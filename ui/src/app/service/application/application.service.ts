@@ -33,6 +33,7 @@ export class ApplicationService {
         params = params.append('withUsage', 'true');
         params = params.append('withKeys', 'true');
         params = params.append('withDeploymentStrategies', 'true');
+        params = params.append('withVulnerabilities', 'true');
 
 
         if (filter) {

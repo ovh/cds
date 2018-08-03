@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {cloneDeep} from 'lodash';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
@@ -10,7 +10,7 @@ declare var CodeMirror: any;
     templateUrl: './condition.form.html',
     styleUrls: ['./condition.form.scss']
 })
-export class WorkflowNodeConditionFormComponent implements OnInit {
+export class WorkflowNodeConditionFormComponent {
 
     @Input() operators: {};
     @Input('names')
@@ -25,6 +25,7 @@ export class WorkflowNodeConditionFormComponent implements OnInit {
     }
     @Input() conditions: WorkflowNodeConditions;
     @Input() workflow: Workflow;
+    @Input() mode: 'advanced'|'basic';
 
     @Output() changeEvent = new EventEmitter<WorkflowNodeConditions>();
 
@@ -34,7 +35,6 @@ export class WorkflowNodeConditionFormComponent implements OnInit {
     _names: Array<string> = [];
     suggest: Array<string> = [];
     condition = new WorkflowNodeCondition();
-    mode = 'basic';
     codeMirrorConfig: {};
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
 
@@ -47,12 +47,6 @@ export class WorkflowNodeConditionFormComponent implements OnInit {
             lineNumbers: true,
             autoRefresh: true
         };
-    }
-
-    ngOnInit() {
-        if (this.conditions.lua_script) {
-            this.mode = 'advanced';
-        }
     }
 
     send(): void {

@@ -36,6 +36,7 @@ export class Application {
     keys: Array<Key>;
     vcs_strategy: VCSStrategy;
     deployment_strategies: Map<string, any>;
+    vulnerabilities: Array<Vulnerability>;
     project_key: string; // project unique key
 
     // true if someone has updated the application ( used for warnings )
@@ -73,8 +74,6 @@ export interface ApplicationFilter {
 export class Vulnerability {
     id: number;
     application_id: number;
-    workflow_id: number;
-    workflow_node_run_id: number;
     title: string;
     description: string;
     cve: string;

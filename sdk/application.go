@@ -39,6 +39,7 @@ type Application struct {
 	Keys                 []ApplicationKey          `json:"keys" yaml:"keys" db:"-"`
 	Usage                *Usage                    `json:"usage,omitempty" db:"-" cli:"-"`
 	DeploymentStrategies map[string]PlatformConfig `json:"deployment_strategies,omitempty" db:"-" cli:"-"`
+	Vulnerabilities      []Vulnerability           `json:"vulnerabilities,omitempty" db:"-" cli:"-"`
 }
 
 // IsValid returns error if the application is not valid

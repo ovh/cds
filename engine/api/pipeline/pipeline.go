@@ -3,7 +3,6 @@ package pipeline
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -19,40 +18,6 @@ import (
 type structarg struct {
 	loadstages     bool
 	loadparameters bool
-}
-
-// UpdatePipelineLastModified Update last_modified date on pipeline
-func UpdatePipelineLastModified(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
-	query := "UPDATE pipeline SET last_modified = current_timestamp WHERE id = $1 RETURNING last_modified"
-	var lastModified time.Time
-	err := db.QueryRow(query, p.ID).Scan(&lastModified)
-	if err == nil {
-		p.LastModified = lastModified.Unix()
-	}
-
-	t := time.Now()
-
-	if u != nil {
-		store.SetWithTTL(cache.Key("lastModified", proj.Key, "pipeline", p.Name), sdk.LastModification{
-			Name:         p.Name,
-			Username:     u.Username,
-			LastModified: t.Unix(),
-		}, 0)
-
-		updates := sdk.LastModification{
-			Key:          proj.Key,
-			Name:         p.Name,
-			LastModified: lastModified.Unix(),
-			Username:     u.Username,
-			Type:         sdk.PipelineLastModificationType,
-		}
-		b, errP := json.Marshal(updates)
-		if errP == nil {
-			store.Publish("lastUpdates", string(b))
-		}
-	}
-
-	return err
 }
 
 // LoadPipeline loads a pipeline from database
@@ -495,7 +460,7 @@ func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p
 
 	event.PublishPipelineAdd(proj.Key, *p, u)
 
-	return UpdatePipelineLastModified(db, store, proj, p, u)
+	return nil
 }
 
 // ExistPipeline Check if the given pipeline exist in database

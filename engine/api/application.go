@@ -244,6 +244,7 @@ func (api *API) getApplicationHandler() Handler {
 		withKeys := FormBool(r, "withKeys")
 		withUsage := FormBool(r, "withUsage")
 		withDeploymentStrategies := FormBool(r, "withDeploymentStrategies")
+		withVulnerabilities := FormBool(r, "withVulnerabilities")
 		branchName := r.FormValue("branchName")
 		remote := r.FormValue("remote")
 		versionString := r.FormValue("version")
@@ -266,6 +267,9 @@ func (api *API) getApplicationHandler() Handler {
 		}
 		if withDeploymentStrategies {
 			loadOptions = append(loadOptions, application.LoadOptions.WithDeploymentStrategies)
+		}
+		if withVulnerabilities {
+			loadOptions = append(loadOptions, application.LoadOptions.WithVulnerabilities)
 		}
 
 		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), loadOptions...)
@@ -521,15 +525,9 @@ func (api *API) addApplicationHandler() Handler {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot add groups on application")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectApplicationLastModificationType); err != nil {
-			return sdk.WrapError(err, "addApplicationHandler> Cannot update last modified on project")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot commit transaction")
 		}
-
-		event.PublishAddApplication(proj.Key, app, getUser(ctx))
 
 		return WriteJSON(w, app, http.StatusOK)
 	}
@@ -573,10 +571,6 @@ func (api *API) deleteApplicationHandler() Handler {
 		err = application.DeleteApplication(tx, app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deleteApplicationHandler> Cannot delete application")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectApplicationLastModificationType); err != nil {
-			return sdk.WrapError(err, "deleteApplicationHandler> Cannot update project last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -628,15 +622,9 @@ func (api *API) cloneApplicationHandler() Handler {
 			return sdk.WrapError(err, "cloneApplicationHandler> Cannot insert new application %s", newApp.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectApplicationLastModificationType); err != nil {
-			return sdk.WrapError(err, "cloneApplicationHandler: Cannot update last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "cloneApplicationHandler> Cannot commit transaction")
 		}
-
-		event.PublishAddApplication(proj.Key, newApp, getUser(ctx))
 
 		return WriteJSON(w, newApp, http.StatusOK)
 	}
@@ -743,16 +731,6 @@ func (api *API) updateApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateApplicationHandler> Cannot delete application %s", applicationName)
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateApplicationHandler> Cannot update last modified for application %s", applicationName)
-		}
-
-		if app.Name != applicationName {
-			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectApplicationLastModificationType); err != nil {
-				return sdk.WrapError(err, "updateApplicationHandler> Cannot update last modified for project key %s", p.Key)
-			}
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateApplicationHandler> Cannot commit transaction")
 		}
@@ -775,6 +753,7 @@ func (api *API) postApplicationMetadataHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "postApplicationMetadataHandler")
 		}
+		oldApp := *app
 
 		m := vars["metadata"]
 		v, err := ioutil.ReadAll(r.Body)
@@ -797,6 +776,8 @@ func (api *API) postApplicationMetadataHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postApplicationMetadataHandler> unable to commit tx")
 		}
+
+		event.PublishUpdateApplication(projectKey, *app, oldApp, getUser(ctx))
 
 		return nil
 	}

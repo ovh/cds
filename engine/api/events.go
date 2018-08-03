@@ -35,6 +35,7 @@ type eventsBroker struct {
 	disconnectedMutex *sync.Mutex
 	dbFunc            func() *gorp.DbMap
 	cache             cache.Store
+	clientsLen        int64
 }
 
 // AddClient add a client to the client map
@@ -42,6 +43,7 @@ func (b *eventsBroker) addClient(client eventsBrokerSubscribe) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	b.clients[client.UUID] = client
+	b.clientsLen++
 }
 
 // CleanAll cleans all clients
@@ -54,6 +56,7 @@ func (b *eventsBroker) cleanAll() {
 			delete(b.clients, c)
 		}
 	}
+	b.clientsLen = 0
 }
 
 func (b *eventsBroker) disconnectClient(uuid string) {
@@ -228,6 +231,7 @@ func (b *eventsBroker) canSend(client eventsBrokerSubscribe) bool {
 	}
 	close(client.Queue)
 	delete(b.clients, client.UUID)
+	b.clientsLen--
 	return false
 }
 

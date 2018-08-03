@@ -10,7 +10,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/venom"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -95,11 +94,11 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 		r.Coverage = cov
 	}
 	if loadOpts.WithVulnerabilities {
-		vulns, errV := application.LoadVulnerabilitiesByRun(db, r.ID)
-		if errV != nil && errV != sdk.ErrNotFound {
-			return nil, sdk.WrapError(errV, "LoadNodeRun>Error loading vulnerabilities for run %d", r.ID)
+		vuln, errV := loadVulnerabilityReport(db, r.ID)
+		if errV != nil {
+			return nil, sdk.WrapError(errV, "LoadNodeRun>Error vulnerability report coverage for run %d", r.ID)
 		}
-		r.Vulnerabilities = vulns
+		r.VulnerabilitiesReport = vuln
 	}
 	return r, nil
 

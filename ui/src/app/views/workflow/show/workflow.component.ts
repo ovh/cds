@@ -75,7 +75,10 @@ export class WorkflowShowComponent {
 
             this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
             this._workflowCoreService.setWorkflowPreview(null);
-            this._workflowEventStore.unselectAll();
+
+            if (!this.activatedRoute.snapshot.queryParams['node_id']) {
+                this._workflowEventStore.unselectAll();
+            }
             if (projkey && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();

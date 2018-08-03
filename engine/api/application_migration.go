@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflowv0"
@@ -18,13 +19,15 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
+		u := getUser(ctx)
 
-		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments)
+		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments)
 		if errP != nil {
 			return sdk.WrapError(errP, "migrationApplicationWorkflowHandler")
 		}
+		oldProj := *p
 
-		cdTree, errT := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", "", 0)
+		cdTree, errT := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, u, "", "", 0)
 		if errT != nil {
 			return sdk.WrapError(errT, "migrationApplicationWorkflowCleanHandler")
 		}
@@ -41,30 +44,28 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 		defer tx.Rollback()
 
 		for appID := range appIDs {
-			appToClean, errA := application.LoadByID(api.mustDB(), api.Cache, appID, getUser(ctx), application.LoadOptions.WithPipelines)
+			appToClean, errA := application.LoadByID(api.mustDB(), api.Cache, appID, u, application.LoadOptions.WithPipelines)
 			if errA != nil {
 				return sdk.WrapError(errA, "migrationApplicationWorkflowHandler> Cannot load app")
 			}
 
 			appToClean.WorkflowMigration = migrate.STATUS_CLEANING
 			appToClean.ProjectID = p.ID
-			if err := application.Update(tx, api.Cache, appToClean, getUser(ctx)); err != nil {
+			if err := application.Update(tx, api.Cache, appToClean, u); err != nil {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 			}
 		}
 
 		p.WorkflowMigration = migrate.STATUS_START
-		if err := project.Update(tx, api.Cache, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
+		if err := project.Update(tx, api.Cache, p, u); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Cannot commit transaction")
 		}
+		event.PublishUpdateProject(p, &oldProj, u)
+
 		return nil
 	}
 }
@@ -78,6 +79,7 @@ func getApplicationFromCDPipeline(tree sdk.CDPipeline, appIDs *map[int64]bool) {
 
 func (api *API) migrationApplicationWorkflowHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		u := getUser(ctx)
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
@@ -87,16 +89,17 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		withCurrentVersion := FormBool(r, "withCurrentVersion")
 		withRepositoryWebHook := FormBool(r, "withRepositoryWebHook")
 
-		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errP != nil {
 			return sdk.WrapError(errP, "migrationApplicationWorkflowHandler")
 		}
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
+		oldProj := *p
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, u)
 		if errA != nil {
 			return sdk.WrapError(errA, "migrationApplicationWorkflowHandler")
 		}
 
-		cdTree, errW := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
+		cdTree, errW := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, u, "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "migrationApplicationWorkflowHandler> Cannot load cd tree")
 		}
@@ -112,29 +115,27 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 			app.WorkflowMigration = migrate.STATUS_CLEANING
 		} else {
 			var errM error
-			wfs, errM = migrate.ToWorkflow(tx, api.Cache, cdTree, p, getUser(ctx), force, disablePrefix, withCurrentVersion, withRepositoryWebHook)
+			wfs, errM = migrate.ToWorkflow(tx, api.Cache, cdTree, p, u, force, disablePrefix, withCurrentVersion, withRepositoryWebHook)
 			if errM != nil {
 				return sdk.WrapError(errM, "migrationApplicationWorkflowHandler")
 			}
 			app.WorkflowMigration = migrate.STATUS_START
 		}
 
-		if err := application.Update(tx, api.Cache, app, getUser(ctx)); err != nil {
+		if err := application.Update(tx, api.Cache, app, u); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 		}
 
 		p.WorkflowMigration = migrate.STATUS_START
-		if err := project.Update(tx, api.Cache, p, getUser(ctx)); err != nil {
+		if err := project.Update(tx, api.Cache, p, u); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-		}
-
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType, sdk.ProjectWorkflowLastModificationType); err != nil {
-			return sdk.WrapError(err, "migrationApplicationWorkflowHandler %s", sdk.ProjectWorkflowLastModificationType)
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Cannot commit transaction")
 		}
+		event.PublishUpdateProject(p, &oldProj, u)
+
 		return WriteJSON(w, wfs, http.StatusOK)
 	}
 }

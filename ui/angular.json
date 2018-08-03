@@ -28,6 +28,7 @@
               "node_modules/angular2-toaster/toaster.css",
               "node_modules/font-awesome/css/font-awesome.css",
               "node_modules/animate.css/animate.min.css",
+              "node_modules/prismjs/themes/prism-okaidia.css",
               "src/styles.scss"
             ],
             "scripts": [
@@ -56,7 +57,8 @@
               "node_modules/ansi_up/ansi_up.js",
               "node_modules/duration-js/duration.js",
               "node_modules/graphlib/dist/graphlib.js",
-              "node_modules/dagre/dist/dagre.js"
+              "node_modules/dagre/dist/dagre.js",
+              "node_modules/prismjs/prism.js"
             ]
           },
           "configurations": {

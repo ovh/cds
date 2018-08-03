@@ -77,15 +77,6 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 				Pipeline: *pip,
 				ID:       id,
 			})
-
-			projTmp := &sdk.Project{Key: key}
-			if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, projTmp, pip, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "attachPipelinesToApplicationHandler> Cannot update pipeline last modified date")
-			}
-		}
-
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "attachPipelinesToApplicationHandler: Cannot update application last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -210,10 +201,6 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "removePipelineFromApplicationHandler: Cannot detach pipeline %s from %s", pipelineName, appName)
 		}
 
-		if err := application.UpdateLastModified(tx, api.Cache, a, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot update application last modified date")
-		}
-
 		// Remove pipeline from struct
 		var indexPipeline int
 		for i, appPip := range a.Pipelines {
@@ -221,11 +208,6 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 				indexPipeline = i
 				break
 			}
-		}
-
-		projTmp := &sdk.Project{Key: key}
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, projTmp, &a.Pipelines[indexPipeline].Pipeline, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot update pipeline last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -361,11 +343,6 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> cannot delete user notification")
 		}
 
-		err = application.UpdateLastModified(tx, api.Cache, applicationData, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> cannot update application last_modified date")
-		}
-
 		err = tx.Commit()
 		if err != nil {
 			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> cannot commit transaction")
@@ -427,11 +404,6 @@ func (api *API) addNotificationsHandler() Handler {
 				return sdk.WrapError(err, "addNotificationsHandler> cannot update user notification")
 
 			}
-		}
-
-		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addNotificationsHandler> cannot update application last_modified date")
-
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -496,16 +468,9 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 
 		}
 
-		err = application.UpdateLastModified(tx, api.Cache, applicationData, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "updateUserNotificationApplicationPipelineHandler> cannot update application last_modified date")
-
-		}
-
 		err = tx.Commit()
 		if err != nil {
 			return sdk.WrapError(err, "updateUserNotificationApplicationPipelineHandler> cannot commit transaction")
-
 		}
 
 		var errNotif error

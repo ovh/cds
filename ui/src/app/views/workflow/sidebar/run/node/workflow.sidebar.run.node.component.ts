@@ -13,6 +13,7 @@ import {
 import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
+import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../../../../service/workflow/workflow.sidebar.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {DurationService} from '../../../../../shared/duration/duration.service';
 import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
@@ -53,9 +54,14 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
 
     durationIntervalID: number;
 
-    constructor(private _wrService: WorkflowRunService, private _router: Router,
-               private _durationService: DurationService,
-                private _workflowEventStore: WorkflowEventStore) {
+    constructor(
+      private _wrService: WorkflowRunService,
+      private _router: Router,
+      private _durationService: DurationService,
+      private _workflowEventStore: WorkflowEventStore,
+      private _sidebarStore: WorkflowSidebarStore,
+    ) {
+
     }
 
     ngOnInit(): void {
@@ -217,5 +223,13 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             clearInterval(this.durationIntervalID);
             this.durationIntervalID = 0;
         }
+    }
+
+    goToEditNode(): void {
+      this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_NODE);
+      this._workflowEventStore.setSelectedNodeRun(null, false);
+      this._workflowEventStore.setSelectedRun(null);
+      this._workflowEventStore.setSelectedNode(this.node, true);
+      this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name], {queryParams: {'node_id': this.node.id}});
     }
 }

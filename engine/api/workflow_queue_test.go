@@ -824,7 +824,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	ctx.worker.ActionBuildID = wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID
 	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
 
-	request := sdk.VulnerabilityReport{
+	request := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: []sdk.Vulnerability{
 			{
 				Version:     "1.0.0",

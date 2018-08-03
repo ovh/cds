@@ -197,7 +197,6 @@ type API struct {
 	Config              Configuration
 	DBConnectionFactory *database.DBConnectionFactory
 	StartupTime         time.Time
-	lastUpdateBroker    *lastUpdateBroker
 	eventsBroker        *eventsBroker
 	warnChan            chan sdk.Event
 	Cache               cache.Store

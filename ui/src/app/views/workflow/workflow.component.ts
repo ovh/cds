@@ -7,6 +7,7 @@ import {finalize} from 'rxjs/operators';
 import {Project} from '../../model/project.model';
 import {Workflow} from '../../model/workflow.model';
 import {ProjectStore} from '../../service/project/project.store';
+import {RouterService} from '../../service/router/router.service';
 import {WorkflowRunService} from '../../service/workflow/run/workflow.run.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
 import {WorkflowEventStore} from '../../service/workflow/workflow.event.store';
@@ -52,6 +53,7 @@ export class WorkflowComponent implements OnInit {
                 private _workflowRunService: WorkflowRunService,
                 private _workflowEventStore: WorkflowEventStore,
                 private _router: Router,
+                private _routerService: RouterService,
                 private _projectStore: ProjectStore,
                 public _sidebarStore: WorkflowSidebarStore,
                 private _workflowCore: WorkflowCoreService,
@@ -129,15 +131,13 @@ export class WorkflowComponent implements OnInit {
           .subscribe(wrs => {
               this._workflowEventStore.setListingRuns(false);
               this._workflowEventStore.pushWorkflowRuns(wrs);
-              this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
           });
     }
 
     initSidebar(): void {
         // Mode of sidebar
-        this.sideBarModeSubscription = this._sidebarStore.sidebarMode().subscribe(m => {
-            this.sidebarMode = m;
-        })
+        this.sideBarModeSubscription = this._sidebarStore.sidebarMode()
+            .subscribe(m => this.sidebarMode = m);
     }
 
     ngOnInit() {
@@ -161,7 +161,13 @@ export class WorkflowComponent implements OnInit {
     }
 
     changeToRunsMode(): void {
+        let activatedRoute = this._routerService.getActivatedRoute(this._activatedRoute);
+        this._router.navigate([], {relativeTo: activatedRoute});
+        this.selectedNodeID = null;
         this._workflowEventStore.setSelectedNode(null, false);
+        if (!activatedRoute.snapshot.params['nodeId']) {
+            this._workflowEventStore.setSelectedNodeRun(null, false);
+        }
         this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
     }
 }

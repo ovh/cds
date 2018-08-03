@@ -32,10 +32,12 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 		return nil, nil
 	}
 
+	nodeUpdated := false
 	//Browse stages
 	stage := &n.Stages[stageIndex]
 	if stage.Status == sdk.StatusWaiting {
 		stage.Status = sdk.StatusBuilding
+		nodeUpdated = true
 	}
 	isStopped := true
 	for i := range stage.RunJobs {
@@ -53,11 +55,16 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 		}
 	}
 	if isStopped {
+		nodeUpdated = true
 		stage.Status = sdk.StatusStopped
 	}
 
 	if n.Status == sdk.StatusWaiting.String() {
+		nodeUpdated = true
 		n.Status = sdk.StatusBuilding.String()
+	}
+
+	if nodeUpdated {
 		report.Add(*n)
 	}
 
@@ -82,6 +89,11 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	}
 
 	report := new(ProcessorReport)
+	defer func(oldStatus string, wNr *sdk.WorkflowNodeRun) {
+		if oldStatus != wNr.Status {
+			report.Add(*wNr)
+		}
+	}(n.Status, n)
 
 	//If status is not waiting neither build: nothing to do
 	if sdk.StatusIsTerminated(n.Status) {
@@ -214,8 +226,6 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	//Delete jobs only when node is over
 	if sdk.StatusIsTerminated(n.Status) {
-		// push node run event
-		report.Add(*n)
 		if n.Status != sdk.StatusStopped.String() {
 
 			r1, _, err := processWorkflowRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)

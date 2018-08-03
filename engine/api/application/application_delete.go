@@ -90,6 +90,7 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	if _, err := db.Exec(query, applicationID); err != nil {
 		return sdk.WrapError(err, "DeleteApplication> Cannot delete application")
 	}
+
 	return nil
 }
 

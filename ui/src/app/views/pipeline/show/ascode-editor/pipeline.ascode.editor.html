@@ -3,7 +3,7 @@
         <ng-container *ngIf="open">
             <codemirror
                 [(ngModel)]="exportedPip"
-                (keydown)="updated = true"
+                (keydown)="updated = true; keyEvent($event)"
                 [config]="codeMirrorConfig" #codeMirror>
             </codemirror>
         </ng-container>

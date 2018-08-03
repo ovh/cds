@@ -158,10 +158,6 @@ func (api *API) postPerformImportAsCodeHandler() Handler {
 		}
 		msgListString := translate(r, allMsg)
 
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
-			return sdk.WrapError(err, "workflowPush> Unable to update project")
-		}
-
 		// Grant CDS as a repository collaborator
 		// TODO for this moment, this step is not mandatory. If it's failed, continue the ascode process
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, ope.VCSServer)

@@ -8,7 +8,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -52,15 +51,6 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 
 		if err := pipeline.DeleteParameterFromPipeline(tx, p.ID, paramName); err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot delete %s", paramName)
-		}
-
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "deleteParameterFromPipelineHandler> unable to load project")
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "deleteParameterFromPipelineHandler> Cannot update pipeline last_modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -108,15 +98,6 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 
 		if err := pipeline.UpdateParameterInPipeline(tx, p.ID, paramName, newParam); err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s", paramName, pipelineName)
-		}
-
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "updateParameterInPipelineHandler> unable to load project")
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update pipeline last_modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -171,15 +152,6 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			if err := pipeline.InsertParameterInPipeline(tx, p.ID, &newParam); err != nil {
 				return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot add parameter %s in pipeline %s", paramName, pipelineName)
 			}
-		}
-
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "addParameterInPipelineHandler> unable to load project")
-		}
-
-		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addParameterInPipelineHandler> Cannot update pipeline last_modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

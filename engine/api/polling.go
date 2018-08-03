@@ -73,11 +73,6 @@ func (api *API) addPollerHandler() Handler {
 			return sdk.WrapError(err, "addPollerHandler: cannot insert poller in db")
 		}
 
-		err = application.UpdateLastModified(tx, api.Cache, app, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "addPollerHandler: cannot update application (%s) lastmodified date", app.Name)
-		}
-
 		err = tx.Commit()
 		if err != nil {
 			return sdk.WrapError(err, "addPollerHandler> Cannot commit transaction")
@@ -146,10 +141,6 @@ func (api *API) updatePollerHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "updatePollerHandler: cannot update poller in db")
 
-		}
-
-		if err = application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updatePollerHandler: cannot update application last modified date")
 		}
 
 		if err = tx.Commit(); err != nil {
@@ -230,7 +221,6 @@ func (api *API) deletePollerHandler() Handler {
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot load pipeline %s/%s", projectKey, pipelineName)
-
 		}
 
 		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
@@ -241,24 +231,16 @@ func (api *API) deletePollerHandler() Handler {
 		po, err := poller.LoadByApplicationAndPipeline(api.mustDB(), a.ID, p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot load poller")
-
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot start transaction")
-
 		}
 		defer tx.Rollback()
 
 		if err = poller.Delete(tx, po); err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot delete poller")
-
-		}
-
-		if err = application.UpdateLastModified(tx, api.Cache, a, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "deletePollerHandler> cannot update application last modified date")
-
 		}
 
 		if err = tx.Commit(); err != nil {

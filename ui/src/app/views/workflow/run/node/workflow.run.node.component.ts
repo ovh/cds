@@ -38,6 +38,9 @@ export class WorkflowNodeRunComponent {
 
     isAdmin: boolean;
 
+    nbVuln = 0;
+    deltaVul = 0;
+
     constructor(private _activatedRoute: ActivatedRoute,
                 private _router: Router, private _routerService: RouterService, private _workflowRunService: WorkflowRunService,
                 private _durationService: DurationService, private _authStore: AuthentificationStore,
@@ -90,6 +93,7 @@ export class WorkflowNodeRunComponent {
                         .pipe(first())
                         .subscribe(nrs => this.nodeRunsHistory = nrs);
                 }
+                this.initVulnerabilitySummary();
 
                 this._workflowEventStore.setSelectedNodeRun(this.nodeRun);
                 this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
@@ -115,5 +119,24 @@ export class WorkflowNodeRunComponent {
             'workflow', this.workflowName,
             'run', this.nodeRun.num,
             'node', this.nodeRun.id], navExtras);
+    }
+
+    initVulnerabilitySummary(): void {
+        if (this.nodeRun && this.nodeRun.vulnerabilities_report && this.nodeRun.vulnerabilities_report.report) {
+            Object.keys(this.nodeRun.vulnerabilities_report.report.summary).forEach(k => {
+                this.nbVuln += this.nodeRun.vulnerabilities_report.report.summary[k];
+            });
+            let previousNb = 0;
+            if (this.nodeRun.vulnerabilities_report.report.previous_run_summary) {
+                Object.keys(this.nodeRun.vulnerabilities_report.report.previous_run_summary).forEach(k => {
+                    previousNb += this.nodeRun.vulnerabilities_report.report.previous_run_summary[k];
+                });
+            } else if (this.nodeRun.vulnerabilities_report.report.default_branch_summary) {
+                Object.keys(this.nodeRun.vulnerabilities_report.report.default_branch_summary).forEach(k => {
+                    previousNb += this.nodeRun.vulnerabilities_report.report.default_branch_summary[k];
+                });
+            }
+            this.deltaVul = this.nbVuln - previousNb;
+        }
     }
 }

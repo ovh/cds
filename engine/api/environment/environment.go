@@ -10,7 +10,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
@@ -386,21 +385,6 @@ func DeleteAllEnvironment(db gorp.SqlExecutor, projectID int64) error {
 		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment")
 	}
 	return nil
-}
-
-// UpdateLastModified updates last_modified on environment
-func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, env *sdk.Environment) error {
-	if u != nil {
-		store.SetWithTTL(cache.Key("lastModified", env.ProjectKey, "environment", env.Name), sdk.LastModification{
-			Name:         env.Name,
-			Username:     u.Username,
-			LastModified: time.Now().Unix(),
-		}, 0)
-	}
-
-	query := `UPDATE environment SET last_modified = current_timestamp WHERE id=$1`
-	_, err := db.Exec(query, env.ID)
-	return err
 }
 
 func loadGroupByEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {

@@ -14,14 +14,6 @@ func (api *API) InitRouter() {
 	api.Router.SetHeaderFunc = DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
-	api.lastUpdateBroker = &lastUpdateBroker{
-		clients:  make(map[string]lastUpdateBrokerSubscribe),
-		messages: make(chan string),
-		mutex:    &sync.Mutex{},
-		cache:    api.Cache,
-		dbFunc:   api.DBConnectionFactory.GetDBMap,
-	}
-	api.lastUpdateBroker.Init(api.Router.Background)
 
 	api.eventsBroker = &eventsBroker{
 		cache:             api.Cache,
@@ -170,6 +162,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/audit", r.GET(api.getVariablesAuditInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", r.GET(api.getVariableAuditInApplicationHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/vulnerability/{id}", r.POST(api.postVulnerabilityHandler))
 	// Application deployment
 	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config/{platform}", r.POST(api.postApplicationDeploymentStrategyConfigHandler, AllowProvider(true)), r.GET(api.getApplicationDeploymentStrategyConfigHandler), r.DELETE(api.deleteApplicationDeploymentStrategyConfigHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config", r.GET(api.getApplicationDeploymentStrategiesConfigHandler))
@@ -424,7 +417,6 @@ func (api *API) InitRouter() {
 
 	// SSE
 	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
-	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
 
 	// Feature
 	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))
