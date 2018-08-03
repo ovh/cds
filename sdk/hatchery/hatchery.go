@@ -236,7 +236,7 @@ func Create(h Interface) error {
 						tracing.Tag("reason", reason),
 					)
 				}
-				tracing.End(currentCtx, nil, nil)
+				_ = tracing.End(currentCtx, nil, nil)
 			}
 
 			//Check if the jobs is concerned by a pending worker creation

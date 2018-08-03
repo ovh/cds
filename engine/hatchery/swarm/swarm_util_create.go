@@ -24,7 +24,7 @@ func (h *HatcherySwarm) createNetwork(ctx context.Context, dockerClient *dockerC
 	ctx, end := tracing.Span(ctx, "swarm.createNetwork", tracing.Tag("network", name))
 	defer end()
 	log.Debug("hatchery> swarm> createNetwork> Create network %s", name)
-	_, err := dockerClient.NetworkCreate(context.Background(), name, types.NetworkCreate{
+	_, err := dockerClient.NetworkCreate(ctx, name, types.NetworkCreate{
 		Driver:         "bridge",
 		Internal:       false,
 		CheckDuplicate: true,
@@ -95,11 +95,13 @@ func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClien
 		}
 	}
 
+	_ := next tracing.Span(ctx, "swarm.dockerClient.ImageList")
 	// Check the images to know if we had to pull or not
-	images, errl := dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
+	images, errl := dockerClient.ImageList(ctx, types.ImageListOptions{All: true})
 	if errl != nil {
 		log.Warning("createAndStartContainer> Unable to list images: %s", errl)
 	}
+	next()
 
 	var imageFound bool
 checkImage:
@@ -117,19 +119,28 @@ checkImage:
 	}
 
 	if !imageFound {
+		_ := next tracing.Span(ctx, "swarm.dockerClient.pullImage", tracing.Tag("image", cArgs.image))
 		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage); err != nil {
+			next()
 			return sdk.WrapError(err, "createAndStartContainer> Unable to pull image %s on %s", cArgs.image, dockerClient.name)
 		}
+		next()
 	}
 
-	c, err := dockerClient.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, name)
+	_ := next tracing.Span(ctx, "swarm.dockerClient.ContainerCreate", tracing.Tag(tracing.TagWorker, cArgs.name), tracing.Tag("network", fmt.Sprintf("%v", networkingConfig))
+	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, name)
 	if err != nil {
+		next()
 		return sdk.WrapError(err, "createAndStartContainer> Unable to create container %s", name)
 	}
+	next()
 
-	if err := dockerClient.ContainerStart(context.Background(), c.ID, types.ContainerStartOptions{}); err != nil {
+	_ := next tracing.Span(ctx, "swarm.dockerClient.ContainerStart", tracing.Tag(tracing.TagWorker, cArgs.name), tracing.Tag("network", fmt.Sprintf("%v", networkingConfig))
+	if err := dockerClient.ContainerStart(ctx, c.ID, types.ContainerStartOptions{}); err != nil {
+		next()
 		return sdk.WrapError(err, "createAndStartContainer> Unable to start container on %s: %s", dockerClient.name, c.ID[:12])
 	}
+	next()
 	return nil
 }
 
