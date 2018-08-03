@@ -10,7 +10,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -51,7 +50,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	}
 	log.Info("takePipelineBuildJob> Job %d taken%s", pipelineBuildJobID, t)
 
-	pbji := worker.PipelineBuildJobInfo{}
+	pbji := sdk.PipelineBuildJobInfo{}
 	if err := json.Unmarshal([]byte(data), &pbji); err != nil {
 		log.Info("takeJob> Cannot unmarshal action: %s", err)
 		return false
