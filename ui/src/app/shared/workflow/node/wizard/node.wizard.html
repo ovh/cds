@@ -228,16 +228,17 @@
                 <div class="ui row">
                   <div class="ui sixteen wide column">
                       <div class="fields">
-                        <div class="six wide field">
+                        <div class="ui active centered inline loader" *ngIf="loadingPlatforms"></div>
+                        <div class="six wide field" *ngIf="!loadingPlatforms">
                             <label>{{'common_platform' | translate}}</label>
                               <sm-select
                                   class="search"
                                   placeholder="{{ 'common_platform' | translate }}"
                                   [(model)]="node.context.project_platform_id"
                                   [options]="{'fullTextSearch': true}"
-                                  id="WorkflowEnvironmentSelect">
+                                  id="WorkflowPlatformSelect">
                                   <option> </option>
-                                  <option *ngFor="let platform of project.platforms" [value]="platform.id">{{ platform.name }}</option>
+                                  <option *ngFor="let platform of platforms" [value]="platform.id">{{ platform.name }}</option>
                               </sm-select>
                         </div>
                       </div>

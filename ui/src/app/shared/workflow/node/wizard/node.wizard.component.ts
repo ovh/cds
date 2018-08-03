@@ -1,10 +1,9 @@
 
-import {Observable, of as observableOf} from 'rxjs';
-
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
+import {Observable, of as observableOf} from 'rxjs';
 import {finalize, first, map} from 'rxjs/operators';
 import {Application} from '../../../../model/application.model';
 import {Environment} from '../../../../model/environment.model';
@@ -95,6 +94,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     loadingCreateEnvironment = false;
     newEnvironment: Environment = new Environment();
     _createNewEnvironment = false;
+    platforms: IdName[] = [];
+    loadingPlatforms = false;
 
     constructor(private _router: Router,
                 private _translate: TranslateService,
@@ -207,8 +208,32 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
         return this.createApplication().pipe(
           map(() => 'environment'));
       }
+      this.getPlatforms();
       this.pipelineSection = 'environment';
       return observableOf('environment');
+    }
+
+    getPlatforms() {
+      this.loadingPlatforms = true;
+      let app = this.project.application_names.find((a) => a.id === this.node.context.application_id);
+      this._appStore.getDeploymentStrategies(this.project.key, app.name).pipe(
+          first(),
+          finalize(() => this.loadingPlatforms = false)
+      ).subscribe(
+          (data) => {
+              this.platforms = [new IdName()];
+              let pfNames = Object.keys(data);
+              pfNames.forEach(s => {
+                  let pf = this.project.platforms.find(p => p.name === s);
+                  if (pf) {
+                      let idName = new IdName();
+                      idName.id = pf.id;
+                      idName.name = pf.name;
+                      this.platforms.push(idName);
+                  }
+              })
+          }
+      );
     }
 
     createEnvironment(): Observable<Project>  {
