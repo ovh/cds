@@ -123,9 +123,11 @@ export class WorkflowNodeRunComponent {
 
     initVulnerabilitySummary(): void {
         if (this.nodeRun && this.nodeRun.vulnerabilities_report && this.nodeRun.vulnerabilities_report.report) {
-            Object.keys(this.nodeRun.vulnerabilities_report.report.summary).forEach(k => {
-                this.nbVuln += this.nodeRun.vulnerabilities_report.report.summary[k];
-            });
+            if (this.nodeRun.vulnerabilities_report.report.summary) {
+              Object.keys(this.nodeRun.vulnerabilities_report.report.summary).forEach(k => {
+                  this.nbVuln += this.nodeRun.vulnerabilities_report.report.summary[k];
+              });
+            }
             let previousNb = 0;
             if (this.nodeRun.vulnerabilities_report.report.previous_run_summary) {
                 Object.keys(this.nodeRun.vulnerabilities_report.report.previous_run_summary).forEach(k => {
