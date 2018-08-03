@@ -101,7 +101,7 @@ func (r Repo) LocalConfigSet(section, key, value string) error {
 	conf, _ := r.LocalConfigGet(section, key)
 	s := fmt.Sprintf("%s.%s", section, key)
 	if conf != "" {
-		if _, err := r.runCmd("git", "config", "--local", "--unset", s); err != nil {
+		if _, err := r.runCmd("git", "config", "--local", "--unset-all", s); err != nil {
 			return err
 		}
 	}
@@ -196,9 +196,61 @@ func (r Repo) FetchRemoteBranch(remote, branch string) error {
 	if _, err := r.runCmd("git", "fetch"); err != nil {
 		return fmt.Errorf("unable to git fetch: %s", err)
 	}
+
+	var branchExist bool
+	if _, err := r.runCmd("git", "rev-parse", "--verify", branch); err == nil {
+		branchExist = true
+	}
+
+	var hasUpstream bool
+	if _, err := r.runCmd("git", "rev-parse", "--abbrev-ref", branch+"@{upstream}"); err == nil {
+		hasUpstream = true
+	}
+
+	if branchExist {
+		if hasUpstream {
+			_, err := r.runCmd("git", "checkout", branch)
+			if err != nil {
+				return fmt.Errorf("unable to git checkout: %s", err)
+			}
+			return nil
+		}
+		// the branch exist but has no upstream. Delete it
+		if _, err := r.runCmd("git", "branch", "-d", branch); err != nil {
+			return fmt.Errorf("unable to git delete: %s", err)
+		}
+	}
+
 	_, err := r.runCmd("git", "checkout", "-b", branch, "--track", remote+"/"+branch)
 	if err != nil {
+		return fmt.Errorf("unable to git checkout new branch: %s", err)
+	}
+	return nil
+}
+
+// Checkout checkouts a branch on the local repository
+func (r Repo) Checkout(branch string) error {
+	_, err := r.runCmd("git", "checkout", branch)
+	if err != nil {
 		return fmt.Errorf("unable to git checkout: %s", err)
+	}
+	return nil
+}
+
+// CheckoutNewBranch checkouts a new branch on the local repository
+func (r Repo) CheckoutNewBranch(branch string) error {
+	_, err := r.runCmd("git", "checkout", "-b", branch)
+	if err != nil {
+		return fmt.Errorf("unable to git checkout: %s", err)
+	}
+	return nil
+}
+
+// DeleteBranch deletes a branch on the local repository
+func (r Repo) DeleteBranch(branch string) error {
+	_, err := r.runCmd("git", "branch", "-d", branch)
+	if err != nil {
+		return fmt.Errorf("unable to delete branch: %s", err)
 	}
 	return nil
 }
@@ -242,14 +294,70 @@ func (r Repo) Glob(s string) ([]string, error) {
 	return files, nil
 }
 
-// Open opens a file form the repo
+// Open opens a file from the repo
 func (r Repo) Open(s string) (*os.File, error) {
 	p := filepath.Join(r.path, s)
 	return os.Open(p)
 }
 
+// Write writes a file in the repo
+func (r Repo) Write(s string, content io.Reader) error {
+	p := filepath.Join(r.path, s)
+	f, err := os.OpenFile(p, os.O_WRONLY, os.FileMode(0644))
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(f, content); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Add file contents to the index
+func (r Repo) Add(s ...string) error {
+	args := append([]string{"add"}, s...)
+	out, err := r.runCmd("git", args...)
+	if err != nil {
+		return fmt.Errorf("command 'git add' failed: %v (%s)", err, out)
+	}
+	return nil
+}
+
+// Commit the index
+func (r Repo) Commit(m string) error {
+	out, err := r.runCmd("git", "commit", "-m", strconv.Quote(m))
+	if err != nil {
+		return fmt.Errorf("command 'git commit' failed: %v (%s)", err, out)
+	}
+	return nil
+}
+
+// Push (always with force) the branch
+func (r Repo) Push(remote, branch string) error {
+	out, err := r.runCmd("git", "push", "-f", "-u", remote, branch)
+	if err != nil {
+		return fmt.Errorf("command 'git push' failed: %v (%s)", err, out)
+	}
+	return nil
+}
+
 // Option is a function option
 type Option func(r *Repo) error
+
+// WithUser configure the git command to use user
+func WithUser(email, name string) Option {
+	return func(r *Repo) error {
+		out, err := r.runCmd("git", "config", "user.email", email)
+		if err != nil {
+			return fmt.Errorf("command 'git config user.email' failed: %v (%s)", err, out)
+		}
+		out, err = r.runCmd("git", "config", "user.name", name)
+		if err != nil {
+			return fmt.Errorf("command 'git config user.name' failed: %v (%s)", err, out)
+		}
+		return err
+	}
+}
 
 // WithSSHAuth configure the git command to use a specific private key
 func WithSSHAuth(privateKey []byte) Option {

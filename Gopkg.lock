@@ -372,7 +372,7 @@
   branch = "master"
   name = "github.com/fsamin/go-repo"
   packages = ["."]
-  revision = "2b23591bd8d5c87e5cfcc9348e34b23bea7c326e"
+  revision = "58026cca98288f8ef4838be1836ea1a039438eb3"
 
 [[projects]]
   name = "github.com/fsamin/go-shredder"
@@ -1608,6 +1608,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bea562e511da2feeaa59495ec4d2d6f7784a80ef48f35068ccd0bd2aae32b4c0"
+  inputs-digest = "54cb2b701640f07c1a59e0d6b8b2c7c396a32506206daa66ae6b9fee6a176ad7"
   solver-name = "gps-cdcl"
   solver-version = 1
