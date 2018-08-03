@@ -87,3 +87,71 @@ func (api *API) getPullCacheHandler() Handler {
 		return nil
 	}
 }
+
+func (api *API) postPushCacheWithTempURLHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		tag := vars["tag"]
+
+		// check tag name pattern
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(tag) {
+			return sdk.ErrInvalidName
+		}
+
+		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		if !ok {
+			return sdk.WrapError(sdk.ErrNotImplemented, "postPushCacheWithTempURLHandler> cast error")
+		}
+
+		cacheObject := sdk.Cache{
+			Name:    "cache.tar",
+			Project: projectKey,
+			Tag:     tag,
+		}
+
+		url, key, errO := store.StoreURL(&cacheObject)
+		if errO != nil {
+			return sdk.WrapError(errO, "postPushCacheWithTempURLHandler>Cannot store cache")
+		}
+		cacheObject.TmpURL = url
+		cacheObject.SecretKey = key
+
+		return WriteJSON(w, cacheObject, http.StatusOK)
+	}
+}
+
+func (api *API) getPullCacheWithTempURLHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		tag := vars["tag"]
+
+		// check tag name pattern
+		regexp := sdk.NamePatternRegex
+		if !regexp.MatchString(tag) {
+			return sdk.ErrInvalidName
+		}
+
+		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		if !ok {
+			return sdk.WrapError(sdk.ErrNotImplemented, "getPullCacheWithTempURLHandler> cast error")
+		}
+
+		cacheObject := sdk.Cache{
+			Name:    "cache.tar",
+			Project: projectKey,
+			Tag:     tag,
+		}
+
+		url, key, errF := store.FetchURL(&cacheObject)
+		if errF != nil {
+			return sdk.WrapError(errF, "getPullCacheWithTempURLHandler> Cannot get tmp URL")
+		}
+		cacheObject.TmpURL = url
+		cacheObject.SecretKey = key
+
+		return WriteJSON(w, cacheObject, http.StatusOK)
+	}
+}
