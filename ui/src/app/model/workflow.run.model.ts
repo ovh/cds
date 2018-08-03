@@ -1,5 +1,6 @@
 // WorkflowRun is an execution instance of a run
 import {Action} from './action.model';
+import {Vulnerability} from './application.model';
 import {Event} from './event.model';
 import {Hatchery} from './hatchery.model';
 import {Job, StepStatus} from './job.model';
@@ -83,6 +84,7 @@ export class WorkflowNodeRun {
     artifacts: Array<WorkflowNodeRunArtifact>;
     tests: Tests;
     commits: Array<Commit>;
+    vulnerabilities_report: WorkflowNodeRunVulnerabilityReport;
     triggers_run: Map<string, TriggerRun>;
     can_be_run: boolean;
 
@@ -254,4 +256,22 @@ export class WorkflowNodeRunManual {
     payload: {};
     pipeline_parameter: Array<Parameter>;
     user: User;
+}
+
+export class WorkflowNodeRunVulnerabilityReport {
+    id: number;
+    application_id: number;
+    workflow_id: number;
+    workflow_run_id: number;
+    workflow_node_run_id: number;
+    num: number;
+    branch: string;
+    report: WorkflowNodeRunVulnerability;
+}
+
+export class WorkflowNodeRunVulnerability {
+    vulnerabilities: Array<Vulnerability>;
+    summary: { [key: string]: number};
+    default_branch_summary: { [key: string]: number};
+    previous_run_summary: { [key: string]: number};
 }

@@ -13,8 +13,14 @@
                 <span *ngIf="nodeRun.commits && nodeRun.commits.length > 1">{{ 'common_commits' | translate }}</span>
                 <span *ngIf="!nodeRun.commits || (nodeRun.commits && nodeRun.commits.length < 2)">{{ 'common_commit' | translate }}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!nodeRun || !nodeRun.vulnerabilities || nodeRun.vulnerabilities.length ===0" (click)="showTab('vuln')" *ngIf="isAdmin">
-                <span *ngIf="nodeRun.vulnerabilities">{{ 'common_vulnerabilities' | translate }}</span>
+            <a sm-item [class.active]="selectedTab === 'vuln'" [class.disabled]="!nodeRun || !nodeRun.vulnerabilities_report" (click)="showTab('vuln')" *ngIf="isAdmin">
+                <span>{{ 'common_vulnerabilities' | translate }}</span>
+                <span *ngIf="nbVuln > 0 || deltaVul !== 0">
+                    (
+                    {{nbVuln}}
+                    <span *ngIf="deltaVul !== 0">+ {{deltaVul}}</span>
+                    )
+                </span>
             </a>
             <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRun.tests && nodeRun.tests.total !== 0 && showTab('test')" [class.disabled]="!nodeRun.tests || nodeRun.tests.total === 0">
                 <span *ngIf="nodeRun && nodeRun.tests && nodeRun.tests.total > 1">{{ 'common_tests' | translate }}</span>
@@ -42,7 +48,7 @@
                     <app-workflow-artifact-list [artifacts]="nodeRun.artifacts"></app-workflow-artifact-list>
                 </div>
                 <div *ngSwitchCase="'vuln'">
-                    <app-vulnerabilities [vulnerabilities]="nodeRun.vulnerabilities"></app-vulnerabilities>
+                    <app-vulnerabilities [report]="nodeRun.vulnerabilities_report"></app-vulnerabilities>
                 </div>
                 <div *ngSwitchCase="'commit'">
                     <app-commit-list [commits]="nodeRun.commits"></app-commit-list>

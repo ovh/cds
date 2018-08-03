@@ -244,6 +244,7 @@ func (api *API) getApplicationHandler() Handler {
 		withKeys := FormBool(r, "withKeys")
 		withUsage := FormBool(r, "withUsage")
 		withDeploymentStrategies := FormBool(r, "withDeploymentStrategies")
+		withVulnerabilities := FormBool(r, "withVulnerabilities")
 		branchName := r.FormValue("branchName")
 		remote := r.FormValue("remote")
 		versionString := r.FormValue("version")
@@ -266,6 +267,9 @@ func (api *API) getApplicationHandler() Handler {
 		}
 		if withDeploymentStrategies {
 			loadOptions = append(loadOptions, application.LoadOptions.WithDeploymentStrategies)
+		}
+		if withVulnerabilities {
+			loadOptions = append(loadOptions, application.LoadOptions.WithVulnerabilities)
 		}
 
 		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), loadOptions...)

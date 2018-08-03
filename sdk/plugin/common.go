@@ -161,7 +161,7 @@ type Log struct {
 }
 
 // SendVulnerabilityReport call worker to send vulnerabiliry report to API
-func SendVulnerabilityReport(j IJob, report sdk.VulnerabilityReport) error {
+func SendVulnerabilityReport(j IJob, report sdk.VulnerabilityWorkerReport) error {
 	if j == nil {
 		return nil
 	}

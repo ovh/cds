@@ -54,7 +54,7 @@ func (d NpmAuditParserPlugin) Run(j plugin.IJob) plugin.Result {
 		return plugin.Fail
 	}
 
-	var report sdk.VulnerabilityReport
+	var report sdk.VulnerabilityWorkerReport
 	summary := make(map[string]int64)
 	for _, a := range npmAudit.Advisories {
 		for _, f := range a.Findings {
@@ -94,6 +94,7 @@ func (d NpmAuditParserPlugin) Run(j plugin.IJob) plugin.Result {
 
 		}
 	}
+	report.Summary = summary
 	if err := plugin.SendVulnerabilityReport(j, report); err != nil {
 		_ = plugin.SendLog(j, "Unable to send report: %s", err)
 		return plugin.Fail

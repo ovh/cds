@@ -32,6 +32,7 @@ var LoadOptions = struct {
 	WithClearKeys                  LoadOptionFunc
 	WithDeploymentStrategies       LoadOptionFunc
 	WithClearDeploymentStrategies  LoadOptionFunc
+	WithVulnerabilities            LoadOptionFunc
 }{
 	Default:                        &loadDefaultDependencies,
 	WithVariables:                  &loadVariables,
@@ -45,6 +46,7 @@ var LoadOptions = struct {
 	WithClearKeys:                  &loadClearKeys,
 	WithDeploymentStrategies:       &loadDeploymentStrategies,
 	WithClearDeploymentStrategies:  &loadDeploymentStrategiesWithClearPassword,
+	WithVulnerabilities:            &loadVulnerabilities,
 }
 
 // LoadOldApplicationWorkflowToClean load application to clean
