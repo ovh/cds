@@ -127,7 +127,7 @@ checkImage:
 		next()
 	}
 
-	_, next:= tracing.Span(ctx, "swarm.dockerClient.ContainerCreate", tracing.Tag(tracing.TagWorker, cArgs.name), tracing.Tag("network", fmt.Sprintf("%v", networkingConfig))
+	_, next = tracing.Span(ctx, "swarm.dockerClient.ContainerCreate", tracing.Tag(tracing.TagWorker, cArgs.name), tracing.Tag("network", fmt.Sprintf("%v", networkingConfig)))
 	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, name)
 	if err != nil {
 		next()
@@ -135,7 +135,7 @@ checkImage:
 	}
 	next()
 
-	_, next := tracing.Span(ctx, "swarm.dockerClient.ContainerStart", tracing.Tag(tracing.TagWorker, cArgs.name), tracing.Tag("network", fmt.Sprintf("%v", networkingConfig))
+	_, next = tracing.Span(ctx, "swarm.dockerClient.ContainerStart", tracing.Tag(tracing.TagWorker, cArgs.name), tracing.Tag("network", fmt.Sprintf("%v", networkingConfig)))
 	if err := dockerClient.ContainerStart(ctx, c.ID, types.ContainerStartOptions{}); err != nil {
 		next()
 		return sdk.WrapError(err, "createAndStartContainer> Unable to start container on %s: %s", dockerClient.name, c.ID[:12])
