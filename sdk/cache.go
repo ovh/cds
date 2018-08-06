@@ -62,7 +62,7 @@ func CreateTarFromPaths(cwd string, paths []string) (io.Reader, error) {
 				return err
 			}
 
-			header.Name = strings.TrimPrefix(strings.Replace(file, path, "", -1), string(filepath.Separator))
+			header.Name = strings.TrimPrefix(strings.Replace(file, cwd, "", -1), string(filepath.Separator))
 			if fi.Mode()&os.ModeSymlink != 0 {
 				symlink, errEval := filepath.EvalSymlinks(file)
 				if errEval != nil {
