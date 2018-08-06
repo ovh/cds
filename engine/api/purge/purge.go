@@ -3,6 +3,7 @@ package purge
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -170,6 +171,40 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 	)`
 	if _, err := tx.Exec(queryUpdateNodeJobRun, args...); err != nil {
 		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node job run history")
+	}
+
+	resp := []struct {
+		ID     int64  `db:"id"`
+		Status string `db:"status"`
+		Stages string `db:"stages"`
+	}{}
+
+	querySelectNodeRuns := `
+	SELECT workflow_node_run.id, workflow_node_run.status, workflow_node_run.stages
+		FROM workflow_node_run
+		WHERE workflow_node_run.workflow_run_id = ANY(string_to_array($1, ',')::bigint[])
+	`
+	if _, err := tx.Select(&resp, querySelectNodeRuns, wfIdsJoined); err != nil {
+		return sdk.WrapError(err, "stopRunsBlocked> cannot get workflow node run infos")
+	}
+
+	now := time.Now()
+	for i := range resp {
+		nr := sdk.WorkflowNodeRun{
+			ID:     resp[i].ID,
+			Status: resp[i].Status,
+		}
+		if err := json.Unmarshal([]byte(resp[i].Stages), &nr.Stages); err != nil {
+			return sdk.WrapError(err, "stopRunsBlocked> cannot unmarshal stages")
+		}
+
+		workflow.StopWorkflowNodeRunStages(&nr)
+		nr.Status = sdk.StatusStopped.String()
+		nr.Done = now
+
+		if err := workflow.UpdateNodeRunStatusAndStage(tx, &nr); err != nil {
+			return sdk.WrapError(err, "stopRunsBlocked> cannot update node runs stages")
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

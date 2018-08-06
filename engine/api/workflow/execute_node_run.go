@@ -68,7 +68,7 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	}
 
 	// Save the node run in database
-	if err := updateNodeRunStatusAndStage(db, n); err != nil {
+	if err := UpdateNodeRunStatusAndStage(db, n); err != nil {
 		return nil, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.syncTakeJobInNodeRun> Unable to execute node")
 	}
 	return report, nil
@@ -212,7 +212,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	}
 
 	// Save the node run in database
-	if err := updateNodeRunStatusAndStage(db, n); err != nil {
+	if err := UpdateNodeRunStatusAndStage(db, n); err != nil {
 		return nil, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.execute> Unable to execute node")
 	}
 
@@ -648,6 +648,21 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	wg.Wait()
 
 	// Update stages from node run
+	StopWorkflowNodeRunStages(&nodeRun)
+
+	nodeRun.Status = sdk.StatusStopped.String()
+	nodeRun.Done = time.Now()
+	if errU := UpdateNodeRun(dbFunc(), &nodeRun); errU != nil {
+		return report, sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
+	}
+	report.Add(nodeRun)
+
+	return report, nil
+}
+
+// StopWorkflowNodeRunStages mark to stop all stages and step status in struct
+func StopWorkflowNodeRunStages(nodeRun *sdk.WorkflowNodeRun) {
+	// Update stages from node run
 	for iS := range nodeRun.Stages {
 		stag := &nodeRun.Stages[iS]
 		for iR := range stag.RunJobs {
@@ -668,15 +683,6 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 			stag.Status = sdk.StatusStopped
 		}
 	}
-
-	nodeRun.Status = sdk.StatusStopped.String()
-	nodeRun.Done = time.Now()
-	if errU := UpdateNodeRun(dbFunc(), &nodeRun); errU != nil {
-		return report, sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
-	}
-	report.Add(nodeRun)
-
-	return report, nil
 }
 
 func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanErr chan<- error, chanDone chan<- bool, wg *sync.WaitGroup) *ProcessorReport {
