@@ -1092,33 +1092,21 @@ func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u *sdk.User, add bool
 	return sdk.WrapError(err, "UpdateFavorite>")
 }
 
-// LoadAllByPlatformName loads all workflow using a platform (project_platform table)
-func LoadAllByPlatformName(db gorp.SqlExecutor, projID int64, pfName string) ([]sdk.Workflow, error) {
+// IsDeploymentPlatformUsed checks if a deployment platform is used on any workflow
+func IsDeploymentPlatformUsed(db gorp.SqlExecutor, projectID int64, appID int64, pfName string) (bool, error) {
 	query := `
-	SELECT workflow.*
-	FROM workflow
-	JOIN workflow_node ON workflow.id = workflow_node.workflow_id
-	JOIN workflow_node_context ON workflow_node.id = workflow_node_context.workflow_node_id
-	JOIN project_platform ON project_platform.project_id = workflow.project_id
-	WHERE workflow.project_id = $1
-	AND project_platform.name = $2
-	AND workflow_node_context.project_platform_id = project_platform.id
+	SELECT count(1) 
+	FROM workflow_node_context
+	JOIN project_platform ON project_platform.id = workflow_node_context.project_platform_id
+	WHERE workflow_node_context.application_id = $2
+	AND project_platform.project_id = $1
+	AND project_platform.name = $3
 	`
 
-	res := []sdk.Workflow{}
-	dbRes := []Workflow{}
-	if _, err := db.Select(&dbRes, query, projID, pfName); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "LoadAllByPlatformName> Unable to load workflows")
+	nb, err := db.SelectInt(query, projectID, appID, pfName)
+	if err != nil {
+		return false, sdk.WrapError(err, "IsDeploymentPlatformUsed")
 	}
 
-	for _, w := range dbRes {
-		if err := w.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadAllByPlatformName> Unable to execute post get")
-		}
-		res = append(res, sdk.Workflow(w))
-	}
-	return res, nil
+	return nb > 0, nil
 }
