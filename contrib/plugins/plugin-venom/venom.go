@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -188,8 +189,24 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 		filepath = strings.Split(filepath[0], " ")
 	}
 
+	for _, fp := range filepath {
+		filepath, err = walkGlobFile(fp)
+		if err != nil {
+			plugin.SendLog(a, "VENOM - Error on walk files: %v\n", err) // nolint
+			return plugin.Fail
+		}
+	}
+
 	if len(filepathExcluded) == 1 {
 		filepathExcluded = strings.Split(filepathExcluded[0], " ")
+	}
+
+	for _, fp := range filepathExcluded {
+		filepathExcluded, err = walkGlobFile(fp)
+		if err != nil {
+			plugin.SendLog(a, "VENOM - Error on walk excluded files: %v\n", err) // nolint
+			return plugin.Fail
+		}
 	}
 
 	tests, err := v.Process(filepath, filepathExcluded)
@@ -201,7 +218,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	elapsed := time.Since(start)
 	plugin.SendLog(a, "VENOM - Output test results under: %s\n", output)
 	if err := v.OutputResult(*tests, elapsed); err != nil {
-		plugin.SendLog(a, "VENOM - Error while uploading test results: %v\n", err)
+		plugin.SendLog(a, "VENOM - Error while uploading test results: %v\n", err) // nolint
 		return plugin.Fail
 	}
 
@@ -210,4 +227,28 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 
 func main() {
 	plugin.Main(&VenomPlugin{})
+}
+
+func walkGlobFile(path string) ([]string, error) {
+	filenames, err := filepath.Glob(path)
+	if err != nil {
+		return nil, err
+	}
+	result := []string{}
+	for _, fpath := range filenames {
+		err := filepath.Walk(fpath,
+			func(path string, info os.FileInfo, err error) error {
+				if err != nil {
+					return err
+				}
+				if !info.IsDir() {
+					result = append(result, path)
+				}
+				return nil
+			})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
