@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -145,17 +144,13 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() Handler {
 			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to load application")
 		}
 
-		ws, err := workflow.LoadAllByPlatformName(tx, proj.ID, pfName)
+		isUsed, err := workflow.IsDeploymentPlatformUsed(tx, proj.ID, app.ID, pfName)
 		if err != nil {
-			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to load workflows")
+			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to check if platform is used")
 		}
 
-		if len(ws) > 0 {
-			var wNames = make([]string, len(ws))
-			for i, w := range ws {
-				wNames[i] = w.Name
-			}
-			return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("platform used by %s", strings.Join(wNames, ",")))
+		if isUsed {
+			return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("platform is still used in a workflow"))
 		}
 
 		if _, has := app.DeploymentStrategies[pfName]; !has {
@@ -163,7 +158,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() Handler {
 		}
 
 		delete(app.DeploymentStrategies, pfName)
-		if err := application.DeleteDeploymentStrategy(tx, proj.ID, app.ID, pf.PlatformModelID); err != nil {
+		if err := application.DeleteDeploymentStrategy(tx, proj.ID, app.ID, pf.ID); err != nil {
 			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler")
 		}
 
