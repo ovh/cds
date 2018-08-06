@@ -1,6 +1,7 @@
 package application
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 
@@ -142,19 +143,39 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	//deployment strategies
 	for pfName, pfConfig := range eapp.DeploymentStrategies {
+		if app.DeploymentStrategies == nil {
+			app.DeploymentStrategies = make(map[string]sdk.PlatformConfig)
+		}
+		if app.DeploymentStrategies[pfName] == nil {
+			app.DeploymentStrategies[pfName] = make(map[string]sdk.PlatformConfigValue)
+		}
+
+		projPF, has := proj.GetPlatform(pfName)
+		if !has {
+			return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("platform not found")), "ParseAndImport> Platform %s not found", pfName)
+		}
+
+		// Inherit from existing deployment strategy or from the project
+		if oldApp != nil {
+			oldPFConfig, has := oldApp.DeploymentStrategies[pfName]
+			if has {
+				app.DeploymentStrategies[pfName] = oldPFConfig.Clone()
+			}
+		} else {
+			app.DeploymentStrategies[pfName] = projPF.Model.DeploymentDefaultConfig.Clone()
+		}
+
+		app.DeploymentStrategies[pfName].MergeWith(projPF.Model.DeploymentDefaultConfig.Clone())
+
 		for k, v := range pfConfig {
-			if v.Type == sdk.SecretVariable {
-				clearPWD, err := decryptFunc(db, proj.ID, v.Value)
-				if err != nil {
-					return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "ParseAndImport> Unable to decrypt deployment strategy password")
+			if v.Value != "" {
+				if v.Type == sdk.SecretVariable {
+					clearPWD, err := decryptFunc(db, proj.ID, v.Value)
+					if err != nil {
+						return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, err), "ParseAndImport> Unable to decrypt deployment strategy password")
+					}
+					v.Value = clearPWD
 				}
-				v.Value = clearPWD
-			}
-			if app.DeploymentStrategies == nil {
-				app.DeploymentStrategies = make(map[string]sdk.PlatformConfig)
-			}
-			if app.DeploymentStrategies[pfName] == nil {
-				app.DeploymentStrategies[pfName] = make(map[string]sdk.PlatformConfigValue)
 			}
 			app.DeploymentStrategies[pfName][k] = sdk.PlatformConfigValue{
 				Type:  v.Type,
