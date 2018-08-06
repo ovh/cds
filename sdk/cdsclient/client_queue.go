@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -176,7 +175,7 @@ func (c *client) QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error) {
 	return pbJobs, nil
 }
 
-func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worker.WorkflowNodeJobRunInfo, error) {
+func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error) {
 	in := sdk.WorkerTakeForm{
 		Time:    time.Now(),
 		Version: sdk.VERSION,
@@ -188,7 +187,7 @@ func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worke
 	}
 
 	path := fmt.Sprintf("/queue/workflows/%d/take", job.ID)
-	var info worker.WorkflowNodeJobRunInfo
+	var info sdk.WorkflowNodeJobRunData
 
 	if _, err := c.PostJSON(path, &in, &info); err != nil {
 		return nil, err

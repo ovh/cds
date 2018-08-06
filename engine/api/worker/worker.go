@@ -18,22 +18,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// PipelineBuildJobInfo is returned to worker in answer to takePipelineBuildJobHandler
-type PipelineBuildJobInfo struct {
-	PipelineBuildJob sdk.PipelineBuildJob
-	Secrets          []sdk.Variable
-	PipelineID       int64
-	BuildNumber      int64
-}
-
-// WorkflowNodeJobRunInfo is returned to worker in answer to postTakeWorkflowJobHandler
-type WorkflowNodeJobRunInfo struct {
-	NodeJobRun sdk.WorkflowNodeJobRun
-	Secrets    []sdk.Variable
-	Number     int64
-	SubNumber  int64
-}
-
 // ErrNoWorker means the given worker ID is not found
 var ErrNoWorker = fmt.Errorf("cds: no worker found")
 

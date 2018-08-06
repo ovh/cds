@@ -382,7 +382,7 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 			return sdk.WrapError(err, "takePipelineBuildJobHandler> Cannot update worker status")
 		}
 
-		pbji := worker.PipelineBuildJobInfo{}
+		pbji := sdk.PipelineBuildJobInfo{}
 		pb, errPb := pipeline.LoadPipelineBuildByID(api.mustDB(), pbJob.PipelineBuildID)
 		if errPb != nil {
 			return sdk.WrapError(errPb, "takePipelineBuildJobHandler> Cannot get pipeline build")
@@ -445,7 +445,7 @@ func (api *API) addSpawnInfosPipelineBuildJobHandler() Handler {
 	}
 }
 
-func loadActionBuildSecretsAndKeys(db *gorp.DbMap, store cache.Store, pbJobID int64, pbji *worker.PipelineBuildJobInfo) error {
+func loadActionBuildSecretsAndKeys(db *gorp.DbMap, store cache.Store, pbJobID int64, pbji *sdk.PipelineBuildJobInfo) error {
 	query := `SELECT pipeline.project_id, pipeline_build.application_id, pipeline_build.environment_id
 	FROM pipeline_build
 	JOIN pipeline_build_job ON pipeline_build_job.pipeline_build_id = pipeline_build.id
@@ -468,7 +468,7 @@ func loadActionBuildSecretsAndKeys(db *gorp.DbMap, store cache.Store, pbJobID in
 	return nil
 }
 
-func loadActionBuildKeys(db gorp.SqlExecutor, store cache.Store, projectID, appID, envID int64, pbji *worker.PipelineBuildJobInfo) error {
+func loadActionBuildKeys(db gorp.SqlExecutor, store cache.Store, projectID, appID, envID int64, pbji *sdk.PipelineBuildJobInfo) error {
 	p, errP := project.LoadByID(db, store, projectID, nil, project.LoadOptions.WithKeys)
 	if errP != nil {
 		return sdk.WrapError(errP, "loadActionBuildKeys> Cannot load project keys")
@@ -539,7 +539,7 @@ func loadActionBuildKeys(db gorp.SqlExecutor, store cache.Store, projectID, appI
 	return nil
 }
 
-func loadActionBuildSecrets(db gorp.SqlExecutor, store cache.Store, projectID, appID, envID int64, pbji *worker.PipelineBuildJobInfo) error {
+func loadActionBuildSecrets(db gorp.SqlExecutor, store cache.Store, projectID, appID, envID int64, pbji *sdk.PipelineBuildJobInfo) error {
 	var secrets []sdk.Variable
 	// Load project secrets
 	pv, err := project.GetAllVariableInProject(db, projectID, project.WithClearPassword())
