@@ -6,13 +6,23 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"reflect"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/fatih/color"
+	dump "github.com/fsamin/go-dump"
 	tap "github.com/mndrix/tap-go"
 	log "github.com/sirupsen/logrus"
 	yaml "gopkg.in/yaml.v2"
 )
+
+var regexpSlug = regexp.MustCompile("[^a-z0-9]+")
+
+func slug(s string) string {
+	return strings.Trim(regexpSlug.ReplaceAllString(strings.ToLower(s), "-"), "-")
+}
 
 // OutputResult output result to sdtout, files...
 func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
@@ -42,18 +52,50 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
 	}
 
-	if v.OutputDetails == "high" {
-		v.PrintFunc(string(data))
-	}
-
-	if v.OutputResume {
-		v.outputResume(tests, elapsed)
-	}
+	v.outputResume(tests, elapsed)
 
 	if v.OutputDir != "" {
-		filename := v.OutputDir + "/" + "test_results" + "." + v.OutputFormat
+		v.PrintFunc("\n") // new line to display files written
+		filename := v.OutputDir + "/test_results." + v.OutputFormat
 		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
 			return fmt.Errorf("Error while creating file %s: %v", filename, err)
+		}
+		v.PrintFunc("File %s is written\n", filename)
+
+		for _, ts := range tests.TestSuites {
+			for _, tc := range ts.TestCases {
+				for _, f := range tc.Failures {
+					filename := v.OutputDir + "/" + slug(ts.ShortName) + "." + slug(tc.Name) + ".dump"
+
+					sdump := &bytes.Buffer{}
+					dumpEncoder := dump.NewDefaultEncoder(sdump)
+					dumpEncoder.ExtraFields.DetailedMap = false
+					dumpEncoder.ExtraFields.DetailedStruct = false
+					dumpEncoder.ExtraFields.Len = false
+					dumpEncoder.ExtraFields.Type = false
+					dumpEncoder.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+
+					//Try to pretty print only the result
+					var smartPrinted bool
+					for k, v := range f.Result {
+						if k == "result" && reflect.TypeOf(v).Kind() != reflect.String {
+							dumpEncoder.Fdump(v)
+							smartPrinted = true
+							break
+						}
+					}
+					//If not succeed print all the stuff
+					if !smartPrinted {
+						dumpEncoder.Fdump(f.Result)
+					}
+
+					output := f.Value + "\n ------ \n" + sdump.String()
+					if err := ioutil.WriteFile(filename, []byte(output), 0644); err != nil {
+						return fmt.Errorf("Error while creating file %s: %v", filename, err)
+					}
+					v.PrintFunc("File %s is written\n", filename)
+				}
+			}
 		}
 	}
 	return nil
@@ -96,47 +138,37 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 }
 
 func (v *Venom) outputResume(tests Tests, elapsed time.Duration) {
-	if v.OutputResumeFailures {
-		red := color.New(color.FgRed).SprintFunc()
-		for _, t := range tests.TestSuites {
-			if t.Failures > 0 || t.Errors > 0 {
-				v.PrintFunc("%s %s\n", red("FAILED"), t.Name)
-				v.PrintFunc("--------------\n")
-
-				for _, tc := range t.TestCases {
-					for _, f := range tc.Failures {
-						v.PrintFunc("%s\n", f.Value)
-					}
-					for _, f := range tc.Errors {
-						v.PrintFunc("%s\n", f.Value)
-					}
-				}
-				v.PrintFunc("-=-=-=-=-=-=-=-=-\n\n")
-			}
-		}
-	}
-
+	red := color.New(color.FgRed).SprintFunc()
 	totalTestCases := 0
 	totalTestSteps := 0
-	red := color.New(color.FgRed).SprintFunc()
+	v.PrintFunc("\n")
 	for _, t := range tests.TestSuites {
-		if t.Failures > 0 || t.Errors > 0 {
-			v.PrintFunc("%s %s\n", red("FAILED"), t.Name)
-		}
 		totalTestCases += len(t.TestCases)
 		for _, tc := range t.TestCases {
 			totalTestSteps += len(tc.TestSteps)
 		}
+
+		if t.Failures > 0 || t.Errors > 0 {
+			v.PrintFunc("%s %s\n", red("FAILED"), t.Name)
+
+			for _, tc := range t.TestCases {
+				for _, f := range tc.Failures {
+					v.PrintFunc("%s\n", f.Value)
+				}
+				for _, f := range tc.Errors {
+					v.PrintFunc("%s\n", f.Value)
+				}
+			}
+		}
 	}
 
-	v.PrintFunc("Total:%d TotalOK:%d TotalKO:%d TotalSkipped:%d TotalTestSuite:%d TotalTestCase:%d TotalTestStep:%d Duration:%s\n",
+	v.PrintFunc("Total:%d Duration:%s\nOK:%d\nKO:%d\nSkipped:%d\nTestSuite:%d\nTestCase:%d\n",
 		tests.Total,
+		elapsed,
 		tests.TotalOK,
 		tests.TotalKO,
 		tests.TotalSkipped,
 		len(tests.TestSuites),
 		totalTestCases,
-		totalTestSteps,
-		elapsed,
 	)
 }

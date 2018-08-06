@@ -7,7 +7,7 @@ import (
 )
 
 //RunTestStep executes a venom testcase is a venom context
-func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCase, step TestStep, l Logger) ExecutorResult {
+func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCase, stepNumber int, step TestStep, l Logger) ExecutorResult {
 	var assertRes assertionsApplied
 
 	var retry int
@@ -30,17 +30,13 @@ func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite,
 		// add result in templater
 		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
 
-		l.Debugf("Apply assertions")
-
 		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
-			assertRes = applyChecks(&result, step, h.GetDefaultAssertions(), l)
+			assertRes = applyChecks(&result, *tc, stepNumber, step, h.GetDefaultAssertions())
 		} else {
-			assertRes = applyChecks(&result, step, nil, l)
+			assertRes = applyChecks(&result, *tc, stepNumber, step, nil)
 		}
 		// add result again for extracts values
 		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
-
-		l.Debugf("result step:%+v", result)
 
 		if assertRes.ok {
 			break

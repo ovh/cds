@@ -56,7 +56,6 @@ func (s VenomPlugin) Parameters() plugin.Parameters {
 	params.Add("exclude", plugin.TextParameter, "Exclude some files, one file per line", "")
 	params.Add("output", plugin.StringParameter, "Directory where output xunit result file", ".")
 	params.Add("parallel", plugin.StringParameter, "Launch Test Suites in parallel. Enter here number of routines", "1")
-	params.Add("details", plugin.StringParameter, "Output Details Level: low, medium, high", "low")
 	params.Add("loglevel", plugin.StringParameter, "Log Level: debug, info, warn or error", "error")
 	params.Add("vars", plugin.StringParameter, "Empty: all {{.cds...}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty", "")
 	params.Add("vars-from-file", plugin.StringParameter, "filename.yaml or filename.json. See https://github.com/ovh/venom#run-venom-with-file-var", "")
@@ -179,7 +178,6 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	v.OutputFormat = "xml"
 	v.OutputDir = output
 	v.Parallel = parallel
-	v.OutputDetails = "low"
 
 	filepath := strings.Split(path, ",")
 	filepathExcluded := strings.Split(exclude, ",")

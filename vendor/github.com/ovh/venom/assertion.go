@@ -1,16 +1,13 @@
 package venom
 
 import (
-	"bytes"
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/smartystreets/assertions"
 )
@@ -39,13 +36,13 @@ type assertionsApplied struct {
 }
 
 // applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
-	res := applyAssertions(*executorResult, step, defaultAssertions, l)
+func applyChecks(executorResult *ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
+	res := applyAssertions(*executorResult, tc, stepNumber, step, defaultAssertions)
 	if !res.ok {
 		return res
 	}
 
-	resExtract := applyExtracts(executorResult, step, l)
+	resExtract := applyExtracts(executorResult, step)
 
 	res.errors = append(res.errors, resExtract.errors...)
 	res.failures = append(res.failures, resExtract.failures...)
@@ -54,7 +51,7 @@ func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertion
 	return res
 }
 
-func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
+func applyAssertions(executorResult ExecutorResult, tc TestCase, stepNumber int, step TestStep, defaultAssertions *StepAssertions) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
@@ -76,7 +73,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 
 	isOK := true
 	for _, assertion := range sa.Assertions {
-		errs, fails := check(assertion, executorResult, l)
+		errs, fails := check(tc, stepNumber, assertion, executorResult)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -98,7 +95,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 	return assertionsApplied{isOK, errors, failures, systemout, systemerr}
 }
 
-func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure, *Failure) {
+func check(tc TestCase, stepNumber int, assertion string, executorResult ExecutorResult) (*Failure, *Failure) {
 	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
 		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert)))}, nil
@@ -126,31 +123,14 @@ func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure,
 	out := f(actual, args...)
 
 	if out != "" {
-		prefix := "assertion: " + assertion
-
-		sdump := &bytes.Buffer{}
-		dumpEncoder := dump.NewDefaultEncoder(sdump)
-		dumpEncoder.ExtraFields.DetailedMap = false
-		dumpEncoder.ExtraFields.DetailedStruct = false
-		dumpEncoder.ExtraFields.Len = false
-		dumpEncoder.ExtraFields.Type = false
-		dumpEncoder.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-
-		//Try to pretty print only the result
-		var smartPrinted bool
-		for k, v := range executorResult {
-			if k == "result" && reflect.TypeOf(v).Kind() != reflect.String {
-				dumpEncoder.Fdump(v)
-				smartPrinted = true
-				break
-			}
+		var prefix string
+		if stepNumber >= 0 {
+			prefix = fmt.Sprintf("testcase %s / step n°%d / assertion: %s", tc.Name, stepNumber, assertion)
+		} else {
+			// venom used as lib
+			prefix = fmt.Sprintf("assertion: %s", assertion)
 		}
-		//If not succeed print all the stuff
-		if !smartPrinted {
-			dumpEncoder.Fdump(executorResult)
-		}
-
-		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n" + sdump.String())}
+		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n"), Result: executorResult}
 	}
 	return nil, nil
 }

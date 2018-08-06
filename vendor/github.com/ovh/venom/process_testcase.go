@@ -37,8 +37,8 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 	vars := []string{}
 	extractedVars := []string{}
 
-	for _, stepIn := range tc.TestSteps {
-		step, erra := ts.Templater.ApplyOnStep(stepIn)
+	for stepNumber, stepIn := range tc.TestSteps {
+		step, erra := ts.Templater.ApplyOnStep(stepNumber, stepIn)
 		if erra != nil {
 			return nil, nil, erra
 		}
@@ -125,31 +125,25 @@ func (v *Venom) runTestCase(ts *TestSuite, tc *TestCase, l Logger) {
 	if _l, ok := l.(*logrus.Entry); ok {
 		l = _l.WithField("x.testcase", tc.Name)
 	}
-	l.Infof("start")
 
-	for i, stepIn := range tc.TestSteps {
-		l.Debugf("Apply template on step %d", i)
-		step, erra := ts.Templater.ApplyOnStep(stepIn)
+	ts.Templater.Add("", map[string]string{"venom.testcase": tc.Name})
+	for stepNumber, stepIn := range tc.TestSteps {
+		step, erra := ts.Templater.ApplyOnStep(stepNumber, stepIn)
 		if erra != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(erra.Error())})
 			break
 		}
 
-		l.Debugf("Wrap executor on step %d", i)
 		e, err := v.WrapExecutor(step, tcc)
 		if err != nil {
 			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
 			break
 		}
 
-		v.RunTestStep(tcc, e, ts, tc, step, l)
+		v.RunTestStep(tcc, e, ts, tc, stepNumber, step, l)
 
-		if v.OutputDetails != DetailsLow {
-			v.outputProgressBar[ts.Package].Increment()
-		}
 		if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
 			break
 		}
 	}
-	l.Infof("end")
 }
