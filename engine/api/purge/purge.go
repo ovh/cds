@@ -126,7 +126,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 	query := `SELECT workflow_run.id
 		FROM workflow_run
 		WHERE (workflow_run.status = $1 or workflow_run.status = $2 or workflow_run.status = $3)
-		AND now() - workflow_run.start > interval '1 day'
+		AND now() - workflow_run.last_execution > interval '1 day'
 		LIMIT 30`
 	ids := []struct {
 		ID int64 `db:"id"`
