@@ -20,7 +20,13 @@
         var cur = cm.getCursor(0);
 
         // Get current line
-        var text = cm.doc.children[0].lines[cur.line].text;
+        var line = cm.doc.children[0].lines[cur.line]
+        var text = '';
+
+        if (!line) {
+          return null;
+        }
+        text = line.text;
 
         // Show nothing if there is no  {{. on the line
         if (text.indexOf('{{.') === -1) {

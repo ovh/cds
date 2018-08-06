@@ -46,26 +46,67 @@ func CreateTarFromPaths(cwd string, paths []string) (io.Reader, error) {
 	tw := tar.NewWriter(buf)
 
 	for _, path := range paths {
-		symlink, err := filepath.EvalSymlinks(path)
-		if err != nil {
-			return nil, WrapError(err, "CreateTarFromPaths> cannot get resolve path %s", path)
+		// ensure the src actually exists before trying to tar it
+		if _, err := os.Stat(path); err != nil {
+			return nil, fmt.Errorf("Unable to tar files - %v", err.Error())
 		}
-
-		fstat, err := os.Lstat(symlink)
-		if err != nil {
-			return nil, WrapError(err, "CreateTarFromPaths> cannot get resolve(lstat) link")
-		}
-
-		if fstat.IsDir() {
-			if err := iterDirectory(cwd, symlink, tw); err != nil {
-				tw.Close()
-				return nil, WrapError(err, "CreateTarFromPaths> cannot iter directory for path %s and symlink %s", path, symlink)
+		// walk path
+		errWalk := filepath.Walk(path, func(file string, fi os.FileInfo, err error) error {
+			if err != nil {
+				return err
 			}
-		} else {
-			if err := tarWrite(cwd, symlink, tw, fstat); err != nil {
-				tw.Close()
-				return nil, WrapError(err, "CreateTarFromPaths> Cannot tar write %s and symlink %s", path, symlink)
+
+			// create a new dir/file header
+			header, err := tar.FileInfoHeader(fi, fi.Name())
+			if err != nil {
+				return err
 			}
+
+			header.Name = strings.TrimPrefix(strings.Replace(file, path, "", -1), string(filepath.Separator))
+			if fi.Mode()&os.ModeSymlink != 0 {
+				symlink, errEval := filepath.EvalSymlinks(file)
+				if errEval != nil {
+					return errEval
+				}
+				abs, errAbs := filepath.Abs(filepath.Dir(header.Name))
+				if errAbs != nil {
+					return errAbs
+				}
+				symlinkRel, errRel := filepath.Rel(abs, symlink)
+				if errRel != nil {
+					return errRel
+				}
+				header.Linkname = symlinkRel
+			}
+
+			// write the header
+			if err := tw.WriteHeader(header); err != nil {
+				return err
+			}
+
+			if !fi.Mode().IsRegular() {
+				return nil
+			}
+
+			// open files for taring
+			f, err := os.Open(file)
+			if err != nil {
+				return err
+			}
+
+			// copy file data into tar writer
+			if _, err := io.Copy(tw, f); err != nil {
+				return err
+			}
+
+			_ = f.Close()
+
+			return nil
+		})
+
+		if errWalk != nil {
+			_ = tw.Close()
+			return nil, WrapError(errWalk, "CreateTarFromPaths> Cannot walk file")
 		}
 	}
 
@@ -78,97 +119,4 @@ func CreateTarFromPaths(cwd string, paths []string) (io.Reader, error) {
 	res := bytes.NewBuffer(btes)
 
 	return res, nil
-}
-
-func tarWrite(cwd, path string, tw *tar.Writer, fi os.FileInfo) error {
-	filename, err := filepath.Rel(cwd, path)
-	if err != nil {
-		return WrapError(err, "tarWrite> cannot find relative path")
-	}
-
-	hdr := &tar.Header{
-		Name:     filename,
-		Mode:     0600,
-		Size:     fi.Size(),
-		Typeflag: tar.TypeReg,
-	}
-
-	if fi.IsDir() {
-		hdr.Typeflag = tar.TypeDir
-	}
-
-	// Useful to not copy files like socket or device files
-	if !fi.IsDir() && !fi.Mode().IsRegular() {
-		return nil
-	}
-
-	if fi.Mode()&os.ModeSymlink != 0 {
-		symlink, errEval := filepath.EvalSymlinks(path)
-		if errEval != nil {
-			return WrapError(errEval, "tarWrite> cannot get resolve path %s", path)
-		}
-
-		fil, errLs := os.Lstat(symlink)
-		if errLs != nil {
-			return WrapError(errLs, "tarWrite> cannot get resolve(lstat) link")
-		}
-
-		hdr.Size = fil.Size()
-
-		// Useful to not copy files like socket or device files
-		if !fil.IsDir() && !fil.Mode().IsRegular() {
-			return nil
-		}
-	}
-
-	filR, err := os.Open(path)
-	if err != nil {
-		return WrapError(err, "tarWrite> cannot open path")
-	}
-	defer filR.Close()
-
-	if err := tw.WriteHeader(hdr); err != nil {
-		return WrapError(err, "tarWrite> cannot write header")
-	}
-
-	if _, err := io.Copy(tw, filR); err != nil {
-		return WrapError(err, "tarWrite> cannot copy")
-	}
-	return nil
-}
-
-func iterDirectory(cwd, dirPath string, tw *tar.Writer) error {
-	dir, err := os.Open(dirPath)
-	if err != nil {
-		return WrapError(err, "iterDirectory> cannot open path %s", dirPath)
-	}
-	defer dir.Close()
-	fis, err := dir.Readdir(0)
-	if err != nil {
-		return WrapError(err, "iterDirectory> cannot readdir %s", dirPath)
-	}
-	for _, fi := range fis {
-		curPath := dirPath + "/" + fi.Name()
-		symlink, err := filepath.EvalSymlinks(curPath)
-		if err != nil {
-			return WrapError(err, "tarWrite> cannot get resolve path %s", curPath)
-		}
-
-		fil, err := os.Lstat(symlink)
-		if err != nil {
-			return WrapError(err, "tarWrite> cannot get resolve(lstat) link")
-		}
-
-		if fil.IsDir() {
-			if err := iterDirectory(cwd, symlink, tw); err != nil {
-				return WrapError(err, "iterDirectory> cannot iter on directory")
-			}
-		} else {
-			if err := tarWrite(cwd, symlink, tw, fil); err != nil {
-				return WrapError(err, "tarWrite> cannot tar write (%s)", symlink)
-			}
-		}
-	}
-
-	return nil
 }
