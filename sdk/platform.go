@@ -176,6 +176,8 @@ func (config PlatformConfig) MergeWith(cfg PlatformConfig) {
 		val, has := config[k]
 		if !has {
 			val.Type = v.Type
+		} else if v.Value == "" && config[k].Value != "" {
+			continue
 		}
 		if val.Type != PlatformConfigTypePassword || (val.Type == PlatformConfigTypePassword && v.Value != PasswordPlaceholder) {
 			val.Value = v.Value
