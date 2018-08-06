@@ -59,7 +59,6 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 
 // Run execute TestStep of type exec
 func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep, workdir string) (venom.ExecutorResult, error) {
-
 	var e Executor
 	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
@@ -84,7 +83,6 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 }
 
 func (e *Executor) readfile(path string) (Result, error) {
-
 	result := Result{Executor: *e}
 
 	fileInfo, _ := os.Stat(path)
