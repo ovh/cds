@@ -357,7 +357,6 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 		// if its a dir and it doesn't exist create it
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
-				fmt.Println("create directory ", target)
 				if err := os.MkdirAll(target, 0755); err != nil {
 					err = sdk.Error{
 						Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
