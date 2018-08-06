@@ -52,13 +52,14 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 
 		//Compute a new workflow run
 		wr := &sdk.WorkflowRun{
-			Number:       number,
-			Workflow:     *w,
-			WorkflowID:   w.ID,
-			Start:        time.Now(),
-			LastModified: time.Now(),
-			ProjectID:    w.ProjectID,
-			Status:       string(sdk.StatusWaiting),
+			Number:        number,
+			Workflow:      *w,
+			WorkflowID:    w.ID,
+			Start:         time.Now(),
+			LastModified:  time.Now(),
+			ProjectID:     w.ProjectID,
+			Status:        string(sdk.StatusWaiting),
+			LastExecution: time.Now(),
 		}
 
 		if trigg, ok := e.Payload["cds.triggered_by.username"]; ok {
@@ -162,13 +163,14 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 	defer end()
 
 	wr := &sdk.WorkflowRun{
-		Number:       number,
-		Workflow:     *w,
-		WorkflowID:   w.ID,
-		Start:        time.Now(),
-		LastModified: time.Now(),
-		ProjectID:    w.ProjectID,
-		Status:       sdk.StatusWaiting.String(),
+		Number:        number,
+		Workflow:      *w,
+		WorkflowID:    w.ID,
+		Start:         time.Now(),
+		LastModified:  time.Now(),
+		ProjectID:     w.ProjectID,
+		Status:        sdk.StatusWaiting.String(),
+		LastExecution: time.Now(),
 	}
 	wr.Tag(tagTriggeredBy, e.User.Username)
 
