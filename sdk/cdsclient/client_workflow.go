@@ -324,24 +324,22 @@ func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.R
 }
 
 func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
+	downloadURL := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
 	store := new(sdk.ArtifactsStore)
 	_, _ = c.GetJSON("/artifact/store", store)
+
 	if store.TemporaryURLSupported {
-		return c.workflowCacheIndirectDownload(projectKey, ref)
-	}
-	return c.workflowCacheDirectDownload(projectKey, ref)
-}
+		url := fmt.Sprintf("/project/%s/cache/%s/url", projectKey, ref)
 
-func (c *client) workflowCacheIndirectDownload(projectKey, ref string) (io.Reader, error) {
-	url := fmt.Sprintf("/project/%s/cache/%s/url", projectKey, ref)
-
-	var cacheObj sdk.Cache
-	code, err := c.GetJSON(url, &cacheObj)
-	if err != nil {
-		return nil, err
-	}
-	if code >= 400 {
-		return nil, fmt.Errorf("HTTP Code %d", code)
+		var cacheObj sdk.Cache
+		code, err := c.GetJSON(url, &cacheObj)
+		if err != nil {
+			return nil, err
+		}
+		if code >= 400 {
+			return nil, fmt.Errorf("HTTP Code %d", code)
+		}
+		downloadURL = cacheObj.TmpURL
 	}
 
 	mods := []RequestModifier{
@@ -350,7 +348,7 @@ func (c *client) workflowCacheIndirectDownload(projectKey, ref string) (io.Reade
 		}),
 	}
 
-	res, _, code, err := c.Stream("GET", cacheObj.TmpURL, nil, true, mods...)
+	res, _, code, err := c.Stream("GET", downloadURL, nil, true, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -363,30 +361,6 @@ func (c *client) workflowCacheIndirectDownload(projectKey, ref string) (io.Reade
 	if err != nil {
 		return nil, err
 	}
-	return bytes.NewBuffer(body), nil
-}
 
-func (c *client) workflowCacheDirectDownload(projectKey, ref string) (io.Reader, error) {
-	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
-
-	mods := []RequestModifier{
-		(func(r *http.Request) {
-			r.Header.Set("Content-Type", "application/tar")
-		}),
-	}
-
-	res, _, code, err := c.Stream("GET", url, nil, true, mods...)
-	if err != nil {
-		return nil, err
-	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("HTTP Code %d", code)
-	}
-
-	body, err := ioutil.ReadAll(res)
-	if err != nil {
-		return nil, err
-	}
 	return bytes.NewBuffer(body), nil
 }
