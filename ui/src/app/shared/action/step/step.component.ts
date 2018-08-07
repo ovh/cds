@@ -16,7 +16,7 @@ export class ActionStepComponent {
     @Input('step')
     set step(step: Action) {
         this._step = step;
-        if (step) {
+        if (step && step.parameters) {
             this.withAdvanced = step.parameters.some((parameter) => parameter.advanced);
         }
     }
