@@ -1,6 +1,7 @@
 package repositoriesmanager
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -15,19 +16,21 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/tracing"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //LoadAll Load all RepositoriesManager from the database
-func LoadAll(db *gorp.DbMap, store cache.Store) ([]string, error) {
+func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) ([]string, error) {
 	srvs, err := services.FindByType(db, services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WrapError(err, "repositoriesmanager.LoadAll> Unable to load services")
 	}
 
 	vcsServers := map[string]interface{}{}
-	if _, err := services.DoJSONRequest(srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
+	if _, err := services.DoJSONRequest(ctx, srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
 		return nil, err
 	}
 	servers := []string{}
@@ -78,7 +81,7 @@ func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name str
 	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
 }
 
-func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
+func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	srv, err := services.FindByType(c.dbFunc(), services.TypeVCS)
 	if err != nil {
 		return "", "", err
@@ -87,14 +90,14 @@ func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
 	log.Info("Performing request on %s", path)
-	if _, err := services.DoJSONRequest(srv, "GET", path, nil, &res); err != nil {
+	if _, err := services.DoJSONRequest(ctx, srv, "GET", path, nil, &res); err != nil {
 		return "", "", sdk.WrapError(err, "repositoriesmanager.AuthorizeRedirect> ")
 	}
 
 	return res["token"], res["url"], nil
 }
 
-func (c *vcsConsumer) AuthorizeToken(token string, secret string) (string, string, error) {
+func (c *vcsConsumer) AuthorizeToken(ctx context.Context, token string, secret string) (string, string, error) {
 	srv, err := services.FindByType(c.dbFunc(), services.TypeVCS)
 	if err != nil {
 		return "", "", err
@@ -107,14 +110,14 @@ func (c *vcsConsumer) AuthorizeToken(token string, secret string) (string, strin
 
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
-	if _, err := services.DoJSONRequest(srv, "POST", path, body, &res); err != nil {
+	if _, err := services.DoJSONRequest(ctx, srv, "POST", path, body, &res); err != nil {
 		return "", "", err
 	}
 
 	return res["token"], res["secret"], nil
 }
 
-func (c *vcsConsumer) GetAuthorizedClient(token string, secret string) (sdk.VCSAuthorizedClient, error) {
+func (c *vcsConsumer) GetAuthorizedClient(ctx context.Context, token string, secret string) (sdk.VCSAuthorizedClient, error) {
 	s := GetProjectVCSServer(c.proj, c.name)
 	if s == nil {
 		return nil, sdk.ErrNoReposManagerClientAuth
@@ -163,7 +166,7 @@ func (c *localAuthorizedClientCache) Get(repo *sdk.ProjectVCSServer) (sdk.VCSAut
 }
 
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
-func AuthorizedClient(db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, error) {
+func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, error) {
 	if repo == nil {
 		return nil, sdk.ErrUnauthorized
 	}
@@ -188,8 +191,8 @@ func AuthorizedClient(db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectV
 	return vcs, nil
 }
 
-func (c *vcsClient) doJSONRequest(method, path string, in interface{}, out interface{}) (int, error) {
-	code, err := services.DoJSONRequest(c.srvs, method, path, in, out, func(req *http.Request) {
+func (c *vcsClient) doJSONRequest(ctx context.Context, method, path string, in interface{}, out interface{}) (int, error) {
+	code, err := services.DoJSONRequest(ctx, c.srvs, method, path, in, out, func(req *http.Request) {
 		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
 		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})
@@ -212,14 +215,14 @@ func (c *vcsClient) doJSONRequest(method, path string, in interface{}, out inter
 	return code, err
 }
 
-func (c *vcsClient) postMultipart(path string, fileContent []byte, out interface{}) (int, error) {
-	return services.PostMultipart(c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
+func (c *vcsClient) postMultipart(ctx context.Context, path string, fileContent []byte, out interface{}) (int, error) {
+	return services.PostMultipart(ctx, c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
 		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
 		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})
 }
 
-func (c *vcsClient) Repos() ([]sdk.VCSRepo, error) {
+func (c *vcsClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	items, has := c.Cache().Get("/repos")
 	if has {
 		return items.([]sdk.VCSRepo), nil
@@ -227,7 +230,7 @@ func (c *vcsClient) Repos() ([]sdk.VCSRepo, error) {
 
 	repos := []sdk.VCSRepo{}
 	path := fmt.Sprintf("/vcs/%s/repos", c.name)
-	if _, err := c.doJSONRequest("GET", path, nil, &repos); err != nil {
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &repos); err != nil {
 		return nil, err
 	}
 
@@ -236,7 +239,11 @@ func (c *vcsClient) Repos() ([]sdk.VCSRepo, error) {
 	return repos, nil
 }
 
-func (c *vcsClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
+func (c *vcsClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
+	var end func()
+	ctx, end = tracing.Span(ctx, "repositories.RepoByFullname")
+	defer end()
+
 	items, has := c.Cache().Get("/repos/" + fullname)
 	if has {
 		return items.(sdk.VCSRepo), nil
@@ -244,7 +251,7 @@ func (c *vcsClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 
 	repo := sdk.VCSRepo{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s", c.name, fullname)
-	if _, err := c.doJSONRequest("GET", path, nil, &repo); err != nil {
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &repo); err != nil {
 		return repo, err
 	}
 
@@ -253,7 +260,7 @@ func (c *vcsClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 	return repo, nil
 }
 
-func (c *vcsClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
+func (c *vcsClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
 	items, has := c.Cache().Get("/branches/" + fullname)
 	if has {
 		return items.([]sdk.VCSBranch), nil
@@ -261,7 +268,7 @@ func (c *vcsClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 
 	branches := []sdk.VCSBranch{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches", c.name, fullname)
-	if _, err := c.doJSONRequest("GET", path, nil, &branches); err != nil {
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branches); err != nil {
 		return nil, err
 	}
 
@@ -270,19 +277,19 @@ func (c *vcsClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 	return branches, nil
 }
 
-func (c *vcsClient) Branch(fullname string, branchName string) (*sdk.VCSBranch, error) {
+func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName string) (*sdk.VCSBranch, error) {
 	branch := sdk.VCSBranch{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s", c.name, fullname, url.QueryEscape(branchName))
-	if _, err := c.doJSONRequest("GET", path, nil, &branch); err != nil {
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &branch); err != nil {
 		return nil, err
 	}
 	return &branch, nil
 }
 
-func (c *vcsClient) Commits(fullname, branch, since, until string) ([]sdk.VCSCommit, error) {
+func (c *vcsClient) Commits(ctx context.Context, fullname, branch, since, until string) ([]sdk.VCSCommit, error) {
 	commits := []sdk.VCSCommit{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/commits?branch=%s&since=%s&until=%s", c.name, fullname, url.QueryEscape(branch), url.QueryEscape(since), url.QueryEscape(until))
-	if code, err := c.doJSONRequest("GET", path, nil, &commits); err != nil {
+	if code, err := c.doJSONRequest(ctx, "GET", path, nil, &commits); err != nil {
 		if code != http.StatusNotFound {
 			return nil, err
 		}
@@ -290,10 +297,10 @@ func (c *vcsClient) Commits(fullname, branch, since, until string) ([]sdk.VCSCom
 	return commits, nil
 }
 
-func (c *vcsClient) Commit(fullname, hash string) (sdk.VCSCommit, error) {
+func (c *vcsClient) Commit(ctx context.Context, fullname, hash string) (sdk.VCSCommit, error) {
 	commit := sdk.VCSCommit{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s", c.name, fullname, hash)
-	if code, err := c.doJSONRequest("GET", path, nil, &commit); err != nil {
+	if code, err := c.doJSONRequest(ctx, "GET", path, nil, &commit); err != nil {
 		if code != http.StatusNotFound {
 			return commit, err
 		}
@@ -301,107 +308,107 @@ func (c *vcsClient) Commit(fullname, hash string) (sdk.VCSCommit, error) {
 	return commit, nil
 }
 
-func (c *vcsClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) {
+func (c *vcsClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
 	prs := []sdk.VCSPullRequest{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests", c.name, fullname)
-	if _, err := c.doJSONRequest("GET", path, nil, &prs); err != nil {
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &prs); err != nil {
 		return nil, err
 	}
 	return prs, nil
 }
 
-func (c *vcsClient) PullRequestComment(fullname string, id int, body string) error {
+func (c *vcsClient) PullRequestComment(ctx context.Context, fullname string, id int, body string) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests/%d/comments", c.name, fullname, id)
-	if _, err := c.doJSONRequest("POST", path, body, nil); err != nil {
+	if _, err := c.doJSONRequest(ctx, "POST", path, body, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *vcsClient) CreateHook(fullname string, hook *sdk.VCSHook) error {
+func (c *vcsClient) CreateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
-	_, err := c.doJSONRequest("POST", path, hook, hook)
+	_, err := c.doJSONRequest(ctx, "POST", path, hook, hook)
 	return err
 }
 
-func (c *vcsClient) GetHook(fullname, u string) (sdk.VCSHook, error) {
+func (c *vcsClient) GetHook(ctx context.Context, fullname, u string) (sdk.VCSHook, error) {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks?url=%s", c.name, fullname, url.QueryEscape(u))
 	hook := &sdk.VCSHook{}
-	_, err := c.doJSONRequest("GET", path, nil, hook)
+	_, err := c.doJSONRequest(ctx, "GET", path, nil, hook)
 	return *hook, err
 }
 
-func (c *vcsClient) UpdateHook(fullname, url string, hook sdk.VCSHook) error {
+func (c *vcsClient) UpdateHook(ctx context.Context, fullname, url string, hook sdk.VCSHook) error {
 	return nil
 }
 
-func (c *vcsClient) DeleteHook(fullname string, hook sdk.VCSHook) error {
+func (c *vcsClient) DeleteHook(ctx context.Context, fullname string, hook sdk.VCSHook) error {
 	// If we are not able to remove anything, just ignore
 	if hook.URL == "" && hook.ID == "" {
 		return nil
 	}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks?url=%s&id=%s", c.name, fullname, url.QueryEscape(hook.URL), hook.ID)
-	_, err := c.doJSONRequest("DELETE", path, nil, nil)
+	_, err := c.doJSONRequest(ctx, "DELETE", path, nil, nil)
 	return err
 }
 
-func (c *vcsClient) GetEvents(fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
+func (c *vcsClient) GetEvents(ctx context.Context, fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
 	res := struct {
 		Events []interface{} `json:"events"`
 		Delay  time.Duration `json:"delay"`
 	}{}
 
 	path := fmt.Sprintf("/vcs/%s/repos/%s/events?since=%d", c.name, fullname, dateRef.Unix())
-	if _, err := c.doJSONRequest("GET", path, nil, &res); err != nil {
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &res); err != nil {
 		return nil, time.Duration(0), err
 	}
 
 	return res.Events, res.Delay, nil
 }
 
-func (c *vcsClient) PushEvents(fullname string, evts []interface{}) ([]sdk.VCSPushEvent, error) {
+func (c *vcsClient) PushEvents(ctx context.Context, fullname string, evts []interface{}) ([]sdk.VCSPushEvent, error) {
 	events := []sdk.VCSPushEvent{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=push", c.name, fullname)
-	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+	if _, err := c.doJSONRequest(ctx, "POST", path, evts, &events); err != nil {
 		return nil, err
 	}
 	return events, nil
 }
 
-func (c *vcsClient) CreateEvents(fullname string, evts []interface{}) ([]sdk.VCSCreateEvent, error) {
+func (c *vcsClient) CreateEvents(ctx context.Context, fullname string, evts []interface{}) ([]sdk.VCSCreateEvent, error) {
 	events := []sdk.VCSCreateEvent{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=create", c.name, fullname)
-	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+	if _, err := c.doJSONRequest(ctx, "POST", path, evts, &events); err != nil {
 		return nil, err
 	}
 	return events, nil
 }
 
-func (c *vcsClient) DeleteEvents(fullname string, evts []interface{}) ([]sdk.VCSDeleteEvent, error) {
+func (c *vcsClient) DeleteEvents(ctx context.Context, fullname string, evts []interface{}) ([]sdk.VCSDeleteEvent, error) {
 	events := []sdk.VCSDeleteEvent{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=delete", c.name, fullname)
-	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+	if _, err := c.doJSONRequest(ctx, "POST", path, evts, &events); err != nil {
 		return nil, err
 	}
 	return events, nil
 }
 
-func (c *vcsClient) PullRequestEvents(fullname string, evts []interface{}) ([]sdk.VCSPullRequestEvent, error) {
+func (c *vcsClient) PullRequestEvents(ctx context.Context, fullname string, evts []interface{}) ([]sdk.VCSPullRequestEvent, error) {
 	events := []sdk.VCSPullRequestEvent{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=pullrequests", c.name, fullname)
-	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+	if _, err := c.doJSONRequest(ctx, "POST", path, evts, &events); err != nil {
 		return nil, err
 	}
 	return events, nil
 }
 
-func (c *vcsClient) SetStatus(event sdk.Event) error {
+func (c *vcsClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	path := fmt.Sprintf("/vcs/%s/status", c.name)
-	_, err := c.doJSONRequest("POST", path, event, nil)
+	_, err := c.doJSONRequest(ctx, "POST", path, event, nil)
 	return err
 }
 
-func (c *vcsClient) Release(fullname, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {
+func (c *vcsClient) Release(ctx context.Context, fullname, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {
 	res := struct {
 		Tag         string `json:"tag"`
 		Title       string `json:"title"`
@@ -414,14 +421,14 @@ func (c *vcsClient) Release(fullname, tagName, releaseTitle, releaseDescription 
 
 	release := sdk.VCSRelease{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/releases", c.name, fullname)
-	_, err := c.doJSONRequest("POST", path, &res, &release)
+	_, err := c.doJSONRequest(ctx, "POST", path, &res, &release)
 	if err != nil {
 		return nil, err
 	}
 	return &release, nil
 }
 
-func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL string, artifactName string, r io.ReadCloser) error {
+func (c *vcsClient) UploadReleaseFile(ctx context.Context, fullname string, releaseName, uploadURL string, artifactName string, r io.ReadCloser) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/releases/%s/artifacts/%s", c.name, fullname, releaseName, artifactName)
 	defer r.Close()
 
@@ -430,33 +437,33 @@ func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL st
 		return err
 	}
 
-	if _, err := c.postMultipart(path, fileContent, nil); err != nil {
+	if _, err := c.postMultipart(ctx, path, fileContent, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *vcsClient) ListForks(repo string) ([]sdk.VCSRepo, error) {
+func (c *vcsClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, error) {
 	forks := []sdk.VCSRepo{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/forks", c.name, repo)
-	if _, err := c.doJSONRequest("GET", path, nil, &forks); err != nil {
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &forks); err != nil {
 		return nil, err
 	}
 	return forks, nil
 }
 
-func (c *vcsClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+func (c *vcsClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	statuses := []sdk.VCSCommitStatus{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s/statuses", c.name, repo, ref)
-	if _, err := c.doJSONRequest("GET", path, nil, &statuses); err != nil {
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &statuses); err != nil {
 		return nil, err
 	}
 	return statuses, nil
 }
 
-func (c *vcsClient) GrantReadPermission(repo string) error {
+func (c *vcsClient) GrantReadPermission(ctx context.Context, repo string) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/grant", c.name, repo)
-	if _, err := c.doJSONRequest("POST", path, nil, nil); err != nil {
+	if _, err := c.doJSONRequest(ctx, "POST", path, nil, nil); err != nil {
 		return err
 	}
 	return nil
@@ -470,14 +477,14 @@ type WebhooksInfos struct {
 }
 
 // GetWebhooksInfos returns webhooks_supported, webhooks_disabled, webhooks_creation_supported, webhooks_creation_disabled for a vcs server
-func GetWebhooksInfos(c sdk.VCSAuthorizedClient) (WebhooksInfos, error) {
+func GetWebhooksInfos(ctx context.Context, c sdk.VCSAuthorizedClient) (WebhooksInfos, error) {
 	client, ok := c.(*vcsClient)
 	if !ok {
 		return WebhooksInfos{}, fmt.Errorf("Polling infos cast error")
 	}
 	res := WebhooksInfos{}
 	path := fmt.Sprintf("/vcs/%s/webhooks", client.name)
-	if _, err := client.doJSONRequest("GET", path, nil, &res); err != nil {
+	if _, err := client.doJSONRequest(ctx, "GET", path, nil, &res); err != nil {
 		return WebhooksInfos{}, err
 	}
 	return res, nil
@@ -490,14 +497,14 @@ type PollingInfos struct {
 }
 
 // GetPollingInfos returns polling_supported and polling_disabled for a vcs server
-func GetPollingInfos(c sdk.VCSAuthorizedClient, prj sdk.Project) (PollingInfos, error) {
+func GetPollingInfos(ctx context.Context, c sdk.VCSAuthorizedClient, prj sdk.Project) (PollingInfos, error) {
 	client, ok := c.(*vcsClient)
 	if !ok {
 		return PollingInfos{}, fmt.Errorf("Polling infos cast error")
 	}
 	res := PollingInfos{}
 	path := fmt.Sprintf("/vcs/%s/polling", client.name)
-	if _, err := client.doJSONRequest("GET", path, nil, &res); err != nil {
+	if _, err := client.doJSONRequest(ctx, "GET", path, nil, &res); err != nil {
 		return PollingInfos{}, sdk.WrapError(err, "GetPollingInfos> project %s", prj.Key)
 	}
 	return res, nil

@@ -5,6 +5,13 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/ovh/cds/sdk"
+)
+
+var (
+	_ sdk.VCSAuthorizedClient = &bitbucketClient{}
+	_ sdk.VCSServer           = &bitbucketConsumer{}
 )
 
 // WebHook Represent a webhook in bitbucket model

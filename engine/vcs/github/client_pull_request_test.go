@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +11,7 @@ import (
 
 func TestPullRequests(t *testing.T) {
 	client := getNewAuthorizedClient(t)
-	prs, err := client.PullRequests("ovh/cds")
+	prs, err := client.PullRequests(context.Background(), "ovh/cds")
 	test.NoError(t, err)
 	assert.NotEmpty(t, prs)
 	t.Logf("%v", prs)
@@ -18,11 +19,11 @@ func TestPullRequests(t *testing.T) {
 
 func TestPullRequestComment(t *testing.T) {
 	client := getNewAuthorizedClient(t)
-	prs, err := client.PullRequests("ovh/cds")
+	prs, err := client.PullRequests(context.Background(), "ovh/cds")
 	test.NoError(t, err)
 	assert.NotEmpty(t, prs)
 	t.Logf("%v", prs)
 	if len(prs) > 0 {
-		test.NoError(t, client.PullRequestComment("ovh/cds", prs[0].ID, "this is a test"))
+		test.NoError(t, client.PullRequestComment(context.Background(), "ovh/cds", prs[0].ID, "this is a test"))
 	}
 }

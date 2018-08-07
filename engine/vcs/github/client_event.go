@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -20,7 +21,7 @@ var (
 )
 
 //GetEvents calls Github et returns GithubEvents as []interface{}
-func (g *githubClient) GetEvents(fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
+func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
 	log.Debug("githubClient.GetEvents> loading events for %s after %v", fullname, dateRef)
 	var events = []interface{}{}
 
@@ -102,7 +103,7 @@ func (g *githubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 }
 
 //PushEvents returns push events as commits
-func (g *githubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk.VCSPushEvent, error) {
+func (g *githubClient) PushEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSPushEvent, error) {
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
@@ -142,7 +143,7 @@ func (g *githubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk
 
 	res := []sdk.VCSPushEvent{}
 	for b, c := range lastCommitPerBranch {
-		branch, err := g.Branch(fullname, b)
+		branch, err := g.Branch(ctx, fullname, b)
 		if err != nil || branch == nil {
 			if strings.Contains(err.Error(), "Branch not found") {
 				log.Debug("githubClient.PushEvents> Unable to find branch %s in %s : %s", b, fullname, err)
@@ -162,7 +163,7 @@ func (g *githubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk
 }
 
 //CreateEvents checks create events from a event list
-func (g *githubClient) CreateEvents(fullname string, iEvents []interface{}) ([]sdk.VCSCreateEvent, error) {
+func (g *githubClient) CreateEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSCreateEvent, error) {
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
@@ -178,7 +179,7 @@ func (g *githubClient) CreateEvents(fullname string, iEvents []interface{}) ([]s
 	res := []sdk.VCSCreateEvent{}
 	for _, e := range events {
 		b := e.Payload.Ref
-		branch, err := g.Branch(fullname, b)
+		branch, err := g.Branch(ctx, fullname, b)
 		if err != nil || branch == nil {
 			errtxt := fmt.Sprintf("githubClient.CreateEvents> Unable to find branch %s in %s : %s", b, fullname, err)
 			if err != nil && !strings.Contains(errtxt, "Branch not found") {
@@ -192,7 +193,7 @@ func (g *githubClient) CreateEvents(fullname string, iEvents []interface{}) ([]s
 			Branch: *branch,
 		}
 
-		c, err := g.Commit(fullname, branch.LatestCommit)
+		c, err := g.Commit(ctx, fullname, branch.LatestCommit)
 		if err != nil {
 			log.Warning("githubClient.CreateEvents> Unable to find commit %s in %s : %s", branch.LatestCommit, fullname, err)
 			continue
@@ -208,7 +209,7 @@ func (g *githubClient) CreateEvents(fullname string, iEvents []interface{}) ([]s
 }
 
 //DeleteEvents checks delete events from a event list
-func (g *githubClient) DeleteEvents(fullname string, iEvents []interface{}) ([]sdk.VCSDeleteEvent, error) {
+func (g *githubClient) DeleteEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSDeleteEvent, error) {
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
@@ -236,7 +237,7 @@ func (g *githubClient) DeleteEvents(fullname string, iEvents []interface{}) ([]s
 }
 
 //PullRequestEvents checks pull request events from a event list
-func (g *githubClient) PullRequestEvents(fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
+func (g *githubClient) PullRequestEvents(ctx context.Context, fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {

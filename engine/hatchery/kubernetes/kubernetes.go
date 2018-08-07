@@ -129,6 +129,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.Common.Common.ServiceName = "cds-hatchery-kubernetes"
 
 	return nil
 }
@@ -230,7 +231,7 @@ func (h *HatcheryKubernetes) CanSpawn(model *sdk.Model, jobID int64, requirement
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
 	name := fmt.Sprintf("k8s-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	label := "execution"
 	if spawnArgs.RegisterOnly {

@@ -34,7 +34,7 @@ func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Sto
 
 		db := DBFunc()
 		if db != nil {
-			if err := processEvent(db, e, store); err != nil {
+			if err := processEvent(c, db, e, store); err != nil {
 				log.Error("ReceiveEvents> err while processing error = %s", err)
 				RetryEvent(&e, err, store)
 			}
@@ -54,7 +54,7 @@ func RetryEvent(e *sdk.Event, err error, store cache.Store) {
 	store.Enqueue("events_repositoriesmanager", e)
 }
 
-func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
+func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 	var c sdk.VCSAuthorizedClient
 	var errC error
 
@@ -72,7 +72,7 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, err)
 		}
 
-		c, errC = AuthorizedClient(db, store, vcsServer)
+		c, errC = AuthorizedClient(ctx, db, store, vcsServer)
 		if errC != nil {
 			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, errC)
 		}
@@ -91,7 +91,7 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, err)
 		}
 
-		c, errC = AuthorizedClient(db, store, vcsServer)
+		c, errC = AuthorizedClient(ctx, db, store, vcsServer)
 		if errC != nil {
 			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", event.ProjectKey, eventWNR.RepositoryManagerName, errC)
 		}
@@ -99,7 +99,7 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 		return nil
 	}
 
-	if err := c.SetStatus(event); err != nil {
+	if err := c.SetStatus(ctx, event); err != nil {
 		RetryEvent(&event, err, store)
 		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > err:%s", err)
 	}

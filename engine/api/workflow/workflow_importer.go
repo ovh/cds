@@ -126,7 +126,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		}
 
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-		if errHr := HookRegistration(db, store, nil, *w, proj); errHr != nil {
+		if errHr := HookRegistration(ctx, db, store, nil, *w, proj); errHr != nil {
 			return sdk.WrapError(errHr, "Import> Cannot register hook")
 		}
 
@@ -149,7 +149,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 
 	if !dryRun {
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-		if errHr := HookRegistration(db, store, oldW, *w, proj); errHr != nil {
+		if errHr := HookRegistration(ctx, db, store, oldW, *w, proj); errHr != nil {
 			return sdk.WrapError(errHr, "Import> Cannot register hook")
 		}
 	}

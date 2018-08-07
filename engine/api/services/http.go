@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -11,15 +12,17 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 // HTTPClient will be set to a default httpclient if not set
 var HTTPClient sdk.HTTPClient
 
 // DoJSONRequest performs an http request on a service
-func DoJSONRequest(srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -27,7 +30,7 @@ func DoJSONRequest(srvs []sdk.Service, method, path string, in interface{}, out 
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			code, err := doJSONRequest(srv, method, path, in, out, mods...)
+			code, err := doJSONRequest(ctx, srv, method, path, in, out, mods...)
 			if err == nil {
 				return code, nil
 			}
@@ -42,7 +45,7 @@ func DoJSONRequest(srvs []sdk.Service, method, path string, in interface{}, out 
 }
 
 // DoJSONRequest performs an http request on service
-func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	var b = []byte{}
 	var err error
 
@@ -54,7 +57,7 @@ func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out in
 	}
 
 	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
-	res, code, err := doRequest(srv.HTTPURL, srv.Hash, method, path, b, mods...)
+	res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, b, mods...)
 	if err != nil {
 		return code, sdk.WrapError(err, "services.doJSONRequest> Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
@@ -69,7 +72,7 @@ func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out in
 }
 
 // PostMultipart post a file content through multipart upload
-func PostMultipart(srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func PostMultipart(ctx context.Context, srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, err := writer.CreateFormFile("file", filename)
@@ -90,7 +93,7 @@ func PostMultipart(srvs []sdk.Service, path string, filename string, fileContent
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			res, code, err := doRequest(srv.HTTPURL, srv.Hash, "POST", path, body.Bytes(), mods...)
+			res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, "POST", path, body.Bytes(), mods...)
 			lastCode = code
 			lastErr = err
 
@@ -112,7 +115,7 @@ func PostMultipart(srvs []sdk.Service, path string, filename string, fileContent
 }
 
 // DoRequest performs an http request on a service
-func DoRequest(srvs []sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+func DoRequest(ctx context.Context, srvs []sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
 	var lastErr error
 	var lastCode int
 	var attempt int
@@ -120,7 +123,7 @@ func DoRequest(srvs []sdk.Service, method, path string, args []byte, mods ...sdk
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			btes, code, err := doRequest(srv.HTTPURL, srv.Hash, method, path, args, mods...)
+			btes, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, args, mods...)
 			if err == nil {
 				return btes, code, nil
 			}
@@ -135,7 +138,7 @@ func DoRequest(srvs []sdk.Service, method, path string, args []byte, mods ...sdk
 }
 
 // doRequest performs an http request on service
-func doRequest(httpURL string, hash string, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
+func doRequest(ctx context.Context, httpURL string, hash string, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
 			Timeout: 60 * time.Second,
@@ -156,6 +159,15 @@ func doRequest(httpURL string, hash string, method, path string, args []byte, mo
 	}
 	if requestError != nil {
 		return nil, 0, requestError
+	}
+
+	req = req.WithContext(ctx)
+
+	log.Debug("services> tracing> > context> %s", tracingutils.DumpContext(ctx))
+	spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
+	log.Debug("setup tracing = %v (%v) on request to %s", ok, spanCtx, req.URL.String())
+	if ok {
+		tracing.DefaultFormat.SpanContextToRequest(spanCtx, req)
 	}
 
 	req.Header.Set("Connection", "close")

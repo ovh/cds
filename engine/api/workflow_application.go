@@ -80,12 +80,12 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, rm)
 		if err != nil {
 			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.VCSServer)
 		}
 
-		release, errRelease := client.Release(workflowNode.Context.Application.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)
+		release, errRelease := client.Release(ctx, workflowNode.Context.Application.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)
 		if errRelease != nil {
 			return sdk.WrapError(errRelease, "releaseApplicationWorkflowHandler")
 		}
@@ -113,7 +113,7 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 				return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot fetch artifact")
 			}
 
-			if err := client.UploadReleaseFile(workflowNode.Context.Application.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, f); err != nil {
+			if err := client.UploadReleaseFile(ctx, workflowNode.Context.Application.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, f); err != nil {
 				return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
 			}
 		}

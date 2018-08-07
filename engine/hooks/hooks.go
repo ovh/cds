@@ -42,6 +42,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.Token = s.Cfg.API.Token
 	s.Type = services.TypeHooks
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+	s.ServiceName = "cds-hooks"
 
 	return nil
 }

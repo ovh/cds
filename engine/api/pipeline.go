@@ -984,7 +984,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 
 		//Get the RepositoriesManager Client
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-		client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		client, errclient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 		if errclient != nil {
 			return sdk.WrapError(errclient, "getPipelineCommitsHandler> Cannot get client")
 		}
@@ -996,7 +996,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 
 		//If we are lucky, return a true diff
 		var errcommits error
-		commits, errcommits = client.Commits(app.RepositoryFullname, pbs[0].Trigger.VCSChangesBranch, pbs[0].Trigger.VCSChangesHash, hash)
+		commits, errcommits = client.Commits(ctx, app.RepositoryFullname, pbs[0].Trigger.VCSChangesBranch, pbs[0].Trigger.VCSChangesHash, hash)
 		if errcommits != nil {
 			return sdk.WrapError(errcommits, "getPipelineBuildCommitsHandler> Cannot get commits")
 		}

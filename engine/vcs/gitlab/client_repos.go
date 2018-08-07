@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/xanzy/go-gitlab"
@@ -9,7 +10,7 @@ import (
 )
 
 //Repos returns the list of accessible repositories
-func (c *gitlabClient) Repos() ([]sdk.VCSRepo, error) {
+func (c *gitlabClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	var repos []sdk.VCSRepo
 
 	pp := 1000
@@ -60,7 +61,7 @@ func (c *gitlabClient) Repos() ([]sdk.VCSRepo, error) {
 }
 
 //RepoByFullname returns the repo from its fullname
-func (c *gitlabClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
+func (c *gitlabClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
 	repo := sdk.VCSRepo{}
 
 	p, _, err := c.client.Projects.GetProject(fullname)
@@ -78,6 +79,6 @@ func (c *gitlabClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 	return repo, nil
 }
 
-func (c *gitlabClient) GrantReadPermission(repo string) error {
+func (c *gitlabClient) GrantReadPermission(ctx context.Context, repo string) error {
 	return nil
 }

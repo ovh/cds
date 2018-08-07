@@ -13,6 +13,29 @@ import (
 	"github.com/sguiheux/go-coverage"
 )
 
+var (
+	WorkflowRunHeader = "X-Workflow-Run"
+	WorkflowHeader    = "X-Workflow"
+	ProjectKeyHeader  = "X-Project-Key"
+)
+
+type WorkflowRunHeaders map[string]string
+
+func (h *WorkflowRunHeaders) Set(k, v string) {
+	if h == nil {
+		h = new(WorkflowRunHeaders)
+	}
+	(*h)[k] = v
+}
+
+func (h *WorkflowRunHeaders) Get(k string) (string, bool) {
+	if h == nil {
+		return "", false
+	}
+	v, has := (*h)[k]
+	return v, has
+}
+
 //WorkflowRun is an execution instance of a run
 type WorkflowRun struct {
 	ID               int64                            `json:"id" db:"id"`
@@ -30,6 +53,7 @@ type WorkflowRun struct {
 	LastExecution    time.Time                        `json:"last_execution" db:"last_execution" cli:"last_execution"`
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
+	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
@@ -149,6 +173,7 @@ type WorkflowNodeRun struct {
 	VCSHash               string                             `json:"vcs_hash"`
 	VCSServer             string                             `json:"vcs_server"`
 	CanBeRun              bool                               `json:"can_be_run"`
+	Header                WorkflowRunHeaders                 `json:"header,omitempty"`
 }
 
 // WorkflowNodeRunVulnerability represents vulnerabilities report for the current node run
@@ -243,6 +268,7 @@ func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 }
 
 //WorkflowNodeJobRun represents an job to be run
+// /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\
 //easyjson:json
 type WorkflowNodeJobRun struct {
 	ProjectID              int64              `json:"project_id"`
@@ -261,8 +287,11 @@ type WorkflowNodeJobRun struct {
 	BookedBy               Hatchery           `json:"bookedby"`
 	SpawnInfos             []SpawnInfo        `json:"spawninfos"`
 	ExecGroups             []Group            `json:"exec_groups"`
-	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries"`
+	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries,omitempty"`
+	Header                 WorkflowRunHeaders `json:"header,omitempty"`
 }
+
+// /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\
 
 // WorkflowNodeJobRunSummary is a light representation of WorkflowNodeJobRun for CDS event
 type WorkflowNodeJobRunSummary struct {

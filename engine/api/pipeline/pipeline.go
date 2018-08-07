@@ -58,8 +58,8 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pipeline, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "pipeline.LoadPipelineByID",
-		tracing.Tag("pipeline_id", pipelineID),
-		tracing.Tag("deep", deep),
+		tracing.Tag(tracing.TagPipelineID, pipelineID),
+		tracing.Tag(tracing.TagPipelineDeep, deep),
 	)
 	defer end()
 

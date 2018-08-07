@@ -2,6 +2,7 @@ package github
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,7 +14,7 @@ import (
 )
 
 // PullRequests fetch all the pull request for a repository
-func (g *githubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) {
+func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
 	var pullRequests = []PullRequest{}
 	var nextPage = "/repos/" + fullname + "/pulls"
 
@@ -108,7 +109,7 @@ func (g *githubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, erro
 }
 
 // PullRequestComment push a new comment on a pull request
-func (g *githubClient) PullRequestComment(repo string, id int, text string) error {
+func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id int, text string) error {
 	if g.DisableStatus {
 		log.Warning("github.PullRequestComment>  ⚠ Github statuses are disabled")
 		return nil

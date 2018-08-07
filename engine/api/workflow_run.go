@@ -480,7 +480,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		}
 
 		log.Debug("getWorkflowCommitsHandler> VCSHash: %s VCSBranch: %s", wfNodeRun.VCSHash, wfNodeRun.VCSBranch)
-		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, wf, nodeName, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
+		commits, _, errC := workflow.GetNodeRunBuildCommits(ctx, api.mustDB(), api.Cache, proj, wf, nodeName, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
 		if errC != nil {
 			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits: %v", errC)
 		}
@@ -592,7 +592,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		name := vars["permWorkflowName"]
 		u := getUser(ctx)
 
-		tracing.Current(ctx, tracing.Tag("workflow", name))
+		tracing.Current(ctx, tracing.Tag(tracing.TagWorkflow, name))
 
 		_, next := tracing.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
@@ -686,7 +686,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			return sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", key, name)
 		}
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
 		// Purge workflow run

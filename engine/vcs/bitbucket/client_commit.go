@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -10,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (b *bitbucketClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommit, error) {
+func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, until string) ([]sdk.VCSCommit, error) {
 	commits := []sdk.VCSCommit{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
@@ -37,7 +38,7 @@ func (b *bitbucketClient) Commits(repo, branch, since, until string) ([]sdk.VCSC
 				params.Set("start", fmt.Sprintf("%d", response.NextPageStart))
 			}
 
-			if err := b.do("GET", "core", path, params, nil, &response, nil); err != nil {
+			if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
 				if err == sdk.ErrNotFound {
 					return nil, nil
 				}
@@ -64,7 +65,7 @@ func (b *bitbucketClient) Commits(repo, branch, since, until string) ([]sdk.VCSC
 			},
 			URL: urlCommit + sc.Hash,
 		}
-		stashUser := b.findUser(sc.Author.Email)
+		stashUser := b.findUser(ctx, sc.Author.Email)
 		if stashUser == nil {
 			newStashUserUnknown := newUnknownStashUser(*sc.Author)
 			var stashUserKey = cache.Key("vcs", "bitbucket", b.consumer.URL, sc.Author.Email)
@@ -81,11 +82,11 @@ func (b *bitbucketClient) Commits(repo, branch, since, until string) ([]sdk.VCSC
 	return commits, nil
 }
 
-func (b *bitbucketClient) findUser(email string) *User {
+func (b *bitbucketClient) findUser(ctx context.Context, email string) *User {
 	var stashUser = &User{}
 	var stashUserKey = cache.Key("reposmanager", "stash", b.consumer.URL, email)
 	if !b.consumer.cache.Get(stashUserKey, &stashUser) && email != "" {
-		newStashUser, err := b.findByEmail(email)
+		newStashUser, err := b.findByEmail(ctx, email)
 		if err != nil {
 			if !strings.Contains(err.Error(), "User not found") {
 				log.Warning("Unable to get stash user %s : %s", email, err)
@@ -98,7 +99,7 @@ func (b *bitbucketClient) findUser(email string) *User {
 	return stashUser
 }
 
-func (b *bitbucketClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
+func (b *bitbucketClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCommit, error) {
 	commit := sdk.VCSCommit{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
@@ -108,7 +109,7 @@ func (b *bitbucketClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 
 	sc := Commit{}
 	path := fmt.Sprintf("/projects/%s/repos/%s/commits/%s", project, slug, hash)
-	if err := b.do("GET", "core", path, nil, nil, &sc, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &sc, nil); err != nil {
 		return commit, sdk.WrapError(err, "vcs> bitbucket> commits> Unable to get commit %s", path)
 	}
 
@@ -124,7 +125,7 @@ func (b *bitbucketClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 		URL: urlCommit,
 	}
 
-	stashUser := b.findUser(sc.Author.Email)
+	stashUser := b.findUser(ctx, sc.Author.Email)
 	if stashUser == nil {
 		newStashUserUnknown := newUnknownStashUser(*sc.Author)
 		var stashUserKey = cache.Key("vcs", "bitbucket", b.consumer.URL, sc.Author.Email)

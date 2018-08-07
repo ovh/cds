@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -12,15 +13,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (c *gitlabClient) GetHook(repo, id string) (sdk.VCSHook, error) {
+func (c *gitlabClient) GetHook(ctx context.Context, repo, id string) (sdk.VCSHook, error) {
 	return sdk.VCSHook{}, fmt.Errorf("Not yet implemented")
 }
-func (c *gitlabClient) UpdateHook(repo, id string, hook sdk.VCSHook) error {
+func (c *gitlabClient) UpdateHook(ctx context.Context, repo, id string, hook sdk.VCSHook) error {
 	return fmt.Errorf("Not yet implemented")
 }
 
 //CreateHook enables the defaut HTTP POST Hook in Gitlab
-func (c *gitlabClient) CreateHook(repo string, hook *sdk.VCSHook) error {
+func (c *gitlabClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	t := true
 	f := false
 
@@ -56,7 +57,7 @@ func (c *gitlabClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 }
 
 //DeleteHook disables the defaut HTTP POST Hook in Gitlab
-func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
+func (c *gitlabClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
 	if !hook.Workflow {
 		if c.proxyURL != "" {
 			lastIndexSlash := strings.LastIndex(hook.URL, "/")

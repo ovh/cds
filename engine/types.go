@@ -8,6 +8,7 @@ import (
 	"github.com/fatih/structs"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
@@ -51,6 +52,7 @@ type Configuration struct {
 	Repositories    repositories.Configuration   `toml:"repositories" comment:"######################\n CDS Repositories Settings \n######################"`
 	ElasticSearch   elasticsearch.Configuration  `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n This is use for CDS timeline and is optional\n######################"`
 	DatabaseMigrate migrateservice.Configuration `toml:"databaseMigrate" comment:"######################\n CDS DB Migrate Service Settings \n######################"`
+	Tracing         tracing.Configuration        `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
 }
 
 // AsEnvVariables returns the object attributes as env variables. It used for configuration structs

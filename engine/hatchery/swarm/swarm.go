@@ -19,6 +19,7 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
@@ -147,13 +148,17 @@ func (h *HatcherySwarm) Init() error {
 // SpawnWorker start a new docker container
 // User can add option on prerequisite, as --port and --privileged
 // but only hatchery NOT 'shared.infra' can launch containers with options
-func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
+	ctx, end := tracing.Span(ctx, "swarm.SpawnWorker")
+	defer end()
+
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	if spawnArgs.RegisterOnly {
 		name = "register-" + name
 	}
 
+	tracing.Current(ctx, tracing.Tag(tracing.TagWorker, name))
 	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
 
 	// Choose a dockerEngine
@@ -161,6 +166,8 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	var foundDockerClient bool
 	//  To choose a docker client by the number of containers
 	nbContainersRatio := float64(0)
+
+	_, next := tracing.Span(ctx, "swarm.chooseDockerEngine")
 	for dname, dclient := range h.dockerClients {
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelList()
@@ -184,6 +191,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 			foundDockerClient = true
 		}
 	}
+	next()
 
 	if !foundDockerClient {
 		return "", fmt.Errorf("unable to found suitable docker engine")
@@ -213,12 +221,12 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 				if network == "" {
 					network = name + "-net"
 					networkAlias = "worker"
-					if err := h.createNetwork(dockerClient, network); err != nil {
+					if err := h.createNetwork(ctx, dockerClient, network); err != nil {
 						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s for jobID %d : %v", network, spawnArgs.JobID, err)
+						next()
 						return "", err
 					}
 				}
-
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
 				//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
 				tuple := strings.Split(r.Value, " ")
@@ -268,7 +276,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					entryPoint:   nil,
 				}
 
-				if err := h.createAndStartContainer(dockerClient, args, spawnArgs); err != nil {
+				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
 					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container: %s", err)
 					return "", err
 				}
@@ -386,7 +394,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	}
 
 	//start the worker
-	if err := h.createAndStartContainer(dockerClient, args, spawnArgs); err != nil {
+	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
 		log.Warning("hatchery> swarm> SpawnWorker> Unable to start container %s on %s with image %s err:%s", dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
 		return "", err
 	}

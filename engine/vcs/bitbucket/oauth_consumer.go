@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,7 +13,7 @@ import (
 const oauth1OOB = "oob"
 
 //AuthorizeRedirect returns the request token, the Authorize URL
-func (g *bitbucketConsumer) AuthorizeRedirect() (string, string, error) {
+func (g *bitbucketConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	requestToken, err := g.RequestToken()
 	if err != nil {
 		log.Warning("requestToken>%s\n", err)
@@ -38,7 +39,7 @@ func (g *bitbucketConsumer) AuthorizeRedirect() (string, string, error) {
 
 //AuthorizeToken returns the authorized token (and its secret)
 //from the request token and the verifier got on authorize url
-func (g *bitbucketConsumer) AuthorizeToken(token, verifier string) (string, string, error) {
+func (g *bitbucketConsumer) AuthorizeToken(ctx context.Context, token, verifier string) (string, string, error) {
 	accessTokenURL, _ := url.Parse(g.accessTokenURL)
 	req := http.Request{
 		URL:    accessTokenURL,
@@ -68,7 +69,7 @@ func (g *bitbucketConsumer) AuthorizeToken(token, verifier string) (string, stri
 var instancesAuthorizedClient = map[string]*bitbucketClient{}
 
 //GetAuthorized returns an authorized client
-func (g *bitbucketConsumer) GetAuthorizedClient(accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
+func (g *bitbucketConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
 	c, ok := instancesAuthorizedClient[accessToken]
 	if !ok {
 		c = &bitbucketClient{

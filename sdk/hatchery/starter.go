@@ -1,15 +1,18 @@
 package hatchery
 
 import (
+	"context"
 	"fmt"
 	"sync/atomic"
 	"time"
 
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 type workerStarterRequest struct {
+	ctx                 context.Context
 	id                  int64
 	isWorkflowJob       bool
 	model               sdk.Model
@@ -52,6 +55,8 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 	for j := range jobs {
 		// Start a worker for a job
 		if m := j.registerWorkerModel; m == nil {
+			_, end := tracing.Span(j.ctx, "hatchery.workerStarter")
+
 			//Try to start the worker
 			isRun, err := spawnWorkerForJob(h, j)
 			//Check the result
@@ -63,6 +68,7 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 			}
 			//Send the result back
 			results <- res
+			end()
 
 		} else { // Start a worker for registering
 			log.Debug("Spawning worker for register model %s", m.Name)
@@ -72,7 +78,7 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 
 			atomic.AddInt64(&nbWorkerToStart, 1)
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
-			if _, errSpawn := h.SpawnWorker(SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
+			if _, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, errSpawn)
 				if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("cannot spawn worker for register: %s", errSpawn)); err != nil {
 					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
@@ -80,11 +86,15 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 			}
 			atomic.AddInt64(&nbWorkerToStart, -1)
 			atomic.AddInt64(&nbRegisteringWorkerModels, -1)
+
 		}
 	}
 }
 
 func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
+	ctx, end := tracing.Span(j.ctx, "hatchery.spawnWorkerForJob")
+	defer end()
+
 	log.Debug("hatchery> spawnWorkerForJob> %d", j.id)
 	defer logTime(h, fmt.Sprintf("hatchery> spawnWorkerForJob> %d elapsed", j.timestamp), time.Now())
 
@@ -106,11 +116,14 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		return false, nil
 	}
 
+	_, next := tracing.Span(ctx, "hatchery.QueueJobBook")
 	if err := h.CDSClient().QueueJobBook(j.isWorkflowJob, j.id); err != nil {
+		next()
 		// perhaps already booked by another hatchery
 		log.Info("hatchery> spawnWorkerForJob> %d - cannot book job %d %s: %s", j.timestamp, j.id, j.model.Name, err)
 		return false, nil
 	}
+	next()
 	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s by hatchery %d isWorkflowJob:%t", j.timestamp, j.id, j.model.Name, h.Hatchery().ID, j.isWorkflowJob)
 
 	start := time.Now()
@@ -121,7 +134,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		},
 	}
 	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", j.model.Name, j.id)
-	workerName, errSpawn := h.SpawnWorker(SpawnArguments{Model: j.model, IsWorkflowJob: j.isWorkflowJob, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
+	workerName, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: j.model, IsWorkflowJob: j.isWorkflowJob, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
 	if errSpawn != nil {
 		log.Warning("spawnWorkerForJob> %d - cannot spawn worker %s for job %d: %s", j.timestamp, j.model.Name, j.id, errSpawn)
 		infos = append(infos, sdk.SpawnInfo{
@@ -147,8 +160,11 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		},
 	})
 
+	_, next = tracing.Span(ctx, "hatchery.QueueJobSendSpawnInfo")
 	if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
+		next()
 		log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", j.timestamp, j.id, err)
 	}
+	next()
 	return true, nil // ok for this job
 }

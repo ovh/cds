@@ -17,7 +17,7 @@ const (
 	StatusCodeAttribute = "http.status_code"
 )
 
-var defaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
+var DefaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
 
 // Configuration is the global tracing configuration
 type Configuration struct {
@@ -25,7 +25,6 @@ type Configuration struct {
 	Exporter struct {
 		Jaeger struct {
 			HTTPCollectorEndpoint string `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268"`
-			ServiceName           string `toml:"serviceName" default:"cds-api"`
 		}
 	}
 	SamplingProbability float64
@@ -39,4 +38,5 @@ type Options struct {
 	User     *sdk.User
 	Worker   *sdk.Worker
 	Hatchery *sdk.Hatchery
+	SpanKind int
 }

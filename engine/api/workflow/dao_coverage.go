@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/go-gorp/gorp"
@@ -129,7 +130,7 @@ func (c *Coverage) PostUpdate(s gorp.SqlExecutor) error {
 }
 
 // ComputeNewReport compute trends and import new coverage report
-func ComputeNewReport(db gorp.SqlExecutor, cache cache.Store, report coverage.Report, wnr *sdk.WorkflowNodeRun, proj *sdk.Project) error {
+func ComputeNewReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, report coverage.Report, wnr *sdk.WorkflowNodeRun, proj *sdk.Project) error {
 	covReport := sdk.WorkflowNodeRunCoverage{
 		WorkflowID:        wnr.WorkflowID,
 		WorkflowRunID:     wnr.WorkflowRunID,
@@ -154,7 +155,7 @@ func ComputeNewReport(db gorp.SqlExecutor, cache cache.Store, report coverage.Re
 		covReport.Trend.CurrentBranch = previousReport.Report
 	}
 
-	if err := ComputeLatestDefaultBranchReport(db, cache, proj, wnr, &covReport); err != nil {
+	if err := ComputeLatestDefaultBranchReport(ctx, db, cache, proj, wnr, &covReport); err != nil {
 		return sdk.WrapError(err, "Unable to get default branch coverage report")
 	}
 
@@ -166,16 +167,16 @@ func ComputeNewReport(db gorp.SqlExecutor, cache cache.Store, report coverage.Re
 }
 
 // ComputeLatestDefaultBranchReport add the default branch coverage report into  the given report
-func ComputeLatestDefaultBranchReport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, wnr *sdk.WorkflowNodeRun, covReport *sdk.WorkflowNodeRunCoverage) error {
+func ComputeLatestDefaultBranchReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, wnr *sdk.WorkflowNodeRun, covReport *sdk.WorkflowNodeRunCoverage) error {
 	// Get report latest report on previous branch
 	var defaultBranch string
 	projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, wnr.VCSServer)
-	client, erra := repositoriesmanager.AuthorizedClient(db, cache, projectVCSServer)
+	client, erra := repositoriesmanager.AuthorizedClient(ctx, db, cache, projectVCSServer)
 	if erra != nil {
 		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "ComputeLatestDefaultBranchReport> Cannot get repo client %s : %s", wnr.VCSServer, erra)
 	}
 
-	branches, errB := client.Branches(wnr.VCSRepository)
+	branches, errB := client.Branches(ctx, wnr.VCSRepository)
 	if errB != nil {
 		return sdk.WrapError(errB, "ComputeLatestDefaultBranchReport> Cannot list branches for %s/%s", wnr.VCSServer, wnr.VCSRepository)
 	}

@@ -19,6 +19,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
 	"github.com/ovh/cds/engine/hatchery/local"
@@ -433,6 +434,11 @@ See $ engine config command for more details.
 				if err := srv.BeforeStart(); err != nil {
 					sdk.Exit("Unable to start service %s: %v", s.arg, err)
 				}
+			}
+
+			// Initialiaze tracing
+			if err := tracing.Init(conf.Tracing, "cds-"+s.arg); err != nil {
+				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
 		}
 

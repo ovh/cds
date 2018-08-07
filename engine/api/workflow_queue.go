@@ -60,9 +60,9 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		tracing.Current(ctx,
-			tracing.Tag("node_job_run", id),
-			tracing.Tag("workflow_node_run", pbj.WorkflowNodeRunID),
-			tracing.Tag("job", pbj.Job.Action.Name))
+			tracing.Tag(tracing.TagWorkflowNodeJobRun, id),
+			tracing.Tag(tracing.TagWorkflowNodeRun, pbj.WorkflowNodeRunID),
+			tracing.Tag(tracing.TagJob, pbj.Job.Action.Name))
 
 		// a worker can have only one group
 		groups := getUser(ctx).Groups
@@ -93,7 +93,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
-		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, workflowNodeRuns)
 
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
@@ -331,7 +331,7 @@ func (api *API) postVulnerabilityReportHandler() Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := workflow.HandleVulnerabilityReport(tx, api.Cache, p, nr, report); err != nil {
+		if err := workflow.HandleVulnerabilityReport(ctx, tx, api.Cache, p, nr, report); err != nil {
 			return sdk.WrapError(err, "postVulnerabilityReportHandler> Unable to handle report")
 		}
 		return tx.Commit()
@@ -402,7 +402,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		}
 
 		tracing.Current(ctx,
-			tracing.Tag("project_key", proj.Key),
+			tracing.Tag(tracing.TagProjectKey, proj.Key),
 		)
 
 		report, err := postJobResult(customCtx, api.mustDBWithCtx, api.Cache, proj, getWorker(ctx), &res)
@@ -414,14 +414,14 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 
 		if len(workflowRuns) > 0 {
 			tracing.Current(ctx,
-				tracing.Tag("workflow", workflowRuns[0].Workflow.Name),
+				tracing.Tag(tracing.TagWorkflow, workflowRuns[0].Workflow.Name),
 			)
 		}
 
 		db := api.mustDB()
 
 		_, next = tracing.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, workflowNodeRuns)
+		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, workflowNodeRuns)
 		next()
 
 		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, proj.Key)
@@ -449,9 +449,9 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	}
 
 	tracing.Current(ctx,
-		tracing.Tag("node_job_run", res.BuildID),
-		tracing.Tag("workflow_node_run", job.WorkflowNodeRunID),
-		tracing.Tag("job", job.Job.Action.Name))
+		tracing.Tag(tracing.TagWorkflowNodeJobRun, res.BuildID),
+		tracing.Tag(tracing.TagWorkflowNodeRun, job.WorkflowNodeRunID),
+		tracing.Tag(tracing.TagJob, job.Job.Action.Name))
 
 	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
 	if errt != nil {
@@ -767,14 +767,14 @@ func (api *API) postWorkflowJobCoverageResultsHandler() Handler {
 			return sdk.WrapError(errP, "postWorkflowJobCoverageResultsHandler> Cannot load project by nodeJobRunID:%d", id)
 		}
 		if errLoad == sdk.ErrNotFound {
-			if err := workflow.ComputeNewReport(api.mustDB(), api.Cache, report, wnr, p); err != nil {
+			if err := workflow.ComputeNewReport(ctx, api.mustDB(), api.Cache, report, wnr, p); err != nil {
 				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Cannot compute new coverage report")
 			}
 
 		} else {
 			// update
 			existingReport.Report = report
-			if err := workflow.ComputeLatestDefaultBranchReport(api.mustDB(), api.Cache, p, wnr, &existingReport); err != nil {
+			if err := workflow.ComputeLatestDefaultBranchReport(ctx, api.mustDB(), api.Cache, p, wnr, &existingReport); err != nil {
 				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Cannot compute default branch coverage report")
 			}
 

@@ -138,7 +138,7 @@ func cleanApplicationHook(db *gorp.DbMap, store cache.Store, wg *sync.WaitGroup,
 	if vcsServer == nil {
 		return
 	}
-	client, err := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
+	client, err := repositoriesmanager.AuthorizedClient(context.Background(), db, store, vcsServer)
 	if err != nil {
 		log.Error("cleanApplicationHook> Cannot connect to repository manager: %s", err)
 		return
@@ -167,7 +167,7 @@ func cleanApplicationHook(db *gorp.DbMap, store cache.Store, wg *sync.WaitGroup,
 			Workflow: false,
 		}
 
-		if err := client.DeleteHook(app.RepositoryFullname, vcsHook); err != nil {
+		if err := client.DeleteHook(context.Background(), app.RepositoryFullname, vcsHook); err != nil {
 			log.Error("cleanApplicationHook> Cannot delete hooks from repomanager: %s / %s", vcsServer.Name, app.RepositoryFullname)
 			return
 		}

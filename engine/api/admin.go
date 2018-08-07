@@ -96,7 +96,7 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) Handler {
 		}
 
 		query := r.FormValue("query")
-		btes, code, err := services.DoRequest(srvs, method, query, nil)
+		btes, code, err := services.DoRequest(ctx, srvs, method, query, nil)
 		if err != nil {
 			sdkErr := sdk.Error{
 				Status:  code,
@@ -126,7 +126,7 @@ func putPostAdminServiceCallHandler(api *API, method string) Handler {
 		}
 		defer r.Body.Close()
 
-		btes, code, err := services.DoRequest(srvs, method, query, body)
+		btes, code, err := services.DoRequest(ctx, srvs, method, query, body)
 		if err != nil {
 			sdkErr := sdk.Error{
 				Status:  code,

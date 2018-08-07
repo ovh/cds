@@ -1,6 +1,7 @@
 package hook
 
 import (
+	"context"
 	"crypto/rand"
 	"database/sql"
 	"encoding/hex"
@@ -252,13 +253,13 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 	if server == nil {
 		return nil, fmt.Errorf("Unable to find repository manager")
 	}
-	client, err := repositoriesmanager.AuthorizedClient(tx, store, server)
+	client, err := repositoriesmanager.AuthorizedClient(context.Background(), tx, store, server)
 	if err != nil {
 		return nil, sdk.WrapError(err, "CreateHook> Cannot get client, got  %s %s", proj.Key, rm)
 	}
 
 	//Check if the webhooks if disabled
-	if info, err := repositoriesmanager.GetWebhooksInfos(client); err != nil {
+	if info, err := repositoriesmanager.GetWebhooksInfos(context.Background(), client); err != nil {
 		return nil, err
 	} else if !info.WebhooksSupported || info.WebhooksDisabled {
 		return nil, sdk.WrapError(sdk.NewError(sdk.ErrForbidden, fmt.Errorf("Webhooks are not supported on %s", server.Name)), "CreateHook>")
@@ -300,7 +301,7 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 
 	log.Info("CreateHook> will create %+v", hook)
 
-	if err := client.CreateHook(repoFullName, &hook); err != nil {
+	if err := client.CreateHook(context.Background(), repoFullName, &hook); err != nil {
 		log.Warning("Cannot create hook on repository manager: %s", err)
 		if strings.Contains(err.Error(), "Not yet implemented") {
 			return nil, sdk.WrapError(sdk.ErrNotImplemented, "CreateHook> Cannot create hook on repository manager")

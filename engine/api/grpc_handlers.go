@@ -105,7 +105,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	}
 
 	workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
-	workflow.ResyncNodeRunsWithCommits(db, h.store, p, workflowNodeRuns)
+	workflow.ResyncNodeRunsWithCommits(c, db, h.store, p, workflowNodeRuns)
 
 	go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, p.Key)
 

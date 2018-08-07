@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"context"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -96,7 +98,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 }
 
 // ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
-func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeRuns []sdk.WorkflowNodeRun) {
+func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeRuns []sdk.WorkflowNodeRun) {
 	for _, nodeRun := range nodeRuns {
 		if len(nodeRun.Commits) > 0 {
 			continue
@@ -118,7 +120,7 @@ func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk
 				return
 			}
 
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(db, store, proj, &wr.Workflow, n.Name, wr.Number, &nr, n.Context.Application, n.Context.Environment)
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(ctx, db, store, proj, &wr.Workflow, n.Name, wr.Number, &nr, n.Context.Application, n.Context.Environment)
 			if err != nil {
 				log.Error("ResyncNodeRuns> cannot get build commits on a node run %v", err)
 			} else if commits != nil {

@@ -217,8 +217,8 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 // Load loads a workflow for a given user (ie. checking permissions)
 func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string, u *sdk.User, opts LoadOptions) (*sdk.Workflow, error) {
 	ctx, end := tracing.Span(ctx, "workflow.Load",
-		tracing.Tag("workflow", name),
-		tracing.Tag("project_key", proj.Key),
+		tracing.Tag(tracing.TagWorkflow, name),
+		tracing.Tag(tracing.TagProjectKey, proj.Key),
 		tracing.Tag("with_pipeline", opts.DeepPipeline),
 		tracing.Tag("only_root", opts.OnlyRootNode),
 		tracing.Tag("with_base64_keys", opts.Base64Keys),
@@ -709,7 +709,7 @@ func MarkAsDelete(db gorp.SqlExecutor, w *sdk.Workflow) error {
 }
 
 // Delete workflow
-func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow) error {
+func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow) error {
 	log.Debug("Delete> deleting workflow %d", w.ID)
 
 	//Detach root from workflow
@@ -719,7 +719,7 @@ func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workf
 
 	hooks := w.GetHooks()
 	// Delete all hooks
-	if err := DeleteHookConfiguration(db, store, p, hooks); err != nil {
+	if err := DeleteHookConfiguration(ctx, db, store, p, hooks); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete hooks from workflow")
 	}
 
@@ -1038,7 +1038,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
 					UUID:              opts.HookUUID,
 				})
-				if wf.Root.Context.DefaultPayload, err = DefaultPayload(tx, store, proj, u, wf); err != nil {
+				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, u, wf); err != nil {
 					return nil, nil, sdk.WrapError(err, "Push> Unable to get default payload")
 				}
 			}
@@ -1055,7 +1055,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 
 		if !opts.DryRun {
-			if errHr := HookRegistration(tx, store, nil, *wf, proj); errHr != nil {
+			if errHr := HookRegistration(ctx, tx, store, nil, *wf, proj); errHr != nil {
 				return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
 			}
 		}

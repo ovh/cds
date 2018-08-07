@@ -99,7 +99,7 @@ func (r *ProcessorReport) Errors() []error {
 func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.UpdateNodeJobRunStatus",
-		tracing.Tag("workflow_node_run_job", job.ID),
+		tracing.Tag(tracing.TagWorkflowNodeJobRun, job.ID),
 		tracing.Tag("workflow_node_run_job_status", status),
 	)
 	defer end()

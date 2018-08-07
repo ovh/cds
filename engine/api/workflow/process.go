@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ovh/cds/sdk/tracingutils"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
@@ -23,13 +26,25 @@ import (
 func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.processWorkflowRun",
-		tracing.Tag("workflow_run", w.Number),
-		tracing.Tag("workflow", w.Workflow.Name),
+		tracing.Tag(tracing.TagWorkflowRun, w.Number),
+		tracing.Tag(tracing.TagWorkflow, w.Workflow.Name),
 	)
 	defer end()
 
-	report := new(ProcessorReport)
+	if w.Header == nil {
+		w.Header = sdk.WorkflowRunHeaders{}
+	}
+	w.Header.Set(sdk.WorkflowRunHeader, strconv.FormatInt(w.Number, 10))
+	w.Header.Set(sdk.WorkflowHeader, w.Workflow.Name)
+	w.Header.Set(sdk.ProjectKeyHeader, proj.Key)
 
+	// Push data in header to allow tracing
+	if tracing.Current(ctx).SpanContext().IsSampled() {
+		w.Header.Set(tracingutils.SampledHeader, "1")
+		w.Header.Set(tracingutils.TraceIDHeader, fmt.Sprintf("%v", tracing.Current(ctx).SpanContext().TraceID))
+	}
+
+	report := new(ProcessorReport)
 	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess, nodesRunSkipped, nodesRunDisabled int
 
 	defer func(oldStatus string, wr *sdk.WorkflowRun) {
@@ -40,7 +55,6 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	w.Status = string(sdk.StatusBuilding)
 	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
-	log.Debug("processWorkflowRun> %s/%s %d.%d", proj.Name, w.Workflow.Name, w.Number, maxsn)
 	w.LastSubNumber = maxsn
 
 	//Checks startingFromNode
@@ -336,9 +350,9 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	var end func()
 	ctx, end = tracing.Span(ctx, "workflow.processWorkflowNodeRun",
-		tracing.Tag("workflow", w.Workflow.Name),
-		tracing.Tag("workflow_run", w.Number),
-		tracing.Tag("workflow_node", n.Name),
+		tracing.Tag(tracing.TagWorkflow, w.Workflow.Name),
+		tracing.Tag(tracing.TagWorkflowRun, w.Number),
+		tracing.Tag(tracing.TagWorkflowNode, n.Name),
 	)
 	defer end()
 
@@ -365,6 +379,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		WorkflowNodeName: n.Name,
 		Status:           string(sdk.StatusWaiting),
 		Stages:           stages,
+		Header:           w.Header,
 	}
 	if n.Context != nil && n.Context.ApplicationID != 0 {
 		run.ApplicationID = n.Context.ApplicationID

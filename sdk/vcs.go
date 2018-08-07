@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -17,55 +18,55 @@ type BuildNumberAndHash struct {
 
 // VCSServer is an interce for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient
 type VCSServer interface {
-	AuthorizeRedirect() (string, string, error)
-	AuthorizeToken(string, string) (string, string, error)
-	GetAuthorizedClient(string, string) (VCSAuthorizedClient, error)
+	AuthorizeRedirect(context.Context) (string, string, error)
+	AuthorizeToken(context.Context, string, string) (string, string, error)
+	GetAuthorizedClient(context.Context, string, string) (VCSAuthorizedClient, error)
 }
 
 // VCSAuthorizedClient is an interface for a connected client on a VCS Server.
 type VCSAuthorizedClient interface {
 	//Repos
-	Repos() ([]VCSRepo, error)
-	RepoByFullname(fullname string) (VCSRepo, error)
+	Repos(context.Context) ([]VCSRepo, error)
+	RepoByFullname(ctx context.Context, fullname string) (VCSRepo, error)
 
 	//Branches
-	Branches(string) ([]VCSBranch, error)
-	Branch(repo string, branch string) (*VCSBranch, error)
+	Branches(context.Context, string) ([]VCSBranch, error)
+	Branch(ctx context.Context, repo string, branch string) (*VCSBranch, error)
 
 	//Commits
-	Commits(repo, branch, since, until string) ([]VCSCommit, error)
-	Commit(repo, hash string) (VCSCommit, error)
+	Commits(ctx context.Context, repo, branch, since, until string) ([]VCSCommit, error)
+	Commit(ctx context.Context, repo, hash string) (VCSCommit, error)
 
 	// PullRequests
-	PullRequests(string) ([]VCSPullRequest, error)
-	PullRequestComment(string, int, string) error
+	PullRequests(context.Context, string) ([]VCSPullRequest, error)
+	PullRequestComment(context.Context, string, int, string) error
 
 	//Hooks
-	CreateHook(repo string, hook *VCSHook) error
-	GetHook(repo, url string) (VCSHook, error)
-	UpdateHook(repo, url string, hook VCSHook) error
-	DeleteHook(repo string, hook VCSHook) error
+	CreateHook(ctx context.Context, repo string, hook *VCSHook) error
+	GetHook(ctx context.Context, repo, url string) (VCSHook, error)
+	UpdateHook(ctx context.Context, repo, url string, hook VCSHook) error
+	DeleteHook(ctx context.Context, repo string, hook VCSHook) error
 
 	//Events
-	GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error)
-	PushEvents(string, []interface{}) ([]VCSPushEvent, error)
-	CreateEvents(string, []interface{}) ([]VCSCreateEvent, error)
-	DeleteEvents(string, []interface{}) ([]VCSDeleteEvent, error)
-	PullRequestEvents(string, []interface{}) ([]VCSPullRequestEvent, error)
+	GetEvents(ctx context.Context, repo string, dateRef time.Time) ([]interface{}, time.Duration, error)
+	PushEvents(context.Context, string, []interface{}) ([]VCSPushEvent, error)
+	CreateEvents(context.Context, string, []interface{}) ([]VCSCreateEvent, error)
+	DeleteEvents(context.Context, string, []interface{}) ([]VCSDeleteEvent, error)
+	PullRequestEvents(context.Context, string, []interface{}) ([]VCSPullRequestEvent, error)
 
 	// Set build status on repository
-	SetStatus(event Event) error
-	ListStatuses(repo string, ref string) ([]VCSCommitStatus, error)
+	SetStatus(context.Context, Event) error
+	ListStatuses(ctx context.Context, repo string, ref string) ([]VCSCommitStatus, error)
 
 	// Release
-	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
-	UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error
+	Release(ctx context.Context, repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
+	UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error
 
 	// Forks
-	ListForks(repo string) ([]VCSRepo, error)
+	ListForks(ctx context.Context, repo string) ([]VCSRepo, error)
 
 	// Permissions
-	GrantReadPermission(repo string) error
+	GrantReadPermission(ctx context.Context, repo string) error
 }
 
 // GetDefaultBranch return the default branch

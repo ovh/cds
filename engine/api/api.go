@@ -35,7 +35,6 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -144,7 +143,6 @@ type Configuration struct {
 	} `toml:"vault"`
 	Providers   []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
 	Services    []ServiceConfiguration  `toml:"services" comment:"###########################\n CDS Providers Settings \n##########################"`
-	Tracing     tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
 	DefaultOS   string                  `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
 	DefaultArch string                  `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
 }
@@ -217,6 +215,7 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 	}
 
 	a.Type = services.TypeAPI
+	a.ServiceName = "cds-api"
 
 	return nil
 }
@@ -525,10 +524,6 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.TTL)
 	if errCache != nil {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
-	}
-
-	if err := tracing.Init(a.Config.Tracing); err != nil {
-		return fmt.Errorf("Unable to start tracing exporter: %v", err)
 	}
 
 	log.Info("Initializing HTTP router")

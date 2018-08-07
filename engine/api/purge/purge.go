@@ -33,15 +33,15 @@ func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap)
 			}
 
 			log.Debug("purge> Deleting all workflow marked to delete....")
-			if err := workflows(DBFunc(), store); err != nil {
+			if err := Workflows(c, DBFunc(), store); err != nil {
 				log.Warning("purge> Error on workflows : %v", err)
 			}
 		}
 	}
 }
 
-// workflows purges all marked workflows
-func workflows(db *gorp.DbMap, store cache.Store) error {
+// Workflows purges all marked workflows
+func Workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 	query := "SELECT id, project_id FROM workflow WHERE to_delete = true ORDER BY id ASC"
 	res := []struct {
 		ID        int64 `db:"id"`
@@ -88,7 +88,7 @@ func workflows(db *gorp.DbMap, store cache.Store) error {
 			return sdk.WrapError(err, "purge.Workflows> unable to start tx")
 		}
 
-		if err := workflow.Delete(tx, store, &proj, &w); err != nil {
+		if err := workflow.Delete(ctx, tx, store, &proj, &w); err != nil {
 			log.Error("purge.Workflows> unable to delete workflow %d: %v", w.ID, err)
 			_ = tx.Rollback()
 			continue

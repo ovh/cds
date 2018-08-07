@@ -1,13 +1,14 @@
 package bitbucket
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func (b *bitbucketClient) ListForks(repo string) ([]sdk.VCSRepo, error) {
+func (b *bitbucketClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, error) {
 	bbRepos := []Repo{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
@@ -22,7 +23,7 @@ func (b *bitbucketClient) ListForks(repo string) ([]sdk.VCSRepo, error) {
 		}
 
 		var response Response
-		if err := b.do("GET", "core", path, params, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> ListForks> Unable to get repos")
 		}
 

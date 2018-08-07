@@ -21,6 +21,10 @@ type Common struct {
 	initialized bool
 }
 
+func (c *Common) ServiceName() string {
+	return c.Common.ServiceName
+}
+
 func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *api.HandlerConfig) (context.Context, error) {
 	if rc.Options["auth"] != "true" {
 		return ctx, nil

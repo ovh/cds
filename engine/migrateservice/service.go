@@ -70,6 +70,7 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 	s.HTTPURL = s.cfg.URL
 	s.Token = s.cfg.API.Token
 	s.Type = services.TypeDBMigrate
+	s.ServiceName = "cds-migrate"
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),

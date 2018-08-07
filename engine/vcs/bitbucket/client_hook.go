@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -10,7 +11,7 @@ import (
 
 const bitbucketHookKey string = "de.aeffle.stash.plugin.stash-http-get-post-receive-hook%3Ahttp-get-post-receive-hook"
 
-func (b *bitbucketClient) getHooksConfig(repo string) (HooksConfig, error) {
+func (b *bitbucketClient) getHooksConfig(ctx context.Context, repo string) (HooksConfig, error) {
 	oldHookConfig := HooksConfig{}
 
 	project, slug, err := getRepo(repo)
@@ -19,15 +20,15 @@ func (b *bitbucketClient) getHooksConfig(repo string) (HooksConfig, error) {
 	}
 
 	getPath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
-	if err := b.do("GET", "core", getPath, nil, nil, &oldHookConfig, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", getPath, nil, nil, &oldHookConfig, nil); err != nil {
 		return oldHookConfig, sdk.WrapError(err, "vcs> bitbucket> getHooksConfig> Unable to get hook config")
 	}
 
 	return oldHookConfig, nil
 }
 
-func (b *bitbucketClient) GetHook(repo, url string) (sdk.VCSHook, error) {
-	hcfg, err := b.getHooksConfig(repo)
+func (b *bitbucketClient) GetHook(ctx context.Context, repo, url string) (sdk.VCSHook, error) {
+	hcfg, err := b.getHooksConfig(ctx, repo)
 	if err != nil {
 		return sdk.VCSHook{}, err
 	}
@@ -51,14 +52,14 @@ func (b *bitbucketClient) GetHook(repo, url string) (sdk.VCSHook, error) {
 	return sdk.VCSHook{}, sdk.ErrHookNotFound
 }
 
-func (b *bitbucketClient) CreateHook(repo string, hook *sdk.VCSHook) error {
+func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk.VCSHook) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return err
 	}
 
 	if !hook.Workflow {
-		hcfg, err := b.getHooksConfig(repo)
+		hcfg, err := b.getHooksConfig(ctx, repo)
 		if err != nil {
 			return err
 		}
@@ -84,14 +85,14 @@ func (b *bitbucketClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 		}
 
 		updatePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
-		if err := b.do("PUT", "core", updatePath, nil, values, &hook, nil); err != nil {
+		if err := b.do(ctx, "PUT", "core", updatePath, nil, values, &hook, nil); err != nil {
 			return sdk.WrapError(err, "vcs> bitbucket> CreateHook> Unable to update hook config %s", string(values))
 		}
 
 		//If it's the first hook, let's enable the plugin
 		if len(hcfg.Details) == 1 {
 			enablePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/enabled", project, slug, bitbucketHookKey)
-			if err := b.do("PUT", "core", enablePath, nil, values, &hook, nil); err != nil {
+			if err := b.do(ctx, "PUT", "core", enablePath, nil, values, &hook, nil); err != nil {
 				return sdk.WrapError(err, "vcs> bitbucket> CreateHook> Unable to get enable hook")
 			}
 		}
@@ -111,20 +112,20 @@ func (b *bitbucketClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	if err != nil {
 		return err
 	}
-	if err := b.do("POST", "core", url, nil, values, &request, nil); err != nil {
+	if err := b.do(ctx, "POST", "core", url, nil, values, &request, nil); err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> CreateHook> Unable to get enable webhook")
 	}
 	hook.ID = fmt.Sprintf("%d", request.ID)
 	return nil
 }
 
-func (b *bitbucketClient) UpdateHook(repo, url string, hook sdk.VCSHook) error {
+func (b *bitbucketClient) UpdateHook(ctx context.Context, repo, url string, hook sdk.VCSHook) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> UpdateHook>")
 	}
 
-	hcfg, err := b.getHooksConfig(repo)
+	hcfg, err := b.getHooksConfig(ctx, repo)
 	if err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> UpdateHook>")
 	}
@@ -145,21 +146,21 @@ func (b *bitbucketClient) UpdateHook(repo, url string, hook sdk.VCSHook) error {
 	}
 
 	updatePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
-	if err := b.do("PUT", "core", updatePath, nil, values, &hook, nil); err != nil {
+	if err := b.do(ctx, "PUT", "core", updatePath, nil, values, &hook, nil); err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> UpdateHook> Unable to update hook config")
 	}
 
 	return nil
 }
 
-func (b *bitbucketClient) DeleteHook(repo string, hook sdk.VCSHook) error {
+func (b *bitbucketClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> DeleteHook>")
 	}
 
 	if !hook.Workflow {
-		hcfg, err := b.getHooksConfig(repo)
+		hcfg, err := b.getHooksConfig(ctx, repo)
 		if err != nil {
 			return sdk.WrapError(err, "vcs> bitbucket> DeleteHook>")
 		}
@@ -177,14 +178,14 @@ func (b *bitbucketClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 		}
 
 		updatePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
-		if err := b.do("PUT", "core", updatePath, nil, values, &hook, nil); err != nil {
+		if err := b.do(ctx, "PUT", "core", updatePath, nil, values, &hook, nil); err != nil {
 			return sdk.WrapError(err, "vcs> bitbucket> DeleteHook> Unable to update hook config")
 		}
 		return nil
 	}
 
 	url := fmt.Sprintf("/projects/%s/repos/%s/webhooks/%s", project, slug, hook.ID)
-	if err := b.do("DELETE", "core", url, nil, nil, nil, nil); err != nil {
+	if err := b.do(ctx, "DELETE", "core", url, nil, nil, nil, nil); err != nil {
 		if err != sdk.ErrNotFound {
 			return sdk.WrapError(err, "vcs> bitbucket> DeleteHook> Unable to get enable webhook")
 		}

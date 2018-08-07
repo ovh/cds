@@ -34,6 +34,7 @@ type Common struct {
 	Token                string
 	Type                 string
 	MaxHeartbeatFailures int
+	ServiceName          string
 }
 
 //Service is the interface for a engine service

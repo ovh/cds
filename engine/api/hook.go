@@ -421,29 +421,29 @@ func (api *API) getHookPollingVCSEvents() Handler {
 
 		//get the client for the repositories manager
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerParam)
-		client, errR := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		client, errR := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 		if errR != nil {
 			return sdk.WrapError(errR, "getHookPollingVCSEvents> Unable to get client for %s %s", proj.Key, vcsServerParam)
 		}
 
 		//Check if the polling if disabled
-		if info, err := repositoriesmanager.GetPollingInfos(client, *proj); err != nil {
+		if info, err := repositoriesmanager.GetPollingInfos(ctx, client, *proj); err != nil {
 			return sdk.WrapError(err, "getHookPollingVCSEvents> cannot check if polling is enabled")
 		} else if info.PollingDisabled || !info.PollingSupported {
 			log.Info("getHookPollingVCSEvents> %s polling is disabled", vcsServer.Name)
 			return WriteJSON(w, nil, http.StatusOK)
 		}
 
-		events, pollingDelay, err := client.GetEvents(h.Config["repoFullName"].Value, lastExec)
+		events, pollingDelay, err := client.GetEvents(ctx, h.Config["repoFullName"].Value, lastExec)
 		if err != nil && err.Error() != "No new events" {
 			return sdk.WrapError(err, "Polling> Unable to get events for %s %s", proj.Key, vcsServerParam)
 		}
-		pushEvents, err := client.PushEvents(h.Config["repoFullName"].Value, events)
+		pushEvents, err := client.PushEvents(ctx, h.Config["repoFullName"].Value, events)
 		if err != nil {
 			return sdk.WrapError(err, "getHookPollingVCSEvent> ")
 		}
 
-		pullRequestEvents, err := client.PullRequestEvents(h.Config["repoFullName"].Value, events)
+		pullRequestEvents, err := client.PullRequestEvents(ctx, h.Config["repoFullName"].Value, events)
 		if err != nil {
 			return sdk.WrapError(err, "getHookPollingVCSEvent> ")
 		}

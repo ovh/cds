@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -9,7 +10,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (b *bitbucketClient) PullRequests(repo string) ([]sdk.VCSPullRequest, error) {
+func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.VCSPullRequest, error) {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests>")
@@ -27,7 +28,7 @@ func (b *bitbucketClient) PullRequests(repo string) ([]sdk.VCSPullRequest, error
 		}
 
 		var response PullRequestResponse
-		if err := b.do("GET", "core", path, params, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> Unable to get repos")
 		}
 
@@ -65,7 +66,7 @@ func (b *bitbucketClient) PullRequests(repo string) ([]sdk.VCSPullRequest, error
 			Email:       r.Author.User.EmailAddress,
 		}
 
-		baseBranch, err := b.Branch(repo, pr.Base.Branch.ID)
+		baseBranch, err := b.Branch(ctx, repo, pr.Base.Branch.ID)
 		if err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> unable to get branch %s", baseBranch)
 		}
@@ -74,7 +75,7 @@ func (b *bitbucketClient) PullRequests(repo string) ([]sdk.VCSPullRequest, error
 			Hash: baseBranch.LatestCommit,
 		}
 
-		headBranch, err := b.Branch(r.FromRef.Repository.Project.Key+"/"+r.FromRef.Repository.Slug, pr.Head.Branch.ID)
+		headBranch, err := b.Branch(ctx, r.FromRef.Repository.Project.Key+"/"+r.FromRef.Repository.Slug, pr.Head.Branch.ID)
 		if err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> unable to get branch %s", headBranch)
 		}
@@ -87,7 +88,7 @@ func (b *bitbucketClient) PullRequests(repo string) ([]sdk.VCSPullRequest, error
 }
 
 // PullRequestComment push a new comment on a pull request
-func (b *bitbucketClient) PullRequestComment(repo string, prID int, text string) error {
+func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, prID int, text string) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> PullRequestComment>")
@@ -98,5 +99,5 @@ func (b *bitbucketClient) PullRequestComment(repo string, prID int, text string)
 	values, _ := json.Marshal(payload)
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prID)
 
-	return b.do("POST", "core", path, nil, values, nil, &options{asUser: true})
+	return b.do(ctx, "POST", "core", path, nil, values, nil, &options{asUser: true})
 }
