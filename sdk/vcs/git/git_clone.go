@@ -62,7 +62,8 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
 			gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
 		} else if opts.SingleBranch {
 			gitcmd.args = append(gitcmd.args, "--single-branch")
-		} else if !opts.SingleBranch && opts.Depth != 0 {
+		}
+		if !opts.SingleBranch && opts.Depth != 0 {
 			gitcmd.args = append(gitcmd.args, "--no-single-branch")
 		}
 
