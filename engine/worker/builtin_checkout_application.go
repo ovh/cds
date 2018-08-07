@@ -30,26 +30,27 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 		}
 
 		//Prepare all options - clone options
-		var clone = &git.CloneOpts{
+		var opts = &git.CloneOpts{
 			Recursive:               true,
 			NoStrictHostKeyChecking: true,
+			Depth: 50,
 		}
 		if branch != nil {
-			clone.Branch = branch.Value
+			opts.Branch = branch.Value
 		} else {
-			clone.SingleBranch = true
+			opts.SingleBranch = true
 		}
 
 		// if there is no branch, check if there a defaultBranch
-		if (clone.Branch == "" || clone.Branch == "{{.git.branch}}") && defaultBranch != "" {
-			clone.Branch = defaultBranch
-			clone.SingleBranch = false
+		if (opts.Branch == "" || opts.Branch == "{{.git.branch}}") && defaultBranch != "" {
+			opts.Branch = defaultBranch
+			opts.SingleBranch = false
 			sendLog(fmt.Sprintf("branch is empty, using the default branch %s", defaultBranch))
 		}
 
 		r, _ := regexp.Compile("{{.*}}")
 		if commit != nil && commit.Value != "" && !r.MatchString(commit.Value) {
-			clone.CheckoutCommit = commit.Value
+			opts.CheckoutCommit = commit.Value
 		}
 
 		var dir string
@@ -57,6 +58,6 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 			dir = directory.Value
 		}
 
-		return gitClone(w, params, gitURL, dir, auth, clone, sendLog)
+		return gitClone(w, params, gitURL, dir, auth, opts, sendLog)
 	}
 }
