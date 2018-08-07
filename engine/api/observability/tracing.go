@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/feature"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
 )
 
@@ -28,7 +27,6 @@ func Start(ctx context.Context, serviceName string, w http.ResponseWriter, req *
 	if !traceEnable || !opt.Enable {
 		return ctx, nil
 	}
-	log.Info("starting trace %s on %s", opt.Name, serviceName)
 
 	tags := []trace.Attribute{}
 	if opt.Worker != nil {

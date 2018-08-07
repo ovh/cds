@@ -51,8 +51,8 @@ func Accepted(w http.ResponseWriter) error {
 	w.Header().Add("Content-Type", "text/plain")
 	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(msg)))
 	w.WriteHeader(http.StatusAccepted)
-	w.Write([]byte(msg))
-	return nil
+	_, err := w.Write([]byte(msg))
+	return err
 }
 
 // Write is a helper function
@@ -61,8 +61,8 @@ func Write(w http.ResponseWriter, btes []byte, status int, contentType string) e
 	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(btes)))
 	WriteProcessTime(w)
 	w.WriteHeader(status)
-	w.Write(btes)
-	return nil
+	_, err := w.Write(btes)
+	return err
 }
 
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
@@ -75,6 +75,7 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 	return Write(w, b, status, "application/json")
 }
 
+// WriteProcessTime writes the duration of the call in the responsewriter
 func WriteProcessTime(w http.ResponseWriter) {
 	if h := w.Header().Get(cdsclient.ResponseAPINanosecondsTimeHeader); h != "" {
 		start, err := strconv.ParseInt(h, 10, 64)
