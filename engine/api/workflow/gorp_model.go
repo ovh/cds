@@ -7,7 +7,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -125,7 +124,6 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	if err != nil {
 		return sdk.WrapError(err, "column header")
 	}
-	log.Info("ToJobRun> %d header=%v", j.ID, j.Header)
 	return nil
 }
 
@@ -180,7 +178,6 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 			})
 		}
 	}
-	log.Info("WorkflowNodeRunJob> %d header=%v", jr.ID, jr.Header)
 	return jr, nil
 }
 

@@ -214,7 +214,8 @@ func Create(h Interface) error {
 				continue
 			}
 
-			currentCtx := context.WithValue(ctx, observability.TagWorkflowNodeJobRun, j.ID)
+			var traceEnded *struct{}
+			currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
 			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
 				currentCtx, _ = observability.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
@@ -236,8 +237,16 @@ func Create(h Interface) error {
 					)
 				}
 				observability.End(currentCtx, nil, nil) // nolint
+				var T struct{}
+				traceEnded = &T
+				currentCancel()
 			}
-
+			go func() {
+				<-currentCtx.Done()
+				if traceEnded == nil {
+					endTrace(currentCtx.Err().Error())
+				}
+			}()
 			//Check if the jobs is concerned by a pending worker creation
 			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
 				log.Debug("job %d already spawned in previous routine", j.ID)
@@ -297,7 +306,7 @@ func Create(h Interface) error {
 					isRun:        false,
 					temptToSpawn: true,
 				}
-				endTrace("no model")
+				endTrace("no model or service ratio reached")
 
 				continue
 			}
