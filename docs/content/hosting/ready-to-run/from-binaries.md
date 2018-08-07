@@ -95,7 +95,7 @@ chmod +x caddy-linux-amd64
 ./caddy-linux-amd64 
 ```
 
-Then, open a browser on http://localhost:2015/
+Then, open a browser on http://localhost:2015/ . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use `cdsctl signup`. If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
 
 ### Launch CDS Local Hatchery
 
