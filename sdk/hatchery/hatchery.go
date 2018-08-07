@@ -85,6 +85,9 @@ func Create(h Interface) error {
 	// purges expired items every minute
 	spawnIDs := cache.New(10*time.Second, 60*time.Second)
 
+	// hatchery is now fully Initialized
+	h.SetInitialized()
+
 	sdk.GoRoutine("heartbeat", func() {
 		hearbeat(h, h.Configuration().API.Token, h.Configuration().API.MaxHeartbeatFailures)
 	})
@@ -95,9 +98,6 @@ func Create(h Interface) error {
 			cancel()
 		}
 	})
-
-	// hatchery is now fully Initialized
-	h.SetInitialized()
 
 	// run the starters pool
 	workersStartChan, workerStartResultChan := startWorkerStarters(h)

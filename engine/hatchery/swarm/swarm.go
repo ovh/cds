@@ -59,6 +59,7 @@ func (h *HatcherySwarm) Init() error {
 			MaxContainers: h.Configuration().Provision.MaxWorker,
 			name:          "default",
 		}
+		log.Info("hatchery> swarm> connected to default docker engine")
 
 	} else {
 		for hostName, cfg := range h.Config.DockerEngines {

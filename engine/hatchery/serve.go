@@ -103,6 +103,7 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Middlewares = append(r.Middlewares, c.AuthMiddleware)
 
 	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
+	r.Handle("/mon/status", r.GET(getStatusHandler(h), api.Auth(false)))
 	r.Handle("/mon/workers", r.GET(getWorkersPoolHandler(h), api.Auth(false)))
 }
 
@@ -117,6 +118,22 @@ func getWorkersPoolHandler(h hatchery.Interface) api.HandlerFunc {
 				return sdk.WrapError(err, "getWorkersPoolHandler")
 			}
 			return api.WriteJSON(w, pool, http.StatusOK)
+		}
+	}
+}
+
+func getStatusHandler(h hatchery.Interface) api.HandlerFunc {
+	return func() api.Handler {
+		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			if h == nil {
+				return nil
+			}
+			srv, ok := h.(service.Service)
+			if !ok {
+				return fmt.Errorf("unable to get status from %s", h.Hatchery().Name)
+			}
+			status := srv.Status()
+			return api.WriteJSON(w, status, status.HTTPStatusCode())
 		}
 	}
 }
