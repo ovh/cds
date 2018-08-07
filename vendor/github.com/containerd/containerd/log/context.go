@@ -38,7 +38,7 @@ type (
 	loggerKey struct{}
 )
 
-// TraceLevel is the log level for observability. Trace level is lower than debug level,
+// TraceLevel is the log level for tracing. Trace level is lower than debug level,
 // and is usually used to trace detailed behavior of the program.
 const TraceLevel = logrus.Level(uint32(logrus.DebugLevel + 1))
 
