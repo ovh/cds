@@ -3,6 +3,7 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 )
 
@@ -25,6 +26,16 @@ type MonitoringStatusLine struct {
 	Component string `json:"component" cli:"component"`
 	Value     string `json:"value" cli:"value"`
 	Type      string `json:"type" cli:"type"`
+}
+
+// HTTPStatusCode return the http status code
+func (m MonitoringStatus) HTTPStatusCode() int {
+	for _, l := range m.Lines {
+		if l.Status != MonitoringStatusOK {
+			return http.StatusServiceUnavailable
+		}
+	}
+	return http.StatusOK
 }
 
 func (m MonitoringStatusLine) String() string {
