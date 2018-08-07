@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -233,6 +234,18 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 }
 
 func (c *client) WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error {
+	store := new(sdk.ArtifactsStore)
+	_, _ = c.GetJSON("/artifact/store", store)
+	if store.TemporaryURLSupported {
+		err := c.workflowCachePushIndirectUpload(projectKey, ref, tarContent)
+		return err
+	}
+	err := c.workflowCachePushDirectUpload(projectKey, ref, tarContent)
+
+	return err
+}
+
+func (c *client) workflowCachePushDirectUpload(projectKey, ref string, tarContent io.Reader) error {
 	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
 
 	mods := []RequestModifier{
@@ -253,8 +266,81 @@ func (c *client) WorkflowCachePush(projectKey, ref string, tarContent io.Reader)
 	return nil
 }
 
+func (c *client) workflowCachePushIndirectUpload(projectKey, ref string, tarContent io.Reader) error {
+	url := fmt.Sprintf("/project/%s/cache/%s/url", projectKey, ref)
+
+	cacheObj := sdk.Cache{}
+	code, err := c.PostJSON(url, nil, &cacheObj)
+	if err != nil {
+		return err
+	}
+
+	if code >= 400 {
+		return fmt.Errorf("HTTP Code %d", code)
+	}
+
+	if err := c.workflowCachePushIndirectUploadPost(cacheObj.TmpURL, tarContent); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.Reader) error {
+	//Post the file to the temporary URL
+	var retry = 10
+	var globalErr error
+	var body []byte
+	for i := 0; i < retry; i++ {
+		req, errRequest := http.NewRequest("PUT", url, tarContent)
+		if errRequest != nil {
+			return errRequest
+		}
+		req.Header.Set("Content-Type", "application/tar")
+
+		var resp *http.Response
+		resp, globalErr = http.DefaultClient.Do(req)
+		if globalErr == nil {
+			defer resp.Body.Close()
+
+			var err error
+			body, err = ioutil.ReadAll(resp.Body)
+			if err != nil {
+				globalErr = err
+				continue
+			}
+
+			if resp.StatusCode >= 300 {
+				globalErr = fmt.Errorf("[%d] Unable to upload cache: (HTTP %d) %s", i, resp.StatusCode, string(body))
+				continue
+			}
+
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return globalErr
+}
+
 func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
-	url := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
+	downloadURL := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
+	store := new(sdk.ArtifactsStore)
+	_, _ = c.GetJSON("/artifact/store", store)
+
+	if store.TemporaryURLSupported {
+		url := fmt.Sprintf("/project/%s/cache/%s/url", projectKey, ref)
+
+		var cacheObj sdk.Cache
+		code, err := c.GetJSON(url, &cacheObj)
+		if err != nil {
+			return nil, err
+		}
+		if code >= 400 {
+			return nil, fmt.Errorf("HTTP Code %d", code)
+		}
+		downloadURL = cacheObj.TmpURL
+	}
 
 	mods := []RequestModifier{
 		(func(r *http.Request) {
@@ -262,7 +348,7 @@ func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
 		}),
 	}
 
-	res, _, code, err := c.Stream("GET", url, nil, true, mods...)
+	res, _, code, err := c.Stream("GET", downloadURL, nil, true, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -275,5 +361,6 @@ func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return bytes.NewBuffer(body), nil
 }

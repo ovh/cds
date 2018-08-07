@@ -65,7 +65,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 
 	var errCl error
 	var clientset *kubernetes.Clientset
-	k8sTimeout := time.Second * 5
+	k8sTimeout := time.Second * 10
 	if h.Config.KubernetesConfigFile != "" {
 		cfg, err := clientcmd.BuildConfigFromFlags(h.Config.KubernetesMasterURL, h.Config.KubernetesConfigFile)
 		if err != nil {
@@ -82,7 +82,6 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot build config from config getter")
 		}
-		configK8s.Host = h.Config.KubernetesMasterURL
 		configK8s.Timeout = k8sTimeout
 
 		if h.Config.KubernetesCertAuthData != "" {

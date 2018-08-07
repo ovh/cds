@@ -300,7 +300,7 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("cache pull HTTP error %v\n", err)
 			}
 			cdsError := sdk.DecodeError(body)
-			sdk.Exit("Error: %v\n", cdsError)
+			sdk.Exit("Error: %v -> %s\n", cdsError, string(body))
 		}
 
 		fmt.Printf("Worker cache pull with success (tag: %s)\n", args[0])
@@ -331,55 +331,75 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 
 	tr := tar.NewReader(bts)
 	for {
-		hdr, err := tr.Next()
-		if err == io.EOF {
+		header, errH := tr.Next()
+		if errH == io.EOF {
 			break
 		}
-		if err != nil {
-			err = sdk.Error{
-				Message: "worker cache pull > Unable to read tar file : " + err.Error(),
+
+		if errH != nil {
+			errH = sdk.Error{
+				Message: "worker cache pull > Unable to read tar file : " + errH.Error(),
 				Status:  http.StatusBadRequest,
 			}
-			writeError(w, r, err)
+			writeJSON(w, errH, http.StatusBadRequest)
 			return
 		}
 
-		if hdr == nil {
+		if header == nil {
 			continue
 		}
 
-		target := filepath.Join(path, hdr.Name)
-		if _, errS := os.Stat(filepath.Dir(target)); errS != nil {
-			if errM := os.MkdirAll(filepath.Dir(target), 0755); errM != nil {
-				errM = sdk.Error{
-					Message: "worker cache pull > Cannot create directory : " + errM.Error(),
+		// the target location where the dir/file should be created
+		target := filepath.Join(path, header.Name)
+
+		// check the file type
+		switch header.Typeflag {
+		// if its a dir and it doesn't exist create it
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, 0755); err != nil {
+					err = sdk.Error{
+						Message: "worker cache pull > Unable to mkdir all files : " + err.Error(),
+						Status:  http.StatusInternalServerError,
+					}
+					writeJSON(w, err, http.StatusInternalServerError)
+					return
+				}
+			}
+		case tar.TypeSymlink:
+			if err := os.Symlink(header.Linkname, target); err != nil {
+				err = sdk.Error{
+					Message: "worker cache pull > Unable to create symlink : " + err.Error(),
 					Status:  http.StatusInternalServerError,
 				}
-				writeError(w, r, errM)
+				writeJSON(w, err, http.StatusInternalServerError)
 				return
 			}
-		}
 
-		f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(hdr.Mode))
-		if err != nil {
-			err = sdk.Error{
-				Message: "worker cache pull > Cannot create file: " + err.Error(),
-				Status:  http.StatusInternalServerError,
+			// if it's a file create it
+		case tar.TypeReg, tar.TypeLink:
+			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				err = sdk.Error{
+					Message: "worker cache pull > Unable to open file : " + err.Error(),
+					Status:  http.StatusInternalServerError,
+				}
+				writeJSON(w, err, http.StatusInternalServerError)
+				return
 			}
-			writeError(w, r, err)
-			return
-		}
 
-		// copy over contents
-		if _, err := io.Copy(f, tr); err != nil {
-			f.Close()
-			err = sdk.Error{
-				Message: "worker cache pull > Cannot copy content file : " + err.Error(),
-				Status:  http.StatusInternalServerError,
+			// copy over contents
+			if _, err := io.Copy(f, tr); err != nil {
+				_ = f.Close()
+				err = sdk.Error{
+					Message: "worker cache pull > Cannot copy content file : " + err.Error(),
+					Status:  http.StatusInternalServerError,
+				}
+				writeJSON(w, err, http.StatusInternalServerError)
+				return
 			}
-			writeError(w, r, err)
-			return
+
+			_ = f.Close()
 		}
-		f.Close()
 	}
 }
