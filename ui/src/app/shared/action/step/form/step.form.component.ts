@@ -11,7 +11,6 @@ export class ActionStepFormComponent implements OnInit {
     @Input() publicActions: Array<Action>;
     showAddStep: boolean;
     @Output() create = new EventEmitter<StepEvent>();
-
     step: Action;
 
     constructor() { }

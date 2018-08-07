@@ -114,23 +114,6 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 	return nil
 }
 
-// LoadPipelineActionByID retrieves and action by its id but check project and pipeline
-func LoadPipelineActionByID(db gorp.SqlExecutor, project, pip string, actionID int64) (*sdk.Action, error) {
-	query := `
-	SELECT action.id, action.name, action.description, action.type, action.last_modified, action.enabled, action.deprecated
-	FROM action
-	JOIN pipeline_action ON pipeline_action.action_id = $1
-	JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
-	JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
-	JOIN project ON project.id = pipeline.project_id
-	WHERE action.id = $1 AND pipeline.name = $2 AND project.projectkey = $3`
-	a, err := loadActions(db, query, actionID, pip, project)
-	if err != nil {
-		return nil, err
-	}
-	return &a[0], nil
-}
-
 // LoadPublicAction load an action from database
 func LoadPublicAction(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
 	query := `SELECT id, name, description, type, last_modified, enabled, deprecated FROM action WHERE lower(action.name) = lower($1) AND public = true`

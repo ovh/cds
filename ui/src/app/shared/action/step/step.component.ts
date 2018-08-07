@@ -11,8 +11,20 @@ import {StepEvent} from './step.event';
 })
 export class ActionStepComponent {
 
+    _step: Action;
+    withAdvanced: boolean;
+    @Input('step')
+    set step(step: Action) {
+        this._step = step;
+        if (step) {
+            this.withAdvanced = step.parameters.some((parameter) => parameter.advanced);
+        }
+    }
+    get step(): Action {
+        return this._step;
+    }
+
     @Input() action: Action;
-    @Input() step: Action;
     @Input() edit: boolean;
     @Input() suggest: Array<string>;
     @Input() keys: AllKeys;

@@ -34,12 +34,17 @@ func NewAction(act sdk.Action) (a Action) {
 	a.Version = ActionVersion1
 	a.Description = act.Description
 	a.Parameters = make(map[string]ParameterValue, len(act.Parameters))
-	for _, v := range act.Parameters {
-		a.Parameters[v.Name] = ParameterValue{
+	for k, v := range act.Parameters {
+		param := ParameterValue{
 			Type:         string(v.Type),
 			DefaultValue: v.Value,
 			Description:  v.Description,
 		}
+		// no need to export it if "Advanced" is false
+		if v.Advanced {
+			param.Advanced = &act.Parameters[k].Advanced
+		}
+		a.Parameters[v.Name] = param
 	}
 	a.Steps = newSteps(act)
 	a.Requirements = newRequirements(act.Requirements)
@@ -553,6 +558,9 @@ func (act *Action) Action() (*sdk.Action, error) {
 		}
 		if param.Type == "" {
 			param.Type = sdk.StringParameter
+		}
+		if v.Advanced != nil && *v.Advanced {
+			param.Advanced = true
 		}
 		a.Parameters[i] = param
 		i++

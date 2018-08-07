@@ -51,13 +51,11 @@
                         {{ 'common_disabled_f' | translate }}
                     </div>
                 </ng-container>
-
                 <ng-container *ngIf="step.optional">
                     <div class="five wide field">
                         {{ 'action_optional' | translate }}
                     </div>
                 </ng-container>
-
                 <ng-container *ngIf="step.always_executed">
                     <div class="five wide field">
                         {{ 'action_always_executed' | translate }}
@@ -74,18 +72,47 @@
     </div>
 </div>
 <div class="ui stackable grid" *ngIf="collapsed">
+
     <div class="row" *ngFor="let p of step.parameters">
-        <div class="two wide column">
-            <label>
-              <b>{{p.name}}</b>
-              <span *ngIf="p.description" suiPopup [popupText]="p.description" popupPlacement="right center">
-                <i class="info circle icon"></i>
-              </span>
-            </label>
-        </div>
-        <div class="fourteen wide column">
-            <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value" [editList]="false" [suggest]="suggest"
-                                 (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)"></app-parameter-value>
-        </div>
+        <ng-container *ngIf="!p.advanced">
+            <div class="two wide column">
+                <label>
+                <b>{{p.name}}</b>
+                <span *ngIf="p.description" suiPopup [popupText]="p.description" popupPlacement="right center">
+                    <i class="info circle icon"></i>
+                </span>
+                </label>
+            </div>
+            <div class="fourteen wide column">
+                <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value" [editList]="false" [suggest]="suggest"
+                                    (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)"></app-parameter-value>
+            </div>
+        </ng-container>
     </div>
+
+    <div class="sixteen wide right aligned field pointing" *ngIf="withAdvanced" (click)="collapsed_advanced = !collapsed_advanced">
+        {{'parameters_advanced' | translate}}
+        <i class="caret down icon" *ngIf="collapsed_advanced"></i>
+        <i class="caret right icon" *ngIf="!collapsed_advanced"></i>
+    </div>    
+
+    <ng-container *ngIf="withAdvanced && collapsed_advanced">
+        <div class="row" *ngFor="let p of step.parameters">
+            <ng-container *ngIf="p.advanced">
+                <div class="two wide column">
+                    <label>
+                    <b>{{p.name}}</b>
+                    <span *ngIf="p.description" suiPopup [popupText]="p.description" popupPlacement="right center">
+                        <i class="info circle icon"></i>
+                    </span>
+                    </label>
+                </div>
+                <div class="fourteen wide column">
+                    <app-parameter-value [edit]="edit" [type]="p.type" [keys]="keys" [(value)]="p.value" [editList]="false" [suggest]="suggest"
+                                        (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)"></app-parameter-value>
+                </div>
+            </ng-container>
+        </div>
+    </ng-container>
+
 </div>

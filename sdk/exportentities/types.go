@@ -26,6 +26,7 @@ type (
 		Type         string `json:"type,omitempty" yaml:"type,omitempty"`
 		DefaultValue string `json:"default,omitempty" yaml:"default,omitempty"`
 		Description  string `json:"description,omitempty" yaml:"description,omitempty"`
+		Advanced     *bool  `json:"advanced,omitempty" yaml:"advanced,omitempty"`
 	}
 )
 
