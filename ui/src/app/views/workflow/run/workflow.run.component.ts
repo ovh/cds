@@ -1,4 +1,5 @@
 import {Component, OnInit, ViewChild} from '@angular/core';
+import {Title} from '@angular/platform-browser';
 import {ActivatedRoute} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
@@ -42,10 +43,15 @@ export class WorkflowRunComponent implements OnInit {
     // copy of root node to send it into run modal
     nodeToRun: WorkflowNode;
 
-    constructor(private _activatedRoute: ActivatedRoute,
-                private _workflowStore: WorkflowStore, private _notification: NotificationService,
-                private _translate: TranslateService, private _workflowEventStore: WorkflowEventStore,
-                private _workflowRunService: WorkflowRunService) {
+    constructor(
+      private _activatedRoute: ActivatedRoute,
+      private _workflowStore: WorkflowStore,
+      private _notification: NotificationService,
+      private _translate: TranslateService,
+      private _workflowEventStore: WorkflowEventStore,
+      private _workflowRunService: WorkflowRunService,
+      private _titleService: Title
+    ) {
         this._workflowEventStore.setSelectedNodeRun(null, false);
         this._workflowEventStore.setSelectedNode(null, false);
 
@@ -76,11 +82,11 @@ export class WorkflowRunComponent implements OnInit {
                 previousWR = this.workflowRun;
             }
             this.workflowRun = wr;
-            if (previousWR && this.workflowRun && previousWR.status !== this.workflowRun.status &&
-                (this.workflowRun.status === PipelineStatus.STOPPED ||
-                this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS)) {
+            if (previousWR && this.workflowRun && previousWR.id === wr.id && previousWR.status !== this.workflowRun.status &&
+                PipelineStatus.isDone(this.workflowRun.status)) {
                 this.handleNotification();
             }
+            this.updateTitle();
         });
 
         // Subscribe to route event
@@ -118,6 +124,16 @@ export class WorkflowRunComponent implements OnInit {
                     workflowName: this.workflowName
                 }), {icon: 'assets/images/close.png'}).subscribe();
                 break;
+        }
+    }
+
+    updateTitle() {
+        if (!this.workflowRun || !Array.isArray(this.workflowRun.tags)) {
+            return;
+        }
+        let branch = this.workflowRun.tags.find((tag) => tag.tag === 'git.branch');
+        if (branch) {
+            this._titleService.setTitle(`#${this.workflowRun.num} [${branch.value}] • ${this.workflowName}`);
         }
     }
 
