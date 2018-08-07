@@ -665,7 +665,9 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 
-	workflow.Initialize(a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+	sdk.GoRoutine("workflow.Initialize", func() {
+		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+	})
 	sdk.GoRoutine("PushInElasticSearch", func() { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
 	sdk.GoRoutine("Purge", func() { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
 

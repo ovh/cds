@@ -648,6 +648,21 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	wg.Wait()
 
 	// Update stages from node run
+	stopWorkflowNodeRunStages(&nodeRun)
+
+	nodeRun.Status = sdk.StatusStopped.String()
+	nodeRun.Done = time.Now()
+	if errU := UpdateNodeRun(dbFunc(), &nodeRun); errU != nil {
+		return report, sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
+	}
+	report.Add(nodeRun)
+
+	return report, nil
+}
+
+// stopWorkflowNodeRunStages mark to stop all stages and step status in struct
+func stopWorkflowNodeRunStages(nodeRun *sdk.WorkflowNodeRun) {
+	// Update stages from node run
 	for iS := range nodeRun.Stages {
 		stag := &nodeRun.Stages[iS]
 		for iR := range stag.RunJobs {
@@ -668,15 +683,6 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 			stag.Status = sdk.StatusStopped
 		}
 	}
-
-	nodeRun.Status = sdk.StatusStopped.String()
-	nodeRun.Done = time.Now()
-	if errU := UpdateNodeRun(dbFunc(), &nodeRun); errU != nil {
-		return report, sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
-	}
-	report.Add(nodeRun)
-
-	return report, nil
 }
 
 func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanErr chan<- error, chanDone chan<- bool, wg *sync.WaitGroup) *ProcessorReport {
