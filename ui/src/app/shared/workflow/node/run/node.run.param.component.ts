@@ -274,6 +274,9 @@ export class WorkflowNodeRunParamComponent {
 
     private updateDefaultPipelineParameters() {
         let pipToRun = Workflow.getPipeline(this.workflow, this._nodeToRun);
+        if (!pipToRun) {
+          return;
+        }
 
         if (this._nodeToRun.context) {
             this._nodeToRun.context.default_pipeline_parameters =
