@@ -1,9 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "cds.fullname" . }}-api
+  name: {{ template "cds.fullname" . }}
   labels:
-    app: {{ template "cds.fullname" . }}-api
+    app: {{ template "cds.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
@@ -12,9 +12,9 @@ spec:
   ports:
   - name: http
     port: 80
-    targetPort: 2015
-  - name: https
-    port: 443
-    targetPort: 2015
+    targetPort: http
+  - name: grpc
+    port: 8082
+    targetPort: grpc
   selector:
-    app: {{ template "cds.fullname" . }}-gui
+    app: {{ template "cds.fullname" . }}

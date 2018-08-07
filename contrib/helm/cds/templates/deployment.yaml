@@ -23,7 +23,7 @@ spec:
       {{- end }}
       #TODO : question what is migrate container ?
       containers:
-      - name: {{ template "cds.fullname" . }}-api
+      - name: {{ template "cds.fullname" . }}
         image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         env:
@@ -89,9 +89,9 @@ spec:
 #TODO : if migrate needs ports, probes and claims
         ports:
         - name: http
-          containerPort: 8080
-        - name: https
           containerPort: 8081
+        - name: grpc #TODO need explanation
+          containerPort: 8082
         livenessProbe:
 {{ toYaml .Values.api.livenessProbe | indent 10 }} #FIXME: add level in values.yml or add other chart ? And find somethign that does not say ` 404  | /   resource not found`
         readinessProbe:

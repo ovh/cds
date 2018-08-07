@@ -1,0 +1,46 @@
+#TODO : make migrate a statefull and &&
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "cds.fullname" . }}-ui
+  labels:
+    app: {{ template "cds.fullname" . }}-ui
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "cds.fullname" . }}-ui
+    spec:
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.image.pullSecrets }}
+        - name: {{ . }}
+      {{- end}}
+      {{- end }}
+      #TODO : question what is migrate container ?
+      containers:
+      - name: {{ template "cds.fullname" . }}-ui
+        image: "{{ .Values.ui.image.registry }}/{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        env:
+          - name: BACKEND_HOST
+            value: {{ template "cds.fullname" . }}
+          - name: BASE_URL
+            value: "{{ .Values.ui.baseUrl }}"
+          - name: CDS_LOG_LEVEL
+            value: debug #TODO CONF
+        ports:
+        - name: http
+          containerPort: 8081
+        - name: https
+          containerPort: 8081
+        livenessProbe:
+{{ toYaml .Values.ui.livenessProbe | indent 10 }} #FIXME: add level in values.yml or add other chart ? And find somethign that does not say ` 404  | /   resource not found`
+        readinessProbe:
+{{ toYaml .Values.ui.readinessProbe | indent 10 }}
+        resources:
+{{ toYaml .Values.ui.resources | indent 10 }}

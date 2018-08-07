@@ -466,7 +466,7 @@ redis:
   ## For minikube, set this to NodePort, elsewhere use LoadBalancer
   ## Use ClusterIP if your setup includes ingress controller
   ##
-serviceType: LoadBalancer
+serviceType: ClusterIP
 
 ## Configure Ingress resource that allow you to access the Drupal installation
 ## Set up the URL
@@ -536,7 +536,7 @@ resources:
 # - name: EXTRA_VAR_2
 #   value: extra-var-value-2
 
-gui:
+ui:
   image:
     registry: docker.io
     repository: ovhcom/cds-ui
@@ -552,6 +552,7 @@ gui:
       path: /
       port: 8081
     initialDelaySeconds: 30
+  serviceType: LoadBalancer
 
 ## Configure liveness and readiness probes.
 ## Drupal core exposes /user/login to unauthenticated requests, making it a good
