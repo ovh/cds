@@ -216,7 +216,6 @@ func Create(h Interface) error {
 
 			currentCtx := context.WithValue(ctx, tracing.TagWorkflowNodeJobRun, j.ID)
 			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
-				log.Info("hatchery> enable tracing on job. Headers: %+v", j.Header)
 				currentCtx, _ = tracing.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
 				r, _ := j.Header.Get(sdk.WorkflowRunHeader)
