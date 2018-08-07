@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -78,7 +79,7 @@ func processGitlabHook(w http.ResponseWriter, r *http.Request, data []byte) (hoo
 	return rh, nil
 }
 
-func (api *API) receiveHookHandler() Handler {
+func (api *API) receiveHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get body
 		data, err := ioutil.ReadAll(r.Body)
@@ -120,7 +121,7 @@ func (api *API) receiveHookHandler() Handler {
 	}
 }
 
-func (api *API) addHookHandler() Handler {
+func (api *API) addHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -148,11 +149,11 @@ func (api *API) addHookHandler() Handler {
 			return sdk.WrapError(errA, "addHook: Cannot load workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) updateHookHandler() Handler {
+func (api *API) updateHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -191,11 +192,11 @@ func (api *API) updateHookHandler() Handler {
 			return sdk.WrapError(errW, "updateHookHandler: Cannot load workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationHooksHandler() Handler {
+func (api *API) getApplicationHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectName := vars["key"]
@@ -206,11 +207,11 @@ func (api *API) getApplicationHooksHandler() Handler {
 			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application %s/%s", projectName, appName)
 		}
 
-		return WriteJSON(w, a.Hooks, http.StatusOK)
+		return service.WriteJSON(w, a.Hooks, http.StatusOK)
 	}
 }
 
-func (api *API) getHooksHandler() Handler {
+func (api *API) getHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectName := vars["key"]
@@ -235,11 +236,11 @@ func (api *API) getHooksHandler() Handler {
 			return sdk.WrapError(err, "getHooks> cannot load hooks")
 		}
 
-		return WriteJSON(w, hooks, http.StatusOK)
+		return service.WriteJSON(w, hooks, http.StatusOK)
 	}
 }
 
-func (api *API) deleteHookHandler() Handler {
+func (api *API) deleteHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		idS := vars["id"]
@@ -389,7 +390,7 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 	return nil
 }
 
-func (api *API) getHookPollingVCSEvents() Handler {
+func (api *API) getHookPollingVCSEvents() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		uuid := vars["uuid"]
@@ -431,7 +432,7 @@ func (api *API) getHookPollingVCSEvents() Handler {
 			return sdk.WrapError(err, "getHookPollingVCSEvents> cannot check if polling is enabled")
 		} else if info.PollingDisabled || !info.PollingSupported {
 			log.Info("getHookPollingVCSEvents> %s polling is disabled", vcsServer.Name)
-			return WriteJSON(w, nil, http.StatusOK)
+			return service.WriteJSON(w, nil, http.StatusOK)
 		}
 
 		events, pollingDelay, err := client.GetEvents(ctx, h.Config["repoFullName"].Value, lastExec)
@@ -471,6 +472,6 @@ func (api *API) getHookPollingVCSEvents() Handler {
 
 		w.Header().Add("X-CDS-Poll-Interval", fmt.Sprintf("%.0f", pollingDelay.Seconds()))
 
-		return WriteJSON(w, repoEvents, http.StatusOK)
+		return service.WriteJSON(w, repoEvents, http.StatusOK)
 	}
 }

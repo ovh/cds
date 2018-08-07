@@ -10,7 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 )
@@ -190,10 +190,10 @@ func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.Workf
 }
 
 func getNodeRunBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
-	ctx, end := tracing.Span(ctx, "workflow.getNodeRunBuildParameters",
-		tracing.Tag(tracing.TagWorkflow, w.Workflow.Name),
-		tracing.Tag(tracing.TagWorkflowRun, w.Number),
-		tracing.Tag(tracing.TagWorkflowNodeRun, run.ID),
+	ctx, end := observability.Span(ctx, "workflow.getNodeRunBuildParameters",
+		observability.Tag(observability.TagWorkflow, w.Workflow.Name),
+		observability.Tag(observability.TagWorkflowRun, w.Number),
+		observability.Tag(observability.TagWorkflowNodeRun, run.ID),
 	)
 	defer end()
 
@@ -217,7 +217,7 @@ func getNodeRunBuildParameters(ctx context.Context, db gorp.SqlExecutor, store c
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)
 
-	_, next := tracing.Span(ctx, "workflow.interpolate")
+	_, next := observability.Span(ctx, "workflow.interpolate")
 	params = make([]sdk.Parameter, 0, len(tmp))
 	for k, v := range tmp {
 		s, err := interpolate.Do(v, tmp)

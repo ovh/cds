@@ -17,18 +17,19 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
 // VersionHandler returns version of current uservice
-func VersionHandler() Handler {
+func VersionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		s := sdk.Version{
 			Version:      sdk.VERSION,
 			Architecture: runtime.GOARCH,
 			OS:           runtime.GOOS,
 		}
-		return WriteJSON(w, s, http.StatusOK)
+		return service.WriteJSON(w, s, http.StatusOK)
 	}
 }
 
@@ -57,7 +58,7 @@ func getStatusLine(s sdk.MonitoringStatusLine) sdk.MonitoringStatusLine {
 	return s
 }
 
-func (api *API) statusHandler() Handler {
+func (api *API) statusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
 		if api.Router.panicked {
@@ -70,7 +71,7 @@ func (api *API) statusHandler() Handler {
 		}
 
 		mStatus := api.computeGlobalStatus(srvs)
-		return WriteJSON(w, mStatus, status)
+		return service.WriteJSON(w, mStatus, status)
 	}
 }
 
@@ -183,7 +184,7 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 	return r
 }
 
-func (api *API) smtpPingHandler() Handler {
+func (api *API) smtpPingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if getUser(ctx) == nil {
 			return sdk.ErrForbidden
@@ -194,6 +195,6 @@ func (api *API) smtpPingHandler() Handler {
 			message = err.Error()
 		}
 
-		return WriteJSON(w, map[string]string{"message": message}, http.StatusOK)
+		return service.WriteJSON(w, map[string]string{"message": message}, http.StatusOK)
 	}
 }

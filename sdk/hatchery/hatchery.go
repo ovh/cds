@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk/tracingutils"
 	"go.opencensus.io/trace"
 
@@ -214,29 +214,29 @@ func Create(h Interface) error {
 				continue
 			}
 
-			currentCtx := context.WithValue(ctx, tracing.TagWorkflowNodeJobRun, j.ID)
+			currentCtx := context.WithValue(ctx, observability.TagWorkflowNodeJobRun, j.ID)
 			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
 				log.Info("hatchery> enable tracing on job. Headers: %+v", j.Header)
-				currentCtx, _ = tracing.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+				currentCtx, _ = observability.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
 				r, _ := j.Header.Get(sdk.WorkflowRunHeader)
 				w, _ := j.Header.Get(sdk.WorkflowHeader)
 				p, _ := j.Header.Get(sdk.ProjectKeyHeader)
 
-				tracing.Current(currentCtx,
-					tracing.Tag(tracing.TagWorkflow, w),
-					tracing.Tag(tracing.TagWorkflowRun, r),
-					tracing.Tag(tracing.TagProjectKey, p),
-					tracing.Tag(tracing.TagWorkflowNodeJobRun, j.ID),
+				observability.Current(currentCtx,
+					observability.Tag(observability.TagWorkflow, w),
+					observability.Tag(observability.TagWorkflowRun, r),
+					observability.Tag(observability.TagProjectKey, p),
+					observability.Tag(observability.TagWorkflowNodeJobRun, j.ID),
 				)
 			}
 			endTrace := func(reason string) {
 				if reason != "" {
-					tracing.Current(currentCtx,
-						tracing.Tag("reason", reason),
+					observability.Current(currentCtx,
+						observability.Tag("reason", reason),
 					)
 				}
-				tracing.End(currentCtx, nil, nil) // nolint
+				observability.End(currentCtx, nil, nil) // nolint
 			}
 
 			//Check if the jobs is concerned by a pending worker creation

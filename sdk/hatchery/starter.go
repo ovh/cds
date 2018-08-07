@@ -6,7 +6,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -55,7 +55,7 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 	for j := range jobs {
 		// Start a worker for a job
 		if m := j.registerWorkerModel; m == nil {
-			_, end := tracing.Span(j.ctx, "hatchery.workerStarter")
+			_, end := observability.Span(j.ctx, "hatchery.workerStarter")
 
 			//Try to start the worker
 			isRun, err := spawnWorkerForJob(h, j)
@@ -92,7 +92,7 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 }
 
 func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
-	ctx, end := tracing.Span(j.ctx, "hatchery.spawnWorkerForJob")
+	ctx, end := observability.Span(j.ctx, "hatchery.spawnWorkerForJob")
 	defer end()
 
 	log.Debug("hatchery> spawnWorkerForJob> %d", j.id)
@@ -116,7 +116,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		return false, nil
 	}
 
-	_, next := tracing.Span(ctx, "hatchery.QueueJobBook")
+	_, next := observability.Span(ctx, "hatchery.QueueJobBook")
 	if err := h.CDSClient().QueueJobBook(j.isWorkflowJob, j.id); err != nil {
 		next()
 		// perhaps already booked by another hatchery
@@ -160,7 +160,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		},
 	})
 
-	_, next = tracing.Span(ctx, "hatchery.QueueJobSendSpawnInfo")
+	_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo")
 	if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
 		next()
 		log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", j.timestamp, j.id, err)

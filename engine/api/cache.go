@@ -8,10 +8,11 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) postPushCacheHandler() Handler {
+func (api *API) postPushCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -43,7 +44,7 @@ func (api *API) postPushCacheHandler() Handler {
 	}
 }
 
-func (api *API) getPullCacheHandler() Handler {
+func (api *API) getPullCacheHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -88,7 +89,7 @@ func (api *API) getPullCacheHandler() Handler {
 	}
 }
 
-func (api *API) postPushCacheWithTempURLHandler() Handler {
+func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -118,11 +119,11 @@ func (api *API) postPushCacheWithTempURLHandler() Handler {
 		cacheObject.TmpURL = url
 		cacheObject.SecretKey = key
 
-		return WriteJSON(w, cacheObject, http.StatusOK)
+		return service.WriteJSON(w, cacheObject, http.StatusOK)
 	}
 }
 
-func (api *API) getPullCacheWithTempURLHandler() Handler {
+func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -152,6 +153,6 @@ func (api *API) getPullCacheWithTempURLHandler() Handler {
 		cacheObject.TmpURL = url
 		cacheObject.SecretKey = key
 
-		return WriteJSON(w, cacheObject, http.StatusOK)
+		return service.WriteJSON(w, cacheObject, http.StatusOK)
 	}
 }

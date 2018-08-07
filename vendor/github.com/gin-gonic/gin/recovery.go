@@ -22,7 +22,7 @@ var (
 )
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
-func Recovery() HandlerFunc {
+func Recovery() service.HandlerFunc {
 	return RecoveryWithWriter(DefaultErrorWriter)
 }
 

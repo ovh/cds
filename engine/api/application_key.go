@@ -10,11 +10,12 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getKeysInApplicationHandler() Handler {
+func (api *API) getKeysInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -31,11 +32,11 @@ func (api *API) getKeysInApplicationHandler() Handler {
 			return sdk.WrapError(errK, "getKeysInApplicationHandler> Cannot load application keys")
 		}
 
-		return WriteJSON(w, app.Keys, http.StatusOK)
+		return service.WriteJSON(w, app.Keys, http.StatusOK)
 	}
 }
 
-func (api *API) deleteKeyInApplicationHandler() Handler {
+func (api *API) deleteKeyInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := getUser(ctx)
 		vars := mux.Vars(r)
@@ -73,11 +74,11 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 		}
 		event.PublishApplicationKeyDelete(key, *app, keyToDelete, u)
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) addKeyInApplicationHandler() Handler {
+func (api *API) addKeyInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -137,6 +138,6 @@ func (api *API) addKeyInApplicationHandler() Handler {
 
 		event.PublishApplicationKeyAdd(key, *app, newKey, getUser(ctx))
 
-		return WriteJSON(w, newKey, http.StatusOK)
+		return service.WriteJSON(w, newKey, http.StatusOK)
 	}
 }

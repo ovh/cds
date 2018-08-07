@@ -10,7 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
@@ -57,9 +57,9 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 // LoadPipelineByID loads a pipeline from database
 func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pipeline, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "pipeline.LoadPipelineByID",
-		tracing.Tag(tracing.TagPipelineID, pipelineID),
-		tracing.Tag(tracing.TagPipelineDeep, deep),
+	ctx, end = observability.Span(ctx, "pipeline.LoadPipelineByID",
+		observability.Tag(observability.TagPipelineID, pipelineID),
+		observability.Tag(observability.TagPipelineDeep, deep),
 	)
 	defer end()
 
@@ -391,7 +391,7 @@ func updateParamInList(params []sdk.Parameter, paramAction sdk.Parameter) (bool,
 
 // LoadGroupByPipeline load group permission on one pipeline
 func LoadGroupByPipeline(ctx context.Context, db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
-	_, end := tracing.Span(ctx, "pipeline.LoadGroupByPipeline")
+	_, end := observability.Span(ctx, "pipeline.LoadGroupByPipeline")
 	defer end()
 
 	query := `SELECT "group".id,"group".name,pipeline_group.role FROM "group"

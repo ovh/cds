@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/tracingutils"
@@ -167,7 +167,7 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 	spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
 	log.Debug("setup tracing = %v (%v) on request to %s", ok, spanCtx, req.URL.String())
 	if ok {
-		tracing.DefaultFormat.SpanContextToRequest(spanCtx, req)
+		observability.DefaultFormat.SpanContextToRequest(spanCtx, req)
 	}
 
 	req.Header.Set("Connection", "close")

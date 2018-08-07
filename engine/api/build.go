@@ -20,11 +20,12 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) updateStepStatusHandler() Handler {
+func (api *API) updateStepStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		buildID, errr := requestVarInt(r, "id")
 		if errr != nil {
@@ -60,7 +61,7 @@ func (api *API) updateStepStatusHandler() Handler {
 	}
 }
 
-func (api *API) getPipelineBuildTriggeredHandler() Handler {
+func (api *API) getPipelineBuildTriggeredHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -100,11 +101,11 @@ func (api *API) getPipelineBuildTriggeredHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoPipelineBuild, "getPipelineBuildTriggeredHandler> Cannot load pipeline build children: %s", err)
 		}
-		return WriteJSON(w, pbs, http.StatusOK)
+		return service.WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
-func (api *API) deleteBuildHandler() Handler {
+func (api *API) deleteBuildHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -166,7 +167,7 @@ func (api *API) deleteBuildHandler() Handler {
 	}
 }
 
-func (api *API) getBuildStateHandler() Handler {
+func (api *API) getBuildStateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -243,11 +244,11 @@ func (api *API) getBuildStateHandler() Handler {
 		}
 		pb.Translate(r.Header.Get("Accept-Language"))
 
-		return WriteJSON(w, pb, http.StatusOK)
+		return service.WriteJSON(w, pb, http.StatusOK)
 	}
 }
 
-func (api *API) addQueueResultHandler() Handler {
+func (api *API) addQueueResultHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -307,7 +308,7 @@ func (api *API) addQueueResultHandler() Handler {
 	}
 }
 
-func (api *API) getPipelineBuildJobHandler() Handler {
+func (api *API) getPipelineBuildJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -321,11 +322,11 @@ func (api *API) getPipelineBuildJobHandler() Handler {
 			}
 			return sdk.WrapError(err, "getPipelineBuildJobHandler> Unable to load pipeline build job id")
 		}
-		return WriteJSON(w, j, http.StatusOK)
+		return service.WriteJSON(w, j, http.StatusOK)
 	}
 }
 
-func (api *API) takePipelineBuildJobHandler() Handler {
+func (api *API) takePipelineBuildJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -398,11 +399,11 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "takePipelineBuildJobHandler> Cannot commit transaction")
 		}
-		return WriteJSON(w, pbji, http.StatusOK)
+		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
 }
 
-func (api *API) bookPipelineBuildJobHandler() Handler {
+func (api *API) bookPipelineBuildJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -412,11 +413,11 @@ func (api *API) bookPipelineBuildJobHandler() Handler {
 		if _, err := pipeline.BookPipelineBuildJob(api.Cache, id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "bookPipelineBuildJobHandler> job already booked")
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) addSpawnInfosPipelineBuildJobHandler() Handler {
+func (api *API) addSpawnInfosPipelineBuildJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		pbJobID, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -441,7 +442,7 @@ func (api *API) addSpawnInfosPipelineBuildJobHandler() Handler {
 			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
@@ -595,7 +596,7 @@ func loadActionBuildSecrets(db gorp.SqlExecutor, store cache.Store, projectID, a
 	return nil
 }
 
-func (api *API) getQueueHandler() Handler {
+func (api *API) getQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var queue []sdk.PipelineBuildJob
 		var errQ error
@@ -617,11 +618,11 @@ func (api *API) getQueueHandler() Handler {
 			return sdk.WrapError(errQ, "getQueueHandler> Cannot load queue from db: %s", errQ)
 		}
 
-		return WriteJSON(w, queue, http.StatusOK)
+		return service.WriteJSON(w, queue, http.StatusOK)
 	}
 }
 
-func (api *API) addBuildVariableHandler() Handler {
+func (api *API) addBuildVariableHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -691,7 +692,7 @@ func (api *API) addBuildVariableHandler() Handler {
 	}
 }
 
-func (api *API) addBuildTestResultsHandler() Handler {
+func (api *API) addBuildTestResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -781,7 +782,7 @@ func (api *API) addBuildTestResultsHandler() Handler {
 	}
 }
 
-func (api *API) getBuildTestResultsHandler() Handler {
+func (api *API) getBuildTestResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -845,6 +846,6 @@ func (api *API) getBuildTestResultsHandler() Handler {
 			return sdk.WrapError(errltr, "getBuildTestResultsHandler> Cannot load test results")
 		}
 
-		return WriteJSON(w, tests, http.StatusOK)
+		return service.WriteJSON(w, tests, http.StatusOK)
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -27,7 +27,7 @@ const (
 //RunFromHook is the entry point to trigger a workflow from a hook
 func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.RunFromHook")
+	ctx, end = observability.Span(ctx, "workflow.RunFromHook")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -159,7 +159,7 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 		return nil, report, sdk.WrapError(err, "ManualRun> Unable to get next number")
 	}
 
-	ctx, end := tracing.Span(ctx, "workflow.ManualRun", tracing.Tag(tracing.TagWorkflowRun, number))
+	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, number))
 	defer end()
 
 	wr := &sdk.WorkflowRun{

@@ -14,8 +14,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -37,7 +37,7 @@ type PushOption struct {
 
 // CreateFromRepository a workflow from a repository
 func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
-	ctx, end := tracing.Span(ctx, "workflow.CreateFromRepository")
+	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
 	ope, err := createOperationRequest(*w, opts)
@@ -74,7 +74,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 }
 
 func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.User, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
-	ctx, end := tracing.Span(ctx, "workflow.extractWorkflow")
+	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 
 	// Read files

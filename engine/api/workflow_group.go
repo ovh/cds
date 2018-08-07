@@ -10,11 +10,12 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
 // deleteWorkflowGroupHandler delete permission for a group on the workflow
-func (api *API) deleteWorkflowGroupHandler() Handler {
+func (api *API) deleteWorkflowGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -64,12 +65,12 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 
 		event.PublishWorkflowPermissionDelete(key, *wf, oldGp, getUser(ctx))
 
-		return WriteJSON(w, wf, http.StatusOK)
+		return service.WriteJSON(w, wf, http.StatusOK)
 	}
 }
 
 // putWorkflowGroupHandler update permission for a group on the workflow
-func (api *API) putWorkflowGroupHandler() Handler {
+func (api *API) putWorkflowGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -126,12 +127,12 @@ func (api *API) putWorkflowGroupHandler() Handler {
 
 		event.PublishWorkflowPermissionUpdate(key, *wf, gp, oldGp, getUser(ctx))
 
-		return WriteJSON(w, wf, http.StatusOK)
+		return service.WriteJSON(w, wf, http.StatusOK)
 	}
 }
 
 // postWorkflowGroupHandler add permission for a group on the workflow
-func (api *API) postWorkflowGroupHandler() Handler {
+func (api *API) postWorkflowGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -185,6 +186,6 @@ func (api *API) postWorkflowGroupHandler() Handler {
 
 		event.PublishWorkflowPermissionAdd(key, *wf, gp, getUser(ctx))
 
-		return WriteJSON(w, wf, http.StatusOK)
+		return service.WriteJSON(w, wf, http.StatusOK)
 	}
 }

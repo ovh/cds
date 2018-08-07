@@ -37,7 +37,7 @@ func (m *DbMap) TraceOn(prefix string, logger GorpLogger) {
 	}
 }
 
-// TraceOff turns off tracing. It is idempotent.
+// TraceOff turns off observability. It is idempotent.
 func (m *DbMap) TraceOff() {
 	m.logger = nil
 	m.logPrefix = ""

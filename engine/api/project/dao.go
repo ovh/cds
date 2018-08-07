@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -63,7 +63,7 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo str
 // LoadAll returns all projects
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	var end func()
-	_, end = tracing.Span(ctx, "project.LoadAll")
+	_, end = observability.Span(ctx, "project.LoadAll")
 	defer end()
 
 	var query string
@@ -369,7 +369,7 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 
 func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	var end func()
-	_, end = tracing.Span(ctx, "project.load")
+	_, end = observability.Span(ctx, "project.load")
 	defer end()
 
 	dbProj := &dbProject{}

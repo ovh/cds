@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -25,7 +26,7 @@ func (c *Common) ServiceName() string {
 	return c.Common.ServiceName
 }
 
-func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *api.HandlerConfig) (context.Context, error) {
+func (c *Common) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 	if rc.Options["auth"] != "true" {
 		return ctx, nil
 	}
@@ -105,10 +106,11 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
 	r.Handle("/mon/status", r.GET(getStatusHandler(h), api.Auth(false)))
 	r.Handle("/mon/workers", r.GET(getWorkersPoolHandler(h), api.Auth(false)))
+	r.Handle("/mon/metrics", r.GET(observability.StatsHandler, api.Auth(false)))
 }
 
-func getWorkersPoolHandler(h hatchery.Interface) api.HandlerFunc {
-	return func() api.Handler {
+func getWorkersPoolHandler(h hatchery.Interface) service.HandlerFunc {
+	return func() service.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			if h == nil {
 				return nil
@@ -117,13 +119,13 @@ func getWorkersPoolHandler(h hatchery.Interface) api.HandlerFunc {
 			if err != nil {
 				return sdk.WrapError(err, "getWorkersPoolHandler")
 			}
-			return api.WriteJSON(w, pool, http.StatusOK)
+			return service.WriteJSON(w, pool, http.StatusOK)
 		}
 	}
 }
 
-func getStatusHandler(h hatchery.Interface) api.HandlerFunc {
-	return func() api.Handler {
+func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
+	return func() service.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			if h == nil {
 				return nil
@@ -133,7 +135,7 @@ func getStatusHandler(h hatchery.Interface) api.HandlerFunc {
 				return fmt.Errorf("unable to get status from %s", h.Hatchery().Name)
 			}
 			status := srv.Status()
-			return api.WriteJSON(w, status, status.HTTPStatusCode())
+			return service.WriteJSON(w, status, status.HTTPStatusCode())
 		}
 	}
 }

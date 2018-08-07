@@ -11,10 +11,11 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflowv0"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
+func (api *API) migrationApplicationWorkflowCleanHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -77,7 +78,7 @@ func getApplicationFromCDPipeline(tree sdk.CDPipeline, appIDs *map[int64]bool) {
 	}
 }
 
-func (api *API) migrationApplicationWorkflowHandler() Handler {
+func (api *API) migrationApplicationWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := getUser(ctx)
 		vars := mux.Vars(r)
@@ -136,6 +137,6 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		}
 		event.PublishUpdateProject(p, &oldProj, u)
 
-		return WriteJSON(w, wfs, http.StatusOK)
+		return service.WriteJSON(w, wfs, http.StatusOK)
 	}
 }

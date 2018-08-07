@@ -13,25 +13,26 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/token"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getExternalServiceHandler() Handler {
+func (api *API) getExternalServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		typeService := vars["type"]
 
 		for _, s := range api.Config.Services {
 			if s.Type == typeService {
-				return WriteJSON(w, s, http.StatusOK)
+				return service.WriteJSON(w, s, http.StatusOK)
 			}
 		}
 		return sdk.WrapError(sdk.ErrNotFound, "getExternalServiceHandler> Service %s not found", typeService)
 	}
 }
 
-func (api *API) postServiceRegisterHandler() Handler {
+func (api *API) postServiceRegisterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		srv := &sdk.Service{}
 		if err := UnmarshalBody(r, srv); err != nil {
@@ -89,7 +90,7 @@ func (api *API) postServiceRegisterHandler() Handler {
 			return sdk.WrapError(err, "postServiceRegisterHandler")
 		}
 
-		return WriteJSON(w, srv, http.StatusOK)
+		return service.WriteJSON(w, srv, http.StatusOK)
 	}
 }
 

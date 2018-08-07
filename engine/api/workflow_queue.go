@@ -16,18 +16,19 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) postTakeWorkflowJobHandler() Handler {
+func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -59,10 +60,10 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(errl, "postTakeWorkflowJobHandler> Cannot load job nodeJobRunID:%d", id)
 		}
 
-		tracing.Current(ctx,
-			tracing.Tag(tracing.TagWorkflowNodeJobRun, id),
-			tracing.Tag(tracing.TagWorkflowNodeRun, pbj.WorkflowNodeRunID),
-			tracing.Tag(tracing.TagJob, pbj.Job.Action.Name))
+		observability.Current(ctx,
+			observability.Tag(observability.TagWorkflowNodeJobRun, id),
+			observability.Tag(observability.TagWorkflowNodeRun, pbj.WorkflowNodeRunID),
+			observability.Tag(observability.TagJob, pbj.Job.Action.Name))
 
 		// a worker can have only one group
 		groups := getUser(ctx).Groups
@@ -97,7 +98,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
-		return WriteJSON(w, pbji, http.StatusOK)
+		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
 }
 
@@ -189,7 +190,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	return report, nil
 }
 
-func (api *API) postBookWorkflowJobHandler() Handler {
+func (api *API) postBookWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -199,11 +200,11 @@ func (api *API) postBookWorkflowJobHandler() Handler {
 		if _, err := workflow.BookNodeJobRun(api.Cache, id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "postBookWorkflowJobHandler> job already booked")
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) deleteBookWorkflowJobHandler() Handler {
+func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -213,11 +214,11 @@ func (api *API) deleteBookWorkflowJobHandler() Handler {
 		if err := workflow.FreeNodeJobRun(api.Cache, id); err != nil {
 			return sdk.WrapError(err, "deleteBookWorkflowJobHandler> job not booked")
 		}
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) postIncWorkflowJobAttemptHandler() Handler {
+func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -225,7 +226,7 @@ func (api *API) postIncWorkflowJobAttemptHandler() Handler {
 		}
 		h := getHatchery(ctx)
 		if h == nil {
-			return WriteJSON(w, nil, http.StatusUnauthorized)
+			return service.WriteJSON(w, nil, http.StatusUnauthorized)
 		}
 		spawnAttempts, err := workflow.AddNodeJobAttempt(api.mustDB(), id, h.ID)
 		if err != nil {
@@ -281,11 +282,11 @@ func (api *API) postIncWorkflowJobAttemptHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, spawnAttempts, http.StatusOK)
+		return service.WriteJSON(w, spawnAttempts, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowJobHandler() Handler {
+func (api *API) getWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -295,11 +296,11 @@ func (api *API) getWorkflowJobHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobHandler> job not found")
 		}
-		return WriteJSON(w, j, http.StatusOK)
+		return service.WriteJSON(w, j, http.StatusOK)
 	}
 }
 
-func (api *API) postVulnerabilityReportHandler() Handler {
+func (api *API) postVulnerabilityReportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
@@ -338,7 +339,7 @@ func (api *API) postVulnerabilityReportHandler() Handler {
 	}
 }
 
-func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
+func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
@@ -367,7 +368,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobResultHandler() Handler {
+func (api *API) postWorkflowJobResultHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
@@ -383,7 +384,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		defer cancel()
 		dbWithCtx := api.mustDBWithCtx(customCtx)
 
-		_, next := tracing.Span(ctx, "project.LoadProjectByNodeJobRunID")
+		_, next := observability.Span(ctx, "project.LoadProjectByNodeJobRunID")
 		proj, errP := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
 		next()
 		if errP != nil {
@@ -401,8 +402,8 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project from job %d", id)
 		}
 
-		tracing.Current(ctx,
-			tracing.Tag(tracing.TagProjectKey, proj.Key),
+		observability.Current(ctx,
+			observability.Tag(observability.TagProjectKey, proj.Key),
 		)
 
 		report, err := postJobResult(customCtx, api.mustDBWithCtx, api.Cache, proj, getWorker(ctx), &res)
@@ -413,14 +414,14 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
 
 		if len(workflowRuns) > 0 {
-			tracing.Current(ctx,
-				tracing.Tag(tracing.TagWorkflow, workflowRuns[0].Workflow.Name),
+			observability.Current(ctx,
+				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
 			)
 		}
 
 		db := api.mustDB()
 
-		_, next = tracing.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
+		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
 		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, workflowNodeRuns)
 		next()
 
@@ -432,7 +433,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 
 func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap, store cache.Store, proj *sdk.Project, wr *sdk.Worker, res *sdk.Result) (*workflow.ProcessorReport, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "postJobResult")
+	ctx, end = observability.Span(ctx, "postJobResult")
 	defer end()
 
 	//Start the transaction
@@ -448,10 +449,10 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		return nil, sdk.WrapError(errj, "postJobResult> Unable to load node run job %d", res.BuildID)
 	}
 
-	tracing.Current(ctx,
-		tracing.Tag(tracing.TagWorkflowNodeJobRun, res.BuildID),
-		tracing.Tag(tracing.TagWorkflowNodeRun, job.WorkflowNodeRunID),
-		tracing.Tag(tracing.TagJob, job.Job.Action.Name))
+	observability.Current(ctx,
+		observability.Tag(observability.TagWorkflowNodeJobRun, res.BuildID),
+		observability.Tag(observability.TagWorkflowNodeRun, job.WorkflowNodeRunID),
+		observability.Tag(observability.TagJob, job.Job.Action.Name))
 
 	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
 	if errt != nil {
@@ -490,7 +491,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	return report, nil
 }
 
-func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
+func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
@@ -515,7 +516,7 @@ func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobServiceLogsHandler() AsynchronousHandler {
+func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		var logs []sdk.ServiceLog
 		if err := UnmarshalBody(r, &logs); err != nil {
@@ -582,7 +583,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobStepStatusHandler() Handler {
+func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
@@ -671,7 +672,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 	}
 }
 
-func (api *API) countWorkflowJobQueueHandler() Handler {
+func (api *API) countWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until, _ := getSinceUntilLimitHeader(ctx, w, r)
 		groupsID := []int64{}
@@ -688,11 +689,11 @@ func (api *API) countWorkflowJobQueueHandler() Handler {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
 
-		return WriteJSON(w, count, http.StatusOK)
+		return service.WriteJSON(w, count, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowJobQueueHandler() Handler {
+func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until, limit := getSinceUntilLimitHeader(ctx, w, r)
 		groupsID := make([]int64, len(getUser(ctx).Groups))
@@ -713,7 +714,7 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
 
-		return WriteJSON(w, jobs, http.StatusOK)
+		return service.WriteJSON(w, jobs, http.StatusOK)
 	}
 }
 
@@ -739,7 +740,7 @@ func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *htt
 	return since, until, limit
 }
 
-func (api *API) postWorkflowJobCoverageResultsHandler() Handler {
+func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Load and lock Existing workflow Run Job
 		id, errI := requestVarInt(r, "permID")
@@ -787,7 +788,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobTestsResultsHandler() Handler {
+func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal into results
 		var new venom.Tests
@@ -856,7 +857,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobTagsHandler() Handler {
+func (api *API) postWorkflowJobTagsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
@@ -895,7 +896,7 @@ func (api *API) postWorkflowJobTagsHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobVariableHandler() Handler {
+func (api *API) postWorkflowJobVariableHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {

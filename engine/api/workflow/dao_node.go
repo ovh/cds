@@ -12,8 +12,8 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -286,13 +286,13 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 
 // loadNode loads a node in a workflow
 func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNode, error) {
-	c, end := tracing.Span(c, "workflow.loadNode",
-		tracing.Tag(tracing.TagWorkflow, w.Name),
-		tracing.Tag(tracing.TagProjectKey, proj.Key),
-		tracing.Tag("with_pipeline", opts.DeepPipeline),
-		tracing.Tag("only_root", opts.OnlyRootNode),
-		tracing.Tag("with_base64_keys", opts.Base64Keys),
-		tracing.Tag("without_node", opts.WithoutNode),
+	c, end := observability.Span(c, "workflow.loadNode",
+		observability.Tag(observability.TagWorkflow, w.Name),
+		observability.Tag(observability.TagProjectKey, proj.Key),
+		observability.Tag("with_pipeline", opts.DeepPipeline),
+		observability.Tag("only_root", opts.OnlyRootNode),
+		observability.Tag("with_base64_keys", opts.Base64Keys),
+		observability.Tag("without_node", opts.WithoutNode),
 	)
 	defer end()
 

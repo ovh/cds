@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -16,7 +17,7 @@ func muxVar(r *http.Request, s string) string {
 	return vars[s]
 }
 
-func (s *Service) postOperationHandler() api.Handler {
+func (s *Service) postOperationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		uuid := sdk.UUID()
 		op := new(sdk.Operation)
@@ -35,17 +36,17 @@ func (s *Service) postOperationHandler() api.Handler {
 			return err
 		}
 
-		return api.WriteJSON(w, op, http.StatusAccepted)
+		return service.WriteJSON(w, op, http.StatusAccepted)
 	}
 }
 
-func (s *Service) getOperationsHandler() api.Handler {
+func (s *Service) getOperationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		uuid := muxVar(r, "uuid")
 
 		op := s.dao.loadOperation(uuid)
 
-		return api.WriteJSON(w, op, http.StatusOK)
+		return service.WriteJSON(w, op, http.StatusOK)
 	}
 }
 
@@ -55,9 +56,9 @@ func (s *Service) Status() sdk.MonitoringStatus {
 	return m
 }
 
-func (s *Service) getStatusHandler() api.Handler {
+func (s *Service) getStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
-		return api.WriteJSON(w, s.Status(), status)
+		return service.WriteJSON(w, s.Status(), status)
 	}
 }

@@ -16,10 +16,11 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -132,10 +133,10 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	if runs == nil {
 		runs = []sdk.WorkflowRun{}
 	}
-	return WriteJSON(w, runs, code)
+	return service.WriteJSON(w, runs, code)
 }
 
-func (api *API) getWorkflowAllRunsHandler() Handler {
+func (api *API) getWorkflowAllRunsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -147,7 +148,7 @@ func (api *API) getWorkflowAllRunsHandler() Handler {
 	}
 }
 
-func (api *API) getWorkflowRunsHandler() Handler {
+func (api *API) getWorkflowRunsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -161,7 +162,7 @@ func (api *API) getWorkflowRunsHandler() Handler {
 }
 
 // getWorkflowRunNumHandler returns the last run number for the given workflow
-func (api *API) getWorkflowRunNumHandler() Handler {
+func (api *API) getWorkflowRunNumHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -172,12 +173,12 @@ func (api *API) getWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunNumHandler> Cannot load current run num")
 		}
 
-		return WriteJSON(w, sdk.WorkflowRunNumber{Num: num}, http.StatusOK)
+		return service.WriteJSON(w, sdk.WorkflowRunNumber{Num: num}, http.StatusOK)
 	}
 }
 
 // postWorkflowRunNumHandler updates the current run number for the given workflow
-func (api *API) postWorkflowRunNumHandler() Handler {
+func (api *API) postWorkflowRunNumHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -224,11 +225,11 @@ func (api *API) postWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(errDb, "postWorkflowRunNumHandler> ")
 		}
 
-		return WriteJSON(w, m, http.StatusOK)
+		return service.WriteJSON(w, m, http.StatusOK)
 	}
 }
 
-func (api *API) getLatestWorkflowRunHandler() Handler {
+func (api *API) getLatestWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -238,11 +239,11 @@ func (api *API) getLatestWorkflowRunHandler() Handler {
 			return sdk.WrapError(err, "getLatestWorkflowRunHandler> Unable to load last workflow run")
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, run, http.StatusOK)
+		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
 
-func (api *API) resyncWorkflowRunHandler() Handler {
+func (api *API) resyncWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -274,11 +275,11 @@ func (api *API) resyncWorkflowRunHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "resyncWorkflowRunHandler> Cannot commit transaction")
 		}
-		return WriteJSON(w, run, http.StatusOK)
+		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowRunHandler() Handler {
+func (api *API) getWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -298,11 +299,11 @@ func (api *API) getWorkflowRunHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load workflow %s run number %d", name, number)
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, run, http.StatusOK)
+		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
 
-func (api *API) stopWorkflowRunHandler() Handler {
+func (api *API) stopWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -330,7 +331,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, proj.Key)
 
-		return WriteJSON(w, run, http.StatusOK)
+		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -384,7 +385,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	return report, nil
 }
 
-func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
+func (api *API) getWorkflowNodeRunHistoryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -407,11 +408,11 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 		if !ok {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowNodeRunHistoryHandler")
 		}
-		return WriteJSON(w, nodeRuns, http.StatusOK)
+		return service.WriteJSON(w, nodeRuns, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowCommitsHandler() Handler {
+func (api *API) getWorkflowCommitsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -455,7 +456,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		}
 
 		if nodeCtx == nil || nodeCtx.Application == nil {
-			return WriteJSON(w, []sdk.VCSCommit{}, http.StatusOK)
+			return service.WriteJSON(w, []sdk.VCSCommit{}, http.StatusOK)
 		}
 
 		if wfRun == nil {
@@ -485,11 +486,11 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits: %v", errC)
 		}
 
-		return WriteJSON(w, commits, http.StatusOK)
+		return service.WriteJSON(w, commits, http.StatusOK)
 	}
 }
 
-func (api *API) stopWorkflowNodeRunHandler() Handler {
+func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -522,7 +523,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
 
-		return WriteJSON(w, nodeRun, http.StatusOK)
+		return service.WriteJSON(w, nodeRun, http.StatusOK)
 	}
 }
 
@@ -562,7 +563,7 @@ func stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	return report, nil
 }
 
-func (api *API) getWorkflowNodeRunHandler() Handler {
+func (api *API) getWorkflowNodeRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -581,20 +582,20 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 		}
 
 		run.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, run, http.StatusOK)
+		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
 
-func (api *API) postWorkflowRunHandler() Handler {
+func (api *API) postWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 		u := getUser(ctx)
 
-		tracing.Current(ctx, tracing.Tag(tracing.TagWorkflow, name))
+		observability.Current(ctx, observability.Tag(observability.TagWorkflow, name))
 
-		_, next := tracing.Span(ctx, "project.Load")
+		_, next := observability.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures,
@@ -616,7 +617,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		var asCodeInfosMsg []sdk.Message
 		if opts.Number != nil {
 			var errlr error
-			_, next := tracing.Span(ctx, "workflow.LoadRun")
+			_, next := observability.Span(ctx, "workflow.LoadRun")
 			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
 			next()
 			if errlr != nil {
@@ -703,12 +704,12 @@ func (api *API) postWorkflowRunHandler() Handler {
 			wr = &workflowRuns[0]
 			wr.Translate(r.Header.Get("Accept-Language"))
 		}
-		return WriteJSON(w, wr, http.StatusAccepted)
+		return service.WriteJSON(w, wr, http.StatusAccepted)
 	}
 }
 
 func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) (*workflow.ProcessorReport, error) {
-	ctx, end := tracing.Span(ctx, "api.startWorkflowRun")
+	ctx, end := observability.Span(ctx, "api.startWorkflowRun")
 	defer end()
 
 	report := new(workflow.ProcessorReport)
@@ -819,7 +820,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 
 func runFromNode(ctx context.Context, db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHandlerOption, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, u *sdk.User, fromNode *sdk.WorkflowNode) (*workflow.ProcessorReport, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "runFromNode")
+	ctx, end = observability.Span(ctx, "runFromNode")
 	defer end()
 
 	tx, errb := db.Begin()
@@ -865,7 +866,7 @@ func runFromNode(ctx context.Context, db *gorp.DbMap, store cache.Store, opts sd
 	return report, nil
 }
 
-func (api *API) downloadworkflowArtifactDirectHandler() Handler {
+func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		hash := vars["hash"]
@@ -895,7 +896,7 @@ func (api *API) downloadworkflowArtifactDirectHandler() Handler {
 	}
 }
 
-func (api *API) getDownloadArtifactHandler() Handler {
+func (api *API) getDownloadArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -945,7 +946,7 @@ func (api *API) getDownloadArtifactHandler() Handler {
 	}
 }
 
-func (api *API) getWorkflowRunArtifactsHandler() Handler {
+func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -986,11 +987,11 @@ func (api *API) getWorkflowRunArtifactsHandler() Handler {
 			arts = append(arts, runs[0].Artifacts...)
 		}
 
-		return WriteJSON(w, arts, http.StatusOK)
+		return service.WriteJSON(w, arts, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobServiceLogsHandler() Handler {
+func (api *API) getWorkflowNodeRunJobServiceLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		runJobID, errJ := requestVarInt(r, "runJobId")
 		if errJ != nil {
@@ -1003,11 +1004,11 @@ func (api *API) getWorkflowNodeRunJobServiceLogsHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowNodeRunJobServiceLogsHandler> cannot load service logs for node run job id %d", runJobID)
 		}
 
-		return WriteJSON(w, logsServices, http.StatusOK)
+		return service.WriteJSON(w, logsServices, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
+func (api *API) getWorkflowNodeRunJobStepHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -1073,11 +1074,11 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 			StepLogs: *ls,
 		}
 
-		return WriteJSON(w, result, http.StatusOK)
+		return service.WriteJSON(w, result, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowRunTagsHandler() Handler {
+func (api *API) getWorkflowRunTagsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -1088,11 +1089,11 @@ func (api *API) getWorkflowRunTagsHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunTagsHandler> Error")
 		}
 
-		return WriteJSON(w, res, http.StatusOK)
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
-func (api *API) postResyncVCSWorkflowRunHandler() Handler {
+func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		db := api.mustDB()
 		vars := mux.Vars(r)

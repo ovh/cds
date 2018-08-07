@@ -9,13 +9,14 @@ import (
 
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/token"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
 // generateTokenHandler allows a user to generate a token associated to a group permission
 // and used by worker to take action from API.
 // User generating the token needs to be admin of given group
-func (api *API) generateTokenHandler() Handler {
+func (api *API) generateTokenHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
@@ -60,11 +61,11 @@ func (api *API) generateTokenHandler() Handler {
 			Creator:     getUser(ctx).Fullname,
 			GroupName:   groupName,
 		}
-		return WriteJSON(w, token, http.StatusOK)
+		return service.WriteJSON(w, token, http.StatusOK)
 	}
 }
 
-func (api *API) getGroupTokenListHandler() Handler {
+func (api *API) getGroupTokenListHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
@@ -75,7 +76,7 @@ func (api *API) getGroupTokenListHandler() Handler {
 		}
 
 		if !isAdmin {
-			return WriteJSON(w, nil, http.StatusForbidden)
+			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		tokens, err := group.LoadTokens(api.mustDB(), groupName)
@@ -83,11 +84,11 @@ func (api *API) getGroupTokenListHandler() Handler {
 			return sdk.WrapError(err, "getGroupTokenListHandler> cannot load group '%s'", groupName)
 		}
 
-		return WriteJSON(w, tokens, http.StatusOK)
+		return service.WriteJSON(w, tokens, http.StatusOK)
 	}
 }
 
-func (api *API) deleteTokenHandler() Handler {
+func (api *API) deleteTokenHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
@@ -102,13 +103,13 @@ func (api *API) deleteTokenHandler() Handler {
 		}
 
 		if !isGroupAdmin {
-			return WriteJSON(w, nil, http.StatusForbidden)
+			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		if err := token.Delete(api.mustDB(), tokenID); err != nil {
 			return sdk.WrapError(err, "deleteTokenHandler> cannot load delete token id %d", tokenID)
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }

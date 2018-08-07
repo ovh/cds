@@ -12,8 +12,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -146,7 +146,7 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 //LoadAndLockNodeRunByID load and lock a specific node run on a workflow
 func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, wait bool) (*sdk.WorkflowNodeRun, error) {
 	var end func()
-	_, end = tracing.Span(ctx, "workflow.LoadAndLockNodeRunByID")
+	_, end = observability.Span(ctx, "workflow.LoadAndLockNodeRunByID")
 	defer end()
 
 	var rr = NodeRun{}

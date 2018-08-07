@@ -18,11 +18,12 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getProjectsHandler() Handler {
+func (api *API) getProjectsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		withApplications := FormBool(r, "application")
 		withWorkflows := FormBool(r, "workflow")
@@ -76,7 +77,7 @@ func (api *API) getProjectsHandler() Handler {
 				projects = res
 			}
 
-			return WriteJSON(w, projects, http.StatusOK)
+			return service.WriteJSON(w, projects, http.StatusOK)
 		}
 
 		var filterByRepoFunc = func(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *sdk.User) error {
@@ -128,11 +129,11 @@ func (api *API) getProjectsHandler() Handler {
 			projects = res
 		}
 
-		return WriteJSON(w, projects, http.StatusOK)
+		return service.WriteJSON(w, projects, http.StatusOK)
 	}
 }
 
-func (api *API) updateProjectHandler() Handler {
+func (api *API) updateProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -167,11 +168,11 @@ func (api *API) updateProjectHandler() Handler {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 		event.PublishUpdateProject(proj, p, getUser(ctx))
-		return WriteJSON(w, proj, http.StatusOK)
+		return service.WriteJSON(w, proj, http.StatusOK)
 	}
 }
 
-func (api *API) getProjectHandler() Handler {
+func (api *API) getProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -244,11 +245,11 @@ func (api *API) getProjectHandler() Handler {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) addProjectHandler() Handler {
+func (api *API) addProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Unmarshal data
 		p := &sdk.Project{}
@@ -394,11 +395,11 @@ func (api *API) addProjectHandler() Handler {
 
 		event.PublishAddProject(p, getUser(ctx))
 
-		return WriteJSON(w, p, http.StatusCreated)
+		return service.WriteJSON(w, p, http.StatusCreated)
 	}
 }
 
-func (api *API) deleteProjectHandler() Handler {
+func (api *API) deleteProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)

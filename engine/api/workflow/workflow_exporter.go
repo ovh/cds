@@ -12,15 +12,15 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
 // Export a workflow
 func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
-	ctx, end := tracing.Span(ctx, "workflow.Export")
+	ctx, end := observability.Span(ctx, "workflow.Export")
 	defer end()
 
 	wf, errload := Load(ctx, db, cache, proj, name, u, LoadOptions{})
@@ -53,7 +53,7 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, withPermissions bo
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
 func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer) error {
-	ctx, end := tracing.Span(ctx, "workflow.Pull")
+	ctx, end := observability.Span(ctx, "workflow.Pull")
 	defer end()
 
 	options := LoadOptions{

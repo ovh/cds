@@ -3,19 +3,17 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -29,42 +27,12 @@ func (api *API) deleteUserPermissionCache(ctx context.Context, store cache.Store
 	}
 }
 
-// Accepted is a helper function used by asynchronous handlers
-func Accepted(w http.ResponseWriter) error {
-	const msg = "request accepted"
-	w.Header().Add("Content-Type", "text/plain")
-	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(msg)))
-	w.WriteHeader(http.StatusAccepted)
-	w.Write([]byte(msg))
-	return nil
-}
-
-// Write is a helper function
-func Write(w http.ResponseWriter, btes []byte, status int, contentType string) error {
-	w.Header().Add("Content-Type", contentType)
-	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(btes)))
-	writeProcessTime(w)
-	w.WriteHeader(status)
-	w.Write(btes)
-	return nil
-}
-
-// WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
-func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
-	b, e := json.Marshal(data)
-	if e != nil {
-		return sdk.WrapError(e, "WriteJSON> unable to marshal : %s", e)
-	}
-
-	return Write(w, b, status, "application/json")
-}
-
 // writeNoContentPostMiddleware writes StatusNoContent (204) for each response with No Header Content-Type
 // this is a PostMiddlewaare, launch if there no error in handler.
 // If there is no Content-Type, it's because there is no body return. In CDS, we
-// always use WriteJSON to send body or explicitly write Content-TYpe as application/octet-stream
+// always use service.WriteJSON to send body or explicitly write Content-TYpe as application/octet-stream
 // So, if there is No Content-Type, we return 204 with content type to json
-func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
 	for headerName := range w.Header() {
 		if headerName == "Content-Type" {
 			return ctx, nil
@@ -73,20 +41,10 @@ func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, re
 			return ctx, nil
 		}
 	}
-	writeProcessTime(w)
+	service.WriteProcessTime(w)
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 	return ctx, nil
-}
-
-func writeProcessTime(w http.ResponseWriter) {
-	if h := w.Header().Get(cdsclient.ResponseAPINanosecondsTimeHeader); h != "" {
-		start, err := strconv.ParseInt(h, 10, 64)
-		if err != nil {
-			log.Error("writeProcessTime> error on ParseInt header ResponseAPINanosecondsTimeHeader: %s", err)
-		}
-		w.Header().Add(cdsclient.ResponseProcessTimeHeader, fmt.Sprintf("%d", time.Now().UnixNano()-start))
-	}
 }
 
 // UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.
@@ -103,11 +61,11 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 }
 
 // GetRoute returns the routes given a handler
-func (r *Router) GetRoute(method string, handler HandlerFunc, vars map[string]string) string {
+func (r *Router) GetRoute(method string, handler service.HandlerFunc, vars map[string]string) string {
 	p1 := reflect.ValueOf(handler()).Pointer()
 	var url string
 	for uri, routerConfig := range r.mapRouterConfigs {
-		rc := routerConfig.config[method]
+		rc := routerConfig.Config[method]
 		if rc == nil {
 			continue
 		}

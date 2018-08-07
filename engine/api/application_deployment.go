@@ -10,11 +10,12 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getApplicationDeploymentStrategiesConfigHandler() Handler {
+func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -25,11 +26,11 @@ func (api *API) getApplicationDeploymentStrategiesConfigHandler() Handler {
 			return sdk.WrapError(err, "getApplicationDeploymentStrategiesConfigHandler")
 		}
 
-		return WriteJSON(w, app.DeploymentStrategies, http.StatusOK)
+		return service.WriteJSON(w, app.DeploymentStrategies, http.StatusOK)
 	}
 }
 
-func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
+func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -101,11 +102,11 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() Handler {
 			log.Info("postApplicationDeploymentStrategyConfigHandler> application %s configuration successfully updated by provider %s", appName, *p)
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) deleteApplicationDeploymentStrategyConfigHandler() Handler {
+func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -166,11 +167,11 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() Handler {
 			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to commit tx")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationDeploymentStrategyConfigHandler() Handler {
+func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -195,6 +196,6 @@ func (api *API) getApplicationDeploymentStrategyConfigHandler() Handler {
 			return sdk.ErrNotFound
 		}
 
-		return WriteJSON(w, cfg, http.StatusOK)
+		return service.WriteJSON(w, cfg, http.StatusOK)
 	}
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /*
-Package trace contains support for OpenCensus distributed tracing.
+Package trace contains support for OpenCensus distributed observability.
 
 The following assumes a basic familiarity with OpenCensus concepts.
 See http://opencensus.io

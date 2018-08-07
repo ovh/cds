@@ -15,9 +15,9 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/secret"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -98,9 +98,9 @@ func (r *ProcessorReport) Errors() []error {
 // the dbFunc parameter is only used to send status to the repository manager
 func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.UpdateNodeJobRunStatus",
-		tracing.Tag(tracing.TagWorkflowNodeJobRun, job.ID),
-		tracing.Tag("workflow_node_run_job_status", status),
+	ctx, end = observability.Span(ctx, "workflow.UpdateNodeJobRunStatus",
+		observability.Tag(observability.TagWorkflowNodeJobRun, job.ID),
+		observability.Tag("workflow_node_run_job_status", status),
 	)
 	defer end()
 
@@ -108,7 +108,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
-	_, next := tracing.Span(ctx, "workflow.LoadRunByID")
+	_, next := observability.Span(ctx, "workflow.LoadRunByID")
 	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
 	next()
 	if errLoad != nil {
@@ -139,7 +139,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		job.Done = time.Now()
 		job.Status = status.String()
 
-		_, next := tracing.Span(ctx, "workflow.LoadRunByID")
+		_, next := observability.Span(ctx, "workflow.LoadRunByID")
 		wf, errLoadWf := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{})
 		next()
 		if errLoadWf != nil {
@@ -173,7 +173,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
-		_, next := tracing.Span(ctx, "workflow.LoadNodeRunByID")
+		_, next := observability.Span(ctx, "workflow.LoadNodeRunByID")
 		nodeRun, errNR := LoadNodeRunByID(db, node.ID, LoadRunOptions{})
 		next()
 
@@ -186,7 +186,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 	var errReport error
 	report, errReport = report.Merge(execute(ctx, db, store, proj, node))
 
-	_, next = tracing.Span(ctx, "workflow.LoadRunByID")
+	_, next = observability.Span(ctx, "workflow.LoadRunByID")
 	wr, err := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true, WithTests: true})
 	next()
 	if err != nil {
@@ -235,7 +235,7 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 // TakeNodeJobRun Take an a job run for update
 func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, *ProcessorReport, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.TakeNodeJobRun")
+	ctx, end = observability.Span(ctx, "workflow.TakeNodeJobRun")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -595,7 +595,7 @@ func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.S
 // RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
 func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.RestartWorkflowNodeJob")
+	ctx, end = observability.Span(ctx, "workflow.RestartWorkflowNodeJob")
 	defer end()
 
 	for iS := range wNodeJob.Job.StepStatus {

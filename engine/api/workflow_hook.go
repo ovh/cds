@@ -9,21 +9,22 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getWorkflowHooksHandler() Handler {
+func (api *API) getWorkflowHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		hooks, err := workflow.LoadAllHooks(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHooksHandler")
 		}
 
-		return WriteJSON(w, hooks, http.StatusOK)
+		return service.WriteJSON(w, hooks, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowHookModelsHandler() Handler {
+func (api *API) getWorkflowHookModelsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -112,11 +113,11 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, models, http.StatusOK)
+		return service.WriteJSON(w, models, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowHookModelHandler() Handler {
+func (api *API) getWorkflowHookModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["model"]
@@ -124,11 +125,11 @@ func (api *API) getWorkflowHookModelHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHookModelHandler")
 		}
-		return WriteJSON(w, m, http.StatusOK)
+		return service.WriteJSON(w, m, http.StatusOK)
 	}
 }
 
-func (api *API) postWorkflowHookModelHandler() Handler {
+func (api *API) postWorkflowHookModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := &sdk.WorkflowHookModel{}
 		if err := UnmarshalBody(r, m); err != nil {
@@ -149,11 +150,11 @@ func (api *API) postWorkflowHookModelHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowHookModelHandler> Unable to commit transaction")
 		}
 
-		return WriteJSON(w, m, http.StatusCreated)
+		return service.WriteJSON(w, m, http.StatusCreated)
 	}
 }
 
-func (api *API) putWorkflowHookModelHandler() Handler {
+func (api *API) putWorkflowHookModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := &sdk.WorkflowHookModel{}
 		if err := UnmarshalBody(r, m); err != nil {
@@ -175,6 +176,6 @@ func (api *API) putWorkflowHookModelHandler() Handler {
 			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to commit transaction")
 		}
 
-		return WriteJSON(w, m, http.StatusOK)
+		return service.WriteJSON(w, m, http.StatusOK)
 	}
 }

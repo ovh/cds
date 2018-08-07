@@ -12,7 +12,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -52,7 +52,7 @@ func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 
 // UpdateWorkflowRun updates in table "workflow_run""
 func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
-	_, end := tracing.Span(ctx, "workflow.UpdateWorkflowRun")
+	_, end := observability.Span(ctx, "workflow.UpdateWorkflowRun")
 	defer end()
 
 	wr.LastModified = time.Now()

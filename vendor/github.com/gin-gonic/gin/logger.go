@@ -24,7 +24,7 @@ var (
 	reset   = string([]byte{27, 91, 48, 109})
 )
 
-func ErrorLogger() HandlerFunc {
+func ErrorLogger() service.HandlerFunc {
 	return ErrorLoggerT(ErrorTypeAny)
 }
 
@@ -40,7 +40,7 @@ func ErrorLoggerT(typ ErrorType) HandlerFunc {
 
 // Logger instances a Logger middleware that will write the logs to gin.DefaultWriter
 // By default gin.DefaultWriter = os.Stdout
-func Logger() HandlerFunc {
+func Logger() service.HandlerFunc {
 	return LoggerWithWriter(DefaultWriter)
 }
 

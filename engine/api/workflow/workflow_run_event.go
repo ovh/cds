@@ -11,8 +11,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -60,9 +60,9 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 
 // ResyncCommitStatus resync commit status for a workflow run
 func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
-	_, end := tracing.Span(ctx, "workflow.resyncCommitStatus",
-		tracing.Tag(tracing.TagWorkflow, wr.Workflow.Name),
-		tracing.Tag(tracing.TagWorkflowRun, wr.Number),
+	_, end := observability.Span(ctx, "workflow.resyncCommitStatus",
+		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
+		observability.Tag(observability.TagWorkflowRun, wr.Number),
 	)
 	defer end()
 

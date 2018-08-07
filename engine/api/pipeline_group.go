@@ -15,11 +15,12 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-func (api *API) updateGroupRoleOnPipelineHandler() Handler {
+func (api *API) updateGroupRoleOnPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -87,11 +88,11 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 		if err := pipeline.LoadGroupByPipeline(context.TODO(), api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s", p.Name)
 		}
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) addGroupInPipelineHandler() Handler {
+func (api *API) addGroupInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -146,11 +147,11 @@ func (api *API) addGroupInPipelineHandler() Handler {
 		groupPermission.Group = *g
 		event.PublishPipelinePermissionAdd(key, p.Name, groupPermission, getUser(ctx))
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) importGroupsInPipelineHandler() Handler {
+func (api *API) importGroupsInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -265,11 +266,11 @@ func (api *API) importGroupsInPipelineHandler() Handler {
 			return sdk.WrapError(err, "importGroupsInPipelineHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, pip, http.StatusOK)
+		return service.WriteJSON(w, pip, http.StatusOK)
 	}
 }
 
-func (api *API) deleteGroupFromPipelineHandler() Handler {
+func (api *API) deleteGroupFromPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -311,6 +312,6 @@ func (api *API) deleteGroupFromPipelineHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot load groups")
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }

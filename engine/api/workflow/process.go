@@ -14,8 +14,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
@@ -25,9 +25,9 @@ import (
 // It contains all the logic for triggers and joins processing.
 func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.processWorkflowRun",
-		tracing.Tag(tracing.TagWorkflowRun, w.Number),
-		tracing.Tag(tracing.TagWorkflow, w.Workflow.Name),
+	ctx, end = observability.Span(ctx, "workflow.processWorkflowRun",
+		observability.Tag(observability.TagWorkflowRun, w.Number),
+		observability.Tag(observability.TagWorkflow, w.Workflow.Name),
 	)
 	defer end()
 
@@ -39,9 +39,9 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	w.Header.Set(sdk.ProjectKeyHeader, proj.Key)
 
 	// Push data in header to allow tracing
-	if tracing.Current(ctx).SpanContext().IsSampled() {
+	if observability.Current(ctx).SpanContext().IsSampled() {
 		w.Header.Set(tracingutils.SampledHeader, "1")
-		w.Header.Set(tracingutils.TraceIDHeader, fmt.Sprintf("%v", tracing.Current(ctx).SpanContext().TraceID))
+		w.Header.Set(tracingutils.TraceIDHeader, fmt.Sprintf("%v", observability.Current(ctx).SpanContext().TraceID))
 	}
 
 	report := new(ProcessorReport)
@@ -309,7 +309,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	// the map of workflow node runs of the workflow run to get the right statuses
 	// After resync, recompute all status counter compute the workflow status
 	// All of this is useful to get the right workflow status is the last node status is skipped
-	_, next := tracing.Span(ctx, "workflow.syncNodeRuns")
+	_, next := observability.Span(ctx, "workflow.syncNodeRuns")
 	if err := syncNodeRuns(db, w, LoadRunOptions{}); err != nil {
 		next()
 		return report, false, sdk.WrapError(err, "processWorkflowRun> Unable to sync workflow node runs")
@@ -349,10 +349,10 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.processWorkflowNodeRun",
-		tracing.Tag(tracing.TagWorkflow, w.Workflow.Name),
-		tracing.Tag(tracing.TagWorkflowRun, w.Number),
-		tracing.Tag(tracing.TagWorkflowNode, n.Name),
+	ctx, end = observability.Span(ctx, "workflow.processWorkflowNodeRun",
+		observability.Tag(observability.TagWorkflow, w.Workflow.Name),
+		observability.Tag(observability.TagWorkflowRun, w.Number),
+		observability.Tag(observability.TagWorkflowNode, n.Name),
 	)
 	defer end()
 
@@ -413,7 +413,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 
 		//Merge the payloads from all the sources
-		_, next := tracing.Span(ctx, "workflow.processWorkflowNodeRun.mergePayload")
+		_, next := observability.Span(ctx, "workflow.processWorkflowNodeRun.mergePayload")
 		for _, r := range runs {
 			e := dump.NewDefaultEncoder(new(bytes.Buffer))
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
@@ -516,7 +516,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	// Inherit parameter from parent job
 	if len(sourceNodeRuns) > 0 {
-		_, next := tracing.Span(ctx, "workflow.getParentParameters")
+		_, next := observability.Span(ctx, "workflow.getParentParameters")
 		parentsParams, errPP := getParentParameters(db, w, run, sourceNodeRuns, runPayload)
 		next()
 		if errPP != nil {

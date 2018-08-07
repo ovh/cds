@@ -8,17 +8,18 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) downloadsHandler() Handler {
+func (api *API) downloadsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		downloads := sdk.GetStaticDownloadsWithAvailability(api.Config.Directories.Download)
-		return WriteJSON(w, downloads, http.StatusAccepted)
+		return service.WriteJSON(w, downloads, http.StatusAccepted)
 	}
 }
 
-func (api *API) downloadHandler() Handler {
+func (api *API) downloadHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]

@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/service"
 
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
@@ -42,7 +43,7 @@ func loadDestEnvFromRunRequest(ctx context.Context, db *gorp.DbMap, request *sdk
 	return envDest, nil
 }
 
-func (api *API) runPipelineWithLastParentHandler() Handler {
+func (api *API) runPipelineWithLastParentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -265,10 +266,10 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 		}
 	}()
 
-	return WriteJSON(w, pb, http.StatusOK)
+	return service.WriteJSON(w, pb, http.StatusOK)
 }
 
-func (api *API) runPipelineHandler() Handler {
+func (api *API) runPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var request sdk.RunRequest
 		if err := UnmarshalBody(r, &request); err != nil {
@@ -279,7 +280,7 @@ func (api *API) runPipelineHandler() Handler {
 	}
 }
 
-func (api *API) updatePipelineHandler() Handler {
+func (api *API) updatePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -327,11 +328,11 @@ func (api *API) updatePipelineHandler() Handler {
 
 		event.PublishPipelineUpdate(key, p.Name, oldName, getUser(ctx))
 
-		return WriteJSON(w, pipelineDB, http.StatusOK)
+		return service.WriteJSON(w, pipelineDB, http.StatusOK)
 	}
 }
 
-func (api *API) postPipelineRollbackHandler() Handler {
+func (api *API) postPipelineRollbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -391,11 +392,11 @@ func (api *API) postPipelineRollbackHandler() Handler {
 
 		event.PublishPipelineUpdate(key, audit.Pipeline.Name, name, u)
 
-		return WriteJSON(w, *audit.Pipeline, http.StatusOK)
+		return service.WriteJSON(w, *audit.Pipeline, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationUsingPipelineHandler() Handler {
+func (api *API) getApplicationUsingPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -411,11 +412,11 @@ func (api *API) getApplicationUsingPipelineHandler() Handler {
 			return sdk.WrapError(err, "getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s", name)
 		}
 
-		return WriteJSON(w, applications, http.StatusOK)
+		return service.WriteJSON(w, applications, http.StatusOK)
 	}
 }
 
-func (api *API) addPipelineHandler() Handler {
+func (api *API) addPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -484,11 +485,11 @@ func (api *API) addPipelineHandler() Handler {
 
 		p.Permission = permission.PermissionReadWriteExecute
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelineAuditHandler() Handler {
+func (api *API) getPipelineAuditHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -498,11 +499,11 @@ func (api *API) getPipelineAuditHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getPipelineAuditHandler> Cannot load pipeline audit")
 		}
-		return WriteJSON(w, audits, http.StatusOK)
+		return service.WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelineHandler() Handler {
+func (api *API) getPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -547,17 +548,17 @@ func (api *API) getPipelineHandler() Handler {
 			p.Usage.Environments = envs
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelineTypeHandler() Handler {
+func (api *API) getPipelineTypeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, sdk.AvailablePipelineType, http.StatusOK)
+		return service.WriteJSON(w, sdk.AvailablePipelineType, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelinesHandler() Handler {
+func (api *API) getPipelinesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -579,11 +580,11 @@ func (api *API) getPipelinesHandler() Handler {
 			return err
 		}
 
-		return WriteJSON(w, pip, http.StatusOK)
+		return service.WriteJSON(w, pip, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelineHistoryHandler() Handler {
+func (api *API) getPipelineHistoryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -667,11 +668,11 @@ func (api *API) getPipelineHistoryHandler() Handler {
 			return sdk.WrapError(errl, "getPipelineHistoryHandler> cannot load pipeline %s history", p.Name)
 		}
 
-		return WriteJSON(w, pbs, http.StatusOK)
+		return service.WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
-func (api *API) deletePipelineHandler() Handler {
+func (api *API) deletePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -729,7 +730,7 @@ func (api *API) deletePipelineHandler() Handler {
 	}
 }
 
-func (api *API) getBuildingPipelinesHandler() Handler {
+func (api *API) getBuildingPipelinesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var err error
 		var pbs, recent []sdk.PipelineBuild
@@ -744,11 +745,11 @@ func (api *API) getBuildingPipelinesHandler() Handler {
 
 		}
 		pbs = append(pbs, recent...)
-		return WriteJSON(w, pbs, http.StatusOK)
+		return service.WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelineBuildingCommitHandler() Handler {
+func (api *API) getPipelineBuildingCommitHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		hash := vars["hash"]
@@ -759,11 +760,11 @@ func (api *API) getPipelineBuildingCommitHandler() Handler {
 
 		}
 
-		return WriteJSON(w, pbs, http.StatusOK)
+		return service.WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
-func (api *API) stopPipelineBuildHandler() Handler {
+func (api *API) stopPipelineBuildHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -823,7 +824,7 @@ func (api *API) stopPipelineBuildHandler() Handler {
 	}
 }
 
-func (api *API) restartPipelineBuildHandler() Handler {
+func (api *API) restartPipelineBuildHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -907,11 +908,11 @@ func (api *API) restartPipelineBuildHandler() Handler {
 
 		}
 
-		return WriteJSON(w, pb, http.StatusOK)
+		return service.WriteJSON(w, pb, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelineCommitsHandler() Handler {
+func (api *API) getPipelineCommitsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -964,7 +965,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		//Check it the application is attached to a repository
 		if app.VCSServer == "" {
 			log.Warning("getPipelineCommitsHandler> Application %s/%s not attached to a repository manager", projectKey, appName)
-			return WriteJSON(w, commits, http.StatusOK)
+			return service.WriteJSON(w, commits, http.StatusOK)
 		}
 
 		pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), app.ID, pip.ID, env.ID, 1, pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)))
@@ -974,12 +975,12 @@ func (api *API) getPipelineCommitsHandler() Handler {
 
 		if len(pbs) != 1 {
 			log.Debug("getPipelineCommitsHandler> There is no previous build")
-			return WriteJSON(w, commits, http.StatusOK)
+			return service.WriteJSON(w, commits, http.StatusOK)
 		}
 
 		if app.RepositoryFullname == "" {
 			log.Debug("getPipelineCommitsHandler> No repository on the application %s", appName)
-			return WriteJSON(w, commits, http.StatusOK)
+			return service.WriteJSON(w, commits, http.StatusOK)
 		}
 
 		//Get the RepositoriesManager Client
@@ -991,7 +992,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 
 		if pbs[0].Trigger.VCSChangesHash == "" {
 			log.Debug("getPipelineCommitsHandler>No hash on the previous run %d", pbs[0].ID)
-			return WriteJSON(w, commits, http.StatusOK)
+			return service.WriteJSON(w, commits, http.StatusOK)
 		}
 
 		//If we are lucky, return a true diff
@@ -1001,11 +1002,11 @@ func (api *API) getPipelineCommitsHandler() Handler {
 			return sdk.WrapError(errcommits, "getPipelineBuildCommitsHandler> Cannot get commits")
 		}
 
-		return WriteJSON(w, commits, http.StatusOK)
+		return service.WriteJSON(w, commits, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelineBuildCommitsHandler() Handler {
+func (api *API) getPipelineBuildCommitsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -1073,6 +1074,6 @@ func (api *API) getPipelineBuildCommitsHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getPipelineBuildCommitsHandler> UpdatePipelineBuildCommits failed")
 		}
-		return WriteJSON(w, cm, http.StatusOK)
+		return service.WriteJSON(w, cm, http.StatusOK)
 	}
 }

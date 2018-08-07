@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -23,7 +24,7 @@ import (
 // @title import an environment yml file
 // @description import an environment yml file with `cdsctl environment import myenv.env.yml`
 // @params force=true or false. If false and if the environment already exists, raise an error
-func (api *API) postEnvironmentImportHandler() Handler {
+func (api *API) postEnvironmentImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -74,7 +75,7 @@ func (api *API) postEnvironmentImportHandler() Handler {
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)
 			if ok {
-				return WriteJSON(w, msgListString, myError.Status)
+				return service.WriteJSON(w, msgListString, myError.Status)
 			}
 			return sdk.WrapError(globalError, "postEnvironmentImportHandler> Unable import environment %s", eenv.Name)
 		}
@@ -83,11 +84,11 @@ func (api *API) postEnvironmentImportHandler() Handler {
 			return sdk.WrapError(err, "postEnvironmentImportHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
 }
 
-func (api *API) importNewEnvironmentHandler() Handler {
+func (api *API) importNewEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -169,11 +170,11 @@ func (api *API) importNewEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importNewEnvironmentHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
 }
 
-func (api *API) importIntoEnvironmentHandler() Handler {
+func (api *API) importIntoEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -265,6 +266,6 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -21,24 +22,24 @@ func muxVar(r *http.Request, s string) string {
 	return vars[s]
 }
 
-func (s *Service) getAllVCSServersHandler() api.Handler {
+func (s *Service) getAllVCSServersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return api.WriteJSON(w, s.Cfg.Servers, http.StatusOK)
+		return service.WriteJSON(w, s.Cfg.Servers, http.StatusOK)
 	}
 }
 
-func (s *Service) getVCSServersHandler() api.Handler {
+func (s *Service) getVCSServersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
 		if !ok {
 			return sdk.ErrNotFound
 		}
-		return api.WriteJSON(w, cfg, http.StatusOK)
+		return service.WriteJSON(w, cfg, http.StatusOK)
 	}
 }
 
-func (s *Service) getVCSServersHooksHandler() api.Handler {
+func (s *Service) getVCSServersHooksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
@@ -66,11 +67,11 @@ func (s *Service) getVCSServersHooksHandler() api.Handler {
 			res.WebhooksIcon = sdk.GitlabIcon
 		}
 
-		return api.WriteJSON(w, res, http.StatusOK)
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
-func (s *Service) getVCSServersPollingHandler() api.Handler {
+func (s *Service) getVCSServersPollingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		cfg, ok := s.Cfg.Servers[name]
@@ -94,11 +95,11 @@ func (s *Service) getVCSServersPollingHandler() api.Handler {
 			res.PollingDisabled = cfg.Gitlab.DisablePolling
 		}
 
-		return api.WriteJSON(w, res, http.StatusOK)
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
-func (s *Service) getAuthorizeHandler() api.Handler {
+func (s *Service) getAuthorizeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		consumer, err := s.getConsumer(name)
@@ -111,14 +112,14 @@ func (s *Service) getAuthorizeHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getAuthorizeHandler>")
 		}
 
-		return api.WriteJSON(w, map[string]string{
+		return service.WriteJSON(w, map[string]string{
 			"token": token,
 			"url":   url,
 		}, http.StatusOK)
 	}
 }
 
-func (s *Service) postAuhorizeHandler() api.Handler {
+func (s *Service) postAuhorizeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		consumer, err := s.getConsumer(name)
@@ -136,14 +137,14 @@ func (s *Service) postAuhorizeHandler() api.Handler {
 			return err
 		}
 
-		return api.WriteJSON(w, map[string]string{
+		return service.WriteJSON(w, map[string]string{
 			"token":  token,
 			"secret": secret,
 		}, http.StatusOK)
 	}
 }
 
-func (s *Service) getReposHandler() api.Handler {
+func (s *Service) getReposHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 
@@ -167,11 +168,11 @@ func (s *Service) getReposHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getReposHandler> Unable to get repos")
 		}
 
-		return api.WriteJSON(w, repos, http.StatusOK)
+		return service.WriteJSON(w, repos, http.StatusOK)
 	}
 }
 
-func (s *Service) getRepoHandler() api.Handler {
+func (s *Service) getRepoHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -197,11 +198,11 @@ func (s *Service) getRepoHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getRepoHandler> Unable to get repo %s/%s", owner, repo)
 		}
 
-		return api.WriteJSON(w, ghRepo, http.StatusOK)
+		return service.WriteJSON(w, ghRepo, http.StatusOK)
 	}
 }
 
-func (s *Service) getBranchesHandler() api.Handler {
+func (s *Service) getBranchesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -226,11 +227,11 @@ func (s *Service) getBranchesHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getBranchesHandler> Unable to get repo %s/%s branches", owner, repo)
 		}
-		return api.WriteJSON(w, branches, http.StatusOK)
+		return service.WriteJSON(w, branches, http.StatusOK)
 	}
 }
 
-func (s *Service) getBranchHandler() api.Handler {
+func (s *Service) getBranchHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -256,11 +257,11 @@ func (s *Service) getBranchHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getBranchHandler> Unable to get repo %s/%s branch %s", owner, repo, branch)
 		}
-		return api.WriteJSON(w, ghBranch, http.StatusOK)
+		return service.WriteJSON(w, ghBranch, http.StatusOK)
 	}
 }
 
-func (s *Service) getCommitsHandler() api.Handler {
+func (s *Service) getCommitsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -290,11 +291,11 @@ func (s *Service) getCommitsHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getCommitsHandler> Unable to get commits on branch %s of %s/%s commits", branch, owner, repo)
 		}
-		return api.WriteJSON(w, commits, http.StatusOK)
+		return service.WriteJSON(w, commits, http.StatusOK)
 	}
 }
 
-func (s *Service) getCommitHandler() api.Handler {
+func (s *Service) getCommitHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -320,11 +321,11 @@ func (s *Service) getCommitHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getCommitHandler> Unable to get commit %s on %s/%s", commit, owner, repo)
 		}
-		return api.WriteJSON(w, c, http.StatusOK)
+		return service.WriteJSON(w, c, http.StatusOK)
 	}
 }
 
-func (s *Service) getCommitStatusHandler() api.Handler {
+func (s *Service) getCommitStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -351,11 +352,11 @@ func (s *Service) getCommitStatusHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getCommitStatusHandler> Unable to get commit %s statuses on %s/%s", commit, owner, repo)
 		}
 
-		return api.WriteJSON(w, statuses, http.StatusOK)
+		return service.WriteJSON(w, statuses, http.StatusOK)
 	}
 }
 
-func (s *Service) getPullRequestsHandler() api.Handler {
+func (s *Service) getPullRequestsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -380,11 +381,11 @@ func (s *Service) getPullRequestsHandler() api.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "VCS> getPullRequestsHandler> Unable to get pull requests on %s/%s", owner, repo)
 		}
-		return api.WriteJSON(w, c, http.StatusOK)
+		return service.WriteJSON(w, c, http.StatusOK)
 	}
 }
 
-func (s *Service) postPullRequestCommentHandler() api.Handler {
+func (s *Service) postPullRequestCommentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -423,7 +424,7 @@ func (s *Service) postPullRequestCommentHandler() api.Handler {
 	}
 }
 
-func (s *Service) getEventsHandler() api.Handler {
+func (s *Service) getEventsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -465,11 +466,11 @@ func (s *Service) getEventsHandler() api.Handler {
 			Events: evts,
 			Delay:  delay,
 		}
-		return api.WriteJSON(w, res, http.StatusOK)
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
-func (s *Service) postFilterEventsHandler() api.Handler {
+func (s *Service) postFilterEventsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -503,32 +504,32 @@ func (s *Service) postFilterEventsHandler() api.Handler {
 			if err != nil {
 				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter push events")
 			}
-			return api.WriteJSON(w, events, http.StatusOK)
+			return service.WriteJSON(w, events, http.StatusOK)
 		case "create":
 			events, err := client.CreateEvents(ctx, fmt.Sprintf("%s/%s", owner, repo), evts)
 			if err != nil {
 				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter create events")
 			}
-			return api.WriteJSON(w, events, http.StatusOK)
+			return service.WriteJSON(w, events, http.StatusOK)
 		case "delete":
 			events, err := client.DeleteEvents(ctx, fmt.Sprintf("%s/%s", owner, repo), evts)
 			if err != nil {
 				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter delete events")
 			}
-			return api.WriteJSON(w, events, http.StatusOK)
+			return service.WriteJSON(w, events, http.StatusOK)
 		case "pullrequests":
 			events, err := client.PullRequestEvents(ctx, fmt.Sprintf("%s/%s", owner, repo), evts)
 			if err != nil {
 				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter pullrequests events")
 			}
-			return api.WriteJSON(w, events, http.StatusOK)
+			return service.WriteJSON(w, events, http.StatusOK)
 		default:
 			return sdk.WrapError(sdk.ErrWrongRequest, "VCS> postFilterEventsHandler> Unrecognized filter")
 		}
 	}
 }
 
-func (s *Service) postStatusHandler() api.Handler {
+func (s *Service) postStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 
@@ -560,7 +561,7 @@ func (s *Service) postStatusHandler() api.Handler {
 	}
 }
 
-func (s *Service) postReleaseHandler() api.Handler {
+func (s *Service) postReleaseHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -596,11 +597,11 @@ func (s *Service) postReleaseHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> postReleaseHandler> Unable to create release")
 		}
 
-		return api.WriteJSON(w, re, http.StatusOK)
+		return service.WriteJSON(w, re, http.StatusOK)
 	}
 }
 
-func (s *Service) postUploadReleaseFileHandler() api.Handler {
+func (s *Service) postUploadReleaseFileHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -640,7 +641,7 @@ func (s *Service) postUploadReleaseFileHandler() api.Handler {
 	}
 }
 
-func (s *Service) getHookHandler() api.Handler {
+func (s *Service) getHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -671,11 +672,11 @@ func (s *Service) getHookHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getHookHandler> Unable to get authorized client")
 		}
 
-		return api.WriteJSON(w, hook, http.StatusOK)
+		return service.WriteJSON(w, hook, http.StatusOK)
 	}
 }
 
-func (s *Service) postHookHandler() api.Handler {
+func (s *Service) postHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -704,11 +705,11 @@ func (s *Service) postHookHandler() api.Handler {
 		if err := client.CreateHook(ctx, fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
 			return sdk.WrapError(err, "VCS> postHookHandler> CreateHook")
 		}
-		return api.WriteJSON(w, body, http.StatusOK)
+		return service.WriteJSON(w, body, http.StatusOK)
 	}
 }
 
-func (s *Service) deleteHookHandler() api.Handler {
+func (s *Service) deleteHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -754,7 +755,7 @@ func (s *Service) deleteHookHandler() api.Handler {
 	}
 }
 
-func (s *Service) getListForks() api.Handler {
+func (s *Service) getListForks() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
@@ -780,7 +781,7 @@ func (s *Service) getListForks() api.Handler {
 			return sdk.WrapError(err, "VCS> getListForks> Unable to get forks")
 		}
 
-		return api.WriteJSON(w, forks, http.StatusOK)
+		return service.WriteJSON(w, forks, http.StatusOK)
 	}
 }
 
@@ -795,14 +796,14 @@ func (s *Service) Status() sdk.MonitoringStatus {
 	return m
 }
 
-func (s *Service) statusHandler() api.Handler {
+func (s *Service) statusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
-		return api.WriteJSON(w, s.Status(), status)
+		return service.WriteJSON(w, s.Status(), status)
 	}
 }
 
-func (s *Service) postRepoGrantHandler() api.Handler {
+func (s *Service) postRepoGrantHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")

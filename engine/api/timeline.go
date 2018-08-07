@@ -7,10 +7,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getTimelineHandler() Handler {
+func (api *API) getTimelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		u := getUser(ctx)
@@ -69,6 +70,6 @@ func (api *API) getTimelineHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getTimelineHandler> Unable to load events")
 		}
-		return WriteJSON(w, events, http.StatusOK)
+		return service.WriteJSON(w, events, http.StatusOK)
 	}
 }

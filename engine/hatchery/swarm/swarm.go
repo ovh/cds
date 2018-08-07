@@ -19,7 +19,7 @@ import (
 	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
@@ -150,7 +150,7 @@ func (h *HatcherySwarm) Init() error {
 // User can add option on prerequisite, as --port and --privileged
 // but only hatchery NOT 'shared.infra' can launch containers with options
 func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
-	ctx, end := tracing.Span(ctx, "swarm.SpawnWorker")
+	ctx, end := observability.Span(ctx, "swarm.SpawnWorker")
 	defer end()
 
 	//name is the name of the worker and the name of the container
@@ -159,7 +159,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		name = "register-" + name
 	}
 
-	tracing.Current(ctx, tracing.Tag(tracing.TagWorker, name))
+	observability.Current(ctx, observability.Tag(observability.TagWorker, name))
 	log.Debug("hatchery> swarm> SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
 
 	// Choose a dockerEngine
@@ -168,7 +168,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	//  To choose a docker client by the number of containers
 	nbContainersRatio := float64(0)
 
-	_, next := tracing.Span(ctx, "swarm.chooseDockerEngine")
+	_, next := observability.Span(ctx, "swarm.chooseDockerEngine")
 	for dname, dclient := range h.dockerClients {
 		ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancelList()
