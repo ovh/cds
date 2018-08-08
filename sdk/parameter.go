@@ -46,6 +46,7 @@ type Parameter struct {
 	Type        string `json:"type"`
 	Value       string `json:"value"`
 	Description string `json:"description,omitempty" yaml:"desc,omitempty"`
+	Advanced    bool   `json:"advanced,omitempty" yaml:"advanced,omitempty"`
 }
 
 // NewStringParameter creates a Parameter from a string with <name>=<value> format

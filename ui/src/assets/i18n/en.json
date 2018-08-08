@@ -439,6 +439,8 @@
   "parameter_type": "Type",
   "parameter_updated": "Parameter updated",
   "parameter_value": "Value",
+  "parameter_advanced": "Advanced parameter",
+  "parameters_advanced": "Advanced parameters",
 
   "permission_added": "Permission added",
   "permission_deleted": "Permission deleted",

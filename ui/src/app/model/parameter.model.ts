@@ -4,6 +4,7 @@ export class Parameter {
     type: string;
     value: string;
     description: string;
+    advanced: boolean;
 
     // flag to know if variable data has changed
     hasChanged: boolean;
@@ -28,6 +29,7 @@ export class Parameter {
             pa.type = parameter.type;
             pa.description = parameter.description;
             pa.value = parameter.value.toString();
+            pa.advanced = parameter.advanced;
             return pa;
         }
         return parameter;
