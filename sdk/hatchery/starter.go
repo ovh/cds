@@ -13,6 +13,7 @@ import (
 
 type workerStarterRequest struct {
 	ctx                 context.Context
+	cancel              func(reason string)
 	id                  int64
 	isWorkflowJob       bool
 	model               sdk.Model
@@ -69,6 +70,12 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 			//Send the result back
 			results <- res
 			end()
+
+			if err != nil {
+				j.cancel(err.Error())
+			} else {
+				j.cancel("")
+			}
 
 		} else { // Start a worker for registering
 			log.Debug("Spawning worker for register model %s", m.Name)

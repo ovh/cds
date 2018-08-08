@@ -280,6 +280,7 @@ func Create(h Interface) error {
 
 			workerRequest := workerStarterRequest{
 				ctx:               currentCtx,
+				cancel:            endTrace,
 				id:                j.ID,
 				isWorkflowJob:     true,
 				execGroups:        j.ExecGroups,
@@ -307,7 +308,6 @@ func Create(h Interface) error {
 					temptToSpawn: true,
 				}
 				endTrace("no model or service ratio reached")
-
 				continue
 			}
 
@@ -317,7 +317,6 @@ func Create(h Interface) error {
 			//Ask to start
 			log.Info("hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
 			workersStartChan <- workerRequest
-			endTrace("")
 
 		case err := <-errs:
 			log.Error("%v", err)
