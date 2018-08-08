@@ -57,7 +57,7 @@ spec:
         - name: CDS_API_CACHE_MODE
           value: redis #TODO CONF
         - name: CDS_API_CACHE_REDIS_HOST
-          value: {{ template "cds.redis.fullname" . }}-master:6379 #TOOD : issue on CDS : need splitted conf #FIXME : need related redis
+          value: {{ template "cds.redis.fullname" . }}-master:{{ default "" .Values.redis.master.port }} 
         - name: CDS_API_CACHE_REDIS_PASSWORD
         {{- if .Values.redis.enabled }}
           valueFrom:
