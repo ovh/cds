@@ -13,21 +13,22 @@ import (
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getPlatformModelsHandler() Handler {
+func (api *API) getPlatformModelsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		p, err := platform.LoadModels(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getPlatformModels> Cannot get platform models")
 		}
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) getPlatformModelHandler() Handler {
+func (api *API) getPlatformModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
@@ -37,11 +38,11 @@ func (api *API) getPlatformModelHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getPlatformModelHandler> Cannot get platform model")
 		}
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) postPlatformModelHandler() Handler {
+func (api *API) postPlatformModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := new(sdk.PlatformModel)
 		if err := UnmarshalBody(r, m); err != nil {
@@ -81,11 +82,11 @@ func (api *API) postPlatformModelHandler() Handler {
 			go propagatePublicPlatformModel(api.mustDB(), api.Cache, *m, getUser(ctx))
 		}
 
-		return WriteJSON(w, m, http.StatusCreated)
+		return service.WriteJSON(w, m, http.StatusCreated)
 	}
 }
 
-func (api *API) putPlatformModelHandler() Handler {
+func (api *API) putPlatformModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
@@ -141,7 +142,7 @@ func (api *API) putPlatformModelHandler() Handler {
 			go propagatePublicPlatformModel(api.mustDB(), api.Cache, *m, getUser(ctx))
 		}
 
-		return WriteJSON(w, m, http.StatusOK)
+		return service.WriteJSON(w, m, http.StatusOK)
 	}
 }
 
@@ -213,7 +214,7 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 	return nil
 }
 
-func (api *API) deletePlatformModelHandler() Handler {
+func (api *API) deletePlatformModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]

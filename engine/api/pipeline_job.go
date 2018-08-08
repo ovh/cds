@@ -11,10 +11,11 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) addJobToStageHandler() Handler {
+func (api *API) addJobToStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -89,11 +90,11 @@ func (api *API) addJobToStageHandler() Handler {
 
 		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, getUser(ctx))
 
-		return WriteJSON(w, pip, http.StatusOK)
+		return service.WriteJSON(w, pip, http.StatusOK)
 	}
 }
 
-func (api *API) updateJobHandler() Handler {
+func (api *API) updateJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -181,11 +182,11 @@ func (api *API) updateJobHandler() Handler {
 
 		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, getUser(ctx))
 
-		return WriteJSON(w, pipelineData, http.StatusOK)
+		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
 
-func (api *API) deleteJobHandler() Handler {
+func (api *API) deleteJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -250,6 +251,6 @@ func (api *API) deleteJobHandler() Handler {
 
 		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, getUser(ctx))
 
-		return WriteJSON(w, pipelineData, http.StatusOK)
+		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }

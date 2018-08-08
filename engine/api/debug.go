@@ -18,11 +18,12 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // getProfileIndexHandler returns the profiles index
-func (api *API) getProfileIndexHandler() Handler {
+func (api *API) getProfileIndexHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		session := getUserSession(ctx)
 
@@ -83,7 +84,7 @@ func (api *API) getProfileIndexHandler() Handler {
 }
 
 // getProfileHandler responds with the pprof-formatted profile named by the request.
-func (api *API) getProfileHandler() Handler {
+func (api *API) getProfileHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := mux.Vars(r)["name"]
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -121,7 +122,7 @@ func durationExceedsWriteTimeout(r *http.Request, seconds float64) bool {
 
 // getTraceHandler responds with the execution trace in binary form.
 // Tracing lasts for duration specified in seconds GET parameter, or for 1 second if not specified.
-func (api *API) getTraceHandler() Handler {
+func (api *API) getTraceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		sec, err := strconv.ParseFloat(r.FormValue("seconds"), 64)
 		if sec <= 0 || err != nil {
@@ -156,7 +157,7 @@ func (api *API) getTraceHandler() Handler {
 
 // getCPUProfileHandler responds with the pprof-formatted cpu profile.
 // The package initialization registers it as /debug/pprof/profile.
-func (api *API) getCPUProfileHandler() Handler {
+func (api *API) getCPUProfileHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		sec, _ := strconv.ParseInt(r.FormValue("seconds"), 10, 64)
 		if sec == 0 {

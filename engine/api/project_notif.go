@@ -8,9 +8,10 @@ import (
 
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 )
 
-func (api *API) getProjectNotificationsHandler() Handler {
+func (api *API) getProjectNotificationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -25,6 +26,6 @@ func (api *API) getProjectNotificationsHandler() Handler {
 			return err
 		}
 
-		return WriteJSON(w, notifs, http.StatusOK)
+		return service.WriteJSON(w, notifs, http.StatusOK)
 	}
 }

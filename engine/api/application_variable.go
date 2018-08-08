@@ -8,11 +8,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getVariablesAuditInApplicationHandler() Handler {
+func (api *API) getVariablesAuditInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -23,11 +24,11 @@ func (api *API) getVariablesAuditInApplicationHandler() Handler {
 			return sdk.WrapError(err, "getVariablesAuditInApplicationHandler> Cannot get variable audit for application %s", appName)
 
 		}
-		return WriteJSON(w, audits, http.StatusOK)
+		return service.WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
-func (api *API) getVariableAuditInApplicationHandler() Handler {
+func (api *API) getVariableAuditInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -49,11 +50,11 @@ func (api *API) getVariableAuditInApplicationHandler() Handler {
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load audit for variable %s", varName)
 		}
-		return WriteJSON(w, audits, http.StatusOK)
+		return service.WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
-func (api *API) getVariableInApplicationHandler() Handler {
+func (api *API) getVariableInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -70,11 +71,11 @@ func (api *API) getVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "getVariableInApplicationHandler> Cannot get variable %s for application %s", varName, appName)
 		}
 
-		return WriteJSON(w, variable, http.StatusOK)
+		return service.WriteJSON(w, variable, http.StatusOK)
 	}
 }
 
-func (api *API) getVariablesInApplicationHandler() Handler {
+func (api *API) getVariablesInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -85,11 +86,11 @@ func (api *API) getVariablesInApplicationHandler() Handler {
 			return sdk.WrapError(err, "getVariablesInApplicationHandler> Cannot get variables for application %s", appName)
 		}
 
-		return WriteJSON(w, variables, http.StatusOK)
+		return service.WriteJSON(w, variables, http.StatusOK)
 	}
 }
 
-func (api *API) deleteVariableFromApplicationHandler() Handler {
+func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -129,11 +130,11 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 
 		event.PublishDeleteVariableApplication(key, *app, *varToDelete, getUser(ctx))
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) updateVariableInApplicationHandler() Handler {
+func (api *API) updateVariableInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -179,11 +180,11 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 
 		event.PublishUpdateVariableApplication(key, *app, newVar, *variableBefore, getUser(ctx))
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) addVariableInApplicationHandler() Handler {
+func (api *API) addVariableInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -233,6 +234,6 @@ func (api *API) addVariableInApplicationHandler() Handler {
 
 		event.PublishAddVariableApplication(key, *app, newVar, getUser(ctx))
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }

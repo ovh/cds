@@ -14,11 +14,12 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) postWorkflowJobArtifactHandler() Handler {
+func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Load  Existing workflow Run Job
 		id, errI := requestVarInt(r, "permID")
@@ -132,7 +133,7 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobArtifacWithTempURLHandler() Handler {
+func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !objectstore.Instance().TemporaryURLSupported {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler")
@@ -194,11 +195,11 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() Handler {
 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
 		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour
 
-		return WriteJSON(w, art, http.StatusOK)
+		return service.WriteJSON(w, art, http.StatusOK)
 	}
 }
 
-func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() Handler {
+func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !objectstore.Instance().TemporaryURLSupported {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler")

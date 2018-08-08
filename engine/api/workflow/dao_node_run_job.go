@@ -12,8 +12,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -200,7 +200,7 @@ func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64)
 //LoadAndLockNodeJobRunNoWait load for update a NodeJobRun given its ID
 func LoadAndLockNodeJobRunNoWait(ctx context.Context, db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	var end func()
-	_, end = tracing.Span(ctx, "workflow.LoadAndLockNodeJobRunNoWait")
+	_, end = observability.Span(ctx, "workflow.LoadAndLockNodeJobRunNoWait")
 	defer end()
 
 	j := JobRun{}
@@ -239,7 +239,7 @@ func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 //UpdateNodeJobRun updates a workflow_node_run_job
 func UpdateNodeJobRun(ctx context.Context, db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	var end func()
-	_, end = tracing.Span(ctx, "workflow.UpdateNodeJobRun")
+	_, end = observability.Span(ctx, "workflow.UpdateNodeJobRun")
 	defer end()
 
 	dbj := new(JobRun)

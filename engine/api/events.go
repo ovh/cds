@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -127,7 +128,7 @@ func (b *eventsBroker) Start(c context.Context) {
 	}
 }
 
-func (b *eventsBroker) ServeHTTP() Handler {
+func (b *eventsBroker) ServeHTTP() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		// Make sure that the writer supports flushing.

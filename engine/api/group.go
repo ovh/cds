@@ -13,10 +13,11 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getGroupHandler() Handler {
+func (api *API) getGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get group name in URL
 		vars := mux.Vars(r)
@@ -46,11 +47,11 @@ func (api *API) getGroupHandler() Handler {
 			g.Tokens = tokens
 		}
 
-		return WriteJSON(w, g, http.StatusOK)
+		return service.WriteJSON(w, g, http.StatusOK)
 	}
 }
 
-func (api *API) deleteGroupHandler() Handler {
+func (api *API) deleteGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get group name in URL
 		vars := mux.Vars(r)
@@ -117,7 +118,7 @@ func (api *API) deleteGroupHandler() Handler {
 	}
 }
 
-func (api *API) updateGroupHandler() Handler {
+func (api *API) updateGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get group name in URL
 		vars := mux.Vars(r)
@@ -178,11 +179,11 @@ func (api *API) updateGroupHandler() Handler {
 			return sdk.WrapError(err, "updateGroupHandler: Cannot commit transaction")
 		}
 
-		return WriteJSON(w, updatedGroup, http.StatusOK)
+		return service.WriteJSON(w, updatedGroup, http.StatusOK)
 	}
 }
 
-func (api *API) getGroupsHandler() Handler {
+func (api *API) getGroupsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var groups []sdk.Group
 		var err error
@@ -216,24 +217,24 @@ func (api *API) getGroupsHandler() Handler {
 					filteredGroups = append(filteredGroups, g)
 				}
 			}
-			return WriteJSON(w, filteredGroups, http.StatusOK)
+			return service.WriteJSON(w, filteredGroups, http.StatusOK)
 		}
 
-		return WriteJSON(w, groups, http.StatusOK)
+		return service.WriteJSON(w, groups, http.StatusOK)
 	}
 }
 
-func (api *API) getPublicGroupsHandler() Handler {
+func (api *API) getPublicGroupsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		groups, err := group.LoadPublicGroups(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "GetGroups: Cannot load group from db")
 		}
-		return WriteJSON(w, groups, http.StatusOK)
+		return service.WriteJSON(w, groups, http.StatusOK)
 	}
 }
 
-func (api *API) addGroupHandler() Handler {
+func (api *API) addGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		g := &sdk.Group{}
 		if err := UnmarshalBody(r, g); err != nil {
@@ -263,11 +264,11 @@ func (api *API) addGroupHandler() Handler {
 			return sdk.WrapError(err, "addGroupHandler> cannot commit tx")
 		}
 
-		return WriteJSON(w, g, http.StatusCreated)
+		return service.WriteJSON(w, g, http.StatusCreated)
 	}
 }
 
-func (api *API) removeUserFromGroupHandler() Handler {
+func (api *API) removeUserFromGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get group name in URL
 		vars := mux.Vars(r)
@@ -301,7 +302,7 @@ func (api *API) removeUserFromGroupHandler() Handler {
 	}
 }
 
-func (api *API) addUserInGroupHandler() Handler {
+func (api *API) addUserInGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get group name in URL
 		vars := mux.Vars(r)
@@ -343,7 +344,7 @@ func (api *API) addUserInGroupHandler() Handler {
 	}
 }
 
-func (api *API) setUserGroupAdminHandler() Handler {
+func (api *API) setUserGroupAdminHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get group name in URL
 		vars := mux.Vars(r)
@@ -368,7 +369,7 @@ func (api *API) setUserGroupAdminHandler() Handler {
 	}
 }
 
-func (api *API) removeUserGroupAdminHandler() Handler {
+func (api *API) removeUserGroupAdminHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get group name in URL
 		vars := mux.Vars(r)

@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -57,7 +58,7 @@ func (api *API) setGroupsAndPermissionsFromGroupID(ctx context.Context, groupID 
 	return err
 }
 
-func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, rc *HandlerConfig, routeVar map[string]string) bool {
+func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, rc *service.HandlerConfig, routeVar map[string]string) bool {
 	if getWorker(ctx) == nil {
 		return false
 	}

@@ -12,10 +12,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/plugin"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) postPGRPCluginHandler() Handler {
+func (api *API) postPGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 
@@ -29,11 +30,11 @@ func (api *API) postPGRPCluginHandler() Handler {
 			return sdk.WrapError(err, "postPGRPCluginHandler> unable to insert plugin")
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) getAllGRPCluginHandler() Handler {
+func (api *API) getAllGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		ps, err := plugin.LoadAll(api.mustDB())
@@ -41,11 +42,11 @@ func (api *API) getAllGRPCluginHandler() Handler {
 			return sdk.WrapError(err, "getAllGRPCluginHandler> unable to load all plugins")
 		}
 
-		return WriteJSON(w, ps, http.StatusOK)
+		return service.WriteJSON(w, ps, http.StatusOK)
 	}
 }
 
-func (api *API) getGRPCluginHandler() Handler {
+func (api *API) getGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var name = mux.Vars(r)["name"]
 
@@ -54,11 +55,11 @@ func (api *API) getGRPCluginHandler() Handler {
 			return sdk.WrapError(err, "getGRPCluginHandler")
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) putGRPCluginHandler() Handler {
+func (api *API) putGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 
@@ -79,11 +80,11 @@ func (api *API) putGRPCluginHandler() Handler {
 			return sdk.WrapError(err, "putGRPCluginHandler> unable to insert plugin")
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) deleteGRPCluginHandler() Handler {
+func (api *API) deleteGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var name = mux.Vars(r)["name"]
 		old, err := plugin.LoadByName(api.mustDB(), name)
@@ -99,7 +100,7 @@ func (api *API) deleteGRPCluginHandler() Handler {
 	}
 }
 
-func (api *API) postGRPCluginBinaryHandler() Handler {
+func (api *API) postGRPCluginBinaryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		var b sdk.GRPCPluginBinary
@@ -140,11 +141,11 @@ func (api *API) postGRPCluginBinaryHandler() Handler {
 			return sdk.WrapError(err, "postGRPCluginBinaryHandler> unable to commit tx")
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) getGRPCluginBinaryHandler() Handler {
+func (api *API) getGRPCluginBinaryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
@@ -192,7 +193,7 @@ func (api *API) getGRPCluginBinaryHandler() Handler {
 	}
 }
 
-func (api *API) deleteGRPCluginBinaryHandler() Handler {
+func (api *API) deleteGRPCluginBinaryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return nil
 	}

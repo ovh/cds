@@ -8,10 +8,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getParametersInPipelineHandler() Handler {
+func (api *API) getParametersInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -27,11 +28,11 @@ func (api *API) getParametersInPipelineHandler() Handler {
 			return sdk.WrapError(err, "getParametersInPipelineHandler: Cannot get parameters for pipeline %s", pipelineName)
 		}
 
-		return WriteJSON(w, parameters, http.StatusOK)
+		return service.WriteJSON(w, parameters, http.StatusOK)
 	}
 }
 
-func (api *API) deleteParameterFromPipelineHandler() Handler {
+func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -63,11 +64,11 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot load pipeline parameters")
 		}
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) updateParameterInPipelineHandler() Handler {
+func (api *API) updateParameterInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -110,11 +111,11 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load pipeline parameters")
 		}
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) addParameterInPipelineHandler() Handler {
+func (api *API) addParameterInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -165,6 +166,6 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot get pipeline parameters")
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }

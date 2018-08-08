@@ -1,48 +1,16 @@
-package tracing
+package observability
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
-	"go.opencensus.io/exporter/jaeger"
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/sdk/tracingutils"
 )
-
-var (
-	traceEnable bool
-	exporter    trace.Exporter
-)
-
-// Init the tracer
-func Init(cfg Configuration, serviceName string) error {
-	if !cfg.Enable {
-		return nil
-	}
-	traceEnable = true
-	var err error
-	if exporter == nil {
-		exporter, err = jaeger.NewExporter(jaeger.Options{
-			Endpoint:    cfg.Exporter.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
-			ServiceName: serviceName,                               //"cds-tracing"
-		})
-	}
-	if err != nil {
-		return err
-	}
-	trace.RegisterExporter(exporter)
-	trace.ApplyConfig(
-		trace.Config{
-			DefaultSampler: trace.ProbabilitySampler(cfg.SamplingProbability),
-		},
-	)
-
-	return nil
-}
 
 // New may start a tracing span
 func New(ctx context.Context, serviceName, name string, sampler trace.Sampler, spanKind int) (context.Context, *trace.Span) {

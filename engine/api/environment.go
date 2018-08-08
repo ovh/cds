@@ -15,11 +15,12 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getEnvironmentsHandler() Handler {
+func (api *API) getEnvironmentsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -51,11 +52,11 @@ func (api *API) getEnvironmentsHandler() Handler {
 			return sdk.WrapError(err, "getEnvironmentsHandler> Cannot commit transaction from db")
 		}
 
-		return WriteJSON(w, environments, http.StatusOK)
+		return service.WriteJSON(w, environments, http.StatusOK)
 	}
 }
 
-func (api *API) getEnvironmentHandler() Handler {
+func (api *API) getEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -90,11 +91,11 @@ func (api *API) getEnvironmentHandler() Handler {
 
 		env.Permission = permission.EnvironmentPermission(projectKey, env.Name, getUser(ctx))
 
-		return WriteJSON(w, env, http.StatusOK)
+		return service.WriteJSON(w, env, http.StatusOK)
 	}
 }
 
-func (api *API) getEnvironmentUsageHandler() Handler {
+func (api *API) getEnvironmentUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -104,7 +105,7 @@ func (api *API) getEnvironmentUsageHandler() Handler {
 			return sdk.WrapError(err, "getEnvironmentHandler> Cannot load usage for environment %s in project %s", environmentName, projectKey)
 		}
 
-		return WriteJSON(w, usage, http.StatusOK)
+		return service.WriteJSON(w, usage, http.StatusOK)
 	}
 }
 
@@ -132,7 +133,7 @@ func loadEnvironmentUsage(db gorp.SqlExecutor, projectKey, envName string) (sdk.
 	return usage, nil
 }
 
-func (api *API) addEnvironmentHandler() Handler {
+func (api *API) addEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -180,11 +181,11 @@ func (api *API) addEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentAdd(key, env, getUser(ctx))
 
-		return WriteJSON(w, proj, http.StatusOK)
+		return service.WriteJSON(w, proj, http.StatusOK)
 	}
 }
 
-func (api *API) deleteEnvironmentHandler() Handler {
+func (api *API) deleteEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -225,11 +226,11 @@ func (api *API) deleteEnvironmentHandler() Handler {
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteEnvironmentHandler> Cannot load environments")
 		}
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) updateEnvironmentHandler() Handler {
+func (api *API) updateEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -276,11 +277,11 @@ func (api *API) updateEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnvs, "updateEnvironmentHandler> Cannot load environments")
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) cloneEnvironmentHandler() Handler {
+func (api *API) cloneEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -358,6 +359,6 @@ func (api *API) cloneEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentAdd(p.Key, envPost, getUser(ctx))
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }

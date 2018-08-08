@@ -18,11 +18,12 @@ import (
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) uploadArtifactHandler() Handler {
+func (api *API) uploadArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -137,7 +138,7 @@ func (api *API) uploadArtifactHandler() Handler {
 	}
 }
 
-func (api *API) downloadArtifactHandler() Handler {
+func (api *API) downloadArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		artifactID, errAtoi := requestVarInt(r, "id")
 		if errAtoi != nil {
@@ -170,7 +171,7 @@ func (api *API) downloadArtifactHandler() Handler {
 	}
 }
 
-func (api *API) listArtifactsBuildHandler() Handler {
+func (api *API) listArtifactsBuildHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -216,11 +217,11 @@ func (api *API) listArtifactsBuildHandler() Handler {
 			return sdk.WrapError(errArt, "listArtifactsBuildHandler> Cannot load artifacts")
 		}
 
-		return WriteJSON(w, art, http.StatusOK)
+		return service.WriteJSON(w, art, http.StatusOK)
 	}
 }
 
-func (api *API) listArtifactsHandler() Handler {
+func (api *API) listArtifactsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -265,17 +266,17 @@ func (api *API) listArtifactsHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "listArtifactHandler> %s-%s-%s-%s/%s: not found", key, appName, env.Name, pipelineName, tag)
 		}
 
-		return WriteJSON(w, art, http.StatusOK)
+		return service.WriteJSON(w, art, http.StatusOK)
 	}
 }
 
-func (api *API) getArtifactsStoreHandler() Handler {
+func (api *API) getArtifactsStoreHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, objectstore.Instance(), http.StatusOK)
+		return service.WriteJSON(w, objectstore.Instance(), http.StatusOK)
 	}
 }
 
-func (api *API) downloadArtifactDirectHandler() Handler {
+func (api *API) downloadArtifactDirectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		hash := vars["hash"]
@@ -307,7 +308,7 @@ func (api *API) downloadArtifactDirectHandler() Handler {
 	}
 }
 
-func (api *API) postArtifactWithTempURLHandler() Handler {
+func (api *API) postArtifactWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !objectstore.Instance().TemporaryURLSupported {
 			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler")
@@ -375,11 +376,11 @@ func (api *API) postArtifactWithTempURLHandler() Handler {
 		cacheKey := cache.Key("artifacts", art.GetPath(), art.GetName())
 		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour
 
-		return WriteJSON(w, art, http.StatusOK)
+		return service.WriteJSON(w, art, http.StatusOK)
 	}
 }
 
-func (api *API) postArtifactWithTempURLCallbackHandler() Handler {
+func (api *API) postArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !objectstore.Instance().TemporaryURLSupported {
 			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler")

@@ -8,10 +8,11 @@ import (
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (s *Service) getEventsHandler() api.Handler {
+func (s *Service) getEventsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		var filters sdk.EventFilter
@@ -31,11 +32,11 @@ func (s *Service) getEventsHandler() api.Handler {
 		if errR != nil {
 			return sdk.WrapError(errR, "getEventsHandler> Cannot get result on index: %s", s.Cfg.ElasticSearch.Index)
 		}
-		return api.WriteJSON(w, result.Hits.Hits, http.StatusOK)
+		return service.WriteJSON(w, result.Hits.Hits, http.StatusOK)
 	}
 }
 
-func (s *Service) postEventHandler() api.Handler {
+func (s *Service) postEventHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var e sdk.Event
 		if err := api.UnmarshalBody(r, &e); err != nil {
@@ -50,9 +51,9 @@ func (s *Service) postEventHandler() api.Handler {
 	}
 }
 
-func (s *Service) getStatusHandler() api.Handler {
+func (s *Service) getStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
-		return api.WriteJSON(w, s.Status(), status)
+		return service.WriteJSON(w, s.Status(), status)
 	}
 }

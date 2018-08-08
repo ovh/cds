@@ -10,11 +10,12 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) registerWorkerHandler() Handler {
+func (api *API) registerWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		params := &sdk.WorkerRegistrationForm{}
 		if err := UnmarshalBody(r, params); err != nil {
@@ -43,11 +44,11 @@ func (api *API) registerWorkerHandler() Handler {
 		log.Debug("New worker: [%s] - %s", worker.ID, worker.Name)
 
 		// Return worker info to worker itself
-		return WriteJSON(w, worker, http.StatusOK)
+		return service.WriteJSON(w, worker, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkersHandler() Handler {
+func (api *API) getWorkersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := r.ParseForm(); err != nil {
 			return sdk.WrapError(err, "getWorkerModels> cannot parse form")
@@ -63,11 +64,11 @@ func (api *API) getWorkersHandler() Handler {
 			return sdk.WrapError(errl, "getWorkerModels> cannot load workers")
 		}
 
-		return WriteJSON(w, workers, http.StatusOK)
+		return service.WriteJSON(w, workers, http.StatusOK)
 	}
 }
 
-func (api *API) disableWorkerHandler() Handler {
+func (api *API) disableWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -100,7 +101,7 @@ func (api *API) disableWorkerHandler() Handler {
 	}
 }
 
-func (api *API) refreshWorkerHandler() Handler {
+func (api *API) refreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "refreshWorkerHandler> cannot refresh last beat of %s", getWorker(ctx).ID)
@@ -109,7 +110,7 @@ func (api *API) refreshWorkerHandler() Handler {
 	}
 }
 
-func (api *API) unregisterWorkerHandler() Handler {
+func (api *API) unregisterWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := worker.DisableWorker(api.mustDB(), getWorker(ctx).ID); err != nil {
 			return sdk.WrapError(err, "unregisterWorkerHandler> cannot delete worker %s", getWorker(ctx).ID)
@@ -118,7 +119,7 @@ func (api *API) unregisterWorkerHandler() Handler {
 	}
 }
 
-func (api *API) workerCheckingHandler() Handler {
+func (api *API) workerCheckingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerC := getWorker(ctx)
 		wk, errW := worker.LoadWorker(api.mustDB(), workerC.ID)
@@ -137,7 +138,7 @@ func (api *API) workerCheckingHandler() Handler {
 	}
 }
 
-func (api *API) workerWaitingHandler() Handler {
+func (api *API) workerWaitingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerC := getWorker(ctx)
 		wk, errW := worker.LoadWorker(api.mustDB(), workerC.ID)

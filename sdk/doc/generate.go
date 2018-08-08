@@ -59,7 +59,7 @@ title = "%s"
 		// @params BB=valB
 		// @requestBody {"mykey": "myval"}
 		// @responseBody {"mykey": "myval"}
-		func (api *API) getActionsHandler() Handler {
+		func (api *API) getActionsHandler() service.Handler {
 		[...]
 		*/
 		if err := writeRouteInfo(getAllRouteInfo(gitPath+"/engine/api"), genPath+"/api"); err != nil {

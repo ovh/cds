@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk/tracingutils"
 	"go.opencensus.io/trace"
 
@@ -217,26 +217,26 @@ func Create(h Interface) error {
 			var traceEnded *struct{}
 			currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
 			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
-				currentCtx, _ = tracing.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
+				currentCtx, _ = observability.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
 				r, _ := j.Header.Get(sdk.WorkflowRunHeader)
 				w, _ := j.Header.Get(sdk.WorkflowHeader)
 				p, _ := j.Header.Get(sdk.ProjectKeyHeader)
 
-				tracing.Current(currentCtx,
-					tracing.Tag(tracing.TagWorkflow, w),
-					tracing.Tag(tracing.TagWorkflowRun, r),
-					tracing.Tag(tracing.TagProjectKey, p),
-					tracing.Tag(tracing.TagWorkflowNodeJobRun, j.ID),
+				observability.Current(currentCtx,
+					observability.Tag(observability.TagWorkflow, w),
+					observability.Tag(observability.TagWorkflowRun, r),
+					observability.Tag(observability.TagProjectKey, p),
+					observability.Tag(observability.TagWorkflowNodeJobRun, j.ID),
 				)
 			}
 			endTrace := func(reason string) {
 				if reason != "" {
-					tracing.Current(currentCtx,
-						tracing.Tag("reason", reason),
+					observability.Current(currentCtx,
+						observability.Tag("reason", reason),
 					)
 				}
-				tracing.End(currentCtx, nil, nil) // nolint
+				observability.End(currentCtx, nil, nil) // nolint
 				var T struct{}
 				traceEnded = &T
 				currentCancel()

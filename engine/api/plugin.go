@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/actionplugin"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
@@ -71,7 +72,7 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	return ap, params, content, deferFunc, nil
 }
 
-func (api *API) addPluginHandler() Handler {
+func (api *API) addPluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Upload file and get plugin information
 		ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
@@ -116,11 +117,11 @@ func (api *API) addPluginHandler() Handler {
 			return sdk.WrapError(err, "addPluginHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, a, http.StatusCreated)
+		return service.WriteJSON(w, a, http.StatusCreated)
 	}
 }
 
-func (api *API) updatePluginHandler() Handler {
+func (api *API) updatePluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Upload file and get plugin information
 		ap, params, file, deferFunc, errUpload := fileUploadAndGetPlugin(w, r)
@@ -213,11 +214,11 @@ func (api *API) updatePluginHandler() Handler {
 			return sdk.WrapError(err, "updatePluginHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, a, http.StatusOK)
+		return service.WriteJSON(w, a, http.StatusOK)
 	}
 }
 
-func (api *API) deletePluginHandler() Handler {
+func (api *API) deletePluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
@@ -239,7 +240,7 @@ func (api *API) deletePluginHandler() Handler {
 	}
 }
 
-func (api *API) downloadPluginHandler() Handler {
+func (api *API) downloadPluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]

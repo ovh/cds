@@ -22,21 +22,22 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getRepositoriesManagerHandler() Handler {
+func (api *API) getRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		rms, err := repositoriesmanager.LoadAll(ctx, api.mustDB(), api.Cache)
 		if err != nil {
 			return sdk.WrapError(err, "getRepositoriesManagerHandler> error")
 		}
-		return WriteJSON(w, rms, http.StatusOK)
+		return service.WriteJSON(w, rms, http.StatusOK)
 	}
 }
 
-func (api *API) getRepositoriesManagerForProjectHandler() Handler {
+func (api *API) getRepositoriesManagerForProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -46,11 +47,11 @@ func (api *API) getRepositoriesManagerForProjectHandler() Handler {
 			return errproj
 		}
 
-		return WriteJSON(w, proj.VCSServers, http.StatusOK)
+		return service.WriteJSON(w, proj.VCSServers, http.StatusOK)
 	}
 }
 
-func (api *API) repositoriesManagerAuthorizeHandler() Handler {
+func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -86,11 +87,11 @@ func (api *API) repositoriesManagerAuthorizeHandler() Handler {
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
-		return WriteJSON(w, data, http.StatusOK)
+		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }
 
-func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
+func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		cberr := r.FormValue("error")
 		errDescription := r.FormValue("error_description")
@@ -171,7 +172,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 	}
 }
 
-func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
+func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -235,11 +236,11 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 
 		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
 
-		return WriteJSON(w, proj, http.StatusOK)
+		return service.WriteJSON(w, proj, http.StatusOK)
 	}
 }
 
-func (api *API) deleteRepositoriesManagerHandler() Handler {
+func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -272,11 +273,11 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 
 		event.PublishDeleteVCSServer(p, vcsServer.Name, getUser(ctx))
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) getReposFromRepositoriesManagerHandler() Handler {
+func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -318,11 +319,11 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, repos, http.StatusOK)
+		return service.WriteJSON(w, repos, http.StatusOK)
 	}
 }
 
-func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
+func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -355,11 +356,11 @@ func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getRepoFromRepositoriesManagerHandler> Cannot get repos")
 		}
-		return WriteJSON(w, repo, http.StatusOK)
+		return service.WriteJSON(w, repo, http.StatusOK)
 	}
 }
 
-func (api *API) attachRepositoriesManagerHandler() Handler {
+func (api *API) attachRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -454,11 +455,11 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 
 		event.PublishApplicationRepositoryAdd(projectKey, *app, u)
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) detachRepositoriesManagerHandler() Handler {
+func (api *API) detachRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -579,11 +580,11 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 
 		event.PublishApplicationRepositoryDelete(projectKey, appName, app.VCSServer, app.RepositoryFullname, u)
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) addHookOnRepositoriesManagerHandler() Handler {
+func (api *API) addHookOnRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -649,11 +650,11 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(errW, "addHookOnRepositoriesManagerHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusCreated)
+		return service.WriteJSON(w, app, http.StatusCreated)
 	}
 }
 
-func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
+func (api *API) deleteHookOnRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -730,6 +731,6 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }

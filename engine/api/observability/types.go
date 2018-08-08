@@ -1,4 +1,4 @@
-package tracing
+package observability
 
 import (
 	"go.opencensus.io/plugin/ochttp/propagation/b3"
@@ -25,6 +25,9 @@ type Configuration struct {
 	Exporter struct {
 		Jaeger struct {
 			HTTPCollectorEndpoint string `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268"`
+		}
+		Prometheus struct {
+			ReporteringPeriod int `toml:"ReporteringPeriod" default:"60"`
 		}
 	}
 	SamplingProbability float64

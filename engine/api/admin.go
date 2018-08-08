@@ -8,11 +8,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) adminTruncateWarningsHandler() Handler {
+func (api *API) adminTruncateWarningsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, err := api.mustDB().Exec("delete from warning"); err != nil {
 			return sdk.WrapError(err, "adminTruncateWarningsHandler> Unable to truncate warning ")
@@ -21,29 +22,29 @@ func (api *API) adminTruncateWarningsHandler() Handler {
 	}
 }
 
-func (api *API) postAdminMaintenanceHandler() Handler {
+func (api *API) postAdminMaintenanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		api.Cache.SetWithTTL("maintenance", true, -1)
 		return nil
 	}
 }
 
-func (api *API) getAdminMaintenanceHandler() Handler {
+func (api *API) getAdminMaintenanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var m bool
 		api.Cache.Get("maintenance", &m)
-		return WriteJSON(w, m, http.StatusOK)
+		return service.WriteJSON(w, m, http.StatusOK)
 	}
 }
 
-func (api *API) deleteAdminMaintenanceHandler() Handler {
+func (api *API) deleteAdminMaintenanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		api.Cache.Delete("maintenance")
 		return nil
 	}
 }
 
-func (api *API) getAdminServicesHandler() Handler {
+func (api *API) getAdminServicesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		srvs := []sdk.Service{}
 		var err error
@@ -56,11 +57,11 @@ func (api *API) getAdminServicesHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getAdminServicesHandler")
 		}
-		return WriteJSON(w, srvs, http.StatusOK)
+		return service.WriteJSON(w, srvs, http.StatusOK)
 	}
 }
 
-func (api *API) getAdminServiceHandler() Handler {
+func (api *API) getAdminServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
@@ -68,27 +69,27 @@ func (api *API) getAdminServiceHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getAdminServiceHandler")
 		}
-		return WriteJSON(w, srv, http.StatusOK)
+		return service.WriteJSON(w, srv, http.StatusOK)
 	}
 }
 
-func (api *API) getAdminServiceCallHandler() Handler {
+func (api *API) getAdminServiceCallHandler() service.Handler {
 	return selectDeleteAdminServiceCallHandler(api, http.MethodGet)
 }
 
-func (api *API) deleteAdminServiceCallHandler() Handler {
+func (api *API) deleteAdminServiceCallHandler() service.Handler {
 	return selectDeleteAdminServiceCallHandler(api, http.MethodDelete)
 }
 
-func (api *API) postAdminServiceCallHandler() Handler {
+func (api *API) postAdminServiceCallHandler() service.Handler {
 	return putPostAdminServiceCallHandler(api, http.MethodPost)
 }
 
-func (api *API) putAdminServiceCallHandler() Handler {
+func (api *API) putAdminServiceCallHandler() service.Handler {
 	return putPostAdminServiceCallHandler(api, http.MethodPut)
 }
 
-func selectDeleteAdminServiceCallHandler(api *API, method string) Handler {
+func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		srvs, err := services.FindByType(api.mustDB(), r.FormValue("type"))
 		if err != nil {
@@ -108,11 +109,11 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) Handler {
 		log.Debug("selectDeleteAdminServiceCallHandler> %s : %s", query, string(btes))
 
 		//TODO: assuming it's only json...
-		return Write(w, btes, code, "application/json")
+		return service.Write(w, btes, code, "application/json")
 	}
 }
 
-func putPostAdminServiceCallHandler(api *API, method string) Handler {
+func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		srvs, err := services.FindByType(api.mustDB(), r.FormValue("type"))
 		if err != nil {
@@ -135,6 +136,6 @@ func putPostAdminServiceCallHandler(api *API, method string) Handler {
 			return sdkErr
 		}
 
-		return Write(w, btes, code, "application/json")
+		return service.Write(w, btes, code, "application/json")
 	}
 }

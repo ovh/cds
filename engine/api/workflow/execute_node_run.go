@@ -13,16 +13,16 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int) (*ProcessorReport, error) {
-	_, end := tracing.Span(ctx, "workflow.syncTakeJobInNodeRun")
+	_, end := observability.Span(ctx, "workflow.syncTakeJobInNodeRun")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -77,10 +77,10 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 
 func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, n *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.execute",
-		tracing.Tag(tracing.TagWorkflowRun, n.Number),
-		tracing.Tag(tracing.TagWorkflowNodeRun, n.ID),
-		tracing.Tag("workflow_node_run_status", n.Status),
+	ctx, end = observability.Span(ctx, "workflow.execute",
+		observability.Tag(observability.TagWorkflowRun, n.Number),
+		observability.Tag(observability.TagWorkflowNodeRun, n.ID),
+		observability.Tag("workflow_node_run_status", n.Status),
 	)
 	defer end()
 	wr, errWr := LoadRunByID(db, n.WorkflowRunID, LoadRunOptions{})
@@ -155,7 +155,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 			newStatus = sdk.StatusBuilding.String()
 			var end bool
 
-			_, next := tracing.Span(ctx, "workflow.syncStage")
+			_, next := observability.Span(ctx, "workflow.syncStage")
 			end, errSync := syncStage(db, store, stage)
 			next()
 			if errSync != nil {
@@ -244,7 +244,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 		//Do we release a mutex ?
 		//Try to find one node run of the same node from the same workflow at status Waiting
 		if node != nil && node.Context != nil && node.Context.Mutex {
-			_, next := tracing.Span(ctx, "workflow.releaseMutex")
+			_, next := observability.Span(ctx, "workflow.releaseMutex")
 
 			mutexQuery := `select workflow_node_run.id
 			from workflow_node_run
@@ -304,12 +304,12 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.addJobsToQueue")
+	ctx, end = observability.Span(ctx, "workflow.addJobsToQueue")
 	defer end()
 
 	report := new(ProcessorReport)
 
-	_, next := tracing.Span(ctx, "sdk.WorkflowCheckConditions")
+	_, next := observability.Span(ctx, "sdk.WorkflowCheckConditions")
 	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
 	next()
 	if err != nil {
@@ -323,14 +323,14 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		stage.Status = sdk.StatusDisabled
 	}
 
-	_, next = tracing.Span(ctx, "workflow.getPlatformPluginBinaries")
+	_, next = observability.Span(ctx, "workflow.getPlatformPluginBinaries")
 	platformPluginBinaries, err := getPlatformPluginBinaries(db, wr, run)
 	if err != nil {
 		return report, sdk.WrapError(err, "addJobsToQueue> unable to get platform plugins requirement")
 	}
 	next()
 
-	_, next = tracing.Span(ctx, "workflow.getJobExecutablesGroups")
+	_, next = observability.Span(ctx, "workflow.getJobExecutablesGroups")
 	groups, errGroups := getJobExecutablesGroups(db, wr, run)
 	if errGroups != nil {
 		return report, sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
@@ -343,7 +343,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		job := &stage.Jobs[j]
 		errs := sdk.MultiError{}
 		//Process variables for the jobs
-		_, next = tracing.Span(ctx, "workflow..getNodeJobRunParameters")
+		_, next = observability.Span(ctx, "workflow..getNodeJobRunParameters")
 		jobParams, errParam := getNodeJobRunParameters(db, *job, run, stage)
 		next()
 
@@ -351,7 +351,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			errs.Join(*errParam)
 		}
 
-		_, next = tracing.Span(ctx, "workflow.getNodeJobRunRequirements")
+		_, next = observability.Span(ctx, "workflow.getNodeJobRunRequirements")
 		jobRequirements, errReq := getNodeJobRunRequirements(db, *job, run)
 		next()
 
@@ -360,7 +360,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 
 		// add requirements in job parameters, to use them as {{.job.requirement...}} in job
-		_, next = tracing.Span(ctx, "workflow.prepareRequirementsToNodeJobRunParameters")
+		_, next = observability.Span(ctx, "workflow.prepareRequirementsToNodeJobRunParameters")
 		jobParams = append(jobParams, prepareRequirementsToNodeJobRunParameters(jobRequirements)...)
 		next()
 
@@ -411,7 +411,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 
 		//Insert in database
-		_, next = tracing.Span(ctx, "workflow.insertWorkflowNodeJobRun")
+		_, next = observability.Span(ctx, "workflow.insertWorkflowNodeJobRun")
 		if err := insertWorkflowNodeJobRun(db, &wjob); err != nil {
 			next()
 			return report, sdk.WrapError(err, "addJobsToQueue> Unable to insert in table workflow_node_run_job")
@@ -611,7 +611,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
 func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.StopWorkflowNodeRun")
+	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -689,7 +689,7 @@ func stopWorkflowNodeRunStages(nodeRun *sdk.WorkflowNodeRun) {
 
 func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanErr chan<- error, chanDone chan<- bool, wg *sync.WaitGroup) *ProcessorReport {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.stopWorkflowNodeJobRun")
+	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodeJobRun")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -740,7 +740,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 // SyncNodeRunRunJob sync step status and spawnInfos in a specific run job
 func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, nodeJobRun sdk.WorkflowNodeJobRun) (bool, error) {
 	var end func()
-	_, end = tracing.Span(ctx, "workflow.SyncNodeRunRunJob")
+	_, end = observability.Span(ctx, "workflow.SyncNodeRunRunJob")
 	defer end()
 
 	found := false
@@ -793,10 +793,10 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 		return vcsInfos, nil
 	}
 
-	ctx, end := tracing.Span(ctx, "workflow.getVCSInfos",
-		tracing.Tag("application", applicationName),
-		tracing.Tag("vcs_server", applicationVCSServer),
-		tracing.Tag("vcs_repo", applicationRepositoryFullname),
+	ctx, end := observability.Span(ctx, "workflow.getVCSInfos",
+		observability.Tag("application", applicationName),
+		observability.Tag("vcs_server", applicationVCSServer),
+		observability.Tag("vcs_repo", applicationRepositoryFullname),
 	)
 	defer end()
 

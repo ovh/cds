@@ -10,11 +10,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-func (api *API) getWorkflowExportHandler() Handler {
+func (api *API) getWorkflowExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -45,7 +46,7 @@ func (api *API) getWorkflowExportHandler() Handler {
 }
 
 //Pull is only in yaml
-func (api *API) getWorkflowPullHandler() Handler {
+func (api *API) getWorkflowPullHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]

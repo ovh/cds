@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -20,17 +21,17 @@ import (
 
 // getActionsHandler Retrieve all public actions
 // @title List all public actions
-func (api *API) getActionsHandler() Handler {
+func (api *API) getActionsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		acts, err := action.LoadActions(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "GetActions: Cannot load action from db")
 		}
-		return WriteJSON(w, acts, http.StatusOK)
+		return service.WriteJSON(w, acts, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelinesUsingActionHandler() Handler {
+func (api *API) getPipelinesUsingActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get action name in URL
 		vars := mux.Vars(r)
@@ -39,21 +40,21 @@ func (api *API) getPipelinesUsingActionHandler() Handler {
 		if err != nil {
 			return err
 		}
-		return WriteJSON(w, response, http.StatusOK)
+		return service.WriteJSON(w, response, http.StatusOK)
 	}
 }
 
-func (api *API) getActionsRequirements() Handler {
+func (api *API) getActionsRequirements() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		req, err := action.LoadAllBinaryRequirements(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getActionsRequirements> Cannot load action requirements")
 		}
-		return WriteJSON(w, req, http.StatusOK)
+		return service.WriteJSON(w, req, http.StatusOK)
 	}
 }
 
-func (api *API) deleteActionHandler() Handler {
+func (api *API) deleteActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		// Get action name in URL
@@ -96,7 +97,7 @@ func (api *API) deleteActionHandler() Handler {
 	}
 }
 
-func (api *API) updateActionHandler() Handler {
+func (api *API) updateActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get action name in URL
 		vars := mux.Vars(r)
@@ -132,11 +133,11 @@ func (api *API) updateActionHandler() Handler {
 
 		event.PublishActionUpdate(*actionDB, a, getUser(ctx))
 
-		return WriteJSON(w, a, http.StatusOK)
+		return service.WriteJSON(w, a, http.StatusOK)
 	}
 }
 
-func (api *API) addActionHandler() Handler {
+func (api *API) addActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var a sdk.Action
 		if err := UnmarshalBody(r, &a); err != nil {
@@ -170,11 +171,11 @@ func (api *API) addActionHandler() Handler {
 
 		event.PublishActionAdd(a, getUser(ctx))
 
-		return WriteJSON(w, a, http.StatusOK)
+		return service.WriteJSON(w, a, http.StatusOK)
 	}
 }
 
-func (api *API) getActionAuditHandler() Handler {
+func (api *API) getActionAuditHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		actionIDString := vars["actionID"]
@@ -188,11 +189,11 @@ func (api *API) getActionAuditHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getActionAuditHandler> Cannot load audit for action %s", actionID)
 		}
-		return WriteJSON(w, a, http.StatusOK)
+		return service.WriteJSON(w, a, http.StatusOK)
 	}
 }
 
-func (api *API) getActionHandler() Handler {
+func (api *API) getActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["permActionName"]
@@ -201,11 +202,11 @@ func (api *API) getActionHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "getActionHandler> Cannot load action: %s", err)
 		}
-		return WriteJSON(w, a, http.StatusOK)
+		return service.WriteJSON(w, a, http.StatusOK)
 	}
 }
 
-func (api *API) getActionExportHandler() Handler {
+func (api *API) getActionExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["permActionName"]
@@ -227,7 +228,7 @@ func (api *API) getActionExportHandler() Handler {
 }
 
 // importActionHandler insert OR update an existing action.
-func (api *API) importActionHandler() Handler {
+func (api *API) importActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var a *sdk.Action
 
@@ -308,6 +309,6 @@ func (api *API) importActionHandler() Handler {
 			event.PublishActionAdd(*a, getUser(ctx))
 		}
 
-		return WriteJSON(w, a, code)
+		return service.WriteJSON(w, a, code)
 	}
 }
