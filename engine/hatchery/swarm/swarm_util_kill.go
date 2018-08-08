@@ -127,8 +127,8 @@ func (h *HatcherySwarm) killAwolNetworks() error {
 				continue
 			}
 
-			// if network created less than 5 min, keep it alive for now
-			if time.Since(nets[i].Created) < 5*time.Minute {
+			// if network created less than 10 min, keep it alive for now
+			if time.Since(nets[i].Created) < 10*time.Minute {
 				continue
 			}
 
