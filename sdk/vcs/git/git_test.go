@@ -191,7 +191,7 @@ func Test_gitCommand(t *testing.T) {
 				},
 			},
 			want: []string{
-				"git clone --verbose --depth 1 --branch master --recursive https://github.com/ovh/cds.git /tmp/Test_gitCommand-2",
+				"git clone --verbose --depth 1 --branch master --no-single-branch --recursive https://github.com/ovh/cds.git /tmp/Test_gitCommand-2",
 			},
 		},
 		{

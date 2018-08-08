@@ -3,6 +3,7 @@ package swarm
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	types "github.com/docker/docker/api/types"
 	context "golang.org/x/net/context"
@@ -123,6 +124,11 @@ func (h *HatcherySwarm) killAwolNetworks() error {
 			}
 
 			if len(n.Containers) > 0 {
+				continue
+			}
+
+			// if network created less than 10 min, keep it alive for now
+			if time.Since(nets[i].Created) < 10*time.Minute {
 				continue
 			}
 
