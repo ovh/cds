@@ -1,6 +1,6 @@
 -- +migrate Up
-ALTER TABLE action_edge_parameter ADD COLUMN advanced BOOLEAN;
-ALTER TABLE action_parameter ADD COLUMN advanced BOOLEAN;
+ALTER TABLE action_edge_parameter ADD COLUMN advanced BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE action_parameter ADD COLUMN advanced BOOLEAN NOT NULL DEFAULT false;
 update action_parameter set advanced = false;
 update action_edge_parameter set advanced = false;
 
