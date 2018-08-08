@@ -1,6 +1,7 @@
-## Bitnami Drupal image version
-## ref: https://hub.docker.com/r/bitnami/drupal/tags/
-##
+# Main cds values relates to api 
+# .ui values are used for ui related ressources 
+
+# Api
 image:
   registry: docker.io
   repository: ovhcom/cds-engine
@@ -17,21 +18,9 @@ image:
   # pullSecrets:
   #   - myRegistrKeySecretName
 
-## User of the application
-## ref: https://github.com/bitnami/bitnami-docker-drupal#configuration
-##
 cdsUsername: cds
-
-## Application password
-## Defaults to a random 10-character alphanumeric string if not set
-## ref: https://github.com/bitnami/bitnami-docker-drupal#configuration
-##
-# drupalPassword:
-
-## Admin email
-## ref: https://github.com/bitnami/bitnami-docker-drupal#configuration
-##
 cdsEmail: user@example.com
+logLevel: info
 
 ## Set to `yes` to allow the container to be started with blank passwords
 ## ref: https://github.com/bitnami/bitnami-docker-wordpress#environment-variables
@@ -45,13 +34,13 @@ externalDatabase:
   # host:
 
   ## Database user
-  # user: bn_drupal
+  # user: 
 
   ## Database password
   # password:
 
   ## Database name
-  # database: bitnami_drupal
+  # database: 
 
 ##
 ## Postgresql chart configuration
@@ -541,6 +530,7 @@ ui:
     registry: docker.io
     repository: ovhcom/cds-ui
     tag: latest
+  logLevel: info
   baseUrl: /
   api.livenessProbe:
     httpGet:

@@ -21,7 +21,6 @@ spec:
         - name: {{ . }}
       {{- end}}
       {{- end }}
-      #TODO : question what is migrate container ?
       containers:
       - name: {{ template "cds.fullname" . }}-ui
         image: "{{ .Values.ui.image.registry }}/{{ .Values.ui.image.repository }}:{{ .Values.ui.image.tag }}"
@@ -32,7 +31,7 @@ spec:
           - name: BASE_URL
             value: "{{ .Values.ui.baseUrl }}"
           - name: CDS_LOG_LEVEL
-            value: debug #TODO CONF
+            value: "{{ .Values.ui.logLevel }}"
         ports:
         - name: http
           containerPort: 8081

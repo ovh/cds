@@ -1,4 +1,3 @@
-#TODO : make migrate a statefull and &&
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -21,7 +20,6 @@ spec:
         - name: {{ . }}
       {{- end}}
       {{- end }}
-      #TODO : question what is migrate container ?
       containers:
       - name: {{ template "cds.fullname" . }}
         image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -53,9 +51,9 @@ spec:
         - name: CDS_API_AUTH_DEFAULTGROUP
           value: cdsdemo #TODO CONF
         - name: CDS_LOG_LEVEL
-          value: debug #TODO CONF
+          value: {{ default "" .Values.logLevel | quote }} 
         - name: CDS_API_CACHE_MODE
-          value: redis #TODO CONF
+          value: redis #No alternative in this chart
         - name: CDS_API_CACHE_REDIS_HOST
           value: {{ template "cds.redis.fullname" . }}-master:{{ default "" .Values.redis.master.port }} 
         - name: CDS_API_CACHE_REDIS_PASSWORD
@@ -83,17 +81,14 @@ spec:
               name: {{ template "cds.fullname" . }}
               key: cds-password
         command: ["/bin/sh"]
-        #TODO : refactor with vars and agrs and what is migrate-dir for ?
-        #args: ["-c", "/app/cds-engine-linux-amd64 start api"]
         args: ["-c", "/app/cds-engine-linux-amd64 start api"]
-#TODO : if migrate needs ports, probes and claims
         ports:
         - name: http
           containerPort: 8081
         - name: grpc #TODO need explanation
           containerPort: 8082
         livenessProbe:
-{{ toYaml .Values.api.livenessProbe | indent 10 }} #FIXME: add level in values.yml or add other chart ? And find somethign that does not say ` 404  | /   resource not found`
+{{ toYaml .Values.api.livenessProbe | indent 10 }} #FIXME:  should remove till PR add level in values.yml or add other chart ? And find somethign that does not say ` 404  | /   resource not found`
         readinessProbe:
 {{ toYaml .Values.api.readinessProbe | indent 10 }}
         resources:
