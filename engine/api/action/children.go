@@ -141,7 +141,7 @@ func loadChildActionParameterValue(db gorp.SqlExecutor, edgeID int64) ([]sdk.Par
 		var pType, val string
 		var advanced bool
 
-		if err := rows.Scan(&p.Name, &pType, &val, &p.Description, &p.Advanced); err != nil {
+		if err := rows.Scan(&p.Name, &pType, &val, &p.Description, &advanced); err != nil {
 			return nil, err
 		}
 		p.Type = pType
