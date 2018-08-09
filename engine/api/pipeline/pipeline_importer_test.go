@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -74,6 +75,8 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 
 func TestImportUpdate(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	event.Initialize(event.KafkaConfig{}, cache)
+
 	if db == nil {
 		t.FailNow()
 	}
