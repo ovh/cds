@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -64,6 +65,8 @@ func TestCanBeRun(t *testing.T) {
 
 func TestPurgeWorkflowRun(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	event.Initialize(event.KafkaConfig{}, cache)
+
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -139,6 +142,8 @@ func TestPurgeWorkflowRun(t *testing.T) {
 
 func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	event.Initialize(event.KafkaConfig{}, cache)
+
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -217,6 +222,8 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 
 func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	event.Initialize(event.KafkaConfig{}, cache)
+
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -308,6 +315,8 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 
 func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	event.Initialize(event.KafkaConfig{}, cache)
+
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -386,6 +395,8 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	event.Initialize(event.KafkaConfig{}, cache)
+
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -461,6 +472,8 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 
 func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	event.Initialize(event.KafkaConfig{}, cache)
+
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)

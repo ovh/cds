@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -56,6 +57,7 @@ func TestExist(t *testing.T) {
 
 func TestLoadAllByRepo(t *testing.T) {
 	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	event.Initialize(event.KafkaConfig{}, cache)
 
 	app, _ := application.LoadByName(db, cache, "TestLoadAllByRepo", "TestLoadAllByRepo", nil)
 	if app != nil {
