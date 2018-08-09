@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"time"
+
+	dump "github.com/fsamin/go-dump"
+	log "github.com/sirupsen/logrus"
 )
 
 //RunTestStep executes a venom testcase is a venom context
@@ -37,6 +40,20 @@ func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite,
 		}
 		// add result again for extracts values
 		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
+
+		// then template the TestSuite vars if needed
+		var applied bool
+		applied, ts.Vars, err = ts.Templater.ApplyOnMap(ts.Vars)
+		if err != nil {
+			log.Errorf("err:%s", err)
+		}
+		if applied {
+			d, err := dump.ToStringMap(ts.Vars)
+			if err != nil {
+				log.Errorf("err:%s", err)
+			}
+			ts.Templater.Add("", d)
+		}
 
 		if assertRes.ok {
 			break

@@ -89,7 +89,10 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 						dumpEncoder.Fdump(f.Result)
 					}
 
-					output := f.Value + "\n ------ \n" + sdump.String()
+					output := f.Value + "\n ------ Result: \n" + sdump.String() + "\n ------ Variables:\n"
+					for k, v := range ts.Templater.Values {
+						output += fmt.Sprintf("%s:%s\n", k, v)
+					}
 					if err := ioutil.WriteFile(filename, []byte(output), 0644); err != nil {
 						return fmt.Errorf("Error while creating file %s: %v", filename, err)
 					}
