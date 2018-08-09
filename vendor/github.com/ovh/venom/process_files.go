@@ -80,9 +80,9 @@ func (v *Venom) readFiles(filesPath []string) (err error) {
 
 		// Apply templater unitl there is no more modifications
 		// it permits to include testcase from env
-		out := ts.Templater.apply(dat)
+		_, out := ts.Templater.apply(dat)
 		for i := 0; i < 10; i++ {
-			tmp := ts.Templater.apply(out)
+			_, tmp := ts.Templater.apply(out)
 			if string(tmp) == string(out) {
 				break
 			}

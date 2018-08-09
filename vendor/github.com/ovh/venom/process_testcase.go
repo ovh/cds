@@ -10,7 +10,7 @@ import (
 
 func (v *Venom) initTestCaseContext(ts *TestSuite, tc *TestCase) (TestCaseContext, error) {
 	var errContext error
-	tc.Context, errContext = ts.Templater.ApplyOnContext(tc.Context)
+	_, tc.Context, errContext = ts.Templater.ApplyOnMap(tc.Context)
 	if errContext != nil {
 		return nil, errContext
 	}
