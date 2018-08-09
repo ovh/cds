@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/blang/semver"
@@ -25,6 +26,8 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
 		commit := sdk.ParameterFind(&a.Parameters, "commit")
 		directory := sdk.ParameterFind(&a.Parameters, "directory")
+		depth := sdk.ParameterFind(&a.Parameters, "depth")
+		submodules := sdk.ParameterFind(&a.Parameters, "submodules")
 
 		if url == nil {
 			res := sdk.Result{
@@ -128,11 +131,27 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		var opts = &git.CloneOpts{
 			Recursive:               true,
 			NoStrictHostKeyChecking: true,
+			Depth: 50,
 		}
 		if branch != nil {
 			opts.Branch = branch.Value
 		} else {
 			opts.SingleBranch = true
+		}
+		if depth != nil {
+			if depth.Value == "false" {
+				opts.Depth = 0
+			} else if depth.Value != "" {
+				depthVal, errConv := strconv.Atoi(depth.Value)
+				if errConv != nil {
+					sendLog(fmt.Sprintf("invalid depth value. It must by empty, or false, or a numeric value. current value: %s", depth.Value))
+				} else {
+					opts.Depth = depthVal
+				}
+			}
+		}
+		if submodules != nil && submodules.Value == "false" {
+			opts.Recursive = false
 		}
 
 		// if there is no branch, check if there a defaultBranch
@@ -168,7 +187,9 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	git.LogFunc = log.Info
 
 	//Perform the git clone
-	err := git.Clone(url, dir, auth, clone, output)
+	userLogCommand, err := git.Clone(url, dir, auth, clone, output)
+
+	sendLog(userLogCommand)
 
 	//Send the logs
 	if len(stdOut.Bytes()) > 0 {

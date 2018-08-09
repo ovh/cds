@@ -109,6 +109,20 @@ The public key have to be granted on your repository`,
 		Value:       "{{.cds.workspace}}",
 		Type:        sdk.StringParameter,
 	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "depth",
+		Description: "gitClone use a depth of 50 by default. You can remove --depth with the value 'false'",
+		Value:       "",
+		Type:        sdk.StringParameter,
+		Advanced:    true,
+	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "submodules",
+		Description: "gitClone clones submodules by default, you can set 'false' to avoid this",
+		Value:       "true",
+		Type:        sdk.BooleanParameter,
+		Advanced:    true,
+	})
 	gitclone.Requirement("git", sdk.BinaryRequirement, "git")
 
 	if err := checkBuiltinAction(db, gitclone); err != nil {
@@ -119,7 +133,12 @@ The public key have to be granted on your repository`,
 	checkoutApplication := sdk.NewAction(sdk.CheckoutApplicationAction)
 	checkoutApplication.Type = sdk.BuiltinAction
 	checkoutApplication.Description = `CDS Builtin Action.
-Checkout a repository into a new directory.`
+Checkout a repository into a new directory.
+
+This action use the configuration from application to git clone the repository.
+The clone will be done with a depth of 50 and with submodules.
+If you want to modify theses options, you have to use gitClone action.
+`
 
 	checkoutApplication.Parameter(sdk.Parameter{
 		Name:        "directory",

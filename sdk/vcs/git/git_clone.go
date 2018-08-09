@@ -19,7 +19,7 @@ type CloneOpts struct {
 }
 
 // Clone make a git clone
-func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) error {
+func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) (string, error) {
 	if verbose {
 		t1 := time.Now()
 		if opts != nil && opts.CheckoutCommit != "" {
@@ -31,14 +31,15 @@ func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *Ou
 	var commands []cmd
 	repoURL, err := getRepoURL(repo, auth)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	commands = prepareGitCloneCommands(repoURL, path, opts)
-	return runGitCommands(repo, commands, auth, output)
+	var userLogCommand string
+	userLogCommand, commands = prepareGitCloneCommands(repoURL, path, opts)
+	return userLogCommand, runGitCommands(repo, commands, auth, output)
 }
 
-func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
+func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string, cmds) {
 	allCmd := []cmd{}
 	gitcmd := cmd{
 		cmd:  "git",
@@ -63,15 +64,13 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
 		} else if opts.SingleBranch {
 			gitcmd.args = append(gitcmd.args, "--single-branch")
 		}
-		if !opts.SingleBranch && opts.Depth != 0 {
-			gitcmd.args = append(gitcmd.args, "--no-single-branch")
-		}
 
 		if opts.Recursive {
 			gitcmd.args = append(gitcmd.args, "--recursive")
 		}
 	}
 
+	userLogCommand := "Executing: git " + strings.Join(gitcmd.args, " ") + " ...  "
 	gitcmd.args = append(gitcmd.args, repo)
 
 	if path != "" {
@@ -85,6 +84,7 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
 			cmd:  "git",
 			args: []string{"reset", "--hard", opts.CheckoutCommit},
 		}
+		userLogCommand += "\n\rExecuting: git " + strings.Join(resetCmd.args, " ")
 		//Locate the git reset cmd to the right directory
 		if path == "" {
 			t := strings.Split(repo, "/")
@@ -96,5 +96,5 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
 		allCmd = append(allCmd, resetCmd)
 	}
 
-	return cmds(allCmd)
+	return userLogCommand, cmds(allCmd)
 }
