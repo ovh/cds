@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	"go.opencensus.io/stats"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"go.opencensus.io/stats"
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API

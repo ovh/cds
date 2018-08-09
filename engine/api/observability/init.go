@@ -3,11 +3,12 @@ package observability
 import (
 	"time"
 
-	"github.com/ovh/cds/sdk/log"
 	"go.opencensus.io/exporter/jaeger"
 	"go.opencensus.io/exporter/prometheus"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
+
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (

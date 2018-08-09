@@ -3,13 +3,13 @@ package hatchery
 import (
 	"fmt"
 
-	"github.com/ovh/cds/engine/api/observability"
-
-	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
+
+	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Stats returns the metric stats measures
