@@ -4,9 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"go.opencensus.io/stats/view"
+
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk/log"
-	"go.opencensus.io/stats/view"
 )
 
 // RegisterView begins collecting data for the given views
