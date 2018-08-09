@@ -136,11 +136,11 @@ func newSteps(a sdk.Action) []Step {
 					gitCloneArgs["directory"] = directory.Value
 				}
 				password := sdk.ParameterFind(&act.Parameters, "password")
-				if password != nil {
+				if password != nil && password.Value != "" {
 					gitCloneArgs["password"] = password.Value
 				}
 				privateKey := sdk.ParameterFind(&act.Parameters, "privateKey")
-				if privateKey != nil {
+				if privateKey != nil && privateKey.Value != "" {
 					gitCloneArgs["privateKey"] = privateKey.Value
 				}
 				url := sdk.ParameterFind(&act.Parameters, "url")
@@ -148,11 +148,11 @@ func newSteps(a sdk.Action) []Step {
 					gitCloneArgs["url"] = url.Value
 				}
 				user := sdk.ParameterFind(&act.Parameters, "user")
-				if user != nil {
+				if user != nil && user.Value != "" {
 					gitCloneArgs["user"] = user.Value
 				}
 				depth := sdk.ParameterFind(&act.Parameters, "depth")
-				if depth != nil && depth.Value != "50" {
+				if depth != nil && depth.Value != "" && depth.Value != "50" {
 					gitCloneArgs["depth"] = depth.Value
 				}
 				submodules := sdk.ParameterFind(&act.Parameters, "submodules")
