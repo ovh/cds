@@ -20,6 +20,7 @@ type Common struct {
 	service.Common
 	Router      *api.Router
 	initialized bool
+	stats       hatchery.Stats
 }
 
 func (c *Common) ServiceName() string {
@@ -60,7 +61,7 @@ func (c *Common) SetInitialized() {
 
 // CommonServe start the HatcheryLocal server
 func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
-	log.Info("%s> Starting service %s...", c.Name, sdk.VERSION)
+	log.Info("%s> Starting service %s (%s)...", c.Name, h.Configuration().Name, sdk.VERSION)
 	c.StartupTime = time.Now()
 
 	//Init the http server
@@ -87,6 +88,10 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 			server.Shutdown(ctx)
 		}
 	}()
+
+	if err := c.initStats(h.Configuration().Name); err != nil {
+		return err
+	}
 
 	if err := hatchery.Create(h); err != nil {
 		return err

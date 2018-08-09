@@ -4,13 +4,16 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ovh/cds/engine/service"
 	"go.opencensus.io/stats/view"
+
+	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // RegisterView begins collecting data for the given views
 func RegisterView(views ...*view.View) error {
-	if statsExporter != nil {
+	if statsExporter == nil {
+		log.Info("observability> stats are disabled")
 		return nil
 	}
 	return view.Register(views...)

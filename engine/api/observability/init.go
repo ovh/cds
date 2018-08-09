@@ -7,6 +7,8 @@ import (
 	"go.opencensus.io/exporter/prometheus"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
+
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -23,6 +25,7 @@ func Init(cfg Configuration, serviceName string) error {
 	traceEnable = true
 	var err error
 	if traceExporter == nil {
+		log.Info("observability> initializing jaegger exporter")
 		traceExporter, err = jaeger.NewExporter(jaeger.Options{
 			Endpoint:    cfg.Exporter.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
 			ServiceName: serviceName,                               //"cds-tracing"
@@ -39,12 +42,16 @@ func Init(cfg Configuration, serviceName string) error {
 	)
 
 	if statsExporter == nil {
+		log.Info("observability> initializing prometheus exporter")
 		statsExporter, err = prometheus.NewExporter(prometheus.Options{})
 	}
 	if err != nil {
 		return err
 	}
 	view.RegisterExporter(statsExporter)
+	if cfg.Exporter.Prometheus.ReporteringPeriod == 0 {
+		cfg.Exporter.Prometheus.ReporteringPeriod = 30
+	}
 	view.SetReportingPeriod(time.Duration(cfg.Exporter.Prometheus.ReporteringPeriod) * time.Second)
 
 	return nil

@@ -3,6 +3,8 @@ package hatchery
 import (
 	"context"
 
+	"go.opencensus.io/stats"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -90,4 +92,16 @@ type Interface interface {
 	IsInitialized() bool
 	SetInitialized()
 	ServiceName() string
+	Stats() *Stats
+}
+
+type Stats struct {
+	Jobs               *stats.Int64Measure
+	SpawnedWorkers     *stats.Int64Measure
+	PendingWorkers     *stats.Int64Measure
+	RegisteringWorkers *stats.Int64Measure
+	CheckingWorkers    *stats.Int64Measure
+	WaitingWorkers     *stats.Int64Measure
+	BuildingWorkers    *stats.Int64Measure
+	DisabledWorkers    *stats.Int64Measure
 }
