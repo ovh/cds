@@ -120,7 +120,6 @@ func newSteps(a sdk.Action) []Step {
 				if tag != nil {
 					artifactUploadArgs["tag"] = tag.Value
 				}
-
 				s["artifactUpload"] = artifactUploadArgs
 			case sdk.GitCloneAction:
 				gitCloneArgs := map[string]string{}
@@ -152,7 +151,14 @@ func newSteps(a sdk.Action) []Step {
 				if user != nil {
 					gitCloneArgs["user"] = user.Value
 				}
-
+				depth := sdk.ParameterFind(&act.Parameters, "depth")
+				if depth != nil && depth.Value != "50" {
+					gitCloneArgs["depth"] = depth.Value
+				}
+				submodules := sdk.ParameterFind(&act.Parameters, "submodules")
+				if submodules != nil && submodules.Value == "false" {
+					gitCloneArgs["submodules"] = submodules.Value
+				}
 				s["gitClone"] = gitCloneArgs
 			case sdk.JUnitAction:
 				path := sdk.ParameterFind(&act.Parameters, "path")

@@ -18,7 +18,8 @@
             <label>{{'parameter_description' | translate}}</label>
             <textarea [(ngModel)]="newParameter.description" name="description" rows="{{ _sharedService.getTextAreaheight(newParameter.description)}}"></textarea>
         </div>
-        <div class="two wide field">
+        <div class="two wide field" *ngIf="!project">
+            <label>{{'parameter_advanced' | translate}}</label>
             <div class="ui checkbox">
                 <input type="checkbox" name="advanced" [(ngModel)]="newParameter.advanced">
                 <label></label>
