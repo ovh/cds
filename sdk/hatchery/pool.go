@@ -1,15 +1,19 @@
 package hatchery
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"go.opencensus.io/stats"
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
 func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
+	ctx := WithTags(context.Background(), h)
+
 	// First: call API
 	registeredWorkers, err := h.CDSClient().WorkerList()
 	if err != nil {
@@ -58,6 +62,21 @@ func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
 			Status: status,
 		})
 	}
+
+	nbPerStatus := map[sdk.Status]int{}
+	for _, w := range allWorkers {
+		nbPerStatus[w.Status] = nbPerStatus[w.Status] + 1
+	}
+
+	measures := []stats.Measurement{
+		h.Stats().PendingWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
+		h.Stats().RegisteringWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
+		h.Stats().WaitingWorkers.M(int64(nbPerStatus[sdk.StatusWaiting])),
+		h.Stats().CheckingWorkers.M(int64(nbPerStatus[sdk.StatusChecking])),
+		h.Stats().BuildingWorkers.M(int64(nbPerStatus[sdk.StatusBuilding])),
+		h.Stats().DisabledWorkers.M(int64(nbPerStatus[sdk.StatusDisabled])),
+	}
+	stats.Record(ctx, measures...)
 
 	// Filter by status
 	res := make([]sdk.Worker, 0, len(allWorkers))

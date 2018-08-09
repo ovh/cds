@@ -11,14 +11,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/sdk/tracingutils"
+	cache "github.com/patrickmn/go-cache"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
 
-	cache "github.com/patrickmn/go-cache"
-
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 var (
@@ -26,7 +27,25 @@ var (
 	Client                 sdk.HTTPClient
 	defaultMaxProvisioning = 10
 	models                 []sdk.Model
+
+	// Opencensus tags
+	TagHatchery     tag.Key
+	TagHatcheryName tag.Key
 )
+
+func init() {
+	TagHatchery, _ = tag.NewKey("hatchery")
+	TagHatcheryName, _ = tag.NewKey("hatchery_name")
+}
+
+// WithTags returns a context with opencenstus tags
+func WithTags(ctx context.Context, h Interface) context.Context {
+	ctx, _ = tag.New(ctx,
+		tag.Upsert(TagHatchery, h.ServiceName()),
+		tag.Upsert(TagHatcheryName, h.Hatchery().Name),
+	)
+	return ctx
+}
 
 // Create creates hatchery
 func Create(h Interface) error {
@@ -216,6 +235,7 @@ func Create(h Interface) error {
 
 			var traceEnded *struct{}
 			currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
+			currentCtx = WithTags(currentCtx, h)
 			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
 				currentCtx, _ = observability.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
@@ -247,6 +267,9 @@ func Create(h Interface) error {
 					endTrace(currentCtx.Err().Error())
 				}
 			}()
+
+			stats.Record(currentCtx, h.Stats().Jobs.M(1))
+
 			//Check if the jobs is concerned by a pending worker creation
 			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
 				log.Debug("job %d already spawned in previous routine", j.ID)
