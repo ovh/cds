@@ -3,6 +3,9 @@ package hatchery
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"sync/atomic"
 	"time"
 
@@ -35,6 +38,16 @@ type workerStarterResult struct {
 	err          error
 }
 
+func PanicDump(h Interface) func(s string) (io.WriteCloser, error) {
+	return func(s string) (io.WriteCloser, error) {
+		dir, err := h.PanicDumpDirectory()
+		if err != nil {
+			return nil, err
+		}
+		return os.OpenFile(filepath.Join(dir, s), os.O_RDWR|os.O_CREATE, 0644)
+	}
+}
+
 // Start all goroutines which manage the hatchery worker spawning routine.
 // the purpose is to avoid go routines leak when there is a bunch of worker to start
 func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerStarterResult) {
@@ -46,9 +59,12 @@ func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerS
 		maxProv = defaultMaxProvisioning
 	}
 	for i := 0; i < maxProv; i++ {
-		sdk.GoRoutine("workerStarter", func() {
-			workerStarter(h, jobs, results)
-		})
+		sdk.GoRoutine("workerStarter",
+			func() {
+				workerStarter(h, jobs, results)
+			},
+			PanicDump(h),
+		)
 	}
 
 	return jobs, results
