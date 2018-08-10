@@ -66,7 +66,7 @@ func Tag(key string, value interface{}) trace.Attribute {
 // Span start a new span from the parent context
 func Span(ctx context.Context, name string, tags ...trace.Attribute) (context.Context, func()) {
 	if ctx == nil {
-		return nil, func() {}
+		return context.Background(), func() {}
 	}
 	var span *trace.Span
 	ctx, span = trace.StartSpan(ctx, name)
