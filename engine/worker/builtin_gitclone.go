@@ -29,15 +29,6 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		depth := sdk.ParameterFind(&a.Parameters, "depth")
 		submodules := sdk.ParameterFind(&a.Parameters, "submodules")
 
-		if url == nil {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: "Git repository URL is not set. Nothing to perform.",
-			}
-			sendLog(res.Reason)
-			return res
-		}
-
 		deprecatedKey := true
 
 		if privateKey != nil && (strings.HasPrefix(privateKey.Value, "app-") || strings.HasPrefix(privateKey.Value, "proj-") || strings.HasPrefix(privateKey.Value, "env-")) {
@@ -96,18 +87,6 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			}
 		}
 
-		//If url is not http(s), a key must be found
-		if !strings.HasPrefix(url.Value, "http") {
-			if errK == sdk.ErrKeyNotFound || key == nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("SSH Key not found. Unable to perform git clone"),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-		}
-
 		//Prepare all options - credentials
 		var auth *git.AuthOpts
 		if user != nil || password != nil {
@@ -125,6 +104,48 @@ func runGitClone(w *currentWorker) BuiltInAction {
 				auth = new(git.AuthOpts)
 			}
 			auth.PrivateKey = *key
+		}
+
+		var gitURL string
+		if url != nil {
+			gitURL = url.Value
+		}
+
+		// if not auth setted in GitClone action, we try to use VCS Strategy
+		// if failed with VCS Strategy: warn only user (user can use GitClone without auth, with a git url valid)
+		if gitURL == "" && (auth == nil || (auth.Username == "" && auth.Password == "" && len(auth.PrivateKey.Content) == 0)) {
+			sendLog("no url and auth parameters, trying to use VCS Strategy from application")
+			var errExtract error
+			gitURL, auth, errExtract = extractVCSInformations(*params, secrets)
+			if errExtract != nil {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: fmt.Sprintf("Could not use VCS Auth Strategy from application: %v", errExtract),
+				}
+				sendLog(res.Reason)
+				return res
+			}
+		}
+
+		if gitURL == "" {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Git repository URL is not set. Nothing to perform."),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+
+		//If url is not http(s), a key must be found
+		if !strings.HasPrefix(gitURL, "http") {
+			if errK == sdk.ErrKeyNotFound || key == nil {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: fmt.Sprintf("SSH Key not found. Unable to perform git clone"),
+				}
+				sendLog(res.Reason)
+				return res
+			}
 		}
 
 		//Prepare all options - clone options
@@ -170,7 +191,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		if directory != nil {
 			dir = directory.Value
 		}
-		return gitClone(w, params, url.Value, dir, auth, opts, sendLog)
+		return gitClone(w, params, gitURL, dir, auth, opts, sendLog)
 	}
 }
 
