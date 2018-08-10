@@ -57,6 +57,8 @@ func init() {
 			}
 
 			path := filepath.Join(dir, panicDumpDir)
+			_ = os.MkdirAll(path, os.FileMode(0755))
+
 			files, err := ioutil.ReadDir(path)
 			if err != nil {
 				log.Warning("unable to list files in %s: %v", path, err)
