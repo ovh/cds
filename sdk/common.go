@@ -107,17 +107,31 @@ func FileSHA512sum(filePath string) (string, error) {
 }
 
 // GoRoutine runs the function within a goroutine with a panic recovery
-func GoRoutine(name string, fn func()) {
+func GoRoutine(name string, fn func(), writerFactories ...func(s string) (io.WriteCloser, error)) {
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				buf := make([]byte, 1<<16)
-				runtime.Stack(buf, true)
-				log.Error("[PANIC] %s Failed", name)
-				log.Error("[PANIC] %s> %s", name, string(buf))
+				runtime.Stack(buf, false)
+				uuid := UUID()
+				log.Error("[PANIC] %s Failed (%s)", name, uuid)
+
+				for _, f := range writerFactories {
+					w, err := f(uuid)
+					if err != nil {
+						log.Error("unable open writer %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
+						continue
+					}
+					if _, err := io.Copy(w, bytes.NewReader(buf)); err != nil {
+						log.Error("unable to write %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
+						continue
+					}
+					if err := w.Close(); err != nil {
+						log.Error("unable to close %s ¯\\_(ツ)_/¯ (%v)", uuid, err)
+					}
+				}
 			}
 		}()
 		fn()
 	}()
-
 }

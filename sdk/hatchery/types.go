@@ -93,6 +93,7 @@ type Interface interface {
 	SetInitialized()
 	ServiceName() string
 	Stats() *Stats
+	PanicDumpDirectory() (string, error)
 }
 
 type Stats struct {
