@@ -31,12 +31,17 @@ func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
 	allWorkers := make([]sdk.Worker, 0, len(startedWorkers)+len(registeredWorkers))
 
 	// Consider the registered worker
-	for _, w := range registeredWorkers {
+	for k, w := range registeredWorkers {
 		var found bool
 		for i := range startedWorkers {
 			if startedWorkers[i] == w.Name {
 				startedWorkers = append(startedWorkers[:i], startedWorkers[i+1:]...)
 				found = true
+
+				if strings.HasPrefix(w.Name, "register-") {
+					registeredWorkers[k].Status = sdk.StatusWorkerRegistering
+				}
+
 				break
 			}
 		}
@@ -53,10 +58,26 @@ func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
 	// And add the other worker with status pending of registering
 	for _, w := range startedWorkers {
 		name := w
-		status := sdk.StatusWorkerPending
+		var status sdk.Status
+
+		var found bool
+		for _, wr := range registeredWorkers {
+			if wr.Name == name {
+				found = true
+				break
+			}
+		}
+		if found {
+			continue // worker is registered
+		}
+
 		if strings.HasPrefix(w, "register-") {
 			name = strings.Replace(w, "register-", "", 1)
 			status = sdk.StatusWorkerRegistering
+		}
+
+		if status == "" {
+			status = sdk.StatusWorkerPending
 		}
 		allWorkers = append(allWorkers, sdk.Worker{
 			Name:   name,
