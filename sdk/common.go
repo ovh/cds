@@ -108,13 +108,14 @@ func FileSHA512sum(filePath string) (string, error) {
 
 // GoRoutine runs the function within a goroutine with a panic recovery
 func GoRoutine(name string, fn func(), writerFactories ...func(s string) (io.WriteCloser, error)) {
+	hostname, _ := os.Hostname()
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
 				buf := make([]byte, 1<<16)
 				runtime.Stack(buf, false)
 				uuid := UUID()
-				log.Error("[PANIC] %s Failed (%s)", name, uuid)
+				log.Error("[PANIC][%s] %s Failed (%s)", hostname, name, uuid)
 
 				for _, f := range writerFactories {
 					w, err := f(uuid)

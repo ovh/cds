@@ -45,6 +45,41 @@ func (c *Common) servePanicDumpList() ([]string, error) {
 	return res, nil
 }
 
+func init() {
+	// This go routine deletes panic dumps older than 15 minutes
+	go func() {
+		for {
+			time.Sleep(1 * time.Minute)
+			dir, err := os.Getwd()
+			if err != nil {
+				log.Warning("unable to get working directory: %v", err)
+				continue
+			}
+
+			path := filepath.Join(dir, panicDumpDir)
+			files, err := ioutil.ReadDir(path)
+			if err != nil {
+				log.Warning("unable to list files in %s: %v", path, err)
+				continue
+			}
+
+			for _, f := range files {
+				filename := filepath.Join(path, f.Name())
+				file, err := os.Stat(filename)
+				if err != nil {
+					log.Warning("unable to get file %s info: %v", f.Name(), err)
+					continue
+				}
+				if file.ModTime().Before(time.Now().Add(-15 * time.Minute)) {
+					if err := os.Remove(filename); err != nil {
+						log.Warning("unable to remove file %s: %v", filename, err)
+					}
+				}
+			}
+		}
+	}()
+}
+
 func (c *Common) servePanicDump(f string) (io.ReadCloser, error) {
 	dir, _ := os.Getwd()
 	path := filepath.Join(dir, panicDumpDir, f)
