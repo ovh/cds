@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -14,13 +15,13 @@ func (s *Service) Status() sdk.MonitoringStatus {
 		status = sdk.MonitoringStatusWarn
 		value = "disconnected"
 	} else {
-		_, code, err := esClient.Ping(s.Cfg.URL).Do(context.Background())
+		_, code, err := esClient.Ping(s.Cfg.ElasticSearch.URL).Do(context.Background())
 		if err != nil {
 			status = sdk.MonitoringStatusWarn
-			value = "no ping"
+			value = fmt.Sprintf("no ping (%v)", err)
 		} else if code >= 400 {
 			status = sdk.MonitoringStatusWarn
-			value = "ping error"
+			value = fmt.Sprintf("ping error (code:%d, err: %v)", code, err)
 		} else {
 			status = sdk.MonitoringStatusOK
 		}
