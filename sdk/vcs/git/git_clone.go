@@ -53,10 +53,8 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 			gitcmd.args = append(gitcmd.args, "--verbose")
 		}
 
-		if opts.CheckoutCommit == "" {
-			if opts.Depth != 0 {
-				gitcmd.args = append(gitcmd.args, "--depth", fmt.Sprintf("%d", opts.Depth))
-			}
+		if opts.Depth != 0 {
+			gitcmd.args = append(gitcmd.args, "--depth", fmt.Sprintf("%d", opts.Depth))
 		}
 
 		if opts.Branch != "" {
