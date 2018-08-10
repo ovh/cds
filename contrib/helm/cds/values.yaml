@@ -22,9 +22,59 @@ cdsUsername: cds
 cdsEmail: user@example.com
 logLevel: info
 
-## Set to `yes` to allow the container to be started with blank passwords
-## ref: https://github.com/bitnami/bitnami-docker-wordpress#environment-variables
-allowEmptyPassword: "yes"
+## Configure resource requests and limits
+## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+##
+resources:
+  requests:
+    memory: 512Mi
+    cpu: 300m
+
+## Enable persistence using Persistent Volume Claims
+## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+##
+persistence:
+  enabled: true
+  ## drupal data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+  accessMode: ReadWriteOnce
+  size: 8Gi
+  mountPath: /app/artifacts
+
+  ## A manually managed Persistent Volume Claim
+  ## Requires persistence.enabled: true
+  ## If defined, PVC must be created manually before volume will be bound
+  ##
+  # existingClaim:
+
+  ## If defined, the drupal-data volume will mount to the specified hostPath.
+  ## Requires persistence.enabled: true
+  ## Requires persistence.existingClaim: nil|false
+  ## Default: nil.
+  ##
+  # hostPath
+  
+  
+
+#TODO : find a working probe    
+# livenessProbe:
+#   httpGet:
+#     path: /
+#     port: 8081
+#   initialDelaySeconds: 120
+# readinessProbe:
+#   httpGet:
+#     path: /
+#     port: 8081
+#   initialDelaySeconds: 30
+## Configure volume mounts. This is useful for images whose data mount paths are
+## different than the default.
 
 ##
 ## External database configuration
@@ -45,6 +95,57 @@ externalDatabase:
 ##
 ## Postgresql chart configuration
 ##
+
+
+## Kubernetes configuration
+## For minikube, set this to NodePort, elsewhere use LoadBalancer
+## Use ClusterIP if your setup includes ingress controller
+##
+serviceType: ClusterIP
+
+## Configure Ingress resource that allow you to access the Drupal installation
+## Set up the URL
+## ref: http://kubernetes.io/docs/user-guide/ingress/
+##
+ingress:
+  enabled: false
+  # Used to create Ingress record (should used with ServiceType: ClusterIP).
+  # hostname: drupal.local
+
+  ## Ingress annotations
+  ##
+  # annotations:
+  #   kubernetes.io/ingress.class: nginx
+
+  ## Ingress TLS configuration
+  ## Secrets must be manually created in the namespace
+  ##
+  # tls:
+  #   - secretName: wordpress.local-tls
+  #     hosts:
+  #       - drupal.local
+
+
+
+# Ui
+ui:
+  image:
+    registry: docker.io
+    repository: ovhcom/cds-ui
+    tag: latest
+  logLevel: info
+  baseUrl: /
+  api.livenessProbe:
+    httpGet:
+      path: /
+      port: 8081
+    initialDelaySeconds: 120
+  api.readinessProbe:
+    httpGet:
+      path: /
+      port: 8081
+    initialDelaySeconds: 30
+  serviceType: LoadBalancer
 
 postgresql:
 
@@ -177,9 +278,6 @@ postgresql:
   podAnnotations: {}
 
 redis:
-## Bitnami Redis image version
-## ref: https://hub.docker.com/r/bitnami/redis/tags/
-##
   image:
     registry: docker.io
     repository: bitnami/redis
@@ -248,7 +346,7 @@ redis:
   ## Defaults to a random 10-character alphanumeric string if not set and usePassword is true
   ## ref: https://github.com/bitnami/bitnami-docker-redis#setting-the-server-password-on-first-run
   ##
-  usePassword: false #FIXME : set to true, check in deployement, secret ref is correctly referenced, but see it fail with "Serve: cannot connect to cache store: NOAUTH Authentication required."
+  usePassword: false
   password:
   ## Use existing secret (ignores previous password)
   # existingSecret:
@@ -451,120 +549,3 @@ redis:
     #   fsGroup: 1001
     #   runAsUser: 1001
 
-  ## Kubernetes configuration
-  ## For minikube, set this to NodePort, elsewhere use LoadBalancer
-  ## Use ClusterIP if your setup includes ingress controller
-  ##
-serviceType: ClusterIP
-
-## Configure Ingress resource that allow you to access the Drupal installation
-## Set up the URL
-## ref: http://kubernetes.io/docs/user-guide/ingress/
-##
-ingress:
-  enabled: false
-  # Used to create Ingress record (should used with ServiceType: ClusterIP).
-  # hostname: drupal.local
-
-  ## Ingress annotations
-  ##
-  # annotations:
-  #   kubernetes.io/ingress.class: nginx
-
-  ## Ingress TLS configuration
-  ## Secrets must be manually created in the namespace
-  ##
-  # tls:
-  #   - secretName: wordpress.local-tls
-  #     hosts:
-  #       - drupal.local
-
-## Enable persistence using Persistent Volume Claims
-## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
-##
-persistence:
-  enabled: true
-  cds:
-    ## drupal data Persistent Volume Storage Class
-    ## If defined, storageClassName: <storageClass>
-    ## If set to "-", storageClassName: "", which disables dynamic provisioning
-    ## If undefined (the default) or set to null, no storageClassName spec is
-    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
-    ##   GKE, AWS & OpenStack)
-    ##
-    # storageClass: "-"
-    accessMode: ReadWriteOnce
-    size: 8Gi
-
-    ## A manually managed Persistent Volume Claim
-    ## Requires persistence.enabled: true
-    ## If defined, PVC must be created manually before volume will be bound
-    ##
-    # existingClaim:
-
-    ## If defined, the drupal-data volume will mount to the specified hostPath.
-    ## Requires persistence.enabled: true
-    ## Requires persistence.existingClaim: nil|false
-    ## Default: nil.
-    ##
-    # hostPath:
-
-## Configure resource requests and limits
-## ref: http://kubernetes.io/docs/user-guide/compute-resources/
-##
-resources:
-  requests:
-    memory: 512Mi
-    cpu: 300m
-
-## Pass extra environment variables to the Drupal container.
-##
-# extraVars:
-# - name: EXTRA_VAR_1
-#   value: extra-var-value-1
-# - name: EXTRA_VAR_2
-#   value: extra-var-value-2
-
-ui:
-  image:
-    registry: docker.io
-    repository: ovhcom/cds-ui
-    tag: latest
-  logLevel: info
-  baseUrl: /
-  api.livenessProbe:
-    httpGet:
-      path: /
-      port: 8081
-    initialDelaySeconds: 120
-  api.readinessProbe:
-    httpGet:
-      path: /
-      port: 8081
-    initialDelaySeconds: 30
-  serviceType: LoadBalancer
-
-## Configure liveness and readiness probes.
-## Drupal core exposes /user/login to unauthenticated requests, making it a good
-## default liveness and readiness path. However, that may not always be the
-## case. For example, if the image value is overridden to an image containing a
-## module that alters that route, or an image that does not auto-install Drupal.
-## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-#
-api :
-  #TODO : find a good api readiness probe
-  # livenessProbe:
-  #   httpGet:
-  #     path: /
-  #     port: 8081
-  #   initialDelaySeconds: 120
-  # readinessProbe:
-  #   httpGet:
-  #     path: /
-  #     port: 8081
-  #   initialDelaySeconds: 30
-  ## Configure volume mounts. This is useful for images whose data mount paths are
-  ## different than the default.
-  ##
-  volumeMounts:
-      mountPath: /app/artifacts

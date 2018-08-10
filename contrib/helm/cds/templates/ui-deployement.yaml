@@ -1,4 +1,3 @@
-#TODO : make migrate a statefull and &&
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
@@ -38,7 +37,7 @@ spec:
         - name: https
           containerPort: 8081
         livenessProbe:
-{{ toYaml .Values.ui.livenessProbe | indent 10 }} #FIXME: add level in values.yml or add other chart ? And find somethign that does not say ` 404  | /   resource not found`
+{{ toYaml .Values.ui.livenessProbe | indent 10 }}
         readinessProbe:
 {{ toYaml .Values.ui.readinessProbe | indent 10 }}
         resources:

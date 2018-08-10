@@ -1,13 +1,13 @@
-{{- if and .Values.persistence.enabled .Values.persistence.cds.hostPath (not .Values.persistence.cds.existingClaim) -}}
+{{- if and .Values.persistence.enabled .Values.persistence.hostPath (not .Values.persistence.existingClaim) -}}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ template "cds.fullname" . }}-cds
+  name: {{ template "cds.fullname" . }}
 spec:
   accessModes:
-    - {{ .Values.persistence.cds.accessMode | quote }}
+    - {{ .Values.persistence.accessMode | quote }}
   capacity:
-    storage: {{ .Values.persistence.cds.size | quote }}
+    storage: {{ .Values.persistence.size | quote }}
   hostPath:
-    path: {{ .Values.persistence.cds.hostPath | quote }}
+    path: {{ .Values.persistence.hostPath | quote }}
 {{- end -}}

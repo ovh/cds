@@ -25,12 +25,6 @@ spec:
         image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         env:
-        - name: ALLOW_EMPTY_PASSWORD #TODO : handle ?
-        {{- if .Values.allowEmptyPassword }}
-          value: "yes"
-        {{- else }}
-          value: "no"
-        {{- end }}
         - name: CDS_API_DATABASE_HOST
         {{- if .Values.postgresql.enabled }}
           value: {{ template "cds.postgresql.fullname" . }}
@@ -49,7 +43,7 @@ spec:
         - name: CDS_USERNAME
           value: {{ default "" .Values.cdsUsername | quote }}
         - name: CDS_API_AUTH_DEFAULTGROUP
-          value: cdsdemo #TODO CONF
+          value: cdsdemo
         - name: CDS_LOG_LEVEL
           value: {{ default "" .Values.logLevel | quote }} 
         - name: CDS_API_CACHE_MODE
@@ -63,7 +57,7 @@ spec:
               name: {{ template "cds.redis.fullname" . }}
               key: redis-password #reference postgresql chart secret
         {{- else }}
-          value: {{ default "" .Values.redis.password | quote }} #FIXME : check if correct way
+          value: {{ default "" .Values.redis.password | quote }}
         {{- end }}
         - name: CDS_API_DIRECTORIES_DOWNLOAD
           value: /app
@@ -75,7 +69,7 @@ spec:
           value: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
         - name: CDS_API_SECRETS_KEY
           value: changeitchangeitchangeitchangeit
-        - name: CDS_PASSWORD #TODO : wich password ??
+        - name: CDS_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ template "cds.fullname" . }}
@@ -85,22 +79,22 @@ spec:
         ports:
         - name: http
           containerPort: 8081
-        - name: grpc #TODO need explanation
+        - name: grpc
           containerPort: 8082
         livenessProbe:
-{{ toYaml .Values.api.livenessProbe | indent 10 }} #FIXME:  should remove till PR add level in values.yml or add other chart ? And find somethign that does not say ` 404  | /   resource not found`
+{{ toYaml .Values.livenessProbe | indent 10 }}
         readinessProbe:
-{{ toYaml .Values.api.readinessProbe | indent 10 }}
+{{ toYaml .Values.readinessProbe | indent 10 }}
         resources:
-{{ toYaml .Values.api.resources | indent 10 }}
+{{ toYaml .Values.resources | indent 10 }}
         volumeMounts:
         - name: cds-data
-          mountPath: {{ .Values.api.volumeMounts.mountPath }}
+          mountPath: {{ .Values.persistence.mountPath }}
       volumes:
       - name: cds-data
       {{- if .Values.persistence.enabled }}
         persistentVolumeClaim:
-          claimName: {{ .Values.persistence.cds.existingClaim | default (printf "%s-cds" (include "cds.fullname" .)) }}
+          claimName: {{ .Values.persistence.existingClaim | default (printf "%s" (include "cds.fullname" .)) }}
       {{- else }}
         emptyDir: {}
       {{- end }}

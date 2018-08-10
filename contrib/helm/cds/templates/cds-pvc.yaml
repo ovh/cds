@@ -1,27 +1,27 @@
-{{- if and .Values.persistence.enabled (not .Values.persistence.cds.existingClaim) -}}
+{{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) -}}
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: {{ template "cds.fullname" . }}-cds
+  name: {{ template "cds.fullname" . }}
   labels:
     app: {{ template "cds.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
-  {{- if .Values.persistence.cds.hostPath }}
+  {{- if .Values.persistence.hostPath }}
   storageClassName: ""
   {{- end }}
   accessModes:
-    - {{ .Values.persistence.cds.accessMode | quote }}
+    - {{ .Values.persistence.accessMode | quote }}
   resources:
     requests:
-      storage: {{ .Values.persistence.cds.size | quote }}
-{{- if and .Values.persistence.cds.storageClass (not .Values.persistence.cds.hostPath) -}}
-{{- if (eq "-" .Values.persistence.cds.storageClass) }}
+      storage: {{ .Values.persistence.size | quote }}
+{{- if and .Values.persistence.storageClass (not .Values.persistence.hostPath) -}}
+{{- if (eq "-" .Values.persistence.storageClass) }}
   storageClassName: ""
 {{- else }}
-  storageClassName: "{{ .Values.persistence.cds.storageClass }}"
+  storageClassName: "{{ .Values.persistence.storageClass }}"
 {{- end }}
 {{- end }}
 {{- end -}}
