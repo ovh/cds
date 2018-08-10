@@ -144,7 +144,7 @@ func newSteps(a sdk.Action) []Step {
 					gitCloneArgs["privateKey"] = privateKey.Value
 				}
 				url := sdk.ParameterFind(&act.Parameters, "url")
-				if url != nil {
+				if url != nil && url.Value != "" {
 					gitCloneArgs["url"] = url.Value
 				}
 				user := sdk.ParameterFind(&act.Parameters, "user")
