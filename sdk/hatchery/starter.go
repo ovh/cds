@@ -75,7 +75,6 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 		// Start a worker for a job
 		if m := j.registerWorkerModel; m == nil {
 			_, end := observability.Span(j.ctx, "hatchery.workerStarter")
-
 			//Try to start the worker
 			isRun, err := spawnWorkerForJob(h, j)
 			//Check the result
