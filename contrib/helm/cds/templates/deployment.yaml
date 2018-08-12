@@ -1,9 +1,9 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ template "cds.fullname" . }}
+  name: {{ template "cds.fullname" . }}-api
   labels:
-    app: {{ template "cds.fullname" . }}
+    app: {{ template "cds.fullname" . }}-api
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
@@ -12,7 +12,7 @@ spec:
   template:
     metadata:
       labels:
-        app: {{ template "cds.fullname" . }}
+        app: {{ template "cds.fullname" . }}-api
     spec:
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
@@ -21,7 +21,7 @@ spec:
       {{- end}}
       {{- end }}
       containers:
-      - name: {{ template "cds.fullname" . }}
+      - name: {{ template "cds.fullname" . }}-api
         image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
         env:
@@ -72,7 +72,7 @@ spec:
         - name: CDS_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ template "cds.fullname" . }}
+              name: {{ template "cds.fullname" . }}-api
               key: cds-password
         command: ["/bin/sh"]
         args: ["-c", "/app/cds-engine-linux-amd64 start api"]
@@ -94,7 +94,7 @@ spec:
       - name: cds-data
       {{- if .Values.persistence.enabled }}
         persistentVolumeClaim:
-          claimName: {{ .Values.persistence.existingClaim | default (printf "%s" (include "cds.fullname" .)) }}
+          claimName: {{ .Values.persistence.existingClaim | default (printf "%s-api" (include "cds.fullname" .)) }}
       {{- else }}
         emptyDir: {}
       {{- end }}
