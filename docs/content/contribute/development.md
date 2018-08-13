@@ -79,7 +79,7 @@ $ tar xzf node-v10.8.0-darwin-x64.tar.gz
 
 ## Golang
 
-Download the latest Golang version from https://golang.org/dl/
+Download the latest Golang version from https://golang.org/dl/, version 1.10 min
 
 Example with version 1.10.3 on OSX:
 
