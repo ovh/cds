@@ -10,7 +10,7 @@ Write / Generate / Test documentation:
 
 * Download release Hugo v32.4 https://github.com/gohugoio/hugo/releases/tag/v0.32.4 - put hugo binary in your PATH
 * Download CDS Binaries: cdsctl, engine, worker from https://github.com/ovh/cds/releases/latest
-* Clone CDS repository: git clone https://github.com/ovh/cds.git inside ${CDS_SOURCES}
+* Clone CDS repository: `git clone https://github.com/ovh/cds.git` inside ${CDS_SOURCES}
 * Generate documentation with Hugo
 
 ```bash
