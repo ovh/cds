@@ -138,6 +138,7 @@ $ engine config new > ~/.cds/dev.toml
 ### --> set variable defaultOS to your OS, darwin if you are on osx for example
 ## in section [hatchery.local.commonConfiguration]
 ### --> set name to "hatchery-local"
+## in section [hatchery.local.commonConfiguration.api.http]
 ### --> uncomment url, should be set to url = "http://localhost:8086" 
 
 ```
