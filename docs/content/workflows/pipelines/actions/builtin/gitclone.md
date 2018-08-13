@@ -18,7 +18,7 @@ This action clones a repository into a new directory.
 * commit - optional - the current branch head (HEAD) to the commit
 * directory - optional - the name of a directory to clone into.
 
-Avanced parameters:
+Advanced parameters:
 
 * depth - optional - 50 by default. You can remove --depth with the value 'false'
 * submodules - true by default, you can set false to avoid this.
@@ -27,6 +27,9 @@ Notes:
 
 By defaut, depth is 50 and git clone with `--single-branch` automatically. 
 So, if you want to do in a step script `git diff anotherBranch`, you have to set depth to 'false'.
+
+If there is no user && password && sshkey setted in action GitClone, CDS checks on Application VCS Strategy if some auth parameters can be used.
+
 
 ### Example
 
