@@ -71,7 +71,7 @@ Download the latest stable Node from https://nodejs.org/en/download/current/, ve
 Example with version 10.8.0 on OSX:
 
 ```bash
-$ wget https://nodejs.org/dist/v10.8.0/node-v10.8.0-darwin-x64.tar.gz
+$ curl -O https://nodejs.org/dist/v10.8.0/node-v10.8.0-darwin-x64.tar.gz
 $ tar xzf node-v10.8.0-darwin-x64.tar.gz
 # directory node-v10.8.0-darwin-x64 is created
 # You should add node-v10.8.0-darwin-x64/bin to your PATH
@@ -87,7 +87,7 @@ Example with version 1.10.3 on OSX:
 $ export GOROOT=~/go
 $ export PATH=$PATH:$GOROOT/bin
 $ cd ~
-$ wget https://dl.google.com/go/go1.10.3.darwin-amd64.tar.gz
+$ curl -O https://dl.google.com/go/go1.10.3.darwin-amd64.tar.gz
 $ tar xzf go1.10.3.darwin-amd64.tar.gz
 ```
 
@@ -186,6 +186,6 @@ If you want to launch vcs & hooks uServices, you have to :
 - set name in sections `[vcs]` and `[hooks]`
 - uncomment API URL in sections `[vcs.api.http]` and `[hooks.api.http]`
 
-Of course, you have to do the same thing with uServices `repositories`, `elasticsearch`, `hatchery.swarm`, etc...
+Of course, you have to do the same thing with other uServices `repositories`, `elasticsearch`, `hatchery.swarm`, etc...
 
 A remark / question / suggestion, feel free to join us on https://gitter.im/ovh-cds/Lobby
