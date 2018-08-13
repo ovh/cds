@@ -153,6 +153,9 @@ $ cd $(go env GOPATH)/src/github.com/ovh/cds/engine
 $ engine database upgrade --db-password cds --db-sslmode disable
 ```
 
+If you don't have a local postgreSQL, you should run `engine database upgrade --help`
+and update `~/.cds/dev.toml` file.
+
 Launch CDS engine api & local hatchery:
 
 ```bash
