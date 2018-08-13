@@ -281,6 +281,11 @@
           <span>Artifact Upload</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/checkout-application/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/checkout-application/">
+          <span>CheckoutApplication</span>
+        </a>
+    </li>
       <li data-nav-id="/workflows/pipelines/actions/builtin/gitclone/" class="dd-item active">
         <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gitclone/">
           <span>GitClone</span>
@@ -1920,8 +1925,20 @@
           
     <li data-nav-id="/contribute/" class="dd-item">
       <a href="https://ovh.github.io/cds/contribute/">
-        <span>Opensource / Contribute</span>
+        <span>Opensource / Contribute</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
+        <ul>
+      <li data-nav-id="/contribute/documentation/" class="dd-item">
+        <a href="https://ovh.github.io/cds/contribute/documentation/">
+          <span>Write documentation</span>
+        </a>
+    </li>
+      <li data-nav-id="/contribute/development/" class="dd-item">
+        <a href="https://ovh.github.io/cds/contribute/development/">
+          <span>Development Environment</span>
+        </a>
+    </li>
+        </ul>
     </li>
           
         
@@ -2058,10 +2075,6 @@
 
 <p>This action clones a repository into a new directory.</p>
 
-<p>This will retrieve a shallow git clone (<code>depth==1</code>).</p>
-
-<p>You may want to use a privateKey to clone from an SSH repository. To do so, you will need to add a project or an application variable of type <code>key</code>. <code>{{.cds.app.a-key.pub}}</code></p>
-
 <h2 id="parameters">Parameters</h2>
 
 <ul>
@@ -2074,10 +2087,24 @@
 <li>directory - optional - the name of a directory to clone into.</li>
 </ul>
 
+<p>Advanced parameters:</p>
+
+<ul>
+<li>depth - optional - 50 by default. You can remove &ndash;depth with the value &lsquo;false&rsquo;</li>
+<li>submodules - true by default, you can set false to avoid this.</li>
+</ul>
+
+<p>Notes:</p>
+
+<p>By defaut, depth is 50 and git clone with <code>--single-branch</code> automatically.
+So, if you want to do in a step script <code>git diff anotherBranch</code>, you have to set depth to &lsquo;false&rsquo;.</p>
+
+<p>If there is no user &amp;&amp; password &amp;&amp; sshkey setted in action GitClone, CDS checks on Application VCS Strategy if some auth parameters can be used.</p>
+
 <h3 id="example">Example</h3>
 
 <ul>
-<li>Add repository manager on your application. We can use CDS Variables <code>{{.git...}}</code> in Job Configuration</li>
+<li>Add repository manager on your application.</li>
 </ul>
 
 <p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-repo-manager.png" alt="img" /></p>
@@ -2086,19 +2113,19 @@
 <li>Job Configuration.</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-job.png" alt="img" /></p>
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-edit-job.png" alt="img" /></p>
 
 <ul>
-<li>Launch pipeline, check logs</li>
+<li>Launch workflow, you can select the git branch.</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-logs.png" alt="img" /></p>
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-run-workflow.png" alt="img" /></p>
 
 <ul>
-<li>View artifact</li>
+<li>View logs on job</li>
 </ul>
 
-<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.artifact-upload-view-artifact.png" alt="img" /></p>
+<p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.gitclone-run-job.png" alt="img" /></p>
 
 
 <footer class=" footline" >
@@ -2118,7 +2145,7 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-upload/" title="Artifact Upload"> <i class="fa fa-chevron-left"></i></a>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/checkout-application/" title="CheckoutApplication"> <i class="fa fa-chevron-left"></i></a>
             <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gittag/" title="GitTag" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>

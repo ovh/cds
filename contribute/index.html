@@ -277,6 +277,11 @@
           <span>Artifact Upload</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/checkout-application/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/checkout-application/">
+          <span>CheckoutApplication</span>
+        </a>
+    </li>
       <li data-nav-id="/workflows/pipelines/actions/builtin/gitclone/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gitclone/">
           <span>GitClone</span>
@@ -1917,7 +1922,20 @@
     <li data-nav-id="/contribute/" class="dd-item parent active">
       <a href="https://ovh.github.io/cds/contribute/">
         <span>Opensource / Contribute</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
+        <ul>
+      <li data-nav-id="/contribute/documentation/" class="dd-item">
+        <a href="https://ovh.github.io/cds/contribute/documentation/">
+          <span>Write documentation</span>
+        </a>
+    </li>
+      <li data-nav-id="/contribute/development/" class="dd-item">
+        <a href="https://ovh.github.io/cds/contribute/development/">
+          <span>Development Environment</span>
+        </a>
+    </li>
+        </ul>
     </li>
           
         
@@ -2007,11 +2025,6 @@
 <li><a href="#roadmap">Roadmap</a></li>
 <li><a href="#contact-us">Contact us</a></li>
 <li><a href="#found-a-bug">Found a bug?</a></li>
-<li><a href="#documentation">Documentation</a>
-<ul>
-<li><a href="#write-generate-test-documentation">Write / Generate / Test documentation</a></li>
-<li><a href="#golang-development">Golang Development</a></li>
-</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -2055,42 +2068,6 @@
 
 <p>Feel free to open an issue on <a href="https://github.com/ovh/cds/issues">https://github.com/ovh/cds/issues</a></p>
 
-<h2 id="documentation">Documentation</h2>
-
-<p>Documentation <a href="https://ovh.github.io/cds">https://ovh.github.io/cds</a> is generated with Hugo. Source are under <a href="https://github.com/ovh/cds/tree/master/docs/content">https://github.com/ovh/cds/tree/master/docs/content</a></p>
-
-<h3 id="write-generate-test-documentation">Write / Generate / Test documentation</h3>
-
-<ul>
-<li>Download release Hugo v32.4 <a href="https://github.com/gohugoio/hugo/releases/tag/v0.32.4">https://github.com/gohugoio/hugo/releases/tag/v0.32.4</a> - put hugo binary in your PATH</li>
-<li>Download CDS Binaries: cdsctl, engine, worker from <a href="https://github.com/ovh/cds/releases/latest">https://github.com/ovh/cds/releases/latest</a></li>
-<li>Clone CDS repository: git clone <a href="https://github.com/ovh/cds.git">https://github.com/ovh/cds.git</a> inside ${CDS_SOURCES}</li>
-<li>Generate documentation with Hugo</li>
-</ul>
-
-<pre><code class="language-bash">cd ${CDS_SOURCES}/docs/content/cli
-rm -rf cdsctl engine worker;
-cd ${CDS_SOURCES}
-GEN_PATH=${CDS_SOURCES}/docs/content/cli make doc 
-cd ${CDS_SOURCES}/docs
-hugo server
-</code></pre>
-
-<ul>
-<li>go to <a href="http://localhost:1313/cds/">http://localhost:1313/cds/</a></li>
-</ul>
-
-<h3 id="golang-development">Golang Development</h3>
-
-<p>We use <a href="https://github.com/golang/dep">https://github.com/golang/dep</a> to manage CDS Dependencies.</p>
-
-<p>If you have to add or update a CDS Dependency, please follow instructions on <a href="https://github.com/golang/dep#adding-a-dependency">https://github.com/golang/dep#adding-a-dependency</a></p>
-
-<p>And then launch:</p>
-
-<pre><code class="language-bash">$ dep prune
-</code></pre>
-
 
 <footer class=" footline" >
 	
@@ -2112,7 +2089,7 @@ hugo server
 
     <div id="navigation">
         <a class="nav nav-prev" href="https://ovh.github.io/cds/hosting/upgrade/" title="Upgrade your CDS Instance"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/gettingstarted/" title="Getting Started" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/contribute/documentation/" title="Write documentation" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

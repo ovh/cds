@@ -155,6 +155,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/contribute/documentation/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/files/application-syntax/</loc>
   </url>
   
@@ -164,6 +168,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/contribute/development/</loc>
   </url>
   
   <url>
@@ -362,6 +370,10 @@
   <url>
     <loc>https://ovh.github.io/cds/categories/</loc>
     <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/checkout-application/</loc>
   </url>
   
   <url>
