@@ -144,6 +144,9 @@ $ engine config new > ~/.cds/dev.toml
 
 Prepare database:
 
+This command will create tables, index and initial data on CDS database.
+you have to launch it each time you have to upgrade cds.
+
 ```bash
 $ cd $(go env GOPATH)/src/github.com/ovh/cds/engine
 $ engine database upgrade --db-password cds --db-sslmode disable
