@@ -15,6 +15,20 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+const appRows = `
+application.id,
+application.name,
+application.project_id,
+application.repo_fullname,
+application.repositories_manager_id,
+application.last_modified,
+application.metadata,
+application.workflow_migration,
+application.vcs_server,
+application.vcs_strategy,
+application.description
+`
+
 // LoadOptionFunc is a type for all options in LoadOptions
 type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Application, *sdk.User) error
 
@@ -33,6 +47,7 @@ var LoadOptions = struct {
 	WithDeploymentStrategies       LoadOptionFunc
 	WithClearDeploymentStrategies  LoadOptionFunc
 	WithVulnerabilities            LoadOptionFunc
+	WithIcon                       LoadOptionFunc
 }{
 	Default:                        &loadDefaultDependencies,
 	WithVariables:                  &loadVariables,
@@ -47,12 +62,13 @@ var LoadOptions = struct {
 	WithDeploymentStrategies:       &loadDeploymentStrategies,
 	WithClearDeploymentStrategies:  &loadDeploymentStrategiesWithClearPassword,
 	WithVulnerabilities:            &loadVulnerabilities,
+	WithIcon:                       &loadIcon,
 }
 
 // LoadOldApplicationWorkflowToClean load application to clean
 func LoadOldApplicationWorkflowToClean(db gorp.SqlExecutor) ([]sdk.Application, error) {
 	apps := []sdk.Application{}
-	query := `SELECT application.* FROM application where workflow_migration = 'CLEANING'`
+	query := fmt.Sprintf(`SELECT %s FROM application where workflow_migration = 'CLEANING'`, appRows)
 	if _, err := db.Select(&apps, query); err != nil {
 		if err == sql.ErrNoRows {
 			return apps, nil
@@ -77,16 +93,16 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
 	var args []interface{}
 
 	if u == nil || u.Admin {
-		query = `
-                SELECT application.*
+		query = fmt.Sprintf(`
+                SELECT %s
                 FROM application
                 JOIN project ON project.id = application.project_id
                 WHERE project.projectkey = $1
-                AND application.name = $2`
+                AND application.name = $2`, appRows)
 		args = []interface{}{projectKey, appName}
 	} else {
-		query = `
-            SELECT distinct application.*
+		query = fmt.Sprintf(`
+            SELECT distinct %s
             FROM application
             JOIN project ON project.id = application.project_id
             JOIN application_group on application.id = application_group.application_id
@@ -96,7 +112,7 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
 				application_group.group_id = ANY(string_to_array($3, ',')::int[])
 				OR
 				$4 = ANY(string_to_array($3, ',')::int[])
-			)`
+			)`, appRows)
 		var groupID string
 		for i, g := range u.Groups {
 			if i == 0 {
@@ -117,14 +133,14 @@ func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.Us
 	var args []interface{}
 
 	if u == nil || u.Admin {
-		query = `
-                SELECT application.*
+		query = fmt.Sprintf(`
+                SELECT %s
                 FROM application
-                WHERE application.id = $1 FOR UPDATE NOWAIT`
+                WHERE application.id = $1 FOR UPDATE NOWAIT`, appRows)
 		args = []interface{}{id}
 	} else {
-		query = `
-            SELECT distinct application.*
+		query = fmt.Sprintf(`
+            SELECT distinct %s
             FROM application
             JOIN application_group on application.id = application_group.application_id
             WHERE application.id = $1
@@ -132,7 +148,7 @@ func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.Us
 				application_group.group_id = ANY(string_to_array($2, ',')::int[])
 				OR
 				$3 = ANY(string_to_array($2, ',')::int[])
-			) FOR UPDATE NOWAIT`
+			) FOR UPDATE NOWAIT`, appRows)
 		var groupID string
 
 		for i, g := range u.Groups {
@@ -154,14 +170,14 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opt
 	var args []interface{}
 
 	if u == nil || u.Admin {
-		query = `
-                SELECT application.*
+		query = fmt.Sprintf(`
+                SELECT %s
                 FROM application
-                WHERE application.id = $1`
+                WHERE application.id = $1`, appRows)
 		args = []interface{}{id}
 	} else {
-		query = `
-            SELECT distinct application.*
+		query = fmt.Sprintf(`
+            SELECT distinct %s
             FROM application
             JOIN application_group on application.id = application_group.application_id
             WHERE application.id = $1
@@ -169,7 +185,7 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opt
 				application_group.group_id = ANY(string_to_array($2, ',')::int[])
 				OR
 				$3 = ANY(string_to_array($2, ',')::int[])
-			)`
+			)`, appRows)
 		var groupID string
 
 		for i, g := range u.Groups {
@@ -188,11 +204,11 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opt
 // LoadByWorkflowID loads applications from database for a given workflow id
 func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application, error) {
 	apps := []sdk.Application{}
-	query := `SELECT DISTINCT application.* FROM application
+	query := fmt.Sprintf(`SELECT DISTINCT %s FROM application
 	JOIN workflow_node_context ON workflow_node_context.application_id = application.id
 	JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
 	JOIN workflow ON workflow.id = workflow_node.workflow_id
-	WHERE workflow.id = $1`
+	WHERE workflow.id = $1`, appRows)
 
 	if _, err := db.Select(&apps, query, workflowID); err != nil {
 		if err == sql.ErrNoRows {
@@ -207,11 +223,11 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 // LoadByEnvName loads applications from database for a given project key and environment name
 func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Application, error) {
 	apps := []sdk.Application{}
-	query := `SELECT DISTINCT application.* FROM application
+	query := fmt.Sprintf(`SELECT DISTINCT %s FROM application
 	JOIN pipeline_trigger ON application.id = pipeline_trigger.src_application_id OR application.id = pipeline_trigger.dest_application_id
 	JOIN environment ON environment.id = pipeline_trigger.src_environment_id OR environment.id = pipeline_trigger.dest_environment_id
 	JOIN project ON application.project_id = project.id
-	WHERE project.projectkey = $1 AND environment.name = $2`
+	WHERE project.projectkey = $1 AND environment.name = $2`, appRows)
 
 	if _, err := db.Select(&apps, query, projKey, envName); err != nil {
 		if err == sql.ErrNoRows {
@@ -225,11 +241,11 @@ func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Applicat
 
 // LoadByPipeline Load application where pipeline is attached
 func LoadByPipeline(db gorp.SqlExecutor, store cache.Store, pipelineID int64, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
-	query := `SELECT distinct application.*
+	query := fmt.Sprintf(`SELECT distinct %s
 		 FROM application
 		 JOIN application_pipeline ON application.id = application_pipeline.application_id
 		 WHERE application_pipeline.pipeline_id = $1
-		 ORDER BY application.name`
+		 ORDER BY application.name`, appRows)
 	app, err := loadapplications(db, store, u, opts, query, pipelineID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "LoadByPipeline (%d)", pipelineID)
@@ -326,16 +342,16 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 	var args []interface{}
 
 	if u == nil || u.Admin {
-		query = `
-		SELECT  application.*
+		query = fmt.Sprintf(`
+		SELECT %s
 		FROM application
 		JOIN project ON project.id = application.project_id
 		WHERE project.projectkey = $1
-		ORDER BY application.name ASC`
+		ORDER BY application.name ASC`, appRows)
 		args = []interface{}{key}
 	} else {
-		query = `
-			SELECT distinct application.*
+		query = fmt.Sprintf(`
+			SELECT distinct %s
 			FROM application
 			JOIN project ON project.id = application.project_id
 			WHERE application.id IN (
@@ -345,7 +361,7 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 				WHERE group_user.user_id = $2
 			)
 			AND project.projectkey = $1
-			ORDER by application.name ASC`
+			ORDER by application.name ASC`, appRows)
 		args = []interface{}{key, u.ID}
 	}
 	return loadapplications(db, store, u, opts, query, args...)
@@ -412,4 +428,11 @@ func loadapplications(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts 
 	}
 
 	return apps, nil
+}
+
+// LoadIcon return application icon given his application id
+func LoadIcon(db gorp.SqlExecutor, appID int64) (string, error) {
+	icon, err := db.SelectStr("SELECT icon FROM application WHERE id = $1", appID)
+
+	return icon, sdk.WrapError(err, "application.loadIcon>")
 }

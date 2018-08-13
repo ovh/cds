@@ -37,6 +37,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 		projectKey := vars["permProjectKey"]
 		withPermissions := r.FormValue("permission")
 		withUsage := FormBool(r, "withUsage")
+		withIcon := FormBool(r, "withIcon")
 
 		var u = getUser(ctx)
 		requestedUserName := r.Header.Get("X-Cds-Username")
@@ -56,8 +57,11 @@ func (api *API) getApplicationsHandler() service.Handler {
 				return sdk.WrapError(err, "getApplicationsHandler> unable to load user '%s' permissions", requestedUserName)
 			}
 		}
-
-		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, u)
+		loadOpts := []application.LoadOptionFunc{}
+		if withIcon {
+			loadOpts = append(loadOpts, application.LoadOptions.WithIcon)
+		}
+		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, u, loadOpts...)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationsHandler> Cannot load applications from db")
 		}
@@ -244,6 +248,7 @@ func (api *API) getApplicationHandler() service.Handler {
 		withSchedulers := FormBool(r, "withSchedulers")
 		withKeys := FormBool(r, "withKeys")
 		withUsage := FormBool(r, "withUsage")
+		withIcon := FormBool(r, "withIcon")
 		withDeploymentStrategies := FormBool(r, "withDeploymentStrategies")
 		withVulnerabilities := FormBool(r, "withVulnerabilities")
 		branchName := r.FormValue("branchName")
@@ -271,6 +276,9 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 		if withVulnerabilities {
 			loadOptions = append(loadOptions, application.LoadOptions.WithVulnerabilities)
+		}
+		if withIcon {
+			loadOptions = append(loadOptions, application.LoadOptions.WithIcon)
 		}
 
 		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), loadOptions...)
