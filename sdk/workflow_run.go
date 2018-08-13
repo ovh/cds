@@ -169,6 +169,7 @@ type WorkflowNodeRun struct {
 	Commits               []VCSCommit                        `json:"commits,omitempty"`
 	TriggersRun           map[int64]WorkflowNodeTriggerRun   `json:"triggers_run,omitempty"`
 	VCSRepository         string                             `json:"vcs_repository"`
+	VCSTag                string                             `json:"vcs_tag"`
 	VCSBranch             string                             `json:"vcs_branch"`
 	VCSHash               string                             `json:"vcs_hash"`
 	VCSServer             string                             `json:"vcs_server"`
@@ -176,7 +177,7 @@ type WorkflowNodeRun struct {
 	Header                WorkflowRunHeaders                 `json:"header,omitempty"`
 }
 
-// WorkflowNodeRunVulnerability represents vulnerabilities report for the current node run
+// WorkflowNodeRunVulnerabilityReport represents vulnerabilities report for the current node run
 type WorkflowNodeRunVulnerabilityReport struct {
 	ID                int64                        `json:"id" db:"id"`
 	ApplicationID     int64                        `json:"application_id" db:"application_id"`
@@ -367,7 +368,7 @@ func (w *WorkflowNodeRunArtifact) GetPath() string {
 	return container
 }
 
-const workflowNodeRunReport = `{{- if .Stages }} 
+const workflowNodeRunReport = `{{- if .Stages }}
 CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
 {{- range $s := .Stages}}
 {{- if $s.RunJobs }}
@@ -379,7 +380,7 @@ CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Su
 {{- end}}
 {{- end}}
 
-{{- if .Tests }} 
+{{- if .Tests }}
 {{- if gt .Tests.TotalKO 0}}
 Unit Tests Report
 

@@ -766,6 +766,7 @@ func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.Wo
 
 type vcsInfos struct {
 	Repository string
+	Tag        string
 	Branch     string
 	Hash       string
 	Author     string
@@ -783,6 +784,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 	var vcsInfos vcsInfos
 	vcsInfos.Repository = gitValues[tagGitRepository]
 	vcsInfos.Branch = gitValues[tagGitBranch]
+	vcsInfos.Tag = gitValues[tagGitTag]
 	vcsInfos.Hash = gitValues[tagGitHash]
 	vcsInfos.Author = gitValues[tagGitAuthor]
 	vcsInfos.Message = gitValues[tagGitMessage]
@@ -868,6 +870,10 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 	vcsInfos.HTTPUrl = repo.HTTPCloneURL
 
 	if vcsInfos.Branch == "" && !isChildNode {
+		//TODO: fetch commits with tags
+		if vcsInfos.Tag != "" {
+			return vcsInfos, nil
+		}
 		return vcsInfos, sdk.WrapError(sdk.ErrBranchNameNotProvided, "computeVCSInfos> should not have an empty branch")
 	}
 

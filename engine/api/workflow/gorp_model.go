@@ -66,6 +66,7 @@ type NodeRun struct {
 	TriggersRun        sql.NullString `db:"triggers_run"`
 	VCSRepository      sql.NullString `db:"vcs_repository"`
 	VCSBranch          sql.NullString `db:"vcs_branch"`
+	VCSTag             sql.NullString `db:"vcs_tag"`
 	VCSHash            sql.NullString `db:"vcs_hash"`
 	VCSServer          sql.NullString `db:"vcs_server"`
 	Header             sql.NullString `db:"header"`

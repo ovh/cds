@@ -42,6 +42,7 @@ workflow_node_run.triggers_run,
 workflow_node_run.vcs_repository,
 workflow_node_run.vcs_hash,
 workflow_node_run.vcs_branch,
+workflow_node_run.vcs_tag,
 workflow_node_run.vcs_server,
 workflow_node_run.workflow_node_name,
 workflow_node_run.header
@@ -247,6 +248,9 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 	if rr.VCSBranch.Valid {
 		r.VCSBranch = rr.VCSBranch.String
 	}
+	if rr.VCSTag.Valid {
+		r.VCSTag = rr.VCSTag.String
+	}
 	if rr.VCSServer.Valid {
 		r.VCSServer = rr.VCSServer.String
 	}
@@ -339,6 +343,8 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB.VCSHash.String = n.VCSHash
 	nodeRunDB.VCSBranch.Valid = true
 	nodeRunDB.VCSBranch.String = n.VCSBranch
+	nodeRunDB.VCSTag.Valid = true
+	nodeRunDB.VCSTag.String = n.VCSTag
 	nodeRunDB.VCSRepository.Valid = true
 	nodeRunDB.VCSRepository.String = n.VCSRepository
 
@@ -593,7 +599,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 				`, nodeRunFields)
 	var nodeRun sdk.WorkflowNodeRun
 	var rr = NodeRun{}
-	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
+	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.VCSTag, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
 		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run on workflow %d node %s", workflowID, n.Name)
 	}
 	pNodeRun, errF := fromDBNodeRun(rr, LoadRunOptions{})
@@ -610,11 +616,11 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 //If you don't have environment linked set envID to 0 or -1
 func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Workflow, nodeName string, current sdk.BuildNumberAndHash, appID int64, envID int64) (sdk.BuildNumberAndHash, error) {
 	var previous sdk.BuildNumberAndHash
-	var prevHash, prevBranch, prevRepository sql.NullString
+	var prevHash, prevBranch, prevTag, prevRepository sql.NullString
 	var previousBuildNumber sql.NullInt64
 
 	queryPrevious := `
-		SELECT workflow_node_run.vcs_branch, workflow_node_run.vcs_hash, workflow_node_run.vcs_repository, workflow_node_run.num
+		SELECT workflow_node_run.vcs_branch, workflow_node_run.vcs_tag, workflow_node_run.vcs_hash, workflow_node_run.vcs_repository, workflow_node_run.num
 		FROM workflow_node_run
 		JOIN workflow_node ON workflow_node.name = workflow_node_run.workflow_node_name AND workflow_node.name = $1 AND workflow_node.workflow_id = $2
 		JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
@@ -630,7 +636,7 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Wor
 	}
 	queryPrevious += fmt.Sprintf(" ORDER BY workflow_node_run.num DESC LIMIT 1")
 
-	errPrev := db.QueryRow(queryPrevious, argPrevious...).Scan(&prevBranch, &prevHash, &prevRepository, &previousBuildNumber)
+	errPrev := db.QueryRow(queryPrevious, argPrevious...).Scan(&prevBranch, &prevTag, &prevHash, &prevRepository, &previousBuildNumber)
 	if errPrev == sql.ErrNoRows {
 		log.Warning("PreviousNodeRunVCSInfos> no result with previous %d %s , arguments %v", current.BuildNumber, nodeName, argPrevious)
 		return previous, nil
@@ -641,6 +647,9 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Wor
 
 	if prevBranch.Valid {
 		previous.Branch = prevBranch.String
+	}
+	if prevTag.Valid {
+		previous.Tag = prevTag.String
 	}
 	if prevHash.Valid {
 		previous.Hash = prevHash.String

@@ -11,6 +11,7 @@ type CloneOpts struct {
 	Depth                   int
 	SingleBranch            bool
 	Branch                  string
+	Tag                     string
 	Recursive               bool
 	Verbose                 bool
 	Quiet                   bool
@@ -57,8 +58,12 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 			gitcmd.args = append(gitcmd.args, "--depth", fmt.Sprintf("%d", opts.Depth))
 		}
 
-		if opts.Branch != "" {
-			gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
+		if opts.Branch != "" || opts.Tag != "" {
+			if opts.Branch != "" {
+				gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
+			} else {
+				gitcmd.args = append(gitcmd.args, "--branch", opts.Tag)
+			}
 		} else if opts.SingleBranch {
 			gitcmd.args = append(gitcmd.args, "--single-branch")
 		}

@@ -12,6 +12,7 @@ type BuildNumberAndHash struct {
 	BuildNumber int64
 	Hash        string
 	Branch      string
+	Tag         string
 	Remote      string
 	RemoteURL   string
 }
