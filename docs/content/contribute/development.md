@@ -166,7 +166,7 @@ Launch CDS UI:
 
 ```bash
 $ cd $(go env GOPATH)/src/github.com/ovh/cds/ui
-$ npm install
+$ npm start
 ```
 
 Register first user with cdsctl:
