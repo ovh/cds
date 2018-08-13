@@ -124,6 +124,15 @@ var (
 		return nil
 	}
 
+	loadIcon = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+		var err error
+		app.Icon, err = LoadIcon(db, app.ID)
+		if err != nil && err != sql.ErrNoRows {
+			return sdk.WrapError(err, "application.loadIcon> Unable to load icon")
+		}
+		return nil
+	}
+
 	loadVulnerabilities = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		var err error
 		app.Vulnerabilities, err = LoadVulnerabilities(db, app.ID)

@@ -192,10 +192,10 @@ func (api *API) getProjectHandler() service.Handler {
 		withWorkflowNames := FormBool(r, "withWorkflowNames")
 		withPlatforms := FormBool(r, "withPlatforms")
 		withFeatures := FormBool(r, "withFeatures")
+		withIcon := FormBool(r, "withIcon")
 
 		opts := []project.LoadOptionFunc{
 			project.LoadOptions.WithFavorites,
-			project.LoadOptions.WithIcon,
 		}
 		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
@@ -238,6 +238,9 @@ func (api *API) getProjectHandler() service.Handler {
 		}
 		if withFeatures {
 			opts = append(opts, project.LoadOptions.WithFeatures)
+		}
+		if withIcon {
+			opts = append(opts, project.LoadOptions.WithIcon)
 		}
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), opts...)
