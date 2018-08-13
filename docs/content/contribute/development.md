@@ -4,7 +4,7 @@ weight = 3
 
 +++
 
-Before doing some code on CDS, you must install your
+Before contributing to CDS, you'll need to install your
 development environment. 
 
 * Postgresql
@@ -13,7 +13,7 @@ development environment.
 * Golang
 * CDS
 
-if you are familiar with these different software, you probably will not need to read this page :-)
+if you are familiar with these different tools, you probably will not need to read this page :-)
 
 ## Postgresql
 
@@ -43,7 +43,9 @@ Then launch PostgreSQL with:
 $ postgres -D ~/data/postgres/data
 ```
 
-That's all for a local PostgreSQL installation - not recommanded for a production installation.
+Note: this is not recommended for a production installation.
+
+That's all for a local PostgreSQL installation
 
 ## Redis
 
