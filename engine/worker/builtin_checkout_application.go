@@ -17,7 +17,7 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 		// Load build param
 		branch := sdk.ParameterFind(params, "git.branch")
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
-		commit := sdk.ParameterFind(params, "git.commit")
+		commit := sdk.ParameterFind(params, "git.hash")
 
 		gitURL, auth, err := extractVCSInformations(*params, secrets)
 		if err != nil {
