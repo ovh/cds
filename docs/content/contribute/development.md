@@ -145,7 +145,7 @@ $ engine config new > ~/.cds/dev.toml
 
 Prepare database:
 
-This command will create tables, index and initial data on CDS database.
+This command will create tables, indexes and initial data on CDS database.
 you have to launch it each time you have to upgrade cds.
 
 ```bash
