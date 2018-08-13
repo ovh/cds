@@ -139,7 +139,7 @@ $ engine config new > ~/.cds/dev.toml
 ## in section [hatchery.local.commonConfiguration]
 ### --> set name to "hatchery-local"
 ## in section [hatchery.local.commonConfiguration.api.http]
-### --> uncomment url, should be set to url = "http://localhost:8086" 
+### --> uncomment url, should be set to url = "http://localhost:8081" 
 
 ```
 
