@@ -127,7 +127,7 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 			vars["git.http.user"] = n.Context.Application.RepositoryStrategy.User
 		}
 		if n.Context.Application.VCSServer != "" {
-			vars["git.vcs_server"] = n.Context.Application.VCSServer
+			vars["git.server"] = n.Context.Application.VCSServer
 		}
 	} else {
 		// remove vcs strategy variable
