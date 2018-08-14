@@ -295,6 +295,39 @@ func (s *Service) getCommitsHandler() service.Handler {
 	}
 }
 
+func (s *Service) getCommitsBetweenRefsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+		base := r.URL.Query().Get("base")
+		head := r.URL.Query().Get("head")
+
+		log.Debug("getCommitsBetweenRefsHandler>")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getCommitsBetweenRefsHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getCommitsBetweenRefsHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getCommitsBetweenRefsHandler> Unable to get authorized client")
+		}
+
+		commits, err := client.CommitsBetweenRefs(ctx, fmt.Sprintf("%s/%s", owner, repo), base, head)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getCommitsBetweenRefsHandler> Unable to get commits of %s/%s commits diff between %s and %s", owner, repo, base, head)
+		}
+		return service.WriteJSON(w, commits, http.StatusOK)
+	}
+}
+
 func (s *Service) getCommitHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")

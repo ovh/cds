@@ -73,3 +73,7 @@ func (c *gitlabClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 
 	return commit, nil
 }
+
+func (c *gitlabClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
+	return []sdk.VCSCommit{}, nil
+}

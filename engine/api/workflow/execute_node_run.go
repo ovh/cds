@@ -870,7 +870,6 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 	vcsInfos.HTTPUrl = repo.HTTPCloneURL
 
 	if vcsInfos.Branch == "" && !isChildNode {
-		//TODO: fetch commits with tags
 		if vcsInfos.Tag != "" {
 			return vcsInfos, nil
 		}

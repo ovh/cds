@@ -20,8 +20,6 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 		tag := sdk.ParameterValue(*params, "git.tag")
 		commit := sdk.ParameterFind(params, "git.hash")
 
-		sendLog(fmt.Sprintf("%+v\n", *params))
-
 		gitURL, auth, err := extractVCSInformations(*params, secrets)
 		if err != nil {
 			res := sdk.Result{

@@ -482,16 +482,16 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 	if errclient != nil {
 		return nil, cur, sdk.WrapError(errclient, "GetNodeRunBuildCommits> Cannot get client")
 	}
-
 	cur.Remote = nodeRun.VCSRepository
 	cur.Branch = nodeRun.VCSBranch
 	cur.Hash = nodeRun.VCSHash
+	cur.Tag = nodeRun.VCSTag
 
 	if cur.Remote == "" {
 		cur.Remote = app.RepositoryFullname
 	}
 
-	if cur.Branch == "" {
+	if cur.Branch == "" && cur.Tag == "" {
 		branches, errBr := client.Branches(ctx, cur.Remote)
 		if errBr != nil {
 			return nil, cur, sdk.WrapError(errBr, "GetNodeRunBuildCommits> Cannot load branches from vcs api remote %s", cur.Remote)
@@ -520,7 +520,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	var lastCommit sdk.VCSCommit
-	if cur.Hash == "" {
+	if cur.Hash == "" && cur.Tag == "" && cur.Branch != "" {
 		//If we only have the current branch, search for the branch
 		br, err := client.Branch(ctx, repo, cur.Branch)
 		if err != nil {
@@ -554,24 +554,46 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 	if prev.Hash != "" && cur.Hash == prev.Hash {
 		log.Debug("GetNodeRunBuildCommits> there is not difference between the previous build and the current build for node %s", nodeRun.WorkflowNodeName)
 	} else if prev.Hash != "" {
-		if cur.Hash == "" {
+		switch {
+		case cur.Hash == "" && cur.Tag == "":
 			br, err := client.Branch(ctx, repo, cur.Branch)
 			if err != nil {
 				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get branch %s", cur.Branch)
 			}
 			cur.Hash = br.LatestCommit
-		}
-		//If we are lucky, return a true diff
-		commits, err := client.Commits(ctx, repo, cur.Branch, prev.Hash, cur.Hash)
-		if err != nil {
-			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
-		}
-		if commits != nil {
-			res = commits
+			//If we are lucky, return a true diff
+			commits, err := client.Commits(ctx, repo, cur.Branch, prev.Hash, cur.Hash)
+			if err != nil {
+				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
+			}
+			if commits != nil {
+				res = commits
+			}
+
+		case cur.Hash == "" && cur.Tag != "":
+			c, err := client.CommitsBetweenRefs(ctx, repo, prev.Hash, cur.Tag)
+			if err != nil {
+				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
+			}
+			if c != nil {
+				res = c
+			}
 		}
 	} else if prev.Hash == "" {
 		if lastCommit.Hash != "" {
 			res = []sdk.VCSCommit{lastCommit}
+		} else if cur.Tag != "" {
+			base := prev.Tag
+			if base == "" {
+				base = prev.Hash
+			}
+			c, err := client.CommitsBetweenRefs(ctx, repo, base, cur.Tag)
+			if err != nil {
+				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
+			}
+			if c != nil {
+				res = c
+			}
 		}
 	} else {
 		//If we only get current node run hash

@@ -297,6 +297,17 @@ func (c *vcsClient) Commits(ctx context.Context, fullname, branch, since, until 
 	return commits, nil
 }
 
+func (c *vcsClient) CommitsBetweenRefs(ctx context.Context, fullname, base, head string) ([]sdk.VCSCommit, error) {
+	var commits []sdk.VCSCommit
+	path := fmt.Sprintf("/vcs/%s/repos/%s/commits?base=%s&head=%s", c.name, fullname, url.QueryEscape(base), url.QueryEscape(head))
+	if code, err := c.doJSONRequest(context.Background(), "GET", path, nil, &commits); err != nil {
+		if code != http.StatusNotFound {
+			return nil, err
+		}
+	}
+	return commits, nil
+}
+
 func (c *vcsClient) Commit(ctx context.Context, fullname, hash string) (sdk.VCSCommit, error) {
 	commit := sdk.VCSCommit{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s", c.name, fullname, hash)

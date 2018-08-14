@@ -147,3 +147,7 @@ func newUnknownStashUser(author Author) *User {
 		Slug:         "unknownSlug",
 	}
 }
+
+func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
+	return []sdk.VCSCommit{}, nil
+}

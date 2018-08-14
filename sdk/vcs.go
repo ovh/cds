@@ -37,6 +37,7 @@ type VCSAuthorizedClient interface {
 	//Commits
 	Commits(ctx context.Context, repo, branch, since, until string) ([]VCSCommit, error)
 	Commit(ctx context.Context, repo, hash string) (VCSCommit, error)
+	CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]VCSCommit, error)
 
 	// PullRequests
 	PullRequests(context.Context, string) ([]VCSPullRequest, error)

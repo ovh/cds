@@ -143,6 +143,9 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store c
 			if curVCSInfos.Remote != "" {
 				tagsUpdated = wr.Tag(tagGitRepository, curVCSInfos.Remote)
 			}
+			if curVCSInfos.Tag != "" {
+				tagsUpdated = wr.Tag(tagGitTag, curVCSInfos.Tag)
+			}
 
 			if tagsUpdated {
 				if err := UpdateWorkflowRunTags(db, wr); err != nil {
