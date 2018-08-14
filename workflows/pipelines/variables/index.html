@@ -2036,7 +2036,7 @@
 <li><a href="#variable-types">Variable types</a></li>
 <li><a href="#placeholder-format">Placeholder format</a></li>
 <li><a href="#builtin-variables">Builtin variables</a></li>
-<li><a href="#the-version-variable">The .version variable</a></li>
+<li><a href="#the-cds-version-variable">The cds.version variable</a></li>
 <li><a href="#export-a-variable-inside-a-step">Export a variable inside a step</a></li>
 <li><a href="#shell-environment-variable">Shell Environment Variable</a></li>
 <li><a href="#git-variables">Git variables</a></li>
@@ -2123,11 +2123,11 @@
 <li><code>{{.cds.workspace}}</code> Current job&rsquo;s workspace. It&rsquo;s a directory. In a step <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">script</a>, <code>{{.cds.workspace}}</code> == $HOME</li>
 </ul>
 
-<h2 id="the-version-variable">The .version variable</h2>
+<h2 id="the-cds-version-variable">The cds.version variable</h2>
 
 <p><code>{{.cds.version}}</code></p>
 
-<p>CDS version is a builtin variable set to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to both testing and deployment pipelines.</p>
+<p>CDS version is a builtin variable, it is transmitted through pipelines of a workflow run.</p>
 
 <h2 id="export-a-variable-inside-a-step">Export a variable inside a step</h2>
 
@@ -2136,7 +2136,15 @@
 <pre><code class="language-bash">$ worker export varname thevalue
 </code></pre>
 
-<p>You can now use <code>{{.cds.build.varname}}</code> in further steps and stages.</p>
+<p>You can use the build variable in :</p>
+
+<ul>
+<li>the current job with <code>{{.cds.build.varname}}</code></li>
+<li>the next stages in same pipeline <code>{{.cds.build.varname}}</code></li>
+<li>the next pipelines <code>{{.workflow.pipelineName.build.varname}}</code> with <code>pipelineName</code> the name of the pipeline in your worklow</li>
+</ul>
+
+<p><a href="https://ovh.github.io/cds/cli/worker/export/">See worker export documentation</a></p>
 
 <h2 id="shell-environment-variable">Shell Environment Variable</h2>
 
@@ -2159,6 +2167,7 @@ echo $CDS_PARENT_APPLICATION
 <li><code>{{.git.branch}}</code></li>
 <li><code>{{.git.author}}</code></li>
 <li><code>{{.git.message}}</code></li>
+<li><code>{{.git.server}}</code></li>
 </ul>
 
 <h2 id="helpers">Helpers</h2>
