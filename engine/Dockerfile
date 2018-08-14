@@ -10,7 +10,9 @@ RUN apt-get update && \
     cp cds-worker-linux-amd64 worker && \
     chmod +x worker && \
     tar xzf sql.tar.gz && \
+    mkdir /app/panic_dumps && \
     chown -R nobody:nogroup /app && \
+    chmod +w /app/panic_dumps && \
     rm -rf /var/lib/apt/lists/*
 USER nobody
 WORKDIR /app
