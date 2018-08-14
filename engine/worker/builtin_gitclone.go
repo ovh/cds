@@ -24,7 +24,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		password := sdk.ParameterFind(&a.Parameters, "password")
 		branch := sdk.ParameterFind(&a.Parameters, "branch")
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
-		tag := sdk.ParameterValue(*params, "git.tag")
+		tag := sdk.ParameterValue(a.Parameters, "tag")
 		commit := sdk.ParameterFind(&a.Parameters, "commit")
 		directory := sdk.ParameterFind(&a.Parameters, "directory")
 		depth := sdk.ParameterFind(&a.Parameters, "depth")
@@ -208,8 +208,6 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	}
 
 	git.LogFunc = log.Info
-
-	sendLog(fmt.Sprintf("cloneOpts ---> %+v\n", *clone))
 	//Perform the git clone
 	userLogCommand, err := git.Clone(url, dir, auth, clone, output)
 
@@ -236,7 +234,7 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	gitURLSSH := sdk.ParameterValue(*params, "git.url")
 	gitURLHTTP := sdk.ParameterValue(*params, "git.http_url")
 	if gitURLSSH == url || gitURLHTTP == url {
-		extractInfo(w, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit, sendLog)
+		_ = extractInfo(w, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit, sendLog)
 	}
 
 	stdTaglistErr := new(bytes.Buffer)
@@ -361,7 +359,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 		sendLog(fmt.Sprintf("git.branch: %s", branch))
 	}
 
-	if tag != "" && tag != "{{.git.tag}}" {
+	if tag != "" {
 		sendLog(fmt.Sprintf("git.tag: %s", tag))
 	}
 

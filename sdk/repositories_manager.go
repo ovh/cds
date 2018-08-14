@@ -281,15 +281,6 @@ type VCSBranch struct {
 	Parents      []string `json:"parents"`
 }
 
-//VCSTag represents tag known by the repositories manager
-type VCSTag struct {
-	Tag     string    `json:"tag"`
-	Sha     string    `json:"sha"`
-	Message string    `json:"message"`
-	Tagger  VCSAuthor `json:"tagger"`
-	Hash    string    `json:"hash"`
-}
-
 //VCSPullRequest represents a pull request
 type VCSPullRequest struct {
 	ID   int          `json:"id"`
