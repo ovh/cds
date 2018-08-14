@@ -56,11 +56,11 @@ Here is the list of builtin variables, generated for every build:
 - `{{.cds.workflow}}` The name of the current workflow
 - `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), `{{.cds.workspace}}` == $HOME
 
-## The .version variable
+## The cds.version variable
 
 `{{.cds.version}}`
 
-CDS version is a builtin variable set to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to both testing and deployment pipelines.
+CDS version is a builtin variable, it is transmitted through pipelines of a workflow run.
 
 ## Export a variable inside a step
 
@@ -70,7 +70,13 @@ In a step of type `script`, you can export a variable as the following:
 $ worker export varname thevalue
 ```
 
-You can now use `{{.cds.build.varname}}` in further steps and stages.
+You can use the build variable in :
+
+* the current job with `{{.cds.build.varname}}`
+* the next stages in same pipeline `{{.cds.build.varname}}`
+* the next pipelines `{{.workflow.pipelineName.build.varname}}` with `pipelineName` the name of the pipeline in your worklow
+
+[See worker export documentation]({{< relref "/cli/worker/export.md" >}})
 
 ## Shell Environment Variable
 
@@ -93,6 +99,7 @@ Here is the list of git variables:
 - `{{.git.branch}}`
 - `{{.git.author}}`
 - `{{.git.message}}`
+- `{{.git.server}}`
 
 ## Helpers
 
