@@ -850,6 +850,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 				return vcsInfos, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.Repository))
 			}
 			vcsInfos.Repository = applicationRepositoryFullname
+			vcsInfos.Tag = ""
 		}
 	}
 
