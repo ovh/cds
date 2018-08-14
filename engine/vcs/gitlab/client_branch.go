@@ -14,16 +14,15 @@ func (c *gitlabClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 		return nil, err
 	}
 
-	var brs []sdk.VCSBranch
-	for _, b := range branches {
-		br := sdk.VCSBranch{
+	brs := make([]sdk.VCSBranch, len(branches))
+	for i, b := range branches {
+		brs[i] = sdk.VCSBranch{
 			ID:           b.Name,
 			DisplayID:    b.Name,
 			LatestCommit: b.Commit.ID,
 			Default:      false,
 			Parents:      nil,
 		}
-		brs = append(brs, br)
 	}
 
 	return brs, nil

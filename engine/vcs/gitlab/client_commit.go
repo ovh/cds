@@ -34,9 +34,9 @@ func (c *gitlabClient) Commits(ctx context.Context, repo, branch, since, until s
 		return nil, err
 	}
 
-	var vcscommits []sdk.VCSCommit
-	for _, c := range commits {
-		vcsc := sdk.VCSCommit{
+	vcscommits := make([]sdk.VCSCommit, len(commits))
+	for i, c := range commits {
+		vcscommits[i] = sdk.VCSCommit{
 			Hash: c.ID,
 			Author: sdk.VCSAuthor{
 				Name:        c.AuthorName,
@@ -46,8 +46,6 @@ func (c *gitlabClient) Commits(ctx context.Context, repo, branch, since, until s
 			Timestamp: c.AuthoredDate.Unix(),
 			Message:   c.Message,
 		}
-
-		vcscommits = append(vcscommits, vcsc)
 	}
 
 	return vcscommits, nil
@@ -75,5 +73,33 @@ func (c *gitlabClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 }
 
 func (c *gitlabClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
-	return []sdk.VCSCommit{}, nil
+	opt := &gitlab.CompareOptions{
+		From: &base,
+		To:   &head,
+	}
+
+	compare, _, err := c.client.Repositories.Compare(repo, opt)
+	if err != nil {
+		return nil, err
+	}
+
+	if compare == nil || compare.Commits == nil {
+		return nil, nil
+	}
+
+	vcscommits := make([]sdk.VCSCommit, len(compare.Commits))
+	for i, c := range compare.Commits {
+		vcscommits[i] = sdk.VCSCommit{
+			Hash: c.ID,
+			Author: sdk.VCSAuthor{
+				Name:        c.AuthorName,
+				DisplayName: c.AuthorName,
+				Email:       c.AuthorEmail,
+			},
+			Timestamp: c.AuthoredDate.Unix(),
+			Message:   c.Message,
+		}
+	}
+
+	return vcscommits, nil
 }
