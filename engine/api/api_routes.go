@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -102,6 +103,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
+	r.Handle("/mon/stats", r.GET(observability.StatsHandler, Auth(false)))
 
 	r.Handle("/navbar", r.GET(api.getNavbarHandler))
 

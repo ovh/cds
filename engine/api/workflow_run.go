@@ -594,6 +594,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		u := getUser(ctx)
 
 		observability.Current(ctx, observability.Tag(observability.TagWorkflow, name))
+		observability.Record(ctx, api.Stats.WorkflowRuns, 1)
 
 		_, next := observability.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,

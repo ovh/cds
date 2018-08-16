@@ -17,8 +17,11 @@ import (
 	muxcontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -43,6 +46,10 @@ type Router struct {
 	panicked               bool
 	nbPanic                int
 	lastPanic              *time.Time
+	Stats                  struct {
+		Errors *stats.Int64Measure
+		Hits   *stats.Int64Measure
+	}
 }
 
 // NewHandlerConfig returns a new HandlerConfig pointer
@@ -53,7 +60,7 @@ func NewHandlerConfig() *service.HandlerConfig {
 }
 
 func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
-	return &Router{
+	r := &Router{
 		AuthDriver:             a,
 		Mux:                    m,
 		Prefix:                 p,
@@ -62,6 +69,7 @@ func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
 		mapAsynchronousHandler: map[string]service.HandlerFunc{},
 		Background:             context.Background(),
 	}
+	return r
 }
 
 // HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
@@ -188,10 +196,12 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+		observability.Record(ctx, r.Stats.Hits, 1)
 
 		//Get route configuration
 		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
+			observability.Record(ctx, r.Stats.Errors, 1)
 			service.WriteError(w, req, sdk.ErrNotFound)
 			return
 		}
@@ -212,12 +222,14 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 			var err error
 			ctx, err = m(ctx, w, req, rc)
 			if err != nil {
+				observability.Record(ctx, r.Stats.Errors, 1)
 				service.WriteError(w, req, err)
 				return
 			}
 		}
 
 		if err := rc.Handler(ctx, w, req); err != nil {
+			observability.Record(ctx, r.Stats.Errors, 1)
 			service.WriteError(w, req, err)
 			return
 		}
@@ -495,4 +507,29 @@ func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
 		statusPanic = sdk.MonitoringStatusWarn
 	}
 	return sdk.MonitoringStatusLine{Component: "Nb of Panics", Value: fmt.Sprintf("%d", r.nbPanic), Status: statusPanic}
+}
+
+// InitStats initialize prometheus metrics
+func (r *Router) InitStats(service, name string) error {
+	label := fmt.Sprintf("cds/%s/%s/errors", service, name)
+	r.Stats.Errors = stats.Int64(label, "number of errors", stats.UnitDimensionless)
+	label = fmt.Sprintf("cds/%s/%s/hits", service, name)
+	r.Stats.Hits = stats.Int64(label, "number of hits", stats.UnitDimensionless)
+
+	log.Info("api> Stats initialized")
+
+	return observability.RegisterView(
+		&view.View{
+			Name:        "errors",
+			Description: r.Stats.Errors.Description(),
+			Measure:     r.Stats.Errors,
+			Aggregation: view.Count(),
+		},
+		&view.View{
+			Name:        "hits",
+			Description: r.Stats.Hits.Description(),
+			Measure:     r.Stats.Hits,
+			Aggregation: view.Count(),
+		},
+	)
 }
