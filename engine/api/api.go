@@ -144,10 +144,33 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
-	Providers   []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
-	Services    []ServiceConfiguration  `toml:"services" comment:"###########################\n CDS Providers Settings \n##########################"`
-	DefaultOS   string                  `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
-	DefaultArch string                  `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
+	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+	Services  []ServiceConfiguration  `toml:"services" comment:"###########################\n CDS Services Settings \n##########################"`
+	Status    struct {
+		API struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of API is running, an alert will on Global/API be created on /mon/status"`
+		} `toml:"api"`
+		DBMigrate struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of dbmigrate service is running, an alert on Global/dbmigrate will be created on /mon/status"`
+		} `toml:"dbmigrate"`
+		ElasticSearch struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of elasticsearch service is running, an alert on Global/elasticsearch will be created on /mon/status"`
+		} `toml:"elasticsearch"`
+		Hatchery struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hatchery service is running, an alert on Global/hatchery will be created on /mon/status"`
+		} `toml:"hatchery"`
+		Hooks struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hooks service is running, an alert on Global/hooks will be created on /mon/status"`
+		} `toml:"hooks"`
+		Repositories struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hooks repositories is running, an alert on Global/hooks will be created on /mon/status"`
+		} `toml:"repositories"`
+		VCS struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of vcs is running, an alert will on Global/vcs be created on /mon/status"`
+		} `toml:"vcs"`
+	} `toml:"status" comment:"###########################\n CDS Status Settings \n##########################"`
+	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
+	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
