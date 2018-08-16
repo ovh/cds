@@ -168,7 +168,7 @@ type Configuration struct {
 		VCS struct {
 			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of vcs is running, an alert will on Global/vcs be created on /mon/status"`
 		} `toml:"vcs"`
-	} `toml:"status" comment:"###########################\n CDS Status Settings \n##########################"`
+	} `toml:"status" comment:"###########################\n CDS Status Settings \n Documentation: https://ovh.github.io/cds/hosting/monitoring/ \n##########################"`
 	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
 	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
 }
