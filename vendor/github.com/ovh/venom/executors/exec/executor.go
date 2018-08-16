@@ -91,15 +91,15 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	// Create a tmp file
 	tmpscript, errt := ioutil.TempFile(os.TempDir(), "venom-")
 	if errt != nil {
-		return nil, fmt.Errorf("Cannot create tmp file: %s\n", errt)
+		return nil, fmt.Errorf("cannot create tmp file: %s\n", errt)
 	}
 
 	// Put script in file
-	l.Debugf("work with tmp file %s", tmpscript)
+	l.Debugf("work with tmp file %s", tmpscript.Name())
 	n, errw := tmpscript.Write([]byte(scriptContent))
 	if errw != nil || n != len(scriptContent) {
 		if errw != nil {
-			return nil, fmt.Errorf("Cannot write script: %s\n", errw)
+			return nil, fmt.Errorf("cannot write script: %s\n", errw)
 		}
 		return nil, fmt.Errorf("cannot write all script: %d/%d\n", n, len(scriptContent))
 	}
@@ -113,7 +113,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		//and add .PS1 extension
 		newPath = newPath + ".PS1"
 		if err := os.Rename(oldPath, newPath); err != nil {
-			return nil, fmt.Errorf("cannot rename script to add powershell Extension, aborting\n")
+			return nil, fmt.Errorf("cannot rename script to add powershell extension, aborting\n")
 		}
 		//This aims to stop a the very first error and return the right exit code
 		psCommand := fmt.Sprintf("& { $ErrorActionPreference='Stop'; & %s ;exit $LastExitCode}", newPath)

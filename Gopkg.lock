@@ -1140,7 +1140,7 @@
   revision = "02f7e9439689eda7ce4752c7f37e50cb678f2679"
 
 [[projects]]
-  digest = "1:36ecbd0dadbbfd1be08d278132ff90f045fcc31c8343cd44ef9cd9bbec88e69f"
+  digest = "1:738ac771d474430f5c1e60e203f90e61a5920a70441d6d880fe544ed7136797f"
   name = "github.com/ovh/venom"
   packages = [
     ".",
@@ -1160,8 +1160,8 @@
     "executors/web",
   ]
   pruneopts = "NUT"
-  revision = "b18883989054a128a5a31d4099af2feed9adce8c"
-  version = "v0.21.1"
+  revision = "3229a223f0508cacfb55f28150194e89681e2901"
+  version = "v0.21.2"
 
 [[projects]]
   branch = "master"
@@ -2118,7 +2118,9 @@
     "go.opencensus.io/exporter/jaeger",
     "go.opencensus.io/exporter/prometheus",
     "go.opencensus.io/plugin/ochttp/propagation/b3",
+    "go.opencensus.io/stats",
     "go.opencensus.io/stats/view",
+    "go.opencensus.io/tag",
     "go.opencensus.io/trace",
     "go.opencensus.io/trace/propagation",
     "golang.org/x/crypto/openpgp",
