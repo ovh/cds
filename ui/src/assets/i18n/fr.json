@@ -546,7 +546,6 @@
   "project_env_permission_form_title": "Ajouter des permissions sur des environnements",
   "project_key": "Identifiant du projet",
   "project_key_error": "L'identifiant est obligatoire et doit etre en majuscule",
-  "project_workflow_migration_title": "Avancement de la migration vers les workflows",
   "project_name": "Nom du projet",
   "project_name_error": "Le nom du projet est obligatoire",
   "project_no": "Il n'y a aucun projet",
