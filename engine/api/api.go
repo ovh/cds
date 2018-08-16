@@ -9,6 +9,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
@@ -25,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/poller"
@@ -200,6 +203,10 @@ type API struct {
 	eventsBroker        *eventsBroker
 	warnChan            chan sdk.Event
 	Cache               cache.Store
+	Stats               struct {
+		WorkflowRuns *stats.Int64Measure
+		Sessions     *stats.Int64Measure
+	}
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -532,6 +539,13 @@ func (a *API) Serve(ctx context.Context) error {
 		Background: ctx,
 	}
 	a.InitRouter()
+	if err := a.Router.InitStats("cds-api", a.Name); err != nil {
+		log.Error("unable to init router stats: %v", err)
+	}
+
+	if err := a.initStats(); err != nil {
+		log.Error("unable to init api stats: %v", err)
+	}
 
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
@@ -700,4 +714,20 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (a *API) initStats() error {
+	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs", a.Name)
+	a.Stats.WorkflowRuns = stats.Int64(label, "number of workflow runs", stats.UnitDimensionless)
+
+	log.Info("api> Stats initialized")
+
+	return observability.RegisterView(
+		&view.View{
+			Name:        "workflow_runs",
+			Description: a.Stats.WorkflowRuns.Description(),
+			Measure:     a.Stats.WorkflowRuns,
+			Aggregation: view.Count(),
+		},
+	)
 }
