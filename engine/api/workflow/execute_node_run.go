@@ -847,6 +847,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 			if !isChildNode {
 				return vcsInfos, sdk.NewError(sdk.ErrNotFound, fmt.Errorf("repository %s not found", vcsInfos.Repository))
 			}
+			vcsInfos.Hash = ""
 			vcsInfos.Repository = applicationRepositoryFullname
 		}
 	}

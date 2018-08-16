@@ -110,15 +110,11 @@ func (api *API) getVariablesHandler() service.Handler {
 		cdsVar := []string{
 			"{{.cds.version}}",
 			"{{.cds.application}}",
-			"{{.cds.buildNumber}}",
 			"{{.cds.environment}}",
 			"{{.cds.job}}",
 			"{{.cds.manual}}",
 			"{{.cds.node}}",
 			"{{.cds.node.id}}",
-			"{{.cds.parent.application}}",
-			"{{.cds.parent.buildNumber}}",
-			"{{.cds.parent.pipeline}}",
 			"{{.cds.pipeline}}",
 			"{{.cds.project}}",
 			"{{.cds.run}}",
@@ -143,6 +139,7 @@ func (api *API) getVariablesHandler() service.Handler {
 			"{{.git.repository}}",
 			"{{.git.url}}",
 			"{{.git.http_url}}",
+			"{{.git.server}}",
 		}
 		allVariables = append(allVariables, gitVar...)
 
