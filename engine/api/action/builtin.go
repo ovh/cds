@@ -123,6 +123,13 @@ The public key have to be granted on your repository`,
 		Type:        sdk.BooleanParameter,
 		Advanced:    true,
 	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "tag",
+		Description: "Useful when you want to git clone a specific tag",
+		Value:       "",
+		Type:        sdk.StringParameter,
+		Advanced:    true,
+	})
 	gitclone.Requirement("git", sdk.BinaryRequirement, "git")
 
 	if err := checkBuiltinAction(db, gitclone); err != nil {
