@@ -53,6 +53,7 @@ export class WorkflowNodeComponent implements OnInit {
     subSelect: Subscription;
 
     selectedNodeID: number;
+    ready = false;
 
     constructor(
         private elementRef: ElementRef,
@@ -60,15 +61,12 @@ export class WorkflowNodeComponent implements OnInit {
         private _router: Router,
         private _activatedRoute: ActivatedRoute,
         private _location: Location
-    ) {
-        this._activatedRoute.queryParams.subscribe(params => {
-            if (params['node_id']) {
-                this.selectedNodeID = parseInt(params['node_id'], 10);
-            }
-        });
-    }
+    ) { }
 
     ngOnInit(): void {
+        if (this._activatedRoute.snapshot.queryParams['node_id']) {
+            this.selectedNodeID = parseInt(this._activatedRoute.snapshot.queryParams['node_id'], 10);
+        }
         this.isSelected = this.selectedNodeID === this.node.id;
         this.subSelect = this._workflowEventStore.selectedNode().subscribe(n => {
             if (n && this.node) {
@@ -104,13 +102,21 @@ export class WorkflowNodeComponent implements OnInit {
             } else {
                 this.workflowRun = null;
             }
-            if (this.node && this.selectedNodeID && this.node.id === this.selectedNodeID) {
+
+            if (this._activatedRoute.snapshot.queryParams['node_id']) {
+                this.selectedNodeID = parseInt(this._activatedRoute.snapshot.queryParams['node_id'], 10);
+            }
+
+            if (!this.ready && this.node && this.selectedNodeID && this.node.id === this.selectedNodeID) {
                 this._workflowEventStore.setSelectedNode(this.node, false);
                 this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun, false);
             }
+
+
             if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
                 this.computeWarnings();
             }
+            this.ready = true;
         });
 
         if (!this.workflowRun) {

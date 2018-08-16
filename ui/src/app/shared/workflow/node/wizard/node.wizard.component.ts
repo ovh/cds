@@ -215,7 +215,13 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
 
     getPlatforms() {
       this.loadingPlatforms = true;
+      if (!this.node.context.application_id) {
+        return;
+      }
       let app = this.project.application_names.find((a) => a.id === this.node.context.application_id);
+      if (!app) {
+        return;
+      }
       this._appStore.getDeploymentStrategies(this.project.key, app.name).pipe(
           first(),
           finalize(() => this.loadingPlatforms = false)
