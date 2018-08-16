@@ -14,7 +14,7 @@ type Service struct {
 
 // Configuration is the vcs configuration structure
 type Configuration struct {
-	Name string `toml:"name" comment:"Name of this CDS elasticsearch Service"`
+	Name string `toml:"name" comment:"Name of this CDS elasticsearch Service\n Enter a name to enable this service"`
 	HTTP struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
 		Port int    `toml:"port" default:"8088"`
