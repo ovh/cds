@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"runtime/pprof"
+	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -41,6 +42,21 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 	ts.Templater.Add("", d)
 	ts.Templater.Add("", map[string]string{"venom.testsuite": ts.ShortName})
 	ts.Templater.Add("", map[string]string{"venom.testsuite.filename": ts.Filename})
+
+	// we apply templater on current vars only
+	for index := 0; index < 10; index++ {
+		var toApply bool
+		for k, v := range ts.Templater.Values {
+			if strings.Contains(v, "{{") {
+				toApply = true
+				_, s := ts.Templater.apply([]byte(v))
+				ts.Templater.Values[k] = string(s)
+			}
+		}
+		if !toApply {
+			break
+		}
+	}
 
 	totalSteps := 0
 	for _, tc := range ts.TestCases {

@@ -44,8 +44,7 @@ func (v *Venom) Parse(path []string, exclude []string) error {
 	extractedVars := []string{}
 	for i := range v.testsuites {
 		ts := &v.testsuites[i]
-		log.Info("Parsing testsuite", ts.Package)
-
+		log.Info("Parsing testsuite ", ts.Package)
 		tvars, textractedVars, err := v.parseTestSuite(ts)
 		if err != nil {
 			return err
