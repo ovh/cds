@@ -56,7 +56,7 @@ func (h *HatcherySwarm) Init() error {
 		}
 		h.dockerClients["default"] = &dockerClient{
 			Client:        *d,
-			MaxContainers: h.Configuration().Provision.MaxWorker,
+			MaxContainers: h.Config.MaxContainers,
 			name:          "default",
 		}
 		log.Info("hatchery> swarm> connected to default docker engine")
