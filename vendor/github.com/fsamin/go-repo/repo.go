@@ -341,6 +341,17 @@ func (r Repo) Push(remote, branch string) error {
 	return nil
 }
 
+func (r Repo) HasDiverged() (bool, error) {
+	out, err := r.runCmd("git", "status")
+	if err != nil {
+		return false, fmt.Errorf("command 'git status' failed: %v (%s)", err, out)
+	}
+	if strings.Contains(out, "diverged") {
+		return true, nil
+	}
+	return false, nil
+}
+
 // Option is a function option
 type Option func(r *Repo) error
 
