@@ -511,22 +511,22 @@ func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
 
 // InitStats initialize prometheus metrics
 func (r *Router) InitStats(service, name string) error {
-	label := fmt.Sprintf("cds/%s/%s/errors", service, name)
+	label := fmt.Sprintf("cds/%s/%s/router_errors", service, name)
 	r.Stats.Errors = stats.Int64(label, "number of errors", stats.UnitDimensionless)
-	label = fmt.Sprintf("cds/%s/%s/hits", service, name)
+	label = fmt.Sprintf("cds/%s/%s/router_hits", service, name)
 	r.Stats.Hits = stats.Int64(label, "number of hits", stats.UnitDimensionless)
 
 	log.Info("api> Stats initialized")
 
 	return observability.RegisterView(
 		&view.View{
-			Name:        "errors",
+			Name:        "router_errors",
 			Description: r.Stats.Errors.Description(),
 			Measure:     r.Stats.Errors,
 			Aggregation: view.Count(),
 		},
 		&view.View{
-			Name:        "hits",
+			Name:        "router_hits",
 			Description: r.Stats.Hits.Description(),
 			Measure:     r.Stats.Hits,
 			Aggregation: view.Count(),
