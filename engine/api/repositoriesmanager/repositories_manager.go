@@ -300,7 +300,7 @@ func (c *vcsClient) Commits(ctx context.Context, fullname, branch, since, until 
 func (c *vcsClient) CommitsBetweenRefs(ctx context.Context, fullname, base, head string) ([]sdk.VCSCommit, error) {
 	var commits []sdk.VCSCommit
 	path := fmt.Sprintf("/vcs/%s/repos/%s/commits?base=%s&head=%s", c.name, fullname, url.QueryEscape(base), url.QueryEscape(head))
-	if code, err := c.doJSONRequest(context.Background(), "GET", path, nil, &commits); err != nil {
+	if code, err := c.doJSONRequest(ctx, "GET", path, nil, &commits); err != nil {
 		if code != http.StatusNotFound {
 			return nil, err
 		}

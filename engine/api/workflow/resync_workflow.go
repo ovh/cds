@@ -120,7 +120,8 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store c
 				return
 			}
 
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(ctx, db, store, proj, &wr.Workflow, n.Name, wr.Number, &nr, n.Context.Application, n.Context.Environment)
+			//New context because we are in goroutine
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(context.Background(), db, store, proj, &wr.Workflow, n.Name, wr.Number, &nr, n.Context.Application, n.Context.Environment)
 			if err != nil {
 				log.Error("ResyncNodeRuns> cannot get build commits on a node run %v", err)
 			} else if commits != nil {
