@@ -147,7 +147,7 @@ var configNewCmd = &cobra.Command{
 	$ engine config new debug tracing [µService(s)...]
 
 # All options
-	$ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories]
+	$ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -308,44 +308,82 @@ var configCheckCmd = &cobra.Command{
 		config()
 
 		var hasError bool
-		if conf.API.URL.API != "" {
-			if err := api.New().CheckConfiguration(conf.API); err != nil {
-				fmt.Println(err)
+		if conf.API != nil && conf.API.URL.API != "" {
+			fmt.Printf("checking api configuration...\n")
+			if err := api.New().CheckConfiguration(*conf.API); err != nil {
+				fmt.Printf("api Configuration: %v\n", err)
 				hasError = true
 			}
 		}
 
-		if conf.DatabaseMigrate.API.HTTP.URL != "" {
-			if err := api.New().CheckConfiguration(conf.DatabaseMigrate); err != nil {
-				fmt.Println(err)
+		if conf.DatabaseMigrate != nil && conf.DatabaseMigrate.API.HTTP.URL != "" {
+			fmt.Printf("checking migrate configuration...\n")
+			if err := api.New().CheckConfiguration(*conf.DatabaseMigrate); err != nil {
+				fmt.Printf("migrate Configuration: %v\n", err)
 				hasError = true
 			}
 		}
 
-		if conf.Hatchery.Local.API.HTTP.URL != "" {
-			if err := local.New().CheckConfiguration(conf.Hatchery.Local); err != nil {
-				fmt.Println(err)
+		if conf.Hatchery != nil && conf.Hatchery.Local != nil && conf.Hatchery.Local.API.HTTP.URL != "" {
+			fmt.Printf("checking hatchery:local configuration...\n")
+			if err := local.New().CheckConfiguration(*conf.Hatchery.Local); err != nil {
+				fmt.Printf("hatchery:local Configuration: %v\n", err)
 				hasError = true
 			}
 		}
 
-		if conf.Hatchery.Marathon.API.HTTP.URL != "" {
-			if err := marathon.New().CheckConfiguration(conf.Hatchery.Marathon); err != nil {
-				fmt.Println(err)
+		if conf.Hatchery != nil && conf.Hatchery.Marathon != nil &&  conf.Hatchery.Marathon.API.HTTP.URL != "" {
+			fmt.Printf("checking hatchery:marathon configuration...\n")
+			if err := marathon.New().CheckConfiguration(*conf.Hatchery.Marathon); err != nil {
+				fmt.Printf("hatchery:marathon Configuration: %v\n", err)
 				hasError = true
 			}
 		}
 
-		if conf.Hatchery.Openstack.API.HTTP.URL != "" {
-			if err := openstack.New().CheckConfiguration(conf.Hatchery.Openstack); err != nil {
-				fmt.Println(err)
+		if conf.Hatchery != nil && conf.Hatchery.Openstack != nil &&  conf.Hatchery.Openstack.API.HTTP.URL != "" {
+			fmt.Printf("checking hatchery:openstack configuration...\n")
+			if err := openstack.New().CheckConfiguration(*conf.Hatchery.Openstack); err != nil {
+				fmt.Printf("hatchery:openstack Configuration: %v\n", err)
 				hasError = true
 			}
 		}
 
-		if conf.Hatchery.Swarm.API.HTTP.URL != "" {
-			if err := swarm.New().CheckConfiguration(conf.Hatchery.Swarm); err != nil {
-				fmt.Println(err)
+		if conf.Hatchery != nil &&  conf.Hatchery.Kubernetes != nil && conf.Hatchery.Kubernetes.API.HTTP.URL != "" {
+			fmt.Printf("checking hatchery:kubernetes configuration...\n")
+			if err := kubernetes.New().CheckConfiguration(*conf.Hatchery.Kubernetes); err != nil {
+				fmt.Printf("hatchery:kubernetes Configuration: %v\n", err)
+				hasError = true
+			}
+		}
+
+		if conf.Hatchery != nil &&  conf.Hatchery.Swarm != nil && conf.Hatchery.Swarm.API.HTTP.URL != "" {
+			fmt.Printf("checking hatchery:swarm configuration...\n")
+			if err := swarm.New().CheckConfiguration(*conf.Hatchery.Swarm); err != nil {
+				fmt.Printf("hatchery:swarm Configuration: %v\n", err)
+				hasError = true
+			}
+		}
+
+		if conf.Hatchery != nil &&  conf.Hatchery.VSphere != nil &&  conf.Hatchery.VSphere.API.HTTP.URL != "" {
+			fmt.Printf("checking hatchery:vsphere configuration...\n")
+			if err := vsphere.New().CheckConfiguration(*conf.Hatchery.VSphere); err != nil {
+				fmt.Printf("hatchery:vsphere Configuration: %v\n", err)
+				hasError = true
+			}
+		}
+
+		if conf.VCS != nil && conf.VCS.API.HTTP.URL != "" {
+			fmt.Printf("checking vcs configuration...\n")
+			if err := vcs.New().CheckConfiguration(*conf.VCS); err != nil {
+				fmt.Printf("vcs Configuration: %v\n", err)
+				hasError = true
+			}
+		}
+
+		if conf.Hooks != nil && conf.Hooks.API.HTTP.URL != "" {
+			fmt.Printf("checking hooks configuration...\n")
+			if err := hooks.New().CheckConfiguration(*conf.Hooks); err != nil {
+				fmt.Printf("hooks Configuration: %v\n", err)
 				hasError = true
 			}
 		}
@@ -388,7 +426,7 @@ This component operates CDS VCS connectivity
 
 Start all of this with a single command:
 
-	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories]
+	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
 
 All the services are using the same configuration file format.
 
