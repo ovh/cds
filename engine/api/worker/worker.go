@@ -159,7 +159,7 @@ func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error)
 	return w, nil
 }
 
-// LoadDeadWorkers load worker with refresh last beat > timeout
+// LoadDeadWorkers load worker with refresh last beat > timeout (seconds)
 func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
