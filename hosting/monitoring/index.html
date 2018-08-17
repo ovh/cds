@@ -2074,6 +2074,14 @@
 }
 </code></pre>
 
+<p>If you don&rsquo;t need a CDS µService repositories, you can disable monitoring on it by setting <code>0</code> on configuration.</p>
+
+<pre><code class="language-toml">    [api.status.repositories]
+
+      # if less than minInstance of hooks repositories is running, an alert on Global/hooks will be created on /mon/status
+      minInstance = 0
+</code></pre>
+
 <h3 id="monitoring-with-command-line">Monitoring with Command Line</h3>
 
 <pre><code class="language-bash">./cdsctl monitoring
