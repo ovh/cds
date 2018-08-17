@@ -182,13 +182,20 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		// Register (heartbeat loop)
 		go func() {
+			var nbErrors int
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case <-registerTick.C:
-					log.Debug("heartbeat")
-					w.doRegister()
+					if err := w.doRegister(); err != nil {
+						log.Error("Heartbeat failed: %v", err)
+						nbErrors++
+						if nbErrors == 5 {
+							errs <- err
+						}
+					}
+					nbErrors = 0
 				}
 			}
 		}()
@@ -428,7 +435,7 @@ func (w *currentWorker) doRegister() error {
 		ModelID:      w.model.ID,
 	}
 	if err := w.register(form); err != nil {
-		log.Info("Cannot register: %s", err)
+		log.Error("Cannot register: %s", err)
 		return err
 	}
 	return nil
