@@ -12,10 +12,9 @@ CDS can be linked to following repositories manager :
 
 It allows you to enable some CDS features such as :
 
- - Create application in CDS from Bitbucket or Github
- - Attach an application to its Bitbucket or Github repository
+ - Associate a CDS Application to a repository
  - Fully automatic hook management
- - Branch filtering on application workflows
- - Commit logs on pipeline build details
+ - Add pipeline status on pull request and commits
+ - Add comment on pull request
 
 Go through this tutorial to enable the link between repositories managers and CDS.

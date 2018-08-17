@@ -57,10 +57,14 @@ Set value to `privateKey`. You can modify `consumerKey` if you want.
     [vcs.servers.Bitbucket]
 
       # URL of this VCS Server
-      url = "https://mybitbucket.localhost"
+      url = "https://mybitbucket.com"
 
       [vcs.servers.Bitbucket.bitbucket]
-        # you can change the consumeKey if you want
+
+        #######
+        # CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/
+        ########
+        # You can change the consumeKey if you want
         consumerKey = "CDS"
 
         # Does polling is supported by VCS Server
@@ -68,11 +72,16 @@ Set value to `privateKey`. You can modify `consumerKey` if you want.
 
         # Does webhooks are supported by VCS Server
         disableWebHooks = false
+        privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
 
         # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
-        # proxyWebhook = "https://myproxy.com"
+        # proxyWebhook = ""
 
-        privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
+        # optional, Bitbucket Token associated to username, used to add comment on Pull Request
+        token = ""
+
+        # optional. Bitbucket username, used to add comment on Pull Request on failed build.
+        username = ""
 
         [vcs.servers.Bitbucket.bitbucket.Status]
 

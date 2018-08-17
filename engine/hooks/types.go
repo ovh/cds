@@ -24,7 +24,7 @@ type Service struct {
 
 // Configuration is the hooks configuration structure
 type Configuration struct {
-	Name string `toml:"name" comment:"Name of this CDS Hooks Service"`
+	Name string `toml:"name" comment:"Name of this CDS Hooks Service\n Enter a name to enable this service"`
 	HTTP struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
 		Port int    `toml:"port" default:"8083"`
@@ -42,5 +42,5 @@ type Configuration struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379"`
 			Password string `toml:"password"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup"`
-	} `toml:"cache" comment:"######################\n CDS Hooks Cache Settings \n######################\n"`
+	} `toml:"cache" comment:"######################\n CDS Hooks Cache Settings \n######################"`
 }

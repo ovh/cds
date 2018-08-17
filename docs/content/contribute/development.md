@@ -141,6 +141,9 @@ $ engine config new > ~/.cds/dev.toml
 ## in section [hatchery.local.commonConfiguration.api.http]
 ### --> uncomment url, should be set to url = "http://localhost:8081" 
 
+## Replace all http://localhost:2015 by http://localhost:4200
+## 2015 is the "production" port for UI, 4200 is the development port
+
 ```
 
 Prepare database:
