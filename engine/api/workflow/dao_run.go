@@ -828,8 +828,10 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		}
 
 		stopWorkflowNodeRunStages(&nr)
-		nr.Status = sdk.StatusStopped.String()
-		nr.Done = now
+		if !sdk.StatusIsTerminated(resp[i].Status) {
+			nr.Status = sdk.StatusStopped.String()
+			nr.Done = now
+		}
 
 		if err := updateNodeRunStatusAndStage(tx, &nr); err != nil {
 			return sdk.WrapError(err, "stopRunsBlocked> cannot update node runs stages")

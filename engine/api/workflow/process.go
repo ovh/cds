@@ -650,6 +650,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if err := insertWorkflowNodeRun(db, run); err != nil {
 		return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run (node id : %d, node name : %s, subnumber : %d)", run.WorkflowNodeID, run.WorkflowNodeName, run.SubNumber)
 	}
+	w.LastExecution = time.Now()
 
 	buildParameters := sdk.ParametersToMap(run.BuildParameters)
 	_, okUI := buildParameters["cds.ui.pipeline.run"]
