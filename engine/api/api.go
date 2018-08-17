@@ -163,10 +163,10 @@ type Configuration struct {
 			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hooks service is running, an alert on Global/hooks will be created on /mon/status"`
 		} `toml:"hooks"`
 		Repositories struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hooks repositories is running, an alert on Global/hooks will be created on /mon/status"`
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of repositories service is running, an alert on Global/hooks will be created on /mon/status"`
 		} `toml:"repositories"`
 		VCS struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of vcs is running, an alert will on Global/vcs be created on /mon/status"`
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of vcs service is running, an alert will on Global/vcs be created on /mon/status"`
 		} `toml:"vcs"`
 	} `toml:"status" comment:"###########################\n CDS Status Settings \n Documentation: https://ovh.github.io/cds/hosting/monitoring/ \n##########################"`
 	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
