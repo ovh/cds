@@ -39,7 +39,6 @@ export class ProjectAdminComponent implements OnInit {
 
     loading = false;
     fileTooLarge = false;
-    migrationValue = 0;
     user: User;
 
     constructor(private _projectStore: ProjectStore, private _toast: ToastService,
@@ -48,15 +47,6 @@ export class ProjectAdminComponent implements OnInit {
     ngOnInit(): void {
         if (this.project.permission !== 7) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' }});
-        }
-        if (this.project.applications) {
-            this.project.applications.forEach(app => {
-                if (app.workflow_migration === 'STARTED') {
-                    this.migrationValue += 0.5;
-                } else if (app.workflow_migration === 'DONE' || app.workflow_migration === 'CLEANING') {
-                    this.migrationValue++;
-                }
-            });
         }
         this.user = this._authStore.getUser();
     }
