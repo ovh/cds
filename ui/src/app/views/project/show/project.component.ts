@@ -26,7 +26,7 @@ export class ProjectShowComponent implements OnInit {
     project: Project;
     private projectSubscriber: Subscription;
 
-    selectedTab = 'applications';
+    selectedTab = 'workflows';
 
     permissionEnum = PermissionValue;
 
