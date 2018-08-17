@@ -24,6 +24,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		password := sdk.ParameterFind(&a.Parameters, "password")
 		branch := sdk.ParameterFind(&a.Parameters, "branch")
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
+		tag := sdk.ParameterValue(a.Parameters, "tag")
 		commit := sdk.ParameterFind(&a.Parameters, "commit")
 		directory := sdk.ParameterFind(&a.Parameters, "directory")
 		depth := sdk.ParameterFind(&a.Parameters, "depth")
@@ -153,6 +154,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			Recursive:               true,
 			NoStrictHostKeyChecking: true,
 			Depth: 50,
+			Tag:   tag,
 		}
 		if branch != nil {
 			opts.Branch = branch.Value
@@ -176,7 +178,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		}
 
 		// if there is no branch, check if there a defaultBranch
-		if (opts.Branch == "" || opts.Branch == "{{.git.branch}}") && defaultBranch != "" {
+		if (opts.Branch == "" || opts.Branch == "{{.git.branch}}") && defaultBranch != "" && tag == "" {
 			opts.Branch = defaultBranch
 			opts.SingleBranch = false
 			sendLog(fmt.Sprintf("branch is empty, using the default branch %s", defaultBranch))
@@ -206,7 +208,6 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	}
 
 	git.LogFunc = log.Info
-
 	//Perform the git clone
 	userLogCommand, err := git.Clone(url, dir, auth, clone, output)
 
@@ -233,7 +234,7 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	gitURLSSH := sdk.ParameterValue(*params, "git.url")
 	gitURLHTTP := sdk.ParameterValue(*params, "git.http_url")
 	if gitURLSSH == url || gitURLHTTP == url {
-		extractInfo(w, dir, params, clone.Branch, clone.CheckoutCommit, sendLog)
+		_ = extractInfo(w, dir, params, clone.Tag, clone.Branch, clone.CheckoutCommit, sendLog)
 	}
 
 	stdTaglistErr := new(bytes.Buffer)
@@ -261,7 +262,7 @@ func gitClone(w *currentWorker, params *[]sdk.Parameter, url string, dir string,
 	return sdk.Result{Status: sdk.StatusSuccess.String()}
 }
 
-func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, commit string, sendLog LoggerFunc) error {
+func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, branch, commit string, sendLog LoggerFunc) error {
 	author := sdk.ParameterValue(*params, "git.author")
 	authorEmail := sdk.ParameterValue(*params, "git.author.email")
 	message := sdk.ParameterValue(*params, "git.message")
@@ -339,7 +340,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 		sendLog(fmt.Sprintf("cds.semver: %s", cdsSemver))
 	}
 
-	if branch == "" || branch == "{{.git.branch}}" {
+	if (branch == "" || branch == "{{.git.branch}}") && tag == "" {
 		if info.Branch != "" {
 			gitBranch := sdk.Variable{
 				Name:  "git.branch",
@@ -354,8 +355,12 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 		} else {
 			sendLog("git.branch: [empty]")
 		}
-	} else {
+	} else if branch != "" && branch != "{{.git.branch}}" {
 		sendLog(fmt.Sprintf("git.branch: %s", branch))
+	}
+
+	if tag != "" {
+		sendLog(fmt.Sprintf("git.tag: %s", tag))
 	}
 
 	if commit == "" || commit == "{{.git.hash}}" {

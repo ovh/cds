@@ -91,7 +91,11 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			return sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client")
 		}
 
-		statuses, errStatuses := client.ListStatuses(ctx, node.Context.Application.RepositoryFullname, nodeRun.VCSHash)
+		ref := nodeRun.VCSHash
+		if nodeRun.VCSTag != "" {
+			ref = nodeRun.VCSTag
+		}
+		statuses, errStatuses := client.ListStatuses(ctx, node.Context.Application.RepositoryFullname, ref)
 		if errStatuses != nil {
 			return sdk.WrapError(errStatuses, "resyncCommitStatus> Cannot get statuses")
 		}
@@ -191,6 +195,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		Payload:        nodeRun.Payload,
 		SourceNodeRuns: nodeRun.SourceNodeRuns,
 		Hash:           nodeRun.VCSHash,
+		Tag:            nodeRun.VCSTag,
 		BranchName:     nodeRun.VCSBranch,
 		NodeID:         nodeRun.WorkflowNodeID,
 		RunID:          nodeRun.WorkflowRunID,

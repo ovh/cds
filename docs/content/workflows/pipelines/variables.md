@@ -42,7 +42,7 @@ Here is the list of builtin variables, generated for every build:
 - `{{.cds.application}}` The name of the current application
 - `{{.cds.job}}` The name of the current job
 - `{{.cds.manual}}` true if current pipeline is manually run, false otherwise
-- `{{.cds.pipeline}}` The name of the current pipeline 
+- `{{.cds.pipeline}}` The name of the current pipeline
 - `{{.cds.project}}` The name of the current project
 - `{{.cds.run}}` Run Number of current workflow, example: 3.0
 - `{{.cds.run.number}}` Number of current workflow, example: 3 if `{{.cds.run}} = 3.0`
@@ -97,6 +97,7 @@ Here is the list of git variables:
 - `{{.git.url}}`
 - `{{.git.http_url}}`
 - `{{.git.branch}}`
+- `{{.git.tag}}`
 - `{{.git.author}}`
 - `{{.git.message}}`
 - `{{.git.server}}`
@@ -159,4 +160,4 @@ Helpers available and some examples:
 - b64dec
 - escape : replace '_', '/', '.' by '-'
 
-You're a go developper? See all helpers on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23 
+You're a go developper? See all helpers on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23

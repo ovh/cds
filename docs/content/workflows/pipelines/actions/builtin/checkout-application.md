@@ -6,7 +6,7 @@ chapter = true
 
 **CheckoutApplication** is a builtin action, you can't modify it.
 
-This action clones a repository into a directory.
+This action clones a repository into a directory. If you want to clone a tag from your repository in this way, in your workflow payload you can add a key in your JSON like `"git.tag": "0.2"`.
 
 This will run git clone with the following options:
 

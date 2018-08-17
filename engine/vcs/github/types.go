@@ -654,3 +654,57 @@ type RepositoryInvitation struct {
 	URL         string `json:"url"`
 	HTMLURL     string `json:"html_url"`
 }
+
+// DiffCommits represent response from github api for a diff between commits
+type DiffCommits struct {
+	URL          string `json:"url"`
+	HTMLURL      string `json:"html_url"`
+	PermalinkURL string `json:"permalink_url"`
+	DiffURL      string `json:"diff_url"`
+	PatchURL     string `json:"patch_url"`
+	BaseCommit   struct {
+		URL         string `json:"url"`
+		Sha         string `json:"sha"`
+		NodeID      string `json:"node_id"`
+		HTMLURL     string `json:"html_url"`
+		CommentsURL string `json:"comments_url"`
+		Commit      Commit `json:"commit"`
+		Author      User   `json:"author"`
+		Committer   User   `json:"committer"`
+		Parents     []struct {
+			URL string `json:"url"`
+			Sha string `json:"sha"`
+		} `json:"parents"`
+	} `json:"base_commit"`
+	MergeBaseCommit struct {
+		URL         string `json:"url"`
+		Sha         string `json:"sha"`
+		NodeID      string `json:"node_id"`
+		HTMLURL     string `json:"html_url"`
+		CommentsURL string `json:"comments_url"`
+		Commit      Commit `json:"commit"`
+		Author      User   `json:"author"`
+		Committer   User   `json:"committer"`
+		Parents     []struct {
+			URL string `json:"url"`
+			Sha string `json:"sha"`
+		} `json:"parents"`
+	} `json:"merge_base_commit"`
+	Status       string   `json:"status"`
+	AheadBy      int      `json:"ahead_by"`
+	BehindBy     int      `json:"behind_by"`
+	TotalCommits int      `json:"total_commits"`
+	Commits      []Commit `json:"commits"`
+	Files        []struct {
+		Sha         string `json:"sha"`
+		Filename    string `json:"filename"`
+		Status      string `json:"status"`
+		Additions   int    `json:"additions"`
+		Deletions   int    `json:"deletions"`
+		Changes     int    `json:"changes"`
+		BlobURL     string `json:"blob_url"`
+		RawURL      string `json:"raw_url"`
+		ContentsURL string `json:"contents_url"`
+		Patch       string `json:"patch"`
+	} `json:"files"`
+}

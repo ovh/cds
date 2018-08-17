@@ -526,7 +526,12 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 		}
 		payload["git.author"] = pushEvent.HeadCommit.Author.Username
 		payload["git.author.email"] = pushEvent.HeadCommit.Author.Email
-		payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Ref, "refs/heads/"), "refs/tags/")
+
+		if !strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
+			payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+		} else {
+			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
+		}
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
 		payload["git.repository"] = pushEvent.Repository.FullName
@@ -534,9 +539,6 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 		payload["cds.triggered_by.fullname"] = pushEvent.HeadCommit.Author.Name
 		payload["cds.triggered_by.email"] = pushEvent.HeadCommit.Author.Email
 
-		if strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
-			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
-		}
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
@@ -551,7 +553,11 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 		}
 		payload["git.author"] = pushEvent.UserUsername
 		payload["git.author.email"] = pushEvent.UserEmail
-		payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Ref, "refs/heads/"), "refs/tags/")
+		if !strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
+			payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+		} else {
+			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
+		}
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
 		payload["git.repository"] = pushEvent.Project.PathWithNamespace
@@ -560,9 +566,6 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 		payload["cds.triggered_by.fullname"] = pushEvent.UserName
 		payload["cds.triggered_by.email"] = pushEvent.UserEmail
 
-		if strings.HasPrefix(pushEvent.Ref, "refs/tags/") {
-			payload["git.tag"] = strings.TrimPrefix(pushEvent.Ref, "refs/tags/")
-		}
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
@@ -578,7 +581,11 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 			return nil, nil
 		}
 
-		payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/heads/"), "refs/tags/")
+		if !strings.HasPrefix(pushEvent.Changes[0].RefID, "refs/tags/") {
+			payload["git.branch"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/heads/")
+		} else {
+			payload["git.tag"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/tags/")
+		}
 		payload["git.hash.before"] = pushEvent.Changes[0].FromHash
 		payload["git.hash"] = pushEvent.Changes[0].ToHash
 		payload["git.repository"] = fmt.Sprintf("%s/%s", pushEvent.Repository.Project.Key, pushEvent.Repository.Slug)
@@ -586,10 +593,6 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 		payload["cds.triggered_by.username"] = pushEvent.Actor.Name
 		payload["cds.triggered_by.fullname"] = pushEvent.Actor.DisplayName
 		payload["cds.triggered_by.email"] = pushEvent.Actor.EmailAddress
-
-		if strings.HasPrefix(pushEvent.Changes[0].RefID, "refs/tags/") {
-			payload["git.tag"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/tags/")
-		}
 	default:
 		log.Warning("executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
 		return nil, fmt.Errorf("Repository manager not found. Cannot read request body")

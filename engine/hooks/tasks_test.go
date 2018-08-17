@@ -73,7 +73,8 @@ func Test_doWebHookExecutionTagGithub(t *testing.T) {
 	h, err := s.doWebHookExecution(task)
 	test.NoError(t, err)
 
-	assert.Equal(t, "my-branch", h.Payload["git.branch"])
+	assert.Equal(t, "", h.Payload["git.branch"])
+	assert.Equal(t, "my-branch", h.Payload["git.tag"])
 	assert.Equal(t, "baxterthehacker", h.Payload["git.author"])
 	assert.Equal(t, "Update README.md", h.Payload["git.message"])
 	assert.Equal(t, "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c", h.Payload["git.hash"])

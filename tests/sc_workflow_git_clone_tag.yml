@@ -1,0 +1,40 @@
+name: Create a simple workflow (ITSCWRKFLW6) and run it to test gitClone action
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW6/clone.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW6/ITSCWRKFLW6.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW6"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW6"
+  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW6 ITSCWRKFLW6"
+
+- name: import pipeline
+  steps:
+  - script: {{.cds.build.cdsctl}} pipeline import --force ITSCWRKFLW6 ./tests/fixtures/ITSCWRKFLW6/clone.pip.yml
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: import workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow import --force ITSCWRKFLW6 ./tests/fixtures/ITSCWRKFLW6/ITSCWRKFLW6.yml
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: run workflow
+  steps:
+  - script: "{{.cds.build.cdsctl}} workflow run ITSCWRKFLW6 ITSCWRKFLW6-WORKFLOW -d '{\"git.tag\": \"v0.4.0\"}'"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW6-WORKFLOW #1 has been launched"
+
+- name: check workflow
+  steps:
+  - script: {{.cds.build.cdsctl}} workflow status ITSCWRKFLW6 ITSCWRKFLW6-WORKFLOW 1 --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Success
+    retry: 30
+    delay: 10
