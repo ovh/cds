@@ -56,6 +56,20 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 		return err
 	}
 
+	//Check is repo has diverged
+	hasDiverged, err := gitRepo.HasDiverged()
+	if err != nil {
+		log.Error("Repositories> processCheckout> HasDiverged> [%s] Error: %v", op.UUID, err)
+		return err
+	}
+
+	if hasDiverged {
+		if err := gitRepo.ResetHard("origin/" + currentBranch); err != nil {
+			log.Error("Repositories> processCheckout> ResetHard> [%s] Error: %v", op.UUID, err)
+			return err
+		}
+	}
+
 	if op.Setup.Checkout.Branch == "" {
 		op.Setup.Checkout.Branch = d
 	}
