@@ -76,10 +76,11 @@ func (api *API) statusHandler() service.Handler {
 }
 
 type computeGlobalNumbers struct {
-	nbSrv    int
-	nbOK     int
-	nbAlerts int
-	nbWarn   int
+	nbSrv       int
+	nbOK        int
+	nbAlerts    int
+	nbWarn      int
+	minInstance int
 }
 
 func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
@@ -90,13 +91,13 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 	linesGlobal := []sdk.MonitoringStatusLine{}
 
 	resume := map[string]computeGlobalNumbers{
-		services.TypeAPI:           {},
-		services.TypeRepositories:  {},
-		services.TypeVCS:           {},
-		services.TypeHooks:         {},
-		services.TypeHatchery:      {},
-		services.TypeDBMigrate:     {},
-		services.TypeElasticsearch: {},
+		services.TypeAPI:           {minInstance: api.Config.Status.API.MinInstance},
+		services.TypeRepositories:  {minInstance: api.Config.Status.Repositories.MinInstance},
+		services.TypeVCS:           {minInstance: api.Config.Status.VCS.MinInstance},
+		services.TypeHooks:         {minInstance: api.Config.Status.Hooks.MinInstance},
+		services.TypeHatchery:      {minInstance: api.Config.Status.Hatchery.MinInstance},
+		services.TypeDBMigrate:     {minInstance: api.Config.Status.DBMigrate.MinInstance},
+		services.TypeElasticsearch: {minInstance: api.Config.Status.ElasticSearch.MinInstance},
 	}
 	var nbg computeGlobalNumbers
 	for _, s := range srvs {
@@ -178,7 +179,7 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 		r = sdk.MonitoringStatusAlert
 	} else if s.nbWarn > 0 {
 		r = sdk.MonitoringStatusWarn
-	} else if s.nbSrv == 0 {
+	} else if s.nbSrv < s.minInstance {
 		r = sdk.MonitoringStatusAlert
 	}
 	return r
