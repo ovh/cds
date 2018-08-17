@@ -381,6 +381,9 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		Stages:           stages,
 		Header:           w.Header,
 	}
+	if run.SubNumber >= w.LastSubNumber {
+		w.LastSubNumber = run.SubNumber
+	}
 	if n.Context != nil && n.Context.ApplicationID != 0 {
 		run.ApplicationID = n.Context.ApplicationID
 	} else if n.Context != nil && n.Context.Application != nil {
@@ -635,7 +638,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	for _, info := range w.Infos {
-		if info.IsError {
+		if info.IsError && info.SubNumber == w.LastSubNumber {
 			run.Status = string(sdk.StatusFail)
 			run.Done = time.Now()
 			break
@@ -775,9 +778,10 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 func AddWorkflowRunInfo(run *sdk.WorkflowRun, isError bool, infos ...sdk.SpawnMsg) {
 	for _, i := range infos {
 		run.Infos = append(run.Infos, sdk.WorkflowRunInfo{
-			APITime: time.Now(),
-			Message: i,
-			IsError: isError,
+			APITime:   time.Now(),
+			Message:   i,
+			IsError:   isError,
+			SubNumber: run.LastSubNumber,
 		})
 	}
 }

@@ -77,7 +77,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 	var isInError bool
 	var newStatus string
 	for _, info := range wr.Infos {
-		if info.IsError {
+		if info.IsError && info.SubNumber == wr.LastSubNumber {
 			isInError = true
 			break
 		}

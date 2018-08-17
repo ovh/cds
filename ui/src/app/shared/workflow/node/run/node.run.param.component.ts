@@ -34,7 +34,6 @@ export class WorkflowNodeRunParamComponent {
     @ViewChild('textareaCodeMirror')
     codemirror: CodemirrorComponent;
 
-    @Input() canResync = false;
     @Input() workflowRun: WorkflowRun;
     @Input() nodeRun: WorkflowNodeRun;
     @Input() project: Project;
@@ -48,7 +47,7 @@ export class WorkflowNodeRunParamComponent {
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
                 if ((!this.nodeRun || !this.nodeRun.payload ) &&
-                    (!this.workflowRun || !this.workflowRun.nodes[this.workflowRun.workflow.root.id])) {
+                    (!this.workflowRun  || !this.workflowRun.nodes || !this.workflowRun.nodes[this.workflowRun.workflow.root.id])) {
                         this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
                 }
                 this.linkedToRepo = this._nodeToRun.context.application != null
@@ -98,7 +97,7 @@ export class WorkflowNodeRunParamComponent {
         if (this.nodeRun) { // relaunch a pipeline
             num = this.nodeRun.num;
             nodeRunID = this.nodeRun.id;
-        } else if (this.workflowRun) {
+        } else if (this.workflowRun && this.workflowRun.nodes) {
             let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
             num = rootNodeRun.num;
             nodeRunID = rootNodeRun.id;
@@ -237,7 +236,7 @@ export class WorkflowNodeRunParamComponent {
         let currentContext = {};
         if (this.nodeRun && this.nodeRun.payload) {
             currentContext = this.nodeRun.payload;
-        } else if (this.workflowRun) {
+        } else if (this.workflowRun && this.workflowRun.nodes) {
             let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id];
             if (rootNodeRun) {
                 currentContext = rootNodeRun[0].payload;

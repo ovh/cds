@@ -131,6 +131,7 @@ type WorkflowRunInfo struct {
 	Message SpawnMsg  `json:"message,omitempty" db:"-"`
 	// UserMessage contains msg translated for end user
 	UserMessage string `json:"user_message,omitempty" db:"-"`
+	SubNumber   int64  `json:"sub_number,omitempty" db:"-"`
 	IsError     bool   `json:"is_error" db:"-"`
 }
 
@@ -367,7 +368,7 @@ func (w *WorkflowNodeRunArtifact) GetPath() string {
 	return container
 }
 
-const workflowNodeRunReport = `{{- if .Stages }} 
+const workflowNodeRunReport = `{{- if .Stages }}
 CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
 {{- range $s := .Stages}}
 {{- if $s.RunJobs }}
@@ -379,7 +380,7 @@ CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Su
 {{- end}}
 {{- end}}
 
-{{- if .Tests }} 
+{{- if .Tests }}
 {{- if gt .Tests.TotalKO 0}}
 Unit Tests Report
 
