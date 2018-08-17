@@ -617,7 +617,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 	query := fmt.Sprintf(`
 					SELECT %s FROM workflow_node_run
 					JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
-					WHERE vcs_branch = $3 AND workflow_node_run.num <= $4 AND workflow_node_run.workflow_node_id = $5 AND workflow_node_run.id != $6
+					WHERE workflow_node_run.vcs_branch = $3 AND workflow_node_run.vcs_tag = $4 AND workflow_node_run.num <= $5 AND workflow_node_run.workflow_node_id = $6 AND workflow_node_run.id != $7
 					ORDER BY workflow_node_run.num, workflow_node_run.sub_num DESC
 					LIMIT 1
 				`, nodeRunFields)
