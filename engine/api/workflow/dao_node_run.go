@@ -554,13 +554,14 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 	if prev.Hash != "" && cur.Hash == prev.Hash {
 		log.Debug("GetNodeRunBuildCommits> there is not difference between the previous build and the current build for node %s", nodeRun.WorkflowNodeName)
 	} else if prev.Hash != "" {
-		switch {
-		case cur.Hash == "" && cur.Tag == "":
-			br, err := client.Branch(ctx, repo, cur.Branch)
-			if err != nil {
-				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get branch %s", cur.Branch)
+		if cur.Tag == "" {
+			if cur.Hash == "" {
+				br, err := client.Branch(ctx, repo, cur.Branch)
+				if err != nil {
+					return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get branch %s", cur.Branch)
+				}
+				cur.Hash = br.LatestCommit
 			}
-			cur.Hash = br.LatestCommit
 			//If we are lucky, return a true diff
 			commits, err := client.Commits(ctx, repo, cur.Branch, prev.Hash, cur.Hash)
 			if err != nil {
@@ -569,8 +570,9 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 			if commits != nil {
 				res = commits
 			}
+		}
 
-		case cur.Hash == "" && cur.Tag != "":
+		if cur.Hash == "" && cur.Tag != "" {
 			c, err := client.CommitsBetweenRefs(ctx, repo, prev.Hash, cur.Tag)
 			if err != nil {
 				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
