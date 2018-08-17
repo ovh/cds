@@ -2064,7 +2064,9 @@
 
 <h3 id="create-a-cds-application-on-github">Create a CDS application on Github</h3>
 
-<p>Go to <code>https://github.com/settings/developers</code> and <strong>Register a new application</strong>: set an application name, the url and a description. <code>Authorization callback URL</code>: <code>http(s)://&lt;your-cds-api&gt;/repositories_manager/oauth2/callback</code></p>
+<p>Go to <a href="https://github.com/settings/developers">https://github.com/settings/developers</a> and <strong>Register a new application</strong>: set an application name, the url and a description. <code>Authorization callback URL</code>: <code>http(s)://&lt;your-cds-api&gt;/repositories_manager/oauth2/callback</code></p>
+
+<p>Example: for a local configuration with API default port (8081), callback URL will be <code>http://localhost:8081/repositories_manager/oauth2/callback</code></p>
 
 <p>On the next page Github give you a <strong>Client ID</strong> and a <strong>Client Secret</strong></p>
 
@@ -2072,17 +2074,20 @@
 
 <p>Set value to <code>clientId</code> and <code>clientSecret</code></p>
 
-<pre><code class="language-yaml">    [vcs.servers.github]
+<pre><code class="language-yaml">    [vcs.servers.Github]
 
       # URL of this VCS Server
       url = &quot;https://github.com&quot;
 
-      [vcs.servers.github.github]
+      [vcs.servers.Github.github]
 
-        # github OAuth Application Client ID
+        #######
+        # CDS &lt;-&gt; Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/
+        ########
+        # Github OAuth Application Client ID
         clientId = &quot;xxxx&quot;
 
-        # github OAuth Application Client Secret
+        # Github OAuth Application Client Secret
         clientSecret = &quot;xxxx&quot;
 
         # Does polling is supported by VCS Server
@@ -2092,15 +2097,21 @@
         disableWebHooks = false
 
         # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
-        # proxyWebhook = &quot;https://myproxy.com&quot;
+        # proxyWebhook = &quot;&quot;
 
-        [vcs.servers.github.github.Status]
+        # optional, Github Token associated to username, used to add comment on Pull Request
+        token = &quot;&quot;
+
+        # optional. Github username, used to add comment on Pull Request on failed build.
+        username = &quot;&quot;
+
+        [vcs.servers.Github.github.Status]
 
           # Set to true if you don't want CDS to push statuses on the VCS server
-          disable = false
+          # disable = false
 
           # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
-          showDetail = true
+          # showDetail = false
 </code></pre>
 
 <p><strong>Then restart CDS</strong></p>

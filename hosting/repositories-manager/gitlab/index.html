@@ -73,85 +73,6 @@
         <span>Getting Started</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/gettingstarted/init_workflow_with_cdsctl/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/init_workflow_with_cdsctl/">
-          <span>Init a CDS Workflow from a repository</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/import_workflow_with_webui/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/import_workflow_with_webui/">
-          <span>Import a CDS Workflow from a repository</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/step_by_step_build_deploy/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/step_by_step_build_deploy/">
-          <span>Build &amp; Deploy a standard application</span>
-        </a>
-    </li>
-    <li data-nav-id="/gettingstarted/concepts/" class="dd-item">
-      <a href="https://ovh.github.io/cds/gettingstarted/concepts/">
-        <span>Concepts</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/gettingstarted/concepts/why_cds/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/why_cds/">
-          <span>CDS - The origins</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/workflow/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/workflow/">
-          <span>Workflow</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/pipeline/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/pipeline/">
-          <span>Pipeline</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/stage/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/stage/">
-          <span>Stage</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/job/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/job/">
-          <span>Job</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/concepts/step/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/concepts/step/">
-          <span>Step</span>
-        </a>
-    </li>
-        </ul>
-    </li>
-    <li data-nav-id="/gettingstarted/scopes/" class="dd-item">
-      <a href="https://ovh.github.io/cds/gettingstarted/scopes/">
-        <span>Scopes &amp; ACLs</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/gettingstarted/scopes/project/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/scopes/project/">
-          <span>Project</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/scopes/application/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/scopes/application/">
-          <span>Application</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/scopes/environment/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/scopes/environment/">
-          <span>Environment</span>
-        </a>
-    </li>
-      <li data-nav-id="/gettingstarted/scopes/permissions/" class="dd-item">
-        <a href="https://ovh.github.io/cds/gettingstarted/scopes/permissions/">
-          <span>Permissions</span>
-        </a>
-    </li>
-        </ul>
-    </li>
         </ul>
     </li>
           
@@ -2089,12 +2010,16 @@
 
 <p>Set value to <code>appId</code> and <code>secret</code></p>
 
-<pre><code class="language-yaml">   [vcs.servers.Gitlab]
+<pre><code class="language-yaml">    [vcs.servers.Gitlab]
 
       # URL of this VCS Server
       url = &quot;https://gitlab.com&quot;
 
       [vcs.servers.Gitlab.gitlab]
+
+        #######
+        # CDS &lt;-&gt; Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/
+        ########
         appId = &quot;xxxx&quot;
 
         # Does polling is supported by VCS Server
@@ -2103,18 +2028,17 @@
         # Does webhooks are supported by VCS Server
         disableWebHooks = false
 
-        secret = &quot;xxxx&quot;
-
         # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
-        # proxyWebhook = &quot;https://myproxy.com&quot;
+        # proxyWebhook = &quot;&quot;
+        secret = &quot;xxxx&quot;
 
         [vcs.servers.Gitlab.gitlab.Status]
 
           # Set to true if you don't want CDS to push statuses on the VCS server
-          disable = false
+          # disable = false
 
           # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
-          showDetail = true
+          # showDetail = false
 </code></pre>
 
 <p><strong>Then restart CDS</strong></p>
