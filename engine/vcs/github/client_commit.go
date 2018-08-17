@@ -257,3 +257,48 @@ func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCo
 
 	return commit, nil
 }
+
+func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
+	var commits []sdk.VCSCommit
+	url := fmt.Sprintf("/repos/%s/compare/%s...%s", repo, base, head)
+	status, body, _, err := g.get(url)
+	if err != nil {
+		log.Warning("githubClient.CommitsBetweenRefs> Error %s", err)
+		return commits, err
+	}
+	if status >= 400 {
+		return commits, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
+	}
+
+	var diff DiffCommits
+	//Github may return 304 status because we are using conditional request with ETag based headers
+	if status == http.StatusNotModified {
+		//If repo isn't updated, lets get them from cache
+		g.Cache.Get(cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url), &commits)
+	} else {
+		if err := json.Unmarshal(body, &diff); err != nil {
+			log.Warning("githubClient.CommitsBetweenRefs> Unable to parse github commit: %s", err)
+			return commits, err
+		}
+
+		commits = make([]sdk.VCSCommit, len(diff.Commits))
+		for i, commit := range diff.Commits {
+			commits[i] = sdk.VCSCommit{
+				Timestamp: commit.Commit.Author.Date.Unix() * 1000,
+				Message:   commit.Commit.Message,
+				Hash:      commit.Sha,
+				Author: sdk.VCSAuthor{
+					DisplayName: commit.Commit.Author.Name,
+					Email:       commit.Commit.Author.Email,
+					Name:        commit.Author.Login,
+					Avatar:      commit.Author.AvatarURL,
+				},
+				URL: commit.HTMLURL,
+			}
+		}
+		//Put the body on cache for one hour and one minute
+		g.Cache.SetWithTTL(cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url), &commits, 61*60)
+	}
+
+	return commits, nil
+}

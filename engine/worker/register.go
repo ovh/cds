@@ -39,7 +39,6 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 	}
 	sdk.Authorization(worker.ID)
 	w.initGRPCConn()
-	log.Info("%s Registered on %s", form.Name, w.apiEndpoint)
 
 	if !uptodate {
 		if w.autoUpdate {

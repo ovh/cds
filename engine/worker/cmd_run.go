@@ -97,7 +97,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			time.Sleep(2 * time.Second)
 		}
 
-		//Register every 10 seconds if we have nothing to do
+		//Register every 10 seconds
 		registerTick := time.NewTicker(10 * time.Second)
 
 		updateTick := time.NewTicker(5 * time.Minute)
@@ -166,6 +166,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
+		// Errors check loops
 		go func(errs chan error) {
 			for {
 				select {
@@ -178,6 +179,26 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 			}
 		}(errs)
+
+		// Register (heartbeat loop)
+		go func() {
+			var nbErrors int
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-registerTick.C:
+					if err := w.doRegister(); err != nil {
+						log.Error("Heartbeat failed: %v", err)
+						nbErrors++
+						if nbErrors == 5 {
+							errs <- err
+						}
+					}
+					nbErrors = 0
+				}
+			}
+		}()
 
 		// main loop
 		for {
@@ -299,8 +320,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				// Unregister from engine
 				log.Info("Job is done. Unregistering...")
 				cancel()
-			case <-registerTick.C:
-				w.doRegister()
 			case <-updateTick.C:
 				w.doUpdate()
 			}
@@ -407,18 +426,17 @@ func (w *currentWorker) doRegister() error {
 			info = fmt.Sprintf(", I was born to work on workflow node job %d", w.bookedWJobID)
 		}
 		log.Info("Registering on CDS engine%s Version:%s", info, sdk.VERSION)
-		form := sdk.WorkerRegistrationForm{
-			Name:         w.status.Name,
-			Token:        w.token,
-			Hatchery:     w.hatchery.id,
-			HatcheryName: w.hatchery.name,
-			ModelID:      w.model.ID,
-		}
-		if err := w.register(form); err != nil {
-			log.Info("Cannot register: %s", err)
-			return err
-		}
-		log.Debug("Registered (groupID:%d, model:%v)", w.groupID, w.model.Name)
+	}
+	form := sdk.WorkerRegistrationForm{
+		Name:         w.status.Name,
+		Token:        w.token,
+		Hatchery:     w.hatchery.id,
+		HatcheryName: w.hatchery.name,
+		ModelID:      w.model.ID,
+	}
+	if err := w.register(form); err != nil {
+		log.Error("Cannot register: %s", err)
+		return err
 	}
 	return nil
 }

@@ -170,6 +170,7 @@ type WorkflowNodeRun struct {
 	Commits               []VCSCommit                        `json:"commits,omitempty"`
 	TriggersRun           map[int64]WorkflowNodeTriggerRun   `json:"triggers_run,omitempty"`
 	VCSRepository         string                             `json:"vcs_repository"`
+	VCSTag                string                             `json:"vcs_tag"`
 	VCSBranch             string                             `json:"vcs_branch"`
 	VCSHash               string                             `json:"vcs_hash"`
 	VCSServer             string                             `json:"vcs_server"`
@@ -177,7 +178,7 @@ type WorkflowNodeRun struct {
 	Header                WorkflowRunHeaders                 `json:"header,omitempty"`
 }
 
-// WorkflowNodeRunVulnerability represents vulnerabilities report for the current node run
+// WorkflowNodeRunVulnerabilityReport represents vulnerabilities report for the current node run
 type WorkflowNodeRunVulnerabilityReport struct {
 	ID                int64                        `json:"id" db:"id"`
 	ApplicationID     int64                        `json:"application_id" db:"application_id"`

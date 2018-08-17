@@ -17,6 +17,7 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 		// Load build param
 		branch := sdk.ParameterFind(params, "git.branch")
 		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
+		tag := sdk.ParameterValue(*params, "git.tag")
 		commit := sdk.ParameterFind(params, "git.hash")
 
 		gitURL, auth, err := extractVCSInformations(*params, secrets)
@@ -34,6 +35,7 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 			Recursive:               true,
 			NoStrictHostKeyChecking: true,
 			Depth: 50,
+			Tag:   tag,
 		}
 		if branch != nil {
 			opts.Branch = branch.Value
@@ -42,13 +44,13 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 		}
 
 		// if there is no branch, check if there a defaultBranch
-		if (opts.Branch == "" || opts.Branch == "{{.git.branch}}") && defaultBranch != "" {
+		if (opts.Branch == "" || opts.Branch == "{{.git.branch}}") && defaultBranch != "" && tag == "" {
 			opts.Branch = defaultBranch
 			opts.SingleBranch = false
 			sendLog(fmt.Sprintf("branch is empty, using the default branch %s", defaultBranch))
 		}
 
-		r, _ := regexp.Compile("{{.*}}")
+		r := regexp.MustCompile("{{.*}}")
 		if commit != nil && commit.Value != "" && !r.MatchString(commit.Value) {
 			opts.CheckoutCommit = commit.Value
 		}

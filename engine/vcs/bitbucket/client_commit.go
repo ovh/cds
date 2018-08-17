@@ -147,3 +147,74 @@ func newUnknownStashUser(author Author) *User {
 		Slug:         "unknownSlug",
 	}
 }
+
+func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
+	var commits []sdk.VCSCommit
+	project, slug, err := getRepo(repo)
+	if err != nil {
+		return nil, sdk.WrapError(err, "vcs> bitbucket> CommitsBetweenRefs>")
+	}
+
+	var stashCommits []Commit
+
+	var stashCommitsKey = cache.Key("vcs", "bitbucket", b.consumer.URL, repo, "compare/commits", "from@"+base, "to@"+head)
+
+	if !b.consumer.cache.Get(stashCommitsKey, &stashCommits) {
+		response := CommitsResponse{}
+		path := fmt.Sprintf("/projects/%s/repos/%s/compare/commits", project, slug)
+		params := url.Values{}
+		if base != "" {
+			params.Add("from", base)
+		}
+		if head != "" {
+			params.Add("to", head)
+		}
+
+		for {
+			if response.NextPageStart != 0 {
+				params.Set("start", fmt.Sprintf("%d", response.NextPageStart))
+			}
+
+			if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
+				if err == sdk.ErrNotFound {
+					return nil, nil
+				}
+				return nil, sdk.WrapError(err, "vcs> bitbucket> CommitsBetweenRefs> Unable to get commits %s", path)
+			}
+
+			stashCommits = append(stashCommits, response.Values...)
+			if response.IsLastPage {
+				break
+			}
+		}
+		b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60) //3 hours
+	}
+
+	urlCommit := b.consumer.URL + "/projects/" + project + "/repos/" + slug + "/compare/commits"
+	for _, sc := range stashCommits {
+		c := sdk.VCSCommit{
+			Hash:      sc.Hash,
+			Timestamp: sc.Timestamp,
+			Message:   sc.Message,
+			Author: sdk.VCSAuthor{
+				Name:  sc.Author.Name,
+				Email: sc.Author.Email,
+			},
+			URL: urlCommit + sc.Hash,
+		}
+		stashUser := b.findUser(ctx, sc.Author.Email)
+		if stashUser == nil {
+			newStashUserUnknown := newUnknownStashUser(*sc.Author)
+			var stashUserKey = cache.Key("vcs", "bitbucket", b.consumer.URL, sc.Author.Email)
+			b.consumer.cache.SetWithTTL(stashUserKey, newStashUserUnknown, 86400) // 1 day
+			stashUser = newUnknownStashUser(*sc.Author)
+		}
+
+		c.Author.DisplayName = stashUser.DisplayName
+		if stashUser.Slug != "" && stashUser.Slug != "unknownSlug" {
+			c.Author.Avatar = fmt.Sprintf("%s/users/%s/avatar.png", b.consumer.URL, stashUser.Slug)
+		}
+		commits = append(commits, c)
+	}
+	return commits, nil
+}

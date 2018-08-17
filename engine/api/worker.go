@@ -82,7 +82,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "disabledWorkerHandler> Cannot load worker %s", id)
 		}
 
-		if wor.Status == sdk.StatusBuilding || wor.Status == sdk.StatusChecking {
+		if wor.Status == sdk.StatusBuilding {
 			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wor.Status)
 		}
 

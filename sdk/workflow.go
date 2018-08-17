@@ -930,6 +930,7 @@ func (c *WorkflowNodeContext) DefaultPayloadToMap() (map[string]string, error) {
 //WorkflowNodeContextDefaultPayloadVCS represents a default payload when a workflow is attached to a repository Webhook
 type WorkflowNodeContextDefaultPayloadVCS struct {
 	GitBranch     string `json:"git.branch" db:"-"`
+	GitTag        string `json:"git.tag" db:"-"`
 	GitHash       string `json:"git.hash" db:"-"`
 	GitAuthor     string `json:"git.author" db:"-"`
 	GitHashBefore string `json:"git.hash.before" db:"-"`

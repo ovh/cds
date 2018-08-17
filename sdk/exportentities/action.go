@@ -159,6 +159,10 @@ func newSteps(a sdk.Action) []Step {
 				if submodules != nil && submodules.Value == "false" {
 					gitCloneArgs["submodules"] = submodules.Value
 				}
+				tag := sdk.ParameterFind(&act.Parameters, "tag")
+				if tag != nil && tag.Value != "" {
+					gitCloneArgs["tag"] = tag.Value
+				}
 				s["gitClone"] = gitCloneArgs
 			case sdk.JUnitAction:
 				path := sdk.ParameterFind(&act.Parameters, "path")
