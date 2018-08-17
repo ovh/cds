@@ -135,61 +135,140 @@ var configNewCmd = &cobra.Command{
 	Use:   "new",
 	Short: "CDS configuration file assistant",
 	Long: `
-Comming soon...`,
+# generate the whole configuration file
+	$ engine config new > conf.toml
+
+# you can compose your file configuration
+# this will generate a file configuration containing
+# api and hatchery:local µService
+	$ engine config new api hatchery:local
+
+# For advanced usage, Debug and Tracing section can be generated as:
+	$ engine config new debug tracing [µService(s)...]
+
+# All options
+	$ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories]
+
+`,
 	Run: func(cmd *cobra.Command, args []string) {
+		for _, a := range args {
+			if strings.HasPrefix(a, "hatchery:") {
+				if conf.Hatchery == nil {
+					conf.Hatchery = &HatcheryConfiguration{}
+				}
+			}
+		}
+
+		for _, a := range args {
+			switch a {
+			case "debug":
+				conf.Debug = &DebugConfiguration{}
+			case "tracing":
+				conf.Tracing = &observability.Configuration{}
+			case "api":
+				conf.API = &api.Configuration{}
+			case "migrate":
+				conf.DatabaseMigrate = &migrateservice.Configuration{}
+			case "hatchery:local":
+				conf.Hatchery.Local = &local.HatcheryConfiguration{}
+			case "hatchery:kubernetes":
+				conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
+			case "hatchery:marathon":
+				conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
+			case "hatchery:openstack":
+				conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
+			case "hatchery:swarm":
+				conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
+			case "hatchery:vsphere":
+				conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
+			case "hooks":
+				conf.Hooks = &hooks.Configuration{}
+			case "vcs":
+				conf.VCS = &vcs.Configuration{}
+			case "repositories":
+				conf.Repositories = &repositories.Configuration{}
+			case "elasticsearch":
+				conf.ElasticSearch = &elasticsearch.Configuration{}
+			default:
+				fmt.Printf("Error: service '%s' unknown\n", a)
+				os.Exit(1)
+			}
+		}
+
 		defaults.SetDefaults(conf)
 
-		conf.API.Auth.SharedInfraToken = sdk.RandomString(128)
-		conf.API.Secrets.Key = sdk.RandomString(32)
-		conf.API.Providers = append(conf.API.Providers, api.ProviderConfiguration{
-			Name:  "sample-provider",
-			Token: sdk.RandomString(32),
-		})
-		conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{
-			Name:       "sample-service",
-			URL:        "https://ovh.github.io",
-			Port:       "443",
-			Path:       "/cds",
-			HealthPath: "/cds",
-			HealthPort: "443",
-			HealthURL:  "https://ovh.github.io",
-			Type:       "doc",
-		})
-		conf.Hatchery.Local.API.Token = conf.API.Auth.SharedInfraToken
-		conf.Hatchery.Openstack.API.Token = conf.API.Auth.SharedInfraToken
-		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken
-		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
-		conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
-			"sample-docker-engine": {
-				Host: "///var/run/docker.sock",
-			},
+		var sharedInfraToken = sdk.RandomString(128)
+
+		if conf.API != nil {
+			conf.API.Auth.SharedInfraToken = sharedInfraToken
+			conf.API.Secrets.Key = sdk.RandomString(32)
+			conf.API.Providers = append(conf.API.Providers, api.ProviderConfiguration{
+				Name:  "sample-provider",
+				Token: sdk.RandomString(32),
+			})
+			conf.API.Services = append(conf.API.Services, api.ServiceConfiguration{
+				Name:       "sample-service",
+				URL:        "https://ovh.github.io",
+				Port:       "443",
+				Path:       "/cds",
+				HealthPath: "/cds",
+				HealthPort: "443",
+				HealthURL:  "https://ovh.github.io",
+				Type:       "doc",
+			})
+		} else {
+			sharedInfraToken = "enter sharedInfraToken from section [api.auth] here"
 		}
-		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
-		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
-		conf.Repositories.API.Token = conf.API.Auth.SharedInfraToken
-		conf.DatabaseMigrate.API.Token = conf.API.Auth.SharedInfraToken
-		conf.VCS.API.Token = conf.API.Auth.SharedInfraToken
-		conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
-		conf.VCS.Servers["Github"] = vcs.ServerConfiguration{
-			URL: "https://github.com",
-			Github: &vcs.GithubServerConfiguration{
-				ClientID:     "xxxx",
-				ClientSecret: "xxxx",
-			},
+
+		if conf.Hatchery != nil {
+			conf.Hatchery.Local.API.Token = sharedInfraToken
+			conf.Hatchery.Openstack.API.Token = sharedInfraToken
+			conf.Hatchery.VSphere.API.Token = sharedInfraToken
+			conf.Hatchery.Swarm.API.Token = sharedInfraToken
+			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
+				"sample-docker-engine": {
+					Host: "///var/run/docker.sock",
+				},
+			}
+			conf.Hatchery.Marathon.API.Token = sharedInfraToken
 		}
-		conf.VCS.Servers["Bitbucket"] = vcs.ServerConfiguration{
-			URL: "https://mybitbucket.com",
-			Bitbucket: &vcs.BitbucketServerConfiguration{
-				ConsumerKey: "xxx",
-				PrivateKey:  "xxx",
-			},
+
+		if conf.Hooks != nil {
+			conf.Hooks.API.Token = sharedInfraToken
 		}
-		conf.VCS.Servers["Gitlab"] = vcs.ServerConfiguration{
-			URL: "https://gitlab.com",
-			Gitlab: &vcs.GitlabServerConfiguration{
-				AppID:  "xxxx",
-				Secret: "xxxx",
-			},
+
+		if conf.Repositories != nil {
+			conf.Repositories.API.Token = sharedInfraToken
+		}
+
+		if conf.DatabaseMigrate != nil {
+			conf.DatabaseMigrate.API.Token = sharedInfraToken
+		}
+
+		if conf.VCS != nil {
+			conf.VCS.API.Token = sharedInfraToken
+			conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
+			conf.VCS.Servers["Github"] = vcs.ServerConfiguration{
+				URL: "https://github.com",
+				Github: &vcs.GithubServerConfiguration{
+					ClientID:     "xxxx",
+					ClientSecret: "xxxx",
+				},
+			}
+			conf.VCS.Servers["Bitbucket"] = vcs.ServerConfiguration{
+				URL: "https://mybitbucket.com",
+				Bitbucket: &vcs.BitbucketServerConfiguration{
+					ConsumerKey: "xxx",
+					PrivateKey:  "xxx",
+				},
+			}
+			conf.VCS.Servers["Gitlab"] = vcs.ServerConfiguration{
+				URL: "https://gitlab.com",
+				Gitlab: &vcs.GitlabServerConfiguration{
+					AppID:  "xxxx",
+					Secret: "xxxx",
+				},
+			}
 		}
 
 		if !configNewAsEnvFlag {
@@ -309,7 +388,7 @@ This component operates CDS VCS connectivity
 
 Start all of this with a single command:
 
-	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs] [repositories]
+	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories]
 
 All the services are using the same configuration file format.
 
@@ -365,44 +444,100 @@ See $ engine config command for more details.
 		}
 		services := []serviceConf{}
 
+		if conf.Debug == nil {
+			conf.Debug = &DebugConfiguration{}
+		}
+
+		if conf.Tracing == nil {
+			conf.Tracing = &observability.Configuration{}
+		}
+
 		names := []string{}
 		for _, a := range args {
 			fmt.Printf("Starting service %s\n", a)
 			switch a {
 			case "api":
+				if conf.API == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: api.New(), cfg: conf.API})
 				names = append(names, conf.API.Name)
 			case "migrate":
+				if conf.DatabaseMigrate == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: migrateservice.New(), cfg: conf.DatabaseMigrate})
 				names = append(names, conf.DatabaseMigrate.Name)
 			case "hatchery:local":
+				if conf.Hatchery.Local == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
 			case "hatchery:kubernetes":
+				if conf.Hatchery.Kubernetes == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: kubernetes.New(), cfg: conf.Hatchery.Kubernetes})
 				names = append(names, conf.Hatchery.Kubernetes.Name)
 			case "hatchery:marathon":
+				if conf.Hatchery.Marathon == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)
 			case "hatchery:openstack":
+				if conf.Hatchery.Openstack == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: openstack.New(), cfg: conf.Hatchery.Openstack})
 				names = append(names, conf.Hatchery.Openstack.Name)
 			case "hatchery:swarm":
+				if conf.Hatchery.Swarm == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: swarm.New(), cfg: conf.Hatchery.Swarm})
 				names = append(names, conf.Hatchery.Swarm.Name)
 			case "hatchery:vsphere":
+				if conf.Hatchery.VSphere == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: vsphere.New(), cfg: conf.Hatchery.VSphere})
 				names = append(names, conf.Hatchery.VSphere.Name)
 			case "hooks":
+				if conf.Hooks == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: hooks.New(), cfg: conf.Hooks})
 				names = append(names, conf.Hooks.Name)
 			case "vcs":
+				if conf.VCS == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: conf.VCS})
 				names = append(names, conf.VCS.Name)
 			case "repositories":
+				if conf.Repositories == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: repositories.New(), cfg: conf.Repositories})
 				names = append(names, conf.Repositories.Name)
 			case "elasticsearch":
+				if conf.ElasticSearch == nil {
+					fmt.Printf("Error: missing configuration for service '%s'\n", a)
+					os.Exit(1)
+				}
 				services = append(services, serviceConf{arg: a, service: elasticsearch.New(), cfg: conf.ElasticSearch})
 				names = append(names, conf.ElasticSearch.Name)
 			default:
@@ -437,7 +572,7 @@ See $ engine config command for more details.
 			}
 
 			// Initialiaze tracing
-			if err := observability.Init(conf.Tracing, "cds-"+s.arg); err != nil {
+			if err := observability.Init(*conf.Tracing, "cds-"+s.arg); err != nil {
 				sdk.Exit("Unable to start tracing exporter: %v", err)
 			}
 		}
