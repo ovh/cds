@@ -2092,11 +2092,12 @@
 <ul>
 <li>depth - optional - 50 by default. You can remove &ndash;depth with the value &lsquo;false&rsquo;</li>
 <li>submodules - true by default, you can set false to avoid this.</li>
+<li>tag - optional - empty by default, you can set to <code>{{.git.tag}}</code> to clone a tag from your repository. In this way, in your workflow payload you can add a key in your JSON like <code>&quot;git.tag&quot;: &quot;0.2&quot;</code>.</li>
 </ul>
 
 <p>Notes:</p>
 
-<p>By defaut, depth is 50 and git clone with <code>--single-branch</code> automatically.
+<p>By default, depth is 50 and git clone with <code>--single-branch</code> automatically.
 So, if you want to do in a step script <code>git diff anotherBranch</code>, you have to set depth to &lsquo;false&rsquo;.</p>
 
 <p>If there is no user &amp;&amp; password &amp;&amp; sshkey setted in action GitClone, CDS checks on Application VCS Strategy if some auth parameters can be used.</p>
