@@ -231,6 +231,7 @@ type UserClient interface {
 type WorkerClient interface {
 	WorkerModelBook(id int64) error
 	WorkerList() ([]sdk.Worker, error)
+	WorkerRefresh() error
 	WorkerDisable(id string) error
 	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)

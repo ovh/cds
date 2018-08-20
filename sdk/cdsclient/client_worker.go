@@ -23,6 +23,14 @@ func (c *client) WorkerDisable(id string) error {
 	return nil
 }
 
+func (c *client) WorkerRefresh() error {
+	url := fmt.Sprintf("/worker/refresh")
+	if _, err := c.PostJSON(url, nil, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) WorkerRegister(r sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error) {
 	var w sdk.Worker
 	code, err := c.PostJSON("/worker", r, &w)
