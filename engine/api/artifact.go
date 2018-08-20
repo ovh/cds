@@ -449,6 +449,6 @@ func generateHash() (string, error) {
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]
 
-	log.Debug("generateHash> new generated id: %s", token)
+	log.Debug("api> generateHash> new generated id: %s", token)
 	return string(token), nil
 }

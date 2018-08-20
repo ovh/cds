@@ -99,6 +99,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		//Register every 10 seconds
 		registerTick := time.NewTicker(10 * time.Second)
+		refreshTick := time.NewTicker(30 * time.Second)
 
 		updateTick := time.NewTicker(5 * time.Minute)
 
@@ -144,6 +145,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			log.Info("Stopping the worker")
 			w.drainLogsAndCloseLogger(ctx)
 			registerTick.Stop()
+			refreshTick.Stop()
 			updateTick.Stop()
 			w.unregister()
 			cancel()
@@ -187,9 +189,18 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				select {
 				case <-ctx.Done():
 					return
+				case <-refreshTick.C:
+					if err := w.client.WorkerRefresh(); err != nil {
+						log.Error("Heartbeat failed: %v", err)
+						nbErrors++
+						if nbErrors == 5 {
+							errs <- err
+						}
+					}
+					nbErrors = 0
 				case <-registerTick.C:
 					if err := w.doRegister(); err != nil {
-						log.Error("Heartbeat failed: %v", err)
+						log.Error("Register failed: %v", err)
 						nbErrors++
 						if nbErrors == 5 {
 							errs <- err
@@ -426,17 +437,18 @@ func (w *currentWorker) doRegister() error {
 			info = fmt.Sprintf(", I was born to work on workflow node job %d", w.bookedWJobID)
 		}
 		log.Info("Registering on CDS engine%s Version:%s", info, sdk.VERSION)
-	}
-	form := sdk.WorkerRegistrationForm{
-		Name:         w.status.Name,
-		Token:        w.token,
-		Hatchery:     w.hatchery.id,
-		HatcheryName: w.hatchery.name,
-		ModelID:      w.model.ID,
-	}
-	if err := w.register(form); err != nil {
-		log.Error("Cannot register: %s", err)
-		return err
+
+		form := sdk.WorkerRegistrationForm{
+			Name:         w.status.Name,
+			Token:        w.token,
+			Hatchery:     w.hatchery.id,
+			HatcheryName: w.hatchery.name,
+			ModelID:      w.model.ID,
+		}
+		if err := w.register(form); err != nil {
+			log.Error("Cannot register: %s", err)
+			return err
+		}
 	}
 	return nil
 }

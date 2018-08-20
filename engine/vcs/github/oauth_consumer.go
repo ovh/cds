@@ -28,13 +28,13 @@ func generateHash() (string, error) {
 	size := 128
 	bs := make([]byte, size)
 	if _, err := rand.Read(bs); err != nil {
-		log.Error("generateID: rand.Read failed: %s\n", err)
+		log.Error("vcs> github> generateID: rand.Read failed: %s\n", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]
 
-	log.Debug("generateID: new generated id: %s\n", token)
+	log.Debug("vcs> github> generateID: new generated id: %s\n", token)
 	return string(token), nil
 }
 

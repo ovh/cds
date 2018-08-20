@@ -230,13 +230,13 @@ func generateID() (string, error) {
 	size := 64
 	bs := make([]byte, size)
 	if _, err := rand.Read(bs); err != nil {
-		log.Error("generateID: rand.Read failed: %s", err)
+		log.Error("api> worker> generateID: rand.Read failed: %s", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]
 
-	log.Debug("generateID: new generated id: %s", token)
+	log.Debug("api> worker> generateID: new generated id: %s", token)
 	return string(token), nil
 }
 

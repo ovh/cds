@@ -323,6 +323,6 @@ func generateID() (string, error) {
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]
 
-	log.Debug("generateID> new generated id: %s", token)
+	log.Debug("hatchery> generateID> new generated id: %s", token)
 	return string(token), nil
 }

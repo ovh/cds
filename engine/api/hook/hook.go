@@ -227,13 +227,13 @@ func generateHash() (string, error) {
 	bs := make([]byte, size)
 	_, err := rand.Read(bs)
 	if err != nil {
-		log.Error("generateID: rand.Read failed: %s\n", err)
+		log.Error("hook> generateID: rand.Read failed: %s\n", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]
 
-	log.Debug("generateID: new generated id: %s\n", token)
+	log.Debug("hook> generateID: new generated id: %s\n", token)
 	return string(token), nil
 }
 
