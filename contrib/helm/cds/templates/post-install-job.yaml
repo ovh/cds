@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: "{{.Release.Name}}"
+  name: {{printf "%s-%s" .Release.Name "migrate" }}
   labels:
     heritage: {{.Release.Service | quote }}
     release: {{.Release.Name | quote }}
