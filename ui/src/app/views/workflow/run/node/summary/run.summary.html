@@ -63,6 +63,11 @@
     </div>
 </div>
 <ng-container *ngIf="node && workflow && project">
-    <app-workflow-node-run-param #workflowNodeRunParam [project]="project" [workflow]="workflow" [nodeToRun]="node" [canResync]="true"
-        [nodeRun]="nodeRun"></app-workflow-node-run-param>
+    <app-workflow-node-run-param #workflowNodeRunParam
+        [project]="project"
+        [workflow]="workflow"
+        [nodeToRun]="node"
+        [num]="nodeRun.num"
+        [nodeRun]="nodeRun">
+    </app-workflow-node-run-param>
 </ng-container>

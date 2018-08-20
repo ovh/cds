@@ -36,9 +36,6 @@
       &.success {
         background-color: $cds_color_green;
       }
-      &.success {
-        background-color: $cds_color_green;
-      }
       &.running {
         background-color: $cds_color_teal;
       }
@@ -47,6 +44,9 @@
       }
       &.waiting {
         background-color: $cds_color_teal;
+      }
+      &.never {
+        background-color: grey;
       }
     }
   }
@@ -58,6 +58,9 @@
   }
   .fail {
     color: $cds_color_red !important;
+  }
+  .never {
+    color: grey !important;
   }
   .active {
     background-color: grey;

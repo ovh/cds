@@ -77,7 +77,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 	var isInError bool
 	var newStatus string
 	for _, info := range wr.Infos {
-		if info.IsError {
+		if info.IsError && info.SubNumber == wr.LastSubNumber {
 			isInError = true
 			break
 		}
@@ -121,7 +121,7 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store c
 			}
 
 			//New context because we are in goroutine
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(context.Background(), db, store, proj, &wr.Workflow, n.Name, wr.Number, &nr, n.Context.Application, n.Context.Environment)
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(context.TODO(), db, store, proj, &wr.Workflow, n.Name, wr.Number, &nr, n.Context.Application, n.Context.Environment)
 			if err != nil {
 				log.Error("ResyncNodeRuns> cannot get build commits on a node run %v", err)
 			} else if commits != nil {

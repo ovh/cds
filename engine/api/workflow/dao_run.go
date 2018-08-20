@@ -58,7 +58,7 @@ func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workflo
 	wr.LastModified = time.Now()
 
 	for _, info := range wr.Infos {
-		if info.IsError {
+		if info.IsError && info.SubNumber == wr.LastSubNumber {
 			wr.Status = string(sdk.StatusFail)
 		}
 	}
