@@ -515,85 +515,73 @@ See $ engine config command for more details.
 			switch a {
 			case "api":
 				if conf.API == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.API = &api.Configuration{}
 				}
 				services = append(services, serviceConf{arg: a, service: api.New(), cfg: *conf.API})
 				names = append(names, conf.API.Name)
 			case "migrate":
 				if conf.DatabaseMigrate == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.DatabaseMigrate = &migrateservice.Configuration{}
 				}
 				services = append(services, serviceConf{arg: a, service: migrateservice.New(), cfg: *conf.DatabaseMigrate})
 				names = append(names, conf.DatabaseMigrate.Name)
 			case "hatchery:local":
 				if conf.Hatchery.Local == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.Hatchery.Local = &local.HatcheryConfiguration{}
 				}
 				services = append(services, serviceConf{arg: a, service: local.New(), cfg: *conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
 			case "hatchery:kubernetes":
 				if conf.Hatchery.Kubernetes == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
 				}
 				services = append(services, serviceConf{arg: a, service: kubernetes.New(), cfg: *conf.Hatchery.Kubernetes})
 				names = append(names, conf.Hatchery.Kubernetes.Name)
 			case "hatchery:marathon":
 				if conf.Hatchery.Marathon == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
 				}
 				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: *conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)
 			case "hatchery:openstack":
 				if conf.Hatchery.Openstack == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
 				}
 				services = append(services, serviceConf{arg: a, service: openstack.New(), cfg: *conf.Hatchery.Openstack})
 				names = append(names, conf.Hatchery.Openstack.Name)
 			case "hatchery:swarm":
 				if conf.Hatchery.Swarm == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
 				}
 				services = append(services, serviceConf{arg: a, service: swarm.New(), cfg: *conf.Hatchery.Swarm})
 				names = append(names, conf.Hatchery.Swarm.Name)
 			case "hatchery:vsphere":
 				if conf.Hatchery.VSphere == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
 				}
 				services = append(services, serviceConf{arg: a, service: vsphere.New(), cfg: *conf.Hatchery.VSphere})
 				names = append(names, conf.Hatchery.VSphere.Name)
 			case "hooks":
 				if conf.Hooks == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.Hooks = &hooks.Configuration{}
 				}
 				services = append(services, serviceConf{arg: a, service: hooks.New(), cfg: *conf.Hooks})
 				names = append(names, conf.Hooks.Name)
 			case "vcs":
 				if conf.VCS == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.VCS = &vcs.Configuration{}
 				}
 				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: *conf.VCS})
 				names = append(names, conf.VCS.Name)
 			case "repositories":
 				if conf.Repositories == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.Repositories = &repositories.Configuration{}
 				}
 				services = append(services, serviceConf{arg: a, service: repositories.New(), cfg: *conf.Repositories})
 				names = append(names, conf.Repositories.Name)
 			case "elasticsearch":
 				if conf.ElasticSearch == nil {
-					fmt.Printf("Error: missing configuration for service '%s'\n", a)
-					os.Exit(1)
+					conf.ElasticSearch = &elasticsearch.Configuration{}
 				}
 				services = append(services, serviceConf{arg: a, service: elasticsearch.New(), cfg: *conf.ElasticSearch})
 				names = append(names, conf.ElasticSearch.Name)
