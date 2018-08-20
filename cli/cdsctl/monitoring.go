@@ -413,8 +413,6 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", errpb.Error())
 		return ""
 	}
-	elapsed = time.Since(start)
-	msg += fmt.Sprintf(" | [queue pb %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
 	var maxQueued time.Duration
 
