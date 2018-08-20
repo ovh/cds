@@ -87,7 +87,8 @@ imagePullSecrets:
 1. Install the chart
 
 ```console
-helm install --name my-release -f values.yaml stable/drupal
+cd contrib/helm/cds
+helm install --name my-release -f values.yaml .
 ```
 
 ## Persistence

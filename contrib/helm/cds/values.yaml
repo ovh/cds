@@ -35,7 +35,7 @@ resources:
 ##
 persistence:
   enabled: true
-  ## drupal data Persistent Volume Storage Class
+  ## cds data Persistent Volume Storage Class
   ## If defined, storageClassName: <storageClass>
   ## If set to "-", storageClassName: "", which disables dynamic provisioning
   ## If undefined (the default) or set to null, no storageClassName spec is
@@ -53,7 +53,7 @@ persistence:
   ##
   # existingClaim:
 
-  ## If defined, the drupal-data volume will mount to the specified hostPath.
+  ## If defined, the cds-data volume will mount to the specified hostPath.
   ## Requires persistence.enabled: true
   ## Requires persistence.existingClaim: nil|false
   ## Default: nil.
@@ -103,14 +103,14 @@ externalDatabase:
 ##
 serviceType: ClusterIP
 
-## Configure Ingress resource that allow you to access the Drupal installation
+## Configure Ingress resource that allow you to access the Cds installation
 ## Set up the URL
 ## ref: http://kubernetes.io/docs/user-guide/ingress/
 ##
 ingress:
   enabled: false
   # Used to create Ingress record (should used with ServiceType: ClusterIP).
-  # hostname: drupal.local
+  # hostname: cds.local
 
   ## Ingress annotations
   ##
@@ -123,7 +123,7 @@ ingress:
   # tls:
   #   - secretName: wordpress.local-tls
   #     hosts:
-  #       - drupal.local
+  #       - cds.local
 
 
 
