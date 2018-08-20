@@ -61,20 +61,16 @@ persistence:
   # hostPath
   
   
-
-#TODO : find a working probe    
-# livenessProbe:
-#   httpGet:
-#     path: /
-#     port: 8081
-#   initialDelaySeconds: 120
-# readinessProbe:
-#   httpGet:
-#     path: /
-#     port: 8081
-#   initialDelaySeconds: 30
-## Configure volume mounts. This is useful for images whose data mount paths are
-## different than the default.
+livenessProbe:
+  httpGet:
+    path: /mon/version
+    port: 8081
+  initialDelaySeconds: 120
+readinessProbe:
+  httpGet:
+    path: /mon/status
+    port: 8081
+  initialDelaySeconds: 30
 
 ##
 ## External database configuration
