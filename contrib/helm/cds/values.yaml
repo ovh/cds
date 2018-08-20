@@ -93,9 +93,7 @@ externalDatabase:
 ##
 
 
-## Kubernetes configuration
-## For minikube, set this to NodePort, elsewhere use LoadBalancer
-## Use ClusterIP if your setup includes ingress controller
+## Api service type may not be exposed to external traffic. ClusterIP is then recommended
 ##
 serviceType: ClusterIP
 
@@ -141,6 +139,10 @@ ui:
       path: /
       port: 8081
     initialDelaySeconds: 30
+
+  ## Service configuration
+  # For minikube set this to NodePort. On docker for windows set this to ClusterIP and use port-foward
+  # Elsewhere use LoadBalancer or use ClusterIP if your setup includes ingress controller
   serviceType: LoadBalancer
 
 postgresql:

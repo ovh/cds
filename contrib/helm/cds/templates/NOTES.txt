@@ -11,14 +11,14 @@
 
   http://{{- .Values.ingress.hostname }}/
 
-{{- else if contains "LoadBalancer" .Values.serviceType }}
+{{- else if contains "LoadBalancer" .Values.ui.serviceType }}
 
   NOTE: It may take a few minutes for the LoadBalancer IP to be available.
-        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ template "cds.fullname" . }}'
+        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ template "cds.fullname" . }}-ui'
 
-  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ template "cds.fullname" . }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ template "cds.fullname" . }}-ui -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
   echo http://$SERVICE_IP/
-{{- else if contains "ClusterIP"  .Values.serviceType }}
+{{- else if contains "ClusterIP"  .Values.ui.serviceType }}
 
   export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "cds.fullname" . }}-ui" -o jsonpath="{.items[0].metadata.name}")
   kubectl port-forward $POD_NAME 2015:2015
@@ -26,17 +26,19 @@
   
 {{- end }}
 
-{{- if contains "NodePort" .Values.serviceType }}
+{{- if contains "NodePort" .Values.ui.serviceType }}
 
   Or running:
 
-  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "cds.fullname" . }})
+  export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ template "cds.fullname" . }}-ui)
   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
   echo http://$NODE_IP:$NODE_PORT/
 
 {{- end }}
 
-2. Login with the following credentials
+2. Create an account from the ui using your web browser
 
-  echo Username: {{ .Values.cdsUsername }}
-  echo Password: $(kubectl get secret --namespace {{ .Release.Namespace }} {{ template "cds.fullname" . }} -o jsonpath="{.data.cds-password}" | base64 --decode)
+And check in the log of your api server to get registration URL :
+
+  export API_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "cds.fullname" . }}-api" -o jsonpath="{.items[0].metadata.name}")
+  kubectl logs -f --namespace {{ .Release.Namespace }} $API_POD_NAME
