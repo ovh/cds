@@ -40,8 +40,6 @@ spec:
         {{- else }}
           value: {{ default "" .Values.externalDatabase.password | quote }}
         {{- end }}
-        - name: CDS_USERNAME
-          value: {{ default "" .Values.cdsUsername | quote }}
         - name: CDS_API_AUTH_DEFAULTGROUP
           value: cdsdemo
         - name: CDS_LOG_LEVEL
@@ -66,14 +64,15 @@ spec:
         - name: CDS_API_ARTIFACT_LOCAL_BASEDIRECTORY
           value: /app/artifacts
         - name: CDS_API_AUTH_SHAREDINFRATOKEN
-          value: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
-        - name: CDS_API_SECRETS_KEY
-          value: changeitchangeitchangeitchangeit
-        - name: CDS_PASSWORD
           valueFrom:
             secretKeyRef:
               name: {{ template "cds.fullname" . }}-api
-              key: cds-password
+              key: cds-api_auth_sharedinfratoken
+        - name: CDS_API_SECRETS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}-api
+              key: cds-api_secrets_key
         command: ["/bin/sh"]
         args: ["-c", "/app/cds-engine-linux-amd64 start api"]
         ports:

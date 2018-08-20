@@ -19,8 +19,13 @@ image:
   #   - myRegistrKeySecretName
 
 cdsUsername: cds
-cdsEmail: user@example.com
 logLevel: info
+
+## Default: random 64 character string
+#apiAuthSharedinfratoken: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+
+## Default: random 32 character string
+#apiSecretsKey: changeitchangeitchangeitchangeit
 
 ## Configure resource requests and limits
 ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -59,7 +64,6 @@ persistence:
   ## Default: nil.
   ##
   # hostPath
-  
   
 livenessProbe:
   httpGet:

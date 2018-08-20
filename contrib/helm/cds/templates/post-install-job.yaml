@@ -48,12 +48,5 @@ spec:
         {{- else }}
           value: {{ default "" .Values.externalDatabase.password | quote }}
         {{- end }}
-        - name: CDS_USERNAME
-          value: {{ default "" .Values.cdsUsername | quote }}
-        - name: CDS_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: {{ template "cds.fullname" . }}-api
-              key: cds-password
         command: ["/bin/sh"]
         args: ["-xc", "/app/cds-engine-linux-amd64 database upgrade --db-host $CDS_DATABASE_HOST --db-user cds --db-password $CDS_DATABASE_PASSWORD --db-name cds --db-sslmode disable  --migrate-dir /app/sql"]
