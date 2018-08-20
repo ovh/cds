@@ -465,6 +465,10 @@ See $ engine config command for more details.
 		//Initialize config
 		config()
 
+		if conf.Debug == nil {
+			conf.Debug = &DebugConfiguration{}
+		}
+
 		// gops debug
 		if conf.Debug.Enable {
 			if conf.Debug.RemoteDebugURL != "" {
@@ -500,10 +504,6 @@ See $ engine config command for more details.
 			cfg     interface{}
 		}
 		services := []serviceConf{}
-
-		if conf.Debug == nil {
-			conf.Debug = &DebugConfiguration{}
-		}
 
 		if conf.Tracing == nil {
 			conf.Tracing = &observability.Configuration{}
