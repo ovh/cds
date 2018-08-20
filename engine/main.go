@@ -195,6 +195,24 @@ var configNewCmd = &cobra.Command{
 			}
 		}
 
+		if len(args) == 0 {
+			conf.Debug = &DebugConfiguration{}
+			conf.Tracing = &observability.Configuration{}
+			conf.API = &api.Configuration{}
+			conf.DatabaseMigrate = &migrateservice.Configuration{}
+			conf.Hatchery = &HatcheryConfiguration{}
+			conf.Hatchery.Local = &local.HatcheryConfiguration{}
+			conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
+			conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
+			conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
+			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
+			conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
+			conf.Hooks = &hooks.Configuration{}
+			conf.VCS = &vcs.Configuration{}
+			conf.Repositories = &repositories.Configuration{}
+			conf.ElasticSearch = &elasticsearch.Configuration{}
+		}
+
 		defaults.SetDefaults(conf)
 
 		var sharedInfraToken = sdk.RandomString(128)
@@ -332,7 +350,7 @@ var configCheckCmd = &cobra.Command{
 			}
 		}
 
-		if conf.Hatchery != nil && conf.Hatchery.Marathon != nil &&  conf.Hatchery.Marathon.API.HTTP.URL != "" {
+		if conf.Hatchery != nil && conf.Hatchery.Marathon != nil && conf.Hatchery.Marathon.API.HTTP.URL != "" {
 			fmt.Printf("checking hatchery:marathon configuration...\n")
 			if err := marathon.New().CheckConfiguration(*conf.Hatchery.Marathon); err != nil {
 				fmt.Printf("hatchery:marathon Configuration: %v\n", err)
@@ -340,7 +358,7 @@ var configCheckCmd = &cobra.Command{
 			}
 		}
 
-		if conf.Hatchery != nil && conf.Hatchery.Openstack != nil &&  conf.Hatchery.Openstack.API.HTTP.URL != "" {
+		if conf.Hatchery != nil && conf.Hatchery.Openstack != nil && conf.Hatchery.Openstack.API.HTTP.URL != "" {
 			fmt.Printf("checking hatchery:openstack configuration...\n")
 			if err := openstack.New().CheckConfiguration(*conf.Hatchery.Openstack); err != nil {
 				fmt.Printf("hatchery:openstack Configuration: %v\n", err)
@@ -348,7 +366,7 @@ var configCheckCmd = &cobra.Command{
 			}
 		}
 
-		if conf.Hatchery != nil &&  conf.Hatchery.Kubernetes != nil && conf.Hatchery.Kubernetes.API.HTTP.URL != "" {
+		if conf.Hatchery != nil && conf.Hatchery.Kubernetes != nil && conf.Hatchery.Kubernetes.API.HTTP.URL != "" {
 			fmt.Printf("checking hatchery:kubernetes configuration...\n")
 			if err := kubernetes.New().CheckConfiguration(*conf.Hatchery.Kubernetes); err != nil {
 				fmt.Printf("hatchery:kubernetes Configuration: %v\n", err)
@@ -356,7 +374,7 @@ var configCheckCmd = &cobra.Command{
 			}
 		}
 
-		if conf.Hatchery != nil &&  conf.Hatchery.Swarm != nil && conf.Hatchery.Swarm.API.HTTP.URL != "" {
+		if conf.Hatchery != nil && conf.Hatchery.Swarm != nil && conf.Hatchery.Swarm.API.HTTP.URL != "" {
 			fmt.Printf("checking hatchery:swarm configuration...\n")
 			if err := swarm.New().CheckConfiguration(*conf.Hatchery.Swarm); err != nil {
 				fmt.Printf("hatchery:swarm Configuration: %v\n", err)
@@ -364,7 +382,7 @@ var configCheckCmd = &cobra.Command{
 			}
 		}
 
-		if conf.Hatchery != nil &&  conf.Hatchery.VSphere != nil &&  conf.Hatchery.VSphere.API.HTTP.URL != "" {
+		if conf.Hatchery != nil && conf.Hatchery.VSphere != nil && conf.Hatchery.VSphere.API.HTTP.URL != "" {
 			fmt.Printf("checking hatchery:vsphere configuration...\n")
 			if err := vsphere.New().CheckConfiguration(*conf.Hatchery.VSphere); err != nil {
 				fmt.Printf("hatchery:vsphere Configuration: %v\n", err)
