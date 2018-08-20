@@ -126,7 +126,7 @@ The public key have to be granted on your repository`,
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "tag",
 		Description: "Useful when you want to git clone a specific tag",
-		Value:       "",
+		Value:       sdk.DefaultGitCloneParameterTagValue,
 		Type:        sdk.StringParameter,
 		Advanced:    true,
 	})

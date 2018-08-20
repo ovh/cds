@@ -59,10 +59,10 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 		}
 
 		if opts.Branch != "" || opts.Tag != "" {
-			if opts.Branch != "" {
-				gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
-			} else {
+			if opts.Tag != "" {
 				gitcmd.args = append(gitcmd.args, "--branch", opts.Tag)
+			} else {
+				gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
 			}
 		} else if opts.SingleBranch {
 			gitcmd.args = append(gitcmd.args, "--single-branch")
@@ -82,7 +82,7 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 
 	allCmd = append(allCmd, gitcmd)
 
-	if opts != nil && opts.CheckoutCommit != "" {
+	if opts != nil && opts.CheckoutCommit != "" && opts.Tag == "" {
 		resetCmd := cmd{
 			cmd:  "git",
 			args: []string{"reset", "--hard", opts.CheckoutCommit},
