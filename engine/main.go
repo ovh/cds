@@ -155,6 +155,7 @@ var configNewCmd = &cobra.Command{
 			if strings.HasPrefix(a, "hatchery:") {
 				if conf.Hatchery == nil {
 					conf.Hatchery = &HatcheryConfiguration{}
+					break
 				}
 			}
 		}
