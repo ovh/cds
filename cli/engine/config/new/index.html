@@ -1547,24 +1547,19 @@
         <span>model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/worker/model/delete/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/delete/">
-          <span>delete</span>
+      <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
+          <span>Github</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/worker/model/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/import/">
-          <span>import</span>
+      <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/">
+          <span>Bitbucket</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/worker/model/list/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/list/">
-          <span>list</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/worker/model/show/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/show/">
-          <span>show</span>
+      <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
+          <span>Gitlab</span>
         </a>
     </li>
         </ul>
@@ -2042,6 +2037,17 @@
 <li><a href="#engine-config-new">engine config new</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#generate-the-whole-configuration-file">generate the whole configuration file</a></li>
+<li><a href="#you-can-compose-your-file-configuration">you can compose your file configuration</a></li>
+<li><a href="#this-will-generate-a-file-configuration-containing">this will generate a file configuration containing</a></li>
+<li><a href="#api-and-hatchery-local-µservice">api and hatchery:local µService</a></li>
+<li><a href="#for-advanced-usage-debug-and-tracing-section-can-be-generated-as">For advanced usage, Debug and Tracing section can be generated as:</a></li>
+<li><a href="#all-options">All options</a>
+<ul>
+<li>
+<ul>
 <li><a href="#options">Options</a></li>
 <li><a href="#see-also">SEE ALSO</a></li>
 </ul></li>
@@ -2073,7 +2079,29 @@
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Comming soon&hellip;</p>
+<h1 id="generate-the-whole-configuration-file">generate the whole configuration file</h1>
+
+<pre><code>$ engine config new &gt; conf.toml
+</code></pre>
+
+<h1 id="you-can-compose-your-file-configuration">you can compose your file configuration</h1>
+
+<h1 id="this-will-generate-a-file-configuration-containing">this will generate a file configuration containing</h1>
+
+<h1 id="api-and-hatchery-local-µservice">api and hatchery:local µService</h1>
+
+<pre><code>$ engine config new api hatchery:local
+</code></pre>
+
+<h1 id="for-advanced-usage-debug-and-tracing-section-can-be-generated-as">For advanced usage, Debug and Tracing section can be generated as:</h1>
+
+<pre><code>$ engine config new debug tracing [µService(s)...]
+</code></pre>
+
+<h1 id="all-options">All options</h1>
+
+<pre><code>$ engine config new [debug] [tracing] [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [elasticsearch] [hooks] [vcs] [repositories] [migrate]
+</code></pre>
 
 <pre><code>engine config new [flags]
 </code></pre>
