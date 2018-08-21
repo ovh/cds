@@ -58,7 +58,6 @@ func (c *client) UserSignup(username, fullname, email, callback string) error {
 	if code >= 300 {
 		return fmt.Errorf("Error %d", code)
 	}
-
 	return nil
 }
 
@@ -67,7 +66,6 @@ func (c *client) UserGet(username string) (*sdk.User, error) {
 	if _, err := c.GetJSON("/user/"+url.QueryEscape(username), &res); err != nil {
 		return nil, err
 	}
-
 	return &res, nil
 }
 
@@ -94,7 +92,6 @@ func (c *client) UserReset(username, email, callback string) error {
 	if code != http.StatusCreated {
 		return fmt.Errorf("Error %d", code)
 	}
-
 	return nil
 }
 
@@ -148,6 +145,5 @@ func (c *client) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) 
 	if _, err := c.PostJSON("/user/favorite", params, &res); err != nil {
 		return res, err
 	}
-
 	return res, nil
 }
