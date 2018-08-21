@@ -411,9 +411,8 @@ See $ engine config command for more details.
 
 		//Initialize config
 		configBootstrap(args)
+		configSetDefaults()
 		config(args)
-
-		fmt.Printf("####### conf:%+v", conf)
 
 		// gops debug
 		if conf.Debug.Enable {
