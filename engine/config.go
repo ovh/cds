@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/mcuadros/go-defaults"
+	defaults "github.com/mcuadros/go-defaults"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api"
@@ -25,6 +25,24 @@ import (
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 )
+
+func configSetDefaults() {
+	defaults.SetDefaults(conf.Debug)
+	defaults.SetDefaults(conf.Tracing)
+	defaults.SetDefaults(conf.API)
+	defaults.SetDefaults(conf.DatabaseMigrate)
+	defaults.SetDefaults(conf.Hatchery)
+	defaults.SetDefaults(conf.Hatchery.Local)
+	defaults.SetDefaults(conf.Hatchery.Kubernetes)
+	defaults.SetDefaults(conf.Hatchery.Marathon)
+	defaults.SetDefaults(conf.Hatchery.Openstack)
+	defaults.SetDefaults(conf.Hatchery.Swarm)
+	defaults.SetDefaults(conf.Hatchery.VSphere)
+	defaults.SetDefaults(conf.Hooks)
+	defaults.SetDefaults(conf.VCS)
+	defaults.SetDefaults(conf.Repositories)
+	defaults.SetDefaults(conf.ElasticSearch)
+}
 
 // config reads in config file and ENV variables if set.
 func configBootstrap(args []string) {
@@ -157,7 +175,7 @@ func config(args []string) {
 			sdk.Exit(err.Error())
 		}
 	default:
-		defaults.SetDefaults(conf)
+		configSetDefaults()
 	}
 
 	if err := viper.Unmarshal(conf); err != nil {

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/gops/agent"
-	defaults "github.com/mcuadros/go-defaults"
 	"github.com/spf13/cobra"
 	_ "github.com/spf13/viper/remote"
 	"github.com/yesnault/go-toml"
@@ -161,7 +160,7 @@ var configNewCmd = &cobra.Command{
 		}
 
 		configBootstrap(args)
-		defaults.SetDefaults(conf)
+		configSetDefaults()
 
 		var sharedInfraToken = sdk.RandomString(128)
 
@@ -413,6 +412,8 @@ See $ engine config command for more details.
 		//Initialize config
 		configBootstrap(args)
 		config(args)
+
+		fmt.Printf("####### conf:%+v", conf)
 
 		// gops debug
 		if conf.Debug.Enable {
