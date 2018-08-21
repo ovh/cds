@@ -315,6 +315,10 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		} else {
 			name = w.HatcheryName
 		}
+		if _, ok := hatcheries[name]; !ok {
+			hatcheries[name] = make(map[string]int64)
+			hatcheryNames = append(hatcheryNames, name)
+		}
 		hatcheries[name][w.Status.String()] = hatcheries[name][w.Status.String()] + 1
 		if _, ok := status[w.Status.String()]; !ok {
 			statusTitle = append(statusTitle, w.Status.String())
