@@ -343,7 +343,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 	if tag != "" && tag != sdk.DefaultGitCloneParameterTagValue {
 		sendLog(fmt.Sprintf("git.tag: %s", tag))
 	} else {
-		if (branch == "" || branch == "{{.git.branch}}") && tag == "" {
+		if branch == "" || branch == "{{.git.branch}}" {
 			if info.Branch != "" {
 				gitBranch := sdk.Variable{
 					Name:  "git.branch",
