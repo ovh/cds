@@ -161,6 +161,7 @@ func config(args []string) {
 		viper.BindEnv(strings.ToLower(strings.Replace(k, "_", ".", -1)), "CDS_"+k)
 	}
 
+	var setDefault bool
 	switch {
 	case remoteCfg != "":
 		fmt.Println("Reading configuration from consul @", remoteCfg)
@@ -202,10 +203,14 @@ func config(args []string) {
 			sdk.Exit(err.Error())
 		}
 	default:
-		configSetDefaults()
+		setDefault = true
 	}
 
 	if err := viper.Unmarshal(conf); err != nil {
 		sdk.Exit("Unable to parse config: %v", err.Error())
+	}
+
+	if setDefault {
+		configSetDefaults()
 	}
 }
