@@ -27,21 +27,48 @@ import (
 )
 
 func configSetDefaults() {
-	defaults.SetDefaults(conf.Debug)
-	defaults.SetDefaults(conf.Tracing)
-	defaults.SetDefaults(conf.API)
-	defaults.SetDefaults(conf.DatabaseMigrate)
-	defaults.SetDefaults(conf.Hatchery)
-	defaults.SetDefaults(conf.Hatchery.Local)
-	defaults.SetDefaults(conf.Hatchery.Kubernetes)
-	defaults.SetDefaults(conf.Hatchery.Marathon)
-	defaults.SetDefaults(conf.Hatchery.Openstack)
-	defaults.SetDefaults(conf.Hatchery.Swarm)
-	defaults.SetDefaults(conf.Hatchery.VSphere)
-	defaults.SetDefaults(conf.Hooks)
-	defaults.SetDefaults(conf.VCS)
-	defaults.SetDefaults(conf.Repositories)
-	defaults.SetDefaults(conf.ElasticSearch)
+	if conf.Debug != nil {
+		defaults.SetDefaults(conf.Debug)
+	}
+	if conf.Tracing != nil {
+		defaults.SetDefaults(conf.Tracing)
+	}
+	if conf.API != nil {
+		defaults.SetDefaults(conf.API)
+	}
+	if conf.DatabaseMigrate != nil {
+		defaults.SetDefaults(conf.DatabaseMigrate)
+	}
+	if conf.Hatchery != nil && conf.Hatchery.Local != nil {
+		defaults.SetDefaults(conf.Hatchery.Local)
+	}
+	if conf.Hatchery != nil && conf.Hatchery.Kubernetes != nil {
+		defaults.SetDefaults(conf.Hatchery.Kubernetes)
+	}
+	if conf.Hatchery != nil && conf.Hatchery.Marathon != nil {
+		defaults.SetDefaults(conf.Hatchery.Marathon)
+	}
+	if conf.Hatchery != nil && conf.Hatchery.Openstack != nil {
+		defaults.SetDefaults(conf.Hatchery.Openstack)
+	}
+	if conf.Hatchery != nil && conf.Hatchery.Swarm != nil {
+		defaults.SetDefaults(conf.Hatchery.Swarm)
+	}
+	if conf.Hatchery != nil && conf.Hatchery.VSphere != nil {
+		defaults.SetDefaults(conf.Hatchery.VSphere)
+	}
+	if conf.Hooks != nil {
+		defaults.SetDefaults(conf.Hooks)
+	}
+	if conf.VCS != nil {
+		defaults.SetDefaults(conf.VCS)
+	}
+	if conf.Repositories != nil {
+		defaults.SetDefaults(conf.Repositories)
+	}
+	if conf.ElasticSearch != nil {
+		defaults.SetDefaults(conf.ElasticSearch)
+	}
 }
 
 // config reads in config file and ENV variables if set.
