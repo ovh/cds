@@ -34,6 +34,9 @@ type VCSAuthorizedClient interface {
 	Branches(context.Context, string) ([]VCSBranch, error)
 	Branch(ctx context.Context, repo string, branch string) (*VCSBranch, error)
 
+	//Tags
+	Tags(ctx context.Context, repo string) ([]VCSTag, error)
+
 	//Commits
 	Commits(ctx context.Context, repo, branch, since, until string) ([]VCSCommit, error)
 	Commit(ctx context.Context, repo, hash string) (VCSCommit, error)

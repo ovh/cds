@@ -272,6 +272,15 @@ type VCSRemote struct {
 	URL  string `json:"url"`
 }
 
+//VCSTag represents branches known by the repositories manager
+type VCSTag struct {
+	Tag     string    `json:"tag"`
+	Sha     string    `json:"sha"` // Represent sha of tag
+	Message string    `json:"message"`
+	Tagger  VCSAuthor `json:"tagger"`
+	Hash    string    `json:"hash"` // Represent hash of commit
+}
+
 //VCSBranch represents branches known by the repositories manager
 type VCSBranch struct {
 	ID           string   `json:"id"`

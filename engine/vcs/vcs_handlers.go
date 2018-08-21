@@ -261,6 +261,37 @@ func (s *Service) getBranchHandler() service.Handler {
 	}
 }
 
+func (s *Service) getTagsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		log.Debug("getTagsHandler>")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getTagsHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getTagsHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getTagsHandler> Unable to get authorized client")
+		}
+
+		tags, err := client.Tags(ctx, fmt.Sprintf("%s/%s", owner, repo))
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getTagsHandler> Unable to get tags on %s/%s", owner, repo)
+		}
+		return service.WriteJSON(w, tags, http.StatusOK)
+	}
+}
+
 func (s *Service) getCommitsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")

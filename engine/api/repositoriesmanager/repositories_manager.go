@@ -260,6 +260,23 @@ func (c *vcsClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VC
 	return repo, nil
 }
 
+func (c *vcsClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag, error) {
+	items, has := c.Cache().Get("/tags/" + fullname)
+	if has {
+		return items.([]sdk.VCSTag), nil
+	}
+
+	tags := []sdk.VCSTag{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/tags", c.name, fullname)
+	if _, err := c.doJSONRequest(ctx, "GET", path, nil, &tags); err != nil {
+		return nil, err
+	}
+
+	c.Cache().SetDefault("/tags/"+fullname, tags)
+
+	return tags, nil
+}
+
 func (c *vcsClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
 	items, has := c.Cache().Get("/branches/" + fullname)
 	if has {

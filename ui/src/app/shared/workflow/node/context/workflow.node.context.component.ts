@@ -44,6 +44,8 @@ export class WorkflowNodeContextComponent {
     suggest: string[] = [];
     payloadString: string;
     branches: string[] = [];
+    remotes: string[] = [];
+    tags: string[] = [];
     codeMirrorConfig: {};
     invalidJSON = false;
     loadingBranches = false;
@@ -77,9 +79,7 @@ export class WorkflowNodeContextComponent {
             // TODO delete .repository_fullname condition and update handler to get history branches of node_run (issue: #1815)
             if (this.node.context && this.node.context.application && this.node.context.application.repository_fullname) {
                 this.loadingBranches = true;
-                this._appWorkflowService.getBranches(this.project.key, this.node.context.application.name)
-                    .pipe(finalize(() => this.loadingBranches = false))
-                    .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
+                this.refreshVCSInfos();
             }
 
             this.editableNode = cloneDeep(this.node);
@@ -114,6 +114,22 @@ export class WorkflowNodeContextComponent {
                 }
             });
         }
+    }
+
+    refreshVCSInfos(remote?: string) {
+        this._appWorkflowService.getVCSInfos(this.project.key, this.node.context.application.name, remote)
+            .pipe(finalize(() => this.loadingBranches = false))
+            .subscribe((vcsInfos) => {
+                if (vcsInfos.branches) {
+                    this.branches = vcsInfos.branches.map((br) => '"' + br.display_id + '"');
+                }
+                if (vcsInfos.remotes) {
+                    this.remotes = vcsInfos.remotes.map((rem) => '"' + rem.fullname + '"');
+                }
+                if (vcsInfos.tags) {
+                    this.tags = vcsInfos.tags.map((tag) => '"' + tag.tag + '"');
+                }
+            });
     }
 
     saveContext(): void {
@@ -173,8 +189,8 @@ export class WorkflowNodeContextComponent {
             closeCharacters: / /,
             payloadCompletionList: {
               branches: this.branches,
-              repositories: [],
-              tags: [],
+              repositories: this.remotes,
+              tags: this.tags,
             },
             specialChars: ''
         });

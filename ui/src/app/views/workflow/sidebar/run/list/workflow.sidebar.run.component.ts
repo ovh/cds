@@ -32,8 +32,11 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
                 haveToStart = true;
             }
 
+            if (!this._workflow || this._workflow.id !== data.id) {
+                this._workflow = data;
+                this.initSelectableTags();
+            }
             this._workflow = data;
-            this.initSelectableTags();
             if (haveToStart) {
                 this.eventSubscription = this._eventStore.workflowRuns()
                     .subscribe((m) => {

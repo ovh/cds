@@ -31,6 +31,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/branches", r.GET(s.getBranchesHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/branches/", r.GET(s.getBranchHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/branches/commits", r.GET(s.getCommitsHandler, api.EnableTracing()))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/tags", r.GET(s.getTagsHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits", r.GET(s.getCommitsBetweenRefsHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}", r.GET(s.getCommitHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}/statuses", r.GET(s.getCommitStatusHandler, api.EnableTracing()))

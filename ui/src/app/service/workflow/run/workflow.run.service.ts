@@ -159,7 +159,7 @@ export class WorkflowRunService {
      * @param {number} workflowNodeId Workflow node id
      */
     getCommits(key: string, workflowName: string, workflowNumber: number,
-        workflowNodeName: string, branch?: string, hash?: string): Observable<Commit[]> {
+        workflowNodeName: string, branch?: string, hash?: string, remote?: string): Observable<Commit[]> {
 
         let params = new HttpParams();
         if (branch) {
@@ -167,6 +167,9 @@ export class WorkflowRunService {
         }
         if (hash) {
           params = params.append('hash', hash);
+        }
+        if (remote) {
+          params = params.append('remote', remote);
         }
         return this._http.get<Commit[]>(
             `/project/${key}/workflows/${workflowName}/runs/${workflowNumber}/${workflowNodeName}/commits`, {params});
