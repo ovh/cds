@@ -74,6 +74,14 @@ func configSetDefaults() {
 // config reads in config file and ENV variables if set.
 func configBootstrap(args []string) {
 	for _, a := range args {
+		if strings.HasPrefix(a, "hatchery:") {
+			if conf.Hatchery == nil {
+				conf.Hatchery = &HatcheryConfiguration{}
+				break
+			}
+		}
+	}
+	for _, a := range args {
 		switch a {
 		case "api":
 			if conf.API == nil {

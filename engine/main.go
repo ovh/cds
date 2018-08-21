@@ -150,15 +150,6 @@ var configNewCmd = &cobra.Command{
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, a := range args {
-			if strings.HasPrefix(a, "hatchery:") {
-				if conf.Hatchery == nil {
-					conf.Hatchery = &HatcheryConfiguration{}
-					break
-				}
-			}
-		}
-
 		configBootstrap(args)
 		configSetDefaults()
 
