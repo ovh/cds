@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/google/gops/agent"
-	defaults "github.com/mcuadros/go-defaults"
 	"github.com/spf13/cobra"
 	_ "github.com/spf13/viper/remote"
 	"github.com/yesnault/go-toml"
@@ -151,70 +150,8 @@ var configNewCmd = &cobra.Command{
 
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, a := range args {
-			if strings.HasPrefix(a, "hatchery:") {
-				if conf.Hatchery == nil {
-					conf.Hatchery = &HatcheryConfiguration{}
-					break
-				}
-			}
-		}
-
-		for _, a := range args {
-			switch a {
-			case "debug":
-				conf.Debug = &DebugConfiguration{}
-			case "tracing":
-				conf.Tracing = &observability.Configuration{}
-			case "api":
-				conf.API = &api.Configuration{}
-			case "migrate":
-				conf.DatabaseMigrate = &migrateservice.Configuration{}
-			case "hatchery:local":
-				conf.Hatchery.Local = &local.HatcheryConfiguration{}
-			case "hatchery:kubernetes":
-				conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
-			case "hatchery:marathon":
-				conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
-			case "hatchery:openstack":
-				conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
-			case "hatchery:swarm":
-				conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
-			case "hatchery:vsphere":
-				conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
-			case "hooks":
-				conf.Hooks = &hooks.Configuration{}
-			case "vcs":
-				conf.VCS = &vcs.Configuration{}
-			case "repositories":
-				conf.Repositories = &repositories.Configuration{}
-			case "elasticsearch":
-				conf.ElasticSearch = &elasticsearch.Configuration{}
-			default:
-				fmt.Printf("Error: service '%s' unknown\n", a)
-				os.Exit(1)
-			}
-		}
-
-		if len(args) == 0 {
-			conf.Debug = &DebugConfiguration{}
-			conf.Tracing = &observability.Configuration{}
-			conf.API = &api.Configuration{}
-			conf.DatabaseMigrate = &migrateservice.Configuration{}
-			conf.Hatchery = &HatcheryConfiguration{}
-			conf.Hatchery.Local = &local.HatcheryConfiguration{}
-			conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
-			conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
-			conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
-			conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
-			conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
-			conf.Hooks = &hooks.Configuration{}
-			conf.VCS = &vcs.Configuration{}
-			conf.Repositories = &repositories.Configuration{}
-			conf.ElasticSearch = &elasticsearch.Configuration{}
-		}
-
-		defaults.SetDefaults(conf)
+		configBootstrap(args)
+		configSetDefaults()
 
 		var sharedInfraToken = sdk.RandomString(128)
 
@@ -324,7 +261,8 @@ var configCheckCmd = &cobra.Command{
 
 		cfgFile = args[0]
 		//Initialize config
-		config()
+		configBootstrap(args)
+		config([]string{})
 
 		var hasError bool
 		if conf.API != nil && conf.API.URL.API != "" {
@@ -463,11 +401,9 @@ See $ engine config command for more details.
 		}
 
 		//Initialize config
-		config()
-
-		if conf.Debug == nil {
-			conf.Debug = &DebugConfiguration{}
-		}
+		configBootstrap(args)
+		configSetDefaults()
+		config(args)
 
 		// gops debug
 		if conf.Debug.Enable {
@@ -505,84 +441,44 @@ See $ engine config command for more details.
 		}
 		services := []serviceConf{}
 
-		if conf.Tracing == nil {
-			conf.Tracing = &observability.Configuration{}
-		}
-
 		names := []string{}
 		for _, a := range args {
 			fmt.Printf("Starting service %s\n", a)
 			switch a {
 			case "api":
-				if conf.API == nil {
-					conf.API = &api.Configuration{}
-				}
 				services = append(services, serviceConf{arg: a, service: api.New(), cfg: *conf.API})
 				names = append(names, conf.API.Name)
 			case "migrate":
-				if conf.DatabaseMigrate == nil {
-					conf.DatabaseMigrate = &migrateservice.Configuration{}
-				}
 				services = append(services, serviceConf{arg: a, service: migrateservice.New(), cfg: *conf.DatabaseMigrate})
 				names = append(names, conf.DatabaseMigrate.Name)
 			case "hatchery:local":
-				if conf.Hatchery.Local == nil {
-					conf.Hatchery.Local = &local.HatcheryConfiguration{}
-				}
 				services = append(services, serviceConf{arg: a, service: local.New(), cfg: *conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
 			case "hatchery:kubernetes":
-				if conf.Hatchery.Kubernetes == nil {
-					conf.Hatchery.Kubernetes = &kubernetes.HatcheryConfiguration{}
-				}
 				services = append(services, serviceConf{arg: a, service: kubernetes.New(), cfg: *conf.Hatchery.Kubernetes})
 				names = append(names, conf.Hatchery.Kubernetes.Name)
 			case "hatchery:marathon":
-				if conf.Hatchery.Marathon == nil {
-					conf.Hatchery.Marathon = &marathon.HatcheryConfiguration{}
-				}
 				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: *conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)
 			case "hatchery:openstack":
-				if conf.Hatchery.Openstack == nil {
-					conf.Hatchery.Openstack = &openstack.HatcheryConfiguration{}
-				}
 				services = append(services, serviceConf{arg: a, service: openstack.New(), cfg: *conf.Hatchery.Openstack})
 				names = append(names, conf.Hatchery.Openstack.Name)
 			case "hatchery:swarm":
-				if conf.Hatchery.Swarm == nil {
-					conf.Hatchery.Swarm = &swarm.HatcheryConfiguration{}
-				}
 				services = append(services, serviceConf{arg: a, service: swarm.New(), cfg: *conf.Hatchery.Swarm})
 				names = append(names, conf.Hatchery.Swarm.Name)
 			case "hatchery:vsphere":
-				if conf.Hatchery.VSphere == nil {
-					conf.Hatchery.VSphere = &vsphere.HatcheryConfiguration{}
-				}
 				services = append(services, serviceConf{arg: a, service: vsphere.New(), cfg: *conf.Hatchery.VSphere})
 				names = append(names, conf.Hatchery.VSphere.Name)
 			case "hooks":
-				if conf.Hooks == nil {
-					conf.Hooks = &hooks.Configuration{}
-				}
 				services = append(services, serviceConf{arg: a, service: hooks.New(), cfg: *conf.Hooks})
 				names = append(names, conf.Hooks.Name)
 			case "vcs":
-				if conf.VCS == nil {
-					conf.VCS = &vcs.Configuration{}
-				}
 				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: *conf.VCS})
 				names = append(names, conf.VCS.Name)
 			case "repositories":
-				if conf.Repositories == nil {
-					conf.Repositories = &repositories.Configuration{}
-				}
 				services = append(services, serviceConf{arg: a, service: repositories.New(), cfg: *conf.Repositories})
 				names = append(names, conf.Repositories.Name)
 			case "elasticsearch":
-				if conf.ElasticSearch == nil {
-					conf.ElasticSearch = &elasticsearch.Configuration{}
-				}
 				services = append(services, serviceConf{arg: a, service: elasticsearch.New(), cfg: *conf.ElasticSearch})
 				names = append(names, conf.ElasticSearch.Name)
 			default:
