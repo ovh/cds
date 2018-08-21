@@ -104,8 +104,6 @@ func configBootstrap(args []string) {
 }
 
 func config(args []string) {
-	configBootstrap(args)
-
 	if conf.Debug == nil {
 		conf.Debug = &DebugConfiguration{}
 	}
@@ -113,7 +111,7 @@ func config(args []string) {
 	if conf.Tracing == nil {
 		conf.Tracing = &observability.Configuration{}
 	}
-	
+
 	for k := range AsEnvVariables(conf, "", false) {
 		viper.BindEnv(strings.ToLower(strings.Replace(k, "_", ".", -1)), "CDS_"+k)
 	}

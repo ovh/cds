@@ -271,6 +271,7 @@ var configCheckCmd = &cobra.Command{
 
 		cfgFile = args[0]
 		//Initialize config
+		configBootstrap(args)
 		config([]string{})
 
 		var hasError bool
