@@ -362,7 +362,11 @@ export class WorkflowNodeRunParamComponent {
         CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
             completeSingle: true,
             closeCharacters: / /,
-            payloadCompletionList: this.branches,
+            payloadCompletionList: {
+              branches: this.branches,
+              tags: [],
+              repositories: [],
+            },
             specialChars: ''
         });
     }

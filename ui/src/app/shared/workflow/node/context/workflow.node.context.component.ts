@@ -171,7 +171,11 @@ export class WorkflowNodeContextComponent {
         CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
             completeSingle: true,
             closeCharacters: / /,
-            payloadCompletionList: this.branches,
+            payloadCompletionList: {
+              branches: this.branches,
+              repositories: [],
+              tags: [],
+            },
             specialChars: ''
         });
     }
