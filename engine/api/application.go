@@ -442,12 +442,12 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load project %s from db", projectKey, projectKey)
+			return sdk.WrapError(err, "getApplicationVCSInfosHandler> Cannot load project %s from db", projectKey)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load application %s for project %s from db", applicationName, projectKey)
+			return sdk.WrapError(err, "getApplicationVCSInfosHandler> Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
 
 		resp := struct {
@@ -463,7 +463,7 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 		if erra != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationVCSInfosHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
 		}
 
 		repositoryFullname := app.RepositoryFullname
@@ -472,19 +472,19 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		}
 		branches, errb := client.Branches(ctx, repositoryFullname)
 		if errb != nil {
-			return sdk.WrapError(errb, "getApplicationBranchHandler> Cannot get branches from repository %s", repositoryFullname)
+			return sdk.WrapError(errb, "getApplicationVCSInfosHandler> Cannot get branches from repository %s", repositoryFullname)
 		}
 		resp.Branches = branches
 
 		tags, errt := client.Tags(ctx, repositoryFullname)
 		if errt != nil {
-			return sdk.WrapError(errt, "getApplicationBranchHandler> Cannot get tags from repository %s", repositoryFullname)
+			return sdk.WrapError(errt, "getApplicationVCSInfosHandler> Cannot get tags from repository %s", repositoryFullname)
 		}
 		resp.Tags = tags
 
 		remotes, errR := client.ListForks(ctx, repositoryFullname)
 		if errR != nil {
-			return sdk.WrapError(errR, "getApplicationBranchHandler> Cannot get remotes from repository %s", repositoryFullname)
+			return sdk.WrapError(errR, "getApplicationVCSInfosHandler> Cannot get remotes from repository %s", repositoryFullname)
 		}
 		resp.Remotes = remotes
 

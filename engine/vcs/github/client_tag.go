@@ -3,7 +3,6 @@ package github
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -67,7 +66,6 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 	//Put the body on cache for one hour and one minute
 	g.Cache.SetWithTTL(cache.Key("vcs", "github", "tags", g.OAuthToken, "/repos/"+fullname+"/tags"), tags, 61*60)
 
-	fmt.Printf("tags %+v\n", tags)
 	tagsResult := make([]sdk.VCSTag, len(tags))
 	for i, tag := range tags {
 		tagsResult[i] = sdk.VCSTag{
