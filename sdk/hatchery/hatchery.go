@@ -347,7 +347,7 @@ func Create(h Interface) error {
 			workerRequest.model = *chosenModel
 
 			//Ask to start
-			log.Info("hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
+			log.Debug("hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
 			workersStartChan <- workerRequest
 
 		case err := <-errs:

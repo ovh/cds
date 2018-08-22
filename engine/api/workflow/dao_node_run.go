@@ -614,17 +614,25 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 
 // PreviousNodeRun find previous node run
 func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.WorkflowNode, workflowID int64) (sdk.WorkflowNodeRun, error) {
+	var nodeRun sdk.WorkflowNodeRun
+	// check the first run of a workflow, no need to check previous
+	if nr.Number == 1 && nr.SubNumber == 0 {
+		return nodeRun, nil
+	}
 	query := fmt.Sprintf(`
 					SELECT %s FROM workflow_node_run
-					JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
-					WHERE workflow_node_run.vcs_branch = $3 AND workflow_node_run.vcs_tag = $4 AND workflow_node_run.num <= $5 AND workflow_node_run.workflow_node_id = $6 AND workflow_node_run.id != $7
-					ORDER BY workflow_node_run.num, workflow_node_run.sub_num DESC
+					JOIN workflow_run ON workflow_run.id = workflow_node_run.workflow_run_id AND workflow_run.workflow_id = $1
+					WHERE workflow_node_run.workflow_node_name = $2
+						AND workflow_node_run.vcs_branch = $3 AND workflow_node_run.vcs_tag = $4 
+						AND workflow_node_run.num <= $5 
+						AND workflow_node_run.id != $6
+					ORDER BY workflow_node_run.num DESC, workflow_node_run.sub_num DESC
 					LIMIT 1
 				`, nodeRunFields)
-	var nodeRun sdk.WorkflowNodeRun
+
 	var rr = NodeRun{}
-	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.VCSTag, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
-		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run on workflow %d node %s", workflowID, n.Name)
+	if err := db.SelectOne(&rr, query, workflowID, n.Name, nr.VCSBranch, nr.VCSTag, nr.Number, nr.ID); err != nil {
+		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run on workflow %d node %s nr.VCSBranch:%s nr.VCSTag:%s nr.Number:%d nr.ID:%d ", workflowID, n.Name, nr.VCSBranch, nr.VCSTag, nr.Number, nr.ID)
 	}
 	pNodeRun, errF := fromDBNodeRun(rr, LoadRunOptions{})
 	if errF != nil {
