@@ -29,6 +29,13 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 	}()
 
 	ui := &Termui{}
+
+	user, err := client.UserGet(cfg.User)
+	if err != nil {
+		return nil, fmt.Errorf("Can't get current user: %v", err)
+	}
+	ui.isAdmin = user.Admin
+
 	ui.init()
 	ui.draw(0)
 
@@ -42,8 +49,8 @@ type Termui struct {
 	header, times *termui.Par
 	msg           string
 
-	current  string
 	selected string
+	isAdmin  bool
 
 	// monitoring
 	queue                   *cli.ScrollableList
@@ -292,18 +299,21 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 	hatcheries := make(map[string]map[string]int64)
 	status := make(map[string]int)
 
-	services, err := client.ServicesByType("hatchery")
-	if err != nil {
-		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
-		return
-	}
+	if ui.isAdmin {
+		services, err := client.ServicesByType("hatchery")
+		if err != nil {
+			ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+			return
+		}
 
-	for _, s := range services {
-		if _, ok := hatcheries[s.Name]; !ok {
-			hatcheries[s.Name] = make(map[string]int64)
-			hatcheryNames = append(hatcheryNames, s.Name)
+		for _, s := range services {
+			if _, ok := hatcheries[s.Name]; !ok {
+				hatcheries[s.Name] = make(map[string]int64)
+				hatcheryNames = append(hatcheryNames, s.Name)
+			}
 		}
 	}
+
 	without := "Without hatchery"
 	hatcheries[without] = make(map[string]int64)
 	hatcheryNames = append(hatcheryNames, without)
