@@ -8,7 +8,6 @@ import (
 
 //Branches retrieves the branches
 func (c *gitlabClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
-
 	branches, _, err := c.client.Branches.ListBranches(fullname, nil)
 	if err != nil {
 		return nil, err

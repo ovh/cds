@@ -37,6 +37,21 @@ type BranchResponse struct {
 	IsLastPage bool     `json:"isLastPage"`
 }
 
+type Tag struct {
+	ID              string `json:"id"`
+	DisplayID       string `json:"displayId"`
+	Type            string `json:"type"`
+	LatestCommit    string `json:"latestCommit"`
+	LatestChangeset string `json:"latestChangeset"`
+	Hash            string `json:"hash"`
+}
+
+type TagResponse struct {
+	Values     []Tag `json:"values"`
+	Size       int   `json:"size"`
+	IsLastPage bool  `json:"isLastPage"`
+}
+
 type Author struct {
 	Name  string `json:"name"`
 	Email string `json:"emailAddress"`

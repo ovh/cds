@@ -708,3 +708,14 @@ type DiffCommits struct {
 		Patch       string `json:"patch"`
 	} `json:"files"`
 }
+
+type Ref struct {
+	Ref    string `json:"ref"`
+	NodeID string `json:"node_id"`
+	URL    string `json:"url"`
+	Object struct {
+		Type string `json:"type"`
+		Sha  string `json:"sha"`
+		URL  string `json:"url"`
+	} `json:"object"`
+}

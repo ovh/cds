@@ -89,8 +89,10 @@
 
     CodeMirror.registerHelper("hint", "payload", function(cm, options) {
         var branchPrefix = '"git.branch":';
+        var tagPrefix = '"git.tag":';
+        var repoPrefix = '"git.repository":';
         // Suggest list
-        var payloadCompletionList = options.payloadCompletionList;
+        var payloadCompletionList = [];
 
         // Get cursor position
         var cur = cm.getCursor(0);
@@ -98,14 +100,31 @@
 
         // Get current line
         var text = cm.doc.children[0].lines[cur.line].text;
+        var prefix = "";
 
-        // Show nothing if there is no branchPrefix on the line
-        if (text.indexOf(branchPrefix) === -1) {
+        if (!options.payloadCompletionList) {
             return null;
         }
 
-        var lastIndexOfBranchPrefix = text.lastIndexOf(branchPrefix);
-        var areaAfterPrefix = text.substring(lastIndexOfBranchPrefix + branchPrefix.length + 1);
+        switch(true) {
+            case text.indexOf(branchPrefix) !== -1:
+                payloadCompletionList = options.payloadCompletionList.branches;
+                prefix = branchPrefix;
+                break;
+            case text.indexOf(repoPrefix) !== -1:
+                payloadCompletionList = options.payloadCompletionList.repositories;
+                prefix = repoPrefix;
+                break;
+            case text.indexOf(tagPrefix) !== -1:
+                payloadCompletionList = options.payloadCompletionList.tags;
+                prefix = tagPrefix;
+                break;
+            default:
+                return null;
+        }
+
+        var lastIndexOfPrefix = text.lastIndexOf(prefix);
+        var areaAfterPrefix = text.substring(lastIndexOfPrefix + prefix.length + 1);
         var lastIndexOfComma = areaAfterPrefix.indexOf(',');
         var indexOfComma = text.indexOf(',');
         if (indexOfComma !== -1 && cur.ch >= indexOfComma) {
@@ -117,14 +136,14 @@
         if (lastIndexOfComma === -1) {
             lastIndexOfComma += text.length + 1;
         } else if (lastIndexOfComma === 0) {
-            lastIndexOfComma += (lastIndexOfBranchPrefix + branchPrefix.length);
+            lastIndexOfComma += (lastIndexOfPrefix + prefix.length);
         } else {
-            lastIndexOfComma += (lastIndexOfBranchPrefix + branchPrefix.length + 1);
+            lastIndexOfComma += (lastIndexOfPrefix + prefix.length + 1);
         }
 
         return {
             list: payloadCompletionList,
-            from: { line: cur.line, ch: lastIndexOfBranchPrefix + branchPrefix.length + 1},
+            from: { line: cur.line, ch: lastIndexOfPrefix + prefix.length + 1},
             to: CodeMirror.Pos(cur.line, lastIndexOfComma)
         };
     });
