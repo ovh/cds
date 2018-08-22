@@ -283,7 +283,7 @@ func importNew(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *s
 	}
 
 	//If no GroupPermission provided, inherit from project
-	if pip.GroupPermission == nil {
+	if pip.GroupPermission == nil || len(pip.GroupPermission) == 0 {
 		pip.GroupPermission = proj.ProjectGroups
 	}
 
