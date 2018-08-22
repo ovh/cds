@@ -346,11 +346,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		modelEnvs[k] = v
 	}
 
-	envsWm, errEnv := sdk.TemplateEnvs(udataParam, modelEnvs)
-	if errEnv != nil {
-		return "", errEnv
-	}
-
+	envsWm := map[string]string{}
 	envsWm["CDS_FORCE_EXIT"] = "1"
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
@@ -372,6 +368,15 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
 		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
+	}
+
+	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, modelEnvs)
+	if errEnv != nil {
+		return "", errEnv
+	}
+
+	for envName, envValue := range envTemplated {
+		envsWm[envName] = envValue
 	}
 
 	envs := make([]string, len(envsWm))

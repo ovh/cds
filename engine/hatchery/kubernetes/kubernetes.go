@@ -303,12 +303,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	if spawnArgs.Model.ModelDocker.Envs == nil {
 		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
 	}
-
-	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
-	if errEnv != nil {
-		return "", errEnv
-	}
-
+	envsWm := map[string]string{}
 	envsWm["CDS_FORCE_EXIT"] = "1"
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
@@ -330,6 +325,15 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
 		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
+	}
+
+	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
+	if errEnv != nil {
+		return "", errEnv
+	}
+
+	for envName, envValue := range envTemplated {
+		envsWm[envName] = envValue
 	}
 
 	envs := make([]apiv1.EnvVar, len(envsWm))

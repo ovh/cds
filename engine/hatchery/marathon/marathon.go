@@ -303,11 +303,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
 	}
 
-	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
-	if errEnv != nil {
-		return "", errEnv
-	}
-
+	envsWm := map[string]string{}
 	envsWm["CDS_FORCE_EXIT"] = "0"
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
@@ -329,6 +325,15 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
 		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
+	}
+
+	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
+	if errEnv != nil {
+		return "", errEnv
+	}
+
+	for envName, envValue := range envTemplated {
+		envsWm[envName] = envValue
 	}
 
 	application := &marathon.Application{
