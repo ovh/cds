@@ -340,46 +340,46 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 		sendLog(fmt.Sprintf("cds.semver: %s", cdsSemver))
 	}
 
-	if (branch == "" || branch == "{{.git.branch}}") && tag == "" {
-		if info.Branch != "" {
-			gitBranch := sdk.Variable{
-				Name:  "git.branch",
-				Type:  sdk.StringVariable,
-				Value: info.Branch,
-			}
-
-			if _, err := w.addVariableInPipelineBuild(gitBranch, params); err != nil {
-				return fmt.Errorf("Error on addVariableInPipelineBuild (branch): %s", err)
-			}
-			sendLog(fmt.Sprintf("git.branch: %s", info.Branch))
-		} else {
-			sendLog("git.branch: [empty]")
-		}
-	} else if branch != "" && branch != "{{.git.branch}}" {
-		sendLog(fmt.Sprintf("git.branch: %s", branch))
-	}
-
-	if tag != "" {
+	if tag != "" && tag != sdk.DefaultGitCloneParameterTagValue {
 		sendLog(fmt.Sprintf("git.tag: %s", tag))
-	}
-
-	if commit == "" || commit == "{{.git.hash}}" {
-		if info.Hash != "" {
-			gitHash := sdk.Variable{
-				Name:  "git.hash",
-				Type:  sdk.StringVariable,
-				Value: info.Hash,
-			}
-
-			if _, err := w.addVariableInPipelineBuild(gitHash, params); err != nil {
-				return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
-			}
-			sendLog(fmt.Sprintf("git.hash: %s", info.Hash))
-		} else {
-			sendLog("git.hash: [empty]")
-		}
 	} else {
-		sendLog(fmt.Sprintf("git.hash: %s", commit))
+		if branch == "" || branch == "{{.git.branch}}" {
+			if info.Branch != "" {
+				gitBranch := sdk.Variable{
+					Name:  "git.branch",
+					Type:  sdk.StringVariable,
+					Value: info.Branch,
+				}
+
+				if _, err := w.addVariableInPipelineBuild(gitBranch, params); err != nil {
+					return fmt.Errorf("Error on addVariableInPipelineBuild (branch): %s", err)
+				}
+				sendLog(fmt.Sprintf("git.branch: %s", info.Branch))
+			} else {
+				sendLog("git.branch: [empty]")
+			}
+		} else if branch != "" && branch != "{{.git.branch}}" {
+			sendLog(fmt.Sprintf("git.branch: %s", branch))
+		}
+
+		if commit == "" || commit == "{{.git.hash}}" {
+			if info.Hash != "" {
+				gitHash := sdk.Variable{
+					Name:  "git.hash",
+					Type:  sdk.StringVariable,
+					Value: info.Hash,
+				}
+
+				if _, err := w.addVariableInPipelineBuild(gitHash, params); err != nil {
+					return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
+				}
+				sendLog(fmt.Sprintf("git.hash: %s", info.Hash))
+			} else {
+				sendLog("git.hash: [empty]")
+			}
+		} else {
+			sendLog(fmt.Sprintf("git.hash: %s", commit))
+		}
 	}
 
 	if message == "" {

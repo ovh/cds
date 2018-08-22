@@ -87,6 +87,8 @@ const (
 	ReleaseAction             = "Release"
 	CheckoutApplicationAction = "CheckoutApplication"
 	DeployApplicationAction   = "DeployApplication"
+
+	DefaultGitCloneParameterTagValue = "{{.git.tag}}"
 )
 
 // NewAction instanciate a new Action

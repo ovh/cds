@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // CloneOpts is a optional structs for git clone command
@@ -58,11 +60,11 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 			gitcmd.args = append(gitcmd.args, "--depth", fmt.Sprintf("%d", opts.Depth))
 		}
 
-		if opts.Branch != "" || opts.Tag != "" {
-			if opts.Branch != "" {
-				gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
-			} else {
+		if opts.Branch != "" || (opts.Tag != "" && opts.Tag != sdk.DefaultGitCloneParameterTagValue) {
+			if opts.Tag != "" && opts.Tag != sdk.DefaultGitCloneParameterTagValue {
 				gitcmd.args = append(gitcmd.args, "--branch", opts.Tag)
+			} else {
+				gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
 			}
 		} else if opts.SingleBranch {
 			gitcmd.args = append(gitcmd.args, "--single-branch")
@@ -82,7 +84,7 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string,
 
 	allCmd = append(allCmd, gitcmd)
 
-	if opts != nil && opts.CheckoutCommit != "" {
+	if opts != nil && opts.CheckoutCommit != "" && opts.Tag == "" {
 		resetCmd := cmd{
 			cmd:  "git",
 			args: []string{"reset", "--hard", opts.CheckoutCommit},
