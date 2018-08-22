@@ -230,7 +230,7 @@ func (h *HatcheryVSphere) updateServerList() {
 	for k, s := range status {
 		st += fmt.Sprintf("%d %s ", s, k)
 	}
-	log.Info("Got %d servers %s", total, st)
+	log.Debug("Got %d servers %s", total, st)
 	if total > 0 {
 		log.Debug(out)
 	}
