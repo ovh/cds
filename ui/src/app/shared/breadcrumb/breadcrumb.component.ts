@@ -30,10 +30,12 @@ export class BreadcrumbComponent {
 
     getProjectQueryParams(): {} {
         let queryParams = {};
-        if (!this.application && this.pipeline) {
+        if (this.pipeline) {
             queryParams['tab'] = 'pipelines';
-        } else {
+        } else if (this.application) {
             queryParams['tab'] = 'applications';
+        } else if (this.workflow) {
+            queryParams['tab'] = 'workflows';
         }
 
         return queryParams;
