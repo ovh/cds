@@ -67,11 +67,13 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 	g.Cache.SetWithTTL(cache.Key("vcs", "github", "tags", g.OAuthToken, "/repos/"+fullname+"/tags"), tags, 61*60)
 
 	tagsResult := make([]sdk.VCSTag, len(tags))
-	for i, tag := range tags {
-		tagsResult[i] = sdk.VCSTag{
-			Tag: strings.Replace(tag.Ref, "refs/tags/", "", 1),
-			Sha: tag.Object.Sha,
+	j := 0
+	for i := len(tags) - 1; i >= 0; i-- {
+		tagsResult[j] = sdk.VCSTag{
+			Tag: strings.Replace(tags[i].Ref, "refs/tags/", "", 1),
+			Sha: tags[i].Object.Sha,
 		}
+		j++
 	}
 
 	return tagsResult, nil
