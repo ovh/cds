@@ -44,10 +44,11 @@ func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error 
 		return sdk.WrapError(err, "bitbucketClient.SetStatus: Cannot process Event")
 	}
 
+	state := getBitbucketStateFromStatus(statusData.status)
 	status := Status{
 		Key:         statusData.key,
 		Name:        fmt.Sprintf("%s%d", statusData.key, statusData.buildNumber),
-		State:       getBitbucketStateFromStatus(statusData.status),
+		State:       state,
 		URL:         statusData.url,
 		Description: statusData.description,
 	}
@@ -56,7 +57,11 @@ func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error 
 	if err != nil {
 		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to marshall status")
 	}
-	return b.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil, nil)
+
+	if err := b.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil, nil); err != nil {
+		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to post build-status name:%s status:%s", status.Name, state)
+	}
+	return nil
 }
 
 func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {

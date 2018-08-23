@@ -618,7 +618,7 @@ func (s *Service) postStatusHandler() service.Handler {
 		}
 
 		if err := client.SetStatus(ctx, evt); err != nil {
-			return sdk.WrapError(err, "VCS> postStatusHandler> Unable to set status")
+			return sdk.WrapError(err, "VCS> postStatusHandler> Unable to set status on %s", name)
 		}
 
 		return nil

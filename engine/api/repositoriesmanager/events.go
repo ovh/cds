@@ -101,7 +101,7 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 
 	if err := c.SetStatus(ctx, event); err != nil {
 		RetryEvent(&event, err, store)
-		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > err:%s", err)
+		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > event.EventType:%s err:%s", event.EventType, err)
 	}
 
 	return nil

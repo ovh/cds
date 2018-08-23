@@ -85,7 +85,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if _, _, err := c.client.Commits.SetCommitStatus(data.repoFullName, data.hash, opt); err != nil {
-		return err
+		return sdk.WrapError(err, "gitlabClient.SetStatus> Cannot process event %s - repo:%s hash:%s", event, data.repoFullName, data.hash)
 	}
 
 	return nil
