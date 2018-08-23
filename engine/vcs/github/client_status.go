@@ -83,7 +83,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if res.StatusCode != 201 {
-		return sdk.WrapError(err, "github.SetStatus>  Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
+		return sdk.WrapError(err, "github.SetStatus>  Unable to create status on github. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
 	}
 
 	s := &Status{}

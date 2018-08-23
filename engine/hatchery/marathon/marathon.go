@@ -525,15 +525,15 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 		return err
 	}
 
-	for _, w := range workers {
+	for wk, w := range workers {
 		if w.Status != sdk.StatusDisabled {
 			continue
 		}
 
 		// check that there is a worker matching
-		for _, app := range apps {
+		for ak, app := range apps {
 			if strings.HasSuffix(app, w.Name) {
-				log.Info("killing disabled worker %s", app)
+				log.Info("killing disabled worker %s id:%s wk:%d ak:%d", app, w.ID, wk, ak)
 				if _, err := h.marathonClient.DeleteApplication(app, true); err != nil {
 					log.Warning("killDisabledWorkers> Error while delete app %s err:%s", app, err)
 					// continue to next app

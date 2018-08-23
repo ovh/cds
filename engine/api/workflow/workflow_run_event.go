@@ -80,15 +80,18 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		if !node.IsLinkedToRepo() {
 			return nil
 		}
+
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
 		if vcsServer == nil {
 			return nil
 		}
 
+		details := fmt.Sprintf("on project:%s workflow:%s node:%s num:%d sub:%d vcs:%s", proj.Name, wr.Workflow.Name, nodeRun.WorkflowNodeName, nodeRun.Number, nodeRun.SubNumber, vcsServer.Name)
+
 		//Get the RepositoriesManager Client
 		client, errClient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
 		if errClient != nil {
-			return sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client")
+			return sdk.WrapError(errClient, "resyncCommitStatus> Cannot get client %s", details)
 		}
 
 		ref := nodeRun.VCSHash
@@ -97,7 +100,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		}
 		statuses, errStatuses := client.ListStatuses(ctx, node.Context.Application.RepositoryFullname, ref)
 		if errStatuses != nil {
-			return sdk.WrapError(errStatuses, "resyncCommitStatus> Cannot get statuses")
+			return sdk.WrapError(errStatuses, "resyncCommitStatus> Cannot get statuses %s", details)
 		}
 
 		var statusFound *sdk.VCSCommitStatus
@@ -112,28 +115,34 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			}
 		}
 
-		if statusFound == nil {
+		if statusFound == nil || statusFound.State == "" {
 			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-				log.Error("resyncCommitStatus> Error sending status: %v", err)
+				log.Error("resyncCommitStatus> Error sending status %s err: %v", details, err)
 			}
 			continue
 		}
 
 		if statusFound.State == sdk.StatusBuilding.String() {
 			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-				log.Error("resyncCommitStatus> Error sending status: %v", err)
+				log.Error("resyncCommitStatus> Error sending status %s err: %v", details, err)
 			}
 			continue
 		}
 
 		switch statusFound.State {
+		case sdk.StatusBuilding.String():
+			if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
+				log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
+			}
+			continue
+
 		case sdk.StatusSuccess.String():
 			switch nodeRun.Status {
 			case sdk.StatusSuccess.String():
 				continue
 			default:
 				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-					log.Error("resyncCommitStatus> Error sending status: %v", err)
+					log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
 				}
 				continue
 			}
@@ -144,7 +153,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				continue
 			default:
 				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-					log.Error("resyncCommitStatus> Error sending status: %v", err)
+					log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
 				}
 				continue
 			}
@@ -155,7 +164,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				continue
 			default:
 				if err := sendVCSEventStatus(ctx, db, store, proj, wr, &nodeRun); err != nil {
-					log.Error("resyncCommitStatus> Error sending status: %v", err)
+					log.Error("resyncCommitStatus> Error sending status %s %s err:%v", statusFound.State, details, err)
 				}
 				continue
 			}
