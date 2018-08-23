@@ -140,10 +140,15 @@
         } else {
             lastIndexOfComma += (lastIndexOfPrefix + prefix.length + 1);
         }
+        var inc = 0;
+
+        if (text.indexOf(prefix + ' ') !== -1) {
+            inc = 1;
+        }
 
         return {
             list: payloadCompletionList,
-            from: { line: cur.line, ch: lastIndexOfPrefix + prefix.length + 1},
+            from: { line: cur.line, ch: lastIndexOfPrefix + prefix.length + inc},
             to: CodeMirror.Pos(cur.line, lastIndexOfComma)
         };
     });
