@@ -164,6 +164,48 @@ func newSteps(a sdk.Action) []Step {
 					gitCloneArgs["tag"] = tag.Value
 				}
 				s["gitClone"] = gitCloneArgs
+			case sdk.GitTagAction:
+				gitTagArgs := map[string]string{}
+				path := sdk.ParameterFind(&act.Parameters, "path")
+				if path != nil {
+					gitTagArgs["path"] = path.Value
+				}
+				tagLevel := sdk.ParameterFind(&act.Parameters, "tagLevel")
+				if tagLevel != nil {
+					gitTagArgs["tagLevel"] = tagLevel.Value
+				}
+				tagMessage := sdk.ParameterFind(&act.Parameters, "tagMessage")
+				if tagMessage != nil {
+					gitTagArgs["tagMessage"] = tagMessage.Value
+				}
+				tagMetadata := sdk.ParameterFind(&act.Parameters, "tagMetadata")
+				if tagMetadata != nil && tagMetadata.Value != "" {
+					gitTagArgs["tagMetadata"] = tagMetadata.Value
+				}
+				tagPrerelease := sdk.ParameterFind(&act.Parameters, "tagPrerelease")
+				if tagPrerelease != nil && tagPrerelease.Value != "" {
+					gitTagArgs["tagPrerelease"] = tagPrerelease.Value
+				}
+				s["gitTag"] = gitTagArgs
+			case sdk.ReleaseAction:
+				releaseArgs := map[string]string{}
+				artifacts := sdk.ParameterFind(&act.Parameters, "artifacts")
+				if artifacts != nil {
+					releaseArgs["artifacts"] = artifacts.Value
+				}
+				releaseNote := sdk.ParameterFind(&act.Parameters, "releaseNote")
+				if releaseNote != nil {
+					releaseArgs["releaseNote"] = releaseNote.Value
+				}
+				tag := sdk.ParameterFind(&act.Parameters, "tag")
+				if tag != nil {
+					releaseArgs["tag"] = tag.Value
+				}
+				title := sdk.ParameterFind(&act.Parameters, "title")
+				if title != nil && title.Value != "" {
+					releaseArgs["title"] = title.Value
+				}
+				s["release"] = releaseArgs
 			case sdk.JUnitAction:
 				path := sdk.ParameterFind(&act.Parameters, "path")
 				if path != nil {
