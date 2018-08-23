@@ -49,6 +49,9 @@ func (v *Venom) Parse(path []string, exclude []string) error {
 		if err != nil {
 			return err
 		}
+		for k := range ts.Vars {
+			textractedVars = append(textractedVars, k)
+		}
 		for _, k := range tvars {
 			var found bool
 			for i := 0; i < len(missingVars); i++ {
