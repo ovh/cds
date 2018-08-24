@@ -128,9 +128,9 @@ Click on create to create the workflow.
 In this example, we create a Workflow to build, tag and release an application. 
 
 So, we have to trigger this workflow on each commit, on every git branches - and on each tag created. This will be 
-useful to compile code from all developper and somethimes create a tag from master branch is the buid is Success.
+useful to compile code from all developper and somethimes create a tag from master branch if the build is Success.
 
-The application is linked to a Github Git Repository, we have two choice to trigger automatically the workflow:
+The application is linked to a Github Git Repository, we have two choices to trigger automatically the workflow:
 
 * add a Git Repository Webhook
 * or add a Git Repository Poller.
