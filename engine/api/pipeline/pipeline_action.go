@@ -118,7 +118,7 @@ func UpdateJob(db gorp.SqlExecutor, job *sdk.Job, userID int64) error {
 		return sdk.ErrForbidden
 	}
 
-	if UpdatePipelineAction(db, *job); err != nil {
+	if err := UpdatePipelineAction(db, *job); err != nil {
 		return err
 	}
 	job.Action.Enabled = job.Enabled
