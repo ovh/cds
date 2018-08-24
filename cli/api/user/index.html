@@ -88,6 +88,11 @@
           <span>Build &amp; Deploy a standard application</span>
         </a>
     </li>
+      <li data-nav-id="/gettingstarted/step_by_step_build_tag_release/" class="dd-item">
+        <a href="https://ovh.github.io/cds/gettingstarted/step_by_step_build_tag_release/">
+          <span>Build, tag and release an application</span>
+        </a>
+    </li>
     <li data-nav-id="/gettingstarted/concepts/" class="dd-item">
       <a href="https://ovh.github.io/cds/gettingstarted/concepts/">
         <span>Concepts</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -437,18 +442,6 @@
         <span>Worker Model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-    <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker/" class="dd-item">
-      <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">
-        <span>Docker Worker Model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/workflows/pipelines/requirements/worker-model/docker/docker-customized/" class="dd-item">
-        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/">
-          <span>Worker Model with your own image</span>
-        </a>
-    </li>
-        </ul>
-    </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
           <span>Openstack Worker Model</span>
@@ -2036,8 +2029,8 @@
 <li>
 <ul>
 <li><a href="#getusers-fetches-all-users-from-databases">GetUsers fetches all users from databases</a></li>
-<li><a href="#getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</a></li>
 <li><a href="#updateuser-modifies-user-informations">UpdateUser modifies user informations</a></li>
+<li><a href="#getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</a></li>
 <li><a href="#deleteuser-removes-a-user">DeleteUser removes a user</a></li>
 <li><a href="#confirmuser-verify-token-send-via-email-and-mark-user-as-verified">ConfirmUser verify token send via email and mark user as verified</a></li>
 <li><a href="#getusergroups-returns-groups-of-the-user">getUserGroups returns groups of the user</a></li>
@@ -2101,34 +2094,6 @@
 </tbody>
 </table>
 
-<h3 id="getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/user/&lt;username&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedUsernameOrAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="updateuser-modifies-user-informations">UpdateUser modifies user informations</h3>
 
 <table>
@@ -2153,6 +2118,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateUserHandler%22">updateUserHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/user/&lt;username&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedUsernameOrAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
 </tr>
 </tbody>
 </table>

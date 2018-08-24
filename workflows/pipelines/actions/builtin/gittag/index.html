@@ -88,6 +88,11 @@
           <span>Build &amp; Deploy a standard application</span>
         </a>
     </li>
+      <li data-nav-id="/gettingstarted/step_by_step_build_tag_release/" class="dd-item">
+        <a href="https://ovh.github.io/cds/gettingstarted/step_by_step_build_tag_release/">
+          <span>Build, tag and release an application</span>
+        </a>
+    </li>
     <li data-nav-id="/gettingstarted/concepts/" class="dd-item">
       <a href="https://ovh.github.io/cds/gettingstarted/concepts/">
         <span>Concepts</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -2046,6 +2051,7 @@
 <li>
 <ul>
 <li><a href="#parameters">Parameters</a></li>
+<li><a href="#example-of-usage">Example of usage</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -2084,6 +2090,36 @@
 <li>path - optional - path to your git repository</li>
 <li>signKey - optional - pgp key to sign the tag</li>
 </ul>
+
+<h2 id="example-of-usage">Example of usage</h2>
+
+<p>Here, a pipeline as code, containing two actions:</p>
+
+<ul>
+<li>CheckoutApplication</li>
+<li>GitTag</li>
+</ul>
+
+<pre><code class="language-yml">version: v1.0
+name: create-tag
+parameters:
+  tagLevel:
+    type: list
+    default: major;minor;patch
+    description: major, minor or patch
+jobs:
+- job: CreateTag
+  steps:
+  - checkout: '{{.cds.workspace}}'
+  - gitTag:
+      path: '{{.cds.workspace}}'
+      tagLevel: '{{.cds.pip.tagLevel}}'
+      tagMessage: Release from CDS run {{.cds.version}}
+</code></pre>
+
+<p>This pipeline could be used in a workflow, with a Run Condition on cds.manual = true.</p>
+
+<p>Tutorial: <a href="https://ovh.github.io/cds/gettingstarted/step_by_step_build_tag_release/">Build, tag and release an application</a></p>
 
 
 <footer class=" footline" >
