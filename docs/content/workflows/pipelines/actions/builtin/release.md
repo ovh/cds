@@ -8,6 +8,8 @@ chapter = true
 
 This action creates a release on the git repository linked to the application, if repository manager implements it.
 
+This is actually implemented for Github only.
+
 ## Parameters
 
 * artifacts - optional - List of artifacts to upload, separated by ','. You can also use regexp
