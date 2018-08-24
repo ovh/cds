@@ -6,7 +6,8 @@ parameters:
 requirements:
 - binary: git
 steps:
-- gitClone:
+- name: 'gitClone'
+  gitClone:
     branch: '{{.git.branch}}'
     commit: '{{.git.hash}}'
     depth: "10"

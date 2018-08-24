@@ -68,7 +68,7 @@ type Step map[string]interface{}
 func (s Step) IsValid() bool {
 	keys := []string{}
 	for k := range s {
-		if k != "enabled" && k != "optional" && k != "always_executed" {
+		if k != "enabled" && k != "optional" && k != "always_executed" && k != "name" {
 			keys = append(keys, k)
 		}
 	}
@@ -78,7 +78,7 @@ func (s Step) IsValid() bool {
 func (s Step) key() string {
 	keys := []string{}
 	for k := range s {
-		if k != "enabled" && k != "optional" && k != "always_executed" {
+		if k != "enabled" && k != "optional" && k != "always_executed" && k != "name" {
 			keys = append(keys, k)
 		}
 	}
