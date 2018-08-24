@@ -623,7 +623,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	// Tag VCS infos : add in tag only if it does not exist
 	if !w.TagExists(tagGitRepository) {
 		w.Tag(tagGitRepository, run.VCSRepository)
-		if run.VCSBranch != "" {
+		if run.VCSBranch != "" && run.VCSTag == "" {
 			w.Tag(tagGitBranch, run.VCSBranch)
 		}
 		if run.VCSTag != "" {

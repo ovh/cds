@@ -62,6 +62,9 @@ func newSteps(a sdk.Action) []Step {
 	for i := range a.Actions {
 		act := &a.Actions[i]
 		s := Step{}
+		if act.StepName != "" {
+			s["name"] = act.StepName
+		}
 		if !act.Enabled {
 			s["enabled"] = act.Enabled
 		}
@@ -267,6 +270,10 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 	a := sdk.NewStepScript(bS)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -311,6 +318,10 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 	}
 
 	a.Enabled, err = s.IsFlagged("enabled")
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	if err != nil {
 		return nil, true, err
 	}
@@ -344,6 +355,10 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	a := sdk.NewStepJUnitReport(bS)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -383,6 +398,10 @@ func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 	a := sdk.NewStepGitClone(argss)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -428,6 +447,10 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	}
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -462,6 +485,10 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	a := sdk.NewStepArtifactDownload(argss)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -495,6 +522,10 @@ func (s Step) AsCheckoutApplication() (*sdk.Action, bool, error) {
 	a := sdk.NewCheckoutApplication(bS)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -528,6 +559,10 @@ func (s Step) AsCoverageAction() (*sdk.Action, bool, error) {
 	a := sdk.NewCoverage(argss)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -561,6 +596,10 @@ func (s Step) AsDeployApplication() (*sdk.Action, bool, error) {
 	a := sdk.NewDeployApplication(bS)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -589,6 +628,18 @@ func (s Step) IsFlagged(flag string) (bool, error) {
 		return false, fmt.Errorf("Malformatted Step : %s attribute must be true|false", flag)
 	}
 	return bS, nil
+}
+
+// Name returns true the step name if exist
+func (s Step) Name() (string, error) {
+	if stepAttr, ok := s["name"]; ok {
+		if stepName, okName := stepAttr.(string); okName {
+			return stepName, nil
+		} else {
+			return "", fmt.Errorf("Malformatted Step : name must be a string")
+		}
+	}
+	return "", nil
 }
 
 // Action returns an sdk.Action

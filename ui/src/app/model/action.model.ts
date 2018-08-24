@@ -4,6 +4,7 @@ import {Requirement} from './requirement.model';
 export class Action {
     id: number;
     name: string;
+    step_name: string;
     type: string;
     description = '';
     requirements: Array<Requirement>;

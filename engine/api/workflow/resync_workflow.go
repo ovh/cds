@@ -135,7 +135,7 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store c
 			}
 
 			tagsUpdated := false
-			if curVCSInfos.Branch != "" {
+			if curVCSInfos.Branch != "" && curVCSInfos.Tag == "" {
 				tagsUpdated = wr.Tag(tagGitBranch, curVCSInfos.Branch)
 			}
 			if curVCSInfos.Hash != "" {

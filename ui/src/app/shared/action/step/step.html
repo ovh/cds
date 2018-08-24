@@ -1,13 +1,19 @@
 <div class="ui form">
     <div class="inline fields">
-        <div class="eight wide field paramName">
-            <span>
-                <i class="move icon" *ngIf="edit"></i>
-                <span class="pointing" (click)="collapsed = !collapsed">
-                    {{step.name}}
-                    <i class="caret down icon" *ngIf="collapsed"></i>
-                    <i class="caret right icon" *ngIf="!collapsed"></i>
+        <i class="move icon" *ngIf="edit"></i>
+        <span class="pointing" (click)="collapsed = !collapsed">
+            <i class="caret down icon" *ngIf="collapsed"></i>
+            <i class="caret right icon" *ngIf="!collapsed"></i>
+        </span>
+        <div class="four wide inline field inputStepname" *ngIf="edit">
+            <input class="inline" type="text" name="stepName" [(ngModel)]="step.step_name" (keydown)="action.hasChanged = true">
+        </div>
+        <div class="{{edit ? 'four' : 'eight'}} wide inline field">
+            <span class="pointing" (click)="collapsed = !collapsed">
+                <span *ngIf="!edit">
+                    {{step.step_name}}
                 </span>
+                <i class="stepname">({{step.name}})</i>
             </span>
             <span class="textOrange" *ngIf="action.deprecated">
                 <i class="warning orange sign icon"></i>{{'common_deprecated' | translate}}
@@ -24,20 +30,24 @@
                 <div class="five wide field">
                     <div class="ui checkbox">
                         <input type="checkbox" id="active_{{order}}" name="active" [checked]="step.optional" (change)="step.optional = updateStepBool(step.optional)">
-                        <label for="active_{{order}}">{{ 'action_optional' | translate}}</label>
+                        <label for="active_{{order}}">
+                            {{ 'action_optional' | translate}}
+                            <span suiPopup [popupText]="'action_optional_details' | translate" popupPlacement="top center">
+                                <i class="info circle icon"></i>
+                            </span>
+                        </label>
                     </div>
-                    <span suiPopup [popupText]="'action_optional_details' | translate" popupPlacement="top center">
-                        <i class="info circle icon"></i>
-                    </span>
                 </div>
                 <div class="six wide field">
                     <div class="ui checkbox">
                         <input type="checkbox" id="always_executed_{{order}}" name="always_executed" [checked]="step.always_executed" (change)="step.always_executed = updateStepBool(step.always_executed)">
-                        <label for="always_executed_{{order}}">{{ 'action_always_executed' | translate}}</label>
+                        <label for="always_executed_{{order}}">
+                            {{ 'action_always_executed' | translate}}
+                            <span suiPopup [popupText]="'action_always_executed_details' | translate" popupPlacement="top center">
+                                <i class="info circle icon"></i>
+                            </span>
+                        </label>
                     </div>
-                    <span suiPopup [popupText]="'action_always_executed_details' | translate" popupPlacement="top center">
-                        <i class="info circle icon"></i>
-                    </span>
                 </div>
             </ng-container>
             <ng-container *ngIf="!edit">

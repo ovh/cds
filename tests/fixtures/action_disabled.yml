@@ -4,7 +4,8 @@ enabled: false
 requirements:
 - binary: bash
 steps:
-- script:
+- name: my empty script
+  script:
   - '#!/bin/bash'
   - set -e
   - ""

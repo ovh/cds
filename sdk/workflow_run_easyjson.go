@@ -1766,6 +1766,8 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk2(in *jlexer.Lexer, out *Parameter)
 			out.Value = string(in.String())
 		case "description":
 			out.Description = string(in.String())
+		case "advanced":
+			out.Advanced = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -1829,6 +1831,16 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk2(out *jwriter.Writer, in Parameter
 			out.RawString(prefix)
 		}
 		out.String(string(in.Description))
+	}
+	if in.Advanced {
+		const prefix string = ",\"advanced\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Advanced))
 	}
 	out.RawByte('}')
 }
@@ -2133,6 +2145,8 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk12(in *jlexer.Lexer, out *Action) {
 			out.ID = int64(in.Int64())
 		case "name":
 			out.Name = string(in.String())
+		case "step_name":
+			out.StepName = string(in.String())
 		case "type":
 			out.Type = string(in.String())
 		case "description":
@@ -2251,6 +2265,16 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk12(out *jwriter.Writer, in Action) 
 			out.RawString(prefix)
 		}
 		out.String(string(in.Name))
+	}
+	if in.StepName != "" {
+		const prefix string = ",\"step_name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.StepName))
 	}
 	{
 		const prefix string = ",\"type\":"

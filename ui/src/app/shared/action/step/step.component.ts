@@ -18,6 +18,7 @@ export class ActionStepComponent {
         this._step = step;
         if (step && step.parameters) {
             this.withAdvanced = step.parameters.some((parameter) => parameter.advanced);
+            this._step.step_name = this._step.step_name || this._step.name;
         }
     }
     get step(): Action {
