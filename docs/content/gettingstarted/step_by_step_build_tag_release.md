@@ -128,7 +128,7 @@ Click on create to create the workflow.
 In this example, we create a Workflow to build, tag and release an application. 
 
 So, we have to trigger this workflow on each commit, on every git branches - and on each tag created. This will be 
-useful to compile code from all developper and somethimes create a tag from master branch is the buid is Ok.
+useful to compile code from all developper and somethimes create a tag from master branch is the buid is Success.
 
 The application is linked to a Github Git Repository, we have two choice to trigger automatically the workflow:
 
@@ -151,7 +151,7 @@ reacheabled from Github. So, we have to add a Git Repository Poller
 ### 7 - Create a tag
 
 * Select the pipeline 'build-pipeline', then click on the sidebar 'Add a pipeline'
-* Create a new pipeline, then select the application 'my-java-app'
+* Create a new pipeline named 'create-tag', then select the application 'my-java-app'
 * We don't need an environment, neither plaform for create a tag, Click on 'Finish'
 * Edit the pipeline 'create-tag'
 * Click on Edit as Code button, then paste that code:
@@ -198,7 +198,7 @@ each commit - we want to decide when to launch it.
 
 * Click on the pipeline 'create-tag'
 * Add two Run Conditions:
-    * cds.manual = master
+    * cds.manual = true
     * git.branch = master
 * Launch the workflow, select the tag level, then click on Run
 
@@ -210,7 +210,7 @@ Edit Run Conditions.
 Launch the workflow.
 ![21_launch](/images/getting_started_build_tag_wf_21_launch.png?height=400px&classes=shadow)
 
-The workflow is stopped, pipeline create-tag is not launched as it's a manual pipeline.
+The workflow is stopped, because you set cds.manual to true in your run conditons.
 ![22_launch_view](/images/getting_started_build_tag_wf_22_launch_view.png?height=400px&classes=shadow)
 
 Select the pipeline, then click on the 'play' button.
