@@ -34,6 +34,10 @@ func (g *githubClient) Tags(ctx context.Context, fullname string) ([]sdk.VCSTag,
 				return nil, err
 			}
 			if status >= 400 {
+				if status == http.StatusNotFound {
+					log.Debug("githubClient.Tags> status 404 return nil because no tags found")
+					return nil, nil
+				}
 				return nil, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
 			}
 			nextTags := []Ref{}
