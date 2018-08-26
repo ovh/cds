@@ -19,21 +19,20 @@ var (
 func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	labels := prometheus.Labels{"instance": instance}
 
-	nbUsers := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_users", Help: "metrics nb_users", ConstLabels: labels})
-	nbApplications := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_applications", Help: "metrics nb_applications", ConstLabels: labels})
-	nbProjects := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_projects", Help: "metrics nb_projects", ConstLabels: labels})
-	nbGroups := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_groups", Help: "metrics nb_groups", ConstLabels: labels})
-	nbPipelines := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_pipelines", Help: "metrics nb_pipelines", ConstLabels: labels})
-	nbWorkflows := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflows", Help: "metrics nb_workflows", ConstLabels: labels})
-	nbArtifacts := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_artifacts", Help: "metrics nb_artifacts", ConstLabels: labels})
-	nbWorkerModels := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_worker_models", Help: "metrics nb_worker_models", ConstLabels: labels})
-	nbWorkflowRuns := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
-	nbWorkflowNodeRuns := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
-	nbWorkflowNodeRunJobs := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_run_jobs", Help: "metrics nb_workflow_node_run_jobs", ConstLabels: labels})
-	nbMaxWorkersBuilding := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
-
-	nbOldPipelineBuilds := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_old_pipeline_builds", Help: "metrics nb_old_pipeline_builds", ConstLabels: labels})
-	nbOldPipelineBuildJobs := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_old_pipeline_build_jobs", Help: "metrics nb_old_pipeline_build_jobs", ConstLabels: labels})
+	nbUsers := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_users", Help: "metrics nb_users", ConstLabels: labels})
+	nbApplications := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_applications", Help: "metrics nb_applications", ConstLabels: labels})
+	nbProjects := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_projects", Help: "metrics nb_projects", ConstLabels: labels})
+	nbGroups := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_groups", Help: "metrics nb_groups", ConstLabels: labels})
+	nbPipelines := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_pipelines", Help: "metrics nb_pipelines", ConstLabels: labels})
+	nbWorkflows := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflows", Help: "metrics nb_workflows", ConstLabels: labels})
+	nbArtifacts := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_artifacts", Help: "metrics nb_artifacts", ConstLabels: labels})
+	nbWorkerModels := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_worker_models", Help: "metrics nb_worker_models", ConstLabels: labels})
+	nbWorkflowRuns := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
+	nbWorkflowNodeRuns := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
+	nbWorkflowNodeRunJobs := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflow_node_run_jobs", Help: "metrics nb_workflow_node_run_jobs", ConstLabels: labels})
+	nbMaxWorkersBuilding := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
+	nbNodeRunJobBuilding := prometheus.NewCounter(prometheus.CounterOpts{Name: "queue", Help: "metrics queue building", ConstLabels: prometheus.Labels{"instance": instance, "status": "building"}})
+	nbNodeRunJobWaiting := prometheus.NewCounter(prometheus.CounterOpts{Name: "queue", Help: "metrics queue waiting", ConstLabels: prometheus.Labels{"instance": instance, "status": "waiting"}})
 
 	registry.MustRegister(nbUsers)
 	registry.MustRegister(nbApplications)
@@ -46,9 +45,9 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	registry.MustRegister(nbWorkflowRuns)
 	registry.MustRegister(nbWorkflowNodeRuns)
 	registry.MustRegister(nbWorkflowNodeRunJobs)
-	registry.MustRegister(nbOldPipelineBuilds)
-	registry.MustRegister(nbOldPipelineBuildJobs)
 	registry.MustRegister(nbMaxWorkersBuilding)
+	registry.MustRegister(nbNodeRunJobBuilding)
+	registry.MustRegister(nbNodeRunJobWaiting)
 
 	tick := time.NewTicker(30 * time.Second).C
 
@@ -72,15 +71,15 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 				count(DBFunc(), "SELECT MAX(id) FROM workflow_run", nbWorkflowRuns)
 				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run", nbWorkflowNodeRuns)
 				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run_job", nbWorkflowNodeRunJobs)
-				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build", nbOldPipelineBuilds)
-				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build_job", nbOldPipelineBuildJobs)
 				count(DBFunc(), "SELECT COUNT(1) FROM worker where status like 'Building' ", nbMaxWorkersBuilding)
+				count(DBFunc(), "SELECT COUNT(1) FROM workflow_node_run_job where status like 'Building' ", nbNodeRunJobBuilding)
+				count(DBFunc(), "SELECT COUNT(1) FROM workflow_node_run_job where status like 'Waiting' ", nbNodeRunJobBuilding)
 			}
 		}
 	}(c, DBFunc)
 }
 
-func count(db *gorp.DbMap, query string, v prometheus.Summary) {
+func count(db *gorp.DbMap, query string, v prometheus.Counter) {
 	if db == nil {
 		return
 	}
@@ -90,7 +89,7 @@ func count(db *gorp.DbMap, query string, v prometheus.Summary) {
 		return
 	}
 	if n.Valid {
-		v.Observe(float64(n.Int64))
+		v.Set(float64(n.Int64))
 	}
 
 }
