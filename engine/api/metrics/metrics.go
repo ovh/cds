@@ -30,6 +30,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	nbWorkflowRuns := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
 	nbWorkflowNodeRuns := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
 	nbMaxWorkersBuilding := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
+	nbJobs := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_jobs", Help: "nb_jobs", ConstLabels: labels})
 	queue := prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "queue", Help: "metrics queue", ConstLabels: prometheus.Labels{"instance": instance}}, []string{"status", "range"})
 
 	registry.MustRegister(nbUsers)
@@ -43,9 +44,10 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	registry.MustRegister(nbWorkflowRuns)
 	registry.MustRegister(nbWorkflowNodeRuns)
 	registry.MustRegister(nbMaxWorkersBuilding)
+	registry.MustRegister(nbJobs)
 	registry.MustRegister(queue)
 
-	tick := time.NewTicker(30 * time.Second).C
+	tick := time.NewTicker(9 * time.Second).C
 
 	go func(c context.Context, DBFunc func() *gorp.DbMap) {
 		for {
@@ -67,6 +69,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 				count(DBFunc(), nbWorkflowRuns, "SELECT MAX(id) FROM workflow_run")
 				count(DBFunc(), nbWorkflowNodeRuns, "SELECT MAX(id) FROM workflow_node_run")
 				count(DBFunc(), nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
+				count(DBFunc(), nbJobs, "SELECT MAX(id) FROM workflow_node_run_job_info")
 
 				now := time.Now()
 				now10s := now.Add(-10 * time.Second)
@@ -81,13 +84,13 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 				queryOld := "select COUNT(1) from workflow_node_run_job where queued < $1 and status = 'Waiting'"
 
 				countGauge(DBFunc(), *queue, "building", "all", queryBuilding)
-				countGauge(DBFunc(), *queue, "waiting", "less_10s", query, now10s, now)
-				countGauge(DBFunc(), *queue, "waiting", "more_10s_less_30s", query, now30s, now10s)
-				countGauge(DBFunc(), *queue, "waiting", "more_30s_less_1min", query, now1min, now30s)
-				countGauge(DBFunc(), *queue, "waiting", "more_1min_less_2min", query, now2min, now1min)
-				countGauge(DBFunc(), *queue, "waiting", "more_2min_less_5min", query, now5min, now2min)
-				countGauge(DBFunc(), *queue, "waiting", "more_5min_less_10min", query, now10min, now5min)
-				countGauge(DBFunc(), *queue, "waiting", "more_10min", queryOld, now10min)
+				countGauge(DBFunc(), *queue, "waiting", "10_less_10s", query, now10s, now)
+				countGauge(DBFunc(), *queue, "waiting", "20_more_10s_less_30s", query, now30s, now10s)
+				countGauge(DBFunc(), *queue, "waiting", "30_more_30s_less_1min", query, now1min, now30s)
+				countGauge(DBFunc(), *queue, "waiting", "40_more_1min_less_2min", query, now2min, now1min)
+				countGauge(DBFunc(), *queue, "waiting", "50_more_2min_less_5min", query, now5min, now2min)
+				countGauge(DBFunc(), *queue, "waiting", "60_more_5min_less_10min", query, now10min, now5min)
+				countGauge(DBFunc(), *queue, "waiting", "70_more_10min", queryOld, now10min)
 			}
 		}
 	}(c, DBFunc)
