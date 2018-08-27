@@ -6,14 +6,26 @@
             <i class="caret right icon" *ngIf="!collapsed"></i>
         </span>
         <div class="four wide inline field inputStepname" *ngIf="edit">
-            <input class="inline" type="text" name="stepName" [(ngModel)]="step.step_name" (keydown)="action.hasChanged = true">
+            <input *ngIf="editStepName"
+                class="inline"
+                type="text"
+                name="stepName"
+                [(ngModel)]="step.step_name"
+                (keydown)="action.hasChanged = true">
+            <span *ngIf="!editStepName">
+                {{step.step_name}}
+                <i class="stepname" *ngIf="step.step_name !== step.name">({{step.name}})</i>
+            </span>
+            <a class="inline pointing ml5" (click)="editStepName = true" *ngIf="!editStepName">
+                <i class="pencil icon float"></i>
+            </a>
         </div>
         <div class="{{edit ? 'four' : 'eight'}} wide inline field">
             <span class="pointing" (click)="collapsed = !collapsed">
                 <span *ngIf="!edit">
                     {{step.step_name}}
                 </span>
-                <i class="stepname">({{step.name}})</i>
+                <i class="stepname" *ngIf="!edit || editStepName">({{step.name}})</i>
             </span>
             <span class="textOrange" *ngIf="action.deprecated">
                 <i class="warning orange sign icon"></i>{{'common_deprecated' | translate}}
