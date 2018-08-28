@@ -19,18 +19,18 @@ var (
 func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	labels := prometheus.Labels{"instance": instance}
 
-	nbUsers := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_users", Help: "metrics nb_users", ConstLabels: labels})
-	nbApplications := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_applications", Help: "metrics nb_applications", ConstLabels: labels})
-	nbProjects := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_projects", Help: "metrics nb_projects", ConstLabels: labels})
-	nbGroups := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_groups", Help: "metrics nb_groups", ConstLabels: labels})
-	nbPipelines := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_pipelines", Help: "metrics nb_pipelines", ConstLabels: labels})
-	nbWorkflows := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflows", Help: "metrics nb_workflows", ConstLabels: labels})
-	nbArtifacts := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_artifacts", Help: "metrics nb_artifacts", ConstLabels: labels})
-	nbWorkerModels := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_worker_models", Help: "metrics nb_worker_models", ConstLabels: labels})
-	nbWorkflowRuns := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
-	nbWorkflowNodeRuns := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
-	nbMaxWorkersBuilding := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
-	nbJobs := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_jobs", Help: "nb_jobs", ConstLabels: labels})
+	nbUsers := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_users", Help: "metrics nb_users", ConstLabels: labels})
+	nbApplications := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_applications", Help: "metrics nb_applications", ConstLabels: labels})
+	nbProjects := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_projects", Help: "metrics nb_projects", ConstLabels: labels})
+	nbGroups := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_groups", Help: "metrics nb_groups", ConstLabels: labels})
+	nbPipelines := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_pipelines", Help: "metrics nb_pipelines", ConstLabels: labels})
+	nbWorkflows := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_workflows", Help: "metrics nb_workflows", ConstLabels: labels})
+	nbArtifacts := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_artifacts", Help: "metrics nb_artifacts", ConstLabels: labels})
+	nbWorkerModels := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_worker_models", Help: "metrics nb_worker_models", ConstLabels: labels})
+	nbWorkflowRuns := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
+	nbWorkflowNodeRuns := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
+	nbMaxWorkersBuilding := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
+	nbJobs := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_jobs", Help: "nb_jobs", ConstLabels: labels})
 	queue := prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "queue", Help: "metrics queue", ConstLabels: prometheus.Labels{"instance": instance}}, []string{"status", "range"})
 
 	registry.MustRegister(nbUsers)
@@ -96,7 +96,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	}(c, DBFunc)
 }
 
-func count(db *gorp.DbMap, v prometheus.Counter, query string) {
+func count(db *gorp.DbMap, v prometheus.Gauge, query string) {
 	if db == nil {
 		return
 	}
