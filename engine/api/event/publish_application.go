@@ -135,3 +135,12 @@ func PublishApplicationRepositoryDelete(projKey string, appName string, vcsServe
 	}
 	publishApplicationEvent(e, projKey, appName, u)
 }
+
+// PublishApplicationVulnerabilityUpdate publishes an event when updating a vulnerability
+func PublishApplicationVulnerabilityUpdate(projKey string, appName string, oldV sdk.Vulnerability, newV sdk.Vulnerability, u *sdk.User) {
+	e := sdk.EventApplicationVulnerabilityUpdate{
+		OldVulnerability: oldV,
+		NewVulnerability: newV,
+	}
+	publishApplicationEvent(e, projKey, appName, u)
+}

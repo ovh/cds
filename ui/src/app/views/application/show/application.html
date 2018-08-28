@@ -28,7 +28,7 @@
                 <a sm-item [class.active]="selectedTab === 'keys'" id="ApplicationKeysTab" (click)="showTab('keys')"><i class="privacy icon"></i>
                     {{ 'common_keys' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="application.permission === 7">
+                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="application.permission === perm.READ_WRITE_EXECUTE">
                   <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
                 </a>
             </sm-menu>
@@ -42,21 +42,21 @@
                     </div>
                     <div [ngSwitch]="selectedTab">
                         <div *ngSwitchCase="'variables'">
-                            <ng-container *ngIf="application.permission === 7">
+                            <ng-container *ngIf="application.permission === perm.READ_WRITE_EXECUTE">
                                 <h3>{{ 'application_variable_form_title' | translate}}</h3>
                                 <app-variable-form [loading]="varFormLoading" (createVariableEvent)="variableEvent($event)"></app-variable-form>
                             </ng-container>
                             <h3>{{ 'application_variable_list_title' | translate}}</h3>
-                            <app-variable [variables]="application.variables" [mode]="application.permission === 7?'edit':'ro'" (event)="variableEvent($event)" auditContext="application" [project]="project" [application]="application"></app-variable>
+                            <app-variable [variables]="application.variables" [mode]="application.permission === perm.READ_WRITE_EXECUTE?'edit':'ro'" (event)="variableEvent($event)" auditContext="application" [project]="project" [application]="application"></app-variable>
                             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="variableEvent($event, true)" #varWarning></app-warning-modal>
                         </div>
                         <div *ngSwitchCase="'vuln'">
-                            <app-vulnerabilities [vulnerabilities]="application.vulnerabilities"></app-vulnerabilities>
+                            <app-vulnerabilities [project]="project" [application]="application" [vulnerabilities]="application.vulnerabilities" [edit]="application.permission === perm.READ_WRITE_EXECUTE"></app-vulnerabilities>
                         </div>
                         <div *ngSwitchCase="'permissions'">
                             <h3>{{ 'application_permission_list_title' | translate }}</h3>
-                            <app-permission-list [permissions]="application.groups" [edit]="application.permission === 7" (event)="groupEvent($event)"></app-permission-list>
-                            <ng-container *ngIf="application.permission === 7">
+                            <app-permission-list [permissions]="application.groups" [edit]="application.permission === perm.READ_WRITE_EXECUTE" (event)="groupEvent($event)"></app-permission-list>
+                            <ng-container *ngIf="application.permission === perm.READ_WRITE_EXECUTE">
                                 <h3>{{ 'application_permission_form_title' | translate }}</h3>
                                 <app-permission-form [loading]="permFormLoading" (createGroupPermissionEvent)="groupEvent($event)"></app-permission-form>
                             </ng-container>
@@ -65,7 +65,7 @@
 
                         <div *ngSwitchCase="'notifications'">
                             <h3>{{ 'application_notifications_list_title' | translate }}</h3>
-                            <app-notification-list (event)="notificationEvent($event)" [project]="project" [application]="application" [loading]="notifFormLoading" [notifications]="application.notifications" [edit]="application.permission === 7" #notificationList></app-notification-list>
+                            <app-notification-list (event)="notificationEvent($event)" [project]="project" [application]="application" [loading]="notifFormLoading" [notifications]="application.notifications" [edit]="application.permission === perm.READ_WRITE_EXECUTE" #notificationList></app-notification-list>
                             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="notificationEvent($event, true)" #notifWarning></app-warning-modal>
                         </div>
 
