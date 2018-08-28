@@ -94,6 +94,7 @@ func (d NpmAuditParserPlugin) Run(j plugin.IJob) plugin.Result {
 
 		}
 	}
+	report.Type = "js"
 	report.Summary = summary
 	if err := plugin.SendVulnerabilityReport(j, report); err != nil {
 		_ = plugin.SendLog(j, "Unable to send report: %s", err)
