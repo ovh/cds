@@ -58,6 +58,7 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.Common.Common.ServiceName = "cds-hatchery-vsphere"
 
 	return nil
 }
@@ -229,7 +230,7 @@ func (h *HatcheryVSphere) updateServerList() {
 	for k, s := range status {
 		st += fmt.Sprintf("%d %s ", s, k)
 	}
-	log.Info("Got %d servers %s", total, st)
+	log.Debug("Got %d servers %s", total, st)
 	if total > 0 {
 		log.Debug(out)
 	}

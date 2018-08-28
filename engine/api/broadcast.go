@@ -8,10 +8,11 @@ import (
 	"github.com/ovh/cds/engine/api/broadcast"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) addBroadcastHandler() Handler {
+func (api *API) addBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var bc sdk.Broadcast
 		if err := UnmarshalBody(r, &bc); err != nil {
@@ -38,11 +39,11 @@ func (api *API) addBroadcastHandler() Handler {
 		}
 
 		event.PublishBroadcastAdd(bc, getUser(ctx))
-		return WriteJSON(w, bc, http.StatusCreated)
+		return service.WriteJSON(w, bc, http.StatusCreated)
 	}
 }
 
-func (api *API) updateBroadcastHandler() Handler {
+func (api *API) updateBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		broadcastID, errr := requestVarInt(r, "id")
 		if errr != nil {
@@ -90,11 +91,11 @@ func (api *API) updateBroadcastHandler() Handler {
 		}
 
 		event.PublishBroadcastUpdate(*oldBC, bc, getUser(ctx))
-		return WriteJSON(w, bc, http.StatusOK)
+		return service.WriteJSON(w, bc, http.StatusOK)
 	}
 }
 
-func (api *API) postMarkAsReadBroadcastHandler() Handler {
+func (api *API) postMarkAsReadBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		broadcastID, errr := requestVarInt(r, "id")
 		if errr != nil {
@@ -113,11 +114,11 @@ func (api *API) postMarkAsReadBroadcastHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) deleteBroadcastHandler() Handler {
+func (api *API) deleteBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		broadcastID, errr := requestVarInt(r, "id")
 		if errr != nil {
@@ -142,7 +143,7 @@ func (api *API) deleteBroadcastHandler() Handler {
 	}
 }
 
-func (api *API) getBroadcastHandler() Handler {
+func (api *API) getBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "id")
 		if errr != nil {
@@ -154,17 +155,17 @@ func (api *API) getBroadcastHandler() Handler {
 			return sdk.WrapError(err, "getBroadcast> cannot load broadcasts")
 		}
 
-		return WriteJSON(w, broadcast, http.StatusOK)
+		return service.WriteJSON(w, broadcast, http.StatusOK)
 	}
 }
 
-func (api *API) getBroadcastsHandler() Handler {
+func (api *API) getBroadcastsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		broadcasts, err := broadcast.LoadAll(api.mustDB(), getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getBroadcasts> cannot load broadcasts")
 		}
 
-		return WriteJSON(w, broadcasts, http.StatusOK)
+		return service.WriteJSON(w, broadcasts, http.StatusOK)
 	}
 }

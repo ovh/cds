@@ -9,10 +9,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) addStageHandler() Handler {
+func (api *API) addStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -58,11 +59,11 @@ func (api *API) addStageHandler() Handler {
 
 		event.PublishPipelineStageAdd(projectKey, pipelineKey, *stageData, getUser(ctx))
 
-		return WriteJSON(w, pipelineData, http.StatusCreated)
+		return service.WriteJSON(w, pipelineData, http.StatusCreated)
 	}
 }
 
-func (api *API) getStageHandler() Handler {
+func (api *API) getStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -86,11 +87,11 @@ func (api *API) getStageHandler() Handler {
 			return sdk.WrapError(err, "getStageHandler> Error on load stage")
 		}
 
-		return WriteJSON(w, s, http.StatusOK)
+		return service.WriteJSON(w, s, http.StatusOK)
 	}
 }
 
-func (api *API) moveStageHandler() Handler {
+func (api *API) moveStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -151,11 +152,11 @@ func (api *API) moveStageHandler() Handler {
 		}
 
 		event.PublishPipelineStageMove(projectKey, pipelineKey, *stageData, oldStage.BuildOrder, getUser(ctx))
-		return WriteJSON(w, pipelineData, http.StatusOK)
+		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
 
-func (api *API) updateStageHandler() Handler {
+func (api *API) updateStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -213,11 +214,11 @@ func (api *API) updateStageHandler() Handler {
 		}
 
 		event.PublishPipelineStageUpdate(projectKey, pipelineKey, *s, *stageData, getUser(ctx))
-		return WriteJSON(w, pipelineData, http.StatusOK)
+		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
 
-func (api *API) deleteStageHandler() Handler {
+func (api *API) deleteStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -265,6 +266,6 @@ func (api *API) deleteStageHandler() Handler {
 		}
 
 		event.PublishPipelineStageDelete(projectKey, pipelineKey, *s, getUser(ctx))
-		return WriteJSON(w, pipelineData, http.StatusOK)
+		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }

@@ -26,16 +26,18 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getApplicationsHandler() Handler {
+func (api *API) getApplicationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 		withPermissions := r.FormValue("permission")
 		withUsage := FormBool(r, "withUsage")
+		withIcon := FormBool(r, "withIcon")
 
 		var u = getUser(ctx)
 		requestedUserName := r.Header.Get("X-Cds-Username")
@@ -55,8 +57,11 @@ func (api *API) getApplicationsHandler() Handler {
 				return sdk.WrapError(err, "getApplicationsHandler> unable to load user '%s' permissions", requestedUserName)
 			}
 		}
-
-		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, u)
+		loadOpts := []application.LoadOptionFunc{}
+		if withIcon {
+			loadOpts = append(loadOpts, application.LoadOptions.WithIcon)
+		}
+		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, u, loadOpts...)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationsHandler> Cannot load applications from db")
 		}
@@ -81,11 +86,11 @@ func (api *API) getApplicationsHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, applications, http.StatusOK)
+		return service.WriteJSON(w, applications, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationTreeHandler() Handler {
+func (api *API) getApplicationTreeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -96,11 +101,11 @@ func (api *API) getApplicationTreeHandler() Handler {
 			return sdk.WrapError(err, "getApplicationTreeHandler> Cannot load CD Tree for applications %s", applicationName)
 		}
 
-		return WriteJSON(w, tree, http.StatusOK)
+		return service.WriteJSON(w, tree, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelineBuildBranchHistoryHandler() Handler {
+func (api *API) getPipelineBuildBranchHistoryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -141,11 +146,11 @@ func (api *API) getPipelineBuildBranchHistoryHandler() Handler {
 			return sdk.WrapError(errL, "getPipelineBranchHistoryHandler> Cannot get history by branch")
 		}
 
-		return WriteJSON(w, pbs, http.StatusOK)
+		return service.WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationDeployHistoryHandler() Handler {
+func (api *API) getApplicationDeployHistoryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -158,11 +163,11 @@ func (api *API) getApplicationDeployHistoryHandler() Handler {
 			return sdk.WrapError(errL, "getPipelineDeployHistoryHandler> Cannot get history by env")
 		}
 
-		return WriteJSON(w, pbs, http.StatusOK)
+		return service.WriteJSON(w, pbs, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationBranchVersionHandler() Handler {
+func (api *API) getApplicationBranchVersionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -180,11 +185,11 @@ func (api *API) getApplicationBranchVersionHandler() Handler {
 			return sdk.WrapError(err, "getApplicationBranchVersionHandler: Cannot load version for application %s on branch %s with remote %s", applicationName, branch, remote)
 		}
 
-		return WriteJSON(w, versions, http.StatusOK)
+		return service.WriteJSON(w, versions, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationTreeStatusHandler() Handler {
+func (api *API) getApplicationTreeStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -224,11 +229,11 @@ func (api *API) getApplicationTreeStatusHandler() Handler {
 			hooks,
 		}
 
-		return WriteJSON(w, response, http.StatusOK)
+		return service.WriteJSON(w, response, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationHandler() Handler {
+func (api *API) getApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -243,6 +248,7 @@ func (api *API) getApplicationHandler() Handler {
 		withSchedulers := FormBool(r, "withSchedulers")
 		withKeys := FormBool(r, "withKeys")
 		withUsage := FormBool(r, "withUsage")
+		withIcon := FormBool(r, "withIcon")
 		withDeploymentStrategies := FormBool(r, "withDeploymentStrategies")
 		withVulnerabilities := FormBool(r, "withVulnerabilities")
 		branchName := r.FormValue("branchName")
@@ -270,6 +276,9 @@ func (api *API) getApplicationHandler() Handler {
 		}
 		if withVulnerabilities {
 			loadOptions = append(loadOptions, application.LoadOptions.WithVulnerabilities)
+		}
+		if withIcon {
+			loadOptions = append(loadOptions, application.LoadOptions.WithIcon)
 		}
 
 		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), loadOptions...)
@@ -342,7 +351,7 @@ func (api *API) getApplicationHandler() Handler {
 			app.Usage = &usage
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
@@ -371,7 +380,7 @@ func loadApplicationUsage(db gorp.SqlExecutor, projKey, appName string) (sdk.Usa
 	return usage, nil
 }
 
-func (api *API) getApplicationBranchHandler() Handler {
+func (api *API) getApplicationBranchHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -391,12 +400,12 @@ func (api *API) getApplicationBranchHandler() Handler {
 		var branches []sdk.VCSBranch
 		if app.RepositoryFullname != "" && app.VCSServer != "" {
 			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
 			}
 			if remote != "" && remote != app.RepositoryFullname {
-				brs, errB := client.Branches(remote)
+				brs, errB := client.Branches(ctx, remote)
 				if errB != nil {
 					return sdk.WrapError(errB, "getApplicationBranchHandler> Cannot get branches from repository %s", remote)
 				}
@@ -405,7 +414,7 @@ func (api *API) getApplicationBranchHandler() Handler {
 				}
 			} else {
 				var errb error
-				branches, errb = client.Branches(app.RepositoryFullname)
+				branches, errb = client.Branches(ctx, app.RepositoryFullname)
 				if errb != nil {
 					return sdk.WrapError(errb, "getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 				}
@@ -420,11 +429,70 @@ func (api *API) getApplicationBranchHandler() Handler {
 
 		//Yo analyze branch and delete pipeline_build for old branches...
 
-		return WriteJSON(w, branches, http.StatusOK)
+		return service.WriteJSON(w, branches, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationRemoteHandler() Handler {
+func (api *API) getApplicationVCSInfosHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		applicationName := vars["permApplicationName"]
+		remote := r.FormValue("remote")
+
+		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "getApplicationVCSInfosHandler> Cannot load project %s from db", projectKey)
+		}
+
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
+		if err != nil {
+			return sdk.WrapError(err, "getApplicationVCSInfosHandler> Cannot load application %s for project %s from db", applicationName, projectKey)
+		}
+
+		resp := struct {
+			Branches []sdk.VCSBranch `json:"branches,omitempty"`
+			Remotes  []sdk.VCSRepo   `json:"remotes,omitempty"`
+			Tags     []sdk.VCSTag    `json:"tags,omitempty"`
+		}{}
+
+		if app.RepositoryFullname == "" || app.VCSServer == "" {
+			return service.WriteJSON(w, resp, http.StatusOK)
+		}
+
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
+		if erra != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationVCSInfosHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
+		}
+
+		repositoryFullname := app.RepositoryFullname
+		if remote != "" && remote != app.RepositoryFullname {
+			repositoryFullname = remote
+		}
+		branches, errb := client.Branches(ctx, repositoryFullname)
+		if errb != nil {
+			return sdk.WrapError(errb, "getApplicationVCSInfosHandler> Cannot get branches from repository %s", repositoryFullname)
+		}
+		resp.Branches = branches
+
+		tags, errt := client.Tags(ctx, repositoryFullname)
+		if errt != nil {
+			return sdk.WrapError(errt, "getApplicationVCSInfosHandler> Cannot get tags from repository %s", repositoryFullname)
+		}
+		resp.Tags = tags
+
+		remotes, errR := client.ListForks(ctx, repositoryFullname)
+		if errR != nil {
+			return sdk.WrapError(errR, "getApplicationVCSInfosHandler> Cannot get remotes from repository %s", repositoryFullname)
+		}
+		resp.Remotes = remotes
+
+		return service.WriteJSON(w, resp, http.StatusOK)
+	}
+}
+
+func (api *API) getApplicationRemoteHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -444,12 +512,12 @@ func (api *API) getApplicationRemoteHandler() Handler {
 		var prs []sdk.VCSPullRequest
 		if app.RepositoryFullname != "" && app.VCSServer != "" {
 			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
 			}
 			var errb error
-			prs, errb = client.PullRequests(app.RepositoryFullname)
+			prs, errb = client.PullRequests(ctx, app.RepositoryFullname)
 			if errb != nil {
 				return sdk.WrapError(errb, "getApplicationRemoteHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 			}
@@ -480,11 +548,11 @@ func (api *API) getApplicationRemoteHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, remotes, http.StatusOK)
+		return service.WriteJSON(w, remotes, http.StatusOK)
 	}
 }
 
-func (api *API) addApplicationHandler() Handler {
+func (api *API) addApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -529,11 +597,11 @@ func (api *API) addApplicationHandler() Handler {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) deleteApplicationHandler() Handler {
+func (api *API) deleteApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -583,7 +651,7 @@ func (api *API) deleteApplicationHandler() Handler {
 	}
 }
 
-func (api *API) cloneApplicationHandler() Handler {
+func (api *API) cloneApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -626,7 +694,7 @@ func (api *API) cloneApplicationHandler() Handler {
 			return sdk.WrapError(err, "cloneApplicationHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, newApp, http.StatusOK)
+		return service.WriteJSON(w, newApp, http.StatusOK)
 	}
 }
 
@@ -673,7 +741,7 @@ func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
 	return application.AddGroup(db, store, proj, newApp, u, newApp.ApplicationGroups...)
 }
 
-func (api *API) updateApplicationHandler() Handler {
+func (api *API) updateApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -737,12 +805,12 @@ func (api *API) updateApplicationHandler() Handler {
 
 		event.PublishUpdateApplication(p.Key, *app, old, getUser(ctx))
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 
 	}
 }
 
-func (api *API) postApplicationMetadataHandler() Handler {
+func (api *API) postApplicationMetadataHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)

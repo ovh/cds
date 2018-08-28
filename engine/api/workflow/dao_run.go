@@ -12,7 +12,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -52,13 +52,13 @@ func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 
 // UpdateWorkflowRun updates in table "workflow_run""
 func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
-	_, end := tracing.Span(ctx, "workflow.UpdateWorkflowRun")
+	_, end := observability.Span(ctx, "workflow.UpdateWorkflowRun")
 	defer end()
 
 	wr.LastModified = time.Now()
 
 	for _, info := range wr.Infos {
-		if info.IsError {
+		if info.IsError && info.SubNumber == wr.LastSubNumber {
 			wr.Status = string(sdk.StatusFail)
 		}
 	}
@@ -119,7 +119,12 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 		return sdk.WrapError(erri, "Run.PostInsert> Unable to marshal infos")
 	}
 
-	if _, err := db.Exec("update workflow_run set workflow = $3, infos = $2, join_triggers_run = $4 where id = $1", r.ID, i, w, jtr); err != nil {
+	h, errh := json.Marshal(r.Header)
+	if errh != nil {
+		return sdk.WrapError(erri, "Run.PostInsert> Unable to marshal header")
+	}
+
+	if _, err := db.Exec("update workflow_run set workflow = $3, infos = $2, join_triggers_run = $4, header = $5 where id = $1", r.ID, i, w, jtr, h); err != nil {
 		return sdk.WrapError(err, "Run.PostInsert> Unable to store marshalled infos")
 	}
 
@@ -142,9 +147,10 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 		W sql.NullString `db:"workflow"`
 		I sql.NullString `db:"infos"`
 		J sql.NullString `db:"join_triggers_run"`
+		H sql.NullString `db:"header"`
 	}{}
 
-	if err := db.SelectOne(&res, "select workflow, infos, join_triggers_run from workflow_run where id = $1", r.ID); err != nil {
+	if err := db.SelectOne(&res, "select workflow, infos, join_triggers_run, header from workflow_run where id = $1", r.ID); err != nil {
 		return sdk.WrapError(err, "Run.PostGet> Unable to load marshalled workflow")
 	}
 
@@ -178,6 +184,12 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal join_triggers_run")
 	}
 	r.JoinTriggersRun = j
+
+	h := sdk.WorkflowRunHeaders{}
+	if err := gorpmapping.JSONNullString(res.H, &h); err != nil {
+		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal header")
+	}
+	r.Header = h
 
 	return nil
 }
@@ -736,5 +748,98 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 		})
 	}
 
+	return nil
+}
+
+// stopRunsBlocked is useful to force stop all workflow that is running more than 24hrs
+func stopRunsBlocked(db *gorp.DbMap) error {
+	query := `SELECT workflow_run.id
+		FROM workflow_run
+		WHERE (workflow_run.status = $1 or workflow_run.status = $2 or workflow_run.status = $3)
+		AND now() - workflow_run.last_execution > interval '1 day'
+		LIMIT 30`
+	ids := []struct {
+		ID int64 `db:"id"`
+	}{}
+
+	if _, err := db.Select(&ids, query, sdk.StatusWaiting.String(), sdk.StatusChecking.String(), sdk.StatusBuilding.String()); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "stopRunsBlocked>")
+	}
+
+	tx, errTx := db.Begin()
+	if errTx != nil {
+		return sdk.WrapError(errTx, "stopRunsBlocked>")
+	}
+	defer tx.Rollback() // nolint
+
+	wfIds := make([]string, len(ids))
+	for i := range wfIds {
+		wfIds[i] = fmt.Sprintf("%d", ids[i].ID)
+	}
+	wfIdsJoined := strings.Join(wfIds, ",")
+	queryUpdateWf := `UPDATE workflow_run SET status = $1 WHERE id = ANY(string_to_array($2, ',')::bigint[])`
+	if _, err := tx.Exec(queryUpdateWf, sdk.StatusStopped.String(), wfIdsJoined); err != nil {
+		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow run history")
+	}
+	args := []interface{}{sdk.StatusStopped.String(), wfIdsJoined, sdk.StatusBuilding.String(), sdk.StatusChecking.String(), sdk.StatusWaiting.String()}
+	queryUpdateNodeRun := `UPDATE workflow_node_run SET status = $1, done = now()
+	WHERE workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
+	AND (status = $3 OR status = $4 OR status = $5)`
+	if _, err := tx.Exec(queryUpdateNodeRun, args...); err != nil {
+		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node run history")
+	}
+	queryUpdateNodeJobRun := `UPDATE workflow_node_run_job SET status = $1, done = now()
+	WHERE workflow_node_run_job.workflow_node_run_id IN (
+		SELECT workflow_node_run.id
+		FROM workflow_node_run
+		WHERE workflow_node_run.workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
+		AND (status = $3 OR status = $4 OR status = $5)
+	)`
+	if _, err := tx.Exec(queryUpdateNodeJobRun, args...); err != nil {
+		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node job run history")
+	}
+
+	resp := []struct {
+		ID     int64  `db:"id"`
+		Status string `db:"status"`
+		Stages string `db:"stages"`
+	}{}
+
+	querySelectNodeRuns := `
+	SELECT workflow_node_run.id, workflow_node_run.status, workflow_node_run.stages
+		FROM workflow_node_run
+		WHERE workflow_node_run.workflow_run_id = ANY(string_to_array($1, ',')::bigint[])
+	`
+	if _, err := tx.Select(&resp, querySelectNodeRuns, wfIdsJoined); err != nil {
+		return sdk.WrapError(err, "stopRunsBlocked> cannot get workflow node run infos")
+	}
+
+	now := time.Now()
+	for i := range resp {
+		nr := sdk.WorkflowNodeRun{
+			ID:     resp[i].ID,
+			Status: resp[i].Status,
+		}
+		if err := json.Unmarshal([]byte(resp[i].Stages), &nr.Stages); err != nil {
+			return sdk.WrapError(err, "stopRunsBlocked> cannot unmarshal stages")
+		}
+
+		stopWorkflowNodeRunStages(&nr)
+		if !sdk.StatusIsTerminated(resp[i].Status) {
+			nr.Status = sdk.StatusStopped.String()
+			nr.Done = now
+		}
+
+		if err := updateNodeRunStatusAndStage(tx, &nr); err != nil {
+			return sdk.WrapError(err, "stopRunsBlocked> cannot update node runs stages")
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "stopRunsBlocked> Unable to commit transaction")
+	}
 	return nil
 }

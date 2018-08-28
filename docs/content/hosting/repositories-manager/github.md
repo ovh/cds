@@ -6,7 +6,9 @@ weight = 1
 
 ## Authorize CDS on Github
 ### Create a CDS application on Github
-Go to `https://github.com/settings/developers` and **Register a new application**: set an application name, the url and a description. `Authorization callback URL`: `http(s)://<your-cds-api>/repositories_manager/oauth2/callback`
+Go to https://github.com/settings/developers and **Register a new application**: set an application name, the url and a description. `Authorization callback URL`: `http(s)://<your-cds-api>/repositories_manager/oauth2/callback`
+
+Example: for a local configuration with API default port (8081), callback URL will be `http://localhost:8081/repositories_manager/oauth2/callback`
 
 On the next page Github give you a **Client ID** and a **Client Secret**
 
@@ -15,17 +17,20 @@ On the next page Github give you a **Client ID** and a **Client Secret**
 Set value to `clientId` and `clientSecret`
 
 ```yaml
-    [vcs.servers.github]
+    [vcs.servers.Github]
 
       # URL of this VCS Server
       url = "https://github.com"
 
-      [vcs.servers.github.github]
+      [vcs.servers.Github.github]
 
-        # github OAuth Application Client ID
+        #######
+        # CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/
+        ########
+        # Github OAuth Application Client ID
         clientId = "xxxx"
 
-        # github OAuth Application Client Secret
+        # Github OAuth Application Client Secret
         clientSecret = "xxxx"
 
         # Does polling is supported by VCS Server
@@ -35,15 +40,21 @@ Set value to `clientId` and `clientSecret`
         disableWebHooks = false
 
         # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
-        # proxyWebhook = "https://myproxy.com"
+        # proxyWebhook = ""
 
-        [vcs.servers.github.github.Status]
+        # optional, Github Token associated to username, used to add comment on Pull Request
+        token = ""
+
+        # optional. Github username, used to add comment on Pull Request on failed build.
+        username = ""
+
+        [vcs.servers.Github.github.Status]
 
           # Set to true if you don't want CDS to push statuses on the VCS server
-          disable = false
+          # disable = false
 
           # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
-          showDetail = true
+          # showDetail = false
 ```
 
 **Then restart CDS**

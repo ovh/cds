@@ -690,7 +690,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 
 	res := []sdk.VCSCommit{}
 	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
+	client, errclient := repositoriesmanager.AuthorizedClient(context.Background(), db, store, vcsServer)
 	if errclient != nil {
 		return nil, sdk.WrapError(errclient, "UpdatePipelineBuildCommits> Cannot get client")
 	}
@@ -717,7 +717,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 		log.Debug("UpdatePipelineBuildCommits> there is not difference between the previous build and the current build")
 	} else if prev != nil && cur.Hash != "" && prev.Hash != "" {
 		//If we are lucky, return a true diff
-		commits, err := client.Commits(repo, cur.Branch, prev.Hash, cur.Hash)
+		commits, err := client.Commits(context.Background(), repo, cur.Branch, prev.Hash, cur.Hash)
 		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
 		}
@@ -725,14 +725,14 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 	} else if cur.Hash != "" {
 		//If we only get current pipeline build hash
 		log.Debug("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
-		c, err := client.Commits(repo, cur.Branch, "", cur.Hash)
+		c, err := client.Commits(context.Background(), repo, cur.Branch, "", cur.Hash)
 		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
 		}
 		res = c
 	} else {
 		//If we only have the current branch, search for the branch
-		br, err := client.Branch(repo, cur.Branch)
+		br, err := client.Branch(context.Background(), repo, cur.Branch)
 		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get branch %s", cur.Branch)
 		}
@@ -743,7 +743,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 
 			//and return the last commit of the branch
 			log.Debug("get the last commit : %s", br.LatestCommit)
-			cm, errcm := client.Commit(repo, br.LatestCommit)
+			cm, errcm := client.Commit(context.Background(), repo, br.LatestCommit)
 			if errcm != nil {
 				return nil, sdk.WrapError(errcm, "UpdatePipelineBuildCommits> Cannot get commits")
 			}
@@ -772,7 +772,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 		}
 
 		//We don't need to pass apiURL and uiURL because they are not useful for commit
-		client, _ = repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
+		client, _ = repositoriesmanager.AuthorizedClient(context.Background(), tx, store, vcsServer)
 	}
 
 	// Load last finished build
@@ -815,7 +815,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 
 	switch {
 	case client != nil && (!gitURLfound || !gitHTTPURLFound) && !parentBuildNumberFound: // For root pipeline
-		repo, errC := client.RepoByFullname(app.RepositoryFullname)
+		repo, errC := client.RepoByFullname(context.Background(), app.RepositoryFullname)
 		if errC != nil {
 			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.VCSServer, app.RepositoryFullname)
 		}
@@ -857,7 +857,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 			pb.Trigger.VCSRemote = trigger.ParentPipelineBuild.Trigger.VCSRemote
 		}
 	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil && client != nil && mapPreviousParams["cds.application"] != app.Name: // For pipeline attached to an external application
-		repo, errC := client.RepoByFullname(app.RepositoryFullname)
+		repo, errC := client.RepoByFullname(context.Background(), app.RepositoryFullname)
 		if errC != nil {
 			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.VCSServer, app.RepositoryFullname)
 		}
@@ -884,7 +884,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 		defaultBranch := "master"
 		lastGitHash := map[string]string{}
 		if client != nil {
-			branches, _ := client.Branches(pb.Trigger.VCSRemote)
+			branches, _ := client.Branches(context.Background(), pb.Trigger.VCSRemote)
 			for _, b := range branches {
 				//If application is linked to a repository manager, we try to found de default branch
 				if b.Default {
@@ -939,7 +939,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 
 	//Retreive commit information
 	if client != nil && pb.Trigger.VCSChangesHash != "" {
-		commit, errC := client.Commit(pb.Trigger.VCSRemote, pb.Trigger.VCSChangesHash)
+		commit, errC := client.Commit(context.Background(), pb.Trigger.VCSRemote, pb.Trigger.VCSChangesHash)
 		if errC != nil {
 			log.Warning("InsertPipelineBuild> Cannot get commit: %s", errC)
 		} else {

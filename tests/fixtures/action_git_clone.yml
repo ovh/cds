@@ -1,0 +1,30 @@
+version: v1.0
+name: CDS_TestIT_GitClone
+parameters:
+  name:
+    type: string
+requirements:
+- binary: git
+steps:
+- name: 'gitClone'
+  gitClone:
+    branch: '{{.git.branch}}'
+    commit: '{{.git.hash}}'
+    depth: "10"
+    directory: '{{.cds.workspace}}'
+    submodules: "false"
+    url: '{{.git.url}}'
+    tag: '{{.git.tag}}'
+- gitClone:
+    branch: '{{.git.branch}}'
+    commit: '{{.git.hash}}'
+    directory: '{{.cds.workspace}}'
+    url: '{{.git.url}}'
+    tag: '{{.git.tag}}'
+- gitClone:
+    branch: '{{.git.branch}}'
+    commit: '{{.git.hash}}'
+    depth: "10"
+    directory: '{{.cds.workspace}}'
+    url: '{{.git.url}}'
+    tag: '{{.git.tag}}'

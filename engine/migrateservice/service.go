@@ -30,7 +30,7 @@ type dbmigservice struct {
 
 // Configuration is the exposed type for database API configuration
 type Configuration struct {
-	Name      string `toml:"name" comment:"Name of this CDS Database Migrate service"`
+	Name      string `toml:"name" comment:"Name of this CDS Database Migrate service\n Enter a name to enable this service"`
 	URL       string `default:"http://localhost:8087"`
 	Directory string `toml:"directory" comment:"SQL Migration files directory" default:"sql"`
 	HTTP      struct {
@@ -70,6 +70,7 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 	s.HTTPURL = s.cfg.URL
 	s.Token = s.cfg.API.Token
 	s.Type = services.TypeDBMigrate
+	s.ServiceName = "cds-migrate"
 	s.MaxHeartbeatFailures = s.cfg.API.MaxHeartbeatFailures
 	s.Router = &api.Router{
 		Mux: mux.NewRouter(),

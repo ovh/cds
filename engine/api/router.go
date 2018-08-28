@@ -17,8 +17,12 @@ import (
 	muxcontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -35,71 +39,44 @@ type Router struct {
 	SetHeaderFunc          func() map[string]string
 	Prefix                 string
 	URL                    string
-	Middlewares            []Middleware
-	PostMiddlewares        []Middleware
-	mapRouterConfigs       map[string]*RouterConfig
-	mapAsynchronousHandler map[string]HandlerFunc
+	Middlewares            []service.Middleware
+	PostMiddlewares        []service.Middleware
+	mapRouterConfigs       map[string]*service.RouterConfig
+	mapAsynchronousHandler map[string]service.HandlerFunc
 	panicked               bool
 	nbPanic                int
 	lastPanic              *time.Time
-}
-
-// Handler defines the HTTP handler used in CDS engine
-type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
-
-// AsynchronousHandler defines the HTTP asynchronous handler used in CDS engine
-type AsynchronousHandler func(ctx context.Context, r *http.Request) error
-
-// Middleware defines the HTTP Middleware used in CDS engine
-type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error)
-
-// HandlerFunc defines the way to instanciate a handler
-type HandlerFunc func() Handler
-
-// AsynchronousHandlerFunc defines the way to instanciate a handler
-type AsynchronousHandlerFunc func() AsynchronousHandler
-
-// RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions
-type RouterConfigParam func(rc *RouterConfig)
-
-// RouterConfig contains a map of handler configuration. Key is the method of the http route
-type RouterConfig struct {
-	config map[string]*HandlerConfig
-}
-
-// HandlerConfig is the configuration for one handler
-type HandlerConfig struct {
-	Name         string
-	Method       string
-	Handler      Handler
-	IsDeprecated bool
-	Options      map[string]string
+	Stats                  struct {
+		Errors *stats.Int64Measure
+		Hits   *stats.Int64Measure
+	}
 }
 
 // NewHandlerConfig returns a new HandlerConfig pointer
-func NewHandlerConfig() *HandlerConfig {
-	return &HandlerConfig{
+func NewHandlerConfig() *service.HandlerConfig {
+	return &service.HandlerConfig{
 		Options: map[string]string{},
 	}
 }
 
 func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
-	return &Router{
+	r := &Router{
 		AuthDriver:             a,
 		Mux:                    m,
 		Prefix:                 p,
 		URL:                    "",
-		mapRouterConfigs:       map[string]*RouterConfig{},
-		mapAsynchronousHandler: map[string]HandlerFunc{},
+		mapRouterConfigs:       map[string]*service.RouterConfig{},
+		mapAsynchronousHandler: map[string]service.HandlerFunc{},
 		Background:             context.Background(),
 	}
+	return r
 }
 
 // HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
-type HandlerConfigParam func(*HandlerConfig)
+type HandlerConfigParam func(*service.HandlerConfig)
 
 // HandlerConfigFunc is a type used in the router configuration fonction "Handle"
-type HandlerConfigFunc func(Handler, ...HandlerConfigParam) *HandlerConfig
+type HandlerConfigFunc func(service.Handler, ...HandlerConfigParam) *service.HandlerConfig
 
 func (r *Router) pprofLabel(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -155,7 +132,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 					log.Error("[PANIC_RECOVERY] RESTART NEEDED")
 				}
 
-				WriteError(w, req, err)
+				service.WriteError(w, req, err)
 			}
 		}()
 		h.ServeHTTP(w, req)
@@ -186,18 +163,18 @@ func DefaultHeaders() map[string]string {
 }
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
-func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
+func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 	uri = r.Prefix + uri
-	cfg := &RouterConfig{
-		config: map[string]*HandlerConfig{},
+	cfg := &service.RouterConfig{
+		Config: map[string]*service.HandlerConfig{},
 	}
 	if r.mapRouterConfigs == nil {
-		r.mapRouterConfigs = map[string]*RouterConfig{}
+		r.mapRouterConfigs = map[string]*service.RouterConfig{}
 	}
 	r.mapRouterConfigs[uri] = cfg
 
 	for i := range handlers {
-		cfg.config[handlers[i].Method] = handlers[i]
+		cfg.Config[handlers[i].Method] = handlers[i]
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
@@ -219,11 +196,13 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+		observability.Record(ctx, r.Stats.Hits, 1)
 
 		//Get route configuration
-		rc := cfg.config[req.Method]
+		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
-			WriteError(w, req, sdk.ErrNotFound)
+			observability.Record(ctx, r.Stats.Errors, 1)
+			service.WriteError(w, req, sdk.ErrNotFound)
 			return
 		}
 
@@ -243,13 +222,15 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			var err error
 			ctx, err = m(ctx, w, req, rc)
 			if err != nil {
-				WriteError(w, req, err)
+				observability.Record(ctx, r.Stats.Errors, 1)
+				service.WriteError(w, req, err)
 				return
 			}
 		}
 
 		if err := rc.Handler(ctx, w, req); err != nil {
-			WriteError(w, req, err)
+			observability.Record(ctx, r.Stats.Errors, 1)
+			service.WriteError(w, req, err)
 			return
 		}
 
@@ -279,7 +260,7 @@ type asynchronousRequest struct {
 	body          io.Reader
 }
 
-func (r *asynchronousRequest) do(ctx context.Context, h AsynchronousHandler) error {
+func (r *asynchronousRequest) do(ctx context.Context, h service.AsynchronousHandler) error {
 	for k, v := range r.contextValues {
 		ctx = context.WithValue(ctx, k, v)
 	}
@@ -300,7 +281,7 @@ func (r *asynchronousRequest) do(ctx context.Context, h AsynchronousHandler) err
 	return r.err
 }
 
-func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequest, handlerFunc AsynchronousHandlerFunc, retry int) {
+func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequest, handlerFunc service.AsynchronousHandlerFunc, retry int) {
 	handler := handlerFunc()
 	for {
 		select {
@@ -324,11 +305,11 @@ func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequ
 }
 
 // Asynchronous handles an AsynchronousHandlerFunc
-func (r *Router) Asynchronous(handler AsynchronousHandlerFunc, retry int) HandlerFunc {
+func (r *Router) Asynchronous(handler service.AsynchronousHandlerFunc, retry int) service.HandlerFunc {
 	chanRequest := make(chan asynchronousRequest, 1000)
 	go processAsyncRequests(r.Background, chanRequest, handler, retry)
 
-	return func() Handler {
+	return func() service.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			async := asynchronousRequest{
 				contextValues: auth.ContextValues(ctx),
@@ -340,18 +321,18 @@ func (r *Router) Asynchronous(handler AsynchronousHandlerFunc, retry int) Handle
 			}
 			log.Debug("Router> Asynchronous call of %s", r.URL.String())
 			chanRequest <- async
-			return Accepted(w)
+			return service.Accepted(w)
 		}
 	}
 }
 
 // DEPRECATED marks the handler as deprecated
-var DEPRECATED = func(rc *HandlerConfig) {
+var DEPRECATED = func(rc *service.HandlerConfig) {
 	rc.Options["isDeprecated"] = "true"
 }
 
 // GET will set given handler only for GET request
-func (r *Router) GET(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+func (r *Router) GET(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
 	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
@@ -366,7 +347,7 @@ func (r *Router) GET(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 }
 
 // POST will set given handler only for POST request
-func (r *Router) POST(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+func (r *Router) POST(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
 	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
@@ -381,7 +362,7 @@ func (r *Router) POST(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 }
 
 // POSTEXECUTE will set given handler only for POST request and add a flag for execution permission
-func (r *Router) POSTEXECUTE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+func (r *Router) POSTEXECUTE(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
 	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
@@ -397,7 +378,7 @@ func (r *Router) POSTEXECUTE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerC
 }
 
 // PUT will set given handler only for PUT request
-func (r *Router) PUT(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+func (r *Router) PUT(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
 	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["allowServices"] = "false"
@@ -412,7 +393,7 @@ func (r *Router) PUT(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 }
 
 // DELETE will set given handler only for DELETE request
-func (r *Router) DELETE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+func (r *Router) DELETE(h service.HandlerFunc, cfg ...HandlerConfigParam) *service.HandlerConfig {
 	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["allowServices"] = "false"
@@ -428,7 +409,7 @@ func (r *Router) DELETE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig
 
 // NeedAdmin set the route for cds admin only (or not)
 func NeedAdmin(admin bool) HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["needAdmin"] = fmt.Sprintf("%v", admin)
 	}
 	return f
@@ -436,7 +417,7 @@ func NeedAdmin(admin bool) HandlerConfigParam {
 
 // AllowProvider set the route for external providers
 func AllowProvider(need bool) HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["allowProvider"] = fmt.Sprintf("%v", need)
 	}
 	return f
@@ -444,7 +425,7 @@ func AllowProvider(need bool) HandlerConfigParam {
 
 // NeedToken set the route for requests that have the given header
 func NeedToken(k, v string) HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["token"] = fmt.Sprintf("%s:%s", k, v)
 	}
 	return f
@@ -452,7 +433,7 @@ func NeedToken(k, v string) HandlerConfigParam {
 
 // NeedUsernameOrAdmin set the route for cds admin or current user = username called on route
 func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["needUsernameOrAdmin"] = fmt.Sprintf("%v", need)
 	}
 	return f
@@ -460,7 +441,7 @@ func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
 
 // NeedHatchery set the route for hatchery only
 func NeedHatchery() HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["needHatchery"] = "true"
 	}
 	return f
@@ -468,7 +449,7 @@ func NeedHatchery() HandlerConfigParam {
 
 // NeedService set the route for hatchery only
 func NeedService() HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["needService"] = "true"
 	}
 	return f
@@ -476,7 +457,7 @@ func NeedService() HandlerConfigParam {
 
 // NeedWorker set the route for worker only
 func NeedWorker() HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["needWorker"] = "true"
 	}
 	return f
@@ -484,7 +465,7 @@ func NeedWorker() HandlerConfigParam {
 
 // AllowServices allows CDS service to use this route
 func AllowServices(s bool) HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["allowServices"] = fmt.Sprintf("%v", s)
 	}
 	return f
@@ -493,7 +474,7 @@ func AllowServices(s bool) HandlerConfigParam {
 // Auth set manually whether authorisation layer should be applied
 // Authorization is enabled by default
 func Auth(v bool) HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["auth"] = fmt.Sprintf("%v", v)
 	}
 	return f
@@ -501,7 +482,7 @@ func Auth(v bool) HandlerConfigParam {
 
 // EnableTracing on a route
 func EnableTracing() HandlerConfigParam {
-	f := func(rc *HandlerConfig) {
+	f := func(rc *service.HandlerConfig) {
 		rc.Options["trace_enable"] = "true"
 	}
 	return f
@@ -514,7 +495,7 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 		latency := end.Sub(start)
 		log.Warning("%-7s | %13v | %v", req.Method, latency, req.URL)
 	}()
-	WriteError(w, req, sdk.ErrNotFound)
+	service.WriteError(w, req, sdk.ErrNotFound)
 }
 
 // StatusPanic returns router status. If nbPanic > 30 -> Alert, if nbPanic > 0 -> Warn
@@ -526,4 +507,29 @@ func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
 		statusPanic = sdk.MonitoringStatusWarn
 	}
 	return sdk.MonitoringStatusLine{Component: "Nb of Panics", Value: fmt.Sprintf("%d", r.nbPanic), Status: statusPanic}
+}
+
+// InitStats initialize prometheus metrics
+func (r *Router) InitStats(service, name string) error {
+	label := fmt.Sprintf("cds/%s/%s/router_errors", service, name)
+	r.Stats.Errors = stats.Int64(label, "number of errors", stats.UnitDimensionless)
+	label = fmt.Sprintf("cds/%s/%s/router_hits", service, name)
+	r.Stats.Hits = stats.Int64(label, "number of hits", stats.UnitDimensionless)
+
+	log.Info("api> Stats initialized")
+
+	return observability.RegisterView(
+		&view.View{
+			Name:        "router_errors",
+			Description: r.Stats.Errors.Description(),
+			Measure:     r.Stats.Errors,
+			Aggregation: view.Count(),
+		},
+		&view.View{
+			Name:        "router_hits",
+			Description: r.Stats.Hits.Description(),
+			Measure:     r.Stats.Hits,
+			Aggregation: view.Count(),
+		},
+	)
 }

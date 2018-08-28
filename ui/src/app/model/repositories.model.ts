@@ -29,6 +29,14 @@ export class Remote {
     url: string;
 };
 
+export class Tag {
+    sha: string;
+    hash: string;
+    tagger: Author;
+    tag: string;
+    message: string;
+};
+
 export interface Commit {
     id: string;
     author: Author;
@@ -43,3 +51,9 @@ export interface Author {
     email: string;
     avatar: string;
 };
+
+export interface VCSInfos {
+    branches: Branch[];
+    tags: Tag[];
+    remotes: Repository[];
+}

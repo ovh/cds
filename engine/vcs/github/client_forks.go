@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -11,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (g *githubClient) ListForks(repo string) ([]sdk.VCSRepo, error) {
+func (g *githubClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, error) {
 	var repos = []Repository{}
 	var nextPage = "/repos/" + repo + "/forks"
 

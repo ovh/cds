@@ -4,15 +4,18 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ovh/cds/sdk/tracingutils"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
@@ -22,14 +25,26 @@ import (
 // It contains all the logic for triggers and joins processing.
 func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.processWorkflowRun",
-		tracing.Tag("workflow_run", w.Number),
-		tracing.Tag("workflow", w.Workflow.Name),
+	ctx, end = observability.Span(ctx, "workflow.processWorkflowRun",
+		observability.Tag(observability.TagWorkflowRun, w.Number),
+		observability.Tag(observability.TagWorkflow, w.Workflow.Name),
 	)
 	defer end()
 
-	report := new(ProcessorReport)
+	if w.Header == nil {
+		w.Header = sdk.WorkflowRunHeaders{}
+	}
+	w.Header.Set(sdk.WorkflowRunHeader, strconv.FormatInt(w.Number, 10))
+	w.Header.Set(sdk.WorkflowHeader, w.Workflow.Name)
+	w.Header.Set(sdk.ProjectKeyHeader, proj.Key)
 
+	// Push data in header to allow tracing
+	if observability.Current(ctx).SpanContext().IsSampled() {
+		w.Header.Set(tracingutils.SampledHeader, "1")
+		w.Header.Set(tracingutils.TraceIDHeader, fmt.Sprintf("%v", observability.Current(ctx).SpanContext().TraceID))
+	}
+
+	report := new(ProcessorReport)
 	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess, nodesRunSkipped, nodesRunDisabled int
 
 	defer func(oldStatus string, wr *sdk.WorkflowRun) {
@@ -40,7 +55,6 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	w.Status = string(sdk.StatusBuilding)
 	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
-	log.Debug("processWorkflowRun> %s/%s %d.%d", proj.Name, w.Workflow.Name, w.Number, maxsn)
 	w.LastSubNumber = maxsn
 
 	//Checks startingFromNode
@@ -295,7 +309,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	// the map of workflow node runs of the workflow run to get the right statuses
 	// After resync, recompute all status counter compute the workflow status
 	// All of this is useful to get the right workflow status is the last node status is skipped
-	_, next := tracing.Span(ctx, "workflow.syncNodeRuns")
+	_, next := observability.Span(ctx, "workflow.syncNodeRuns")
 	if err := syncNodeRuns(db, w, LoadRunOptions{}); err != nil {
 		next()
 		return report, false, sdk.WrapError(err, "processWorkflowRun> Unable to sync workflow node runs")
@@ -335,10 +349,10 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	var end func()
-	ctx, end = tracing.Span(ctx, "workflow.processWorkflowNodeRun",
-		tracing.Tag("workflow", w.Workflow.Name),
-		tracing.Tag("workflow_run", w.Number),
-		tracing.Tag("workflow_node", n.Name),
+	ctx, end = observability.Span(ctx, "workflow.processWorkflowNodeRun",
+		observability.Tag(observability.TagWorkflow, w.Workflow.Name),
+		observability.Tag(observability.TagWorkflowRun, w.Number),
+		observability.Tag(observability.TagWorkflowNode, n.Name),
 	)
 	defer end()
 
@@ -365,6 +379,10 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		WorkflowNodeName: n.Name,
 		Status:           string(sdk.StatusWaiting),
 		Stages:           stages,
+		Header:           w.Header,
+	}
+	if run.SubNumber >= w.LastSubNumber {
+		w.LastSubNumber = run.SubNumber
 	}
 	if n.Context != nil && n.Context.ApplicationID != 0 {
 		run.ApplicationID = n.Context.ApplicationID
@@ -398,7 +416,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 
 		//Merge the payloads from all the sources
-		_, next := tracing.Span(ctx, "workflow.processWorkflowNodeRun.mergePayload")
+		_, next := observability.Span(ctx, "workflow.processWorkflowNodeRun.mergePayload")
 		for _, r := range runs {
 			e := dump.NewDefaultEncoder(new(bytes.Buffer))
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
@@ -501,7 +519,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	// Inherit parameter from parent job
 	if len(sourceNodeRuns) > 0 {
-		_, next := tracing.Span(ctx, "workflow.getParentParameters")
+		_, next := observability.Span(ctx, "workflow.getParentParameters")
 		parentsParams, errPP := getParentParameters(db, w, run, sourceNodeRuns, runPayload)
 		next()
 		if errPP != nil {
@@ -605,7 +623,12 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	// Tag VCS infos : add in tag only if it does not exist
 	if !w.TagExists(tagGitRepository) {
 		w.Tag(tagGitRepository, run.VCSRepository)
-		w.Tag(tagGitBranch, run.VCSBranch)
+		if run.VCSBranch != "" && run.VCSTag == "" {
+			w.Tag(tagGitBranch, run.VCSBranch)
+		}
+		if run.VCSTag != "" {
+			w.Tag(tagGitTag, run.VCSTag)
+		}
 		if len(run.VCSHash) >= 7 {
 			w.Tag(tagGitHash, run.VCSHash[:7])
 		} else {
@@ -620,7 +643,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	for _, info := range w.Infos {
-		if info.IsError {
+		if info.IsError && info.SubNumber == w.LastSubNumber {
 			run.Status = string(sdk.StatusFail)
 			run.Done = time.Now()
 			break
@@ -630,6 +653,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if err := insertWorkflowNodeRun(db, run); err != nil {
 		return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run (node id : %d, node name : %s, subnumber : %d)", run.WorkflowNodeID, run.WorkflowNodeName, run.SubNumber)
 	}
+	w.LastExecution = time.Now()
 
 	buildParameters := sdk.ParametersToMap(run.BuildParameters)
 	_, okUI := buildParameters["cds.ui.pipeline.run"]
@@ -705,11 +729,13 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) {
 	run.VCSRepository = vcsInfos.Repository
 	run.VCSBranch = vcsInfos.Branch
+	run.VCSTag = vcsInfos.Tag
 	run.VCSHash = vcsInfos.Hash
 	run.VCSServer = vcsInfos.Server
 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
+	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitTag, sdk.StringParameter, run.VCSTag)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsInfos.Author)
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitMessage, sdk.StringParameter, vcsInfos.Message)
@@ -760,9 +786,10 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 func AddWorkflowRunInfo(run *sdk.WorkflowRun, isError bool, infos ...sdk.SpawnMsg) {
 	for _, i := range infos {
 		run.Infos = append(run.Infos, sdk.WorkflowRunInfo{
-			APITime: time.Now(),
-			Message: i,
-			IsError: isError,
+			APITime:   time.Now(),
+			Message:   i,
+			IsError:   isError,
+			SubNumber: run.LastSubNumber,
 		})
 	}
 }

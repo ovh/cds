@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // CloneOpts is a optional structs for git clone command
@@ -11,6 +13,7 @@ type CloneOpts struct {
 	Depth                   int
 	SingleBranch            bool
 	Branch                  string
+	Tag                     string
 	Recursive               bool
 	Verbose                 bool
 	Quiet                   bool
@@ -19,7 +22,7 @@ type CloneOpts struct {
 }
 
 // Clone make a git clone
-func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) error {
+func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) (string, error) {
 	if verbose {
 		t1 := time.Now()
 		if opts != nil && opts.CheckoutCommit != "" {
@@ -31,14 +34,15 @@ func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *Ou
 	var commands []cmd
 	repoURL, err := getRepoURL(repo, auth)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	commands = prepareGitCloneCommands(repoURL, path, opts)
-	return runGitCommands(repo, commands, auth, output)
+	var userLogCommand string
+	userLogCommand, commands = prepareGitCloneCommands(repoURL, path, opts)
+	return userLogCommand, runGitCommands(repo, commands, auth, output)
 }
 
-func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
+func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) (string, cmds) {
 	allCmd := []cmd{}
 	gitcmd := cmd{
 		cmd:  "git",
@@ -52,14 +56,16 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
 			gitcmd.args = append(gitcmd.args, "--verbose")
 		}
 
-		if opts.CheckoutCommit == "" {
-			if opts.Depth != 0 {
-				gitcmd.args = append(gitcmd.args, "--depth", fmt.Sprintf("%d", opts.Depth))
-			}
+		if opts.Depth != 0 {
+			gitcmd.args = append(gitcmd.args, "--depth", fmt.Sprintf("%d", opts.Depth))
 		}
 
-		if opts.Branch != "" {
-			gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
+		if opts.Branch != "" || (opts.Tag != "" && opts.Tag != sdk.DefaultGitCloneParameterTagValue) {
+			if opts.Tag != "" && opts.Tag != sdk.DefaultGitCloneParameterTagValue {
+				gitcmd.args = append(gitcmd.args, "--branch", opts.Tag)
+			} else {
+				gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
+			}
 		} else if opts.SingleBranch {
 			gitcmd.args = append(gitcmd.args, "--single-branch")
 		}
@@ -69,6 +75,7 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
 		}
 	}
 
+	userLogCommand := "Executing: git " + strings.Join(gitcmd.args, " ") + " ...  "
 	gitcmd.args = append(gitcmd.args, repo)
 
 	if path != "" {
@@ -77,11 +84,12 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
 
 	allCmd = append(allCmd, gitcmd)
 
-	if opts != nil && opts.CheckoutCommit != "" {
+	if opts != nil && opts.CheckoutCommit != "" && opts.Tag == "" {
 		resetCmd := cmd{
 			cmd:  "git",
 			args: []string{"reset", "--hard", opts.CheckoutCommit},
 		}
+		userLogCommand += "\n\rExecuting: git " + strings.Join(resetCmd.args, " ")
 		//Locate the git reset cmd to the right directory
 		if path == "" {
 			t := strings.Split(repo, "/")
@@ -93,5 +101,5 @@ func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
 		allCmd = append(allCmd, resetCmd)
 	}
 
-	return cmds(allCmd)
+	return userLogCommand, cmds(allCmd)
 }

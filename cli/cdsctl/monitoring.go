@@ -29,6 +29,13 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 	}()
 
 	ui := &Termui{}
+
+	user, err := client.UserGet(cfg.User)
+	if err != nil {
+		return nil, fmt.Errorf("Can't get current user: %v", err)
+	}
+	ui.isAdmin = user.Admin
+
 	ui.init()
 	ui.draw(0)
 
@@ -42,8 +49,8 @@ type Termui struct {
 	header, times *termui.Par
 	msg           string
 
-	current  string
 	selected string
+	isAdmin  bool
 
 	// monitoring
 	queue                   *cli.ScrollableList
@@ -54,10 +61,7 @@ type Termui struct {
 
 // Constants for each view of cds ui
 const (
-	QueueSelected             = "queue"
-	BuildingSelected          = "building"
-	HatcheriesWorkersSelected = "hatcheriesWorkers"
-	StatusSelected            = "status"
+	QueueSelected = "queue"
 )
 
 func (ui *Termui) init() {
@@ -76,10 +80,6 @@ func (ui *Termui) init() {
 
 	termui.Handle("/sys/kbd", func(e termui.Event) {
 		ui.msg = fmt.Sprintf("No command for %v", e)
-	})
-
-	termui.Handle("/sys/kbd/<tab>", func(e termui.Event) {
-		ui.monitoringSelectNext()
 	})
 
 	termui.Handle("/sys/kbd/<down>", func(e termui.Event) {
@@ -230,10 +230,6 @@ func (ui *Termui) monitoringCursorDown() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.CursorDown()
-	case HatcheriesWorkersSelected:
-		ui.statusHatcheriesWorkers.CursorDown()
-	case StatusSelected:
-		ui.status.CursorDown()
 	}
 }
 
@@ -241,27 +237,7 @@ func (ui *Termui) monitoringCursorUp() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.CursorUp()
-	case HatcheriesWorkersSelected:
-		ui.statusHatcheriesWorkers.CursorUp()
-	case StatusSelected:
-		ui.status.CursorUp()
 	}
-}
-
-func (ui *Termui) monitoringSelectNext() {
-	ui.currentURL = ""
-	switch ui.selected {
-	case QueueSelected:
-		ui.selected = BuildingSelected
-		ui.queue.Cursor = 0
-	case HatcheriesWorkersSelected:
-		ui.selected = StatusSelected
-		ui.statusHatcheriesWorkers.Cursor = 0
-	case StatusSelected:
-		ui.selected = QueueSelected
-		ui.status.Cursor = 0
-	}
-	ui.monitoringColorSelected()
 }
 
 func (ui *Termui) monitoringColorSelected() {
@@ -272,10 +248,6 @@ func (ui *Termui) monitoringColorSelected() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.BorderFg = termui.ColorRed
-	case HatcheriesWorkersSelected:
-		ui.statusHatcheriesWorkers.BorderFg = termui.ColorRed
-	case StatusSelected:
-		ui.status.BorderFg = termui.ColorRed
 	}
 	termui.Render(ui.queue,
 		ui.statusHatcheriesWorkers,
@@ -306,16 +278,6 @@ func (ui *Termui) updateStatus() string {
 	return msg
 }
 
-func (ui *Termui) pipelineLine(projKey string, app sdk.Application, pb sdk.PipelineBuild) string {
-	branch := pb.Trigger.VCSChangesBranch
-	selected := ",bg-default"
-	if ui.selected == BuildingSelected {
-		selected = "fg-white"
-	}
-	icon, color := statusShort(pb.Status.String())
-	return fmt.Sprintf("[%s](%s,%s)[ %s](bg-default)[➤ ](fg-cyan,bg-default)[%s ](bg-default)[➤ ](fg-cyan,bg-default)[%s](bg-default)", icon, color, selected, pad(projKey+"/"+app.Name, 35), pad(pb.Pipeline.Name, 25), pad(branch+"/"+pb.Environment.Name, 19))
-}
-
 func (ui *Termui) updateQueueWorkers() string {
 	start := time.Now()
 	workers, err := client.WorkerList()
@@ -337,6 +299,25 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 	hatcheries := make(map[string]map[string]int64)
 	status := make(map[string]int)
 
+	if ui.isAdmin {
+		services, err := client.ServicesByType("hatchery")
+		if err != nil {
+			ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+			return
+		}
+
+		for _, s := range services {
+			if _, ok := hatcheries[s.Name]; !ok {
+				hatcheries[s.Name] = make(map[string]int64)
+				hatcheryNames = append(hatcheryNames, s.Name)
+			}
+		}
+	}
+
+	without := "Without hatchery"
+	hatcheries[without] = make(map[string]int64)
+	hatcheryNames = append(hatcheryNames, without)
+
 	for _, w := range workers {
 		var name string
 		if w.HatcheryID == 0 {
@@ -344,22 +325,15 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		} else {
 			name = w.HatcheryName
 		}
-
 		if _, ok := hatcheries[name]; !ok {
 			hatcheries[name] = make(map[string]int64)
 			hatcheryNames = append(hatcheryNames, name)
 		}
 		hatcheries[name][w.Status.String()] = hatcheries[name][w.Status.String()] + 1
-
 		if _, ok := status[w.Status.String()]; !ok {
 			statusTitle = append(statusTitle, w.Status.String())
 		}
 		status[w.Status.String()] = status[w.Status.String()] + 1
-	}
-
-	selected := ",bg-default"
-	if ui.selected == HatcheriesWorkersSelected {
-		selected = ""
 	}
 
 	items := []string{}
@@ -370,10 +344,13 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		for _, status := range statusTitle {
 			if v[status] > 0 {
 				icon, color := statusShort(status)
-				t += fmt.Sprintf("[ %d %s ](%s%s)", v[status], icon, color, selected)
+				t += fmt.Sprintf("[ %d %s ](%s,bg-default)", v[status], icon, color)
 			}
 		}
-		t += fmt.Sprintf("[ %s](fg-white%s)", name, selected)
+		if len(t) == 0 {
+			t += fmt.Sprintf("[ _ ](fg-white,bg-default)")
+		}
+		t += fmt.Sprintf("[ %s](fg-white,bg-default)", name)
 		items = append(items, t)
 	}
 	ui.statusHatcheriesWorkers.Items = items
@@ -413,8 +390,6 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", errpb.Error())
 		return ""
 	}
-	elapsed = time.Since(start)
-	msg += fmt.Sprintf(" | [queue pb %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
 	var maxQueued time.Duration
 

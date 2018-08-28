@@ -9,10 +9,11 @@ import (
 	"github.com/prometheus/common/expfmt"
 
 	"github.com/ovh/cds/engine/api/metrics"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getMetricsHandler() Handler {
+func (api *API) getMetricsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		mfs, err := metrics.GetGatherer().Gather()
 		if err != nil {

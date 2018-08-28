@@ -10,11 +10,11 @@ jobs:
   - script:
     - mkdir mydir
     - echo "this is a test" > mydir/test.txt
-    - echo "test" > toto.txt
-    - echo "tata" > tata.txt
+    - echo "test" > mydir/toto.txt
+    - echo "tata" > mydir/tata.txt
     - cd mydir
-    - ln -s ../toto.txt toto.txt
-    - ln -s $HOME/tata.txt tata.txt
+    - ln -s toto.txt totosymlink.txt
+    - ln -s tata.txt tatasymlink.txt
     - cd ..
     - ""
     - worker cache push abcd ./mydir

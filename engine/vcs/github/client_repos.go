@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,7 +16,7 @@ import (
 
 // Repos list repositories that are accessible to the authenticated user
 // https://developer.github.com/v3/repos/#list-your-repositories
-func (g *githubClient) Repos() ([]sdk.VCSRepo, error) {
+func (g *githubClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	var repos = []Repository{}
 	var nextPage = "/user/repos"
 
@@ -88,7 +89,7 @@ func (g *githubClient) Repos() ([]sdk.VCSRepo, error) {
 
 // RepoByFullname Get only one repo
 // https://developer.github.com/v3/repos/#list-your-repositories
-func (g *githubClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
+func (g *githubClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
 	repo, err := g.repoByFullname(fullname)
 	if err != nil {
 		return sdk.VCSRepo{}, err
@@ -138,7 +139,7 @@ func (g *githubClient) repoByFullname(fullname string) (Repository, error) {
 	return repo, nil
 }
 
-func (g *githubClient) GrantReadPermission(fullname string) error {
+func (g *githubClient) GrantReadPermission(ctx context.Context, fullname string) error {
 	owner := strings.SplitN(fullname, "/", 2)[0]
 	if g.username == "" || owner == g.username {
 		log.Debug("githubClient.GrantReadPermission> nothing to do ¯\\_(ツ)_/¯")

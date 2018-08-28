@@ -16,11 +16,12 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-func (api *API) deleteGroupFromProjectHandler() Handler {
+func (api *API) deleteGroupFromProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -100,11 +101,11 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 
 		event.PublishDeleteProjectPermission(p, gp, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) updateGroupRoleOnProjectHandler() Handler {
+func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -176,11 +177,11 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 		}
 		event.PublishUpdateProjectPermission(p, newGP, gpInProject, getUser(ctx))
 
-		return WriteJSON(w, groupProject, http.StatusOK)
+		return service.WriteJSON(w, groupProject, http.StatusOK)
 	}
 }
 
-func (api *API) addGroupInProjectHandler() Handler {
+func (api *API) addGroupInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -299,11 +300,11 @@ func (api *API) addGroupInProjectHandler() Handler {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot load groups on project %s", p.Key)
 		}
 
-		return WriteJSON(w, p.ProjectGroups, http.StatusOK)
+		return service.WriteJSON(w, p.ProjectGroups, http.StatusOK)
 	}
 }
 
-func (api *API) importGroupsInProjectHandler() Handler {
+func (api *API) importGroupsInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -381,6 +382,6 @@ func (api *API) importGroupsInProjectHandler() Handler {
 			return sdk.WrapError(err, "importGroupsInProjectHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, proj, http.StatusOK)
+		return service.WriteJSON(w, proj, http.StatusOK)
 	}
 }

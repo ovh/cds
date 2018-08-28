@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -63,7 +64,7 @@ func newAuthorizedClient(t *testing.T) (string, string) {
 	}
 
 	ghConsummer := New(consumerKey, []byte(privateKey), url, "", "", "", "", "", cache, true)
-	token, secret, err := ghConsummer.AuthorizeToken(accessToken, accessTokenSecret)
+	token, secret, err := ghConsummer.AuthorizeToken(context.Background(), accessToken, accessTokenSecret)
 	test.NoError(t, err)
 
 	t.Logf("token: %s", token)
@@ -96,14 +97,14 @@ func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	}
 
 	consumer := New(consumerKey, []byte(privateKey), url, "", "", "", username, password, cache, true)
-	cli, err := consumer.GetAuthorizedClient(token, secret)
+	cli, err := consumer.GetAuthorizedClient(context.Background(), token, secret)
 	test.NoError(t, err)
 	return cli
 }
 
 func TestClientAuthorizeToken(t *testing.T) {
 	consumer := getNewConsumer(t)
-	token, url, err := consumer.AuthorizeRedirect()
+	token, url, err := consumer.AuthorizeRedirect(context.Background())
 	t.Logf("token: %s", token)
 	assert.NotEmpty(t, token)
 

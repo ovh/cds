@@ -7,6 +7,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var (
+	_ sdk.VCSAuthorizedClient = &gitlabClient{}
+	_ sdk.VCSServer           = &gitlabConsumer{}
+)
+
 // gitlabClient implements VCSAuthorizedClient interface
 type gitlabClient struct {
 	client              *gitlab.Client

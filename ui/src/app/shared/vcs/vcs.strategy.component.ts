@@ -96,12 +96,10 @@ export class VCSStrategyComponent implements OnInit {
     }
 
     updatePublicKey(keyName): void {
-        if (this.project && this.project.keys) {
-            for (let i = 0; i < this.project.keys.length; i++) {
-                if (this.project.keys[i].name === keyName) {
-                    this.selectedPublicKey = this.project.keys[i].public;
-                    break;
-                }
+        if (this.project && Array.isArray(this.project.keys)) {
+            let key = this.project.keys.find((k) => k.name === keyName);
+            if (key) {
+                this.selectedPublicKey = key.public;
             }
         }
     }

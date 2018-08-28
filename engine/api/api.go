@@ -9,6 +9,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
@@ -25,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/poller"
@@ -35,7 +38,6 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -142,11 +144,33 @@ type Configuration struct {
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
-	Providers   []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
-	Services    []ServiceConfiguration  `toml:"services" comment:"###########################\n CDS Providers Settings \n##########################"`
-	Tracing     tracing.Configuration   `toml:"tracing" comment:"###########################\n CDS Tracing Settings \n##########################"`
-	DefaultOS   string                  `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
-	DefaultArch string                  `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
+	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
+	Services  []ServiceConfiguration  `toml:"services" comment:"###########################\n CDS Services Settings \n##########################"`
+	Status    struct {
+		API struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of API is running, an alert will on Global/API be created on /mon/status"`
+		} `toml:"api"`
+		DBMigrate struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of dbmigrate service is running, an alert on Global/dbmigrate will be created on /mon/status"`
+		} `toml:"dbmigrate"`
+		ElasticSearch struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of elasticsearch service is running, an alert on Global/elasticsearch will be created on /mon/status"`
+		} `toml:"elasticsearch"`
+		Hatchery struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hatchery service is running, an alert on Global/hatchery will be created on /mon/status"`
+		} `toml:"hatchery"`
+		Hooks struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hooks service is running, an alert on Global/hooks will be created on /mon/status"`
+		} `toml:"hooks"`
+		Repositories struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of repositories service is running, an alert on Global/hooks will be created on /mon/status"`
+		} `toml:"repositories"`
+		VCS struct {
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of vcs service is running, an alert will on Global/vcs be created on /mon/status"`
+		} `toml:"vcs"`
+	} `toml:"status" comment:"###########################\n CDS Status Settings \n Documentation: https://ovh.github.io/cds/hosting/monitoring/ \n##########################"`
+	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
+	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
@@ -202,6 +226,10 @@ type API struct {
 	eventsBroker        *eventsBroker
 	warnChan            chan sdk.Event
 	Cache               cache.Store
+	Stats               struct {
+		WorkflowRuns *stats.Int64Measure
+		Sessions     *stats.Int64Measure
+	}
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -217,6 +245,7 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 	}
 
 	a.Type = services.TypeAPI
+	a.ServiceName = "cds-api"
 
 	return nil
 }
@@ -527,16 +556,19 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
 
-	if err := tracing.Init(a.Config.Tracing); err != nil {
-		return fmt.Errorf("Unable to start tracing exporter: %v", err)
-	}
-
 	log.Info("Initializing HTTP router")
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
 		Background: ctx,
 	}
 	a.InitRouter()
+	if err := a.Router.InitStats("cds-api", a.Name); err != nil {
+		log.Error("unable to init router stats: %v", err)
+	}
+
+	if err := a.initStats(); err != nil {
+		log.Error("unable to init api stats: %v", err)
+	}
 
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
@@ -665,7 +697,9 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 
-	workflow.Initialize(a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+	sdk.GoRoutine("workflow.Initialize", func() {
+		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+	})
 	sdk.GoRoutine("PushInElasticSearch", func() { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
 	sdk.GoRoutine("Purge", func() { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
 
@@ -703,4 +737,20 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (a *API) initStats() error {
+	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs", a.Name)
+	a.Stats.WorkflowRuns = stats.Int64(label, "number of workflow runs", stats.UnitDimensionless)
+
+	log.Info("api> Stats initialized")
+
+	return observability.RegisterView(
+		&view.View{
+			Name:        "workflow_runs",
+			Description: a.Stats.WorkflowRuns.Description(),
+			Measure:     a.Stats.WorkflowRuns,
+			Aggregation: view.Count(),
+		},
+	)
 }

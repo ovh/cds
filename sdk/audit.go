@@ -19,7 +19,7 @@ type AuditWorklflow struct {
 	ProjectKey  string    `json:"project_key" db:"project_key"`
 	WorkflowID  int64     `json:"workflow_id" db:"workflow_id"`
 	TriggeredBy string    `json:"triggered_by" db:"triggered_by"`
-	Created     time.Time `json:"created" db:"created"`
+	Created     time.Time `json:"created" db:"created" mapstructure:"-"`
 	DataBefore  string    `json:"data_before" db:"data_before"`
 	DataAfter   string    `json:"data_after" db:"data_after"`
 	EventType   string    `json:"event_type" db:"event_type"`

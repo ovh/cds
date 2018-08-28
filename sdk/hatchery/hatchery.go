@@ -6,14 +6,20 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	cache "github.com/patrickmn/go-cache"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/tag"
+	"go.opencensus.io/trace"
 
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 var (
@@ -21,7 +27,25 @@ var (
 	Client                 sdk.HTTPClient
 	defaultMaxProvisioning = 10
 	models                 []sdk.Model
+
+	// Opencensus tags
+	TagHatchery     tag.Key
+	TagHatcheryName tag.Key
 )
+
+func init() {
+	TagHatchery, _ = tag.NewKey("hatchery")
+	TagHatcheryName, _ = tag.NewKey("hatchery_name")
+}
+
+// WithTags returns a context with opencenstus tags
+func WithTags(ctx context.Context, h Interface) context.Context {
+	ctx, _ = tag.New(ctx,
+		tag.Upsert(TagHatchery, h.ServiceName()),
+		tag.Upsert(TagHatcheryName, h.Hatchery().Name),
+	)
+	return ctx
+}
 
 // Create creates hatchery
 func Create(h Interface) error {
@@ -80,19 +104,25 @@ func Create(h Interface) error {
 	// purges expired items every minute
 	spawnIDs := cache.New(10*time.Second, 60*time.Second)
 
-	sdk.GoRoutine("heartbeat", func() {
-		hearbeat(h, h.Configuration().API.Token, h.Configuration().API.MaxHeartbeatFailures)
-	})
-
-	sdk.GoRoutine("queuePolling", func() {
-		if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, nil); err != nil {
-			log.Error("Queues polling stopped: %v", err)
-			cancel()
-		}
-	})
-
 	// hatchery is now fully Initialized
 	h.SetInitialized()
+
+	sdk.GoRoutine("heartbeat",
+		func() {
+			hearbeat(h, h.Configuration().API.Token, h.Configuration().API.MaxHeartbeatFailures)
+		},
+		PanicDump(h),
+	)
+
+	sdk.GoRoutine("queuePolling",
+		func() {
+			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, nil); err != nil {
+				log.Error("Queues polling stopped: %v", err)
+				cancel()
+			}
+		},
+		PanicDump(h),
+	)
 
 	// run the starters pool
 	workersStartChan, workerStartResultChan := startWorkerStarters(h)
@@ -102,35 +132,36 @@ func Create(h Interface) error {
 		return fmt.Errorf("Create> Cannot retrieve hostname: %s", errh)
 	}
 	// read the result channel in another goroutine to let the main goroutine start new workers
-	sdk.GoRoutine("checkStarterResult", func() {
-		for startWorkerRes := range workerStartResultChan {
-			if startWorkerRes.err != nil {
-				errs <- startWorkerRes.err
-			}
-			if startWorkerRes.isRun {
-				spawnIDs.SetDefault(string(startWorkerRes.request.id), startWorkerRes.request.id)
-			} else if startWorkerRes.temptToSpawn {
-				found := false
-				for _, hID := range startWorkerRes.request.spawnAttempts {
-					if hID == h.ID() {
-						found = true
-						break
-					}
+	sdk.GoRoutine("checkStarterResult",
+		func() {
+			for startWorkerRes := range workerStartResultChan {
+				if startWorkerRes.err != nil {
+					errs <- startWorkerRes.err
 				}
-				if !found {
-					if hCount, err := h.CDSClient().HatcheryCount(startWorkerRes.request.workflowNodeRunID); err == nil {
-						if int64(len(startWorkerRes.request.spawnAttempts)) < hCount {
-							if _, errQ := h.CDSClient().QueueJobIncAttempts(startWorkerRes.request.id); errQ != nil {
-								log.Warning("Hatchery> Create> cannot inc spawn attempts %v", errQ)
-							}
+				if startWorkerRes.temptToSpawn {
+					found := false
+					for _, hID := range startWorkerRes.request.spawnAttempts {
+						if hID == h.ID() {
+							found = true
+							break
 						}
-					} else {
-						log.Warning("Hatchery> Create> cannot get hatchery count: %v", err)
+					}
+					if !found {
+						if hCount, err := h.CDSClient().HatcheryCount(startWorkerRes.request.workflowNodeRunID); err == nil {
+							if int64(len(startWorkerRes.request.spawnAttempts)) < hCount {
+								if _, errQ := h.CDSClient().QueueJobIncAttempts(startWorkerRes.request.id); errQ != nil {
+									log.Warning("Hatchery> Create> cannot inc spawn attempts %v", errQ)
+								}
+							}
+						} else {
+							log.Warning("Hatchery> Create> cannot get hatchery count: %v", err)
+						}
 					}
 				}
 			}
-		}
-	})
+		},
+		PanicDump(h),
+	)
 
 	// the main goroutine
 	for {
@@ -152,10 +183,13 @@ func Create(h Interface) error {
 			}
 
 			//Check spawnsID
-			if _, exist := spawnIDs.Get(string(j.ID)); exist {
+			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
 				log.Debug("pipeline build job %d already spawned in previous routine", j.ID)
 				continue
 			}
+
+			//Before doing anything, push in cache
+			spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
 
 			//Check bookedBy current hatchery
 			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
@@ -208,31 +242,77 @@ func Create(h Interface) error {
 				continue
 			}
 
-			//Check if the jobs is concerned by a pending worker creation
-			if _, exist := spawnIDs.Get(string(j.ID)); exist {
-				log.Debug("job %d already spawned in previous routine", j.ID)
-				continue
-			}
+			var traceEnded *struct{}
+			currentCtx, currentCancel := context.WithTimeout(ctx, 10*time.Minute)
+			currentCtx = WithTags(currentCtx, h)
+			if val, has := j.Header.Get(tracingutils.SampledHeader); has && val == "1" {
+				currentCtx, _ = observability.New(currentCtx, h.ServiceName(), "hatchery.JobReceive", trace.AlwaysSample(), trace.SpanKindServer)
 
-			//Check bookedBy current hatchery
-			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
-				log.Debug("hatchery> job %d is booked by someone else (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
+				r, _ := j.Header.Get(sdk.WorkflowRunHeader)
+				w, _ := j.Header.Get(sdk.WorkflowHeader)
+				p, _ := j.Header.Get(sdk.ProjectKeyHeader)
+
+				observability.Current(currentCtx,
+					observability.Tag(observability.TagWorkflow, w),
+					observability.Tag(observability.TagWorkflowRun, r),
+					observability.Tag(observability.TagProjectKey, p),
+					observability.Tag(observability.TagWorkflowNodeJobRun, j.ID),
+				)
+			}
+			endTrace := func(reason string) {
+				if reason != "" {
+					observability.Current(currentCtx,
+						observability.Tag("reason", reason),
+					)
+				}
+				observability.End(currentCtx, nil, nil) // nolint
+				var T struct{}
+				traceEnded = &T
+				currentCancel()
+			}
+			go func() {
+				<-currentCtx.Done()
+				if traceEnded == nil {
+					endTrace(currentCtx.Err().Error())
+				}
+			}()
+
+			stats.Record(currentCtx, h.Stats().Jobs.M(1))
+
+			//Check if the jobs is concerned by a pending worker creation
+			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
+				log.Debug("job %d already spawned in previous routine", j.ID)
+				endTrace("already spawned")
 				continue
 			}
 
 			//Check gracetime
 			if j.QueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
 				log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID)
+				endTrace("too fresh")
+				continue
+			}
+
+			//Before doing anything, push in cache
+			spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
+
+			//Check bookedBy current hatchery
+			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
+				log.Debug("hatchery> job %d is booked by someone else (%d / %d)", j.ID, j.BookedBy.ID, h.ID())
+				endTrace("booked by someone else")
 				continue
 			}
 
 			//Check if hatchery if able to start a new worker
 			if !checkCapacities(h) {
 				log.Info("hatchery %s is not able to provision new worker", h.Hatchery().Name)
+				endTrace("no capacities")
 				continue
 			}
 
 			workerRequest := workerStarterRequest{
+				ctx:               currentCtx,
+				cancel:            endTrace,
 				id:                j.ID,
 				isWorkflowJob:     true,
 				execGroups:        j.ExecGroups,
@@ -259,6 +339,7 @@ func Create(h Interface) error {
 					isRun:        false,
 					temptToSpawn: true,
 				}
+				endTrace("no model or service ratio reached")
 				continue
 			}
 
@@ -266,7 +347,7 @@ func Create(h Interface) error {
 			workerRequest.model = *chosenModel
 
 			//Ask to start
-			log.Info("hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
+			log.Debug("hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
 			workersStartChan <- workerRequest
 
 		case err := <-errs:

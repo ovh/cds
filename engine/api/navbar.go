@@ -5,15 +5,16 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/navbar"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getNavbarHandler() Handler {
+func (api *API) getNavbarHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getNavbarHandler")
 		}
-		return WriteJSON(w, data, http.StatusOK)
+		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }

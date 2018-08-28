@@ -65,7 +65,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 
 	var errCl error
 	var clientset *kubernetes.Clientset
-	k8sTimeout := time.Second * 5
+	k8sTimeout := time.Second * 10
 	if h.Config.KubernetesConfigFile != "" {
 		cfg, err := clientcmd.BuildConfigFromFlags(h.Config.KubernetesMasterURL, h.Config.KubernetesConfigFile)
 		if err != nil {
@@ -82,7 +82,6 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot build config from config getter")
 		}
-		configK8s.Host = h.Config.KubernetesMasterURL
 		configK8s.Timeout = k8sTimeout
 
 		if h.Config.KubernetesCertAuthData != "" {
@@ -130,6 +129,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.Common.Common.ServiceName = "cds-hatchery-kubernetes"
 
 	return nil
 }
@@ -231,7 +231,7 @@ func (h *HatcheryKubernetes) CanSpawn(model *sdk.Model, jobID int64, requirement
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
 	name := fmt.Sprintf("k8s-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	label := "execution"
 	if spawnArgs.RegisterOnly {
@@ -303,12 +303,7 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 	if spawnArgs.Model.ModelDocker.Envs == nil {
 		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
 	}
-
-	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
-	if errEnv != nil {
-		return "", errEnv
-	}
-
+	envsWm := map[string]string{}
 	envsWm["CDS_FORCE_EXIT"] = "1"
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
@@ -330,6 +325,15 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
 		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
+	}
+
+	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
+	if errEnv != nil {
+		return "", errEnv
+	}
+
+	for envName, envValue := range envTemplated {
+		envsWm[envName] = envValue
 	}
 
 	envs := make([]apiv1.EnvVar, len(envsWm))
@@ -414,7 +418,7 @@ func (h *HatcheryKubernetes) SpawnWorker(spawnArgs hatchery.SpawnArguments) (str
 		}
 		podSchema.ObjectMeta.Labels[LABEL_SERVICE_JOB_ID] = fmt.Sprintf("%d", spawnArgs.JobID)
 		podSchema.Spec.Containers = append(podSchema.Spec.Containers, servContainer)
-		podSchema.Spec.HostAliases[0].Hostnames[i+1] = serv.Name
+		podSchema.Spec.HostAliases[0].Hostnames[i+1] = strings.ToLower(serv.Name)
 	}
 
 	pod, err := h.k8sClient.CoreV1().Pods(h.Config.KubernetesNamespace).Create(&podSchema)

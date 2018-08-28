@@ -118,9 +118,7 @@ func UpdateJob(db gorp.SqlExecutor, job *sdk.Job, userID int64) error {
 		return sdk.ErrForbidden
 	}
 
-	query := `UPDATE pipeline_action set action_id=$1, pipeline_stage_id=$2, enabled=$4  WHERE id=$3`
-	_, err = db.Exec(query, job.Action.ID, job.PipelineStageID, job.PipelineActionID, job.Enabled)
-	if err != nil {
+	if err := UpdatePipelineAction(db, *job); err != nil {
 		return err
 	}
 	job.Action.Enabled = job.Enabled
@@ -134,10 +132,8 @@ func DeleteJob(db gorp.SqlExecutor, job sdk.Job, userID int64) error {
 
 // UpdatePipelineAction Update an action in a pipeline
 func UpdatePipelineAction(db gorp.SqlExecutor, job sdk.Job) error {
-	query := `UPDATE pipeline_action set action_id=$1, pipeline_stage_id=$2, enabled=$4  WHERE id=$3`
-
-	_, err := db.Exec(query, job.Action.ID, job.PipelineStageID, job.PipelineActionID, job.Enabled)
-	if err != nil {
+	query := `UPDATE pipeline_action set action_id=$1, pipeline_stage_id=$2, enabled=$3 WHERE id=$4`
+	if _, err := db.Exec(query, job.Action.ID, job.PipelineStageID, job.Enabled, job.PipelineActionID); err != nil {
 		return err
 	}
 

@@ -10,11 +10,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func insertEdge(db gorp.SqlExecutor, parentID, childID int64, execOrder int, optional, alwaysExecuted, enabled bool) (int64, error) {
-	query := `INSERT INTO action_edge (parent_id, child_id, exec_order, optional, always_executed, enabled) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+func insertEdge(db gorp.SqlExecutor, parentID, childID int64, execOrder int, stepName string, optional, alwaysExecuted, enabled bool) (int64, error) {
+	query := `INSERT INTO action_edge (parent_id, child_id, exec_order, step_name, optional, always_executed, enabled) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
 
 	var id int64
-	err := db.QueryRow(query, parentID, childID, execOrder, optional, alwaysExecuted, enabled).Scan(&id)
+	err := db.QueryRow(query, parentID, childID, execOrder, stepName, optional, alwaysExecuted, enabled).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -27,7 +27,12 @@ func insertActionChild(db gorp.SqlExecutor, actionID int64, child sdk.Action, ex
 		return fmt.Errorf("insertActionChild: child action has no id")
 	}
 
-	id, err := insertEdge(db, actionID, child.ID, execOrder, child.Optional, child.AlwaysExecuted, child.Enabled)
+	//Useful to not save a step_name if it's the same than the default name (for ascode)
+	if strings.ToLower(child.Name) == strings.ToLower(child.StepName) {
+		child.StepName = ""
+	}
+
+	id, err := insertEdge(db, actionID, child.ID, execOrder, child.StepName, child.Optional, child.AlwaysExecuted, child.Enabled)
 	if err != nil {
 		return err
 	}
@@ -54,9 +59,10 @@ func insertChildActionParameter(db gorp.SqlExecutor, edgeID, parentID, childID i
 					name,
 					type,
 					value,
-					description) VALUES ($1, $2, $3, $4, $5)`
+					description,
+					advanced) VALUES ($1, $2, $3, $4, $5, $6)`
 
-	if _, err := db.Exec(query, edgeID, param.Name, string(param.Type), param.Value, param.Description); err != nil {
+	if _, err := db.Exec(query, edgeID, param.Name, string(param.Type), param.Value, param.Description, param.Advanced); err != nil {
 		return err
 	}
 	return nil
@@ -67,7 +73,7 @@ func loadActionChildren(db gorp.SqlExecutor, actionID int64) ([]sdk.Action, erro
 	var children []sdk.Action
 	var edgeIDs []int64
 	var childrenIDs []int64
-	query := `SELECT id, child_id, exec_order, optional, always_executed, enabled FROM action_edge WHERE parent_id = $1 ORDER BY exec_order ASC`
+	query := `SELECT id, child_id, exec_order, step_name, optional, always_executed, enabled FROM action_edge WHERE parent_id = $1 ORDER BY exec_order ASC`
 
 	rows, err := db.Query(query, actionID)
 	if err != nil {
@@ -77,18 +83,21 @@ func loadActionChildren(db gorp.SqlExecutor, actionID int64) ([]sdk.Action, erro
 
 	var edgeID, childID int64
 	var execOrder int
+	var stepName string
 	var optional, alwaysExecuted, enabled bool
+	var mapStepName = make(map[int64]string)
 	var mapOptional = make(map[int64]bool)
 	var mapAlwaysExecuted = make(map[int64]bool)
 	var mapEnabled = make(map[int64]bool)
 
 	for rows.Next() {
-		err = rows.Scan(&edgeID, &childID, &execOrder, &optional, &alwaysExecuted, &enabled)
+		err = rows.Scan(&edgeID, &childID, &execOrder, &stepName, &optional, &alwaysExecuted, &enabled)
 		if err != nil {
 			return nil, err
 		}
 		edgeIDs = append(edgeIDs, edgeID)
 		childrenIDs = append(childrenIDs, childID)
+		mapStepName[edgeID] = stepName
 		mapOptional[edgeID] = optional
 		mapAlwaysExecuted[edgeID] = alwaysExecuted
 		mapEnabled[edgeID] = enabled
@@ -113,6 +122,7 @@ func loadActionChildren(db gorp.SqlExecutor, actionID int64) ([]sdk.Action, erro
 		// If child action has been modified, new parameters will show
 		// and delete one won't be there anymore
 		replaceChildActionParameters(&children[i], params)
+		children[i].StepName = mapStepName[edgeIDs[i]]
 		// Get optional & always_executed flags
 		children[i].Optional = mapOptional[edgeIDs[i]]
 		children[i].AlwaysExecuted = mapAlwaysExecuted[edgeIDs[i]]
@@ -127,7 +137,7 @@ func loadActionChildren(db gorp.SqlExecutor, actionID int64) ([]sdk.Action, erro
 func loadChildActionParameterValue(db gorp.SqlExecutor, edgeID int64) ([]sdk.Parameter, error) {
 	var params []sdk.Parameter
 
-	query := `SELECT name, type, value, description FROM action_edge_parameter
+	query := `SELECT name, type, value, description, advanced FROM action_edge_parameter
 							WHERE action_edge_id = $1 ORDER BY name`
 	rows, err := db.Query(query, edgeID)
 	if err != nil {
@@ -138,12 +148,14 @@ func loadChildActionParameterValue(db gorp.SqlExecutor, edgeID int64) ([]sdk.Par
 	for rows.Next() {
 		var p sdk.Parameter
 		var pType, val string
-		err = rows.Scan(&p.Name, &pType, &val, &p.Description)
-		if err != nil {
+		var advanced bool
+
+		if err := rows.Scan(&p.Name, &pType, &val, &p.Description, &advanced); err != nil {
 			return nil, err
 		}
 		p.Type = pType
 		p.Value = val
+		p.Advanced = advanced
 
 		params = append(params, p)
 	}
@@ -153,7 +165,6 @@ func loadChildActionParameterValue(db gorp.SqlExecutor, edgeID int64) ([]sdk.Par
 
 // Replace action parameter with value configured by user when he created the child action
 func replaceChildActionParameters(a *sdk.Action, params []sdk.Parameter) {
-
 	// So for each _existing_ parameter in child action
 	for i := range a.Parameters {
 		// search parameter matching the name
@@ -164,7 +175,6 @@ func replaceChildActionParameters(a *sdk.Action, params []sdk.Parameter) {
 			}
 		}
 	}
-
 	// New parameter will have their default value
 }
 

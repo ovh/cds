@@ -10,10 +10,11 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getKeysInEnvironmentHandler() Handler {
+func (api *API) getKeysInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -28,11 +29,11 @@ func (api *API) getKeysInEnvironmentHandler() Handler {
 			return sdk.WrapError(errK, "getKeysInEnvironmentHandler> Cannot load environment keys")
 		}
 
-		return WriteJSON(w, env.Keys, http.StatusOK)
+		return service.WriteJSON(w, env.Keys, http.StatusOK)
 	}
 }
 
-func (api *API) deleteKeyInEnvironmentHandler() Handler {
+func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -65,11 +66,11 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentKeyDelete(key, *env, envKey, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) addKeyInEnvironmentHandler() Handler {
+func (api *API) addKeyInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -129,6 +130,6 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentKeyAdd(key, *env, newKey, getUser(ctx))
 
-		return WriteJSON(w, newKey, http.StatusOK)
+		return service.WriteJSON(w, newKey, http.StatusOK)
 	}
 }

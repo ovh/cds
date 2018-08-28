@@ -14,8 +14,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -37,7 +37,7 @@ type PushOption struct {
 
 // CreateFromRepository a workflow from a repository
 func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, opts sdk.WorkflowRunPostHandlerOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, error) {
-	ctx, end := tracing.Span(ctx, "workflow.CreateFromRepository")
+	ctx, end := observability.Span(ctx, "workflow.CreateFromRepository")
 	defer end()
 
 	ope, err := createOperationRequest(*w, opts)
@@ -53,7 +53,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		}
 	}
 
-	if err := PostRepositoryOperation(db, store, *p, &ope); err != nil {
+	if err := PostRepositoryOperation(ctx, db, store, *p, &ope); err != nil {
 		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to post repository operation")
 	}
 
@@ -74,7 +74,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 }
 
 func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, w *sdk.Workflow, ope sdk.Operation, u *sdk.User, decryptFunc keys.DecryptFunc, hookUUID string) ([]sdk.Message, error) {
-	ctx, end := tracing.Span(ctx, "workflow.extractWorkflow")
+	ctx, end := observability.Span(ctx, "workflow.extractWorkflow")
 	defer end()
 
 	// Read files
@@ -146,7 +146,7 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 		case <-tickTimeout.C:
 			return sdk.WrapError(sdk.ErrRepoOperationTimeout, "pollRepositoryOperation> Timeout analyzing repository")
 		case <-tickPoll.C:
-			if err := GetRepositoryOperation(db, store, ope); err != nil {
+			if err := GetRepositoryOperation(c, db, store, ope); err != nil {
 				return sdk.WrapError(err, "pollRepositoryOperation> Cannot get repository operation status")
 			}
 			switch ope.Status {
@@ -212,7 +212,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 }
 
 // PostRepositoryOperation creates a new repository operation
-func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, prj sdk.Project, ope *sdk.Operation) error {
+func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, prj sdk.Project, ope *sdk.Operation) error {
 	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "PostRepositoryOperation> Unable to found repositories service")
@@ -226,20 +226,20 @@ func PostRepositoryOperation(db gorp.SqlExecutor, cache cache.Store, prj sdk.Pro
 			}
 		}
 	}
-	if _, err := services.DoJSONRequest(srvs, http.MethodPost, "/operations", ope, ope); err != nil {
+	if _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
 		return sdk.WrapError(err, "PostRepositoryOperation> Unable to perform operation")
 	}
 	return nil
 }
 
 // GetRepositoryOperation get repository operation status
-func GetRepositoryOperation(db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
+func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
 	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "GetRepositoryOperation> Unable to found repositories service")
 	}
 
-	if _, err := services.DoJSONRequest(srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
+	if _, err := services.DoJSONRequest(ctx, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
 		return sdk.WrapError(err, "GetRepositoryOperation> Unable to get operation")
 	}
 	return nil

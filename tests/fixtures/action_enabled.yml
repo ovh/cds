@@ -17,6 +17,7 @@ parameters:
     type: string
     description: Tag to identify uploaded artifacts. Default tag value is CDS run
       version number. (Optional)
+    advanced: true
 requirements:
 - binary: bash
 steps:

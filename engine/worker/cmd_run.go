@@ -53,14 +53,16 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		log.Info("auto-update: %t", w.autoUpdate)
 		log.Info("single-use: %t", w.singleUse)
 
-		w.initServer(ctx)
+		httpServerCtx, stopHTTPServer := context.WithCancel(context.Background())
+		w.initServer(httpServerCtx)
 
 		// Gracefully shutdown connections
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 		defer func() {
-			log.Info("Run signal.Stop. My hostname is %s", hostname)
+			log.Info("Run signal.Stop. Hostname: %s", hostname)
 			signal.Stop(c)
+			stopHTTPServer()
 			cancel()
 		}()
 
@@ -74,9 +76,9 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}()
 
-		time.AfterFunc(time.Duration(FlagInt(cmd, flagTTL))*time.Minute, func() {
+		ttl := FlagInt(cmd, flagTTL)
+		time.AfterFunc(time.Duration(ttl)*time.Minute, func() {
 			if w.nbActionsDone == 0 {
-				log.Debug("Suicide")
 				cancel()
 			}
 		})
@@ -95,8 +97,9 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			time.Sleep(2 * time.Second)
 		}
 
-		//Register every 10 seconds if we have nothing to do
+		//Register every 10 seconds
 		registerTick := time.NewTicker(10 * time.Second)
+		refreshTick := time.NewTicker(30 * time.Second)
 
 		updateTick := time.NewTicker(5 * time.Minute)
 
@@ -133,18 +136,20 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		go func(ctx context.Context, exceptID *int64) {
 			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, 0, exceptID); err != nil {
-				log.Error("Queues polling stopped: %v", err)
+				log.Info("Queues polling stopped: %v", err)
 			}
 		}(ctx, &exceptJobID)
 
 		//Definition of the function which must be called to stop the worker
 		var endFunc = func() {
-			log.Info("Enter endFunc")
+			log.Info("Stopping the worker")
 			w.drainLogsAndCloseLogger(ctx)
 			registerTick.Stop()
+			refreshTick.Stop()
 			updateTick.Stop()
 			w.unregister()
 			cancel()
+			stopHTTPServer()
 
 			if FlagBool(cmd, flagForceExit) {
 				log.Info("Exiting worker with force_exit true")
@@ -163,6 +168,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}
 
+		// Errors check loops
 		go func(errs chan error) {
 			for {
 				select {
@@ -175,6 +181,35 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 			}
 		}(errs)
+
+		// Register (heartbeat loop)
+		go func() {
+			var nbErrors int
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case <-refreshTick.C:
+					if err := w.client.WorkerRefresh(); err != nil {
+						log.Error("Heartbeat failed: %v", err)
+						nbErrors++
+						if nbErrors == 5 {
+							errs <- err
+						}
+					}
+					nbErrors = 0
+				case <-registerTick.C:
+					if err := w.doRegister(); err != nil {
+						log.Error("Register failed: %v", err)
+						nbErrors++
+						if nbErrors == 5 {
+							errs <- err
+						}
+					}
+					nbErrors = 0
+				}
+			}
+		}()
 
 		// main loop
 		for {
@@ -207,17 +242,27 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					if canWorkOnAnotherJob {
 						continue
 					}
-				} else {
+				} else if ttl > 0 {
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
-					log.Debug("Unable to run this pipeline build job, requirements not OK, let's continue %d%s", j.ID, t)
+					log.Debug("Unable to run pipeline build job %d, requirements not OK, let's continue %s", j.ID, t)
 					continue
 				}
 
+				var continueTakeJob bool
 				if !w.singleUse {
-					//Continue
 					log.Debug("PipelineBuildJob is done. single_use to false, keep worker alive")
+					continueTakeJob = true
+				}
+				// If the bookedJob has been proceed and the TTL is null the worker has to stop
+				if j.ID != w.bookedPBJobID && ttl == 0 {
+					log.Debug("PipelineBuildJob is done. ttl not null, keep worker alive")
+					continueTakeJob = true
+				}
+
+				if continueTakeJob {
+					//Continue
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
@@ -254,17 +299,29 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 							continue
 						}
 					}
-				} else {
+				} else if ttl > 0 {
+					// If requirements are KO and the ttl > 0, keep alive
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
-					log.Debug("Unable to run this workflow job, requirements not ok, let's continue %d%s", j.ID, t)
+					log.Debug("Unable to run this job %d%s, requirements not ok. let's continue", j.ID, t)
 					continue
 				}
 
-				if !w.singleUse {
+				var continueTakeJob = true
+
+				// Is the worker is "single use": unregister and exit the worker
+				if w.singleUse {
+					continueTakeJob = false
+				}
+
+				// If the TTL is null: unregister and exit the worker
+				if ttl == 0 {
+					continueTakeJob = false
+				}
+
+				if continueTakeJob {
 					//Continue
-					log.Debug("Job is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
@@ -274,8 +331,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				// Unregister from engine
 				log.Info("Job is done. Unregistering...")
 				cancel()
-			case <-registerTick.C:
-				w.doRegister()
 			case <-updateTick.C:
 				w.doUpdate()
 			}
@@ -382,6 +437,7 @@ func (w *currentWorker) doRegister() error {
 			info = fmt.Sprintf(", I was born to work on workflow node job %d", w.bookedWJobID)
 		}
 		log.Info("Registering on CDS engine%s Version:%s", info, sdk.VERSION)
+
 		form := sdk.WorkerRegistrationForm{
 			Name:         w.status.Name,
 			Token:        w.token,
@@ -390,10 +446,9 @@ func (w *currentWorker) doRegister() error {
 			ModelID:      w.model.ID,
 		}
 		if err := w.register(form); err != nil {
-			log.Info("Cannot register: %s", err)
+			log.Error("Cannot register: %s", err)
 			return err
 		}
-		log.Debug("I am registered, with groupID:%d and model:%v", w.groupID, w.model)
 	}
 	return nil
 }

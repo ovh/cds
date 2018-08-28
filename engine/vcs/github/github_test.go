@@ -64,7 +64,7 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	}
 
 	ghConsummer := New(clientID, clientSecret, "", "", "http://localhost", "", "", cache, true, true)
-	cli, err := ghConsummer.GetAuthorizedClient(accessToken, "")
+	cli, err := ghConsummer.GetAuthorizedClient(context.Background(), accessToken, "")
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
 	}
@@ -74,7 +74,7 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 
 func TestClientAuthorizeToken(t *testing.T) {
 	ghConsummer := getNewConsumer(t)
-	token, url, err := ghConsummer.AuthorizeRedirect()
+	token, url, err := ghConsummer.AuthorizeRedirect(context.Background())
 	t.Logf("token: %s", token)
 	t.Logf("url: %s", url)
 	assert.NotEmpty(t, token)
@@ -110,14 +110,14 @@ func TestClientAuthorizeToken(t *testing.T) {
 	assert.NotEmpty(t, code)
 	assert.NotEmpty(t, state)
 
-	accessToken, accessTokenSecret, err := ghConsummer.AuthorizeToken(state, code)
+	accessToken, accessTokenSecret, err := ghConsummer.AuthorizeToken(context.Background(), state, code)
 	assert.NotEmpty(t, accessToken)
 	assert.NotEmpty(t, accessTokenSecret)
 	test.NoError(t, err)
 
 	t.Logf("Token is %s", accessToken)
 
-	ghClient, err := ghConsummer.GetAuthorizedClient(accessToken, accessTokenSecret)
+	ghClient, err := ghConsummer.GetAuthorizedClient(context.Background(), accessToken, accessTokenSecret)
 	test.NoError(t, err)
 	assert.NotNil(t, ghClient)
 }
@@ -131,7 +131,7 @@ func TestRepos(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	repos, err := ghClient.Repos()
+	repos, err := ghClient.Repos(context.Background())
 	test.NoError(t, err)
 	assert.NotEmpty(t, repos)
 }
@@ -140,7 +140,7 @@ func TestRepoByFullname(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	repo, err := ghClient.RepoByFullname("ovh/cds")
+	repo, err := ghClient.RepoByFullname(context.Background(), "ovh/cds")
 	test.NoError(t, err)
 	assert.NotNil(t, repo)
 }
@@ -149,7 +149,7 @@ func TestBranches(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	branches, err := ghClient.Branches("ovh/cds")
+	branches, err := ghClient.Branches(context.Background(), "ovh/cds")
 	test.NoError(t, err)
 	assert.NotEmpty(t, branches)
 }
@@ -158,7 +158,7 @@ func TestBranch(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	branch, err := ghClient.Branch("ovh/cds", "master")
+	branch, err := ghClient.Branch(context.Background(), "ovh/cds", "master")
 	test.NoError(t, err)
 	assert.NotNil(t, branch)
 }
@@ -167,7 +167,7 @@ func TestCommits(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	commits, err := ghClient.Commits("ovh/cds", "master", "", "")
+	commits, err := ghClient.Commits(context.Background(), "ovh/cds", "master", "", "")
 	test.NoError(t, err)
 	assert.NotNil(t, commits)
 }

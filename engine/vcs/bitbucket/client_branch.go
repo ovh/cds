@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -8,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (b *bitbucketClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
+func (b *bitbucketClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
 	branches := []sdk.VCSBranch{}
 
 	t := strings.Split(fullname, "/")
@@ -28,7 +29,7 @@ func (b *bitbucketClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 		}
 
 		var response BranchResponse
-		if err := b.do("GET", "core", path, params, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> branches> Unable to get branches %s", path)
 		}
 
@@ -52,7 +53,7 @@ func (b *bitbucketClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 
 	return branches, nil
 }
-func (b *bitbucketClient) Branch(fullname string, filter string) (*sdk.VCSBranch, error) {
+func (b *bitbucketClient) Branch(ctx context.Context, fullname string, filter string) (*sdk.VCSBranch, error) {
 	t := strings.Split(fullname, "/")
 	if len(t) != 2 {
 		return nil, sdk.ErrRepoNotFound
@@ -61,7 +62,7 @@ func (b *bitbucketClient) Branch(fullname string, filter string) (*sdk.VCSBranch
 	branches := BranchResponse{}
 	path := fmt.Sprintf("/projects/%s/repos/%s/branches?filterText=%s", t[0], t[1], url.QueryEscape(filter))
 
-	if err := b.do("GET", "core", path, nil, nil, &branches, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &branches, nil); err != nil {
 		return nil, sdk.WrapError(err, "vcs> bitbucket> branches> Unable to get branch %s %s", filter, path)
 	}
 

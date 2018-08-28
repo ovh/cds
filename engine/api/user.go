@@ -16,18 +16,19 @@ import (
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // DeleteUserHandler removes a user
-func (api *API) deleteUserHandler() Handler {
+func (api *API) deleteUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
 		if !getUser(ctx).Admin && username != getUser(ctx).Username {
-			return WriteJSON(w, nil, http.StatusForbidden)
+			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		u, errLoad := user.LoadUserWithoutAuth(api.mustDB(), username)
@@ -54,13 +55,13 @@ func (api *API) deleteUserHandler() Handler {
 }
 
 // GetUserHandler returns a specific user's information
-func (api *API) getUserHandler() Handler {
+func (api *API) getUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
 		if !getUser(ctx).Admin && username != getUser(ctx).Username {
-			return WriteJSON(w, nil, http.StatusForbidden)
+			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		u, err := user.LoadUserWithoutAuth(api.mustDB(), username)
@@ -72,18 +73,18 @@ func (api *API) getUserHandler() Handler {
 			return sdk.WrapError(err, "getUserHandler: Cannot get user group and project from db")
 		}
 
-		return WriteJSON(w, u, http.StatusOK)
+		return service.WriteJSON(w, u, http.StatusOK)
 	}
 }
 
 // getUserGroupsHandler returns groups of the user
-func (api *API) getUserGroupsHandler() Handler {
+func (api *API) getUserGroupsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
 		if !getUser(ctx).Admin && username != getUser(ctx).Username {
-			return WriteJSON(w, nil, http.StatusForbidden)
+			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		u, errl := user.LoadUserWithoutAuth(api.mustDB(), username)
@@ -108,18 +109,18 @@ func (api *API) getUserGroupsHandler() Handler {
 		res["groups"] = groups
 		res["groups_admin"] = groupsAdmin
 
-		return WriteJSON(w, res, http.StatusOK)
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
 // UpdateUserHandler modifies user informations
-func (api *API) updateUserHandler() Handler {
+func (api *API) updateUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
 		if !getUser(ctx).Admin && username != getUser(ctx).Username {
-			return WriteJSON(w, nil, http.StatusForbidden)
+			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
 		userDB, errload := user.LoadUserWithoutAuth(api.mustDB(), username)
@@ -142,33 +143,33 @@ func (api *API) updateUserHandler() Handler {
 			return sdk.WrapError(err, "updateUserHandler: Cannot update user table")
 		}
 
-		return WriteJSON(w, userBody, http.StatusOK)
+		return service.WriteJSON(w, userBody, http.StatusOK)
 	}
 }
 
 // GetUsers fetches all users from databases
-func (api *API) getUsersHandler() Handler {
+func (api *API) getUsersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		users, err := user.LoadUsers(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "GetUsers: Cannot load user from db")
 		}
-		return WriteJSON(w, users, http.StatusOK)
+		return service.WriteJSON(w, users, http.StatusOK)
 	}
 }
 
-func (api *API) getTimelineFilterHandler() Handler {
+func (api *API) getTimelineFilterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := getUser(ctx)
 		filter, err := user.LoadTimelineFilter(api.mustDB(), u)
 		if err != nil {
 			return sdk.WrapError(err, "getTimelineFilterHandler")
 		}
-		return WriteJSON(w, filter, http.StatusOK)
+		return service.WriteJSON(w, filter, http.StatusOK)
 	}
 }
 
-func (api *API) postTimelineFilterHandler() Handler {
+func (api *API) postTimelineFilterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := getUser(ctx)
 		var timelineFilter sdk.TimelineFilter
@@ -195,7 +196,7 @@ func (api *API) postTimelineFilterHandler() Handler {
 }
 
 // postUserFavoriteHandler post favorite user for workflow or project
-func (api *API) postUserFavoriteHandler() Handler {
+func (api *API) postUserFavoriteHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		params := sdk.FavoriteParams{}
 		if err := UnmarshalBody(r, &params); err != nil {
@@ -219,14 +220,14 @@ func (api *API) postUserFavoriteHandler() Handler {
 			}
 			wf.Favorite = !wf.Favorite
 
-			return WriteJSON(w, wf, http.StatusOK)
+			return service.WriteJSON(w, wf, http.StatusOK)
 		case "project":
 			if err := project.UpdateFavorite(api.mustDB(), p.ID, getUser(ctx), !p.Favorite); err != nil {
 				return sdk.WrapError(err, "postUserFavoriteHandler> Cannot change workflow %s favorite", p.Key)
 			}
 			p.Favorite = !p.Favorite
 
-			return WriteJSON(w, p, http.StatusOK)
+			return service.WriteJSON(w, p, http.StatusOK)
 		}
 
 		return sdk.ErrInvalidFavoriteType
@@ -234,7 +235,7 @@ func (api *API) postUserFavoriteHandler() Handler {
 }
 
 // AddUser creates a new user and generate verification email
-func (api *API) addUserHandler() Handler {
+func (api *API) addUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//returns forbidden if LDAP mode is activated
 		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
@@ -306,11 +307,11 @@ func (api *API) addUserHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, u, http.StatusCreated)
+		return service.WriteJSON(w, u, http.StatusCreated)
 	}
 }
 
-func (api *API) resetUserHandler() Handler {
+func (api *API) resetUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//returns forbidden if LDAP mode is activated
 		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
@@ -346,12 +347,12 @@ func (api *API) resetUserHandler() Handler {
 
 		go mail.SendMailVerifyToken(userDb.Email, userDb.Username, tokenVerify, resetUserRequest.Callback)
 
-		return WriteJSON(w, userDb, http.StatusCreated)
+		return service.WriteJSON(w, userDb, http.StatusCreated)
 	}
 }
 
 //AuthModeHandler returns the auth mode : local ok ldap
-func (api *API) authModeHandler() Handler {
+func (api *API) authModeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		mode := "local"
 		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
@@ -360,12 +361,12 @@ func (api *API) authModeHandler() Handler {
 		res := map[string]string{
 			"auth_mode": mode,
 		}
-		return WriteJSON(w, res, http.StatusOK)
+		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
 
 // ConfirmUser verify token send via email and mark user as verified
-func (api *API) confirmUserHandler() Handler {
+func (api *API) confirmUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//returns forbidden if LDAP mode is activated
 		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
@@ -431,12 +432,12 @@ func (api *API) confirmUserHandler() Handler {
 		response.Password = password
 
 		response.User.Auth = sdk.Auth{}
-		return WriteJSON(w, response, http.StatusOK)
+		return service.WriteJSON(w, response, http.StatusOK)
 	}
 }
 
 // LoginUser take user credentials and creates a auth token
-func (api *API) loginUserHandler() Handler {
+func (api *API) loginUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		loginUserRequest := sdk.UserLoginRequest{}
 		if err := UnmarshalBody(r, &loginUserRequest); err != nil {
@@ -498,11 +499,11 @@ func (api *API) loginUserHandler() Handler {
 
 		response.User.Auth = sdk.Auth{}
 		response.User.Permissions = sdk.UserPermissions{}
-		return WriteJSON(w, response, http.StatusOK)
+		return service.WriteJSON(w, response, http.StatusOK)
 	}
 }
 
-func (api *API) importUsersHandler() Handler {
+func (api *API) importUsersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var users = []sdk.User{}
 		if err := UnmarshalBody(r, &users); err != nil {
@@ -537,22 +538,22 @@ func (api *API) importUsersHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, errors, http.StatusOK)
+		return service.WriteJSON(w, errors, http.StatusOK)
 	}
 }
 
-func (api *API) getUserTokenListHandler() Handler {
+func (api *API) getUserTokenListHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		tokens, err := token.LoadTokens(api.mustDB(), getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getUserTokenListHandler> cannot load group for user %s", getUser(ctx).Username)
 		}
 
-		return WriteJSON(w, tokens, http.StatusOK)
+		return service.WriteJSON(w, tokens, http.StatusOK)
 	}
 }
 
-func (api *API) getUserTokenHandler() Handler {
+func (api *API) getUserTokenHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		tok, err := token.LoadTokenWithGroup(api.mustDB(), vars["token"])
@@ -564,6 +565,6 @@ func (api *API) getUserTokenHandler() Handler {
 		}
 		tok.Token = ""
 
-		return WriteJSON(w, tok, http.StatusOK)
+		return service.WriteJSON(w, tok, http.StatusOK)
 	}
 }

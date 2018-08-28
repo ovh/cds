@@ -2,6 +2,7 @@ package github
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,7 +13,7 @@ import (
 )
 
 // Release Create a release Github
-func (g *githubClient) Release(fullname string, tagName string, title string, releaseNote string) (*sdk.VCSRelease, error) {
+func (g *githubClient) Release(ctx context.Context, fullname string, tagName string, title string, releaseNote string) (*sdk.VCSRelease, error) {
 	var url = "/repos/" + fullname + "/releases"
 
 	req := ReleaseRequest{
@@ -55,7 +56,7 @@ func (g *githubClient) Release(fullname string, tagName string, title string, re
 }
 
 // UploadReleaseFile Attach a file into the release
-func (g *githubClient) UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
+func (g *githubClient) UploadReleaseFile(ctx context.Context, repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
 	var url = strings.Split(uploadURL, "{")[0] + "?name=" + artifactName
 	res, err := g.post(url, "application/octet-stream", r, &postOptions{skipDefaultBaseURL: true})
 	if err != nil {

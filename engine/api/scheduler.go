@@ -15,11 +15,12 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/workflowv0"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getSchedulerApplicationPipelineHandler() Handler {
+func (api *API) getSchedulerApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -74,11 +75,11 @@ func (api *API) getSchedulerApplicationPipelineHandler() Handler {
 			}
 		}
 
-		return WriteJSON(w, schedulers, http.StatusOK)
+		return service.WriteJSON(w, schedulers, http.StatusOK)
 	}
 }
 
-func (api *API) addSchedulerApplicationPipelineHandler() Handler {
+func (api *API) addSchedulerApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -210,11 +211,11 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 			return sdk.WrapError(errW, "addSchedulerApplicationPipelineHandler> cannot reload workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusCreated)
+		return service.WriteJSON(w, app, http.StatusCreated)
 	}
 }
 
-func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
+func (api *API) updateSchedulerApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -300,11 +301,11 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 			return sdk.WrapError(errW, "updateSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
+func (api *API) deleteSchedulerApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -349,6 +350,6 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
 			return sdk.WrapError(errW, "deleteSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }

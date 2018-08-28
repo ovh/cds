@@ -8,10 +8,6 @@ chapter = true
 
 This action clones a repository into a new directory.
 
-This will retrieve a shallow git clone (`depth==1`).
-
-You may want to use a privateKey to clone from an SSH repository. To do so, you will need to add a project or an application variable of type `key`. `{{.cds.app.a-key.pub}}`
-
 ## Parameters
 
 * url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository.
@@ -22,22 +18,34 @@ You may want to use a privateKey to clone from an SSH repository. To do so, you 
 * commit - optional - the current branch head (HEAD) to the commit
 * directory - optional - the name of a directory to clone into.
 
+Advanced parameters:
+
+* depth - optional - 50 by default. You can remove --depth with the value 'false'
+* submodules - true by default, you can set false to avoid this.
+* tag - optional - empty by default, you can set to `{{.git.tag}}` to clone a tag from your repository. In this way, in your workflow payload you can add a key in your JSON like `"git.tag": "0.2"`.
+
+Notes:
+
+By default, depth is 50 and git clone with `--single-branch` automatically.
+So, if you want to do in a step script `git diff anotherBranch`, you have to set depth to 'false'.
+
+If there is no user && password && sshkey setted in action GitClone, CDS checks on Application VCS Strategy if some auth parameters can be used.
+
 
 ### Example
 
-* Add repository manager on your application. We can use CDS Variables `{{.git...}}` in Job Configuration
+* Add repository manager on your application.
 
 ![img](/images/workflows.pipelines.actions.builtin.gitclone-repo-manager.png)
 
 * Job Configuration.
 
-![img](/images/workflows.pipelines.actions.builtin.gitclone-job.png)
+![img](/images/workflows.pipelines.actions.builtin.gitclone-edit-job.png)
 
+* Launch workflow, you can select the git branch.
 
-* Launch pipeline, check logs
+![img](/images/workflows.pipelines.actions.builtin.gitclone-run-workflow.png)
 
-![img](/images/workflows.pipelines.actions.builtin.gitclone-logs.png)
+* View logs on job
 
-* View artifact
-
-![img](/images/workflows.pipelines.actions.builtin.artifact-upload-view-artifact.png)
+![img](/images/workflows.pipelines.actions.builtin.gitclone-run-job.png)

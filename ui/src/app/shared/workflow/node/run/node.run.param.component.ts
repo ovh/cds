@@ -34,7 +34,6 @@ export class WorkflowNodeRunParamComponent {
     @ViewChild('textareaCodeMirror')
     codemirror: CodemirrorComponent;
 
-    @Input() canResync = false;
     @Input() workflowRun: WorkflowRun;
     @Input() nodeRun: WorkflowNodeRun;
     @Input() project: Project;
@@ -48,7 +47,7 @@ export class WorkflowNodeRunParamComponent {
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
                 if ((!this.nodeRun || !this.nodeRun.payload ) &&
-                    (!this.workflowRun || !this.workflowRun.nodes[this.workflowRun.workflow.root.id])) {
+                    (!this.workflowRun  || !this.workflowRun.nodes || !this.workflowRun.nodes[this.workflowRun.workflow.root.id])) {
                         this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
                 }
                 this.linkedToRepo = this._nodeToRun.context.application != null
@@ -70,6 +69,9 @@ export class WorkflowNodeRunParamComponent {
     codeMirrorConfig: {};
     commits: Commit[] = [];
     branches: string[] = [];
+    remotes: string[] = [];
+    tags: string[] = [];
+    payloadRemote: string;
     payloadString: string;
     invalidJSON: boolean;
     isSync = false;
@@ -98,7 +100,7 @@ export class WorkflowNodeRunParamComponent {
         if (this.nodeRun) { // relaunch a pipeline
             num = this.nodeRun.num;
             nodeRunID = this.nodeRun.id;
-        } else if (this.workflowRun) {
+        } else if (this.workflowRun && this.workflowRun.nodes) {
             let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
             num = rootNodeRun.num;
             nodeRunID = rootNodeRun.id;
@@ -171,9 +173,7 @@ export class WorkflowNodeRunParamComponent {
         if (this.linkedToRepo) {
             if (this.nodeToRun.context.application.repository_fullname) {
                 this.loadingBranches = true;
-                this._appWorkflowService.getBranches(this.project.key, this.nodeToRun.context.application.name)
-                    .pipe(finalize(() => this.loadingBranches = false))
-                    .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
+                this.refreshVCSInfos();
             }
 
             if (this.num == null) {
@@ -196,7 +196,7 @@ export class WorkflowNodeRunParamComponent {
         if (!WorkflowNode.isLinkedToRepo(this.nodeToRun)) {
             return;
         }
-        let branch, hash;
+        let branch, hash, repository;
         let currentContext = this.getCurrentPayload();
 
         if (change && this.payloadString) {
@@ -210,6 +210,7 @@ export class WorkflowNodeRunParamComponent {
         }
 
         if (currentContext) {
+          repository = currentContext['git.repository'];
           branch = currentContext['git.branch'];
           hash = currentContext['git.hash'];
         }
@@ -225,7 +226,7 @@ export class WorkflowNodeRunParamComponent {
         this._firstCommitLoad = true;
         this._previousBranch = branch;
         this.loadingCommits = true;
-        this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch, hash)
+        this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch, hash, repository)
           .pipe(
             debounceTime(500),
             finalize(() => this.loadingCommits = false)
@@ -237,7 +238,7 @@ export class WorkflowNodeRunParamComponent {
         let currentContext = {};
         if (this.nodeRun && this.nodeRun.payload) {
             currentContext = this.nodeRun.payload;
-        } else if (this.workflowRun) {
+        } else if (this.workflowRun && this.workflowRun.nodes) {
             let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id];
             if (rootNodeRun) {
                 currentContext = rootNodeRun[0].payload;
@@ -274,6 +275,9 @@ export class WorkflowNodeRunParamComponent {
 
     private updateDefaultPipelineParameters() {
         let pipToRun = Workflow.getPipeline(this.workflow, this._nodeToRun);
+        if (!pipToRun) {
+          return;
+        }
 
         if (this._nodeToRun.context) {
             this._nodeToRun.context.default_pipeline_parameters =
@@ -332,6 +336,22 @@ export class WorkflowNodeRunParamComponent {
         });
     }
 
+    refreshVCSInfos(remote?: string) {
+        this._appWorkflowService.getVCSInfos(this.project.key, this.nodeToRun.context.application.name, remote)
+            .pipe(finalize(() => this.loadingBranches = false))
+            .subscribe((vcsInfos) => {
+                if (vcsInfos.branches) {
+                    this.branches = vcsInfos.branches.map((br) => '"' + br.display_id + '"');
+                }
+                if (vcsInfos.remotes) {
+                    this.remotes = vcsInfos.remotes.map((rem) => '"' + rem.fullname + '"');
+                }
+                if (vcsInfos.tags) {
+                    this.tags = vcsInfos.tags.map((tag) => '"' + tag.tag + '"');
+                }
+            });
+    }
+
     changeCodeMirror(eventRoot: Event): void {
         let num = this.num;
         if (!this.codemirror || !this.codemirror.instance) {
@@ -351,6 +371,28 @@ export class WorkflowNodeRunParamComponent {
 
         if (!this._completionListener) {
             this._completionListener = this.codemirror.instance.on('endCompletion', (cm, event) => {
+                if (!WorkflowNode.isLinkedToRepo(this.nodeToRun)) {
+                    return;
+                }
+                let currentContext = this.getCurrentPayload();
+                if (this.payloadString) {
+                    try {
+                        currentContext = JSON.parse(this.payloadString);
+                        this.invalidJSON = false;
+                    } catch (e) {
+                        this.invalidJSON = true;
+                        return;
+                    }
+                }
+                let change = false;
+                if (currentContext) {
+                    change = currentContext['git.repository'] !== this.payloadRemote;
+                    this.payloadRemote = currentContext['git.repository'];
+                }
+                if (change) {
+                    this.refreshVCSInfos(this.payloadRemote);
+                }
+
                 this.getCommits(num || this.lastNum, true);
             });
         }
@@ -360,7 +402,11 @@ export class WorkflowNodeRunParamComponent {
         CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
             completeSingle: true,
             closeCharacters: / /,
-            payloadCompletionList: this.branches,
+            payloadCompletionList: {
+              branches: this.branches,
+              tags: this.tags,
+              repositories: this.remotes,
+            },
             specialChars: ''
         });
     }

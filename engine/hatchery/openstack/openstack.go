@@ -74,6 +74,7 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.Common.Common.ServiceName = "cds-hatchery-openstack"
 
 	return nil
 }
@@ -83,6 +84,7 @@ func (h *HatcheryOpenstack) Status() sdk.MonitoringStatus {
 	m := h.CommonMonitoring()
 	if h.IsInitialized() {
 		m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Workers", Value: fmt.Sprintf("%d/%d", len(h.WorkersStarted()), h.Config.Provision.MaxWorker), Status: sdk.MonitoringStatusOK})
+
 	}
 	return m
 }
@@ -186,19 +188,14 @@ func (h *HatcheryOpenstack) main() {
 
 	for {
 		select {
-
 		case <-serverListTick:
 			h.updateServerList()
-
 		case <-killAwolServersTick:
 			h.killAwolServers()
-
 		case <-killErrorServersTick:
 			h.killErrorServers()
-
 		case <-killDisabledWorkersTick:
 			h.killDisabledWorkers()
-
 		}
 	}
 }
@@ -220,7 +217,7 @@ func (h *HatcheryOpenstack) updateServerList() {
 	for k, s := range status {
 		st += fmt.Sprintf("%d %s ", s, k)
 	}
-	log.Info("Got %d servers %s", total, st)
+	log.Debug("Got %d servers %s", total, st)
 	if total > 0 {
 		log.Debug(out)
 	}

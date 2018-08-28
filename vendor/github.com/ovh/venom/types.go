@@ -5,9 +5,9 @@ import "encoding/xml"
 const (
 	// DetailsLow prints only summary results
 	DetailsLow = "low"
-	// DetailsMedium prints progress bar and summary
+	// DetailsMedium summary with lines in failure
 	DetailsMedium = "medium"
-	// DetailsHigh prints progress bar and details
+	// DetailsHigh all
 	DetailsHigh = "high"
 )
 
@@ -96,6 +96,8 @@ type TestSuite struct {
 	Hostname   string                 `xml:"hostname,attr,omitempty" json:"hostname" yaml:"-"`
 	ID         string                 `xml:"id,attr,omitempty" json:"id" yaml:"-"`
 	Name       string                 `xml:"name,attr" json:"name" yaml:"name"`
+	Filename   string                 `xml:"-" json:"-" yaml:"-"`
+	ShortName  string                 `xml:"-" json:"-" yaml:"-"`
 	Package    string                 `xml:"package,attr,omitempty" json:"package" yaml:"-"`
 	Properties []Property             `xml:"-" json:"properties" yaml:"-"`
 	Skipped    int                    `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
@@ -142,9 +144,10 @@ type Skipped struct {
 
 // Failure contains data related to a failed test.
 type Failure struct {
-	Value   string `xml:",cdata" json:"value" yaml:"value,omitempty"`
-	Type    string `xml:"type,attr,omitempty" json:"type" yaml:"type,omitempty"`
-	Message string `xml:"message,attr,omitempty" json:"message" yaml:"message,omitempty"`
+	Value   string         `xml:",cdata" json:"value" yaml:"value,omitempty"`
+	Result  ExecutorResult `xml:"-" json:"-" yaml:"-"`
+	Type    string         `xml:"type,attr,omitempty" json:"type" yaml:"type,omitempty"`
+	Message string         `xml:"message,attr,omitempty" json:"message" yaml:"message,omitempty"`
 }
 
 // InnerResult is used by TestCase

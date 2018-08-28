@@ -439,6 +439,8 @@
   "parameter_type": "Type",
   "parameter_updated": "Parameter updated",
   "parameter_value": "Value",
+  "parameter_advanced": "Advanced parameter",
+  "parameters_advanced": "Advanced parameters",
 
   "permission_added": "Permission added",
   "permission_deleted": "Permission deleted",
@@ -544,7 +546,6 @@
   "project_env_permission_form_title": "Add permissions on environments",
   "project_key": "Project unique key",
   "project_key_error": "Project unique key is mandatory and must be in upper case",
-  "project_workflow_migration_title": "Workflow migration progress",
   "project_name": "Project name",
   "project_name_error": "project name is mandatory",
   "project_no": "There is no project",

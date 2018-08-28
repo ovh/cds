@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 
 // Branches returns list of branches for a repo
 // https://developer.github.com/v3/repos/branches/#list-branches
-func (g *githubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
+func (g *githubClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
 	var branches = []Branch{}
 	var nextPage = "/repos/" + fullname + "/branches"
 
@@ -91,7 +92,7 @@ func (g *githubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 }
 
 // Branch returns only detail of a branch
-func (g *githubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error) {
+func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (*sdk.VCSBranch, error) {
 	cacheBranchKey := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+theBranch)
 	repo, err := g.repoByFullname(fullname)
 	if err != nil {

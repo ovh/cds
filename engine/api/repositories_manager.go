@@ -22,21 +22,22 @@ import (
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getRepositoriesManagerHandler() Handler {
+func (api *API) getRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		rms, err := repositoriesmanager.LoadAll(api.mustDB(), api.Cache)
+		rms, err := repositoriesmanager.LoadAll(ctx, api.mustDB(), api.Cache)
 		if err != nil {
 			return sdk.WrapError(err, "getRepositoriesManagerHandler> error")
 		}
-		return WriteJSON(w, rms, http.StatusOK)
+		return service.WriteJSON(w, rms, http.StatusOK)
 	}
 }
 
-func (api *API) getRepositoriesManagerForProjectHandler() Handler {
+func (api *API) getRepositoriesManagerForProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -46,11 +47,11 @@ func (api *API) getRepositoriesManagerForProjectHandler() Handler {
 			return errproj
 		}
 
-		return WriteJSON(w, proj.VCSServers, http.StatusOK)
+		return service.WriteJSON(w, proj.VCSServers, http.StatusOK)
 	}
 }
 
-func (api *API) repositoriesManagerAuthorizeHandler() Handler {
+func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -70,7 +71,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() Handler {
 			return sdk.WrapError(errVcsServer, "repositoriesManagerAuthorize> Cannot start transaction")
 		}
 
-		token, url, err := vcsServer.AuthorizeRedirect()
+		token, url, err := vcsServer.AuthorizeRedirect(ctx)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerAuth, "repositoriesManagerAuthorize> error with AuthorizeRedirect %s", err)
 		}
@@ -86,11 +87,11 @@ func (api *API) repositoriesManagerAuthorizeHandler() Handler {
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
-		return WriteJSON(w, data, http.StatusOK)
+		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }
 
-func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
+func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		cberr := r.FormValue("error")
 		errDescription := r.FormValue("error_description")
@@ -128,7 +129,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
 
-		token, secret, err := vcsServer.AuthorizeToken(state, code)
+		token, secret, err := vcsServer.AuthorizeToken(ctx, state, code)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
 
@@ -171,7 +172,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 	}
 }
 
-func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
+func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -210,7 +211,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		token, secret, err := vcsServer.AuthorizeToken(token, verifier)
+		token, secret, err := vcsServer.AuthorizeToken(ctx, token, verifier)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
 		}
@@ -235,11 +236,11 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 
 		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
 
-		return WriteJSON(w, proj, http.StatusOK)
+		return service.WriteJSON(w, proj, http.StatusOK)
 	}
 }
 
-func (api *API) deleteRepositoriesManagerHandler() Handler {
+func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -272,11 +273,11 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 
 		event.PublishDeleteVCSServer(p, vcsServer.Name, getUser(ctx))
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) getReposFromRepositoriesManagerHandler() Handler {
+func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -298,7 +299,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s; ok", vcsServer.Name)
 
 		var errAuthClient error
-		client, errAuthClient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		client, errAuthClient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 		if errAuthClient != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s: %v", projectKey, rmName, errAuthClient)
 		}
@@ -311,18 +312,18 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 		var repos []sdk.VCSRepo
 		if !api.Cache.Get(cacheKey, &repos) || len(repos) == 0 {
 			var errRepos error
-			repos, errRepos = client.Repos()
+			repos, errRepos = client.Repos(ctx)
 			api.Cache.SetWithTTL(cacheKey, repos, 0)
 			if errRepos != nil {
 				return sdk.WrapError(errRepos, "getReposFromRepositoriesManagerHandler> Cannot get repos: %v", errRepos)
 			}
 		}
 
-		return WriteJSON(w, repos, http.StatusOK)
+		return service.WriteJSON(w, repos, http.StatusOK)
 	}
 }
 
-func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
+func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -344,22 +345,22 @@ func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
 
 		log.Info("getRepoFromRepositoriesManagerHandler> Loading repository on %s", vcsServer.Name)
 
-		repo, err := client.RepoByFullname(repoName)
+		repo, err := client.RepoByFullname(ctx, repoName)
 		if err != nil {
 			return sdk.WrapError(err, "getRepoFromRepositoriesManagerHandler> Cannot get repos")
 		}
-		return WriteJSON(w, repo, http.StatusOK)
+		return service.WriteJSON(w, repo, http.StatusOK)
 	}
 }
 
-func (api *API) attachRepositoriesManagerHandler() Handler {
+func (api *API) attachRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -381,12 +382,12 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 		}
 
 		//Get an authorized Client
-		client, err := repositoriesmanager.AuthorizedClient(db, api.Cache, rm)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, rm)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
 
-		if _, err := client.RepoByFullname(fullname); err != nil {
+		if _, err := client.RepoByFullname(ctx, fullname); err != nil {
 			return sdk.WrapError(sdk.ErrRepoNotFound, "attachRepositoriesManager> Cannot get repo %s: %s", fullname, err)
 		}
 
@@ -441,7 +442,7 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 					continue
 				}
 
-				defaultPayload, errPay := workflow.DefaultPayload(db, api.Cache, proj, u, &wf)
+				defaultPayload, errPay := workflow.DefaultPayload(ctx, db, api.Cache, proj, u, &wf)
 				if errPay != nil {
 					return sdk.WrapError(errPay, "attachRepositoriesManager> Cannot get defaultPayload")
 				}
@@ -454,11 +455,11 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 
 		event.PublishApplicationRepositoryAdd(projectKey, *app, u)
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) detachRepositoriesManagerHandler() Handler {
+func (api *API) detachRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -479,7 +480,7 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 		}
 
 		//Get an authorized Client
-		client, err := repositoriesmanager.AuthorizedClient(db, api.Cache, rm)
+		client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, rm)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
@@ -507,7 +508,7 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 				Workflow: false,
 			}
 
-			if err := client.DeleteHook(rm.Name, vcsHook); err != nil {
+			if err := client.DeleteHook(ctx, rm.Name, vcsHook); err != nil {
 				log.Warning("detachRepositoriesManager> Cannot delete hook on stash: %s", err)
 				//do no return, try to delete the hook in database
 			}
@@ -567,7 +568,7 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 						return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete hooks")
 					}
 				}
-				if err := workflow.DeleteHookConfiguration(txDel, api.Cache, proj, hookToDelete); err != nil {
+				if err := workflow.DeleteHookConfiguration(ctx, txDel, api.Cache, proj, hookToDelete); err != nil {
 					return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete hooks vcs configuration")
 				}
 
@@ -579,11 +580,11 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 
 		event.PublishApplicationRepositoryDelete(projectKey, appName, app.VCSServer, app.RepositoryFullname, u)
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) addHookOnRepositoriesManagerHandler() Handler {
+func (api *API) addHookOnRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -649,11 +650,11 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(errW, "addHookOnRepositoriesManagerHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusCreated)
+		return service.WriteJSON(w, app, http.StatusCreated)
 	}
 }
 
-func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
+func (api *API) deleteHookOnRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -705,7 +706,7 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 			return sdk.ErrNoReposManager
 		}
 
-		client, errauth := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
+		client, errauth := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, rm)
 		if errauth != nil {
 			return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, app.VCSServer)
 		}
@@ -726,10 +727,10 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 			Workflow: false,
 		}
 
-		if errdelete := client.DeleteHook(app.RepositoryFullname, vcsHook); errdelete != nil {
+		if errdelete := client.DeleteHook(ctx, app.RepositoryFullname, vcsHook); errdelete != nil {
 			return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }

@@ -10,7 +10,7 @@ import (
 type Worker struct {
 	ID            string    `json:"id" cli:"-"`
 	Name          string    `json:"name" cli:"name,key"`
-	LastBeat      time.Time `json:"-" cli:"-"`
+	LastBeat      time.Time `json:"lastbeat" cli:"lastbeat"`
 	GroupID       int64     `json:"group_id" cli:"-"`
 	ModelID       int64     `json:"model_id" cli:"-"`
 	ActionBuildID int64     `json:"action_build_id" cli:"-"`
@@ -188,4 +188,20 @@ func TemplateEnvs(args WorkerArgs, envs map[string]string) (map[string]string, e
 	}
 
 	return envs, nil
+}
+
+// PipelineBuildJobInfo is returned to worker in answer to takePipelineBuildJobHandler
+type PipelineBuildJobInfo struct {
+	PipelineBuildJob PipelineBuildJob
+	Secrets          []Variable
+	PipelineID       int64
+	BuildNumber      int64
+}
+
+// WorkflowNodeJobRunData is returned to worker in answer to postTakeWorkflowJobHandler
+type WorkflowNodeJobRunData struct {
+	NodeJobRun WorkflowNodeJobRun
+	Secrets    []Variable
+	Number     int64
+	SubNumber  int64
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -63,7 +63,7 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo str
 // LoadAll returns all projects
 func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	var end func()
-	_, end = tracing.Span(ctx, "project.LoadAll")
+	_, end = observability.Span(ctx, "project.LoadAll")
 	defer end()
 
 	var query string
@@ -349,17 +349,19 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 		return nil, sdk.WrapError(err, "loadprojects> db.Select")
 	}
 
-	projs := make([]sdk.Project, len(res))
+	projs := make([]sdk.Project, 0, len(res))
 	for i := range res {
 		p := &res[i]
 		if err := p.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "loadprojects> PostGet error")
+			log.Error("loadprojects> PostGet error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
+			continue
 		}
 		proj, err := unwrap(db, store, p, u, opts)
 		if err != nil {
-			return nil, sdk.WrapError(err, "loadprojects> unwrap error")
+			log.Error("loadprojects> unwrap error (ID=%d, Key:%s): %v", p.ID, p.Key, err)
+			continue
 		}
-		projs[i] = *proj
+		projs = append(projs, *proj)
 	}
 
 	return projs, nil
@@ -367,7 +369,7 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 
 func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	var end func()
-	_, end = tracing.Span(ctx, "project.load")
+	_, end = observability.Span(ctx, "project.load")
 	defer end()
 
 	dbProj := &dbProject{}

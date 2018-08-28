@@ -18,22 +18,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// PipelineBuildJobInfo is returned to worker in answer to takePipelineBuildJobHandler
-type PipelineBuildJobInfo struct {
-	PipelineBuildJob sdk.PipelineBuildJob
-	Secrets          []sdk.Variable
-	PipelineID       int64
-	BuildNumber      int64
-}
-
-// WorkflowNodeJobRunInfo is returned to worker in answer to postTakeWorkflowJobHandler
-type WorkflowNodeJobRunInfo struct {
-	NodeJobRun sdk.WorkflowNodeJobRun
-	Secrets    []sdk.Variable
-	Number     int64
-	SubNumber  int64
-}
-
 // ErrNoWorker means the given worker ID is not found
 var ErrNoWorker = fmt.Errorf("cds: no worker found")
 
@@ -175,7 +159,7 @@ func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error)
 	return w, nil
 }
 
-// LoadDeadWorkers load worker with refresh last beat > timeout
+// LoadDeadWorkers load worker with refresh last beat > timeout (seconds)
 func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
@@ -246,13 +230,13 @@ func generateID() (string, error) {
 	size := 64
 	bs := make([]byte, size)
 	if _, err := rand.Read(bs); err != nil {
-		log.Error("generateID: rand.Read failed: %s", err)
+		log.Error("api> worker> generateID: rand.Read failed: %s", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]
 
-	log.Debug("generateID: new generated id: %s", token)
+	log.Debug("api> worker> generateID: new generated id: %s", token)
 	return string(token), nil
 }
 

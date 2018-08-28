@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -22,7 +23,7 @@ type statusData struct {
 	description string
 }
 
-func (b *bitbucketClient) SetStatus(event sdk.Event) error {
+func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if b.consumer.disableStatus {
 		log.Warning("bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
 		return nil
@@ -43,10 +44,11 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 		return sdk.WrapError(err, "bitbucketClient.SetStatus: Cannot process Event")
 	}
 
+	state := getBitbucketStateFromStatus(statusData.status)
 	status := Status{
 		Key:         statusData.key,
 		Name:        fmt.Sprintf("%s%d", statusData.key, statusData.buildNumber),
-		State:       getBitbucketStateFromStatus(statusData.status),
+		State:       state,
 		URL:         statusData.url,
 		Description: statusData.description,
 	}
@@ -55,10 +57,14 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 	if err != nil {
 		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to marshall status")
 	}
-	return b.do("POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil, nil)
+
+	if err := b.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil, nil); err != nil {
+		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to post build-status name:%s status:%s", status.Name, state)
+	}
+	return nil
 }
 
-func (b *bitbucketClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	ss := []Status{}
 
 	path := fmt.Sprintf("/commits/%s", ref)
@@ -70,7 +76,7 @@ func (b *bitbucketClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommit
 		}
 
 		var response ResponseStatus
-		if err := b.do("GET", "build-status", path, nil, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "build-status", path, nil, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> Repos> Unable to get statuses")
 		}
 

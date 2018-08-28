@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -11,7 +12,7 @@ import (
 
 // User Get a single user
 // https://developer.github.com/v3/users/#get-a-single-user
-func (g *githubClient) User(username string) (User, error) {
+func (g *githubClient) User(ctx context.Context, username string) (User, error) {
 	url := "/users/" + username
 	status, body, _, err := g.get(url)
 	if err != nil {

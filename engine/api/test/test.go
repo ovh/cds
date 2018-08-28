@@ -14,7 +14,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -87,7 +86,6 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	if err != nil {
 		t.Fatalf("Unable to connect to redis: %v", err)
 	}
-	event.Initialize(event.KafkaConfig{}, store)
 
 	return DBConnectionFactory.GetDBMap(), store
 }

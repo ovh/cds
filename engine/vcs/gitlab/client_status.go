@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -47,7 +48,7 @@ func getGitlabStateFromStatus(s string) gitlab.BuildState {
 }
 
 //SetStatus set build status on Gitlab
-func (c *gitlabClient) SetStatus(event sdk.Event) error {
+func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	if c.disableStatus {
 		log.Warning("disableStatus.SetStatus>  ⚠ Gitlab statuses are disabled")
 		return nil
@@ -84,13 +85,13 @@ func (c *gitlabClient) SetStatus(event sdk.Event) error {
 	}
 
 	if _, _, err := c.client.Commits.SetCommitStatus(data.repoFullName, data.hash, opt); err != nil {
-		return err
+		return sdk.WrapError(err, "gitlabClient.SetStatus> Cannot process event %s - repo:%s hash:%s", event, data.repoFullName, data.hash)
 	}
 
 	return nil
 }
 
-func (c *gitlabClient) ListStatuses(repo string, ref string) ([]sdk.VCSCommitStatus, error) {
+func (c *gitlabClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	ss, _, err := c.client.Commits.GetCommitStatuses(repo, ref, nil)
 	if err != nil {
 		return nil, sdk.WrapError(err, "gitlabClient.ListStatuses> Unable to get comit statuses %s", ref)

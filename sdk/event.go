@@ -72,6 +72,7 @@ type EventRunWorkflowNode struct {
 	RepositoryManagerName string                    `json:"repository_manager_name"`
 	RepositoryFullName    string                    `json:"repository_full_name"`
 	Hash                  string                    `json:"hash"`
+	Tag                   string                    `json:"tag"`
 	BranchName            string                    `json:"branch_name"`
 	NodeName              string                    `json:"node_name"`
 	StagesSummary         []StageSummary            `json:"stages_summary"`

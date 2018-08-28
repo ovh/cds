@@ -13,10 +13,11 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getVariablesHandler() Handler {
+func (api *API) getVariablesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -109,15 +110,11 @@ func (api *API) getVariablesHandler() Handler {
 		cdsVar := []string{
 			"{{.cds.version}}",
 			"{{.cds.application}}",
-			"{{.cds.buildNumber}}",
 			"{{.cds.environment}}",
 			"{{.cds.job}}",
 			"{{.cds.manual}}",
 			"{{.cds.node}}",
 			"{{.cds.node.id}}",
-			"{{.cds.parent.application}}",
-			"{{.cds.parent.buildNumber}}",
-			"{{.cds.parent.pipeline}}",
 			"{{.cds.pipeline}}",
 			"{{.cds.project}}",
 			"{{.cds.run}}",
@@ -137,15 +134,17 @@ func (api *API) getVariablesHandler() Handler {
 		gitVar := []string{
 			"{{.git.hash}}",
 			"{{.git.branch}}",
+			"{{.git.tag}}",
 			"{{.git.author}}",
 			"{{.git.project}}",
 			"{{.git.repository}}",
 			"{{.git.url}}",
 			"{{.git.http_url}}",
+			"{{.git.server}}",
 		}
 		allVariables = append(allVariables, gitVar...)
 
 		// Check permission on application
-		return WriteJSON(w, allVariables, http.StatusOK)
+		return service.WriteJSON(w, allVariables, http.StatusOK)
 	}
 }

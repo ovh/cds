@@ -74,8 +74,8 @@ export class ActionComponent implements OnDestroy, OnInit {
 
     keyEvent(event: KeyboardEvent) {
       if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
-          this.sendActionEvent('update');
           event.preventDefault();
+          setTimeout(() => this.sendActionEvent('update'));
       }
     }
 

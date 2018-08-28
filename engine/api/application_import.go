@@ -13,12 +13,13 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) postApplicationImportHandler() Handler {
+func (api *API) postApplicationImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -72,7 +73,7 @@ func (api *API) postApplicationImportHandler() Handler {
 				log.Warning("postApplicationImportHandler> Unable to import application %s : %v", eapp.Name, myError)
 				msgTranslated, _ := sdk.ProcessError(myError, r.Header.Get("Accept-Language"))
 				msgListString = append(msgListString, msgTranslated)
-				return WriteJSON(w, msgListString, myError.Status)
+				return service.WriteJSON(w, msgListString, myError.Status)
 			}
 			return sdk.WrapError(globalError, "postApplicationImportHandler> Unable import application %s", eapp.Name)
 		}
@@ -82,6 +83,6 @@ func (api *API) postApplicationImportHandler() Handler {
 		}
 		event.PublishAddApplication(proj.Key, *newApp, getUser(ctx))
 
-		return WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
 }

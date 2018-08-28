@@ -67,6 +67,7 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
+	h.Common.Common.ServiceName = "cds-hatchery-marathon"
 
 	return nil
 }
@@ -216,7 +217,7 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
+func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
 	if spawnArgs.JobID > 0 {
 		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
@@ -302,11 +303,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 		spawnArgs.Model.ModelDocker.Envs = map[string]string{}
 	}
 
-	envsWm, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
-	if errEnv != nil {
-		return "", errEnv
-	}
-
+	envsWm := map[string]string{}
 	envsWm["CDS_FORCE_EXIT"] = "0"
 	envsWm["CDS_API"] = udataParam.API
 	envsWm["CDS_TOKEN"] = udataParam.Token
@@ -328,6 +325,15 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		envsWm["CDS_GRPC_API"] = udataParam.GrpcAPI
 		envsWm["CDS_GRPC_INSECURE"] = fmt.Sprintf("%v", udataParam.GrpcInsecure)
+	}
+
+	envTemplated, errEnv := sdk.TemplateEnvs(udataParam, spawnArgs.Model.ModelDocker.Envs)
+	if errEnv != nil {
+		return "", errEnv
+	}
+
+	for envName, envValue := range envTemplated {
+		envsWm[envName] = envValue
 	}
 
 	application := &marathon.Application{
@@ -519,15 +525,15 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 		return err
 	}
 
-	for _, w := range workers {
+	for wk, w := range workers {
 		if w.Status != sdk.StatusDisabled {
 			continue
 		}
 
 		// check that there is a worker matching
-		for _, app := range apps {
+		for ak, app := range apps {
 			if strings.HasSuffix(app, w.Name) {
-				log.Info("killing disabled worker %s", app)
+				log.Info("killing disabled worker %s id:%s wk:%d ak:%d", app, w.ID, wk, ak)
 				if _, err := h.marathonClient.DeleteApplication(app, true); err != nil {
 					log.Warning("killDisabledWorkers> Error while delete app %s err:%s", app, err)
 					// continue to next app

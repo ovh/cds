@@ -8,10 +8,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) postEncryptVariableHandler() Handler {
+func (api *API) postEncryptVariableHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -32,11 +33,11 @@ func (api *API) postEncryptVariableHandler() Handler {
 		}
 
 		variable.Value = encryptedValue
-		return WriteJSON(w, variable, http.StatusOK)
+		return service.WriteJSON(w, variable, http.StatusOK)
 	}
 }
 
-func (api *API) getVariablesAuditInProjectnHandler() Handler {
+func (api *API) getVariablesAuditInProjectnHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -46,11 +47,11 @@ func (api *API) getVariablesAuditInProjectnHandler() Handler {
 			return sdk.WrapError(err, "getVariablesAuditInProjectnHandler: Cannot get variable audit for project %s", key)
 
 		}
-		return WriteJSON(w, audits, http.StatusOK)
+		return service.WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
-func (api *API) getVariablesInProjectHandler() Handler {
+func (api *API) getVariablesInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -61,11 +62,11 @@ func (api *API) getVariablesInProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot load %s", key)
 		}
 
-		return WriteJSON(w, p.Variable, http.StatusOK)
+		return service.WriteJSON(w, p.Variable, http.StatusOK)
 	}
 }
 
-func (api *API) deleteVariableFromProjectHandler() Handler {
+func (api *API) deleteVariableFromProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -98,11 +99,11 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 
 		event.PublishDeleteProjectVariable(p, *varToDelete, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) updateVariableInProjectHandler() Handler {
+func (api *API) updateVariableInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -142,11 +143,11 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		event.PublishUpdateProjectVariable(p, newVar, *previousVar, getUser(ctx))
 
-		return WriteJSON(w, newVar, http.StatusOK)
+		return service.WriteJSON(w, newVar, http.StatusOK)
 	}
 }
 
-func (api *API) addVariableInProjectHandler() Handler {
+func (api *API) addVariableInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -208,11 +209,11 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		}
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) getVariableInProjectHandler() Handler {
+func (api *API) getVariableInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -229,11 +230,11 @@ func (api *API) getVariableInProjectHandler() Handler {
 			return sdk.WrapError(errV, "getVariableAuditInProjectHandler> Cannot load variable %s", varName)
 		}
 
-		return WriteJSON(w, variable, http.StatusOK)
+		return service.WriteJSON(w, variable, http.StatusOK)
 	}
 }
 
-func (api *API) getVariableAuditInProjectHandler() Handler {
+func (api *API) getVariableAuditInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -254,6 +255,6 @@ func (api *API) getVariableAuditInProjectHandler() Handler {
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInProjectHandler> Cannot load audit for variable %s", varName)
 		}
-		return WriteJSON(w, audits, http.StatusOK)
+		return service.WriteJSON(w, audits, http.StatusOK)
 	}
 }

@@ -1,4 +1,5 @@
 import {Component} from '@angular/core';
+import {Title} from '@angular/platform-browser';
 import {ActivatedRoute, NavigationExtras, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
@@ -31,6 +32,7 @@ export class WorkflowNodeRunComponent {
     duration: string;
 
     workflowRun: WorkflowRun;
+    pipelineName = '';
 
     // History
     nodeRunsHistory = new Array<WorkflowNodeRun>();
@@ -41,10 +43,16 @@ export class WorkflowNodeRunComponent {
     nbVuln = 0;
     deltaVul = 0;
 
-    constructor(private _activatedRoute: ActivatedRoute,
-                private _router: Router, private _routerService: RouterService, private _workflowRunService: WorkflowRunService,
-                private _durationService: DurationService, private _authStore: AuthentificationStore,
-                private _workflowEventStore: WorkflowEventStore) {
+    constructor(
+        private _activatedRoute: ActivatedRoute,
+        private _router: Router,
+        private _routerService: RouterService,
+        private _workflowRunService: WorkflowRunService,
+        private _durationService: DurationService,
+        private _authStore: AuthentificationStore,
+        private _workflowEventStore: WorkflowEventStore,
+        private _titleService: Title
+    ) {
 
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -59,6 +67,7 @@ export class WorkflowNodeRunComponent {
             } else {
                 this.selectedTab = 'pipeline';
             }
+            this.pipelineName = q['name'] || '';
         });
 
         // Get workflow name
@@ -107,6 +116,7 @@ export class WorkflowNodeRunComponent {
                     if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
                         this.duration = this._durationService.duration(new Date(this.nodeRun.start), new Date(this.nodeRun.done));
                     }
+                    this.updateTitle();
                 });
             });
         });
@@ -121,11 +131,24 @@ export class WorkflowNodeRunComponent {
             'node', this.nodeRun.id], navExtras);
     }
 
+    updateTitle() {
+          if (!this.workflowRun || !Array.isArray(this.workflowRun.tags)) {
+              return;
+          }
+          let branch = this.workflowRun.tags.find((tag) => tag.tag === 'git.branch');
+          if (branch) {
+              this._titleService
+                .setTitle(`Pipeline ${this.pipelineName} • #${this.workflowRun.num} [${branch.value}] • ${this.workflowName}`);
+          }
+      }
+
     initVulnerabilitySummary(): void {
         if (this.nodeRun && this.nodeRun.vulnerabilities_report && this.nodeRun.vulnerabilities_report.report) {
-            Object.keys(this.nodeRun.vulnerabilities_report.report.summary).forEach(k => {
-                this.nbVuln += this.nodeRun.vulnerabilities_report.report.summary[k];
-            });
+            if (this.nodeRun.vulnerabilities_report.report.summary) {
+              Object.keys(this.nodeRun.vulnerabilities_report.report.summary).forEach(k => {
+                  this.nbVuln += this.nodeRun.vulnerabilities_report.report.summary[k];
+              });
+            }
             let previousNb = 0;
             if (this.nodeRun.vulnerabilities_report.report.previous_run_summary) {
                 Object.keys(this.nodeRun.vulnerabilities_report.report.previous_run_summary).forEach(k => {

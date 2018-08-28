@@ -17,6 +17,10 @@ var kafkaBroker Broker
 var brokers []Broker
 var subscribers []chan<- sdk.Event
 
+func init() {
+	subscribers = make([]chan<- sdk.Event, 0)
+}
+
 // Broker event typed
 type Broker interface {
 	initialize(options interface{}) (Broker, error)
@@ -36,7 +40,6 @@ func getBroker(t string, option interface{}) (Broker, error) {
 
 // Initialize initializes event system
 func Initialize(k KafkaConfig, cache cache.Store) error {
-	subscribers = make([]chan<- sdk.Event, 0)
 	store = cache
 	var err error
 	hostname, err = os.Hostname()

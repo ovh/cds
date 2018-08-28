@@ -18,13 +18,14 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
-func (api *API) getWorkflowsHandler() Handler {
+func (api *API) getWorkflowsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -34,12 +35,12 @@ func (api *API) getWorkflowsHandler() Handler {
 			return err
 		}
 
-		return WriteJSON(w, ws, http.StatusOK)
+		return service.WriteJSON(w, ws, http.StatusOK)
 	}
 }
 
 // getWorkflowHandler returns a full workflow
-func (api *API) getWorkflowHandler() Handler {
+func (api *API) getWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -79,7 +80,7 @@ func (api *API) getWorkflowHandler() Handler {
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
-		return WriteJSON(w, w1, http.StatusOK)
+		return service.WriteJSON(w, w1, http.StatusOK)
 	}
 }
 
@@ -107,7 +108,7 @@ func loadWorkflowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error)
 }
 
 // postWorkflowRollbackHandler rollback to a specific audit id
-func (api *API) postWorkflowRollbackHandler() Handler {
+func (api *API) postWorkflowRollbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -165,12 +166,12 @@ func (api *API) postWorkflowRollbackHandler() Handler {
 
 		event.PublishWorkflowUpdate(key, *wf, *newWf, getUser(ctx))
 
-		return WriteJSON(w, *newWf, http.StatusOK)
+		return service.WriteJSON(w, *newWf, http.StatusOK)
 	}
 }
 
 // postWorkflowHandler creates a new workflow
-func (api *API) postWorkflowHandler() Handler {
+func (api *API) postWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -194,7 +195,7 @@ func (api *API) postWorkflowHandler() Handler {
 
 		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
-			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
+			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, getUser(ctx), &wf); err != nil {
 				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
 			}
 		}
@@ -203,7 +204,7 @@ func (api *API) postWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
 
-		if errHr := workflow.HookRegistration(tx, api.Cache, nil, wf, p); errHr != nil {
+		if errHr := workflow.HookRegistration(ctx, tx, api.Cache, nil, wf, p); errHr != nil {
 			return sdk.WrapError(errHr, "postWorkflowHandler>Hook registration failed")
 		}
 
@@ -228,12 +229,12 @@ func (api *API) postWorkflowHandler() Handler {
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
-		return WriteJSON(w, wf1, http.StatusCreated)
+		return service.WriteJSON(w, wf1, http.StatusCreated)
 	}
 }
 
 // putWorkflowHandler updates a workflow
-func (api *API) putWorkflowHandler() Handler {
+func (api *API) putWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -267,7 +268,7 @@ func (api *API) putWorkflowHandler() Handler {
 
 		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
-			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(tx, api.Cache, p, getUser(ctx), &wf); err != nil {
+			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, getUser(ctx), &wf); err != nil {
 				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
 			}
 		}
@@ -277,7 +278,7 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
-		if errHr := workflow.HookRegistration(tx, api.Cache, oldW, wf, p); errHr != nil {
+		if errHr := workflow.HookRegistration(ctx, tx, api.Cache, oldW, wf, p); errHr != nil {
 			return sdk.WrapError(errHr, "putWorkflowHandler> HookRegistration")
 		}
 
@@ -309,12 +310,12 @@ func (api *API) putWorkflowHandler() Handler {
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
-		return WriteJSON(w, wf1, http.StatusOK)
+		return service.WriteJSON(w, wf1, http.StatusOK)
 	}
 }
 
 // putWorkflowHandler deletes a workflow
-func (api *API) deleteWorkflowHandler() Handler {
+func (api *API) deleteWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -348,16 +349,16 @@ func (api *API) deleteWorkflowHandler() Handler {
 
 		sdk.GoRoutine("deleteWorkflowHandler",
 			func() {
-				if err := workflow.Delete(api.mustDB(), api.Cache, p, oldW); err != nil {
+				if err := workflow.Delete(context.Background(), api.mustDB(), api.Cache, p, oldW); err != nil {
 					log.Error("deleteWorkflowHandler> unable to delete workflow: %v", err)
 				}
 			})
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkflowHookHandler() Handler {
+func (api *API) getWorkflowHookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -389,10 +390,10 @@ func (api *API) getWorkflowHookHandler() Handler {
 
 		path := fmt.Sprintf("/task/%s/execution", uuid)
 		task := sdk.Task{}
-		if _, err := services.DoJSONRequest(srvs, "GET", path, nil, &task); err != nil {
+		if _, err := services.DoJSONRequest(ctx, srvs, "GET", path, nil, &task); err != nil {
 			return sdk.WrapError(err, "getWorkflowHookHandler> Unable to get hook %s task and executions", uuid)
 		}
 
-		return WriteJSON(w, task, http.StatusOK)
+		return service.WriteJSON(w, task, http.StatusOK)
 	}
 }

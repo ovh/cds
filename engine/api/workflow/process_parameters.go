@@ -10,7 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
 )
@@ -126,6 +126,9 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 		if n.Context.Application.RepositoryStrategy.User != "" {
 			vars["git.http.user"] = n.Context.Application.RepositoryStrategy.User
 		}
+		if n.Context.Application.VCSServer != "" {
+			vars["git.server"] = n.Context.Application.VCSServer
+		}
 	} else {
 		// remove vcs strategy variable
 		delete(vars, "git.ssh.key")
@@ -190,10 +193,10 @@ func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.Workf
 }
 
 func getNodeRunBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
-	ctx, end := tracing.Span(ctx, "workflow.getNodeRunBuildParameters",
-		tracing.Tag("workflow", w.Workflow.Name),
-		tracing.Tag("workflow_run", w.Number),
-		tracing.Tag("workflow_node_run", run.ID),
+	ctx, end := observability.Span(ctx, "workflow.getNodeRunBuildParameters",
+		observability.Tag(observability.TagWorkflow, w.Workflow.Name),
+		observability.Tag(observability.TagWorkflowRun, w.Number),
+		observability.Tag(observability.TagWorkflowNodeRun, run.ID),
 	)
 	defer end()
 
@@ -217,7 +220,7 @@ func getNodeRunBuildParameters(ctx context.Context, db gorp.SqlExecutor, store c
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)
 
-	_, next := tracing.Span(ctx, "workflow.interpolate")
+	_, next := observability.Span(ctx, "workflow.interpolate")
 	params = make([]sdk.Parameter, 0, len(tmp))
 	for k, v := range tmp {
 		s, err := interpolate.Do(v, tmp)

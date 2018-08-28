@@ -134,7 +134,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	var contextHeader map[string]string
 	err = ctx.GetComplex("headers", &contextHeader)
-	if err != nil && err != defaultctx.NotFound("headers") {
+	if err != nil && err.Error() != defaultctx.NotFound("headers").Error() {
 		l.Warnf("fail to read headers from context : '%s'", err)
 	}
 	for key, value := range contextHeader {

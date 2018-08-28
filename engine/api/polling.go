@@ -10,11 +10,12 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/workflowv0"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) addPollerHandler() Handler {
+func (api *API) addPollerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -85,11 +86,11 @@ func (api *API) addPollerHandler() Handler {
 			return sdk.WrapError(errW, "addPollerHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) updatePollerHandler() Handler {
+func (api *API) updatePollerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -157,11 +158,11 @@ func (api *API) updatePollerHandler() Handler {
 			return sdk.WrapError(errW, "updatePollerHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) getApplicationPollersHandler() Handler {
+func (api *API) getApplicationPollersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectName := vars["key"]
@@ -178,11 +179,11 @@ func (api *API) getApplicationPollersHandler() Handler {
 			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application poller %s/%s", projectName, appName)
 		}
 
-		return WriteJSON(w, a.RepositoryPollers, http.StatusOK)
+		return service.WriteJSON(w, a.RepositoryPollers, http.StatusOK)
 	}
 }
 
-func (api *API) getPollersHandler() Handler {
+func (api *API) getPollersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectName := vars["key"]
@@ -207,11 +208,11 @@ func (api *API) getPollersHandler() Handler {
 
 		}
 
-		return WriteJSON(w, poller, http.StatusOK)
+		return service.WriteJSON(w, poller, http.StatusOK)
 	}
 }
 
-func (api *API) deletePollerHandler() Handler {
+func (api *API) deletePollerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -257,6 +258,6 @@ func (api *API) deletePollerHandler() Handler {
 			return sdk.WrapError(errW, "deletePollerHandler> Cannot load workflow")
 		}
 
-		return WriteJSON(w, a, http.StatusOK)
+		return service.WriteJSON(w, a, http.StatusOK)
 	}
 }

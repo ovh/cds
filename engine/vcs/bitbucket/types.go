@@ -5,6 +5,13 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"github.com/ovh/cds/sdk"
+)
+
+var (
+	_ sdk.VCSAuthorizedClient = &bitbucketClient{}
+	_ sdk.VCSServer           = &bitbucketConsumer{}
 )
 
 // WebHook Represent a webhook in bitbucket model
@@ -28,6 +35,21 @@ type BranchResponse struct {
 	Values     []Branch `json:"values"`
 	Size       int      `json:"size"`
 	IsLastPage bool     `json:"isLastPage"`
+}
+
+type Tag struct {
+	ID              string `json:"id"`
+	DisplayID       string `json:"displayId"`
+	Type            string `json:"type"`
+	LatestCommit    string `json:"latestCommit"`
+	LatestChangeset string `json:"latestChangeset"`
+	Hash            string `json:"hash"`
+}
+
+type TagResponse struct {
+	Values     []Tag `json:"values"`
+	Size       int   `json:"size"`
+	IsLastPage bool  `json:"isLastPage"`
 }
 
 type Author struct {

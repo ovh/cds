@@ -7,17 +7,18 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/service"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getRequirementTypesHandler() Handler {
+func (api *API) getRequirementTypesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, sdk.AvailableRequirementsType, http.StatusOK)
+		return service.WriteJSON(w, sdk.AvailableRequirementsType, http.StatusOK)
 	}
 }
 
-func (api *API) getRequirementTypeValuesHandler() Handler {
+func (api *API) getRequirementTypeValuesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		reqType := vars["type"]
@@ -28,7 +29,7 @@ func (api *API) getRequirementTypeValuesHandler() Handler {
 			if err != nil {
 				return sdk.WrapError(err, "getRequirementTypeValuesHandler> Cannot load binary requirements")
 			}
-			return WriteJSON(w, req.Values(), http.StatusOK)
+			return service.WriteJSON(w, req.Values(), http.StatusOK)
 
 		case sdk.ModelRequirement:
 			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getUser(ctx))
@@ -43,10 +44,10 @@ func (api *API) getRequirementTypeValuesHandler() Handler {
 					Value: m.Name,
 				}
 			}
-			return WriteJSON(w, modelsAsRequirements.Values(), http.StatusOK)
+			return service.WriteJSON(w, modelsAsRequirements.Values(), http.StatusOK)
 
 		case sdk.OSArchRequirement:
-			return WriteJSON(w, sdk.OSArchRequirementValues.Values(), http.StatusOK)
+			return service.WriteJSON(w, sdk.OSArchRequirementValues.Values(), http.StatusOK)
 
 		default:
 			return nil

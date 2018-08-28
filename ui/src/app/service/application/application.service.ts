@@ -31,6 +31,7 @@ export class ApplicationService {
         params = params.append('withWorkflow', 'true');
         params = params.append('withNotifs', 'true');
         params = params.append('withUsage', 'true');
+        params = params.append('withIcon', 'true');
         params = params.append('withKeys', 'true');
         params = params.append('withDeploymentStrategies', 'true');
         params = params.append('withVulnerabilities', 'true');

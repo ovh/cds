@@ -12,10 +12,11 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getAllKeysProjectHandler() Handler {
+func (api *API) getAllKeysProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -61,11 +62,11 @@ func (api *API) getAllKeysProjectHandler() Handler {
 		}
 		allkeys.EnvironmentKeys = envKeys
 
-		return WriteJSON(w, allkeys, http.StatusOK)
+		return service.WriteJSON(w, allkeys, http.StatusOK)
 	}
 }
 
-func (api *API) getKeysInProjectHandler() Handler {
+func (api *API) getKeysInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -79,11 +80,11 @@ func (api *API) getKeysInProjectHandler() Handler {
 			return sdk.WrapError(errK, "getKeysInProjectHandler> Cannot load project keys")
 		}
 
-		return WriteJSON(w, p.Keys, http.StatusOK)
+		return service.WriteJSON(w, p.Keys, http.StatusOK)
 	}
 }
 
-func (api *API) deleteKeyInProjectHandler() Handler {
+func (api *API) deleteKeyInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -116,11 +117,11 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 
 		event.PublishDeleteProjectKey(p, deletedKey, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) addKeyInProjectHandler() Handler {
+func (api *API) addKeyInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -179,6 +180,6 @@ func (api *API) addKeyInProjectHandler() Handler {
 
 		event.PublishAddProjectKey(p, newKey, getUser(ctx))
 
-		return WriteJSON(w, newKey, http.StatusOK)
+		return service.WriteJSON(w, newKey, http.StatusOK)
 	}
 }

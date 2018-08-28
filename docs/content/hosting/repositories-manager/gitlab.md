@@ -27,12 +27,16 @@ Set value to `appId` and `secret`
 
 
 ```yaml
-   [vcs.servers.Gitlab]
+    [vcs.servers.Gitlab]
 
       # URL of this VCS Server
       url = "https://gitlab.com"
 
       [vcs.servers.Gitlab.gitlab]
+
+        #######
+        # CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/
+        ########
         appId = "xxxx"
 
         # Does polling is supported by VCS Server
@@ -41,18 +45,17 @@ Set value to `appId` and `secret`
         # Does webhooks are supported by VCS Server
         disableWebHooks = false
 
-        secret = "xxxx"
-
         # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
-        # proxyWebhook = "https://myproxy.com"
+        # proxyWebhook = ""
+        secret = "xxxx"
 
         [vcs.servers.Gitlab.gitlab.Status]
 
           # Set to true if you don't want CDS to push statuses on the VCS server
-          disable = false
+          # disable = false
 
           # Set to true if you don't want CDS to push CDS URL in statuses on the VCS server
-          showDetail = true
+          # showDetail = false
 ```
 
 **Then restart CDS**

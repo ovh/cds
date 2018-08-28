@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
@@ -15,7 +16,7 @@ func TestCreateHook(t *testing.T) {
 		URL:    "http://localhost:8080",
 	}
 
-	err := client.CreateHook("CDS/cds-event-function", &h)
+	err := client.CreateHook(context.Background(), "CDS/cds-event-function", &h)
 	test.NoError(t, err)
 }
 
@@ -27,10 +28,10 @@ func TestDeleteHook(t *testing.T) {
 		URL:    "http://localhost:8080",
 	}
 
-	err := client.CreateHook("CDS/cds-event-function", &h)
+	err := client.CreateHook(context.Background(), "CDS/cds-event-function", &h)
 	test.NoError(t, err)
 
-	err = client.DeleteHook("CDS/cds-event-function", h)
+	err = client.DeleteHook(context.Background(), "CDS/cds-event-function", h)
 	test.NoError(t, err)
 }
 
@@ -42,7 +43,7 @@ func TestUpdateHook(t *testing.T) {
 		URL:    "http://localhost:8080",
 	}
 
-	err := client.CreateHook("CDS/cds-event-function", &h)
+	err := client.CreateHook(context.Background(), "CDS/cds-event-function", &h)
 	test.NoError(t, err)
 
 	h = sdk.VCSHook{
@@ -50,9 +51,9 @@ func TestUpdateHook(t *testing.T) {
 		URL:    "http://localhost:8080",
 	}
 
-	err = client.UpdateHook("CDS/cds-event-function", h.URL, h)
+	err = client.UpdateHook(context.Background(), "CDS/cds-event-function", h.URL, h)
 	test.NoError(t, err)
 
-	err = client.DeleteHook("CDS/cds-event-function", h)
+	err = client.DeleteHook(context.Background(), "CDS/cds-event-function", h)
 	test.NoError(t, err)
 }

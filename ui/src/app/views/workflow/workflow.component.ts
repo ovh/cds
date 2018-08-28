@@ -137,7 +137,9 @@ export class WorkflowComponent implements OnInit {
     initSidebar(): void {
         // Mode of sidebar
         this.sideBarModeSubscription = this._sidebarStore.sidebarMode()
-            .subscribe(m => this.sidebarMode = m);
+            .subscribe(m => {
+              setTimeout(() => this.sidebarMode = m, 0);
+            });
     }
 
     ngOnInit() {

@@ -205,6 +205,7 @@ export class WorkflowSidebarEditNodeComponent {
         if (!node) {
             return;
         }
+        node.name = n.name;
         node.context = cloneDeep(n.context);
         delete node.context.application;
         delete node.context.environment;

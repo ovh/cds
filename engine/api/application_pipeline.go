@@ -13,11 +13,12 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflowv0"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
 // Deprecated
-func (api *API) attachPipelineToApplicationHandler() Handler {
+func (api *API) attachPipelineToApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -37,11 +38,11 @@ func (api *API) attachPipelineToApplicationHandler() Handler {
 		if _, err := application.AttachPipeline(api.mustDB(), app.ID, pipeline.ID); err != nil {
 			return sdk.WrapError(err, "addPipelineInApplicationHandler> Cannot attach pipeline %s to application %s", pipelineName, appName)
 		}
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) attachPipelinesToApplicationHandler() Handler {
+func (api *API) attachPipelinesToApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -89,11 +90,11 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 			return sdk.WrapError(errW, "attachPipelinesToApplicationHandler: Cannot load application workflow")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) updatePipelinesToApplicationHandler() Handler {
+func (api *API) updatePipelinesToApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -126,12 +127,12 @@ func (api *API) updatePipelinesToApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrUnknownError, "updatePipelinesToApplicationHandler: Cannot commit transaction")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
 // DEPRECATED
-func (api *API) updatePipelineToApplicationHandler() Handler {
+func (api *API) updatePipelineToApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -160,11 +161,11 @@ func (api *API) updatePipelineToApplicationHandler() Handler {
 			return sdk.WrapError(err, "updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s", appName, pipelineName)
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelinesInApplicationHandler() Handler {
+func (api *API) getPipelinesInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -175,11 +176,11 @@ func (api *API) getPipelinesInApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "getPipelinesInApplicationHandler: Cannot load pipelines for application %s", appName)
 		}
 
-		return WriteJSON(w, pipelines, http.StatusOK)
+		return service.WriteJSON(w, pipelines, http.StatusOK)
 	}
 }
 
-func (api *API) removePipelineFromApplicationHandler() Handler {
+func (api *API) removePipelineFromApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -222,25 +223,25 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 
 		a.Pipelines = append(a.Pipelines[:indexPipeline], a.Pipelines[indexPipeline+1:]...)
 
-		return WriteJSON(w, a, http.StatusOK)
+		return service.WriteJSON(w, a, http.StatusOK)
 	}
 }
 
-func (api *API) getUserNotificationTypeHandler() Handler {
+func (api *API) getUserNotificationTypeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var types = []sdk.UserNotificationSettingsType{sdk.EmailUserNotification, sdk.JabberUserNotification}
-		return WriteJSON(w, types, http.StatusOK)
+		return service.WriteJSON(w, types, http.StatusOK)
 	}
 }
 
-func (api *API) getUserNotificationStateValueHandler() Handler {
+func (api *API) getUserNotificationStateValueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		states := []sdk.UserNotificationEventType{sdk.UserNotificationAlways, sdk.UserNotificationChange, sdk.UserNotificationNever}
-		return WriteJSON(w, states, http.StatusOK)
+		return service.WriteJSON(w, states, http.StatusOK)
 	}
 }
 
-func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
+func (api *API) getUserNotificationApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -287,11 +288,11 @@ func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
 			return nil
 		}
 
-		return WriteJSON(w, notifs, http.StatusOK)
+		return service.WriteJSON(w, notifs, http.StatusOK)
 	}
 }
 
-func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
+func (api *API) deleteUserNotificationApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -354,11 +355,11 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 		if errN != nil {
 			return sdk.WrapError(errN, "deleteUserNotificationApplicationPipelineHandler> cannot load notifications")
 		}
-		return WriteJSON(w, applicationData, http.StatusOK)
+		return service.WriteJSON(w, applicationData, http.StatusOK)
 	}
 }
 
-func (api *API) addNotificationsHandler() Handler {
+func (api *API) addNotificationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -416,11 +417,11 @@ func (api *API) addNotificationsHandler() Handler {
 			return sdk.WrapError(errNotif, "addNotificationsHandler> cannot load notifications")
 		}
 
-		return WriteJSON(w, app, http.StatusOK)
+		return service.WriteJSON(w, app, http.StatusOK)
 	}
 }
 
-func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
+func (api *API) updateUserNotificationApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -479,6 +480,6 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 			return sdk.WrapError(errNotif, "updateUserNotificationApplicationPipelineHandler> Cannot load notifications")
 		}
 
-		return WriteJSON(w, applicationData, http.StatusOK)
+		return service.WriteJSON(w, applicationData, http.StatusOK)
 	}
 }

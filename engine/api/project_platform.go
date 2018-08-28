@@ -9,10 +9,11 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getProjectPlatformHandler() Handler {
+func (api *API) getProjectPlatformHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -24,11 +25,11 @@ func (api *API) getProjectPlatformHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getProjectPlatformHandler> Cannot load platform %s/%s", projectKey, platformName)
 		}
-		return WriteJSON(w, platform, http.StatusOK)
+		return service.WriteJSON(w, platform, http.StatusOK)
 	}
 }
 
-func (api *API) putProjectPlatformHandler() Handler {
+func (api *API) putProjectPlatformHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -85,11 +86,11 @@ func (api *API) putProjectPlatformHandler() Handler {
 
 		event.PublishUpdateProjectPlatform(p, ppBody, ppDB, getUser(ctx))
 
-		return WriteJSON(w, ppBody, http.StatusOK)
+		return service.WriteJSON(w, ppBody, http.StatusOK)
 	}
 }
 
-func (api *API) deleteProjectPlatformHandler() Handler {
+func (api *API) deleteProjectPlatformHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -130,7 +131,7 @@ func (api *API) deleteProjectPlatformHandler() Handler {
 	}
 }
 
-func (api *API) getProjectPlatformsHandler() Handler {
+func (api *API) getProjectPlatformsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -139,11 +140,11 @@ func (api *API) getProjectPlatformsHandler() Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "getProjectPlatformsHandler> Cannot load project")
 		}
-		return WriteJSON(w, p.Platforms, http.StatusOK)
+		return service.WriteJSON(w, p.Platforms, http.StatusOK)
 	}
 }
 
-func (api *API) postProjectPlatformHandler() Handler {
+func (api *API) postProjectPlatformHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
@@ -201,6 +202,6 @@ func (api *API) postProjectPlatformHandler() Handler {
 
 		event.PublishAddProjectPlatform(p, pp, getUser(ctx))
 
-		return WriteJSON(w, pp, http.StatusOK)
+		return service.WriteJSON(w, pp, http.StatusOK)
 	}
 }

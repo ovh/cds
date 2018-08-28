@@ -34,12 +34,17 @@ func NewAction(act sdk.Action) (a Action) {
 	a.Version = ActionVersion1
 	a.Description = act.Description
 	a.Parameters = make(map[string]ParameterValue, len(act.Parameters))
-	for _, v := range act.Parameters {
-		a.Parameters[v.Name] = ParameterValue{
+	for k, v := range act.Parameters {
+		param := ParameterValue{
 			Type:         string(v.Type),
 			DefaultValue: v.Value,
 			Description:  v.Description,
 		}
+		// no need to export it if "Advanced" is false
+		if v.Advanced {
+			param.Advanced = &act.Parameters[k].Advanced
+		}
+		a.Parameters[v.Name] = param
 	}
 	a.Steps = newSteps(act)
 	a.Requirements = newRequirements(act.Requirements)
@@ -57,6 +62,9 @@ func newSteps(a sdk.Action) []Step {
 	for i := range a.Actions {
 		act := &a.Actions[i]
 		s := Step{}
+		if act.StepName != "" {
+			s["name"] = act.StepName
+		}
 		if !act.Enabled {
 			s["enabled"] = act.Enabled
 		}
@@ -115,7 +123,6 @@ func newSteps(a sdk.Action) []Step {
 				if tag != nil {
 					artifactUploadArgs["tag"] = tag.Value
 				}
-
 				s["artifactUpload"] = artifactUploadArgs
 			case sdk.GitCloneAction:
 				gitCloneArgs := map[string]string{}
@@ -132,23 +139,76 @@ func newSteps(a sdk.Action) []Step {
 					gitCloneArgs["directory"] = directory.Value
 				}
 				password := sdk.ParameterFind(&act.Parameters, "password")
-				if password != nil {
+				if password != nil && password.Value != "" {
 					gitCloneArgs["password"] = password.Value
 				}
 				privateKey := sdk.ParameterFind(&act.Parameters, "privateKey")
-				if privateKey != nil {
+				if privateKey != nil && privateKey.Value != "" {
 					gitCloneArgs["privateKey"] = privateKey.Value
 				}
 				url := sdk.ParameterFind(&act.Parameters, "url")
-				if url != nil {
+				if url != nil && url.Value != "" {
 					gitCloneArgs["url"] = url.Value
 				}
 				user := sdk.ParameterFind(&act.Parameters, "user")
-				if user != nil {
+				if user != nil && user.Value != "" {
 					gitCloneArgs["user"] = user.Value
 				}
-
+				depth := sdk.ParameterFind(&act.Parameters, "depth")
+				if depth != nil && depth.Value != "" && depth.Value != "50" {
+					gitCloneArgs["depth"] = depth.Value
+				}
+				submodules := sdk.ParameterFind(&act.Parameters, "submodules")
+				if submodules != nil && submodules.Value == "false" {
+					gitCloneArgs["submodules"] = submodules.Value
+				}
+				tag := sdk.ParameterFind(&act.Parameters, "tag")
+				if tag != nil && tag.Value != "" && tag.Value != sdk.DefaultGitCloneParameterTagValue {
+					gitCloneArgs["tag"] = tag.Value
+				}
 				s["gitClone"] = gitCloneArgs
+			case sdk.GitTagAction:
+				gitTagArgs := map[string]string{}
+				path := sdk.ParameterFind(&act.Parameters, "path")
+				if path != nil {
+					gitTagArgs["path"] = path.Value
+				}
+				tagLevel := sdk.ParameterFind(&act.Parameters, "tagLevel")
+				if tagLevel != nil {
+					gitTagArgs["tagLevel"] = tagLevel.Value
+				}
+				tagMessage := sdk.ParameterFind(&act.Parameters, "tagMessage")
+				if tagMessage != nil {
+					gitTagArgs["tagMessage"] = tagMessage.Value
+				}
+				tagMetadata := sdk.ParameterFind(&act.Parameters, "tagMetadata")
+				if tagMetadata != nil && tagMetadata.Value != "" {
+					gitTagArgs["tagMetadata"] = tagMetadata.Value
+				}
+				tagPrerelease := sdk.ParameterFind(&act.Parameters, "tagPrerelease")
+				if tagPrerelease != nil && tagPrerelease.Value != "" {
+					gitTagArgs["tagPrerelease"] = tagPrerelease.Value
+				}
+				s["gitTag"] = gitTagArgs
+			case sdk.ReleaseAction:
+				releaseArgs := map[string]string{}
+				artifacts := sdk.ParameterFind(&act.Parameters, "artifacts")
+				if artifacts != nil {
+					releaseArgs["artifacts"] = artifacts.Value
+				}
+				releaseNote := sdk.ParameterFind(&act.Parameters, "releaseNote")
+				if releaseNote != nil {
+					releaseArgs["releaseNote"] = releaseNote.Value
+				}
+				tag := sdk.ParameterFind(&act.Parameters, "tag")
+				if tag != nil {
+					releaseArgs["tag"] = tag.Value
+				}
+				title := sdk.ParameterFind(&act.Parameters, "title")
+				if title != nil && title.Value != "" {
+					releaseArgs["title"] = title.Value
+				}
+				s["release"] = releaseArgs
 			case sdk.JUnitAction:
 				path := sdk.ParameterFind(&act.Parameters, "path")
 				if path != nil {
@@ -210,6 +270,10 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 	a := sdk.NewStepScript(bS)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -254,6 +318,10 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 	}
 
 	a.Enabled, err = s.IsFlagged("enabled")
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	if err != nil {
 		return nil, true, err
 	}
@@ -287,6 +355,10 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	a := sdk.NewStepJUnitReport(bS)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -326,6 +398,10 @@ func (s Step) AsGitClone() (*sdk.Action, bool, error) {
 	a := sdk.NewStepGitClone(argss)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -371,6 +447,10 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	}
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -405,6 +485,10 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	a := sdk.NewStepArtifactDownload(argss)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -438,6 +522,10 @@ func (s Step) AsCheckoutApplication() (*sdk.Action, bool, error) {
 	a := sdk.NewCheckoutApplication(bS)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -471,6 +559,10 @@ func (s Step) AsCoverageAction() (*sdk.Action, bool, error) {
 	a := sdk.NewCoverage(argss)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -504,6 +596,10 @@ func (s Step) AsDeployApplication() (*sdk.Action, bool, error) {
 	a := sdk.NewDeployApplication(bS)
 
 	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
 	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
@@ -534,6 +630,18 @@ func (s Step) IsFlagged(flag string) (bool, error) {
 	return bS, nil
 }
 
+// Name returns true the step name if exist
+func (s Step) Name() (string, error) {
+	if stepAttr, ok := s["name"]; ok {
+		if stepName, okName := stepAttr.(string); okName {
+			return stepName, nil
+		} else {
+			return "", fmt.Errorf("Malformatted Step : name must be a string")
+		}
+	}
+	return "", nil
+}
+
 // Action returns an sdk.Action
 func (act *Action) Action() (*sdk.Action, error) {
 	a := new(sdk.Action)
@@ -553,6 +661,9 @@ func (act *Action) Action() (*sdk.Action, error) {
 		}
 		if param.Type == "" {
 			param.Type = sdk.StringParameter
+		}
+		if v.Advanced != nil && *v.Advanced {
+			param.Advanced = true
 		}
 		a.Parameters[i] = param
 		i++

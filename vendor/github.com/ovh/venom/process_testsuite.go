@@ -2,6 +2,9 @@ package venom
 
 import (
 	"fmt"
+	"os"
+	"runtime/pprof"
+	"strings"
 	"time"
 
 	"github.com/fatih/color"
@@ -10,6 +13,25 @@ import (
 )
 
 func (v *Venom) runTestSuite(ts *TestSuite) {
+	if v.EnableProfiling {
+		var filename, filenameCPU, filenameMem string
+		if v.OutputDir != "" {
+			filename = v.OutputDir + "/"
+		}
+		filenameCPU = filename + "pprof_cpu_profile_" + ts.Filename + ".prof"
+		filenameMem = filename + "pprof_mem_profile_" + ts.Filename + ".prof"
+		fCPU, errCPU := os.Create(filenameCPU)
+		fMem, errMem := os.Create(filenameMem)
+		if errCPU != nil || errMem != nil {
+			log.Errorf("error while create profile file CPU:%v MEM:%v", errCPU, errMem)
+		} else {
+			pprof.StartCPUProfile(fCPU)
+			p := pprof.Lookup("heap")
+			defer p.WriteTo(fMem, 1)
+			defer pprof.StopCPUProfile()
+		}
+	}
+
 	l := log.WithField("v.testsuite", ts.Name)
 	start := time.Now()
 
@@ -18,6 +40,23 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		log.Errorf("err:%s", err)
 	}
 	ts.Templater.Add("", d)
+	ts.Templater.Add("", map[string]string{"venom.testsuite": ts.ShortName})
+	ts.Templater.Add("", map[string]string{"venom.testsuite.filename": ts.Filename})
+
+	// we apply templater on current vars only
+	for index := 0; index < 10; index++ {
+		var toApply bool
+		for k, v := range ts.Templater.Values {
+			if strings.Contains(v, "{{") {
+				toApply = true
+				_, s := ts.Templater.apply([]byte(v))
+				ts.Templater.Values[k] = string(s)
+			}
+		}
+		if !toApply {
+			break
+		}
+	}
 
 	totalSteps := 0
 	for _, tc := range ts.TestCases {
@@ -36,15 +75,8 @@ func (v *Venom) runTestSuite(ts *TestSuite) {
 		green := color.New(color.FgGreen).SprintFunc()
 		o = fmt.Sprintf("%s %s", green("SUCCESS"), rightPad(ts.Package, " ", 47))
 	}
-	if v.OutputDetails == DetailsLow {
-		o += fmt.Sprintf("%s", elapsed)
-	}
-	if v.OutputDetails != DetailsLow {
-		v.outputProgressBar[ts.Package].Prefix(o)
-		v.outputProgressBar[ts.Package].Finish()
-	} else {
-		v.PrintFunc("%s\n", o)
-	}
+	o += fmt.Sprintf("%s", elapsed)
+	v.PrintFunc("%s\n", o)
 }
 
 func (v *Venom) runTestCases(ts *TestSuite, l Logger) {

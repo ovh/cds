@@ -1,11 +1,16 @@
 <div class="ui large breadcrumb">
     <!-- PROJECT -->
     <i class="browser icon"></i>
-    <a class="section" [class.active]="!application && !pipeline && !action"
+    <a class="section"
+       *ngIf="application || pipeline || action || workflow"
        [routerLink]="['/project', project.key]"
        [queryParams]="getProjectQueryParams()">
         {{ project?.name}}
     </a>
+    <span class="section active"
+       *ngIf="!application && !pipeline && !action && !workflow">
+        {{ project?.name}}
+    </span>
 
     <!-- APPLICATION -->
     <ng-container *ngIf="application">

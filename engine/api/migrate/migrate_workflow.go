@@ -54,9 +54,9 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 		newW.Root = n
 
 		if force {
-			w, err := workflow.Load(context.TODO(), db, store, proj, newW.Name, u, workflow.LoadOptions{})
+			w, err := workflow.Load(context.Background(), db, store, proj, newW.Name, u, workflow.LoadOptions{})
 			if err == nil {
-				if errD := workflow.Delete(db, store, proj, w); errD != nil {
+				if errD := workflow.Delete(context.Background(), db, store, proj, w); errD != nil {
 					return nil, sdk.WrapError(errD, "MigrateToWorkflow workflow.Load>")
 				}
 			}
@@ -64,7 +64,7 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 
 		if newW.Root != nil && newW.Root.Context != nil && (newW.Root.Context.Application != nil || newW.Root.Context.ApplicationID != 0) {
 			var err error
-			if newW.Root.Context.DefaultPayload, err = workflow.DefaultPayload(db, store, proj, u, &newW); err != nil {
+			if newW.Root.Context.DefaultPayload, err = workflow.DefaultPayload(context.Background(), db, store, proj, u, &newW); err != nil {
 				return nil, sdk.WrapError(err, "migratePipeline> error compute defaut payload: %s", err)
 			}
 		}
@@ -97,7 +97,7 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 			newW.ID = oldW.ID
 
 			// then register (node is updated in HookRegistration)
-			if errHr := workflow.HookRegistration(db, store, nil, *oldW, proj); errHr != nil {
+			if errHr := workflow.HookRegistration(context.Background(), db, store, nil, *oldW, proj); errHr != nil {
 				return nil, sdk.WrapError(errHr, "migratePipeline> Cannot register hook 2")
 			}
 		} else {

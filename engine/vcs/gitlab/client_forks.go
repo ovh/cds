@@ -1,13 +1,14 @@
 package gitlab
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
 	gitlab "github.com/xanzy/go-gitlab"
 )
 
-func (c *gitlabClient) ListForks(repo string) ([]sdk.VCSRepo, error) {
+func (c *gitlabClient) ListForks(ctx context.Context, repo string) ([]sdk.VCSRepo, error) {
 	var repos []sdk.VCSRepo
 
 	pp := 1000

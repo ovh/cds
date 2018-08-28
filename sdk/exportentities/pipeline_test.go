@@ -551,6 +551,7 @@ steps:
     privateKey: '{{.cds.app.key}}'
     url: '{{.git.http_url}}'
     user: ""
+    depth: '12'
 - artifactUpload:
     path: arti.tar.gz
     tag: '{{.cds.version}}'
@@ -567,7 +568,7 @@ steps:
 	assert.Equal(t, sdk.GitCloneAction, p.Stages[0].Jobs[0].Action.Actions[0].Name)
 	assert.Equal(t, sdk.ArtifactUpload, p.Stages[0].Jobs[0].Action.Actions[1].Name)
 	assert.Equal(t, sdk.ArtifactUpload, p.Stages[0].Jobs[0].Action.Actions[2].Name)
-	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 7)
+	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[0].Parameters, 8)
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[1].Parameters, 2)
 	assert.Len(t, p.Stages[0].Jobs[0].Action.Actions[2].Parameters, 1)
 }

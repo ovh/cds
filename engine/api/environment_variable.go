@@ -9,10 +9,11 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getVariableAuditInEnvironmentHandler() Handler {
+func (api *API) getVariableAuditInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -34,11 +35,11 @@ func (api *API) getVariableAuditInEnvironmentHandler() Handler {
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInEnvironmentHandler> Cannot load audit for variable %s", varName)
 		}
-		return WriteJSON(w, audits, http.StatusOK)
+		return service.WriteJSON(w, audits, http.StatusOK)
 	}
 }
 
-func (api *API) getVariableInEnvironmentHandler() Handler {
+func (api *API) getVariableInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -50,11 +51,11 @@ func (api *API) getVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(errVar, "getVariableInEnvironmentHandler: Cannot get variable %s for environment %s", name, envName)
 		}
 
-		return WriteJSON(w, v, http.StatusOK)
+		return service.WriteJSON(w, v, http.StatusOK)
 	}
 }
 
-func (api *API) getVariablesInEnvironmentHandler() Handler {
+func (api *API) getVariablesInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -65,11 +66,11 @@ func (api *API) getVariablesInEnvironmentHandler() Handler {
 			return sdk.WrapError(errVar, "getVariablesInEnvironmentHandler: Cannot get variables for environment %s", envName)
 		}
 
-		return WriteJSON(w, variables, http.StatusOK)
+		return service.WriteJSON(w, variables, http.StatusOK)
 	}
 }
 
-func (api *API) deleteVariableFromEnvironmentHandler() Handler {
+func (api *API) deleteVariableFromEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -114,11 +115,11 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentVariableDelete(key, *env, *varToDelete, getUser(ctx))
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) updateVariableInEnvironmentHandler() Handler {
+func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -170,11 +171,11 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentVariableUpdate(key, *env, newVar, varBefore, getUser(ctx))
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }
 
-func (api *API) addVariableInEnvironmentHandler() Handler {
+func (api *API) addVariableInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -229,6 +230,6 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 
 		event.PublishEnvironmentVariableAdd(key, *env, newVar, getUser(ctx))
 
-		return WriteJSON(w, p, http.StatusOK)
+		return service.WriteJSON(w, p, http.StatusOK)
 	}
 }

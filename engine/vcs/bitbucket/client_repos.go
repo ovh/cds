@@ -1,6 +1,7 @@
 package bitbucket
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strings"
@@ -8,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (b *bitbucketClient) Repos() ([]sdk.VCSRepo, error) {
+func (b *bitbucketClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	bbRepos := []Repo{}
 
 	path := "/repos"
@@ -20,7 +21,7 @@ func (b *bitbucketClient) Repos() ([]sdk.VCSRepo, error) {
 		}
 
 		var response Response
-		if err := b.do("GET", "core", path, params, nil, &response, nil); err != nil {
+		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
 			return nil, sdk.WrapError(err, "vcs> bitbucket> Repos> Unable to get repos")
 		}
 
@@ -65,13 +66,13 @@ func (b *bitbucketClient) Repos() ([]sdk.VCSRepo, error) {
 	return repos, nil
 }
 
-func (b *bitbucketClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
+func (b *bitbucketClient) RepoByFullname(ctx context.Context, fullname string) (sdk.VCSRepo, error) {
 	t := strings.SplitN(fullname, "/", 2)
 	r := Repo{}
 	path := fmt.Sprintf("/projects/%s/repos/%s", t[0], t[1])
 
 	var repo sdk.VCSRepo
-	if err := b.do("GET", "core", path, nil, nil, &r, nil); err != nil {
+	if err := b.do(ctx, "GET", "core", path, nil, nil, &r, nil); err != nil {
 		return repo, sdk.WrapError(err, "vcs> bitbucket> RepoByFullname> Unable to get repo")
 	}
 
@@ -108,7 +109,7 @@ func (b *bitbucketClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 	return repo, nil
 }
 
-func (b *bitbucketClient) GrantReadPermission(repo string) error {
+func (b *bitbucketClient) GrantReadPermission(ctx context.Context, repo string) error {
 	if b.username == "" {
 		return nil
 	}
@@ -122,5 +123,5 @@ func (b *bitbucketClient) GrantReadPermission(repo string) error {
 	params.Add("name", b.username)
 	params.Add("permission", "REPO_WRITE")
 
-	return b.do("PUT", "core", path, params, nil, nil, nil)
+	return b.do(ctx, "PUT", "core", path, params, nil, nil, nil)
 }

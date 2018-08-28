@@ -12,11 +12,12 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-func (api *API) postPipelinePreviewHandler() Handler {
+func (api *API) postPipelinePreviewHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		format := r.FormValue("format")
 
@@ -50,11 +51,11 @@ func (api *API) postPipelinePreviewHandler() Handler {
 			return sdk.WrapError(errP, "postPipelinePreviewHandler> Unable to parse pipeline")
 		}
 
-		return WriteJSON(w, pip, http.StatusOK)
+		return service.WriteJSON(w, pip, http.StatusOK)
 	}
 }
 
-func (api *API) importPipelineHandler() Handler {
+func (api *API) importPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -62,13 +63,9 @@ func (api *API) importPipelineHandler() Handler {
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups)
 		if errp != nil {
 			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project %s", key)
-		}
-
-		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
-			return sdk.WrapError(err, "importPipelineHandler> Unable to load project permissions %s", key)
 		}
 
 		// Get body
@@ -141,7 +138,7 @@ func (api *API) importPipelineHandler() Handler {
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)
 			if ok {
-				return WriteJSON(w, msgListString, myError.Status)
+				return service.WriteJSON(w, msgListString, myError.Status)
 			}
 			return sdk.WrapError(globalError, "importPipelineHandler> Unable import pipeline")
 		}
@@ -150,11 +147,11 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
 }
 
-func (api *API) putImportPipelineHandler() Handler {
+func (api *API) putImportPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -248,6 +245,6 @@ func (api *API) putImportPipelineHandler() Handler {
 			return sdk.WrapError(err, "putImportPipelineHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
 }

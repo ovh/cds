@@ -1,7 +1,6 @@
 package venom
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -23,13 +22,6 @@ func (v *Venom) init() error {
 	}
 
 	log.SetOutput(v.LogOutput)
-	switch v.OutputDetails {
-	case DetailsLow, DetailsMedium, DetailsHigh:
-		log.Debug("Detail Level: ", v.OutputDetails)
-	default:
-		return errors.New("Invalid details. Must be low, medium or high")
-	}
-
 	return nil
 }
 
@@ -52,11 +44,13 @@ func (v *Venom) Parse(path []string, exclude []string) error {
 	extractedVars := []string{}
 	for i := range v.testsuites {
 		ts := &v.testsuites[i]
-		log.Info("Parsing testsuite", ts.Package)
-
+		log.Info("Parsing testsuite ", ts.Package)
 		tvars, textractedVars, err := v.parseTestSuite(ts)
 		if err != nil {
 			return err
+		}
+		for k := range ts.Vars {
+			textractedVars = append(textractedVars, k)
 		}
 		for _, k := range tvars {
 			var found bool
@@ -94,9 +88,14 @@ func (v *Venom) Parse(path []string, exclude []string) error {
 		}
 		if !varExtracted {
 			var ignored bool
+			// ignore {{.venom.var..}}
+			if strings.HasPrefix(k, "venom.") {
+				continue
+			}
 			for _, i := range v.IgnoreVariables {
 				if strings.HasPrefix(k, i) {
 					ignored = true
+					break
 				}
 			}
 			if !ignored {
@@ -125,11 +124,6 @@ func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
 
 	if err := v.readFiles(filesPath); err != nil {
 		return nil, err
-	}
-
-	if v.OutputDetails != DetailsLow {
-		pool := v.initBars()
-		defer endBars(v.OutputDetails, pool)
 	}
 
 	chanEnd := make(chan *TestSuite, 1)

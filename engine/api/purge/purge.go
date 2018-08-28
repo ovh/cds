@@ -3,8 +3,6 @@ package purge
 import (
 	"context"
 	"database/sql"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -35,19 +33,15 @@ func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap)
 			}
 
 			log.Debug("purge> Deleting all workflow marked to delete....")
-			if err := workflows(DBFunc(), store); err != nil {
+			if err := Workflows(c, DBFunc(), store); err != nil {
 				log.Warning("purge> Error on workflows : %v", err)
-			}
-
-			if err := stopRunsBlocked(DBFunc()); err != nil {
-				log.Warning("purge> Error on stopRunsBlocked : %v", err)
 			}
 		}
 	}
 }
 
-// workflows purges all marked workflows
-func workflows(db *gorp.DbMap, store cache.Store) error {
+// Workflows purges all marked workflows
+func Workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 	query := "SELECT id, project_id FROM workflow WHERE to_delete = true ORDER BY id ASC"
 	res := []struct {
 		ID        int64 `db:"id"`
@@ -94,7 +88,7 @@ func workflows(db *gorp.DbMap, store cache.Store) error {
 			return sdk.WrapError(err, "purge.Workflows> unable to start tx")
 		}
 
-		if err := workflow.Delete(tx, store, &proj, &w); err != nil {
+		if err := workflow.Delete(ctx, tx, store, &proj, &w); err != nil {
 			log.Error("purge.Workflows> unable to delete workflow %d: %v", w.ID, err)
 			_ = tx.Rollback()
 			continue
@@ -117,63 +111,6 @@ func deleteWorkflowRunsHistory(db gorp.SqlExecutor) error {
 	if _, err := db.Exec(query); err != nil {
 		log.Warning("deleteWorkflowRunsHistory> Unable to delete workflow history %s", err)
 		return err
-	}
-	return nil
-}
-
-// stopRunsBlocked is useful to force stop all workflow that is running more than 24hrs
-func stopRunsBlocked(db *gorp.DbMap) error {
-	query := `SELECT workflow_run.id
-		FROM workflow_run
-		WHERE (workflow_run.status = $1 or workflow_run.status = $2 or workflow_run.status = $3)
-		AND now() - workflow_run.start > interval '1 day'
-		LIMIT 30`
-	ids := []struct {
-		ID int64 `db:"id"`
-	}{}
-
-	if _, err := db.Select(&ids, query, sdk.StatusWaiting.String(), sdk.StatusChecking.String(), sdk.StatusBuilding.String()); err != nil {
-		if err == sql.ErrNoRows {
-			return nil
-		}
-		return sdk.WrapError(err, "stopRunsBlocked>")
-	}
-
-	tx, errTx := db.Begin()
-	if errTx != nil {
-		return sdk.WrapError(errTx, "stopRunsBlocked>")
-	}
-	defer tx.Rollback() // nolint
-
-	wfIds := make([]string, len(ids))
-	for i := range wfIds {
-		wfIds[i] = fmt.Sprintf("%d", ids[i].ID)
-	}
-	wfIdsJoined := strings.Join(wfIds, ",")
-	queryUpdateWf := `UPDATE workflow_run SET status = $1 WHERE id = ANY(string_to_array($2, ',')::bigint[])`
-	if _, err := tx.Exec(queryUpdateWf, sdk.StatusStopped.String(), wfIdsJoined); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow run history")
-	}
-	args := []interface{}{sdk.StatusStopped.String(), wfIdsJoined, sdk.StatusBuilding.String(), sdk.StatusChecking.String(), sdk.StatusWaiting.String()}
-	queryUpdateNodeRun := `UPDATE workflow_node_run SET status = $1, done = now()
-	WHERE workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
-	AND (status = $3 OR status = $4 OR status = $5)`
-	if _, err := tx.Exec(queryUpdateNodeRun, args...); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node run history")
-	}
-	queryUpdateNodeJobRun := `UPDATE workflow_node_run_job SET status = $1, done = now()
-	WHERE workflow_node_run_job.workflow_node_run_id IN (
-		SELECT workflow_node_run.id
-		FROM workflow_node_run
-		WHERE workflow_node_run.workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
-		AND (status = $3 OR status = $4 OR status = $5)
-	)`
-	if _, err := tx.Exec(queryUpdateNodeJobRun, args...); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node job run history")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to commit transaction")
 	}
 	return nil
 }

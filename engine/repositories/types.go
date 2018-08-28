@@ -21,7 +21,7 @@ type Service struct {
 
 // Configuration is the vcs configuration structure
 type Configuration struct {
-	Name                   string `toml:"name" comment:"Name of this CDS Repositories Service"`
+	Name                   string `toml:"name" comment:"Name of this CDS Repositories Service\n Enter a name to enable this service"`
 	Basedir                string `toml:"basedir" comment:"Root directory where the service will store all checked-out repositories"`
 	OperationRetention     int    `toml:"operation_retention" comment:"Operation retention in redis store (in days)" default:"5"`
 	RepositoriesRentention int    `toml:"repositories_retention" comment:"Re retention on the filesystem (in days)" default:"10"`

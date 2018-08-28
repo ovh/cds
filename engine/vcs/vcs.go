@@ -46,6 +46,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 	s.Token = s.Cfg.API.Token
 	s.Type = services.TypeVCS
 	s.MaxHeartbeatFailures = s.Cfg.API.MaxHeartbeatFailures
+	s.ServiceName = "cds-vcs"
 
 	return nil
 }

@@ -19,21 +19,19 @@ var (
 func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	labels := prometheus.Labels{"instance": instance}
 
-	nbUsers := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_users", Help: "metrics nb_users", ConstLabels: labels})
-	nbApplications := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_applications", Help: "metrics nb_applications", ConstLabels: labels})
-	nbProjects := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_projects", Help: "metrics nb_projects", ConstLabels: labels})
-	nbGroups := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_groups", Help: "metrics nb_groups", ConstLabels: labels})
-	nbPipelines := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_pipelines", Help: "metrics nb_pipelines", ConstLabels: labels})
-	nbWorkflows := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflows", Help: "metrics nb_workflows", ConstLabels: labels})
-	nbArtifacts := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_artifacts", Help: "metrics nb_artifacts", ConstLabels: labels})
-	nbWorkerModels := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_worker_models", Help: "metrics nb_worker_models", ConstLabels: labels})
-	nbWorkflowRuns := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
-	nbWorkflowNodeRuns := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
-	nbWorkflowNodeRunJobs := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_run_jobs", Help: "metrics nb_workflow_node_run_jobs", ConstLabels: labels})
-	nbMaxWorkersBuilding := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
-
-	nbOldPipelineBuilds := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_old_pipeline_builds", Help: "metrics nb_old_pipeline_builds", ConstLabels: labels})
-	nbOldPipelineBuildJobs := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_old_pipeline_build_jobs", Help: "metrics nb_old_pipeline_build_jobs", ConstLabels: labels})
+	nbUsers := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_users", Help: "metrics nb_users", ConstLabels: labels})
+	nbApplications := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_applications", Help: "metrics nb_applications", ConstLabels: labels})
+	nbProjects := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_projects", Help: "metrics nb_projects", ConstLabels: labels})
+	nbGroups := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_groups", Help: "metrics nb_groups", ConstLabels: labels})
+	nbPipelines := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_pipelines", Help: "metrics nb_pipelines", ConstLabels: labels})
+	nbWorkflows := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflows", Help: "metrics nb_workflows", ConstLabels: labels})
+	nbArtifacts := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_artifacts", Help: "metrics nb_artifacts", ConstLabels: labels})
+	nbWorkerModels := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_worker_models", Help: "metrics nb_worker_models", ConstLabels: labels})
+	nbWorkflowRuns := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
+	nbWorkflowNodeRuns := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
+	nbMaxWorkersBuilding := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
+	nbJobs := prometheus.NewCounter(prometheus.CounterOpts{Name: "nb_jobs", Help: "nb_jobs", ConstLabels: labels})
+	queue := prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "queue", Help: "metrics queue", ConstLabels: prometheus.Labels{"instance": instance}}, []string{"status", "range"})
 
 	registry.MustRegister(nbUsers)
 	registry.MustRegister(nbApplications)
@@ -45,12 +43,11 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	registry.MustRegister(nbWorkerModels)
 	registry.MustRegister(nbWorkflowRuns)
 	registry.MustRegister(nbWorkflowNodeRuns)
-	registry.MustRegister(nbWorkflowNodeRunJobs)
-	registry.MustRegister(nbOldPipelineBuilds)
-	registry.MustRegister(nbOldPipelineBuildJobs)
 	registry.MustRegister(nbMaxWorkersBuilding)
+	registry.MustRegister(nbJobs)
+	registry.MustRegister(queue)
 
-	tick := time.NewTicker(30 * time.Second).C
+	tick := time.NewTicker(9 * time.Second).C
 
 	go func(c context.Context, DBFunc func() *gorp.DbMap) {
 		for {
@@ -61,26 +58,45 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 					return
 				}
 			case <-tick:
-				count(DBFunc(), "SELECT COUNT(1) FROM \"user\"", nbUsers)
-				count(DBFunc(), "SELECT COUNT(1) FROM application", nbApplications)
-				count(DBFunc(), "SELECT COUNT(1) FROM project", nbProjects)
-				count(DBFunc(), "SELECT COUNT(1) FROM \"group\"", nbGroups)
-				count(DBFunc(), "SELECT COUNT(1) FROM pipeline", nbPipelines)
-				count(DBFunc(), "SELECT COUNT(1) FROM workflow", nbWorkflows)
-				count(DBFunc(), "SELECT COUNT(1) FROM artifact", nbArtifacts)
-				count(DBFunc(), "SELECT COUNT(1) FROM worker_model", nbWorkerModels)
-				count(DBFunc(), "SELECT MAX(id) FROM workflow_run", nbWorkflowRuns)
-				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run", nbWorkflowNodeRuns)
-				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run_job", nbWorkflowNodeRunJobs)
-				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build", nbOldPipelineBuilds)
-				count(DBFunc(), "SELECT MAX(id) FROM pipeline_build_job", nbOldPipelineBuildJobs)
-				count(DBFunc(), "SELECT COUNT(1) FROM worker where status like 'Building' ", nbMaxWorkersBuilding)
+				count(DBFunc(), nbUsers, "SELECT COUNT(1) FROM \"user\"")
+				count(DBFunc(), nbApplications, "SELECT COUNT(1) FROM application")
+				count(DBFunc(), nbProjects, "SELECT COUNT(1) FROM project")
+				count(DBFunc(), nbGroups, "SELECT COUNT(1) FROM \"group\"")
+				count(DBFunc(), nbPipelines, "SELECT COUNT(1) FROM pipeline")
+				count(DBFunc(), nbWorkflows, "SELECT COUNT(1) FROM workflow")
+				count(DBFunc(), nbArtifacts, "SELECT COUNT(1) FROM artifact")
+				count(DBFunc(), nbWorkerModels, "SELECT COUNT(1) FROM worker_model")
+				count(DBFunc(), nbWorkflowRuns, "SELECT MAX(id) FROM workflow_run")
+				count(DBFunc(), nbWorkflowNodeRuns, "SELECT MAX(id) FROM workflow_node_run")
+				count(DBFunc(), nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
+				count(DBFunc(), nbJobs, "SELECT MAX(id) FROM workflow_node_run_job_info")
+
+				now := time.Now()
+				now10s := now.Add(-10 * time.Second)
+				now30s := now.Add(-30 * time.Second)
+				now1min := now.Add(-1 * time.Minute)
+				now2min := now.Add(-2 * time.Minute)
+				now5min := now.Add(-5 * time.Minute)
+				now10min := now.Add(-10 * time.Minute)
+
+				queryBuilding := "SELECT COUNT(1) FROM workflow_node_run_job where status = 'Building'"
+				query := "select COUNT(1) from workflow_node_run_job where queued > $1 and queued <= $2 and status = 'Waiting'"
+				queryOld := "select COUNT(1) from workflow_node_run_job where queued < $1 and status = 'Waiting'"
+
+				countGauge(DBFunc(), *queue, "building", "all", queryBuilding)
+				countGauge(DBFunc(), *queue, "waiting", "10_less_10s", query, now10s, now)
+				countGauge(DBFunc(), *queue, "waiting", "20_more_10s_less_30s", query, now30s, now10s)
+				countGauge(DBFunc(), *queue, "waiting", "30_more_30s_less_1min", query, now1min, now30s)
+				countGauge(DBFunc(), *queue, "waiting", "40_more_1min_less_2min", query, now2min, now1min)
+				countGauge(DBFunc(), *queue, "waiting", "50_more_2min_less_5min", query, now5min, now2min)
+				countGauge(DBFunc(), *queue, "waiting", "60_more_5min_less_10min", query, now10min, now5min)
+				countGauge(DBFunc(), *queue, "waiting", "70_more_10min", queryOld, now10min)
 			}
 		}
 	}(c, DBFunc)
 }
 
-func count(db *gorp.DbMap, query string, v prometheus.Summary) {
+func count(db *gorp.DbMap, v prometheus.Counter, query string) {
 	if db == nil {
 		return
 	}
@@ -90,9 +106,22 @@ func count(db *gorp.DbMap, query string, v prometheus.Summary) {
 		return
 	}
 	if n.Valid {
-		v.Observe(float64(n.Int64))
+		v.Set(float64(n.Int64))
 	}
+}
 
+func countGauge(db *gorp.DbMap, v prometheus.GaugeVec, status, timerange string, query string, args ...interface{}) {
+	if db == nil {
+		return
+	}
+	var n sql.NullInt64
+	if err := db.QueryRow(query, args...).Scan(&n); err != nil {
+		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
+		return
+	}
+	if n.Valid {
+		v.WithLabelValues(status, timerange).Set(float64(n.Int64))
+	}
 }
 
 // GetGatherer returns CDS API gatherer

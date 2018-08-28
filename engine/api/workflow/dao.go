@@ -22,9 +22,9 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/keys"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/tracing"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -216,13 +216,13 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 
 // Load loads a workflow for a given user (ie. checking permissions)
 func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, name string, u *sdk.User, opts LoadOptions) (*sdk.Workflow, error) {
-	ctx, end := tracing.Span(ctx, "workflow.Load",
-		tracing.Tag("workflow", name),
-		tracing.Tag("project_key", proj.Key),
-		tracing.Tag("with_pipeline", opts.DeepPipeline),
-		tracing.Tag("only_root", opts.OnlyRootNode),
-		tracing.Tag("with_base64_keys", opts.Base64Keys),
-		tracing.Tag("without_node", opts.WithoutNode),
+	ctx, end := observability.Span(ctx, "workflow.Load",
+		observability.Tag(observability.TagWorkflow, name),
+		observability.Tag(observability.TagProjectKey, proj.Key),
+		observability.Tag("with_pipeline", opts.DeepPipeline),
+		observability.Tag("only_root", opts.OnlyRootNode),
+		observability.Tag("with_base64_keys", opts.Base64Keys),
+		observability.Tag("without_node", opts.WithoutNode),
 	)
 	defer end()
 
@@ -364,7 +364,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	t0 := time.Now()
 	dbRes := Workflow{}
 
-	_, next := tracing.Span(ctx, "workflow.load.selectOne")
+	_, next := observability.Span(ctx, "workflow.load.selectOne")
 	if err := db.SelectOne(&dbRes, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
@@ -385,7 +385,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 
 	// Load groups
-	_, next = tracing.Span(ctx, "workflow.load.loadWorkflowGroups")
+	_, next = observability.Span(ctx, "workflow.load.loadWorkflowGroups")
 	gps, err := loadWorkflowGroups(db, res)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow groups")
@@ -396,7 +396,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	res.Pipelines = map[int64]sdk.Pipeline{}
 
 	if !opts.WithoutNode {
-		_, next = tracing.Span(ctx, "workflow.load.loadNodes")
+		_, next = observability.Span(ctx, "workflow.load.loadNodes")
 		err := loadWorkflowRoot(ctx, db, store, proj, &res, u, opts)
 		next()
 
@@ -406,7 +406,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 
 		// Load joins
 		if !opts.OnlyRootNode {
-			_, next = tracing.Span(ctx, "workflow.load.loadJoins")
+			_, next = observability.Span(ctx, "workflow.load.loadJoins")
 			joins, errJ := loadJoins(ctx, db, store, proj, &res, u, opts)
 			next()
 
@@ -419,7 +419,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 
 	if opts.WithFavorites {
-		_, next = tracing.Span(ctx, "workflow.load.loadFavorite")
+		_, next = observability.Span(ctx, "workflow.load.loadFavorite")
 		fav, errF := loadFavorite(db, &res, u)
 		next()
 
@@ -429,7 +429,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		res.Favorite = fav
 	}
 
-	_, next = tracing.Span(ctx, "workflow.load.loadNotifications")
+	_, next = observability.Span(ctx, "workflow.load.loadNotifications")
 	notifs, errN := loadNotifications(db, &res)
 	next()
 
@@ -443,7 +443,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	log.Debug("Load> Load workflow (%s/%s)%d took %.3f seconds", res.ProjectKey, res.Name, res.ID, delta)
 	w := &res
 	if !opts.WithoutNode {
-		_, next = tracing.Span(ctx, "workflow.load.Sort")
+		_, next = observability.Span(ctx, "workflow.load.Sort")
 		Sort(w)
 		next()
 	}
@@ -709,7 +709,7 @@ func MarkAsDelete(db gorp.SqlExecutor, w *sdk.Workflow) error {
 }
 
 // Delete workflow
-func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow) error {
+func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow) error {
 	log.Debug("Delete> deleting workflow %d", w.ID)
 
 	//Detach root from workflow
@@ -719,7 +719,7 @@ func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workf
 
 	hooks := w.GetHooks()
 	// Delete all hooks
-	if err := DeleteHookConfiguration(db, store, p, hooks); err != nil {
+	if err := DeleteHookConfiguration(ctx, db, store, p, hooks); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete hooks from workflow")
 	}
 
@@ -856,7 +856,7 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 
 // Push push a workflow from cds files
 func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, tr *tar.Reader, opts *PushOption, u *sdk.User, decryptFunc keys.DecryptFunc) ([]sdk.Message, *sdk.Workflow, error) {
-	ctx, end := tracing.Span(ctx, "workflow.Push")
+	ctx, end := observability.Span(ctx, "workflow.Push")
 	defer end()
 
 	apps := make(map[string]exportentities.Application)
@@ -1038,7 +1038,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 					Config:            sdk.RepositoryWebHookModel.DefaultConfig,
 					UUID:              opts.HookUUID,
 				})
-				if wf.Root.Context.DefaultPayload, err = DefaultPayload(tx, store, proj, u, wf); err != nil {
+				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, u, wf); err != nil {
 					return nil, nil, sdk.WrapError(err, "Push> Unable to get default payload")
 				}
 			}
@@ -1055,7 +1055,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 
 		if !opts.DryRun {
-			if errHr := HookRegistration(tx, store, nil, *wf, proj); errHr != nil {
+			if errHr := HookRegistration(ctx, tx, store, nil, *wf, proj); errHr != nil {
 				return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
 			}
 		}
@@ -1092,33 +1092,21 @@ func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u *sdk.User, add bool
 	return sdk.WrapError(err, "UpdateFavorite>")
 }
 
-// LoadAllByPlatformName loads all workflow using a platform (project_platform table)
-func LoadAllByPlatformName(db gorp.SqlExecutor, projID int64, pfName string) ([]sdk.Workflow, error) {
+// IsDeploymentPlatformUsed checks if a deployment platform is used on any workflow
+func IsDeploymentPlatformUsed(db gorp.SqlExecutor, projectID int64, appID int64, pfName string) (bool, error) {
 	query := `
-	SELECT workflow.*
-	FROM workflow
-	JOIN workflow_node ON workflow.id = workflow_node.workflow_id
-	JOIN workflow_node_context ON workflow_node.id = workflow_node_context.workflow_node_id
-	JOIN project_platform ON project_platform.project_id = workflow.project_id
-	WHERE workflow.project_id = $1
-	AND project_platform.name = $2
-	AND workflow_node_context.project_platform_id = project_platform.id
+	SELECT count(1) 
+	FROM workflow_node_context
+	JOIN project_platform ON project_platform.id = workflow_node_context.project_platform_id
+	WHERE workflow_node_context.application_id = $2
+	AND project_platform.project_id = $1
+	AND project_platform.name = $3
 	`
 
-	res := []sdk.Workflow{}
-	dbRes := []Workflow{}
-	if _, err := db.Select(&dbRes, query, projID, pfName); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "LoadAllByPlatformName> Unable to load workflows")
+	nb, err := db.SelectInt(query, projectID, appID, pfName)
+	if err != nil {
+		return false, sdk.WrapError(err, "IsDeploymentPlatformUsed")
 	}
 
-	for _, w := range dbRes {
-		if err := w.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadAllByPlatformName> Unable to execute post get")
-		}
-		res = append(res, sdk.Workflow(w))
-	}
-	return res, nil
+	return nb > 0, nil
 }

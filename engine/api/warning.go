@@ -2,15 +2,17 @@ package api
 
 import (
 	"context"
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/warning"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getWarningsHandler() Handler {
+func (api *API) getWarningsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -26,11 +28,11 @@ func (api *API) getWarningsHandler() Handler {
 			w := &warnings[i]
 			w.ComputeMessage(al)
 		}
-		return WriteJSON(w, warnings, http.StatusOK)
+		return service.WriteJSON(w, warnings, http.StatusOK)
 	}
 }
 
-func (api *API) putWarningsHandler() Handler {
+func (api *API) putWarningsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -54,6 +56,6 @@ func (api *API) putWarningsHandler() Handler {
 
 		event.PublishUpdateWarning(warn, getUser(ctx))
 		warn.Message = wa.Message
-		return WriteJSON(w, warn, http.StatusOK)
+		return service.WriteJSON(w, warn, http.StatusOK)
 	}
 }

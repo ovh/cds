@@ -1,6 +1,7 @@
 package github
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -92,7 +93,7 @@ func filterCommits(allCommits []Commit, since, until string) []Commit {
 }
 
 // Commits returns the commits list on a branch between a commit SHA (since) until another commit SHA (until). The branch is given by the branch of the first commit SHA (since)
-func (g *githubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSCommit, error) {
+func (g *githubClient) Commits(ctx context.Context, repo, theBranch, since, until string) ([]sdk.VCSCommit, error) {
 	var commitsResult []sdk.VCSCommit
 
 	log.Debug("Looking for commits on repo %s since = %s until = %s", repo, since, until)
@@ -103,7 +104,7 @@ func (g *githubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 	// Calculate since commit
 	if since == "" {
 		// If no since commit, take from the begining of the branch
-		b, errB := g.Branch(repo, theBranch)
+		b, errB := g.Branch(ctx, repo, theBranch)
 		if errB != nil {
 			return nil, errB
 		}
@@ -111,7 +112,7 @@ func (g *githubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 			return nil, fmt.Errorf("Commits>Cannot find branch %s", theBranch)
 		}
 		for _, c := range b.Parents {
-			cp, errCP := g.Commit(repo, c)
+			cp, errCP := g.Commit(ctx, repo, c)
 			if errCP != nil {
 				return nil, errCP
 			}
@@ -122,7 +123,7 @@ func (g *githubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 			}
 		}
 	} else {
-		sinceCommit, errC := g.Commit(repo, since)
+		sinceCommit, errC := g.Commit(ctx, repo, since)
 		if errC != nil {
 			return nil, errC
 		}
@@ -134,7 +135,7 @@ func (g *githubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 		// If no until commit take until the end of the branch
 		untilDate = time.Now()
 	} else {
-		untilCommit, errC := g.Commit(repo, until)
+		untilCommit, errC := g.Commit(ctx, repo, until)
 		if errC != nil {
 			return nil, errC
 		}
@@ -216,7 +217,7 @@ func (g *githubClient) allCommitBetween(repo string, untilDate time.Time, sinceD
 
 // Commit Get a single commit
 // https://developer.github.com/v3/repos/commits/#get-a-single-commit
-func (g *githubClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
+func (g *githubClient) Commit(ctx context.Context, repo, hash string) (sdk.VCSCommit, error) {
 	url := "/repos/" + repo + "/commits/" + hash
 	status, body, _, err := g.get(url)
 	if err != nil {
@@ -255,4 +256,49 @@ func (g *githubClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 	}
 
 	return commit, nil
+}
+
+func (g *githubClient) CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]sdk.VCSCommit, error) {
+	var commits []sdk.VCSCommit
+	url := fmt.Sprintf("/repos/%s/compare/%s...%s", repo, base, head)
+	status, body, _, err := g.get(url)
+	if err != nil {
+		log.Warning("githubClient.CommitsBetweenRefs> Error %s", err)
+		return commits, err
+	}
+	if status >= 400 {
+		return commits, sdk.NewError(sdk.ErrRepoNotFound, errorAPI(body))
+	}
+
+	var diff DiffCommits
+	//Github may return 304 status because we are using conditional request with ETag based headers
+	if status == http.StatusNotModified {
+		//If repo isn't updated, lets get them from cache
+		g.Cache.Get(cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url), &commits)
+	} else {
+		if err := json.Unmarshal(body, &diff); err != nil {
+			log.Warning("githubClient.CommitsBetweenRefs> Unable to parse github commit: %s", err)
+			return commits, err
+		}
+
+		commits = make([]sdk.VCSCommit, len(diff.Commits))
+		for i, commit := range diff.Commits {
+			commits[i] = sdk.VCSCommit{
+				Timestamp: commit.Commit.Author.Date.Unix() * 1000,
+				Message:   commit.Commit.Message,
+				Hash:      commit.Sha,
+				Author: sdk.VCSAuthor{
+					DisplayName: commit.Commit.Author.Name,
+					Email:       commit.Commit.Author.Email,
+					Name:        commit.Author.Login,
+					Avatar:      commit.Author.AvatarURL,
+				},
+				URL: commit.HTMLURL,
+			}
+		}
+		//Put the body on cache for one hour and one minute
+		g.Cache.SetWithTTL(cache.Key("vcs", "github", "commitdiff", g.OAuthToken, url), &commits, 61*60)
+	}
+
+	return commits, nil
 }

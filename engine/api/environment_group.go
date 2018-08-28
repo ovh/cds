@@ -14,12 +14,13 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
+func (api *API) updateGroupRoleOnEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -88,11 +89,11 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 		groupEnvironment.Group = *g
 		event.PublishEnvironmentPermissionUpdate(key, *envUpdated, groupEnvironment, gpOld, getUser(ctx))
 
-		return WriteJSON(w, envUpdated, http.StatusOK)
+		return service.WriteJSON(w, envUpdated, http.StatusOK)
 	}
 }
 
-func (api *API) addGroupsInEnvironmentHandler() Handler {
+func (api *API) addGroupsInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -159,11 +160,11 @@ func (api *API) addGroupsInEnvironmentHandler() Handler {
 			event.PublishEnvironmentPermissionAdd(key, *envUpdated, gp, getUser(ctx))
 		}
 
-		return WriteJSON(w, envUpdated, http.StatusOK)
+		return service.WriteJSON(w, envUpdated, http.StatusOK)
 	}
 }
 
-func (api *API) addGroupInEnvironmentHandler() Handler {
+func (api *API) addGroupInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -205,11 +206,11 @@ func (api *API) addGroupInEnvironmentHandler() Handler {
 		groupPermission.Group = *g
 		event.PublishEnvironmentPermissionAdd(key, *env, groupPermission, getUser(ctx))
 
-		return WriteJSON(w, nil, http.StatusCreated)
+		return service.WriteJSON(w, nil, http.StatusCreated)
 	}
 }
 
-func (api *API) deleteGroupFromEnvironmentHandler() Handler {
+func (api *API) deleteGroupFromEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -260,7 +261,7 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 	}
 }
 
-func (api *API) importGroupsInEnvironmentHandler() Handler {
+func (api *API) importGroupsInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -376,6 +377,6 @@ func (api *API) importGroupsInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importGroupsInEnvironmentHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, env, http.StatusOK)
+		return service.WriteJSON(w, env, http.StatusOK)
 	}
 }

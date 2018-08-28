@@ -42,11 +42,6 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
         if (this.nodeRun) {
             return '';
         }
-
-    }
-
-    navigateToBuild(nr: WorkflowNodeRun): void {
-
     }
 
     stop(): void {

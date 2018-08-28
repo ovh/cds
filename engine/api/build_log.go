@@ -12,10 +12,11 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getStepBuildLogsHandler() Handler {
+func (api *API) getStepBuildLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -91,11 +92,11 @@ func (api *API) getStepBuildLogsHandler() Handler {
 			return sdk.WrapError(errLog, "getBuildLogshandler> Cannot load pipeline build logs")
 		}
 
-		return WriteJSON(w, result, http.StatusOK)
+		return service.WriteJSON(w, result, http.StatusOK)
 	}
 }
 
-func (api *API) getBuildLogsHandler() Handler {
+func (api *API) getBuildLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
@@ -178,11 +179,11 @@ func (api *API) getBuildLogsHandler() Handler {
 			l := sdk.NewLog(0, fmt.Sprintf("Build finished with status: %s\n", pb.Status), pb.ID, 0)
 			pipelinelogs = append(pipelinelogs, *l)
 		}
-		return WriteJSON(w, pipelinelogs, http.StatusOK)
+		return service.WriteJSON(w, pipelinelogs, http.StatusOK)
 	}
 }
 
-func (api *API) getPipelineBuildJobLogsHandler() Handler {
+func (api *API) getPipelineBuildJobLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		// Get pipeline and action name in URL
@@ -251,11 +252,11 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 			return sdk.WrapError(err, "getPipelineBuildJobLogsHandler> Cannot load pipeline build logs")
 		}
 
-		return WriteJSON(w, pipelinelogs, http.StatusOK)
+		return service.WriteJSON(w, pipelinelogs, http.StatusOK)
 	}
 }
 
-func (api *API) addBuildLogHandler() Handler {
+func (api *API) addBuildLogHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var logs sdk.Log
 		if err := UnmarshalBody(r, &logs); err != nil {

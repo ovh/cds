@@ -11,8 +11,21 @@ import {StepEvent} from './step.event';
 })
 export class ActionStepComponent {
 
+    _step: Action;
+    withAdvanced: boolean;
+    @Input('step')
+    set step(step: Action) {
+        this._step = step;
+        if (step && step.parameters) {
+            this.withAdvanced = step.parameters.some((parameter) => parameter.advanced);
+            this._step.step_name = this._step.step_name || this._step.name;
+        }
+    }
+    get step(): Action {
+        return this._step;
+    }
+
     @Input() action: Action;
-    @Input() step: Action;
     @Input() edit: boolean;
     @Input() suggest: Array<string>;
     @Input() keys: AllKeys;
@@ -34,6 +47,7 @@ export class ActionStepComponent {
     @Output() removeEvent = new EventEmitter<StepEvent>();
 
     originalParam = new Map<string, Parameter>();
+    editStepName = false;
     constructor() {
          this.collapsed = true;
     }

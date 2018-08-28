@@ -213,29 +213,29 @@ func ListArtifacts(project string, application string, pipeline string, tag stri
 	return arts, nil
 }
 
-// UploadArtifact read file at filePath and upload it in projet-pipeline-tag starage directory
+// UploadArtifact read file at filePath and upload it in projet-pipeline-tag storage directory
 func UploadArtifact(project string, pipeline string, application string, tag string, filePath string, buildNumber int, env string) (bool, time.Duration, error) {
 	t0 := time.Now()
 
 	f, errop := os.Open(filePath)
 	if errop != nil {
-		return false, 0, fmt.Errorf("unable on open file %s (%v)", filePath, errop)
+		return false, time.Since(t0), fmt.Errorf("unable on open file %s (%v)", filePath, errop)
 	}
 	sha512sum, err512 := FileSHA512sum(filePath)
 	if err512 != nil {
-		return false, 0, fmt.Errorf("unable to compte sha512sum on file %s (%v)", filePath, err512)
+		return false, time.Since(t0), fmt.Errorf("unable to compte sha512sum on file %s (%v)", filePath, err512)
 	}
 
 	//File stat
 	stat, errst := f.Stat()
 	if errst != nil {
-		return false, 0, fmt.Errorf("unable to get file info (%v)", errst)
+		return false, time.Since(t0), fmt.Errorf("unable to get file info (%v)", errst)
 	}
 
 	//Compute md5sum
 	hash := md5.New()
 	if _, errcopy := io.Copy(hash, f); errcopy != nil {
-		return false, 0, fmt.Errorf("unable to read file content (%v)", errcopy)
+		return false, time.Since(t0), fmt.Errorf("unable to read file content (%v)", errcopy)
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
@@ -244,7 +244,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	//Reopen the file because we already read it for md5
 	fileContent, erro := ioutil.ReadFile(filePath)
 	if erro != nil {
-		return false, 0, fmt.Errorf("unable to read file %s (%v)", filePath, erro)
+		return false, time.Since(t0), fmt.Errorf("unable to read file %s (%v)", filePath, erro)
 	}
 	_, name := filepath.Split(filePath)
 
@@ -266,11 +266,11 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
 	if errc != nil {
-		return false, 0, fmt.Errorf("unable to create multipart form file (%v)", errc)
+		return false, time.Since(t0), fmt.Errorf("unable to create multipart form file (%v)", errc)
 	}
 
 	if _, err := io.Copy(part, bytes.NewReader(fileContent)); err != nil {
-		return false, 0, fmt.Errorf("unable to read file content (%v)", err)
+		return false, time.Since(t0), fmt.Errorf("unable to read file content (%v)", err)
 	}
 
 	writer.WriteField("env", env)
@@ -280,7 +280,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	writer.WriteField("sha512sum", sha512sum)
 
 	if err := writer.Close(); err != nil {
-		return false, 0, fmt.Errorf("unable to close multipart form writer (%v)", err)
+		return false, time.Since(t0), fmt.Errorf("unable to close multipart form writer (%v)", err)
 	}
 
 	var bodyReader io.Reader
@@ -298,7 +298,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		bodyReader = buf
 	}
 
-	return false, 0, fmt.Errorf("x10: %s", err)
+	return false, time.Since(t0), fmt.Errorf("x10: %s", err)
 }
 
 func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, fileContent []byte, stat os.FileInfo, md5sum, sha512sum string) (bool, time.Duration, error) {
@@ -313,17 +313,17 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 
 	b, err := json.Marshal(art)
 	if err != nil {
-		return true, 0, err
+		return true, time.Since(t0), err
 	}
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s/url?envName=%s", project, application, pipeline, buildNumber, tag, url.QueryEscape(env))
 	body, _, err := Request("POST", path, b)
 	if err != nil {
-		return true, 0, err
+		return true, time.Since(t0), err
 	}
 
 	if err := json.Unmarshal(body, &art); err != nil {
-		return true, 0, err
+		return true, time.Since(t0), err
 	}
 
 	if verbose {
@@ -333,35 +333,50 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 	//Post the file to the temporary URL
 	req, errRequest := http.NewRequest("PUT", art.TempURL, bytes.NewReader(fileContent))
 	if errRequest != nil {
-		return true, 0, errRequest
+		return true, time.Since(t0), errRequest
 	}
 
-	resp, err := client.Do(req)
-	if err != nil {
-		return true, 0, err
+	//Try 10 times to put on swift
+	const retryPutSwift = 10
+	var globalErrSwift error
+	for i := 0; i < retryPutSwift; i++ {
+		globalErrSwift = nil
+		resp, err := client.Do(req)
+		if err != nil {
+			globalErrSwift = fmt.Errorf("Unable to upload artifact - try %d: %v", i, err)
+			continue
+		}
+
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			globalErrSwift = fmt.Errorf("Unable to upload artifact - try %d (Read Body) err: %v", i, err)
+			continue
+		}
+		resp.Body.Close()
+
+		if resp.StatusCode >= 500 {
+			globalErrSwift = fmt.Errorf("Unable to upload artifact - try %d: (HTTP %d) %s", i, resp.StatusCode, string(body))
+			continue
+		} else if resp.StatusCode >= 300 {
+			// 300-499 -> should always fail, no need to retry this theses status code
+			return true, time.Since(t0), fmt.Errorf("Unable to upload artifact - try %d: (HTTP %d) %s", i, resp.StatusCode, string(body))
+		}
 	}
 
-	defer resp.Body.Close()
-
-	body, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return true, 0, err
-	}
-
-	if resp.StatusCode >= 300 {
-		return true, 0, fmt.Errorf("Unable to upload artifact: (HTTP %d) %s", resp.StatusCode, string(body))
+	if globalErrSwift != nil {
+		return true, time.Since(t0), globalErrSwift
 	}
 
 	//Call the API back to store the artifact in DB
 	b, err = json.Marshal(art)
 	if err != nil {
-		return true, 0, err
+		return true, time.Since(t0), err
 	}
 
 	//Try 50 times to make the callback
-	const retry = 50
+	const retryCallbak = 50
 	var globalErr error
-	for i := 0; i < retry; i++ {
+	for i := 0; i < retryCallbak; i++ {
 		path = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s/url/callback?envName=%s", project, application, pipeline, buildNumber, tag, url.QueryEscape(env))
 		_, _, globalErr = Request("POST", path, b)
 		if globalErr == nil {

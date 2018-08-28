@@ -13,10 +13,11 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/workflowv0"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) addTriggerHandler() Handler {
+func (api *API) addTriggerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -120,11 +121,11 @@ func (api *API) addTriggerHandler() Handler {
 			return sdk.WrapError(errWorkflow, "addTriggerHandler> cannot load updated workflow")
 		}
 
-		return WriteJSON(w, t.SrcApplication, http.StatusOK)
+		return service.WriteJSON(w, t.SrcApplication, http.StatusOK)
 	}
 }
 
-func (api *API) getTriggerHandler() Handler {
+func (api *API) getTriggerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		striggerID := vars["id"]
@@ -139,11 +140,11 @@ func (api *API) getTriggerHandler() Handler {
 			return sdk.WrapError(errTrig, "getTriggerHandler> Cannot load trigger %d", triggerID)
 		}
 
-		return WriteJSON(w, t, http.StatusOK)
+		return service.WriteJSON(w, t, http.StatusOK)
 	}
 }
 
-func (api *API) getTriggersHandler() Handler {
+func (api *API) getTriggersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -183,11 +184,11 @@ func (api *API) getTriggersHandler() Handler {
 			return sdk.WrapError(errTri, "getTriggersHandler> cannot load triggers")
 		}
 
-		return WriteJSON(w, triggers, http.StatusOK)
+		return service.WriteJSON(w, triggers, http.StatusOK)
 	}
 }
 
-func (api *API) deleteTriggerHandler() Handler {
+func (api *API) deleteTriggerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -223,11 +224,11 @@ func (api *API) deleteTriggerHandler() Handler {
 			return sdk.WrapError(errWorkflow, "deleteTriggerHandler> cannot load updated workflow")
 		}
 
-		return WriteJSON(w, t.SrcApplication, http.StatusOK)
+		return service.WriteJSON(w, t.SrcApplication, http.StatusOK)
 	}
 }
 
-func (api *API) updateTriggerHandler() Handler {
+func (api *API) updateTriggerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -269,11 +270,11 @@ func (api *API) updateTriggerHandler() Handler {
 			return sdk.WrapError(errWorkflow, "updateTriggerHandler> cannot load updated workflow")
 		}
 
-		return WriteJSON(w, t.SrcApplication, http.StatusOK)
+		return service.WriteJSON(w, t.SrcApplication, http.StatusOK)
 	}
 }
 
-func (api *API) getTriggersAsSourceHandler() Handler {
+func (api *API) getTriggersAsSourceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -313,6 +314,6 @@ func (api *API) getTriggersAsSourceHandler() Handler {
 			return sdk.WrapError(errTri, "getTriggersAsSourceHandler> cannot load triggers")
 		}
 
-		return WriteJSON(w, triggers, http.StatusOK)
+		return service.WriteJSON(w, triggers, http.StatusOK)
 	}
 }

@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	pb "gopkg.in/cheggaaa/pb.v1"
 )
 
 var (
@@ -15,17 +13,15 @@ var (
 
 func New() *Venom {
 	v := &Venom{
-		LogLevel:             "info",
-		LogOutput:            os.Stdout,
-		OutputDetails:        "medium",
-		PrintFunc:            fmt.Printf,
-		executors:            map[string]Executor{},
-		contexts:             map[string]TestCaseContext{},
-		variables:            map[string]string{},
-		IgnoreVariables:      []string{},
-		OutputFormat:         "xml",
-		OutputResume:         false,
-		OutputResumeFailures: false,
+		LogLevel:        "info",
+		LogOutput:       os.Stdout,
+		PrintFunc:       fmt.Printf,
+		executors:       map[string]Executor{},
+		contexts:        map[string]TestCaseContext{},
+		variables:       map[string]string{},
+		EnableProfiling: false,
+		IgnoreVariables: []string{},
+		OutputFormat:    "xml",
 	}
 	return v
 }
@@ -43,13 +39,10 @@ type Venom struct {
 	IgnoreVariables []string
 	Parallel        int
 
-	OutputDetails        string
-	outputProgressBar    map[string]*pb.ProgressBar
-	OutputFormat         string
-	OutputDir            string
-	OutputResume         bool
-	OutputResumeFailures bool
-	StopOnFailure        bool
+	EnableProfiling bool
+	OutputFormat    string
+	OutputDir       string
+	StopOnFailure   bool
 }
 
 func (v *Venom) AddVariables(variables map[string]string) {

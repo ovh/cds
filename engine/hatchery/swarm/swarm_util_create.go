@@ -13,15 +13,18 @@ import (
 	"github.com/docker/go-connections/nat"
 	context "golang.org/x/net/context"
 
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //create the docker bridge
-func (h *HatcherySwarm) createNetwork(dockerClient *dockerClient, name string) error {
+func (h *HatcherySwarm) createNetwork(ctx context.Context, dockerClient *dockerClient, name string) error {
+	ctx, end := observability.Span(ctx, "swarm.createNetwork", observability.Tag("network", name))
+	defer end()
 	log.Debug("hatchery> swarm> createNetwork> Create network %s", name)
-	_, err := dockerClient.NetworkCreate(context.Background(), name, types.NetworkCreate{
+	_, err := dockerClient.NetworkCreate(ctx, name, types.NetworkCreate{
 		Driver:         "bridge",
 		Internal:       false,
 		CheckDuplicate: true,
@@ -46,7 +49,10 @@ type containerArgs struct {
 }
 
 //shortcut to create+start(=run) a container
-func (h *HatcherySwarm) createAndStartContainer(dockerClient *dockerClient, cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
+func (h *HatcherySwarm) createAndStartContainer(ctx context.Context, dockerClient *dockerClient, cArgs containerArgs, spawnArgs hatchery.SpawnArguments) error {
+	ctx, end := observability.Span(ctx, "swarm.createAndStartContainer", observability.Tag(observability.TagWorker, cArgs.name))
+	defer end()
+
 	//Memory is set to 1GB by default
 	if cArgs.memory <= 4 {
 		cArgs.memory = 1024
@@ -89,11 +95,13 @@ func (h *HatcherySwarm) createAndStartContainer(dockerClient *dockerClient, cArg
 		}
 	}
 
+	_, next := observability.Span(ctx, "swarm.dockerClient.ImageList")
 	// Check the images to know if we had to pull or not
-	images, errl := dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
+	images, errl := dockerClient.ImageList(ctx, types.ImageListOptions{All: true})
 	if errl != nil {
 		log.Warning("createAndStartContainer> Unable to list images: %s", errl)
 	}
+	next()
 
 	var imageFound bool
 checkImage:
@@ -111,19 +119,28 @@ checkImage:
 	}
 
 	if !imageFound {
+		_, next := observability.Span(ctx, "swarm.dockerClient.pullImage", observability.Tag("image", cArgs.image))
 		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage); err != nil {
+			next()
 			return sdk.WrapError(err, "createAndStartContainer> Unable to pull image %s on %s", cArgs.image, dockerClient.name)
 		}
+		next()
 	}
 
-	c, err := dockerClient.ContainerCreate(context.Background(), config, hostConfig, networkingConfig, name)
+	_, next = observability.Span(ctx, "swarm.dockerClient.ContainerCreate", observability.Tag(observability.TagWorker, cArgs.name), observability.Tag("network", fmt.Sprintf("%v", networkingConfig)))
+	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, name)
 	if err != nil {
+		next()
 		return sdk.WrapError(err, "createAndStartContainer> Unable to create container %s", name)
 	}
+	next()
 
-	if err := dockerClient.ContainerStart(context.Background(), c.ID, types.ContainerStartOptions{}); err != nil {
+	_, next = observability.Span(ctx, "swarm.dockerClient.ContainerStart", observability.Tag(observability.TagWorker, cArgs.name), observability.Tag("network", fmt.Sprintf("%v", networkingConfig)))
+	if err := dockerClient.ContainerStart(ctx, c.ID, types.ContainerStartOptions{}); err != nil {
+		next()
 		return sdk.WrapError(err, "createAndStartContainer> Unable to start container on %s: %s", dockerClient.name, c.ID[:12])
 	}
+	next()
 	return nil
 }
 

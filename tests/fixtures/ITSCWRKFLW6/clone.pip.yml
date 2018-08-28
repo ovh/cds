@@ -1,0 +1,16 @@
+version: v1.0
+name: clonetagbis
+jobs:
+- job: New Job
+  steps:
+  - gitClone:
+      branch: '{{.git.branch}}'
+      commit: '{{.git.hash}}'
+      directory: '{{.cds.workspace}}'
+      tag: '{{.git.tag}}'
+      url: https://github.com/ovh/cds.git
+  - script:
+    - git log
+    - cat README.md
+  requirements:
+  - binary: git

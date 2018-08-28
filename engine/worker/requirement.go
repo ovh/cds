@@ -73,7 +73,7 @@ func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, 
 		}
 	}
 
-	log.Debug("checkRequirements> checkRequirements:%t errRequirements:%s", requirementsOK, errRequirements)
+	log.Debug("checkRequirements> checkRequirements:%t errRequirements:%v", requirementsOK, errRequirements)
 	return requirementsOK, errRequirements
 }
 

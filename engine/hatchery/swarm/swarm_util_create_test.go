@@ -7,6 +7,7 @@ import (
 	types "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/go-connections/nat"
+	context "golang.org/x/net/context"
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
@@ -145,7 +146,7 @@ func TestHatcherySwarm_createAndStartContainer(t *testing.T) {
 
 	// RegisterOnly = true, this will pull image if image is not found
 	spawnArgs := hatchery.SpawnArguments{RegisterOnly: true}
-	err := h.createAndStartContainer(h.dockerClients["default"], args, spawnArgs)
+	err := h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	test.NoError(t, err)
 
 	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
@@ -183,7 +184,7 @@ func TestHatcherySwarm_createAndStartContainerWithMount(t *testing.T) {
 	test.NoError(t, err)
 
 	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
-	err = h.createAndStartContainer(h.dockerClients["default"], args, spawnArgs)
+	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	test.NoError(t, err)
 
 	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})
@@ -206,11 +207,11 @@ func TestHatcherySwarm_createAndStartContainerWithNetwork(t *testing.T) {
 		networkAlias: "my-container",
 	}
 
-	err := h.createNetwork(h.dockerClients["default"], args.network)
+	err := h.createNetwork(context.TODO(), h.dockerClients["default"], args.network)
 	test.NoError(t, err)
 
 	spawnArgs := hatchery.SpawnArguments{RegisterOnly: false}
-	err = h.createAndStartContainer(h.dockerClients["default"], args, spawnArgs)
+	err = h.createAndStartContainer(context.TODO(), h.dockerClients["default"], args, spawnArgs)
 	test.NoError(t, err)
 
 	cntr, err := h.getContainer(h.dockerClients["default"], args.name, types.ContainerListOptions{})

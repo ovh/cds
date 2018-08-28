@@ -15,12 +15,13 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) postWorkflowPreviewHandler() Handler {
+func (api *API) postWorkflowPreviewHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -70,11 +71,11 @@ func (api *API) postWorkflowPreviewHandler() Handler {
 			return sdk.WrapError(globalError, "postWorkflowPreviewHandler> Unable import workflow %s", ew.Name)
 		}
 
-		return WriteJSON(w, wf, http.StatusOK)
+		return service.WriteJSON(w, wf, http.StatusOK)
 	}
 }
 
-func (api *API) postWorkflowImportHandler() Handler {
+func (api *API) postWorkflowImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -142,11 +143,11 @@ func (api *API) postWorkflowImportHandler() Handler {
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
 
-		return WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
 }
 
-func (api *API) putWorkflowImportHandler() Handler {
+func (api *API) putWorkflowImportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -221,11 +222,11 @@ func (api *API) putWorkflowImportHandler() Handler {
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
 
-		return WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
 }
 
-func (api *API) postWorkflowPushHandler() Handler {
+func (api *API) postWorkflowPushHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		db := api.mustDB()
@@ -277,6 +278,6 @@ func (api *API) postWorkflowPushHandler() Handler {
 			w.Header().Add(sdk.ResponseWorkflowNameHeader, wrkflw.Name)
 		}
 
-		return WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, msgListString, http.StatusOK)
 	}
 }

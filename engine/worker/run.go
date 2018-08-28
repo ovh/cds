@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -347,7 +346,7 @@ func workingDirectory(basedir, jobPath string) string {
 	return path.Join(basedir, jobPath, gen)
 }
 
-func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.WorkflowNodeJobRunInfo) sdk.Result {
+func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNodeJobRunData) sdk.Result {
 	t0 := time.Now()
 	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
 
@@ -446,7 +445,7 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 	return res
 }
 
-func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobInfo) sdk.Result {
+func (w *currentWorker) run(ctx context.Context, pbji *sdk.PipelineBuildJobInfo) sdk.Result {
 	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
 	defer cancel()
 

@@ -21,7 +21,7 @@ type Service struct {
 
 // Configuration is the vcs configuration structure
 type Configuration struct {
-	Name string `toml:"name" comment:"Name of this CDS VCS Service"`
+	Name string `toml:"name" comment:"Name of this CDS VCS Service\n Enter a name to enable this service"`
 	HTTP struct {
 		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
 		Port int    `toml:"port" default:"8084"`
@@ -53,7 +53,7 @@ type ServerConfiguration struct {
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
-	ClientID     string `toml:"clientId" json:"-" comment:"Github OAuth Application Client ID"`
+	ClientID     string `toml:"clientId" json:"-" comment:"#######\n CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/ \n#######\n Github OAuth Application Client ID"`
 	ClientSecret string `toml:"clientSecret" json:"-"  comment:"Github OAuth Application Client Secret"`
 	Status       struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
@@ -62,8 +62,8 @@ type GithubServerConfiguration struct {
 	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
-	Username        string `toml:"username" comment:"Username" json:"username"`
-	Token           string `toml:"token" comment:"Token" json:"-"`
+	Username        string `toml:"username" comment:"optional. Github username, used to add comment on Pull Request on failed build." json:"username"`
+	Token           string `toml:"token" comment:"optional, Github Token associated to username, used to add comment on Pull Request" json:"-"`
 }
 
 func (s GithubServerConfiguration) check() error {
@@ -83,7 +83,7 @@ var errGithubConfigurationError = fmt.Errorf("Github configuration Error")
 
 // GitlabServerConfiguration represents the gitlab configuration
 type GitlabServerConfiguration struct {
-	AppID  string `toml:"appId" json:"-"`
+	AppID  string `toml:"appId" json:"-" comment:"#######\n CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/ \n#######"`
 	Secret string `toml:"secret" json:"-"`
 	Status struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
@@ -103,7 +103,7 @@ func (s GitlabServerConfiguration) check() error {
 
 // BitbucketServerConfiguration represents the bitbucket configuration
 type BitbucketServerConfiguration struct {
-	ConsumerKey string `toml:"consumerKey" json:"-" comment:"You can change the consumeKey if you want"`
+	ConsumerKey string `toml:"consumerKey" json:"-" comment:"#######\n CDS <-> Bitbucket. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/ \n#######\n You can change the consumeKey if you want"`
 	PrivateKey  string `toml:"privateKey" json:"-"`
 	Status      struct {
 		Disable bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
@@ -111,8 +111,8 @@ type BitbucketServerConfiguration struct {
 	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
-	Username        string `toml:"username" comment:"Username" json:"username"`
-	Token           string `toml:"token" comment:"Token" json:"-"`
+	Username        string `toml:"username" comment:"optional. Bitbucket username, used to add comment on Pull Request on failed build." json:"username"`
+	Token           string `toml:"token" comment:"optional, Bitbucket Token associated to username, used to add comment on Pull Request" json:"-"`
 }
 
 func (s BitbucketServerConfiguration) check() error {

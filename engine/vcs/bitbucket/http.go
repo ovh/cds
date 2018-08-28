@@ -2,6 +2,7 @@ package bitbucket
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -74,7 +75,7 @@ type options struct {
 	asUser bool
 }
 
-func (c *bitbucketClient) do(method, api, path string, params url.Values, values []byte, v interface{}, opts *options) error {
+func (c *bitbucketClient) do(ctx context.Context, method, api, path string, params url.Values, values []byte, v interface{}, opts *options) error {
 	// Sad hack to get username
 	var username = false
 	if path == "username" {

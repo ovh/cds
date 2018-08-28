@@ -83,7 +83,7 @@ func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) er
 		SELECT 	project_platform.id 
 		FROM project_platform
 		WHERE project_platform.project_id = $2
-		AND project_platform.platform_model_id = $3
+		AND project_platform.id = $3
 	)`
 
 	_, err := db.Exec(query, appID, projID, pfID)

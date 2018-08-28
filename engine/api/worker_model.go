@@ -12,11 +12,12 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) addWorkerModelHandler() Handler {
+func (api *API) addWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal body
 		var model sdk.Model
@@ -126,11 +127,11 @@ func (api *API) addWorkerModelHandler() Handler {
 		key := cache.Key("api:workermodels:*")
 		api.Cache.DeleteAll(key)
 
-		return WriteJSON(w, model, http.StatusOK)
+		return service.WriteJSON(w, model, http.StatusOK)
 	}
 }
 
-func (api *API) bookWorkerModelHandler() Handler {
+func (api *API) bookWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerModelID, errr := requestVarInt(r, "permModelID")
 		if errr != nil {
@@ -143,7 +144,7 @@ func (api *API) bookWorkerModelHandler() Handler {
 	}
 }
 
-func (api *API) spawnErrorWorkerModelHandler() Handler {
+func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		spawnErrorForm := &sdk.SpawnErrorForm{}
 		if err := UnmarshalBody(r, spawnErrorForm); err != nil {
@@ -177,11 +178,11 @@ func (api *API) spawnErrorWorkerModelHandler() Handler {
 		key := cache.Key("api:workermodels:*")
 		api.Cache.DeleteAll(key)
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) updateWorkerModelHandler() Handler {
+func (api *API) updateWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerModelID, errr := requestVarInt(r, "permModelID")
 		if errr != nil {
@@ -376,11 +377,11 @@ func (api *API) updateWorkerModelHandler() Handler {
 		key := cache.Key("api:workermodels:*")
 		api.Cache.DeleteAll(key)
 
-		return WriteJSON(w, model, http.StatusOK)
+		return service.WriteJSON(w, model, http.StatusOK)
 	}
 }
 
-func (api *API) deleteWorkerModelHandler() Handler {
+func (api *API) deleteWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerModelID, errr := requestVarInt(r, "permModelID")
 		if errr != nil {
@@ -412,10 +413,10 @@ func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name stri
 	if err != nil {
 		return sdk.WrapError(err, "getWorkerModel> cannot load worker model")
 	}
-	return WriteJSON(w, m, http.StatusOK)
+	return service.WriteJSON(w, m, http.StatusOK)
 }
 
-func (api *API) getWorkerModelsEnabledHandler() Handler {
+func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if getHatchery(ctx) == nil || getHatchery(ctx).GroupID == 0 {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModelsEnabled> this route can be called only by hatchery")
@@ -424,11 +425,11 @@ func (api *API) getWorkerModelsEnabledHandler() Handler {
 		if errgroup != nil {
 			return sdk.WrapError(errgroup, "getWorkerModelsEnabled> cannot load worker models for hatchery %d with group %d", getHatchery(ctx).ID, getHatchery(ctx).GroupID)
 		}
-		return WriteJSON(w, models, http.StatusOK)
+		return service.WriteJSON(w, models, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkerModelsHandler() Handler {
+func (api *API) getWorkerModelsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := r.ParseForm(); err != nil {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> cannot parse form")
@@ -461,11 +462,11 @@ func (api *API) getWorkerModelsHandler() Handler {
 			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", getUser(ctx).ID)
 		}
 
-		return WriteJSON(w, models, http.StatusOK)
+		return service.WriteJSON(w, models, http.StatusOK)
 	}
 }
 
-func (api *API) putWorkerModelPatternHandler() Handler {
+func (api *API) putWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		patternName := vars["name"]
@@ -514,11 +515,11 @@ func (api *API) putWorkerModelPatternHandler() Handler {
 			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot update worker model pattern")
 		}
 
-		return WriteJSON(w, modelPattern, http.StatusOK)
+		return service.WriteJSON(w, modelPattern, http.StatusOK)
 	}
 }
 
-func (api *API) deleteWorkerModelPatternHandler() Handler {
+func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		patternName := vars["name"]
@@ -536,11 +537,11 @@ func (api *API) deleteWorkerModelPatternHandler() Handler {
 			return sdk.WrapError(err, "deleteWorkerModelPatternHandler> Cannot delete worker model (%s/%s) : %v", patternType, patternName, err)
 		}
 
-		return WriteJSON(w, nil, http.StatusOK)
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkerModelPatternHandler() Handler {
+func (api *API) getWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if getUser(ctx).ID == 0 {
 			var username string
@@ -558,11 +559,11 @@ func (api *API) getWorkerModelPatternHandler() Handler {
 			return sdk.WrapError(err, "getWorkerModelPatternsHandler> cannot load worker model patterns")
 		}
 
-		return WriteJSON(w, modelPattern, http.StatusOK)
+		return service.WriteJSON(w, modelPattern, http.StatusOK)
 	}
 }
 
-func (api *API) postAddWorkerModelPatternHandler() Handler {
+func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal body
 		var modelPattern sdk.ModelPattern
@@ -599,11 +600,11 @@ func (api *API) postAddWorkerModelPatternHandler() Handler {
 			return sdk.WrapError(err, "postAddWorkerModelPatternHandler> cannot add worker model pattern")
 		}
 
-		return WriteJSON(w, modelPattern, http.StatusOK)
+		return service.WriteJSON(w, modelPattern, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkerModelPatternsHandler() Handler {
+func (api *API) getWorkerModelPatternsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if getUser(ctx) == nil || getUser(ctx).ID == 0 {
 			var username string
@@ -618,18 +619,18 @@ func (api *API) getWorkerModelPatternsHandler() Handler {
 			return sdk.WrapError(err, "getWorkerModelPatternsHandler> cannot load worker model patterns")
 		}
 
-		return WriteJSON(w, modelPatterns, http.StatusOK)
+		return service.WriteJSON(w, modelPatterns, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkerModelTypesHandler() Handler {
+func (api *API) getWorkerModelTypesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, sdk.AvailableWorkerModelType, http.StatusOK)
+		return service.WriteJSON(w, sdk.AvailableWorkerModelType, http.StatusOK)
 	}
 }
 
-func (api *API) getWorkerModelCommunicationsHandler() Handler {
+func (api *API) getWorkerModelCommunicationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, sdk.AvailableWorkerModelCommunication, http.StatusOK)
+		return service.WriteJSON(w, sdk.AvailableWorkerModelCommunication, http.StatusOK)
 	}
 }

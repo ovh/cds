@@ -10,7 +10,7 @@ import (
 )
 
 // applyExtracts try to run extract on step, return true if all extracts are OK, false otherwise
-func applyExtracts(executorResult *ExecutorResult, step TestStep, l Logger) assertionsApplied {
+func applyExtracts(executorResult *ExecutorResult, step TestStep) assertionsApplied {
 	var se StepExtracts
 	var errors []Failure
 	var failures []Failure
@@ -31,7 +31,7 @@ func applyExtracts(executorResult *ExecutorResult, step TestStep, l Logger) asse
 				errors: []Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("key %s in result is not found", key))}},
 			}
 		}
-		errs, fails := checkExtracts(transformPattern(pattern), fmt.Sprintf("%v", e[key]), executorResult, l)
+		errs, fails := checkExtracts(transformPattern(pattern), fmt.Sprintf("%v", e[key]), executorResult)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false
@@ -65,7 +65,7 @@ func transformPattern(pattern string) string {
 	return p
 }
 
-func checkExtracts(pattern, instring string, executorResult *ExecutorResult, l Logger) (*Failure, *Failure) {
+func checkExtracts(pattern, instring string, executorResult *ExecutorResult) (*Failure, *Failure) {
 	r := regexp.MustCompile(pattern)
 	match := r.FindStringSubmatch(instring)
 	if match == nil {
@@ -87,6 +87,7 @@ func checkExtracts(pattern, instring string, executorResult *ExecutorResult, l L
 	return nil, nil
 }
 
+// RemoveNotPrintableChar removes not printable chararacter from a string
 func RemoveNotPrintableChar(in string) string {
 	m := func(r rune) rune {
 		if unicode.IsPrint(r) || unicode.IsSpace(r) || unicode.IsPunct(r) {

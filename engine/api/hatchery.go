@@ -9,11 +9,12 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/token"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) registerHatcheryHandler() Handler {
+func (api *API) registerHatcheryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		hatch := sdk.Hatchery{}
 		if err := UnmarshalBody(r, &hatch); err != nil {
@@ -48,11 +49,11 @@ func (api *API) registerHatcheryHandler() Handler {
 		hatch.Uptodate = hatch.Version == sdk.VERSION
 
 		log.Debug("registerHatcheryHandler> Welcome %d", hatch.ID)
-		return WriteJSON(w, hatch, http.StatusOK)
+		return service.WriteJSON(w, hatch, http.StatusOK)
 	}
 }
 
-func (api *API) refreshHatcheryHandler() Handler {
+func (api *API) refreshHatcheryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		hatcheryID := vars["id"]
@@ -64,7 +65,7 @@ func (api *API) refreshHatcheryHandler() Handler {
 	}
 }
 
-func (api *API) hatcheryCountHandler() Handler {
+func (api *API) hatcheryCountHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		wfNodeRunID, err := requestVarInt(r, "workflowNodeRunID")
 		if err != nil {
@@ -76,6 +77,6 @@ func (api *API) hatcheryCountHandler() Handler {
 			return sdk.WrapError(err, "hatcheryCountHandler> cannot get hatcheries count")
 		}
 
-		return WriteJSON(w, count, http.StatusOK)
+		return service.WriteJSON(w, count, http.StatusOK)
 	}
 }

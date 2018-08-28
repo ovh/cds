@@ -9,10 +9,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
 
-func (api *API) getWorkflowTriggerConditionHandler() Handler {
+func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -97,6 +98,6 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 		}
 
 		sort.Strings(data.ConditionNames)
-		return WriteJSON(w, data, http.StatusOK)
+		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }

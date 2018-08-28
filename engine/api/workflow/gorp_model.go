@@ -66,8 +66,10 @@ type NodeRun struct {
 	TriggersRun        sql.NullString `db:"triggers_run"`
 	VCSRepository      sql.NullString `db:"vcs_repository"`
 	VCSBranch          sql.NullString `db:"vcs_branch"`
+	VCSTag             sql.NullString `db:"vcs_tag"`
 	VCSHash            sql.NullString `db:"vcs_hash"`
 	VCSServer          sql.NullString `db:"vcs_server"`
+	Header             sql.NullString `db:"header"`
 }
 
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun
@@ -87,6 +89,7 @@ type JobRun struct {
 	ExecGroups             sql.NullString `db:"exec_groups"`
 	PlatformPluginBinaries sql.NullString `db:"platform_plugin_binaries"`
 	BookedBy               sdk.Hatchery   `db:"-"`
+	Header                 sql.NullString `db:"header"`
 }
 
 // ToJobRun transform the JobRun with data of the provided sdk.WorkflowNodeJobRun
@@ -118,6 +121,10 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	if err != nil {
 		return sdk.WrapError(err, "column platform_plugin_binaries")
 	}
+	j.Header, err = gorpmapping.JSONToNullString(jr.Header)
+	if err != nil {
+		return sdk.WrapError(err, "column header")
+	}
 	return nil
 }
 
@@ -133,6 +140,7 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 		QueuedSeconds:     time.Now().Unix() - j.Queued.Unix(),
 		Start:             j.Start,
 		Done:              j.Done,
+		BookedBy:          j.BookedBy,
 	}
 	if j.SpawnAttempts != nil {
 		jr.SpawnAttempts = *j.SpawnAttempts
@@ -148,6 +156,9 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 	}
 	if err := gorpmapping.JSONNullString(j.PlatformPluginBinaries, &jr.PlatformPluginBinaries); err != nil {
 		return jr, sdk.WrapError(err, "platform_plugin_binaries")
+	}
+	if err := gorpmapping.JSONNullString(j.Header, &jr.Header); err != nil {
+		return jr, sdk.WrapError(err, "header")
 	}
 	if defaultOS != "" && defaultArch != "" {
 		var modelFound, osArchFound bool

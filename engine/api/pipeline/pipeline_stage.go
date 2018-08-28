@@ -13,7 +13,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/tracing"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -94,7 +94,7 @@ func InsertStagePrequisites(db gorp.SqlExecutor, s *sdk.Stage) error {
 
 // LoadPipelineStage loads pipeline stage
 func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) error {
-	_, end := tracing.Span(ctx, "pipeline.LoadPipelineStage")
+	_, end := observability.Span(ctx, "pipeline.LoadPipelineStage")
 	defer end()
 
 	p.Stages = []sdk.Stage{}
@@ -104,13 +104,13 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 	}
 
 	query := `
-	SELECT  pipeline_stage_R.id as stage_id, pipeline_stage_R.pipeline_id, pipeline_stage_R.name, pipeline_stage_R.last_modified,
+	SELECT pipeline_stage_R.id as stage_id, pipeline_stage_R.pipeline_id, pipeline_stage_R.name, pipeline_stage_R.last_modified,
 			pipeline_stage_R.build_order, pipeline_stage_R.enabled, pipeline_stage_R.parameter,
 			pipeline_stage_R.expected_value, pipeline_action_R.id as pipeline_action_id, pipeline_action_R.action_id, pipeline_action_R.action_last_modified,
 			pipeline_action_R.action_args, pipeline_action_R.action_enabled
 	FROM (
-		SELECT  pipeline_stage.id, pipeline_stage.pipeline_id,
-				pipeline_stage.name, pipeline_stage.last_modified ,pipeline_stage.build_order,
+		SELECT pipeline_stage.id, pipeline_stage.pipeline_id,
+				pipeline_stage.name, pipeline_stage.last_modified, pipeline_stage.build_order,
 				pipeline_stage.enabled,
 				pipeline_stage_prerequisite.parameter, pipeline_stage_prerequisite.expected_value
 		FROM pipeline_stage
@@ -118,7 +118,7 @@ func LoadPipelineStage(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline
 		WHERE pipeline_id = $1
 	) as pipeline_stage_R
 	LEFT OUTER JOIN (
-		SELECT  pipeline_action.id, action.id as action_id, action.name as action_name, action.last_modified as action_last_modified,
+		SELECT pipeline_action.id, action.id as action_id, action.name as action_name, action.last_modified as action_last_modified,
 				pipeline_action.args as action_args, pipeline_action.enabled as action_enabled,
 				pipeline_action.pipeline_stage_id
 		FROM action

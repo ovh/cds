@@ -11,11 +11,12 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) webhookHandler() api.Handler {
+func (s *Service) webhookHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Get the UUID of the webhook
 		vars := mux.Vars(r)
@@ -63,11 +64,11 @@ func (s *Service) webhookHandler() api.Handler {
 		s.Dao.EnqueueTaskExecution(exec)
 
 		//Return the execution
-		return api.WriteJSON(w, exec, http.StatusOK)
+		return service.WriteJSON(w, exec, http.StatusOK)
 	}
 }
 
-func (s *Service) startTasksHandler() api.Handler {
+func (s *Service) startTasksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := s.startTasks(ctx); err != nil {
 			return sdk.WrapError(err, "Hooks> startTasksHandler")
@@ -76,7 +77,7 @@ func (s *Service) startTasksHandler() api.Handler {
 	}
 }
 
-func (s *Service) stopTasksHandler() api.Handler {
+func (s *Service) stopTasksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := s.stopTasks(); err != nil {
 			return sdk.WrapError(err, "Hooks> stopTasksHandler")
@@ -85,7 +86,7 @@ func (s *Service) stopTasksHandler() api.Handler {
 	}
 }
 
-func (s *Service) startTaskHandler() api.Handler {
+func (s *Service) startTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Get the UUID of the task from the URL
 		vars := mux.Vars(r)
@@ -108,7 +109,7 @@ func (s *Service) startTaskHandler() api.Handler {
 	}
 }
 
-func (s *Service) stopTaskHandler() api.Handler {
+func (s *Service) stopTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Get the UUID of the task from the URL
 		vars := mux.Vars(r)
@@ -131,7 +132,7 @@ func (s *Service) stopTaskHandler() api.Handler {
 	}
 }
 
-func (s *Service) postTaskHandler() api.Handler {
+func (s *Service) postTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeHook from the body
 		hook := &sdk.WorkflowNodeHook{}
@@ -145,7 +146,7 @@ func (s *Service) postTaskHandler() api.Handler {
 	}
 }
 
-func (s *Service) getTasksHandler() api.Handler {
+func (s *Service) getTasksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		tasks, err := s.Dao.FindAllTasks()
 		if err != nil {
@@ -167,11 +168,11 @@ func (s *Service) getTasksHandler() api.Handler {
 			tasks[i].NbExecutionsTotal = len(execs)
 			tasks[i].NbExecutionsTodo = nbTodo
 		}
-		return api.WriteJSON(w, tasks, http.StatusOK)
+		return service.WriteJSON(w, tasks, http.StatusOK)
 	}
 }
 
-func (s *Service) putTaskHandler() api.Handler {
+func (s *Service) putTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Get the UUID of the task from the URL
 		vars := mux.Vars(r)
@@ -203,7 +204,7 @@ func (s *Service) putTaskHandler() api.Handler {
 	}
 }
 
-func (s *Service) getTaskHandler() api.Handler {
+func (s *Service) getTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Get the UUID of the task from the URL
 		vars := mux.Vars(r)
@@ -212,7 +213,7 @@ func (s *Service) getTaskHandler() api.Handler {
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t != nil {
-			return api.WriteJSON(w, t, http.StatusOK)
+			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
 		execs, err := s.Dao.FindAllTaskExecutions(t)
@@ -222,11 +223,11 @@ func (s *Service) getTaskHandler() api.Handler {
 
 		t.Executions = execs
 
-		return api.WriteJSON(w, t, http.StatusOK)
+		return service.WriteJSON(w, t, http.StatusOK)
 	}
 }
 
-func (s *Service) deleteTaskHandler() api.Handler {
+func (s *Service) deleteTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Get the UUID of the task from the URL
 		vars := mux.Vars(r)
@@ -235,7 +236,7 @@ func (s *Service) deleteTaskHandler() api.Handler {
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t != nil {
-			return api.WriteJSON(w, t, http.StatusOK)
+			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Stop the task
@@ -250,7 +251,7 @@ func (s *Service) deleteTaskHandler() api.Handler {
 	}
 }
 
-func (s *Service) getTaskExecutionsHandler() api.Handler {
+func (s *Service) getTaskExecutionsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Get the UUID of the task from the URL
 		vars := mux.Vars(r)
@@ -259,7 +260,7 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t == nil {
-			return api.WriteJSON(w, t, http.StatusOK)
+			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Load the executions
@@ -273,11 +274,11 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 			return t.Executions[i].Timestamp > t.Executions[j].Timestamp
 		})
 
-		return api.WriteJSON(w, t, http.StatusOK)
+		return service.WriteJSON(w, t, http.StatusOK)
 	}
 }
 
-func (s *Service) deleteAllTaskExecutionsHandler() api.Handler {
+func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Get the UUID of the task from the URL
 		vars := mux.Vars(r)
@@ -286,7 +287,7 @@ func (s *Service) deleteAllTaskExecutionsHandler() api.Handler {
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t == nil {
-			return api.WriteJSON(w, t, http.StatusOK)
+			return service.WriteJSON(w, t, http.StatusOK)
 		}
 
 		//Stop the task
@@ -308,11 +309,11 @@ func (s *Service) deleteAllTaskExecutionsHandler() api.Handler {
 			return sdk.WrapError(err, "Hooks> deleteAllTaskExecutionsHandler> Unable start task %+v", t)
 		}
 
-		return api.WriteJSON(w, t, http.StatusOK)
+		return service.WriteJSON(w, t, http.StatusOK)
 	}
 }
 
-func (s *Service) deleteTaskBulkHandler() api.Handler {
+func (s *Service) deleteTaskBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		hooks := map[string]sdk.WorkflowNodeHook{}
 		if err := api.UnmarshalBody(r, &hooks); err != nil {
@@ -338,7 +339,7 @@ func (s *Service) deleteTaskBulkHandler() api.Handler {
 	}
 }
 
-func (s *Service) postTaskBulkHandler() api.Handler {
+func (s *Service) postTaskBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeHook from the body
 		hooks := map[string]sdk.WorkflowNodeHook{}
@@ -356,7 +357,7 @@ func (s *Service) postTaskBulkHandler() api.Handler {
 				return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 			}
 		}
-		return api.WriteJSON(w, hooks, http.StatusOK)
+		return service.WriteJSON(w, hooks, http.StatusOK)
 	}
 }
 
@@ -456,9 +457,9 @@ func (s *Service) Status() sdk.MonitoringStatus {
 	return m
 }
 
-func (s *Service) statusHandler() api.Handler {
+func (s *Service) statusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
-		return api.WriteJSON(w, s.Status(), status)
+		return service.WriteJSON(w, s.Status(), status)
 	}
 }

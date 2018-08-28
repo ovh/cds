@@ -1,6 +1,7 @@
 package gitlab
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -34,18 +35,18 @@ func generateHash() (string, error) {
 	size := 128
 	bs := make([]byte, size)
 	if _, err := rand.Read(bs); err != nil {
-		log.Error("generateID: rand.Read failed: %s\n", err)
+		log.Error("vcs> gitlab> generateID: rand.Read failed: %s\n", err)
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]
 
-	log.Debug("generateID: new generated id: %s\n", token)
+	log.Debug("vcs> gitlab> generateID: new generated id: %s\n", token)
 	return string(token), nil
 }
 
 //AuthorizeRedirect returns the request token, the Authorize URL
-func (g *gitlabConsumer) AuthorizeRedirect() (string, string, error) {
+func (g *gitlabConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	// See https://docs.gitlab.com/ce/api/oauth2.html
 
 	requestToken, err := generateHash()
@@ -101,7 +102,7 @@ func (g *gitlabConsumer) postForm(path string, data url.Values, headers map[stri
 
 //AuthorizeToken returns the authorized token (and its secret)
 //from the request token and the verifier got on authorize url
-func (g *gitlabConsumer) AuthorizeToken(state, code string) (string, string, error) {
+func (g *gitlabConsumer) AuthorizeToken(ctx context.Context, state, code string) (string, string, error) {
 	log.Debug("GitlabDriver.AuthorizeToken: state:%s code:%s", state, code)
 
 	params := url.Values{}
@@ -134,7 +135,7 @@ func (g *gitlabConsumer) AuthorizeToken(state, code string) (string, string, err
 var instancesAuthorizedClient = map[string]*gitlabClient{}
 
 //GetAuthorized returns an authorized client
-func (g *gitlabConsumer) GetAuthorizedClient(accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
+func (g *gitlabConsumer) GetAuthorizedClient(ctx context.Context, accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
 	c, ok := instancesAuthorizedClient[accessToken]
 	httpClient := &http.Client{
 		Timeout: 60 * time.Second,
