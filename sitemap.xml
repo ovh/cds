@@ -11,6 +11,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/tutorials/step_by_step_npm_vulnerabilities/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/design/</loc>
   </url>
   
@@ -319,11 +323,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/contribute/</loc>
+    <loc>https://ovh.github.io/cds/hosting/repositories-manager/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/hosting/repositories-manager/</loc>
+    <loc>https://ovh.github.io/cds/tutorials/</loc>
   </url>
   
   <url>
@@ -332,6 +336,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/hosting/monitoring/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/contribute/</loc>
   </url>
   
   <url>
@@ -1087,6 +1095,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-marathon/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-npm-audit-parser/</loc>
   </url>
   
   <url>
