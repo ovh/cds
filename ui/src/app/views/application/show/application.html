@@ -13,7 +13,7 @@
                 <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')">
                   <i class="font icon"></i>{{ 'common_variables' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'vuln'" (click)="showTab('vuln')" *ngIf="currentUser.admin">
+                <a sm-item [class.active]="selectedTab === 'vuln'" (click)="showTab('vuln')">
                     {{ 'common_vulnerabilities' | translate}}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')">
