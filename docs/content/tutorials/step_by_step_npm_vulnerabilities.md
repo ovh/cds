@@ -5,10 +5,10 @@ weight = 1
 
 {{% notice note %}}
 
-In this tutorial, you will create a CDS Workflow with the Web UI.
+In this tutorial, you will create a CDS Workflow with the Web UI that check javascript vulnerabilities
 
 * Create a workflow using one pipeline
-* You will discover the [Npm-audit-parser]({{< relref "plugin-npm-audit-parser.md" >}}) plugin action, which parser npm audit report
+* You will discover the [Npm-audit-parser]({{< relref "plugin-npm-audit-parser.md" >}}) plugin action, which parse npm audit report
 
 {{% /notice %}}
 
