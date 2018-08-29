@@ -22,7 +22,7 @@ Let's create a project. On the top navbar, click on 'Create a project'.
 
 {{%expand "view screenshots..." %}}
 
-![create_prj](/images/tutorials/npm-audit-parser/create_prj.png?height=400px&classes=shadow)
+![create_prj](/images/tutorials/npm-audit-parser/create_prj.png?classes=shadow)
 
 {{% /expand%}}
 
@@ -39,17 +39,17 @@ Be sure to have a [Repository manager]({{< relref "/hosting/repositories-manager
 {{%expand "view screenshots..." %}}
 
 Select 'Advanced' section
-![admin_prj](/images/tutorials/npm-audit-parser/admin_prj.png?height=400px&classes=shadow)
+![admin_prj](/images/tutorials/npm-audit-parser/admin_prj.png?classes=shadow)
 
 In the section 'Link to a repository manager', select 'github', then click on 'Connect'
-![admin_prj_add_repo](/images/tutorials/npm-audit-parser/admin_prj_add_repo.png?height=400px&classes=shadow)
+![admin_prj_add_repo](/images/tutorials/npm-audit-parser/admin_prj_add_repo.png?classes=shadow)
 
 A popup is displayed, Click on 'Click here' to finalize the link with github. By doing that, you allow CDS to create hook on github.
-![admin_prj_add_repo_popup](/images/tutorials/npm-audit-parser/admin_prj_add_repo_popup.png?height=400px&classes=shadow)
+![admin_prj_add_repo_popup](/images/tutorials/npm-audit-parser/admin_prj_add_repo_popup.png?classes=shadow)
 
 Here, Github is well linked on your CDS project.
 
-![admin_repo_linked](/images/tutorials/npm-audit-parser/admin_repo_linked.png?height=400px&classes=shadow)
+![admin_repo_linked](/images/tutorials/npm-audit-parser/admin_repo_linked.png?classes=shadow)
 
 {{% /expand%}}
 
@@ -67,16 +67,16 @@ A CDS Application is useful to have a link to a Git Repository.
 {{%expand "view screenshots..." %}}
 
 Go on Project -> Applications tab, click on 'Create a new application'
-![app_tab](/images/tutorials/npm-audit-parser/app_tab.png?height=400px&classes=shadow)
+![app_tab](/images/tutorials/npm-audit-parser/app_tab.png?classes=shadow)
 
 Enter application name, here 'my-node-app'
-![create_app](/images/tutorials/npm-audit-parser/create_app.png?height=400px&classes=shadow)
+![create_app](/images/tutorials/npm-audit-parser/create_app.png?classes=shadow)
 
 Go on Advanced tab, select a Repository
-![admin_app](/images/tutorials/npm-audit-parser/admin_app.png?height=400px&classes=shadow)
+![admin_app](/images/tutorials/npm-audit-parser/admin_app.png?classes=shadow)
 
 Expand configuration, select 'https'. If your repository is public, you can keep empty fields, then click on 'Save'
-![app_link_repo](/images/tutorials/npm-audit-parser/app_link_repo.png?height=400px&classes=shadow)
+![app_link_repo](/images/tutorials/npm-audit-parser/app_link_repo.png?classes=shadow)
 
 {{% /expand%}}
 
@@ -114,22 +114,22 @@ jobs:
 {{%expand "view screenshots..." %}}
 
 Create the pipeline
-![create_pipeline](/images/tutorials/npm-audit-parser/create_pipeline.png?height=400px&classes=shadow)
+![create_pipeline](/images/tutorials/npm-audit-parser/create_pipeline.png?classes=shadow)
 
 Then select your application.
-![select_app](/images/tutorials/npm-audit-parser/select_app.png?height=400px&classes=shadow)
+![select_app](/images/tutorials/npm-audit-parser/select_app.png?classes=shadow)
 
 Click on create to create the workflow.
-![create](/images/tutorials/npm-audit-parser/create_wf.png?height=400px&classes=shadow)
+![create](/images/tutorials/npm-audit-parser/create_wf.png?classes=shadow)
 
 Click on 'Edit the pipeline'
-![click_edit](/images/tutorials/npm-audit-parser/click_edit.png?height=400px&classes=shadow)
+![click_edit](/images/tutorials/npm-audit-parser/click_edit.png?classes=shadow)
 
 Click on Edit as Code button, then paste that code:
-![as_code](/images/tutorials/npm-audit-parser/as_code.png?height=400px&classes=shadow)
+![as_code](/images/tutorials/npm-audit-parser/as_code.png?classes=shadow)
 
 Pipeline is created
-![pip_edited](/images/tutorials/npm-audit-parser/pip_edited.png?height=400px&classes=shadow)
+![pip_edited](/images/tutorials/npm-audit-parser/pip_edited.png?classes=shadow)
 
 {{% /expand%}}
 
@@ -145,10 +145,10 @@ The workflow is now ready to be launched
 {{%expand "view screenshots..." %}}
 
 Launch the workflow and double click on the pipeline when build finished
-![run](/images/tutorials/npm-audit-parser/run_wf.png?height=400px&classes=shadow)
+![run](/images/tutorials/npm-audit-parser/run_wf.png?classes=shadow)
 
 Click on tab 'Vulnerabilities'
-![run_vuln](/images/tutorials/npm-audit-parser/run_vulnerability.png?height=400px&classes=shadow)
+![run_vuln](/images/tutorials/npm-audit-parser/run_vulnerability.png?classes=shadow)
 
 {{% /expand%}}
 
@@ -162,9 +162,9 @@ If the workflow has been launch on the default branch of your repository, vulner
 {{%expand "view screenshots..." %}}
 
 Go to your project, on application tab
-![run](/images/tutorials/npm-audit-parser/project_tab_app.png?height=400px&classes=shadow)
+![run](/images/tutorials/npm-audit-parser/project_tab_app.png?classes=shadow)
 
 Select your application and go to vulnerabilities tab
-![run](/images/tutorials/npm-audit-parser/app_vuln.png?height=400px&classes=shadow)
+![run](/images/tutorials/npm-audit-parser/app_vuln.png?classes=shadow)
 
 {{% /expand%}}
