@@ -69,7 +69,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 				count(DBFunc(), nbWorkflowRuns, "SELECT MAX(id) FROM workflow_run")
 				count(DBFunc(), nbWorkflowNodeRuns, "SELECT MAX(id) FROM workflow_node_run")
 				count(DBFunc(), nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
-				count(DBFunc(), nbJobs, "SELECT MAX(id) FROM workflow_node_run_job_info")
+				count(DBFunc(), nbJobs, "SELECT COUNT(1) FROM (SELECT distinct(workflow_node_run_job_id) from workflow_node_run_job_info group by workflow_node_run_job_id) AS temp")
 
 				now := time.Now()
 				now10s := now.Add(-10 * time.Second)
