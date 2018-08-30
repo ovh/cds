@@ -30,7 +30,6 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	nbWorkflowRuns := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
 	nbWorkflowNodeRuns := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
 	nbMaxWorkersBuilding := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
-	nbJobs := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_jobs", Help: "nb_jobs", ConstLabels: labels})
 	queue := prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "queue", Help: "metrics queue", ConstLabels: prometheus.Labels{"instance": instance}}, []string{"status", "range"})
 
 	registry.MustRegister(nbUsers)
@@ -44,7 +43,6 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	registry.MustRegister(nbWorkflowRuns)
 	registry.MustRegister(nbWorkflowNodeRuns)
 	registry.MustRegister(nbMaxWorkersBuilding)
-	registry.MustRegister(nbJobs)
 	registry.MustRegister(queue)
 
 	tick := time.NewTicker(9 * time.Second).C
@@ -69,7 +67,6 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 				count(DBFunc(), nbWorkflowRuns, "SELECT MAX(id) FROM workflow_run")
 				count(DBFunc(), nbWorkflowNodeRuns, "SELECT MAX(id) FROM workflow_node_run")
 				count(DBFunc(), nbMaxWorkersBuilding, "SELECT COUNT(1) FROM worker where status = 'Building'")
-				count(DBFunc(), nbJobs, "SELECT COUNT(1) FROM (SELECT distinct(workflow_node_run_job_id) from workflow_node_run_job_info group by workflow_node_run_job_id) AS temp")
 
 				now := time.Now()
 				now10s := now.Add(-10 * time.Second)
