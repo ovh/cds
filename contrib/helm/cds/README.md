@@ -1,13 +1,14 @@
-# CDS (TODO)
+# CDS
 
-[CSD](https://github.com/ovh/cds) is ... 
+[CSD](https://github.com/ovh/cds) is a pipeline based Continuous Delivery Service written in Go(lang).
+Documentation is available at https://ovh.github.io/cds/
 
 ## TL;DR;
 
 ```console
 $ cd contrib/helm/cds; 
 helm dependency update; 
-helm install stable/cds
+helm install .
 ```
 
 
@@ -20,9 +21,9 @@ $ helm install stable/cds
 
 ## Introduction
 
-This chart bootstraps a [CSD](https://github.com/ovh/cds) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
+This chart bootstraps a [CDS](https://github.com/ovh/cds) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
-It also packages a Postregsql server and a Redis server, both include with helm dependency mechanisms. 
+It also starts a PostgreSQL server and a Redis server using the helm built-in dependency system.
 
 ## Prerequisites
 
@@ -77,7 +78,7 @@ The `image` parameter allows specifying which image will be pulled for the chart
 If you configure the `image` value to one in a private registry, you will need to [specify an image pull secret](https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod).
 
 1. Manually create image pull secret(s) in the namespace. See [this YAML example reference](https://kubernetes.io/docs/concepts/containers/images/#creating-a-secret-with-a-docker-config). Consult your image registry's documentation about getting the appropriate secret.
-1. Note that the `imagePullSecrets` configuration value cannot currently be passed to helm using the `--set` parameter, so you must supply these using a `values.yaml` file, such as:
+2. Note that the `imagePullSecrets` configuration value cannot currently be passed to helm using the `--set` parameter, so you must supply these using a `values.yaml` file, such as:
 
 ```yaml
 imagePullSecrets:

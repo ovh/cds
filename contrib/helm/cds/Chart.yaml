@@ -1,13 +1,13 @@
 name: cds
 version: 0.1.0
-appVersion: 8.5.3
-description: One of the most versatile open source content management systems.
+appVersion: 0.35.1
+description: Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform.
 keywords:
 - cds
-- continuous
-- delivery
-- system
-- golang
+- devops
+- scale
+- stateless
+- high-availability
 home: https://github.com/ovh/cds
 icon: https://raw.githubusercontent.com/ovh/cds/master/logo-background.png
 sources:
