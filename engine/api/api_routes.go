@@ -115,6 +115,7 @@ func (api *API) InitRouter() {
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler, AllowProvider(true), EnableTracing()), r.POST(api.addProjectHandler))
 	r.Handle("/project/{permProjectKey}", r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
+	r.Handle("/project/{permProjectKey}/labels", r.PUT(api.putProjectLabelsHandler))
 	r.Handle("/project/{permProjectKey}/group", r.POST(api.addGroupInProjectHandler))
 	r.Handle("/project/{permProjectKey}/group/import", r.POST(api.importGroupsInProjectHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/group/{group}", r.PUT(api.updateGroupRoleOnProjectHandler), r.DELETE(api.deleteGroupFromProjectHandler))
@@ -222,6 +223,8 @@ func (api *API) InitRouter() {
 
 	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler, EnableTracing()), r.GET(api.getWorkflowsHandler, AllowProvider(true), EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler, AllowProvider(true), EnableTracing()), r.PUT(api.putWorkflowHandler, EnableTracing()), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/label", r.POST(api.postWorkflowLabelHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/label/{labelID}", r.DELETE(api.deleteWorkflowLabelHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/rollback/{auditID}", r.POST(api.postWorkflowRollbackHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups", r.POST(api.postWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))

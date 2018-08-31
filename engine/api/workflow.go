@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -47,6 +48,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		withUsage := FormBool(r, "withUsage")
 		withAudits := FormBool(r, "withAudits")
+		withLabels := FormBool(r, "withLabels")
 		withDeepPipelines := FormBool(r, "withDeepPipelines")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
@@ -54,7 +56,8 @@ func (api *API) getWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "getWorkflowHandler> unable to load projet")
 		}
 
-		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{WithFavorites: true, DeepPipeline: withDeepPipelines, WithIcon: true})
+		opts := workflow.LoadOptions{WithFavorites: true, DeepPipeline: withDeepPipelines, WithIcon: true, WithLabels: withLabels}
+		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), opts)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}
@@ -167,6 +170,103 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		event.PublishWorkflowUpdate(key, *wf, *newWf, getUser(ctx))
 
 		return service.WriteJSON(w, *newWf, http.StatusOK)
+	}
+}
+
+// postWorkflowLabelHandler handler to link a label to a workflow
+func (api *API) postWorkflowLabelHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+		db := api.mustDB()
+		u := getUser(ctx)
+
+		var label sdk.Label
+		if err := UnmarshalBody(r, &label); err != nil {
+			return sdk.WrapError(err, "Cannot read body")
+		}
+
+		proj, errP := project.Load(db, api.Cache, key, u)
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowLabelHandler> cannot load project %s", key)
+		}
+		label.ProjectID = proj.ID
+
+		tx, errTx := db.Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "postWorkflowLabelHandler> Cannot create new transaction")
+		}
+		defer tx.Rollback() //nolint
+
+		if label.ID == 0 {
+			if label.Name == "" {
+				return service.WriteJSON(w, "Label ID or label name should not be empty", http.StatusBadRequest)
+			}
+
+			lbl, errL := project.LabelByName(db, proj.ID, label.Name)
+			if errL != nil {
+				if errL != sql.ErrNoRows {
+					return sdk.WrapError(errL, "postWorkflowLabelHandler> cannot load label by name")
+				}
+				// If label doesn't exist create him
+				if err := project.InsertLabel(tx, &label); err != nil {
+					return sdk.WrapError(err, "postWorkflowLabelHandler> Cannot create new label")
+				}
+			} else {
+				label.ID = lbl.ID
+			}
+		}
+
+		wf, errW := workflow.Load(ctx, db, api.Cache, proj, workflowName, u, workflow.LoadOptions{WithoutNode: true, WithLabels: true})
+		if errW != nil {
+			return sdk.WrapError(errW, "postWorkflowLabelHandler> cannot load workflow %s/%s", key, workflowName)
+		}
+
+		if err := workflow.LabelWorkflow(tx, label.ID, wf.ID); err != nil {
+			return sdk.WrapError(err, "postWorkflowLabelHandler> cannot link label %d to workflow %s", label.ID, wf.Name)
+		}
+		newWf := *wf
+		label.WorkflowID = wf.ID
+		newWf.Labels = append(newWf.Labels, label)
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postWorkflowLabelHandler> Cannot commit transaction")
+		}
+
+		return service.WriteJSON(w, label, http.StatusOK)
+	}
+}
+
+// deleteWorkflowLabelHandler handler to unlink a label to a workflow
+func (api *API) deleteWorkflowLabelHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+		labelID, errV := requestVarInt(r, "labelID")
+		if errV != nil {
+			return sdk.WrapError(errV, "deleteWorkflowLabelHandler> Cannot convert to int labelID")
+		}
+
+		db := api.mustDB()
+		u := getUser(ctx)
+
+		proj, errP := project.Load(db, api.Cache, key, u)
+		if errP != nil {
+			return sdk.WrapError(errP, "deleteWorkflowLabelHandler> cannot load project %s", key)
+		}
+
+		wf, errW := workflow.Load(ctx, db, api.Cache, proj, workflowName, u, workflow.LoadOptions{WithoutNode: true})
+		if errW != nil {
+			return sdk.WrapError(errW, "deleteWorkflowLabelHandler> cannot load workflow %s/%s", key, workflowName)
+		}
+
+		if err := workflow.UnLabelWorkflow(db, labelID, wf.ID); err != nil {
+			return sdk.WrapError(err, "deleteWorkflowLabelHandler> cannot unlink label %d to workflow %s", labelID, wf.Name)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

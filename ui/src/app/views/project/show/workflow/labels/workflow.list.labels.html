@@ -1,0 +1,85 @@
+<div class="workflow-list-labels">
+
+    <sui-accordion class="styled fluid">
+        <ng-container *ngFor="let label of project.labels">
+            <sui-accordion-panel>
+                <div title>
+                    <i class="dropdown icon"></i>
+                    <div class="ui label" [style.background-color]="label.color">
+                        {{label.name}}
+                    </div>
+                </div>
+                <div content>
+                    <p *ngIf="!workflowLabelsMapByLabels[label.name] || !workflowLabelsMapByLabels[label.name].length">
+                        {{ 'project_no_workflow_label' | translate }}
+                    </p>
+
+                    <div class="ui stackable four cards" *ngIf="workflowLabelsMapByLabels[label.name] && workflowLabelsMapByLabels[label.name].length">
+                        <div class="ui link card" *ngFor="let wf of workflowLabelsMapByLabels[label.name]">
+                            <a [routerLink]="['./workflow', wf.name]" class="content">
+                                <img *ngIf="wf.icon" class="right floated mini ui image" [src]="wf.icon">
+                                <div class="header">
+                                    <span [innerText]="wf.name"></span>
+                                    <app-warning-mark-list [warnings]="warnMap?.get(wf.name)"></app-warning-mark-list>
+                                </div>
+                                <div class="meta" *ngIf="wf.description">
+                                    <span [innerText]="wf.description.slice(0, 90)"></span><span *ngIf="wf.description.length > 90">...</span>
+                                </div>
+                                <div class="meta" *ngIf="!wf.description" [innerText]="'common_no_description' | translate"></div>
+                            </a>
+                            <div class="extra content">
+                              <span class="left floated">
+                                <div *ngFor="let label of wf?.labels?.slice(0, 3)" [style.background-color]="label.color" class="ui horizontal label">
+                                    {{label.name}}
+                                </div>
+                                <div class="ui horizontal label" *ngIf="wf?.labels?.length > 3">
+                                    ...
+                                </div>
+                              </span>
+                              <ng-container *ngIf="project.permission === 7">
+                                  <span class="right floated tag btn-label"
+                                    suiPopup
+                                    #popup="suiPopup"
+                                    [popupTemplate]="popupTemplate"
+                                    popupTrigger="outsideClick"
+                                    popupPlacement="bottom right">
+                                    <i class="tag icon"></i>
+                                  </span>
+                              </ng-container>
+                            </div>
+                            <ng-template let-popup #popupTemplate>
+                                <div class="header">{{'common_labels' | translate}}</div>
+                                <div class="content popup-label">
+                                    <div class="ui fluid icon input">
+                                      <input type="text" placeholder="Filter or create" [(ngModel)]="labelFilter" (keyup.enter)="confirmLabel(wf.name, labelFilter)">
+                                      <i class="search icon"></i>
+                                    </div>
+                                    <div class="ui celled relaxed list">
+                                      <div class="item label-item"
+                                        [class.pointing]="!workflowLabelsMap[wf.name][label.name]"
+                                        [class.active]="workflowLabelsMap[wf.name][label.name]"
+                                        *ngFor="let label of filteredLabels"
+                                        (click)="!workflowLabelsMap[wf.name][label.name] && linkLabelToWorkflow(wf.name, label)">
+                                          <i class="circle icon" [style.color]="label.color"></i>
+                                          <div class="content">
+                                              {{label.name}}
+                                              <span class="pointing" *ngIf="workflowLabelsMap[wf.name][label.name]" (click)="unlinkLabelToWorkflow(wf.name, label)">
+                                                  <i class="right floated close icon"></i>
+                                              </span>
+                                          </div>
+                                      </div>
+                                    </div>
+                                </div>
+                                <div class="mt5">
+                                    <a class="pointing" (click)="editLabels(); popup.close()"><i class="pencil icon"></i> Edit labels</a>
+                                </div>
+                            </ng-template>
+                        </div>
+                    </div>
+                </div>
+            </sui-accordion-panel>
+        </ng-container>
+
+    </sui-accordion>
+
+</div>

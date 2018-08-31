@@ -1,8 +1,11 @@
 package sdk
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"sort"
 	"time"
 
@@ -10,7 +13,12 @@ import (
 )
 
 // DefaultHistoryLength is the default history length
-const DefaultHistoryLength int64 = 20
+const (
+	DefaultHistoryLength int64 = 20
+)
+
+// ColorRegexp represent the regexp for a format to hexadecimal color
+var ColorRegexp *regexp.Regexp = regexp.MustCompile(`^#\w{3,8}$`)
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
@@ -37,6 +45,7 @@ type Workflow struct {
 	DerivationBranch        string                 `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
 	Audits                  []AuditWorklflow       `json:"audits" db:"-"`
 	Pipelines               map[int64]Pipeline     `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
+	Labels                  []Label                `json:"labels" db:"-" cli:"labels"`
 	ToDelete                bool                   `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                   `json:"favorite" db:"-" cli:"favorite"`
 }
@@ -982,4 +991,33 @@ type WorkflowNodeJobRunCount struct {
 	Count int64     `json:"version"`
 	Since time.Time `json:"since"`
 	Until time.Time `json:"until"`
+}
+
+// Label represent a label linked to a workflow
+type Label struct {
+	ID         int64  `json:"id" db:"id"`
+	Name       string `json:"name" db:"name"`
+	Color      string `json:"color" db:"color"`
+	ProjectID  int64  `json:"project_id" db:"project_id"`
+	WorkflowID int64  `json:"workflow_id,omitempty" db:"-"`
+}
+
+//Validate return error or update label if it is not valid
+func (label *Label) Validate() error {
+	if label.Name == "" {
+		return WrapError(fmt.Errorf("Label must have a name"), "IsValid>")
+	}
+	if label.Color == "" {
+		bytes := make([]byte, 4)
+		if _, err := rand.Read(bytes); err != nil {
+			return WrapError(err, "IsValid> Cannot create random color")
+		}
+		label.Color = "#" + hex.EncodeToString(bytes)
+	} else {
+		if !ColorRegexp.Match([]byte(label.Color)) {
+			return ErrIconBadFormat
+		}
+	}
+
+	return nil
 }

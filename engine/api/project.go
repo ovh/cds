@@ -193,6 +193,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withPlatforms := FormBool(r, "withPlatforms")
 		withFeatures := FormBool(r, "withFeatures")
 		withIcon := FormBool(r, "withIcon")
+		withLabels := FormBool(r, "withLabels")
 
 		opts := []project.LoadOptionFunc{
 			project.LoadOptions.WithFavorites,
@@ -242,11 +243,98 @@ func (api *API) getProjectHandler() service.Handler {
 		if withIcon {
 			opts = append(opts, project.LoadOptions.WithIcon)
 		}
+		if withLabels {
+			opts = append(opts, project.LoadOptions.WithLabels)
+		}
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), opts...)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
+
+		return service.WriteJSON(w, p, http.StatusOK)
+	}
+}
+
+func (api *API) putProjectLabelsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		db := api.mustDB()
+
+		var labels []sdk.Label
+		if err := UnmarshalBody(r, &labels); err != nil {
+			return sdk.WrapError(err, "putProjectLabelsHandler> Unmarshall error")
+		}
+
+		// Check is project exist
+		proj, errProj := project.Load(db, api.Cache, key, getUser(ctx), project.LoadOptions.WithLabels)
+		if errProj != nil {
+			return sdk.WrapError(errProj, "putProjectLabelsHandler> Cannot load project from db")
+		}
+
+		var labelsToUpdate, labelsToAdd []sdk.Label
+		for _, lblUpdated := range labels {
+			var lblFound bool
+			for _, lbl := range proj.Labels {
+				if lbl.ID == lblUpdated.ID {
+					lblFound = true
+				}
+			}
+			lblUpdated.ProjectID = proj.ID
+			if lblFound {
+				labelsToUpdate = append(labelsToUpdate, lblUpdated)
+			} else {
+				labelsToAdd = append(labelsToAdd, lblUpdated)
+			}
+		}
+
+		var labelsToDelete []sdk.Label
+		for _, lbl := range proj.Labels {
+			var lblFound bool
+			for _, lblUpdated := range labels {
+				if lbl.ID == lblUpdated.ID {
+					lblFound = true
+				}
+			}
+			if !lblFound {
+				lbl.ProjectID = proj.ID
+				labelsToDelete = append(labelsToDelete, lbl)
+			}
+		}
+
+		tx, errTx := db.Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "putProjectLabelsHandler> Cannot create transaction")
+		}
+		defer tx.Rollback() //nolint
+
+		for _, lblToDelete := range labelsToDelete {
+			if err := project.DeleteLabel(tx, lblToDelete.ID); err != nil {
+				return sdk.WrapError(err, "putProjectLabelsHandler> cannot delete label %s with id %d", lblToDelete.Name, lblToDelete.ID)
+			}
+		}
+		for _, lblToUpdate := range labelsToUpdate {
+			if err := project.UpdateLabel(tx, &lblToUpdate); err != nil {
+				return sdk.WrapError(err, "putProjectLabelsHandler> cannot update label %s with id %d", lblToUpdate.Name, lblToUpdate.ID)
+			}
+		}
+		for _, lblToAdd := range labelsToAdd {
+			if err := project.InsertLabel(tx, &lblToAdd); err != nil {
+				return sdk.WrapError(err, "putProjectLabelsHandler> cannot add label %s with id %d", lblToAdd.Name, lblToAdd.ID)
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "putProjectLabelsHandler> cannot commit transaction")
+		}
+
+		p, errP := project.Load(db, api.Cache, key, getUser(ctx), project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames)
+		if errP != nil {
+			return sdk.WrapError(errP, "putProjectLabelsHandler> Cannot load project updated from db")
+		}
+		event.PublishUpdateProject(p, proj, getUser(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}

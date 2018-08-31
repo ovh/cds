@@ -6,6 +6,7 @@ import {GroupPermission} from './group.model';
 import {Parameter} from './parameter.model';
 import {Pipeline} from './pipeline.model';
 import { ProjectPlatform } from './platform.model';
+import { Label } from './project.model';
 import {Usage} from './usage.model';
 import {WorkflowHookModel} from './workflow.hook.model';
 
@@ -31,6 +32,7 @@ export class Workflow {
     from_repository: string;
     favorite: boolean;
     pipelines: {[key: number]: Pipeline; };
+    labels: Label[];
 
     // UI params
     externalChange: boolean;

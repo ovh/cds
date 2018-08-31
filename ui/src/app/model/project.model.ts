@@ -29,6 +29,7 @@ export class Project {
     keys: Array<Key>;
     platforms: Array<ProjectPlatform>;
     features: {};
+    labels: Label[];
     metadata: {};
     favorite: boolean;
     // true if someone has updated the project ( used for warnings )
@@ -49,6 +50,15 @@ export class IdName {
   name: string;
   description?: string;
   icon?: string;
+  labels?: Label[];
   // ui params
   mute: boolean;
+}
+
+export class Label {
+  id: number;
+  name: string;
+  color: string;
+  project_id: number;
+  workflow_id: number;
 }

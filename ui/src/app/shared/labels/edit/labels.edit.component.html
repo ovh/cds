@@ -1,0 +1,29 @@
+<ng-template let-context let-modal="modal" #labelsEditModal>
+    <div class="header">{{ 'common_labels' | translate }}</div>
+    <div class="content">
+        <div class="ui form">
+          <div class="inline fields" *ngFor="let label of labels">
+            <label>{{'common_name' | translate}}</label>
+            <div class="field">
+              <input type="text" [placeholder]="'common_name' | translate" [(ngModel)]="label.name">
+            </div>
+            <label>{{'common_color' | translate}}</label>
+            <div class="field">
+              <input type="text" [placeholder]="'common_color' | translate" [(ngModel)]="label.color">
+            </div>
+            <div class="field">
+              <i class="circle icon" [style.color]="label.color"></i>
+            </div>
+            <div class="field">
+              <app-delete-button (event)="deleteLabel(label)"></app-delete-button>
+            </div>
+          </div>
+        </div>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" *ngIf="project.permission === permission.READ_WRITE_EXECUTE" [disabled]="loading" [class.loading]="loading" (click)="saveLabels()">
+            {{ 'btn_save' | translate }}
+        </button>
+    </div>
+</ng-template>

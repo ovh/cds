@@ -3,6 +3,21 @@
         <div class="six wide column">
             <h3>{{ 'project_workflows_list' | translate }}</h3>
         </div>
+    </div>
+    <div class="ui row">
+        <div class="six wide column">
+            <div class="ui icon buttons">
+                <button class="ui button" [class.active]="viewMode === 'blocs'" (click)="setViewMode('blocs')">
+                    <i class="table icon"></i>
+                </button>
+                <button class="ui button" [class.active]="viewMode === 'labels'" (click)="setViewMode('labels')">
+                    <i class="tags icon"></i>
+                </button>
+                <button class="ui button" [class.active]="viewMode === 'lines'" (click)="setViewMode('lines')">
+                    <i class="th list icon"></i>
+                </button>
+            </div>
+        </div>
         <div class="four wide column centered">
           <a class="ui blue button" [routerLink]="['./workflow']">{{ 'workflow_create_btn' | translate }}</a>
         </div>
@@ -15,24 +30,45 @@
     </div>
     <div class="ui row">
         <div class="ui sixteen wide column">
-            <div class="ui stackable four cards" *ngIf="project && project.workflow_names && project.workflow_names.length > 0">
-                <a [routerLink]="['./workflow', wf.name]" class="ui link card" *ngFor="let wf of filteredWorkflows">
-                    <div class="content">
-                        <img *ngIf="wf.icon" class="right floated mini ui image" [src]="wf.icon">
-                        <div class="header">
-                            <span [innerText]="wf.name"></span>
-                            <app-warning-mark-list [warnings]="warnMap?.get(wf.name)"></app-warning-mark-list>
-                        </div>
-                        <div class="meta" *ngIf="wf.description">
-                            <span [innerText]="wf.description.slice(0, 90)"></span><span *ngIf="wf.description.length > 90">...</span>
-                        </div>
-                        <div class="meta" *ngIf="!wf.description" [innerText]="'common_no_description' | translate"></div>
-                    </div>
-                </a>
-            </div>
+            <ng-container *ngIf="project && project.workflow_names && project.workflow_names.length > 0">
+                <ng-container [ngSwitch]="viewMode">
+                    <ng-container *ngSwitchCase="'blocs'">
+                        <app-project-workflows-blocs
+                            [project]="project"
+                            [labels]="project.labels"
+                            [workflows]="filteredWorkflows"
+                            [warnMap]="warnMap"
+                            (edit)="editLabels()">
+                        </app-project-workflows-blocs>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'labels'">
+                        <app-project-workflows-labels
+                            [project]="project"
+                            [labels]="project.labels"
+                            [workflows]="filteredWorkflows"
+                            [warnMap]="warnMap"
+                            (edit)="editLabels()">
+                        </app-project-workflows-labels>
+                    </ng-container>
+                    <ng-container *ngSwitchCase="'lines'">
+                        <app-project-workflows-lines
+                            [project]="project"
+                            [labels]="project.labels"
+                            [workflows]="filteredWorkflows"
+                            [warnMap]="warnMap"
+                            (edit)="editLabels()">
+                        </app-project-workflows-lines>
+                    </ng-container>
+                </ng-container>
+            </ng-container>
             <div class="ui segment" *ngIf="!project || !project.workflow_names || project.workflow_names.length === 0">
                 <span>{{ 'project_no_workflow' | translate }}</span>
             </div>
         </div>
     </div>
 </div>
+<ng-container *ngIf="project">
+    <app-labels-edit
+        [project]="project" #projectLabels>
+    </app-labels-edit>
+</ng-container>

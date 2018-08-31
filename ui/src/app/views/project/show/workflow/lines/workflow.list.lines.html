@@ -1,0 +1,18 @@
+<div class="workflow-list-lines">
+
+    <div class="ui celled relaxed selection list">
+        <div class="item pointing" [routerLink]="['./workflow', wf.name]" *ngFor="let wf of workflows">
+            <div class="right floated content">
+              <div class="ui horizontal label" [style.background-color]="label.color" *ngFor="let label of wf?.labels?.slice(0, 3)">
+                  {{label.name}}
+              </div>
+              <div class="ui horizontal label" *ngIf="wf?.labels?.length > 4">
+                  ...
+              </div>
+            </div>
+            <div class="content">
+                {{wf.name}}<app-warning-mark-list [warnings]="warnMap?.get(wf.name)"></app-warning-mark-list>
+            </div>
+        </div>
+    </div>
+</div>
