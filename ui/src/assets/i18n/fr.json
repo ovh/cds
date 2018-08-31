@@ -721,7 +721,9 @@
   "vcs_ssh_key" : "Clé SSH",
   "vcs_pgp_key" : "Clé PGP",
 
+  "vulnerability_ignore": "Ignorer",
   "vulnerability_no" : "Aucune vulnérabilité détectée",
+  "vulnerability_updated" : "Vulnérabilité mise à jour",
 
   "warning_context": "Contexte",
   "warning_element": "Element",

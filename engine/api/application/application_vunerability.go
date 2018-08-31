@@ -9,12 +9,13 @@ import (
 )
 
 // InsertVulnerabilities Insert vulnerabilities
-func InsertVulnerabilities(db gorp.SqlExecutor, vs []sdk.Vulnerability, appID int64) error {
-	if _, err := db.Exec("DELETE FROM application_vulnerability WHERE application_id = $1", appID); err != nil {
+func InsertVulnerabilities(db gorp.SqlExecutor, vs []sdk.Vulnerability, appID int64, t string) error {
+	if _, err := db.Exec("DELETE FROM application_vulnerability WHERE application_id = $1 AND type = $2", appID, t); err != nil {
 		return sdk.WrapError(err, "InsertVulnerability> Unable to remove old vulnerabilities")
 	}
 	for _, v := range vs {
 		v.ApplicationID = appID
+		v.Type = t
 		dbVuln := dbApplicationVulnerability(v)
 		if err := db.Insert(&dbVuln); err != nil {
 			return sdk.WrapError(err, "InsertVulnerability> Unable to insert vulnerabilities")

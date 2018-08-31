@@ -618,7 +618,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Con
 				found = true
 				// If worker is disabled, kill it
 				if n.Status == sdk.StatusDisabled {
-					log.Debug("lhatchery> swarm> istAwolWorkers> Worker %s is disabled. Kill it with fire !", c.Names[0])
+					log.Debug("lhatchery> swarm> listAwolWorkers> Worker %s is disabled. Kill it with fire!", c.Names[0])
 					oldContainers = append(oldContainers, c)
 					break
 				}
@@ -641,7 +641,7 @@ func (h *HatcherySwarm) killAwolWorker() error {
 			return err
 		}
 
-		//Delete the workers
+		// Delete the workers
 		for _, c := range oldContainers {
 			log.Debug("hatchery> swarm> killAwolWorker> Delete worker %s on %s", c.Names[0], dockerClient.name)
 			if err := h.killAndRemove(dockerClient, c.ID); err != nil {
@@ -655,13 +655,20 @@ func (h *HatcherySwarm) killAwolWorker() error {
 			return errC
 		}
 
-		//Checking services
+		// Checking services
 		for _, c := range containers {
 			if c.Labels["service_worker"] == "" {
 				continue
 			}
 			//check if the service is linked to a worker which doesn't exist
 			if w, _ := h.getContainer(dockerClient, c.Labels["service_worker"], types.ContainerListOptions{All: true}); w == nil {
+				// perhaps worker is not already started, we remove service only if worker is not here
+				// and service created more than 1 min (if service exited -> remove it)
+				if !strings.Contains(c.Status, "Exited") && time.Now().Add(-1*time.Minute).Unix() < c.Created {
+					log.Debug("hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker", c.Names[0], c.Status, c.Labels["service_worker"])
+					continue
+				}
+
 				log.Debug("hatchery> swarm> killAwolWorker> Delete worker (service) %s on %s", c.Names[0], dockerClient.name)
 				if err := h.killAndRemove(dockerClient, c.ID); err != nil {
 					log.Error("hatchery> swarm> killAwolWorker> service %v on %s", err, dockerClient.name)

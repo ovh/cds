@@ -288,7 +288,7 @@ func Create(h Interface) error {
 
 			//Check gracetime
 			if j.QueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
-				log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID)
+				log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID, j.QueuedSeconds)
 				endTrace("too fresh")
 				continue
 			}

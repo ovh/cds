@@ -99,6 +99,7 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 	report := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: vulnerabilities,
 		Summary:         summary,
+		Type:            "docker",
 	}
 	if err := plugin.SendVulnerabilityReport(a, report); err != nil {
 		_ = plugin.SendLog(a, "Unable to send report: %s", err)
