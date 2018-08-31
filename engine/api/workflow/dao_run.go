@@ -793,12 +793,13 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 	WHERE (workflow_node_run_job.workflow_node_run_id IN (
 			SELECT workflow_node_run.id
 			FROM workflow_node_run
-			WHERE workflow_node_run.workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
-			AND (status = $3 OR status = $4 OR status = $5)
+			WHERE (
+					workflow_node_run.workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
+					AND (status = $3 OR status = $4 OR status = $5)
+				)
+				OR
+				(workflow_node_run.status = $6 OR workflow_node_run.status = $1 OR workflow_node_run.status = $7)
 		)
-		OR status = $1
-		OR status = $6
-		OR status = $7
 	)`
 	argsNodeJobRun := append(args, sdk.StatusFail.String(), sdk.StatusSuccess.String())
 	if _, err := tx.Exec(queryUpdateNodeJobRun, argsNodeJobRun...); err != nil {
