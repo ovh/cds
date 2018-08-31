@@ -108,7 +108,7 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 	}
 
 	var updateGroupInEnv = func(groupName string, groupID int64, role int) {
-		log.Debug("ImportInto> Updating group %s", groupID)
+		log.Debug("ImportInto> Updating group %d", groupID)
 		if err := group.UpdateGroupRoleInEnvironment(db, into.ID, groupID, role); err != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentGroupCannotBeUpdated, groupName, into.Name, err)
 			return

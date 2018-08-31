@@ -14,27 +14,27 @@ import (
 // DeleteGroupAndDependencies deletes group and all subsequent group_project, pipeline_project
 func DeleteGroupAndDependencies(db gorp.SqlExecutor, group *sdk.Group) error {
 	if err := DeleteGroupUserByGroup(db, group); err != nil {
-		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group user %s: %s", group.Name)
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group user %s", group.Name)
 	}
 
 	if err := deleteGroupEnvironmentByGroup(db, group); err != nil {
-		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group env %s: %s", group.Name)
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group env %s", group.Name)
 	}
 
 	if err := deleteGroupPipelineByGroup(db, group); err != nil {
-		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group pipeline %s: %s", group.Name)
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group pipeline %s", group.Name)
 	}
 
 	if err := deleteGroupApplicationByGroup(db, group); err != nil {
-		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group application %s: %s", group.Name)
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group application %s", group.Name)
 	}
 
 	if err := deleteGroupProjectByGroup(db, group); err != nil {
-		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group project %s: %s", group.Name)
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group project %s", group.Name)
 	}
 
 	if err := deleteGroup(db, group); err != nil {
-		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group %s: %s", group.Name)
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group %s", group.Name)
 	}
 
 	// TODO EVENT Send event for all dependencies
@@ -47,14 +47,14 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 	// check projectKey pattern
 	regexp := sdk.NamePatternRegex
 	if !regexp.MatchString(group.Name) {
-		return 0, false, sdk.WrapError(sdk.ErrInvalidGroupPattern, "AddGroup: Wrong pattern for group name : %s", group.Name)
+		return 0, false, sdk.WrapError(sdk.ErrInvalidGroupPattern, "AddGroup: Wrong pattern for group name: %s", group.Name)
 	}
 
 	// Check that group does not already exists
 	query := `SELECT id FROM "group" WHERE "group".name = $1`
 	rows, errq := db.Query(query, group.Name)
 	if errq != nil {
-		return 0, false, sdk.WrapError(errq, "AddGroup: Cannot check if group %s exists: %s", group.Name)
+		return 0, false, sdk.WrapError(errq, "AddGroup: Cannot check if group %s exists", group.Name)
 	}
 	defer rows.Close()
 
@@ -63,7 +63,7 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 		if err := rows.Scan(&groupID); err != nil {
 			return 0, false, sdk.WrapError(sdk.ErrGroupExists, "AddGroup: Cannot get the ID of the existing group %s (%s)", group.Name, err)
 		}
-		return groupID, false, sdk.WrapError(sdk.ErrGroupExists, "AddGroup: Group %s already exists")
+		return groupID, false, sdk.WrapError(sdk.ErrGroupExists, "AddGroup: Group %s already exists", group.Name)
 	}
 
 	if err := InsertGroup(db, group); err != nil {
