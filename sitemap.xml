@@ -1082,6 +1082,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-clair/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-download/</loc>
   </url>
   

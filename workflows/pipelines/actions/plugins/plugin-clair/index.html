@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Command Line - REST API - SDK :: CDS - Continuous Delivery Service</title>
+    <title>plugin-clair :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/">
+  <body class="" data-url="/workflows/pipelines/actions/plugins/plugin-clair/">
     <nav id="sidebar" class="">
 
 
@@ -161,9 +161,10 @@
     </li>
           
           
-    <li data-nav-id="/workflows/" class="dd-item">
+    <li data-nav-id="/workflows/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/">
-        <span>Building CDS Workflows</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Building CDS Workflows</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/design/" class="dd-item">
@@ -252,9 +253,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/" class="dd-item">
+    <li data-nav-id="/workflows/pipelines/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/pipelines/">
-        <span>Building Pipelines</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Building Pipelines</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/pipelines/variables/" class="dd-item">
@@ -262,9 +264,10 @@
           <span>Variables</span>
         </a>
     </li>
-    <li data-nav-id="/workflows/pipelines/actions/" class="dd-item">
+    <li data-nav-id="/workflows/pipelines/actions/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/pipelines/actions/">
-        <span>Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Actions</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/workflows/pipelines/actions/builtin/" class="dd-item">
@@ -361,9 +364,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/workflows/pipelines/actions/plugins/" class="dd-item">
+    <li data-nav-id="/workflows/pipelines/actions/plugins/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/">
-        <span>Plugins Actions</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Plugins Actions</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/workflows/pipelines/actions/plugins/write-plugin/" class="dd-item">
@@ -371,7 +375,7 @@
           <span>Write a Plugin</span>
         </a>
     </li>
-      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-clair/" class="dd-item">
+      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-clair/" class="dd-item active">
         <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-clair/">
           <span>plugin-clair</span>
         </a>
@@ -594,10 +598,9 @@
     </li>
           
           
-    <li data-nav-id="/cli/" class="dd-item parent active">
+    <li data-nav-id="/cli/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/">
-        <span>Command Line - REST API - SDK</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Command Line - REST API - SDK</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/api/" class="dd-item">
@@ -2021,7 +2024,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/_index.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/workflows/pipelines/actions/plugins/plugin-clair.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -2038,7 +2041,27 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > Command Line - REST API - SDK
+
+
+
+
+
+
+
+
+
+
+
+
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/actions/'>Actions</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/actions/plugins/'>Plugins Actions</a> > plugin-clair
+
+ 
+
+ 
+
+ 
+
+ 
 
  
 
@@ -2047,7 +2070,17 @@
             </div>
             <div class="progress">
     <div class="wrapper">
-
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#parameters">Parameters</a>
+<ul>
+<li><a href="#prerequisites">Prerequisites</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
     </div>
 </div>
 
@@ -2057,7 +2090,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Command Line - REST API - SDK</h1>
+                <h1>plugin-clair</h1>
                 <p></p>
             </div>
           
@@ -2067,25 +2100,40 @@
 
 
 
-<ul class="children children-h4"><h4>
-	<a href="https://ovh.github.io/cds/cli/api/" >REST API</a></h4><h4>
-	<a href="https://ovh.github.io/cds/cli/sdk/" >SDK Golang</a></h4><h4>
-	<a href="https://ovh.github.io/cds/cli/cdsctl/" >cdsctl</a></h4><h4>
-	<a href="https://ovh.github.io/cds/cli/engine/" >engine</a></h4><h4>
-	<a href="https://ovh.github.io/cds/cli/worker/" >worker</a></h4>
+<p>This plugin analyze your docker image using clair (<a href="https://github.com/coreos/clair">https://github.com/coreos/clair</a>)</p>
+
+<p>Add an extra step of type plugin-clair on your job to use it.</p>
+
+<h2 id="parameters">Parameters</h2>
+
+<ul>
+<li><strong>image</strong>: Image to analize</li>
 </ul>
 
+<h3 id="prerequisites">Prerequisites</h3>
 
+<p>To use this plugin, you must :</p>
 
+<ul>
+<li>Have clair running: <a href="https://github.com/coreos/clair/blob/master/Documentation/running-clair.md">https://github.com/coreos/clair/blob/master/Documentation/running-clair.md</a></li>
+<li>Add clair in your CDS configuration:</li>
+</ul>
 
-
+<pre><code class="language-yml">[[api.services]]
+        healthUrl = &quot;http://localhost&quot;
+        healthPort = &quot;6061&quot;
+        healthPath = &quot;/health&quot;
+        name = &quot;clair&quot;
+        type = &quot;clair&quot; # MUST BE 'clair'
+        url = &quot;http://localhost&quot;
+        port = &quot;6060&quot;
+        path = &quot;&quot;
+</code></pre>
 
 
 <footer class=" footline" >
 	
 </footer>
-
-
 
 
 
@@ -2100,8 +2148,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/hatchery/create/" title="Write your own hatchery"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/api/" title="REST API" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/" title="Write a Plugin"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-download/" title="plugin-download" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
@@ -2121,3 +2169,4 @@
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
   </body>
 </html>
+
