@@ -27,7 +27,7 @@
                 </span>
                 <i class="stepname" *ngIf="!edit || editStepName">({{step.name}})</i>
             </span>
-            <span class="textOrange" *ngIf="action.deprecated">
+            <span class="textOrange" *ngIf="step.deprecated">
                 <i class="warning orange sign icon"></i>{{'common_deprecated' | translate}}
             </span>
         </div>

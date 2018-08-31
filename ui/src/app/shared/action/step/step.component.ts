@@ -16,9 +16,11 @@ export class ActionStepComponent {
     @Input('step')
     set step(step: Action) {
         this._step = step;
-        if (step && step.parameters) {
+        if (step) {
+          this._step.step_name = this._step.step_name || this._step.name;
+          if (step.parameters) {
             this.withAdvanced = step.parameters.some((parameter) => parameter.advanced);
-            this._step.step_name = this._step.step_name || this._step.name;
+          }
         }
     }
     get step(): Action {
