@@ -38,9 +38,6 @@ type Run sdk.WorkflowRun
 // Coverage is a gorp wrapper around sdk.WorkflowNodeRunCoverage
 type Coverage sdk.WorkflowNodeRunCoverage
 
-// Label is a gorp wrapper around sdk.Label
-type Label sdk.Label
-
 type dbNodeRunVulenrabilitiesReport sdk.WorkflowNodeRunVulnerabilityReport
 
 // NodeRun is a gorp wrapper around sdk.WorkflowNodeRun
@@ -218,5 +215,4 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(auditWorkflow{}, "workflow_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Coverage{}, "workflow_node_run_coverage", false, "workflow_id", "workflow_run_id", "workflow_node_run_id", "repository", "branch"))
 	gorpmapping.Register(gorpmapping.New(dbNodeRunVulenrabilitiesReport{}, "workflow_node_run_vulnerability", true, "id"))
-	gorpmapping.Register(gorpmapping.New(Label{}, "workflow_label", true, "id"))
 }

@@ -197,20 +197,20 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 		if errTx != nil {
 			return sdk.WrapError(errTx, "postWorkflowLabelHandler> Cannot create new transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() //nolint
 
 		if label.ID == 0 {
 			if label.Name == "" {
 				return service.WriteJSON(w, "Label ID or label name should not be empty", http.StatusBadRequest)
 			}
 
-			lbl, errL := workflow.LabelByName(db, proj.ID, label.Name)
+			lbl, errL := project.LabelByName(db, proj.ID, label.Name)
 			if errL != nil {
 				if errL != sql.ErrNoRows {
 					return sdk.WrapError(errL, "postWorkflowLabelHandler> cannot load label by name")
 				}
 				// If label doesn't exist create him
-				if err := workflow.InsertLabel(tx, &label); err != nil {
+				if err := project.InsertLabel(tx, &label); err != nil {
 					return sdk.WrapError(err, "postWorkflowLabelHandler> Cannot create new label")
 				}
 			} else {

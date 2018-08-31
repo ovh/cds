@@ -13,7 +13,12 @@ import (
 )
 
 // DefaultHistoryLength is the default history length
-const DefaultHistoryLength int64 = 20
+const (
+	DefaultHistoryLength int64 = 20
+)
+
+// ColorRegexp represent the regexp for a format to hexadecimal color
+var ColorRegexp *regexp.Regexp = regexp.MustCompile(`^#\w{3,8}$`)
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
@@ -1009,7 +1014,7 @@ func (label *Label) Validate() error {
 		}
 		label.Color = "#" + hex.EncodeToString(bytes)
 	} else {
-		if !regexp.MustCompile(`^#\w{3,8}$`).Match([]byte(label.Color)) {
+		if !ColorRegexp.Match([]byte(label.Color)) {
 			return ErrIconBadFormat
 		}
 	}

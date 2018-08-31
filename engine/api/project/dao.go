@@ -412,10 +412,10 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, p *dbProject, u *sdk.User, o
 func Labels(db gorp.SqlExecutor, projectID int64) ([]sdk.Label, error) {
 	var labels []sdk.Label
 	query := `
-	SELECT workflow_label.*
-		FROM workflow_label
-		WHERE workflow_label.project_id = $1
-		ORDER BY workflow_label.name
+	SELECT project_label.*
+		FROM project_label
+		WHERE project_label.project_id = $1
+		ORDER BY project_label.name
 	`
 	if _, err := db.Select(&labels, query, projectID); err != nil {
 		if err == sql.ErrNoRows {
@@ -427,9 +427,17 @@ func Labels(db gorp.SqlExecutor, projectID int64) ([]sdk.Label, error) {
 	return labels, nil
 }
 
+// LabelByName return a label given his name and project id
+func LabelByName(db gorp.SqlExecutor, projectID int64, labelName string) (sdk.Label, error) {
+	var label sdk.Label
+	err := db.SelectOne(&label, "SELECT project_label.* FROM project_label WHERE project_id = $1 AND name = $2", projectID, labelName)
+
+	return label, err
+}
+
 // DeleteLabel delete a label given a label ID
 func DeleteLabel(db gorp.SqlExecutor, labelID int64) error {
-	query := "DELETE FROM workflow_label WHERE id = $1"
+	query := "DELETE FROM project_label WHERE id = $1"
 	if _, err := db.Exec(query, labelID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil

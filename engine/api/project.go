@@ -308,7 +308,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		if errTx != nil {
 			return sdk.WrapError(errTx, "putProjectLabelsHandler> Cannot create transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() //nolint
 
 		for _, lblToDelete := range labelsToDelete {
 			if err := project.DeleteLabel(tx, lblToDelete.ID); err != nil {
