@@ -5,6 +5,9 @@
         </div>
         <div class="title" [title]="startExec ? ('step_title_duration' | translate:{start: startExec, end: doneExec}) : ''">
             <span *ngIf="!step.step_name">{{step.name}}</span><span *ngIf="step.step_name">{{step.step_name}}</span> {{duration}}
+            <i class="textOrange" *ngIf="step.deprecated">
+                <i class="warning orange sign icon"></i>{{'common_deprecated' | translate}}
+            </i>
         </div>
         <div class="right floated flags" *ngIf="step.optional">
             <i class="warning sign icon orange stepWarn" *ngIf="currentStatus === pipelineBuildStatusEnum.FAIL && step.optional"></i>{{ 'action_optional' | translate }}

@@ -690,6 +690,10 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 		idsToUpdate = idsToUpdate[:100]
 	}
 
+	if len(idsToUpdate) == 0 {
+		return nil
+	}
+
 	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id = ANY(string_to_array($1, ',')::bigint[])`
 	if _, err := db.Exec(queryUpdate, strings.Join(idsToUpdate, ",")); err != nil {
 		log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
@@ -769,6 +773,10 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		return sdk.WrapError(err, "stopRunsBlocked>")
 	}
 
+	if len(ids) == 0 {
+		return nil
+	}
+
 	tx, errTx := db.Begin()
 	if errTx != nil {
 		return sdk.WrapError(errTx, "stopRunsBlocked>")
@@ -780,26 +788,34 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		wfIds[i] = fmt.Sprintf("%d", ids[i].ID)
 	}
 	wfIdsJoined := strings.Join(wfIds, ",")
-	queryUpdateWf := `UPDATE workflow_run SET status = $1 WHERE id = ANY(string_to_array($2, ',')::bigint[])`
-	if _, err := tx.Exec(queryUpdateWf, sdk.StatusStopped.String(), wfIdsJoined); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow run history")
-	}
 	args := []interface{}{sdk.StatusStopped.String(), wfIdsJoined, sdk.StatusBuilding.String(), sdk.StatusChecking.String(), sdk.StatusWaiting.String()}
+	queryUpdateNodeJobRun := `DELETE FROM workflow_node_run_job
+	WHERE (workflow_node_run_job.workflow_node_run_id IN (
+			SELECT workflow_node_run.id
+			FROM workflow_node_run
+			WHERE (
+					workflow_node_run.workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
+					AND (status = $3 OR status = $4 OR status = $5)
+				)
+				OR
+				(workflow_node_run.status = $6 OR workflow_node_run.status = $1 OR workflow_node_run.status = $7)
+		)
+	)`
+	argsNodeJobRun := append(args, sdk.StatusFail.String(), sdk.StatusSuccess.String())
+	if _, err := tx.Exec(queryUpdateNodeJobRun, argsNodeJobRun...); err != nil {
+		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node job run history")
+	}
+
 	queryUpdateNodeRun := `UPDATE workflow_node_run SET status = $1, done = now()
 	WHERE workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
 	AND (status = $3 OR status = $4 OR status = $5)`
 	if _, err := tx.Exec(queryUpdateNodeRun, args...); err != nil {
 		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node run history")
 	}
-	queryUpdateNodeJobRun := `UPDATE workflow_node_run_job SET status = $1, done = now()
-	WHERE workflow_node_run_job.workflow_node_run_id IN (
-		SELECT workflow_node_run.id
-		FROM workflow_node_run
-		WHERE workflow_node_run.workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
-		AND (status = $3 OR status = $4 OR status = $5)
-	)`
-	if _, err := tx.Exec(queryUpdateNodeJobRun, args...); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node job run history")
+
+	queryUpdateWf := `UPDATE workflow_run SET status = $1 WHERE id = ANY(string_to_array($2, ',')::bigint[])`
+	if _, err := tx.Exec(queryUpdateWf, sdk.StatusStopped.String(), wfIdsJoined); err != nil {
+		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow run history")
 	}
 
 	resp := []struct {
