@@ -6,7 +6,7 @@ import {List, Map} from 'immutable';
 import {map} from 'rxjs/operators';
 import {Environment} from '../../model/environment.model';
 import {GroupPermission} from '../../model/group.model';
-import {LoadOpts, Project} from '../../model/project.model';
+import {Label, LoadOpts, Project} from '../../model/project.model';
 import {Variable} from '../../model/variable.model';
 import {EnvironmentService} from '../environment/environment.service';
 import {NavbarService} from '../navbar/navbar.service';
@@ -19,7 +19,7 @@ import {ProjectPlatform} from '../../model/platform.model';
 
 @Injectable()
 export class ProjectStore {
-
+    private WORKFLOW_VIEW_MODE = 'CDS-WORKFLOW-VIEW-MODE';
     // List of all project. Use by Navbar
     private _projectNav: BehaviorSubject<List<Project>> = new BehaviorSubject(null);
 
@@ -33,6 +33,27 @@ export class ProjectStore {
         private _navbarService: NavbarService
       ) {
 
+    }
+
+    getWorkflowViewMode(key: string): 'blocs'|'labels'|'lines' {
+        let o = localStorage.getItem(this.WORKFLOW_VIEW_MODE);
+        if (o) {
+            let j = JSON.parse(o);
+            if (j[key]) {
+                return j[key];
+            }
+        }
+        return 'blocs';
+    }
+
+    setWorkflowViewMode(key: string, viewMode: 'blocs'|'labels'|'lines') {
+        let ls = localStorage.getItem(this.WORKFLOW_VIEW_MODE);
+        let j = {};
+        if (ls) {
+            j = JSON.parse(ls);
+        }
+        j[key] = viewMode;
+        localStorage.setItem(this.WORKFLOW_VIEW_MODE, JSON.stringify(j));
     }
 
     /**
@@ -79,13 +100,13 @@ export class ProjectStore {
      * @returns {Observable<R>}
      */
     resync(key: string, opts: LoadOpts[]): Observable<Project> {
-        return this._projectService.getProject(key, opts).pipe(map( res => {
+        return this._projectService.getProject(key, opts).pipe(map(res => {
             let store = this._projectCache.getValue();
             let proj = store.get(key);
             if (proj) {
                 proj = Object.assign({}, proj, res);
                 if (opts) {
-                    opts.forEach( o => {
+                    opts.forEach(o => {
                        switch (o.fieldName) {
                            case 'workflow_names':
                                if (!res.workflow_names) {
@@ -116,6 +137,12 @@ export class ProjectStore {
                                if (!res.keys) {
                                    proj.keys = [];
                                }
+                               break;
+                           case 'labels':
+                               if (!res.labels) {
+                                   proj.labels = [];
+                               }
+                               break;
                        }
                     });
                 }
@@ -860,6 +887,22 @@ export class ProjectStore {
             }
             return res;
         }));
+    }
+
+    updateLabels(key: string, labels: Label[]): Observable<Project> {
+        return this._projectService.updateLabels(key, labels)
+          .pipe(
+            map((proj) => {
+              let cache = this._projectCache.getValue();
+              let projectUpdate = cache.get(key);
+              if (projectUpdate) {
+                  projectUpdate.labels = proj.labels;
+                  projectUpdate.workflow_names = proj.workflow_names;
+                  this._projectCache.next(cache.set(key, projectUpdate));
+              }
+              return projectUpdate;
+            })
+          );
     }
 
 }

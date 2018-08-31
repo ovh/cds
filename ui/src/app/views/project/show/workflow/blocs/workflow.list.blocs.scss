@@ -1,0 +1,40 @@
+.workflow-list-blocs {
+  .link {
+    &.card {
+      min-height: 6em;
+      .btn-label {
+        &:hover {
+          color: black;
+        }
+      }
+      .ui.label > .icon {
+        margin-right: 2px;
+      }
+    }
+  }
+}
+.popup-label {
+  width: 12em;
+  max-height: 12em;
+  overflow: auto;
+}
+.label-item {
+  &:hover {
+    background-color: grey;
+  }
+  &.active {
+    background-color: lightgrey;
+  }
+  .content {
+    width: 100%;
+    .icon {
+      color: grey;
+      &:hover {
+        color: black;
+      }
+    }
+  }
+}
+.mt5 {
+  margin-top: 5px;
+}

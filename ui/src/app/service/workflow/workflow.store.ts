@@ -4,8 +4,10 @@ import {List, Map} from 'immutable';
 import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
 import {GroupPermission} from '../../model/group.model';
 import {NavbarRecentData} from '../../model/navbar.model';
+import {Label, LoadOpts} from '../../model/project.model';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 import {NavbarService} from '../navbar/navbar.service';
+import {ProjectStore} from '../project/project.store';
 import {WorkflowService} from './workflow.service';
 
 import {map, mergeMap} from 'rxjs/operators';
@@ -22,7 +24,11 @@ export class WorkflowStore {
     private _recentWorkflows: BehaviorSubject<List<NavbarRecentData>> = new BehaviorSubject(List<NavbarRecentData>());
 
 
-    constructor(private _workflowService: WorkflowService, private _navbarService: NavbarService) {
+    constructor(
+        private _workflowService: WorkflowService,
+        private _navbarService: NavbarService,
+        private _projectStore: ProjectStore
+    ) {
         this.loadRecentWorkflows();
     }
 
@@ -265,6 +271,60 @@ export class WorkflowStore {
             this._workflows.next(store.set(workflowKey, workflowToUpdate));
             return w;
         }));
+    }
+
+    linkLabel(key: string, workflowName: string, label: Label): Observable<Workflow> {
+      return this._workflowService.linkLabel(key, workflowName, label)
+        .pipe(
+          map((lbl) => {
+            this._projectStore.resync(key, [
+                new LoadOpts('withLabels', 'labels'),
+                new LoadOpts('withWorkflowNames', 'workflow_names')
+            ]).subscribe();
+            let workflowKey = key + '-' + workflowName;
+            let store = this._workflows.getValue();
+            let workflowToUpdate = store.get(workflowKey);
+            if (!workflowToUpdate) {
+                return null;
+            }
+
+            if (Array.isArray(workflowToUpdate.labels)) {
+              workflowToUpdate.labels.push(lbl);
+            } else {
+              workflowToUpdate.labels = [lbl];
+            }
+
+            this._workflows.next(store.set(workflowKey, workflowToUpdate));
+            return workflowToUpdate;
+          })
+        )
+    }
+
+    unlinkLabel(key: string, workflowName: string, labelId: number): Observable<Workflow> {
+      return this._workflowService.unlinkLabel(key, workflowName, labelId)
+        .pipe(
+          map((lbl) => {
+            this._projectStore.resync(key, [
+                new LoadOpts('withLabels', 'labels'),
+                new LoadOpts('withWorkflowNames', 'workflow_names')
+            ]).subscribe();
+            let workflowKey = key + '-' + workflowName;
+            let store = this._workflows.getValue();
+            let workflowToUpdate = store.get(workflowKey);
+            if (!workflowToUpdate) {
+                return null;
+            }
+
+            if (Array.isArray(workflowToUpdate.labels)) {
+              workflowToUpdate.labels = workflowToUpdate.labels.filter((label) => label.id !== labelId);
+            } else {
+              workflowToUpdate.labels = [];
+            }
+
+            this._workflows.next(store.set(workflowKey, workflowToUpdate));
+            return workflowToUpdate;
+          })
+        )
     }
 
     externalModification(wfKey: string) {

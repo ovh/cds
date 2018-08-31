@@ -19,6 +19,9 @@ import {ProjectPlatformsComponent} from './show/platforms/project.platforms.comp
 import {ProjectShowComponent} from './show/project.component';
 import {ProjectVariablesComponent} from './show/variable/variable.list.component';
 import {ProjectWarningsComponent} from './show/warnings/warnings.component';
+import {ProjectWorkflowListBlocsComponent} from './show/workflow/blocs/workflow.list.blocs.component';
+import {ProjectWorkflowListLabelsComponent} from './show/workflow/labels/workflow.list.labels.component';
+import {ProjectWorkflowListLinesComponent} from './show/workflow/lines/workflow.list.lines.component';
 import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.component';
 
 @NgModule({
@@ -36,6 +39,9 @@ import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.compon
         ProjectPermissionsComponent,
         ProjectRepoManagerComponent,
         ProjectShowComponent,
+        ProjectWorkflowListBlocsComponent,
+        ProjectWorkflowListLabelsComponent,
+        ProjectWorkflowListLinesComponent,
         ProjectWorkflowListComponent,
         ProjectPlatformsComponent,
         ProjectPlatformFormComponent,

@@ -271,6 +271,7 @@ var LoadOptions = struct {
 	WithClearPlatforms                      LoadOptionFunc
 	WithFavorites                           LoadOptionFunc
 	WithFeatures                            LoadOptionFunc
+	WithLabels                              LoadOptionFunc
 }{
 	Default:                                 &loadDefault,
 	WithIcon:                                &loadIcon,
@@ -296,6 +297,7 @@ var LoadOptions = struct {
 	WithFavorites:                           &loadFavorites,
 	WithFeatures:                            &loadFeatures,
 	WithApplicationWithDeploymentStrategies: &loadApplicationWithDeploymentStrategies,
+	WithLabels:                              &loadLabels,
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id
@@ -404,6 +406,68 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, p *dbProject, u *sdk.User, o
 	}
 
 	return &proj, nil
+}
+
+// Labels return list of labels given a project ID
+func Labels(db gorp.SqlExecutor, projectID int64) ([]sdk.Label, error) {
+	var labels []sdk.Label
+	query := `
+	SELECT workflow_label.*
+		FROM workflow_label
+		WHERE workflow_label.project_id = $1
+		ORDER BY workflow_label.name
+	`
+	if _, err := db.Select(&labels, query, projectID); err != nil {
+		if err == sql.ErrNoRows {
+			return labels, nil
+		}
+		return labels, sdk.WrapError(err, "Labels> Cannot load labels")
+	}
+
+	return labels, nil
+}
+
+// DeleteLabel delete a label given a label ID
+func DeleteLabel(db gorp.SqlExecutor, labelID int64) error {
+	query := "DELETE FROM workflow_label WHERE id = $1"
+	if _, err := db.Exec(query, labelID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "DeleteLabel> Cannot delete labels")
+	}
+
+	return nil
+}
+
+// InsertLabel insert a label
+func InsertLabel(db gorp.SqlExecutor, label *sdk.Label) error {
+	if err := label.Validate(); err != nil {
+		return sdk.WrapError(err, "InsertLabel>")
+	}
+
+	lbl := dbLabel(*label)
+	if err := db.Insert(&lbl); err != nil {
+		return sdk.WrapError(err, "InsertLabel> Cannot insert labels")
+	}
+	*label = sdk.Label(lbl)
+
+	return nil
+}
+
+// UpdateLabel update a label
+func UpdateLabel(db gorp.SqlExecutor, label *sdk.Label) error {
+	if err := label.Validate(); err != nil {
+		return sdk.WrapError(err, "UpdateLabel>")
+	}
+
+	lbl := dbLabel(*label)
+	if _, err := db.Update(&lbl); err != nil {
+		return sdk.WrapError(err, "UpdateLabel> Cannot update labels")
+	}
+	*label = sdk.Label(lbl)
+
+	return nil
 }
 
 // UpdateFavorite add or delete project from user favorites

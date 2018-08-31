@@ -140,9 +140,9 @@ export class AppService {
                 opts.push(new LoadOpts('withEnvironments', 'environments'));
             } else if (event.type_event.indexOf(EventType.WORKFLOW_PREFIX) === 0) {
                 opts.push(new LoadOpts('withWorkflowNames', 'workflow_names'));
+                opts.push(new LoadOpts('withLabels', 'labels'));
             }
-            this._projStore.resync(projectInCache.key, opts).pipe(first()).subscribe(() => {
-            });
+            this._projStore.resync(projectInCache.key, opts).pipe(first()).subscribe();
         });
     }
 

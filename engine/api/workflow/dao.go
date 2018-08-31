@@ -37,6 +37,7 @@ type LoadOptions struct {
 	Base64Keys    bool
 	OnlyRootNode  bool
 	WithFavorites bool
+	WithLabels    bool
 	WithIcon      bool
 }
 
@@ -209,6 +210,13 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 			return res, nil
 		}
 		return nil, sdk.WrapError(err, "LoadAllNames> Unable to load workflows with project %s", projID)
+	}
+	for i := range res {
+		var err error
+		res[i].Labels, err = Labels(db, res[i].ID)
+		if err != nil {
+			return res, sdk.WrapError(err, "LoadAllNames> cannot load labels for workflow %s", res[i].Name)
+		}
 	}
 
 	return res, nil
@@ -427,6 +435,17 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 			return nil, sdk.WrapError(errF, "Load> unable to load favorite")
 		}
 		res.Favorite = fav
+	}
+
+	if opts.WithLabels {
+		_, next = observability.Span(ctx, "workflow.load.Labels")
+		labels, errL := Labels(db, res.ID)
+		next()
+
+		if errL != nil {
+			return nil, sdk.WrapError(errL, "Load> unable to load labels")
+		}
+		res.Labels = labels
 	}
 
 	_, next = observability.Span(ctx, "workflow.load.loadNotifications")
@@ -1095,7 +1114,7 @@ func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u *sdk.User, add bool
 // IsDeploymentPlatformUsed checks if a deployment platform is used on any workflow
 func IsDeploymentPlatformUsed(db gorp.SqlExecutor, projectID int64, appID int64, pfName string) (bool, error) {
 	query := `
-	SELECT count(1) 
+	SELECT count(1)
 	FROM workflow_node_context
 	JOIN project_platform ON project_platform.id = workflow_node_context.project_platform_id
 	WHERE workflow_node_context.application_id = $2

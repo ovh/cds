@@ -5,6 +5,7 @@ import {deepClone} from 'fast-json-patch/lib/core';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 import {GroupPermission} from '../../model/group.model';
+import {Label} from '../../model/project.model';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 
 @Injectable()
@@ -163,5 +164,27 @@ export class WorkflowService {
      */
     deletePermission(key: string, workflowName: string, gp: GroupPermission): Observable<Workflow> {
         return this._http.delete<Workflow>('/project/' + key + '/workflows/' + workflowName + '/groups/' + gp.group.name);
+    }
+
+    /**
+     * Link a label on a workflow
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow Name
+     * @param {Label} label label to link
+     * @returns {Observable<Label>}
+     */
+    linkLabel(key: string, workflowName: string, label: Label): Observable<Label> {
+        return this._http.post<Label>(`/project/${key}/workflows/${workflowName}/label`, label);
+    }
+
+    /**
+     * Link a label on a workflow
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow Name
+     * @param {labelId} labelId labelId to unlink
+     * @returns {Observable<Label>}
+     */
+    unlinkLabel(key: string, workflowName: string, labelId: number): Observable<null> {
+        return this._http.delete<null>(`/project/${key}/workflows/${workflowName}/label/${labelId}`);
     }
 }

@@ -9,7 +9,7 @@ import {GroupPermission} from '../../model/group.model';
 import {Key} from '../../model/keys.model';
 import {Notification} from '../../model/notification.model';
 import {ProjectPlatform} from '../../model/platform.model';
-import {LoadOpts, Project} from '../../model/project.model';
+import {Label, LoadOpts, Project} from '../../model/project.model';
 import {Variable} from '../../model/variable.model';
 
 /**
@@ -398,5 +398,15 @@ export class ProjectService {
      */
     updatePlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
         return this._http.put<ProjectPlatform>('/project/' + key + '/platforms/' + platform.name, platform);
+    }
+
+    /**
+     * Update project labels
+     * @param key Project unique key
+     * @param labels Labels to update
+     * @returns {Observable<Project>}
+     */
+    updateLabels(key: string, labels: Label[]): Observable<Project> {
+        return this._http.put<Project>('/project/' + key + '/labels', labels);
     }
 }

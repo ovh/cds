@@ -270,5 +270,57 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 	apps, err := sdkclient.ApplicationsList(pkey, cdsclient.FilterByUser(u.Username), cdsclient.WithUsage())
 	test.NoError(t, err)
 	assert.Len(t, apps, 1)
+}
 
+func Test_putProjectLabelsHandler(t *testing.T) {
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(db)
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true))
+
+	lbl1 := sdk.Label{
+		Name:      sdk.RandomString(5),
+		ProjectID: proj.ID,
+	}
+	test.NoError(t, project.InsertLabel(db, &lbl1))
+	lbl2 := sdk.Label{
+		Name:      sdk.RandomString(5),
+		ProjectID: proj.ID,
+	}
+	test.NoError(t, project.InsertLabel(db, &lbl2))
+
+	bodyLabels := []sdk.Label{
+		{ID: lbl1.ID, Name: "this is a test", Color: lbl1.Color},
+		{Name: "anotherone"},
+		{Name: "anotheronebis", Color: "#FF0000"},
+	}
+	jsonBody, _ := json.Marshal(bodyLabels)
+	body := bytes.NewBuffer(jsonBody)
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("PUT", api.putProjectLabelsHandler, vars)
+	req, err := http.NewRequest("PUT", uri, body)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	projReturned := sdk.Project{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &projReturned))
+	assert.Equal(t, proj.Key, projReturned.Key)
+	assert.NotNil(t, projReturned.Labels)
+	assert.Equal(t, 3, len(projReturned.Labels))
+	assert.Equal(t, "anotherone", projReturned.Labels[0].Name)
+	assert.NotZero(t, projReturned.Labels[0].Color)
+	assert.Equal(t, "anotheronebis", projReturned.Labels[1].Name)
+	assert.NotZero(t, projReturned.Labels[1].Color)
+	assert.Equal(t, "#FF0000", projReturned.Labels[1].Color)
+	assert.Equal(t, "this is a test", projReturned.Labels[2].Name)
+	assert.NotZero(t, projReturned.Labels[2].Color)
 }

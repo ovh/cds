@@ -235,6 +235,15 @@ var (
 		return nil
 	}
 
+	loadLabels = func(db gorp.SqlExecutor, _ cache.Store, proj *sdk.Project, _ *sdk.User) error {
+		labels, err := Labels(db, proj.ID)
+		if err != nil {
+			return sdk.WrapError(err, "project.loadLabels>")
+		}
+		proj.Labels = labels
+		return nil
+	}
+
 	loadFavorites = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND user_id = $2", proj.ID, u.ID)
 		if err != nil {
