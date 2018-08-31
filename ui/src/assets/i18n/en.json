@@ -717,8 +717,12 @@
   "vcs_ssh_key" : "SSH key",
   "vcs_pgp_key" : "PGP key",
 
+  "vulnerability_fixin" : "Fix in",
+  "vunerability_hide" : "Hide",
   "vulnerability_ignore": "Ignore",
   "vulnerability_no" : "No vulnerabilities detected",
+  "vulnerability_origin": "Origin",
+  "vulnerability_showmore" : "Show more",
   "vulnerability_updated" : "Vulnerability updated",
 
   "warning_context": "Context",
