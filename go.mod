@@ -1,0 +1,205 @@
+module github.com/ovh/cds
+
+require (
+	git.apache.org/thrift.git v0.0.0-20180514124809-e59b73d3c2bf // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
+	github.com/Microsoft/go-winio v0.4.7 // indirect
+	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
+	github.com/Shopify/sarama v1.17.0
+	github.com/Sirupsen/logrus v1.0.6 // indirect
+	github.com/aokoli/goutils v1.0.1
+	github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 // indirect
+	github.com/armon/consul-api v0.0.0-20150107205647-dcfedd50ed53 // indirect
+	github.com/artyom/untar v0.0.0-20160228112026-02ed5a2449a6 // indirect
+	github.com/beorn7/perks v0.0.0-20160804104726-4c0e84591b9a // indirect
+	github.com/bgentry/speakeasy v0.0.0-20160813190634-a1ccbf2c40df
+	github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932 // indirect
+	github.com/blang/semver v3.5.1+incompatible
+	github.com/briandowns/spinner v0.0.0-20161121172928-cd65e8bd7da2
+	github.com/buger/goterm v0.0.0-20170918171949-d443b9114f9c
+	github.com/chzyer/readline v0.0.0-20171208011716-f6d7a1f6fbf3
+	github.com/containerd/containerd v1.1.2 // indirect
+	github.com/containerd/continuity v0.0.0-20180712174259-0377f7d76720 // indirect
+	github.com/coreos/clair v2.0.4+incompatible // indirect
+	github.com/coreos/go-etcd v0.0.0-20151026160318-003851be7bb0 // indirect
+	github.com/coreos/go-systemd v0.0.0-20180511133405-39ca1b05acc7 // indirect
+	github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea // indirect
+	github.com/cpuguy83/go-md2man v0.0.0-20171223160537-8d868be6e9bf // indirect
+	github.com/danieljoos/wincred v1.0.1 // indirect
+	github.com/docker/cli v0.0.0-20180712011953-7178075fdad6 // indirect
+	github.com/docker/distribution v0.0.0-20180611183926-749f6afb4572
+	github.com/docker/docker v0.0.0-20180719120607-683738900eec
+	github.com/docker/docker-credential-helpers v0.6.1
+	github.com/docker/go-connections v0.3.0
+	github.com/docker/go-metrics v0.0.0-20180209012529-399ea8c73916 // indirect
+	github.com/docker/go-units v0.3.2 // indirect
+	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
+	github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e // indirect
+	github.com/eapache/go-resiliency v0.0.0-20160104191539-b86b1ec0dd42
+	github.com/eapache/go-xerial-snappy v0.0.0-20160609142408-bb955e01b934 // indirect
+	github.com/eapache/queue v1.1.0 // indirect
+	github.com/facebookgo/httpcontrol v0.0.0-20150708234001-ccde4420e1fe
+	github.com/fatih/color v0.0.0-20161018201348-a360acfe359f
+	github.com/fatih/structs v1.0.0
+	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
+	github.com/fsamin/go-dump v0.0.0-20180223131834-7ae1b0fe42eb
+	github.com/fsamin/go-repo v0.0.0-20180816144714-4e5b13febf0a
+	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
+	github.com/fsnotify/fsnotify v0.0.0-20161013012219-bd2828f9f176 // indirect
+	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
+	github.com/garyburd/redigo v1.6.0 // indirect
+	github.com/ghodss/yaml v1.0.0 // indirect
+	github.com/gin-gonic/gin v1.1.4
+	github.com/gizak/termui v0.0.0-20170306115353-798ffb9cbbe4
+	github.com/go-gorp/gorp v2.0.0+incompatible
+	github.com/go-redis/redis v0.0.0-20170602131943-f29951c8990f
+	github.com/go-sql-driver/mysql v0.0.0-20180113200744-2cc627ac8def // indirect
+	github.com/gogo/protobuf v0.0.0-20171007142547-342cbe0a0415 // indirect
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
+	github.com/golang/protobuf v1.1.0
+	github.com/golang/snappy v0.0.0-20170119014723-7db9049039a0 // indirect
+	github.com/google/btree v0.0.0-20180124185431-e89373fe6b4a // indirect
+	github.com/google/go-querystring v0.0.0-20170111101155-53e6ce116135 // indirect
+	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
+	github.com/google/gops v0.0.0-20170728214508-806455e841dc
+	github.com/googleapis/gnostic v0.1.0 // indirect
+	github.com/gophercloud/gophercloud v0.0.0-20170519040446-baa2eb4d1d56
+	github.com/gorhill/cronexpr v0.0.0-20161205141322-d520615e531a
+	github.com/gorilla/context v1.1.1
+	github.com/gorilla/handlers v0.0.0-20160816184729-a5775781a543
+	github.com/gorilla/mux v0.0.0-20160920230813-757bef944d0f
+	github.com/gosuri/uilive v0.0.0-20160202011846-efb88ccd0599
+	github.com/gregjones/httpcache v0.0.0-20171119193500-2bcd89a1743f // indirect
+	github.com/hashicorp/errwrap v0.0.0-20141028054710-7554cd9344ce // indirect
+	github.com/hashicorp/go-cleanhttp v0.0.0-20160407174126-ad28ea4487f0 // indirect
+	github.com/hashicorp/go-hclog v0.0.0-20180828044259-75ecd6e6d645 // indirect
+	github.com/hashicorp/go-multierror v0.0.0-20171204182908-b7773ae21874 // indirect
+	github.com/hashicorp/go-plugin v0.0.0-20180814222501-a4620f9913d1
+	github.com/hashicorp/go-rootcerts v0.0.0-20160503143440-6bb64b370b90 // indirect
+	github.com/hashicorp/hcl v0.0.0-20161019170701-99ce73d4fe57 // indirect
+	github.com/hashicorp/vault v0.0.0-20170114041158-f1c8b772fdec
+	github.com/hashicorp/yamux v0.0.0-20160720233140-d1caa6c97c9f // indirect
+	github.com/howeyc/gopass v0.0.0-20160303200116-66487b23f288
+	github.com/huandu/xstrings v0.0.0-20170908061042-d6590c0c31d1
+	github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19 // indirect
+	github.com/inconshreveable/go-update v0.0.0-20160112193335-8152e7eb6ccf
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933
+	github.com/jgsqware/clairctl v1.2.8
+	github.com/jgsqware/xnet v0.0.0-20170203143001-13630f0737d2 // indirect
+	github.com/json-iterator/go v0.0.0-20171115153421-f7279a603ede // indirect
+	github.com/juju/ratelimit v1.0.1 // indirect
+	github.com/julienschmidt/httprouter v0.0.0-20150421170007-8c199fb6259f // indirect
+	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
+	github.com/kr/fs v0.0.0-20131111012553-2788f0dbd169 // indirect
+	github.com/lib/pq v0.0.0-20161014011634-ae8357db35d7
+	github.com/lytics/logrus v0.0.0-20170528191427-4389a17ed024 // indirect
+	github.com/magiconair/properties v0.0.0-20160908093658-0723e352fa35 // indirect
+	github.com/mailru/easyjson v0.0.0-20171120080333-32fa128f234d
+	github.com/manucorporat/sse v0.0.0-20160126180136-ee05b128a739 // indirect
+	github.com/maruel/panicparse v0.0.0-20170227222818-25bcac0d793c // indirect
+	github.com/mattbaird/elastigo v0.0.0-20170123220020-2fe47fd29e4b
+	github.com/mattn/go-colorable v0.0.5 // indirect
+	github.com/mattn/go-isatty v0.0.0-20160806122752-66b8e73f3f5c // indirect
+	github.com/mattn/go-runewidth v0.0.1 // indirect
+	github.com/mattn/go-shellwords v1.0.3 // indirect
+	github.com/mattn/go-xmpp v0.0.0-20161121012536-f4550b539938
+	github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817
+	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
+	github.com/mgutz/ansi v0.0.0-20150914162238-c286dcecd19f
+	github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747 // indirect
+	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
+	github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7 // indirect
+	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
+	github.com/mitchellh/mapstructure v0.0.0-20161020161836-f3009df150da
+	github.com/mndrix/tap-go v0.0.0-20170113192335-56cca451570b // indirect
+	github.com/ncw/swift v0.0.0-20171019114456-c95c6e5c2d1a
+	github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace // indirect
+	github.com/oklog/run v1.0.0 // indirect
+	github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
+	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
+	github.com/opencontainers/image-spec v1.0.1 // indirect
+	github.com/opencontainers/runc v0.0.0-20180718062236-bc1467269fce // indirect
+	github.com/opencontainers/runtime-spec v1.0.1 // indirect
+	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
+	github.com/ovh/venom v0.0.0-20180821160944-9ec4044cda41
+	github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
+	github.com/patrickmn/go-cache v2.1.0+incompatible
+	github.com/pborman/uuid v0.0.0-20170612153648-e790cca94e6c // indirect
+	github.com/pelletier/go-toml v0.0.0-20171222114548-0131db6d737c
+	github.com/petar/GoLLRB v0.0.0-20130427215148-53be0d36a84c // indirect
+	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
+	github.com/phayes/permbits v0.0.0-20160816172359-32459f104210
+	github.com/pierrec/lz4 v0.0.0-20161206202305-5c9560bfa9ac // indirect
+	github.com/pierrec/xxHash v0.0.0-20160112165351-5a004441f897 // indirect
+	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
+	github.com/pkg/errors v0.0.0-20171216070316-e881fd58d78e
+	github.com/pkg/sftp v0.0.0-20160930220758-4d0e916071f6 // indirect
+	github.com/prometheus/client_golang v0.0.0-20180827221046-3653aff4d509
+	github.com/prometheus/client_model v0.0.0-20170216185247-6f3806018612 // indirect
+	github.com/prometheus/common v0.0.0-20170830190555-bc8b88226a12
+	github.com/prometheus/procfs v0.0.0-20170703101242-e645f4e5aaa8 // indirect
+	github.com/rcrowley/go-metrics v0.0.0-20161128210544-1f30fe9094a5 // indirect
+	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
+	github.com/russross/blackfriday v0.0.0-20170728175326-4048872b16cc // indirect
+	github.com/sclevine/agouti v0.0.0-20171003013254-8cf0313221cb // indirect
+	github.com/sethgrid/pester v0.0.0-20171127025028-760f8913c048 // indirect
+	github.com/sguiheux/go-coverage v0.0.0-20180713093848-6a8eac16bbb6
+	github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
+	github.com/sirupsen/logrus v1.0.5
+	github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
+	github.com/smartystreets/assertions v0.0.0-20170213163019-15adfb6b24e2 // indirect
+	github.com/spf13/afero v0.0.0-20160919210114-52e4a6cfac46 // indirect
+	github.com/spf13/cast v0.0.0-20160926084249-2580bc98dc0e // indirect
+	github.com/spf13/cobra v0.0.0-20171231101556-b95ab734e27d
+	github.com/spf13/jwalterweatherman v0.0.0-20160311093646-33c24e77fb80 // indirect
+	github.com/spf13/pflag v0.0.0-20171106142849-4c012f6dcd95 // indirect
+	github.com/spf13/viper v1.0.2
+	github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
+	github.com/stretchr/testify v1.2.2
+	github.com/ugorji/go v0.0.0-20160928015244-faddd6128c66 // indirect
+	github.com/urfave/cli v1.20.0
+	github.com/vbatts/tar-split v0.10.2 // indirect
+	github.com/vmware/govmomi v0.0.0-20170817040329-d7e841db6909
+	github.com/xanzy/go-gitlab v0.7.5
+	github.com/xeipuuv/gojsonpointer v0.0.0-20151027082146-e0fe6f683076 // indirect
+	github.com/xeipuuv/gojsonreference v0.0.0-20150808065054-e02fc20de94c // indirect
+	github.com/xeipuuv/gojsonschema v0.0.0-20161231055540-f06f290571ce
+	github.com/xordataexchange/crypt v0.0.0-20150523230031-749e360c8f23 // indirect
+	github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b // indirect
+	github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277
+	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
+	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
+	go.opencensus.io v0.15.0
+	golang.org/x/crypto v0.0.0-20180119165957-a66000089151
+	golang.org/x/net v0.0.0-20180112015858-5ccada7d0a7b
+	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect
+	golang.org/x/sys v0.0.0-20171109001538-4b45465282a4 // indirect
+	golang.org/x/text v0.0.0-20170901153044-bd91bbf73e9a
+	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
+	google.golang.org/api v0.0.0-20180517000435-aedc137bffca // indirect
+	google.golang.org/appengine v1.0.0 // indirect
+	google.golang.org/genproto v0.0.0-20180718234121-fedd2861243f // indirect
+	google.golang.org/grpc v1.13.0
+	gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175 // indirect
+	gopkg.in/bsm/sarama-cluster.v2 v2.1.4
+	gopkg.in/go-playground/validator.v8 v8.18.1 // indirect
+	gopkg.in/gorp.v1 v1.7.1
+	gopkg.in/inf.v0 v0.9.0 // indirect
+	gopkg.in/ini.v1 v1.28.0 // indirect
+	gopkg.in/ldap.v2 v2.3.0
+	gopkg.in/olivere/elastic.v5 v5.0.69
+	gopkg.in/testfixtures.v2 v2.4.2 // indirect
+	gopkg.in/urfave/cli.v1 v1.18.1
+	gopkg.in/yaml.v2 v2.2.1
+	k8s.io/api v0.0.0-20180126130815-dc0dd48d5a5c
+	k8s.io/apimachinery v0.0.0-20180126010535-b621949a1923
+	k8s.io/client-go v6.0.0+incompatible
+)
+
+replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
+
+replace github.com/hashicorp/go-plugin => github.com/yesnault/go-plugin v0.0.0-20180831150006-bb20eeea62eb
+
+replace github.com/docker/docker-credential-helpers => github.com/yesnault/docker-credential-helpers v0.0.0-20180831150006-4dd7c3df8875

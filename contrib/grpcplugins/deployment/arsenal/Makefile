@@ -24,8 +24,7 @@ TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 
-GO_BUILD = go build -v
-
+GO_BUILD = GO111MODULE=on go build -mod=vendor -v
 
 $(TARGET_DIR):
 	$(info create $(TARGET_DIR) directory)
