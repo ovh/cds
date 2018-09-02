@@ -124,7 +124,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		}
 	case getUser(ctx) != nil:
 		if err := loadUserPermissions(api.mustDB(), api.Cache, getUser(ctx)); err != nil {
-			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %s permission: %s", getUser(ctx).ID, err)
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %d permission: %v", getUser(ctx).ID, err)
 		}
 	}
 

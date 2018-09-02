@@ -85,12 +85,12 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 		log.Debug("application.AddGroup> proj=%s app=%s group=%s", proj.Name, a.Name, g.Name)
 		groupAttachedToApp, erra := group.CheckGroupInApplication(db, a.ID, g.ID)
 		if erra != nil {
-			return sdk.WrapError(erra, "AddGroup> Unable to check group in application %s")
+			return sdk.WrapError(erra, "AddGroup> Unable to check group in application %s project:%s", a.Name, proj.Name)
 		}
 
 		if !groupAttachedToApp {
 			if err := group.InsertGroupInApplication(db, a.ID, g.ID, gp.Permission); err != nil {
-				return sdk.WrapError(err, "AddGroup> Unable to inserting in application_group %d %d %d: %s", a.ID, g.ID, gp.Permission)
+				return sdk.WrapError(err, "AddGroup> Unable to inserting in application_group %d %d %d - application %s project:%s", a.ID, g.ID, gp.Permission, a.Name, proj.Name)
 			}
 		}
 		// If the group has only read permission on application, let it go with read permission on projet, pipeline and environment

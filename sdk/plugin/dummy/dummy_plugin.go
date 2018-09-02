@@ -28,7 +28,7 @@ func (d DummyPlugin) Run(a plugin.IJob) plugin.Result {
 		plugin.SendLog(a, "PLUGIN DEBUG ENV : %s\n", s)
 	}
 
-	err := plugin.SendLog(a, "PLUGIN", "This is a log from %\n", d.Name())
+	err := plugin.SendLog(a, "PLUGIN", "This is a log from %s\n", d.Name())
 	if err != nil {
 		return plugin.Fail
 	}

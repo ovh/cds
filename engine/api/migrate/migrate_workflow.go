@@ -133,7 +133,7 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 
 func addGroupOnWorkflow(db gorp.SqlExecutor, w *sdk.Workflow, app *sdk.Application) error {
 	if err := application.LoadGroupByApplication(db, app); err != nil {
-		return sdk.WrapError(err, "addGroupOnWorkflow> error while LoadGroupByApplication on application %s", app.ID)
+		return sdk.WrapError(err, "addGroupOnWorkflow> error while LoadGroupByApplication on application %d", app.ID)
 	}
 
 	for _, ag := range app.ApplicationGroups {

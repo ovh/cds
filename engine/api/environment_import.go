@@ -142,7 +142,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		go func() {
 			for {
 				msg, ok := <-msgChan
-				log.Debug("importNewEnvironmentHandler >>> %s", msg)
+				log.Debug("importNewEnvironmentHandler >>> %v", msg)
 				allMsg = append(allMsg, msg)
 				if !ok {
 					done <- true
@@ -245,7 +245,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		go func() {
 			for {
 				msg, ok := <-msgChan
-				log.Debug("importIntoEnvironmentHandler >>> %s", msg)
+				log.Debug("importIntoEnvironmentHandler >>> %v", msg)
 				allMsg = append(allMsg, msg)
 				if !ok {
 					done <- true

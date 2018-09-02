@@ -232,7 +232,7 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 	// Schedule pipeline for build
 	log.Debug("runPipelineHandler> Scheduling %s/%s/%s[%s] with %d params, version 0",
 		projectKey, app.Name, pipelineName, envDest.Name, len(request.Params))
-	log.Debug("runPipelineHandler> Pipeline trigger by %s - %d", getUser(ctx).ID, request.ParentPipelineID)
+	log.Debug("runPipelineHandler> Pipeline trigger by %d - %d", getUser(ctx).ID, request.ParentPipelineID)
 	trigger := sdk.PipelineBuildTrigger{
 		ManualTrigger:       true,
 		TriggeredBy:         getUser(ctx),

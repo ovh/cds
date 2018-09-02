@@ -256,7 +256,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 			var err error
 			memory, err = strconv.ParseInt(r.Value, 10, 64)
 			if err != nil {
-				log.Warning("spawnKubernetesDockerWorker> %s unable to parse memory requirement %s:%s", logJob, memory, err)
+				log.Warning("spawnKubernetesDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
 				return "", err
 			}
 		}
@@ -346,7 +346,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	var gracePeriodSecs int64
 	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:                       name,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
 				LABEL_WORKER:        label,

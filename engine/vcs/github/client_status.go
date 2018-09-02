@@ -43,7 +43,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processEventWorkflowNodeRun(event, g.uiURL, g.DisableStatusDetail)
 	default:
-		log.Error("github.SetStatus> Unknown event %s", event)
+		log.Error("github.SetStatus> Unknown event %v", event)
 		return nil
 	}
 	if err != nil {
@@ -51,7 +51,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if data.status == "" {
-		log.Debug("github.SetStatus> Do not process event for current status: %s", event)
+		log.Debug("github.SetStatus> Do not process event for current status: %v", event)
 		return nil
 	}
 

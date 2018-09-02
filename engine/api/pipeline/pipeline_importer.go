@@ -264,7 +264,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 	//Reload the pipeline
 	pip2, err := LoadPipeline(db, proj.Key, pip.Name, false)
 	if err != nil {
-		return sdk.WrapError(err, "Import> Unable to load imported pipeline", proj.Name, pip.Name)
+		return sdk.WrapError(err, "Import> Unable to load imported pipeline project:%s pipeline:%s", proj.Name, pip.Name)
 	}
 	//Be confident: use the pipeline
 	*pip = *pip2

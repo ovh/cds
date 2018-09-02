@@ -123,7 +123,7 @@ func (api *API) addGroupInPipelineHandler() service.Handler {
 
 		}
 		if groupInPipeline {
-			return sdk.WrapError(sdk.ErrGroupExists, "addGroupInPipeline: The group is already attached to the pipeline %s: %s", g.Name, p.Name, err)
+			return sdk.WrapError(sdk.ErrGroupExists, "addGroupInPipeline: The group %s is already attached to the pipeline %s: %v", g.Name, p.Name, err)
 		}
 
 		tx, err := api.mustDB().Begin()

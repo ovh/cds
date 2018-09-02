@@ -350,7 +350,7 @@ func (api *API) addProjectHandler() service.Handler {
 
 		// check projectKey pattern
 		if rgxp := regexp.MustCompile(sdk.ProjectKeyPattern); !rgxp.MatchString(p.Key) {
-			return sdk.WrapError(sdk.ErrInvalidProjectKey, "addProjectHandler> Project key %s do not respect pattern %s")
+			return sdk.WrapError(sdk.ErrInvalidProjectKey, "addProjectHandler> Project key %s do not respect pattern %s", p.Key, sdk.ProjectKeyPattern)
 		}
 
 		//check project Name
@@ -464,7 +464,7 @@ func (api *API) addProjectHandler() service.Handler {
 				k.Key = keyTemp
 			}
 			if errK := project.InsertKey(tx, &k); errK != nil {
-				return sdk.WrapError(errK, "addProjectHandler> Cannot add key %s in project %s", k.Name)
+				return sdk.WrapError(errK, "addProjectHandler> Cannot add key %s in project %s", k.Name, p.Name)
 			}
 		}
 

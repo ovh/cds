@@ -16,10 +16,10 @@ import (
 var (
 	loadDefaultDependencies = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		if err := loadVariables(db, store, app, u); err != nil && err != sql.ErrNoRows {
-			return sdk.WrapError(err, "application.loadDefaultDependencies", app.Name)
+			return sdk.WrapError(err, "application.loadDefaultDependencies %s", app.Name)
 		}
 		if err := loadTriggers(db, store, app, u); err != nil && err != sql.ErrNoRows {
-			return sdk.WrapError(err, "application.loadDefaultDependencies", app.Name)
+			return sdk.WrapError(err, "application.loadDefaultDependencies %s", app.Name)
 		}
 		return nil
 	}

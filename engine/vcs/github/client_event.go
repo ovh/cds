@@ -49,7 +49,7 @@ func (g *githubClient) GetEvents(ctx context.Context, fullname string, dateRef t
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
 
-	log.Debug("githubClient.GetEvents> Found %d events...")
+	log.Debug("githubClient.GetEvents> Found %d events...", len(nextEvents))
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
 	for _, e := range nextEvents {
 		var skipEvent bool

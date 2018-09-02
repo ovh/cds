@@ -69,7 +69,7 @@ func (s *Service) vacuumFilesystemCleanerRun() error {
 
 	for _, n := range names {
 		if err := s.vacuumFileSystemCleanerFunc(n); err != nil {
-			log.Error("vacuumFilesystemCleanerRun> ", err)
+			log.Error("vacuumFilesystemCleanerRun> %v ", err)
 		}
 	}
 

@@ -485,7 +485,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 
 	//Update worker status
 	if err := worker.UpdateWorkerStatus(tx, wr.ID, sdk.StatusWaiting); err != nil {
-		return nil, sdk.WrapError(err, "postJobResult> Cannot update worker %d status", wr.ID)
+		return nil, sdk.WrapError(err, "postJobResult> Cannot update worker %s status", wr.ID)
 	}
 
 	//Commit the transaction

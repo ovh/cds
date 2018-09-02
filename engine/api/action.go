@@ -187,7 +187,7 @@ func (api *API) getActionAuditHandler() service.Handler {
 		// Load action
 		a, err := action.LoadAuditAction(api.mustDB(), actionID, true)
 		if err != nil {
-			return sdk.WrapError(err, "getActionAuditHandler> Cannot load audit for action %s", actionID)
+			return sdk.WrapError(err, "getActionAuditHandler> Cannot load audit for action %d", actionID)
 		}
 		return service.WriteJSON(w, a, http.StatusOK)
 	}

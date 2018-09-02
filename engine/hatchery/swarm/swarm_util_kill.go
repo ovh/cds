@@ -53,7 +53,7 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 		network, err := dockerClient.NetworkInspect(context.Background(), cnetwork.NetworkID, types.NetworkInspectOptions{})
 		if err != nil {
 			if !strings.Contains(err.Error(), "No such network") {
-				return sdk.WrapError(err, "hatchery> swarm> killAndRemove> unable to get network for % on %s", ID[:7], dockerClient.name)
+				return sdk.WrapError(err, "hatchery> swarm> killAndRemove> unable to get network for %s on %s", ID[:7], dockerClient.name)
 			}
 			continue
 		}

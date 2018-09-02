@@ -24,7 +24,7 @@ fi`
 
 // DEPRECATED
 func (w *currentWorker) writeSSHKey(key []byte, keypath string) error {
-	log.Debug("writeSSHKey> Writing key in %", keypath)
+	log.Debug("writeSSHKey> Writing key in %s", keypath)
 	err := ioutil.WriteFile(keypath, key, os.FileMode(0600))
 	if err != nil {
 		return err

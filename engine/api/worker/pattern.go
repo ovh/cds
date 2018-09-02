@@ -184,7 +184,7 @@ chmod +x worker
 	for _, pattern := range patternCases {
 		numPattern, err := db.SelectInt("SELECT COUNT(1) FROM worker_model_pattern WHERE type = $1", pattern.patternType)
 		if err != nil {
-			log.Warning("insertFirstPatterns> cannot load worker_model_pattern for type %s", pattern.patternType, err)
+			log.Warning("insertFirstPatterns> cannot load worker_model_pattern for type %s err:%v", pattern.patternType, err)
 			continue
 		}
 

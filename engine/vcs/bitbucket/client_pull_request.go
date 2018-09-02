@@ -68,7 +68,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 
 		baseBranch, err := b.Branch(ctx, repo, pr.Base.Branch.ID)
 		if err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> unable to get branch %s", baseBranch)
+			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> unable to get branch %v", baseBranch)
 		}
 		pr.Base.Branch = *baseBranch
 		pr.Base.Commit = sdk.VCSCommit{
@@ -77,7 +77,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 
 		headBranch, err := b.Branch(ctx, r.FromRef.Repository.Project.Key+"/"+r.FromRef.Repository.Slug, pr.Head.Branch.ID)
 		if err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> unable to get branch %s", headBranch)
+			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> unable to get branch %v", headBranch)
 		}
 		pr.Head.Branch = *headBranch
 
