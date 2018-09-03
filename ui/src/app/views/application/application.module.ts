@@ -8,7 +8,7 @@ import {ApplicationRepositoryComponent} from './show/admin/repository/applicatio
 import {ApplicationShowComponent} from './show/application.component';
 import {ApplicationHookItemFormComponent} from './show/hook/edit/item.form.component';
 import {ApplicationHookItemComponent} from './show/hook/item/hook.item.component';
-import {ApplicationKeysComponent} from './show/keys/appplication.keys.component';
+import {ApplicationKeysComponent} from './show/keys/application.keys.component';
 import {ApplicationNotificationFormModalComponent} from './show/notifications/form/notification.form.component';
 import {ApplicationNotificationListComponent} from './show/notifications/list/notification.list.component';
 import {ApplicationPollerFormComponent} from './show/poller/edit/poller.edit.component';
