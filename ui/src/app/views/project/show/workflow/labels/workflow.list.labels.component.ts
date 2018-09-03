@@ -1,4 +1,5 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {cloneDeep} from 'lodash';
 import {finalize} from 'rxjs/operators';
 import {IdName, Label, Project} from '../../../../../model/project.model';
 import {Warning} from '../../../../../model/warning.model';
@@ -12,7 +13,22 @@ import {LabelsEditComponent} from '../../../../../shared/labels/edit/labels.edit
 })
 export class ProjectWorkflowListLabelsComponent {
 
-  @Input() project: Project
+  @Input('project')
+  set project(project: Project) {
+    this._project = cloneDeep(project);
+    if (project) {
+      let fakeLabel = new Label();
+      fakeLabel.name = '...';
+      if (Array.isArray(project.labels)) {
+        this._project.labels.push(fakeLabel);
+      } else {
+        this._project.labels = [fakeLabel];
+      }
+    }
+  }
+  get project(): Project {
+    return this._project;
+  }
   @Input() warnMap: Map<string, Array<Warning>>;
   @Input('workflows')
   set workflows(workflows: IdName[]) {
@@ -20,7 +36,7 @@ export class ProjectWorkflowListLabelsComponent {
     if (workflows) {
       workflows.forEach((wf) => {
         this.workflowLabelsMap[wf.name] = {};
-        if (wf.labels) {
+        if (wf.labels && wf.labels.length > 0) {
           wf.labels.forEach((lbl) => {
             this.workflowLabelsMap[wf.name][lbl.name] = true;
             if (!this.workflowLabelsMapByLabels[lbl.name]) {
@@ -28,6 +44,11 @@ export class ProjectWorkflowListLabelsComponent {
             }
             this.workflowLabelsMapByLabels[lbl.name].push(wf);
           });
+        } else {
+          if (!this.workflowLabelsMapByLabels['...']) {
+            this.workflowLabelsMapByLabels['...'] = [];
+          }
+          this.workflowLabelsMapByLabels['...'].push(wf);
         }
       });
     }
@@ -63,6 +84,7 @@ export class ProjectWorkflowListLabelsComponent {
   @ViewChild('projectLabels')
   projectLabels: LabelsEditComponent;
 
+  _project: Project;
   _labels: Label[];
   _workflows: IdName[];
   _filterLabel = '';
