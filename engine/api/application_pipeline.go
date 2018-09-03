@@ -158,7 +158,7 @@ func (api *API) updatePipelineToApplicationHandler() service.Handler {
 
 		err = application.UpdatePipelineApplicationString(api.mustDB(), api.Cache, app, pipeline.ID, string(data), getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s", appName, pipelineName)
+			return sdk.WrapError(err, "updatePipelineToApplicationHandler: Cannot update application %s pipeline %s", appName, pipelineName)
 		}
 
 		return service.WriteJSON(w, app, http.StatusOK)

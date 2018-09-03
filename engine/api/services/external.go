@@ -73,7 +73,7 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 	serv.LastHeartbeat = time.Now()
 	serv.MonitoringStatus = mon
 	if _, err := db.Update(&serv); err != nil {
-		log.Warning("service.ping> unable to update monitoring status: %s")
+		log.Warning("service.ping> unable to update monitoring status: %v", err)
 		return err
 	}
 	return nil

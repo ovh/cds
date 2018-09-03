@@ -81,9 +81,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":           url,
-			"request_token": token,
-			"username":      getUser(ctx).Username,
+			"url":                  url,
+			"request_token":        token,
+			"username":             getUser(ctx).Username,
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
@@ -136,7 +136,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		}
 
 		if token == "" || secret == "" {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> token or secret is empty", err)
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> token or secret is empty")
 		}
 
 		tx, errT := api.mustDB().Begin()

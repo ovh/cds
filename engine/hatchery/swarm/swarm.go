@@ -214,7 +214,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				var err error
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
-					log.Warning("hatchery> swarm> SpawnWorker>Unable to parse memory requirement %s :s", memory, err)
+					log.Warning("hatchery> swarm> SpawnWorker>Unable to parse memory requirement %d :%v", memory, err)
 					return "", err
 				}
 			} else if r.Type == sdk.ServiceRequirement {
@@ -401,7 +401,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 
 	//start the worker
 	if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-		log.Warning("hatchery> swarm> SpawnWorker> Unable to start container %s on %s with image %s err:%s", dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
+		log.Warning("hatchery> swarm> SpawnWorker> Unable to start container %s on %s with image %s err:%v", args.name, dockerClient.name, spawnArgs.Model.ModelDocker.Image, err)
 		return "", err
 	}
 
@@ -665,7 +665,7 @@ func (h *HatcherySwarm) killAwolWorker() error {
 				// perhaps worker is not already started, we remove service only if worker is not here
 				// and service created more than 1 min (if service exited -> remove it)
 				if !strings.Contains(c.Status, "Exited") && time.Now().Add(-1*time.Minute).Unix() < c.Created {
-					log.Debug("hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker", c.Names[0], c.Status, c.Labels["service_worker"])
+					log.Debug("hatchery> swarm> killAwolWorker> container %s(status=%s) is too young - service associated to worker %s", c.Names[0], c.Status, c.Labels["service_worker"])
 					continue
 				}
 

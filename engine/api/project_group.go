@@ -129,7 +129,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 
 		p, errl := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if errl != nil {
-			return sdk.WrapError(errl, "updateGroupRoleHandler: Cannot load %s: %s", key)
+			return sdk.WrapError(errl, "updateGroupRoleHandler: Cannot load project %s", key)
 		}
 
 		g, errlg := group.LoadGroup(tx, groupProject.Group.Name)
@@ -149,7 +149,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		}
 
 		if gpInProject.Permission == 0 {
-			return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleHandler: Group is not attached to this project: %s")
+			return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleHandler: Group is not attached to this project: %s", key)
 		}
 
 		if group.IsDefaultGroupID(g.ID) && groupProject.Permission > permission.PermissionRead {
@@ -168,7 +168,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot start transaction: %s")
+			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot start transaction")
 		}
 
 		newGP := sdk.GroupPermission{

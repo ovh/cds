@@ -76,7 +76,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 				}
 
 				if j.Status != sdk.StatusBuilding.String() {
-					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context", j.Status, err)
+					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
 					cancel()
 					return
 				}

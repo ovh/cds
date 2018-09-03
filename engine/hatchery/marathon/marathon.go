@@ -290,7 +290,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 				var err error
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
-					log.Warning("spawnMarathonDockerWorker> %s unable to parse memory requirement %s:%s", logJob, memory, err)
+					log.Warning("spawnMarathonDockerWorker> %s unable to parse memory requirement %d: %v", logJob, memory, err)
 					return "", err
 				}
 			}

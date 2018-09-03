@@ -22,7 +22,7 @@ func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) er
 
 	if strings.TrimSpace(defaultValues.DefaultGroupName) != "" {
 		if err := group.CreateDefaultGroup(dbGorp, defaultValues.DefaultGroupName); err != nil {
-			return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group")
+			return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group", defaultValues.DefaultGroupName)
 		}
 	}
 

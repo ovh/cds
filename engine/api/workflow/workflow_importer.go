@@ -95,7 +95,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		}
 		ppf, err := platform.LoadPlatformsByName(db, proj.Key, n.Context.ProjectPlatform.Name, true)
 		if err != nil {
-			log.Warning("workflow.Import> %s > Project platform %s not found: %v", n.Context.ProjectPlatform.Name, err)
+			log.Warning("workflow.Import> %s > Project platform %s not found: %v", w.Name, n.Context.ProjectPlatform.Name, err)
 			mError.Append(fmt.Errorf("Project platform %s not found", n.Context.ProjectPlatform.Name))
 			return
 		}

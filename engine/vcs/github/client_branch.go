@@ -126,7 +126,7 @@ func (g *githubClient) Branch(ctx context.Context, fullname, theBranch string) (
 	}
 
 	if branch.Name == "" {
-		log.Warning("githubClient.Branch> Cannot find branch %s: %v", branch, theBranch)
+		log.Warning("githubClient.Branch> Cannot find branch %v: %s", branch, theBranch)
 		g.Cache.Delete(cacheBranchKey)
 		return nil, fmt.Errorf("githubClient.Branch > Cannot find branch %s", theBranch)
 	}

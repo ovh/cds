@@ -62,12 +62,12 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processWorkflowNodeRunEvent(event, c.uiURL)
 	default:
-		log.Debug("gitlabClient.SetStatus> Unknown event %s", event)
+		log.Debug("gitlabClient.SetStatus> Unknown event %v", event)
 		return nil
 	}
 
 	if err != nil {
-		return sdk.WrapError(err, "gitlabClient.SetStatus> Cannot process event %s", event)
+		return sdk.WrapError(err, "gitlabClient.SetStatus> Cannot process event %v", event)
 	}
 
 	if c.disableStatusDetail {
@@ -85,7 +85,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if _, _, err := c.client.Commits.SetCommitStatus(data.repoFullName, data.hash, opt); err != nil {
-		return sdk.WrapError(err, "gitlabClient.SetStatus> Cannot process event %s - repo:%s hash:%s", event, data.repoFullName, data.hash)
+		return sdk.WrapError(err, "gitlabClient.SetStatus> Cannot process event %v - repo:%s hash:%s", event, data.repoFullName, data.hash)
 	}
 
 	return nil

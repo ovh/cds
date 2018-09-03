@@ -208,7 +208,7 @@ func (api *API) updatePluginHandler() service.Handler {
 				return sdk.WrapError(errStore, "updatePluginHandler> Error while uploading to object store %s", ap.Name)
 			}
 
-			return sdk.WrapError(errDB, "updatePluginHandler> Unable to update plugin", ap.Name)
+			return sdk.WrapError(errDB, "updatePluginHandler> Unable to update plugin %s", ap.Name)
 		}
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updatePluginHandler> Cannot commit transaction")
@@ -264,7 +264,7 @@ func (api *API) downloadPluginHandler() service.Handler {
 
 		f, err := objectstore.Fetch(&p)
 		if err != nil {
-			return sdk.WrapError(err, "downloadPluginHandler> Error while fetching plugin", name)
+			return sdk.WrapError(err, "downloadPluginHandler> Error while fetching plugin %s", name)
 		}
 
 		w.Header().Add("Content-Type", "application/octet-stream")

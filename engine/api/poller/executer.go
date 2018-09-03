@@ -220,7 +220,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 		}
 
 		if pb != nil {
-			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
+			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%v : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
 			e.PipelineBuildVersions[event.Branch.ID+"/"+event.Commit.Hash[:7]] = pb.Version
 			pbs = append(pbs, *pb)
 		}
@@ -234,7 +234,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 		}
 
 		if pb != nil {
-			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Head.Branch, event.Head.Commit.Hash)
+			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%v : %s", projectKey, poller.Application.RepositoryFullname, event.Head.Branch, event.Head.Commit.Hash)
 			e.PipelineBuildVersions[event.Head.Branch.ID+"/"+event.Head.Commit.Hash[:7]] = pb.Version
 			pbs = append(pbs, *pb)
 		}
@@ -247,7 +247,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 		}
 
 		if pb != nil {
-			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
+			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%v : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
 			e.PipelineBuildVersions[event.Branch.ID+"/"+event.Commit.Hash[:7]] = pb.Version
 			pbs = append(pbs, *pb)
 		}

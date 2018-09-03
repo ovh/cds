@@ -78,7 +78,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 		defer tx.Rollback()
 
 		if bc.ID <= 0 || broadcastID != bc.ID {
-			return sdk.WrapError(sdk.ErrWrongRequest, "requestVarInt> %s is not valid. id in path:%d", bc.ID, broadcastID)
+			return sdk.WrapError(sdk.ErrWrongRequest, "requestVarInt> %d is not valid. id in path:%d", bc.ID, broadcastID)
 		}
 
 		// update broadcast in db

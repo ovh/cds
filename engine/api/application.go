@@ -389,7 +389,7 @@ func (api *API) getApplicationBranchHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load project %s from db", projectKey, projectKey)
+			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load project %s from db", projectKey)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
@@ -560,7 +560,7 @@ func (api *API) addApplicationHandler() service.Handler {
 
 		proj, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errl != nil {
-			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s: %s", key)
+			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s", key)
 		}
 
 		var app sdk.Application

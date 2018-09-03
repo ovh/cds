@@ -89,7 +89,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 					continue // do not kill the worker here, could be a timeout
 				}
 				if j.Status != sdk.StatusBuilding.String() {
-					log.Info("takePipelineBuildJob> The job is not more in Building Status. Current Status: %s - Cancelling context", j.Status, err)
+					log.Info("takePipelineBuildJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
 					cancel()
 					return
 				}

@@ -82,7 +82,7 @@ func (api *API) uploadArtifactHandler() service.Handler {
 		}
 
 		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "uploadArtifactHandler> No enought right on this environment %s")
+			return sdk.WrapError(sdk.ErrForbidden, "uploadArtifactHandler> No enought right on this environment %s", env.Name)
 		}
 
 		buildNumber, errI := strconv.Atoi(buildNumberString)
@@ -339,12 +339,12 @@ func (api *API) postArtifactWithTempURLHandler() service.Handler {
 		}
 
 		if !permission.AccessToEnvironment(proj, env.Name, getUser(ctx), permission.PermissionReadExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler> No enought right on this environment %s")
+			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler> No enought right on this environment %s", env.Name)
 		}
 
 		buildNumber, errI := strconv.Atoi(buildNumberString)
 		if errI != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postArtifactWithTempURLHandler> BuildNumber must be an integer: %s", errI)
+			return sdk.WrapError(sdk.ErrWrongRequest, "postArtifactWithTempURLHandler> BuildNumber must be an integer: %v", errI)
 		}
 
 		hash, errG := generateHash()
@@ -419,7 +419,7 @@ func (api *API) postArtifactWithTempURLCallbackHandler() service.Handler {
 		}
 
 		if !permission.AccessToEnvironment(projKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler> No enought right on this environment %s")
+			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler> No enought right on this environment %s", env.Name)
 		}
 
 		pip, errpip := pipeline.LoadPipeline(api.mustDB(), projKey, pipName, false)

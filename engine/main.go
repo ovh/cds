@@ -410,12 +410,12 @@ See $ engine config command for more details.
 			if conf.Debug.RemoteDebugURL != "" {
 				log.Info("Starting gops agent on %s", conf.Debug.RemoteDebugURL)
 				if err := agent.Listen(&agent.Options{Addr: conf.Debug.RemoteDebugURL}); err != nil {
-					log.Error("Error on starting gops agent", err)
+					log.Error("Error on starting gops agent: %v", err)
 				}
 			} else {
 				log.Info("Starting gops agent locally")
 				if err := agent.Listen(nil); err != nil {
-					log.Error("Error on starting gops agent locally", err)
+					log.Error("Error on starting gops agent locally: %v", err)
 				}
 			}
 		}

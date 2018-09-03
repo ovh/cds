@@ -240,7 +240,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	confTimezone := t.Config[sdk.SchedulerModelTimezone]
 	loc, err := time.LoadLocation(confTimezone.Value)
 	if err != nil {
-		return sdk.WrapError(err, "startTask> unable to parse timezone: %s", t.Config[sdk.SchedulerModelTimezone])
+		return sdk.WrapError(err, "startTask> unable to parse timezone: %v", t.Config[sdk.SchedulerModelTimezone])
 	}
 
 	var exec *sdk.TaskExecution
@@ -251,7 +251,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 		confCron := t.Config[sdk.SchedulerModelCron]
 		cronExpr, err := cronexpr.Parse(confCron.Value)
 		if err != nil {
-			return sdk.WrapError(err, "startTask> unable to parse cron expression: %s", t.Config[sdk.SchedulerModelCron])
+			return sdk.WrapError(err, "startTask> unable to parse cron expression: %v", t.Config[sdk.SchedulerModelCron])
 		}
 
 		//Compute a new date

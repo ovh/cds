@@ -209,7 +209,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 		if err == sql.ErrNoRows {
 			return res, nil
 		}
-		return nil, sdk.WrapError(err, "LoadAllNames> Unable to load workflows with project %s", projID)
+		return nil, sdk.WrapError(err, "LoadAllNames> Unable to load workflows with project %d", projID)
 	}
 	for i := range res {
 		var err error
@@ -1070,7 +1070,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 
 		if err := Update(tx, store, wf, wf, proj, u); err != nil {
-			return nil, nil, sdk.WrapError(err, "Push> Unable to update workflow", err)
+			return nil, nil, sdk.WrapError(err, "Push> Unable to update workflow")
 		}
 
 		if !opts.DryRun {

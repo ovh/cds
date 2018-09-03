@@ -54,7 +54,7 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 	var jobID sql.NullInt64
 	var jobType sql.NullString
 	if err := tx.QueryRow(query, id).Scan(&name, &st, &jobID, &jobType); err != nil {
-		log.Debug("DisableWorker[%d]> Cannot lock worker: %s", id, err)
+		log.Debug("DisableWorker[%s]> Cannot lock worker: %v", id, err)
 		return nil
 	}
 

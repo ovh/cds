@@ -165,7 +165,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 			case sdk.JabberUserNotification:
 				jn, ok := notif.Settings.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
-					log.Error("notification.GetUserWorkflowEvents[Jabber]> cannot deal with %s", notif)
+					log.Error("notification.GetUserWorkflowEvents[Jabber]> cannot deal with %v", notif)
 					continue
 				}
 				//Get recipents from groups
@@ -190,7 +190,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 			case sdk.EmailUserNotification:
 				jn, ok := notif.Settings.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
-					log.Error("notification.GetUserEvents[Email]> cannot deal with %s", notif)
+					log.Error("notification.GetUserEvents[Email]> cannot deal with %v", notif)
 					continue
 				}
 				//Get recipents from groups

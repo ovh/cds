@@ -60,7 +60,7 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() service.Handler {
 
 		if groupEnvironment.Permission != permission.PermissionReadWriteExecute {
 			if writeGroupID == 0 {
-				log.Warning("updateGroupRoleOnEnvironmentHandler: Cannot remove write permission on group %s for environment %s :%s", groupName, envName)
+				log.Warning("updateGroupRoleOnEnvironmentHandler: Cannot remove write permission on group %s for environment %s", groupName, envName)
 				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleOnEnvironmentHandler> Cannot remove write permission on group %s for environment %s", groupName, envName)
 			}
 		}

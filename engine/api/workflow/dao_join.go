@@ -129,9 +129,9 @@ func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		if foundRef == nil {
 			return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertOrUpdateJoin> Invalid joins references %s", s)
 		}
-		log.Debug("insertOrUpdateJoin> Found reference %s : %d on %s", s, foundRef.ID, foundRef.PipelineID)
+		log.Debug("insertOrUpdateJoin> Found reference %s: %d on %d", s, foundRef.ID, foundRef.PipelineID)
 		if foundRef.ID == 0 {
-			log.Debug("insertOrUpdateJoin> insert or update reference node (%s) %d on %s/%s", s, foundRef.ID, foundRef.Name, foundRef.PipelineID)
+			log.Debug("insertOrUpdateJoin> insert or update reference node (%s) %d on %s/%d", s, foundRef.ID, foundRef.Name, foundRef.PipelineID)
 			if errN := insertNode(db, store, w, foundRef, u, true); errN != nil {
 				return sdk.WrapError(errN, "insertOrUpdateJoin> Unable to insert or update source node %s", foundRef.Name)
 			}

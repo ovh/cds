@@ -45,7 +45,7 @@ func (api *API) addPollerHandler() service.Handler {
 		//Check if pipeline has been found
 		if pip == nil {
 			log.Warning("addPollerHandler> Cannot load pipeline: %s", pipName)
-			return sdk.WrapError(sdk.ErrPipelineNotFound, "sdk.ErrPipelineNotFound", pipName)
+			return sdk.WrapError(sdk.ErrPipelineNotFound, "sdk.ErrPipelineNotFound %s", pipName)
 		}
 
 		var h sdk.RepositoryPoller
