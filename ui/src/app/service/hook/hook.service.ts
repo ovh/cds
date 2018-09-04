@@ -21,6 +21,13 @@ export class HookService {
         }));
     }
 
+    getOutgoingHookModel(p: Project, w: Workflow, n: WorkflowNode): Observable<Array<WorkflowHookModel>> {
+        return this._http.get<Array<WorkflowHookModel>>('/project/' + p.key + '/workflow/' + w.name +
+            '/node/' + n.id + '/outgoinghook/model').pipe(map(ms => {
+            return ms;
+        }));
+    }
+
     getHookLogs(projectKey: string, workflowName: string, uuid: string): Observable<WorkflowHookTask> {
       return this._http.get<WorkflowHookTask>(`/project/${projectKey}/workflows/${workflowName}/hooks/${uuid}`);
     }

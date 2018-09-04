@@ -899,6 +899,7 @@
   "workflow_node_hook_no_configuration": "Aucune configuration n'est nécessaire",
   "workflow_node_join_add": "Ajouter une jointure",
   "workflow_node_join_link": "Lier à une jointure",
+  "workflow_node_outgoing_hook": "Ajouter un hook sortant",
   "workflow_node_parent": "Ajouter un pipeline parent",
   "workflow_node_pipeline_synchronized": "Pipeline à jour",
   "workflow_node_remove_multiple_parent": "Un workflow ne peut pas avoir plusieurs pipelines racines",

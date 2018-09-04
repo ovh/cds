@@ -6,7 +6,7 @@ import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {zip as observableZip} from 'rxjs';
 import {finalize, first} from 'rxjs/operators';
 import {ProjectPlatform} from '../../../../../model/platform.model';
-import {Project} from '../../../../../model/project.model';
+import {IdName, Project} from '../../../../../model/project.model';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {
     Workflow, WorkflowNode, WorkflowNodeHook
@@ -28,6 +28,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() node: WorkflowNode;
+    @Input() isOutgoing: boolean;
     @Input() loading: boolean;
     @Input() readonly: boolean;
     @Input('hook')
@@ -48,10 +49,18 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     @Output() hookEvent = new EventEmitter<HookEvent>();
 
     hooksModel: Array<WorkflowHookModel>;
+    outgoingHookModels: Array<WorkflowHookModel>;
+
     selectedHookModel: WorkflowHookModel;
+    selectedOutgoingHookModel: WorkflowHookModel;
+
+    availableWorkflows: Array<IdName>;
+    availableHooks: Array<WorkflowNodeHook>;
+
     operators: {};
     conditionNames: Array<string>;
     loadingModels = true;
+    loadingHooks = true;
     displayConfig = false;
     invalidJSON = false;
     updateMode = false;
@@ -79,6 +88,22 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         this.hook.model = this.selectedHookModel;
         this.hook.config = cloneDeep(this.selectedHookModel.default_config);
         this.displayConfig = Object.keys(this.hook.config).length !== 0;
+        console.log(this.hook);
+    }
+
+    updateOutgoingHook(): void {
+        this.hook.model = this.selectedOutgoingHookModel;
+        this.hook.config = cloneDeep(this.selectedOutgoingHookModel.default_config);
+        this.displayConfig = Object.keys(this.hook.config).length !== 0;
+
+        // Specific behavior for the 'workflow' hooks
+        if (this.hook.model.name === 'Workflow') {
+            // Current limitation: trigger only workflow in the same project
+            this.hook.config['project'].value = this.project.key;
+            // Load the workflow for the current project, but exclude the current workflow
+            this.availableWorkflows = this.project.workflow_names.filter(idName => idName.name !== this.workflow.name);
+            console.log(this.availableWorkflows);
+        }
     }
 
     updatePlatform(): void {
@@ -93,21 +118,39 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         });
     }
 
+    updateWorkflow(): void {
+        this.loadingHooks = true;
+        this._workflowStore.getWorkflows(this.hook.config['project'].value, this.hook.config['workflow'].value)
+            .pipe(
+                finalize(() => this.loadingHooks = true)
+            ).subscribe(
+                data => {
+                    let key = this.project.key + '-' + this.hook.config['workflow'].value;
+                    let wf = data.get(key);
+                    if (wf) {
+                        this.availableHooks = Workflow.getAllHooks(wf).filter(h => h.model.name === 'Workflow');
+                    }
+                }
+            );
+    }
+
     show(): void {
         this.loadingModels = true;
         observableZip(
             this._hookService.getHookModel(this.project, this.workflow, this.node),
+            this._hookService.getOutgoingHookModel(this.project, this.workflow, this.node),
             this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id),
-            (hms, wtc) => {
-                this.hooksModel = hms;
+            (hookModels, outgoingHookModels, triggerConditions) => {
+                this.hooksModel = hookModels;
+                this.outgoingHookModels = outgoingHookModels;
                 if (this._hook && this._hook.model) {
                     this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
                 }
                 if (this.selectedHookModel != null && this.hook.id) {
                   this.updateMode = true;
                 }
-                this.operators = wtc.operators;
-                this.conditionNames = wtc.names;
+                this.operators = triggerConditions.operators;
+                this.conditionNames = triggerConditions.names;
             }
         ).pipe(
             first(),

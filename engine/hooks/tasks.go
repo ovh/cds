@@ -28,6 +28,7 @@ const (
 	TypeRepoPoller         = "RepoPoller"
 	TypeKafka              = "Kafka"
 	TypeRabbitMQ           = "RabbitMQ"
+	TypeWorkflowHook       = "Workflow"
 
 	GithubHeader    = "X-Github-Event"
 	GitlabHeader    = "X-Gitlab-Event"
@@ -157,6 +158,11 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 			Type:   TypeRepoPoller,
 			Config: h.Config,
 		}, nil
+	case sdk.WorkflowModelName:
+		return &sdk.Task{
+			UUID: h.UUID,
+			Type: TypeWorkflowHook,
+		}, nil
 	}
 
 	return nil, fmt.Errorf("Unsupported hook: %s", h.WorkflowHookModel.Name)
@@ -206,7 +212,7 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) error {
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
-	case TypeWebHook, TypeRepoManagerWebHook:
+	case TypeWebHook, TypeRepoManagerWebHook, TypeWorkflowHook:
 		return nil
 	case TypeScheduler, TypeRepoPoller:
 		return s.prepareNextScheduledTaskExecution(t)
@@ -295,7 +301,7 @@ func (s *Service) stopTask(t *sdk.Task) error {
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
-	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeKafka:
+	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook, TypeRepoPoller, TypeKafka, TypeWorkflowHook:
 		log.Debug("Hooks> Tasks %s has been stopped", t.UUID)
 		return nil
 	default:
@@ -453,7 +459,7 @@ func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowN
 	//Prepare the payload
 	//Anything can be pushed in the configuration, just avoid sending
 	payloadValues := map[string]string{}
-	if payload, ok := t.Config[sdk.SchedulerModelPayload]; ok && payload.Value != "{}" {
+	if payload, ok := t.Config[sdk.Payload]; ok && payload.Value != "{}" {
 		var payloadInt interface{}
 		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
 			e := dump.NewDefaultEncoder(new(bytes.Buffer))
@@ -472,11 +478,10 @@ func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowN
 		} else {
 			log.Error("Hooks> doScheduledTaskExecution> Cannot unmarshall payload %s", err)
 		}
-
 	}
 	for k, v := range t.Config {
 		switch k {
-		case sdk.HookConfigProject, sdk.HookConfigWorkflow, sdk.SchedulerModelCron, sdk.SchedulerModelTimezone, sdk.SchedulerModelPayload:
+		case sdk.HookConfigProject, sdk.HookConfigWorkflow, sdk.SchedulerModelCron, sdk.SchedulerModelTimezone, sdk.Payload:
 		default:
 			payloadValues[k] = v.Value
 		}

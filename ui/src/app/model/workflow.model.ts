@@ -418,6 +418,21 @@ export class Workflow {
         return workflow;
     }
 
+    static getAllHooks(workflow: Workflow): Array<WorkflowNodeHook> {
+        let res = new Array<WorkflowNodeHook>();
+        res.push(...WorkflowNode.getAllHooks(workflow.root));
+        if (workflow.joins) {
+            workflow.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        res.push(...WorkflowNode.getAllHooks(t.workflow_dest_node));
+                    })
+                }
+            })
+        }
+        return res;
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
@@ -458,6 +473,7 @@ export class WorkflowNode {
     pipeline_name: string;
     context: WorkflowNodeContext;
     hooks: Array<WorkflowNodeHook>;
+    outgoingHooks: Array<WorkflowNodeHook>;
     triggers: Array<WorkflowNodeTrigger>;
 
     static removeNodeWithoutChild(parentNode: WorkflowNode, trigger: WorkflowNodeTrigger, id: number, triggerInd: number): WorkflowNode {
@@ -678,6 +694,17 @@ export class WorkflowNode {
       return node.context.application_id !== 0 && node.context.application != null && !!node.context.application.repository_fullname;
     }
 
+    static getAllHooks(n: WorkflowNode): Array<WorkflowNodeHook> {
+        let res = new Array<WorkflowNodeHook>();
+        res.push(...n.hooks);
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                res.push(...WorkflowNode.getAllHooks(t.workflow_dest_node));
+            });
+        }
+        return res;
+    }
+
     constructor() {
         this.context = new WorkflowNodeContext();
     }
@@ -703,12 +730,20 @@ export class WorkflowNodeContext {
     mutex: boolean;
 }
 
-// WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
+// WorkflowNodeHook represents a hook which can trigger the workflow from a given node
 export class WorkflowNodeHook {
     id: number;
     uuid: string;
     model: WorkflowHookModel;
     config: Map<string, WorkflowNodeHookConfigValue>;
+}
+
+export class WorkflowNodeOutgoingHook {
+    id: number;
+    uuid: string;
+    model: WorkflowHookModel;
+    config: Map<string, WorkflowNodeHookConfigValue>;
+    triggers: Array<WorkflowNodeTrigger>;
 }
 
 export class WorkflowNodeHookConfigValue {

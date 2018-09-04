@@ -50,6 +50,12 @@ func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
 	return res
 }
 
+// WorkflowNodeOutgoingHook represents a outgoing hook
+type WorkflowNodeOutgoingHook struct {
+	WorkflowNodeHook
+	Triggers []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+}
+
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
 type WorkflowNodeHook struct {
 	ID                  int64                  `json:"id" db:"id"`
@@ -119,6 +125,12 @@ const (
 	HookConfigTypeString = "string"
 	// HookConfigTypePlatform type platform
 	HookConfigTypePlatform = "platform"
+	// HookConfigTypeProject type project
+	HookConfigTypeProject = "project"
+	// HookConfigTypeWorkflow type workflow
+	HookConfigTypeWorkflow = "workflow"
+	// HookConfigTypeHook type hook
+	HookConfigTypeHook = "hook"
 )
 
 //WorkflowHookModel represents a hook which can be used in workflows.

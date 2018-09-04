@@ -191,8 +191,11 @@ type RunTag sdk.WorkflowRunTag
 // NodeHook is a gorp wrapper around sdk.WorkflowNodeHook
 type NodeHook sdk.WorkflowNodeHook
 
-// NodeHookModel is a gorp wrapper around sdk.WorkflowHookModel
-type NodeHookModel sdk.WorkflowHookModel
+// hookModel is a gorp wrapper around sdk.WorkflowHookModel
+type hookModel sdk.WorkflowHookModel
+
+// outgoingHookModel is a gorp wrapper around sdk.WorkflowHookModel
+type outgoingHookModel sdk.WorkflowHookModel
 
 type auditWorkflow sdk.AuditWorklflow
 
@@ -210,7 +213,8 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(JobRun{}, "workflow_node_run_job", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeRunArtifact{}, "workflow_node_run_artifacts", true, "id"))
 	gorpmapping.Register(gorpmapping.New(RunTag{}, "workflow_run_tag", false, "workflow_run_id", "tag"))
-	gorpmapping.Register(gorpmapping.New(NodeHookModel{}, "workflow_hook_model", true, "id"))
+	gorpmapping.Register(gorpmapping.New(hookModel{}, "workflow_hook_model", true, "id"))
+	gorpmapping.Register(gorpmapping.New(outgoingHookModel{}, "workflow_outgoing_hook_model", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Notification{}, "workflow_notification", true, "id"))
 	gorpmapping.Register(gorpmapping.New(auditWorkflow{}, "workflow_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Coverage{}, "workflow_node_run_coverage", false, "workflow_id", "workflow_run_id", "workflow_node_run_id", "repository", "branch"))

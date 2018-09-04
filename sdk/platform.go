@@ -6,17 +6,8 @@ const (
 	RabbitMQPlatformModel = "RabbitMQ"
 )
 
-// Here are the default hooks
+// Here are the default plateform models
 var (
-	BuiltinHookModels = []*WorkflowHookModel{
-		&WebHookModel,
-		&RepositoryWebHookModel,
-		&GitPollerModel,
-		&SchedulerModel,
-		&KafkaHookModel,
-		&RabbitMQHookModel,
-	}
-
 	BuiltinPlatformModels = []*PlatformModel{
 		&KafkaPlatform,
 		&RabbitMQPlatform,

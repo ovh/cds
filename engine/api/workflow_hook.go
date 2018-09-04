@@ -24,6 +24,16 @@ func (api *API) getWorkflowHooksHandler() service.Handler {
 	}
 }
 
+func (api *API) getWorkflowOutgoingHookModelsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		m, err := workflow.LoadOutgoingHookModels(api.mustDB())
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowOutgoingHookModelsHandler")
+		}
+		return service.WriteJSON(w, m, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkflowHookModelsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

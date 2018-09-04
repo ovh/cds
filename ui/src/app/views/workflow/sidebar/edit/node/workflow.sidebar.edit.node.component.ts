@@ -12,8 +12,9 @@ import {
     WorkflowNode,
     WorkflowNodeHook,
     WorkflowNodeJoin,
+    WorkflowNodeOutgoingHook,
     WorkflowNodeTrigger,
-    WorkflowPipelineNameImpact
+    WorkflowPipelineNameImpact,
 } from '../../../../../model/workflow.model';
 import {PipelineStore} from '../../../../../service/pipeline/pipeline.store';
 import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
@@ -53,6 +54,8 @@ export class WorkflowSidebarEditNodeComponent {
     workflowConditions: WorkflowNodeConditionsComponent;
     @ViewChild('worklflowAddHook')
     worklflowAddHook: WorkflowNodeHookFormComponent;
+    @ViewChild('worklflowAddOutgoingHook')
+    worklflowAddOutgoingHook: WorkflowNodeHookFormComponent;
     @ViewChild('nodeNameWarningModal')
     nodeNameWarningModal: ModalTemplate<boolean, boolean, void>;
 
@@ -91,6 +94,12 @@ export class WorkflowSidebarEditNodeComponent {
     openAddHookModal(): void {
         if (this.canEdit() && this.worklflowAddHook) {
             this.worklflowAddHook.show();
+        }
+    }
+
+    openAddOutgoingHookModal(): void {
+        if (this.canEdit() && this.worklflowAddOutgoingHook) {
+            this.worklflowAddOutgoingHook.show();
         }
     }
 
@@ -349,6 +358,22 @@ export class WorkflowSidebarEditNodeComponent {
         }
         this.node.hooks.push(he.hook);
         this.updateWorkflow(this.workflow, this.worklflowAddHook.modal);
+    }
+
+    addOutgoingHook(he: HookEvent): void {
+        if (!this.canEdit()) {
+            return;
+        }
+        if (!this.node.outgoingHooks) {
+            this.node.outgoingHooks = new Array<WorkflowNodeOutgoingHook>();
+        }
+        let oh = new WorkflowNodeOutgoingHook();
+        oh.config = he.hook.config
+        oh.id = he.hook.id
+        oh.model = he.hook.model
+        oh.uuid = he.hook.uuid
+        this.node.outgoingHooks.push(oh);
+        this.updateWorkflow(this.workflow, this.worklflowAddOutgoingHook.modal);
     }
 
     rename(): void {

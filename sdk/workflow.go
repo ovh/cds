@@ -497,18 +497,19 @@ type WorkflowNodeJoinTrigger struct {
 
 //WorkflowNode represents a node in w workflow tree
 type WorkflowNode struct {
-	ID                 int64                 `json:"id" db:"id"`
-	Name               string                `json:"name" db:"name"`
-	Ref                string                `json:"ref,omitempty" db:"-"`
-	WorkflowID         int64                 `json:"workflow_id" db:"workflow_id"`
-	PipelineID         int64                 `json:"pipeline_id" db:"pipeline_id"`
-	PipelineName       string                `json:"pipeline_name" db:"-"`
-	DeprecatedPipeline Pipeline              `json:"pipeline" db:"-"`
-	Context            *WorkflowNodeContext  `json:"context" db:"-"`
-	TriggerSrcID       int64                 `json:"-" db:"-"`
-	TriggerJoinSrcID   int64                 `json:"-" db:"-"`
-	Hooks              []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
-	Triggers           []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+	ID                 int64                      `json:"id" db:"id"`
+	Name               string                     `json:"name" db:"name"`
+	Ref                string                     `json:"ref,omitempty" db:"-"`
+	WorkflowID         int64                      `json:"workflow_id" db:"workflow_id"`
+	PipelineID         int64                      `json:"pipeline_id" db:"pipeline_id"`
+	PipelineName       string                     `json:"pipeline_name" db:"-"`
+	DeprecatedPipeline Pipeline                   `json:"pipeline" db:"-"`
+	Context            *WorkflowNodeContext       `json:"context" db:"-"`
+	TriggerSrcID       int64                      `json:"-" db:"-"`
+	TriggerJoinSrcID   int64                      `json:"-" db:"-"`
+	Hooks              []WorkflowNodeHook         `json:"hooks,omitempty" db:"-"`
+	Triggers           []WorkflowNodeTrigger      `json:"triggers,omitempty" db:"-"`
+	OutgoingHooks      []WorkflowNodeOutgoingHook `json:"outgoing_hooks,omitempty" db:"-"`
 }
 
 // IsLinkedToRepo returns boolean to know if the node is linked to an application which is also linked to a repository

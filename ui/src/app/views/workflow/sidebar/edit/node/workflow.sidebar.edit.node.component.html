@@ -53,6 +53,9 @@
       <a class="item noborder" (click)="linkJoin()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
         {{ 'workflow_node_join_link' | translate }} <i class="angle right icon"></i>
       </a>
+      <a class="item noborder" (click)="openAddOutgoingHookModal()" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+        {{ 'workflow_node_outgoing_hook' | translate }} <i class="angle right icon"></i>
+      </a>
       <a class="item noborder" (click)="openDeleteNodeModal()" *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)" [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
         {{ 'workflow_node_delete_btn' | translate }} <i class="angle right icon"></i>
       </a>
@@ -85,7 +88,10 @@
     <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (conditionsEvent)="updateNodeConditions($event)" #workflowConditions></app-workflow-node-conditions>
 </ng-container>
 <ng-container *ngIf="project && node">
-    <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>
+    <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" [isOutgoing]="false" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>
+</ng-container>
+<ng-container *ngIf="project && node">
+    <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" [isOutgoing]="true" (hookEvent)="addOutgoingHook($event)" #worklflowAddOutgoingHook></app-workflow-node-hook-form>
 </ng-container>
 <ng-template let-context let-modal="modal" #nodeNameWarningModal>
     <div class="header">{{ 'workflow_node_name_warning_modal_title' | translate }}</div>

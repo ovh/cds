@@ -541,6 +541,10 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
+	if err := workflow.CreateBuiltinWorkflowOutgoingHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
+	}
+
 	if err := platform.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
 		return fmt.Errorf("cannot setup platforms: %v", err)
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // UpdateHook Update a workflow node hook
@@ -35,6 +36,10 @@ func DeleteHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
 
 // insertHook inserts a hook
 func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeHook) error {
+
+	log.Debug("Insert hook %s (%s) for node %s", hook.UUID, hook.WorkflowHookModel.Name, node.Name)
+	log.Debug("Config: %+v => %+v", hook.Config, hook.WorkflowHookModel.DefaultConfig)
+
 	hook.WorkflowNodeID = node.ID
 	if hook.WorkflowHookModelID == 0 {
 		hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
@@ -58,15 +63,15 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 	hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
 
 	//TODO: to delete when all previous scheduler are updated
-	if _, ok := hook.Config[sdk.SchedulerModelPayload]; hook.WorkflowHookModel.Name == sdk.SchedulerModelName && !ok {
-		hook.Config[sdk.SchedulerModelPayload] = sdk.SchedulerModel.DefaultConfig[sdk.SchedulerModelPayload]
+	if _, ok := hook.Config[sdk.Payload]; hook.WorkflowHookModel.Name == sdk.SchedulerModelName && !ok {
+		hook.Config[sdk.Payload] = sdk.SchedulerModel.DefaultConfig[sdk.Payload]
 	}
 
 	errmu := sdk.MultiError{}
 	// Check configuration of the hook vs the model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
 		if _, ok := hook.Config[k]; !ok {
-			errmu = append(errmu, fmt.Errorf("Missing configuration key: %s", k))
+			errmu = append(errmu, fmt.Errorf("Missing %s configuration key: %s", hook.WorkflowHookModel.Name, k))
 		}
 	}
 	if len(errmu) > 0 {
