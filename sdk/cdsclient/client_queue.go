@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -146,9 +147,19 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	}
 }
 
-func (c *client) QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error) {
+func (c *client) QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error) {
 	wJobs := []sdk.WorkflowNodeJobRun{}
-	if _, err := c.GetJSON("/queue/workflows", &wJobs); err != nil {
+
+	url, _ := url.Parse("/queue/workflows")
+	if len(status) > 0 {
+		q := url.Query()
+		for _, s := range status {
+			q.Add("status", s.String())
+		}
+		url.RawQuery = q.Encode()
+	}
+
+	if _, err := c.GetJSON(url.String(), &wJobs); err != nil {
 		return nil, err
 	}
 	return wJobs, nil

@@ -57,6 +57,7 @@ type Termui struct {
 	statusHatcheriesWorkers *cli.ScrollableList
 	status                  *cli.ScrollableList
 	currentURL              string
+	queueTabSelected        int
 }
 
 // Constants for each view of cds ui
@@ -87,6 +88,12 @@ func (ui *Termui) init() {
 	})
 	termui.Handle("/sys/kbd/<up>", func(e termui.Event) {
 		ui.monitoringCursorUp()
+	})
+	termui.Handle("/sys/kbd/<left>", func(e termui.Event) {
+		ui.monitoringCursorLeft()
+	})
+	termui.Handle("/sys/kbd/<right>", func(e termui.Event) {
+		ui.monitoringCursorRight()
 	})
 
 	termui.Handle("/sys/kbd/<enter>", func(e termui.Event) {
@@ -240,6 +247,28 @@ func (ui *Termui) monitoringCursorUp() {
 	}
 }
 
+func (ui *Termui) monitoringCursorLeft() {
+	switch ui.selected {
+	case QueueSelected:
+		if 0 < ui.queueTabSelected {
+			ui.queueTabSelected--
+		} else {
+			ui.queueTabSelected = 2
+		}
+	}
+}
+
+func (ui *Termui) monitoringCursorRight() {
+	switch ui.selected {
+	case QueueSelected:
+		if ui.queueTabSelected < 2 {
+			ui.queueTabSelected++
+		} else {
+			ui.queueTabSelected = 0
+		}
+	}
+}
+
 func (ui *Termui) monitoringColorSelected() {
 	ui.queue.BorderFg = termui.ColorDefault
 	ui.statusHatcheriesWorkers.BorderFg = termui.ColorDefault
@@ -375,8 +404,18 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) string {
 }
 
 func (ui *Termui) updateQueue(baseURL string) string {
+	var status []sdk.Status
+	switch ui.queueTabSelected {
+	case 0:
+		status = []sdk.Status{sdk.StatusWaiting}
+	case 1:
+		status = []sdk.Status{sdk.StatusBuilding}
+	case 2:
+		status = []sdk.Status{sdk.StatusWaiting, sdk.StatusBuilding}
+	}
+
 	start := time.Now()
-	wJobs, errw := client.QueueWorkflowNodeJobRun()
+	wJobs, errw := client.QueueWorkflowNodeJobRun(status...)
 	if errw != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", errw.Error())
 		return ""
@@ -420,7 +459,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	}
 	ui.queue.Items = items
 
-	t := fmt.Sprintf("Queue:%d - Max Waiting:%s ", nWJobs.Count+int64(len(pbJobs)), sdk.Round(maxQueued, time.Second).String())
+	t := fmt.Sprintf("Queue(%s):%d - Max Waiting:%s ", fmt.Sprintf("%v", status), nWJobs.Count+int64(len(pbJobs)), sdk.Round(maxQueued, time.Second).String())
 	ui.queue.BorderLabel = t
 	return msg
 }
