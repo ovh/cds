@@ -51,10 +51,9 @@ export class ApplicationHomeComponent implements OnInit {
 
         Severity.Severities.forEach(s => {
             // Search for severity in datas
-            let found = false;
-            metrics.forEach(m => {
+            let found = metrics.some(m => {
                 if (m.value[s]) {
-                    found = true;
+                    return true;
                 }
             });
             if (found) {
@@ -71,7 +70,7 @@ export class ApplicationHomeComponent implements OnInit {
                     }
                 });
                 cc.datas.push(cd);
-                cc.colorScheme['domain'].push(Severity.getMetricsColors(s));
+                cc.colorScheme['domain'].push(Severity.getColors(s));
             }
         });
         this.dashboards.push(cc);

@@ -2,10 +2,9 @@ package application
 
 import (
 	"database/sql"
-	"encoding/json"
-
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -27,10 +26,8 @@ func LoadVulnerabilitiesSummary(db gorp.SqlExecutor, appID int64) (map[string]in
 		return nil, sdk.WrapError(err, "LoadVulnerabilitiesSummary")
 	}
 
-	if result.Valid {
-		if err := json.Unmarshal([]byte(result.String), &summary); err != nil {
-			return nil, sdk.WrapError(err, "LoadVulnerabilitiesSummary> Unable to unmarshal summary")
-		}
+	if err := gorpmapping.JSONNullString(result, &summary); err != nil {
+		return nil, sdk.WrapError(err, "LoadVulnerabilitiesSummary> Unable to unmarshal summary")
 	}
 	return summary, nil
 }

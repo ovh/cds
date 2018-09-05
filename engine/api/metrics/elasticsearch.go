@@ -14,23 +14,24 @@ import (
 
 var metricsChan chan sdk.Metric
 
-func Init(c context.Context, db gorp.SqlExecutor) {
+func Init(c context.Context, DBFunc func() *gorp.DbMap) {
 	metricsChan = make(chan sdk.Metric, 50)
-	sdk.GoRoutine("metrics.PushInElasticSearch", func() { pushInElasticSearch(c, db) })
+	sdk.GoRoutine("metrics.PushInElasticSearch", func() { pushInElasticSearch(c, DBFunc) })
 }
 
-func pushInElasticSearch(c context.Context, db gorp.SqlExecutor) {
+func pushInElasticSearch(c context.Context, DBFunc func() *gorp.DbMap) {
 	for {
 		select {
 		case <-c.Done():
 			if c.Err() != nil {
-				log.Error("metrics.send> Exiting: %v", c.Err())
+				log.Error("metrics.pushInElasticSearch> Exiting: %v", c.Err())
 				return
 			}
 		case e := <-metricsChan:
+			db := DBFunc()
 			esServices, errS := services.FindByType(db, services.TypeElasticsearch)
 			if errS != nil {
-				log.Error("metrics.send> Unable to get elasticsearch service: %v", errS)
+				log.Error("metrics.pushInElasticSearch> Unable to get elasticsearch service: %v", errS)
 				continue
 			}
 
@@ -40,7 +41,7 @@ func pushInElasticSearch(c context.Context, db gorp.SqlExecutor) {
 
 			code, errD := services.DoJSONRequest(context.Background(), esServices, "POST", "/metrics", e, nil)
 			if code >= 400 || errD != nil {
-				log.Error("metrics.send> Unable to send metrics to elasticsearch [%d]: %v", code, errD)
+				log.Error("metrics.pushInElasticSearch> Unable to send metrics to elasticsearch [%d]: %v", code, errD)
 				continue
 			}
 		}

@@ -701,7 +701,7 @@ func (a *API) Serve(ctx context.Context) error {
 		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
 	})
 	sdk.GoRoutine("PushInElasticSearch", func() { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
-	metrics.Init(ctx, a.mustDB())
+	metrics.Init(ctx, a.DBConnectionFactory.GetDBMap)
 	sdk.GoRoutine("Purge", func() { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
 
 	s := &http.Server{

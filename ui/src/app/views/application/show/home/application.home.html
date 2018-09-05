@@ -16,6 +16,9 @@
                 {{ 'application_home_no_graph' | translate }}
             </div>
         </ng-container>
+        <ng-container *ngIf="!ready">
+            <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+        </ng-container>
     </div>
     <div class="ui four wide column">
         <div class="ui segment">

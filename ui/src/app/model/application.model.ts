@@ -108,7 +108,7 @@ export class Severity {
         Severity.DEFCON1
     ];
 
-    static getMetricsColors(s: string) {
+    static getColors(s: string) {
         switch (s) {
             case Severity.DEFCON1:
                 return '#000000';
