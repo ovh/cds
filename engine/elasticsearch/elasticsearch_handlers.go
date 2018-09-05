@@ -75,7 +75,7 @@ func (s *Service) getMetricsHandler() service.Handler {
 			stringQuery = fmt.Sprintf("%s AND application_id:%d", stringQuery, request.ApplicationID)
 		}
 		if request.WorkflowID != 0 {
-			stringQuery = fmt.Sprintf("%s AND workflow_id:%s", stringQuery, request.WorkflowID)
+			stringQuery = fmt.Sprintf("%s AND workflow_id:%d", stringQuery, request.WorkflowID)
 		}
 
 		results, errR := esClient.Search().
