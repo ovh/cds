@@ -3,10 +3,17 @@
 
     <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
 
+    <sm-select class="search fluid"
+        *ngIf="!loading"
+        [(model)]="status">
+        <option *ngFor="let t of statusOptions" value="{{t}}">{{t | translate}}</option>
+    </sm-select>
+
     <table class="ui fixed celled table" *ngIf="!loading">
         <thead>
         <tr>
             <th class="two wide">since</th>
+            <th class="two wide">status</th>
             <th class="two wide">booked</th>
             <th class="one wide">run</th>
             <th class="two wide">project/workflow</th>
@@ -17,12 +24,15 @@
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let wNodeJobRun of nodeJobRuns; let index = index">
+        <tr *ngFor="let wNodeJobRun of getNodeJobRuns(); let index = index">
             <td>
                 {{wNodeJobRun.queued | amTimeAgo}}
             </td>
             <td>
-                <span *ngIf="wNodeJobRun.bookedby != null">{{wNodeJobRun.bookedby.name}}</span>
+                <span>{{wNodeJobRun.status}}</span>
+            </td>
+            <td>
+                <span *ngIf="wNodeJobRun.status != null">{{wNodeJobRun.bookedby.name}}</span>
                 <span *ngIf="wNodeJobRun.bookedby == null">/</span>
             </td>
             <td>

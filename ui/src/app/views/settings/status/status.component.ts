@@ -8,7 +8,7 @@ import {MonitoringService} from '../../../service/monitoring/monitoring.service'
     styleUrls: ['./status.scss']
 })
 export class StatusComponent {
-
+    filter: string;
     status: MonitoringStatus;
     loading = false;
 
@@ -19,5 +19,19 @@ export class StatusComponent {
                 this.status = r;
                 this.loading = false;
             });
+    }
+
+    getStatusLines() {
+        if (!this.filter) {
+            return this.status.lines;
+        }
+
+        const lowerFilter = this.filter.toLowerCase();
+
+        return this.status.lines.filter(line => {
+            return line.status.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.value.toLowerCase().indexOf(lowerFilter) !== -1
+        });
     }
 }

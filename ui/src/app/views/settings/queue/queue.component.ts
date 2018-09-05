@@ -29,22 +29,41 @@ export class QueueComponent implements OnDestroy {
     requirementsList: Array<string> = [];
     loading = true;
 
+    statusOptions: Array<string> = ['Waiting', 'Building', 'All'];
+    status: string;
+
     constructor(
         private _authStore: AuthentificationStore,
         private _wfRunService: WorkflowRunService,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
-        this.zone = new NgZone({enableLongStackTrace: false});
+        this.zone = new NgZone({ enableLongStackTrace: false });
         this.loading = true;
-        this.startWorker();
+        this.status = this.statusOptions[0];
         this.user = this._authStore.getUser();
+        this.startWorker();
     }
 
     ngOnDestroy(): void {
         if (this.queueWorker) {
             this.queueWorker.stop();
         }
+    }
+
+    getQueueWorkerParams() {
+        console.log(this.status)
+        return {
+            'user': this._authStore.getUser(),
+            'session': this._authStore.getSessionToken(),
+            'api': environment.apiURL,
+            'status': this.status === 'All' ? this.statusOptions.filter(s => s !== 'All') : [this.status]
+        };
+    }
+
+    getNodeJobRuns() {
+        this.queueWorker.sendMsg(this.getQueueWorkerParams());
+        return this.nodeJobRuns;
     }
 
     startWorker() {
@@ -56,11 +75,7 @@ export class QueueComponent implements OnDestroy {
         }
         // Start web worker
         this.queueWorker = new CDSWebWorker('./assets/worker/web/queue.js');
-        this.queueWorker.start({
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL,
-        });
+        this.queueWorker.start(this.getQueueWorkerParams());
 
         this.queueSubscription = this.queueWorker.response().subscribe(wrString => {
             if (!wrString) {
