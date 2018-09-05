@@ -64,7 +64,7 @@ export class ApplicationHomeComponent implements OnInit {
                     let v = m.value[s];
                     if (v) {
                         let cs = new ChartSeries();
-                        cs.name = m.timestamp;
+                        cs.name = (new Date(m.timestamp)).toLocaleString();
                         cs.value = v;
                         cd.series.push(cs);
                     }

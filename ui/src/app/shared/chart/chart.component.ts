@@ -9,5 +9,4 @@ import {GraphConfiguration} from '../../model/graph.model';
 export class ChartComponentComponent {
 
     @Input() configuration: GraphConfiguration;
-    view = [0, 200];
 }

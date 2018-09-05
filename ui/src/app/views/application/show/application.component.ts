@@ -11,7 +11,6 @@ import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {User} from '../../../model/user.model';
 import {Workflow} from '../../../model/workflow.model';
-import {ApplicationNoCacheService} from '../../../service/application/application.nocache.service';
 import {ApplicationStore} from '../../../service/application/application.store';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../service/project/project.store';
