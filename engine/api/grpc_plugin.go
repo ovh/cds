@@ -10,6 +10,8 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/actionplugin"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/service"
@@ -19,15 +21,43 @@ import (
 func (api *API) postPGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
+		db := api.mustDB()
 
 		if err := UnmarshalBody(r, &p); err != nil {
-			return sdk.WrapError(err, "postPGRPCluginHandler")
+			return sdk.WrapError(err, "postPGRPCluginHandler>")
 		}
-
 		p.Binaries = nil
 
-		if err := plugin.Insert(api.mustDB(), &p); err != nil {
+		fmt.Printf("--- +%v\n", p)
+
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WrapError(err, "postPGRPCluginHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		if p.Type == sdk.GRPCPluginAction {
+			// Check that action does not already exists
+			conflict, err := action.Exists(db, p.Name)
+			if err != nil {
+				return sdk.WrapError(err, "postPGRPCluginHandler> %v", err)
+			}
+			if conflict {
+				return sdk.ErrConflict
+			}
+
+			//Insert in database
+			if _, err := actionplugin.InsertWithGRPCPlugin(tx, &p, p.Parameters); err != nil {
+				return sdk.WrapError(err, "postPGRPCluginHandler> Error while inserting action %s in database", p.Name)
+			}
+		}
+
+		if err := plugin.Insert(tx, &p); err != nil {
 			return sdk.WrapError(err, "postPGRPCluginHandler> unable to insert plugin")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postPGRPCluginHandler> Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
@@ -62,9 +92,8 @@ func (api *API) getGRPCluginHandler() service.Handler {
 func (api *API) putGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
-
 		if err := UnmarshalBody(r, &p); err != nil {
-			return sdk.WrapError(err, "putGRPCluginHandler")
+			return sdk.WrapError(err, "putGRPCluginHandler>")
 		}
 
 		var name = mux.Vars(r)["name"]
@@ -102,7 +131,6 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 
 func (api *API) postGRPCluginBinaryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
 		var b sdk.GRPCPluginBinary
 		if err := UnmarshalBody(r, &b); err != nil {
 			return sdk.WrapError(err, "postGRPCluginBinaryHandler")
@@ -190,6 +218,27 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 		}
 
 		return nil
+	}
+}
+
+func (api *API) getGRPCluginBinaryInfosHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+		os := vars["os"]
+		arch := vars["arch"]
+
+		p, err := plugin.LoadByName(api.mustDB(), name)
+		if err != nil {
+			return sdk.WrapError(err, "getGRPCluginBinaryInfosHandler>")
+		}
+
+		b := p.GetBinary(os, arch)
+		if b == nil {
+			return sdk.WrapError(sdk.ErrNotFound, "getGRPCluginBinaryInfosHandler>")
+		}
+
+		return service.WriteJSON(w, *b, http.StatusOK)
 	}
 }
 

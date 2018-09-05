@@ -51,6 +51,7 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/plugin/{name}", r.GET(api.getGRPCluginHandler, NeedAdmin(true)), r.PUT(api.putGRPCluginHandler, NeedAdmin(true)), r.DELETE(api.deleteGRPCluginHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}/binary", r.POST(api.postGRPCluginBinaryHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}", r.GET(api.getGRPCluginBinaryHandler, Auth(false)), r.DELETE(api.deleteGRPCluginBinaryHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}/infos", r.GET(api.getGRPCluginBinaryInfosHandler))
 
 	// Admin service
 	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))

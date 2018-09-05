@@ -273,24 +273,24 @@ func (w WorkflowNodeRunArtifact) Equal(c WorkflowNodeRunArtifact) bool {
 // /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\
 //easyjson:json
 type WorkflowNodeJobRun struct {
-	ProjectID              int64              `json:"project_id"`
-	ID                     int64              `json:"id"`
-	WorkflowNodeRunID      int64              `json:"workflow_node_run_id,omitempty"`
-	Job                    ExecutedJob        `json:"job"`
-	Parameters             []Parameter        `json:"parameters,omitempty"`
-	Status                 string             `json:"status"`
-	Retry                  int                `json:"retry"`
-	SpawnAttempts          []int64            `json:"spawn_attempts,omitempty"`
-	Queued                 time.Time          `json:"queued,omitempty"`
-	QueuedSeconds          int64              `json:"queued_seconds,omitempty"`
-	Start                  time.Time          `json:"start,omitempty"`
-	Done                   time.Time          `json:"done,omitempty"`
-	Model                  string             `json:"model,omitempty"`
-	BookedBy               Hatchery           `json:"bookedby"`
-	SpawnInfos             []SpawnInfo        `json:"spawninfos"`
-	ExecGroups             []Group            `json:"exec_groups"`
-	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries,omitempty"`
-	Header                 WorkflowRunHeaders `json:"header,omitempty"`
+	ProjectID         int64              `json:"project_id"`
+	ID                int64              `json:"id"`
+	WorkflowNodeRunID int64              `json:"workflow_node_run_id,omitempty"`
+	Job               ExecutedJob        `json:"job"`
+	Parameters        []Parameter        `json:"parameters,omitempty"`
+	Status            string             `json:"status"`
+	Retry             int                `json:"retry"`
+	SpawnAttempts     []int64            `json:"spawn_attempts,omitempty"`
+	Queued            time.Time          `json:"queued,omitempty"`
+	QueuedSeconds     int64              `json:"queued_seconds,omitempty"`
+	Start             time.Time          `json:"start,omitempty"`
+	Done              time.Time          `json:"done,omitempty"`
+	Model             string             `json:"model,omitempty"`
+	BookedBy          Hatchery           `json:"bookedby"`
+	SpawnInfos        []SpawnInfo        `json:"spawninfos"`
+	ExecGroups        []Group            `json:"exec_groups"`
+	PluginBinaries    []GRPCPluginBinary `json:"plugin_binaries,omitempty"`
+	Header            WorkflowRunHeaders `json:"header,omitempty"`
 }
 
 // /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\

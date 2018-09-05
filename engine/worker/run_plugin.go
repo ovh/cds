@@ -61,7 +61,7 @@ func startGRPCPlugin(ctx context.Context, w *currentWorker, p sdk.GRPCPluginBina
 	mOut := io.MultiWriter(opts.out, &c.BuffOut)
 	mErr := io.MultiWriter(opts.err, &c.BuffOut)
 
-	log.Info("Starting GRPC Plugin %s", p.Name)
+	log.Info("Starting GRPC Plugin %s in dir %s", p.Name, w.basedir)
 	if err := grpcplugin.StartPlugin(ctx, w.basedir, p.Cmd, p.Args, opts.env, mOut, mErr); err != nil {
 		return nil, err
 	}

@@ -7,7 +7,9 @@ import (
 	"path"
 	"strings"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
 )
@@ -177,6 +179,111 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		}
 
 		chanRes <- res
+	}(buildID, *params)
+
+	select {
+	case <-ctx.Done():
+		log.Error("CDS Worker execution canceled: %v", ctx.Err())
+		w.sendLog(buildID, "CDS Worker execution canceled\n", stepOrder, false)
+		return sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: "CDS Worker execution canceled",
+		}
+	case res := <-chanRes:
+		return res
+	}
+}
+
+func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
+	log.Info("runPlugin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
+	defer func() {
+		log.Info("runPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
+	}()
+
+	chanRes := make(chan sdk.Result, 1)
+
+	go func(buildID int64, params []sdk.Parameter) {
+		//For the moment we consider that plugin name = action name = plugin binary file name
+		pluginName := a.Name
+
+		pluginSocket, has := w.mapPluginClient[pluginName]
+		if !has {
+			res := sdk.Result{
+				Reason: "Unable to retrieve plugin client... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(res.Reason)
+			chanRes <- res
+			return
+		}
+
+		pluginClient := pluginSocket.Client
+		actionPluginClient, ok := pluginClient.(actionplugin.ActionPluginClient)
+		if !ok {
+			res := sdk.Result{
+				Reason: "Unable to retrieve plugin client... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(res.Reason)
+			chanRes <- res
+			return
+		}
+
+		logCtx, stopLogs := context.WithCancel(ctx)
+		go enablePluginLogger(logCtx, sendLog, pluginSocket)
+		defer stopLogs()
+
+		manifest, err := actionPluginClient.Manifest(ctx, &empty.Empty{})
+		if err != nil {
+			res := sdk.Result{
+				Reason: "Unable to retrieve plugin manifest... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(res.Reason)
+			chanRes <- res
+			return
+		}
+
+		sendLog(fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
+		query := actionplugin.ActionQuery{
+			Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(a.Parameters)),
+		}
+
+		// env := []string{}
+		// //set up environment variables from pipeline build job parameters
+		// for _, p := range params {
+		// 	// avoid put private key in environment var as it's a binary value
+		// 	if (p.Type == sdk.KeyPGPParameter || p.Type == sdk.KeySSHParameter) && strings.HasSuffix(p.Name, ".priv") {
+		// 		continue
+		// 	}
+		// 	if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
+		// 		continue
+		// 	}
+		// 	envName := strings.Replace(p.Name, ".", "_", -1)
+		// 	envName = strings.ToUpper(envName)
+		// 	env = append(env, fmt.Sprintf("%s=%s", envName, p.Value))
+		// }
+		//
+		// for _, p := range w.currentJob.buildVariables {
+		// 	envName := strings.Replace(p.Name, ".", "_", -1)
+		// 	envName = strings.ToUpper(envName)
+		// 	env = append(env, fmt.Sprintf("%s=%s", envName, p.Value))
+		// }
+
+		result, err := actionPluginClient.Run(ctx, &query)
+		if err != nil {
+			result := sdk.Result{
+				Reason: fmt.Sprintf("Error deploying application: %v", err),
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(result.Reason)
+			chanRes <- result
+		}
+
+		chanRes <- sdk.Result{
+			Status: result.GetStatus(),
+			Reason: result.GetDetails(),
+		}
 	}(buildID, *params)
 
 	select {

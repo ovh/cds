@@ -180,7 +180,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 		//Define a loggin function
 		sendLog := getLogger(w, buildID, stepOrder)
 		//Run the plugin
-		return w.runPlugin(ctx, a, buildID, params, stepOrder, sendLog)
+		return w.runGRPCPlugin(ctx, a, buildID, params, stepOrder, sendLog)
 	}
 
 	// There is is no children actions (action is empty) to do, success !

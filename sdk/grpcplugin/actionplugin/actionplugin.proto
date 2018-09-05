@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.ovh.cds.sdk.grpcplugin.actionplugin";
+option java_outer_classname = "ActionPluginProto";
+option go_package = "actionplugin";
+
+package actionplugin;
+
+import "google/protobuf/empty.proto";
+
+// To generate the go files run:
+// protoc --go_out=plugins=grpc:. *.proto
+
+message ActionPluginManifest {
+    string name = 1;
+    string version = 2;
+    string description = 3;
+    string author = 4;
+}
+
+message ActionQuery {
+    map<string, string> options = 1;
+}
+
+message ActionResult {
+    string status = 1;
+    string details = 2;
+}
+
+service ActionPlugin {
+    rpc Manifest (google.protobuf.Empty) returns (ActionPluginManifest) {}
+    rpc Run (ActionQuery) returns (ActionResult) {}
+}

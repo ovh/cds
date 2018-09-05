@@ -1,0 +1,11 @@
+name: plugin-tmpl
+type: action
+author: "Alexandre JIN <alexandre.jin@corp.ovh.com>"
+description: "tmpl Plugin"
+parameters:
+- name: "file"
+  type: string
+- name: "output"
+  type: string
+- name: "params"
+  type: text

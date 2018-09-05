@@ -16,9 +16,9 @@ import (
 	"github.com/shirou/gopsutil/mem"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement) (bool, error){
@@ -61,6 +61,7 @@ func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, 
 		}
 	}
 
+	log.Debug("requirements for %s >>> %+v\n", a.Name, a.Requirements)
 	for _, r := range a.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
@@ -85,28 +86,87 @@ func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	return check(w, r)
 }
 
+// func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
+// 	pluginBinary := path.Join(w.basedir, r.Name)
+//
+// 	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
+// 		//If the file doesn't exist. Download it.
+// 		if err := sdk.DownloadPlugin(r.Name, w.basedir); err != nil {
+// 			return false, err
+// 		}
+// 		if err := os.Chmod(pluginBinary, 0700); err != nil {
+// 			return false, err
+// 		}
+// 	}
+//
+// 	pluginClient := plugin.NewClient(context.Background(), r.Name, pluginBinary, "", "", false)
+// 	defer pluginClient.Kill()
+//
+// 	_plugin, err := pluginClient.Instance()
+// 	if err != nil {
+// 		log.Warning("checkPluginRequirement> Error Checking %s requirement : %s", r.Name, err)
+// 		return false, err
+// 	}
+// 	log.Debug("checkPluginRequirement> Plugin %s successfully started", _plugin.Name())
+//
+// 	return true, nil
+// }
+
 func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	pluginBinary := path.Join(w.basedir, r.Name)
+	var currentOS = strings.ToLower(runtime.GOOS)
+	var currentARCH = strings.ToLower(runtime.GOARCH)
 
-	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
-		//If the file doesn't exist. Download it.
-		if err := sdk.DownloadPlugin(r.Name, w.basedir); err != nil {
-			return false, err
-		}
-		if err := os.Chmod(pluginBinary, 0700); err != nil {
-			return false, err
-		}
-	}
-
-	pluginClient := plugin.NewClient(context.Background(), r.Name, pluginBinary, "", "", false)
-	defer pluginClient.Kill()
-
-	_plugin, err := pluginClient.Instance()
+	binary, err := w.client.PluginGetBinaryInfos(r.Name, currentOS, currentARCH)
 	if err != nil {
-		log.Warning("checkPluginRequirement> Error Checking %s requirement : %s", r.Name, err)
 		return false, err
 	}
-	log.Debug("checkPluginRequirement> Plugin %s successfully started", _plugin.Name())
+
+	//Then try to download the plugin
+	pluginBinary := path.Join(w.basedir, binary.Name)
+	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
+		log.Info("Downloading the plugin %s", binary.Name)
+		//If the file doesn't exist. Download it.
+		fi, err := os.OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		if err != nil {
+			return false, err
+		}
+
+		log.Info("Get the binary plugin %s", r.Name)
+		if err := w.client.PluginGetBinary(r.Name, currentOS, currentARCH, fi); err != nil {
+			_ = fi.Close()
+			return false, err
+		}
+		//It's downloaded. Close the file
+		_ = fi.Close()
+	} else {
+		log.Debug("plugin binary is in cache")
+	}
+
+	log.Info("Start GRPC plugin %s from checkPluginRequirement", binary.Name)
+	//Last but not least: start the plugin
+	socket, err := startGRPCPlugin(context.Background(), w, *binary, startGRPCPluginOptions{
+		out: os.Stdout,
+		err: os.Stderr,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	c, err := actionplugin.Client(context.Background(), socket.Socket)
+	if err != nil {
+		return false, fmt.Errorf("unable to call grpc plugin: %v", err)
+	}
+
+	socket.Client = c
+
+	m, err := c.Manifest(context.Background(), new(empty.Empty))
+	if err != nil {
+		return false, fmt.Errorf("unable to call grpc plugin manifest: %v", err)
+	}
+
+	log.Info("plugin successfully initialized: %#v", m)
+
+	registerPluginClient(w, r.Name, socket)
 
 	return true, nil
 }
@@ -224,14 +284,14 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 	var currentARCH = strings.ToLower(runtime.GOARCH)
 	var binary *sdk.GRPCPluginBinary
 
-	if len(j.PlatformPluginBinaries) == 0 {
+	if len(j.PluginBinaries) == 0 {
 		return true, nil
 	}
 
-	log.Debug("Checking plugins...(%#v)", j.PlatformPluginBinaries)
+	log.Debug("Checking plugins...(%#v)", j.PluginBinaries)
 
 	//First check OS and Architecture
-	for _, b := range j.PlatformPluginBinaries {
+	for _, b := range j.PluginBinaries {
 		if b.OS == currentOS && b.Arch == currentARCH {
 			binary = &b
 			break

@@ -3,7 +3,7 @@
 VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 
 TARGET_DIR = ./dist
-TARGET_NAME = arsenal
+TARGET_NAME = tmpl
 
 PLUGIN_MANIFEST=`echo $TARGET_NAME.yml`
 export PLUGIN_MANIFEST
@@ -55,6 +55,6 @@ publish:
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl admin plugins binary-add arsenal-deployment-plugin $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			cdsctl admin plugins binary-add tmpl-action-plugin $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done
