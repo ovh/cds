@@ -6,8 +6,6 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/ovh/cds/sdk/exportentities"
-
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 
@@ -19,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
@@ -444,6 +443,8 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
 	test.Equal(t, len(n1.Hooks), len(n2.Hooks))
 	t.Logf("assertEqualNode : Checking triggers")
 	test.Equal(t, len(n1.Triggers), len(n2.Triggers))
+	t.Logf("assertEqualNode : Checking out going hooks")
+	test.Equal(t, len(n1.OutgoingHooks), len(n2.OutgoingHooks))
 
 	assert.Equal(t, n1.PipelineName, n2.PipelineName)
 	for i, t1 := range n1.Triggers {
@@ -1169,6 +1170,8 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	test.NoError(t, workflow.CreateBuiltinWorkflowOutgoingHookModels(db))
+
 	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
@@ -1224,6 +1227,54 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 					},
 				},
 			},
+			OutgoingHooks: []sdk.WorkflowNodeOutgoingHook{
+				{
+					WorkflowHookModel: sdk.WorkflowHookModel{
+						Name: sdk.OutgoingWebHookModel.Name,
+					},
+					Config: sdk.WorkflowNodeHookConfig{
+						"method": sdk.WorkflowNodeHookConfigValue{
+							Value:        "POST",
+							Configurable: true,
+						},
+						"username": sdk.WorkflowNodeHookConfigValue{
+							Value:        "test",
+							Configurable: false,
+						},
+						"password": sdk.WorkflowNodeHookConfigValue{
+							Value:        "password",
+							Configurable: false,
+						},
+					},
+				},
+				{
+					WorkflowHookModel: sdk.WorkflowHookModel{
+						Name: sdk.OutgoingWebHookModel.Name,
+					},
+					Config: sdk.WorkflowNodeHookConfig{
+						"method": sdk.WorkflowNodeHookConfigValue{
+							Value:        "POST",
+							Configurable: true,
+						},
+						"username": sdk.WorkflowNodeHookConfigValue{
+							Value:        "test",
+							Configurable: false,
+						},
+						"password": sdk.WorkflowNodeHookConfigValue{
+							Value:        "password",
+							Configurable: false,
+						},
+					},
+					Triggers: []sdk.WorkflowNodeOutgoingHookTrigger{
+						{
+							WorkflowDestNode: sdk.WorkflowNode{
+								PipelineID:   pip.ID,
+								PipelineName: pip.Name,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -1257,5 +1308,5 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	fmt.Println(string(btes))
 
-	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, &w))
+	//test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, &w))
 }

@@ -364,15 +364,16 @@ export class WorkflowSidebarEditNodeComponent {
         if (!this.canEdit()) {
             return;
         }
-        if (!this.node.outgoingHooks) {
-            this.node.outgoingHooks = new Array<WorkflowNodeOutgoingHook>();
+        if (!this.node.outgoing_hooks) {
+            this.node.outgoing_hooks = new Array<WorkflowNodeOutgoingHook>();
         }
         let oh = new WorkflowNodeOutgoingHook();
         oh.config = he.hook.config
         oh.id = he.hook.id
         oh.model = he.hook.model
-        oh.uuid = he.hook.uuid
-        this.node.outgoingHooks.push(oh);
+        this.node.outgoing_hooks.push(oh);
+        console.log(this.node);
+        console.log(this.workflow);
         this.updateWorkflow(this.workflow, this.worklflowAddOutgoingHook.modal);
     }
 

@@ -189,7 +189,7 @@ func insertJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, 
 
 	return nil
 }
-
+ 
 func deleteJoin(db gorp.SqlExecutor, n sdk.WorkflowNodeJoin) error {
 	j := Join(n)
 	if _, err := db.Delete(&j); err != nil {

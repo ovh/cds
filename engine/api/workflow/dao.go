@@ -647,6 +647,15 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 			return err
 		}
 	}
+
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			if err := saveNodeByPipeline(db, dict, mapMaxNumber, &n.OutgoingHooks[i].Triggers[j].WorkflowDestNode, w); err != nil {
+				return err
+			}
+		}
+	}
+
 	return nil
 }
 

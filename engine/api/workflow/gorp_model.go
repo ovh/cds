@@ -29,6 +29,8 @@ type Join sdk.WorkflowNodeJoin
 // JoinTrigger  is a gorp wrapper around sdk.WorkflowNodeJoinTrigger
 type JoinTrigger sdk.WorkflowNodeJoinTrigger
 
+type outgoingHookTrigger sdk.WorkflowNodeOutgoingHookTrigger
+
 // Notification is a gorp wrapper around sdk.WorkflowNotification
 type Notification sdk.WorkflowNotification
 
@@ -191,6 +193,8 @@ type RunTag sdk.WorkflowRunTag
 // NodeHook is a gorp wrapper around sdk.WorkflowNodeHook
 type NodeHook sdk.WorkflowNodeHook
 
+type nodeOutgoingHook sdk.WorkflowNodeOutgoingHook
+
 // hookModel is a gorp wrapper around sdk.WorkflowHookModel
 type hookModel sdk.WorkflowHookModel
 
@@ -206,6 +210,8 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(NodeContext{}, "workflow_node_context", true, "id"))
 	gorpmapping.Register(gorpmapping.New(sqlContext{}, "workflow_node_context", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeHook{}, "workflow_node_hook", true, "id"))
+	gorpmapping.Register(gorpmapping.New(nodeOutgoingHook{}, "workflow_node_outgoing_hook", true, "id"))
+	gorpmapping.Register(gorpmapping.New(outgoingHookTrigger{}, "workflow_node_outgoing_hook_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Join{}, "workflow_node_join", true, "id"))
 	gorpmapping.Register(gorpmapping.New(JoinTrigger{}, "workflow_node_join_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Run{}, "workflow_run", true, "id"))

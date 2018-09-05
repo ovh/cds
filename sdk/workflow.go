@@ -18,7 +18,7 @@ const (
 )
 
 // ColorRegexp represent the regexp for a format to hexadecimal color
-var ColorRegexp *regexp.Regexp = regexp.MustCompile(`^#\w{3,8}$`)
+var ColorRegexp = regexp.MustCompile(`^#\w{3,8}$`)
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
@@ -507,6 +507,7 @@ type WorkflowNode struct {
 	Context            *WorkflowNodeContext       `json:"context" db:"-"`
 	TriggerSrcID       int64                      `json:"-" db:"-"`
 	TriggerJoinSrcID   int64                      `json:"-" db:"-"`
+	TriggerHookSrcID   int64                      `json:"-" db:"-"`
 	Hooks              []WorkflowNodeHook         `json:"hooks,omitempty" db:"-"`
 	Triggers           []WorkflowNodeTrigger      `json:"triggers,omitempty" db:"-"`
 	OutgoingHooks      []WorkflowNodeOutgoingHook `json:"outgoing_hooks,omitempty" db:"-"`
@@ -867,12 +868,20 @@ func (n *WorkflowNode) CheckApplicationDeploymentStrategies(proj *Project) error
 	return nil
 }
 
-//WorkflowNodeTrigger is a ling betweeb two pipelines in a workflow
+//WorkflowNodeTrigger is a ling between two pipelines in a workflow
 type WorkflowNodeTrigger struct {
 	ID                 int64        `json:"id" db:"id"`
 	WorkflowNodeID     int64        `json:"workflow_node_id" db:"workflow_node_id"`
 	WorkflowDestNodeID int64        `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode `json:"workflow_dest_node" db:"-"`
+}
+
+//WorkflowNodeOutgoingHookTrigger is a ling between an outgoing hook and pipeline in a workflow
+type WorkflowNodeOutgoingHookTrigger struct {
+	ID                         int64        `json:"id" db:"id"`
+	WorkflowNodeOutgoingHookID int64        `json:"workflow_node_outgoing_hook_id" db:"workflow_node_outgoing_hook_id"`
+	WorkflowDestNodeID         int64        `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
+	WorkflowDestNode           WorkflowNode `json:"workflow_dest_node" db:"-"`
 }
 
 //WorkflowNodeConditions is either an array of WorkflowNodeCondition or a lua script

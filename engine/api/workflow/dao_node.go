@@ -38,6 +38,15 @@ func updateWorkflowTriggerJoinSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 	return nil
 }
 
+func updateWorkflowTriggerHookSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) error {
+	//Update node
+	query := "UPDATE workflow_node SET workflow_outgoing_hook_trigger_id = $1 WHERE id = $2"
+	if _, err := db.Exec(query, n.TriggerHookSrcID, n.ID); err != nil {
+		return sdk.WrapError(err, "updateWorkflowTriggerHookSrc> Unable to set  workflow_outgoing_hook_trigger_id ON node %d", n.ID)
+	}
+	return nil
+}
+
 func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
 	log.Debug("insertNode> insert or update node %s %d (%s) on %d", n.Name, n.ID, n.Ref, n.PipelineID)
 
@@ -191,11 +200,23 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 
 	//Insert triggers
 	for i := range n.Triggers {
+		log.Debug("inserting trigger")
 		t := &n.Triggers[i]
 		if errT := insertTrigger(db, store, w, n, t, u); errT != nil {
 			return sdk.WrapError(errT, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}
+
+	//Insert outgoing hooks
+	for i := range n.OutgoingHooks {
+		h := &n.OutgoingHooks[i]
+		log.Debug("inserting outgoing hook %+v", h)
+		//Insert the hook
+		if err := insertOutgoingHook(db, store, w, n, h, u); err != nil {
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node hook")
+		}
+	}
+
 	return nil
 }
 
@@ -330,6 +351,13 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return nil, sdk.WrapError(errHooks, "LoadNode> Unable to load hooks of %d", id)
 	}
 	wn.Hooks = hooks
+
+	//Load outgoing hooks
+	ohooks, errHooks := loadOutgoingHooks(c, db, store, proj, w, &wn, u, opts)
+	if errHooks != nil {
+		return nil, sdk.WrapError(errHooks, "LoadNode> Unable to load outgoing hooks of %d", id)
+	}
+	wn.OutgoingHooks = ohooks
 
 	//Load pipeline
 	if w.Pipelines == nil {

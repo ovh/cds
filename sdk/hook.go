@@ -11,7 +11,9 @@ const (
 	WorkflowModelName             = "Workflow"
 	HookConfigProject             = "project"
 	HookConfigWorkflow            = "workflow"
-	HookConfigHook                = "hook"
+	HookConfigTargetProject       = "target_project"
+	HookConfigTargetWorkflow      = "target_workflow"
+	HookConfigTargetHook          = "target_hook"
 	HookConfigWorkflowID          = "workflow_id"
 	WebHookModelConfigMethod      = "method"
 	RepositoryWebHookModelMethod  = "method"
@@ -219,15 +221,15 @@ var (
 		Name:       WorkflowModelName,
 		Icon:       "sitemap",
 		DefaultConfig: WorkflowNodeHookConfig{
-			HookConfigProject: {
+			HookConfigTargetProject: {
 				Configurable: true,
 				Type:         HookConfigTypeProject,
 			},
-			HookConfigWorkflow: {
+			HookConfigTargetWorkflow: {
 				Configurable: true,
 				Type:         HookConfigTypeWorkflow,
 			},
-			HookConfigHook: {
+			HookConfigTargetHook: {
 				Configurable: true,
 				Type:         HookConfigTypeHook,
 			},

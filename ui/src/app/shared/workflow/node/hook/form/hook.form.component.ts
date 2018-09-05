@@ -99,7 +99,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         // Specific behavior for the 'workflow' hooks
         if (this.hook.model.name === 'Workflow') {
             // Current limitation: trigger only workflow in the same project
-            this.hook.config['project'].value = this.project.key;
+            this.hook.config['target_project'].value = this.project.key;
             // Load the workflow for the current project, but exclude the current workflow
             this.availableWorkflows = this.project.workflow_names.filter(idName => idName.name !== this.workflow.name);
             console.log(this.availableWorkflows);
@@ -120,12 +120,12 @@ export class WorkflowNodeHookFormComponent implements OnInit {
 
     updateWorkflow(): void {
         this.loadingHooks = true;
-        this._workflowStore.getWorkflows(this.hook.config['project'].value, this.hook.config['workflow'].value)
+        this._workflowStore.getWorkflows(this.hook.config['target_project'].value, this.hook.config['target_workflow'].value)
             .pipe(
                 finalize(() => this.loadingHooks = true)
             ).subscribe(
                 data => {
-                    let key = this.project.key + '-' + this.hook.config['workflow'].value;
+                    let key = this.project.key + '-' + this.hook.config['target_workflow'].value;
                     let wf = data.get(key);
                     if (wf) {
                         this.availableHooks = Workflow.getAllHooks(wf).filter(h => h.model.name === 'Workflow');

@@ -139,7 +139,6 @@ func LoadOutgoingHookModelByName(db gorp.SqlExecutor, name string) (*sdk.Workflo
 // UpdateOutgoingHookModel updates a hook model in database
 func UpdateOutgoingHookModel(db gorp.SqlExecutor, m *sdk.WorkflowHookModel) error {
 	dbm := outgoingHookModel(*m)
-	log.Info("config=%+v", dbm.DefaultConfig)
 	if n, err := db.Update(&dbm); err != nil {
 		return sdk.WrapError(err, "UpdateOutgoingHookModel> Unable to update hook model %s", m.Name)
 	} else if n == 0 {

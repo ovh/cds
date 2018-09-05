@@ -52,8 +52,12 @@ func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
 
 // WorkflowNodeOutgoingHook represents a outgoing hook
 type WorkflowNodeOutgoingHook struct {
-	WorkflowNodeHook
-	Triggers []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+	ID                  int64                             `json:"id" db:"id"`
+	WorkflowNodeID      int64                             `json:"workflow_node_id" db:"workflow_node_id"`
+	WorkflowHookModelID int64                             `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
+	WorkflowHookModel   WorkflowHookModel                 `json:"model" db:"-"`
+	Config              WorkflowNodeHookConfig            `json:"config" db:"-"`
+	Triggers            []WorkflowNodeOutgoingHookTrigger `json:"triggers,omitempty" db:"-"`
 }
 
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node

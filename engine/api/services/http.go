@@ -165,7 +165,6 @@ func doRequest(ctx context.Context, httpURL string, hash string, method, path st
 
 	log.Debug("services> tracing> > context> %s", tracingutils.DumpContext(ctx))
 	spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
-	log.Debug("setup tracing = %v (%v) on request to %s", ok, spanCtx, req.URL.String())
 	if ok {
 		observability.DefaultFormat.SpanContextToRequest(spanCtx, req)
 	}

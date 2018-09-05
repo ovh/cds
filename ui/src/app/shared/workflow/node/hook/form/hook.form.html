@@ -81,14 +81,14 @@
                         <div class="four wide field"><label>project</label></div>
                         <div class="twelve wide field">
                             <!-- Know limitation: trigger only workflow in the current project -->
-                            <input type="text" [(ngModel)]="_hook.config['project'].value" readonly/>
+                            <input type="text" [(ngModel)]="_hook.config['target_project'].value" readonly/>
                         </div>
                     </div>
                     <div class="inline fields">
                             <div class="four wide field"><label>workflow</label></div>
                             <div class="twelve wide field">
                                 <sui-select class="selection" placeholder="{{'workflow_name' | translate}}"
-                                    [(ngModel)]="_hook.config['workflow'].value"
+                                    [(ngModel)]="_hook.config['target_workflow'].value"
                                     (ngModelChange)="updateWorkflow()"
                                     [options]="availableWorkflows"
                                     [isSearchable]="true"
@@ -102,7 +102,7 @@
                         <div class="four wide field"><label>hook</label></div>
                         <div class="twelve wide field">
                             <sui-select class="selection" placeholder="{{'hook' | translate}}"
-                                [(ngModel)]="_hook.config['hook'].value"
+                                [(ngModel)]="_hook.config['target_hook'].value"
                                 [options]="availableHooks"
                                 [isSearchable]="true"
                                 labelField="uuid" 

@@ -473,7 +473,7 @@ export class WorkflowNode {
     pipeline_name: string;
     context: WorkflowNodeContext;
     hooks: Array<WorkflowNodeHook>;
-    outgoingHooks: Array<WorkflowNodeHook>;
+    outgoing_hooks: Array<WorkflowNodeOutgoingHook>;
     triggers: Array<WorkflowNodeTrigger>;
 
     static removeNodeWithoutChild(parentNode: WorkflowNode, trigger: WorkflowNodeTrigger, id: number, triggerInd: number): WorkflowNode {
@@ -740,7 +740,6 @@ export class WorkflowNodeHook {
 
 export class WorkflowNodeOutgoingHook {
     id: number;
-    uuid: string;
     model: WorkflowHookModel;
     config: Map<string, WorkflowNodeHookConfigValue>;
     triggers: Array<WorkflowNodeTrigger>;
