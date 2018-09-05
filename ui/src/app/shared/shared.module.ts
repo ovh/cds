@@ -1,11 +1,14 @@
 import {CommonModule} from '@angular/common';
 import {CUSTOM_ELEMENTS_SCHEMA, NgModule} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
 import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 import {TranslateModule} from '@ngx-translate/core';
+import {NgxChartsModule} from '@swimlane/ngx-charts';
 import {MomentModule} from 'angular2-moment';
 import {NgSemanticModule} from 'ng-semantic/ng-semantic';
+import { ChartsModule } from 'ng2-charts';
 import {CodemirrorModule} from 'ng2-codemirror-typescript/Codemirror';
 import {DragulaModule} from 'ng2-dragula/ng2-dragula';
 import {SuiModule} from 'ng2-semantic-ui';
@@ -22,6 +25,7 @@ import {BroadcastLevelService} from './broadcast/broadcast.level.service';
 import {ConfirmButtonComponent} from './button/confirm/confirm.button';
 import {DeleteButtonComponent} from './button/delete/delete.button';
 import {UploadButtonComponent} from './button/upload/upload.button.component';
+import {ChartComponentComponent} from './chart/chart.component';
 import {CommitListComponent} from './commit/commit.list.component';
 import {DiffComponent} from './diff/diff.component';
 import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
@@ -96,13 +100,14 @@ import {ZoneComponent} from './zone/zone.component';
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
         CodemirrorModule, ReactiveFormsModule, MarkdownModule.forRoot(), NguiAutoCompleteModule, RouterModule,
-        SuiModule, NgxAutoScrollModule, InfiniteScrollModule],
+        SuiModule, NgxAutoScrollModule, InfiniteScrollModule, ChartsModule, NgxChartsModule],
     declarations: [
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
         AuditListComponent,
         BreadcrumbComponent,
+        ChartComponentComponent,
         CommitListComponent,
         CutPipe,
         DeleteButtonComponent,
@@ -188,6 +193,8 @@ import {ZoneComponent} from './zone/zone.component';
         ActionComponent,
         AuditListComponent,
         BreadcrumbComponent,
+        ChartsModule,
+        ChartComponentComponent,
         CodemirrorModule,
         CommitListComponent,
         CommonModule,

@@ -24,6 +24,7 @@
   },
   "private": true,
   "dependencies": {
+    "@angular/animations": "6.0.4",
     "@angular/common": "6.0.4",
     "@angular/compiler": "6.0.4",
     "@angular/core": "6.0.4",
@@ -35,6 +36,7 @@
     "@ngui/auto-complete": "^0.16.1",
     "@ngx-translate/core": "^9.0.1",
     "@ngx-translate/http-loader": "^2.0.0",
+    "@swimlane/ngx-charts": "^9.0.0",
     "@types/dagre-d3": "^0.4.36",
     "angular2-moment": "^1.0.0",
     "angular2-prettyjson": "2.0.5",
@@ -56,6 +58,7 @@
     "moment": "^2.17.1",
     "ng-event-source": "^1.0.9",
     "ng-semantic": "https://github.com/sguiheux/ngSemantic/tarball/sgu-master",
+    "ng2-charts": "^1.6.0",
     "ng2-codemirror-typescript": "^1.1.1",
     "ng2-completer": "^1.4.0",
     "ng2-dragula": "^1.2.1",
@@ -67,7 +70,6 @@
     "prismjs": "^1.15.0",
     "rxjs": "6.2.0",
     "rxjs-compat": "6.2.0",
-
     "semantic-ui": "2.2.13",
     "string-format-obj": "^1.1.1",
     "ts-helpers": "^1.1.1",

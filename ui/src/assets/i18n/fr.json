@@ -43,6 +43,13 @@
   "admin_status_title": "CDS Engine - Statut",
   "admin_queue_title": "File d'attente",
 
+  "application_home_repo": "Dépôt GIT",
+  "application_home_no_repo": "Lier un dépôt GIT",
+  "application_home_platform": "Liste des platformes liées",
+  "application_home_no_platform": "Lier une platforme",
+  "application_home_no_graph": "Aucun graphique à afficher (vulnerabilités, tests unitaires)",
+  "application_home_no_usage": "L'application n'est pas utilisée",
+
   "application_create": "Créer une application",
   "application_created": "Application créée",
   "application_deleted": "Application supprimée",
@@ -177,6 +184,7 @@
   "common_date_end": "Date de fin",
   "common_date_start": "Date de début",
   "common_description": "Description",
+  "common_home": "Vue d'ensemble",
   "common_icon": "Icône",
   "common_disabled_f": "Désactivée",
   "common_see_documentation": "Voir documentation",
@@ -324,6 +332,8 @@
   "broadcast_load_broadcasts": "Chargement des informations...",
   "broadcast_recent": "Récentes",
   "broadcast_seen": "Vues",
+
+  "graph_vulnerability_title": "Vulnérabilités",
 
   "group_added": "Groupe ajouté",
   "group_deleted": "Groupe supprimé",

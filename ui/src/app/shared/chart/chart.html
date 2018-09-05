@@ -1,0 +1,18 @@
+<ng-container [ngSwitch]="configuration.type">
+    <ng-container *ngSwitchCase="'area-stacked'">
+        <ngx-charts-area-chart-stacked
+                [view]="view"
+                [scheme]="configuration.colorScheme"
+                [results]="configuration.datas"
+                [gradient]="configuration.gradient"
+                [xAxis]="configuration.showXAxis"
+                [yAxis]="configuration.showYAxis"
+                [legend]="configuration.showLegend"
+                [showXAxisLabel]="configuration.showXAxisLabel"
+                [showYAxisLabel]="configuration.showYAxisLabel"
+                [xAxisLabel]="configuration.xAxisLabel"
+                [yAxisLabel]="configuration.yAxisLabel">
+        </ngx-charts-area-chart-stacked>
+
+    </ng-container>
+</ng-container>

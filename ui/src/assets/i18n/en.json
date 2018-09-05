@@ -43,6 +43,13 @@
   "admin_status_title": "Status of CDS Engine",
   "admin_queue_title": "Current CDS jobs queue",
 
+  "application_home_repo": "GIT repository",
+  "application_home_no_repo": "Link a repository",
+  "application_home_platform": "Linked platforms",
+  "application_home_no_platform": "Link a  platform",
+  "application_home_no_graph": "No graph to display (vulnerabilities, unit tests)",
+  "application_home_no_usage": "Application is not used",
+
   "application_create": "Create a new application",
   "application_created": "Application created",
   "application_deleted": "Application deleted",
@@ -177,6 +184,7 @@
   "common_date_end": "End",
   "common_date_start": "Start",
   "common_description": "Description",
+  "common_home": "Overview",
   "common_icon": "Icon",
   "common_disabled_f": "Disabled",
   "common_see_documentation": "See documentation",
@@ -324,6 +332,8 @@
   "broadcast_load_broadcasts": "Loading broadcasts...",
   "broadcast_recent": "Recent",
   "broadcast_seen": "Seen",
+
+  "graph_vulnerability_title": "Vulnerabilities",
 
   "group_added": "Group added",
   "group_deleted": "Group deleted",

@@ -24,7 +24,10 @@ type Configuration struct {
 		URL      string `toml:"url"`
 		Username string `toml:"username"`
 		Password string `toml:"password"`
-		Index    string `toml:"index"`
+		Indexes  []struct {
+			Role  string `toml:"role" commented:"true" comment:"events/metrics"`
+			Index string `toml:"index"`
+		} `toml:"indexes" commented:"true" comment:"Need 2 indexes, 1 for events, 1 for metrics"`
 	} `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n######################"`
 	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################"`
 }

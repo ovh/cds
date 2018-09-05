@@ -1,0 +1,59 @@
+<div class="ui grid">
+    <div class="ui twelve wide column">
+        <ng-container *ngIf="ready && dashboards && dashboards.length > 0">
+            <ng-container *ngFor="let d of dashboards">
+                <div class="dashboard">
+                    <h4>{{'graph_vulnerability_title' | translate }}</h4>
+                    <div class="graph">
+                        <app-chart [configuration]="d"></app-chart>
+                    </div>
+                </div>
+            </ng-container>
+
+        </ng-container>
+        <ng-container *ngIf="ready && dashboards && dashboards.length === 0">
+            <div class="ui info message">
+                {{ 'application_home_no_graph' | translate }}
+            </div>
+        </ng-container>
+    </div>
+    <div class="ui four wide column">
+        <div class="ui segment">
+            <h4>{{ 'application_home_repo' | translate }}</h4>
+            <ng-container *ngIf="application.vcs_server">
+                <ul><li>{{application.vcs_server + ' - ' + application.repository_fullname}}</li></ul>
+            </ng-container>
+            <ng-container *ngIf="!application.vcs_server">
+                <div class="ui info message">
+                    <a [routerLink]="['/project', project.key,'application', application.name]" [queryParams]="{tab: 'advanced'}">{{ 'application_home_no_repo' | translate }}</a>
+                </div>
+            </ng-container>
+            <h4>{{ 'application_home_platform' | translate }}</h4>
+                <ul *ngIf="application.deployment_strategies">
+                    <li *ngFor="let p of application.deployment_strategies | keys">
+                        {{ p }}
+                    </li>
+                </ul>
+                <div class="ui info message" *ngIf="!application.deployment_strategies">
+                    <a [routerLink]="['/project', project.key,'application', application.name]" [queryParams]="{tab: 'advanced'}">{{ 'application_home_no_platform' | translate }}</a>
+                </div>
+            <h4>{{ 'common_usage' | translate}}</h4>
+            <ng-container *ngIf="application.usage && application.usage.workflows">
+                <ul>
+                    <li *ngFor="let w of application.usage.workflows">
+                        <a [routerLink]="['/project', w.project_key, 'workflow', w.name]">{{w.name}}</a>
+                    </li>
+                </ul>
+            </ng-container>
+            <ng-container *ngIf="!application.usage || !application.usage.workflows || application.usage.workflows.length === 0">
+                <div class="ui info message">
+                    {{ 'application_home_no_usage' | translate }}
+                </div>
+            </ng-container>
+
+        </div>
+    </div>
+</div>
+
+
+

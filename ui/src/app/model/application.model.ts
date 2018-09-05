@@ -97,4 +97,33 @@ export class Severity {
     static HIGH = 'high';
     static CRITICAL = 'critical';
     static DEFCON1 = 'defcon1';
+
+    static Severities = [
+        Severity.UNKNOWN,
+        Severity.NEGLIGIBLE,
+        Severity.LOW,
+        Severity.MEDIUM,
+        Severity.HIGH,
+        Severity.CRITICAL,
+        Severity.DEFCON1
+    ];
+
+    static getMetricsColors(s: string) {
+        switch (s) {
+            case Severity.DEFCON1:
+                return '#000000';
+            case Severity.CRITICAL:
+                return '#8B0000';
+            case Severity.HIGH:
+                return '#FF4F60';
+            case Severity.MEDIUM:
+                return '#FFA500';
+            case Severity.LOW:
+                return '#21BA45';
+            case Severity.NEGLIGIBLE:
+                return '#808080';
+            case Severity.UNKNOWN:
+                return '#D3D3D3';
+        }
+    }
 }

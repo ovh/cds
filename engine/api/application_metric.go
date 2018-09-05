@@ -1,0 +1,39 @@
+package api
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/gorilla/mux"
+
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/metrics"
+	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
+)
+
+func (api *API) getApplicationMetricHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		appName := vars["permApplicationName"]
+		metricName := vars["metricName"]
+
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		if errA != nil {
+			return sdk.WrapError(errA, "getApplicationMetricHandler> unable to load application")
+		}
+
+		metricsRequest := sdk.MetricRequest{
+			ProjectKey:    key,
+			ApplicationID: app.ID,
+			Key:           metricName,
+		}
+		result, err := metrics.GetMetrics(api.mustDB(), metricsRequest)
+		if err != nil {
+			return sdk.WrapError(err, "getApplicationMetricHandler> Cannot get metrics")
+
+		}
+		return service.WriteJSON(w, result, http.StatusOK)
+	}
+}
