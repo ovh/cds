@@ -179,6 +179,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	case sdk.PluginAction:
 		//Define a loggin function
 		sendLog := getLogger(w, buildID, stepOrder)
+		log.Info("w.runGRPCPlugin")
 		//Run the plugin
 		return w.runGRPCPlugin(ctx, a, buildID, params, stepOrder, sendLog)
 	}
@@ -359,7 +360,6 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNod
 		fmt.Sprintf("%d", jobInfo.SubNumber),
 		fmt.Sprintf("%d", jobInfo.NodeJobRun.ID),
 		fmt.Sprintf("%d", jobInfo.NodeJobRun.Job.PipelineActionID))
-
 	wd := workingDirectory(w.basedir, pbJobPath)
 
 	if err := setupBuildDirectory(wd); err != nil {
@@ -369,6 +369,7 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNod
 			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
 		}
 	}
+	w.currentJob.workingDirectory = wd
 
 	//Add working directory as job parameter
 	jobInfo.NodeJobRun.Parameters = append(jobInfo.NodeJobRun.Parameters, sdk.Parameter{
@@ -469,6 +470,7 @@ func (w *currentWorker) run(ctx context.Context, pbji *sdk.PipelineBuildJobInfo)
 			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
 		}
 	}
+	w.currentJob.workingDirectory = wd
 
 	//Add working directory as job parameter
 	pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{

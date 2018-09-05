@@ -203,13 +203,41 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 	chanRes := make(chan sdk.Result, 1)
 
 	go func(buildID int64, params []sdk.Parameter) {
-		//For the moment we consider that plugin name = action name = plugin binary file name
+		//For the moment we consider that plugin name = action name
 		pluginName := a.Name
+		pluginSocket, err := startGRPCPlugin(ctx, pluginName, w, nil, startGRPCPluginOptions{
+			out: os.Stdout,
+			err: os.Stderr,
+		})
 
-		pluginSocket, has := w.mapPluginClient[pluginName]
-		if !has {
+		c, err := actionplugin.Client(context.Background(), pluginSocket.Socket)
+		if err != nil {
 			res := sdk.Result{
-				Reason: "Unable to retrieve plugin client... Aborting",
+				Reason: fmt.Sprintf("Unable to call grpc plugin... Aborting (%v)", err),
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(res.Reason)
+			chanRes <- res
+			return
+		}
+
+		pluginSocket.Client = c
+
+		m, err := c.Manifest(context.Background(), new(empty.Empty))
+		if err != nil {
+			res := sdk.Result{
+				Reason: fmt.Sprintf("Unable to call grpc plugin manifest... Aborting (%v)", err),
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(res.Reason)
+			chanRes <- res
+			return
+		}
+		log.Info("plugin successfully initialized: %#v", m)
+
+		if err != nil {
+			res := sdk.Result{
+				Reason: fmt.Sprintf("Unable to start plugin client... Aborting (%v)", err),
 				Status: sdk.StatusFail.String(),
 			}
 			sendLog(res.Reason)
@@ -248,27 +276,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		query := actionplugin.ActionQuery{
 			Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(a.Parameters)),
 		}
-
-		// env := []string{}
-		// //set up environment variables from pipeline build job parameters
-		// for _, p := range params {
-		// 	// avoid put private key in environment var as it's a binary value
-		// 	if (p.Type == sdk.KeyPGPParameter || p.Type == sdk.KeySSHParameter) && strings.HasSuffix(p.Name, ".priv") {
-		// 		continue
-		// 	}
-		// 	if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
-		// 		continue
-		// 	}
-		// 	envName := strings.Replace(p.Name, ".", "_", -1)
-		// 	envName = strings.ToUpper(envName)
-		// 	env = append(env, fmt.Sprintf("%s=%s", envName, p.Value))
-		// }
-		//
-		// for _, p := range w.currentJob.buildVariables {
-		// 	envName := strings.Replace(p.Name, ".", "_", -1)
-		// 	envName = strings.ToUpper(envName)
-		// 	env = append(env, fmt.Sprintf("%s=%s", envName, p.Value))
-		// }
 
 		result, err := actionPluginClient.Run(ctx, &query)
 		if err != nil {

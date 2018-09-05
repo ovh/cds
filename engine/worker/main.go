@@ -37,14 +37,15 @@ type currentWorker struct {
 		insecure bool
 	}
 	currentJob struct {
-		pbJob          sdk.PipelineBuildJob
-		wJob           *sdk.WorkflowNodeJobRun
-		currentStep    int
-		buildVariables []sdk.Variable
-		pkey           string
-		gitsshPath     string
-		params         []sdk.Parameter
-		secrets        []sdk.Variable
+		pbJob            sdk.PipelineBuildJob
+		wJob             *sdk.WorkflowNodeJobRun
+		currentStep      int
+		buildVariables   []sdk.Variable
+		pkey             string
+		gitsshPath       string
+		params           []sdk.Parameter
+		secrets          []sdk.Variable
+		workingDirectory string
 	}
 	status struct {
 		Name   string `json:"name"`

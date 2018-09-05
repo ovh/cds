@@ -16,7 +16,6 @@ import (
 	"github.com/shirou/gopsutil/mem"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -141,32 +140,6 @@ func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	} else {
 		log.Debug("plugin binary is in cache")
 	}
-
-	log.Info("Start GRPC plugin %s from checkPluginRequirement", binary.Name)
-	//Last but not least: start the plugin
-	socket, err := startGRPCPlugin(context.Background(), w, *binary, startGRPCPluginOptions{
-		out: os.Stdout,
-		err: os.Stderr,
-	})
-	if err != nil {
-		return false, err
-	}
-
-	c, err := actionplugin.Client(context.Background(), socket.Socket)
-	if err != nil {
-		return false, fmt.Errorf("unable to call grpc plugin: %v", err)
-	}
-
-	socket.Client = c
-
-	m, err := c.Manifest(context.Background(), new(empty.Empty))
-	if err != nil {
-		return false, fmt.Errorf("unable to call grpc plugin manifest: %v", err)
-	}
-
-	log.Info("plugin successfully initialized: %#v", m)
-
-	registerPluginClient(w, r.Name, socket)
 
 	return true, nil
 }
@@ -333,7 +306,7 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 	}
 
 	//Last but not least: start the plugin
-	socket, err := startGRPCPlugin(context.Background(), w, *binary, startGRPCPluginOptions{
+	socket, err := startGRPCPlugin(context.Background(), binary.PluginName, w, binary, startGRPCPluginOptions{
 		out: os.Stdout,
 		err: os.Stderr,
 	})

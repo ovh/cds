@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -55,15 +57,35 @@ func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClient
 	}
 }
 
-func startGRPCPlugin(ctx context.Context, w *currentWorker, p sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
+func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p *sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
+	currentOS := strings.ToLower(runtime.GOOS)
+	currentARCH := strings.ToLower(runtime.GOARCH)
+	pluginSocket, has := w.mapPluginClient[pluginName]
+	if has {
+		return pluginSocket, nil
+	}
+
+	binary := p
+	if binary == nil {
+		var errBi error
+		binary, errBi = w.client.PluginGetBinaryInfos(pluginName, currentOS, currentARCH)
+		if errBi != nil || binary == nil {
+			return nil, sdk.WrapError(errBi, "Unable to get plugin binary infos... Aborting")
+		}
+	}
+
 	c := pluginClientSocket{}
 
 	mOut := io.MultiWriter(opts.out, &c.BuffOut)
 	mErr := io.MultiWriter(opts.err, &c.BuffOut)
+	dir := w.currentJob.workingDirectory
+	if dir == "" {
+		dir = w.basedir
+	}
 
-	log.Info("Starting GRPC Plugin %s in dir %s", p.Name, w.basedir)
-	if err := grpcplugin.StartPlugin(ctx, w.basedir, p.Cmd, p.Args, opts.env, mOut, mErr); err != nil {
-		return nil, err
+	log.Info("Starting GRPC Plugin %s in dir %s", binary.Name, w.basedir)
+	if err := grpcplugin.StartPlugin(ctx, dir, path.Join(w.basedir, binary.Cmd), binary.Args, opts.env, mOut, mErr); err != nil {
+		return nil, sdk.WrapError(err, "Unable to start GRPC plugin... Aborting")
 	}
 	log.Info("GRPC Plugin started")
 
@@ -90,6 +112,7 @@ func startGRPCPlugin(ctx context.Context, w *currentWorker, p sdk.GRPCPluginBina
 	log.Info("socket %s ready", socket)
 
 	c.Socket = socket
+	registerPluginClient(w, pluginName, &c)
 
 	return &c, nil
 }
