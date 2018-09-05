@@ -3,7 +3,7 @@ package sdk
 import "time"
 
 const (
-	CategoryVulnerability = "Vulnerability"
+	MetricKeyVulnerability = "Vulnerability"
 )
 
 // Metric represent a CDS metric

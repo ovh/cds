@@ -1,14 +1,12 @@
 import {CommonModule} from '@angular/common';
 import {CUSTOM_ELEMENTS_SCHEMA, NgModule} from '@angular/core';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import {RouterModule} from '@angular/router';
 import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 import {TranslateModule} from '@ngx-translate/core';
 import {NgxChartsModule} from '@swimlane/ngx-charts';
 import {MomentModule} from 'angular2-moment';
 import {NgSemanticModule} from 'ng-semantic/ng-semantic';
-import { ChartsModule } from 'ng2-charts';
 import {CodemirrorModule} from 'ng2-codemirror-typescript/Codemirror';
 import {DragulaModule} from 'ng2-dragula/ng2-dragula';
 import {SuiModule} from 'ng2-semantic-ui';
@@ -100,7 +98,7 @@ import {ZoneComponent} from './zone/zone.component';
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
         CodemirrorModule, ReactiveFormsModule, MarkdownModule.forRoot(), NguiAutoCompleteModule, RouterModule,
-        SuiModule, NgxAutoScrollModule, InfiniteScrollModule, ChartsModule, NgxChartsModule],
+        SuiModule, NgxAutoScrollModule, InfiniteScrollModule, NgxChartsModule],
     declarations: [
         ActionComponent,
         ActionStepComponent,
@@ -193,7 +191,6 @@ import {ZoneComponent} from './zone/zone.component';
         ActionComponent,
         AuditListComponent,
         BreadcrumbComponent,
-        ChartsModule,
         ChartComponentComponent,
         CodemirrorModule,
         CommitListComponent,

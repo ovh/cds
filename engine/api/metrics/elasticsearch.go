@@ -2,14 +2,14 @@ package metrics
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+	"gopkg.in/olivere/elastic.v5"
 
-	"encoding/json"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"gopkg.in/olivere/elastic.v5"
 )
 
 var metricsChan chan sdk.Metric
@@ -40,7 +40,7 @@ func pushInElasticSearch(c context.Context, db gorp.SqlExecutor) {
 
 			code, errD := services.DoJSONRequest(context.Background(), esServices, "POST", "/metrics", e, nil)
 			if code >= 400 || errD != nil {
-				log.Error("metrics.send> Unable to send metricsto elasticsearch [%d]: %v", code, errD)
+				log.Error("metrics.send> Unable to send metrics to elasticsearch [%d]: %v", code, errD)
 				continue
 			}
 		}
@@ -54,13 +54,13 @@ func GetMetrics(db gorp.SqlExecutor, req sdk.MetricRequest) ([]json.RawMessage, 
 		return nil, sdk.WrapError(err, "GetMetrics> Unable to get elasticsearch service")
 	}
 
-	var esEvents []elastic.SearchHit
-	if _, err := services.DoJSONRequest(context.Background(), srvs, "GET", "/metrics", req, &esEvents); err != nil {
+	var esMetrics []elastic.SearchHit
+	if _, err := services.DoJSONRequest(context.Background(), srvs, "GET", "/metrics", req, &esMetrics); err != nil {
 		return nil, sdk.WrapError(err, "GetMetrics> Unable to get metrics")
 	}
 
-	events := make([]json.RawMessage, 0, len(esEvents))
-	for _, h := range esEvents {
+	events := make([]json.RawMessage, 0, len(esMetrics))
+	for _, h := range esMetrics {
 		events = append(events, *h.Source)
 	}
 	return events, nil

@@ -2,10 +2,10 @@ package application
 
 import (
 	"database/sql"
+	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
-	"encoding/json"
 	"github.com/ovh/cds/sdk"
 )
 
