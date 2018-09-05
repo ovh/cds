@@ -598,6 +598,15 @@ func (n *WorkflowNode) GetNodeByRef(ref string) *WorkflowNode {
 			return n2
 		}
 	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			n2 := (&n.OutgoingHooks[i].Triggers[j].WorkflowDestNode).GetNodeByRef(ref)
+			if n2 != nil {
+				return n2
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -613,6 +622,14 @@ func (n *WorkflowNode) GetNodeByName(name string) *WorkflowNode {
 		n2 := t.WorkflowDestNode.GetNodeByName(name)
 		if n2 != nil {
 			return n2
+		}
+	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			n2 := (&n.OutgoingHooks[i].Triggers[j].WorkflowDestNode).GetNodeByName(name)
+			if n2 != nil {
+				return n2
+			}
 		}
 	}
 	return nil
@@ -632,6 +649,14 @@ func (n *WorkflowNode) GetNode(id int64) *WorkflowNode {
 			return n
 		}
 	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			n2 := (&n.OutgoingHooks[i].Triggers[j].WorkflowDestNode).GetNode(id)
+			if n2 != nil {
+				return n2
+			}
+		}
+	}
 	return nil
 }
 
@@ -642,6 +667,11 @@ func (n *WorkflowNode) ResetIDs() {
 		t := &n.Triggers[i]
 		(&t.WorkflowDestNode).ResetIDs()
 	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			(&n.OutgoingHooks[i].Triggers[j].WorkflowDestNode).ResetIDs()
+		}
+	}
 }
 
 //Nodes returns a slice with all node IDs
@@ -649,6 +679,11 @@ func (n *WorkflowNode) Nodes() []WorkflowNode {
 	res := []WorkflowNode{*n}
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.Nodes()...)
+	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.Nodes()...)
+		}
 	}
 	return res
 }
@@ -674,6 +709,27 @@ func ancestor(id int64, node *WorkflowNode, deep bool) (map[int64]bool, bool) {
 				res[node.ID] = true
 			}
 			return res, true
+		}
+	}
+	for i := range node.OutgoingHooks {
+		for j := range node.OutgoingHooks[i].Triggers {
+			destNode := &node.OutgoingHooks[i].Triggers[j].WorkflowDestNode
+			if destNode.ID == id {
+				res[node.ID] = true
+				return res, true
+			}
+			ids, ok := ancestor(id, destNode, deep)
+			if ok {
+				if len(ids) == 1 || deep {
+					for k := range ids {
+						res[k] = true
+					}
+				}
+				if deep {
+					res[node.ID] = true
+				}
+				return res, true
+			}
 		}
 	}
 	return res, false
@@ -747,6 +803,11 @@ func (n *WorkflowNode) References() []string {
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.References()...)
 	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.References()...)
+		}
+	}
 	return res
 }
 
@@ -764,6 +825,11 @@ func (n *WorkflowNode) InvolvedApplications() []int64 {
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedApplications()...)
 	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedApplications()...)
+		}
+	}
 	return res
 }
 
@@ -772,6 +838,11 @@ func (n *WorkflowNode) InvolvedPipelines() []int64 {
 	res := []int64{}
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedPipelines()...)
+	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedPipelines()...)
+		}
 	}
 	return res
 }
@@ -785,6 +856,11 @@ func (n *WorkflowNode) GetApplications() []Application {
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.GetApplications()...)
 	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.GetApplications()...)
+		}
+	}
 	return res
 }
 
@@ -796,6 +872,11 @@ func (n *WorkflowNode) GetEnvironments() []Environment {
 	}
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.GetEnvironments()...)
+	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.GetEnvironments()...)
+		}
 	}
 	return res
 }
@@ -814,6 +895,11 @@ func (n *WorkflowNode) InvolvedEnvironments() []int64 {
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedEnvironments()...)
 	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedEnvironments()...)
+		}
+	}
 	return res
 }
 
@@ -830,6 +916,11 @@ func (n *WorkflowNode) InvolvedPlatforms() []int64 {
 	}
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedPlatforms()...)
+	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedPlatforms()...)
+		}
 	}
 	return res
 }
