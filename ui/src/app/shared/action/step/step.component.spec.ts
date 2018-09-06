@@ -10,9 +10,10 @@ import {SharedModule} from '../../shared.module';
 import {ActionStepComponent} from './step.component';
 import {Action} from '../../../model/action.model';
 import {StepEvent} from './step.event';
+import {APP_BASE_HREF} from '@angular/common';
 
 
-describe('CDS: Action Component', () => {
+describe('CDS: Step Component', () => {
 
     let injector: Injector;
 
@@ -25,7 +26,8 @@ describe('CDS: Action Component', () => {
                 TranslateService,
                 ParameterService,
                 TranslateParser,
-                TranslateLoader
+                TranslateLoader,
+                { provide: APP_BASE_HREF , useValue : '/' }
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),

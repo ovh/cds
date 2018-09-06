@@ -11,6 +11,7 @@ import {ParameterEvent} from '../parameter.event.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Parameter List Component', () => {
 
@@ -24,6 +25,7 @@ describe('CDS: Parameter List Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 RepoManagerService,
+                { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),

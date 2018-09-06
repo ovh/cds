@@ -7,6 +7,7 @@ import {VariableAudit} from '../../../model/variable.model';
 import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
 import {VariableAuditComponent} from './audit.component';
+import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Variable Audit Component', () => {
 
@@ -21,6 +22,7 @@ describe('CDS: Variable Audit Component', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
+                { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports : [
                 TranslateModule.forRoot(),
