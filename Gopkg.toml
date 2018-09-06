@@ -27,11 +27,6 @@
   revision= "3653aff4d509dd87a6ba41b82d57c0c662733e14"
 
 [[override]]
-  name = "github.com/jgsqware/clairctl"
-  revision = "1abcd3df1954c818185a75e8c9dd3e1abcfe1380"
-  source = "github.com/sguiheux/clairctl"
-
-[[override]]
   name = "github.com/opencontainers/runc"
   revision = "bc1467269fce13e9780345cfa25f9ca530601aba"
 

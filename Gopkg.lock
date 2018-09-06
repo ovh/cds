@@ -146,17 +146,8 @@
   revision = "003851be7bb0694fe3cc457a49529a19388ee7cf"
 
 [[projects]]
-  name = "github.com/coreos/go-systemd"
-  packages = ["journal"]
-  revision = "39ca1b05acc7ad1220e09f133283b8859a8b71ab"
-  version = "v17"
-
-[[projects]]
   name = "github.com/coreos/pkg"
-  packages = [
-    "capnslog",
-    "timeutil"
-  ]
+  packages = ["timeutil"]
   revision = "97fdf19511ea361ae1c100dd393cc47f8dcfa1e1"
   version = "v4"
 
@@ -669,19 +660,6 @@
   packages = ["."]
   revision = "97b4a9da79331dfa2b6d35f4cdd1e50f5148859c"
   version = "1.0.0"
-
-[[projects]]
-  name = "github.com/jgsqware/clairctl"
-  packages = [
-    "clair",
-    "config",
-    "docker",
-    "docker/dockercli",
-    "docker/dockerdist",
-    "xstrings"
-  ]
-  revision = "1abcd3df1954c818185a75e8c9dd3e1abcfe1380"
-  source = "github.com/sguiheux/clairctl"
 
 [[projects]]
   branch = "master"
@@ -1608,6 +1586,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d8ff2acec9ffd42c4fda904cc2e73ba8c9b2904e043beaa6dc8edcb57ceefcc5"
+  inputs-digest = "f37dc9664c73099fc0c9f399ccb3398f94129c055df9c3f098f30931988436b6"
   solver-name = "gps-cdcl"
   solver-version = 1
