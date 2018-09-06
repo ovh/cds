@@ -704,7 +704,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 
 		status, err := QueryStrings(r, "status")
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Cannot parse request")
+			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		if !sdk.StatusValidate(status...) {
 			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given status"))

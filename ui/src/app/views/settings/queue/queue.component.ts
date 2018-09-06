@@ -3,6 +3,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
 import {environment} from '../../../../environments/environment';
+import {PipelineStatus} from '../../../model/pipeline.model';
 import {User} from '../../../model/user.model';
 import {WorkflowNodeJobRun} from '../../../model/workflow.run.model';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
@@ -29,7 +30,7 @@ export class QueueComponent implements OnDestroy {
     requirementsList: Array<string> = [];
     loading = true;
 
-    statusOptions: Array<string> = ['Waiting', 'Building', 'All'];
+    statusOptions: Array<string> = [PipelineStatus.WAITING, PipelineStatus.BUILDING];
     status: string;
 
     constructor(
@@ -51,19 +52,19 @@ export class QueueComponent implements OnDestroy {
         }
     }
 
-    getQueueWorkerParams() {
-        console.log(this.status)
+    statusFilterChange(status: string): void {
+        this.status = status;
+        this.queueWorker.stop();
+        this.queueWorker.start(this.getQueueWorkerParams());
+    }
+
+    getQueueWorkerParams(): any {
         return {
             'user': this._authStore.getUser(),
             'session': this._authStore.getSessionToken(),
             'api': environment.apiURL,
-            'status': this.status === 'All' ? this.statusOptions.filter(s => s !== 'All') : [this.status]
+            'status': this.status === 'all' ? this.statusOptions : [this.status]
         };
-    }
-
-    getNodeJobRuns() {
-        this.queueWorker.sendMsg(this.getQueueWorkerParams());
-        return this.nodeJobRuns;
     }
 
     startWorker() {

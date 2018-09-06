@@ -2,16 +2,16 @@
     <h3>{{'admin_status_title' | translate }}</h3>
 
     <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
-    
+
     <div class="ui five wide column" *ngIf="status && !loading">
         <div class="ui fluid input">
-            <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
+            <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter" (keyup)="filterChange()">
         </div>
     </div>
 
     <table class="ui definition table" *ngIf="status && !loading">
         <tbody>
-            <tr *ngFor="let line of getStatusLines()" [ngClass]="{'error': line.status=='AL', 'warning': line.status=='WARN', 'positive': line.status=='WARN'}">
+            <tr *ngFor="let line of filteredStatusLines" [ngClass]="{'error': line.status==='AL', 'warning': line.status==='WARN', 'positive': line.status==='WARN'}">
                 <td>
                     {{line.component}}
                 </td>

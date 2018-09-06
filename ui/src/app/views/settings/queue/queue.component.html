@@ -3,10 +3,12 @@
 
     <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
 
-    <sm-select class="search fluid"
+    <sm-select class="fluid"
         *ngIf="!loading"
-        [(model)]="status">
+        [model]="status"
+        (onChange)="statusFilterChange($event)">
         <option *ngFor="let t of statusOptions" value="{{t}}">{{t | translate}}</option>
+        <option value="all">{{'All' | translate}}</option>
     </sm-select>
 
     <table class="ui fixed celled table" *ngIf="!loading">
@@ -24,7 +26,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let wNodeJobRun of getNodeJobRuns(); let index = index">
+        <tr *ngFor="let wNodeJobRun of nodeJobRuns; let index = index">
             <td>
                 {{wNodeJobRun.queued | amTimeAgo}}
             </td>

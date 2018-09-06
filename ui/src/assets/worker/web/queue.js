@@ -5,7 +5,9 @@ var status = [];
 
 onmessage = function (e) {
     status = e.data.status;
-    if (!started) { loadWorkflowRuns(e.data.user, e.data.session, e.data.api); }
+    if (!started) {
+        loadWorkflowRuns(e.data.user, e.data.session, e.data.api);
+    }
 };
 
 function loadWorkflowRuns(user, session, api) {
@@ -14,7 +16,7 @@ function loadWorkflowRuns(user, session, api) {
         var url = '/queue/workflows';
 
         if (status && status.length > 0) {
-            url = url.concat('?', status.map(function (s) { return "status=" + s; }).join('&'))
+            url = url.concat('?', status.map(function (s) { return 'status=' + s; }).join('&'))
         }
 
         var xhr = httpCall(url, api, user, session);
