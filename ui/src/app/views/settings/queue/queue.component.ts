@@ -31,7 +31,7 @@ export class QueueComponent implements OnDestroy {
     loading = true;
 
     statusOptions: Array<string> = [PipelineStatus.WAITING, PipelineStatus.BUILDING];
-    status: string;
+    status: Array<string>;
 
     constructor(
         private _authStore: AuthentificationStore,
@@ -41,7 +41,7 @@ export class QueueComponent implements OnDestroy {
     ) {
         this.zone = new NgZone({ enableLongStackTrace: false });
         this.loading = true;
-        this.status = this.statusOptions[0];
+        this.status = [this.statusOptions[0]];
         this.user = this._authStore.getUser();
         this.startWorker();
     }
@@ -52,8 +52,7 @@ export class QueueComponent implements OnDestroy {
         }
     }
 
-    statusFilterChange(status: string): void {
-        this.status = status;
+    statusFilterChange(): void {
         this.queueWorker.stop();
         this.queueWorker.start(this.getQueueWorkerParams());
     }
@@ -63,7 +62,7 @@ export class QueueComponent implements OnDestroy {
             'user': this._authStore.getUser(),
             'session': this._authStore.getSessionToken(),
             'api': environment.apiURL,
-            'status': this.status === 'all' ? this.statusOptions : [this.status]
+            'status': this.status.length > 0 ? this.status : this.statusOptions
         };
     }
 

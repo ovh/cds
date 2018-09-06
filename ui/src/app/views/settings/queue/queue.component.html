@@ -3,13 +3,18 @@
 
     <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
 
-    <sm-select class="fluid"
+    <sui-multi-select class="selection"
         *ngIf="!loading"
-        [model]="status"
-        (onChange)="statusFilterChange($event)">
-        <option *ngFor="let t of statusOptions" value="{{t}}">{{t | translate}}</option>
-        <option value="all">{{'All' | translate}}</option>
-    </sm-select>
+        [(ngModel)]="status"
+        [options]="statusOptions"
+        [isSearchable]="true"
+        (ngModelChange)="statusFilterChange()"
+        #multiSelect>
+        <sui-select-option
+            *ngFor="let option of multiSelect.filteredOptions"
+            [value]="option">
+        </sui-select-option>
+    </sui-multi-select>
 
     <table class="ui fixed celled table" *ngIf="!loading">
         <thead>
