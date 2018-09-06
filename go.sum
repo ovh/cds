@@ -52,11 +52,16 @@ github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/docker/cli v0.0.0-20180712011953-7178075fdad6 h1:pLY+ZkBfTNWBJoFgjUIzA/cAjDsuJWHYH3EMu7jbRUA=
 github.com/docker/cli v0.0.0-20180712011953-7178075fdad6/go.mod h1:JLrzqnKDaYBop7H2jaqPtU4hHvMKP+vjCwu2uszcLI8=
 github.com/docker/distribution v0.0.0-20180611183926-749f6afb4572 h1:i5cGFDf/s0ocGJXaJHJR+NiDgMb5oLoUNpGlRZqurlY=
 github.com/docker/distribution v0.0.0-20180611183926-749f6afb4572/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
+github.com/docker/distribution v2.6.2+incompatible h1:4FI6af79dfCS/CYb+RRtkSHw3q1L/bnDjG1PcPZtQhM=
+github.com/docker/distribution v2.6.2+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker v0.0.0-20180719120607-683738900eec h1:uwuIXL3LeNTL1kgPAy0A0dmIse0AfxNDNK6NkbnyS/I=
 github.com/docker/docker v0.0.0-20180719120607-683738900eec/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
+github.com/docker/docker v1.13.1 h1:5VBhsO6ckUxB0A8CE5LlUJdXzik9cbEbBTQ/ggeml7M=
+github.com/docker/docker v1.13.1/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/docker/docker-credential-helpers v0.6.1 h1:Dq4iIfcM7cNtddhLVWe9h4QDjsi4OER3Z8voPu/I52g=
 github.com/docker/docker-credential-helpers v0.6.1/go.mod h1:WRaJzqw3CTB9bk10avuGsjVBZsD05qeibJ1/TYlvc0Y=
 github.com/docker/go-connections v0.3.0 h1:3lOnM9cSzgGwx8VfK/NGOW5fLQ0GjIlCkaktF+n1M6o=
@@ -406,5 +411,6 @@ k8s.io/api v0.0.0-20180126130815-dc0dd48d5a5c h1:cPMuLKVgehzf6f4tql8Y4XoPyZrlHVS
 k8s.io/api v0.0.0-20180126130815-dc0dd48d5a5c/go.mod h1:iuAfoD4hCxJ8Onx9kaTIt30j7jUFS00AXQi6QMi99vA=
 k8s.io/apimachinery v0.0.0-20180126010535-b621949a1923 h1:4Uzp2I/Ar+TotUhapluIPoXFCdj32d0v1JADomASbRU=
 k8s.io/apimachinery v0.0.0-20180126010535-b621949a1923/go.mod h1:ccL7Eh7zubPUSh9A3USN90/OzHNSVN6zxzde07TDCL0=
-k8s.io/client-go v6.0.0+incompatible h1:fORuoDQSqHGLqNG19yyYR/6hqL3Nxjwi4lyJC2o08XY=
+k8s.io/client-go v6.0.0+incompatible h1:kskJ2eeKafKUmOhH9xa02lGTs96aoQi3ZKyzIo62sJg=
 k8s.io/client-go v6.0.0+incompatible/go.mod h1:7vJpHMYJwNQCWgzmNV+VYUl1zCObLyodBc8nIyt8L5s=
+k8s.io/client-go v8.0.0+incompatible h1:2pUaSg2x6iEHr8cia6zmWhoCXG1EDG9TCx9s//Aq7HY=

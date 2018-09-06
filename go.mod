@@ -10,7 +10,7 @@ require (
 	github.com/aokoli/goutils v1.0.1
 	github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05 // indirect
 	github.com/armon/consul-api v0.0.0-20150107205647-dcfedd50ed53 // indirect
-	github.com/artyom/untar v0.0.0-20160228112026-02ed5a2449a6 // indirect
+	github.com/artyom/untar v0.0.0-20160228112026-02ed5a2449a6
 	github.com/beorn7/perks v0.0.0-20160804104726-4c0e84591b9a // indirect
 	github.com/bgentry/speakeasy v0.0.0-20160813190634-a1ccbf2c40df
 	github.com/bitly/go-hostpool v0.0.0-20171023180738-a3a6125de932 // indirect
@@ -20,15 +20,15 @@ require (
 	github.com/chzyer/readline v0.0.0-20171208011716-f6d7a1f6fbf3
 	github.com/containerd/containerd v1.1.2 // indirect
 	github.com/containerd/continuity v0.0.0-20180712174259-0377f7d76720 // indirect
-	github.com/coreos/clair v2.0.4+incompatible // indirect
+	github.com/coreos/clair v2.0.4+incompatible
 	github.com/coreos/go-etcd v0.0.0-20151026160318-003851be7bb0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20180511133405-39ca1b05acc7 // indirect
 	github.com/coreos/pkg v0.0.0-20180108230652-97fdf19511ea // indirect
 	github.com/cpuguy83/go-md2man v0.0.0-20171223160537-8d868be6e9bf // indirect
 	github.com/danieljoos/wincred v1.0.1 // indirect
-	github.com/docker/cli v0.0.0-20180712011953-7178075fdad6 // indirect
-	github.com/docker/distribution v0.0.0-20180611183926-749f6afb4572
-	github.com/docker/docker v0.0.0-20180719120607-683738900eec
+	github.com/docker/cli v0.0.0-20180712011953-7178075fdad6
+	github.com/docker/distribution v2.6.2+incompatible
+	github.com/docker/docker v1.13.1
 	github.com/docker/docker-credential-helpers v0.6.1
 	github.com/docker/go-connections v0.3.0
 	github.com/docker/go-metrics v0.0.0-20180209012529-399ea8c73916 // indirect
@@ -86,7 +86,7 @@ require (
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/itsjamie/gin-cors v0.0.0-20160420130702-97b4a9da7933
 	github.com/jgsqware/clairctl v1.2.8
-	github.com/jgsqware/xnet v0.0.0-20170203143001-13630f0737d2 // indirect
+	github.com/jgsqware/xnet v0.0.0-20170203143001-13630f0737d2
 	github.com/json-iterator/go v0.0.0-20171115153421-f7279a603ede // indirect
 	github.com/juju/ratelimit v1.0.1 // indirect
 	github.com/julienschmidt/httprouter v0.0.0-20150421170007-8c199fb6259f // indirect
@@ -118,7 +118,7 @@ require (
 	github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace // indirect
 	github.com/oklog/run v1.0.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
-	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
+	github.com/opencontainers/go-digest v1.0.0-rc1
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/opencontainers/runc v0.0.0-20180718062236-bc1467269fce // indirect
 	github.com/opencontainers/runtime-spec v1.0.1 // indirect
