@@ -28,6 +28,7 @@ export class QueueComponent implements OnDestroy {
     nodeJobRuns: Array<WorkflowNodeJobRun> = [];
     parametersMaps: Array<{}> = [];
     requirementsList: Array<string> = [];
+    bookedOrBuildingByList: Array<string> = [];
     loading = true;
 
     statusOptions: Array<string> = [PipelineStatus.WAITING, PipelineStatus.BUILDING];
@@ -87,12 +88,22 @@ export class QueueComponent implements OnDestroy {
 
                 if (Array.isArray(this.nodeJobRuns) && this.nodeJobRuns.length > 0) {
                     this.requirementsList = [];
+                    this.bookedOrBuildingByList = [];
                     this.parametersMaps = this.nodeJobRuns.map((nj) => {
                         if (this.user.admin && nj.job && nj.job.action && nj.job.action.requirements) {
                             let requirements = nj.job.action.requirements
                                 .reduce((reqs, req) => `type: ${req.type}, value: ${req.value}; ${reqs}`, '');
                             this.requirementsList.push(requirements);
                         }
+                        this.bookedOrBuildingByList.push(((): string => {
+                            if (nj.status === PipelineStatus.BUILDING) {
+                                return nj.job.worker_name;
+                            }
+                            if (nj.bookedby !== null) {
+                                return nj.bookedby.name;
+                            }
+                            return '';
+                        })());
                         if (!nj.parameters) {
                             return null;
                         }

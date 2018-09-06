@@ -8,6 +8,8 @@ export class Job {
     last_modified: string;
     step_status: Array<StepStatus>;
     warnings: Array<ActionWarning>;
+    worker_name: string;
+    worker_id: string;
 
     // UI parameter
     hasChanged: boolean;
