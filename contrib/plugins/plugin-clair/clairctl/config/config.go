@@ -32,44 +32,11 @@ import (
 )
 
 var IsLocal = false
-var Insecure = false
-var NoClean = false
 
 var ImageName string
 
-type reportConfig struct {
-	Path, Format string
-}
-type clairConfig struct {
-	URI              string
-	Port, HealthPort int
-	Report           reportConfig
-}
-type authConfig struct {
-	InsecureSkipVerify bool
-}
-type clairctlConfig struct {
-	IP, Interface, TempFolder string
-	Port                      int
-}
-type docker struct {
-	InsecureRegistries []string
-}
-
-type config struct {
-	Clair    clairConfig
-	Auth     authConfig
-	Clairctl clairctlConfig
-	Docker   docker
-}
-
 func TmpLocal() string {
 	return viper.GetString("clairctl.tempFolder")
-}
-
-type Login struct {
-	Username string
-	Password string
 }
 
 //LocalServerIP return the local clairctl server IP
