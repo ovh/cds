@@ -23,19 +23,13 @@ CODE FROM https://github.com/jgsqware/clairctl
 package config
 
 import (
-	"errors"
 	"fmt"
 	"net"
-	"os"
-	"os/user"
 	"strings"
 
 	"github.com/jgsqware/xnet"
 	"github.com/spf13/viper"
 )
-
-var errNoInterfaceProvided = errors.New("could not load configuration: no interface provided")
-var errInvalidInterface = errors.New("Interface does not exist")
 
 var IsLocal = false
 var Insecure = false
@@ -73,54 +67,9 @@ func TmpLocal() string {
 	return viper.GetString("clairctl.tempFolder")
 }
 
-func values() config {
-	return config{
-		Clair: clairConfig{
-			URI:        viper.GetString("clair.uri"),
-			Port:       viper.GetInt("clair.port"),
-			HealthPort: viper.GetInt("clair.healthPort"),
-			Report: reportConfig{
-				Path:   viper.GetString("clair.report.path"),
-				Format: viper.GetString("clair.report.format"),
-			},
-		},
-		Auth: authConfig{
-			InsecureSkipVerify: viper.GetBool("auth.insecureSkipVerify"),
-		},
-		Clairctl: clairctlConfig{
-			IP:         viper.GetString("clairctl.ip"),
-			Port:       viper.GetInt("clairctl.port"),
-			TempFolder: viper.GetString("clairctl.tempFolder"),
-			Interface:  viper.GetString("clairctl.interface"),
-		},
-		Docker: docker{
-			InsecureRegistries: viper.GetStringSlice("docker.insecure-registries"),
-		},
-	}
-}
-
-func ClairctlHome() string {
-	usr, err := user.Current()
-	if err != nil {
-		panic(err)
-	}
-	p := usr.HomeDir + "/.clairctl"
-
-	if _, err := os.Stat(p); os.IsNotExist(err) {
-		os.Mkdir(p, 0700)
-	}
-	return p
-}
-
 type Login struct {
 	Username string
 	Password string
-}
-
-type loginMapping map[string]Login
-
-func ClairctlConfig() string {
-	return ClairctlHome() + "/config.json"
 }
 
 //LocalServerIP return the local clairctl server IP
