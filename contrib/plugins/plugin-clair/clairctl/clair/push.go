@@ -1,3 +1,25 @@
+/*
+
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+
+CODE FROM https://github.com/jgsqware/clairctl
+
+*/
 package clair
 
 import (
@@ -15,8 +37,8 @@ import (
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/reference"
-	"github.com/jgsqware/clairctl/config"
-	"github.com/jgsqware/clairctl/docker/dockerdist"
+	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/config"
+	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/docker/dockerdist"
 	"github.com/spf13/viper"
 )
 
@@ -59,7 +81,11 @@ func Push(image reference.NamedTagged, manifest distribution.Manifest) error {
 
 func pushLayer(layer v1.LayerEnvelope) error {
 	if !config.IsLocal {
-		layer = auth(layer)
+		var err error
+		layer, err = auth(layer)
+		if err != nil {
+			return fmt.Errorf("pushLayer error auth: %v", err)
+		}
 	}
 
 	lJSON, err := json.Marshal(layer)
@@ -91,31 +117,26 @@ func pushLayer(layer v1.LayerEnvelope) error {
 	return nil
 }
 
-func auth(layer v1.LayerEnvelope) v1.LayerEnvelope {
-
+func auth(layer v1.LayerEnvelope) (v1.LayerEnvelope, error) {
 	out, _ := url.Parse(layer.Layer.Path)
 	client := &http.Client{Transport: &http.Transport{
 		TLSClientConfig:    &tls.Config{InsecureSkipVerify: viper.GetBool("auth.insecureSkipVerify")},
 		DisableCompression: true,
 	}}
 
-	log.Debugf("auth.insecureSkipVerify: %v", viper.GetBool("auth.insecureSkipVerify"))
-	log.Debugf("request.URL.String(): %v", out)
 	req, _ := http.NewRequest("HEAD", out.String(), nil)
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Errorf("response error: %v", err)
-		return v1.LayerEnvelope{}
+		return v1.LayerEnvelope{}, fmt.Errorf("response error: %v", err)
 	}
 
 	if resp.StatusCode == http.StatusUnauthorized {
-		log.Info("pull from clair is unauthorized")
 		dockerdist.AuthenticateResponse(client, resp, req)
 	}
 	layer.Layer.Headers = make(map[string]string)
 	layer.Layer.Headers["Authorization"] = req.Header.Get("Authorization")
-	return layer
+	return layer, nil
 }
 
 func blobsURI(registry string, name string, digest string) string {
@@ -123,19 +144,8 @@ func blobsURI(registry string, name string, digest string) string {
 }
 
 func insertRegistryMapping(layerDigest string, registryURI string) {
-
 	hostURL, _ := dockerdist.GetPushURL(registryURI)
-	log.Debugf("Saving %s[%s]", layerDigest, hostURL.String())
 	registryMapping[layerDigest] = hostURL.String()
-}
-
-//GetRegistryMapping return the registryURI corresponding to the layerID passed as parameter
-func GetRegistryMapping(layerDigest string) (string, error) {
-	registryURI, present := registryMapping[layerDigest]
-	if !present {
-		return "", fmt.Errorf("%v mapping not found", layerDigest)
-	}
-	return registryURI, nil
 }
 
 func init() {

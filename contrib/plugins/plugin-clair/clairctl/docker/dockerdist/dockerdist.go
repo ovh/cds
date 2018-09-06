@@ -1,3 +1,26 @@
+/*
+
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+
+CODE FROM https://github.com/jgsqware/clairctl
+
+*/
+
 // Copyright 2016 CoreOS, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,31 +41,28 @@ package dockerdist
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/url"
 	"reflect"
 
 	"strings"
 
-	"github.com/coreos/pkg/capnslog"
+	"github.com/docker/cli/cli/config"
 	distlib "github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/v2"
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/cli/cli/config"
 	"github.com/docker/docker/distribution"
 	"github.com/docker/docker/dockerversion"
-	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/registry"
 	"github.com/opencontainers/go-digest"
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 )
-
-var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockerdist")
-
-var ErrTagNotFound = errors.New("this image or tag is not found")
 
 func isInsecureRegistry(registryHostname string) bool {
 	for _, r := range viper.GetStringSlice("docker.insecure-registries") {
@@ -66,15 +86,15 @@ func getService() (*registry.DefaultService, error) {
 func getRepositoryClient(image reference.Named, insecure bool, scopes ...string) (distlib.Repository, error) {
 	service, err := getService()
 	if err != nil {
-		log.Debugf("Cannot get service: %v", err)
+		fmt.Printf("Cannot get service: %v\n", err)
 		return nil, err
 	}
-	log.Debugf("Retrieving repository client")
+	fmt.Printf("Retrieving repository client\n")
 
 	ctx := context.Background()
 	authConfig, err := GetAuthCredentials(image.String())
 	if err != nil {
-		log.Debugf("GetAuthCredentials error: %v", err)
+		fmt.Printf("GetAuthCredentials error: %v\n", err)
 		return nil, err
 	}
 
@@ -83,21 +103,21 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		userAgent := dockerversion.DockerUserAgent(ctx)
 		_, _, err = service.Auth(ctx, &authConfig, userAgent)
 		if err != nil {
-			log.Debugf("Auth: err: %v", err)
+			fmt.Printf("Auth: err: %v\n", err)
 			return nil, err
 		}
 	}
 
 	repoInfo, err := service.ResolveRepository(image)
 	if err != nil {
-		log.Debugf("ResolveRepository err: %v", err)
+		fmt.Printf("ResolveRepository err: %v\n", err)
 		return nil, err
 	}
 
 	metaHeaders := map[string][]string{}
 	endpoints, err := service.LookupPullEndpoints(reference.Domain(image))
 	if err != nil {
-		log.Debugf("registry.LookupPullEndpoints error: %v", err)
+		fmt.Printf("registry.LookupPullEndpoints error: %v\n", err)
 		return nil, err
 	}
 
@@ -105,7 +125,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	var repository distlib.Repository
 	for _, endpoint := range endpoints {
 		if confirmedV2 && endpoint.Version == registry.APIVersion1 {
-			log.Debugf("Skipping v1 endpoint %s because v2 registry was detected", endpoint.URL)
+			fmt.Printf("Skipping v1 endpoint %s because v2 registry was detected\n", endpoint.URL)
 			continue
 		}
 
@@ -113,10 +133,10 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		if isInsecureRegistry(endpoint.URL.Host) {
 			endpoint.URL.Scheme = "http"
 		}
-		log.Debugf("endpoint.TLSConfig.InsecureSkipVerify: %v", endpoint.TLSConfig.InsecureSkipVerify)
+		fmt.Printf("endpoint.TLSConfig.InsecureSkipVerify: %v\n", endpoint.TLSConfig.InsecureSkipVerify)
 		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
 		if err != nil {
-			log.Debugf("cannot instanciate new v2 repository on %v", endpoint.URL)
+			fmt.Printf("cannot instanciate new v2 repository on %v\n", endpoint.URL)
 			return nil, err
 		}
 
@@ -132,12 +152,12 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 func GetPushURL(hostname string) (*url.URL, error) {
 	service, err := getService()
 	if err != nil {
-		log.Debugf("Cannot get service: %v", err)
+		fmt.Printf("Cannot get service: %v\n", err)
 		return nil, err
 	}
 	endpoints, err := service.LookupPushEndpoints(hostname)
 	if err != nil {
-		log.Debugf("registry.LookupPushEndpoints error: %v", err)
+		fmt.Printf("registry.LookupPushEndpoints error: %v\n", err)
 		return nil, err
 	}
 
@@ -180,7 +200,7 @@ func getDigest(ctx context.Context, repo distlib.Repository, image reference.Nam
 		}
 
 		if strings.Contains(err.Error(), v2.ErrorCodeManifestUnknown.Message()) {
-			return "", ErrTagNotFound
+			return "", errors.New("this image or tag is not found")
 		}
 
 		return "", err
@@ -209,7 +229,7 @@ func GetAuthCredentials(image string) (types.AuthConfig, error) {
 
 // DownloadManifest the manifest for the given image, using the given credentials.
 func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distlib.Manifest, error) {
-	log.Debugf("Downloading manifest for %v", image)
+	fmt.Printf("Downloading manifest for %v\n", image)
 	// Parse the image name as a docker image reference.
 	n, err := reference.ParseNamed(image)
 	if err != nil {
@@ -244,7 +264,7 @@ func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distl
 	}
 
 	// Verify the manifest if it's signed.
-	log.Debugf("manifest type: %v", reflect.TypeOf(manifest))
+	fmt.Printf("manifest type: %v\n", reflect.TypeOf(manifest))
 
 	switch manifest.(type) {
 	case *schema1.SignedManifest:
@@ -253,7 +273,7 @@ func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distl
 			return nil, nil, verr
 		}
 	case *schema2.DeserializedManifest:
-		log.Debugf("retrieved schema2 manifest, no verification")
+		fmt.Printf("retrieved schema2 manifest, no verification\n")
 	default:
 		log.Printf("Could not verify manifest for image %v: not signed", image)
 	}

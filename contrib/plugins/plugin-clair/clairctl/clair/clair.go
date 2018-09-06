@@ -1,3 +1,25 @@
+/*
+
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+
+CODE FROM https://github.com/jgsqware/clairctl
+
+*/
 package clair
 
 import (
@@ -5,12 +27,8 @@ import (
 	"strings"
 
 	"github.com/coreos/clair/api/v1"
-	"github.com/coreos/pkg/capnslog"
-	"github.com/jgsqware/clairctl/xstrings"
 	"github.com/spf13/viper"
 )
-
-var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "clair")
 
 var uri string
 var healthURI string
@@ -31,7 +49,6 @@ func (imageAnalysis ImageAnalysis) MostRecentLayer() v1.LayerEnvelope {
 }
 
 func fmtURI(u string, port int) string {
-
 	if port != 0 {
 		u += ":" + strconv.Itoa(port)
 	}
@@ -42,14 +59,8 @@ func fmtURI(u string, port int) string {
 	return u
 }
 
-func (imageAnalysis ImageAnalysis) ShortName(l v1.Layer) string {
-	return xstrings.Substr(l.Name, 0, 12)
-}
-
 //Config configure Clair from configFile
 func Config() {
 	uri = fmtURI(viper.GetString("clair.uri"), viper.GetInt("clair.port")) + "/v1"
 	healthURI = fmtURI(viper.GetString("clair.uri"), viper.GetInt("clair.healthPort")) + "/health"
-	Report.Path = viper.GetString("clair.report.path")
-	Report.Format = viper.GetString("clair.report.format")
 }

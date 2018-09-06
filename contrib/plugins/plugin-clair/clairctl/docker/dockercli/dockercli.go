@@ -1,3 +1,25 @@
+/*
+
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+
+CODE FROM https://github.com/jgsqware/clairctl
+
+*/
 package dockercli
 
 import (
@@ -13,22 +35,18 @@ import (
 	"syscall"
 
 	"github.com/artyom/untar"
-	"github.com/coreos/pkg/capnslog"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/layer"
-	"github.com/docker/distribution/reference"
-	"github.com/jgsqware/clairctl/config"
 	"github.com/opencontainers/go-digest"
+	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/config"
 )
-
-var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockercli")
 
 //GetLocalManifest retrieve manifest for local image
 func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, distribution.Manifest, error) {
-
 	n, err := reference.ParseNamed(imageName)
 	if err != nil {
 		return nil, nil, err
@@ -62,20 +80,6 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	return image, m, err
 }
 
-func saveImage(imageName string, fo *os.File) error {
-
-	return nil
-	// save.Stderr = &stderr
-
-	// save.Stdout = writer
-	// err := save.Run()
-	// if err != nil {
-	// 	return errors.New(stderr.String())
-	// }
-
-	// return nil
-}
-
 func save(imageName string) (distribution.Manifest, error) {
 	path := config.TmpLocal() + "/" + strings.Split(imageName, ":")[0] + "/blobs"
 
@@ -90,9 +94,6 @@ func save(imageName string) (distribution.Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	log.Debug("docker image to save: ", imageName)
-	log.Debug("saving in: ", path)
 
 	cli, err := client.NewEnvClient()
 	if err != nil {
@@ -118,7 +119,6 @@ func save(imageName string) (distribution.Manifest, error) {
 	}()
 
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 
@@ -128,13 +128,11 @@ func save(imageName string) (distribution.Manifest, error) {
 
 	err = openAndUntar(path+"/output.tar", path)
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 
 	err = os.Remove(path + "/output.tar")
 	if err != nil {
-		log.Error(err)
 		return nil, err
 	}
 	return historyFromManifest(path)
@@ -182,7 +180,6 @@ func historyFromManifest(path string) (distribution.Manifest, error) {
 }
 
 func historyFromCommand(imageName string) (schema1.SignedManifest, error) {
-
 	client, err := client.NewEnvClient()
 	if err != nil {
 		return schema1.SignedManifest{}, err
