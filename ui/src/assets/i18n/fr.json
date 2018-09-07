@@ -47,7 +47,7 @@
   "application_home_repo": "Dépôt GIT",
   "application_home_no_repo": "Lier un dépôt GIT",
   "application_home_platform": "Liste des plateformes liées",
-  "application_home_no_platform": "Lier une plateformes",
+  "application_home_no_platform": "Lier une plateforme",
   "application_home_no_graph": "Aucun graphique à afficher (vulnerabilités, tests unitaires)",
   "application_home_no_usage": "L'application n'est pas utilisée",
 
