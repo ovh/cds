@@ -46,8 +46,8 @@
   "application_home_history": "Historique",
   "application_home_repo": "Dépôt GIT",
   "application_home_no_repo": "Lier un dépôt GIT",
-  "application_home_platform": "Liste des platformes liées",
-  "application_home_no_platform": "Lier une platforme",
+  "application_home_platform": "Liste des plateformes liées",
+  "application_home_no_platform": "Lier une plateformes",
   "application_home_no_graph": "Aucun graphique à afficher (vulnerabilités, tests unitaires)",
   "application_home_no_usage": "L'application n'est pas utilisée",
 
@@ -594,7 +594,7 @@
   "platform_no" : "Aucune plateforme de liée",
   "platform_model": "Modèle de la plateforme",
   "platform_configuration": "Configuration de la plateforme",
-  "platform_official_tooltip": "Platforme publique",
+  "platform_official_tooltip": "Plateforme publique",
 
   "provider_hook": "hook",
   "provider_deployment": "déploiement",
@@ -940,7 +940,7 @@
   "workflow_history_length": "Nombre de builds",
   "workflow_root_context_application": "Application (facultatif)",
   "workflow_root_context_environment": "Environnement (facultatif)",
-  "workflow_root_context_platform": "Platforme (facultatif)",
+  "workflow_root_context_platform": "Plateforme (facultatif)",
   "workflow_root_context_mutex": "Limiter à une execution à la fois",
   "workflow_root_context_pipeline": "Pipeline",
   "workflow_run_loading": "Chargement des exécutions",
