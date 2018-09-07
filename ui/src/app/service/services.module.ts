@@ -4,6 +4,7 @@ import {ActionService} from './action/action.service';
 import {ActionStore} from './action/action.store';
 import {ApplicationAuditService} from './application/application.audit.service';
 import {ApplicationMigrateService} from './application/application.migration.service';
+import {ApplicationNoCacheService} from './application/application.nocache.service';
 import {ApplicationQueryParamResolver, ApplicationResolver} from './application/application.resolver';
 import {ApplicationService} from './application/application.service';
 import {ApplicationStore} from './application/application.store';
@@ -73,6 +74,7 @@ export class ServicesModule {
                 ActionService,
                 ActionStore,
                 ApplicationService,
+                ApplicationNoCacheService,
                 ApplicationWorkflowService,
                 ApplicationPipelineService,
                 ApplicationMigrateService,
@@ -146,6 +148,7 @@ export {
     ApplicationAuditService,
     ActionStore,
     ApplicationResolver,
+    ApplicationNoCacheService,
     ApplicationStore,
     ApplicationPipelineService,
     ApplicationWorkflowService,

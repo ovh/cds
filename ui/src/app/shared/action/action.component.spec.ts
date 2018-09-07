@@ -24,6 +24,7 @@ import {HttpClientTestingModule, HttpTestingController} from '@angular/common/ht
 import {HttpRequest} from '@angular/common/http';
 import {RequirementStore} from '../../service/requirement/requirement.store';
 import {RequirementService} from '../../service/requirement/requirement.service';
+import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Action Component', () => {
 
@@ -42,7 +43,8 @@ describe('CDS: Action Component', () => {
                 WorkerModelService,
                 {provide: XHRBackend, useClass: MockBackend},
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports: [
                 RouterTestingModule.withRoutes([]),

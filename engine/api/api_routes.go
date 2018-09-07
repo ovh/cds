@@ -105,7 +105,8 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 	r.Handle("/mon/stats", r.GET(observability.StatsHandler, Auth(false)))
 
-	r.Handle("/navbar", r.GET(api.getNavbarHandler))
+	r.Handle("/ui/navbar", r.GET(api.getNavbarHandler))
+	r.Handle("/ui/project/{key}/application/{permApplicationName}/overview", r.GET(api.getApplicationOverviewHandler))
 
 	// Import As Code
 	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))
@@ -141,6 +142,7 @@ func (api *API) InitRouter() {
 
 	// Application
 	r.Handle("/project/{key}/application/{permApplicationName}", r.GET(api.getApplicationHandler), r.PUT(api.updateApplicationHandler), r.DELETE(api.deleteApplicationHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/metrics/{metricName}", r.GET(api.getApplicationMetricHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/keys", r.GET(api.getKeysInApplicationHandler), r.POST(api.addKeyInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/keys/{name}", r.DELETE(api.deleteKeyInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/branches", r.GET(api.getApplicationBranchHandler))

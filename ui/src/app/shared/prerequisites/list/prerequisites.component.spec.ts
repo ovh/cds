@@ -7,6 +7,7 @@ import {SharedModule} from '../../shared.module';
 import {PrerequisiteComponent} from './prerequisites.component';
 import {Prerequisite} from '../../../model/prerequisite.model';
 import {PrerequisiteEvent} from '../prerequisite.event.model';
+import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Prerequisite List Component', () => {
 
@@ -17,7 +18,8 @@ describe('CDS: Prerequisite List Component', () => {
             providers: [
                 TranslateService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),

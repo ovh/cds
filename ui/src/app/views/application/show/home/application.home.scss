@@ -1,0 +1,27 @@
+@import '../../../../../common';
+
+.dashboard {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+i {
+  &.ribbon-state {
+    width: 5px;
+    &.success {
+      background-color: $cds_color_green;
+    }
+    &.running {
+      background-color: $cds_color_teal;
+    }
+    &.fail {
+      background-color: $cds_color_red;
+    }
+    &.waiting {
+      background-color: $cds_color_teal;
+    }
+    &.never {
+      background-color: grey;
+    }
+  }
+}

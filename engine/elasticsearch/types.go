@@ -21,10 +21,11 @@ type Configuration struct {
 	} `toml:"http" comment:"######################\n CDS Elasticsearch HTTP Configuration \n######################"`
 	URL           string `default:"http://localhost:8088"`
 	ElasticSearch struct {
-		URL      string `toml:"url"`
-		Username string `toml:"username"`
-		Password string `toml:"password"`
-		Index    string `toml:"index"`
+		URL          string `toml:"url"`
+		Username     string `toml:"username"`
+		Password     string `toml:"password"`
+		IndexEvents  string `toml:"indexEvents" commented:"true" comment:"index to store CDS events"`
+		IndexMetrics string `toml:"indexMetrics" commented:"true" comment:"index to store CDS metrics"`
 	} `toml:"elasticsearch" comment:"######################\n CDS ElasticSearch Settings \n######################"`
 	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################"`
 }

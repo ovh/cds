@@ -27,6 +27,7 @@ import {KeyService} from '../../../../../service/keys/keys.service';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../service/project/project.service';
 import {NavbarService} from '../../../../../service/navbar/navbar.service';
+import {APP_BASE_HREF} from '@angular/common';
 
 @Component({
     template: ''
@@ -59,7 +60,8 @@ describe('CDS: Application Repo Component', () => {
                 TranslateLoader,
                 TranslateService,
                 TranslateParser,
-                RepoManagerService
+                RepoManagerService,
+                { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports : [
                 RouterTestingModule.withRoutes([

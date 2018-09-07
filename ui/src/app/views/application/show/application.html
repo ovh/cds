@@ -7,6 +7,9 @@
         </div>
         <div class="CDSmenu" *ngIf="application">
             <sm-menu title="" class="pointing secondary">
+                <a sm-item [class.active]="selectedTab === 'home'" (click)="showTab('home')">
+                    <i class=""></i>{{ 'common_home' | translate }}
+                </a>
                 <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')" *ngIf="application.workflow_migration !== 'DONE' && application.workflow_migration !== 'CLEANING'">
                   <i class="rocket icon"></i>{{ 'common_workflow' | translate }}
                 </a>
@@ -41,6 +44,9 @@
                         <app-application-workflow [tab]="selectedTab" [project]="project" [application]="application" [(applicationFilter)]="appFilter" (changeWorkerEvent)="changeWorkerFilter($event)" #workflow></app-application-workflow>
                     </div>
                     <div [ngSwitch]="selectedTab">
+                        <div *ngSwitchCase="'home'">
+                            <app-home [project]="project" [application]="application"></app-home>
+                        </div>
                         <div *ngSwitchCase="'variables'">
                             <ng-container *ngIf="application.permission === perm.READ_WRITE_EXECUTE">
                                 <h3>{{ 'application_variable_form_title' | translate}}</h3>

@@ -303,6 +303,20 @@ func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName stri
 	return &branch, nil
 }
 
+// DefaultBranch get default branch from given repository
+func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClient, fullname string) (string, error) {
+	branches, err := c.Branches(ctx, fullname)
+	if err != nil {
+		return "", sdk.WrapError(err, "DefaultBranch> Unable to list branches")
+	}
+	for _, b := range branches {
+		if b.Default {
+			return b.DisplayID, nil
+		}
+	}
+	return "", sdk.ErrNotFound
+}
+
 func (c *vcsClient) Commits(ctx context.Context, fullname, branch, since, until string) ([]sdk.VCSCommit, error) {
 	commits := []sdk.VCSCommit{}
 	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/commits?branch=%s&since=%s&until=%s", c.name, fullname, url.QueryEscape(branch), url.QueryEscape(since), url.QueryEscape(until))

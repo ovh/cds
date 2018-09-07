@@ -6,6 +6,7 @@ import {ApplicationAdminComponent} from './show/admin/application.admin.componen
 import {ApplicationDeploymentComponent} from './show/admin/deployment/application.deployment.component';
 import {ApplicationRepositoryComponent} from './show/admin/repository/application.repo.component';
 import {ApplicationShowComponent} from './show/application.component';
+import {ApplicationHomeComponent} from './show/home/application.home.component';
 import {ApplicationHookItemFormComponent} from './show/hook/edit/item.form.component';
 import {ApplicationHookItemComponent} from './show/hook/item/hook.item.component';
 import {ApplicationKeysComponent} from './show/keys/application.keys.component';
@@ -22,10 +23,12 @@ import {ApplicationTreeWorkflowComponent} from './show/workflow/tree/application
 import {ApplicationWorkflowItemComponent} from './show/workflow/tree/item/application.workflow.item.component';
 import {ApplicationTriggerComponent} from './show/workflow/trigger/trigger.component';
 
+
 @NgModule({
     declarations: [
         ApplicationAdminComponent,
         ApplicationAddComponent,
+        ApplicationHomeComponent,
         ApplicationHookItemComponent,
         ApplicationHookItemFormComponent,
         ApplicationNotificationFormModalComponent,
@@ -43,7 +46,7 @@ import {ApplicationTriggerComponent} from './show/workflow/trigger/trigger.compo
         ApplicationTriggerComponent,
         ApplicationWorkflowComponent,
         ApplicationWorkflowItemComponent,
-        ApplicationKeysComponent
+        ApplicationKeysComponent,
     ],
     imports: [
         SharedModule,
