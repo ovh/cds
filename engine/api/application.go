@@ -564,7 +564,7 @@ func (api *API) addApplicationHandler() service.Handler {
 		}
 
 		var app sdk.Application
-		if err := UnmarshalBody(r, &app); err != nil {
+		if err := service.UnmarshalBody(r, &app); err != nil {
 			return err
 		}
 
@@ -671,7 +671,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		proj.Environments = envs
 
 		var newApp sdk.Application
-		if err := UnmarshalBody(r, &newApp); err != nil {
+		if err := service.UnmarshalBody(r, &newApp); err != nil {
 			return err
 		}
 
@@ -759,7 +759,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 		}
 
 		var appPost sdk.Application
-		if err := UnmarshalBody(r, &appPost); err != nil {
+		if err := service.UnmarshalBody(r, &appPost); err != nil {
 			return err
 		}
 

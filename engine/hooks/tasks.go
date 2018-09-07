@@ -3,6 +3,7 @@ package hooks
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"mime"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/gorhill/cronexpr"
+	"github.com/mitchellh/hashstructure"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -29,6 +31,8 @@ const (
 	TypeKafka              = "Kafka"
 	TypeRabbitMQ           = "RabbitMQ"
 	TypeWorkflowHook       = "Workflow"
+	TypeOutgoingWebHook    = "OutgoingWebhook"
+	TypeOutgoingWorkflow   = "OutgoingWorkflow"
 
 	GithubHeader    = "X-Github-Event"
 	GitlabHeader    = "X-Gitlab-Event"
@@ -108,6 +112,35 @@ func (s *Service) synchronizeTasks() error {
 	return nil
 }
 
+func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHook) (sdk.Task, error) {
+	if h.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
+		return sdk.Task{}, fmt.Errorf("Unsupported hook type: %s", h.WorkflowHookModel.Type)
+	}
+	configHash, err := hashstructure.Hash(h.Config, nil)
+	if err != nil {
+		return sdk.Task{}, sdk.WrapError(err, "outgoingHookToTask> unable to hash hook config")
+	}
+	identifier := fmt.Sprintf("%s / %d", h.WorkflowHookModel.Name, configHash)
+	uuid := base64.StdEncoding.EncodeToString([]byte(identifier))
+
+	switch h.WorkflowHookModel.Name {
+	case sdk.WebHookModelName:
+		return sdk.Task{
+			UUID:   uuid,
+			Type:   TypeOutgoingWebHook,
+			Config: h.Config,
+		}, nil
+	case sdk.WorkflowModelName:
+		return sdk.Task{
+			UUID:   uuid,
+			Type:   TypeOutgoingWorkflow,
+			Config: h.Config,
+		}, nil
+	}
+
+	return sdk.Task{}, fmt.Errorf("Unsupported hook: %s", h.WorkflowHookModel.Name)
+}
+
 func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 	if h.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
 		return nil, fmt.Errorf("Unsupported hook type: %s", h.WorkflowHookModel.Type)
@@ -181,7 +214,7 @@ func (s *Service) startTasks(ctx context.Context) error {
 	//Start the tasks
 	for i := range tasks {
 		t := &tasks[i]
-		if err := s.startTask(c, t); err != nil {
+		if _, err := s.startTask(c, t); err != nil {
 			log.Error("Hooks> runLongRunningTasks> Unable to start task: %v", err)
 			continue
 		}
@@ -207,22 +240,44 @@ func (s *Service) stopTasks() error {
 	return nil
 }
 
-func (s *Service) startTask(ctx context.Context, t *sdk.Task) error {
+func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecution, error) {
 	t.Stopped = false
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
 	case TypeWebHook, TypeRepoManagerWebHook, TypeWorkflowHook:
-		return nil
+		return nil, nil
 	case TypeScheduler, TypeRepoPoller:
-		return s.prepareNextScheduledTaskExecution(t)
+		return nil, s.prepareNextScheduledTaskExecution(t)
 	case TypeKafka:
-		return s.startKafkaHook(t)
+		return nil, s.startKafkaHook(t)
 	case TypeRabbitMQ:
-		return s.startRabbitMQHook(t)
+		return nil, s.startRabbitMQHook(t)
+	case TypeOutgoingWebHook, TypeOutgoingWorkflow:
+		return s.startOutgoingHookTask(t)
 	default:
-		return fmt.Errorf("Unsupported task type %s", t.Type)
+		return nil, fmt.Errorf("Unsupported task type %s", t.Type)
 	}
+}
+
+func (s *Service) startOutgoingHookTask(t *sdk.Task) (*sdk.TaskExecution, error) {
+	now := time.Now()
+	//Craft a new execution
+	exec := &sdk.TaskExecution{
+		Timestamp: now.UnixNano(),
+		Status:    TaskExecutionScheduled,
+		Type:      t.Type,
+		UUID:      t.UUID,
+		Config:    t.Config,
+		ScheduledTask: &sdk.ScheduledTaskExecution{
+			DateScheduledExecution: fmt.Sprintf("%v", now),
+		},
+	}
+
+	s.Dao.SaveTaskExecution(exec) //We don't push in queue, we will the scheduler to run it
+	log.Debug("Hooks> Outgoing hook task  %s ready", t.UUID)
+
+	return exec, nil
 }
 
 func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {

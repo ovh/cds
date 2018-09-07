@@ -1,4 +1,9 @@
-<div class="workflowHook pointing" (click)="openEditHookSidebar()" [class.active]="isSelected">
+<div class="workflowHook pointing" (click)="openEditHookSidebar()" 
+    [class.active]="isSelected"
+    [class.running]="currentHookRun?.status === pipelineStatus.BUILDING || currentHookRun?.status === pipelineStatus.WAITING"
+    [class.building]="currentHookRun?.status === pipelineStatus.BUILDING || currentHookRun?.status === pipelineStatus.WAITING"
+    [class.success]="currentHookRun?.status === pipelineStatus.SUCCESS"
+    [class.fail]="currentHookRun?.status === pipelineStatus.FAIL || currentHookRun?.status === pipelineStatus.STOPPED">
     <div class="name">
         <i class="{{icon}} icon"></i> <b>{{hook.model.name}}</b>
     </div>

@@ -105,7 +105,7 @@ func (api *API) updateActionHandler() service.Handler {
 
 		// Get body
 		var a sdk.Action
-		if err := UnmarshalBody(r, &a); err != nil {
+		if err := service.UnmarshalBody(r, &a); err != nil {
 			return err
 		}
 
@@ -140,7 +140,7 @@ func (api *API) updateActionHandler() service.Handler {
 func (api *API) addActionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var a sdk.Action
-		if err := UnmarshalBody(r, &a); err != nil {
+		if err := service.UnmarshalBody(r, &a); err != nil {
 			return err
 		}
 

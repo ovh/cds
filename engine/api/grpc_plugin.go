@@ -20,7 +20,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 
-		if err := UnmarshalBody(r, &p); err != nil {
+		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WrapError(err, "postPGRPCluginHandler")
 		}
 
@@ -63,7 +63,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 
-		if err := UnmarshalBody(r, &p); err != nil {
+		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WrapError(err, "putGRPCluginHandler")
 		}
 
@@ -104,7 +104,7 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		var b sdk.GRPCPluginBinary
-		if err := UnmarshalBody(r, &b); err != nil {
+		if err := service.UnmarshalBody(r, &b); err != nil {
 			return sdk.WrapError(err, "postGRPCluginBinaryHandler")
 		}
 

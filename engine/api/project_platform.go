@@ -36,7 +36,7 @@ func (api *API) putProjectPlatformHandler() service.Handler {
 		platformName := vars["platformName"]
 
 		var ppBody sdk.ProjectPlatform
-		if err := UnmarshalBody(r, &ppBody); err != nil {
+		if err := service.UnmarshalBody(r, &ppBody); err != nil {
 			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot read body")
 		}
 
@@ -155,7 +155,7 @@ func (api *API) postProjectPlatformHandler() service.Handler {
 		}
 
 		var pp sdk.ProjectPlatform
-		if err := UnmarshalBody(r, &pp); err != nil {
+		if err := service.UnmarshalBody(r, &pp); err != nil {
 			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot read body")
 		}
 

@@ -13,6 +13,21 @@
     &.active {
       border: 2px solid $cds_color_teal;
     }
+    &.running {
+      border: none;
+    }
+    &.success {
+      background-color: $cds_color_light_green;
+      border: 2px solid $cds_color_green;
+    }
+    &.fail {
+      background-color: $cds_color_light_red;
+      border: 2px solid $cds_color_red;
+    }
+    &.building {
+      background-color: $cds_color_light_teal;
+      border: 2px solid $cds_color_teal;
+    }
 
   i {
     font-size: 1,5em;
@@ -32,6 +47,19 @@
     font-size: 0.8rem;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &.success {
+      border-color: $cds_color_green;
+    }
+    &.building {
+      border-color: $cds_color_teal;
+    }
+    &.fail {
+      border-color: $cds_color_red;
+    }
+    &.inactive {
+      border-color: $cds_color_light_grey;
+    }
   }
 
   .ui.dropdown {

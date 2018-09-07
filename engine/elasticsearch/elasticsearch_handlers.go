@@ -7,7 +7,6 @@ import (
 
 	"gopkg.in/olivere/elastic.v5"
 
-	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -16,7 +15,7 @@ func (s *Service) getEventsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
 		var filters sdk.EventFilter
-		if err := api.UnmarshalBody(r, &filters); err != nil {
+		if err := service.UnmarshalBody(r, &filters); err != nil {
 			return sdk.WrapError(err, "getEventsHandler> Unable to read body")
 		}
 
@@ -39,7 +38,7 @@ func (s *Service) getEventsHandler() service.Handler {
 func (s *Service) postEventHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var e sdk.Event
-		if err := api.UnmarshalBody(r, &e); err != nil {
+		if err := service.UnmarshalBody(r, &e); err != nil {
 			return sdk.WrapError(err, "postEventHandler> Unable to read body")
 		}
 

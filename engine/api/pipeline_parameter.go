@@ -76,7 +76,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 		paramName := vars["name"]
 
 		var newParam sdk.Parameter
-		if err := UnmarshalBody(r, &newParam); err != nil {
+		if err := service.UnmarshalBody(r, &newParam); err != nil {
 			return err
 		}
 
@@ -123,7 +123,7 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 		paramName := vars["name"]
 
 		var newParam sdk.Parameter
-		if err := UnmarshalBody(r, &newParam); err != nil {
+		if err := service.UnmarshalBody(r, &newParam); err != nil {
 			return err
 		}
 		if newParam.Name != paramName {

@@ -28,7 +28,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() service.Handler {
 		groupName := vars["group"]
 
 		var groupPipeline sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupPipeline); err != nil {
+		if err := service.UnmarshalBody(r, &groupPipeline); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler> cannot unmarshal request")
 		}
 
@@ -99,7 +99,7 @@ func (api *API) addGroupInPipelineHandler() service.Handler {
 		pipelineName := vars["permPipelineKey"]
 
 		var groupPermission sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupPermission); err != nil {
+		if err := service.UnmarshalBody(r, &groupPermission); err != nil {
 			return err
 		}
 

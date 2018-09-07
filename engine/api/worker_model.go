@@ -21,7 +21,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal body
 		var model sdk.Model
-		if err := UnmarshalBody(r, &model); err != nil {
+		if err := service.UnmarshalBody(r, &model); err != nil {
 			return sdk.WrapError(err, "addWorkerModel> cannot unmarshal body")
 		}
 
@@ -147,7 +147,7 @@ func (api *API) bookWorkerModelHandler() service.Handler {
 func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		spawnErrorForm := &sdk.SpawnErrorForm{}
-		if err := UnmarshalBody(r, spawnErrorForm); err != nil {
+		if err := service.UnmarshalBody(r, spawnErrorForm); err != nil {
 			return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Unable to parse spawn error form")
 		}
 
@@ -196,7 +196,7 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 
 		// Unmarshal body
 		var model sdk.Model
-		if err := UnmarshalBody(r, &model); err != nil {
+		if err := service.UnmarshalBody(r, &model); err != nil {
 			return sdk.WrapError(err, "updateWorkerModel> cannot unmarshal body")
 		}
 
@@ -474,7 +474,7 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 
 		// Unmarshal body
 		var modelPattern sdk.ModelPattern
-		if err := UnmarshalBody(r, &modelPattern); err != nil {
+		if err := service.UnmarshalBody(r, &modelPattern); err != nil {
 			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot unmarshal body")
 		}
 
@@ -567,7 +567,7 @@ func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal body
 		var modelPattern sdk.ModelPattern
-		if err := UnmarshalBody(r, &modelPattern); err != nil {
+		if err := service.UnmarshalBody(r, &modelPattern); err != nil {
 			return sdk.WrapError(err, "postAddWorkerModelPatternHandler> cannot unmarshal body")
 		}
 

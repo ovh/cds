@@ -128,7 +128,7 @@ func (api *API) addHookHandler() service.Handler {
 		appName := vars["permApplicationName"]
 
 		var h sdk.Hook
-		if err := UnmarshalBody(r, &h); err != nil {
+		if err := service.UnmarshalBody(r, &h); err != nil {
 			return err
 		}
 		h.Enabled = true
@@ -160,7 +160,7 @@ func (api *API) updateHookHandler() service.Handler {
 		appName := vars["permApplicationName"]
 
 		var h sdk.Hook
-		if err := UnmarshalBody(r, &h); err != nil {
+		if err := service.UnmarshalBody(r, &h); err != nil {
 			return sdk.WrapError(err, "updateHookHandler")
 		}
 

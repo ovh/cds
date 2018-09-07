@@ -132,7 +132,7 @@ func (api *API) updateVariableInEnvironmentHandler() service.Handler {
 		}
 
 		var newVar sdk.Variable
-		if err := UnmarshalBody(r, &newVar); err != nil {
+		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return sdk.ErrWrongRequest
 		}
 		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
@@ -188,7 +188,7 @@ func (api *API) addVariableInEnvironmentHandler() service.Handler {
 		}
 
 		var newVar sdk.Variable
-		if err := UnmarshalBody(r, &newVar); err != nil {
+		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return sdk.ErrWrongRequest
 		}
 

@@ -27,7 +27,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		key := vars["permProjectKey"]
 
 		var ope = new(sdk.Operation)
-		if err := UnmarshalBody(r, ope); err != nil {
+		if err := service.UnmarshalBody(r, ope); err != nil {
 			return sdk.WrapError(err, "postImportAsCodeHandler")
 		}
 

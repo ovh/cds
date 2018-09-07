@@ -38,6 +38,7 @@ export class WorkflowRun {
     join_triggers_run: Map<number, TriggerRun>;
     commits: Array<Commit>;
     infos: Array<SpawnInfo>;
+    outgoing_hooks: Map<number, WorkflowNodeOutgoingHookRun>;
 
     // Useful for UI
     duration: string;
@@ -274,4 +275,13 @@ export class WorkflowNodeRunVulnerability {
     summary: { [key: string]: number};
     default_branch_summary: { [key: string]: number};
     previous_run_summary: { [key: string]: number};
+}
+
+export class WorkflowNodeOutgoingHookRun {
+    workflow_node_run_id: number;
+    workflow_node_outgoing_hook_id: number;
+    status: string;
+    // triggers_run TODO
+    num: number;
+    subnumber: number;
 }

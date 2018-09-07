@@ -35,7 +35,7 @@ func (api *API) getExternalServiceHandler() service.Handler {
 func (api *API) postServiceRegisterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		srv := &sdk.Service{}
-		if err := UnmarshalBody(r, srv); err != nil {
+		if err := service.UnmarshalBody(r, srv); err != nil {
 			return sdk.WrapError(err, "postServiceRegisterHandler")
 		}
 

@@ -49,7 +49,7 @@ func (api *API) addPollerHandler() service.Handler {
 		}
 
 		var h sdk.RepositoryPoller
-		if err := UnmarshalBody(r, &h); err != nil {
+		if err := service.UnmarshalBody(r, &h); err != nil {
 			return sdk.WrapError(err, "addPollerHandler> Cannot unmarshal body")
 		}
 
@@ -123,7 +123,7 @@ func (api *API) updatePollerHandler() service.Handler {
 		}
 
 		var h sdk.RepositoryPoller
-		if err := UnmarshalBody(r, &h); err != nil {
+		if err := service.UnmarshalBody(r, &h); err != nil {
 			return err
 		}
 

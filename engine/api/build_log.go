@@ -259,7 +259,7 @@ func (api *API) getPipelineBuildJobLogsHandler() service.Handler {
 func (api *API) addBuildLogHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var logs sdk.Log
-		if err := UnmarshalBody(r, &logs); err != nil {
+		if err := service.UnmarshalBody(r, &logs); err != nil {
 			return sdk.WrapError(err, "addBuildLogHandler>> Unable to parse body")
 		}
 

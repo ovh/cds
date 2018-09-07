@@ -26,7 +26,7 @@ func (api *API) generateTokenHandler() service.Handler {
 			Expiration  string `json:"expiration"`
 			Description string `json:"description"`
 		}{}
-		if err := UnmarshalBody(r, &tokenPostInfos); err != nil {
+		if err := service.UnmarshalBody(r, &tokenPostInfos); err != nil {
 			return sdk.WrapError(err, "generateTokenHandler> cannot unmarshal")
 		}
 

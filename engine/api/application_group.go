@@ -29,7 +29,7 @@ func (api *API) updateGroupRoleOnApplicationHandler() service.Handler {
 		groupName := vars["group"]
 
 		var groupApplication sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupApplication); err != nil {
+		if err := service.UnmarshalBody(r, &groupApplication); err != nil {
 			return err
 		}
 
@@ -100,7 +100,7 @@ func (api *API) addGroupInApplicationHandler() service.Handler {
 		appName := vars["permApplicationName"]
 
 		var groupPermission sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupPermission); err != nil {
+		if err := service.UnmarshalBody(r, &groupPermission); err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot unmarshal request")
 		}
 

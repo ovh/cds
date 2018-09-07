@@ -49,7 +49,7 @@ func (api *API) attachPipelinesToApplicationHandler() service.Handler {
 		appName := vars["permApplicationName"]
 
 		var pipelines []string
-		if err := UnmarshalBody(r, &pipelines); err != nil {
+		if err := service.UnmarshalBody(r, &pipelines); err != nil {
 			return err
 		}
 
@@ -101,7 +101,7 @@ func (api *API) updatePipelinesToApplicationHandler() service.Handler {
 		appName := vars["permApplicationName"]
 
 		var appPipelines []sdk.ApplicationPipeline
-		if err := UnmarshalBody(r, &appPipelines); err != nil {
+		if err := service.UnmarshalBody(r, &appPipelines); err != nil {
 			return err
 		}
 
@@ -366,7 +366,7 @@ func (api *API) addNotificationsHandler() service.Handler {
 		appName := vars["permApplicationName"]
 
 		var notifs []sdk.UserNotification
-		if err := UnmarshalBody(r, &notifs); err != nil {
+		if err := service.UnmarshalBody(r, &notifs); err != nil {
 			return err
 		}
 
@@ -443,7 +443,7 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() service.Handl
 
 		//Parse notification settings
 		notifs := &sdk.UserNotification{}
-		if err := UnmarshalBody(r, &notifs); err != nil {
+		if err := service.UnmarshalBody(r, &notifs); err != nil {
 			return err
 		}
 

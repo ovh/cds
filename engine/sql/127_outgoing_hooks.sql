@@ -40,6 +40,8 @@ SELECT create_foreign_key('FK_WORKFLOW_NODE_OUTGOING_HOOK__TRIGGER_WORKFLOW_NODE
 ALTER TABLE workflow_node ADD COLUMN workflow_outgoing_hook_trigger_id BIGINT;
 ALTER TABLE workflow_node ADD CONSTRAINT FK_WORKFLOW_NODE_TRIGGER_OUTGOING_HOOK FOREIGN KEY(workflow_outgoing_hook_trigger_id) REFERENCES workflow_node_outgoing_hook_trigger(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED;
 
+ALTER TABLE workflow_run ADD COLUMN outgoing_hook_runs JSONB;
+
 -- +migrate Down
 
 DROP TABLE workflow_outgoing_hook_model CASCADE;
@@ -47,4 +49,5 @@ DROP TABLE workflow_node_outgoing_hook CASCADE;
 DROP TABLE workflow_node_outgoing_hook_trigger CASCADE;
 ALTER TABLE workflow_node DROP CONSTRAINT FK_WORKFLOW_NODE_TRIGGER_OUTGOING_HOOK;
 ALTER TABLE workflow_node DROP COLUMN workflow_outgoing_hook_trigger_id;
+ALTER TABLE workflow_run DROP COLUMN outgoing_hook_runs;
 

@@ -142,7 +142,7 @@ func (api *API) getWorkflowHookModelHandler() service.Handler {
 func (api *API) postWorkflowHookModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := &sdk.WorkflowHookModel{}
-		if err := UnmarshalBody(r, m); err != nil {
+		if err := service.UnmarshalBody(r, m); err != nil {
 			return sdk.WrapError(err, "postWorkflowHookModelHandler")
 		}
 
@@ -167,7 +167,7 @@ func (api *API) postWorkflowHookModelHandler() service.Handler {
 func (api *API) putWorkflowHookModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := &sdk.WorkflowHookModel{}
-		if err := UnmarshalBody(r, m); err != nil {
+		if err := service.UnmarshalBody(r, m); err != nil {
 			return err
 		}
 

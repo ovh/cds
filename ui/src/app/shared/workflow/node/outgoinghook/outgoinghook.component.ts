@@ -1,12 +1,14 @@
 import { AfterViewInit, Component, ElementRef, Input } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { Project } from '../../../../model/project.model';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
 import {
     Workflow,
     WorkflowNodeHookConfigValue,
     WorkflowNodeOutgoingHook
-} from '../../../../model/workflow.model';
-import { WorkflowEventStore } from '../../../../service/services.module';
+} from 'app/model/workflow.model';
+import { WorkflowNodeOutgoingHookRun } from 'app/model/workflow.run.model';
+import { WorkflowEventStore } from 'app/service/services.module';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-workflow-node-outgoinghook',
@@ -40,6 +42,10 @@ export class WorkflowNodeOutgoingHookComponent implements AfterViewInit {
     isSelected = false;
     subSelect: Subscription;
 
+    currentHookRun: WorkflowNodeOutgoingHookRun;
+    subCurrentHookRun: Subscription;
+    pipelineStatus = PipelineStatus;
+
     constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore) {
         this.subSelect = this._workflowEventStore.selectedOutgoingHook().subscribe(h => {
             if (this.hook && h) {
@@ -48,6 +54,18 @@ export class WorkflowNodeOutgoingHookComponent implements AfterViewInit {
             }
             this.isSelected = false;
         });
+
+        this.subCurrentHookRun = this._workflowEventStore.selectedRun().subscribe(
+            wr => {
+                this.currentHookRun = null;
+                if (!this.hook) { return }
+                if (!wr) { return }
+                if (!wr.outgoing_hooks) { return }
+                if (!wr.outgoing_hooks[this.hook.id]) { return }
+                if (wr.outgoing_hooks[this.hook.id].length === 0) { return }
+                this.currentHookRun = wr.outgoing_hooks[this.hook.id][0];
+            }
+        );
     }
 
     ngAfterViewInit() {

@@ -188,7 +188,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 			Num int64 `json:"num"`
 		}{}
 
-		if err := UnmarshalBody(r, &m); err != nil {
+		if err := service.UnmarshalBody(r, &m); err != nil {
 			return sdk.WrapError(err, "postWorkflowRunNumHandler>")
 		}
 
@@ -614,7 +614,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		}
 
 		opts := &sdk.WorkflowRunPostHandlerOption{}
-		if err := UnmarshalBody(r, opts); err != nil {
+		if err := service.UnmarshalBody(r, opts); err != nil {
 			return err
 		}
 

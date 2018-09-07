@@ -36,7 +36,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		takeForm := &sdk.WorkerTakeForm{}
-		if err := UnmarshalBody(r, takeForm); err != nil {
+		if err := service.UnmarshalBody(r, takeForm); err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot unmarshal request")
 		}
 
@@ -322,7 +322,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 		}
 
 		var report sdk.VulnerabilityWorkerReport
-		if err := UnmarshalBody(r, &report); err != nil {
+		if err := service.UnmarshalBody(r, &report); err != nil {
 			return sdk.WrapError(err, "postVulnerabilityReportHandler> Unable to read body")
 		}
 
@@ -351,7 +351,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
 		}
 		var s []sdk.SpawnInfo
-		if err := UnmarshalBody(r, &s); err != nil {
+		if err := service.UnmarshalBody(r, &s); err != nil {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
 		}
 
@@ -382,7 +382,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 
 		// Unmarshal into results
 		var res sdk.Result
-		if err := UnmarshalBody(r, &res); err != nil {
+		if err := service.UnmarshalBody(r, &res); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
 		customCtx, cancel := context.WithTimeout(ctx, 180*time.Second)
@@ -509,7 +509,7 @@ func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 		}
 
 		var logs sdk.Log
-		if err := UnmarshalBody(r, &logs); err != nil {
+		if err := service.UnmarshalBody(r, &logs); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobLogsHandler> Unable to parse body")
 		}
 
@@ -524,7 +524,7 @@ func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		var logs []sdk.ServiceLog
-		if err := UnmarshalBody(r, &logs); err != nil {
+		if err := service.UnmarshalBody(r, &logs); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobServiceLogsHandler> Unable to parse body")
 		}
 		db := api.mustDB()
@@ -602,7 +602,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		}
 
 		var step sdk.StepStatus
-		if err := UnmarshalBody(r, &step); err != nil {
+		if err := service.UnmarshalBody(r, &step); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while unmarshal job")
 		}
 
@@ -763,7 +763,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 		}
 
 		var report coverage.Report
-		if err := UnmarshalBody(r, &report); err != nil {
+		if err := service.UnmarshalBody(r, &report); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> cannot unmarshal request")
 		}
 
@@ -806,7 +806,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal into results
 		var new venom.Tests
-		if err := UnmarshalBody(r, &new); err != nil {
+		if err := service.UnmarshalBody(r, &new); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> cannot unmarshal request")
 		}
 
@@ -879,7 +879,7 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 		}
 
 		var tags = []sdk.WorkflowRunTag{}
-		if err := UnmarshalBody(r, &tags); err != nil {
+		if err := service.UnmarshalBody(r, &tags); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to unmarshal body")
 		}
 
@@ -919,7 +919,7 @@ func (api *API) postWorkflowJobVariableHandler() service.Handler {
 
 		// Unmarshal into variable
 		var v sdk.Variable
-		if err := UnmarshalBody(r, &v); err != nil {
+		if err := service.UnmarshalBody(r, &v); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler")
 		}
 

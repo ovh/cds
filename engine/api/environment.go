@@ -145,7 +145,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		}
 
 		var env sdk.Environment
-		if err := UnmarshalBody(r, &env); err != nil {
+		if err := service.UnmarshalBody(r, &env); err != nil {
 			return err
 		}
 		env.ProjectID = proj.ID
@@ -248,7 +248,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 		}
 
 		var envPost sdk.Environment
-		if err := UnmarshalBody(r, &envPost); err != nil {
+		if err := service.UnmarshalBody(r, &envPost); err != nil {
 			return err
 		}
 

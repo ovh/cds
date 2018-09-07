@@ -179,7 +179,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 		rmName := vars["name"]
 
 		var tv map[string]interface{}
-		if err := UnmarshalBody(r, &tv); err != nil {
+		if err := service.UnmarshalBody(r, &tv); err != nil {
 			return err
 		}
 
@@ -592,7 +592,7 @@ func (api *API) addHookOnRepositoriesManagerHandler() service.Handler {
 		rmName := vars["name"]
 
 		var data map[string]string
-		if err := UnmarshalBody(r, &data); err != nil {
+		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
 

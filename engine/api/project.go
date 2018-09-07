@@ -140,7 +140,7 @@ func (api *API) updateProjectHandler() service.Handler {
 		key := vars["permProjectKey"]
 
 		proj := &sdk.Project{}
-		if err := UnmarshalBody(r, proj); err != nil {
+		if err := service.UnmarshalBody(r, proj); err != nil {
 			return sdk.WrapError(err, "updateProject> Unmarshall error")
 		}
 
@@ -264,7 +264,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 		db := api.mustDB()
 
 		var labels []sdk.Label
-		if err := UnmarshalBody(r, &labels); err != nil {
+		if err := service.UnmarshalBody(r, &labels); err != nil {
 			return sdk.WrapError(err, "putProjectLabelsHandler> Unmarshall error")
 		}
 
@@ -344,7 +344,7 @@ func (api *API) addProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Unmarshal data
 		p := &sdk.Project{}
-		if err := UnmarshalBody(r, p); err != nil {
+		if err := service.UnmarshalBody(r, p); err != nil {
 			return sdk.WrapError(err, "addProjectHandler> Unable to unmarshal body")
 		}
 

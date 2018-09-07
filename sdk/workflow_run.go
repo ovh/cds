@@ -38,22 +38,23 @@ func (h *WorkflowRunHeaders) Get(k string) (string, bool) {
 
 //WorkflowRun is an execution instance of a run
 type WorkflowRun struct {
-	ID               int64                            `json:"id" db:"id"`
-	Number           int64                            `json:"num" db:"num" cli:"num"`
-	ProjectID        int64                            `json:"project_id,omitempty" db:"project_id"`
-	WorkflowID       int64                            `json:"workflow_id" db:"workflow_id"`
-	Status           string                           `json:"status" db:"status" cli:"status"`
-	Workflow         Workflow                         `json:"workflow" db:"-"`
-	Start            time.Time                        `json:"start" db:"start" cli:"start"`
-	LastModified     time.Time                        `json:"last_modified" db:"last_modified"`
-	WorkflowNodeRuns map[int64][]WorkflowNodeRun      `json:"nodes,omitempty" db:"-"`
-	Infos            []WorkflowRunInfo                `json:"infos,omitempty" db:"-"`
-	Tags             []WorkflowRunTag                 `json:"tags,omitempty" db:"-" cli:"tags"`
-	LastSubNumber    int64                            `json:"last_subnumber" db:"last_sub_num"`
-	LastExecution    time.Time                        `json:"last_execution" db:"last_execution" cli:"last_execution"`
-	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
-	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
-	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
+	ID                           int64                                   `json:"id" db:"id"`
+	Number                       int64                                   `json:"num" db:"num" cli:"num"`
+	ProjectID                    int64                                   `json:"project_id,omitempty" db:"project_id"`
+	WorkflowID                   int64                                   `json:"workflow_id" db:"workflow_id"`
+	Status                       string                                  `json:"status" db:"status" cli:"status"`
+	Workflow                     Workflow                                `json:"workflow" db:"-"`
+	Start                        time.Time                               `json:"start" db:"start" cli:"start"`
+	LastModified                 time.Time                               `json:"last_modified" db:"last_modified"`
+	WorkflowNodeRuns             map[int64][]WorkflowNodeRun             `json:"nodes,omitempty" db:"-"`
+	WorkflowNodeOutgoingHookRuns map[int64][]WorkflowNodeOutgoingHookRun `json:"outgoing_hooks,omitempty" db:"-"`
+	Infos                        []WorkflowRunInfo                       `json:"infos,omitempty" db:"-"`
+	Tags                         []WorkflowRunTag                        `json:"tags,omitempty" db:"-" cli:"tags"`
+	LastSubNumber                int64                                   `json:"last_subnumber" db:"last_sub_num"`
+	LastExecution                time.Time                               `json:"last_execution" db:"last_execution" cli:"last_execution"`
+	ToDelete                     bool                                    `json:"to_delete" db:"to_delete" cli:"-"`
+	JoinTriggersRun              map[int64]WorkflowNodeTriggerRun        `json:"join_triggers_run,omitempty" db:"-"`
+	Header                       WorkflowRunHeaders                      `json:"header,omitempty" db:"-"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
@@ -176,6 +177,16 @@ type WorkflowNodeRun struct {
 	VCSServer             string                             `json:"vcs_server"`
 	CanBeRun              bool                               `json:"can_be_run"`
 	Header                WorkflowRunHeaders                 `json:"header,omitempty"`
+}
+
+//WorkflowNodeOutgoingHookRun is an execution instance of a WorkflowNodeOutgoingHook
+type WorkflowNodeOutgoingHookRun struct {
+	WorkflowNodeRunID          int64                            `json:"workflow_node_run_id"`
+	WorkflowNodeOutgoingHookID int64                            `json:"workflow_node_outgoing_hook_id"`
+	Status                     string                           `json:"status"`
+	TriggersRun                map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`
+	Number                     int64                            `json:"num"`
+	SubNumber                  int64                            `json:"subnumber"`
 }
 
 // WorkflowNodeRunVulnerabilityReport represents vulnerabilities report for the current node run

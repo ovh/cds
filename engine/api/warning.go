@@ -44,7 +44,7 @@ func (api *API) putWarningsHandler() service.Handler {
 		}
 
 		var wa sdk.Warning
-		if err := UnmarshalBody(r, &wa); err != nil {
+		if err := service.UnmarshalBody(r, &wa); err != nil {
 			return sdk.WrapError(err, "putWarningsHandler> Unable to read body")
 		}
 

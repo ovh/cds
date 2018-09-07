@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/ovh/cds/sdk/tracingutils"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
@@ -16,9 +15,11 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/luascript"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 // processWorkflowRun triggers workflow node for every workflow.
@@ -188,6 +189,18 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 						}
 					}
 				}
+
+				// Execute the outgoing hooks (asynchronously)
+				for j := range node.OutgoingHooks {
+					// Checks if the hooks as already been executed
+					// If not instanciante trigger a task on "hooks" uService and store the execution UUID
+					// Later the hooks uService will call back the API with the task execution status
+					// This will reprocess all the things
+					h := node.OutgoingHooks[j]
+					if err := processWorkflowNodeOutgoingHook(ctx, db, store, proj, w, node, nodeRun.SubNumber, nodeRun.ID, &h); err != nil {
+						return nil, false, sdk.WrapError(err, "process> Cannot update node run")
+					}
+				}
 			}
 
 			if haveToUpdate {
@@ -336,6 +349,63 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	}
 
 	return report, true, nil
+}
+
+func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber, nodeRunID int64, hook *sdk.WorkflowNodeOutgoingHook) error {
+	ctx, end := observability.Span(ctx, "workflow.processWorkflowNodeOutgoingHook")
+	defer end()
+
+	if w.WorkflowNodeOutgoingHookRuns == nil {
+		w.WorkflowNodeOutgoingHookRuns = make(map[int64][]sdk.WorkflowNodeOutgoingHookRun)
+	}
+
+	//Check if the WorkflowNodeOutgoingHookRun already exist with the same subnumber
+	hrs, ok := w.WorkflowNodeOutgoingHookRuns[hook.ID]
+	if ok {
+		alreadyProcessed := false
+		for _, hr := range hrs {
+			if hr.Number == w.Number && hr.SubNumber == subnumber {
+				alreadyProcessed = true
+				break
+			}
+		}
+		if alreadyProcessed {
+			log.Debug("hook %d already processed", hook.ID)
+			return nil
+		}
+	}
+
+	srvs, err := services.FindByType(db, services.TypeHooks)
+	if err != nil {
+		return sdk.WrapError(err, "process> Cannot get hooks service")
+	}
+
+	var hookRun = sdk.WorkflowNodeOutgoingHookRun{
+		WorkflowNodeRunID:          nodeRunID,
+		Status:                     sdk.StatusWaiting.String(),
+		Number:                     w.Number,
+		SubNumber:                  subnumber,
+		WorkflowNodeOutgoingHookID: hook.ID,
+	}
+
+	var taskExecution sdk.TaskExecution
+	if _, err := services.DoJSONRequest(ctx, srvs, "POST", "/task/execute", hook, &taskExecution); err != nil {
+		log.Warning("outgoing hook execution failed: %v", err)
+		hookRun.Status = sdk.StatusFail.String()
+	}
+
+	hookRun.Status = sdk.StatusWaiting.String()
+
+	if w.WorkflowNodeOutgoingHookRuns[hook.ID] == nil {
+		w.WorkflowNodeOutgoingHookRuns[hook.ID] = make([]sdk.WorkflowNodeOutgoingHookRun, 0)
+	}
+	w.WorkflowNodeOutgoingHookRuns[hook.ID] = append(w.WorkflowNodeOutgoingHookRuns[hook.ID], hookRun)
+
+	sort.Slice(w.WorkflowNodeOutgoingHookRuns[hook.ID], func(i, j int) bool {
+		return w.WorkflowNodeOutgoingHookRuns[hook.ID][i].SubNumber > w.WorkflowNodeOutgoingHookRuns[hook.ID][j].SubNumber
+	})
+
+	return nil
 }
 
 //processWorkflowNodeRun triggers execution of a node run

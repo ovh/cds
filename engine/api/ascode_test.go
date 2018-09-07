@@ -243,7 +243,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 			switch r.URL.Path {
 			case "/task/bulk":
 				hooks := map[string]sdk.WorkflowNodeHook{}
-				if err := UnmarshalBody(r, &hooks); err != nil {
+				if err := service.UnmarshalBody(r, &hooks); err != nil {
 					return nil, sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 				}
 

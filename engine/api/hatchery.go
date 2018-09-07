@@ -17,7 +17,7 @@ import (
 func (api *API) registerHatcheryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		hatch := sdk.Hatchery{}
-		if err := UnmarshalBody(r, &hatch); err != nil {
+		if err := service.UnmarshalBody(r, &hatch); err != nil {
 			return err
 		}
 

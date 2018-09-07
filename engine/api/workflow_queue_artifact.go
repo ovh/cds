@@ -159,7 +159,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		}
 
 		art := sdk.WorkflowNodeRunArtifact{}
-		if err := UnmarshalBody(r, &art); err != nil {
+		if err := service.UnmarshalBody(r, &art); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobArtifacWithTempURLHandler>")
 		}
 
@@ -206,7 +206,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 		}
 
 		art := sdk.WorkflowNodeRunArtifact{}
-		if err := UnmarshalBody(r, &art); err != nil {
+		if err := service.UnmarshalBody(r, &art); err != nil {
 			return err
 		}
 
