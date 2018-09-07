@@ -4,6 +4,7 @@ import "time"
 
 const (
 	MetricKeyVulnerability = "Vulnerability"
+	MetricKeyUnitTest      = "UnitTest"
 )
 
 // Metric represent a CDS metric
@@ -14,6 +15,7 @@ type Metric struct {
 	Key           string      `json:"key"`
 	Value         interface{} `json:"value"`
 	Date          time.Time   `json:"timestamp"`
+	Num           int64       `json:"run"`
 }
 
 // MetricRequest represents the request to retrieve metrics

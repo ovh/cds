@@ -105,7 +105,8 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 	r.Handle("/mon/stats", r.GET(observability.StatsHandler, Auth(false)))
 
-	r.Handle("/navbar", r.GET(api.getNavbarHandler))
+	r.Handle("/ui/navbar", r.GET(api.getNavbarHandler))
+	r.Handle("/ui/project/{key}/application/{permApplicationName}/overview", r.GET(api.getApplicationOverviewHandler))
 
 	// Import As Code
 	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))

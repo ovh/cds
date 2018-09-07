@@ -10,6 +10,8 @@ import {Scheduler} from './scheduler.model';
 import {Usage} from './usage.model';
 import {Variable} from './variable.model';
 import {VCSStrategy} from './vcs.model';
+import {Metric} from './metric.model';
+import {WorkflowRun} from './workflow.run.model';
 
 export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -126,4 +128,15 @@ export class Severity {
                 return '#D3D3D3';
         }
     }
+}
+
+export class Overview {
+    graphs: Array<OverviewGraph>;
+    git_url: string;
+    history: {[key: string]: Array<WorkflowRun>; };
+}
+
+export class OverviewGraph {
+    type: string;
+    datas: Array<Metric>;
 }

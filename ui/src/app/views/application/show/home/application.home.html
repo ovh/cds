@@ -3,7 +3,7 @@
         <ng-container *ngIf="ready && dashboards && dashboards.length > 0">
             <ng-container *ngFor="let d of dashboards">
                 <div class="dashboard">
-                    <h4>{{'graph_vulnerability_title' | translate }}</h4>
+                    <h4>{{d.title}}</h4>
                     <div class="graph">
                         <app-chart [configuration]="d"></app-chart>
                     </div>
@@ -24,7 +24,7 @@
         <div class="ui segment">
             <h4>{{ 'application_home_repo' | translate }}</h4>
             <ng-container *ngIf="application.vcs_server">
-                <ul><li>{{application.vcs_server + ' - ' + application.repository_fullname}}</li></ul>
+                <ul><li><a [href]="overview?.git_url" target="_blank">{{application.vcs_server + ' - ' + application.repository_fullname}}</a></li></ul>
             </ng-container>
             <ng-container *ngIf="!application.vcs_server">
                 <div class="ui info message">
@@ -58,5 +58,26 @@
     </div>
 </div>
 
-
+<!-- HISTORY -->
+<div class="history" *ngIf="overview">
+    <h4>{{ 'application_home_history' | translate }}</h4>
+    <div class="ui stackable three cards">
+        <ng-container *ngFor="let k of overview.history | keys">
+            <div class="ui card">
+                <div class="content">
+                    <a class="header" [routerLink]="['/project', project.key, 'workflow', k]">{{k}}</a>
+                    <div class="description">
+                        <div *ngFor="let h of overview.history[k]">
+                            <i class="icon ribbon-state success"></i>
+                            <a class="info" [routerLink]="['/project', project.key, 'workflow', k, 'run', h.num]">
+                                {{'#' + h.num + ' - '}}
+                                {{ h.last_modified | amTimeAgo}}
+                            </a>
+                        </div>
+                   </div>
+               </div>
+            </div>
+        </ng-container>
+    </div>
+</div>
 

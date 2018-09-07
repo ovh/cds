@@ -82,7 +82,7 @@ func (s *Service) getMetricsHandler() service.Handler {
 			Index(s.Cfg.ElasticSearch.IndexMetrics).
 			Type(fmt.Sprintf("%T", sdk.Metric{})).
 			Query(elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(stringQuery))).
-			Sort("timestamp", false).
+			Sort("run", true).
 			Size(10).
 			Do(context.Background())
 		if errR != nil {
@@ -102,7 +102,10 @@ func (s *Service) postMetricsHandler() service.Handler {
 		if err := api.UnmarshalBody(r, &metric); err != nil {
 			return sdk.WrapError(err, "postEventHandler> Unable to read body")
 		}
-		_, errI := esClient.Index().Index(s.Cfg.ElasticSearch.IndexMetrics).Type(fmt.Sprintf("%T", sdk.Metric{})).Timestamp(strconv.Itoa(int(metric.Date.Unix()))).BodyJson(metric).Do(context.Background())
+
+		id := fmt.Sprintf("%s-%d-%d-%d-%s", metric.ProjectKey, metric.WorkflowID, metric.ApplicationID, metric.Num, metric.Key)
+
+		_, errI := esClient.Index().Index(s.Cfg.ElasticSearch.IndexMetrics).Id(id).Type(fmt.Sprintf("%T", sdk.Metric{})).Timestamp(strconv.Itoa(int(metric.Date.Unix()))).BodyJson(metric).Do(context.Background())
 		if errI != nil {
 			return sdk.WrapError(errI, "postEventHandler> Unable to insert event")
 		}

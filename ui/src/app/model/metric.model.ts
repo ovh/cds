@@ -5,4 +5,5 @@ export class Metric {
     key: string;
     value: any;
     timestamp: string;
+    run: number;
 }

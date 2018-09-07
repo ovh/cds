@@ -43,6 +43,7 @@
   "admin_status_title": "Status of CDS Engine",
   "admin_queue_title": "Current CDS jobs queue",
 
+  "application_home_history": "History",
   "application_home_repo": "GIT repository",
   "application_home_no_repo": "Link a repository",
   "application_home_platform": "Linked platforms",
@@ -334,6 +335,11 @@
   "broadcast_seen": "Seen",
 
   "graph_vulnerability_title": "Vulnerabilities",
+  "graph_vulnerability_x": "N° workflow",
+  "graph_vulnerability_y": "Total",
+  "graph_unittest_title": "Unit Tests",
+  "graph_unittest_x": "N° workflow",
+  "graph_unittest_y": "Total",
 
   "group_added": "Group added",
   "group_deleted": "Group deleted",
