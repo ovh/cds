@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import { MonitoringStatus } from 'app/model/monitoring.model';
+import {MonitoringStatus, MonitoringStatusLine} from 'app/model/monitoring.model';
 import {MonitoringService} from '../../../service/monitoring/monitoring.service';
 
 @Component({
@@ -8,8 +8,9 @@ import {MonitoringService} from '../../../service/monitoring/monitoring.service'
     styleUrls: ['./status.scss']
 })
 export class StatusComponent {
-
+    filter: string;
     status: MonitoringStatus;
+    filteredStatusLines: Array<MonitoringStatusLine>;
     loading = false;
 
     constructor(private _monitoringService: MonitoringService) {
@@ -18,6 +19,22 @@ export class StatusComponent {
             .subscribe(r => {
                 this.status = r;
                 this.loading = false;
+                this.filterChange();
             });
+    }
+
+    filterChange(): void {
+        if (!this.filter) {
+            this.filteredStatusLines = this.status.lines;
+            return;
+        }
+
+        const lowerFilter = this.filter.toLowerCase();
+
+        this.filteredStatusLines = this.status.lines.filter(line => {
+            return line.status.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.component.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                line.value.toLowerCase().indexOf(lowerFilter) !== -1
+        });
     }
 }

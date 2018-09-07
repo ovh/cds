@@ -701,6 +701,15 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until, limit := getSinceUntilLimitHeader(ctx, w, r)
+
+		status, err := QueryStrings(r, "status")
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
+		}
+		if !sdk.StatusValidate(status...) {
+			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given status"))
+		}
+
 		groupsID := make([]int64, len(getUser(ctx).Groups))
 		usr := getUser(ctx)
 		for i, g := range usr.Groups {
@@ -714,7 +723,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until, &limit)
+		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until, &limit, status...)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}

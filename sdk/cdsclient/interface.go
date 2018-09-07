@@ -197,7 +197,7 @@ type ProjectVariablesClient interface {
 
 // QueueClient exposes queue related functions
 type QueueClient interface {
-	QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error)
+	QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int, *int64) error

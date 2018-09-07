@@ -106,6 +106,17 @@ func FormString(r *http.Request, s string) string {
 	return r.FormValue(s)
 }
 
+// QueryStrings returns the list of values for given query param key or nil if key no values.
+func QueryStrings(r *http.Request, key string) ([]string, error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	if v, ok := r.Form[key]; ok {
+		return v, nil
+	}
+	return nil, nil
+}
+
 // FormInt return a int from query params
 func FormInt(r *http.Request, s string) (int, error) {
 	stringValue := FormString(r, s)
