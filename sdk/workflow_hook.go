@@ -53,6 +53,7 @@ func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
 // WorkflowNodeOutgoingHook represents a outgoing hook
 type WorkflowNodeOutgoingHook struct {
 	ID                  int64                             `json:"id" db:"id"`
+	Ref                 string                            `json:"ref" db:"-"`
 	WorkflowNodeID      int64                             `json:"workflow_node_id" db:"workflow_node_id"`
 	WorkflowHookModelID int64                             `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
 	WorkflowHookModel   WorkflowHookModel                 `json:"model" db:"-"`

@@ -372,8 +372,6 @@ export class WorkflowSidebarEditNodeComponent {
         oh.id = he.hook.id
         oh.model = he.hook.model
         this.node.outgoing_hooks.push(oh);
-        console.log(this.node);
-        console.log(this.workflow);
         this.updateWorkflow(this.workflow, this.worklflowAddOutgoingHook.modal);
     }
 

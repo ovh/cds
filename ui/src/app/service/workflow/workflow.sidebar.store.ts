@@ -8,6 +8,7 @@ export class WorkflowSidebarMode {
     static RUN_HOOK = 'sidebar:run:hook';
     static EDIT_NODE = 'sidebar:edit:node';
     static EDIT_HOOK = 'sidebar:edit:hook';
+    static EDIT_OUTGOING_HOOK = 'sidebar:edit:outgoinghook';
     static EDIT_JOIN = 'sidebar:edit:join';
 }
 

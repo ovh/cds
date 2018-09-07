@@ -86,6 +86,7 @@ import {WorkflowNodeFormComponent} from './workflow/node/form/workflow.node.form
 import {WorkflowNodeHookDetailsComponent} from './workflow/node/hook/details/hook.details.component';
 import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/hook.form.component';
 import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
+import { WorkflowNodeOutgoingHookComponent } from './workflow/node/outgoinghook/outgoinghook.component';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeAddWizardComponent} from './workflow/node/wizard/node.wizard.component';
 import {WorkflowNodeComponent} from './workflow/node/workflow.node.component';
@@ -157,6 +158,7 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeHookFormComponent,
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
+        WorkflowNodeOutgoingHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         WorkflowNodeConditionFormComponent,
@@ -253,6 +255,7 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
+        WorkflowNodeOutgoingHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         ZoneComponent,

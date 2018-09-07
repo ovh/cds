@@ -468,6 +468,12 @@ func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
 		d := &n.Triggers[i].WorkflowDestNode
 		d.Visit(visitor)
 	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			d := &n.OutgoingHooks[i].Triggers[j].WorkflowDestNode
+			d.Visit(visitor)
+		}
+	}
 }
 
 //Sort sorts the workflow node
@@ -644,9 +650,9 @@ func (n *WorkflowNode) GetNode(id int64) *WorkflowNode {
 		return n
 	}
 	for _, t := range n.Triggers {
-		n = t.WorkflowDestNode.GetNode(id)
-		if n != nil {
-			return n
+		n1 := t.WorkflowDestNode.GetNode(id)
+		if n1 != nil {
+			return n1
 		}
 	}
 	for i := range n.OutgoingHooks {

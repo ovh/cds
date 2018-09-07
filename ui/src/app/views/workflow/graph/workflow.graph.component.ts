@@ -16,13 +16,14 @@ import * as dagreD3 from 'dagre-d3';
 import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
 import {Subscription} from 'rxjs';
 import {Project} from '../../../model/project.model';
-import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeOutgoingHook} from '../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowJoinComponent} from '../../../shared/workflow/join/workflow.join.component';
 import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook.component';
+import { WorkflowNodeOutgoingHookComponent } from '../../../shared/workflow/node/outgoinghook/outgoinghook.component';
 import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
 
 @Component({
@@ -32,7 +33,8 @@ import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node
     entryComponents: [
         WorkflowNodeComponent,
         WorkflowJoinComponent,
-        WorkflowNodeHookComponent
+        WorkflowNodeHookComponent,
+        WorkflowNodeOutgoingHookComponent
     ]
 })
 @AutoUnsubscribe()
@@ -51,6 +53,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this.nodesComponent = new Map<string, ComponentRef<WorkflowNodeComponent>>();
             this.joinsComponent = new Map<string, ComponentRef<WorkflowJoinComponent>>();
             this.hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
+            this.outgoingHooksComponent = new Map<string, ComponentRef<WorkflowNodeOutgoingHookComponent>>();
         }
         this.calculateDynamicWidth();
         this.changeDisplay();
@@ -107,6 +110,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     nodesComponent = new Map<string, ComponentRef<WorkflowNodeComponent>>();
     joinsComponent = new Map<string, ComponentRef<WorkflowJoinComponent>>();
+    outgoingHooksComponent = new Map<string, ComponentRef<WorkflowNodeOutgoingHookComponent>>();
     hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
 
     linkJoinSubscription: Subscription;
@@ -399,6 +403,37 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 this.createEdge('node-' + node.ref, 'node-' + t.workflow_dest_node.ref, options);
             });
         }
+
+        if (node.outgoing_hooks) {
+            node.outgoing_hooks.forEach(h => {
+                this.createOutgoingHook(h);
+                let options = {
+                    id: 'outgoing-hook-' + h.ref,
+                    style: 'stroke: #000000;'
+                };
+                this.createEdge('node-' + node.ref, 'outgoing-hook-' + h.ref, options);
+            })
+        }
+    }
+
+    createOutgoingHook(hook: WorkflowNodeOutgoingHook): void {
+        let componentRef = this.outgoingHooksComponent.get(hook.ref);
+        if (!componentRef) {
+            componentRef = this.createOutgoingHookComponent(hook);
+            this.outgoingHooksComponent.set(hook.ref, componentRef);
+        }
+
+        this.svgContainer.insert(componentRef.hostView, 0);
+        this.g.setNode('outgoing-hook-' + hook.ref, <any>{
+            label: () => {
+                componentRef.location.nativeElement.style.width = '100%';
+                componentRef.location.nativeElement.style.height = '100%';
+                return componentRef.location.nativeElement;
+            },
+            labelStyle: 'width: 210px; height: 68px',
+            width: 200,
+            height: 45
+        });
     }
 
     getJoinTriggerColor(triggerID: number): string {
@@ -452,8 +487,17 @@ export class WorkflowGraphComponent implements AfterViewInit {
         return componentRef;
     }
 
-    toggleLinkJoin(b: boolean): void {
+    createOutgoingHookComponent(hook: WorkflowNodeOutgoingHook): ComponentRef<WorkflowNodeOutgoingHookComponent> {
+        let nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeOutgoingHookComponent);
+        let componentRef = nodeComponentFactory.create(this.svgContainer.parentInjector);
+        componentRef.instance.hook = hook;
+        componentRef.instance.workflow = this.workflow;
+        componentRef.instance.project = this.project;
 
+        return componentRef;
+    }
+
+    toggleLinkJoin(b: boolean): void {
         this.linkWithJoin = b;
         this.nodesComponent.forEach(c => {
             (<WorkflowNodeComponent>c.instance).disabled = this.linkWithJoin;

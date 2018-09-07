@@ -1,0 +1,18 @@
+<div class="workflowHook pointing" (click)="openEditHookSidebar()" [class.active]="isSelected">
+    <div class="name">
+        <i class="{{icon}} icon"></i> <b>{{hook.model.name}}</b>
+    </div>
+    
+    <ng-container *ngIf="hook.model.name === 'WebHook'" >
+        <div class="details">
+            {{ hook.config['method']?.value }} {{ hook.config['URL']?.value }}
+        </div>
+    </ng-container>
+
+    <ng-container *ngIf="hook.model.name === 'Workflow'" >
+        <div class="details">
+            {{ hook.config['target_project']?.value }}/{{ hook.config['target_workflow']?.value }}//{{ hook.config['target_hook']?.value }}
+        </div>
+    </ng-container>
+ 
+</div>

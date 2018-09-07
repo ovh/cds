@@ -20,7 +20,7 @@
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUNS">
             <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow" [scrolled]="onScroll"></app-workflow-sidebar-run-list>
         </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && (sidebarMode === sidebarModes.EDIT_HOOK || sidebarMode === sidebarModes.EDIT_JOIN ||sidebarMode === sidebarModes.EDIT_NODE)">
+        <ng-container *ngIf="project != null && workflow != null && (sidebarMode === sidebarModes.EDIT_HOOK || sidebarMode === sidebarModes.EDIT_OUTGOING_HOOK || sidebarMode === sidebarModes.EDIT_JOIN ||sidebarMode === sidebarModes.EDIT_NODE)">
             <app-workflow-sidebar-edit
               [project]="project"
               [workflow]="workflow">

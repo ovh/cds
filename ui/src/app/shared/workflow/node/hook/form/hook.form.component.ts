@@ -9,7 +9,7 @@ import {ProjectPlatform} from '../../../../../model/platform.model';
 import {IdName, Project} from '../../../../../model/project.model';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {
-    Workflow, WorkflowNode, WorkflowNodeHook
+    Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeOutgoingHook
 } from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
@@ -23,6 +23,7 @@ import {HookEvent} from '../hook.event';
 export class WorkflowNodeHookFormComponent implements OnInit {
 
     _hook: WorkflowNodeHook = new WorkflowNodeHook();
+    _outgoingHook: WorkflowNodeOutgoingHook = new WorkflowNodeOutgoingHook();
     canDelete = false;
 
     @Input() project: Project;
@@ -44,6 +45,26 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
     get hook() {
         return this._hook;
+    }
+    @Input('outgoingHook')
+    set outgoingHook(data: WorkflowNodeOutgoingHook) {
+        if (data) {
+            this.canDelete = true;
+            this._outgoingHook = cloneDeep<WorkflowNodeOutgoingHook>(data);
+            if (this.outgoingHookModels) {
+                this.selectedOutgoingHookModel = this.outgoingHookModels.find(hm => hm.id === this._outgoingHook.model.id);
+            }
+            this.displayConfig = Object.keys(this._outgoingHook.config).length !== 0;
+            this._hook = new WorkflowNodeHook();
+            this._hook.id = this.outgoingHook.id;
+            this._hook.config = cloneDeep(this.outgoingHook.config);
+            this._hook.model = cloneDeep(this.outgoingHook.model);
+            this.displayConfig = Object.keys(this._hook.config).length !== 0;
+            console.log(this._hook);
+        }
+    }
+    get outgoingHook() {
+        return this._outgoingHook;
     }
 
     @Output() hookEvent = new EventEmitter<HookEvent>();
@@ -88,7 +109,6 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         this.hook.model = this.selectedHookModel;
         this.hook.config = cloneDeep(this.selectedHookModel.default_config);
         this.displayConfig = Object.keys(this.hook.config).length !== 0;
-        console.log(this.hook);
     }
 
     updateOutgoingHook(): void {
@@ -102,7 +122,6 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             this.hook.config['target_project'].value = this.project.key;
             // Load the workflow for the current project, but exclude the current workflow
             this.availableWorkflows = this.project.workflow_names.filter(idName => idName.name !== this.workflow.name);
-            console.log(this.availableWorkflows);
         }
     }
 
@@ -143,12 +162,20 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             (hookModels, outgoingHookModels, triggerConditions) => {
                 this.hooksModel = hookModels;
                 this.outgoingHookModels = outgoingHookModels;
+
                 if (this._hook && this._hook.model) {
                     this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
                 }
                 if (this.selectedHookModel != null && this.hook.id) {
                   this.updateMode = true;
                 }
+
+                if (this._outgoingHook && this._outgoingHook.model) {
+                    this.selectedOutgoingHookModel = this.outgoingHookModels.find(hm => hm.id === this._outgoingHook.model.id);
+                }
+                if (this.selectedOutgoingHookModel != null && this.outgoingHook.id) {
+                    this.updateMode = true;
+                  }
                 this.operators = triggerConditions.operators;
                 this.conditionNames = triggerConditions.names;
             }
