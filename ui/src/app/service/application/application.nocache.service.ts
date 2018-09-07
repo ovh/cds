@@ -1,8 +1,8 @@
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {Metric} from '../../model/metric.model';
 import {Overview} from '../../model/application.model';
+import {Metric} from '../../model/metric.model';
 
 @Injectable()
 export class ApplicationNoCacheService {

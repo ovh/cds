@@ -2,6 +2,7 @@ import {WorkflowItem} from './application.workflow.model';
 import {GroupPermission} from './group.model';
 import {Hook} from './hook.model';
 import {Key} from './keys.model';
+import {Metric} from './metric.model';
 import {Notification} from './notification.model';
 import {Parameter} from './parameter.model';
 import {Pipeline, PipelineBuild} from './pipeline.model';
@@ -10,7 +11,6 @@ import {Scheduler} from './scheduler.model';
 import {Usage} from './usage.model';
 import {Variable} from './variable.model';
 import {VCSStrategy} from './vcs.model';
-import {Metric} from './metric.model';
 import {WorkflowRun} from './workflow.run.model';
 
 export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');

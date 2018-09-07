@@ -3,9 +3,9 @@ import {TranslateService} from '@ngx-translate/core';
 import {Application, Overview, Severity} from '../../../../model/application.model';
 import {ChartData, ChartSeries, GraphConfiguration, GraphType} from '../../../../model/graph.model';
 import {Metric} from '../../../../model/metric.model';
+import {Tests} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {ApplicationNoCacheService} from '../../../../service/application/application.nocache.service';
-import {Tests} from '../../../../model/pipeline.model';
 
 @Component({
     selector: 'app-home',
@@ -90,7 +90,7 @@ export class ApplicationHomeComponent implements OnInit {
         cc.showXAxisLabel = true;
         cc.showYAxisLabel = true;
         cc.xAxisLabel = this._translate.instant('graph_vulnerability_x');
-        cc.yAxisLabel = this._translate.instant('graph_vulnerability_y');;
+        cc.yAxisLabel = this._translate.instant('graph_vulnerability_y'); ;
         cc.datas = new Array<ChartData>();
 
         Severity.Severities.forEach(s => {
