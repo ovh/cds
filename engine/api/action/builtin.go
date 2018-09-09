@@ -207,6 +207,13 @@ Semver used if fully compatible with https://semver.org/
 		Value:       "{{.cds.workspace}}",
 		Type:        sdk.StringParameter,
 	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "vprefix",
+		Description: "add ''v'' prefix in tag created",
+		Value:       "false",
+		Type:        sdk.BooleanParameter,
+		Advanced:    true,
+	})
 	gittag.Requirement("git", sdk.BinaryRequirement, "git")
 	gittag.Requirement("gpg", sdk.BinaryRequirement, "gpg")
 
