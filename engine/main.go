@@ -176,17 +176,27 @@ var configNewCmd = &cobra.Command{
 			sharedInfraToken = "enter sharedInfraToken from section [api.auth] here"
 		}
 
-		if conf.Hatchery != nil {
-			conf.Hatchery.Local.API.Token = sharedInfraToken
-			conf.Hatchery.Openstack.API.Token = sharedInfraToken
-			conf.Hatchery.VSphere.API.Token = sharedInfraToken
-			conf.Hatchery.Swarm.API.Token = sharedInfraToken
-			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
-				"sample-docker-engine": {
-					Host: "///var/run/docker.sock",
-				},
+		if h := conf.Hatchery; h != nil {
+			if h.Local != nil {
+				h.Local.API.Token = sharedInfraToken
 			}
-			conf.Hatchery.Marathon.API.Token = sharedInfraToken
+			if h.Openstack != nil {
+				h.Openstack.API.Token = sharedInfraToken
+			}
+			if h.VSphere != nil {
+				h.VSphere.API.Token = sharedInfraToken
+			}
+			if h.Swarm != nil {
+				h.Swarm.API.Token = sharedInfraToken
+				h.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
+					"sample-docker-engine": {
+						Host: "///var/run/docker.sock",
+					},
+				}
+			}
+			if h.Marathon != nil {
+				conf.Hatchery.Marathon.API.Token = sharedInfraToken
+			}
 		}
 
 		if conf.Hooks != nil {
