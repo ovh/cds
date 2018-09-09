@@ -430,12 +430,11 @@ See $ engine config command for more details.
 			}
 		}
 
-		//Initialize context
-		ctx := context.Background()
-		ctx, cancel := context.WithCancel(ctx)
+		// initialize context
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		// Gracefully shutdown all
+		// gracefully shutdown all
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 		go func() {
@@ -555,14 +554,14 @@ func serve(c context.Context, s service.Service, serviceName string) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
-	//First register(heartbeat)
-	if _, err := s.DoHeartbeat(s.Status); err != nil {
+	// first register
+	if err := s.Register(s.Status); err != nil {
 		log.Error("%s> Unable to register: %v", serviceName, err)
 		return err
 	}
 	log.Info("%s> Service registered", serviceName)
 
-	//Start the heartbeat goroutine
+	// start the heartbeat goroutine
 	go func() {
 		if err := s.Heartbeat(ctx, s.Status); err != nil {
 			log.Error("%v", err)
