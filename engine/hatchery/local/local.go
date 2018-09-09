@@ -192,9 +192,11 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	}
 
 	if spawnArgs.JobID > 0 {
-		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.JobID, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", wName,
+			spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Debug("spawnWorker> spawning worker %s (%s) - %s", wName, spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.LogInfo)
+		log.Debug("spawnWorker> spawning worker %s (%s) - %s", wName,
+			spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.LogInfo)
 	}
 
 	udataParam := sdk.WorkerArgs{
@@ -371,10 +373,9 @@ func (h *HatcheryLocal) localWorkerIndexCleanup() {
 }
 
 func (h *HatcheryLocal) startKillAwolWorkerRoutine() {
-	for {
-		time.Sleep(5 * time.Second)
-		err := h.killAwolWorkers()
-		if err != nil {
+	t := time.NewTicker(5 * time.Second)
+	for _ = range t.C {
+		if err := h.killAwolWorkers(); err != nil {
 			log.Warning("Cannot kill awol workers: %s", err)
 		}
 	}
@@ -386,39 +387,34 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 	h.Lock()
 	defer h.Unlock()
 
-	apiworkers, err := h.CDSClient().WorkerList()
+	apiWorkers, err := h.CDSClient().WorkerList()
 	if err != nil {
 		return err
 	}
 
+	mAPIWorkers := make(map[string]sdk.Worker, len(apiWorkers))
+	for _, w := range apiWorkers {
+		mAPIWorkers[w.Name] = w
+	}
+
 	killedWorkers := []string{}
 	for name, workerCmd := range h.workers {
-		// look for worker in apiworkers
-		var w sdk.Worker
-		for i := range apiworkers {
-			if apiworkers[i].Name == name {
-				w = apiworkers[i]
-				break
-			}
-		}
-
-		// Worker not found on api side. kill it
-		if w.Name == "" {
+		var kill bool
+		// if worker not found on api side or disabled, kill it
+		if w, ok := mAPIWorkers[name]; !ok {
 			// if no name on api, and worker create less than 10 seconds, don't kill it
 			if time.Now().Unix()-10 < workerCmd.created.Unix() {
 				log.Debug("killAwolWorkers> Avoid killing baby worker %s born at %s", name, workerCmd.created)
 				continue
 			}
-			w.Name = name
-			log.Info("Killing AWOL worker %s", w.Name)
-			if err := h.killWorker(name, workerCmd); err != nil {
-				log.Warning("Error killing worker %s :%s", name, err)
-			}
-			killedWorkers = append(killedWorkers, name)
+			log.Info("Killing AWOL worker %s", name)
+			kill = true
 		} else if w.Status == sdk.StatusDisabled {
-			// Worker is disabled. kill it
 			log.Info("Killing disabled worker %s", w.Name)
+			kill = true
+		}
 
+		if kill {
 			if err := h.killWorker(name, workerCmd); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
