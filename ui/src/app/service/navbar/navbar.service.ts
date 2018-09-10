@@ -21,7 +21,7 @@ export class NavbarService {
      */
     getData(fromCache?: boolean): Observable<Array<NavbarProjectData>> {
         if (!fromCache) {
-          this._http.get<Array<NavbarProjectData>>('/navbar')
+          this._http.get<Array<NavbarProjectData>>('/ui/navbar')
             .subscribe((data) => {
               this._navbar.next(data);
             });

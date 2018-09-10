@@ -5,6 +5,7 @@ import {Injector} from '@angular/core';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {CommitListComponent} from './commit.list.component';
 import {SharedModule} from '../shared.module';
+import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Commit List', () => {
 
@@ -17,6 +18,7 @@ describe('CDS: Commit List', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
+                { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports: [
                 RouterTestingModule.withRoutes([]),

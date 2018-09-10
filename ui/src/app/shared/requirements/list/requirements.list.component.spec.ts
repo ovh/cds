@@ -11,6 +11,7 @@ import {WorkerModelService} from '../../../service/worker-model/worker-model.ser
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {RequirementStore} from '../../../service/requirement/requirement.store';
 import {RequirementService} from '../../../service/requirement/requirement.service';
+import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Requirement List Component', () => {
 
@@ -24,7 +25,8 @@ describe('CDS: Requirement List Component', () => {
                 TranslateService,
                 RequirementStore,
                 WorkerModelService,
-                TranslateLoader
+                TranslateLoader,
+                { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports : [
                 TranslateModule.forRoot(),

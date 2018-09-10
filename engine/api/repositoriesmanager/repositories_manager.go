@@ -168,7 +168,7 @@ func (c *localAuthorizedClientCache) Get(repo *sdk.ProjectVCSServer) (sdk.VCSAut
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
 func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, error) {
 	if repo == nil {
-		return nil, sdk.ErrUnauthorized
+		return nil, sdk.ErrNoReposManagerClientAuth
 	}
 
 	vcs, has := local.Get(repo)
@@ -301,6 +301,20 @@ func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName stri
 		return nil, err
 	}
 	return &branch, nil
+}
+
+// DefaultBranch get default branch from given repository
+func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClient, fullname string) (string, error) {
+	branches, err := c.Branches(ctx, fullname)
+	if err != nil {
+		return "", sdk.WrapError(err, "DefaultBranch> Unable to list branches")
+	}
+	for _, b := range branches {
+		if b.Default {
+			return b.DisplayID, nil
+		}
+	}
+	return "", sdk.ErrNotFound
 }
 
 func (c *vcsClient) Commits(ctx context.Context, fullname, branch, since, until string) ([]sdk.VCSCommit, error) {

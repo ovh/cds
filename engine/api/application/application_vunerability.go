@@ -2,11 +2,35 @@ package application
 
 import (
 	"database/sql"
-
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
+
+// LoadVulnerabilitiesSummary compute vulnerabilities summary
+func LoadVulnerabilitiesSummary(db gorp.SqlExecutor, appID int64) (map[string]int64, error) {
+	query := `
+    SELECT json_object_agg(severity, nb)::TEXT 
+    FROM (
+	    SELECT count(id) AS nb, severity 
+      FROM application_vulnerability
+	    WHERE application_id = $1
+	    GROUP BY severity
+    ) tmp;
+  `
+
+	var summary map[string]int64
+	var result sql.NullString
+	if err := db.QueryRow(query, appID).Scan(&result); err != nil {
+		return nil, sdk.WrapError(err, "LoadVulnerabilitiesSummary")
+	}
+
+	if err := gorpmapping.JSONNullString(result, &summary); err != nil {
+		return nil, sdk.WrapError(err, "LoadVulnerabilitiesSummary> Unable to unmarshal summary")
+	}
+	return summary, nil
+}
 
 // InsertVulnerabilities Insert vulnerabilities
 func InsertVulnerabilities(db gorp.SqlExecutor, vs []sdk.Vulnerability, appID int64, t string) error {

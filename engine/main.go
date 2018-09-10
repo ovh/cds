@@ -176,17 +176,27 @@ var configNewCmd = &cobra.Command{
 			sharedInfraToken = "enter sharedInfraToken from section [api.auth] here"
 		}
 
-		if conf.Hatchery != nil {
-			conf.Hatchery.Local.API.Token = sharedInfraToken
-			conf.Hatchery.Openstack.API.Token = sharedInfraToken
-			conf.Hatchery.VSphere.API.Token = sharedInfraToken
-			conf.Hatchery.Swarm.API.Token = sharedInfraToken
-			conf.Hatchery.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
-				"sample-docker-engine": {
-					Host: "///var/run/docker.sock",
-				},
+		if h := conf.Hatchery; h != nil {
+			if h.Local != nil {
+				h.Local.API.Token = sharedInfraToken
 			}
-			conf.Hatchery.Marathon.API.Token = sharedInfraToken
+			if h.Openstack != nil {
+				h.Openstack.API.Token = sharedInfraToken
+			}
+			if h.VSphere != nil {
+				h.VSphere.API.Token = sharedInfraToken
+			}
+			if h.Swarm != nil {
+				h.Swarm.API.Token = sharedInfraToken
+				h.Swarm.DockerEngines = map[string]swarm.DockerEngineConfiguration{
+					"sample-docker-engine": {
+						Host: "///var/run/docker.sock",
+					},
+				}
+			}
+			if h.Marathon != nil {
+				conf.Hatchery.Marathon.API.Token = sharedInfraToken
+			}
 		}
 
 		if conf.Hooks != nil {
@@ -420,12 +430,11 @@ See $ engine config command for more details.
 			}
 		}
 
-		//Initialize context
-		ctx := context.Background()
-		ctx, cancel := context.WithCancel(ctx)
+		// initialize context
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		// Gracefully shutdown all
+		// gracefully shutdown all
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 		go func() {
@@ -545,14 +554,14 @@ func serve(c context.Context, s service.Service, serviceName string) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
-	//First register(heartbeat)
-	if _, err := s.DoHeartbeat(s.Status); err != nil {
+	// first register
+	if err := s.Register(s.Status); err != nil {
 		log.Error("%s> Unable to register: %v", serviceName, err)
 		return err
 	}
 	log.Info("%s> Service registered", serviceName)
 
-	//Start the heartbeat goroutine
+	// start the heartbeat goroutine
 	go func() {
 		if err := s.Heartbeat(ctx, s.Status); err != nil {
 			log.Error("%v", err)

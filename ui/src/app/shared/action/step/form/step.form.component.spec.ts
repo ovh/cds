@@ -10,6 +10,7 @@ import {ParameterService} from '../../../../service/parameter/parameter.service'
 import {SharedModule} from '../../../shared.module';
 import {Action} from '../../../../model/action.model';
 import {StepEvent} from '../step.event';
+import {APP_BASE_HREF} from '@angular/common';
 
 
 describe('CDS: Step Form Component', () => {
@@ -25,7 +26,8 @@ describe('CDS: Step Form Component', () => {
                 TranslateService,
                 ParameterService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                { provide: APP_BASE_HREF , useValue : '/' }
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),
