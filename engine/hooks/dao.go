@@ -90,3 +90,16 @@ func (d *dao) FindAllTaskExecutions(t *sdk.Task) ([]sdk.TaskExecution, error) {
 
 	return allexecs, nil
 }
+
+func (d *dao) FindAllTaskExecutionsForTasks(ts ...sdk.Task) ([]sdk.TaskExecution, error) {
+	var tes []sdk.TaskExecution
+	for _, t := range ts {
+		res, err := d.FindAllTaskExecutions(&t)
+		if err != nil {
+			return nil, err
+		}
+		tes = append(tes, res...)
+	}
+
+	return tes, nil
+}
