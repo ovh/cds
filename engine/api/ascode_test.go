@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ovh/cds/sdk"
 	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
@@ -19,6 +18,8 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 )
 
 type mockHTTPClient struct {
