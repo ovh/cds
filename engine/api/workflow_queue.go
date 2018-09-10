@@ -691,7 +691,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		count, err := workflow.CountNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, usr, &since, &until)
+		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, groupsID, usr, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
