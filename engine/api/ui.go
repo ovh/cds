@@ -74,31 +74,31 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 
 		// GET VCS URL
 		// Get vcs info to known if we are on the default branch or not
-		projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
-		client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectVCSServer)
-		if erra != nil {
-			return sdk.WrapError(erra, "getApplicationOverviewHandler> Cannot get repo client %s : %v", app.VCSServer)
-		}
-		vcsRepo, errRepo := client.RepoByFullname(ctx, app.RepositoryFullname)
-		if errRepo != nil {
-			return sdk.WrapError(errRepo, "getApplicationOverviewHandler> unable to get repo")
-		}
-		appOverview.GitURL = vcsRepo.URL
-		defaultBranch, errB := repositoriesmanager.DefaultBranch(ctx, client, app.RepositoryFullname)
-		if errB != nil {
-			return sdk.WrapError(errB, "getApplicationOverviewHandler> Unable to get default branch")
-		}
-
-		// GET LAST BUILD
-
-		tagFilter := make(map[string]string, 1)
-		tagFilter["git.branch"] = defaultBranch
-		for _, w := range app.Usage.Workflows {
-			runs, _, _, _, errR := workflow.LoadRuns(api.mustDB(), key, w.Name, 0, 5, tagFilter)
-			if errR != nil {
-				return sdk.WrapError(errR, "getApplicationOverviewHandler> Unable to load runs")
+		if projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer); projectVCSServer != nil {
+			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectVCSServer)
+			if erra != nil {
+				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationOverviewHandler> Cannot get repo client %s : %v", app.VCSServer)
 			}
-			appOverview.History[w.Name] = runs
+			vcsRepo, errRepo := client.RepoByFullname(ctx, app.RepositoryFullname)
+			if errRepo != nil {
+				return sdk.WrapError(errRepo, "getApplicationOverviewHandler> unable to get repo")
+			}
+			appOverview.GitURL = vcsRepo.URL
+			defaultBranch, errB := repositoriesmanager.DefaultBranch(ctx, client, app.RepositoryFullname)
+			if errB != nil {
+				return sdk.WrapError(errB, "getApplicationOverviewHandler> Unable to get default branch")
+			}
+
+			// GET LAST BUILD
+			tagFilter := make(map[string]string, 1)
+			tagFilter["git.branch"] = defaultBranch
+			for _, w := range app.Usage.Workflows {
+				runs, _, _, _, errR := workflow.LoadRuns(api.mustDB(), key, w.Name, 0, 5, tagFilter)
+				if errR != nil {
+					return sdk.WrapError(errR, "getApplicationOverviewHandler> Unable to load runs")
+				}
+				appOverview.History[w.Name] = runs
+			}
 		}
 
 		return service.WriteJSON(w, appOverview, http.StatusOK)
