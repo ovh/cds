@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/ovh/cds/sdk"
 )
 

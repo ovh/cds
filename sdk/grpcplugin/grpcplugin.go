@@ -51,7 +51,7 @@ func (c *Common) Start(ctx context.Context) error {
 func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interface{}) (Plugin, error) {
 	//Start the grpc server on unix socket
 	uuid := sdk.UUID()
-	c.Socket = filepath.Join(".", "grpcplugin-socket-"+uuid+".sock")
+	c.Socket = filepath.Join(os.TempDir(), "grpcplugin-socket-"+uuid+".sock")
 	syscall.Unlink(c.Socket)
 	l, err := net.Listen("unix", c.Socket)
 	if err != nil {
