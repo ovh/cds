@@ -418,6 +418,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 		nodeName := vars["nodeName"]
+		remote := FormString(r, "remote")
 		branch := FormString(r, "branch")
 		hash := FormString(r, "hash")
 		number, err := requestVarInt(r, "number")
@@ -465,6 +466,9 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		wfNodeRun := &sdk.WorkflowNodeRun{}
 		if branch != "" {
 			wfNodeRun.VCSBranch = branch
+		}
+		if remote != "" {
+			wfNodeRun.VCSRepository = remote
 		}
 		if hash != "" {
 			wfNodeRun.VCSHash = hash

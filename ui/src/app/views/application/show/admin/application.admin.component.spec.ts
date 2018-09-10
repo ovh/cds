@@ -29,6 +29,7 @@ import {SharedModule} from '../../../../shared/shared.module';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {ApplicationModule} from '../../application.module';
 import {ApplicationAdminComponent} from './application.admin.component';
+import {APP_BASE_HREF} from '@angular/common';
 
 @Component({
     template: ''
@@ -64,7 +65,8 @@ describe('CDS: Application Admin Component', () => {
                 ApplicationMigrateService,
                 AuthentificationStore,
                 WorkflowStore,
-                WorkflowService
+                WorkflowService,
+                { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports: [
                 RouterTestingModule.withRoutes([

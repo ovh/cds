@@ -143,7 +143,7 @@ type GroupClient interface {
 // HatcheryClient exposes hatcheries related functions
 type HatcheryClient interface {
 	HatcheryRefresh(int64) error
-	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
+	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, error)
 	HatcheryCount(wfNodeRunID int64) (int64, error)
 }
 
@@ -197,7 +197,7 @@ type ProjectVariablesClient interface {
 
 // QueueClient exposes queue related functions
 type QueueClient interface {
-	QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error)
+	QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int, *int64) error

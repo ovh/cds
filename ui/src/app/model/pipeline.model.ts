@@ -281,6 +281,17 @@ export class Tests {
     ko: number;
     skipped: number;
     test_suites: Array<TestSuite>;
+
+    static getColor(t: string): string {
+        switch (t) {
+            case 'ok':
+                return '#21BA45';
+            case 'ko':
+                return '#FF4F60';
+            case 'skip':
+                return '#808080';
+        }
+    }
 }
 
 export class TestSuite {

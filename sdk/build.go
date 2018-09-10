@@ -136,6 +136,12 @@ func StatusFromString(in string) Status {
 		return StatusDisabled
 	case StatusSkipped.String():
 		return StatusSkipped
+	case StatusStopped.String():
+		return StatusStopped
+	case StatusWorkerPending.String():
+		return StatusWorkerPending
+	case StatusWorkerRegistering.String():
+		return StatusWorkerRegistering
 	default:
 		return StatusUnknown
 	}
@@ -178,4 +184,14 @@ func StatusIsTerminated(status string) bool {
 	default:
 		return true
 	}
+}
+
+// StatusValidate returns if given strings are valid status.
+func StatusValidate(status ...string) bool {
+	for _, s := range status {
+		if StatusFromString(s) == StatusUnknown {
+			return false
+		}
+	}
+	return true
 }

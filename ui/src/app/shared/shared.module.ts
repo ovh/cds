@@ -4,6 +4,7 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import {RouterModule} from '@angular/router';
 import {NguiAutoCompleteModule} from '@ngui/auto-complete';
 import {TranslateModule} from '@ngx-translate/core';
+import {NgxChartsModule} from '@swimlane/ngx-charts';
 import {MomentModule} from 'angular2-moment';
 import {NgSemanticModule} from 'ng-semantic/ng-semantic';
 import {CodemirrorModule} from 'ng2-codemirror-typescript/Codemirror';
@@ -22,6 +23,7 @@ import {BroadcastLevelService} from './broadcast/broadcast.level.service';
 import {ConfirmButtonComponent} from './button/confirm/confirm.button';
 import {DeleteButtonComponent} from './button/delete/delete.button';
 import {UploadButtonComponent} from './button/upload/upload.button.component';
+import {ChartComponentComponent} from './chart/chart.component';
 import {CommitListComponent} from './commit/commit.list.component';
 import {DiffComponent} from './diff/diff.component';
 import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
@@ -96,13 +98,14 @@ import {ZoneComponent} from './zone/zone.component';
 @NgModule({
     imports: [ CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
         CodemirrorModule, ReactiveFormsModule, MarkdownModule.forRoot(), NguiAutoCompleteModule, RouterModule,
-        SuiModule, NgxAutoScrollModule, InfiniteScrollModule],
+        SuiModule, NgxAutoScrollModule, InfiniteScrollModule, NgxChartsModule],
     declarations: [
         ActionComponent,
         ActionStepComponent,
         ActionStepFormComponent,
         AuditListComponent,
         BreadcrumbComponent,
+        ChartComponentComponent,
         CommitListComponent,
         CutPipe,
         DeleteButtonComponent,
@@ -188,6 +191,7 @@ import {ZoneComponent} from './zone/zone.component';
         ActionComponent,
         AuditListComponent,
         BreadcrumbComponent,
+        ChartComponentComponent,
         CodemirrorModule,
         CommitListComponent,
         CommonModule,

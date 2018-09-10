@@ -185,7 +185,6 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Handle("/mon/metrics", r.GET(observability.StatsHandler, api.Auth(false)))
 	r.Handle("/mon/errors", r.GET(c.getPanicDumpListHandler, api.Auth(false)))
 	r.Handle("/mon/errors/{id}", r.GET(c.getPanicDumpHandler, api.Auth(false)))
-
 }
 
 func (c *Common) getPanicDumpListHandler() service.Handler {

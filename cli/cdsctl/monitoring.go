@@ -57,6 +57,7 @@ type Termui struct {
 	statusHatcheriesWorkers *cli.ScrollableList
 	status                  *cli.ScrollableList
 	currentURL              string
+	queueTabSelected        int
 }
 
 // Constants for each view of cds ui
@@ -87,6 +88,12 @@ func (ui *Termui) init() {
 	})
 	termui.Handle("/sys/kbd/<up>", func(e termui.Event) {
 		ui.monitoringCursorUp()
+	})
+	termui.Handle("/sys/kbd/<left>", func(e termui.Event) {
+		ui.monitoringCursorLeft()
+	})
+	termui.Handle("/sys/kbd/<right>", func(e termui.Event) {
+		ui.monitoringCursorRight()
 	})
 
 	termui.Handle("/sys/kbd/<enter>", func(e termui.Event) {
@@ -240,6 +247,28 @@ func (ui *Termui) monitoringCursorUp() {
 	}
 }
 
+func (ui *Termui) monitoringCursorLeft() {
+	switch ui.selected {
+	case QueueSelected:
+		if 0 < ui.queueTabSelected {
+			ui.queueTabSelected--
+		} else {
+			ui.queueTabSelected = 2
+		}
+	}
+}
+
+func (ui *Termui) monitoringCursorRight() {
+	switch ui.selected {
+	case QueueSelected:
+		if ui.queueTabSelected < 2 {
+			ui.queueTabSelected++
+		} else {
+			ui.queueTabSelected = 0
+		}
+	}
+}
+
 func (ui *Termui) monitoringColorSelected() {
 	ui.queue.BorderFg = termui.ColorDefault
 	ui.statusHatcheriesWorkers.BorderFg = termui.ColorDefault
@@ -375,8 +404,18 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) string {
 }
 
 func (ui *Termui) updateQueue(baseURL string) string {
+	var status []sdk.Status
+	switch ui.queueTabSelected {
+	case 0:
+		status = []sdk.Status{sdk.StatusWaiting}
+	case 1:
+		status = []sdk.Status{sdk.StatusBuilding}
+	case 2:
+		status = []sdk.Status{sdk.StatusWaiting, sdk.StatusBuilding}
+	}
+
 	start := time.Now()
-	wJobs, errw := client.QueueWorkflowNodeJobRun()
+	wJobs, errw := client.QueueWorkflowNodeJobRun(status...)
 	if errw != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", errw.Error())
 		return ""
@@ -394,13 +433,13 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	var maxQueued time.Duration
 
 	items := []string{
-		fmt.Sprintf("[  %s %s%s %s ➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("since", 9), pad("booked", 27), pad("run", 7), pad("project/workflow", 30), pad("node", 20), pad("triggered by", 17), "requirements"),
+		fmt.Sprintf("[  _ %s %s%s %s ➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)", pad("since", 9), pad("by", 27), pad("run", 7), pad("project/workflow", 30), pad("node", 20), pad("triggered by", 17), "requirements"),
 	}
 
 	var idx int
 	var item string
 	for _, job := range pbJobs {
-		item, maxQueued = ui.updateQueueJob(idx, maxQueued, job.ID, false, job.Parameters, job.Job.Action.Requirements, job.Queued, job.BookedBy, baseURL)
+		item, maxQueued = ui.updateQueueJob(idx, maxQueued, job.ID, false, job.Parameters, job.Job, job.Queued, job.BookedBy, baseURL, job.Status)
 		items = append(items, item)
 		idx++
 	}
@@ -414,20 +453,20 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	msg = fmt.Sprintf("[count queue wf %s](fg-cyan,bg-default) | %s", sdk.Round(elapsed, time.Millisecond).String(), msg)
 
 	for _, job := range wJobs {
-		item, maxQueued = ui.updateQueueJob(idx, maxQueued, job.ID, true, job.Parameters, job.Job.Action.Requirements, job.Queued, job.BookedBy, baseURL)
+		item, maxQueued = ui.updateQueueJob(idx, maxQueued, job.ID, true, job.Parameters, job.Job, job.Queued, job.BookedBy, baseURL, job.Status)
 		items = append(items, item)
 		idx++
 	}
 	ui.queue.Items = items
 
-	t := fmt.Sprintf("Queue:%d - Max Waiting:%s ", nWJobs.Count+int64(len(pbJobs)), sdk.Round(maxQueued, time.Second).String())
+	t := fmt.Sprintf("Queue(%s):%d - Max Waiting:%s ", fmt.Sprintf("%v", status), nWJobs.Count+int64(len(pbJobs)), sdk.Round(maxQueued, time.Second).String())
 	ui.queue.BorderLabel = t
 	return msg
 }
 
-func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, requirements []sdk.Requirement, queued time.Time, bookedBy sdk.Hatchery, baseURL string) (string, time.Duration) {
+func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, executedJob sdk.ExecutedJob, queued time.Time, bookedBy sdk.Hatchery, baseURL, status string) (string, time.Duration) {
 	req := ""
-	for _, r := range requirements {
+	for _, r := range executedJob.Job.Action.Requirements {
 		req += fmt.Sprintf("%s:%s ", r.Type, r.Value)
 	}
 	prj := getVarsInPbj("cds.project", parameters)
@@ -470,7 +509,9 @@ func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isW
 		fgColor = "fg-magenta"
 	}
 
-	if bookedBy.ID != 0 {
+	if status == sdk.StatusBuilding.String() {
+		row[1] = pad(fmt.Sprintf(" %s.%s ", executedJob.WorkerName, executedJob.WorkerID), 27)
+	} else if bookedBy.ID != 0 {
 		row[1] = pad(fmt.Sprintf(" %s.%d ", bookedBy.Name, bookedBy.ID), 27)
 	} else {
 		row[1] = pad("", 27)
@@ -479,7 +520,9 @@ func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isW
 	row[4] = fmt.Sprintf("➤ %s", pad(triggeredBy, 17))
 	row[5] = fmt.Sprintf("➤ %s", req)
 
-	item := fmt.Sprintf("  [%s](%s)[%s %s %s %s %s](%s,bg-default)", row[0], c, row[1], row[2], row[3], row[4], row[5], fgColor)
+	_, color := statusShort(status)
+	color = strings.Replace(color, "fg", "bg", 1)
+	item := fmt.Sprintf("  [ ](%s)[ ](bg-default)[%s](%s)[%s %s %s %s %s](%s,bg-default)", color, row[0], c, row[1], row[2], row[3], row[4], row[5], fgColor)
 
 	if idx == ui.queue.Cursor-1 {
 		ui.currentURL = currentURL

@@ -2,6 +2,7 @@ import {WorkflowItem} from './application.workflow.model';
 import {GroupPermission} from './group.model';
 import {Hook} from './hook.model';
 import {Key} from './keys.model';
+import {Metric} from './metric.model';
 import {Notification} from './notification.model';
 import {Parameter} from './parameter.model';
 import {Pipeline, PipelineBuild} from './pipeline.model';
@@ -10,6 +11,7 @@ import {Scheduler} from './scheduler.model';
 import {Usage} from './usage.model';
 import {Variable} from './variable.model';
 import {VCSStrategy} from './vcs.model';
+import {WorkflowRun} from './workflow.run.model';
 
 export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -97,4 +99,44 @@ export class Severity {
     static HIGH = 'high';
     static CRITICAL = 'critical';
     static DEFCON1 = 'defcon1';
+
+    static Severities = [
+        Severity.UNKNOWN,
+        Severity.NEGLIGIBLE,
+        Severity.LOW,
+        Severity.MEDIUM,
+        Severity.HIGH,
+        Severity.CRITICAL,
+        Severity.DEFCON1
+    ];
+
+    static getColors(s: string) {
+        switch (s) {
+            case Severity.DEFCON1:
+                return '#000000';
+            case Severity.CRITICAL:
+                return '#8B0000';
+            case Severity.HIGH:
+                return '#FF4F60';
+            case Severity.MEDIUM:
+                return '#FFA500';
+            case Severity.LOW:
+                return '#21BA45';
+            case Severity.NEGLIGIBLE:
+                return '#808080';
+            case Severity.UNKNOWN:
+                return '#D3D3D3';
+        }
+    }
+}
+
+export class Overview {
+    graphs: Array<OverviewGraph>;
+    git_url: string;
+    history: {[key: string]: Array<WorkflowRun>; };
+}
+
+export class OverviewGraph {
+    type: string;
+    datas: Array<Metric>;
 }

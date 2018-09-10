@@ -16,10 +16,12 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -701,6 +703,15 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until, limit := getSinceUntilLimitHeader(ctx, w, r)
+
+		status, err := QueryStrings(r, "status")
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
+		}
+		if !sdk.StatusValidate(status...) {
+			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given status"))
+		}
+
 		groupsID := make([]int64, len(getUser(ctx).Groups))
 		usr := getUser(ctx)
 		for i, g := range usr.Groups {
@@ -714,7 +725,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until, &limit)
+		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until, &limit, status...)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
@@ -818,45 +829,74 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		wnjr, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeRunJob.WorkflowNodeRunID, false)
+		nr, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeRunJob.WorkflowNodeRunID, false)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot load node job")
 		}
 
-		if wnjr.Tests == nil {
-			wnjr.Tests = &venom.Tests{}
+		if nr.Tests == nil {
+			nr.Tests = &venom.Tests{}
 		}
 
 		for k := range new.TestSuites {
-			for i := range wnjr.Tests.TestSuites {
-				if wnjr.Tests.TestSuites[i].Name == new.TestSuites[k].Name {
+			for i := range nr.Tests.TestSuites {
+				if nr.Tests.TestSuites[i].Name == new.TestSuites[k].Name {
 					// testsuite with same name already exists,
 					// Create a unique name
 					new.TestSuites[k].Name = fmt.Sprintf("%s.%d", new.TestSuites[k].Name, id)
 					break
 				}
 			}
-			wnjr.Tests.TestSuites = append(wnjr.Tests.TestSuites, new.TestSuites[k])
+			nr.Tests.TestSuites = append(nr.Tests.TestSuites, new.TestSuites[k])
 		}
 
 		// update total values
-		wnjr.Tests.Total = 0
-		wnjr.Tests.TotalOK = 0
-		wnjr.Tests.TotalKO = 0
-		wnjr.Tests.TotalSkipped = 0
-		for _, ts := range wnjr.Tests.TestSuites {
-			wnjr.Tests.Total += ts.Total
-			wnjr.Tests.TotalKO += ts.Failures + ts.Errors
-			wnjr.Tests.TotalOK += ts.Total - ts.Skipped - ts.Failures - ts.Errors
-			wnjr.Tests.TotalSkipped += ts.Skipped
+		nr.Tests.Total = 0
+		nr.Tests.TotalOK = 0
+		nr.Tests.TotalKO = 0
+		nr.Tests.TotalSkipped = 0
+		for _, ts := range nr.Tests.TestSuites {
+			nr.Tests.Total += ts.Total
+			nr.Tests.TotalKO += ts.Failures + ts.Errors
+			nr.Tests.TotalOK += ts.Total - ts.Skipped - ts.Failures - ts.Errors
+			nr.Tests.TotalSkipped += ts.Skipped
 		}
 
-		if err := workflow.UpdateNodeRun(tx, wnjr); err != nil {
+		if err := workflow.UpdateNodeRun(tx, nr); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot update node run")
 		}
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot update node run")
+		}
+
+		// If we are on default branch, push metrics
+		if nr.VCSServer != "" && nr.VCSBranch != "" {
+			p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getUser(ctx))
+			if errP != nil {
+				log.Error("postWorkflowJobTestsResultsHandler> Cannot load project by nodeJobRunID %d: %v", id, errP)
+				return nil
+			}
+
+			// Get vcs info to known if we are on the default branch or not
+			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, nr.VCSServer)
+			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectVCSServer)
+			if erra != nil {
+				log.Error("postWorkflowJobTestsResultsHandler> Cannot get repo client %s : %v", nr.VCSServer, erra)
+				return nil
+			}
+
+			defaultBranch, errB := repositoriesmanager.DefaultBranch(ctx, client, nr.VCSRepository)
+			if errB != nil {
+				log.Error("postWorkflowJobTestsResultsHandler> Unable to get default branch: %v", errB)
+				return nil
+			}
+
+			if defaultBranch == nr.VCSBranch {
+				// Push metrics
+				metrics.PushUnitTests(p.Key, nr.ApplicationID, nr.WorkflowID, nr.Number, *nr.Tests)
+			}
+
 		}
 		return nil
 	}

@@ -37,13 +37,13 @@ type Common struct {
 	ServiceName          string
 }
 
-//Service is the interface for a engine service
+// Service is the interface for a engine service
 type Service interface {
 	ApplyConfiguration(cfg interface{}) error
 	Serve(ctx context.Context) error
 	CheckConfiguration(cfg interface{}) error
 	Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error
-	DoHeartbeat(status func() sdk.MonitoringStatus) (int, error)
+	Register(status func() sdk.MonitoringStatus) error
 	Status() sdk.MonitoringStatus
 }
 

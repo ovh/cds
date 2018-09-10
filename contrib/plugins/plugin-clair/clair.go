@@ -5,9 +5,9 @@ import (
 
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/reference"
-	"github.com/jgsqware/clairctl/clair"
-	"github.com/jgsqware/clairctl/config"
-	"github.com/jgsqware/clairctl/docker"
+	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/clair"
+	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/config"
+	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/docker"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
@@ -67,7 +67,11 @@ func (d ClairPlugin) Run(a plugin.IJob) plugin.Result {
 	}
 
 	_ = plugin.SendLog(a, "Running analysis")
-	analysis := clair.Analyze(image, manifest)
+	analysis, err := clair.Analyze(image, manifest)
+	if err != nil {
+		_ = plugin.SendLog(a, "Error on running analys with Clair: %s", err)
+		return plugin.Fail
+	}
 
 	_ = plugin.SendLog(a, "Creating report")
 

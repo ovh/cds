@@ -54,7 +54,9 @@ workflow:
   pip1_2:
     depends_on:
       - pip1
-    pipeline: pip1`
+    pipeline: pip1
+metadata:
+  default_tags: git.branch,git.author,git.hash`
 	req.Body = ioutil.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
 
@@ -79,6 +81,7 @@ workflow:
 	assert.Equal(t, "value", m["Workflow.Root.Context.DefaultPipelineParameters.DefaultPipelineParameters0.Value"])
 	assert.Equal(t, "pip1_2", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Triggers.Triggers0.WorkflowDestNode.PipelineName"])
+	assert.Equal(t, "git.branch,git.author,git.hash", m["Workflow.Metadata.default_tags"])
 
 }
 

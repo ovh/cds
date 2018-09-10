@@ -50,7 +50,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     worker: CDSWebWorker;
 
     // Selected tab
-    selectedTab = 'workflow';
+    selectedTab = 'home';
 
     @ViewChildren(ApplicationWorkflowComponent)
     workflowComponentList: QueryList<ApplicationWorkflowComponent>;

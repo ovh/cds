@@ -527,7 +527,16 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		if w.Metadata == nil {
 			w.Metadata = sdk.Metadata{}
 		}
-		w.Metadata["default_tags"] = "git.branch,git.author"
+		if w.Metadata["default_tags"] == "" {
+			w.Metadata["default_tags"] = "git.branch,git.author"
+		} else {
+			if !strings.Contains(w.Metadata["default_tags"], "git.branch") {
+				w.Metadata["default_tags"] = "git.branch," + w.Metadata["default_tags"]
+			}
+			if !strings.Contains(w.Metadata["default_tags"], "git.author") {
+				w.Metadata["default_tags"] = "git.author," + w.Metadata["default_tags"]
+			}
+		}
 
 		if err := UpdateMetadata(db, w.ID, w.Metadata); err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert workflow metadata (%#v, %d)", w.Root, w.ID)

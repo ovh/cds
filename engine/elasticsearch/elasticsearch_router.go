@@ -17,4 +17,5 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
 	r.Handle("/mon/status", r.GET(s.getStatusHandler))
 	r.Handle("/events", r.GET(s.getEventsHandler), r.POST(s.postEventHandler))
+	r.Handle("/metrics", r.GET(s.getMetricsHandler), r.POST(s.postMetricsHandler))
 }

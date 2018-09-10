@@ -14,6 +14,7 @@ import {EnvironmentAuditService} from '../../../service/environment/environment.
 import {ApplicationAuditService} from '../../../service/application/application.audit.service';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import {APP_BASE_HREF} from '@angular/common';
 
 describe('CDS: Variable List Component', () => {
 
@@ -29,7 +30,8 @@ describe('CDS: Variable List Component', () => {
                 TranslateParser,
                 ProjectAuditService,
                 EnvironmentAuditService,
-                ApplicationAuditService
+                ApplicationAuditService,
+                { provide: APP_BASE_HREF, useValue : '/' }
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),

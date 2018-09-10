@@ -25,7 +25,7 @@ func Init(cfg Configuration, serviceName string) error {
 	traceEnable = true
 	var err error
 	if traceExporter == nil {
-		log.Info("observability> initializing jaegger exporter")
+		log.Info("observability> initializing jaeger exporter")
 		traceExporter, err = jaeger.NewExporter(jaeger.Options{
 			Endpoint:    cfg.Exporter.Jaeger.HTTPCollectorEndpoint, //"http://localhost:14268"
 			ServiceName: serviceName,                               //"cds-tracing"
