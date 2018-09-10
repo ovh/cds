@@ -144,7 +144,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		}
 
 		if prefix != nil && prefix.Value != "" {
-			tagOpts.Name = fmt.Sprintf("%s%s", prefix, tagOpts.Name)
+			tagOpts.Name = fmt.Sprintf("%s%s", prefix.Value, tagOpts.Name)
 		}
 
 		if auth.SignKey.ID != "" {

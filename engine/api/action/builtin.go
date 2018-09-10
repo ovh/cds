@@ -211,7 +211,7 @@ Semver used if fully compatible with https://semver.org/
 		Name:        "prefix",
 		Description: "Prefix for tag name",
 		Value:       "false",
-		Type:        sdk.BooleanParameter,
+		Type:        sdk.StringParameter,
 		Advanced:    true,
 	})
 	gittag.Requirement("git", sdk.BinaryRequirement, "git")
