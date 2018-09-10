@@ -168,7 +168,7 @@ func (c *localAuthorizedClientCache) Get(repo *sdk.ProjectVCSServer) (sdk.VCSAut
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
 func AuthorizedClient(ctx context.Context, db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, error) {
 	if repo == nil {
-		return nil, sdk.ErrUnauthorized
+		return nil, sdk.ErrNoReposManagerClientAuth
 	}
 
 	vcs, has := local.Get(repo)
