@@ -70,7 +70,6 @@ export class WorkflowNodeOutgoingHookComponent implements AfterViewInit {
 
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
-        this.elementRef.nativeElement.style.top = '5px';
     }
 
     openEditHookSidebar(): void {
