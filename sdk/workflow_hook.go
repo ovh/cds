@@ -118,6 +118,15 @@ func (cfg WorkflowNodeHookConfig) Values() map[string]string {
 	return r
 }
 
+// Clone returns a copied dinstance of cfg
+func (cfg WorkflowNodeHookConfig) Clone() WorkflowNodeHookConfig {
+	m := WorkflowNodeHookConfig(make(map[string]WorkflowNodeHookConfigValue, len(cfg)))
+	for k, v := range cfg {
+		m[k] = v
+	}
+	return m
+}
+
 // WorkflowNodeHookConfigValue represents the value of a node hook config
 type WorkflowNodeHookConfigValue struct {
 	Value        string `json:"value"`

@@ -386,6 +386,7 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 		Number:                     w.Number,
 		SubNumber:                  subnumber,
 		WorkflowNodeOutgoingHookID: hook.ID,
+		Hook: *hook,
 	}
 
 	var taskExecution sdk.TaskExecution

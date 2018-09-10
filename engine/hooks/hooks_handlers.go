@@ -394,7 +394,7 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 	return nil
 }
 
-func (s *Service) addAndExecuteTask(ctx context.Context, h sdk.WorkflowNodeOutgoingHook) (sdk.Task, sdk.TaskExecution, error) {
+func (s *Service) addAndExecuteTask(ctx context.Context, h sdk.WorkflowNodeOutgoingHookRun) (sdk.Task, sdk.TaskExecution, error) {
 	// Parse the hook as a task
 	t, err := s.outgoingHookToTask(h)
 	if err != nil {

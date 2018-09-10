@@ -19,5 +19,11 @@
             {{ hook.config['target_project']?.value }}/{{ hook.config['target_workflow']?.value }}//{{ hook.config['target_hook']?.value }}
         </div>
     </ng-container>
- 
+
+    <ng-container *ngIf="currentHookRun">
+        <div class="fixed subnumber" >
+            <i class="tag icon"></i>
+            {{ currentHookRun?.subnumber }}
+        </div>
+    </ng-container>
 </div>

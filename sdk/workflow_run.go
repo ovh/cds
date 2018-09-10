@@ -187,6 +187,7 @@ type WorkflowNodeOutgoingHookRun struct {
 	TriggersRun                map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`
 	Number                     int64                            `json:"num"`
 	SubNumber                  int64                            `json:"subnumber"`
+	Hook                       WorkflowNodeOutgoingHook         `json:"hook"`
 }
 
 // WorkflowNodeRunVulnerabilityReport represents vulnerabilities report for the current node run

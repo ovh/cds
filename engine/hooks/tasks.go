@@ -37,6 +37,11 @@ const (
 	GithubHeader    = "X-Github-Event"
 	GitlabHeader    = "X-Gitlab-Event"
 	BitbucketHeader = "X-Event-Key"
+
+	ConfigNodeRunID = "NodeRunID"
+	ConfigNumber    = "Number"
+	ConfigSubNumber = "SubNumber"
+	ConfigHookID    = "HookID"
 )
 
 var (
@@ -112,7 +117,7 @@ func (s *Service) synchronizeTasks() error {
 	return nil
 }
 
-func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHook) (sdk.Task, error) {
+func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHookRun) (sdk.Task, error) {
 	if h.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
 		return sdk.Task{}, fmt.Errorf("Unsupported hook type: %s", h.WorkflowHookModel.Type)
 	}
@@ -122,6 +127,12 @@ func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHook) (sdk.Task, 
 	}
 	identifier := fmt.Sprintf("%s / %d", h.WorkflowHookModel.Name, configHash)
 	uuid := base64.StdEncoding.EncodeToString([]byte(identifier))
+
+	config := h.Config.Clone()
+	config[ConfigNodeRunID] = h.WorkflowNodeRunID
+	config[ConfigNumber] = h.Number
+	config[ConfigSubNumber] = h.SubNumber
+	config[ConfigHookID] = h.WorkflowNodeOutgoingHookID
 
 	switch h.WorkflowHookModel.Name {
 	case sdk.WebHookModelName:
@@ -374,16 +385,18 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	var err error
 
 	switch {
-	case e.WebHook != nil:
+	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
 		h, err = s.doWebHookExecution(e)
+	case e.WebHook != nil && e.Type == TypeWebHook:
+		h, err = s.doOutgoingWebHookExecution(e)
 	case e.ScheduledTask != nil && e.Type == TypeScheduler:
 		h, err = s.doScheduledTaskExecution(e)
 	case e.ScheduledTask != nil && e.Type == TypeRepoPoller:
 		//Populate next execution
 		hs, err = s.doPollerTaskExecution(t, e)
-	case e.Kafka != nil:
+	case e.Kafka != nil && e.Type == TypeKafka:
 		h, err = s.doKafkaTaskExecution(e)
-	case e.RabbitMQ != nil:
+	case e.RabbitMQ != nil && e.Type == TypeRabbitMQ:
 		h, err = s.doRabbitMQTaskExecution(e)
 	default:
 		err = fmt.Errorf("Unsupported task type %s", e.Type)
@@ -555,6 +568,31 @@ func (s *Service) doWebHookExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeRun
 		return executeRepositoryWebHook(t)
 	}
 	return executeWebHook(t)
+}
+
+func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
+	log.Debug("Hooks> Processing outgoing webhook %s %s", t.UUID, t.Type)
+
+	u := t.Config["URL"].Value
+	if _, err := url.ParseQuery(u); err != nil {
+		log.Error("doOutgoingWebHookExecution> unable to parse URL: %v", err)
+	}
+
+	method := t.Config["method"].Value
+	payload := t.Config["payload"].Value
+
+	req, err := http.NewRequest(method, u, strings.NewReader(payload))
+	if err != nil {
+		log.Error("doOutgoingWebHookExecution> unable to parse URL: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Error("doOutgoingWebHookExecution> %v", err)
+	}
+
 }
 
 func getRepositoryHeader(whe *sdk.WebHookExecution) string {
