@@ -40,3 +40,29 @@ func TestErrorIs(t *testing.T) {
 		})
 	}
 }
+
+func TestNewError(t *testing.T) {
+	err := fmt.Errorf("this is an error generated from vendor")
+	cdsErr := NewError(ErrWrongRequest, err)
+	// print the CDS error line
+	fmt.Printf("%s\n", cdsErr)
+	// print the root error message and stack trace
+	fmt.Printf("%+v\n", cdsErr.(Error).Root)
+}
+
+func TestWrapError(t *testing.T) {
+	err := oneForStackTest()
+	// print the CDS error line
+	fmt.Printf("%s\n", err)
+	// print the root error message and stack trace
+	fmt.Printf("%+v\n", err.(Error).Root)
+}
+
+func oneForStackTest() error   { return twoForStackTest() }
+func twoForStackTest() error   { return threeForStackTest() }
+func threeForStackTest() error { return fourForStackTest() }
+func fourForStackTest() error  { return fiveForStackTest() }
+func fiveForStackTest() error {
+	err := fmt.Errorf("this is an error generated from vendor")
+	return WrapError(err, "cds custom message %d", 50)
+}

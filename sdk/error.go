@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"runtime"
+	"strings"
 
 	"github.com/pkg/errors"
-
 	"golang.org/x/text/language"
 )
 
@@ -455,14 +456,56 @@ var errorsLanguages = []map[int]string{
 }
 
 // NewError just set an error with a root cause
-func NewError(target Error, root error) Error {
-	target.Root = root
-	return target
+func NewError(e Error, err error) error {
+	e.Root = errors.WithStack(err)
+	return e
+}
+
+// Error type
+type Error struct {
+	ID      int    `json:"-"`
+	Status  int    `json:"-"`
+	Message string `json:"message"`
+	Root    error  `json:"-"`
+	stack   *stack
+}
+
+type stack []uintptr
+
+func (s *stack) String() string {
+	names := make([]string, len(*s))
+	for i, pc := range *s {
+		sp := strings.Split(runtime.FuncForPC(pc).Name(), ".")
+		names[i] = sp[len(sp)-1]
+	}
+	reverse(names)
+	return strings.Join(names, ">")
+}
+
+func reverse(ss []string) {
+	last := len(ss) - 1
+	for i := 0; i < len(ss)/2; i++ {
+		ss[i], ss[last-i] = ss[last-i], ss[i]
+	}
+}
+
+func callers() *stack {
+	const depth = 32
+	var pcs [depth]uintptr
+	n := runtime.Callers(3, pcs[:])
+	var st stack = pcs[0:n]
+	return &st
 }
 
 // WrapError constructs a stack of errors, adding context to the preceding error.
 func WrapError(err error, format string, args ...interface{}) error {
-	return errors.Wrap(err, fmt.Sprintf(format, args...))
+	m := fmt.Sprintf(format, args...)
+	if e, ok := err.(Error); ok {
+		e.Root = errors.WithMessage(e.Root, m)
+		return e
+	} else {
+		return Error{Root: errors.Wrap(err, m), stack: callers()}
+	}
 }
 
 // SetError completes an error
@@ -536,14 +579,6 @@ func Exit(format string, args ...interface{}) {
 	os.Exit(1)
 }
 
-// Error type
-type Error struct {
-	ID      int    `json:"-"`
-	Status  int    `json:"-"`
-	Message string `json:"message"`
-	Root    error  `json:"-"`
-}
-
 // DecodeError return an Error struct from json
 func DecodeError(data []byte) error {
 	var e Error
@@ -577,7 +612,11 @@ func (e Error) String() string {
 			rootMsg = fmt.Sprintf("%s [%T]", e.Root.Error(), e.Root)
 		}
 
-		msg = fmt.Sprintf("%s (caused by: %s)", msg, rootMsg)
+		if e.stack != nil {
+			msg = fmt.Sprintf("%s %s (caused by: %s)", e.stack.String(), msg, rootMsg)
+		} else {
+			msg = fmt.Sprintf("%s (caused by: %s)", msg, rootMsg)
+		}
 	}
 
 	return msg
