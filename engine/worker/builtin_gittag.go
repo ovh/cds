@@ -22,7 +22,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		tagLevel := sdk.ParameterFind(&a.Parameters, "tagLevel")
 		tagMessage := sdk.ParameterFind(&a.Parameters, "tagMessage")
 		path := sdk.ParameterFind(&a.Parameters, "path")
-		vprefix := sdk.ParameterFind(&a.Parameters, "vprefix")
+		prefix := sdk.ParameterFind(&a.Parameters, "prefix")
 
 		tagLevelValid := true
 		if tagLevel == nil || tagLevel.Value == "" {
@@ -143,8 +143,8 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			Username: userTag,
 		}
 
-		if vprefix != nil && vprefix.Value == "true" {
-			tagOpts.Name = fmt.Sprintf("v%s", tagOpts.Name)
+		if prefix != nil && prefix.Value != "" {
+			tagOpts.Name = fmt.Sprintf("%s%s", prefix, tagOpts.Name)
 		}
 
 		if auth.SignKey.ID != "" {

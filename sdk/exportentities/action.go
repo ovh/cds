@@ -189,9 +189,9 @@ func newSteps(a sdk.Action) []Step {
 				if tagPrerelease != nil && tagPrerelease.Value != "" {
 					gitTagArgs["tagPrerelease"] = tagPrerelease.Value
 				}
-				vprefix := sdk.ParameterFind(&act.Parameters, "vprefix")
-				if vprefix != nil && vprefix.Value == "true" {
-					gitTagArgs["vprefix"] = vprefix.Value
+				prefix := sdk.ParameterFind(&act.Parameters, "prefix")
+				if prefix != nil && prefix.Value != "" {
+					gitTagArgs["prefix"] = prefix.Value
 				}
 				s["gitTag"] = gitTagArgs
 			case sdk.ReleaseAction:

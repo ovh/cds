@@ -208,8 +208,8 @@ Semver used if fully compatible with https://semver.org/
 		Type:        sdk.StringParameter,
 	})
 	gittag.Parameter(sdk.Parameter{
-		Name:        "vprefix",
-		Description: "add ''v'' prefix in tag created",
+		Name:        "prefix",
+		Description: "Prefix for tag name",
 		Value:       "false",
 		Type:        sdk.BooleanParameter,
 		Advanced:    true,
