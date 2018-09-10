@@ -7,23 +7,23 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) HatcheryRegister(h sdk.Hatchery) (*sdk.Hatchery, bool, error) {
+func (c *client) HatcheryRegister(h sdk.Hatchery) (*sdk.Hatchery, error) {
 	var hreceived sdk.Hatchery
 	h.UID = c.config.Token
 	code, err := c.PostJSON("/hatchery", &h, &hreceived)
 	if code == http.StatusUnauthorized {
-		return nil, false, sdk.ErrUnauthorized
+		return nil, sdk.ErrUnauthorized
 	}
 	if code > 300 && err == nil {
-		return nil, false, fmt.Errorf("HatcheryRegister> HTTP %d", code)
+		return nil, fmt.Errorf("HatcheryRegister> HTTP %d", code)
 	} else if err != nil {
-		return nil, false, sdk.WrapError(err, "HatcheryRegister> Error")
+		return nil, sdk.WrapError(err, "HatcheryRegister> Error")
 	}
 
 	c.isHatchery = true
 	c.config.Hash = hreceived.UID
 
-	return &hreceived, hreceived.Uptodate, nil
+	return &hreceived, nil
 }
 
 func (c *client) HatcheryRefresh(id int64) error {

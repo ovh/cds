@@ -143,7 +143,7 @@ type GroupClient interface {
 // HatcheryClient exposes hatcheries related functions
 type HatcheryClient interface {
 	HatcheryRefresh(int64) error
-	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
+	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, error)
 	HatcheryCount(wfNodeRunID int64) (int64, error)
 }
 

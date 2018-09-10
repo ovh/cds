@@ -11,9 +11,9 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Register calls CDS API to register current hatchery
+// Register calls CDS API to register current hatchery.
 func Register(h Interface) error {
-	newHatchery, uptodate, err := h.CDSClient().HatcheryRegister(*h.Hatchery())
+	newHatchery, err := h.CDSClient().HatcheryRegister(*h.Hatchery())
 	if err != nil {
 		return sdk.WrapError(err, "register> Got HTTP exiting")
 	}
@@ -25,8 +25,9 @@ func Register(h Interface) error {
 
 	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
 
-	if !uptodate {
-		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s %s %s -=-=-=-=-", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+	if !newHatchery.Uptodate {
+		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s %s %s -=-=-=-=-",
+			sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 	}
 	return nil
 }
