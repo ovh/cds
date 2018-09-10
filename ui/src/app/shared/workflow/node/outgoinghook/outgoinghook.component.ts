@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnInit } from '@angular/core';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import {
@@ -15,7 +15,7 @@ import { Subscription } from 'rxjs';
     templateUrl: './outgoinghook.html',
     styleUrls: ['./outgoinghook.scss']
 })
-export class WorkflowNodeOutgoingHookComponent implements AfterViewInit {
+export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit {
 
     _hook: WorkflowNodeOutgoingHook;
 
@@ -46,7 +46,9 @@ export class WorkflowNodeOutgoingHookComponent implements AfterViewInit {
     subCurrentHookRun: Subscription;
     pipelineStatus = PipelineStatus;
 
-    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore) {
+    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore) {}
+
+    ngOnInit() {
         this.subSelect = this._workflowEventStore.selectedOutgoingHook().subscribe(h => {
             if (this.hook && h) {
                 this.isSelected = h.id === this.hook.id;
