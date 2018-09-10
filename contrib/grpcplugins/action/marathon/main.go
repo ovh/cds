@@ -13,7 +13,6 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -280,21 +279,6 @@ func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error
 	}, nil
 }
 
-// parseTemplateParameters parses a list of key value pairs separated by new lines
-func parseTemplateParameters(s string) (map[string]interface{}, error) {
-	params := make(map[string]interface{})
-
-	for _, l := range strings.Split(s, "\n") {
-		components := strings.SplitN(l, "=", 2)
-		if len(components) != 2 {
-			return nil, fmt.Errorf("invalid key value pair form for %q", l)
-		}
-		params[components[0]] = components[1]
-	}
-
-	return params, nil
-}
-
 func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (string, error) {
 	//Read initial marathon.json file
 	buff, err := ioutil.ReadFile(filepath)
@@ -323,8 +307,8 @@ func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (st
 		fmt.Printf("Error writing content to file: %s\n", errw.Error())
 		return "", errw
 	}
-	outfile.Sync()
-	outfile.Close()
+	_ = outfile.Sync()
+	_ = outfile.Close()
 
 	return outPath, nil
 }

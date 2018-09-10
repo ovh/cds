@@ -10,12 +10,14 @@ import (
 	"google.golang.org/grpc"
 )
 
+// Common is the common struct of actionplugin
 type Common struct {
 	grpcplugin.Common
-	conn     *grpc.ClientConn
+	conn     *grpc.ClientConn //nolint
 	HTTPPort int32
 }
 
+// Start is useful to start grpcplugin
 func Start(ctx context.Context, srv ActionPluginServer) error {
 	p, ok := srv.(grpcplugin.Plugin)
 	if !ok {
@@ -28,6 +30,7 @@ func Start(ctx context.Context, srv ActionPluginServer) error {
 	return p.Start(ctx)
 }
 
+// Client gives us a grpcplugin client
 func Client(ctx context.Context, socket string) (ActionPluginClient, error) {
 	conn, err := grpc.DialContext(ctx,
 		socket,
