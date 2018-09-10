@@ -1,4 +1,6 @@
+import { Location } from '@angular/common';
 import { AfterViewInit, Component, ElementRef, Input, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PipelineStatus } from 'app/model/pipeline.model';
 import { Project } from 'app/model/project.model';
 import {
@@ -41,14 +43,25 @@ export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit 
     loading = false;
     isSelected = false;
     subSelect: Subscription;
-
+    selectedHookID: number;
     currentHookRun: WorkflowNodeOutgoingHookRun;
     subCurrentHookRun: Subscription;
     pipelineStatus = PipelineStatus;
+    ready = false;
 
-    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore) {}
+    constructor(
+        private elementRef: ElementRef,
+        private _workflowEventStore: WorkflowEventStore,
+        private _router: Router,
+        private _activatedRoute: ActivatedRoute,
+        private _location: Location
+    ) {}
 
     ngOnInit() {
+        if (this._activatedRoute.snapshot.queryParams['outgoing_id']) {
+            this.selectedHookID = parseInt(this._activatedRoute.snapshot.queryParams['outgoing_id'], 10);
+        }
+
         this.subSelect = this._workflowEventStore.selectedOutgoingHook().subscribe(h => {
             if (this.hook && h) {
                 this.isSelected = h.id === this.hook.id;
@@ -66,8 +79,15 @@ export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit 
                 if (!wr.outgoing_hooks[this.hook.id]) { return }
                 if (wr.outgoing_hooks[this.hook.id].length === 0) { return }
                 this.currentHookRun = wr.outgoing_hooks[this.hook.id][0];
+
+                if (!this.ready && this.hook && this.selectedHookID && this.hook.id === this.selectedHookID) {
+                    this._workflowEventStore.setSelectedOutgoingHook(this.hook);
+                }
+
+                this.ready = true;
             }
         );
+
     }
 
     ngAfterViewInit() {
@@ -80,5 +100,7 @@ export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit 
           return;
         }
         this._workflowEventStore.setSelectedOutgoingHook(this.hook);
+        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute, queryParams: { 'outgoing_id': this.hook.id}});
+        this._location.go(url.toString());
     }
 }
