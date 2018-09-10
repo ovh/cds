@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var (
@@ -59,11 +60,12 @@ func adminPluginsImportFunc(v cli.Values) error {
 		return fmt.Errorf("unable to read file %s: %v", v.GetString("file"), err)
 	}
 
-	m := new(sdk.GRPCPlugin)
-	if err := yaml.Unmarshal(b, m); err != nil {
+	var expGPRCPlugin exportentities.GRPCPlugin
+	if err := yaml.Unmarshal(b, &expGPRCPlugin); err != nil {
 		return fmt.Errorf("unable to load file: %v", err)
 	}
 
+	m := expGPRCPlugin.GRPCPlugin()
 	existing, err := client.PluginsGet(m.Name)
 	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
 		return fmt.Errorf("unable to get plugin: %v", err)

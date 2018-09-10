@@ -1,0 +1,16 @@
+name: plugin-download
+type: action
+author: Benjamin COENEN <benjamin.coenen@corp.ovh.com>
+description: This is a plugin to download file from URL
+parameters:
+  url:
+    type: string
+    description: The url of your file
+    default: '{{.cds.app.downloadUrl}}'
+  filepath:
+    type: string
+    description: The destination of your file to be copied
+    default: '.'
+  headers:
+    type: text
+    description: Specific headers to add to your request ("headerName"="value" newline separated list)

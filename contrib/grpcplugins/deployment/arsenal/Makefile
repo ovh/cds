@@ -5,12 +5,7 @@ VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 TARGET_DIR = ./dist
 TARGET_NAME = arsenal
 
-define PLUGIN_MANIFEST
-name: arsenal-deployment-plugin
-type: platform
-author: "François Samin"
-description: "OVH Arsenal Deployment Plugin"
-endef
+PLUGIN_MANIFEST=`echo $TARGET_NAME.yml`
 export PLUGIN_MANIFEST
 
 define PLUGIN_MANIFEST_BINARY

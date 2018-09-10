@@ -7,7 +7,10 @@ import (
 	"path"
 	"strings"
 
+	"github.com/golang/protobuf/ptypes/empty"
+
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
 )
@@ -160,7 +163,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			OrderStep:          stepOrder,
 			Args:               pluginArgs,
 			Secrts:             pluginSecrets,
-			HTTPPortWorker:     w.exportPort,
+			HTTPPortWorker:     int(w.exportPort),
 		}
 		if w.currentJob.wJob != nil && w.currentJob.wJob.WorkflowNodeRunID > 0 {
 			pluginAction.IDWorkflowNodeRun = w.currentJob.wJob.WorkflowNodeRunID
@@ -190,4 +193,101 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 	case res := <-chanRes:
 		return res
 	}
+}
+
+func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
+	log.Info("runPlugin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
+	defer func() {
+		log.Info("runPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
+	}()
+
+	chanRes := make(chan sdk.Result, 1)
+
+	go func(buildID int64, params []sdk.Parameter) {
+		//For the moment we consider that plugin name = action name
+		pluginName := a.Name
+		pluginSocket, err := startGRPCPlugin(context.Background(), pluginName, w, nil, startGRPCPluginOptions{
+			out: os.Stdout,
+			err: os.Stderr,
+		})
+		if err != nil {
+			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to start grpc plugin... Aborting (%v)", err))
+			return
+		}
+
+		c, err := actionplugin.Client(ctx, pluginSocket.Socket)
+		if err != nil {
+			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to call grpc plugin... Aborting (%v)", err))
+			return
+		}
+		qPort := actionplugin.WorkerHTTPPortQuery{Port: w.exportPort}
+		if _, err := c.WorkerHTTPPort(ctx, &qPort); err != nil {
+			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to set worker http port for grpc plugin... Aborting (%v)", err))
+			return
+		}
+
+		pluginSocket.Client = c
+
+		m, err := c.Manifest(context.Background(), new(empty.Empty))
+		if err != nil {
+			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to call grpc plugin manifest... Aborting (%v)", err))
+			return
+		}
+		log.Info("plugin successfully initialized: %#v", m)
+
+		pluginClient := pluginSocket.Client
+		actionPluginClient, ok := pluginClient.(actionplugin.ActionPluginClient)
+		if !ok {
+			pluginFail(chanRes, sendLog, "Unable to retrieve plugin client... Aborting")
+			return
+		}
+
+		logCtx, stopLogs := context.WithCancel(ctx)
+		go enablePluginLogger(logCtx, sendLog, pluginSocket)
+		defer stopLogs()
+
+		manifest, err := actionPluginClient.Manifest(ctx, &empty.Empty{})
+		if err != nil {
+			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to retrieve plugin manifest... Aborting (%v)", err))
+			return
+		}
+
+		sendLog(fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
+		query := actionplugin.ActionQuery{
+			Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(a.Parameters)),
+			JobID:   buildID,
+		}
+
+		result, err := actionPluginClient.Run(ctx, &query)
+		if err != nil {
+			pluginFail(chanRes, sendLog, fmt.Sprintf("Error running action: %v", err))
+			return
+		}
+
+		chanRes <- sdk.Result{
+			Status: result.GetStatus(),
+			Reason: result.GetDetails(),
+		}
+	}(buildID, *params)
+
+	select {
+	case <-ctx.Done():
+		log.Error("CDS Worker execution canceled: %v", ctx.Err())
+		w.sendLog(buildID, "CDS Worker execution canceled\n", stepOrder, false)
+		return sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: "CDS Worker execution canceled",
+		}
+	case res := <-chanRes:
+		return res
+	}
+}
+
+func pluginFail(chanRes chan<- sdk.Result, sendLog LoggerFunc, reason string) {
+	res := sdk.Result{
+		Reason: reason,
+		Status: sdk.StatusFail.String(),
+	}
+	sendLog(res.Reason)
+	chanRes <- res
 }

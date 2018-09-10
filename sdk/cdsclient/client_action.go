@@ -42,7 +42,6 @@ func (c *client) ActionList() ([]sdk.Action, error) {
 }
 
 func (c *client) ActionAddPlugin(file io.Reader, filePath string, update bool) error {
-
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile("UploadFile", filepath.Base(filePath))

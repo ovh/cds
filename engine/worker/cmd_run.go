@@ -128,6 +128,8 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 				exceptJobID = w.bookedWJobID
 				w.bookedWJobID = 0
+			} else {
+				exceptJobID = w.bookedWJobID
 			}
 		}
 		if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
@@ -276,16 +278,23 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				if j.ID == 0 {
 					continue
 				}
+				log.Debug("checkQueue> Receive workflow job %d", j.ID)
 
-				requirementsOK, _ := checkRequirements(w, &j.Job.Action, nil, j.ID)
-				t := ""
-				if j.ID == w.bookedWJobID {
-					t = ", this was my booked job"
-				}
+				var requirementsOK, pluginsOK bool
+				var t string
+				if exceptJobID != j.ID && w.bookedWJobID != 0 { // If we already check the requirements before and it was OK
+					requirementsOK, _ = checkRequirements(w, &j.Job.Action, nil, j.ID)
+					if j.ID == w.bookedWJobID {
+						t = ", this was my booked job"
+					}
 
-				pluginsOK, errPlugins := checkPlugins(w, j)
-				if !pluginsOK {
-					log.Error("Plugins doesn't match: %v", errPlugins)
+					pluginsOK, errPlugins := checkPlugins(w, j)
+					if !pluginsOK {
+						log.Error("Plugins doesn't match: %v", errPlugins)
+					}
+				} else { // Because already checked previously
+					requirementsOK = true
+					pluginsOK = true
 				}
 
 				//Take the job

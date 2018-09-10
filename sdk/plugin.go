@@ -110,12 +110,13 @@ const (
 
 // GRPCPlugin is the type representing a plugin over GRPC
 type GRPCPlugin struct {
-	ID          int64              `json:"id" cli:"id" db:"id"`
-	Name        string             `json:"name" cli:"name,key" db:"name"`
-	Type        string             `json:"type" cli:"type" db:"type"`
-	Author      string             `json:"author" cli:"author" db:"author"`
-	Description string             `json:"description" cli:"description" db:"description"`
-	Binaries    []GRPCPluginBinary `json:"binaries" cli:"-" db:"-"`
+	ID          int64              `json:"id" yaml:"id" cli:"id" db:"id"`
+	Name        string             `json:"name" yaml:"name" cli:"name,key" db:"name"`
+	Type        string             `json:"type" yaml:"type" cli:"type" db:"type"`
+	Author      string             `json:"author" yaml:"author" cli:"author" db:"author"`
+	Description string             `json:"description" yaml:"description" cli:"description" db:"description"`
+	Parameters  []Parameter        `json:"parameters,omitempty" yaml:"parameters,omitempty" cli:"parameters" db:"-"`
+	Binaries    []GRPCPluginBinary `json:"binaries" yaml:"binaries" cli:"-" db:"-"`
 }
 
 // GetBinary returns the binary for a specific os and arch
