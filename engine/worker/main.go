@@ -26,7 +26,7 @@ type currentWorker struct {
 		logChan chan sdk.Log
 		llist   *list.List
 	}
-	exportPort int
+	exportPort int32
 	hatchery   struct {
 		id   int64
 		name string

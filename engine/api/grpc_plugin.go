@@ -28,8 +28,6 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 		}
 		p.Binaries = nil
 
-		fmt.Printf("--- +%v\n", p)
-
 		tx, err := db.Begin()
 		if err != nil {
 			return sdk.WrapError(err, "postPGRPCluginHandler> Cannot start transaction")
@@ -91,6 +89,7 @@ func (api *API) getGRPCluginHandler() service.Handler {
 
 func (api *API) putGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		db := api.mustDB()
 		var p sdk.GRPCPlugin
 		if err := UnmarshalBody(r, &p); err != nil {
 			return sdk.WrapError(err, "putGRPCluginHandler>")
@@ -105,8 +104,24 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		p.ID = old.ID
 		p.Binaries = old.Binaries
 
-		if err := plugin.Update(api.mustDB(), &p); err != nil {
+		tx, err := db.Begin()
+		if err != nil {
+			return sdk.WrapError(err, "putGRPCluginHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		if p.Type == sdk.GRPCPluginAction {
+			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, getUser(ctx).ID); err != nil {
+				return sdk.WrapError(err, "putGRPCluginHandler> Error while updating action %s in database", p.Name)
+			}
+		}
+
+		if err := plugin.Update(tx, &p); err != nil {
 			return sdk.WrapError(err, "putGRPCluginHandler> unable to insert plugin")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "putGRPCluginHandler> Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)

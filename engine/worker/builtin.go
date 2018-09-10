@@ -162,7 +162,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			OrderStep:          stepOrder,
 			Args:               pluginArgs,
 			Secrts:             pluginSecrets,
-			HTTPPortWorker:     w.exportPort,
+			HTTPPortWorker:     int(w.exportPort),
 		}
 		if w.currentJob.wJob != nil && w.currentJob.wJob.WorkflowNodeRunID > 0 {
 			pluginAction.IDWorkflowNodeRun = w.currentJob.wJob.WorkflowNodeRunID
@@ -205,15 +205,35 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 	go func(buildID int64, params []sdk.Parameter) {
 		//For the moment we consider that plugin name = action name
 		pluginName := a.Name
-		pluginSocket, err := startGRPCPlugin(ctx, pluginName, w, nil, startGRPCPluginOptions{
+		pluginSocket, err := startGRPCPlugin(context.Background(), pluginName, w, nil, startGRPCPluginOptions{
 			out: os.Stdout,
 			err: os.Stderr,
 		})
+		if err != nil {
+			res := sdk.Result{
+				Reason: fmt.Sprintf("Unable to start grpc plugin... Aborting (%v)", err),
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(res.Reason)
+			chanRes <- res
+			return
+		}
 
-		c, err := actionplugin.Client(context.Background(), pluginSocket.Socket)
+		c, err := actionplugin.Client(ctx, pluginSocket.Socket)
 		if err != nil {
 			res := sdk.Result{
 				Reason: fmt.Sprintf("Unable to call grpc plugin... Aborting (%v)", err),
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(res.Reason)
+			chanRes <- res
+			return
+		}
+		log.Info("export port %d", w.exportPort)
+		qPort := actionplugin.WorkerHTTPPortQuery{Port: w.exportPort}
+		if _, err := c.WorkerHTTPPort(ctx, &qPort); err != nil {
+			res := sdk.Result{
+				Reason: fmt.Sprintf("Unable to set worker http port for grpc plugin... Aborting (%v)", err),
 				Status: sdk.StatusFail.String(),
 			}
 			sendLog(res.Reason)
@@ -234,16 +254,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			return
 		}
 		log.Info("plugin successfully initialized: %#v", m)
-
-		if err != nil {
-			res := sdk.Result{
-				Reason: fmt.Sprintf("Unable to start plugin client... Aborting (%v)", err),
-				Status: sdk.StatusFail.String(),
-			}
-			sendLog(res.Reason)
-			chanRes <- res
-			return
-		}
 
 		pluginClient := pluginSocket.Client
 		actionPluginClient, ok := pluginClient.(actionplugin.ActionPluginClient)
@@ -275,6 +285,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		sendLog(fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 		query := actionplugin.ActionQuery{
 			Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(a.Parameters)),
+			JobID:   buildID,
 		}
 
 		result, err := actionPluginClient.Run(ctx, &query)

@@ -12,7 +12,8 @@ import (
 
 type Common struct {
 	grpcplugin.Common
-	conn *grpc.ClientConn
+	conn     *grpc.ClientConn
+	HTTPPort int32
 }
 
 func Start(ctx context.Context, srv ActionPluginServer) error {

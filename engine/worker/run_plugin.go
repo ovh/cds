@@ -87,16 +87,22 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	if err := grpcplugin.StartPlugin(ctx, dir, path.Join(w.basedir, binary.Cmd), binary.Args, opts.env, mOut, mErr); err != nil {
 		return nil, sdk.WrapError(err, "Unable to start GRPC plugin... Aborting")
 	}
-	log.Info("GRPC Plugin started")
+	log.Info("GRPC Plugin %s started", binary.Name)
 
 	//Sleep a while, to let the plugin write on stdout the socket address
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(500 * time.Millisecond)
+	tsStart := time.Now()
 
 	buff := new(strings.Builder)
 	for {
 		b, err := c.BuffOut.ReadByte()
 		if err != nil && len(buff.String()) > 0 {
-			log.Error("error on ReadByte: %v", err)
+			if time.Now().Before(tsStart.Add(5 * time.Second)) {
+				log.Warning("Error on ReadByte, retry in 500ms...")
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+			log.Error("error on ReadByte(len buff %d, content: %s): %v", len(buff.String()), buff.String(), err)
 			return nil, fmt.Errorf("unable to get socket address from started binary")
 		}
 		if err := buff.WriteByte(b); err != nil {

@@ -257,14 +257,14 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 	var currentARCH = strings.ToLower(runtime.GOARCH)
 	var binary *sdk.GRPCPluginBinary
 
-	if len(j.PluginBinaries) == 0 {
+	if len(j.PlatformPluginBinaries) == 0 {
 		return true, nil
 	}
 
-	log.Debug("Checking plugins...(%#v)", j.PluginBinaries)
+	log.Debug("Checking plugins...(%#v)", j.PlatformPluginBinaries)
 
 	//First check OS and Architecture
-	for _, b := range j.PluginBinaries {
+	for _, b := range j.PlatformPluginBinaries {
 		if b.OS == currentOS && b.Arch == currentARCH {
 			binary = &b
 			break
@@ -286,11 +286,11 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 	}
 
 	//Then try to download the plugin
-	pluginBinary := path.Join(w.basedir, binary.Name)
-	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
+	platformPluginBinary := path.Join(w.basedir, binary.Name)
+	if _, err := os.Stat(platformPluginBinary); os.IsNotExist(err) {
 		log.Debug("Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
-		fi, err := os.OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		fi, err := os.OpenFile(platformPluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return false, err
 		}

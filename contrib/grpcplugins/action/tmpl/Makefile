@@ -5,9 +5,6 @@ VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 TARGET_DIR = ./dist
 TARGET_NAME = tmpl
 
-PLUGIN_MANIFEST=`echo $TARGET_NAME.yml`
-export PLUGIN_MANIFEST
-
 define PLUGIN_MANIFEST_BINARY
 os: %os%
 arch: %arch%
@@ -32,7 +29,7 @@ clean:
 	@rm -rf $(TARGET_DIR)
 
 build: $(TARGET_DIR)
-	@echo "$$PLUGIN_MANIFEST" > $(TARGET_DIR)/plugin.yml
+	@cp $(TARGET_NAME).yml $(TARGET_DIR)/plugin.yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
@@ -55,6 +52,6 @@ publish:
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl admin plugins binary-add tmpl-action-plugin $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			cdsctl admin plugins binary-add plugin-$(TARGET_NAME) $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done

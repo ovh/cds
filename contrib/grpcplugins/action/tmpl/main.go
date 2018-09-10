@@ -15,36 +15,8 @@ import (
 )
 
 /*
-This plugin have to be used as an action platform plugin
-
-Tmpl action plugin must be configured as following:
-	name: tmpl-action-plugin
-	type: action
-	author: "François Samin"
-	description: "tmpl action Plugin"
-
-$ cdsctl admin plugins import tmpl-action-plugin.yml
-
-Build the present binaries and import in CDS:
-	os: linux
-	arch: amd64
-	cmd: <path-to-binary-file>
-
-$ cdsctl admin plugins binary-add tmpl-action-plugin tmpl-action-plugin-bin.yml <path-to-binary-file>
-
-Arsenal platform must configured as following
-	name: tmpl
-	default_config:
-		host:
-			type: string
-	action_default_config:
-		file:
-			type: string
-		output:
-			type: string
-		params:
-			type: text
-	plugin: tmpl-plugin
+$ make build
+$ make publish
 */
 
 type tmplActionPlugin struct {
@@ -53,7 +25,7 @@ type tmplActionPlugin struct {
 
 func (actPlugin *tmplActionPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
-		Name:   "tmpl action Plugin",
+		Name:   "plugin-tmpl",
 		Author: "Alexandre JIN  <alexandre.jin@corp.ovh.com>",
 		Description: `This action helps you generates a file using a template file and text/template golang package.
 
@@ -125,6 +97,11 @@ func (actPlugin *tmplActionPlugin) Run(ctx context.Context, q *actionplugin.Acti
 	return &actionplugin.ActionResult{
 		Status: sdk.StatusSuccess.String(),
 	}, nil
+}
+
+func (actPlugin *tmplActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
+	actPlugin.HTTPPort = q.Port
+	return &empty.Empty{}, nil
 }
 
 func main() {

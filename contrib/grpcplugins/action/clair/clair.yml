@@ -1,0 +1,8 @@
+name: plugin-clair
+type: action
+author: "Steven GUIHEUX <steven.guiheux@corp.ovh.com>"
+description: This is a plugin to run clair analysis
+parameters:
+  image:
+    type: string
+    description: Image to analyze

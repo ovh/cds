@@ -21,6 +21,7 @@ message ActionPluginManifest {
 
 message ActionQuery {
     map<string, string> options = 1;
+    int64 jobID = 2;
 }
 
 message ActionResult {
@@ -28,7 +29,12 @@ message ActionResult {
     string details = 2;
 }
 
+message WorkerHTTPPortQuery {
+    int32 port = 1;
+}
+
 service ActionPlugin {
     rpc Manifest (google.protobuf.Empty) returns (ActionPluginManifest) {}
     rpc Run (ActionQuery) returns (ActionResult) {}
+    rpc WorkerHTTPPort (WorkerHTTPPortQuery) returns (google.protobuf.Empty) {}
 }

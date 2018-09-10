@@ -1,0 +1,39 @@
+name: plugin-marathon
+type: action
+author: François SAMIN <francois.samin@corp.ovh.com>
+description: |
+  This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
+
+  Your marathon.json file can be templated with cds variables "{{.cds.variables}}". Enable "waitForDeployment" option to ensure deployment is successful.
+parameters:
+  url:
+    type: string
+    description: Marathon URL http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
+    default: '{{.cds.env.marathonHost}}'
+  user:
+    type: string
+    description: Marathon User (please use project, application or environment variables)
+    default: '{{.cds.env.marathonUser}}'
+  password:
+    type: string
+    description: Marathon Password (please use project, application or environment variables)
+    default: '{{.cds.env.marathonPassword}}'
+  configuration:
+    type: string
+    description: Marathon application configuration file (json format)
+    default: marathon.json
+  waitForDeployment:
+    type: boolean
+    description: |
+      Wait for instances deployment.
+      If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result.
+      If not set, CDS will consider a successful result if marathon accepts the provided configuration.
+    default: 'true'
+  insecureSkipVerify:
+    type: boolean
+    description: Skip SSL Verify if you want to use self-signed certificate
+    default: 'false'
+  timeout:
+    type: number
+    description: Marathon deployment timeout (seconds). Used only if "waitForDeployment" is true.
+    default: '120'

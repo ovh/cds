@@ -158,25 +158,25 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *WorkflowNod
 				}
 				in.Delim(']')
 			}
-		case "plugin_binaries":
+		case "platform_plugin_binaries":
 			if in.IsNull() {
 				in.Skip()
-				out.PluginBinaries = nil
+				out.PlatformPluginBinaries = nil
 			} else {
 				in.Delim('[')
-				if out.PluginBinaries == nil {
+				if out.PlatformPluginBinaries == nil {
 					if !in.IsDelim(']') {
-						out.PluginBinaries = make([]GRPCPluginBinary, 0, 1)
+						out.PlatformPluginBinaries = make([]GRPCPluginBinary, 0, 1)
 					} else {
-						out.PluginBinaries = []GRPCPluginBinary{}
+						out.PlatformPluginBinaries = []GRPCPluginBinary{}
 					}
 				} else {
-					out.PluginBinaries = (out.PluginBinaries)[:0]
+					out.PlatformPluginBinaries = (out.PlatformPluginBinaries)[:0]
 				}
 				for !in.IsDelim(']') {
 					var v5 GRPCPluginBinary
 					easyjsonD7860c2dDecodeGithubComOvhCdsSdk6(in, &v5)
-					out.PluginBinaries = append(out.PluginBinaries, v5)
+					out.PlatformPluginBinaries = append(out.PlatformPluginBinaries, v5)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -415,8 +415,8 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in WorkflowNo
 			out.RawByte(']')
 		}
 	}
-	if len(in.PluginBinaries) != 0 {
-		const prefix string = ",\"plugin_binaries\":"
+	if len(in.PlatformPluginBinaries) != 0 {
+		const prefix string = ",\"platform_plugin_binaries\":"
 		if first {
 			first = false
 			out.RawString(prefix[1:])
@@ -425,7 +425,7 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in WorkflowNo
 		}
 		{
 			out.RawByte('[')
-			for v15, v16 := range in.PluginBinaries {
+			for v15, v16 := range in.PlatformPluginBinaries {
 				if v15 > 0 {
 					out.RawByte(',')
 				}

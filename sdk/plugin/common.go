@@ -161,8 +161,8 @@ type Log struct {
 }
 
 // SendVulnerabilityReport call worker to send vulnerabiliry report to API
-func SendVulnerabilityReport(j IJob, report sdk.VulnerabilityWorkerReport) error {
-	if j == nil {
+func SendVulnerabilityReport(workerHTTPPort int32, report sdk.VulnerabilityWorkerReport) error {
+	if workerHTTPPort == 0 {
 		return nil
 	}
 
@@ -173,7 +173,7 @@ func SendVulnerabilityReport(j IJob, report sdk.VulnerabilityWorkerReport) error
 		return e
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/vulnerability", j.WorkerHTTPPort()), bytes.NewReader(data))
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/vulnerability", workerHTTPPort), bytes.NewReader(data))
 	if err != nil {
 		e := fmt.Errorf("send report to worker /vulnerability: %v", err)
 		Trace.Println(e)
@@ -197,13 +197,12 @@ func SendVulnerabilityReport(j IJob, report sdk.VulnerabilityWorkerReport) error
 }
 
 // GetExternalServices call worker to get external service configuration
-func GetExternalServices(j IJob, serviceType string) (sdk.ExternalService, error) {
-
-	if j == nil {
+func GetExternalServices(workerHTTPPort int32, serviceType string) (sdk.ExternalService, error) {
+	if workerHTTPPort == 0 {
 		return sdk.ExternalService{}, nil
 	}
 
-	req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/services/%s", j.WorkerHTTPPort(), serviceType), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/services/%s", workerHTTPPort, serviceType), nil)
 	if err != nil {
 		e := fmt.Errorf("get service from worker /services: %v", err)
 		Trace.Println(e)

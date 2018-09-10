@@ -324,7 +324,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	}
 
 	_, next = observability.Span(ctx, "workflow.getPlatformPluginBinaries")
-	pluginBinaries, err := getPlatformPluginBinaries(db, wr, run)
+	platformPluginBinaries, err := getPlatformPluginBinaries(db, wr, run)
 	if err != nil {
 		return report, sdk.WrapError(err, "addJobsToQueue> unable to get platform plugins requirement")
 	}
@@ -370,14 +370,14 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
-			ProjectID:         wr.ProjectID,
-			WorkflowNodeRunID: run.ID,
-			Start:             time.Time{},
-			Queued:            time.Now(),
-			Status:            sdk.StatusWaiting.String(),
-			Parameters:        jobParams,
-			ExecGroups:        groups,
-			PluginBinaries:    pluginBinaries,
+			ProjectID:              wr.ProjectID,
+			WorkflowNodeRunID:      run.ID,
+			Start:                  time.Time{},
+			Queued:                 time.Now(),
+			Status:                 sdk.StatusWaiting.String(),
+			Parameters:             jobParams,
+			ExecGroups:             groups,
+			PlatformPluginBinaries: platformPluginBinaries,
 			Job: sdk.ExecutedJob{
 				Job: *job,
 			},
