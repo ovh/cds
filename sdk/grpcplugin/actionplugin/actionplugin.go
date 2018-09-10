@@ -37,8 +37,7 @@ func Client(ctx context.Context, socket string) (ActionPluginClient, error) {
 		grpc.WithInsecure(),
 		grpc.WithDialer(func(address string, timeout time.Duration) (net.Conn, error) {
 			return net.DialTimeout("unix", socket, timeout)
-		},
-		),
+		}),
 	)
 	if err != nil {
 		return nil, err

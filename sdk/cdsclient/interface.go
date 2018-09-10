@@ -348,9 +348,9 @@ type GRPCPluginsClient interface {
 	PluginUpdate(*sdk.GRPCPlugin) error
 	PluginDelete(string) error
 	PluginAddBinary(*sdk.GRPCPlugin, *sdk.GRPCPluginBinary) error
-	PluginDeleteBinary(name string, os string, arch string) error
-	PluginGetBinary(name string, os string, arch string, w io.Writer) error
-	PluginGetBinaryInfos(name string, os string, arch string) (*sdk.GRPCPluginBinary, error)
+	PluginDeleteBinary(name, os, arch string) error
+	PluginGetBinary(name, os, arch string, w io.Writer) error
+	PluginGetBinaryInfos(name, os, arch string) (*sdk.GRPCPluginBinary, error)
 }
 
 /* ProviderClient exposes allowed methods for providers
