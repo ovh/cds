@@ -4,9 +4,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/plugin"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_parseEmptyMarathonFileShouldFail(t *testing.T) {

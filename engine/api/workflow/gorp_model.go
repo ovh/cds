@@ -119,7 +119,7 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	}
 	j.PlatformPluginBinaries, err = gorpmapping.JSONToNullString(jr.PlatformPluginBinaries)
 	if err != nil {
-		return sdk.WrapError(err, "column plugin_binaries")
+		return sdk.WrapError(err, "column platform_plugin_binaries")
 	}
 	j.Header, err = gorpmapping.JSONToNullString(jr.Header)
 	if err != nil {
@@ -155,7 +155,7 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 		return jr, sdk.WrapError(err, "column exec_groups")
 	}
 	if err := gorpmapping.JSONNullString(j.PlatformPluginBinaries, &jr.PlatformPluginBinaries); err != nil {
-		return jr, sdk.WrapError(err, "plugin_binaries")
+		return jr, sdk.WrapError(err, "platform_plugin_binaries")
 	}
 	if err := gorpmapping.JSONNullString(j.Header, &jr.Header); err != nil {
 		return jr, sdk.WrapError(err, "header")

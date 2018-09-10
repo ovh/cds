@@ -443,7 +443,6 @@ func getPlatformPluginBinaries(db gorp.SqlExecutor, wr *sdk.WorkflowRun, run *sd
 			if err != nil {
 				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin %s", node.Context.ProjectPlatform.Model.PluginName)
 			}
-			fmt.Printf("%+v\n", p.Binaries)
 			return p.Binaries, nil
 		}
 	}
