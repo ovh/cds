@@ -72,7 +72,6 @@ export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit 
 
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
-        this.elementRef.nativeElement.style.top = '5px';
     }
 
     openEditHookSidebar(): void {
