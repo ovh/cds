@@ -740,6 +740,10 @@ export class WorkflowNodeCondition {
     variable: string;
     operator: string;
     value: string;
+
+    constructor() {
+      this.value = '';
+    }
 }
 
 export class WorkflowTriggerConditionCache {
