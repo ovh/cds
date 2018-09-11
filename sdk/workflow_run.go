@@ -190,6 +190,15 @@ type WorkflowNodeOutgoingHookRun struct {
 	Hook                       WorkflowNodeOutgoingHook         `json:"hook"`
 }
 
+// WorkflowNodeOutgoingHookRunCallback is the callback coming from hooks uservice avec an outgoing hook execution
+type WorkflowNodeOutgoingHookRunCallback struct {
+	WorkflowNodeOutgoingHookID int64     `json:"workflow_node_outgoing_hook_id"`
+	Start                      time.Time `json:"start"`
+	Done                       time.Time `json:"done"`
+	Status                     string    `json:"status"`
+	Log                        string    `json:"log"`
+}
+
 // WorkflowNodeRunVulnerabilityReport represents vulnerabilities report for the current node run
 type WorkflowNodeRunVulnerabilityReport struct {
 	ID                int64                        `json:"id" db:"id"`

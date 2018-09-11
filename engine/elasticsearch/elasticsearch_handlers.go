@@ -65,7 +65,7 @@ func (s *Service) getMetricsHandler() service.Handler {
 		}
 
 		var request sdk.MetricRequest
-		if err := api.UnmarshalBody(r, &request); err != nil {
+		if err := service.UnmarshalBody(r, &request); err != nil {
 			return sdk.WrapError(err, "getMetricsHandler> unable to read request")
 		}
 
@@ -98,7 +98,7 @@ func (s *Service) postMetricsHandler() service.Handler {
 		}
 
 		var metric sdk.Metric
-		if err := api.UnmarshalBody(r, &metric); err != nil {
+		if err := service.UnmarshalBody(r, &metric); err != nil {
 			return sdk.WrapError(err, "postEventHandler> Unable to read body")
 		}
 

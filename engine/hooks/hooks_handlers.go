@@ -149,7 +149,7 @@ func (s *Service) postTaskHandler() service.Handler {
 func (s *Service) postAndExecuteTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeOutgoingHook from the body
-		var hook sdk.WorkflowNodeOutgoingHook
+		var hook sdk.WorkflowNodeOutgoingHookRun
 		if err := service.UnmarshalBody(r, &hook); err != nil {
 			return sdk.WrapError(err, "Hooks> postAndExecuteTaskHandler")
 		}
@@ -398,7 +398,7 @@ func (s *Service) addAndExecuteTask(ctx context.Context, h sdk.WorkflowNodeOutgo
 	// Parse the hook as a task
 	t, err := s.outgoingHookToTask(h)
 	if err != nil {
-		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Hooks> addAndExecuteTask> Unable to parse hook")
+		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Hooks> addAndExecuteTask> Unable to parse hook (%+v)", h)
 	}
 	// Save the task
 	s.Dao.SaveTask(&t)

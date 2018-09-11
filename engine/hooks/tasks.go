@@ -6,12 +6,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"mime"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/fsamin/go-dump"
 	"github.com/gorhill/cronexpr"
@@ -93,7 +97,7 @@ func (s *Service) synchronizeTasks() error {
 				break
 			}
 		}
-		if !found {
+		if !found && t.Type != TypeOutgoingWebHook && t.Type != TypeOutgoingWorkflow {
 			s.Dao.DeleteTask(t)
 			log.Info("Hook> Task %s deleted on synchronization", t.UUID)
 		}
@@ -118,38 +122,46 @@ func (s *Service) synchronizeTasks() error {
 }
 
 func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHookRun) (sdk.Task, error) {
-	if h.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
-		return sdk.Task{}, fmt.Errorf("Unsupported hook type: %s", h.WorkflowHookModel.Type)
+	if h.Hook.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
+		return sdk.Task{}, fmt.Errorf("Unsupported hook type: %s", h.Hook.WorkflowHookModel.Type)
 	}
-	configHash, err := hashstructure.Hash(h.Config, nil)
+	configHash, err := hashstructure.Hash(h.Hook.Config, nil)
 	if err != nil {
 		return sdk.Task{}, sdk.WrapError(err, "outgoingHookToTask> unable to hash hook config")
 	}
-	identifier := fmt.Sprintf("%s / %d", h.WorkflowHookModel.Name, configHash)
+	identifier := fmt.Sprintf("%s / %d", h.Hook.WorkflowHookModel.Name, configHash)
 	uuid := base64.StdEncoding.EncodeToString([]byte(identifier))
 
-	config := h.Config.Clone()
-	config[ConfigNodeRunID] = h.WorkflowNodeRunID
-	config[ConfigNumber] = h.Number
-	config[ConfigSubNumber] = h.SubNumber
-	config[ConfigHookID] = h.WorkflowNodeOutgoingHookID
+	config := h.Hook.Config.Clone()
+	config[ConfigNodeRunID] = sdk.WorkflowNodeHookConfigValue{
+		Value: strconv.FormatInt(h.WorkflowNodeRunID, 10),
+	}
+	config[ConfigNodeRunID] = sdk.WorkflowNodeHookConfigValue{
+		Value: strconv.FormatInt(h.Number, 10),
+	}
+	config[ConfigNodeRunID] = sdk.WorkflowNodeHookConfigValue{
+		Value: strconv.FormatInt(h.SubNumber, 10),
+	}
+	config[ConfigNodeRunID] = sdk.WorkflowNodeHookConfigValue{
+		Value: strconv.FormatInt(h.WorkflowNodeOutgoingHookID, 10),
+	}
 
-	switch h.WorkflowHookModel.Name {
+	switch h.Hook.WorkflowHookModel.Name {
 	case sdk.WebHookModelName:
 		return sdk.Task{
 			UUID:   uuid,
 			Type:   TypeOutgoingWebHook,
-			Config: h.Config,
+			Config: config,
 		}, nil
 	case sdk.WorkflowModelName:
 		return sdk.Task{
 			UUID:   uuid,
 			Type:   TypeOutgoingWorkflow,
-			Config: h.Config,
+			Config: config,
 		}, nil
 	}
 
-	return sdk.Task{}, fmt.Errorf("Unsupported hook: %s", h.WorkflowHookModel.Name)
+	return sdk.Task{}, fmt.Errorf("Unsupported hook: %s", h.Hook.WorkflowHookModel.Name)
 }
 
 func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
@@ -385,10 +397,10 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	var err error
 
 	switch {
-	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
-		h, err = s.doWebHookExecution(e)
+	case e.Type == TypeOutgoingWebHook:
+		err = s.doOutgoingWebHookExecution(e)
 	case e.WebHook != nil && e.Type == TypeWebHook:
-		h, err = s.doOutgoingWebHookExecution(e)
+		h, err = s.doWebHookExecution(e)
 	case e.ScheduledTask != nil && e.Type == TypeScheduler:
 		h, err = s.doScheduledTaskExecution(e)
 	case e.ScheduledTask != nil && e.Type == TypeRepoPoller:
@@ -573,26 +585,82 @@ func (s *Service) doWebHookExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeRun
 func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	log.Debug("Hooks> Processing outgoing webhook %s %s", t.UUID, t.Type)
 
-	u := t.Config["URL"].Value
-	if _, err := url.ParseQuery(u); err != nil {
-		log.Error("doOutgoingWebHookExecution> unable to parse URL: %v", err)
+	callbackURL := fmt.Sprintf("/queue/workflows/%s/hook/callback", t.Config[ConfigNodeRunID].Value)
+	hookID, _ := strconv.ParseInt(t.Config[ConfigHookID].Value, 10, 64)
+	callbackData := sdk.WorkflowNodeOutgoingHookRunCallback{
+		WorkflowNodeOutgoingHookID: hookID,
+		Start: time.Now(),
 	}
 
+	var handleError = func(err error) {
+		if err == nil {
+			return
+		}
+		log.Error(err.Error())
+		t.LastError = err.Error()
+		t.NbErrors++
+
+		if t.NbErrors >= s.Cfg.RetryError {
+			// Send error callback
+			callbackData.Done = time.Now()
+			callbackData.Status = sdk.StatusFail.String()
+			callbackData.Log = err.Error()
+		}
+	}
+
+	u := t.Config["URL"].Value
+	if _, err := url.ParseQuery(u); err != nil {
+		handleError(err)
+		return nil
+	}
 	method := t.Config["method"].Value
 	payload := t.Config["payload"].Value
-
 	req, err := http.NewRequest(method, u, strings.NewReader(payload))
 	if err != nil {
-		log.Error("doOutgoingWebHookExecution> unable to parse URL: %v", err)
+		handleError(err)
+		return nil
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
+	var logBuffer bytes.Buffer
+	logBuffer.WriteString("Request:\n")
+	dump, _ := httputil.DumpRequestOut(req, true)
+	logBuffer.Write(dump) // nolint
+
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Error("doOutgoingWebHookExecution> %v", err)
+		handleError(err)
+		return nil
 	}
 
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		handleError(err)
+		return nil
+	}
+
+	if res.StatusCode >= 400 {
+		err := fmt.Errorf("HTTP Status %d : %v", res.StatusCode, string(body))
+		handleError(err)
+		return nil
+	}
+
+	// Prepare the callback
+	logBuffer.WriteString("\nResponse:\n")
+	dump, _ = httputil.DumpResponse(res, true)
+	logBuffer.Write(dump) // nolint
+
+	callbackData.Done = time.Now()
+	callbackData.Log = logBuffer.String()
+
+	// Post the callback
+	if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
+		log.Error("unable to perform outgoing hook callback")
+		return err
+	}
+
+	return nil
 }
 
 func getRepositoryHeader(whe *sdk.WebHookExecution) string {
