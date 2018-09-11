@@ -148,6 +148,16 @@ func (s *Service) postTaskHandler() service.Handler {
 
 func (s *Service) getTasksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		sortParams, err := api.QuerySort(r)
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
+		}
+		for k := range sortParams {
+			if k != "nb_executions_total" && k != "nb_executions_todo" {
+				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid given sort key"))
+			}
+		}
+
 		tasks, err := s.Dao.FindAllTasks()
 		if err != nil {
 			return sdk.WrapError(err, "Hooks> getTasksHandler")
