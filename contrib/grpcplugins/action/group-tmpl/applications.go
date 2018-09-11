@@ -27,8 +27,10 @@ type Applications struct {
 	alters  map[string]VariableAlteration
 }
 
+// VariableAlteration is a function to alter variable
 type VariableAlteration func(interface{}) (interface{}, error)
 
+// NewApplications create a new application
 func NewApplications(file string) (*Applications, error) {
 	var ret Applications
 
@@ -81,8 +83,7 @@ func (app *Applications) Variables(name string) (map[string]interface{}, error) 
 			}
 
 			buf := new(bytes.Buffer)
-			err = tmpl.Execute(buf, variables)
-			if err != nil {
+			if err := tmpl.Execute(buf, variables); err != nil {
 				return nil, err
 			}
 
