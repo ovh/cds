@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -82,4 +83,30 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 func (c *Common) Stop() {
 	c.s.Stop()
 	return
+}
+
+// InfoMarkdown returns string formatted with markdown
+func InfoMarkdown(pl sdk.GRPCPlugin) string {
+	var sp string
+	for _, param := range pl.Parameters {
+		sp += fmt.Sprintf("* **%s**: %s\n", param.Name, param.Description)
+	}
+
+	info := fmt.Sprintf(`
+%s
+
+## Parameters
+
+%s
+
+## More
+
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/%s/README.md)
+
+`,
+		pl.Description,
+		sp,
+		strings.Replace(pl.Name, "plugin-", "", 1))
+
+	return info
 }
