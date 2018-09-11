@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"reflect"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -32,10 +34,25 @@ var (
 var adminHooksTaskListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS Hooks Tasks",
+	Flags: []cli.Flag{
+		{
+			Kind:    reflect.String,
+			Name:    "sort",
+			Usage:   "Sort task by nb_executions_total,nb_executions_todo",
+			Default: "",
+		},
+	},
 }
 
 func adminHooksTaskListRun(v cli.Values) (cli.ListResult, error) {
-	btes, err := client.ServiceCallGET("hooks", "/task")
+	url, _ := url.Parse("/task")
+	if s := v.GetString("sort"); s != "" {
+		q := url.Query()
+		q.Add("sort", s)
+		url.RawQuery = q.Encode()
+	}
+
+	btes, err := client.ServiceCallGET("hooks", url.String())
 	if err != nil {
 		return nil, err
 	}

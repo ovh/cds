@@ -146,6 +146,11 @@ func (s *Service) postTaskHandler() service.Handler {
 	}
 }
 
+const (
+	sortKeyNbExecutionsTotal string = "nb_executions_total"
+	sortKeyNbExecutionsTodo  string = "nb_executions_todo"
+)
+
 func (s *Service) getTasksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		sortParams, err := api.QuerySort(r)
@@ -153,7 +158,7 @@ func (s *Service) getTasksHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		for k := range sortParams {
-			if k != "nb_executions_total" && k != "nb_executions_todo" {
+			if k != sortKeyNbExecutionsTotal && k != sortKeyNbExecutionsTodo {
 				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid given sort key"))
 			}
 		}
@@ -182,6 +187,19 @@ func (s *Service) getTasksHandler() service.Handler {
 			}
 			tasks[i].NbExecutionsTotal = len(m[t.UUID])
 			tasks[i].NbExecutionsTodo = nbTodo
+		}
+
+		for k, p := range sortParams {
+			switch k {
+			case sortKeyNbExecutionsTotal:
+				sort.Slice(tasks, func(i, j int) bool {
+					return api.SortCompareInt(tasks[i].NbExecutionsTotal, tasks[j].NbExecutionsTotal, p)
+				})
+			case sortKeyNbExecutionsTodo:
+				sort.Slice(tasks, func(i, j int) bool {
+					return api.SortCompareInt(tasks[i].NbExecutionsTodo, tasks[j].NbExecutionsTodo, p)
+				})
+			}
 		}
 
 		return service.WriteJSON(w, tasks, http.StatusOK)

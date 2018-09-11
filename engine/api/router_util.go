@@ -135,6 +135,13 @@ func validateSortOrder(s string) bool {
 	return false
 }
 
+func SortCompareInt(i, j int, o SortOrder) bool {
+	if o == ASC {
+		return i < j
+	}
+	return i > j
+}
+
 // QuerySort returns the a of key found in sort query param or nil if sort param not found.
 func QuerySort(r *http.Request) (map[string]SortOrder, error) {
 	if err := r.ParseForm(); err != nil {
