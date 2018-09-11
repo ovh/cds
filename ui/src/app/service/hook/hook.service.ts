@@ -1,4 +1,3 @@
-
 import {HttpClient} from '@angular/common/http';
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
@@ -23,5 +22,10 @@ export class HookService {
 
     getHookLogs(projectKey: string, workflowName: string, uuid: string): Observable<WorkflowHookTask> {
       return this._http.get<WorkflowHookTask>(`/project/${projectKey}/workflows/${workflowName}/hooks/${uuid}`);
+    }
+
+    getAdminTasks(sort: string): Observable<Array<WorkflowHookTask>> {
+        const query = '/task' + (sort ? '?sort=' + sort : '');
+        return this._http.get<Array<WorkflowHookTask>>('/admin/services/call?type=hooks&query=' + encodeURIComponent(query));
     }
 }

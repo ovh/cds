@@ -1,4 +1,4 @@
-import {WorkflowNodeHookConfigValue} from './workflow.model';
+import { WorkflowNodeHookConfigValue } from './workflow.model';
 
 export class WorkflowHookModel {
     id: number;
@@ -15,9 +15,9 @@ export class WorkflowHookModel {
 }
 
 export enum HookStatus {
-  DONE = 'DONE',
-  DOING = 'DOING',
-  FAIL = 'FAIL'
+    DONE = 'DONE',
+    DOING = 'DOING',
+    FAIL = 'FAIL'
 }
 
 export class WorkflowHookTask {
@@ -26,6 +26,8 @@ export class WorkflowHookTask {
     config: Map<string, WorkflowNodeHookConfigValue>;
     type: string;
     executions: TaskExecution[];
+    nb_executions_total: number;
+    nb_executions_todo: number;
 }
 
 export class TaskExecution {
