@@ -210,7 +210,7 @@ Semver used if fully compatible with https://semver.org/
 	gittag.Parameter(sdk.Parameter{
 		Name:        "prefix",
 		Description: "Prefix for tag name",
-		Value:       "false",
+		Value:       "",
 		Type:        sdk.StringParameter,
 		Advanced:    true,
 	})
