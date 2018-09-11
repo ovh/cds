@@ -1,1 +1,38 @@
-<div>empty</div>
+<h2>{{ 'hook_tasks_summary' | translate }}</h2>
+
+<div *ngIf="!loading && tasks;then showTasks;else loadTasks"></div>
+<ng-template #showTasks>
+    <table class="ui fixed celled table">
+        <thead>
+            <tr>
+                <th class="wide">{{ 'hook_task_cron' | translate }}</th>
+                <th class="wide">{{ 'hook_task_execs_todo' | translate }}</th>
+                <th class="wide">{{ 'hook_task_execs_total' | translate }}</th>
+                <th class="wide">{{ 'common_project' | translate }}</th>
+                <th class="wide">{{ 'hook_task_repo_fullname' | translate }}</th>
+                <th class="wide">{{ 'common_stopped' | translate }}</th>
+                <th class="wide">{{ 'common_type' | translate }}</th>
+                <th class="wide">UUID</th>
+                <th class="wide">{{ 'vcs_server' | translate }}</th>
+                <th class="wide">{{ 'common_workflow' | translate }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let t of tasks">
+                <td class="border">{{t.config['cron']?.value}}</td>
+                <td class="border">{{t.nb_executions_todo}}</td>
+                <td class="border">{{t.nb_executions_total}}</td>
+                <td class="border">{{t.config['project']?.value}}</td>
+                <td class="border">{{t.config['repoFullName']?.value}}</td>
+                <td class="border">{{t.stopped}}</td>
+                <td class="border">{{t.type}}</td>
+                <td class="border">{{t.uuid}}</td>
+                <td class="border">{{t.config['vcsServer']?.value}}</td>
+                <td class="border">{{t.config['workflow']?.value}}</td>
+            </tr>
+        </tbody>
+    </table>
+</ng-template>
+<ng-template #loadTasks>
+    <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+</ng-template>
