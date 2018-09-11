@@ -587,6 +587,7 @@
   "project_variable_list_title": "Liste des variables du projet: ",
   "project_variable_form_title": "Ajouter une nouvelle variable: ",
   "project_workflows_list": "Liste des workflows du projet : ",
+  "project_label_no": "Il n'y a pas de label configuré dans ce projet.",
 
   "platform_add_title" : "Lier une plateforme : ",
   "platform_list_title" : "Liste des plateformes liées : ",
