@@ -194,11 +194,17 @@ func checkServiceRequirement(w *currentWorker, r sdk.Requirement) (bool, error) 
 
 	retry := 3
 	for attempt := 0; attempt < retry; attempt++ {
-		if _, err := net.LookupIP(r.Name); err != nil {
+		ips, err := net.LookupIP(r.Name)
+		if err != nil {
 			log.Debug("Error checking requirement : %s", err)
 			time.Sleep(2 * time.Second)
 			continue
 		}
+		var s string
+		for _, ip := range ips {
+			s += s + ip.String() + " "
+		}
+		log.Info("Service requirement %s is ready %s", r.Name, s)
 		return true, nil
 	}
 
