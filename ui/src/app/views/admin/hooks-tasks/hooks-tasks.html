@@ -2,7 +2,7 @@
 
 <div *ngIf="!loading && tasks;then showTasks;else loadTasks"></div>
 <ng-template #showTasks>
-    <app-sorted-table [columns]="columns" [data]="tasks"></app-sorted-table>
+    <app-sorted-table [columns]="columns" [data]="tasks" (sortChange)="sortChange($event)"></app-sorted-table>
 </ng-template>
 <ng-template #loadTasks>
     <div class="ui text active loader">{{ 'common_loading' | translate }}</div>

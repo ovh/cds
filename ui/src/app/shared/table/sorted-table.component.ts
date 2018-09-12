@@ -1,10 +1,16 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+
+type direction = string;
+const ASC: direction = 'asc';
+const DESC: direction = 'desc';
 
 export type Selector = (d: any) => string;
 
 export class Column {
     name: string;
     selector: Selector;
+    sortable: boolean;
+    sortKey: string;
 }
 
 @Component({
@@ -15,6 +21,25 @@ export class Column {
 export class SortedTableComponent {
     @Input() columns: Array<Column>;
     @Input() data: any;
+    @Output() sortChange = new EventEmitter<any>();
+
+    sortedColumn: Column;
+    sortedColumnDirection: direction;
+
+    columnClick(event: Event, c: Column) {
+        if (!c.sortable) {
+            return;
+        }
+
+        this.sortedColumn = c;
+        if (!this.sortedColumnDirection) {
+            this.sortedColumnDirection = ASC;
+        } else {
+            this.sortedColumnDirection = this.sortedColumnDirection === ASC ? DESC : ASC;
+        }
+
+        this.sortChange.emit(this.sortedColumn.sortKey + ':' + this.sortedColumnDirection);
+    }
 
     constructor() {
     }

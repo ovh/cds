@@ -1,7 +1,11 @@
 <table class="ui fixed celled table">
     <thead>
         <tr>
-            <th *ngFor="let c of columns" class="wide">{{ c.name | translate }}</th>
+            <th *ngFor="let c of columns" class="wide" [class.sortable]="c.sortable && c !== sortedColumn"
+                [class.ascending]="c === sortedColumn && sortedColumnDirection === 'asc'" [class.descending]="c === sortedColumn && sortedColumnDirection === 'desc'"
+                (click)="columnClick($event, c)">
+                {{ c.name | translate }}
+            </th>
         </tr>
     </thead>
     <tbody>

@@ -27,10 +27,14 @@ export class HooksTasksComponent {
             {
                 name: this._translate.instant('hook_task_execs_todo'),
                 selector: d => d.nb_executions_todo,
+                sortable: true,
+                sortKey: 'nb_executions_todo'
             },
             {
                 name: this._translate.instant('hook_task_execs_total'),
                 selector: d => d.nb_executions_total,
+                sortable: true,
+                sortKey: 'nb_executions_total'
             },
             {
                 name: this._translate.instant('common_project'),
@@ -62,6 +66,14 @@ export class HooksTasksComponent {
             }
         ];
         this._hookService.getAdminTasks('')
+            .subscribe(ts => {
+                this.tasks = ts;
+                this.loading = false;
+            });
+    }
+
+    sortChange(event: string) {
+        this._hookService.getAdminTasks(event)
             .subscribe(ts => {
                 this.tasks = ts;
                 this.loading = false;

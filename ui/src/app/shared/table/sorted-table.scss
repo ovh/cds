@@ -1,0 +1,12 @@
+th.sortable:after {
+    font-family: Icons;
+    content: '\f0dc';
+}
+th.ascending:after {
+    font-family: Icons;
+    content: '\f0de';
+}
+th.descending:after {
+    font-family: Icons;
+    content: '\f0dd';
+}
