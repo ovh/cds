@@ -1,0 +1,12 @@
+<table class="ui fixed celled table">
+    <thead>
+        <tr>
+            <th *ngFor="let c of columns" class="wide">{{ c.name | translate }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let d of data">
+            <td *ngFor="let c of columns" class="border">{{ c.selector(d) }}</td>
+        </tr>
+    </tbody>
+</table>

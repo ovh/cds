@@ -57,6 +57,7 @@ import {RequirementsFormComponent} from './requirements/form/requirements.form.c
 import {RequirementsListComponent} from './requirements/list/requirements.list.component';
 import {SharedService} from './shared.service';
 import {StatusIconComponent} from './status/status.component';
+import {SortedTableComponent} from './table/sorted-table.component';
 import {ToastService} from './toast/ToastService';
 import {TokenListComponent} from './token/list/token.list.component';
 import {UsageApplicationsComponent} from './usage/applications/usage.applications.component';
@@ -174,7 +175,8 @@ import {ZoneComponent} from './zone/zone.component';
         DiffComponent,
         SpanColoredComponent,
         VCSStrategyComponent,
-        FavoriteCardsComponent
+        FavoriteCardsComponent,
+        SortedTableComponent
     ],
     entryComponents: [SpanColoredComponent],
     providers: [
@@ -269,7 +271,8 @@ import {ZoneComponent} from './zone/zone.component';
         DiffComponent,
         SpanColoredComponent,
         VCSStrategyComponent,
-        FavoriteCardsComponent
+        FavoriteCardsComponent,
+        SortedTableComponent
     ]
 })
 export class SharedModule {

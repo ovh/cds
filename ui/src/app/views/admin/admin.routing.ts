@@ -50,7 +50,7 @@ const routes: Routes = [
             {
                 path: 'hooks-tasks',
                 component: HooksTasksComponent,
-                data: { title: 'Edit {id} • Broadcast' }
+                data: { title: 'Hooks tasks summary' }
             }
         ]
     }
