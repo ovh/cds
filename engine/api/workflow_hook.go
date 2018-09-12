@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getWorkflowHooksHandler() service.Handler {
@@ -187,5 +188,73 @@ func (api *API) putWorkflowHookModelHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, m, http.StatusOK)
+	}
+}
+
+func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+		hookRunID := vars["hookRunID"]
+		number, errnum := requestVarInt(r, "number")
+		if errnum != nil {
+			return errnum
+		}
+
+		log.Debug("postWorkflowJobHookCallbackHandler> receiving callback for %s", hookRunID)
+
+		var callback sdk.WorkflowNodeOutgoingHookRunCallback
+		if err := service.UnmarshalBody(r, &callback); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to unmarshal body")
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return err
+		}
+
+		defer tx.Rollback() // nolint
+
+		wr, err := workflow.LoadRun(tx, key, workflowName, number, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return err
+		}
+
+		//Checking if the hook is still at status waiting
+		var hookRun *sdk.WorkflowNodeOutgoingHookRun
+	loop:
+		for i := range wr.WorkflowNodeOutgoingHookRuns {
+			hookRuns := wr.WorkflowNodeOutgoingHookRuns[i]
+			for j := range hookRuns {
+				hr := &hookRuns[j]
+				log.Debug("postWorkflowJobHookCallbackHandler> checking %s", hr.HookRunID)
+				if hr.HookRunID == hookRunID && hr.Status == sdk.StatusWaiting.String() {
+					hookRun = hr
+					break loop
+				}
+			}
+		}
+
+		if hookRun == nil {
+			return sdk.ErrNotFound
+		}
+
+		hookRun.Status = callback.Status
+		hookRun.Callback = &callback
+		log.Debug("postWorkflowJobHookCallbackHandler> hook run updated: %v", hookRun)
+
+		//TODO we have to reprocess something
+		if err := workflow.UpdateWorkflowRun(ctx, tx, wr); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+
+		return nil
 	}
 }

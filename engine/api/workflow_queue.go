@@ -498,37 +498,6 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	return report, nil
 }
 
-func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, errc := requestVarInt(r, "id")
-		if errc != nil {
-			return sdk.WrapError(errc, "postWorkflowJobHookCallbackHandler> invalid id")
-		}
-
-		var callback sdk.WorkflowNodeOutgoingHookRunCallback
-		if err := service.UnmarshalBody(r, &callback); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to unmarshal body")
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return err
-		}
-
-		wr, err := workflow.LoadRunByID(tx, id, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: true,
-		})
-		if err != nil {
-			return err
-		}
-
-		_ = wr
-
-		log.Debug("postWorkflowJobHookCallbackHandler> %+v", callback)
-		return nil
-	}
-}
-
 func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
