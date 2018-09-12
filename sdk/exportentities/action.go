@@ -189,6 +189,10 @@ func newSteps(a sdk.Action) []Step {
 				if tagPrerelease != nil && tagPrerelease.Value != "" {
 					gitTagArgs["tagPrerelease"] = tagPrerelease.Value
 				}
+				prefix := sdk.ParameterFind(&act.Parameters, "prefix")
+				if prefix != nil && prefix.Value != "" {
+					gitTagArgs["prefix"] = prefix.Value
+				}
 				s["gitTag"] = gitTagArgs
 			case sdk.ReleaseAction:
 				releaseArgs := map[string]string{}
@@ -635,9 +639,8 @@ func (s Step) Name() (string, error) {
 	if stepAttr, ok := s["name"]; ok {
 		if stepName, okName := stepAttr.(string); okName {
 			return stepName, nil
-		} else {
-			return "", fmt.Errorf("Malformatted Step : name must be a string")
 		}
+		return "", fmt.Errorf("Malformatted Step : name must be a string")
 	}
 	return "", nil
 }
