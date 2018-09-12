@@ -18,6 +18,7 @@ This action creates a tag. You can use a pgp key to sign it.
 * tagMessage - optional - Message for the tag
 * path - optional - path to your git repository
 * signKey - optional - pgp key to sign the tag
+* Advanced parameter: prefix - add a prefix in tag name created
 
 ## Example of usage
 
