@@ -135,6 +135,7 @@ func validateSortOrder(s string) bool {
 	return false
 }
 
+// SortCompareInt returns the result of the right compare equation depending of given sort order.
 func SortCompareInt(i, j int, o SortOrder) bool {
 	if o == ASC {
 		return i < j
