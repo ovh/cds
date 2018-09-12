@@ -8,7 +8,15 @@
             </th>
         </tr>
     </thead>
-    <tbody>
+    <tbody *ngIf="loading">
+        <tr>
+            <td class="center" [colSpan]="columns.length">
+                <div class="ui active small inline loader"></div>
+                <div>{{ 'common_loading' | translate }}</div>
+            </td>
+        </tr>
+    </tbody>
+    <tbody *ngIf="!loading">
         <tr *ngFor="let d of data">
             <td *ngFor="let c of columns" class="border">{{ c.selector(d) }}</td>
         </tr>

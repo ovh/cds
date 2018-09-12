@@ -22,6 +22,7 @@ export class SortedTableComponent {
     @Input() columns: Array<Column>;
     @Input() data: any;
     @Output() sortChange = new EventEmitter<any>();
+    @Input() loading: boolean;
 
     sortedColumn: Column;
     sortedColumnDirection: direction;

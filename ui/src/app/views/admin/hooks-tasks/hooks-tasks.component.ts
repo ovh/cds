@@ -18,9 +18,8 @@ export class HooksTasksComponent {
         private _hookService: HookService,
         private _translate: TranslateService
     ) {
-        this.loading = true;
         this.columns = [
-            {
+            <Column>{
                 name: this._translate.instant('hook_task_cron'),
                 selector: d => d.config['cron'] && d.config['cron'].value,
             },
@@ -36,47 +35,43 @@ export class HooksTasksComponent {
                 sortable: true,
                 sortKey: 'nb_executions_total'
             },
-            {
+            <Column>{
                 name: this._translate.instant('common_project'),
                 selector: d => d.config['project'] && d.config['project'].value,
             },
-            {
+            <Column>{
                 name: this._translate.instant('hook_task_repo_fullname'),
                 selector: d => d.config['repoFullName'] && d.config['repoFullName'].value,
             },
-            {
+            <Column>{
                 name: this._translate.instant('common_stopped'),
                 selector: d => d.stopped,
             },
-            {
+            <Column>{
                 name: this._translate.instant('common_type'),
                 selector: d => d.type,
             },
-            {
+            <Column>{
                 name: 'UUID',
                 selector: d => d.uuid,
             },
-            {
+            <Column>{
                 name: this._translate.instant('vcs_server'),
                 selector: d => d.config['vcsServer'] && d.config['vcsServer'].value,
             },
-            {
+            <Column>{
                 name: this._translate.instant('common_workflow'),
                 selector: d => d.config['workflow'] && d.config['workflow'].value,
             }
         ];
-        this._hookService.getAdminTasks('')
-            .subscribe(ts => {
-                this.tasks = ts;
-                this.loading = false;
-            });
+        this.getAdminTasks('');
     }
 
-    sortChange(event: string) {
-        this._hookService.getAdminTasks(event)
-            .subscribe(ts => {
-                this.tasks = ts;
-                this.loading = false;
-            });
+    getAdminTasks(sort: string) {
+        this.loading = true;
+        this._hookService.getAdminTasks(sort).subscribe(ts => {
+            this.tasks = ts;
+            this.loading = false;
+        });
     }
 }
