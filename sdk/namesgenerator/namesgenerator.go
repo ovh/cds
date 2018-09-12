@@ -5,6 +5,8 @@ package namesgenerator
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/ovh/cds/sdk"
 )
 
 var (
@@ -634,6 +636,7 @@ var (
 		"roullon",
 		"guiheux",
 		"esnault",
+		"le-terrier",
 	}
 )
 
@@ -642,7 +645,7 @@ var (
 // integer between 0 and 10 will be added to the end of the name, e.g `focused_turing3`
 func GetRandomName(retry int) string {
 begin:
-	name := fmt.Sprintf("%s_%s", left[rand.Intn(len(left))], right[rand.Intn(len(right))])
+	name := fmt.Sprintf("%s_%s_%s", left[rand.Intn(len(left))], right[rand.Intn(len(right))], sdk.RandomString(10))
 	if name == "boring_wozniak" /* Steve Wozniak is not boring */ {
 		goto begin
 	}
