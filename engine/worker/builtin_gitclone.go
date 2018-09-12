@@ -287,7 +287,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 		}
 		sendLog(fmt.Sprintf("git.describe: %s", info.GitDescribe))
 
-		smver, errT := semver.Make(info.GitDescribe)
+		smver, errT := semver.ParseTolerant(info.GitDescribe)
 		if errT != nil {
 			sendLog(fmt.Sprintf("!! WARNING !! git describe %s is not semver compatible, we can't create cds.semver variable", info.GitDescribe))
 		} else {
@@ -318,6 +318,12 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, tag, bra
 				cdsVersion.Value,
 			)
 		}
+
+		// if git.describe contains a prefix 'v', we keep it
+		if strings.HasPrefix(info.GitDescribe, "v") {
+			cdsSemver = fmt.Sprintf("v%s", cdsSemver)
+		}
+
 	} else {
 		// default value if there is no tag on repository
 		cdsSemver = fmt.Sprintf("0.0.1+cds.%s", cdsVersion.Value)

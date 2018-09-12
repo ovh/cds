@@ -22,6 +22,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		tagLevel := sdk.ParameterFind(&a.Parameters, "tagLevel")
 		tagMessage := sdk.ParameterFind(&a.Parameters, "tagMessage")
 		path := sdk.ParameterFind(&a.Parameters, "path")
+		prefix := sdk.ParameterFind(&a.Parameters, "prefix")
 
 		tagLevelValid := true
 		if tagLevel == nil || tagLevel.Value == "" {
@@ -64,7 +65,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		smver, errT := semver.Make(cdsSemver.Value)
+		smver, errT := semver.ParseTolerant(cdsSemver.Value)
 		if errT != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
@@ -140,6 +141,10 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			Message:  msg,
 			Name:     smver.String(),
 			Username: userTag,
+		}
+
+		if prefix != nil && prefix.Value != "" {
+			tagOpts.Name = fmt.Sprintf("%s%s", prefix.Value, tagOpts.Name)
 		}
 
 		if auth.SignKey.ID != "" {

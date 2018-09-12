@@ -21,6 +21,7 @@ export class LabelsEditComponent {
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
     labels: Label[];
+    newLabel: Label;
     permission = PermissionValue;
     loading = false;
 
@@ -32,6 +33,7 @@ export class LabelsEditComponent {
         if (!this.project) {
             return;
         }
+        this.newLabel = new Label();
         this.labels = cloneDeep(this.project.labels);
         this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.labelsEditModal);
         this.modalConfig.mustScroll = true;
@@ -42,13 +44,26 @@ export class LabelsEditComponent {
         this.labels = this.labels.filter((lbl) => lbl.name !== label.name);
     }
 
-    saveLabels() {
+    createLabel() {
+        if (!this.labels) {
+            this.labels = [];
+        }
+        this.labels.push(this.newLabel);
+        this.saveLabels();
+    }
+
+    saveLabels(close?: boolean) {
         this.loading = true;
         this._projectStore.updateLabels(this.project.key, this.labels)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => {
+                this.loading = false;
+                this.newLabel = new Label();
+            }))
             .subscribe((proj) => {
                 this.project.labels = proj.labels;
-                this.modal.approve(true);
+                if (close) {
+                    this.modal.approve(true);
+                }
             });
     }
 }

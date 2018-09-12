@@ -33,6 +33,8 @@ export class ProjectWorkflowListLabelsComponent {
   @Input('workflows')
   set workflows(workflows: IdName[]) {
     this._workflows = workflows;
+    this.workflowLabelsMap = {};
+    this.workflowLabelsMapByLabels = {};
     if (workflows) {
       workflows.forEach((wf) => {
         this.workflowLabelsMap[wf.name] = {};
