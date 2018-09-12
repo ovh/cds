@@ -197,12 +197,12 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	}
 
 	if stagesTerminated >= len(n.Stages) || (stagesTerminated >= len(n.Stages)-1 && (n.Stages[len(n.Stages)-1].Status == sdk.StatusDisabled || n.Stages[len(n.Stages)-1].Status == sdk.StatusSkipped)) {
-		var success, building, fail, stop, skipped, disabled int
+		var counterStatus statusCounter
 		if len(n.Stages) > 0 {
 			for _, stage := range n.Stages {
-				computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop, &skipped, &disabled)
+				computeRunStatus(stage.Status.String(), &counterStatus)
 			}
-			newStatus = getRunStatus(success, building, fail, stop, skipped, disabled)
+			newStatus = getRunStatus(counterStatus)
 		}
 	}
 

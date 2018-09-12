@@ -46,8 +46,6 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	}
 
 	report := new(ProcessorReport)
-	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess, nodesRunSkipped, nodesRunDisabled int
-
 	defer func(oldStatus string, wr *sdk.WorkflowRun) {
 		if oldStatus != wr.Status {
 			report.Add(*wr)
@@ -114,18 +112,11 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	//Checks the triggers
 	for k, v := range w.WorkflowNodeRuns {
-		lastCurrentSn := lastSubNumber(w.WorkflowNodeRuns[k])
 		// Subversion of workflowNodeRun
 		for i := range v {
 			nodeRun := &w.WorkflowNodeRuns[k][i]
 
 			haveToUpdate := false
-
-			// Only the last subversion
-			if lastCurrentSn == nodeRun.SubNumber {
-				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
-			}
-
 			//Trigger only if the node is over (successful or not)
 			if sdk.StatusIsTerminated(nodeRun.Status) && nodeRun.Status != sdk.StatusNeverBuilt.String() {
 				//Find the node in the workflow
@@ -160,7 +151,6 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 						_, _ = report.Merge(r1, nil)
 
 						if conditionOk {
-							nodesRunBuilding++
 							if nodeRun.TriggersRun == nil {
 								nodeRun.TriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
 							}
@@ -298,7 +288,6 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 							WorkflowDestNodeID: t.WorkflowDestNode.ID,
 						}
 						w.JoinTriggersRun[t.ID] = triggerRun
-						nodesRunBuilding++
 					} else {
 						if w.JoinTriggersRun == nil {
 							w.JoinTriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
@@ -330,7 +319,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	next()
 
 	// Reinit the counters
-	nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled = 0, 0, 0, 0, 0, 0
+	var counterStatus statusCounter
 	for k, v := range w.WorkflowNodeRuns {
 		lastCurrentSn := lastSubNumber(w.WorkflowNodeRuns[k])
 		// Subversion of workflowNodeRun
@@ -338,12 +327,22 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			nodeRun := &w.WorkflowNodeRuns[k][i]
 			// Compute for the last subnumber only
 			if lastCurrentSn == nodeRun.SubNumber {
-				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
+				computeRunStatus(nodeRun.Status, &counterStatus)
+			}
+		}
+	}
+	for k, v := range w.WorkflowNodeOutgoingHookRuns {
+		lastCurrentSn := lastOutgoingHookSubNumber(w.WorkflowNodeOutgoingHookRuns[k])
+		for i := range v {
+			hookRun := &w.WorkflowNodeOutgoingHookRuns[k][i]
+			// Compute for the last subnumber only
+			if lastCurrentSn == hookRun.SubNumber {
+				computeRunStatus(hookRun.Status, &counterStatus)
 			}
 		}
 	}
 
-	w.Status = getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled)
+	w.Status = getRunStatus(counterStatus)
 	if err := UpdateWorkflowRun(ctx, db, w); err != nil {
 		return report, false, sdk.WrapError(err, "processWorkflowRun>")
 	}
@@ -381,7 +380,7 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 	}
 
 	var hookRun = sdk.WorkflowNodeOutgoingHookRun{
-		WorkflowNodeRunID:          nodeRunID,
+		HookRunID:                  sdk.UUID(),
 		Status:                     sdk.StatusWaiting.String(),
 		Number:                     w.Number,
 		SubNumber:                  subnumber,
@@ -865,41 +864,45 @@ func AddWorkflowRunInfo(run *sdk.WorkflowRun, isError bool, infos ...sdk.SpawnMs
 	}
 }
 
+// computeRunStatus is useful to compute number of runs in success, building and fail
+type statusCounter struct {
+	success, building, failed, stoppped, skipped, disabled int
+}
+
 // getRunStatus return the status depending on number of runs in success, building, stopped and fail
-func getRunStatus(successStatus, buildingStatus, failStatus, stoppedStatus, skippedStatus, disabledStatus int) string {
+func getRunStatus(counter statusCounter) string {
 	switch {
-	case buildingStatus > 0:
+	case counter.building > 0:
 		return sdk.StatusBuilding.String()
-	case failStatus > 0:
+	case counter.failed > 0:
 		return sdk.StatusFail.String()
-	case stoppedStatus > 0:
+	case counter.stoppped > 0:
 		return sdk.StatusStopped.String()
-	case successStatus > 0:
+	case counter.success > 0:
 		return sdk.StatusSuccess.String()
-	case skippedStatus > 0:
+	case counter.skipped > 0:
 		return sdk.StatusSkipped.String()
-	case disabledStatus > 0:
+	case counter.disabled > 0:
 		return sdk.StatusDisabled.String()
 	default:
 		return sdk.StatusNeverBuilt.String()
 	}
 }
 
-// computeRunStatus is useful to compute number of runs in success, building and fail
-func computeRunStatus(status string, success, building, fail, stop, skipped, disabled *int) {
+func computeRunStatus(status string, counter *statusCounter) {
 	switch status {
 	case sdk.StatusSuccess.String():
-		*success++
+		counter.success++
 	case sdk.StatusBuilding.String(), sdk.StatusWaiting.String():
-		*building++
+		counter.building++
 	case sdk.StatusFail.String():
-		*fail++
+		counter.failed++
 	case sdk.StatusStopped.String():
-		*stop++
+		counter.stoppped++
 	case sdk.StatusSkipped.String():
-		*skipped++
+		counter.skipped++
 	case sdk.StatusDisabled.String():
-		*disabled++
+		counter.disabled++
 	}
 }
 
@@ -924,6 +927,15 @@ func lastSubNumber(workflowNodeRuns []sdk.WorkflowNodeRun) int64 {
 			lastSn = wNodeRun.SubNumber
 		}
 	}
+	return lastSn
+}
 
+func lastOutgoingHookSubNumber(WorkflowNodeOutgoingHookRuns []sdk.WorkflowNodeOutgoingHookRun) int64 {
+	var lastSn int64
+	for _, h := range WorkflowNodeOutgoingHookRuns {
+		if lastSn < h.SubNumber {
+			lastSn = h.SubNumber
+		}
+	}
 	return lastSn
 }

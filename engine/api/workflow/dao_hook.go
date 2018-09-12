@@ -299,6 +299,8 @@ func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 		Value:        icon,
 		Configurable: false,
 	}
+	hook.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{Value: w.ProjectKey}
+	hook.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
 
 	dbhook := nodeOutgoingHook(*hook)
 	if err := db.Insert(&dbhook); err != nil {

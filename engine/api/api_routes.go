@@ -267,6 +267,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", r.POST(api.postWorkflowJobHookCallbackHandler, NeedService()))
 
 	// Triggers
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger", r.GET(api.getTriggersHandler), r.POST(api.addTriggerHandler))
@@ -339,7 +340,6 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1), NeedWorker()))
-	r.Handle("/queue/workflows/{id}/hook/callback", r.POST(api.postWorkflowJobHookCallbackHandler, NeedService()))
 	r.Handle("/queue/workflows/log/service", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), NeedHatchery()))
 	r.Handle("/queue/workflows/{permID}/coverage", r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, NeedWorker(), EnableTracing()))

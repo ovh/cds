@@ -505,12 +505,24 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return sdk.WrapError(errc, "postWorkflowJobHookCallbackHandler> invalid id")
 		}
 
-		_ = id
-
 		var callback sdk.WorkflowNodeOutgoingHookRunCallback
 		if err := service.UnmarshalBody(r, &callback); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to unmarshal body")
 		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return err
+		}
+
+		wr, err := workflow.LoadRunByID(tx, id, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return err
+		}
+
+		_ = wr
 
 		log.Debug("postWorkflowJobHookCallbackHandler> %+v", callback)
 		return nil

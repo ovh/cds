@@ -65,11 +65,19 @@ func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
 //ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building
 func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
-	var success, building, failed, stopped, skipped, disabled int
+	var counterStatus statusCounter
 	for _, wnrs := range wr.WorkflowNodeRuns {
 		for _, wnr := range wnrs {
 			if wr.LastSubNumber == wnr.SubNumber {
-				computeRunStatus(wnr.Status, &success, &building, &failed, &stopped, &skipped, &disabled)
+				computeRunStatus(wnr.Status, &counterStatus)
+			}
+		}
+	}
+
+	for _, wnrs := range wr.WorkflowNodeOutgoingHookRuns {
+		for _, wnr := range wnrs {
+			if wr.LastSubNumber == wnr.SubNumber {
+				computeRunStatus(wnr.Status, &counterStatus)
 			}
 		}
 	}
@@ -84,7 +92,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 	}
 
 	if !isInError {
-		newStatus = getRunStatus(success, building, failed, stopped, skipped, disabled)
+		newStatus = getRunStatus(counterStatus)
 	}
 
 	if newStatus != wr.Status {
