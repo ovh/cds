@@ -55,7 +55,7 @@
                     </div>
                 </div>
                 <div class="two wide field">
-                    <button class="ui blue icon button" [disabled]="!condition.variable || !condition.value || !condition.operator" type="button" (click)="send()">
+                    <button class="ui blue icon button" [disabled]="!condition.variable || condition.value == null || !condition.operator" type="button" (click)="send()">
                         <i class="plus icon"></i>
                     </button>
                 </div>
