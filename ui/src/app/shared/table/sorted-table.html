@@ -21,4 +21,5 @@
             <td *ngFor="let c of columns" class="border">{{ c.selector(d) }}</td>
         </tr>
     </tbody>
+    <ng-content select="[tfoot]"></ng-content>
 </table>

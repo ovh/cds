@@ -3,13 +3,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { WorkflowHookTask } from '../../../model/workflow.hook.model';
 import { HookService } from '../../../service/services.module';
 import { Column } from '../../../shared/table/sorted-table.component';
+import { Table } from '../../../shared/table/table';
 
 @Component({
     selector: 'app-hooks-tasks',
     templateUrl: './hooks-tasks.html',
     styleUrls: ['./hooks-tasks.scss']
 })
-export class HooksTasksComponent {
+export class HooksTasksComponent extends Table {
     loading = false;
     columns: Array<Column>;
     tasks: Array<WorkflowHookTask>;
@@ -18,6 +19,8 @@ export class HooksTasksComponent {
         private _hookService: HookService,
         private _translate: TranslateService
     ) {
+        super();
+        this.nbElementsByPage = 25;
         this.columns = [
             <Column>{
                 name: this._translate.instant('hook_task_cron'),
@@ -65,6 +68,10 @@ export class HooksTasksComponent {
             }
         ];
         this.getAdminTasks('');
+    }
+
+    getData(): any[] {
+        return this.tasks;
     }
 
     getAdminTasks(sort: string) {
