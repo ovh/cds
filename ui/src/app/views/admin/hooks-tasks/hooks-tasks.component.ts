@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { WorkflowHookTask } from '../../../model/workflow.hook.model';
 import { HookService } from '../../../service/services.module';
-import { Column } from '../../../shared/table/sorted-table.component';
+import { Column, HTML, Link } from '../../../shared/table/sorted-table.component';
 import { Table } from '../../../shared/table/table';
 
 @Component({
@@ -23,48 +23,39 @@ export class HooksTasksComponent extends Table {
         this.nbElementsByPage = 25;
         this.columns = [
             <Column>{
-                name: this._translate.instant('hook_task_cron'),
-                selector: d => d.config['cron'] && d.config['cron'].value,
+                type: HTML,
+                name: '',
+                selector: d => d.stopped ? '<i class="stop red icon"></i>' : '<i class="play green icon"></i>',
             },
-            {
+            <Column>{
+                name: 'UUID',
+                selector: d => d.uuid
+            },
+            <Column>{
+                name: this._translate.instant('common_type'),
+                selector: d => d.type
+            },
+            <Column>{
+                type: Link,
+                name: this._translate.instant('common_project') + '/' + this._translate.instant('common_workflow'),
+                selector: d => {
+                    return {
+                        link: '/project/' + d.config['project'].value + '/workflow/' + d.config['workflow'].value,
+                        value: d.config['project'].value + '/' + d.config['workflow'].value
+                    };
+                },
+            },
+            <Column>{
                 name: this._translate.instant('hook_task_execs_todo'),
                 selector: d => d.nb_executions_todo,
                 sortable: true,
                 sortKey: 'nb_executions_todo'
             },
-            {
+            <Column>{
                 name: this._translate.instant('hook_task_execs_total'),
                 selector: d => d.nb_executions_total,
                 sortable: true,
                 sortKey: 'nb_executions_total'
-            },
-            <Column>{
-                name: this._translate.instant('common_project'),
-                selector: d => d.config['project'] && d.config['project'].value,
-            },
-            <Column>{
-                name: this._translate.instant('hook_task_repo_fullname'),
-                selector: d => d.config['repoFullName'] && d.config['repoFullName'].value,
-            },
-            <Column>{
-                name: this._translate.instant('common_stopped'),
-                selector: d => d.stopped,
-            },
-            <Column>{
-                name: this._translate.instant('common_type'),
-                selector: d => d.type,
-            },
-            <Column>{
-                name: 'UUID',
-                selector: d => d.uuid,
-            },
-            <Column>{
-                name: this._translate.instant('vcs_server'),
-                selector: d => d.config['vcsServer'] && d.config['vcsServer'].value,
-            },
-            <Column>{
-                name: this._translate.instant('common_workflow'),
-                selector: d => d.config['workflow'] && d.config['workflow'].value,
             }
         ];
         this.getAdminTasks('');

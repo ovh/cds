@@ -4,9 +4,15 @@ type direction = string;
 const ASC: direction = 'asc';
 const DESC: direction = 'desc';
 
-export type Selector = (d: any) => string;
+export type ColumnType = string;
+export const Text: ColumnType = 'text';
+export const HTML: ColumnType = 'html';
+export const Link: ColumnType = 'link';
+
+export type Selector = (d: any) => any;
 
 export class Column {
+    type: ColumnType;
     name: string;
     selector: Selector;
     sortable: boolean;
