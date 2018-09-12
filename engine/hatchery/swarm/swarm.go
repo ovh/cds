@@ -229,13 +229,19 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					}
 				}
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
-				//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
+				//value= "postgres:latest env_1=blabla env_2=blabla" => we can add env variables in requirement name
 				tuple := strings.Split(r.Value, " ")
 				img := tuple[0]
 				env := []string{}
 				serviceMemory := int64(1024)
 				if len(tuple) > 1 {
-					env = append(env, tuple[1:]...)
+					for i := 1; i < len(tuple); i++ {
+						splittedTuple := strings.SplitN(tuple[i], "=", 2)
+						name := splittedTuple[0]
+						val := strings.TrimLeft(splittedTuple[1], "\"")
+						val = strings.TrimRight(val, "\"")
+						env = append(env, name+"="+val)
+					}
 				}
 				//option for power user : set the service memory with CDS_SERVICE_MEMORY=1024
 				for _, e := range env {
