@@ -1,0 +1,41 @@
+{
+    "upgradeStrategy": {
+        "minimumHealthCapacity": 1,
+        "maximumOverCapacity": 1
+    },
+    "container": {
+        "docker": {
+            "forcePullImage": true,
+            "image": "redis:latest",
+            "network": "BRIDGE",
+            "portMappings": [
+                {
+                    "containerPort": 6379,
+                    "hostPort": 0,
+                    "protocol": "tcp",
+                    "servicePort" : 6379
+                }
+            ]
+        },
+        "type": "DOCKER"
+    },
+    "cpus": 0.5,
+    "id": "redis/master",
+    "instances": 1,
+    "labels": {
+        "USER_THOT_TOKEN": "xxxx",
+        "HAPROXY_0_MODE": "tcp"
+    },
+    "mem": 512,
+    "healthChecks": [
+        {
+            "protocol": "TCP",
+            "portIndex": 0,
+            "gracePeriodSeconds": 300,
+            "intervalSeconds": 20,
+            "timeoutSeconds": 20,
+            "maxConsecutiveFailures": 3,
+            "ignoreHttp1xx": false
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+name: plugin-tmpl
+type: action
+author: "Alexandre JIN <alexandre.jin@corp.ovh.com>"
+description: |
+  This action helps you generates a file using a template file and text/template golang package.
+
+  Check documentation on text/template for more information https://golang.org/pkg/text/template.
+parameters:
+  file:
+    type: string
+    description: Template file to use
+  output:
+    type: string
+    description: Output path for generated file (default to <file>.out or just trimming .tpl extension)
+  params:
+    type: text
+    description: Parameters to pass on the template file (key=value newline separated list)
