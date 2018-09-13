@@ -32,7 +32,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "postPGRPCluginHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() //nolint
 
 		if p.Type == sdk.GRPCPluginAction {
 			// Check that action does not already exists
@@ -108,7 +108,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "putGRPCluginHandler> Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() //nolint
 
 		if p.Type == sdk.GRPCPluginAction {
 			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, getUser(ctx).ID); err != nil {

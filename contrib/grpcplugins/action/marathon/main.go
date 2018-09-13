@@ -13,7 +13,10 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+<<<<<<< HEAD
 	"strings"
+=======
+>>>>>>> feat(api): add grpc plugin action handlers (#3308)
 	"sync"
 	"time"
 
@@ -280,6 +283,7 @@ func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error
 	}, nil
 }
 
+<<<<<<< HEAD
 // parseTemplateParameters parses a list of key value pairs separated by new lines
 func parseTemplateParameters(s string) (map[string]interface{}, error) {
 	params := make(map[string]interface{})
@@ -295,6 +299,8 @@ func parseTemplateParameters(s string) (map[string]interface{}, error) {
 	return params, nil
 }
 
+=======
+>>>>>>> feat(api): add grpc plugin action handlers (#3308)
 func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (string, error) {
 	//Read initial marathon.json file
 	buff, err := ioutil.ReadFile(filepath)
@@ -323,8 +329,13 @@ func tmplApplicationConfigFile(q *actionplugin.ActionQuery, filepath string) (st
 		fmt.Printf("Error writing content to file: %s\n", errw.Error())
 		return "", errw
 	}
+<<<<<<< HEAD
 	outfile.Sync()
 	outfile.Close()
+=======
+	_ = outfile.Sync()
+	_ = outfile.Close()
+>>>>>>> feat(api): add grpc plugin action handlers (#3308)
 
 	return outPath, nil
 }

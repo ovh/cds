@@ -50,12 +50,10 @@ func (plg *GRPCPlugin) GRPCPlugin() *sdk.GRPCPlugin {
 			Type:        v.Type,
 			Value:       v.DefaultValue,
 			Description: v.Description,
+			Advanced:    v.Advanced != nil && *v.Advanced,
 		}
 		if param.Type == "" {
 			param.Type = sdk.StringParameter
-		}
-		if v.Advanced != nil && *v.Advanced {
-			param.Advanced = true
 		}
 		p.Parameters[i] = param
 		i++

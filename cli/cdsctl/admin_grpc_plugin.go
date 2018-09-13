@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/grpcplugin"
 )
 
 var (
@@ -27,6 +28,7 @@ var (
 			cli.NewCommand(adminPluginsExportCmd, adminPluginsExportFunc, nil),
 			cli.NewDeleteCommand(adminPluginsDeleteCmd, adminPluginsDeleteFunc, nil),
 			cli.NewCommand(adminPluginsAddBinaryCmd, adminPluginsAddBinaryFunc, nil),
+			cli.NewCommand(adminPluginsDocCmd, adminPluginsDocFunc, nil),
 		},
 	)
 )
@@ -190,6 +192,33 @@ func adminPluginsAddBinaryFunc(v cli.Values) error {
 	if err := client.PluginAddBinary(p, &desc); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+var adminPluginsDocCmd = cli.Command{
+	Name:  "doc",
+	Short: "Generate documentation in markdown for a plugin",
+	Args: []cli.Arg{
+		{
+			Name: "path",
+		},
+	},
+}
+
+func adminPluginsDocFunc(v cli.Values) error {
+	btes, errRead := ioutil.ReadFile(v.GetString("path"))
+	if errRead != nil {
+		return fmt.Errorf("Error while reading file: %s", errRead)
+	}
+
+	var expGPRCPlugin exportentities.GRPCPlugin
+	if err := yaml.Unmarshal(btes, &expGPRCPlugin); err != nil {
+		return fmt.Errorf("unable to load file: %v", err)
+	}
+
+	plg := expGPRCPlugin.GRPCPlugin()
+	fmt.Println(grpcplugin.InfoMarkdown(*plg))
 
 	return nil
 }
