@@ -70,6 +70,19 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 					},
 				},
 			},
+			Forks: []sdk.WorkflowNodeFork{
+				{
+					Name: "fork",
+					Triggers: []sdk.WorkflowNodeForkTrigger{
+						{
+							WorkflowDestNode: sdk.WorkflowNode{
+								PipelineID:   pip.ID,
+								PipelineName: pip.Name,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -99,12 +112,18 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 	assert.Equal(t, `name: test_1
 version: v1.0
 workflow:
+  fork:
+    depends_on:
+    - pip1
   pip1:
     pipeline: pip1
   pip1_2:
     depends_on:
     - pip1
     pipeline: pip1
+  pip1_3:
+    depends_on:
+    - fork
 `, rec.Body.String())
 
 }
