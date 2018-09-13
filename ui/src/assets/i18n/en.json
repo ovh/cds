@@ -782,6 +782,7 @@
   "worker_model_capabilities_need_refresh": "Binaries list need to be refresh by CDS. Last Registration:",
   "worker_model_communication": "Communication with CDS API",
   "worker_model_created_by": "Created By",
+  "worker_model_state": "State of worker model",
   "worker_model_disable": "Disable it",
   "worker_model_disabled": "This worker model is disabled",
   "worker_model_edit_title": "Edit worker model",

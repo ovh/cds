@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -52,6 +53,14 @@ var defaultEnvs = map[string]string{
 type dbResultWMS struct {
 	WorkerModel
 	GroupName string `db:"groupname"`
+}
+
+// LoadOptions represent load options to load worker model
+type LoadOptions struct {
+	OnlyError      bool
+	OnlyDisabled   bool
+	OnlyRegister   bool
+	OnlyDeprecated bool
 }
 
 // InsertWorkerModel insert a new worker model in database
@@ -165,16 +174,37 @@ func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, erro
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
-func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User) ([]sdk.Model, error) {
-	key := cache.Key("api:workermodels", user.Username)
+func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User, opts *LoadOptions) ([]sdk.Model, error) {
+	prefixKey := "api:workermodels"
+
+	if opts != nil {
+		if opts.OnlyError {
+			prefixKey += ":error"
+		}
+		if opts.OnlyDisabled {
+			prefixKey += ":disabled"
+		}
+		if opts.OnlyRegister {
+			prefixKey += ":register"
+		}
+		if opts.OnlyDeprecated {
+			prefixKey += ":deprecated"
+		}
+	}
+	key := cache.Key(prefixKey, user.Username)
 	models := []sdk.Model{}
 	if store.Get(key, &models) {
 		return models, nil
 	}
 
+	additionalFilters := getAdditionalSQLFilters(opts)
 	wms := []dbResultWMS{}
 	if user.Admin {
 		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, modelColumns)
+		if len(additionalFilters) > 0 {
+			query = fmt.Sprintf("%s WHERE %s", query, strings.Join(additionalFilters, " AND "))
+		}
+
 		if _, err := db.Select(&wms, query); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for admin")
 		}
@@ -187,6 +217,10 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 					select %s from worker_model
 					JOIN "group" on worker_model.group_id = "group".id
 					where group_id = $2`, modelColumns, modelColumns)
+		if len(additionalFilters) > 0 {
+			query = fmt.Sprintf("%s AND %s", query, strings.Join(additionalFilters, " AND "))
+		}
+
 		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
 			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
 		}
@@ -458,4 +492,21 @@ func mergeWithDefaultEnvs(envs map[string]string) map[string]string {
 	}
 
 	return envs
+}
+
+func getAdditionalSQLFilters(opts *LoadOptions) []string {
+	var additionalFilters []string
+	if opts != nil {
+		switch {
+		case opts.OnlyError:
+			additionalFilters = append(additionalFilters, "worker_model.nb_spawn_err > 0")
+		case opts.OnlyDisabled:
+			additionalFilters = append(additionalFilters, "worker_model.disabled = true")
+		case opts.OnlyRegister:
+			additionalFilters = append(additionalFilters, "worker_model.need_registration = true")
+		case opts.OnlyDeprecated:
+			additionalFilters = append(additionalFilters, "worker_model.is_deprecated = true")
+		}
+	}
+	return additionalFilters
 }

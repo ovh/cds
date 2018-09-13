@@ -110,7 +110,7 @@ func TestInsertWorkerModel(t *testing.T) {
 	group.InsertGroup(db, g)
 	group.InsertUserInGroup(db, g.ID, u.ID, false)
 
-	m3, err := LoadWorkerModelsByUser(db, store, u)
+	m3, err := LoadWorkerModelsByUser(db, store, u, nil)
 	if err != nil {
 		t.Fatalf("Cannot load worker model by user: %s", err)
 	}
@@ -167,6 +167,25 @@ func TestLoadWorkerModels(t *testing.T) {
 		if m.Type != sdk.Docker {
 			t.Fatalf("Unexpected model type '%s', wanted '%s'", m.Type, sdk.Docker)
 		}
+	}
+}
+
+func TestLoadWorkerModelsWithFilter(t *testing.T) {
+	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
+	deleteAllWorkerModel(t, db)
+
+	g := insertGroup(t, db)
+
+	insertWorkerModel(t, db, "lol", g.ID)
+	insertWorkerModel(t, db, "foo", g.ID)
+
+	models, err := LoadWorkerModelsByUser(db, store, &sdk.User{Admin: true}, &LoadOptions{OnlyError: true})
+	if err != nil {
+		t.Fatalf("Cannot load worker model: %s", err)
+	}
+
+	if len(models) != 0 {
+		t.Fatalf("Expected 0 models, got %d", len(models))
 	}
 }
 
