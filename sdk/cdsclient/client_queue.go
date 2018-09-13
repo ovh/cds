@@ -30,15 +30,18 @@ func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
 	if l < 1 {
 		l = 1
 	}
-	l = l * 3
-	t0 := (*queue)[len(*queue)-1].Queued
 
 	queue.Sort()
 
 	if len(*queue) > l {
-		t0 = (*queue)[l].Queued
 		newQueue := (*queue)[:l]
 		*queue = newQueue
+	}
+	t0 := time.Now()
+	for _, q := range *queue {
+		if q.Queued.Before(t0) {
+			t0 = q.Queued
+		}
 	}
 	return t0
 }
@@ -46,8 +49,8 @@ func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
 func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, exceptWfJobID *int64) error {
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
-	pbjobsTicker := time.NewTicker(delay * 5)
-	oldJobsTicker := time.NewTicker(delay * 10)
+	pbjobsTicker := time.NewTicker(delay * 10)
+	oldJobsTicker := time.NewTicker(delay * 5)
 
 	for {
 		select {
