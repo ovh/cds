@@ -20,25 +20,32 @@ func (c *client) WorkerModelBook(id int64) error {
 
 // WorkerModelsEnabled retrieves all worker models enabled and available to user
 func (c *client) WorkerModelsEnabled() ([]sdk.Model, error) {
-	return c.workerModels(false, "")
+	return c.workerModels(false, "", "")
 }
 
 // WorkerModels retrieves all worker models available to user (enabled or not)
 func (c *client) WorkerModels() ([]sdk.Model, error) {
-	return c.workerModels(true, "")
+	return c.workerModels(true, "", "")
 }
 
-// WorkerModels retrieves all worker models available to user (enabled or not)
+// WorkerModelsByBinary retrieves all worker models by binary available to user (enabled or not)
 func (c *client) WorkerModelsByBinary(binary string) ([]sdk.Model, error) {
-	return c.workerModels(true, binary)
+	return c.workerModels(true, binary, "")
 }
 
-func (c *client) workerModels(withDisabled bool, binary string) ([]sdk.Model, error) {
+// WorkerModelsByState retrieves all worker models by state (error|deprecated|register|disabled) available to user (enabled or not)
+func (c *client) WorkerModelsByState(state string) ([]sdk.Model, error) {
+	return c.workerModels(true, "", state)
+}
+
+func (c *client) workerModels(withDisabled bool, binary, state string) ([]sdk.Model, error) {
 	var uri string
 	if withDisabled {
 		uri = fmt.Sprintf("/worker/model")
 		if binary != "" {
 			uri += "?binary=" + url.QueryEscape(binary)
+		} else if state != "" {
+			uri += "?state=" + url.QueryEscape(state)
 		}
 	} else {
 		uri = fmt.Sprintf("/worker/model/enabled")

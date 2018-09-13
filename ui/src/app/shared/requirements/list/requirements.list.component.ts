@@ -60,7 +60,7 @@ export class RequirementsListComponent extends Table  implements OnInit {
     }
 
     ngOnInit() {
-        this._workerModelService.getWorkerModels()
+        this._workerModelService.getWorkerModels(null)
         .pipe(finalize(() => this.loading = false), first())
         .subscribe(wms => {
             this.workerModels = wms;

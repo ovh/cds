@@ -16,17 +16,35 @@ export class WorkerModelListComponent extends Table {
     searchView = true;
     workerModels: Array<WorkerModel>;
     filteredWorkerModels: Array<WorkerModel>;
+    ready = false;
+    set selectedFilter(filter: string) {
+        this._selectedFilter = filter;
+        if (this.ready) {
+            this.loadWorkerModels(this._selectedFilter);
+        }
+    }
+    get selectedFilter(): string {
+        return this._selectedFilter;
+    }
+
+    _selectedFilter: string;
 
     constructor(private _workerModelService: WorkerModelService) {
         super();
-        this._workerModelService.getWorkerModels()
+        this.loadWorkerModels(null);
+        this.nbElementsByPage = 25;
+    }
+
+    loadWorkerModels(filter: string) {
+        this.binaryValue = '';
+        this.loading = true;
+        this._workerModelService.getWorkerModels(filter)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wms => {
                 this.workerModels = wms;
                 this.filteredWorkerModels = wms;
+                this.ready = true;
             });
-        this.nbElementsByPage = 25;
-
     }
 
     getData(): any[] {
@@ -55,13 +73,14 @@ export class WorkerModelListComponent extends Table {
 
     searchBinary(binary: string) {
         this.filter = '';
+        this.selectedFilter = null;
         if (!binary) {
             this.searchView = true;
             this.filteredWorkerModels = this.workerModels;
             this.binaryValue = '';
             return;
         }
-        this._workerModelService.getWorkerModels(binary)
+        this._workerModelService.getWorkerModels(this.selectedFilter, binary)
             .pipe(finalize(() => {
                 this.loading = false;
                 this.searchView = false;

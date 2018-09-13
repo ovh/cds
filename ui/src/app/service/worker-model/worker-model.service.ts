@@ -52,10 +52,13 @@ export class WorkerModelService {
      * Get the list of available worker models
      * @returns {Observable<WorkerModel[]>}
      */
-    getWorkerModels(binary?: string): Observable<Array<WorkerModel>> {
+    getWorkerModels(state: string, binary?: string): Observable<Array<WorkerModel>> {
         let params = new HttpParams();
         if (binary) {
           params = params.append('binary', binary);
+        }
+        if (state) {
+          params = params.append('state', state);
         }
 
         return this._http.get<Array<WorkerModel>>('/worker/model', {params});

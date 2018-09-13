@@ -40,6 +40,12 @@ var workerModelListCmd = cli.Command{
 			Kind:      reflect.String,
 			ShortHand: "b",
 		},
+		{
+			Name:      "state",
+			Usage:     "Use this flag to filter worker model by his state (disabled|error|register|deprecated)",
+			Kind:      reflect.String,
+			ShortHand: "s",
+		},
 	},
 }
 
@@ -47,11 +53,12 @@ func workerModelListRun(v cli.Values) (cli.ListResult, error) {
 	var err error
 	var workerModels []sdk.Model
 	binaryFlag := v.GetString("binary")
+	stateFlag := v.GetString("state")
 
 	if binaryFlag != "" {
 		workerModels, err = client.WorkerModelsByBinary(binaryFlag)
 	} else {
-		workerModels, err = client.WorkerModels()
+		workerModels, err = client.WorkerModelsByState(stateFlag)
 	}
 
 	if err != nil {
