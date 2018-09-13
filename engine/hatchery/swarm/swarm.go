@@ -185,7 +185,14 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 			break
 		}
 
-		nbContainers := float64(len(containers)) / float64(h.dockerClients[dname].MaxContainers)
+		var nbContainersFromHatchery int64
+		for _, cont := range containers {
+			if _, ok := cont.Labels["hatchery"]; ok {
+				nbContainersFromHatchery++
+			}
+		}
+
+		nbContainers := float64(nbContainersFromHatchery) / float64(h.dockerClients[dname].MaxContainers)
 		if nbContainersRatio == 0 || nbContainers < nbContainersRatio {
 			nbContainersRatio = nbContainers
 			dockerClient = h.dockerClients[dname]
@@ -434,6 +441,13 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 			continue
 		}
 
+		var nbContainersFromHatchery int
+		for _, cont := range cs {
+			if _, ok := cont.Labels["hatchery"]; ok {
+				nbContainersFromHatchery++
+			}
+		}
+
 		//List all workers
 		ws, errWList := h.getWorkerContainers(dockerClient, cs, types.ContainerListOptions{})
 		if errWList != nil {
@@ -442,8 +456,8 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 
 		//Checking teh number of container on each docker engine
-		if len(cs) > dockerClient.MaxContainers {
-			log.Debug("hatchery> swarm> CanSpawn> max containers reached on %s. current:%d max:%d", dockerName, len(cs), dockerClient.MaxContainers)
+		if nbContainersFromHatchery > dockerClient.MaxContainers {
+			log.Debug("hatchery> swarm> CanSpawn> max containers reached on %s. current:%d max:%d", dockerName, nbContainersFromHatchery, dockerClient.MaxContainers)
 			continue
 		}
 
@@ -462,7 +476,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 				log.Debug("hatchery> swarm> CanSpawn> ratioService 100 by conf on %s - no spawn worker without CDS Service", dockerName)
 				return false
 			}
-			if len(cs) > 0 {
+			if nbContainersFromHatchery > 0 {
 				percentFree := 100 - (100 * len(ws) / h.Config.MaxContainers)
 				if percentFree <= h.Config.RatioService {
 					log.Debug("hatchery> swarm> CanSpawn> ratio reached on %s. percentFree:%d ratioService:%d", dockerName, percentFree, h.Config.RatioService)
