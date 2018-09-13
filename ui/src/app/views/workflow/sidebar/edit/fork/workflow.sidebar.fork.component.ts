@@ -82,8 +82,7 @@ export class WorkflowSidebarForkComponent implements OnInit {
             return null
         }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-        let currentFork: WorkflowNodeFork;
-        currentFork = Workflow.getForkByName(this.fork.name, clonedWorkflow);
+        let currentFork = Workflow.getForkByName(this.fork.name, clonedWorkflow);
 
         if (!currentFork) {
             return;
@@ -100,14 +99,11 @@ export class WorkflowSidebarForkComponent implements OnInit {
     }
 
     rename(): void {
-
         if (this.workflow.permission !== PermissionValue.READ_WRITE_EXECUTE) {
             return;
         }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         this.updateWorkflow(clonedWorkflow, null, false);
-
-
     }
 
     updateWorkflow(w: Workflow, modal: ActiveModal<boolean, boolean, void>, addTrigger: boolean): void {

@@ -124,6 +124,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				if node == nil {
 					return report, false, sdk.ErrWorkflowNodeNotFound
 				}
+
 				for j := range node.Triggers {
 					t := &node.Triggers[j]
 

@@ -85,7 +85,7 @@ func loadForks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 		var triggerIDs []int64
 		if _, err := db.Select(&triggerIDs, "select id from workflow_node_fork_trigger where workflow_node_fork_id = $1", forks[i].ID); err != nil {
 			if err == sql.ErrNoRows {
-				return nil, sdk.WrapError(err, "loadForks> Unable to load fork triggers id for for %d", forks[i].ID)
+				continue
 			}
 			return nil, sdk.WrapError(err, "loadForks> Unable to load for triggers id for hook %d", forks[i].ID)
 		}
