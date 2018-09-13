@@ -85,32 +85,6 @@ func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	return check(w, r)
 }
 
-// func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-// 	pluginBinary := path.Join(w.basedir, r.Name)
-//
-// 	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
-// 		//If the file doesn't exist. Download it.
-// 		if err := sdk.DownloadPlugin(r.Name, w.basedir); err != nil {
-// 			return false, err
-// 		}
-// 		if err := os.Chmod(pluginBinary, 0700); err != nil {
-// 			return false, err
-// 		}
-// 	}
-//
-// 	pluginClient := plugin.NewClient(context.Background(), r.Name, pluginBinary, "", "", false)
-// 	defer pluginClient.Kill()
-//
-// 	_plugin, err := pluginClient.Instance()
-// 	if err != nil {
-// 		log.Warning("checkPluginRequirement> Error Checking %s requirement : %s", r.Name, err)
-// 		return false, err
-// 	}
-// 	log.Debug("checkPluginRequirement> Plugin %s successfully started", _plugin.Name())
-//
-// 	return true, nil
-// }
-
 func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	var currentOS = strings.ToLower(runtime.GOOS)
 	var currentARCH = strings.ToLower(runtime.GOARCH)
