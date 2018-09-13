@@ -66,7 +66,7 @@ func Test_shrinkQueue(t *testing.T) {
 					QueuedSeconds: now.Unix() - t15.Unix(),
 				},
 			},
-				l: 4,
+				l: 2,
 			},
 			want: t10,
 		},

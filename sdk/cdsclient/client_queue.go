@@ -22,19 +22,23 @@ import (
 
 // shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
 // it returns as reference date the date of the last element in the shrinkked queue
-func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
+func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	if len(*queue) == 0 {
 		return time.Time{}
 	}
 
-	if l < 1 {
-		l = 1
+	if nbJobsToKeep < 1 {
+		nbJobsToKeep = 1
 	}
+
+	// nbJobsToKeep is by default the concurrent max worker provisionning.
+	// we keep 2x this number
+	nbJobsToKeep = nbJobsToKeep * 2
 
 	queue.Sort()
 
-	if len(*queue) > l {
-		newQueue := (*queue)[:l]
+	if len(*queue) > nbJobsToKeep {
+		newQueue := (*queue)[:nbJobsToKeep]
 		*queue = newQueue
 	}
 	t0 := time.Now()

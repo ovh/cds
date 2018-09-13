@@ -97,7 +97,7 @@ func Create(h Interface) error {
 	}()
 
 	pbjobs := make(chan sdk.PipelineBuildJob, 2)
-	wjobs := make(chan sdk.WorkflowNodeJobRun, h.Configuration().Provision.MaxWorker)
+	wjobs := make(chan sdk.WorkflowNodeJobRun, h.Configuration().Provision.MaxConcurrentProvisioning)
 	errs := make(chan error, 1)
 
 	// Create a cache with a default expiration time of 3 second, and which
