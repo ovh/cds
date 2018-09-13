@@ -27,15 +27,10 @@ type Applications struct {
 	alters  map[string]VariableAlteration
 }
 
-<<<<<<< HEAD
-type VariableAlteration func(interface{}) (interface{}, error)
-
-=======
 // VariableAlteration is a function to alter variable
 type VariableAlteration func(interface{}) (interface{}, error)
 
 // NewApplications create a new application
->>>>>>> feat(api): add grpc plugin action handlers (#3308)
 func NewApplications(file string) (*Applications, error) {
 	var ret Applications
 
@@ -88,12 +83,7 @@ func (app *Applications) Variables(name string) (map[string]interface{}, error) 
 			}
 
 			buf := new(bytes.Buffer)
-<<<<<<< HEAD
-			err = tmpl.Execute(buf, variables)
-			if err != nil {
-=======
 			if err := tmpl.Execute(buf, variables); err != nil {
->>>>>>> feat(api): add grpc plugin action handlers (#3308)
 				return nil, err
 			}
 
