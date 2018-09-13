@@ -35,6 +35,5 @@ export class WorkflowDeleteForkComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        console.log(this.fork);
     }
 }

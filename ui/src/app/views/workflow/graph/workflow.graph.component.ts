@@ -189,8 +189,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
         // Add our custom arrow (a hollow-point)
         this.createCustomArrow();
-        // Add custom diamond
-        this.createDiamond();
 
         // Setup transition
         this.g.graph().transition = function (selection) {
@@ -204,29 +202,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.addListener(d3.select('svg'));
         this.svgHeight = this.g.graph().height + 40;
         this.svgWidth = this.g.graph().width;
-    }
-
-    private createDiamond() {
-        // Add our custom shape (a house)
-        this.render.shapes()['customDiamond'] = function(parent, bbox, node) {
-            let w = bbox.width;
-            let h = bbox.height;
-            let points = [
-                    { x:   w / 2, y:       h / 2 },
-                    { x:   w    , y:       0 },
-                    { x: w / 2 , y:       -h / 2 },
-                    { x:       0, y:       0 },
-                ];
-            let shapeSvg = parent.insert('polygon', ':first-child')
-                .attr('points', points.map(function(d) { return d.x + ',' + d.y; }).join(' '))
-                .attr('transform', 'translate(' + (-w / 2) + ', 10)');
-
-            node.intersect = function(point) {
-                return dagreD3.intersect.polygon(node, points, point);
-            };
-
-            return shapeSvg;
-        };
     }
 
     private createCustomArrow() {

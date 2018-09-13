@@ -3,7 +3,9 @@ package workflow
 import (
 	"context"
 	"database/sql"
+
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"

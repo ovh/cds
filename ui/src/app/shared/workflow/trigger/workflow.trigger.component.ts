@@ -45,13 +45,11 @@ export class WorkflowTriggerComponent {
     }
 
     destNodeChange(node: WorkflowNode): void {
-        console.log(node);
         this.trigger = node;
     }
 
     pipelineSectionChanged(pipSection: string) {
         this.currentSection = pipSection;
-        console.log(pipSection);
     }
 
     saveTrigger(): void {
@@ -77,7 +75,6 @@ export class WorkflowTriggerComponent {
 
     nextStep() {
       this.nodeWizard.goToNextSection().subscribe((section) => {
-          console.log(section);
         if (section === 'done') {
           this.saveTrigger();
         } else {
