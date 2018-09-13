@@ -947,6 +947,11 @@
           <span>delete</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/admin/plugins/doc/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/doc/">
+          <span>doc</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/admin/plugins/export/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/export/">
           <span>export</span>
@@ -2100,30 +2105,30 @@
 
 <p>This action helps you to send data through Kafka across every network.</p>
 
-<pre><code>You are able to send a custom &quot;message&quot; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase.
+<p>You are able to send a custom &ldquo;message&rdquo; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase.</p>
 
-This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consumer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin.
-</code></pre>
+<p>This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consumer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin.</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>artifacts</strong>: Artifacts list (comma separated)</li>
 <li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
-<li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
-<li><strong>kafkaPassword</strong>: Kafka Password</li>
-<li><strong>kafkaUser</strong>: Kafka User</li>
-<li><strong>message</strong>: Kafka Message</li>
+<li><strong>artifacts</strong>: Artifacts list (comma separated)&rdquo;</li>
 <li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
-<li><strong>topic</strong>: Kafka Topic</li>
-<li><strong>waitForAck</strong>: Wait for Ack</li>
+<li><strong>waitForAck</strong>: Wait for ACK</li>
+<li><strong>waitForAckTopic</strong>: Wait for ACK topic</li>
 <li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
-<li><strong>waitForAckTopic</strong>: Kafka Topic. Used only if &ldquo;waitForAck&rdquo; is true.</li>
+<li><strong>message</strong>: Kafka Message</li>
+<li><strong>kafkaPassword</strong>: Kafka password</li>
+<li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
+<li><strong>topic</strong>: Kafka Topic</li>
+<li><strong>key</strong>: Key used by AES Encryption. It have to be the same value as &ndash;key on plugin binary</li>
+<li><strong>kafkaUser</strong>: Kafka user</li>
 </ul>
 
 <h2 id="more">More</h2>
 
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-kafka-publish/README.md">Github</a></p>
+<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish/README.md">Github</a></p>
 
 
 <footer class=" footline" >

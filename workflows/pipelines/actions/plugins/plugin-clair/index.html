@@ -947,6 +947,11 @@
           <span>delete</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/admin/plugins/doc/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/doc/">
+          <span>doc</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/admin/plugins/export/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/export/">
           <span>export</span>
@@ -2074,10 +2079,8 @@
 <ul>
 <li>
 <ul>
-<li><a href="#parameters">Parameters</a>
-<ul>
-<li><a href="#prerequisites">Prerequisites</a></li>
-</ul></li>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#more">More</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -2100,35 +2103,17 @@
 
 
 
-<p>This plugin analyze your docker image using clair (<a href="https://github.com/coreos/clair">https://github.com/coreos/clair</a>)</p>
-
-<p>Add an extra step of type plugin-clair on your job to use it.</p>
+<p>This is a plugin to run clair analysis</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>image</strong>: Image to analize</li>
+<li><strong>image</strong>: Image to analyze</li>
 </ul>
 
-<h3 id="prerequisites">Prerequisites</h3>
+<h2 id="more">More</h2>
 
-<p>To use this plugin, you must :</p>
-
-<ul>
-<li>Have clair running: <a href="https://github.com/coreos/clair/blob/master/Documentation/running-clair.md">https://github.com/coreos/clair/blob/master/Documentation/running-clair.md</a></li>
-<li>Add clair in your CDS configuration:</li>
-</ul>
-
-<pre><code class="language-yml">[[api.services]]
-        healthUrl = &quot;http://localhost&quot;
-        healthPort = &quot;6061&quot;
-        healthPath = &quot;/health&quot;
-        name = &quot;clair&quot;
-        type = &quot;clair&quot; # MUST BE 'clair'
-        url = &quot;http://localhost&quot;
-        port = &quot;6060&quot;
-        path = &quot;&quot;
-</code></pre>
+<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/clair/README.md">Github</a></p>
 
 
 <footer class=" footline" >

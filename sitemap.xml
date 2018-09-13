@@ -698,6 +698,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins/doc/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/engine/database/downgrade/</loc>
   </url>
   

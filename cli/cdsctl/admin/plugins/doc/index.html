@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>push :: CDS - Continuous Delivery Service</title>
+    <title>doc :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/workflow/push/">
+  <body class="" data-url="/cli/cdsctl/admin/plugins/doc/">
     <nav id="sidebar" class="">
 
 
@@ -824,9 +824,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/">
-        <span>admin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>admin</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/admin/broadcasts/" class="dd-item">
@@ -930,9 +931,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/admin/plugins/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/admin/plugins/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/">
-        <span>plugins</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>plugins</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/admin/plugins/binary-add/" class="dd-item">
@@ -945,7 +947,7 @@
           <span>delete</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/admin/plugins/doc/" class="dd-item">
+      <li data-nav-id="/cli/cdsctl/admin/plugins/doc/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/doc/">
           <span>doc</span>
         </a>
@@ -1592,10 +1594,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/">
-        <span>workflow</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>workflow</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/workflow/advanced/" class="dd-item">
@@ -1679,7 +1680,7 @@
           <span>pull</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/workflow/push/" class="dd-item active">
+      <li data-nav-id="/cli/cdsctl/workflow/push/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/push/">
           <span>push</span>
         </a>
@@ -2028,7 +2029,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/workflow/push.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/admin/plugins/doc.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -2054,7 +2055,12 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/workflow/'>workflow</a> > push
+
+
+
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/admin/'>admin</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/admin/plugins/'>plugins</a> > doc
+
+ 
 
  
 
@@ -2073,7 +2079,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-workflow-push">cdsctl workflow push</a>
+<li><a href="#cdsctl-admin-plugins-doc">cdsctl admin plugins doc</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#options">Options</a></li>
@@ -2092,7 +2098,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>push</h1>
+                <h1>doc</h1>
                 <p></p>
             </div>
           
@@ -2102,26 +2108,20 @@
 
 
 
-<h2 id="cdsctl-workflow-push">cdsctl workflow push</h2>
+<h2 id="cdsctl-admin-plugins-doc">cdsctl admin plugins doc</h2>
 
-<p>Push a workflow</p>
+<p>Generate documentation in markdown for a plugin</p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Useful when you want to push a workflow and his dependencies (pipelines, applications, environments)</p>
+<p>Generate documentation in markdown for a plugin</p>
 
-<p>For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with</p>
-
-<pre><code>cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
-</code></pre>
-
-<pre><code>cdsctl workflow push [ PROJECT-KEY ] YAML-FILE ... [flags]
+<pre><code>cdsctl admin plugins doc PATH [flags]
 </code></pre>
 
 <h3 id="options">Options</h3>
 
-<pre><code>  -h, --help                help for push
-      --skip-update-files   Useful if you don't want to update yaml files after pushing the workflow.
+<pre><code>  -h, --help   help for doc
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
@@ -2135,7 +2135,7 @@
 <h3 id="see-also">SEE ALSO</h3>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/">cdsctl workflow</a>   - Manage CDS workflow</li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/">cdsctl admin plugins</a>     - Manage CDS Plugins</li>
 </ul>
 
 
@@ -2156,8 +2156,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/workflow/pull/" title="pull"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/workflow/run/" title="run" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/delete/" title="delete"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/export/" title="export" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
