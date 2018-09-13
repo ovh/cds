@@ -48,7 +48,7 @@ func Initialize(k KafkaConfig, cache cache.Store) error {
 	}
 	// generates an API name. api_foo_bar, only 3 first letters to have a readable status
 	cdsname = "api_"
-	for _, v := range strings.Split(namesgenerator.GetRandomName(0), "_") {
+	for _, v := range strings.Split(namesgenerator.GetRandomNameCDS(0), "_") {
 		if len(v) > 3 {
 			cdsname += v[:3]
 		} else {
