@@ -270,13 +270,13 @@ export class Workflow {
         return
     }
 
-    static getForkByID(id: number, w: Workflow): WorkflowNodeFork {
-        let fork = WorkflowNode.getForkByID(w.root, id);
+    static getForkByName(name: string, w: Workflow): WorkflowNodeFork {
+        let fork = WorkflowNode.getForkByName(w.root, name);
         if (!fork && w.joins) {
             quit: for (let i = 0; i < w.joins.length; i++) {
                 if (w.joins[i].triggers) {
                     for (let j = 0; j < w.joins[i].triggers.length; j++) {
-                        fork = WorkflowNode.getForkByID(w.joins[i].triggers[j].workflow_dest_node, id);
+                        fork = WorkflowNode.getForkByName(w.joins[i].triggers[j].workflow_dest_node, name);
                         if (fork) {
                             break quit;
                         }
@@ -749,16 +749,16 @@ export class WorkflowNode {
         return null;
     }
 
-    static getForkByID(node: WorkflowNode, id: number): WorkflowNodeFork {
+    static getForkByName(node: WorkflowNode, name: string): WorkflowNodeFork {
         let fork: WorkflowNodeFork;
         if (node.forks) {
             for (let i = 0; i < node.forks.length; i++) {
-                if (node.forks[i].id === id) {
+                if (node.forks[i].name === name) {
                     return node.forks[i];
                 }
                 if (node.forks[i].triggers) {
                     for (let j = 0; j < node.forks[i].triggers.length; j++) {
-                        fork = WorkflowNode.getForkByID(node.forks[i].triggers[j].workflow_dest_node, id);
+                        fork = WorkflowNode.getForkByName(node.forks[i].triggers[j].workflow_dest_node, name);
                         if (fork) {
                             return fork;
                         }
@@ -769,7 +769,7 @@ export class WorkflowNode {
 
         if (node.triggers) {
             for (let i = 0; i < node.triggers.length; i++) {
-                fork = WorkflowNode.getForkByID(node.triggers[i].workflow_dest_node, id);
+                fork = WorkflowNode.getForkByName(node.triggers[i].workflow_dest_node, name);
                 if (fork) {
                     return fork;
                 }
@@ -780,7 +780,7 @@ export class WorkflowNode {
             for (let i = 0; i < node.outgoing_hooks.length; i++) {
                 if (node.outgoing_hooks[i].triggers) {
                     for (let j = 0; j < node.outgoing_hooks[i].triggers.length; j++) {
-                        fork = WorkflowNode.getForkByID(node.outgoing_hooks[i].triggers[j].workflow_dest_node, id);
+                        fork = WorkflowNode.getForkByName(node.outgoing_hooks[i].triggers[j].workflow_dest_node, name);
                         if (fork) {
                             return fork;
                         }

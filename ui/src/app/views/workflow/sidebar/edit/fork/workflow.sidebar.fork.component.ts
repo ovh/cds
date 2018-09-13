@@ -83,7 +83,7 @@ export class WorkflowSidebarForkComponent implements OnInit {
         }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         let currentFork: WorkflowNodeFork;
-        currentFork = Workflow.getForkByID(this.fork.id, clonedWorkflow);
+        currentFork = Workflow.getForkByName(this.fork.name, clonedWorkflow);
 
         if (!currentFork) {
             return;
