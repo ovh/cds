@@ -16,9 +16,9 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
-/*
-$ make build
-$ make publish
+/* Inside contrib/grpcplugins/action
+$ make build group-tmpl
+$ make publish group-tmpl
 */
 
 type groupTmplActionPlugin struct {

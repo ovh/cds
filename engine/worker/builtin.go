@@ -272,11 +272,11 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 
 	select {
 	case <-ctx.Done():
-		log.Error("CDS Worker execution canceled: %v", ctx.Err())
-		w.sendLog(buildID, "CDS Worker execution canceled\n", stepOrder, false)
+		log.Error("CDS Worker execution cancelled: %v", ctx.Err())
+		_ = w.sendLog(buildID, "CDS Worker execution cancelled\n", stepOrder, false)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
-			Reason: "CDS Worker execution canceled",
+			Reason: "CDS Worker execution cancelled",
 		}
 	case res := <-chanRes:
 		return res

@@ -21,9 +21,9 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
-/*
-$ make build
-$ make publish
+/* Inside contrib/grpcplugins/action
+$ make build kafka-publish
+$ make publish kafka-publish
 */
 
 type kafkaPublishActionPlugin struct {
