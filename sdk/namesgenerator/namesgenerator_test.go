@@ -1,7 +1,6 @@
 package namesgenerator
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 )
@@ -11,7 +10,7 @@ func TestNameFormat(t *testing.T) {
 	if !strings.Contains(name, "_") {
 		t.Fatalf("Generated name does not contain an underscore")
 	}
-	fmt.Println("####### name:", name)
+	t.Log("name generated:", name)
 	if strings.ContainsAny(name, "0123456789") {
 		t.Fatalf("Generated name contains numbers!")
 	}

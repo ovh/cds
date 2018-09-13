@@ -848,7 +848,7 @@ begin:
 
 // GetRandomNameCDS generates a random name from the list of adjectives and surnames in this package
 func GetRandomNameCDS(retry int) string {
-	format := rand.Intn(2)
+	format := rand.Intn(3)
 	var name string
 	switch format {
 	case 0:
