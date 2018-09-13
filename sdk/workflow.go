@@ -515,6 +515,7 @@ type WorkflowNode struct {
 	TriggerJoinSrcID   int64                      `json:"-" db:"-"`
 	TriggerHookSrcID   int64                      `json:"-" db:"-"`
 	Hooks              []WorkflowNodeHook         `json:"hooks,omitempty" db:"-"`
+	Forks              []WorkflowNodeFork         `json:"forks,omitempty" db:"-"`
 	Triggers           []WorkflowNodeTrigger      `json:"triggers,omitempty" db:"-"`
 	OutgoingHooks      []WorkflowNodeOutgoingHook `json:"outgoing_hooks,omitempty" db:"-"`
 }
@@ -612,6 +613,14 @@ func (n *WorkflowNode) GetNodeByRef(ref string) *WorkflowNode {
 			}
 		}
 	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			n2 := (&n.Forks[i].Triggers[j].WorkflowDestNode).GetNodeByRef(ref)
+			if n2 != nil {
+				return n2
+			}
+		}
+	}
 
 	return nil
 }
@@ -633,6 +642,14 @@ func (n *WorkflowNode) GetNodeByName(name string) *WorkflowNode {
 	for i := range n.OutgoingHooks {
 		for j := range n.OutgoingHooks[i].Triggers {
 			n2 := (&n.OutgoingHooks[i].Triggers[j].WorkflowDestNode).GetNodeByName(name)
+			if n2 != nil {
+				return n2
+			}
+		}
+	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			n2 := (&n.Forks[i].Triggers[j].WorkflowDestNode).GetNodeByName(name)
 			if n2 != nil {
 				return n2
 			}
@@ -663,6 +680,14 @@ func (n *WorkflowNode) GetNode(id int64) *WorkflowNode {
 			}
 		}
 	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			n2 := (&n.Forks[i].Triggers[j].WorkflowDestNode).GetNode(id)
+			if n2 != nil {
+				return n2
+			}
+		}
+	}
 	return nil
 }
 
@@ -678,6 +703,12 @@ func (n *WorkflowNode) ResetIDs() {
 			(&n.OutgoingHooks[i].Triggers[j].WorkflowDestNode).ResetIDs()
 		}
 	}
+
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			(&n.Forks[i].Triggers[j].WorkflowDestNode).ResetIDs()
+		}
+	}
 }
 
 //Nodes returns a slice with all node IDs
@@ -689,6 +720,11 @@ func (n *WorkflowNode) Nodes() []WorkflowNode {
 	for i := range n.OutgoingHooks {
 		for j := range n.OutgoingHooks[i].Triggers {
 			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.Nodes()...)
+		}
+	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.Nodes()...)
 		}
 	}
 	return res
@@ -720,6 +756,27 @@ func ancestor(id int64, node *WorkflowNode, deep bool) (map[int64]bool, bool) {
 	for i := range node.OutgoingHooks {
 		for j := range node.OutgoingHooks[i].Triggers {
 			destNode := &node.OutgoingHooks[i].Triggers[j].WorkflowDestNode
+			if destNode.ID == id {
+				res[node.ID] = true
+				return res, true
+			}
+			ids, ok := ancestor(id, destNode, deep)
+			if ok {
+				if len(ids) == 1 || deep {
+					for k := range ids {
+						res[k] = true
+					}
+				}
+				if deep {
+					res[node.ID] = true
+				}
+				return res, true
+			}
+		}
+	}
+	for i := range node.Forks {
+		for j := range node.Forks[i].Triggers {
+			destNode := &node.Forks[i].Triggers[j].WorkflowDestNode
 			if destNode.ID == id {
 				res[node.ID] = true
 				return res, true
@@ -814,6 +871,11 @@ func (n *WorkflowNode) References() []string {
 			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.References()...)
 		}
 	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.References()...)
+		}
+	}
 	return res
 }
 
@@ -836,6 +898,11 @@ func (n *WorkflowNode) InvolvedApplications() []int64 {
 			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedApplications()...)
 		}
 	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.InvolvedApplications()...)
+		}
+	}
 	return res
 }
 
@@ -848,6 +915,11 @@ func (n *WorkflowNode) InvolvedPipelines() []int64 {
 	for i := range n.OutgoingHooks {
 		for j := range n.OutgoingHooks[i].Triggers {
 			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedPipelines()...)
+		}
+	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.InvolvedPipelines()...)
 		}
 	}
 	return res
@@ -867,6 +939,11 @@ func (n *WorkflowNode) GetApplications() []Application {
 			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.GetApplications()...)
 		}
 	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.GetApplications()...)
+		}
+	}
 	return res
 }
 
@@ -882,6 +959,11 @@ func (n *WorkflowNode) GetEnvironments() []Environment {
 	for i := range n.OutgoingHooks {
 		for j := range n.OutgoingHooks[i].Triggers {
 			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.GetEnvironments()...)
+		}
+	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.GetEnvironments()...)
 		}
 	}
 	return res
@@ -906,6 +988,11 @@ func (n *WorkflowNode) InvolvedEnvironments() []int64 {
 			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedEnvironments()...)
 		}
 	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.InvolvedEnvironments()...)
+		}
+	}
 	return res
 }
 
@@ -926,6 +1013,11 @@ func (n *WorkflowNode) InvolvedPlatforms() []int64 {
 	for i := range n.OutgoingHooks {
 		for j := range n.OutgoingHooks[i].Triggers {
 			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedPlatforms()...)
+		}
+	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.InvolvedPlatforms()...)
 		}
 	}
 	return res
@@ -969,6 +1061,14 @@ func (n *WorkflowNode) CheckApplicationDeploymentStrategies(proj *Project) error
 type WorkflowNodeTrigger struct {
 	ID                 int64        `json:"id" db:"id"`
 	WorkflowNodeID     int64        `json:"workflow_node_id" db:"workflow_node_id"`
+	WorkflowDestNodeID int64        `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
+	WorkflowDestNode   WorkflowNode `json:"workflow_dest_node" db:"-"`
+}
+
+//WorkflowNodeTrigger is a ling between a fork and a node
+type WorkflowNodeForkTrigger struct {
+	ID                 int64        `json:"id" db:"id"`
+	WorkflowForkID     int64        `json:"workflow_node_fork_id" db:"workflow_node_fork_id"`
 	WorkflowDestNodeID int64        `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode `json:"workflow_dest_node" db:"-"`
 }

@@ -195,6 +195,10 @@ type NodeHook sdk.WorkflowNodeHook
 
 type nodeOutgoingHook sdk.WorkflowNodeOutgoingHook
 
+type dbNodeFork sdk.WorkflowNodeFork
+
+type dbNodeForkTrigger sdk.WorkflowNodeForkTrigger
+
 // hookModel is a gorp wrapper around sdk.WorkflowHookModel
 type hookModel sdk.WorkflowHookModel
 
@@ -225,4 +229,6 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(auditWorkflow{}, "workflow_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Coverage{}, "workflow_node_run_coverage", false, "workflow_id", "workflow_run_id", "workflow_node_run_id", "repository", "branch"))
 	gorpmapping.Register(gorpmapping.New(dbNodeRunVulenrabilitiesReport{}, "workflow_node_run_vulnerability", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeFork{}, "workflow_node_fork", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeForkTrigger{}, "workflow_node_fork_trigger", true, "id"))
 }
