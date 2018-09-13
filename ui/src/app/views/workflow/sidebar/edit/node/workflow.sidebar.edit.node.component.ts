@@ -9,7 +9,7 @@ import {PermissionValue} from '../../../../../model/permission.model';
 import {Project} from '../../../../../model/project.model';
 import {
     Workflow,
-    WorkflowNode,
+    WorkflowNode, WorkflowNodeFork,
     WorkflowNodeHook,
     WorkflowNodeJoin,
     WorkflowNodeOutgoingHook,
@@ -64,7 +64,7 @@ export class WorkflowSidebarEditNodeComponent {
     nodeParentModal: ModalTemplate<boolean, boolean, void>;
     newParentNode: WorkflowNode;
     modalParentNode: ActiveModal<boolean, boolean, void>;
-    newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
+    newTrigger: WorkflowNode = new WorkflowNode();
     node: WorkflowNode;
     previousNodeName: string;
     pipelineSubscription: Subscription;
@@ -107,8 +107,7 @@ export class WorkflowSidebarEditNodeComponent {
         if (!this.canEdit()) {
             return;
         }
-        this.newTrigger = new WorkflowNodeTrigger();
-        this.newTrigger.workflow_node_id = this.node.id;
+        this.newTrigger = new WorkflowNode();
         if (this.workflowTrigger) {
           this.workflowTrigger.show();
         }
@@ -188,7 +187,10 @@ export class WorkflowSidebarEditNodeComponent {
         if (!currentNode.triggers) {
             currentNode.triggers = new Array<WorkflowNodeTrigger>();
         }
-        currentNode.triggers.push(cloneDeep(this.newTrigger));
+        let trig = new WorkflowNodeTrigger();
+        trig.workflow_node_id = this.node.id;
+        trig.workflow_dest_node = this.newTrigger;
+        currentNode.triggers.push(trig);
         this.updateWorkflow(clonedWorkflow, this.workflowTrigger.modal);
     }
 
@@ -315,6 +317,32 @@ export class WorkflowSidebarEditNodeComponent {
             }
             this.loading = false;
         });
+    }
+
+    createFork(): void {
+        if (!this.canEdit()) {
+            return;
+        }
+        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
+        let currentNode: WorkflowNode;
+        if (clonedWorkflow.root.id === this.node.id) {
+            currentNode = clonedWorkflow.root;
+        } else {
+            currentNode = Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        }
+        if (!currentNode) {
+            return;
+        }
+
+        if (!currentNode.forks) {
+            currentNode.forks = new Array<WorkflowNodeFork>();
+        }
+
+        let f = new WorkflowNodeFork();
+        f.workflow_node_id = currentNode.id;
+        currentNode.forks.push(f);
+
+        this.updateWorkflow(clonedWorkflow);
     }
 
     createJoin(): void {
