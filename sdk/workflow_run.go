@@ -181,6 +181,7 @@ type WorkflowNodeRun struct {
 
 //WorkflowNodeOutgoingHookRun is an execution instance of a WorkflowNodeOutgoingHook
 type WorkflowNodeOutgoingHookRun struct {
+	WorkflowRunID              int64                                `json:"workflow_run_id"`
 	HookRunID                  string                               `json:"id"`
 	WorkflowNodeOutgoingHookID int64                                `json:"workflow_node_outgoing_hook_id"`
 	Status                     string                               `json:"status"`

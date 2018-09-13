@@ -100,10 +100,8 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(errT, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, workflowNodeRuns)
-
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
+		go workflow.SendEvent(api.mustDB(), p.Key, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -418,22 +416,19 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
 		}
 
-		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
-
-		if len(workflowRuns) > 0 {
+		if len(report.WorkflowRuns()) > 0 {
 			observability.Current(ctx,
-				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
+				observability.Tag(observability.TagWorkflow, report.WorkflowRuns()[0].Workflow.Name),
 			)
 		}
 
 		db := api.mustDB()
 
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, workflowNodeRuns)
+		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, report)
 		next()
 
-		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, proj.Key)
-
+		go workflow.SendEvent(db, proj.Key, report)
 		return nil
 	}
 }

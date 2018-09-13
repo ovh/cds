@@ -278,10 +278,32 @@ export class WorkflowNodeRunVulnerability {
 }
 
 export class WorkflowNodeOutgoingHookRun {
+    workflow_run_id: number;
+    id: string;
     workflow_node_run_id: number;
     workflow_node_outgoing_hook_id: number;
     status: string;
     // triggers_run TODO
     num: number;
     subnumber: number;
+    start: string;
+    done: string;
+    log: string;
+
+    static fromEventRunWorkflowOutgoingHook(e: Event): WorkflowNodeOutgoingHookRun {
+        let hr = new WorkflowNodeOutgoingHookRun();
+        hr.id = e.payload['ID'];
+        hr.workflow_run_id = e.payload['WorkflowRunID']
+        hr.num = e.workflow_run_num;
+        hr.status = e.status;
+        hr.subnumber = e.workflow_run_num_sub;
+        if (!hr.subnumber) {
+            hr.subnumber = 0;
+        }
+        hr.workflow_node_outgoing_hook_id = e.payload['HookID'];
+        hr.start = e.payload['Start']
+        hr.done = e.payload['Done']
+        hr.log = e.payload['Log']
+        return hr;
+    }
 }
