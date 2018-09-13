@@ -232,7 +232,7 @@ func (h *HatcheryKubernetes) CanSpawn(model *sdk.Model, jobID int64, requirement
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
-	name := fmt.Sprintf("k8s-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	name := fmt.Sprintf("k8s-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1))
 	label := "execution"
 	if spawnArgs.RegisterOnly {
 		name = "register-" + name
@@ -346,7 +346,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	var gracePeriodSecs int64
 	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:                       name,
+			Name: name,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
 				LABEL_WORKER:        label,

@@ -230,7 +230,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	memory := int64(h.Config.DefaultMemory)
 
 	instance := 1
-	workerName := fmt.Sprintf("%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	workerName := fmt.Sprintf("%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1))
 	if spawnArgs.RegisterOnly {
 		workerName = "register-" + workerName
 	}
