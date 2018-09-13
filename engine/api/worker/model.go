@@ -202,7 +202,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 	if user.Admin {
 		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, modelColumns)
 		if len(additionalFilters) > 0 {
-			query = fmt.Sprintf("%s WHERE %s", query, strings.Join(additionalFilters, " AND "))
+			query += fmt.Sprintf(" WHERE %s", strings.Join(additionalFilters, " AND "))
 		}
 
 		if _, err := db.Select(&wms, query); err != nil {
@@ -218,7 +218,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 					JOIN "group" on worker_model.group_id = "group".id
 					where group_id = $2`, modelColumns, modelColumns)
 		if len(additionalFilters) > 0 {
-			query = fmt.Sprintf("%s AND %s", query, strings.Join(additionalFilters, " AND "))
+			query += fmt.Sprintf(" AND %s", strings.Join(additionalFilters, " AND "))
 		}
 
 		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
