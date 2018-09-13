@@ -48,7 +48,7 @@ func insertForkTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, 
 		return sdk.WrapError(err, "insertForkTrigger> Unable to insert trigger")
 	}
 	trigger.ID = dbt.ID
-	trigger.WorkflowDestNode.TriggerSrcID = trigger.ID
+	trigger.WorkflowDestNode.TriggerSrcForkID = trigger.ID
 
 	// Update node trigger ID
 	if err := updateWorkflowForkTriggerSrc(db, &trigger.WorkflowDestNode); err != nil {
@@ -61,7 +61,7 @@ func insertForkTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, 
 func updateWorkflowForkTriggerSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) error {
 	//Update node
 	query := "UPDATE workflow_node SET workflow_fork_trigger_src_id = $1 WHERE id = $2"
-	if _, err := db.Exec(query, n.TriggerSrcID, n.ID); err != nil {
+	if _, err := db.Exec(query, n.TriggerSrcForkID, n.ID); err != nil {
 		return sdk.WrapError(err, "updateWorkflowForkTriggerSrc> Unable to set  workflow_fork_trigger_src_id ON node %d", n.ID)
 	}
 	return nil
@@ -128,6 +128,7 @@ func loadForkTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 			return t, sdk.WrapError(err, "loadForkTrigger> Unable to load destination node %d", t.WorkflowDestNodeID)
 		}
 		t.WorkflowDestNode = *dest
+		t.WorkflowDestNode.TriggerSrcForkID = t.ID
 	}
 
 	return t, nil

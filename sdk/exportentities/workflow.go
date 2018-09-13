@@ -97,22 +97,29 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		}
 	}
 
+	forksMap, forksTriggerMap := (&w).Forks()
+
 	var craftNodeEntry = func(n *sdk.WorkflowNode) (NodeEntry, error) {
 		entry := NodeEntry{}
 
-		ancestorIDs := n.Ancestors(&w, false)
-		ancestors := make([]string, 0, len(ancestorIDs))
-		for _, aID := range ancestorIDs {
-			a := w.GetNode(aID)
-			if a == nil {
-				return entry, sdk.ErrWorkflowNodeNotFound
+		if n.TriggerSrcForkID != 0 {
+			entry.DependsOn = []string{forksTriggerMap[n.TriggerSrcForkID]}
+		} else {
+			ancestorIDs := n.Ancestors(&w, false)
+			ancestors := make([]string, 0, len(ancestorIDs))
+			for _, aID := range ancestorIDs {
+				a := w.GetNode(aID)
+				if a == nil {
+					return entry, sdk.ErrWorkflowNodeNotFound
+				}
+				ancestors = append(ancestors, a.Name)
 			}
-			ancestors = append(ancestors, a.Name)
+			sort.Strings(ancestors)
+			entry.DependsOn = ancestors
+
+			entry.PipelineName = n.PipelineName
 		}
 
-		sort.Strings(ancestors)
-		entry.DependsOn = ancestors
-		entry.PipelineName = n.PipelineName
 		conditions := []sdk.WorkflowNodeCondition{}
 		for _, c := range n.Context.Conditions.PlainConditions {
 			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
@@ -171,6 +178,20 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	}
 
 	hooks := w.GetHooks()
+
+	for _, v := range forksMap {
+		entry := NodeEntry{}
+		if w.RootID == v.WorkflowNodeID {
+			entry.DependsOn = []string{w.Root.Name}
+		} else {
+			for _, n := range nodes {
+				if n.ID == v.WorkflowNodeID {
+					entry.DependsOn = []string{n.Name}
+				}
+			}
+		}
+		exportedWorkflow.Workflow[v.Name] = entry
+	}
 
 	if len(nodes) == 0 {
 		n := w.Root

@@ -118,6 +118,18 @@ func ParseWorkflowUserNotificationSettings(t UserNotificationSettingsType, userN
 	}
 }
 
+func (w *Workflow) Forks() (map[int64]WorkflowNodeFork, map[int64]string) {
+	forkMap := make(map[int64]WorkflowNodeFork, 0)
+	forkTriggerMap := make(map[int64]string, 0)
+	w.Root.ForksMap(&forkMap, &forkTriggerMap)
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			(&t.WorkflowDestNode).ForksMap(&forkMap, &forkTriggerMap)
+		}
+	}
+	return forkMap, forkTriggerMap
+}
+
 //JoinsID returns joins ID
 func (w *Workflow) JoinsID() []int64 {
 	res := make([]int64, len(w.Joins))
@@ -156,6 +168,11 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	} else {
 		for _, t := range w.Root.Triggers {
 			res = append(res, t.WorkflowDestNode.Nodes()...)
+		}
+		for _, f := range w.Root.Forks {
+			for _, t := range f.Triggers {
+				res = append(res, t.WorkflowDestNode.Nodes()...)
+			}
 		}
 	}
 
@@ -514,10 +531,29 @@ type WorkflowNode struct {
 	TriggerSrcID       int64                      `json:"-" db:"-"`
 	TriggerJoinSrcID   int64                      `json:"-" db:"-"`
 	TriggerHookSrcID   int64                      `json:"-" db:"-"`
+	TriggerSrcForkID   int64                      `json:"-" db:"-"`
 	Hooks              []WorkflowNodeHook         `json:"hooks,omitempty" db:"-"`
 	Forks              []WorkflowNodeFork         `json:"forks,omitempty" db:"-"`
 	Triggers           []WorkflowNodeTrigger      `json:"triggers,omitempty" db:"-"`
 	OutgoingHooks      []WorkflowNodeOutgoingHook `json:"outgoing_hooks,omitempty" db:"-"`
+}
+
+func (n *WorkflowNode) ForksMap(forkMap *map[int64]WorkflowNodeFork, triggerMap *map[int64]string) {
+	for _, f := range n.Forks {
+		(*forkMap)[f.ID] = f
+		for _, t := range f.Triggers {
+			(*triggerMap)[t.ID] = f.Name
+			(&t.WorkflowDestNode).ForksMap(forkMap, triggerMap)
+		}
+	}
+	for _, t := range n.Triggers {
+		(&t.WorkflowDestNode).ForksMap(forkMap, triggerMap)
+	}
+	for _, o := range n.OutgoingHooks {
+		for _, t := range o.Triggers {
+			(&t.WorkflowDestNode).ForksMap(forkMap, triggerMap)
+		}
+	}
 }
 
 // IsLinkedToRepo returns boolean to know if the node is linked to an application which is also linked to a repository
