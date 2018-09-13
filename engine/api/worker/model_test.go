@@ -179,7 +179,8 @@ func TestLoadWorkerModelsWithFilter(t *testing.T) {
 	insertWorkerModel(t, db, "lol", g.ID)
 	insertWorkerModel(t, db, "foo", g.ID)
 
-	models, err := LoadWorkerModelsByUser(db, store, &sdk.User{Admin: true}, &LoadOptions{OnlyError: true})
+	opts := StateError
+	models, err := LoadWorkerModelsByUser(db, store, &sdk.User{Admin: true}, &opts)
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}

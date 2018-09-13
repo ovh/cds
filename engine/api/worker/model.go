@@ -55,13 +55,20 @@ type dbResultWMS struct {
 	GroupName string `db:"groupname"`
 }
 
-// LoadOptions represent load options to load worker model
-type LoadOptions struct {
-	OnlyError      bool
-	OnlyDisabled   bool
-	OnlyRegister   bool
-	OnlyDeprecated bool
+// StateLoadOption represent load options to load worker model
+type StateLoadOption string
+
+func (state StateLoadOption) String() string {
+	return string(state)
 }
+
+// List of const for state load option
+const (
+	StateError      StateLoadOption = "error"
+	StateDisabled   StateLoadOption = "disabled"
+	StateRegister   StateLoadOption = "register"
+	StateDeprecated StateLoadOption = "deprecated"
+)
 
 // InsertWorkerModel insert a new worker model in database
 func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
@@ -174,22 +181,11 @@ func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, erro
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
-func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User, opts *LoadOptions) ([]sdk.Model, error) {
+func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.User, opts *StateLoadOption) ([]sdk.Model, error) {
 	prefixKey := "api:workermodels"
 
 	if opts != nil {
-		if opts.OnlyError {
-			prefixKey += ":error"
-		}
-		if opts.OnlyDisabled {
-			prefixKey += ":disabled"
-		}
-		if opts.OnlyRegister {
-			prefixKey += ":register"
-		}
-		if opts.OnlyDeprecated {
-			prefixKey += ":deprecated"
-		}
+		prefixKey += fmt.Sprintf(":%v", *opts)
 	}
 	key := cache.Key(prefixKey, user.Username)
 	models := []sdk.Model{}
@@ -494,17 +490,17 @@ func mergeWithDefaultEnvs(envs map[string]string) map[string]string {
 	return envs
 }
 
-func getAdditionalSQLFilters(opts *LoadOptions) []string {
+func getAdditionalSQLFilters(opts *StateLoadOption) []string {
 	var additionalFilters []string
 	if opts != nil {
 		switch {
-		case opts.OnlyError:
+		case *opts == StateError:
 			additionalFilters = append(additionalFilters, "worker_model.nb_spawn_err > 0")
-		case opts.OnlyDisabled:
+		case *opts == StateDisabled:
 			additionalFilters = append(additionalFilters, "worker_model.disabled = true")
-		case opts.OnlyRegister:
+		case *opts == StateRegister:
 			additionalFilters = append(additionalFilters, "worker_model.need_registration = true")
-		case opts.OnlyDeprecated:
+		case *opts == StateDeprecated:
 			additionalFilters = append(additionalFilters, "worker_model.is_deprecated = true")
 		}
 	}

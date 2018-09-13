@@ -442,18 +442,12 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 
 		binary := r.FormValue("binary")
 		state := r.FormValue("state")
-		opts := worker.LoadOptions{}
+		var opt *worker.StateLoadOption
 		switch state {
-		case "":
+		case "", worker.StateDisabled.String(), worker.StateError.String(), worker.StateRegister.String(), worker.StateDeprecated.String():
+			opt = new(worker.StateLoadOption)
+			*opt = worker.StateLoadOption(state)
 			break
-		case "disabled":
-			opts.OnlyDisabled = true
-		case "error":
-			opts.OnlyError = true
-		case "register":
-			opts.OnlyRegister = true
-		case "deprecated":
-			opts.OnlyDeprecated = true
 		default:
 			return sdk.ErrWrongRequest
 		}
@@ -472,7 +466,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		if binary != "" {
 			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), getUser(ctx), binary)
 		} else {
-			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getUser(ctx), &opts)
+			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getUser(ctx), opt)
 		}
 		if errbyuser != nil {
 			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", getUser(ctx).ID)
