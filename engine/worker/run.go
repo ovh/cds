@@ -179,7 +179,6 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	case sdk.PluginAction:
 		//Define a loggin function
 		sendLog := getLogger(w, buildID, stepOrder)
-		log.Info("w.runGRPCPlugin")
 		//Run the plugin
 		return w.runGRPCPlugin(ctx, a, buildID, params, stepOrder, sendLog)
 	}

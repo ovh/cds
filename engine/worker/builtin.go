@@ -196,9 +196,9 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 }
 
 func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
-	log.Info("runPlugin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
+	log.Debug("runPlugin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
 	defer func() {
-		log.Info("runPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
+		log.Debug("runPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
 	}()
 
 	chanRes := make(chan sdk.Result, 1)
@@ -233,7 +233,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to call grpc plugin manifest... Aborting (%v)", err))
 			return
 		}
-		log.Info("plugin successfully initialized: %#v", m)
+		log.Debug("plugin successfully initialized: %#v", m)
 
 		pluginClient := pluginSocket.Client
 		actionPluginClient, ok := pluginClient.(actionplugin.ActionPluginClient)

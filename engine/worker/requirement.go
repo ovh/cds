@@ -97,14 +97,14 @@ func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	//Then try to download the plugin
 	pluginBinary := path.Join(w.basedir, binary.Name)
 	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
-		log.Info("Downloading the plugin %s", binary.Name)
+		log.Debug("Downloading the plugin %s", binary.Name)
 		//If the file doesn't exist. Download it.
 		fi, err := os.OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return false, err
 		}
 
-		log.Info("Get the binary plugin %s", r.Name)
+		log.Debug("Get the binary plugin %s", r.Name)
 		if err := w.client.PluginGetBinary(r.Name, currentOS, currentARCH, fi); err != nil {
 			_ = fi.Close()
 			return false, err
