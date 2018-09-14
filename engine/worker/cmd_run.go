@@ -282,13 +282,14 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				var requirementsOK, pluginsOK bool
 				var t string
-				if exceptJobID != j.ID && w.bookedWJobID != 0 { // If we already check the requirements before and it was OK
+				if exceptJobID != j.ID && w.bookedWJobID == 0 { // If we already check the requirements before and it was OK
 					requirementsOK, _ = checkRequirements(w, &j.Job.Action, nil, j.ID)
 					if j.ID == w.bookedWJobID {
 						t = ", this was my booked job"
 					}
 
-					pluginsOK, errPlugins := checkPlugins(w, j)
+					var errPlugins error
+					pluginsOK, errPlugins = checkPlugins(w, j)
 					if !pluginsOK {
 						log.Error("Plugins doesn't match: %v", errPlugins)
 					}
@@ -302,6 +303,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					log.Debug("checkQueue> Try take the job %d%s", j.ID, t)
 					if canWorkOnAnotherJob, err := w.takeWorkflowJob(ctx, j); err != nil {
 						log.Info("Unable to run this job  %d%s. Take info:%s, continue:%t", j.ID, t, err, canWorkOnAnotherJob)
+						w.bookedWJobID = 0
 						if !canWorkOnAnotherJob {
 							errs <- err
 						} else {
@@ -313,6 +315,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
+					w.bookedWJobID = 0
 					log.Debug("Unable to run this job %d%s, requirements not ok. let's continue", j.ID, t)
 					continue
 				}
@@ -334,6 +337,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
+					w.bookedWJobID = 0
 					continue
 				}
 
