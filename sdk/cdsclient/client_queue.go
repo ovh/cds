@@ -22,23 +22,30 @@ import (
 
 // shrinkQueue is used to shrink the polled queue 200% of the channel capacity (l)
 // it returns as reference date the date of the last element in the shrinkked queue
-func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
+func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	if len(*queue) == 0 {
 		return time.Time{}
 	}
 
-	if l < 1 {
-		l = 1
+	if nbJobsToKeep < 1 {
+		nbJobsToKeep = 1
 	}
-	l = l * 3
-	t0 := (*queue)[len(*queue)-1].Queued
+
+	// nbJobsToKeep is by default the concurrent max worker provisionning.
+	// we keep 2x this number
+	nbJobsToKeep = nbJobsToKeep * 2
 
 	queue.Sort()
 
-	if len(*queue) > l {
-		t0 = (*queue)[l].Queued
-		newQueue := (*queue)[:l]
+	if len(*queue) > nbJobsToKeep {
+		newQueue := (*queue)[:nbJobsToKeep]
 		*queue = newQueue
+	}
+	t0 := time.Now()
+	for _, q := range *queue {
+		if q.Queued.Before(t0) {
+			t0 = q.Queued
+		}
 	}
 	return t0
 }
@@ -46,8 +53,8 @@ func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
 func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, exceptWfJobID *int64) error {
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
-	pbjobsTicker := time.NewTicker(delay * 5)
-	oldJobsTicker := time.NewTicker(delay * 10)
+	pbjobsTicker := time.NewTicker(delay * 10)
+	oldJobsTicker := time.NewTicker(delay * 5)
 
 	for {
 		select {
