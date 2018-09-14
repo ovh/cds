@@ -88,6 +88,13 @@ test: test-config clean
 		cd ${GOPATH}/src/$$PKG; \
 		$(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
 	done;
+ifneq ($(VERSION), snapshot)
+	@for TST in `find .. -name "tests.log"`; do \
+		if [ -s $$TST ]; then \
+			worker upload –tag=${CDS_VERSION} $$TST \
+		fi \
+	done;
+endif
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
 
