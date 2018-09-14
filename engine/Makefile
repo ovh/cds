@@ -129,7 +129,7 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 		fi; \
 		if [ ! -z "${CDS_VERSION}" ]; then \
 			echo "Sending $(TARGET_DIR)/*_tests.log to CDS"; \
-			worker upload -tag ${CDS_VERSION} $(TARGET_DIR)/*_tests.log; \
+			worker upload --tag ${CDS_VERSION} $(TARGET_DIR)/*_tests.log; \
 		fi; \
 	done; \
 	for XML in `find .. -name "*.xml"`; do \
