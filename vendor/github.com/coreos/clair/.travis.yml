@@ -1,0 +1,34 @@
+language: go
+sudo: required
+
+install:
+- curl https://glide.sh/get | sh
+
+script:
+- go test $(glide novendor | grep -v contrib)
+
+dist: trusty
+
+services:
+  - postgresql
+
+notifications:
+  email: false
+
+matrix:
+  include:
+  - addons:
+      apt:
+        packages:
+        - rpm
+      postgresql: 9.4
+  - addons:
+      apt:
+        packages:
+        - rpm
+      postgresql: 9.5
+  - addons:
+      apt:
+        packages:
+        - rpm
+      postgresql: 9.6

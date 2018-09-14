@@ -11,4 +11,4 @@ endif
 	$(TARGET_ENGINE) doc $(GEN_PATH) ./
 
 install:
-	@go install $$(go list ./... | grep -v vendor)
+	@GO111MODULE=on go install -mod=vendor -v $$(go list ./... | grep -v vendor)

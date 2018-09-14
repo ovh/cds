@@ -8,7 +8,7 @@ TARGET_LDFLAGS = -ldflags "-X main.VERSION=$(VERSION)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 
-GO_BUILD = go build
+GO_BUILD = GO111MODULE=on go build -mod=vendor -v
 GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOVERALLS = ${GOPATH}/bin/goveralls

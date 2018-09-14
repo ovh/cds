@@ -29,8 +29,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/config"
 )
 
 //ErrUnauthorized is return when requested user don't have access to the resource
@@ -66,13 +64,6 @@ func AuthenticateResponse(client *http.Client, dockerResponse *http.Response, re
 	if err != nil {
 		return err
 	}
-
-	authConfig, err := GetAuthCredentials(config.ImageName)
-	if err != nil {
-		return err
-	}
-
-	req.SetBasicAuth(authConfig.Username, authConfig.Password)
 
 	response, err := client.Do(req)
 
