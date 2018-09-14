@@ -2,22 +2,82 @@ package hooks
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
+	"github.com/mitchellh/hashstructure"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
+func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHookRun) (sdk.Task, error) {
+	if h.Hook.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
+		return sdk.Task{}, fmt.Errorf("Unsupported hook type: %s", h.Hook.WorkflowHookModel.Type)
+	}
+	configHash, err := hashstructure.Hash(h.Hook.Config, nil)
+	if err != nil {
+		return sdk.Task{}, sdk.WrapError(err, "outgoingHookToTask> unable to hash hook config")
+	}
+	identifier := fmt.Sprintf("%s/%d", h.Hook.WorkflowHookModel.Name, configHash)
+	uuid := base64.StdEncoding.EncodeToString([]byte(identifier))
+
+	config := h.Hook.Config.Clone()
+	config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
+		Value: h.Hook.Config[sdk.HookConfigProject].Value,
+	}
+	config[sdk.HookConfigTypeWorkflow] = sdk.WorkflowNodeHookConfigValue{
+		Value: h.Hook.Config[sdk.HookConfigTypeWorkflow].Value,
+	}
+	config[ConfigHookRunID] = sdk.WorkflowNodeHookConfigValue{
+		Value: h.HookRunID,
+	}
+	config[ConfigNumber] = sdk.WorkflowNodeHookConfigValue{
+		Value: strconv.FormatInt(h.Number, 10),
+	}
+	config[ConfigSubNumber] = sdk.WorkflowNodeHookConfigValue{
+		Value: strconv.FormatInt(h.SubNumber, 10),
+	}
+	config[ConfigHookID] = sdk.WorkflowNodeHookConfigValue{
+		Value: strconv.FormatInt(h.WorkflowNodeOutgoingHookID, 10),
+	}
+
+	switch h.Hook.WorkflowHookModel.Name {
+	case sdk.WebHookModelName:
+		return sdk.Task{
+			UUID:   uuid,
+			Type:   TypeOutgoingWebHook,
+			Config: config,
+		}, nil
+	case sdk.WorkflowModelName:
+		return sdk.Task{
+			UUID:   uuid,
+			Type:   TypeOutgoingWorkflow,
+			Config: config,
+		}, nil
+	}
+
+	return sdk.Task{}, fmt.Errorf("Unsupported hook: %s", h.Hook.WorkflowHookModel.Name)
+}
+
 func (s *Service) startOutgoingHookTask(t *sdk.Task) (*sdk.TaskExecution, error) {
 	now := time.Now()
+
+	u := t.Config["URL"].Value
+	if _, err := url.ParseQuery(u); err != nil {
+		return nil, err
+	}
+	method := t.Config["method"].Value
+	payload := t.Config["payload"].Value
+	headers := http.Header{}
+	headers.Set("Content-Type", "application/json")
+
 	//Craft a new execution
 	exec := &sdk.TaskExecution{
 		Timestamp: now.UnixNano(),
@@ -25,8 +85,11 @@ func (s *Service) startOutgoingHookTask(t *sdk.Task) (*sdk.TaskExecution, error)
 		Type:      t.Type,
 		UUID:      t.UUID,
 		Config:    t.Config,
-		ScheduledTask: &sdk.ScheduledTaskExecution{
-			DateScheduledExecution: fmt.Sprintf("%v", now),
+		WebHook: &sdk.WebHookExecution{
+			RequestURL:    u,
+			RequestBody:   []byte(payload),
+			RequestHeader: headers,
+			RequestMethod: method,
 		},
 	}
 
@@ -37,12 +100,37 @@ func (s *Service) startOutgoingHookTask(t *sdk.Task) (*sdk.TaskExecution, error)
 }
 
 func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
-	log.Debug("Hooks> Processing outgoing webhook %s %s", t.UUID, t.Type)
-
 	pkey := t.Config[sdk.HookConfigProject].Value
 	workflow := t.Config[sdk.HookConfigWorkflow].Value
 	run := t.Config[ConfigNumber].Value
 	hookRunID := t.Config[ConfigHookRunID].Value
+	log.Debug("Hooks> Processing outgoing webhook %s %s (%s/%s #%s)", t.UUID, t.Type, pkey, workflow, run)
+	irun, _ := strconv.ParseInt(run, 10, 64)
+
+	// Checkin if the workflow is still waiting for the callback
+	wr, err := s.Client.WorkflowRunGet(pkey, workflow, irun)
+	if err != nil {
+		return nil
+	}
+
+	if wr.Status != sdk.StatusBuilding.String() {
+		log.Debug("Hooks> workflow %s/%s #%d status: %s", pkey, workflow, run, wr.Status)
+		return fmt.Errorf("workflow %s/%s #%s is not at status Building", pkey, workflow, run)
+	}
+
+	//Checking if the hook is still at status waiting
+	var hookRunFound bool
+	for _, hookRuns := range wr.WorkflowNodeOutgoingHookRuns {
+		for _, hookRun := range hookRuns {
+			if hookRun.HookRunID == hookRunID && hookRun.Status == sdk.StatusWaiting.String() {
+				hookRunFound = true
+			}
+		}
+	}
+
+	if !hookRunFound {
+		return fmt.Errorf("workflow %s/%s #%s has no hook run at status Waiting", pkey, workflow, run)
+	}
 
 	callbackURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/callback", pkey, workflow, run, hookRunID)
 	hookID, _ := strconv.ParseInt(t.Config[ConfigHookID].Value, 10, 64)
@@ -64,23 +152,23 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 			callbackData.Done = time.Now()
 			callbackData.Status = sdk.StatusFail.String()
 			callbackData.Log = err.Error()
+
+			// Post the callback
+			if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
+				log.Error("unable to perform outgoing hook callback")
+			}
 		}
 	}
 
-	u := t.Config["URL"].Value
-	if _, err := url.ParseQuery(u); err != nil {
-		handleError(err)
-		return nil
-	}
-	method := t.Config["method"].Value
-	payload := t.Config["payload"].Value
-	req, err := http.NewRequest(method, u, strings.NewReader(payload))
+	req, err := http.NewRequest(t.WebHook.RequestMethod, t.WebHook.RequestURL, bytes.NewBuffer(t.WebHook.RequestBody))
 	if err != nil {
 		handleError(err)
 		return nil
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	for k, v := range t.WebHook.RequestHeader {
+		req.Header[k] = v
+	}
 
 	var logBuffer bytes.Buffer
 	logBuffer.WriteString("Request:\n")
@@ -112,6 +200,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 
 	callbackData.Done = time.Now()
 	callbackData.Log = logBuffer.String()
+	callbackData.Status = sdk.StatusSuccess.String()
 
 	// Post the callback
 	if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {

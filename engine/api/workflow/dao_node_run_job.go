@@ -25,10 +25,10 @@ func isSharedInfraGroup(groupsID []int64) bool {
 }
 
 // CountNodeJobRunQueue count all workflow_node_run_job accessible
-func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
+func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
 	c := sdk.WorkflowNodeJobRunCount{}
 
-	queue, err := LoadNodeJobRunQueue(db, store, permission.PermissionRead, groupsID, usr, since, until, nil, statuses...)
+	queue, err := LoadNodeJobRunQueue(ctx, db, store, permission.PermissionRead, groupsID, usr, since, until, nil, statuses...)
 	if err != nil {
 		return c, sdk.WrapError(err, "CountNodeJobRunQueue> unable to load queue")
 	}
@@ -44,7 +44,9 @@ func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int
 }
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+	ctx, end := observability.Span(ctx, "LoadNodeJobRunQueue")
+	defer end()
 	if since == nil {
 		since = new(time.Time)
 	}
@@ -68,6 +70,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 	args := []interface{}{*since, *until, strings.Join(statuses, ",")}
 
 	if usr != nil && !usr.Admin {
+		observability.Current(ctx, observability.Tag("isAdmin", false))
 		query = `
 		SELECT DISTINCT workflow_node_run_job.*
 			FROM workflow_node_run_job
@@ -97,6 +100,8 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 			}
 		}
 		args = append(args, groupID, group.SharedInfraGroup.ID)
+	} else {
+		observability.Current(ctx, observability.Tag("isAdmin", true))
 	}
 
 	if limit != nil && *limit > 0 {
@@ -106,13 +111,20 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 
 	isSharedInfraGroup := isSharedInfraGroup(groupsID)
 	sqlJobs := []JobRun{}
+	_, next := observability.Span(ctx, "LoadNodeJobRunQueue.select")
 	if _, err := db.Select(&sqlJobs, query, args...); err != nil {
+		next()
 		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
 	}
+	next()
+
+	ctx2, next2 := observability.Span(ctx, "LoadNodeJobRunQueue.sqlJobs")
 
 	jobs := make([]sdk.WorkflowNodeJobRun, 0, len(sqlJobs))
 	for i := range sqlJobs {
+		_, next3 := observability.Span(ctx2, "LoadNodeJobRunQueue.loadHatcheryInfo")
 		getHatcheryInfo(store, &sqlJobs[i])
+		next3()
 		jr, err := sqlJobs[i].WorkflowNodeRunJob()
 		if err != nil {
 			log.Error("LoadNodeJobRunQueue> WorkflowNodeRunJob error: %v", err)
@@ -139,6 +151,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, rights int, gro
 
 		jobs = append(jobs, jr)
 	}
+	next2()
 
 	return jobs, nil
 }

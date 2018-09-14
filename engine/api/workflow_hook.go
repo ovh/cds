@@ -6,11 +6,13 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getWorkflowHooksHandler() service.Handler {
@@ -187,5 +189,65 @@ func (api *API) putWorkflowHookModelHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, m, http.StatusOK)
+	}
+}
+
+func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+		hookRunID := vars["hookRunID"]
+		number, errnum := requestVarInt(r, "number")
+		if errnum != nil {
+			return errnum
+		}
+
+		log.Debug("postWorkflowJobHookCallbackHandler> receiving callback for %s", hookRunID)
+
+		var callback sdk.WorkflowNodeOutgoingHookRunCallback
+		if err := service.UnmarshalBody(r, &callback); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to unmarshal body")
+		}
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return err
+		}
+
+		defer tx.Rollback() // nolint
+
+		_, next := observability.Span(ctx, "project.Load")
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+			project.LoadOptions.WithVariables,
+			project.LoadOptions.WithFeatures,
+			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithApplicationVariables,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+		)
+		next()
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowJobHookCallbackHandler> Cannot load project")
+		}
+		wr, err := workflow.LoadRun(tx, key, workflowName, number, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return err
+		}
+
+		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, api.mustDB, tx, api.Cache, proj, wr, hookRunID, callback)
+		if err != nil {
+			return err
+		}
+
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
+		go workflow.SendEvent(api.mustDB(), key, report)
+
+		if err := tx.Commit(); err != nil {
+			return err
+		}
+
+		return nil
 	}
 }

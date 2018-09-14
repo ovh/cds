@@ -100,10 +100,8 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(errT, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, workflowNodeRuns)
-
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
+		go workflow.SendEvent(api.mustDB(), p.Key, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
@@ -418,22 +416,19 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
 		}
 
-		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
-
-		if len(workflowRuns) > 0 {
+		if len(report.WorkflowRuns()) > 0 {
 			observability.Current(ctx,
-				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
+				observability.Tag(observability.TagWorkflow, report.WorkflowRuns()[0].Workflow.Name),
 			)
 		}
 
 		db := api.mustDB()
 
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, workflowNodeRuns)
+		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, report)
 		next()
 
-		go workflow.SendEvent(db, workflowRuns, workflowNodeRuns, proj.Key)
-
+		go workflow.SendEvent(db, proj.Key, report)
 		return nil
 	}
 }
@@ -496,37 +491,6 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	}
 
 	return report, nil
-}
-
-func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		id, errc := requestVarInt(r, "id")
-		if errc != nil {
-			return sdk.WrapError(errc, "postWorkflowJobHookCallbackHandler> invalid id")
-		}
-
-		var callback sdk.WorkflowNodeOutgoingHookRunCallback
-		if err := service.UnmarshalBody(r, &callback); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to unmarshal body")
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return err
-		}
-
-		wr, err := workflow.LoadRunByID(tx, id, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: true,
-		})
-		if err != nil {
-			return err
-		}
-
-		_ = wr
-
-		log.Debug("postWorkflowJobHookCallbackHandler> %+v", callback)
-		return nil
-	}
 }
 
 func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
@@ -722,7 +686,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		count, err := workflow.CountNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, usr, &since, &until)
+		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, groupsID, usr, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
@@ -756,7 +720,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until, &limit, status...)
+		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until, &limit, status...)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}

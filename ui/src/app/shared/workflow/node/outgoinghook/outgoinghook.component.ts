@@ -8,8 +8,9 @@ import {
     WorkflowNodeHookConfigValue,
     WorkflowNodeOutgoingHook
 } from 'app/model/workflow.model';
-import { WorkflowNodeOutgoingHookRun } from 'app/model/workflow.run.model';
+import { WorkflowNodeOutgoingHookRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { WorkflowEventStore } from 'app/service/services.module';
+import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -17,6 +18,7 @@ import { Subscription } from 'rxjs';
     templateUrl: './outgoinghook.html',
     styleUrls: ['./outgoinghook.scss']
 })
+@AutoUnsubscribe()
 export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit {
 
     _hook: WorkflowNodeOutgoingHook;
@@ -48,6 +50,9 @@ export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit 
     subCurrentHookRun: Subscription;
     pipelineStatus = PipelineStatus;
     ready = false;
+
+    currentRun: WorkflowRun;
+    subCurrentRun: Subscription;
 
     constructor(
         private elementRef: ElementRef,
@@ -87,6 +92,22 @@ export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit 
                 this.ready = true;
             }
         );
+
+        this._workflowEventStore.outgoingHookEvents().subscribe(
+            hr => {
+                if (hr && this.hook && this.hook.id === hr.workflow_node_outgoing_hook_id) {
+                    if (this.currentRun && this.currentRun.id === hr.workflow_run_id && this.currentRun.num === hr.num) {
+                        this.currentHookRun = hr;
+                    }
+                }
+            }
+        );
+
+        this.subCurrentRun = this._workflowEventStore.selectedRun().subscribe(wr => {
+            if (wr) {
+                this.currentRun = wr;
+            }
+        });
 
     }
 

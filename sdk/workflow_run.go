@@ -181,13 +181,15 @@ type WorkflowNodeRun struct {
 
 //WorkflowNodeOutgoingHookRun is an execution instance of a WorkflowNodeOutgoingHook
 type WorkflowNodeOutgoingHookRun struct {
-	HookRunID                  string                           `json:"id"`
-	WorkflowNodeOutgoingHookID int64                            `json:"workflow_node_outgoing_hook_id"`
-	Status                     string                           `json:"status"`
-	TriggersRun                map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`
-	Number                     int64                            `json:"num"`
-	SubNumber                  int64                            `json:"subnumber"`
-	Hook                       WorkflowNodeOutgoingHook         `json:"hook"`
+	WorkflowRunID              int64                                `json:"workflow_run_id"`
+	HookRunID                  string                               `json:"id"`
+	WorkflowNodeOutgoingHookID int64                                `json:"workflow_node_outgoing_hook_id"`
+	Status                     string                               `json:"status"`
+	TriggersRun                map[int64]WorkflowNodeTriggerRun     `json:"triggers_run,omitempty"`
+	Number                     int64                                `json:"num"`
+	SubNumber                  int64                                `json:"subnumber"`
+	Hook                       WorkflowNodeOutgoingHook             `json:"hook"`
+	Callback                   *WorkflowNodeOutgoingHookRunCallback `json:"callback"`
 }
 
 // WorkflowNodeOutgoingHookRunCallback is the callback coming from hooks uservice avec an outgoing hook execution

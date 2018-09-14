@@ -91,7 +91,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	}
 
 	//Checks the root
-	if len(w.WorkflowNodeRuns) == 0 {
+	if len(w.WorkflowNodeRuns) == 0 && len(w.WorkflowNodeOutgoingHookRuns) == 0 {
 		log.Debug("processWorkflowRun> starting from the root : %d (pipeline %s)", w.Workflow.Root.ID, w.Workflow.Root.PipelineName)
 		//Run the root: manual or from an event
 		AddWorkflowRunInfo(w, false, sdk.SpawnMsg{
@@ -193,7 +193,9 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 					// Later the hooks uService will call back the API with the task execution status
 					// This will reprocess all the things
 					h := node.OutgoingHooks[j]
-					if err := processWorkflowNodeOutgoingHook(ctx, db, store, proj, w, node, nodeRun.SubNumber, nodeRun.ID, &h); err != nil {
+					var err error
+					report, err = report.Merge(processWorkflowNodeOutgoingHook(ctx, db, store, proj, w, node, nodeRun.SubNumber, nodeRun.ID, &h))
+					if err != nil {
 						return nil, false, sdk.WrapError(err, "process> Cannot update node run")
 					}
 				}
@@ -337,6 +339,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			}
 		}
 	}
+
 	for k, v := range w.WorkflowNodeOutgoingHookRuns {
 		lastCurrentSn := lastOutgoingHookSubNumber(w.WorkflowNodeOutgoingHookRuns[k])
 		for i := range v {
@@ -356,9 +359,11 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	return report, true, nil
 }
 
-func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber, nodeRunID int64, hook *sdk.WorkflowNodeOutgoingHook) error {
+func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber, nodeRunID int64, hook *sdk.WorkflowNodeOutgoingHook) (*ProcessorReport, error) {
 	ctx, end := observability.Span(ctx, "workflow.processWorkflowNodeOutgoingHook")
 	defer end()
+
+	report := new(ProcessorReport)
 
 	if w.WorkflowNodeOutgoingHookRuns == nil {
 		w.WorkflowNodeOutgoingHookRuns = make(map[int64][]sdk.WorkflowNodeOutgoingHookRun)
@@ -367,25 +372,36 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 	//Check if the WorkflowNodeOutgoingHookRun already exist with the same subnumber
 	hrs, ok := w.WorkflowNodeOutgoingHookRuns[hook.ID]
 	if ok {
-		alreadyProcessed := false
+		var alreadyProcessed, isWaiting bool
 		for _, hr := range hrs {
 			if hr.Number == w.Number && hr.SubNumber == subnumber {
 				alreadyProcessed = true
 				break
 			}
 		}
-		if alreadyProcessed {
+		if alreadyProcessed && isWaiting {
 			log.Debug("hook %d already processed", hook.ID)
-			return nil
+			return nil, nil
+		} else if alreadyProcessed {
+
+			log.Debug("hook %d is over, we have to reprocess al the things", hook.ID)
+
+			for i := range hook.Triggers {
+				t := &hook.Triggers[i]
+				log.Debug("checking trigger %+v", t)
+			}
+
+			return nil, nil
 		}
 	}
 
 	srvs, err := services.FindByType(db, services.TypeHooks)
 	if err != nil {
-		return sdk.WrapError(err, "process> Cannot get hooks service")
+		return nil, sdk.WrapError(err, "process> Cannot get hooks service")
 	}
 
 	var hookRun = sdk.WorkflowNodeOutgoingHookRun{
+		WorkflowRunID:              w.ID,
 		HookRunID:                  sdk.UUID(),
 		Status:                     sdk.StatusWaiting.String(),
 		Number:                     w.Number,
@@ -411,7 +427,9 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 		return w.WorkflowNodeOutgoingHookRuns[hook.ID][i].SubNumber > w.WorkflowNodeOutgoingHookRuns[hook.ID][j].SubNumber
 	})
 
-	return nil
+	report.Add(hookRun)
+
+	return report, nil
 }
 
 //processWorkflowNodeRun triggers execution of a node run
