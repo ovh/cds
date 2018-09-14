@@ -10,14 +10,12 @@
                     <ng-container *ngIf="task && task.config">
                         <div class="inline fields" *ngFor="let k of task.config | keys">
                             <div class="four wide field"><label>{{k}}</label></div>
-                            <div class="twelve wide field">
-                                <input type="text" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
-                                <ng-container *ngIf="k === 'payload'">
-                                    <codemirror [ngModel]="task.config[k].value" [config]="codeMirrorConfig"
-                                        #textareaCodeMirror>
-                                    </codemirror>
-                                </ng-container>
-                            </div>
+                            <input type="text" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
+                            <ng-container *ngIf="k === 'payload'">
+                                <codemirror class="code" [ngModel]="task.config[k].value" [config]="codeMirrorConfig"
+                                    #textareaCodeMirror>
+                                </codemirror>
+                            </ng-container>
                         </div>
                     </ng-container>
                 </div>
@@ -25,24 +23,7 @@
             <div class="ui row">
                 <div [ngClass]="{sixteen: !selectedExecution, eight: selectedExecution, wide: true, column: true}">
                     <h3>{{ 'hook_task_execs' | translate }}</h3>
-                    <app-sorted-table [columns]="columns" [data]="getDataForCurrentPage()" [loading]="loading">
-                        <tfoot tfoot *ngIf="getNbOfPages() > 1">
-                            <tr>
-                                <td [colSpan]="columns.length">
-                                    <div class="ui right floated pagination menu">
-                                        <a class="icon item" (click)="downPage()">
-                                            <i class="left chevron icon"></i>
-                                        </a>
-                                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
-                                            [class.active]="currentPage === page">{{page}}</a>
-                                        <a class="icon item" (click)="upPage()">
-                                            <i class="right chevron icon"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </app-sorted-table>
+                    <app-sorted-table [withPagination]="5" [columns]="columns" [data]="executions" [loading]="loading"></app-sorted-table>
                 </div>
                 <div class="eight wide column" *ngIf="selectedExecution">
                     <h3>{{'workflow_hook_log_title' | translate}}</h3>
@@ -61,7 +42,7 @@
                     </div>
                     <div class="inline fields" *ngIf="selectedExecutionBody">
                         <div class="four wide field"><label>Body</label></div>
-                        <codemirror [ngModel]="selectedExecutionBody" [config]="codeMirrorConfig" #bodyCode>
+                        <codemirror class="code" [ngModel]="selectedExecutionBody" [config]="codeMirrorConfig">
                         </codemirror>
                     </div>
                 </div>

@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Table } from './table';
 
 type direction = string;
 const ASC: direction = 'asc';
@@ -26,11 +27,18 @@ export class Column {
     templateUrl: './sorted-table.html',
     styleUrls: ['./sorted-table.scss']
 })
-export class SortedTableComponent {
+export class SortedTableComponent extends Table {
     @Input() columns: Array<Column>;
     @Input() data: any;
     @Output() sortChange = new EventEmitter<any>();
     @Input() loading: boolean;
+    @Input() withFilter: boolean;
+
+    @Input()
+    set withPagination(n: number) {
+        this.nbElementsByPage = n;
+    }
+    get withPagination() { return this.nbElementsByPage; }
 
     sortedColumn: Column;
     sortedColumnDirection: direction;
@@ -51,5 +59,17 @@ export class SortedTableComponent {
     }
 
     constructor() {
+        super();
+    }
+
+    getData(): any[] {
+        return this.data;
+    }
+
+    getDataForCurrentPage(): any[] {
+        if (!this.withPagination) {
+            return this.getData();
+        }
+        return super.getDataForCurrentPage();
     }
 }

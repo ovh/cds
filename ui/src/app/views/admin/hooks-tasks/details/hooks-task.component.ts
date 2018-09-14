@@ -5,14 +5,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { HookStatus, TaskExecution, WorkflowHookTask } from '../../../../model/workflow.hook.model';
 import { HookService } from '../../../../service/services.module';
 import { Column, ColumnType } from '../../../../shared/table/sorted-table.component';
-import { Table } from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-hooks-task',
     templateUrl: './hooks-task.html',
     styleUrls: ['./hooks-task.scss']
 })
-export class HooksTaskComponent extends Table {
+export class HooksTaskComponent {
+    codeMirrorConfig: any;
     columns: Array<Column>;
     task: WorkflowHookTask;
     executions: Array<TaskExecution>;
@@ -25,8 +25,15 @@ export class HooksTaskComponent extends Table {
         private _translate: TranslateService,
         private _route: ActivatedRoute
     ) {
-        super();
-        this.nbElementsByPage = 5;
+        this.codeMirrorConfig = this.codeMirrorConfig = {
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            mode: 'application/json',
+            lineWrapping: true,
+            autoRefresh: true,
+            readOnly: true
+        };
+
         this.columns = [
             <Column>{
                 type: ColumnType.HTML,
@@ -63,6 +70,7 @@ export class HooksTaskComponent extends Table {
                 }
             }
         ];
+
         this._route.params.subscribe(params => {
             const id = params['id'];
             this.loading = true;
@@ -77,10 +85,6 @@ export class HooksTaskComponent extends Table {
                 });
             });
         });
-    }
-
-    getData(): any[] {
-        return this.executions;
     }
 
     selectExecution(e: TaskExecution) {

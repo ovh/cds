@@ -24,7 +24,7 @@
         </tr>
     </tbody>
     <tbody *ngIf="!loading && data.length > 0">
-        <tr *ngFor="let d of data">
+        <tr *ngFor="let d of getDataForCurrentPage()">
             <ng-container *ngFor="let c of columns" [ngSwitch]="c.type">
                 <td *ngSwitchCase="'html'" class="border" [innerHTML]="c.selector(d)"></td>
                 <td *ngSwitchCase="'router-link'" class="border">
@@ -33,7 +33,7 @@
                     </a>
                 </td>
                 <td *ngSwitchCase="'link'" class="border">
-                    <a class="ui" (click)="c.selector(d).callback()">
+                    <a class="ui pointing" (click)="c.selector(d).callback()">
                         {{c.selector(d).value}}
                     </a>
                 </td>
@@ -41,5 +41,20 @@
             </ng-container>
         </tr>
     </tbody>
-    <ng-content select="[tfoot]"></ng-content>
+    <tfoot tfoot *ngIf="nbElementsByPage && getNbOfPages() > 1">
+        <tr>
+            <td [colSpan]="columns.length">
+                <div class="ui right floated pagination menu">
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
+                        [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </td>
+        </tr>
+    </tfoot>
 </table>

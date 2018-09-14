@@ -1,20 +1,3 @@
 <h2>{{ 'hook_tasks_summary' | translate }}</h2>
 
-<app-sorted-table [columns]="columns" [data]="getDataForCurrentPage()" (sortChange)="getAdminTasks($event)" [loading]="loading">
-    <tfoot tfoot *ngIf="getNbOfPages() > 1">
-        <tr>
-            <td [colSpan]="columns.length">
-                <div class="ui right floated pagination menu">
-                    <a class="icon item" (click)="downPage()">
-                        <i class="left chevron icon"></i>
-                    </a>
-                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
-                        [class.active]="currentPage === page">{{page}}</a>
-                    <a class="icon item" (click)="upPage()">
-                        <i class="right chevron icon"></i>
-                    </a>
-                </div>
-            </td>
-        </tr>
-    </tfoot>
-</app-sorted-table>
+<app-sorted-table [withPagination]="20" [columns]="columns" [data]="tasks" (sortChange)="getAdminTasks($event)" [loading]="loading"></app-sorted-table>
