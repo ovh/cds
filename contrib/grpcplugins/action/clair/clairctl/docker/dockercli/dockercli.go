@@ -185,6 +185,9 @@ func historyFromCommand(imageName string) (schema1.SignedManifest, error) {
 		return schema1.SignedManifest{}, err
 	}
 	histories, err := client.ImageHistory(context.Background(), imageName)
+	if err != nil {
+		return schema1.SignedManifest{}, err
+	}
 
 	manifest := schema1.SignedManifest{}
 	for _, history := range histories {
