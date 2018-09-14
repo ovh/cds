@@ -17,7 +17,8 @@ export class WorkflowHookModel {
 export enum HookStatus {
     DONE = 'DONE',
     DOING = 'DOING',
-    FAIL = 'FAIL'
+    FAIL = 'FAIL',
+    SCHEDULED = 'SCHEDULED'
 }
 
 export class WorkflowHookTask {

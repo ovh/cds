@@ -1,0 +1,32 @@
+<h2>{{ 'hook_task_details' | translate }}</h2>
+<br />
+<ng-tamplate>
+    <div class="ui form">
+        <div class="ui grid">
+            <div class="ui row">
+                <div class="six wide column">
+                    <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
+                    <br />
+                    <br />
+                    <ng-container *ngIf="task && task.config">
+                        <div class="inline fields" *ngFor="let k of task.config | keys">
+                            <div class="four wide field"><label>{{k}}</label></div>
+                            <div class="twelve wide field">
+                                <input type="text" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
+                                <ng-container *ngIf="k === 'payload'">
+                                    <codemirror [ngModel]="task.config[k].value" [config]="codeMirrorConfig"
+                                        #textareaCodeMirror>
+                                    </codemirror>
+                                </ng-container>
+                            </div>
+                        </div>
+                    </ng-container>
+                </div>
+                <div class="ten wide column">
+                    <h3>{{ 'hook_task_execs' | translate }}</h3>
+                    <app-sorted-table [columns]="columns" [data]="executions" [loading]="loading"></app-sorted-table>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-tamplate>

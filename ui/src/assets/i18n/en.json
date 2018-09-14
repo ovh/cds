@@ -266,6 +266,7 @@
   "common_favorites_all": "All bookmarks",
   "common_file_too_large": "Your file is too large (max 100Ko)",
   "common_vulnerabilities": "Vulnerabilities",
+  "common_no_data": "No data found",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
@@ -396,6 +397,8 @@
   "hook_task_execs_todo": "Task executions to do",
   "hook_task_execs_total": "Total task executions",
   "hook_task_repo_fullname": "Repository fullname",
+  "hook_task_execs": "Executions",
+  "hook_task_details": "Task details",
 
   "home_documentation": "Documentation",
   "home_title": "Welcome to CDS",

@@ -16,7 +16,14 @@
             </td>
         </tr>
     </tbody>
-    <tbody *ngIf="!loading">
+    <tbody *ngIf="!loading && data.length == 0">
+        <tr>
+            <td class="center" [colSpan]="columns.length">
+                <div>{{ 'common_no_data' | translate }}</div>
+            </td>
+        </tr>
+    </tbody>
+    <tbody *ngIf="!loading && data.length > 0">
         <tr *ngFor="let d of data">
             <ng-container *ngFor="let c of columns" [ngSwitch]="c.type">
                 <td *ngSwitchCase="'html'" class="border" [innerHTML]="c.selector(d)"></td>

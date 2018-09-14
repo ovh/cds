@@ -28,8 +28,14 @@ export class HooksTasksComponent extends Table {
                 selector: d => d.stopped ? '<i class="stop red icon"></i>' : '<i class="play green icon"></i>',
             },
             <Column>{
+                type: Link,
                 name: 'UUID',
-                selector: d => d.uuid
+                selector: d => {
+                    return {
+                        link: '/admin/hooks-tasks/' + d.uuid,
+                        value: d.uuid
+                    };
+                }
             },
             <Column>{
                 name: this._translate.instant('common_type'),
