@@ -124,6 +124,7 @@ workflow:
   pip1_3:
     depends_on:
     - fork
+    pipeline: pip1
 `, rec.Body.String())
 
 }
