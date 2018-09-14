@@ -113,6 +113,10 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 				if [ $$NO_TESTS -gt 0 ]; then \
 					echo "No tests found \t\t\t($$TST)"; \
 				else \
+					if [ ! -z "${CDS_VERSION}" ]; then \
+						echo "Sending $$TST to CDS"; \
+						worker upload --tag ${CDS_VERSION} $$TST; \
+					fi; \
 					echo "Generating xUnit report \t$$TST.xml"; \
 					$(GO_GO2XUNIT) -input $$TST -output $$TST.xml; \
 				fi; \
@@ -126,10 +130,6 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 		 	mv $$XML $(TARGET_DIR)/`basename `pwd``.xml; \
 		else \
 			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
-		fi; \
-		if [ ! -z "${CDS_VERSION}" ]; then \
-			echo "Sending $(TARGET_DIR)/*_tests.log to CDS"; \
-			worker upload --tag ${CDS_VERSION} $(TARGET_DIR)/*_tests.log; \
 		fi; \
 	done; \
 	for XML in `find .. -name "*.xml"`; do \
