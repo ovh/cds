@@ -64,7 +64,7 @@ func TestCanBeRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRun(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -141,7 +141,7 @@ func TestPurgeWorkflowRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -221,7 +221,7 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -314,7 +314,7 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -394,7 +394,7 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -471,7 +471,7 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)

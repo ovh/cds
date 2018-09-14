@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -42,7 +43,7 @@ type Bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
 var DBConnectionFactory *database.DBConnectionFactory
 
 // SetupPG setup PG DB for test
-func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store) {
+func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store, context.CancelFunc) {
 	log.SetLogger(t)
 	cfg := LoadTestingConf(t)
 	DBDriver = cfg["dbDriver"]
@@ -64,21 +65,21 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 
 	if DBDriver == "" {
 		t.Fatalf("This should be run with a database")
-		return nil, nil
+		return nil, nil, func() {}
 	}
 	if DBConnectionFactory == nil {
 		var err error
 		DBConnectionFactory, err = database.Init(dbUser, dbRole, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
-			return nil, nil
+			return nil, nil, func() {}
 		}
 	}
 
 	for _, f := range bootstrapFunc {
 		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, DBConnectionFactory.GetDBMap); err != nil {
 			log.Error("Error: %v", err)
-			return nil, nil
+			return nil, nil, func() {}
 		}
 	}
 
@@ -87,7 +88,13 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 		t.Fatalf("Unable to connect to redis: %v", err)
 	}
 
-	return DBConnectionFactory.GetDBMap(), store
+	cancel := func() {
+		log.Debug("Closing redis client")
+		store.Client.Close()
+		store.Client = nil
+	}
+
+	return DBConnectionFactory.GetDBMap(), store, cancel
 }
 
 // LoadTestingConf loads test configuraiton tests.cfg.json

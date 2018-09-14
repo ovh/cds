@@ -74,7 +74,8 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt t
 }
 
 func TestImportUpdate(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	if db == nil {

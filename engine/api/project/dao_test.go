@@ -19,7 +19,8 @@ import (
 )
 
 func TestInsertProject(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	project.Delete(db, cache, "key")
 
 	u, _ := assets.InsertAdminUser(db)
@@ -32,7 +33,8 @@ func TestInsertProject(t *testing.T) {
 }
 
 func TestInsertProject_withWrongKey(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 
 	proj := sdk.Project{
@@ -56,7 +58,8 @@ func TestExist(t *testing.T) {
 }
 
 func TestLoadAllByRepo(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	app, _ := application.LoadByName(db, cache, "TestLoadAllByRepo", "TestLoadAllByRepo", nil)
@@ -102,7 +105,8 @@ func TestLoadAllByRepo(t *testing.T) {
 }
 
 func TestLoadAll(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	project.Delete(db, cache, "test_TestLoadAll")
 	project.Delete(db, cache, "test_TestLoadAll1")

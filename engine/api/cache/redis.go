@@ -31,16 +31,20 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 		sentinelsStr := strings.Split(host, "@")[1]
 		sentinels := strings.Split(sentinelsStr, ",")
 		opts := &redis.FailoverOptions{
-			MasterName:    masterName,
-			SentinelAddrs: sentinels,
-			Password:      password,
+			MasterName:         masterName,
+			SentinelAddrs:      sentinels,
+			Password:           password,
+			IdleCheckFrequency: 10 * time.Second,
+			IdleTimeout:        10 * time.Second,
+			PoolSize:           25,
 		}
 		client = redis.NewFailoverClient(opts)
 	} else {
 		client = redis.NewClient(&redis.Options{
-			Addr:     host,
-			Password: password, // no password set
-			DB:       0,        // use default DB
+			Addr:               host,
+			Password:           password, // no password set
+			DB:                 0,        // use default DB
+			IdleCheckFrequency: 30 * time.Second,
 		})
 	}
 	pong, err := client.Ping().Result()

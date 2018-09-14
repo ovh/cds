@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,15 +14,16 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 )
 
-func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router) {
+func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router, context.CancelFunc) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
-	db, cache := test.SetupPG(t, bootstrapFunc...)
+	db, cache, end := test.SetupPG(t, bootstrapFunc...)
 	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "/"+test.GetTestName(t))
+	var cancel context.CancelFunc
+	router.Background, cancel = context.WithCancel(context.Background())
 	api := &API{
 		StartupTime:         time.Now(),
 		Router:              router,
@@ -30,13 +32,17 @@ func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...tes
 		Cache:               cache,
 	}
 	api.Config.Features.Izanami.Token = token
-	_ = event.Initialize(event.KafkaConfig{}, api.Cache)
 	api.InitRouter()
-	return api, db, router
+	f := func() {
+		cancel()
+		end()
+	}
+	return api, db, router, f
 }
 
 func TestFeatureClean(t *testing.T) {
-	api, _, router := newTestAPIWithIzanamiToken(t, "mytoken", bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPIWithIzanamiToken(t, "mytoken", bootstrap.InitiliazeDB)
+	defer end()
 
 	vars := map[string]string{}
 	uri := router.GetRoute("POST", api.cleanFeatureHandler, vars)

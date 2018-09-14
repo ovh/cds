@@ -18,7 +18,7 @@ import (
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router, context.CancelFunc) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
-	db, cache := test.SetupPG(t, bootstrapFunc...)
+	db, cache, end := test.SetupPG(t, bootstrapFunc...)
 	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "/"+test.GetTestName(t))
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
@@ -30,12 +30,16 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		Cache:               cache,
 	}
 	api.InitRouter()
-	return api, db, router, cancel
+	f := func() {
+		cancel()
+		end()
+	}
+	return api, db, router, f
 }
 
 func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string, func()) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
-	db, cache := test.SetupPG(t, bootstrapFunc...)
+	db, cache, end := test.SetupPG(t, bootstrapFunc...)
 	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "")
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
@@ -50,6 +54,7 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)
 	f := func() {
+		end()
 		cancel()
 		ts.Close()
 	}
