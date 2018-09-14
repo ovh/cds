@@ -12,7 +12,8 @@ import (
 )
 
 func TestImportInto_Variable(t *testing.T) {
-	db, cache := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 
 	u := &sdk.User{
 		Username: "foo",
@@ -136,7 +137,8 @@ func TestImportInto_Variable(t *testing.T) {
 }
 
 func TestImportInto_Group(t *testing.T) {
-	db, cache := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 
 	u := &sdk.User{
 		Username: "foo",
@@ -247,7 +249,8 @@ func TestImportInto_Group(t *testing.T) {
 }
 
 func TestImportInto_WithOldAndNewGroup(t *testing.T) {
-	db, cache := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 
 	u := &sdk.User{
 		Username: "foo",

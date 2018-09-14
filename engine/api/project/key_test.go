@@ -11,7 +11,8 @@ import (
 )
 
 func TestEncryptWithBuiltinKey(t *testing.T) {
-	db, cache := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	key := sdk.RandomString(10)
 	u, _ := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
