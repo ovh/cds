@@ -127,8 +127,9 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 		else \
 			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
-		if [ -z "${CDS_VERSION}" ]; then \ 
-			worker upload -tag ${CDS_VERSION} $(TARGET_DIR)/*_tests.log; \ 
+		if [ ! -z "${CDS_VERSION}" ]; then \
+			echo "Sending $(TARGET_DIR)/*_tests.log to CDS"; \
+			worker upload -tag ${CDS_VERSION} $(TARGET_DIR)/*_tests.log; \
 		fi; \
 	done; \
 	for XML in `find .. -name "*.xml"`; do \
