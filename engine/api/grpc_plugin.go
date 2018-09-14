@@ -22,6 +22,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 		db := api.mustDB()
+		u := getUser(ctx)
 
 		if err := UnmarshalBody(r, &p); err != nil {
 			return sdk.WrapError(err, "postPGRPCluginHandler>")
@@ -41,12 +42,14 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 				return sdk.WrapError(err, "postPGRPCluginHandler> %v", err)
 			}
 			if conflict {
-				return sdk.ErrConflict
-			}
-
-			//Insert in database
-			if _, err := actionplugin.InsertWithGRPCPlugin(tx, &p, p.Parameters); err != nil {
-				return sdk.WrapError(err, "postPGRPCluginHandler> Error while inserting action %s in database", p.Name)
+				if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, u.ID); err != nil {
+					return sdk.WrapError(err, "postPGRPCluginHandler> Error while updating action %s in database", p.Name)
+				}
+			} else {
+				//Insert in database
+				if _, err := actionplugin.InsertWithGRPCPlugin(tx, &p, p.Parameters); err != nil {
+					return sdk.WrapError(err, "postPGRPCluginHandler> Error while inserting action %s in database", p.Name)
+				}
 			}
 		}
 
