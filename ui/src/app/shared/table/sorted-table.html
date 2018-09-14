@@ -27,8 +27,13 @@
         <tr *ngFor="let d of data">
             <ng-container *ngFor="let c of columns" [ngSwitch]="c.type">
                 <td *ngSwitchCase="'html'" class="border" [innerHTML]="c.selector(d)"></td>
-                <td *ngSwitchCase="'link'" class="border">
+                <td *ngSwitchCase="'router-link'" class="border">
                     <a class="ui" [routerLink]="c.selector(d).link">
+                        {{c.selector(d).value}}
+                    </a>
+                </td>
+                <td *ngSwitchCase="'link'" class="border">
+                    <a class="ui" (click)="c.selector(d).callback()">
                         {{c.selector(d).value}}
                     </a>
                 </td>

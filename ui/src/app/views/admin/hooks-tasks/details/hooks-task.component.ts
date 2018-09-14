@@ -4,17 +4,20 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HookStatus, TaskExecution, WorkflowHookTask } from '../../../../model/workflow.hook.model';
 import { HookService } from '../../../../service/services.module';
-import { Column, HTML } from '../../../../shared/table/sorted-table.component';
+import { Column, ColumnType } from '../../../../shared/table/sorted-table.component';
+import { Table } from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-hooks-task',
     templateUrl: './hooks-task.html',
     styleUrls: ['./hooks-task.scss']
 })
-export class HooksTaskComponent {
+export class HooksTaskComponent extends Table {
     columns: Array<Column>;
     task: WorkflowHookTask;
     executions: Array<TaskExecution>;
+    selectedExecution: TaskExecution;
+    selectedExecutionBody: string;
     loading: boolean;
 
     constructor(
@@ -22,9 +25,11 @@ export class HooksTaskComponent {
         private _translate: TranslateService,
         private _route: ActivatedRoute
     ) {
+        super();
+        this.nbElementsByPage = 5;
         this.columns = [
             <Column>{
-                type: HTML,
+                type: ColumnType.HTML,
                 name: '',
                 selector: d => {
                     if (d.status === HookStatus.DONE) {
@@ -37,10 +42,6 @@ export class HooksTaskComponent {
                 }
             },
             <Column>{
-                name: 'uuid',
-                selector: d => d.uuid
-            },
-            <Column>{
                 name: 'created at',
                 selector: d => formatDate(new Date(d.timestamp / 1000000), 'short', this._translate.currentLang)
             },
@@ -49,6 +50,16 @@ export class HooksTaskComponent {
                 selector: d => {
                     return d.processing_timestamp ?
                         formatDate(new Date(d.processing_timestamp / 1000000), 'short', this._translate.currentLang) : '-';
+                }
+            },
+            <Column>{
+                type: ColumnType.LINK,
+                name: 'action',
+                selector: d => {
+                    return {
+                        callback: this.selectExecution(d),
+                        value: 'open'
+                    };
                 }
             }
         ];
@@ -66,5 +77,35 @@ export class HooksTaskComponent {
                 });
             });
         });
+    }
+
+    getData(): any[] {
+        return this.executions;
+    }
+
+    selectExecution(e: TaskExecution) {
+        return _ => {
+            this.selectedExecution = e
+            if (e.webhook) {
+                this.selectedExecutionBody = this.decodeBody(e.webhook.request_body);
+            } else if (e.rabbitmq) {
+                this.selectedExecutionBody = this.decodeBody(e.rabbitmq.message);
+            } else if (e.kafka) {
+                this.selectedExecutionBody = this.decodeBody(e.kafka.message);
+            }
+        };
+    }
+
+    decodeBody(v: string): string {
+        if (!v) {
+            return '';
+        }
+
+        const body = atob(v);
+        try {
+            return JSON.stringify(JSON.parse(body), null, 4);
+        } catch (e) {
+            return body;
+        }
     }
 }

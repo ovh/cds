@@ -41,6 +41,8 @@ export class TaskExecution {
     workflow_run: number;
     config: Map<string, WorkflowNodeHookConfigValue>;
     webhook: Webhook;
+    rabbitmq: RabbitMQ;
+    kafka: Kafka;
     scheduled_task?: any;
     status: HookStatus;
 }
@@ -50,3 +52,12 @@ export class Webhook {
     request_body: string;
     request_header: Map<string, string[]>;
 }
+
+export class RabbitMQ {
+    message: string;
+}
+
+export class Kafka {
+    message: string;
+}
+

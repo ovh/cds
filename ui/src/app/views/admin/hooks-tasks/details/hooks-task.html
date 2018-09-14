@@ -4,9 +4,8 @@
     <div class="ui form">
         <div class="ui grid">
             <div class="ui row">
-                <div class="six wide column">
+                <div class="wide column">
                     <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
-                    <br />
                     <br />
                     <ng-container *ngIf="task && task.config">
                         <div class="inline fields" *ngFor="let k of task.config | keys">
@@ -22,9 +21,49 @@
                         </div>
                     </ng-container>
                 </div>
-                <div class="ten wide column">
+            </div>
+            <div class="ui row">
+                <div [ngClass]="{sixteen: !selectedExecution, eight: selectedExecution, wide: true, column: true}">
                     <h3>{{ 'hook_task_execs' | translate }}</h3>
-                    <app-sorted-table [columns]="columns" [data]="executions" [loading]="loading"></app-sorted-table>
+                    <app-sorted-table [columns]="columns" [data]="getDataForCurrentPage()" [loading]="loading">
+                        <tfoot tfoot *ngIf="getNbOfPages() > 1">
+                            <tr>
+                                <td [colSpan]="columns.length">
+                                    <div class="ui right floated pagination menu">
+                                        <a class="icon item" (click)="downPage()">
+                                            <i class="left chevron icon"></i>
+                                        </a>
+                                        <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
+                                            [class.active]="currentPage === page">{{page}}</a>
+                                        <a class="icon item" (click)="upPage()">
+                                            <i class="right chevron icon"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </app-sorted-table>
+                </div>
+                <div class="eight wide column" *ngIf="selectedExecution">
+                    <h3>{{'workflow_hook_log_title' | translate}}</h3>
+                    <br />
+                    <div class="inline fields" *ngIf="selectedExecution.workflow_run">
+                        <div class="four wide field"><label>{{'workflow_hook_log_workflow_run' | translate}}</label></div>
+                        <input type="text" [value]="selectedExecution.workflow_run" [readonly]="true">
+                    </div>
+                    <div class="inline fields">
+                        <div class="four wide field"><label>{{'worker_model_status' | translate}}</label></div>
+                        <input type="text" [value]="selectedExecution.status" [readonly]="true">
+                    </div>
+                    <div class="inline fields" *ngIf="selectedExecution.last_error">
+                        <div class="four wide field"><label>{{'common_error' | translate}}</label></div>
+                        <input type="text" [value]="selectedExecution.last_error" [readonly]="true">
+                    </div>
+                    <div class="inline fields" *ngIf="selectedExecutionBody">
+                        <div class="four wide field"><label>Body</label></div>
+                        <codemirror [ngModel]="selectedExecutionBody" [config]="codeMirrorConfig" #bodyCode>
+                        </codemirror>
+                    </div>
                 </div>
             </div>
         </div>

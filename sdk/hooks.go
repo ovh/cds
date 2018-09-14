@@ -37,12 +37,12 @@ type WebHookExecution struct {
 
 // KafkaTaskExecution contains specific data for a kafka hook
 type KafkaTaskExecution struct {
-	Message []byte
+	Message []byte `json:"message"`
 }
 
 // RabbitMQTaskExecution contains specific data for a kafka hook
 type RabbitMQTaskExecution struct {
-	Message []byte
+	Message []byte `json:"message"`
 }
 
 // ScheduledTaskExecution contains specific data for a scheduled task execution

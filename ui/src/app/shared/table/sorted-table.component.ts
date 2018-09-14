@@ -4,10 +4,12 @@ type direction = string;
 const ASC: direction = 'asc';
 const DESC: direction = 'desc';
 
-export type ColumnType = string;
-export const Text: ColumnType = 'text';
-export const HTML: ColumnType = 'html';
-export const Link: ColumnType = 'link';
+export enum ColumnType {
+    TEXT = 'text',
+    HTML = 'html',
+    LINK = 'link',
+    ROUTER_LINK = 'router-link'
+}
 
 export type Selector = (d: any) => any;
 
