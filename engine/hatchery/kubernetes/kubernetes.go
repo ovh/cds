@@ -39,7 +39,6 @@ func New() *HatcheryKubernetes {
 
 // Init register local hatchery with its worker model
 func (h *HatcheryKubernetes) Init() error {
-
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -111,8 +110,10 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
+		Name:      h.Configuration().Name,
+		Version:   sdk.VERSION,
+		ModelType: h.ModelType(),
+		Type:      "kubernetes",
 	}
 
 	h.Client = cdsclient.NewHatchery(

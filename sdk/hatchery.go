@@ -16,4 +16,7 @@ type Hatchery struct {
 	Version       string    `json:"version"`
 	Uptodate      bool      `json:"up_to_date"`
 	IsSharedInfra bool      `json:"is_shared_infra"`
+	ModelType     string    `json:"model_type"`
+	Type          string    `json:"type"`
+	RatioService  int       `json:"ratio_service"`
 }

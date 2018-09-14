@@ -38,7 +38,7 @@ func (api *API) registerHatcheryHandler() service.Handler {
 			hatch.ID = oldH.ID
 			hatch.Model.ID = oldH.Model.ID
 			if err := hatchery.Update(api.mustDB(), hatch); err != nil {
-				return sdk.WrapError(err, "registerHatcheryHandler> Cannot insert new hatchery")
+				return sdk.WrapError(err, "registerHatcheryHandler> Cannot update existing hatchery")
 			}
 		} else {
 			if err := hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {

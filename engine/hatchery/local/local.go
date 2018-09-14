@@ -142,7 +142,9 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 			RegisteredCapabilities: capa,
 			Provision:              int64(h.Config.NbProvision),
 		},
-		Version: sdk.VERSION,
+		Version:   sdk.VERSION,
+		ModelType: h.ModelType(),
+		Type:      "local",
 	}
 
 	return h.CommonServe(ctx, h)

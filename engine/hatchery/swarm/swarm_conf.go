@@ -25,8 +25,10 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
+		Name:      h.Configuration().Name,
+		Version:   sdk.VERSION,
+		ModelType: h.ModelType(),
+		Type:      "swarm",
 	}
 
 	h.Client = cdsclient.NewHatchery(
@@ -44,6 +46,7 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-swarm"
+	h.hatch.RatioService = int(h.Config.RatioService)
 
 	return nil
 }

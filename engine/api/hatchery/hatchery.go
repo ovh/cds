@@ -32,8 +32,8 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 		return errg
 	}
 
-	query := `INSERT INTO hatchery (name, group_id, last_beat, uid) VALUES ($1, $2, NOW(), $3) RETURNING id`
-	if err := tx.QueryRow(query, h.Name, h.GroupID, h.UID).Scan(&h.ID); err != nil {
+	query := `INSERT INTO hatchery (name, group_id, last_beat, uid, type, model_type, ratio_service) VALUES ($1, $2, NOW(), $3, $4, $5, $6) RETURNING id`
+	if err := tx.QueryRow(query, h.Name, h.GroupID, h.UID, h.Type, h.ModelType, h.RatioService).Scan(&h.ID); err != nil {
 		return err
 	}
 
@@ -125,14 +125,14 @@ func LoadDeadHatcheries(db gorp.SqlExecutor, timeout float64) ([]sdk.Hatchery, e
 
 // LoadHatchery fetch hatchery info from database given UID
 func LoadHatchery(db gorp.SqlExecutor, uid, name string) (*sdk.Hatchery, error) {
-	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
+	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id, type, model_type, ratio_service
 	FROM hatchery
 	LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
 	WHERE uid = $1 AND name = $2`
 
 	var h sdk.Hatchery
 	var wmID sql.NullInt64
-	err := db.QueryRow(query, uid, name).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	err := db.QueryRow(query, uid, name).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
 	if err != nil {
 		return nil, err
 	}
@@ -146,14 +146,14 @@ func LoadHatchery(db gorp.SqlExecutor, uid, name string) (*sdk.Hatchery, error) 
 
 // LoadHatcheryByName fetch hatchery info from database given name
 func LoadHatcheryByName(db gorp.SqlExecutor, name string) (*sdk.Hatchery, error) {
-	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
+	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id, type, model_type, ratio_service
 			FROM hatchery
 			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
 			WHERE hatchery.name = $1`
 
 	var h sdk.Hatchery
 	var wmID sql.NullInt64
-	err := db.QueryRow(query, name).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	err := db.QueryRow(query, name).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoHatchery
@@ -170,7 +170,7 @@ func LoadHatcheryByName(db gorp.SqlExecutor, name string) (*sdk.Hatchery, error)
 
 // LoadHatcheryByNameAndToken fetch hatchery info from database given name and hashed token
 func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.Hatchery, error) {
-	query := `SELECT hatchery.id, hatchery.uid, hatchery.name, hatchery.last_beat, hatchery.group_id, hatchery_model.worker_model_id
+	query := `SELECT hatchery.id, hatchery.uid, hatchery.name, hatchery.last_beat, hatchery.group_id, hatchery_model.worker_model_id, hatchery.type, hatchery.model_type, hatchery.ratio_service
 			FROM hatchery
 			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
 			LEFT JOIN token ON hatchery.group_id = token.group_id
@@ -180,7 +180,7 @@ func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.H
 	var wmID sql.NullInt64
 	hasher := sha512.New()
 	hashed := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
-	err := db.QueryRow(query, name, hashed).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	err := db.QueryRow(query, name, hashed).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoHatchery
@@ -276,8 +276,8 @@ func LoadHatcheries(db gorp.SqlExecutor) ([]sdk.Hatchery, error) {
 
 // Update update hatchery
 func Update(db gorp.SqlExecutor, hatch sdk.Hatchery) error {
-	query := `UPDATE hatchery SET name = $1, group_id = $2, last_beat = NOW(), uid = $3  WHERE id = $4`
-	res, err := db.Exec(query, hatch.Name, hatch.GroupID, hatch.UID, hatch.ID)
+	query := `UPDATE hatchery SET name = $1, group_id = $2, last_beat = NOW(), uid = $3, type = $4, model_type = $5, ratio_service = $6 WHERE id = $7`
+	res, err := db.Exec(query, hatch.Name, hatch.GroupID, hatch.UID, hatch.Type, hatch.ModelType, hatch.RatioService, hatch.ID)
 	if err != nil {
 		return err
 	}

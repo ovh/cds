@@ -40,8 +40,10 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
+		Name:      h.Configuration().Name,
+		Version:   sdk.VERSION,
+		ModelType: h.ModelType(),
+		Type:      "vsphere",
 	}
 
 	h.Client = cdsclient.NewHatchery(
