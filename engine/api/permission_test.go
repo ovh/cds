@@ -10,7 +10,8 @@ import (
 )
 
 func Test_checkWorkerModelPermissionsByUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 
 	type args struct {
 		m *sdk.Model
@@ -123,7 +124,8 @@ func Test_checkWorkerModelPermissionsByUser(t *testing.T) {
 }
 
 func Test_checkWorkflowPermissionsByUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 
 	type args struct {
 		u     *sdk.User
@@ -303,7 +305,8 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 }
 
 func Test_checkApplicationPermissionsByUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 
 	type args struct {
 		u       *sdk.User
@@ -363,7 +366,8 @@ func Test_checkApplicationPermissionsByUser(t *testing.T) {
 }
 
 func Test_checkPipelinePermissionsByUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 
 	type args struct {
 		u       *sdk.User
@@ -423,7 +427,8 @@ func Test_checkPipelinePermissionsByUser(t *testing.T) {
 }
 
 func Test_checkEnvironmentPermissionsByUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 
 	type args struct {
 		u       *sdk.User

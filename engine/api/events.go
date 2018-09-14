@@ -81,6 +81,10 @@ func (b *eventsBroker) Init(c context.Context) {
 }
 
 func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
+	if cacheMsgChan == nil {
+		return
+	}
+
 	pubSub := store.Subscribe("events_pubsub")
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
@@ -114,6 +118,9 @@ func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cach
 
 // Start the broker
 func (b *eventsBroker) Start(c context.Context) {
+	if b.messages == nil {
+		return
+	}
 	for {
 		select {
 		case <-c.Done():

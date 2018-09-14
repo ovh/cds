@@ -17,7 +17,9 @@ import (
 )
 
 func Test_addBroadcastHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 
 	br := sdk.Broadcast{
@@ -44,7 +46,9 @@ func Test_addBroadcastHandler(t *testing.T) {
 }
 
 func Test_postMarkAsReadBroadcastHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	uLambda, passLambda := assets.InsertLambdaUser(db)
 

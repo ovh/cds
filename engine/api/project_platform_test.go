@@ -17,7 +17,8 @@ import (
 )
 
 func TestAddUpdateAndDeleteProjectPlatform(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	u, pass := assets.InsertAdminUser(api.mustDB())
 

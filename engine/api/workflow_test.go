@@ -25,7 +25,7 @@ import (
 
 func Test_getWorkflowsHandler(t *testing.T) {
 	// Init database
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -48,7 +48,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 
 func Test_getWorkflowHandler(t *testing.T) {
 	// Init database
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -123,7 +123,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 
 func Test_getWorkflowHandler_withUsage(t *testing.T) {
 	// Init database
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -178,7 +178,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 
 func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 	// Init database
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -202,7 +202,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 
 func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	// Init database
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -264,7 +264,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 
 func Test_putWorkflowHandler(t *testing.T) {
 	// Init database
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -354,7 +354,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 
 func Test_postWorkflowRollbackHandler(t *testing.T) {
 	// Init database
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -485,7 +485,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 
 func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	// Init database
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -580,7 +580,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 
 func Test_deleteWorkflowHandler(t *testing.T) {
 	// Init database
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
 	// Init user
@@ -700,7 +700,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 
 func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	t.SkipNow()
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	// Init project
 	key := sdk.RandomString(10)

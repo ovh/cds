@@ -13,7 +13,8 @@ import (
 )
 
 func Test_getPublicGroupsHandler(t *testing.T) {
-	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//Create group
 	g := &sdk.Group{

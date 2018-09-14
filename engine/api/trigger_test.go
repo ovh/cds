@@ -19,7 +19,8 @@ import (
 )
 
 func TestAddTriggerHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -103,7 +104,8 @@ func TestAddTriggerHandler(t *testing.T) {
 }
 
 func TestUpdateTriggerHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -195,7 +197,8 @@ func TestUpdateTriggerHandler(t *testing.T) {
 }
 
 func TestRemoveTriggerHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())

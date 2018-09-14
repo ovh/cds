@@ -53,7 +53,8 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor, store cache.Store)
 }
 
 func TestAddPollerHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -122,7 +123,8 @@ func TestAddPollerHandler(t *testing.T) {
 }
 
 func TestUpdatePollerHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Crerouter.ate admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -213,7 +215,8 @@ func TestUpdatePollerHandler(t *testing.T) {
 }
 
 func TestGetApplicationPollersHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -306,7 +309,8 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 }
 
 func TestGetPollersHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -395,7 +399,8 @@ func TestGetPollersHandler(t *testing.T) {
 }
 
 func TestDeletePollerHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())

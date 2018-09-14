@@ -15,7 +15,9 @@ import (
 )
 
 func Test_getActionExportHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 
 	//Prepare request
@@ -36,7 +38,9 @@ func Test_getActionExportHandler(t *testing.T) {
 }
 
 func Test_postActionImportHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 
 	uri := api.Router.GetRoute("POST", api.importActionHandler, nil)

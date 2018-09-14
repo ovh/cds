@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -569,6 +570,18 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := a.Router.InitStats("cds-api", a.Name); err != nil {
 		log.Error("unable to init router stats: %v", err)
 	}
+
+	// Initialize event broker
+	a.eventsBroker = &eventsBroker{
+		cache:             a.Cache,
+		clients:           make(map[string]eventsBrokerSubscribe),
+		dbFunc:            a.DBConnectionFactory.GetDBMap,
+		messages:          make(chan sdk.Event),
+		mutex:             &sync.Mutex{},
+		disconnectedMutex: &sync.Mutex{},
+		disconnected:      make(map[string]bool),
+	}
+	a.eventsBroker.Init(context.Background())
 
 	if err := a.initStats(); err != nil {
 		log.Error("unable to init api stats: %v", err)
