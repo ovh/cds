@@ -107,13 +107,6 @@ func Create(h Interface) error {
 	// hatchery is now fully Initialized
 	h.SetInitialized()
 
-	sdk.GoRoutine("heartbeat",
-		func() {
-			hearbeat(h, h.Configuration().API.Token, h.Configuration().API.MaxHeartbeatFailures)
-		},
-		PanicDump(h),
-	)
-
 	sdk.GoRoutine("queuePolling",
 		func() {
 			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, nil); err != nil {

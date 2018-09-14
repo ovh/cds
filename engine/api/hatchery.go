@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/token"
@@ -34,34 +32,32 @@ func (api *API) registerHatcheryHandler() service.Handler {
 			return sdk.WrapError(err, "registerHatcheryHandler> Cannot load hatchery %s", hatch.Name)
 		}
 
+		tx, errBegin := api.mustDB().Begin()
+		defer tx.Rollback()
+		if errBegin != nil {
+			return sdk.WrapError(errBegin, "registerHatcheryHandler> Cannot start tx")
+		}
+
 		if oldH != nil {
 			hatch.ID = oldH.ID
 			hatch.Model.ID = oldH.Model.ID
-			if err := hatchery.Update(api.mustDB(), hatch); err != nil {
+			if err := hatchery.Update(tx, hatch); err != nil {
 				return sdk.WrapError(err, "registerHatcheryHandler> Cannot update existing hatchery")
 			}
 		} else {
-			if err := hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
+			if err := hatchery.InsertHatchery(tx, &hatch); err != nil {
 				return sdk.WrapError(err, "registerHatcheryHandler> Cannot insert new hatchery")
 			}
 		}
 
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "registerHatcheryHandler> Cannot commit transaction")
+		}
+
 		hatch.Uptodate = hatch.Version == sdk.VERSION
 
-		log.Debug("registerHatcheryHandler> Welcome %d", hatch.ID)
+		log.Debug("registerHatcheryHandler> Welcome hatchery %s %d group:%d sharedInfra:%t", hatch.Type, hatch.ID, hatch.GroupID, hatch.IsSharedInfra)
 		return service.WriteJSON(w, hatch, http.StatusOK)
-	}
-}
-
-func (api *API) refreshHatcheryHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		hatcheryID := vars["id"]
-
-		if err := hatchery.RefreshHatchery(api.mustDB(), hatcheryID); err != nil {
-			return sdk.WrapError(err, "refreshHatcheryHandler> cannot refresh last beat of %s", hatcheryID)
-		}
-		return nil
 	}
 }
 

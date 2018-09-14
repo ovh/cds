@@ -26,16 +26,6 @@ func (c *client) HatcheryRegister(h sdk.Hatchery) (*sdk.Hatchery, error) {
 	return &hreceived, nil
 }
 
-func (c *client) HatcheryRefresh(id int64) error {
-	code, err := c.PutJSON(fmt.Sprintf("/hatchery/%d", id), nil, nil)
-	if code > 300 && err == nil {
-		return fmt.Errorf("HatcheryRefresh> HTTP %d", code)
-	} else if err != nil {
-		return sdk.WrapError(err, "HatcheryRefresh> Error")
-	}
-	return nil
-}
-
 func (c *client) HatcheryCount(workflowNodeRunID int64) (int64, error) {
 	var hatcheriesCount int64
 	code, err := c.GetJSON(fmt.Sprintf("/hatchery/count/%d", workflowNodeRunID), &hatcheriesCount)

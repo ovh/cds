@@ -80,7 +80,6 @@ func (api *API) InitRouter() {
 	// Hatchery
 	r.Handle("/hatchery", r.POST(api.registerHatcheryHandler, Auth(false)))
 	r.Handle("/hatchery/count/{workflowNodeRunID}", r.GET(api.hatcheryCountHandler))
-	r.Handle("/hatchery/{id}", r.PUT(api.refreshHatcheryHandler))
 
 	// Hooks
 	r.Handle("/hook", r.POST(api.receiveHookHandler, Auth(false) /* Public handler called by third parties */))

@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
-	"math"
 	"strings"
 	"time"
 
@@ -19,126 +18,76 @@ import (
 )
 
 // InsertHatchery registers in database new hatchery
-func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
-	tx, errb := dbmap.Begin()
-	if errb != nil {
-		return errb
-	}
-	defer tx.Rollback()
-
+func InsertHatchery(db gorp.SqlExecutor, hatchery *sdk.Hatchery) error {
 	var errg error
-	h.UID, errg = generateID()
+	hatchery.UID, errg = generateID()
 	if errg != nil {
 		return errg
 	}
 
-	query := `INSERT INTO hatchery (name, group_id, last_beat, uid, type, model_type, ratio_service) VALUES ($1, $2, NOW(), $3, $4, $5, $6) RETURNING id`
-	if err := tx.QueryRow(query, h.Name, h.GroupID, h.UID, h.Type, h.ModelType, h.RatioService).Scan(&h.ID); err != nil {
-		return err
-	}
-
 	// allow hatchery to not declare any model
-	if h.Model.Name == "" && (h.Model.ModelDocker.Image == "" || h.Model.ModelVirtualMachine.Image == "") {
-		return tx.Commit()
+	if hatchery.Type == "local" && hatchery.Model.ModelVirtualMachine.Image == "" && hatchery.Model.ModelDocker.Image == "" {
+		//only local hatcheries declare model on registration
+		hatchery.Model.CreatedBy = sdk.User{Fullname: "Hatchery", Username: hatchery.Name}
+		hatchery.Model.Type = string(sdk.HostProcess)
+		hatchery.Model.GroupID = hatchery.GroupID
+		hatchery.Model.UserLastModified = time.Now()
+		hatchery.Model.ModelVirtualMachine = sdk.ModelVirtualMachine{
+			Image: hatchery.Model.Name,
+			Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
+		}
+
+		if err := worker.InsertWorkerModel(db, &hatchery.Model); err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
+			return sdk.ErrModelNameExist
+		} else if err != nil {
+			return err
+		}
+		hatchery.WorkerModelID = hatchery.Model.ID
 	}
 
-	//only local hatcheries declare model on registration
-	h.Model.CreatedBy = sdk.User{Fullname: "Hatchery", Username: h.Name}
-	h.Model.Type = string(sdk.HostProcess)
-	h.Model.GroupID = h.GroupID
-	h.Model.UserLastModified = time.Now()
-	h.Model.ModelVirtualMachine = sdk.ModelVirtualMachine{
-		Image: h.Model.Name,
-		Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
-	}
-
-	if err := worker.InsertWorkerModel(tx, &h.Model); err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
-		return sdk.ErrModelNameExist
-	} else if err != nil {
+	h := Hatchery(*hatchery)
+	if err := db.Insert(&h); err != nil {
 		return err
 	}
-
-	query = `INSERT INTO hatchery_model (hatchery_id, worker_model_id) VALUES ($1, $2)`
-	if _, err := tx.Exec(query, h.ID, h.Model.ID); err != nil {
-		return err
-	}
-
-	return tx.Commit()
+	*hatchery = sdk.Hatchery(h)
+	return nil
 }
 
-// DeleteHatchery removes from database given hatchery and linked model
-func DeleteHatchery(dbmap *gorp.DbMap, id int64, workerModelID int64) error {
-	tx, errb := dbmap.Begin()
-	if errb != nil {
-		return errb
-	}
-	defer tx.Rollback()
-
-	query := `DELETE FROM hatchery_model WHERE hatchery_id = $1`
-	if _, err := tx.Exec(query, id); err != nil {
+// DeleteHatcheryByName removes from database given hatchery
+func DeleteHatcheryByName(db gorp.SqlExecutor, name string) error {
+	hatchery, err := LoadHatcheryByName(db, name)
+	if err != nil {
 		return err
 	}
-
-	if workerModelID > 0 {
-		if err := worker.DeleteWorkerModel(tx, workerModelID); err != nil {
+	if hatchery.WorkerModelID > 0 {
+		if err := worker.DeleteWorkerModel(db, hatchery.WorkerModelID); err != nil {
 			return err
 		}
 	}
-
-	query = `DELETE FROM hatchery WHERE id = $1`
-	if _, err := tx.Exec(query, id); err != nil {
-		return err
-	}
-
-	return tx.Commit()
-}
-
-// LoadDeadHatcheries load hatchery with refresh last beat > timeout
-func LoadDeadHatcheries(db gorp.SqlExecutor, timeout float64) ([]sdk.Hatchery, error) {
-	var hatcheries []sdk.Hatchery
-	query := `	SELECT id, name, last_beat, group_id, worker_model_id
-				FROM hatchery
-				LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
-				WHERE now() - last_beat > $1 * INTERVAL '1' SECOND
-				LIMIT 10000`
-	rows, err := db.Query(query, int64(math.Floor(timeout)))
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var wmID sql.NullInt64
-	for rows.Next() {
-		var h sdk.Hatchery
-		err = rows.Scan(&h.ID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
-		if err != nil {
-			return nil, err
-		}
-		if wmID.Valid {
-			h.Model.ID = wmID.Int64
-		}
-		hatcheries = append(hatcheries, h)
-	}
-
-	return hatcheries, nil
+	query := `DELETE FROM hatchery WHERE id = $1`
+	_, err = db.Exec(query, hatchery.ID)
+	return err
 }
 
 // LoadHatchery fetch hatchery info from database given UID
 func LoadHatchery(db gorp.SqlExecutor, uid, name string) (*sdk.Hatchery, error) {
-	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id, type, model_type, ratio_service
+
+	//TODO yesnault
+
+	query := `SELECT id, uid, name, group_id, worker_model_id, type, model_type, ratio_service
 	FROM hatchery
-	LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
 	WHERE uid = $1 AND name = $2`
 
 	var h sdk.Hatchery
 	var wmID sql.NullInt64
-	err := db.QueryRow(query, uid, name).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
+	err := db.QueryRow(query, uid, name).Scan(&h.ID, &h.UID, &h.Name, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
 	if err != nil {
 		return nil, err
 	}
 
 	if wmID.Valid {
 		h.Model.ID = wmID.Int64
+		h.WorkerModelID = wmID.Int64
 	}
 
 	return &h, nil
@@ -146,14 +95,16 @@ func LoadHatchery(db gorp.SqlExecutor, uid, name string) (*sdk.Hatchery, error) 
 
 // LoadHatcheryByName fetch hatchery info from database given name
 func LoadHatcheryByName(db gorp.SqlExecutor, name string) (*sdk.Hatchery, error) {
-	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id, type, model_type, ratio_service
+
+	//TODO yesnault
+
+	query := `SELECT id, uid, name, group_id, worker_model_id, type, model_type, ratio_service
 			FROM hatchery
-			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
 			WHERE hatchery.name = $1`
 
 	var h sdk.Hatchery
 	var wmID sql.NullInt64
-	err := db.QueryRow(query, name).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
+	err := db.QueryRow(query, name).Scan(&h.ID, &h.UID, &h.Name, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoHatchery
@@ -163,6 +114,7 @@ func LoadHatcheryByName(db gorp.SqlExecutor, name string) (*sdk.Hatchery, error)
 
 	if wmID.Valid {
 		h.Model.ID = wmID.Int64
+		h.WorkerModelID = wmID.Int64
 	}
 
 	return &h, nil
@@ -170,9 +122,8 @@ func LoadHatcheryByName(db gorp.SqlExecutor, name string) (*sdk.Hatchery, error)
 
 // LoadHatcheryByNameAndToken fetch hatchery info from database given name and hashed token
 func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.Hatchery, error) {
-	query := `SELECT hatchery.id, hatchery.uid, hatchery.name, hatchery.last_beat, hatchery.group_id, hatchery_model.worker_model_id, hatchery.type, hatchery.model_type, hatchery.ratio_service
+	query := `SELECT hatchery.id, hatchery.uid, hatchery.name, hatchery.group_id, hatchery.worker_model_id, hatchery.type, hatchery.model_type, hatchery.ratio_service
 			FROM hatchery
-			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
 			LEFT JOIN token ON hatchery.group_id = token.group_id
 			WHERE hatchery.name = $1 AND token.token = $2`
 
@@ -180,7 +131,7 @@ func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.H
 	var wmID sql.NullInt64
 	hasher := sha512.New()
 	hashed := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
-	err := db.QueryRow(query, name, hashed).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
+	err := db.QueryRow(query, name, hashed).Scan(&h.ID, &h.UID, &h.Name, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoHatchery
@@ -190,6 +141,7 @@ func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.H
 
 	if wmID.Valid {
 		h.Model.ID = wmID.Int64
+		h.WorkerModelID = wmID.Int64
 	}
 
 	return &h, nil
@@ -215,7 +167,6 @@ func CountHatcheries(db gorp.SqlExecutor, wfNodeRunID int64) (int64, error) {
 			hatchery.group_id = $2
 		)
 	`
-
 	return db.SelectInt(query, wfNodeRunID, group.SharedInfraGroup.ID)
 }
 
@@ -240,64 +191,16 @@ func LoadHatcheriesCountByNodeJobRunID(db gorp.SqlExecutor, wfNodeJobRunID int64
 			hatchery.group_id = $2
 		)
 	`
-
 	return db.SelectInt(query, wfNodeJobRunID, group.SharedInfraGroup.ID)
-}
-
-// LoadHatcheries retrieves in database all registered hatcheries
-func LoadHatcheries(db gorp.SqlExecutor) ([]sdk.Hatchery, error) {
-	var hatcheries []sdk.Hatchery
-
-	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
-							FROM hatchery
-							LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
-							LIMIT 10000`
-	rows, err := db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var wmID sql.NullInt64
-	for rows.Next() {
-		var h sdk.Hatchery
-		err = rows.Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
-		if err != nil {
-			return nil, err
-		}
-		if wmID.Valid {
-			h.Model.ID = wmID.Int64
-		}
-		hatcheries = append(hatcheries, h)
-	}
-
-	return hatcheries, nil
 }
 
 // Update update hatchery
 func Update(db gorp.SqlExecutor, hatch sdk.Hatchery) error {
-	query := `UPDATE hatchery SET name = $1, group_id = $2, last_beat = NOW(), uid = $3, type = $4, model_type = $5, ratio_service = $6 WHERE id = $7`
+
+	//TODO yesnault
+
+	query := `UPDATE hatchery SET name = $1, group_id = $2, uid = $3, type = $4, model_type = $5, ratio_service = $6 WHERE id = $7`
 	res, err := db.Exec(query, hatch.Name, hatch.GroupID, hatch.UID, hatch.Type, hatch.ModelType, hatch.RatioService, hatch.ID)
-	if err != nil {
-		return err
-	}
-
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if n == 0 {
-		return sdk.ErrNotFound
-	}
-
-	return nil
-}
-
-// RefreshHatchery Update hatchery last_beat
-func RefreshHatchery(db gorp.SqlExecutor, hatchID string) error {
-	query := `UPDATE hatchery SET last_beat = NOW() WHERE id = $1`
-	res, err := db.Exec(query, hatchID)
 	if err != nil {
 		return err
 	}

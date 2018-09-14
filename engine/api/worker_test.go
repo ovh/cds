@@ -19,25 +19,15 @@ import (
 func Test_workerCheckingHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	//1. Load all workers and hatcheries
+	//1. Load all workers
 	workers, err := worker.LoadWorkers(api.mustDB(), "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := hatchery.LoadHatcheries(api.mustDB())
-	if err != nil {
-		t.Fatalf("Unable to load hatcheries : %s", err)
-	}
-	//2. Delete all workers and hatcheries
+	//2. Delete all workers
 	for _, w := range workers {
 		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
-		}
-	}
-	for _, h := range hs {
-		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
-		if err != nil {
-			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
@@ -114,25 +104,15 @@ func Test_workerCheckingHandler(t *testing.T) {
 func Test_workerWaitingHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	//1. Load all workers and hatcheries
+	//1. Load all workers
 	workers, errlw := worker.LoadWorkers(api.mustDB(), "")
 	if errlw != nil {
 		t.Fatal(errlw)
 	}
-	hs, errlh := hatchery.LoadHatcheries(api.mustDB())
-	if errlh != nil {
-		t.Fatalf("Unable to load hatcheries : %s", errlh)
-	}
-	//2. Delete all workers and hatcheries
+	//2. Delete all workers
 	for _, w := range workers {
 		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
-		}
-	}
-	for _, h := range hs {
-		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
-		if err != nil {
-			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
