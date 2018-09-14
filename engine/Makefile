@@ -88,13 +88,6 @@ test: test-config clean
 		cd ${GOPATH}/src/$$PKG; \
 		$(TEST_CMD) > ${GOPATH}/src/$$PKG/tests.log; \
 	done;
-ifneq ($(VERSION), snapshot)
-	@for TST in `find .. -name "tests.log"`; do \
-		if [ -s $$TST ]; then \
-			worker upload –tag=${CDS_VERSION} $$TST \
-		fi \
-	done;
-endif
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
 
@@ -133,6 +126,9 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 		 	mv $$XML $(TARGET_DIR)/`basename `pwd``.xml; \
 		else \
 			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
+		fi; \
+		if [ -z "${CDS_VERSION}" ]; then \ 
+			worker upload -tag ${CDS_VERSION} $(TARGET_DIR)/*_tests.log; \ 
 		fi; \
 	done; \
 	for XML in `find .. -name "*.xml"`; do \
