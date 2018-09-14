@@ -184,6 +184,18 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	return res
 }
 
+func (w *Workflow) AddNodeFork(name string, dest WorkflowNodeFork) {
+	if w.Root == nil {
+		return
+	}
+	w.Root.AddNodeFork(name, dest)
+	for i := range w.Joins {
+		for j := range w.Joins[i].Triggers {
+			w.Joins[i].Triggers[j].WorkflowDestNode.AddNodeFork(name, dest)
+		}
+	}
+}
+
 //AddTrigger adds a trigger to the destination node from the node found by its name
 func (w *Workflow) AddTrigger(name string, dest WorkflowNode) {
 	if w.Root == nil {
@@ -195,6 +207,18 @@ func (w *Workflow) AddTrigger(name string, dest WorkflowNode) {
 		for j := range w.Joins[i].Triggers {
 			w.Joins[i].Triggers[j].WorkflowDestNode.AddTrigger(name, dest)
 		}
+	}
+}
+
+//AddNodeFork adds a fork to from the node found by its name
+func (n *WorkflowNode) AddNodeFork(name string, dest WorkflowNodeFork) {
+	if n.Name == name {
+		n.Forks = append(n.Forks, dest)
+		return
+	}
+	for i := range n.Triggers {
+		destNode := &n.Triggers[i].WorkflowDestNode
+		destNode.AddNodeFork(name, dest)
 	}
 }
 
@@ -225,6 +249,22 @@ func (w *Workflow) GetNodeByRef(ref string) *WorkflowNode {
 			n2 := (&t.WorkflowDestNode).GetNodeByRef(ref)
 			if n2 != nil {
 				return n2
+			}
+		}
+	}
+	return nil
+}
+
+func (w *Workflow) GetForkByName(name string) *WorkflowNodeFork {
+	n := w.Root.GetForkByName(name)
+	if n != nil {
+		return n
+	}
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			n = t.WorkflowDestNode.GetForkByName(name)
+			if n != nil {
+				return n
 			}
 		}
 	}
@@ -491,6 +531,12 @@ func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
 			d.Visit(visitor)
 		}
 	}
+	for i := range n.Forks {
+		for j := range n.Forks[i].Triggers {
+			d := &n.Forks[i].Triggers[j].WorkflowDestNode
+			d.Visit(visitor)
+		}
+	}
 }
 
 //Sort sorts the workflow node
@@ -658,6 +704,42 @@ func (n *WorkflowNode) GetNodeByRef(ref string) *WorkflowNode {
 		}
 	}
 
+	return nil
+}
+
+func (n *WorkflowNode) GetForkByName(name string) *WorkflowNodeFork {
+	if n == nil {
+		return nil
+	}
+	for i := range n.Forks {
+		f := &n.Forks[i]
+		if f.Name == name {
+			return f
+		}
+
+		for j := range f.Triggers {
+			f2 := (&f.Triggers[j].WorkflowDestNode).GetForkByName(name)
+			if f2 != nil {
+				return f2
+			}
+		}
+	}
+
+	for j := range n.Triggers {
+		n2 := (&n.Triggers[j].WorkflowDestNode).GetForkByName(name)
+		if n2 != nil {
+			return n2
+		}
+	}
+
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			n2 := (&n.OutgoingHooks[i].Triggers[j].WorkflowDestNode).GetForkByName(name)
+			if n2 != nil {
+				return n2
+			}
+		}
+	}
 	return nil
 }
 

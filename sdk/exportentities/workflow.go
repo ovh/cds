@@ -116,9 +116,8 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			}
 			sort.Strings(ancestors)
 			entry.DependsOn = ancestors
-
-			entry.PipelineName = n.PipelineName
 		}
+		entry.PipelineName = n.PipelineName
 
 		conditions := []sdk.WorkflowNodeCondition{}
 		for _, c := range n.Context.Conditions.PlainConditions {
@@ -545,11 +544,50 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 	addHooks(w.Hooks[n.Name])
 }
 
+func (e *NodeEntry) processFork(name string, w *sdk.Workflow) (bool, error) {
+	var ancestor *sdk.WorkflowNode
+
+	if len(e.DependsOn) == 1 {
+		a := e.DependsOn[0]
+		ancestor = w.GetNodeByName(a)
+	}
+	if ancestor == nil {
+		return false, nil
+	}
+
+	fork := sdk.WorkflowNodeFork{
+		Name: name,
+	}
+	w.AddNodeFork(ancestor.Name, fork)
+	return true, nil
+}
+
 func (e *NodeEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
 	if err := e.checkValidity(*w); err != nil {
 		return false, err
 	}
 
+	if e.PipelineName == "" {
+		return e.processFork(name, w)
+	}
+
+	// Find WorkflowNodeAncestors
+	exist, err := e.processNodeAncestors(name, w)
+	if err != nil {
+		return false, err
+	}
+
+	if exist {
+		return true, nil
+	}
+
+	if len(e.DependsOn) != 1 {
+		return false, nil
+	}
+	return e.processForkAncestor(name, w)
+}
+
+func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, error) {
 	var ancestorsExist = true
 	var ancestors []*sdk.WorkflowNode
 
@@ -634,5 +672,23 @@ func (e *NodeEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
 		w.Joins = append(w.Joins, *join)
 	}
 	return true, nil
+}
 
+func (e *NodeEntry) processForkAncestor(name string, w *sdk.Workflow) (bool, error) {
+	a := e.DependsOn[0]
+	ancestor := w.GetForkByName(a)
+	if ancestor == nil {
+		return false, nil
+	}
+
+	n, err := e.getNode(name)
+	if err != nil {
+		return false, err
+	}
+
+	ancestor.Triggers = append(ancestor.Triggers, sdk.WorkflowNodeForkTrigger{
+		WorkflowDestNode: *n,
+		WorkflowForkID:   ancestor.ID,
+	})
+	return true, nil
 }
