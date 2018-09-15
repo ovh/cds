@@ -76,12 +76,12 @@ func insertOrUpdateWorkerModel(db gorp.SqlExecutor, hatchery *sdk.Hatchery) erro
 		} else if err != nil {
 			return err
 		}
-		hatchery.WorkerModelID = hatchery.Model.ID
+		hatchery.WorkerModelID = &hatchery.Model.ID
 		return nil
 	}
 	// update worker model
 	hatchery.Model = *wm
-	hatchery.WorkerModelID = wm.ID
+	hatchery.WorkerModelID = &wm.ID
 	return nil
 }
 
@@ -96,8 +96,8 @@ func DeleteHatcheryByName(db gorp.SqlExecutor, name string) error {
 	if _, err = db.Exec(query, hatchery.ID); err != nil {
 		return err
 	}
-	if hatchery.WorkerModelID > 0 {
-		if err := worker.DeleteWorkerModel(db, hatchery.WorkerModelID); err != nil {
+	if hatchery.WorkerModelID != nil && *hatchery.WorkerModelID > 0 {
+		if err := worker.DeleteWorkerModel(db, *hatchery.WorkerModelID); err != nil {
 			return err
 		}
 	}

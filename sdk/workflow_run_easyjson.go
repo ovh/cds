@@ -1620,7 +1620,15 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk3(in *jlexer.Lexer, out *Hatchery) 
 		case "group_id":
 			out.GroupID = int64(in.Int64())
 		case "worker_model_id":
-			out.WorkerModelID = int64(in.Int64())
+			if in.IsNull() {
+				in.Skip()
+				out.WorkerModelID = nil
+			} else {
+				if out.WorkerModelID == nil {
+					out.WorkerModelID = new(int64)
+				}
+				*out.WorkerModelID = int64(in.Int64())
+			}
 		case "model":
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.Model).UnmarshalJSON(data))
@@ -1699,7 +1707,11 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in Hatchery)
 		} else {
 			out.RawString(prefix)
 		}
-		out.Int64(int64(in.WorkerModelID))
+		if in.WorkerModelID == nil {
+			out.RawString("null")
+		} else {
+			out.Int64(int64(*in.WorkerModelID))
+		}
 	}
 	{
 		const prefix string = ",\"model\":"
