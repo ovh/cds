@@ -26,7 +26,7 @@ func InsertHatchery(db gorp.SqlExecutor, hatchery *sdk.Hatchery) error {
 	}
 
 	// allow hatchery to not declare any model
-	if hatchery.Type == "local" && hatchery.Model.ModelVirtualMachine.Image == "" && hatchery.Model.ModelDocker.Image == "" {
+	if hatchery.Type == "local" {
 		//only local hatcheries declare model on registration
 		hatchery.Model.CreatedBy = sdk.User{Fullname: "Hatchery", Username: hatchery.Name}
 		hatchery.Model.Type = string(sdk.HostProcess)

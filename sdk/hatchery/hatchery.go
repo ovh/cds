@@ -328,7 +328,8 @@ func Create(h Interface) error {
 					isRun:        false,
 					temptToSpawn: true,
 				}
-				endTrace("no model or service ratio reached")
+				log.Debug("hatchery> no model")
+				endTrace("no model")
 				continue
 			}
 
@@ -373,11 +374,12 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 
 func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	if model.Type != h.ModelType() {
+		log.Debug("canRunJob> model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
 		return false
 	}
 
 	// If the model needs registration, don't spawn for now
-	if h.NeedRegistration(&model) {
+	if model.Type != "host" && h.NeedRegistration(&model) {
 		log.Debug("canRunJob> model %s needs registration", model.Name)
 		return false
 	}

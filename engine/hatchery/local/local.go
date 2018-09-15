@@ -167,6 +167,7 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		log.Debug("CanSpawn false Hatchery nil")
 		return false
 	}
+	log.Debug("CanSpawn model.ID:%d h.workerModelID:%d ", model.ID, h.Hatchery().Model.ID)
 	if model.ID != h.Hatchery().Model.ID {
 		log.Debug("CanSpawn false ID different model.ID:%d h.workerModelID:%d ", model.ID, h.Hatchery().Model.ID)
 		return false
