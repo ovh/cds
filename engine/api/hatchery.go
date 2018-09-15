@@ -18,7 +18,6 @@ func (api *API) registerHatcheryHandler() service.Handler {
 		if err := UnmarshalBody(r, &hatch); err != nil {
 			return err
 		}
-
 		// Load token
 		tk, err := token.LoadToken(api.mustDB(), hatch.UID)
 		if err != nil {
@@ -26,14 +25,13 @@ func (api *API) registerHatcheryHandler() service.Handler {
 		}
 		hatch.GroupID = tk.GroupID
 		hatch.IsSharedInfra = tk.GroupID == group.SharedInfraGroup.ID
-
 		oldH, errL := hatchery.LoadHatcheryByNameAndToken(api.mustDB(), hatch.Name, tk.Token)
 		if errL != nil && errL != sdk.ErrNoHatchery {
-			return sdk.WrapError(err, "registerHatcheryHandler> Cannot load hatchery %s", hatch.Name)
+			return sdk.WrapError(errL, "registerHatcheryHandler> Cannot load hatchery %s", hatch.Name)
 		}
 
 		tx, errBegin := api.mustDB().Begin()
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "registerHatcheryHandler> Cannot start tx")
 		}

@@ -71,79 +71,47 @@ func DeleteHatcheryByName(db gorp.SqlExecutor, name string) error {
 
 // LoadHatchery fetch hatchery info from database given UID
 func LoadHatchery(db gorp.SqlExecutor, uid, name string) (*sdk.Hatchery, error) {
-
-	//TODO yesnault
-
-	query := `SELECT id, uid, name, group_id, worker_model_id, type, model_type, ratio_service
-	FROM hatchery
-	WHERE uid = $1 AND name = $2`
-
-	var h sdk.Hatchery
-	var wmID sql.NullInt64
-	err := db.QueryRow(query, uid, name).Scan(&h.ID, &h.UID, &h.Name, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
-	if err != nil {
-		return nil, err
+	var hatchery Hatchery
+	query := `SELECT * FROM hatchery WHERE uid = $1 AND name = $2`
+	if err := db.SelectOne(&hatchery, query, uid, name); err != nil {
+		if err != sql.ErrNoRows {
+			return nil, sdk.WrapError(err, "LoadHatchery> unable to load hachery %s with uid: %s", name, uid)
+		}
+		return nil, sdk.ErrNotFound
 	}
-
-	if wmID.Valid {
-		h.Model.ID = wmID.Int64
-		h.WorkerModelID = wmID.Int64
-	}
-
+	h := sdk.Hatchery(hatchery)
 	return &h, nil
 }
 
 // LoadHatcheryByName fetch hatchery info from database given name
 func LoadHatcheryByName(db gorp.SqlExecutor, name string) (*sdk.Hatchery, error) {
-
-	//TODO yesnault
-
-	query := `SELECT id, uid, name, group_id, worker_model_id, type, model_type, ratio_service
-			FROM hatchery
-			WHERE hatchery.name = $1`
-
-	var h sdk.Hatchery
-	var wmID sql.NullInt64
-	err := db.QueryRow(query, name).Scan(&h.ID, &h.UID, &h.Name, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoHatchery
+	var hatchery Hatchery
+	query := `SELECT * FROM hatchery WHERE name = $1`
+	if err := db.SelectOne(&hatchery, query, name); err != nil {
+		if err != sql.ErrNoRows {
+			return nil, sdk.WrapError(err, "LoadHatcheryByName> unable to load hachery %s", name)
 		}
-		return nil, err
+		return nil, sdk.ErrNotFound
 	}
-
-	if wmID.Valid {
-		h.Model.ID = wmID.Int64
-		h.WorkerModelID = wmID.Int64
-	}
-
+	h := sdk.Hatchery(hatchery)
 	return &h, nil
 }
 
 // LoadHatcheryByNameAndToken fetch hatchery info from database given name and hashed token
 func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.Hatchery, error) {
-	query := `SELECT hatchery.id, hatchery.uid, hatchery.name, hatchery.group_id, hatchery.worker_model_id, hatchery.type, hatchery.model_type, hatchery.ratio_service
-			FROM hatchery
-			LEFT JOIN token ON hatchery.group_id = token.group_id
-			WHERE hatchery.name = $1 AND token.token = $2`
-
-	var h sdk.Hatchery
-	var wmID sql.NullInt64
+	var hatchery Hatchery
 	hasher := sha512.New()
 	hashed := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
-	err := db.QueryRow(query, name, hashed).Scan(&h.ID, &h.UID, &h.Name, &h.GroupID, &wmID, &h.Type, &h.ModelType, &h.RatioService)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoHatchery
+	query := `SELECT hatchery.*	FROM hatchery
+				LEFT JOIN token ON hatchery.group_id = token.group_id
+				WHERE hatchery.name = $1 AND token.token = $2`
+	if err := db.SelectOne(&hatchery, query, name, hashed); err != nil {
+		if err != sql.ErrNoRows {
+			return nil, sdk.WrapError(err, "LoadHatcheryByNameAndToken> unable to load hachery %s", name)
 		}
-		return nil, err
+		return nil, sdk.ErrNoHatchery
 	}
-
-	if wmID.Valid {
-		h.Model.ID = wmID.Int64
-		h.WorkerModelID = wmID.Int64
-	}
-
+	h := sdk.Hatchery(hatchery)
 	return &h, nil
 }
 
@@ -196,24 +164,14 @@ func LoadHatcheriesCountByNodeJobRunID(db gorp.SqlExecutor, wfNodeJobRunID int64
 
 // Update update hatchery
 func Update(db gorp.SqlExecutor, hatch sdk.Hatchery) error {
-
-	//TODO yesnault
-
-	query := `UPDATE hatchery SET name = $1, group_id = $2, uid = $3, type = $4, model_type = $5, ratio_service = $6 WHERE id = $7`
-	res, err := db.Exec(query, hatch.Name, hatch.GroupID, hatch.UID, hatch.Type, hatch.ModelType, hatch.RatioService, hatch.ID)
+	hatchery := Hatchery(hatch)
+	n, err := db.Update(&hatchery)
 	if err != nil {
 		return err
 	}
-
-	n, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
 	if n == 0 {
-		return sdk.ErrNotFound
+		return sdk.ErrNoHatchery
 	}
-
 	return nil
 }
 

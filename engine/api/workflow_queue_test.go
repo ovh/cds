@@ -245,10 +245,9 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent, "", ""))
 
 	ctx.hatchery = &sdk.Hatchery{
-		UID:      tk,
-		LastBeat: time.Now(),
-		Name:     sdk.RandomString(10),
-		GroupID:  ctx.user.Groups[0].ID,
+		UID:     tk,
+		Name:    sdk.RandomString(10),
+		GroupID: ctx.user.Groups[0].ID,
 	}
 
 	err = hatchery.InsertHatchery(api.mustDB(), ctx.hatchery)

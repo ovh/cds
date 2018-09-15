@@ -70,13 +70,9 @@ func Create(h Interface) error {
 		}
 	}()
 
+	// Init call hatchery.Register()
 	if err := h.Init(); err != nil {
 		return fmt.Errorf("Create> Init error: %v", err)
-	}
-
-	// Register the current hatchery to be sure it's authentifed on CDS API before doing any call
-	if err := Register(h); err != nil {
-		return fmt.Errorf("Create> Register error: %v", err)
 	}
 
 	// Call WorkerModel Enabled first

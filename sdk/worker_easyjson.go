@@ -2464,10 +2464,10 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk12(in *jlexer.Lexer, out *Hatchery)
 			out.UID = string(in.String())
 		case "name":
 			out.Name = string(in.String())
-		case "status":
-			out.Status = string(in.String())
 		case "group_id":
 			out.GroupID = int64(in.Int64())
+		case "worker_model_id":
+			out.WorkerModelID = int64(in.Int64())
 		case "model":
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.Model).UnmarshalJSON(data))
@@ -2478,6 +2478,12 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk12(in *jlexer.Lexer, out *Hatchery)
 			out.Uptodate = bool(in.Bool())
 		case "is_shared_infra":
 			out.IsSharedInfra = bool(in.Bool())
+		case "model_type":
+			out.ModelType = string(in.String())
+		case "type":
+			out.Type = string(in.String())
+		case "ratio_service":
+			out.RatioService = int(in.Int())
 		default:
 			in.SkipRecursive()
 		}
@@ -2523,16 +2529,6 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk12(out *jwriter.Writer, in Hatchery
 		out.String(string(in.Name))
 	}
 	{
-		const prefix string = ",\"status\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.String(string(in.Status))
-	}
-	{
 		const prefix string = ",\"group_id\":"
 		if first {
 			first = false
@@ -2541,6 +2537,16 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk12(out *jwriter.Writer, in Hatchery
 			out.RawString(prefix)
 		}
 		out.Int64(int64(in.GroupID))
+	}
+	{
+		const prefix string = ",\"worker_model_id\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.WorkerModelID))
 	}
 	{
 		const prefix string = ",\"model\":"
@@ -2581,6 +2587,36 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk12(out *jwriter.Writer, in Hatchery
 			out.RawString(prefix)
 		}
 		out.Bool(bool(in.IsSharedInfra))
+	}
+	{
+		const prefix string = ",\"model_type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ModelType))
+	}
+	{
+		const prefix string = ",\"type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Type))
+	}
+	{
+		const prefix string = ",\"ratio_service\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int(int(in.RatioService))
 	}
 	out.RawByte('}')
 }
@@ -2666,6 +2702,8 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk19(in *jlexer.Lexer, out *Action) {
 			out.ID = int64(in.Int64())
 		case "name":
 			out.Name = string(in.String())
+		case "step_name":
+			out.StepName = string(in.String())
 		case "type":
 			out.Type = string(in.String())
 		case "description":
@@ -2784,6 +2822,16 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk19(out *jwriter.Writer, in Action) 
 			out.RawString(prefix)
 		}
 		out.String(string(in.Name))
+	}
+	if in.StepName != "" {
+		const prefix string = ",\"step_name\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.StepName))
 	}
 	{
 		const prefix string = ",\"type\":"
