@@ -61,7 +61,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 
 	//4. Registering worker
 	h := sdk.Hatchery{
-		Name:    "test-hatchery",
+		Name:    "test-hatchery-Test_workerCheckingHandler",
 		GroupID: g.ID,
 		UID:     "UUID",
 	}
@@ -146,7 +146,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 
 	//4. Registering worker
 	h := sdk.Hatchery{
-		Name:    "test-hatchery",
+		Name:    "test-hatchery-Test_workerWaitingHandler",
 		GroupID: g.ID,
 		UID:     "UUID",
 	}
