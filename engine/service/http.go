@@ -69,9 +69,8 @@ func Write(w http.ResponseWriter, btes []byte, status int, contentType string) e
 func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 	b, e := json.Marshal(data)
 	if e != nil {
-		return sdk.WrapError(e, "WriteJSON> unable to marshal : %s", e)
+		return sdk.WrapError(e, "WriteJSON> unable to marshal : %v", e)
 	}
-
 	return Write(w, b, status, "application/json")
 }
 
