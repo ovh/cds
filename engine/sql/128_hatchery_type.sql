@@ -10,6 +10,8 @@ ALTER TABLE hatchery
 
 DROP TABLE hatchery_model;
 
+SELECT create_foreign_key('FK_WORKER_MODEL_ID_HATCHERY', 'hatchery', 'worker_model', 'worker_model_id', 'id');
+
 -- +migrate Down
 
 ALTER TABLE hatchery 

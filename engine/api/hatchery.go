@@ -39,7 +39,7 @@ func (api *API) registerHatcheryHandler() service.Handler {
 		if oldH != nil {
 			hatch.ID = oldH.ID
 			hatch.Model.ID = oldH.Model.ID
-			if err := hatchery.Update(tx, hatch); err != nil {
+			if err := hatchery.Update(tx, &hatch); err != nil {
 				return sdk.WrapError(err, "registerHatcheryHandler> Cannot update existing hatchery")
 			}
 		} else {

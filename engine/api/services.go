@@ -32,11 +32,13 @@ func killDeadServices(ctx context.Context, dbFunc func() *gorp.DbMap) {
 				continue
 			}
 			for i := range svcs {
+				log.Info("killDeadServices> Delete dead service: %v", &svcs[i].Name)
 				if err := services.Delete(db, &svcs[i]); err != nil {
 					log.Error("killDeadServices> Unable to find dead services: %v", errdead)
 					continue
 				}
 				if svcs[i].Type == "hatchery" {
+					log.Info("killDeadServices> Delete dead hatchery: %v", &svcs[i].Name)
 					if err := hatchery.DeleteHatcheryByName(db, svcs[i].Name); err != nil {
 						log.Error("HatcheryHeartbeat> Cannot delete hatchery %s: %v", svcs[i].Name, err)
 						continue

@@ -116,6 +116,14 @@ func Create(h Interface) error {
 	// run the starters pool
 	workersStartChan, workerStartResultChan := startWorkerStarters(h)
 
+	// local hatchery, call worker registration
+	if h.Hatchery().Type == "local" {
+		log.Info("Create> Local hatchery created, spawn a register worker")
+		workersStartChan <- workerStarterRequest{
+			registerWorkerModel: &h.Hatchery().Model,
+		}
+	}
+
 	hostname, errh := os.Hostname()
 	if errh != nil {
 		return fmt.Errorf("Create> Cannot retrieve hostname: %s", errh)
@@ -379,7 +387,7 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	}
 
 	// If the model needs registration, don't spawn for now
-	if model.Type != "host" && h.NeedRegistration(&model) {
+	if h.NeedRegistration(&model) {
 		log.Debug("canRunJob> model %s needs registration", model.Name)
 		return false
 	}

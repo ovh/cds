@@ -24,9 +24,44 @@ func InsertHatchery(db gorp.SqlExecutor, hatchery *sdk.Hatchery) error {
 	if errg != nil {
 		return errg
 	}
+	if err := insertOrUpdateWorkerModel(db, hatchery); err != nil {
+		return err
+	}
+	h := Hatchery(*hatchery)
+	if err := db.Insert(&h); err != nil {
+		return err
+	}
+	*hatchery = sdk.Hatchery(h)
+	return nil
+}
 
-	// allow hatchery to not declare any model
-	if hatchery.Type == "local" {
+// Update update hatchery
+func Update(db gorp.SqlExecutor, hatchery *sdk.Hatchery) error {
+	if err := insertOrUpdateWorkerModel(db, hatchery); err != nil {
+		return err
+	}
+	h := Hatchery(*hatchery)
+	n, err := db.Update(&h)
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return sdk.ErrNoHatchery
+	}
+	return nil
+}
+
+func insertOrUpdateWorkerModel(db gorp.SqlExecutor, hatchery *sdk.Hatchery) error {
+	if hatchery.Type != "local" {
+		return nil
+	}
+
+	wm, err := worker.LoadWorkerModelByName(db, hatchery.Name)
+	if err != nil && err != sdk.ErrNoWorkerModel {
+		return sdk.WrapError(err, "registerHatcheryHandler> Cannot load worker model for local hatchery")
+	}
+
+	if wm == nil { // create worker model
 		//only local hatcheries declare model on registration
 		hatchery.Model.CreatedBy = sdk.User{Fullname: "Hatchery", Username: hatchery.Name}
 		hatchery.Model.Type = string(sdk.HostProcess)
@@ -36,20 +71,17 @@ func InsertHatchery(db gorp.SqlExecutor, hatchery *sdk.Hatchery) error {
 			Image: hatchery.Model.Name,
 			Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
 		}
-
 		if err := worker.InsertWorkerModel(db, &hatchery.Model); err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
 			return sdk.ErrModelNameExist
 		} else if err != nil {
 			return err
 		}
 		hatchery.WorkerModelID = hatchery.Model.ID
+		return nil
 	}
-
-	h := Hatchery(*hatchery)
-	if err := db.Insert(&h); err != nil {
-		return err
-	}
-	*hatchery = sdk.Hatchery(h)
+	// update worker model
+	hatchery.Model = *wm
+	hatchery.WorkerModelID = wm.ID
 	return nil
 }
 
@@ -59,14 +91,17 @@ func DeleteHatcheryByName(db gorp.SqlExecutor, name string) error {
 	if err != nil {
 		return err
 	}
+
+	query := `DELETE FROM hatchery WHERE id = $1`
+	if _, err = db.Exec(query, hatchery.ID); err != nil {
+		return err
+	}
 	if hatchery.WorkerModelID > 0 {
 		if err := worker.DeleteWorkerModel(db, hatchery.WorkerModelID); err != nil {
 			return err
 		}
 	}
-	query := `DELETE FROM hatchery WHERE id = $1`
-	_, err = db.Exec(query, hatchery.ID)
-	return err
+	return nil
 }
 
 // LoadHatchery fetch hatchery info from database given UID
@@ -160,19 +195,6 @@ func LoadHatcheriesCountByNodeJobRunID(db gorp.SqlExecutor, wfNodeJobRunID int64
 		)
 	`
 	return db.SelectInt(query, wfNodeJobRunID, group.SharedInfraGroup.ID)
-}
-
-// Update update hatchery
-func Update(db gorp.SqlExecutor, hatch sdk.Hatchery) error {
-	hatchery := Hatchery(hatch)
-	n, err := db.Update(&hatchery)
-	if err != nil {
-		return err
-	}
-	if n == 0 {
-		return sdk.ErrNoHatchery
-	}
-	return nil
 }
 
 func generateID() (string, error) {
