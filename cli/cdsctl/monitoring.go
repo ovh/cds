@@ -29,9 +29,17 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 		}
 	}()
 
+	if err := termui.Init(); err != nil {
+		return nil, err
+	}
+	defer termui.Close()
+
 	ui := newTermui()
+	ui.init()
+	ui.render()
+
 	go func() {
-		for range time.NewTicker(time.Second).C {
+		for range time.NewTicker(2 * time.Second).C {
 			if err := ui.loadData(); err != nil {
 				panic(err)
 			}
@@ -39,24 +47,17 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 		}
 	}()
 
-	ui.init()
-	ui.draw()
-
-	defer termui.Close()
 	termui.Loop()
 	return nil, nil
 }
 
 func newTermui() *Termui {
-	return &Termui{
-		baseURL: "http://cds.ui/",
-	}
+	return &Termui{baseURL: "http://cds.ui/"}
 }
 
 // Termui wrapper designed for dashboard creation
 type Termui struct {
 	header, times *termui.Par
-	msg           string
 
 	selected         string
 	queueTabSelected int
@@ -129,12 +130,9 @@ func (ui *Termui) loadData() error {
 		return err
 	}
 
-	start = time.Now()
-	ui.workflowNodeJobRun, err = client.QueueWorkflowNodeJobRun(ui.statusSelected...)
-	if err != nil {
+	if err := ui.loadQueue(); err != nil {
 		return err
 	}
-	ui.elapsedWorkflowNodeJobRun = time.Since(start)
 
 	start = time.Now()
 	ui.workflowNodeJobRunCount, err = client.QueueCountWorkflowNodeJobRun(nil, nil, "", nil)
@@ -146,21 +144,38 @@ func (ui *Termui) loadData() error {
 	return nil
 }
 
+func (ui *Termui) loadQueue() error {
+	switch ui.queueTabSelected {
+	case 0:
+		ui.statusSelected = []sdk.Status{sdk.StatusWaiting}
+	case 1:
+		ui.statusSelected = []sdk.Status{sdk.StatusBuilding}
+	case 2:
+		ui.statusSelected = []sdk.Status{sdk.StatusWaiting, sdk.StatusBuilding}
+	}
+
+	var err error
+
+	start := time.Now()
+	ui.workflowNodeJobRun, err = client.QueueWorkflowNodeJobRun(ui.statusSelected...)
+	if err != nil {
+		return err
+	}
+	ui.elapsedWorkflowNodeJobRun = time.Since(start)
+
+	return nil
+}
+
 // Constants for each view of cds ui
 const (
 	QueueSelected = "queue"
 )
 
 func (ui *Termui) init() {
-	if err := termui.Init(); err != nil {
-		panic(err)
-	}
-
-	termui.Handle("/timer/1s", func(e termui.Event) { ui.draw() })
+	// init termui handlers
+	termui.Handle("/timer/1s", func(e termui.Event) {})
 	termui.Handle("/sys/kbd/q", func(termui.Event) { termui.StopLoop() })
-	termui.Handle("/sys/kbd", func(e termui.Event) {
-		ui.msg = fmt.Sprintf("No command for %v", e)
-	})
+	termui.Handle("/sys/kbd", func(e termui.Event) { /*ui.msg = fmt.Sprintf("No command for %v", e)*/ })
 	termui.Handle("/sys/kbd/<down>", func(e termui.Event) { ui.moveDown() })
 	termui.Handle("/sys/kbd/<up>", func(e termui.Event) { ui.moveUp() })
 	termui.Handle("/sys/kbd/<left>", func(e termui.Event) { ui.moveLeft() })
@@ -173,44 +188,6 @@ func (ui *Termui) init() {
 
 	ui.header = newPar()
 	ui.times = newPar()
-	go ui.showMonitoring()
-}
-
-func (ui *Termui) draw() {
-	checking, checkingColor := statusShort(sdk.StatusChecking.String())
-	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
-	building, buildingColor := statusShort(sdk.StatusBuilding.String())
-	success, successColor := statusShort(sdk.StatusSuccess.String())
-	fail, failColor := statusShort(sdk.StatusFail.String())
-	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
-	ui.header.Text = fmt.Sprintf("[CDS | (q)uit | Legend: ](fg-cyan) [Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s)",
-		checking, checkingColor,
-		waiting, waitingColor,
-		building, buildingColor,
-		success, successColor,
-		fail, failColor,
-		disabled, disabledColor)
-	ui.times.Text = fmt.Sprintf(ui.msg)
-	termui.Body.Align()
-	termui.Render(termui.Body)
-}
-
-func newPar() *termui.Par {
-	p := termui.NewPar("")
-	p.Height = 1
-	p.TextFgColor = termui.ColorWhite
-	p.BorderLabel = ""
-	p.BorderFg = termui.ColorCyan
-	p.Border = false
-	return p
-}
-
-const (
-	heightBottom int = 25
-)
-
-func (ui *Termui) showMonitoring() {
-	termui.Body.Rows = nil
 
 	ui.selected = QueueSelected
 
@@ -244,6 +221,7 @@ func (ui *Termui) showMonitoring() {
 	ui.statusServices.BorderLeft = false
 	ui.statusServices.BorderRight = false
 
+	termui.Body.Rows = nil
 	termui.Body.AddRows(
 		termui.NewRow(termui.NewCol(12, 0, ui.header)),
 		termui.NewRow(termui.NewCol(12, 0, ui.times)),
@@ -253,17 +231,55 @@ func (ui *Termui) showMonitoring() {
 		termui.NewCol(7, 0, ui.statusServices),
 		termui.NewCol(5, 0, ui.statusHatcheriesWorkers),
 	))
-
-	termui.Render()
 }
 
+func newPar() *termui.Par {
+	p := termui.NewPar("")
+	p.Height = 1
+	p.TextFgColor = termui.ColorWhite
+	p.BorderLabel = ""
+	p.BorderFg = termui.ColorCyan
+	p.Border = false
+	return p
+}
+
+const (
+	heightBottom int = 25
+)
+
 func (ui *Termui) render() {
-	var a, b, c string
+	checking, checkingColor := statusShort(sdk.StatusChecking.String())
+	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
+	building, buildingColor := statusShort(sdk.StatusBuilding.String())
+	success, successColor := statusShort(sdk.StatusSuccess.String())
+	fail, failColor := statusShort(sdk.StatusFail.String())
+	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
+	ui.header.Text = fmt.Sprintf("[CDS | (q)uit | Legend: ](fg-cyan)[Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s)",
+		checking, checkingColor,
+		waiting, waitingColor,
+		building, buildingColor,
+		success, successColor,
+		fail, failColor,
+		disabled, disabledColor)
+
+	ui.times.Text = fmt.Sprintf(
+		"[count queue wf %s](fg-cyan,bg-default) | [queue wf %s](fg-cyan,bg-default) | [workers %s](fg-cyan,bg-default) | [wModels %s](fg-cyan,bg-default) | [status %s](fg-cyan,bg-default)",
+		sdk.Round(ui.elapsedWorkflowNodeJobRunCount, time.Millisecond).String(),
+		sdk.Round(ui.elapsedWorkflowNodeJobRun, time.Millisecond).String(),
+		sdk.Round(ui.elapsedWorkers, time.Millisecond).String(),
+		sdk.Round(ui.elapsedWorkerModels, time.Millisecond).String(),
+		sdk.Round(ui.elapsedStatus, time.Millisecond).String(),
+	)
+	//ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+
 	ui.monitoringColorSelected()
-	a = ui.updateQueue(ui.baseURL)
-	b = ui.updateQueueWorkers()
-	c = ui.updateStatus()
-	ui.msg = fmt.Sprintf("%s | %s | %s", a, b, c)
+
+	ui.updateQueue(ui.baseURL)
+	ui.computeStatusHatcheriesWorkers(ui.workers)
+	ui.updateStatus()
+
+	termui.Body.Align()
+	termui.Render(termui.Body)
 	termui.Render()
 }
 
@@ -286,11 +302,7 @@ func (ui *Termui) moveUp() {
 func (ui *Termui) moveLeft() {
 	switch ui.selected {
 	case QueueSelected:
-		if 0 < ui.queueTabSelected {
-			ui.queueTabSelected--
-		} else {
-			ui.queueTabSelected = 2
-		}
+		ui.decrementQueueFilter()
 	}
 	ui.render()
 }
@@ -298,13 +310,31 @@ func (ui *Termui) moveLeft() {
 func (ui *Termui) moveRight() {
 	switch ui.selected {
 	case QueueSelected:
-		if ui.queueTabSelected < 2 {
-			ui.queueTabSelected++
-		} else {
-			ui.queueTabSelected = 0
-		}
+		ui.incrementQueueFilter()
 	}
 	ui.render()
+}
+
+func (ui *Termui) incrementQueueFilter() {
+	if ui.queueTabSelected < 2 {
+		ui.queueTabSelected++
+	} else {
+		ui.queueTabSelected = 0
+	}
+	if err := ui.loadQueue(); err != nil {
+		panic(err)
+	}
+}
+
+func (ui *Termui) decrementQueueFilter() {
+	if 0 < ui.queueTabSelected {
+		ui.queueTabSelected--
+	} else {
+		ui.queueTabSelected = 2
+	}
+	if err := ui.loadQueue(); err != nil {
+		panic(err)
+	}
 }
 
 func (ui *Termui) monitoringColorSelected() {
@@ -320,11 +350,7 @@ func (ui *Termui) monitoringColorSelected() {
 	termui.Render(ui.queue, ui.statusHatcheriesWorkers, ui.statusServices)
 }
 
-func (ui *Termui) updateStatus() string {
-	//ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
-	msg := fmt.Sprintf("[status %s](fg-cyan,bg-default)",
-		sdk.Round(ui.elapsedStatus, time.Millisecond).String())
-
+func (ui *Termui) updateStatus() {
 	items := []string{}
 	if ui.status != nil {
 		for _, l := range ui.status.Lines {
@@ -338,17 +364,6 @@ func (ui *Termui) updateStatus() string {
 		}
 	}
 	ui.statusServices.Items = items
-	return msg
-}
-
-func (ui *Termui) updateQueueWorkers() string {
-	msg := fmt.Sprintf("[workers %s](fg-cyan,bg-default)",
-		sdk.Round(ui.elapsedWorkers, time.Millisecond).String())
-
-	ui.computeStatusHatcheriesWorkers(ui.workers)
-
-	msga := ui.computeStatusWorkerModels(ui.workers)
-	return msg + msga
 }
 
 func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
@@ -415,15 +430,7 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
 
-func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) string {
-	return fmt.Sprintf(" | [wModels %s](fg-cyan,bg-default)",
-		sdk.Round(ui.elapsedWorkerModels, time.Millisecond).String())
-}
-
-func (ui *Termui) updateQueue(baseURL string) string {
-	msg := fmt.Sprintf("[queue wf %s](fg-cyan,bg-default)",
-		sdk.Round(ui.elapsedWorkflowNodeJobRun, time.Millisecond).String())
-
+func (ui *Termui) updateQueue(baseURL string) {
 	var maxQueued time.Duration
 
 	items := []string{
@@ -441,9 +448,6 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		idx++
 	}
 
-	msg = fmt.Sprintf("[count queue wf %s](fg-cyan,bg-default) | %s",
-		sdk.Round(ui.elapsedWorkflowNodeJobRunCount, time.Millisecond).String(), msg)
-
 	for _, job := range ui.workflowNodeJobRun {
 		item, maxQueued = ui.updateQueueJob(idx, maxQueued, job.ID, true, job.Parameters,
 			job.Job, job.Queued, job.BookedBy, baseURL, job.Status)
@@ -452,19 +456,9 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	}
 	ui.queue.Items = items
 
-	switch ui.queueTabSelected {
-	case 0:
-		ui.statusSelected = []sdk.Status{sdk.StatusWaiting}
-	case 1:
-		ui.statusSelected = []sdk.Status{sdk.StatusBuilding}
-	case 2:
-		ui.statusSelected = []sdk.Status{sdk.StatusWaiting, sdk.StatusBuilding}
-	}
-
 	ui.queue.BorderLabel = fmt.Sprintf("Queue(%s):%d - Max Waiting:%s ", fmt.Sprintf("%v", ui.statusSelected),
 		ui.workflowNodeJobRunCount.Count+int64(len(ui.pipelineBuildJob)),
 		sdk.Round(maxQueued, time.Second).String())
-	return msg
 }
 
 func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, executedJob sdk.ExecutedJob, queued time.Time, bookedBy sdk.Service, baseURL, status string) (string, time.Duration) {
