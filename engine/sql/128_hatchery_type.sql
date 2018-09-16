@@ -12,6 +12,8 @@ DROP TABLE hatchery_model;
 
 SELECT create_foreign_key('FK_WORKER_MODEL_ID_HATCHERY', 'hatchery', 'worker_model', 'worker_model_id', 'id');
 
+ALTER TABLE workflow_node_run_job ADD COLUMN contains_service BOOLEAN DEFAULT false;
+
 -- +migrate Down
 
 ALTER TABLE hatchery 
@@ -25,3 +27,5 @@ ALTER TABLE hatchery
 CREATE TABLE IF NOT EXISTS "hatchery_model" (hatchery_id BIGINT, worker_model_id BIGINT, PRIMARY KEY(hatchery_id, worker_model_id));
 select create_foreign_key('FK_HATCHERY_MODEL_HATCHERY_ID', 'hatchery_model', 'hatchery', 'hatchery_id', 'id');
 select create_foreign_key('FK_HATCHERY_MODEL_WORKER_MODEL_ID', 'hatchery_model', 'worker_model', 'worker_model_id', 'id');
+
+ALTER TABLE workflow_node_run_job DROP COLUMN contains_service;

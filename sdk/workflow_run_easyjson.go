@@ -201,6 +201,8 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *WorkflowNod
 				}
 				in.Delim('}')
 			}
+		case "contains_service":
+			out.ContainsService = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -457,6 +459,16 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in WorkflowNo
 			}
 			out.RawByte('}')
 		}
+	}
+	if in.ContainsService {
+		const prefix string = ",\"contains_service\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.ContainsService))
 	}
 	out.RawByte('}')
 }

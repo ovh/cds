@@ -10,11 +10,14 @@ import (
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
-func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) (sdk.RequirementList, *sdk.MultiError) {
+// getNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
+// one requirement is of type "Service"
+func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) (sdk.RequirementList, bool, *sdk.MultiError) {
 	requirements := sdk.RequirementList{}
 	tmp := map[string]string{}
 	errm := &sdk.MultiError{}
 
+	var containsService bool
 	for _, v := range run.BuildParameters {
 		tmp[v.Name] = v.Value
 	}
@@ -31,12 +34,15 @@ func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Workflow
 			continue
 		}
 		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
+		if v.Type == sdk.ServiceRequirement {
+			containsService = true
+		}
 	}
 
 	if errm.IsEmpty() {
-		return requirements, nil
+		return requirements, containsService, nil
 	}
-	return requirements, errm
+	return requirements, containsService, errm
 }
 
 func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.Parameter {

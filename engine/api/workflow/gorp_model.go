@@ -89,6 +89,7 @@ type JobRun struct {
 	ExecGroups             sql.NullString `db:"exec_groups"`
 	PlatformPluginBinaries sql.NullString `db:"platform_plugin_binaries"`
 	BookedBy               sdk.Hatchery   `db:"-"`
+	ContainsService        sql.NullBool   `db:"contains_service"`
 	Header                 sql.NullString `db:"header"`
 }
 

@@ -352,7 +352,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 
 		_, next = observability.Span(ctx, "workflow.getNodeJobRunRequirements")
-		jobRequirements, errReq := getNodeJobRunRequirements(db, *job, run)
+		jobRequirements, containsService, errReq := getNodeJobRunRequirements(db, *job, run)
 		next()
 
 		if errReq != nil {
@@ -381,7 +381,8 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			Job: sdk.ExecutedJob{
 				Job: *job,
 			},
-			Header: run.Header,
+			Header:          run.Header,
+			ContainsService: containsService,
 		}
 		wjob.Job.Job.Action.Requirements = jobRequirements // Set the interpolated requirements on the job run only
 

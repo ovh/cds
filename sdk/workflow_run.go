@@ -291,6 +291,7 @@ type WorkflowNodeJobRun struct {
 	ExecGroups             []Group            `json:"exec_groups"`
 	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries,omitempty"`
 	Header                 WorkflowRunHeaders `json:"header,omitempty"`
+	ContainsService        bool               `json:"contains_service,omitempty"`
 }
 
 // /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\
