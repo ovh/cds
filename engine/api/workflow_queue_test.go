@@ -202,7 +202,6 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 
 	//Register the worker
 	testRegisterHatchery(t, api, router, ctx)
-
 	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
