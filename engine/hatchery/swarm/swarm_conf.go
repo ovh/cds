@@ -26,10 +26,7 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	h.hatch = &sdk.Hatchery{
-		Name:      h.Configuration().Name,
-		Version:   sdk.VERSION,
-		ModelType: h.ModelType(),
-		Type:      "swarm",
+		RatioService: &h.Config.RatioService,
 	}
 
 	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)

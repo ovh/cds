@@ -39,13 +39,7 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.hatch = &sdk.Hatchery{
-		Name:      h.Configuration().Name,
-		Version:   sdk.VERSION,
-		ModelType: h.ModelType(),
-		Type:      "vsphere",
-	}
-
+	h.hatch = &sdk.Hatchery{}
 	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
 	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
@@ -184,7 +178,12 @@ func (h *HatcheryVSphere) ID() int64 {
 	if h.hatch == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcheryVSphere) Service() *sdk.Service {
+	return h.CDSClient().GetService()
 }
 
 func (h *HatcheryVSphere) main() {

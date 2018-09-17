@@ -10,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
@@ -120,6 +121,10 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 		srv, err = services.FindByHash(db, hash)
 		if err != nil {
 			return nil, fmt.Errorf("cannot load service: %s", err)
+		}
+		if srv.GroupID != nil && group.SharedInfraGroup.ID == *srv.GroupID {
+			srv.IsSharedInfra = true
+			srv.Uptodate = srv.Version == sdk.VERSION
 		}
 		store.Set(key, srv)
 	}

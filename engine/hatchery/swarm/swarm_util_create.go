@@ -170,11 +170,11 @@ func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dock
 	for _, r := range requirements {
 		switch r.Type {
 		case sdk.ModelRequirement:
-			if err := dockerOpts.computeDockerOptsOnModelRequirement(h.hatch.IsSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnModelRequirement(h.CDSClient().GetService().IsSharedInfra, r); err != nil {
 				return nil, err
 			}
 		case sdk.VolumeRequirement:
-			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(h.hatch.IsSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(h.CDSClient().GetService().IsSharedInfra, r); err != nil {
 				return nil, err
 			}
 		}

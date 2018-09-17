@@ -104,13 +104,7 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		}
 	}
 
-	h.hatch = &sdk.Hatchery{
-		Name:      h.Configuration().Name,
-		Version:   sdk.VERSION,
-		ModelType: h.ModelType(),
-		Type:      "kubernetes",
-	}
-
+	h.hatch = &sdk.Hatchery{}
 	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
 	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
@@ -190,7 +184,12 @@ func (h *HatcheryKubernetes) ID() int64 {
 	if h.hatch == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcheryKubernetes) Service() *sdk.Service {
+	return h.CDSClient().GetService()
 }
 
 //Hatchery returns hatchery instance
@@ -257,8 +256,8 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
 		Model:             spawnArgs.Model.ID,
-		Hatchery:          h.hatch.ID,
-		HatcheryName:      h.hatch.Name,
+		Hatchery:          h.ID(),
+		HatcheryName:      h.Service().Name,
 		TTL:               h.Config.WorkerTTL,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,

@@ -52,6 +52,8 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 
 		srv.GroupID = &t.GroupID
+		srv.IsSharedInfra = srv.GroupID == &group.SharedInfraGroup.ID
+		srv.Uptodate = srv.Version == sdk.VERSION
 
 		//Insert or update the service
 		tx, err := api.mustDB().Begin()

@@ -15,6 +15,9 @@ type Service struct {
 	Token            string           `json:"token" db:"-"`
 	GroupID          *int64           `json:"group_id" db:"group_id"`
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"-" cli:"-"`
+	IsSharedInfra    bool             `json:"is_shared_infra" db:"-"`
+	Version          string           `json:"version" db:"-"`
+	Uptodate         bool             `json:"up_to_date" db:"-"`
 }
 
 // ExternalService represents an external service

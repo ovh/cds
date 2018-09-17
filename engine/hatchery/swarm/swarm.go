@@ -320,8 +320,8 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		Name:              name,
 		Model:             spawnArgs.Model.ID,
 		TTL:               h.Config.WorkerTTL,
-		Hatchery:          h.hatch.ID,
-		HatcheryName:      h.hatch.Name,
+		Hatchery:          h.ID(),
+		HatcheryName:      h.Service().Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
@@ -574,7 +574,12 @@ func (h *HatcherySwarm) ID() int64 {
 	if h.hatch == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcherySwarm) Service() *sdk.Service {
+	return h.CDSClient().GetService()
 }
 
 func (h *HatcherySwarm) routines(ctx context.Context) {

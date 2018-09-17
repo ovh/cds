@@ -25,7 +25,7 @@ func isSharedInfraGroup(groupsID []int64) bool {
 }
 
 // CountNodeJobRunQueue count all workflow_node_run_job accessible
-func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hatcheryRatioService *int64, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
+func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hatcheryRatioService *int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
 	c := sdk.WorkflowNodeJobRunCount{}
 
 	queue, err := LoadNodeJobRunQueue(ctx, db, store, hatcheryRatioService, permission.PermissionRead, groupsID, usr, since, until, nil, statuses...)
@@ -44,7 +44,7 @@ func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.
 }
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hatcheryRatioService *int64, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hatcheryRatioService *int, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := observability.Span(ctx, "LoadNodeJobRunQueue")
 	defer end()
 	if since == nil {
@@ -279,7 +279,7 @@ func keyBookJob(id int64) string {
 }
 
 func getHatcheryInfo(store cache.Store, j *JobRun) {
-	h := sdk.Hatchery{}
+	h := sdk.Service{}
 	if store.Get(keyBookJob(j.ID), &h) {
 		j.BookedBy = h
 	}

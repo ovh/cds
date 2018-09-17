@@ -289,7 +289,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
 	if status != sdk.StatusWaiting.String() {
 		k := keyBookJob(jobID)
-		h := sdk.Hatchery{}
+		h := sdk.Service{}
 		if store.Get(k, &h) {
 			return sdk.WrapError(sdk.ErrAlreadyTaken, "checkStatusWaiting> job %d is not waiting status and was booked by hatchery %d. Current status:%s", jobID, h.ID, status)
 		}
@@ -505,7 +505,7 @@ func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Se
 //FreeNodeJobRun  Free a job for a hatchery
 func FreeNodeJobRun(store cache.Store, id int64) error {
 	k := keyBookJob(id)
-	h := sdk.Hatchery{}
+	h := sdk.Service{}
 	if store.Get(k, &h) {
 		// job not already booked, book it for 2 min
 		store.Delete(k)

@@ -83,6 +83,7 @@ type Interface interface {
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() []string
 	Hatchery() *sdk.Hatchery
+	Service() *sdk.Service
 	CDSClient() cdsclient.Interface
 	Configuration() CommonConfiguration
 	ModelType() string

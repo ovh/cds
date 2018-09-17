@@ -681,7 +681,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 func (api *API) countWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		since, until, _ := getSinceUntilLimitHeader(ctx, w, r)
+		since, until, _, ratioService := getSinceUntilLimitHeader(ctx, w, r)
 		groupsID := []int64{}
 		usr := getUser(ctx)
 		for _, g := range usr.Groups {
@@ -691,8 +691,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		// TODO yesnault get ratioService
-		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, nil, groupsID, usr, &since, &until)
+		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, ratioService, groupsID, usr, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
@@ -703,7 +702,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 
 func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		since, until, limit := getSinceUntilLimitHeader(ctx, w, r)
+		since, until, limit, ratioService := getSinceUntilLimitHeader(ctx, w, r)
 
 		status, err := QueryStrings(r, "status")
 		if err != nil {
@@ -726,9 +725,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		// TODO yesnault get ratioService
-
-		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, nil, permissions, groupsID, usr, &since, &until, &limit, status...)
+		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, ratioService, permissions, groupsID, usr, &since, &until, &limit, status...)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
@@ -737,7 +734,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	}
 }
 
-func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *http.Request) (time.Time, time.Time, int) {
+func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *http.Request) (time.Time, time.Time, int, *int) {
 	sinceHeader := r.Header.Get("If-Modified-Since")
 	since := time.Unix(0, 0)
 	if sinceHeader != "" {
@@ -756,7 +753,14 @@ func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *htt
 		limit, _ = strconv.Atoi(limitHeader)
 	}
 
-	return since, until, limit
+	ratioServiceHeader := r.Header.Get("X-CDS-Ratio-Service")
+	var ratioService *int
+	if ratioServiceHeader != "" {
+		iratioService, _ := strconv.Atoi(ratioServiceHeader)
+		ratioService = &iratioService
+	}
+
+	return since, until, limit, ratioService
 }
 
 func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {

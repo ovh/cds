@@ -55,13 +55,7 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.hatch = &sdk.Hatchery{
-		Name:      h.Configuration().Name,
-		Version:   sdk.VERSION,
-		ModelType: h.ModelType(),
-		Type:      "openstack",
-	}
-
+	h.hatch = &sdk.Hatchery{}
 	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
 	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
@@ -141,7 +135,12 @@ func (h *HatcheryOpenstack) ID() int64 {
 	if h.hatch == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcheryOpenstack) Service() *sdk.Service {
+	return h.CDSClient().GetService()
 }
 
 //Hatchery returns hatchery instance
@@ -268,7 +267,7 @@ func (h *HatcheryOpenstack) killAwolServers() {
 		// Delete workers, if not identified by CDS API
 		// Wait for 6 minutes, to avoid killing worker babies
 		log.Debug("killAwolServers> server %s status: %s last update: %s toDeleteKilled:%t inWorkersList:%t", s.Name, s.Status, time.Since(s.Updated), toDeleteKilled, inWorkersList)
-		if isWorker && (workerHatcheryName == "" || workerHatcheryName == h.Hatchery().Name) &&
+		if isWorker && (workerHatcheryName == "" || workerHatcheryName == h.Service().Name) &&
 			(s.Status == "SHUTOFF" || toDeleteKilled || (!inWorkersList && time.Since(s.Updated) > 6*time.Minute)) {
 
 			// if it's was a worker model for registration
@@ -320,7 +319,7 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(workerModelName, workerM
 			"worker_model_name":          workerModelName,
 			"model":                      model,
 			"flavor":                     flavor,
-			"created_by":                 "cdsHatchery_" + h.Hatchery().Name,
+			"created_by":                 "cdsHatchery_" + h.Service().Name,
 			"worker_model_last_modified": workerModelNameLastModified,
 		},
 	}).ExtractImageID()

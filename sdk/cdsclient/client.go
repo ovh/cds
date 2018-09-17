@@ -19,6 +19,7 @@ type client struct {
 	HTTPClient HTTPClient
 	config     Config
 	name       string
+	service    *sdk.Service
 }
 
 // New returns a client from a config struct

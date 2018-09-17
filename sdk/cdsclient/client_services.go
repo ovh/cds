@@ -2,9 +2,15 @@ package cdsclient
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
+
+func (c *client) GetService() *sdk.Service {
+	return c.service
+}
 
 func (c *client) ServiceRegister(s sdk.Service) (string, error) {
 	code, err := c.PostJSON("/services/register", &s, &s)
@@ -18,6 +24,12 @@ func (c *client) ServiceRegister(s sdk.Service) (string, error) {
 	}
 	c.isService = true
 	c.config.Hash = s.Hash
+	c.service = &s
+
+	if !s.Uptodate {
+		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s %s %s -=-=-=-=-",
+			sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+	}
 
 	return s.Hash, nil
 }

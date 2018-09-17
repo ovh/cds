@@ -40,9 +40,10 @@ func init() {
 
 // WithTags returns a context with opencenstus tags
 func WithTags(ctx context.Context, h Interface) context.Context {
+	//TODO yesnault : check difference ServiceName -> h.Service().Name()
 	ctx, _ = tag.New(ctx,
 		tag.Upsert(TagHatchery, h.ServiceName()),
-		tag.Upsert(TagHatcheryName, h.Hatchery().Name),
+		tag.Upsert(TagHatcheryName, h.Service().Name),
 	)
 	return ctx
 }
@@ -105,7 +106,7 @@ func Create(h Interface) error {
 
 	sdk.GoRoutine("queuePolling",
 		func() {
-			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, nil); err != nil {
+			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, h.Hatchery().RatioService, nil); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 				cancel()
 			}
@@ -193,7 +194,7 @@ func Create(h Interface) error {
 
 			//Check if hatchery if able to start a new worker
 			if !checkCapacities(h) {
-				log.Info("hatchery %s is not able to provision new worker", h.Hatchery().Name)
+				log.Info("hatchery %s is not able to provision new worker", h.Service().Name)
 				continue
 			}
 
@@ -294,7 +295,7 @@ func Create(h Interface) error {
 
 			//Check if hatchery if able to start a new worker
 			if !checkCapacities(h) {
-				log.Info("hatchery %s is not able to provision new worker", h.Hatchery().Name)
+				log.Info("hatchery %s is not able to provision new worker", h.Service().Name)
 				endTrace("no capacities")
 				continue
 			}
@@ -385,7 +386,7 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	}
 
 	// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
-	if model.NbSpawnErr > 5 && h.Hatchery().GroupID != model.ID {
+	if model.NbSpawnErr > 5 && *h.Service().GroupID != model.ID {
 		log.Warning("canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
 	}

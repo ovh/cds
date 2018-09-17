@@ -49,7 +49,7 @@ func GetPipelineBuildJobByPipelineBuildID(db gorp.SqlExecutor, store cache.Store
 		if err := pbJobsGorp[i].PostGet(db); err != nil {
 			return nil, err
 		}
-		h := sdk.Hatchery{}
+		h := sdk.Service{}
 		if store.Get(keyBookJob(pbJobsGorp[i].ID), &h) {
 			pbJobsGorp[i].BookedBy = h
 		}
@@ -71,7 +71,7 @@ func GetPipelineBuildJobForUpdate(db gorp.SqlExecutor, store cache.Store, id int
 		}
 		return nil, sdk.WrapError(err, "GetPipelineBuildJobForUpdate> Unable to get pipeline_build_job for update")
 	}
-	h := sdk.Hatchery{}
+	h := sdk.Service{}
 	if store.Get(keyBookJob(pbJobGorp.ID), &h) {
 		pbJobGorp.BookedBy = h
 	}
@@ -89,7 +89,7 @@ func GetPipelineBuildJob(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk
 	`, id); err != nil {
 		return nil, err
 	}
-	h := sdk.Hatchery{}
+	h := sdk.Service{}
 	if store.Get(keyBookJob(pbJobGorp.ID), &h) {
 		pbJobGorp.BookedBy = h
 	}
@@ -111,7 +111,7 @@ func LoadWaitingQueue(db gorp.SqlExecutor, store cache.Store) ([]sdk.PipelineBui
 		if err := pbJobsGorp[i].PostGet(db); err != nil {
 			return nil, err
 		}
-		h := sdk.Hatchery{}
+		h := sdk.Service{}
 		if store.Get(keyBookJob(pbJobsGorp[i].ID), &h) {
 			pbJobsGorp[i].BookedBy = h
 		}
@@ -145,7 +145,7 @@ func LoadGroupWaitingQueue(db gorp.SqlExecutor, store cache.Store, groupID int64
 		if err := pbJobsGorp[i].PostGet(db); err != nil {
 			return nil, err
 		}
-		h := sdk.Hatchery{}
+		h := sdk.Service{}
 		if store.Get(keyBookJob(pbJobsGorp[i].ID), &h) {
 			pbJobsGorp[i].BookedBy = h
 		}
@@ -197,7 +197,7 @@ func TakePipelineBuildJob(db gorp.SqlExecutor, store cache.Store, pbJobID int64,
 	}
 	if pbJob.Status != sdk.StatusWaiting.String() {
 		k := keyBookJob(pbJobID)
-		h := sdk.Hatchery{}
+		h := sdk.Service{}
 		if store.Get(k, &h) {
 			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status and was booked by hatchery %d. Current status:%s", pbJobID, h.ID, pbJob.Status)
 		}

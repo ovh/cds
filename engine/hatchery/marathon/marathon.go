@@ -48,13 +48,7 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.hatch = &sdk.Hatchery{
-		Name:      h.Configuration().Name,
-		Version:   sdk.VERSION,
-		ModelType: h.ModelType(),
-		Type:      "marathon",
-	}
-
+	h.hatch = &sdk.Hatchery{}
 	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
 	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
@@ -147,7 +141,12 @@ func (h *HatcheryMarathon) ID() int64 {
 	if h.hatch == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcheryMarathon) Service() *sdk.Service {
+	return h.CDSClient().GetService()
 }
 
 //Hatchery returns hatchery instance
@@ -238,8 +237,8 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Name:              workerName,
 		TTL:               h.Config.WorkerTTL,
 		Model:             spawnArgs.Model.ID,
-		Hatchery:          h.hatch.ID,
-		HatcheryName:      h.hatch.Name,
+		Hatchery:          h.ID(),
+		HatcheryName:      h.Service().Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,

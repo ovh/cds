@@ -104,7 +104,12 @@ func (h *HatcheryLocal) ID() int64 {
 	if h.hatch == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcheryLocal) Service() *sdk.Service {
+	return h.CDSClient().GetService()
 }
 
 //Hatchery returns hatchery instance
@@ -114,31 +119,20 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 
 // Serve start the hatchery server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
-	req, err := h.CDSClient().Requirements()
-	if err != nil {
-		return fmt.Errorf("Cannot fetch requirements: %v", err)
-	}
 
-	capa, err := checkCapabilities(req)
-	if err != nil {
-		return fmt.Errorf("Cannot check local capabilities: %v", err)
-	}
+	// TODO yesnault
 
-	h.hatch = &sdk.Hatchery{
-		Name: h.Name,
-		Model: sdk.Model{
-			Name: h.Name,
-			Type: sdk.HostProcess,
-			ModelVirtualMachine: sdk.ModelVirtualMachine{
-				Image: h.Name,
-			},
-			RegisteredCapabilities: capa,
-			Provision:              int64(h.Config.NbProvision),
-		},
-		Version:   sdk.VERSION,
-		ModelType: h.ModelType(),
-		Type:      "local",
-	}
+	// req, err := h.CDSClient().Requirements()
+	// if err != nil {
+	// 	return fmt.Errorf("Cannot fetch requirements: %v", err)
+	// }
+
+	// capa, err := checkCapabilities(req)
+	// if err != nil {
+	// 	return fmt.Errorf("Cannot check local capabilities: %v", err)
+	// }
+
+	h.hatch = &sdk.Hatchery{}
 
 	return h.CommonServe(ctx, h)
 }
@@ -163,11 +157,11 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 
 	// TODO yesnault check requirements as worker
 
-	log.Debug("CanSpawn model.ID:%d", model.ID)
-	if model.ID != h.Hatchery().Model.ID {
-		log.Debug("CanSpawn false ID different model.ID:%d", model.ID)
-		return false
-	}
+	// log.Debug("CanSpawn model.ID:%d", model.ID)
+	// if model.ID != h.Hatchery().Model.ID {
+	// 	log.Debug("CanSpawn false ID different model.ID:%d", model.ID)
+	// 	return false
+	// }
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			return false
@@ -185,7 +179,7 @@ func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
-	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomNameCDS(0))
+	wName := fmt.Sprintf("%s-%s", h.Service().Name, namesgenerator.GetRandomNameCDS(0))
 	if spawnArgs.RegisterOnly {
 		wName = "register-" + wName
 	}
@@ -205,8 +199,8 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              wName,
 		Model:             spawnArgs.Model.ID,
-		Hatchery:          h.hatch.ID,
-		HatcheryName:      h.hatch.Name,
+		Hatchery:          h.ID(),
+		HatcheryName:      h.Service().Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
