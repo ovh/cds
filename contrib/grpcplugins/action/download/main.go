@@ -15,9 +15,9 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
-/*
-$ make build
-$ make publish
+/* Inside contrib/grpcplugins/action
+$ make build download
+$ make publish download
 */
 
 type downloadActionPlugin struct {

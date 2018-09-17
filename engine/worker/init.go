@@ -224,7 +224,7 @@ func (w *currentWorker) initServer(c context.Context) {
 		log.Error("cannot bind port for worker export: %v", err)
 		os.Exit(1)
 	}
-	w.exportPort = port
+	w.exportPort = int32(port)
 }
 
 type grpcCreds struct {

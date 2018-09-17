@@ -15,9 +15,9 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
-/*
-$ make build
-$ make publish
+/* Inside contrib/grpcplugins/action
+$ make build ssh-cmd
+$ make publish ssh-cmd
 */
 
 type sshCmdActionPlugin struct {

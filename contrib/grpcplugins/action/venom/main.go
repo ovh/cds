@@ -32,9 +32,9 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
-/*
-$ make build
-$ make publish
+/* Inside contrib/grpcplugins/action
+$ make build venom
+$ make publish venom
 */
 
 type venomActionPlugin struct {

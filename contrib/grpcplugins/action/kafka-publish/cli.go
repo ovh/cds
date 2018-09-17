@@ -7,6 +7,10 @@ import (
 	"gopkg.in/urfave/cli.v1"
 )
 
+var (
+	version = "0.4"
+)
+
 func initCli(mainFunc func()) *cli.App {
 	return &cli.App{
 		Name:         filepath.Base(os.Args[0]),

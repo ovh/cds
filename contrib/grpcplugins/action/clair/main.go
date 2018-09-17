@@ -7,9 +7,9 @@ import (
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/reference"
 	"github.com/golang/protobuf/ptypes/empty"
-	"github.com/jgsqware/clairctl/clair"
-	"github.com/jgsqware/clairctl/config"
-	"github.com/jgsqware/clairctl/docker"
+	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/clair"
+	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/config"
+	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/docker"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
@@ -17,9 +17,9 @@ import (
 	"github.com/ovh/cds/sdk/plugin"
 )
 
-/*
-$ make build
-$ make publish
+/* Inside contrib/grpcplugins/action
+$ make build clair
+$ make publish clair
 */
 
 type clairActionPlugin struct {
@@ -58,7 +58,10 @@ func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	}
 
 	fmt.Printf("Running analysis")
-	analysis := clair.Analyze(image, manifest)
+	analysis, err := clair.Analyze(image, manifest)
+	if err != nil {
+		return fail("Error on running analys with Clair: %v", err)
+	}
 
 	fmt.Printf("Creating report")
 

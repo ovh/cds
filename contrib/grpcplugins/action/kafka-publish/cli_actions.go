@@ -22,7 +22,7 @@ func helpAction(c *cli.Context) error {
 		return cli.ShowCommandHelp(c, args.First())
 	}
 
-	cli.ShowAppHelp(c)
+	_ = cli.ShowAppHelp(c)
 	return nil
 }
 
@@ -38,12 +38,12 @@ func listenAction(c *cli.Context) error {
 	args = append(args, c.Args().Tail()...)
 
 	if len(args) != 4 {
-		cli.ShowCommandHelp(c, "listen")
+		_ = cli.ShowCommandHelp(c, "listen")
 		return cli.NewExitError("Invalid usage", 10)
 	}
 
 	if !c.IsSet("kafka-password") && c.String("kafka-password") == "" {
-		cli.ShowCommandHelp(c, "listen")
+		_ = cli.ShowCommandHelp(c, "listen")
 		return cli.NewExitError(
 			"Missing kafka password. Please specify --kafka-password "+
 				"argument or setup CDS_KAFKA_PASSWORD environment variable.", 17)
@@ -104,12 +104,12 @@ func ackAction(c *cli.Context) error {
 	args := []string{c.Args().First()}
 	args = append(args, c.Args().Tail()...)
 	if len(args) != 5 {
-		cli.ShowCommandHelp(c, "ack")
+		_ = cli.ShowCommandHelp(c, "ack")
 		return cli.NewExitError("Invalid usage", 40)
 	}
 
 	if !c.IsSet("kafka-password") && c.String("kafka-password") == "" {
-		cli.ShowCommandHelp(c, "ack")
+		_ = cli.ShowCommandHelp(c, "ack")
 		return cli.NewExitError(
 			"Missing kafka password. Please specify --kafka-password "+
 				"argument or setup CDS_KAFKA_PASSWORD environment variable.", 48)
@@ -134,7 +134,7 @@ func ackAction(c *cli.Context) error {
 	}
 
 	if result != "OK" && result != "KO" {
-		cli.ShowCommandHelp(c, "ack")
+		_ = cli.ShowCommandHelp(c, "ack")
 		return cli.NewExitError("Invalid usage", 45)
 	}
 

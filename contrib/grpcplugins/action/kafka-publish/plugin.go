@@ -50,3 +50,7 @@ func (m KafkaPlugin) Parameters() plugin.Parameters {
 
 	return params
 }
+
+func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
+	return plugin.Success
+}

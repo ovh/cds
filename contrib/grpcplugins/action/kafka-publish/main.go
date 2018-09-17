@@ -21,9 +21,9 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
 
-/*
-$ make build
-$ make publish
+/* Inside contrib/grpcplugins/action
+$ make build kafka-publish
+$ make publish kafka-publish
 */
 
 type kafkaPublishActionPlugin struct {
@@ -217,7 +217,7 @@ func main() {
 			panic(err)
 		}
 	})
-	app.Run(os.Args)
+	_ = app.Run(os.Args)
 	return
 
 }
