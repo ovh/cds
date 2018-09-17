@@ -41,7 +41,7 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 	go func() {
 		for range time.NewTicker(2 * time.Second).C {
 			if err := ui.loadData(); err != nil {
-				panic(err)
+				ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 			}
 			ui.render()
 		}
@@ -63,6 +63,8 @@ type Termui struct {
 	queueTabSelected int
 	statusSelected   []sdk.Status
 	baseURL          string
+
+	msg string
 
 	me                             *sdk.User
 	status                         *sdk.MonitoringStatus
@@ -175,7 +177,10 @@ func (ui *Termui) init() {
 	// init termui handlers
 	termui.Handle("/timer/1s", func(e termui.Event) {})
 	termui.Handle("/sys/kbd/q", func(termui.Event) { termui.StopLoop() })
-	termui.Handle("/sys/kbd", func(e termui.Event) { /*ui.msg = fmt.Sprintf("No command for %v", e)*/ })
+	termui.Handle("/sys/kbd", func(e termui.Event) {
+		ui.msg = fmt.Sprintf("No command for %v", e)
+		ui.render()
+	})
 	termui.Handle("/sys/kbd/<down>", func(e termui.Event) { ui.moveDown() })
 	termui.Handle("/sys/kbd/<up>", func(e termui.Event) { ui.moveUp() })
 	termui.Handle("/sys/kbd/<left>", func(e termui.Event) { ui.moveLeft() })
@@ -262,15 +267,19 @@ func (ui *Termui) render() {
 		fail, failColor,
 		disabled, disabledColor)
 
-	ui.times.Text = fmt.Sprintf(
-		"[count queue wf %s](fg-cyan,bg-default) | [queue wf %s](fg-cyan,bg-default) | [workers %s](fg-cyan,bg-default) | [wModels %s](fg-cyan,bg-default) | [status %s](fg-cyan,bg-default)",
-		sdk.Round(ui.elapsedWorkflowNodeJobRunCount, time.Millisecond).String(),
-		sdk.Round(ui.elapsedWorkflowNodeJobRun, time.Millisecond).String(),
-		sdk.Round(ui.elapsedWorkers, time.Millisecond).String(),
-		sdk.Round(ui.elapsedWorkerModels, time.Millisecond).String(),
-		sdk.Round(ui.elapsedStatus, time.Millisecond).String(),
-	)
-	//ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+	if ui.msg == "" {
+		ui.times.Text = fmt.Sprintf(
+			"[count queue wf %s](fg-cyan,bg-default) | [queue wf %s](fg-cyan,bg-default) | [workers %s](fg-cyan,bg-default) | [wModels %s](fg-cyan,bg-default) | [status %s](fg-cyan,bg-default)",
+			sdk.Round(ui.elapsedWorkflowNodeJobRunCount, time.Millisecond).String(),
+			sdk.Round(ui.elapsedWorkflowNodeJobRun, time.Millisecond).String(),
+			sdk.Round(ui.elapsedWorkers, time.Millisecond).String(),
+			sdk.Round(ui.elapsedWorkerModels, time.Millisecond).String(),
+			sdk.Round(ui.elapsedStatus, time.Millisecond).String(),
+		)
+	} else {
+		ui.times.Text = ui.msg
+		ui.msg = ""
+	}
 
 	ui.monitoringColorSelected()
 
@@ -322,7 +331,7 @@ func (ui *Termui) incrementQueueFilter() {
 		ui.queueTabSelected = 0
 	}
 	if err := ui.loadQueue(); err != nil {
-		panic(err)
+		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 	}
 }
 
@@ -333,7 +342,7 @@ func (ui *Termui) decrementQueueFilter() {
 		ui.queueTabSelected = 2
 	}
 	if err := ui.loadQueue(); err != nil {
-		panic(err)
+		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 	}
 }
 
