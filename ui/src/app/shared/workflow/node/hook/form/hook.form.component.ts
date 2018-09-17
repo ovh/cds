@@ -132,7 +132,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         this.loadingHooks = true;
         this._workflowStore.getWorkflows(this.hook.config['target_project'].value, this.hook.config['target_workflow'].value)
             .pipe(
-                finalize(() => this.loadingHooks = true)
+                finalize(() => this.loadingHooks = false)
             ).subscribe(
                 data => {
                     let key = this.project.key + '-' + this.hook.config['target_workflow'].value;

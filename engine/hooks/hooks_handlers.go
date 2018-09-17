@@ -103,7 +103,7 @@ func (s *Service) startTaskHandler() service.Handler {
 
 		//Start the task
 		if _, err := s.startTask(ctx, t); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hooks> startTaskHandler> start task")
+			return sdk.WrapError(err, "Hooks> startTaskHandler> start task")
 		}
 		return nil
 	}

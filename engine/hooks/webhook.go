@@ -164,7 +164,7 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 			ct = "application/octet-stream"
 		}
 		//Parse the content type
-		ct, _, err = mime.ParseMediaType(ct)
+		ct, _, _ = mime.ParseMediaType(ct)
 		switch {
 		case ct == "application/x-www-form-urlencoded":
 			formValues, err := url.ParseQuery(string(t.WebHook.RequestBody))

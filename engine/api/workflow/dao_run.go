@@ -126,7 +126,7 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 
 	ohr, erro := json.Marshal(r.WorkflowNodeOutgoingHookRuns)
 	if erro != nil {
-		return sdk.WrapError(erri, "Run.PostInsert> Unable to marshal WorkflowNodeOutgoingHookRuns")
+		return sdk.WrapError(erro, "Run.PostInsert> Unable to marshal WorkflowNodeOutgoingHookRuns")
 	}
 
 	if _, err := db.Exec("update workflow_run set workflow = $3, infos = $2, join_triggers_run = $4, header = $5 , outgoing_hook_runs = $6 where id = $1", r.ID, i, w, jtr, h, ohr); err != nil {
