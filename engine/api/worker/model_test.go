@@ -174,7 +174,8 @@ func TestLoadWorkerModels(t *testing.T) {
 }
 
 func TestLoadWorkerModelsWithFilter(t *testing.T) {
-	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
