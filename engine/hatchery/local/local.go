@@ -119,22 +119,54 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 
 // Serve start the hatchery server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
-
-	// TODO yesnault
-
-	// req, err := h.CDSClient().Requirements()
-	// if err != nil {
-	// 	return fmt.Errorf("Cannot fetch requirements: %v", err)
-	// }
-
-	// capa, err := checkCapabilities(req)
-	// if err != nil {
-	// 	return fmt.Errorf("Cannot check local capabilities: %v", err)
-	// }
-
 	h.hatch = &sdk.Hatchery{}
 
+	req, err := h.CDSClient().Requirements()
+	if err != nil {
+		return fmt.Errorf("Cannot fetch requirements: %v", err)
+	}
+
+	capa, err := checkCapabilities(req)
+	if err != nil {
+		return fmt.Errorf("Cannot check local capabilities: %v", err)
+	}
+
+	h.ModelLocal = sdk.Model{
+		Name: h.Name,
+		Type: sdk.HostProcess,
+		ModelVirtualMachine: sdk.ModelVirtualMachine{
+			Image: h.Name,
+		},
+		RegisteredCapabilities: capa,
+		Provision:              int64(h.Config.NbProvision),
+	}
+
 	return h.CommonServe(ctx, h)
+}
+
+// checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
+// returns an error "Exit status X" if current host misses one requirement
+func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
+	var capa []sdk.Requirement
+	var tmp map[string]sdk.Requirement
+
+	tmp = make(map[string]sdk.Requirement)
+	for _, r := range req {
+		ok, err := hatchery.CheckRequirement(r)
+		if err != nil {
+			return nil, err
+		}
+
+		if ok {
+			tmp[r.Name] = r
+		}
+	}
+
+	for _, r := range tmp {
+		capa = append(capa, r)
+	}
+
+	return capa, nil
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -155,13 +187,13 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		return false
 	}
 
-	// TODO yesnault check requirements as worker
+	for _, r := range requirements {
+		ok, err := hatchery.CheckRequirement(r)
+		if err != nil || !ok {
+			return false
+		}
+	}
 
-	// log.Debug("CanSpawn model.ID:%d", model.ID)
-	// if model.ID != h.Hatchery().Model.ID {
-	// 	log.Debug("CanSpawn false ID different model.ID:%d", model.ID)
-	// 	return false
-	// }
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			return false
@@ -294,6 +326,12 @@ func (h *HatcheryLocal) WorkersStarted() []string {
 	return workers
 }
 
+// WorkerModelsEnabled returns worker model enabled
+func (h *HatcheryLocal) WorkerModelsEnabled() ([]sdk.Model, error) {
+	h.ModelLocal.GroupID = *h.Service().GroupID
+	return []sdk.Model{h.ModelLocal}, nil
+}
+
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryLocal) WorkersStartedByModel(model *sdk.Model) int {
@@ -309,31 +347,6 @@ func (h *HatcheryLocal) WorkersStartedByModel(model *sdk.Model) int {
 	}
 
 	return x
-}
-
-// checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
-// returns an error "Exit status X" if current host misses one requirement
-func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
-	var capa []sdk.Requirement
-	var tmp map[string]sdk.Requirement
-
-	tmp = make(map[string]sdk.Requirement)
-	for _, r := range req {
-		ok, err := hatchery.CheckRequirement(r)
-		if err != nil {
-			return nil, err
-		}
-
-		if ok {
-			tmp[r.Name] = r
-		}
-	}
-
-	for _, r := range tmp {
-		capa = append(capa, r)
-	}
-
-	return capa, nil
 }
 
 // Init register local hatchery with its worker model

@@ -161,9 +161,9 @@ func Create(h Interface) error {
 
 		case <-tickerGetModels.C:
 			var errwm error
-			models, errwm = h.CDSClient().WorkerModelsEnabled()
+			models, errwm = h.WorkerModelsEnabled()
 			if errwm != nil {
-				log.Error("error on h.CDSClient().WorkerModelsEnabled(): %v", errwm)
+				log.Error("error on h.WorkerModelsEnabled(): %v", errwm)
 			}
 
 		case j := <-pbjobs:

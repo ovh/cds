@@ -212,6 +212,11 @@ func (*HatcheryKubernetes) ModelType() string {
 	return sdk.Docker
 }
 
+// WorkerModelsEnabled returns Worker model enabled
+func (h *HatcheryKubernetes) WorkerModelsEnabled() ([]sdk.Model, error) {
+	return h.CDSClient().WorkerModelsEnabled()
+}
+
 // CanSpawn return wether or not hatchery can spawn model.
 // requirements are not supported
 func (h *HatcheryKubernetes) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {

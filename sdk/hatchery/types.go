@@ -95,6 +95,7 @@ type Interface interface {
 	ServiceName() string
 	Stats() *Stats
 	PanicDumpDirectory() (string, error)
+	WorkerModelsEnabled() ([]sdk.Model, error)
 }
 
 type Stats struct {

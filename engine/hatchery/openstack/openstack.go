@@ -163,6 +163,11 @@ func (*HatcheryOpenstack) ModelType() string {
 	return sdk.Openstack
 }
 
+// WorkerModelsEnabled returns Worker model enabled
+func (h *HatcheryOpenstack) WorkerModelsEnabled() ([]sdk.Model, error) {
+	return h.CDSClient().WorkerModelsEnabled()
+}
+
 // CanSpawn return wether or not hatchery can spawn model
 // requirements are not supported
 func (h *HatcheryOpenstack) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {

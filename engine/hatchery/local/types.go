@@ -22,10 +22,11 @@ type HatcheryLocal struct {
 	hatcheryCommon.Common
 	Config HatcheryConfiguration
 	sync.Mutex
-	hatch   *sdk.Hatchery
-	workers map[string]workerCmd
-	os      string
-	arch    string
+	hatch      *sdk.Hatchery
+	workers    map[string]workerCmd
+	os         string
+	arch       string
+	ModelLocal sdk.Model
 }
 
 type workerCmd struct {

@@ -582,6 +582,11 @@ func (h *HatcherySwarm) Service() *sdk.Service {
 	return h.CDSClient().GetService()
 }
 
+// WorkerModelsEnabled returns Worker model enabled
+func (h *HatcherySwarm) WorkerModelsEnabled() ([]sdk.Model, error) {
+	return h.CDSClient().WorkerModelsEnabled()
+}
+
 func (h *HatcherySwarm) routines(ctx context.Context) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()

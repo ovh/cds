@@ -169,6 +169,11 @@ func (*HatcheryMarathon) ModelType() string {
 	return sdk.Docker
 }
 
+// WorkerModelsEnabled returns Worker model enabled
+func (h *HatcheryMarathon) WorkerModelsEnabled() ([]sdk.Model, error) {
+	return h.CDSClient().WorkerModelsEnabled()
+}
+
 // CanSpawn return wether or not hatchery can spawn model
 // requirements services are not supported
 func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {

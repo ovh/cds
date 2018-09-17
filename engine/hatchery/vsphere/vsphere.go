@@ -136,6 +136,11 @@ func (h *HatcheryVSphere) NeedRegistration(m *sdk.Model) bool {
 	return !annot.ToDelete && (m.NeedRegistration || fmt.Sprintf("%d", m.UserLastModified.Unix()) != annot.WorkerModelLastModified)
 }
 
+// WorkerModelsEnabled returns Worker model enabled
+func (h *HatcheryVSphere) WorkerModelsEnabled() ([]sdk.Model, error) {
+	return h.CDSClient().WorkerModelsEnabled()
+}
+
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryVSphere) WorkersStartedByModel(model *sdk.Model) int {
