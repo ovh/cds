@@ -42,7 +42,7 @@ import (
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/layer"
 	"github.com/opencontainers/go-digest"
-	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/config"
+	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/config"
 )
 
 //GetLocalManifest retrieve manifest for local image

@@ -30,7 +30,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/config"
+	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/config"
 )
 
 //ErrUnauthorized is return when requested user don't have access to the resource
