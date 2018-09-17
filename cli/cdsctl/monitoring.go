@@ -153,7 +153,7 @@ func (ui *Termui) loadQueue() error {
 	case 1:
 		ui.statusSelected = []sdk.Status{sdk.StatusBuilding}
 	case 2:
-		ui.statusSelected = []sdk.Status{sdk.StatusWaiting, sdk.StatusBuilding}
+		ui.statusSelected = []sdk.Status{sdk.StatusBuilding, sdk.StatusWaiting}
 	}
 
 	var err error
@@ -440,37 +440,100 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 }
 
 func (ui *Termui) updateQueue(baseURL string) {
-	var maxQueued time.Duration
-
-	items := []string{
-		fmt.Sprintf("[  _ %s %s%s %s ➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)",
-			pad("since", 9), pad("by", 27), pad("run", 7), pad("project/workflow", 30),
-			pad("node", 20), pad("triggered by", 17), "requirements"),
-	}
-
-	var idx int
-	var item string
+	mapLines := map[sdk.Status][]string{}
+	var lineCount int
+	var maxWaiting, maxBuilding time.Duration
 	for _, job := range ui.pipelineBuildJob {
-		item, maxQueued = ui.updateQueueJob(idx, maxQueued, job.ID, false, job.Parameters,
-			job.Job, job.Queued, job.BookedBy, baseURL, job.Status)
-		items = append(items, item)
-		idx++
-	}
+		duration := time.Since(job.Queued)
+		s := sdk.Status(job.Status)
 
+		switch s {
+		case sdk.StatusWaiting:
+			if maxWaiting == 0 || maxWaiting < duration {
+				maxWaiting = duration
+			}
+		case sdk.StatusBuilding:
+			if maxBuilding == 0 || maxBuilding < duration {
+				maxBuilding = duration
+			}
+		}
+
+		mapLines[s] = append(mapLines[s], ui.generateQueueJobLine(false, lineCount, job.ID,
+			job.Parameters, job.Job, duration, job.BookedBy, baseURL, job.Status))
+
+		if lineCount == ui.queue.Cursor-1 {
+			ui.currentURL = generateQueueJobURL(false, baseURL, job.Parameters)
+		}
+
+		lineCount++
+	}
 	for _, job := range ui.workflowNodeJobRun {
-		item, maxQueued = ui.updateQueueJob(idx, maxQueued, job.ID, true, job.Parameters,
-			job.Job, job.Queued, job.BookedBy, baseURL, job.Status)
-		items = append(items, item)
-		idx++
-	}
-	ui.queue.Items = items
+		duration := time.Since(job.Queued)
+		s := sdk.Status(job.Status)
 
-	ui.queue.BorderLabel = fmt.Sprintf("Queue(%s):%d - Max Waiting:%s ", fmt.Sprintf("%v", ui.statusSelected),
-		ui.workflowNodeJobRunCount.Count+int64(len(ui.pipelineBuildJob)),
-		sdk.Round(maxQueued, time.Second).String())
+		if (maxWaiting == 0 || maxWaiting < duration) && job.Status == sdk.StatusWaiting.String() {
+			maxWaiting = duration
+		}
+		if (maxBuilding == 0 || maxBuilding < duration) && job.Status == sdk.StatusBuilding.String() {
+			maxBuilding = duration
+		}
+
+		mapLines[s] = append(mapLines[s], ui.generateQueueJobLine(true, lineCount, job.ID, job.Parameters, job.Job,
+			time.Since(job.Queued), job.BookedBy, baseURL, job.Status))
+
+		if lineCount == ui.queue.Cursor-1 {
+			ui.currentURL = generateQueueJobURL(true, baseURL, job.Parameters)
+		}
+
+		lineCount++
+	}
+
+	ui.queue.Items = []string{fmt.Sprintf("[  _ %s %s%s %s ➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)",
+		pad("since", 9), pad("by", 27), pad("run", 7), pad("project/workflow", 30),
+		pad("node", 20), pad("triggered by", 17), "requirements")}
+	for _, s := range ui.statusSelected {
+		if m, ok := mapLines[s]; ok {
+			for _, l := range m {
+				ui.queue.Items = append(ui.queue.Items, l)
+			}
+		}
+	}
+
+	ui.queue.BorderLabel = fmt.Sprintf("Queue(%s):%d", fmt.Sprintf("%v", ui.statusSelected),
+		ui.workflowNodeJobRunCount.Count+int64(len(ui.pipelineBuildJob)))
+
+	for _, s := range ui.statusSelected {
+		switch s {
+		case sdk.StatusBuilding:
+			ui.queue.BorderLabel = fmt.Sprintf("%s - Max Building:%s", ui.queue.BorderLabel,
+				sdk.Round(maxBuilding, time.Second).String())
+		case sdk.StatusWaiting:
+			ui.queue.BorderLabel = fmt.Sprintf("%s - Max Waiting:%s", ui.queue.BorderLabel,
+				sdk.Round(maxWaiting, time.Second).String())
+		}
+	}
 }
 
-func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, executedJob sdk.ExecutedJob, queued time.Time, bookedBy sdk.Service, baseURL, status string) (string, time.Duration) {
+func generateQueueJobURL(isWJob bool, baseURL string, parameters []sdk.Parameter) string {
+	prj := getVarsInPbj("cds.project", parameters)
+	workflow := getVarsInPbj("cds.workflow", parameters)
+	runNumber := getVarsInPbj("cds.run.number", parameters)
+	if isWJob {
+		return fmt.Sprintf("%s/project/%s/workflow/%s/run/%s", baseURL, prj, workflow, runNumber)
+	}
+
+	app := getVarsInPbj("cds.application", parameters)
+	pip := getVarsInPbj("cds.pipeline", parameters)
+	build := getVarsInPbj("cds.buildNumber", parameters)
+	env := getVarsInPbj("cds.environment", parameters)
+	bra := getVarsInPbj("git.branch", parameters)
+	version := getVarsInPbj("cds.version", parameters)
+	return fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%s?envName=%s&branch=%s&version=%s",
+		baseURL, prj, app, pip, build, url.QueryEscape(env), url.QueryEscape(bra), version)
+}
+
+func (ui *Termui) generateQueueJobLine(isWJob bool, idx int, id int64, parameters []sdk.Parameter, executedJob sdk.ExecutedJob,
+	duration time.Duration, bookedBy sdk.Service, baseURL, status string) string {
 	req := ""
 	for _, r := range executedJob.Job.Action.Requirements {
 		req += fmt.Sprintf("%s:%s ", r.Type, r.Value)
@@ -481,23 +544,21 @@ func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isW
 	workflow := getVarsInPbj("cds.workflow", parameters)
 	node := getVarsInPbj("cds.node", parameters)
 	run := getVarsInPbj("cds.run", parameters)
-	runNumber := getVarsInPbj("cds.run.number", parameters)
-	build := getVarsInPbj("cds.buildNumber", parameters)
 	env := getVarsInPbj("cds.environment", parameters)
 	bra := getVarsInPbj("git.branch", parameters)
-	version := getVarsInPbj("cds.version", parameters)
 	triggeredBy := getVarsInPbj("cds.triggered_by.username", parameters)
-	duration := time.Since(queued)
-	var currentURL, fgColor string
+
+	var fgColor string
 
 	row := make([]string, 6)
-	var c string
-	if duration > 60*time.Second {
-		c = "bg-red"
-	} else if duration > 15*time.Second {
-		c = "bg-yellow"
-	} else {
-		c = "bg-default"
+
+	c := "bg-default"
+	if status == sdk.StatusWaiting.String() {
+		if duration > 60*time.Second {
+			c = "bg-red"
+		} else if duration > 15*time.Second {
+			c = "bg-yellow"
+		}
 	}
 
 	row[0] = pad(fmt.Sprintf(sdk.Round(duration, time.Second).String()), 9)
@@ -505,13 +566,9 @@ func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isW
 		fgColor = "fg-white"
 		row[2] = pad(fmt.Sprintf("%s", run), 7)
 		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+workflow, 30), pad(node, 20))
-		currentURL = fmt.Sprintf("%s/project/%s/workflow/%s/run/%s", baseURL, prj, workflow, runNumber)
 	} else {
 		row[2] = pad(fmt.Sprintf("%d", id), 7)
 		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+app, 30), pad(pip+"/"+bra+"/"+env, 20))
-		currentURL = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%s?envName=%s&branch=%s&version=%s",
-			baseURL, prj, app, pip, build, url.QueryEscape(env), url.QueryEscape(bra), version,
-		)
 		fgColor = "fg-magenta"
 	}
 
@@ -528,15 +585,10 @@ func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isW
 
 	_, color := statusShort(status)
 	color = strings.Replace(color, "fg", "bg", 1)
-	item := fmt.Sprintf("  [ ](%s)[ ](bg-default)[%s](%s)[%s %s %s %s %s](%s,bg-default)", color, row[0], c, row[1], row[2], row[3], row[4], row[5], fgColor)
+	item := fmt.Sprintf("  [ ](%s)[ ](bg-default)[%s](%s)[%s %s %s %s %s](%s,bg-default)",
+		color, row[0], c, row[1], row[2], row[3], row[4], row[5], fgColor)
 
-	if idx == ui.queue.Cursor-1 {
-		ui.currentURL = currentURL
-	}
-	if maxQueued < duration {
-		return item, duration
-	}
-	return item, maxQueued
+	return item
 }
 
 func statusShort(status string) (string, string) {
