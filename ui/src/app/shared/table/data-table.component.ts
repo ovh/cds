@@ -24,11 +24,11 @@ export class Column {
 }
 
 @Component({
-    selector: 'app-sorted-table',
-    templateUrl: './sorted-table.html',
-    styleUrls: ['./sorted-table.scss']
+    selector: 'app-data-table',
+    templateUrl: './data-table.html',
+    styleUrls: ['./data-table.scss']
 })
-export class SortedTableComponent extends Table {
+export class DataTableComponent extends Table {
     @Input() columns: Array<Column>;
     @Output() sortChange = new EventEmitter<any>();
     @Input() loading: boolean;

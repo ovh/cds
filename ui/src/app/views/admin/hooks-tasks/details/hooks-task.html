@@ -23,7 +23,7 @@
             <div class="ui row">
                 <div [ngClass]="{sixteen: !selectedExecution, eight: selectedExecution, wide: true, column: true}">
                     <h3>{{ 'hook_task_execs' | translate }}</h3>
-                    <app-sorted-table [withPagination]="5" [columns]="columns" [data]="executions" [loading]="loading"></app-sorted-table>
+                    <app-data-table [withPagination]="5" [columns]="columns" [data]="executions" [loading]="loading"></app-data-table>
                 </div>
                 <div class="eight wide column" *ngIf="selectedExecution">
                     <h3>{{'workflow_hook_log_title' | translate}}</h3>

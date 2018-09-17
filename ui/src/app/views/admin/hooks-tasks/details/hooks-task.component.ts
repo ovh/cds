@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HookStatus, TaskExecution, WorkflowHookTask } from '../../../../model/workflow.hook.model';
 import { HookService } from '../../../../service/services.module';
-import { Column, ColumnType } from '../../../../shared/table/sorted-table.component';
+import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-hooks-task',

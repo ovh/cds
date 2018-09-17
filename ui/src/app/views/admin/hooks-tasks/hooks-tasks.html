@@ -1,3 +1,3 @@
 <h2>{{ 'hook_tasks_summary' | translate }}</h2>
 
-<app-sorted-table [withFilter]="filter" [withPagination]="20" [columns]="columns" [data]="tasks" (sortChange)="getAdminTasks($event)" [loading]="loading"></app-sorted-table>
+<app-data-table [withFilter]="filter" [withPagination]="20" [columns]="columns" [data]="tasks" (sortChange)="getAdminTasks($event)" [loading]="loading"></app-data-table>

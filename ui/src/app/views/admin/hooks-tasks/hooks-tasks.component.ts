@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { WorkflowHookTask } from '../../../model/workflow.hook.model';
 import { HookService } from '../../../service/services.module';
-import { Column, ColumnType, Filter } from '../../../shared/table/sorted-table.component';
+import { Column, ColumnType, Filter } from '../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-hooks-tasks',
