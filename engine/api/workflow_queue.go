@@ -691,7 +691,8 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, getHatchery(ctx), groupsID, usr, &since, &until)
+		// TODO yesnault get ratioService
+		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, nil, groupsID, usr, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
@@ -725,7 +726,9 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, getHatchery(ctx), permissions, groupsID, usr, &since, &until, &limit, status...)
+		// TODO yesnault get ratioService
+
+		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, nil, permissions, groupsID, usr, &since, &until, &limit, status...)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}

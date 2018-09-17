@@ -51,6 +51,8 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrUnauthorized, "postServiceRegisterHandler> Cannot register service for group %d with service %s", t.GroupID, srv.Type)
 		}
 
+		srv.GroupID = &t.GroupID
+
 		//Insert or update the service
 		tx, err := api.mustDB().Begin()
 		if err != nil {

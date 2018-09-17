@@ -78,33 +78,6 @@ func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 	return cli
 }
 
-// TODO yesnault to delete
-
-// NewHatchery returns client for a hatchery
-// func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool, name string) Interface {
-// 	conf := Config{
-// 		Host:  endpoint,
-// 		Retry: 2,
-// 		Token: token,
-// 		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
-// 	}
-// 	cli := new(client)
-// 	cli.config = conf
-// 	cli.HTTPClient = &http.Client{
-// 		Transport: &httpcontrol.Transport{
-// 			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
-// 			MaxTries:        5,
-// 			TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
-// 		},
-// 	}
-
-// 	// hatchery don't need to make a request without timeout on API
-// 	cli.isHatchery = true
-// 	cli.name = name
-// 	cli.init()
-// 	return cli
-// }
-
 // NewClientFromConfig returns a client from the config file
 func NewClientFromConfig(r io.Reader) (Interface, error) {
 	return nil, nil

@@ -123,7 +123,6 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 		}
 		store.Set(key, srv)
 	}
-
 	return srv, nil
 }
 

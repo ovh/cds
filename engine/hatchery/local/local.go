@@ -116,12 +116,12 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
 	req, err := h.CDSClient().Requirements()
 	if err != nil {
-		return fmt.Errorf("Cannot fetch requirements: %s", err)
+		return fmt.Errorf("Cannot fetch requirements: %v", err)
 	}
 
 	capa, err := checkCapabilities(req)
 	if err != nil {
-		return fmt.Errorf("Cannot check local capabilities: %s", err)
+		return fmt.Errorf("Cannot check local capabilities: %v", err)
 	}
 
 	h.hatch = &sdk.Hatchery{

@@ -14,7 +14,6 @@ CREATE TABLE services (
     last_heartbeat timestamp with time zone NOT NULL,
     hash character varying(256) NOT NULL,
     monitoring_status jsonb,
-    hatchery_ratio_service integer,
     group_id bigint
 );
 

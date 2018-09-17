@@ -86,6 +86,5 @@ func (c *Common) Register(status func() sdk.MonitoringStatus) error {
 	}
 
 	c.Hash = hash
-
 	return nil
 }

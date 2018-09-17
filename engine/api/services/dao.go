@@ -28,19 +28,19 @@ func init() {
 
 // FindByNameAndType a service by its name and type
 func FindByNameAndType(db gorp.SqlExecutor, name, stype string) (*sdk.Service, error) {
-	query := "SELECT name, type, http_url, last_heartbeat, hash FROM services WHERE name = $1 and type = $2"
+	query := "SELECT * FROM services WHERE name = $1 and type = $2"
 	return findOne(db, query, name, stype)
 }
 
 // FindByName a service by its name
 func FindByName(db gorp.SqlExecutor, name string) (*sdk.Service, error) {
-	query := "SELECT name, type, http_url, last_heartbeat, hash FROM services WHERE name = $1"
+	query := "SELECT * FROM services WHERE name = $1"
 	return findOne(db, query, name)
 }
 
 // FindByHash a service by its hash
 func FindByHash(db gorp.SqlExecutor, hash string) (*sdk.Service, error) {
-	query := "SELECT name, type, http_url, last_heartbeat, hash FROM services WHERE hash = $1"
+	query := "SELECT * FROM services WHERE hash = $1"
 	return findOne(db, query, hash)
 }
 
@@ -50,10 +50,7 @@ func FindByType(db gorp.SqlExecutor, t string) ([]sdk.Service, error) {
 		return ss, nil
 	}
 
-	query := `
-	SELECT name, type, http_url, last_heartbeat, hash 
-	FROM services 
-	WHERE type = $1`
+	query := `SELECT * FROM services WHERE type = $1`
 	services, err := findAll(db, query, t)
 	if err != nil {
 		if err == sdk.ErrNotFound {
@@ -67,9 +64,7 @@ func FindByType(db gorp.SqlExecutor, t string) ([]sdk.Service, error) {
 
 // All returns all registered services
 func All(db gorp.SqlExecutor) ([]sdk.Service, error) {
-	query := `
-	SELECT name, type, http_url, last_heartbeat, hash
-	FROM services`
+	query := `SELECT * FROM services`
 	services, err := findAll(db, query)
 	if err != nil {
 		if err == sdk.ErrNotFound {
@@ -200,10 +195,7 @@ func (s *service) PostUpdate(db gorp.SqlExecutor) error {
 
 // FindDeadServices returns services which haven't heart since th duration
 func FindDeadServices(db gorp.SqlExecutor, t time.Duration) ([]sdk.Service, error) {
-	query := `
-	SELECT name, type, http_url, last_heartbeat, hash 
-	FROM services 
-	WHERE last_heartbeat < $1`
+	query := `SELECT * FROM services WHERE last_heartbeat < $1`
 	services, err := findAll(db, query, time.Now().Add(-1*t))
 	if err != nil {
 		if err == sdk.ErrNotFound {

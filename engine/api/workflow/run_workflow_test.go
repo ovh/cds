@@ -351,7 +351,7 @@ func TestManualRun3(t *testing.T) {
 		tx, _ := db.Begin()
 
 		//BookNodeJobRun
-		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Hatchery{
+		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Service{
 			Name: "Hatchery",
 			ID:   1,
 		})
