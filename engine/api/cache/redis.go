@@ -258,6 +258,11 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 
 // Publish a msg in a channel
 func (s *RedisStore) Publish(channel string, value interface{}) {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return
+	}
+
 	msg, err := json.Marshal(value)
 	if err != nil {
 		log.Warning("redis.Publish> Marshall error, cannot push in channel %s: %v, %s", channel, value, err)
@@ -283,11 +288,20 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 
 // Subscribe to a channel
 func (s *RedisStore) Subscribe(channel string) PubSub {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return nil
+	}
 	return s.Client.Subscribe(channel)
 }
 
 // GetMessageFromSubscription from a redis PubSub
 func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return "", nil
+	}
+
 	rps, ok := pb.(*redis.PubSub)
 	if !ok {
 		return "", fmt.Errorf("redis.GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
