@@ -488,9 +488,9 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.Work
 }
 
 //BookNodeJobRun  Book a job for a hatchery
-func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
+func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := keyBookJob(id)
-	h := sdk.Hatchery{}
+	h := sdk.Service{}
 	if !store.Get(k, &h) {
 		// job not already booked, book it for 2 min
 		store.SetWithTTL(k, hatchery, 120)

@@ -687,7 +687,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 		for _, g := range usr.Groups {
 			groupsID = append(groupsID, g.ID)
 		}
-		if isHatcheryOrWorker(r) {
+		if isServiceOrWorker(r) {
 			usr = nil
 		}
 
@@ -719,7 +719,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		}
 
 		permissions := permission.PermissionReadExecute
-		if !isHatcheryOrWorker(r) {
+		if !isServiceOrWorker(r) {
 			permissions = permission.PermissionRead
 		} else {
 			usr = nil

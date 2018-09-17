@@ -188,7 +188,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	}
 
 	h := http.Header{}
-	h.Set("User-Agent", string(sdk.HatcheryAgent))
+	h.Set("User-Agent", string(sdk.ServiceAgent))
 
 	tk, errg := token.GenerateToken()
 	if errg != nil {
@@ -222,7 +222,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	req.Header.Add(sdk.AuthHeader, basedHash)
 	req.Header.Add(cdsclient.RequestedNameHeader, name)
 	req.Header.Add(sdk.SessionTokenHeader, tk)
-	req.Header.Add("User-Agent", sdk.HatcheryAgent)
+	req.Header.Add("User-Agent", sdk.ServiceAgent)
 
 	// Do the request
 	w := httptest.NewRecorder()

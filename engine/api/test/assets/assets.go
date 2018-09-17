@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 // InsertTestProject create a test project
@@ -116,13 +115,6 @@ func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, str
 func AuthentifyRequestFromWorker(t *testing.T, req *http.Request, w *sdk.Worker) {
 	req.Header.Set("User-Agent", string(sdk.WorkerAgent))
 	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(w.ID)))
-}
-
-// AuthentifyRequestFromHatchery have to be used only for tests
-func AuthentifyRequestFromHatchery(t *testing.T, req *http.Request, h *sdk.Hatchery) {
-	req.Header.Add("User-Agent", string(sdk.HatcheryAgent))
-	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(h.UID)))
-	req.Header.Add(cdsclient.RequestedNameHeader, h.Name)
 }
 
 // AuthentifyRequestFromService have to be used only for tests
@@ -239,7 +231,8 @@ func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Hatchery, method, u
 		t.FailNow()
 	}
 
-	AuthentifyRequestFromHatchery(t, req, h)
+	// TODO yesnault
+	AuthentifyRequestFromService(t, req, "")
 	return req
 }
 

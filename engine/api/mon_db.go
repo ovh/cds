@@ -103,12 +103,6 @@ func (api *API) getMonDBTimesDBQueueWorkflow(ctx context.Context, r *http.Reques
 	}
 	s1 := time.Now()
 	permissions := permission.PermissionReadExecute
-	if !isHatcheryOrWorker(r) {
-		permissions = permission.PermissionRead
-	} else {
-		usr = nil
-	}
-
 	if _, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, nil, permissions, groupsID, usr, nil, nil, nil); err != nil {
 		return fmt.Sprintf("getMonDBTimesDBQueueWorkflow> Unable to load queue:: %s", err)
 	}

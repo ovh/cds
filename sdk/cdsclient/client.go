@@ -14,7 +14,6 @@ import (
 
 type client struct {
 	isWorker   bool
-	isHatchery bool
 	isService  bool
 	isProvider bool
 	HTTPClient HTTPClient
@@ -38,15 +37,20 @@ func New(c Config) Interface {
 }
 
 // NewService returns client for a service
-func NewService(endpoint string, timeout time.Duration) Interface {
+func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bool) Interface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 2,
+		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
 	}
 	cli := new(client)
 	cli.config = conf
 	cli.HTTPClient = &http.Client{
-		Timeout: timeout,
+		Transport: &httpcontrol.Transport{
+			RequestTimeout:  timeout,
+			MaxTries:        5,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
+		},
 	}
 	cli.isService = true
 	cli.init()
@@ -74,30 +78,32 @@ func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 	return cli
 }
 
-// NewHatchery returns client for a hatchery
-func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool, name string) Interface {
-	conf := Config{
-		Host:  endpoint,
-		Retry: 2,
-		Token: token,
-		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
-	}
-	cli := new(client)
-	cli.config = conf
-	cli.HTTPClient = &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
-			MaxTries:        5,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
-		},
-	}
+// TODO yesnault to delete
 
-	// hatchery don't need to make a request without timeout on API
-	cli.isHatchery = true
-	cli.name = name
-	cli.init()
-	return cli
-}
+// NewHatchery returns client for a hatchery
+// func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool, name string) Interface {
+// 	conf := Config{
+// 		Host:  endpoint,
+// 		Retry: 2,
+// 		Token: token,
+// 		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
+// 	}
+// 	cli := new(client)
+// 	cli.config = conf
+// 	cli.HTTPClient = &http.Client{
+// 		Transport: &httpcontrol.Transport{
+// 			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
+// 			MaxTries:        5,
+// 			TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
+// 		},
+// 	}
+
+// 	// hatchery don't need to make a request without timeout on API
+// 	cli.isHatchery = true
+// 	cli.name = name
+// 	cli.init()
+// 	return cli
+// }
 
 // NewClientFromConfig returns a client from the config file
 func NewClientFromConfig(r io.Reader) (Interface, error) {
@@ -140,8 +146,6 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 func (c *client) init() {
 	if c.isWorker {
 		c.config.userAgent = sdk.WorkerAgent
-	} else if c.isHatchery {
-		c.config.userAgent = sdk.HatcheryAgent
 	} else if c.isService {
 		c.config.userAgent = sdk.ServiceAgent
 	} else {

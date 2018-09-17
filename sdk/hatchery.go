@@ -12,5 +12,4 @@ type Hatchery struct {
 	IsSharedInfra bool   `json:"is_shared_infra" db:"-"`
 	ModelType     string `json:"model_type" db:"model_type"`
 	Type          string `json:"type" db:"type"`
-	RatioService  int    `json:"ratio_service" db:"ratio_service"`
 }

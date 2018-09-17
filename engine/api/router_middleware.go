@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -54,12 +53,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	//Check Authentication
 	if rc.Options["auth"] == "true" && getProvider(ctx) == nil {
 		switch headers.Get("User-Agent") {
-		case sdk.HatcheryAgent:
-			var err error
-			ctx, err = auth.CheckServiceAuth(ctx, api.mustDB(), api.Cache, headers, services.TypeHatchery)
-			if err != nil {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
-			}
 		case sdk.WorkerAgent:
 			var err error
 			ctx, err = auth.CheckWorkerAuth(ctx, api.mustDB(), api.Cache, headers)
@@ -68,7 +61,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			}
 		case sdk.ServiceAgent:
 			var err error
-			ctx, err = auth.CheckServiceAuth(ctx, api.mustDB(), api.Cache, headers, "")
+			ctx, err = auth.CheckServiceAuth(ctx, api.mustDB(), api.Cache, headers)
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
@@ -85,13 +78,15 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	switch {
 	case getProvider(ctx) != nil:
 	case getHatchery(ctx) != nil:
-		g, perm, err := loadPermissionsByGroupID(api.mustDB(), api.Cache, getHatchery(ctx).GroupID)
-		if err != nil {
-			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions for GroupID %d err:%s", getHatchery(ctx).GroupID, err)
+		h := getHatchery(ctx)
+		if h != nil && h.GroupID != nil {
+			g, perm, err := loadPermissionsByGroupID(api.mustDB(), api.Cache, *h.GroupID)
+			if err != nil {
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions for GroupID %d err:%s", *h.GroupID, err)
+			}
+			getUser(ctx).Permissions = perm
+			getUser(ctx).Groups = append(getUser(ctx).Groups, g)
 		}
-		getUser(ctx).Permissions = perm
-		getUser(ctx).Groups = append(getUser(ctx).Groups, g)
-
 	case getWorker(ctx) != nil:
 		//Refresh the worker
 		workerCtx := getWorker(ctx)

@@ -3,6 +3,7 @@ package swarm
 import (
 	"context"
 	"fmt"
+	"time"
 
 	types "github.com/docker/docker/api/types"
 
@@ -31,14 +32,7 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 		Type:      "swarm",
 	}
 
-	h.Client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
-
+	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
 	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
@@ -46,7 +40,6 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	h.Type = services.TypeHatchery
 	h.MaxHeartbeatFailures = h.Config.API.MaxHeartbeatFailures
 	h.Common.Common.ServiceName = "cds-hatchery-swarm"
-	h.hatch.RatioService = int(h.Config.RatioService)
 
 	return nil
 }

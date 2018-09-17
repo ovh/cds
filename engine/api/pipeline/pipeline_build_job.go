@@ -224,9 +224,9 @@ func keyBookJob(pbJobID int64) string {
 }
 
 // BookPipelineBuildJob Book an action for a hatchery
-func BookPipelineBuildJob(store cache.Store, pbJobID int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
+func BookPipelineBuildJob(store cache.Store, pbJobID int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := keyBookJob(pbJobID)
-	h := sdk.Hatchery{}
+	h := sdk.Service{}
 	if !store.Get(k, &h) {
 		// job not already booked, book it for 2 min
 		store.SetWithTTL(k, hatchery, 120)

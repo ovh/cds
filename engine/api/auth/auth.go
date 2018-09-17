@@ -157,13 +157,16 @@ func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, hea
 }
 
 // CheckServiceAuth checks services authentication
-func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header, serviceType string) (context.Context, error) {
+func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header) (context.Context, error) {
 	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return ctx, fmt.Errorf("bad service key syntax: %s", err)
 	}
 
 	serviceHash := string(id)
+	if serviceHash == "" {
+		return ctx, fmt.Errorf("bad service id")
+	}
 
 	srv, err := GetService(db, store, serviceHash)
 	if err != nil {
@@ -171,7 +174,7 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 	}
 
 	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name})
-	if serviceType == services.TypeHatchery {
+	if srv.Type == services.TypeHatchery {
 		ctx = context.WithValue(ctx, ContextHatchery, srv)
 	} else {
 		ctx = context.WithValue(ctx, ContextService, srv)

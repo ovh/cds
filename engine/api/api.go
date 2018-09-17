@@ -376,9 +376,9 @@ func getAgent(r *http.Request) string {
 	return r.Header.Get("User-Agent")
 }
 
-func isHatcheryOrWorker(r *http.Request) bool {
+func isServiceOrWorker(r *http.Request) bool {
 	switch getAgent(r) {
-	case sdk.HatcheryAgent:
+	case sdk.ServiceAgent:
 		return true
 	case sdk.WorkerAgent:
 		return true
@@ -399,12 +399,12 @@ func getWorker(c context.Context) *sdk.Worker {
 	return u
 }
 
-func getHatchery(c context.Context) *sdk.Hatchery {
+func getHatchery(c context.Context) *sdk.Service {
 	i := c.Value(auth.ContextHatchery)
 	if i == nil {
 		return nil
 	}
-	u, ok := i.(*sdk.Hatchery)
+	u, ok := i.(*sdk.Service)
 	if !ok {
 		return nil
 	}

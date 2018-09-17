@@ -132,10 +132,8 @@ func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
 // Update a service
 func Update(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service(*s)
-	if n, err := db.Update(&sdb); err != nil {
+	if _, err := db.Update(&sdb); err != nil {
 		return sdk.WrapError(err, "Update> unable to update service %s", s.Name)
-	} else if n == 0 {
-		return sdk.WrapError(sdk.ErrNotFound, "Update> unable to update service %s", s.Name)
 	}
 	*s = sdk.Service(sdb)
 	sEvent <- serviceEvent{

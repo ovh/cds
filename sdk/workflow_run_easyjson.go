@@ -1645,8 +1645,6 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk3(in *jlexer.Lexer, out *Hatchery) 
 			out.ModelType = string(in.String())
 		case "type":
 			out.Type = string(in.String())
-		case "ratio_service":
-			out.RatioService = int(in.Int())
 		default:
 			in.SkipRecursive()
 		}
@@ -1760,16 +1758,6 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in Hatchery)
 			out.RawString(prefix)
 		}
 		out.String(string(in.Type))
-	}
-	{
-		const prefix string = ",\"ratio_service\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.Int(int(in.RatioService))
 	}
 	out.RawByte('}')
 }

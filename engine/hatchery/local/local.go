@@ -43,16 +43,9 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	genname := h.Configuration().Name
-	h.Client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		genname,
-	)
-
+	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
 	h.API = h.Config.API.HTTP.URL
-	h.Name = h.Config.Name
+	h.Name = genname
 	h.HTTPURL = h.Config.URL
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery

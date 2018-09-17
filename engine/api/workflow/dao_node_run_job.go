@@ -25,10 +25,10 @@ func isSharedInfraGroup(groupsID []int64) bool {
 }
 
 // CountNodeJobRunQueue count all workflow_node_run_job accessible
-func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hatchery *sdk.Hatchery, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
+func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, service *sdk.Service, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
 	c := sdk.WorkflowNodeJobRunCount{}
 
-	queue, err := LoadNodeJobRunQueue(ctx, db, store, hatchery, permission.PermissionRead, groupsID, usr, since, until, nil, statuses...)
+	queue, err := LoadNodeJobRunQueue(ctx, db, store, service, permission.PermissionRead, groupsID, usr, since, until, nil, statuses...)
 	if err != nil {
 		return c, sdk.WrapError(err, "CountNodeJobRunQueue> unable to load queue")
 	}
@@ -44,7 +44,7 @@ func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.
 }
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hatchery *sdk.Hatchery, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, service *sdk.Service, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := observability.Span(ctx, "LoadNodeJobRunQueue")
 	defer end()
 	if since == nil {
@@ -61,10 +61,10 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	}
 
 	var where string
-	if hatchery != nil {
-		if hatchery.RatioService == 100 {
+	if service != nil && service.HatcheryRatioService != nil {
+		if *service.HatcheryRatioService == 100 {
 			where = " AND contains_service = true "
-		} else if hatchery.RatioService == 0 {
+		} else if *service.HatcheryRatioService == 0 {
 			where = " AND contains_service = false "
 		}
 	}

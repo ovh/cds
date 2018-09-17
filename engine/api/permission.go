@@ -230,8 +230,9 @@ func (api *API) checkWorkerModelPermissions(ctx context.Context, modelID string,
 		return false
 	}
 
-	if getHatchery(ctx) != nil {
-		return getHatchery(ctx).GroupID == group.SharedInfraGroup.ID || m.GroupID == getHatchery(ctx).GroupID
+	h := getHatchery(ctx)
+	if h != nil && h.GroupID != nil {
+		return *h.GroupID == group.SharedInfraGroup.ID || m.GroupID == *h.GroupID
 	}
 	return api.checkWorkerModelPermissionsByUser(m, getUser(ctx), permissionValue)
 }
