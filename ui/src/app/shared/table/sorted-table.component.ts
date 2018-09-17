@@ -7,12 +7,13 @@ const DESC: direction = 'desc';
 
 export enum ColumnType {
     TEXT = 'text',
-    HTML = 'html',
+    ICON = 'icon',
     LINK = 'link',
     ROUTER_LINK = 'router-link'
 }
 
 export type Selector = (d: any) => any;
+export type Filter = (f: string) => (d: any) => any;
 
 export class Column {
     type: ColumnType;
@@ -29,19 +30,35 @@ export class Column {
 })
 export class SortedTableComponent extends Table {
     @Input() columns: Array<Column>;
-    @Input() data: any;
     @Output() sortChange = new EventEmitter<any>();
     @Input() loading: boolean;
-    @Input() withFilter: boolean;
 
-    @Input()
-    set withPagination(n: number) {
+    @Input() set data(d: any) {
+        this.allData = d;
+        this.getDataForCurrentPage();
+    }
+    get data() { return this.allData; }
+
+    @Input() set withPagination(n: number) {
         this.nbElementsByPage = n;
+        this.getDataForCurrentPage();
     }
     get withPagination() { return this.nbElementsByPage; }
 
+
+    @Input() set withFilter(f: Filter) {
+        this.filterFunc = f;
+        this.getDataForCurrentPage();
+    }
+    get withFilter() { return this.filterFunc; }
+
     sortedColumn: Column;
     sortedColumnDirection: direction;
+    allData: any;
+    dataForCurrentPage: any;
+    pagesCount: number;
+    filterFunc: Filter;
+    filter: string;
 
     columnClick(event: Event, c: Column) {
         if (!c.sortable) {
@@ -63,13 +80,30 @@ export class SortedTableComponent extends Table {
     }
 
     getData(): any[] {
+        if (this.filter && this.filter) {
+            return this.data.filter(this.filterFunc(this.filter));
+        }
         return this.data;
     }
 
     getDataForCurrentPage(): any[] {
+        let data: any[];
         if (!this.withPagination) {
-            return this.getData();
+            data = this.getData();
+        } else {
+            data = super.getDataForCurrentPage();
         }
-        return super.getDataForCurrentPage();
+        this.dataForCurrentPage = data;
+        this.pagesCount = this.getNbOfPages();
+
+        if (this.pagesCount < this.currentPage) {
+            this.currentPage = 1;
+        }
+
+        return data;
+    }
+
+    filterChange() {
+        this.getDataForCurrentPage();
     }
 }

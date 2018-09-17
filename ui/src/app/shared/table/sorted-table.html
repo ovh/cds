@@ -1,3 +1,12 @@
+<div *ngIf="filterFunc" class="ui grid">
+    <div class="ui row">
+        <div class="ui wide column">
+            <div class="ui fluid input">
+                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter" (keyup)="filterChange()">
+            </div>
+        </div>
+    </div>
+</div>
 <table class="ui fixed celled table">
     <thead>
         <tr>
@@ -24,9 +33,11 @@
         </tr>
     </tbody>
     <tbody *ngIf="!loading && data.length > 0">
-        <tr *ngFor="let d of getDataForCurrentPage()">
+        <tr *ngFor="let d of dataForCurrentPage">
             <ng-container *ngFor="let c of columns" [ngSwitch]="c.type">
-                <td *ngSwitchCase="'html'" class="border" [innerHTML]="c.selector(d)"></td>
+                <td *ngSwitchCase="'icon'" class="border">
+                    <i [ngClass]="c.selector(d)"></i>
+                </td>
                 <td *ngSwitchCase="'router-link'" class="border">
                     <a class="ui" [routerLink]="c.selector(d).link">
                         {{c.selector(d).value}}
@@ -41,7 +52,7 @@
             </ng-container>
         </tr>
     </tbody>
-    <tfoot tfoot *ngIf="nbElementsByPage && getNbOfPages() > 1">
+    <tfoot tfoot *ngIf="nbElementsByPage && pagesCount > 1">
         <tr>
             <td [colSpan]="columns.length">
                 <div class="ui right floated pagination menu">

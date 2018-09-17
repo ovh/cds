@@ -36,15 +36,14 @@ export class HooksTaskComponent {
 
         this.columns = [
             <Column>{
-                type: ColumnType.HTML,
-                name: '',
+                type: ColumnType.ICON,
                 selector: d => {
                     if (d.status === HookStatus.DONE) {
-                        return '<i class="check green icon"></i>';
+                        return ['check', 'green', 'icon'];
                     } else if (d.status === HookStatus.FAIL) {
-                        return '<i class="ban red icon"></i>';
+                        return ['ban', 'red', 'icon'];
                     } else {
-                        return '<i class="wait blue icon"></i>';
+                        return ['wait', 'blue', 'icon'];
                     }
                 }
             },

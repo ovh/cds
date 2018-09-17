@@ -147,8 +147,8 @@ func (s *Service) postTaskHandler() service.Handler {
 }
 
 const (
-	sortKeyNbExecutionsTotal string = "nb_executions_total"
-	sortKeyNbExecutionsTodo  string = "nb_executions_todo"
+	sortKeyNbExecutionsTotal = "nb_executions_total"
+	sortKeyNbExecutionsTodo  = "nb_executions_todo"
 )
 
 func (s *Service) getTasksHandler() service.Handler {
