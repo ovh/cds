@@ -232,7 +232,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 	for elem == "" {
 		select {
 		case <-ticker:
-			res, err := s.Client.BRPop(200*time.Millisecond, queueName).Result()
+			res, err := s.Client.BRPop(time.Second, queueName).Result()
 			if err == redis.Nil {
 				continue
 			}
@@ -293,7 +293,7 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 		return "", fmt.Errorf("redis.GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
 	}
 
-	msg, _ := rps.ReceiveTimeout(200 * time.Millisecond)
+	msg, _ := rps.ReceiveTimeout(time.Second)
 	redisMsg, ok := msg.(*redis.Message)
 	if msg != nil {
 		if ok {
@@ -305,7 +305,7 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 	for redisMsg == nil {
 		select {
 		case <-ticker:
-			msg, _ := rps.ReceiveTimeout(200 * time.Millisecond)
+			msg, _ := rps.ReceiveTimeout(time.Second)
 			if msg == nil {
 				continue
 			}
