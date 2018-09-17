@@ -167,9 +167,12 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		log.Debug("CanSpawn false Hatchery nil")
 		return false
 	}
-	log.Debug("CanSpawn model.ID:%d h.workerModelID:%d ", model.ID, h.Hatchery().Model.ID)
+
+	// TODO yesnault check requirements as worker
+
+	log.Debug("CanSpawn model.ID:%d", model.ID)
 	if model.ID != h.Hatchery().Model.ID {
-		log.Debug("CanSpawn false ID different model.ID:%d h.workerModelID:%d ", model.ID, h.Hatchery().Model.ID)
+		log.Debug("CanSpawn false ID different model.ID:%d", model.ID)
 		return false
 	}
 	for _, r := range requirements {
@@ -377,7 +380,7 @@ func (h *HatcheryLocal) localWorkerIndexCleanup() {
 
 func (h *HatcheryLocal) startKillAwolWorkerRoutine() {
 	t := time.NewTicker(5 * time.Second)
-	for _ = range t.C {
+	for range t.C {
 		if err := h.killAwolWorkers(); err != nil {
 			log.Warning("Cannot kill awol workers: %s", err)
 		}
@@ -434,8 +437,5 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryLocal) NeedRegistration(m *sdk.Model) bool {
-	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
-		return true
-	}
-	return false
+	return m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix()
 }

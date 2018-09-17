@@ -3,7 +3,6 @@ package hatchery
 import (
 	"fmt"
 	"math"
-	"runtime"
 	"strings"
 	"sync/atomic"
 
@@ -11,26 +10,28 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Register calls CDS API to register current hatchery.
-func Register(h Interface) error {
-	newHatchery, err := h.CDSClient().HatcheryRegister(*h.Hatchery())
-	if err != nil {
-		return sdk.WrapError(err, "register> Got HTTP exiting")
-	}
-	h.Hatchery().ID = newHatchery.ID
-	h.Hatchery().GroupID = newHatchery.GroupID
-	h.Hatchery().Model = newHatchery.Model
-	h.Hatchery().Name = newHatchery.Name
-	h.Hatchery().IsSharedInfra = newHatchery.IsSharedInfra
+// TODO yesnault to delete
 
-	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
+// // Register calls CDS API to register current hatchery.
+// func Register(h Interface) error {
+// 	newHatchery, err := h.CDSClient().HatcheryRegister(*h.Hatchery())
+// 	if err != nil {
+// 		return sdk.WrapError(err, "register> Got HTTP exiting")
+// 	}
+// 	h.Hatchery().ID = newHatchery.ID
+// 	h.Hatchery().GroupID = newHatchery.GroupID
+// 	h.Hatchery().Model = newHatchery.Model
+// 	h.Hatchery().Name = newHatchery.Name
+// 	h.Hatchery().IsSharedInfra = newHatchery.IsSharedInfra
 
-	if !newHatchery.Uptodate {
-		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s %s %s -=-=-=-=-",
-			sdk.VERSION, runtime.GOOS, runtime.GOARCH)
-	}
-	return nil
-}
+// 	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
+
+// 	if !newHatchery.Uptodate {
+// 		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s %s %s -=-=-=-=-",
+// 			sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+// 	}
+// 	return nil
+// }
 
 // workerRegister is called by a ticker.
 // the hatchery checks each worker model, and if a worker model needs to

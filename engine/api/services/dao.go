@@ -26,6 +26,12 @@ func init() {
 	go managerServiceEvent(sEvent)
 }
 
+// FindByNameAndType a service by its name and type
+func FindByNameAndType(db gorp.SqlExecutor, name, stype string) (*sdk.Service, error) {
+	query := "SELECT name, type, http_url, last_heartbeat, hash FROM services WHERE name = $1 and type = $2"
+	return findOne(db, query, name, stype)
+}
+
 // FindByName a service by its name
 func FindByName(db gorp.SqlExecutor, name string) (*sdk.Service, error) {
 	query := "SELECT name, type, http_url, last_heartbeat, hash FROM services WHERE name = $1"

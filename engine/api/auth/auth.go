@@ -10,7 +10,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
@@ -158,7 +157,7 @@ func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, hea
 }
 
 // CheckServiceAuth checks services authentication
-func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header) (context.Context, error) {
+func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header, serviceType string) (context.Context, error) {
 	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return ctx, fmt.Errorf("bad service key syntax: %s", err)
@@ -172,24 +171,10 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 	}
 
 	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name})
-	ctx = context.WithValue(ctx, ContextService, srv)
-	return ctx, nil
-}
-
-// CheckHatcheryAuth checks hatchery authentication
-func CheckHatcheryAuth(ctx context.Context, db *gorp.DbMap, headers http.Header) (context.Context, error) {
-	uid, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
-	if err != nil {
-		return ctx, fmt.Errorf("bad worker key syntax: %s", err)
+	if serviceType == services.TypeHatchery {
+		ctx = context.WithValue(ctx, ContextHatchery, srv)
+	} else {
+		ctx = context.WithValue(ctx, ContextService, srv)
 	}
-
-	name := headers.Get(cdsclient.RequestedNameHeader)
-	h, err := hatchery.LoadHatchery(db, string(uid), name)
-	if err != nil {
-		return ctx, fmt.Errorf("Invalid Hatchery UID:%s name:%s err:%s", string(uid), name, err)
-	}
-
-	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: h.Name})
-	ctx = context.WithValue(ctx, ContextHatchery, h)
 	return ctx, nil
 }

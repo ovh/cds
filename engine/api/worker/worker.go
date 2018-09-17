@@ -260,7 +260,7 @@ type TakeForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *sdk.Hatchery, binaryCapabilities []string, OS, arch string) (*sdk.Worker, error) {
+func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, hatchery *sdk.Service, binaryCapabilities []string, OS, arch string) (*sdk.Worker, error) {
 	if name == "" {
 		return nil, fmt.Errorf("cannot register worker with empty name")
 	}
@@ -275,8 +275,8 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 		return nil, errL
 	}
 
-	if h != nil {
-		if h.GroupID != t.GroupID {
+	if hatchery != nil {
+		if hatchery.GroupID != t.GroupID {
 			return nil, sdk.ErrForbidden
 		}
 	}
@@ -319,9 +319,9 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 		GroupID: t.GroupID,
 	}
 
-	if h != nil {
-		w.HatcheryID = h.ID
-		w.HatcheryName = h.Name
+	if hatchery != nil {
+		w.HatcheryID = hatchery.ID
+		w.HatcheryName = hatchery.Name
 	}
 
 	tx, errTx := db.Begin()

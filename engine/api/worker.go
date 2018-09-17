@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -23,17 +23,17 @@ func (api *API) registerWorkerHandler() service.Handler {
 		}
 
 		// Check that hatchery exists
-		var h *sdk.Hatchery
+		var hatch *sdk.Service
 		if params.HatcheryName != "" {
 			var errH error
-			h, errH = hatchery.LoadHatcheryByName(api.mustDB(), params.HatcheryName)
+			hatch, errH = services.FindByNameAndType(api.mustDB(), params.HatcheryName, services.TypeHatchery)
 			if errH != nil {
 				return sdk.WrapError(errH, "registerWorkerHandler> Unable to load hatchery %s", params.HatcheryName)
 			}
 		}
 
 		// Try to register worker
-		worker, err := worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, h, params.BinaryCapabilities, params.OS, params.Arch)
+		worker, err := worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, hatch, params.BinaryCapabilities, params.OS, params.Arch)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "registerWorkerHandler> [%s] Registering failed", params.Name)

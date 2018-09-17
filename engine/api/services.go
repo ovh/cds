@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/token"
@@ -18,40 +17,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-// killDeadServices must be run as a goroutine. It Deletes all dead workers
-func killDeadServices(ctx context.Context, dbFunc func() *gorp.DbMap) {
-	tick := time.NewTicker(30 * time.Second)
-	db := dbFunc()
-	for {
-		select {
-		case <-tick.C:
-			svcs, errdead := services.FindDeadServices(db, 3*60*time.Second)
-			if errdead != nil {
-				log.Error("killDeadServices> Unable to find dead services: %v", errdead)
-				continue
-			}
-			for i := range svcs {
-				log.Info("killDeadServices> Delete dead service: %v", &svcs[i].Name)
-				if err := services.Delete(db, &svcs[i]); err != nil {
-					log.Error("killDeadServices> Unable to find dead services: %v", errdead)
-					continue
-				}
-				if svcs[i].Type == "hatchery" {
-					log.Info("killDeadServices> Delete dead hatchery: %v", &svcs[i].Name)
-					if err := hatchery.DeleteHatcheryByName(db, svcs[i].Name); err != nil {
-						log.Error("HatcheryHeartbeat> Cannot delete hatchery %s: %v", svcs[i].Name, err)
-						continue
-					}
-				}
-			}
-		case <-ctx.Done():
-			if err := ctx.Err(); err != nil {
-				log.Error("Exiting killDeadServices: %v", err)
-			}
-		}
-	}
-}
 
 func (api *API) getExternalServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {

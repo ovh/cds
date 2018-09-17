@@ -3,10 +3,9 @@ package sdk
 // Hatchery registration model
 type Hatchery struct {
 	ID            int64  `json:"id" db:"id"`
-	UID           string `json:"uid" db:"uid"`
 	Name          string `json:"name" db:"name"`
 	GroupID       int64  `json:"group_id" db:"group_id"`
-	WorkerModelID *int64 `json:"worker_model_id" db:"worker_model_id"`
+	ServiceID     int64  `json:"service_id" db:"service_id"`
 	Model         Model  `json:"model" db:"-"`
 	Version       string `json:"version" db:"-"`
 	Uptodate      bool   `json:"up_to_date" db:"-"`

@@ -78,7 +78,6 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/token/{tokenid}", r.DELETE(api.deleteTokenHandler))
 
 	// Hatchery
-	r.Handle("/hatchery", r.POST(api.registerHatcheryHandler, Auth(false)))
 	r.Handle("/hatchery/count/{workflowNodeRunID}", r.GET(api.hatcheryCountHandler))
 
 	// Hooks

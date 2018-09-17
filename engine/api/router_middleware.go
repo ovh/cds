@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -55,7 +56,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		switch headers.Get("User-Agent") {
 		case sdk.HatcheryAgent:
 			var err error
-			ctx, err = auth.CheckHatcheryAuth(ctx, api.mustDB(), headers)
+			ctx, err = auth.CheckServiceAuth(ctx, api.mustDB(), api.Cache, headers, services.TypeHatchery)
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
@@ -67,7 +68,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			}
 		case sdk.ServiceAgent:
 			var err error
-			ctx, err = auth.CheckServiceAuth(ctx, api.mustDB(), api.Cache, headers)
+			ctx, err = auth.CheckServiceAuth(ctx, api.mustDB(), api.Cache, headers, "")
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}

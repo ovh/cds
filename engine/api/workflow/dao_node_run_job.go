@@ -65,7 +65,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		if hatchery.RatioService == 100 {
 			where = " AND contains_service = true "
 		} else if hatchery.RatioService == 0 {
-			where = " AND (contains_service is NULL or contains_service = false) "
+			where = " AND contains_service = false "
 		}
 	}
 	order := " ORDER BY workflow_node_run_job.queued ASC"
