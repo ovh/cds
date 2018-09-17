@@ -60,7 +60,6 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             this._hook.config = cloneDeep(this.outgoingHook.config);
             this._hook.model = cloneDeep(this.outgoingHook.model);
             this.displayConfig = Object.keys(this._hook.config).length !== 0;
-            console.log(this._hook);
         }
     }
     get outgoingHook() {
