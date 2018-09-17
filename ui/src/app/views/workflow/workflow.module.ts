@@ -21,6 +21,7 @@ import {WorkflowNotificationFormComponent} from './show/notification/form/workfl
 import {WorkflowNotificationListComponent} from './show/notification/list/workflow.notification.list.component';
 import {WorkflowShowComponent} from './show/workflow.component';
 import {WorkflowSidebarCodeComponent} from './sidebar/code/sidebar.code.component';
+import {WorkflowSidebarForkComponent} from './sidebar/edit/fork/workflow.sidebar.fork.component';
 import {WorkflowSidebarHookComponent} from './sidebar/edit/hook/workflow.sidebar.hook.component';
 import {WorkflowSidebarEditJoinComponent} from './sidebar/edit/join/workflow.sidebar.edit.join.component';
 import {WorkflowSidebarEditNodeComponent} from './sidebar/edit/node/workflow.sidebar.edit.node.component';
@@ -61,6 +62,7 @@ import {workflowRouting} from './workflow.routing';
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
         WorkflowSidebarCodeComponent,
+        WorkflowSidebarForkComponent,
         StageStepSummaryComponent,
         JobStepSummaryComponent,
         ActionStepSummaryComponent,

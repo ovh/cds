@@ -16,11 +16,12 @@ import * as dagreD3 from 'dagre-d3';
 import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
 import {Subscription} from 'rxjs';
 import {Project} from '../../../model/project.model';
-import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeOutgoingHook} from '../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeFork, WorkflowNodeJoin, WorkflowNodeOutgoingHook} from '../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {WorkflowNodeForkComponent} from '../../../shared/workflow/fork/fork.component';
 import {WorkflowJoinComponent} from '../../../shared/workflow/join/workflow.join.component';
 import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook.component';
 import { WorkflowNodeOutgoingHookComponent } from '../../../shared/workflow/node/outgoinghook/outgoinghook.component';
@@ -34,7 +35,8 @@ import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node
         WorkflowNodeComponent,
         WorkflowJoinComponent,
         WorkflowNodeHookComponent,
-        WorkflowNodeOutgoingHookComponent
+        WorkflowNodeOutgoingHookComponent,
+        WorkflowNodeForkComponent
     ]
 })
 @AutoUnsubscribe()
@@ -54,6 +56,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this.joinsComponent = new Map<string, ComponentRef<WorkflowJoinComponent>>();
             this.hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
             this.outgoingHooksComponent = new Map<string, ComponentRef<WorkflowNodeOutgoingHookComponent>>();
+            this.forksComponent = new Map<string, ComponentRef<WorkflowNodeForkComponent>>();
         }
         this.calculateDynamicWidth();
         this.changeDisplay();
@@ -111,6 +114,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     nodesComponent = new Map<string, ComponentRef<WorkflowNodeComponent>>();
     joinsComponent = new Map<string, ComponentRef<WorkflowJoinComponent>>();
     outgoingHooksComponent = new Map<string, ComponentRef<WorkflowNodeOutgoingHookComponent>>();
+    forksComponent = new Map<string, ComponentRef<WorkflowNodeForkComponent>>();
     hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
 
     linkJoinSubscription: Subscription;
@@ -205,8 +209,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
             let marker = parent.append('marker')
                 .attr('id', id)
                 .attr('viewBox', '0 0 10 10')
-                .attr('refX', 7)
-                .attr('refY', 5)
+                .attr('refX', 7) // position of arrow
+                .attr('refY', 5) // position of arrow
                 .attr('markerUnits', 'strokeWidth')
                 .attr('markerWidth', 4)
                 .attr('markerHeight', 3)
@@ -244,8 +248,12 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 nbofNodes = Math.max(...Array.from(mapDeep.values()));
                 break;
             default:
-                nbofNodes = this.getWorkflowMaxNodeByLevel(this.workflow.root, nbofNodes);
-                nbofNodes = this.getWorkflowJoinMaxNodeByLevel(nbofNodes);
+                let mapLevel = new Map<number, number>();
+                let mapLevelNode = new Map<string, number>();
+                mapLevel.set(1, 1);
+                this.getWorkflowMaxNodeByLevel(this.workflow.root, mapLevel, 2, mapLevelNode);
+                this.getWorkflowJoinMaxNodeByLevel(nbofNodes, mapLevel, mapLevelNode);
+                nbofNodes = Math.max(...Array.from(mapLevel.values()));
                 break;
         }
 
@@ -412,8 +420,60 @@ export class WorkflowGraphComponent implements AfterViewInit {
                     style: 'stroke: #000000;'
                 };
                 this.createEdge('node-' + node.ref, 'outgoing-hook-' + h.ref, options);
-            })
+            });
         }
+
+        if (node.forks) {
+            node.forks.forEach(f => {
+                this.createFork(f);
+                let options = {
+                  id: 'fork-' + f.id,
+                  style: 'stroke: #000000;top: 20px;',
+                    height: 10,
+                };
+                this.createEdge('node-' + node.ref, 'fork-' + f.name, options);
+
+                if (f.triggers) {
+                    f.triggers.forEach(t => {
+                        this.createNode(t.workflow_dest_node);
+                        let optForkTrig = {
+                            id: 'trigger-' + t.id,
+                            style: 'stroke: ' + this.getTriggerColor(node, t.id) + ';'
+                        };
+                        this.createEdge('fork-' + f.name, 'node-' + t.workflow_dest_node.ref, optForkTrig);
+                    });
+                }
+            });
+        }
+    }
+
+    createFork(f: WorkflowNodeFork): void {
+        let componentRef = this.forksComponent.get(f.name);
+        if (!componentRef) {
+            componentRef = this.createForkComponent(f);
+            this.forksComponent.set(f.name, componentRef);
+        }
+
+        this.svgContainer.insert(componentRef.hostView, 0);
+        this.g.setNode('fork-' + f.name, <any>{
+            label: () => {
+                componentRef.location.nativeElement.style.width = '97%';
+                componentRef.location.nativeElement.style.height = '100%';
+                return componentRef.location.nativeElement;
+            },
+            shape: 'rect',
+            labelStyle: 'width: 70px; height: 70px',
+            width: 70,
+            height: 70
+        });
+    }
+
+    createForkComponent(f: WorkflowNodeFork): ComponentRef<WorkflowNodeForkComponent> {
+        let forkComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeForkComponent);
+        let componentRef = forkComponentFactory.create(this.svgContainer.parentInjector);
+        componentRef.instance.fork = f;
+        componentRef.instance.workflow = this.workflow;
+        return componentRef;
     }
 
     createOutgoingHook(hook: WorkflowNodeOutgoingHook): void {
@@ -507,21 +567,47 @@ export class WorkflowGraphComponent implements AfterViewInit {
         });
     }
 
-    private getWorkflowMaxNodeByLevel(node: WorkflowNode, maxNode: number): number {
+    private getWorkflowMaxNodeByLevel(node: WorkflowNode, levelMap: Map<number, number>, level: number,
+                                      levelNode: Map<string, number>): void {
+        levelNode.set(node.ref, level - 1);
         if (node.triggers) {
-            let nb = node.triggers.length;
-            if (nb > maxNode) {
-                maxNode = nb;
-            }
-
             node.triggers.forEach(t => {
-                let nb2 = this.getWorkflowMaxNodeByLevel(t.workflow_dest_node, maxNode);
-                if (nb2 > maxNode) {
-                    maxNode = nb2;
+                this.getWorkflowMaxNodeByLevel(t.workflow_dest_node, levelMap, level + 1, levelNode);
+                if (levelMap.get(level)) {
+                    levelMap.set(level, levelMap.get(level) + 1);
+                } else {
+                    levelMap.set(level, 1);
                 }
             });
         }
-        return maxNode;
+        if (node.outgoing_hooks) {
+            node.outgoing_hooks.forEach(o => {
+                if (o.triggers) {
+                    o.triggers.forEach(t => {
+                        this.getWorkflowMaxNodeByLevel(t.workflow_dest_node, levelMap, level + 1, levelNode);
+                        if (levelMap.get(level)) {
+                            levelMap.set(level, levelMap.get(level) + 1);
+                        } else {
+                            levelMap.set(level, 1);
+                        }
+                    });
+                }
+            });
+        }
+        if (node.forks) {
+            node.forks.forEach(f => {
+                if (f.triggers) {
+                    f.triggers.forEach(t => {
+                        this.getWorkflowMaxNodeByLevel(t.workflow_dest_node,  levelMap, level + 1, levelNode);
+                        if (levelMap.get(level)) {
+                            levelMap.set(level, levelMap.get(level) + 1);
+                        } else {
+                            levelMap.set(level, 1);
+                        }
+                    });
+                }
+            });
+        }
     }
 
     private getWorkflowNodeDeep(node: WorkflowNode, maxDeep: Map<string, number>) {
@@ -531,20 +617,47 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 this.getWorkflowNodeDeep(t.workflow_dest_node, maxDeep);
             });
         }
+        if (node.outgoing_hooks) {
+            node.outgoing_hooks.forEach(o => {
+                if (o.triggers) {
+                    o.triggers.forEach(t => {
+                        maxDeep.set(t.workflow_dest_node.ref, maxDeep.get(node.ref) + 1);
+                        this.getWorkflowNodeDeep(t.workflow_dest_node, maxDeep);
+                    });
+                }
+            });
+        }
+        if (node.forks) {
+            node.forks.forEach(f => {
+                if (f.triggers) {
+                    f.triggers.forEach(t => {
+                        maxDeep.set(t.workflow_dest_node.ref, maxDeep.get(node.ref) + 1);
+                        this.getWorkflowNodeDeep(t.workflow_dest_node, maxDeep);
+                    });
+                }
+            });
+        }
     }
 
-    private getWorkflowJoinMaxNodeByLevel(maxNode: number): number {
+    private getWorkflowJoinMaxNodeByLevel(maxNode: number, mapLevel: Map<number, number>, levelNode: Map<string, number>): number {
         if (this.workflow.joins) {
             this.workflow.joins.forEach(j => {
+                let maxLevel = 0;
+                if (j.source_node_ref) {
+                    j.source_node_ref.forEach( r => {
+                       if (levelNode.get(r) > maxLevel) {
+                           maxLevel = levelNode.get(r);
+                       }
+                    });
+                }
+                maxLevel++;
                 if (j.triggers) {
-                    let nb = j.triggers.length;
-                    if (nb > maxNode) {
-                        maxNode = nb;
-                    }
                     j.triggers.forEach(t => {
-                        let n = this.getWorkflowMaxNodeByLevel(t.workflow_dest_node, maxNode);
-                        if (n > maxNode) {
-                            maxNode = n;
+                        this.getWorkflowMaxNodeByLevel(t.workflow_dest_node,  mapLevel, maxLevel + 1, levelNode);
+                        if (mapLevel.get(maxLevel)) {
+                            mapLevel.set(maxLevel, mapLevel.get(maxLevel) + 1);
+                        } else {
+                            mapLevel.set(maxLevel, 1);
                         }
                     });
                 }

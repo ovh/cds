@@ -8,15 +8,18 @@ workflow:
       - variable: git.branch
         operator: eq
         value: master
+  fork:
+    depends_on:
+      - root
   build_front:
     pipeline: build_front
     depends_on:
-      - root
+      - fork
     application: ITSCWRKFLW3-APP
   build_api:
     pipeline: build_api
     depends_on:
-      - root
+      - fork
     application: ITSCWRKFLW3-APP
   tests:
     pipeline: tests

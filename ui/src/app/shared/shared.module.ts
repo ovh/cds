@@ -75,6 +75,8 @@ import {VulnerabilitiesComponent} from './vulnerability/vulnerabilities.componen
 import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.component';
 import {WarningMarkComponent} from './warning/mark-single/warning.mark.component';
 import {WarningTabComponent} from './warning/tab/warning.tab.component';
+import {WorkflowDeleteForkComponent} from './workflow/fork/delete/workflow.fork.delete.component';
+import {WorkflowNodeForkComponent} from './workflow/fork/fork.component';
 import {WorkflowDeleteJoinComponent} from './workflow/join/delete/workflow.join.delete.component';
 import {WorkflowJoinTriggerSrcComponent} from './workflow/join/trigger/src/trigger.src.component';
 import {WorkflowTriggerJoinComponent} from './workflow/join/trigger/trigger.join.component';
@@ -151,6 +153,7 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeComponent,
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
+        WorkflowDeleteForkComponent,
         WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
         WorkflowJoinComponent,
@@ -166,6 +169,7 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowTriggerJoinComponent,
         WorkflowNodeConditionFormComponent,
         WorkflowNodeConditionListComponent,
+        WorkflowNodeForkComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,
@@ -248,6 +252,7 @@ import {ZoneComponent} from './zone/zone.component';
         LabelsEditComponent,
         WorkflowNodeComponent,
         WorkflowNodeAddWizardComponent,
+        WorkflowDeleteForkComponent,
         WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
         WorkflowJoinComponent,
@@ -260,6 +265,7 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeOutgoingHookComponent,
+        WorkflowNodeForkComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         ZoneComponent,

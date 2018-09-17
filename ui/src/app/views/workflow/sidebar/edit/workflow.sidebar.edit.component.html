@@ -10,3 +10,6 @@
 <ng-container *ngIf="mode === modes.EDIT_OUTGOING_HOOK">
   <app-workflow-sidebar-outgoing-hook [project]="project" [workflow]="workflow"></app-workflow-sidebar-outgoing-hook>
 </ng-container>
+<ng-container *ngIf="mode === modes.EDIT_FORK">
+  <app-workflow-sidebar-fork [project]="project" [workflow]="workflow"></app-workflow-sidebar-fork>
+</ng-container>

@@ -1,0 +1,48 @@
+<div class="sidebar-fork" *ngIf="fork">
+    <h3 class="ui header ml5">
+        <i class="settings icon"></i>
+        <div class="content">
+            <ng-container *ngIf="!displayInputName">
+                <span>{{fork.name}}</span>
+                <a class="inline pointing ml5" (click)="openRenameArea()"
+                   *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
+                    <i class="pencil icon float"></i>
+                </a>
+            </ng-container>
+            <ng-container *ngIf="displayInputName">
+                <div class="ui fluid mini action input">
+                    <input type="text" [(ngModel)]="fork.name">
+                    <div class="ui icon buttons">
+                        <button class="ui green button" (click)="rename()"><i class="check icon"></i></button>
+                        <button class="ui blue button"><i class="close icon"
+                                                          (click)="displayInputName = false; fork.name = previousNodeName"></i>
+                        </button>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+    </h3>
+    <div class="ui fluid vertical menu noborder">
+        <a class="item noborder" (click)="openTriggerModal()"
+           *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
+           [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+            {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
+        </a>
+        <a class="item noborder" (click)="openDeleteForkModal()"
+           *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
+           [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+            {{ 'workflow_fork_delete_btn' | translate }} <i class="angle right icon"></i>
+        </a>
+    </div>
+
+    <div class="ui active centered inline loader" *ngIf="loading"></div>
+</div>
+<ng-container *ngIf="project && fork">
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow"
+                          [(trigger)]="newTrigger" (triggerChange)="saveTrigger()"
+                          #workflowTrigger></app-workflow-trigger>
+</ng-container>
+<ng-container *ngIf="fork">
+    <app-workflow-fork-delete [loading]="loading" [fork]="fork" [isRoot]="fork.id === workflow.root.id"
+                              (deleteEvent)="deleteFork($event)" #workflowDeleteFork></app-workflow-fork-delete>
+</ng-container>

@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {Map} from 'immutable';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
-import {WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeOutgoingHook} from '../../model/workflow.model';
+import {WorkflowNode, WorkflowNodeFork, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeOutgoingHook} from '../../model/workflow.model';
 import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
 import {WorkflowRunService} from './run/workflow.run.service';
 import {WorkflowSidebarMode, WorkflowSidebarStore} from './workflow.sidebar.store';
@@ -20,6 +20,7 @@ export class WorkflowEventStore {
     private _selectedJoin: BehaviorSubject<WorkflowNodeJoin> = new BehaviorSubject<WorkflowNodeJoin>(null);
     private _selectedHook: BehaviorSubject<WorkflowNodeHook> = new BehaviorSubject<WorkflowNodeHook>(null);
     private _selectedOutgoingHook: BehaviorSubject<WorkflowNodeOutgoingHook> = new BehaviorSubject<WorkflowNodeOutgoingHook>(null);
+    private _selectedFork: BehaviorSubject<WorkflowNodeFork> = new BehaviorSubject<WorkflowNodeFork>(null);
 
     private _isListingRuns: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
@@ -79,6 +80,7 @@ export class WorkflowEventStore {
         this._selectedJoin.next(null);
         this._selectedHook.next(null);
         this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(null);
     }
 
     selectedNode(): Observable<WorkflowNode> {
@@ -93,6 +95,7 @@ export class WorkflowEventStore {
         this._selectedJoin.next(n);
         this._selectedHook.next(null);
         this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(null);
     }
 
     selectedJoin(): Observable<WorkflowNodeJoin> {
@@ -110,11 +113,31 @@ export class WorkflowEventStore {
         this._selectedNode.next(null);
         this._selectedJoin.next(null);
         this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(null);
         this._selectedHook.next(h);
     }
 
     selectedHook(): Observable<WorkflowNodeHook> {
         return new Observable<WorkflowNodeHook>(fn => this._selectedHook.subscribe(fn));
+    }
+
+    selectedFork(): Observable<WorkflowNodeFork> {
+        return new Observable<WorkflowNodeFork>(fn => this._selectedFork.subscribe(fn));
+    }
+
+    setSelectedFork(f: WorkflowNodeFork) {
+        if (f) {
+            if (!this.isRunSelected()) {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_FORK);
+            } else {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_FORK);
+            }
+        }
+        this._selectedNode.next(null);
+        this._selectedJoin.next(null);
+        this._selectedHook.next(null);
+        this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(f);
     }
 
     selectedOutgoingHook(): Observable<WorkflowNodeOutgoingHook> {
@@ -132,6 +155,7 @@ export class WorkflowEventStore {
         this._selectedNode.next(null);
         this._selectedJoin.next(null);
         this._selectedHook.next(null);
+        this._selectedFork.next(null);
         this._selectedOutgoingHook.next(h);
     }
 
@@ -141,6 +165,7 @@ export class WorkflowEventStore {
         this._selectedHook.next(null);
         this._selectedJoin.next(null);
         this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(null);
         this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
     }
 

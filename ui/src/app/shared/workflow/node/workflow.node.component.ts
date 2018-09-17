@@ -39,7 +39,7 @@ export class WorkflowNodeComponent implements OnInit {
     subRun: Subscription;
 
     zone: NgZone;
-    currentNodeRun: WorkflowNodeRun;
+        currentNodeRun: WorkflowNodeRun;
     subNodeRun: Subscription;
     pipelineStatus = PipelineStatus;
 

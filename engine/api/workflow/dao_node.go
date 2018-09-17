@@ -217,6 +217,15 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		}
 	}
 
+	// Insert forks
+	for i := range n.Forks {
+		f := &n.Forks[i]
+		//Insert the hook
+		if err := insertFork(db, store, w, n, f, u); err != nil {
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node fork")
+		}
+	}
+
 	return nil
 }
 
@@ -336,6 +345,20 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 			return nil, sdk.WrapError(errTrig, "LoadNode> Unable to load triggers of %d", id)
 		}
 		wn.Triggers = triggers
+
+		//Load outgoing hooks
+		ohooks, errHooks := loadOutgoingHooks(c, db, store, proj, w, &wn, u, opts)
+		if errHooks != nil {
+			return nil, sdk.WrapError(errHooks, "LoadNode> Unable to load outgoing hooks of %d", id)
+		}
+		wn.OutgoingHooks = ohooks
+
+		// load forks
+		forks, errForks := loadForks(c, db, store, proj, w, &wn, u, opts)
+		if errForks != nil {
+			return nil, sdk.WrapError(errForks, "LoadNode> Unable to load forks of %d", id)
+		}
+		wn.Forks = forks
 	}
 
 	//Load context
@@ -351,13 +374,6 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return nil, sdk.WrapError(errHooks, "LoadNode> Unable to load hooks of %d", id)
 	}
 	wn.Hooks = hooks
-
-	//Load outgoing hooks
-	ohooks, errHooks := loadOutgoingHooks(c, db, store, proj, w, &wn, u, opts)
-	if errHooks != nil {
-		return nil, sdk.WrapError(errHooks, "LoadNode> Unable to load outgoing hooks of %d", id)
-	}
-	wn.OutgoingHooks = ohooks
 
 	//Load pipeline
 	if w.Pipelines == nil {

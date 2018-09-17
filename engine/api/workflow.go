@@ -296,7 +296,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
 			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, getUser(ctx), &wf); err != nil {
-				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
+				log.Warning("postWorkflowHandler> Cannot set default payload : %v", err)
 			}
 		}
 
