@@ -42,8 +42,8 @@ loop:
 	report.Add(hookRun)
 	log.Debug("UpdateOutgoingHookRunStatus> hook run updated: %v", hookRun)
 
-	report1, _, err := processWorkflowRun(ctx, db, store, proj, wr, nil, nil, nil) //nolint
-	report.Merge(report1, err)
+	report1, _, err := processWorkflowRun(ctx, db, store, proj, wr, nil, nil, nil)
+	report.Merge(report1, err) //nolint
 	if err != nil {
 		return nil, err
 	}
