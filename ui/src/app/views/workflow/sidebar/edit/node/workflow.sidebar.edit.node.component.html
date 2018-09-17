@@ -98,20 +98,6 @@
 
 <ng-container *ngIf="project && node && node.id === workflow.root.id">
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [(trigger)]="newParentNode" (triggerChange)="addNewParentNode()" #workflowTriggerParent></app-workflow-trigger>
-    <!-- <ng-template let-context let-modal="modal" #nodeParentModal>
-        <div class="header">{{ 'workflow_node_parent' | translate }}</div>
-        <div class="content ui form">
-            <app-workflow-node-form [project]="project" [(node)]="newParentNode"></app-workflow-node-form>
-        </div>
-        <div class="actions">
-            <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' |
-                translate }}
-            </button>
-            <button class="ui green button" [disabled]="loading" (click)="addNewParentNode($event)">{{ 'btn_save' |
-                translate }}
-            </button>
-        </div>
-    </ng-template> -->
 </ng-container>
 <ng-container *ngIf="node">
     <app-workflow-node-delete [loading]="loading" [node]="node" [isRoot]="node.id === workflow.root.id" [isChildOfOutgoingHook]="isChildOfOutgoingHook"
