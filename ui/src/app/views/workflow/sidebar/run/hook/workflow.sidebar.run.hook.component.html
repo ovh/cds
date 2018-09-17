@@ -8,18 +8,27 @@
             </div>
         </div>
     </h3>
-    <div class="ui fluid vertical menu noborder">
-      <a class="item noborder" (click)="openHookConfigModal()">
-        Configuration <i class="angle right icon"></i>
-      </a>
-    </div>
-    <h4 class="ui header ml5">
-        <i class="newspaper icon"></i>
-        <div class="content">
-            <span>Logs</span>
+    <ng-container *ngIf="hook != null">
+        <div class="ui fluid vertical menu noborder">
+        <a class="item noborder" (click)="openHookConfigModal()">
+            Configuration <i class="angle right icon"></i>
+        </a>
         </div>
-    </h4>
+    </ng-container>
+    <ng-container *ngIf="outgoingHook != null">
+        <div class="ui fluid vertical menu noborder">
+        <a class="item noborder" (click)="openOutgoingHookConfigModal()">
+            Configuration <i class="angle right icon"></i>
+        </a>
+        </div>
+    </ng-container>
     <ng-container *ngIf="!loading && hookDetails != null && hookDetails.executions != null">
+        <h4 class="ui header ml5">
+            <i class="newspaper icon"></i>
+            <div class="content">
+                <span>Logs</span>
+            </div>
+        </h4>
         <div class="ui list divided no-mrt">
             <div class="item padding pointing" *ngFor="let exec of hookDetails.executions" (click)="openHookDetailsModal(exec)">
                 <i class="icon ribbon-state"
@@ -44,6 +53,31 @@
             </div>
         </div>
     </ng-container>
+    <ng-container *ngIf="!loading && outgoingHookRuns != null">
+        <h4 class="ui header ml5">
+            <i class="newspaper icon"></i>
+            <div class="content">
+                <span>Executions</span>
+            </div>
+        </h4>
+        <div class="ui list divided no-mrt">
+            <div class="item padding pointing" *ngFor="let run of outgoingHookRuns" (click)="openOutgoingHookDetailsModal(run)">
+                <i class="icon ribbon-state"
+                    [class.success]="run.status === pipelineStatusEnum.SUCCESS"
+                    [class.waiting]="run.status === pipelineStatusEnum.WAITING || run.status === pipelineStatusEnum.BUILING "
+                    [class.fail]="run.status === pipelineStatusEnum.FAILED">
+                </i>
+                <div class="content">
+                    <div class="infoLine">
+                        <i class="tag icon"></i> #{{ run.num }}.{{ run.subnumber }}
+                    </div>
+                    <div class="infoLine" *ngIf="run.callback">
+                        <i class="calendar icon"></i> {{ run.callback.done | amTimeAgo }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
     <div class="ui active centered inline loader" *ngIf="loading"></div>
 </div>
 <ng-container *ngIf="hook && node">
@@ -57,5 +91,16 @@
       [hook]="hook" #workflowConfigHook>
     </app-workflow-node-hook-form>
 </ng-container>
-<app-workflow-node-hook-details #workflowDetailsHook>
-</app-workflow-node-hook-details>
+<app-workflow-node-hook-details #workflowDetailsHook></app-workflow-node-hook-details>
+
+<ng-container *ngIf="outgoingHook && node">
+    <app-workflow-node-hook-form
+    [project]="project"
+    [workflow]="wr.workflow"
+    [node]="node"
+    [loading]="loading"
+    [readonly]="true"
+    [isoutgoing]="true"
+    [outgoingHook]="outgoingHook" #workflowConfigOutgoingHook>
+    </app-workflow-node-hook-form>
+</ng-container>

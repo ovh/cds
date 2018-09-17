@@ -95,15 +95,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
-    constructor(private _hookService: HookService, private _modalService: SuiModalService, private _workflowStore: WorkflowStore) {
-        this.codeMirrorConfig = {
-            matchBrackets: true,
-            autoCloseBrackets: true,
-            mode: 'application/json',
-            lineWrapping: true,
-            autoRefresh: true
-        };
-    }
+    constructor(private _hookService: HookService, private _modalService: SuiModalService, private _workflowStore: WorkflowStore) { }
 
     updateHook(): void {
         this.hook.model = this.selectedHookModel;
@@ -175,7 +167,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
                 }
                 if (this.selectedOutgoingHookModel != null && this.outgoingHook.id) {
                     this.updateMode = true;
-                  }
+                }
                 this.operators = triggerConditions.operators;
                 this.conditionNames = triggerConditions.names;
             }
@@ -214,5 +206,13 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         if (this.hook && this.hook.config && this.hook.config['platform']) {
             this.selectedPlatform = this.project.platforms.find(pf => pf.name === this.hook.config['platform'].value);
         }
+        this.codeMirrorConfig = {
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            mode: 'application/json',
+            lineWrapping: true,
+            autoRefresh: true,
+            readOnly: this.readonly,
+        };
     }
 }

@@ -115,7 +115,7 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 				else \
 					if [ ! -z "${CDS_VERSION}" ]; then \
 						echo "Sending $$TST to CDS"; \
-						worker upload --tag ${CDS_VERSION} $(abspath $$TST); \
+						worker upload --tag `echo $$TST | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
 					fi; \
 					echo "Generating xUnit report \t$$TST.xml"; \
 					$(GO_GO2XUNIT) -input $$TST -output $$TST.xml; \

@@ -38,7 +38,7 @@ export class WorkflowRun {
     join_triggers_run: Map<number, TriggerRun>;
     commits: Array<Commit>;
     infos: Array<SpawnInfo>;
-    outgoing_hooks: Map<number, WorkflowNodeOutgoingHookRun>;
+    outgoing_hooks: { [key: number]: Array<WorkflowNodeOutgoingHookRun>; };
 
     // Useful for UI
     duration: string;

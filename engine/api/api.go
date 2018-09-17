@@ -557,16 +557,7 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
 
-	log.Info("Initializing HTTP router")
-	a.Router = &Router{
-		Mux:        mux.NewRouter(),
-		Background: ctx,
-	}
-	a.InitRouter()
-	if err := a.Router.InitStats("cds-api", a.Name); err != nil {
-		log.Error("unable to init router stats: %v", err)
-	}
-
+	log.Info("Initializing Events broker")
 	// Initialize event broker
 	a.eventsBroker = &eventsBroker{
 		cache:             a.Cache,
@@ -578,6 +569,16 @@ func (a *API) Serve(ctx context.Context) error {
 		disconnected:      make(map[string]bool),
 	}
 	a.eventsBroker.Init(context.Background())
+
+	log.Info("Initializing HTTP router")
+	a.Router = &Router{
+		Mux:        mux.NewRouter(),
+		Background: ctx,
+	}
+	a.InitRouter()
+	if err := a.Router.InitStats("cds-api", a.Name); err != nil {
+		log.Error("unable to init router stats: %v", err)
+	}
 
 	if err := a.initStats(); err != nil {
 		log.Error("unable to init api stats: %v", err)

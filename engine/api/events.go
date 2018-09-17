@@ -137,7 +137,6 @@ func (b *eventsBroker) Start(c context.Context) {
 
 func (b *eventsBroker) ServeHTTP() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
@@ -150,7 +149,9 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		}
 		uuid := string(uuidSK)
 		user := getUser(ctx)
-		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+		if err := loadUserPermissions(b.dbFunc(),
+			b.cache,
+			user); err != nil {
 			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
 		}
 
