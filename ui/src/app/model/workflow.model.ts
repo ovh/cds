@@ -690,13 +690,10 @@ export class WorkflowNode {
     }
 
     static removeOutgoingHook(n: WorkflowNode, id: number): boolean {
-        console.log('searching to delete ' + id + ' on node ' + n.name);
-
         if (n.outgoing_hooks) {
             let lengthBefore = n.outgoing_hooks.length;
             n.outgoing_hooks = n.outgoing_hooks.filter(h => h.id !== id);
             if (lengthBefore !== n.outgoing_hooks.length) {
-                console.log('hook ' + id + ' has been deleted');
                 return true;
             }
 
