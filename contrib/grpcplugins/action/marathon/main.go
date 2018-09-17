@@ -26,9 +26,9 @@ import (
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
-/*
-$ make build
-$ make publish
+/* Inside contrib/grpcplugins/action
+$ make build marathon
+$ make publish marathon
 */
 
 type marathonActionPlugin struct {

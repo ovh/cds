@@ -102,7 +102,7 @@ func ackFromKafka(kafka, topic, group, user, password, key string, timeout time.
 					fmt.Printf("Unable to read bytes: %s\n", err)
 					continue
 				}
-				fmt.Println("Chunk received - action %d", actionID)
+				fmt.Printf("Chunk received - action %d\n", actionID)
 				chunks = append(chunks, *c)
 
 				allChunks := shredder.Filter(chunks)

@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement) (bool, error){
@@ -61,6 +60,7 @@ func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, 
 		}
 	}
 
+	log.Debug("requirements for %s >>> %+v\n", a.Name, a.Requirements)
 	for _, r := range a.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
@@ -86,27 +86,34 @@ func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	pluginBinary := path.Join(w.basedir, r.Name)
+	var currentOS = strings.ToLower(runtime.GOOS)
+	var currentARCH = strings.ToLower(runtime.GOARCH)
 
-	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
-		//If the file doesn't exist. Download it.
-		if err := sdk.DownloadPlugin(r.Name, w.basedir); err != nil {
-			return false, err
-		}
-		if err := os.Chmod(pluginBinary, 0700); err != nil {
-			return false, err
-		}
-	}
-
-	pluginClient := plugin.NewClient(context.Background(), r.Name, pluginBinary, "", "", false)
-	defer pluginClient.Kill()
-
-	_plugin, err := pluginClient.Instance()
+	binary, err := w.client.PluginGetBinaryInfos(r.Name, currentOS, currentARCH)
 	if err != nil {
-		log.Warning("checkPluginRequirement> Error Checking %s requirement : %s", r.Name, err)
 		return false, err
 	}
-	log.Debug("checkPluginRequirement> Plugin %s successfully started", _plugin.Name())
+
+	//Then try to download the plugin
+	pluginBinary := path.Join(w.basedir, binary.Name)
+	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
+		log.Debug("Downloading the plugin %s", binary.Name)
+		//If the file doesn't exist. Download it.
+		fi, err := os.OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		if err != nil {
+			return false, err
+		}
+
+		log.Debug("Get the binary plugin %s", r.Name)
+		if err := w.client.PluginGetBinary(r.Name, currentOS, currentARCH, fi); err != nil {
+			_ = fi.Close()
+			return false, err
+		}
+		//It's downloaded. Close the file
+		_ = fi.Close()
+	} else {
+		log.Debug("plugin binary is in cache")
+	}
 
 	return true, nil
 }
@@ -259,11 +266,11 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 	}
 
 	//Then try to download the plugin
-	pluginBinary := path.Join(w.basedir, binary.Name)
-	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
+	platformPluginBinary := path.Join(w.basedir, binary.Name)
+	if _, err := os.Stat(platformPluginBinary); os.IsNotExist(err) {
 		log.Debug("Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
-		fi, err := os.OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		fi, err := os.OpenFile(platformPluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return false, err
 		}
@@ -279,7 +286,7 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 	}
 
 	//Last but not least: start the plugin
-	socket, err := startGRPCPlugin(context.Background(), w, *binary, startGRPCPluginOptions{
+	socket, err := startGRPCPlugin(context.Background(), binary.PluginName, w, binary, startGRPCPluginOptions{
 		out: os.Stdout,
 		err: os.Stderr,
 	})
