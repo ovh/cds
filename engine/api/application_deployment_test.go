@@ -17,7 +17,8 @@ import (
 )
 
 func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
@@ -43,7 +44,8 @@ func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 }
 
 func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
@@ -165,7 +167,8 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 }
 
 func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentPlatforms(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)

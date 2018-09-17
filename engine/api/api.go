@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -461,10 +462,6 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.TLS,
 		a.Config.SMTP.Disable)
 
-	if err := warning.Init(); err != nil {
-		return fmt.Errorf("Unable to init warning package: %v", err)
-	}
-
 	// Initialize feature packages
 	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.ApiURL)
 	if a.Config.Features.Izanami.ApiURL != "" {
@@ -559,6 +556,19 @@ func (a *API) Serve(ctx context.Context) error {
 	if errCache != nil {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
+
+	log.Info("Initializing Events broker")
+	// Initialize event broker
+	a.eventsBroker = &eventsBroker{
+		cache:             a.Cache,
+		clients:           make(map[string]eventsBrokerSubscribe),
+		dbFunc:            a.DBConnectionFactory.GetDBMap,
+		messages:          make(chan sdk.Event),
+		mutex:             &sync.Mutex{},
+		disconnectedMutex: &sync.Mutex{},
+		disconnected:      make(map[string]bool),
+	}
+	a.eventsBroker.Init(context.Background())
 
 	log.Info("Initializing HTTP router")
 	a.Router = &Router{

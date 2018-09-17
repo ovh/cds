@@ -59,11 +59,6 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 	}
 	hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
 
-	//TODO: to delete when all previous scheduler are updated
-	if _, ok := hook.Config[sdk.Payload]; hook.WorkflowHookModel.Name == sdk.SchedulerModelName && !ok {
-		hook.Config[sdk.Payload] = sdk.SchedulerModel.DefaultConfig[sdk.Payload]
-	}
-
 	errmu := sdk.MultiError{}
 	// Check configuration of the hook vs the model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
@@ -208,7 +203,7 @@ func loadOutgoingHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 			jt, err := loadHookTrigger(ctx, db, store, proj, w, &hooks[i], t, u, opts)
 			if err != nil {
 				if err == sql.ErrNoRows {
-					log.Warning("nodeOutgoingHook.PostGet> trigger %d not found", t)
+					log.Info("nodeOutgoingHook.PostGet> trigger %d not found", t)
 					continue
 				}
 				return nil, sdk.WrapError(err, "nodeOutgoingHook.PostGet> Unable to load hook trigger %d", t)
@@ -334,16 +329,14 @@ func (h *nodeOutgoingHook) PostInsert(db gorp.SqlExecutor) error {
 
 // PostGet is a db hook
 func (h *nodeOutgoingHook) PostGet(db gorp.SqlExecutor) error {
-	var res = struct {
-		Config sql.NullString `db:"config"`
-	}{}
-	if err := db.SelectOne(&res, "select config from workflow_node_outgoing_hook where id = $1", h.ID); err != nil {
+	resConfig, err := db.SelectNullStr("select config from workflow_node_outgoing_hook where id = $1", h.ID)
+	if err != nil {
 		return err
 	}
 
 	conf := sdk.WorkflowNodeHookConfig{}
 
-	if err := gorpmapping.JSONNullString(res.Config, &conf); err != nil {
+	if err := gorpmapping.JSONNullString(resConfig, &conf); err != nil {
 		return err
 	}
 

@@ -6,13 +6,6 @@
   width: 100%;
   height: 100%;
   
-  &.inactive {
-    background-color: $cds_color_light_grey;
-    border: 2px solid grey;
-  }
-  &.active {
-    border: 2px solid $cds_color_teal;
-  }
   &.running {
     border: none;
   }
@@ -26,6 +19,13 @@
   }
   &.building {
     background-color: $cds_color_light_teal;
+    border: 2px solid $cds_color_teal;
+  }
+  &.inactive {
+    background-color: $cds_color_light_grey;
+    border: 2px solid grey;
+  }
+  &.active {
     border: 2px solid $cds_color_teal;
   }
 

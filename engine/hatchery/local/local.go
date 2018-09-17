@@ -186,7 +186,7 @@ func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
-	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
+	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomNameCDS(0))
 	if spawnArgs.RegisterOnly {
 		wName = "register-" + wName
 	}

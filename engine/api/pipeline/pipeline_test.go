@@ -15,7 +15,8 @@ import (
 )
 
 func TestInsertPipeline(t *testing.T) {
-	db, cache := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -69,7 +70,8 @@ func TestInsertPipeline(t *testing.T) {
 }
 
 func TestInsertPipelineWithParemeters(t *testing.T) {
-	db, cache := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -107,7 +109,8 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 }
 
 func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
-	db, cache := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -138,7 +141,8 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 

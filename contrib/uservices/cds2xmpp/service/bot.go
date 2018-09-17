@@ -201,7 +201,7 @@ func (bot *botClient) sendRetry(v xmpp.Chat) {
 }
 
 func getTypeChat(s string) string {
-	if strings.Contains(s, "@conference.") {
+	if strings.Contains(s, "@conference") {
 		return typeGroupChat
 	}
 	return typeChat

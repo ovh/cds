@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"crypto/tls"
 	"errors"
 	"net"
 	"strings"
@@ -28,16 +29,22 @@ type FailoverOptions struct {
 	Password string
 	DB       int
 
-	MaxRetries int
+	MaxRetries      int
+	MinRetryBackoff time.Duration
+	MaxRetryBackoff time.Duration
 
 	DialTimeout  time.Duration
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
 
 	PoolSize           int
+	MinIdleConns       int
+	MaxConnAge         time.Duration
 	PoolTimeout        time.Duration
 	IdleTimeout        time.Duration
 	IdleCheckFrequency time.Duration
+
+	TLSConfig *tls.Config
 }
 
 func (opt *FailoverOptions) options() *Options {
@@ -59,6 +66,8 @@ func (opt *FailoverOptions) options() *Options {
 		PoolTimeout:        opt.PoolTimeout,
 		IdleTimeout:        opt.IdleTimeout,
 		IdleCheckFrequency: opt.IdleCheckFrequency,
+
+		TLSConfig: opt.TLSConfig,
 	}
 }
 
@@ -76,7 +85,7 @@ func NewFailoverClient(failoverOpt *FailoverOptions) *Client {
 		opt: opt,
 	}
 
-	client := Client{
+	c := Client{
 		baseClient: baseClient{
 			opt:      opt,
 			connPool: failover.Pool(),
@@ -86,53 +95,56 @@ func NewFailoverClient(failoverOpt *FailoverOptions) *Client {
 			},
 		},
 	}
-	client.setProcessor(client.Process)
+	c.baseClient.init()
+	c.cmdable.setProcessor(c.Process)
 
-	return &client
+	return &c
 }
 
 //------------------------------------------------------------------------------
 
-type sentinelClient struct {
-	cmdable
+type SentinelClient struct {
 	baseClient
 }
 
-func newSentinel(opt *Options) *sentinelClient {
+func NewSentinelClient(opt *Options) *SentinelClient {
 	opt.init()
-	client := sentinelClient{
+	c := &SentinelClient{
 		baseClient: baseClient{
 			opt:      opt,
 			connPool: newConnPool(opt),
 		},
 	}
-	client.cmdable = cmdable{client.Process}
-	return &client
+	c.baseClient.init()
+	return c
 }
 
-func (c *sentinelClient) PubSub() *PubSub {
-	return &PubSub{
-		base: baseClient{
-			opt:      c.opt,
-			connPool: c.connPool,
+func (c *SentinelClient) PubSub() *PubSub {
+	pubsub := &PubSub{
+		opt: c.opt,
+
+		newConn: func(channels []string) (*pool.Conn, error) {
+			return c.newConn()
 		},
+		closeConn: c.connPool.CloseConn,
 	}
+	pubsub.init()
+	return pubsub
 }
 
-func (c *sentinelClient) GetMasterAddrByName(name string) *StringSliceCmd {
+func (c *SentinelClient) GetMasterAddrByName(name string) *StringSliceCmd {
 	cmd := NewStringSliceCmd("SENTINEL", "get-master-addr-by-name", name)
 	c.Process(cmd)
 	return cmd
 }
 
-func (c *sentinelClient) Sentinels(name string) *SliceCmd {
+func (c *SentinelClient) Sentinels(name string) *SliceCmd {
 	cmd := NewSliceCmd("SENTINEL", "sentinels", name)
 	c.Process(cmd)
 	return cmd
 }
 
 type sentinelFailover struct {
-	masterName    string
 	sentinelAddrs []string
 
 	opt *Options
@@ -140,20 +152,14 @@ type sentinelFailover struct {
 	pool     *pool.ConnPool
 	poolOnce sync.Once
 
-	mu       sync.RWMutex
-	sentinel *sentinelClient
+	mu          sync.RWMutex
+	masterName  string
+	_masterAddr string
+	sentinel    *SentinelClient
 }
 
 func (d *sentinelFailover) Close() error {
 	return d.resetSentinel()
-}
-
-func (d *sentinelFailover) dial() (net.Conn, error) {
-	addr, err := d.MasterAddr()
-	if err != nil {
-		return nil, err
-	}
-	return net.DialTimeout("tcp", addr, d.opt.DialTimeout)
 }
 
 func (d *sentinelFailover) Pool() *pool.ConnPool {
@@ -164,25 +170,43 @@ func (d *sentinelFailover) Pool() *pool.ConnPool {
 	return d.pool
 }
 
+func (d *sentinelFailover) dial() (net.Conn, error) {
+	addr, err := d.MasterAddr()
+	if err != nil {
+		return nil, err
+	}
+	return net.DialTimeout("tcp", addr, d.opt.DialTimeout)
+}
+
 func (d *sentinelFailover) MasterAddr() (string, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
+	addr, err := d.masterAddr()
+	if err != nil {
+		return "", err
+	}
+	d._switchMaster(addr)
+
+	return addr, nil
+}
+
+func (d *sentinelFailover) masterAddr() (string, error) {
 	// Try last working sentinel.
 	if d.sentinel != nil {
 		addr, err := d.sentinel.GetMasterAddrByName(d.masterName).Result()
-		if err != nil {
-			internal.Logf("sentinel: GetMasterAddrByName %q failed: %s", d.masterName, err)
-			d._resetSentinel()
-		} else {
+		if err == nil {
 			addr := net.JoinHostPort(addr[0], addr[1])
-			internal.Logf("sentinel: %q addr is %s", d.masterName, addr)
 			return addr, nil
 		}
+
+		internal.Logf("sentinel: GetMasterAddrByName name=%q failed: %s",
+			d.masterName, err)
+		d._resetSentinel()
 	}
 
 	for i, sentinelAddr := range d.sentinelAddrs {
-		sentinel := newSentinel(&Options{
+		sentinel := NewSentinelClient(&Options{
 			Addr: sentinelAddr,
 
 			DialTimeout:  d.opt.DialTimeout,
@@ -193,51 +217,71 @@ func (d *sentinelFailover) MasterAddr() (string, error) {
 			PoolTimeout: d.opt.PoolTimeout,
 			IdleTimeout: d.opt.IdleTimeout,
 		})
+
 		masterAddr, err := sentinel.GetMasterAddrByName(d.masterName).Result()
 		if err != nil {
-			internal.Logf("sentinel: GetMasterAddrByName %q failed: %s", d.masterName, err)
+			internal.Logf("sentinel: GetMasterAddrByName master=%q failed: %s",
+				d.masterName, err)
 			sentinel.Close()
 			continue
 		}
 
 		// Push working sentinel to the top.
 		d.sentinelAddrs[0], d.sentinelAddrs[i] = d.sentinelAddrs[i], d.sentinelAddrs[0]
-
 		d.setSentinel(sentinel)
+
 		addr := net.JoinHostPort(masterAddr[0], masterAddr[1])
-		internal.Logf("sentinel: %q addr is %s", d.masterName, addr)
 		return addr, nil
 	}
 
 	return "", errors.New("redis: all sentinels are unreachable")
 }
 
-func (d *sentinelFailover) setSentinel(sentinel *sentinelClient) {
+func (c *sentinelFailover) switchMaster(addr string) {
+	c.mu.Lock()
+	c._switchMaster(addr)
+	c.mu.Unlock()
+}
+
+func (c *sentinelFailover) _switchMaster(addr string) {
+	if c._masterAddr == addr {
+		return
+	}
+
+	internal.Logf("sentinel: new master=%q addr=%q",
+		c.masterName, addr)
+	_ = c.Pool().Filter(func(cn *pool.Conn) bool {
+		return cn.RemoteAddr().String() != addr
+	})
+	c._masterAddr = addr
+}
+
+func (d *sentinelFailover) setSentinel(sentinel *SentinelClient) {
 	d.discoverSentinels(sentinel)
 	d.sentinel = sentinel
 	go d.listen(sentinel)
 }
 
 func (d *sentinelFailover) resetSentinel() error {
+	var err error
 	d.mu.Lock()
-	err := d._resetSentinel()
+	if d.sentinel != nil {
+		err = d._resetSentinel()
+	}
 	d.mu.Unlock()
 	return err
 }
 
 func (d *sentinelFailover) _resetSentinel() error {
-	var err error
-	if d.sentinel != nil {
-		err = d.sentinel.Close()
-		d.sentinel = nil
-	}
+	err := d.sentinel.Close()
+	d.sentinel = nil
 	return err
 }
 
-func (d *sentinelFailover) discoverSentinels(sentinel *sentinelClient) {
+func (d *sentinelFailover) discoverSentinels(sentinel *SentinelClient) {
 	sentinels, err := sentinel.Sentinels(d.masterName).Result()
 	if err != nil {
-		internal.Logf("sentinel: Sentinels %q failed: %s", d.masterName, err)
+		internal.Logf("sentinel: Sentinels master=%q failed: %s", d.masterName, err)
 		return
 	}
 	for _, sentinel := range sentinels {
@@ -248,8 +292,8 @@ func (d *sentinelFailover) discoverSentinels(sentinel *sentinelClient) {
 				sentinelAddr := vals[i+1].(string)
 				if !contains(d.sentinelAddrs, sentinelAddr) {
 					internal.Logf(
-						"sentinel: discovered new %q sentinel: %s",
-						d.masterName, sentinelAddr,
+						"sentinel: discovered new sentinel=%q for master=%q",
+						sentinelAddr, d.masterName,
 					)
 					d.sentinelAddrs = append(d.sentinelAddrs, sentinelAddr)
 				}
@@ -258,71 +302,37 @@ func (d *sentinelFailover) discoverSentinels(sentinel *sentinelClient) {
 	}
 }
 
-// closeOldConns closes connections to the old master after failover switch.
-func (d *sentinelFailover) closeOldConns(newMaster string) {
-	// Good connections that should be put back to the pool. They
-	// can't be put immediately, because pool.PopFree will return them
-	// again on next iteration.
-	cnsToPut := make([]*pool.Conn, 0)
+func (d *sentinelFailover) listen(sentinel *SentinelClient) {
+	pubsub := sentinel.PubSub()
+	defer pubsub.Close()
 
-	for {
-		cn := d.pool.PopFree()
-		if cn == nil {
-			break
-		}
-		if cn.RemoteAddr().String() != newMaster {
-			internal.Logf(
-				"sentinel: closing connection to the old master %s",
-				cn.RemoteAddr(),
-			)
-			d.pool.Remove(cn)
-		} else {
-			cnsToPut = append(cnsToPut, cn)
-		}
+	err := pubsub.Subscribe("+switch-master")
+	if err != nil {
+		internal.Logf("sentinel: Subscribe failed: %s", err)
+		d.resetSentinel()
+		return
 	}
 
-	for _, cn := range cnsToPut {
-		d.pool.Put(cn)
-	}
-}
-
-func (d *sentinelFailover) listen(sentinel *sentinelClient) {
-	var pubsub *PubSub
 	for {
-		if pubsub == nil {
-			pubsub = sentinel.PubSub()
-
-			if err := pubsub.Subscribe("+switch-master"); err != nil {
-				internal.Logf("sentinel: Subscribe failed: %s", err)
-				pubsub.Close()
+		msg, err := pubsub.ReceiveMessage()
+		if err != nil {
+			if err == pool.ErrClosed {
 				d.resetSentinel()
 				return
 			}
-		}
-
-		msg, err := pubsub.ReceiveMessage()
-		if err != nil {
 			internal.Logf("sentinel: ReceiveMessage failed: %s", err)
-			pubsub.Close()
-			d.resetSentinel()
-			return
+			continue
 		}
 
 		switch msg.Channel {
 		case "+switch-master":
 			parts := strings.Split(msg.Payload, " ")
 			if parts[0] != d.masterName {
-				internal.Logf("sentinel: ignore new %s addr", parts[0])
+				internal.Logf("sentinel: ignore addr for master=%q", parts[0])
 				continue
 			}
-
 			addr := net.JoinHostPort(parts[3], parts[4])
-			internal.Logf(
-				"sentinel: new %q addr is %s",
-				d.masterName, addr,
-			)
-
-			d.closeOldConns(addr)
+			d.switchMaster(addr)
 		}
 	}
 }

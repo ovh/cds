@@ -23,7 +23,8 @@ import (
 )
 
 func Test_runPipelineHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -97,7 +98,8 @@ func Test_runPipelineHandler(t *testing.T) {
 }
 
 func Test_runPipelineWithLastParentHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -270,7 +272,8 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 }
 
 func Test_deletePipelineHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -314,7 +317,8 @@ func Test_deletePipelineHandler(t *testing.T) {
 }
 
 func Test_postPipelineRollbackHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -387,7 +391,8 @@ jobs:
 }
 
 func Test_deletePipelineHandlerShouldReturnError(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())

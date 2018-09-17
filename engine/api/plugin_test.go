@@ -57,7 +57,7 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 
 /*
 func TestAddPluginHandlerSuccess(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -129,7 +129,7 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 }
 
 func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -172,7 +172,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 }
 
 func TestAddPluginHandlerFailWithConflict(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -222,7 +222,7 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 }
 
 func TestUpdatePluginHandlerSuccess(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -286,7 +286,7 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 }
 
 func TestDeletePluginHandlerSuccess(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t); defer end()
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {

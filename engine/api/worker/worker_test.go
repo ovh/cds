@@ -9,7 +9,8 @@ import (
 )
 
 func TestInsertWorker(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	workers, err := LoadWorkers(db, "")
 	test.NoError(t, err)
@@ -29,7 +30,8 @@ func TestInsertWorker(t *testing.T) {
 }
 
 func TestDeletetWorker(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	workers, errl := LoadWorkers(db, "")
 	test.NoError(t, errl)
@@ -52,7 +54,8 @@ func TestDeletetWorker(t *testing.T) {
 }
 
 func TestLoadWorkers(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	workers, errl := LoadWorkers(db, "")
 	test.NoError(t, errl)

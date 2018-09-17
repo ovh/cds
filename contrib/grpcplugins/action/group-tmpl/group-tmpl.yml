@@ -1,0 +1,17 @@
+name: plugin-group-tmpl
+type: action
+author: Yannick BRIFFA <yannick.briffa@corp.ovh.com>
+description: |
+  This actions helps you generate a marathon group application file.
+  It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files.
+  Check documentation on text/template for more information https://golang.org/pkg/text/template.
+parameters:
+  config:
+    type: string
+    description: Template file to use
+  output:
+    type: string
+    description: Output path for generated file (default to <file>.out or just trimming .tpl extension)
+  applications:
+    type: string
+    description: Applications file variables

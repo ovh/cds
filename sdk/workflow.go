@@ -1175,7 +1175,7 @@ func (n *WorkflowNode) CheckApplicationDeploymentStrategies(proj *Project) error
 	return nil
 }
 
-//WorkflowNodeTrigger is a ling between two pipelines in a workflow
+//WorkflowNodeTrigger is a link between two pipelines in a workflow
 type WorkflowNodeTrigger struct {
 	ID                 int64        `json:"id" db:"id"`
 	WorkflowNodeID     int64        `json:"workflow_node_id" db:"workflow_node_id"`

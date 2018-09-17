@@ -87,8 +87,8 @@ export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit 
 
                 if (!this.ready && this.hook && this.selectedHookID && this.hook.id === this.selectedHookID) {
                     this._workflowEventStore.setSelectedOutgoingHook(this.hook);
+                    this.isSelected = true;
                 }
-
                 this.ready = true;
             }
         );

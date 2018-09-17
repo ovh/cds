@@ -1,12 +1,9 @@
 package api
 
 import (
-	"context"
 	"net/http"
-	"sync"
 
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/sdk"
 )
 
 // InitRouter initializes the router and all the routes
@@ -15,17 +12,6 @@ func (api *API) InitRouter() {
 	api.Router.SetHeaderFunc = DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
-
-	api.eventsBroker = &eventsBroker{
-		cache:             api.Cache,
-		clients:           make(map[string]eventsBrokerSubscribe),
-		dbFunc:            api.DBConnectionFactory.GetDBMap,
-		messages:          make(chan sdk.Event),
-		mutex:             &sync.Mutex{},
-		disconnectedMutex: &sync.Mutex{},
-		disconnected:      make(map[string]bool),
-	}
-	api.eventsBroker.Init(context.Background())
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
@@ -51,6 +37,7 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/plugin/{name}", r.GET(api.getGRPCluginHandler, NeedAdmin(true)), r.PUT(api.putGRPCluginHandler, NeedAdmin(true)), r.DELETE(api.deleteGRPCluginHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}/binary", r.POST(api.postGRPCluginBinaryHandler, NeedAdmin(true)))
 	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}", r.GET(api.getGRPCluginBinaryHandler, Auth(false)), r.DELETE(api.deleteGRPCluginBinaryHandler, NeedAdmin(true)))
+	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}/infos", r.GET(api.getGRPCluginBinaryInfosHandler))
 
 	// Admin service
 	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))

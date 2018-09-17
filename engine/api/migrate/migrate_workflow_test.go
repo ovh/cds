@@ -18,7 +18,8 @@ import (
 )
 
 func Test_ToWorkflow(t *testing.T) {
-	db, cache := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)

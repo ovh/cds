@@ -21,7 +21,8 @@ import (
 )
 
 func TestVariableInProject(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	// 1. Create project
 	project1 := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -69,7 +70,8 @@ func TestVariableInProject(t *testing.T) {
 }
 
 func Test_getProjectsHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	repofullname := sdk.RandomString(10) + "/" + sdk.RandomString(10)
 	app := &sdk.Application{
@@ -97,7 +99,8 @@ func Test_getProjectsHandler(t *testing.T) {
 }
 
 func Test_addProjectHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(db)
 
 	proj := sdk.Project{
@@ -128,7 +131,8 @@ func Test_addProjectHandler(t *testing.T) {
 }
 
 func Test_addProjectHandlerWithGroup(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(db)
 	g := sdk.Group{Name: sdk.RandomString(10)}
 	test.NoError(t, group.InsertGroup(db, &g))
@@ -164,7 +168,8 @@ func Test_addProjectHandlerWithGroup(t *testing.T) {
 }
 
 func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 
 	u, pass := assets.InsertLambdaUser(api.mustDB())
@@ -187,7 +192,8 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T)
 }
 
 func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertLambdaUser(api.mustDB())
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
@@ -273,7 +279,8 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 }
 
 func Test_putProjectLabelsHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(db)
 
 	pkey := sdk.RandomString(10)

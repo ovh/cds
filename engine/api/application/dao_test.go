@@ -17,7 +17,8 @@ import (
 )
 
 func TestLoadByNameAsAdmin(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
@@ -36,7 +37,8 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 }
 
 func TestLoadByNameAsUser(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
@@ -58,7 +60,8 @@ func TestLoadByNameAsUser(t *testing.T) {
 }
 
 func TestLoadByIDAsAdmin(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
@@ -76,7 +79,8 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 }
 
 func TestLoadByIDAsUser(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
@@ -99,7 +103,8 @@ func TestLoadByIDAsUser(t *testing.T) {
 }
 
 func TestLoadAllAsAdmin(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
@@ -131,7 +136,8 @@ func TestLoadAllAsAdmin(t *testing.T) {
 }
 
 func TestLoadAllAsUser(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
@@ -156,7 +162,8 @@ func TestLoadAllAsUser(t *testing.T) {
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 

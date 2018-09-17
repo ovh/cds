@@ -17,7 +17,8 @@ import (
 )
 
 func Test_workerCheckingHandler(t *testing.T) {
-	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Load all workers and hatcheries
 	workers, err := worker.LoadWorkers(api.mustDB(), "")
@@ -112,7 +113,8 @@ func Test_workerCheckingHandler(t *testing.T) {
 }
 
 func Test_workerWaitingHandler(t *testing.T) {
-	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	//1. Load all workers and hatcheries
 	workers, errlw := worker.LoadWorkers(api.mustDB(), "")

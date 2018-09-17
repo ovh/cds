@@ -19,7 +19,8 @@ import (
 )
 
 func TestMissingProjectVariablePipelineJob(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -126,7 +127,8 @@ func TestMissingProjectVariablePipelineJob(t *testing.T) {
 }
 
 func TestMissingProjectVariablePipelineParameter(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -216,7 +218,8 @@ func TestMissingProjectVariablePipelineParameter(t *testing.T) {
 }
 
 func TestMissingProjectVariableApplication(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -304,7 +307,8 @@ func TestMissingProjectVariableApplication(t *testing.T) {
 }
 
 func TestMissingProjectVariableWorkflow(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -417,7 +421,8 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 }
 
 func TestMissingProjectVariableEnv(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -504,12 +509,11 @@ func TestMissingProjectVariableEnv(t *testing.T) {
 }
 
 func TestUnusedProjectVariableWarningOnApplicationEvent(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
-
-	assert.NoError(t, Init())
 
 	v := sdk.Variable{
 		Name:  sdk.RandomString(10),
@@ -591,7 +595,8 @@ func TestUnusedProjectVariableWarningOnApplicationEvent(t *testing.T) {
 }
 
 func TestUnusedProjectVariableWarning(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)

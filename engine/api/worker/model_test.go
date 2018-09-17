@@ -73,7 +73,8 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func TestInsertWorkerModel(t *testing.T) {
-	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -110,7 +111,7 @@ func TestInsertWorkerModel(t *testing.T) {
 	group.InsertGroup(db, g)
 	group.InsertUserInGroup(db, g.ID, u.ID, false)
 
-	m3, err := LoadWorkerModelsByUser(db, store, u)
+	m3, err := LoadWorkerModelsByUser(db, store, u, nil)
 	if err != nil {
 		t.Fatalf("Cannot load worker model by user: %s", err)
 	}
@@ -124,7 +125,8 @@ func TestInsertWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModel(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -146,7 +148,8 @@ func TestLoadWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModels(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -170,8 +173,30 @@ func TestLoadWorkerModels(t *testing.T) {
 	}
 }
 
+func TestLoadWorkerModelsWithFilter(t *testing.T) {
+	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+	deleteAllWorkerModel(t, db)
+
+	g := insertGroup(t, db)
+
+	insertWorkerModel(t, db, "lol", g.ID)
+	insertWorkerModel(t, db, "foo", g.ID)
+
+	opts := StateError
+	models, err := LoadWorkerModelsByUser(db, store, &sdk.User{Admin: true}, &opts)
+	if err != nil {
+		t.Fatalf("Cannot load worker model: %s", err)
+	}
+
+	if len(models) != 0 {
+		t.Fatalf("Expected 0 models, got %d", len(models))
+	}
+}
+
 func TestLoadWorkerModelsByUserAndBinary(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 	s := sdk.RandomString(10)
 	_, hash, _ := user.GeneratePassword()
@@ -210,7 +235,8 @@ func TestLoadWorkerModelsByUserAndBinary(t *testing.T) {
 }
 
 func TestLoadWorkerModelCapabilities(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -227,7 +253,8 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 }
 
 func TestUpdateWorkerModel(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)

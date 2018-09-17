@@ -154,7 +154,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	defer end()
 
 	//name is the name of the worker and the name of the container
-	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1))
 	if spawnArgs.RegisterOnly {
 		name = "register-" + name
 	}
@@ -185,7 +185,14 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 			break
 		}
 
-		nbContainers := float64(len(containers)) / float64(h.dockerClients[dname].MaxContainers)
+		var nbContainersFromHatchery int64
+		for _, cont := range containers {
+			if _, ok := cont.Labels["hatchery"]; ok {
+				nbContainersFromHatchery++
+			}
+		}
+
+		nbContainers := float64(nbContainersFromHatchery) / float64(h.dockerClients[dname].MaxContainers)
 		if nbContainersRatio == 0 || nbContainers < nbContainersRatio {
 			nbContainersRatio = nbContainers
 			dockerClient = h.dockerClients[dname]
@@ -229,13 +236,19 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					}
 				}
 				//name= <alias> => the name of the host put in /etc/hosts of the worker
-				//value= "postgres:latest env_1=blabla env_2=blabla"" => we can add env variables in requirement name
+				//value= "postgres:latest env_1=blabla env_2=blabla" => we can add env variables in requirement name
 				tuple := strings.Split(r.Value, " ")
 				img := tuple[0]
 				env := []string{}
 				serviceMemory := int64(1024)
 				if len(tuple) > 1 {
-					env = append(env, tuple[1:]...)
+					for i := 1; i < len(tuple); i++ {
+						splittedTuple := strings.SplitN(tuple[i], "=", 2)
+						name := splittedTuple[0]
+						val := strings.TrimLeft(splittedTuple[1], "\"")
+						val = strings.TrimRight(val, "\"")
+						env = append(env, name+"="+val)
+					}
 				}
 				//option for power user : set the service memory with CDS_SERVICE_MEMORY=1024
 				for _, e := range env {
@@ -428,6 +441,13 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 			continue
 		}
 
+		var nbContainersFromHatchery int
+		for _, cont := range cs {
+			if _, ok := cont.Labels["hatchery"]; ok {
+				nbContainersFromHatchery++
+			}
+		}
+
 		//List all workers
 		ws, errWList := h.getWorkerContainers(dockerClient, cs, types.ContainerListOptions{})
 		if errWList != nil {
@@ -436,8 +456,8 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 
 		//Checking teh number of container on each docker engine
-		if len(cs) > dockerClient.MaxContainers {
-			log.Debug("hatchery> swarm> CanSpawn> max containers reached on %s. current:%d max:%d", dockerName, len(cs), dockerClient.MaxContainers)
+		if nbContainersFromHatchery > dockerClient.MaxContainers {
+			log.Debug("hatchery> swarm> CanSpawn> max containers reached on %s. current:%d max:%d", dockerName, nbContainersFromHatchery, dockerClient.MaxContainers)
 			continue
 		}
 
@@ -456,7 +476,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 				log.Debug("hatchery> swarm> CanSpawn> ratioService 100 by conf on %s - no spawn worker without CDS Service", dockerName)
 				return false
 			}
-			if len(cs) > 0 {
+			if nbContainersFromHatchery > 0 {
 				percentFree := 100 - (100 * len(ws) / h.Config.MaxContainers)
 				if percentFree <= h.Config.RatioService {
 					log.Debug("hatchery> swarm> CanSpawn> ratio reached on %s. percentFree:%d ratioService:%d", dockerName, percentFree, h.Config.RatioService)

@@ -25,7 +25,8 @@ import (
 )
 
 func Test_updateStepStatusHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -121,7 +122,8 @@ func Test_updateStepStatusHandler(t *testing.T) {
 }
 
 func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//Create admin user
 	u, _ := assets.InsertAdminUser(api.mustDB())
@@ -198,7 +200,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	name := "HATCHERY_TEST_" + namesgenerator.GetRandomName(0)
+	name := "HATCHERY_TEST_" + namesgenerator.GetRandomNameCDS(0)
 	hatch := sdk.Hatchery{
 		Name:    name,
 		GroupID: g.ID,

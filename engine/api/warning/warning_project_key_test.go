@@ -18,7 +18,8 @@ import (
 
 func TestUnusedProjectKeyWarningEventProjectKeyAdd(t *testing.T) {
 	// INIT
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -75,7 +76,8 @@ func TestUnusedProjectKeyWarningEventProjectKeyAdd(t *testing.T) {
 }
 
 func TestMissingProjectKeyPipelineParameterWarning(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -144,7 +146,8 @@ func TestMissingProjectKeyPipelineParameterWarning(t *testing.T) {
 }
 
 func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -223,7 +226,8 @@ func TestMissingProjectKeyPipelineJobWarning(t *testing.T) {
 }
 
 func TestMissingProjectKeyApplicationWarning(t *testing.T) {
-	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)

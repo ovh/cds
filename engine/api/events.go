@@ -81,6 +81,10 @@ func (b *eventsBroker) Init(c context.Context) {
 }
 
 func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
+	if cacheMsgChan == nil {
+		return
+	}
+
 	pubSub := store.Subscribe("events_pubsub")
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
@@ -114,6 +118,9 @@ func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cach
 
 // Start the broker
 func (b *eventsBroker) Start(c context.Context) {
+	if b.messages == nil {
+		return
+	}
 	for {
 		select {
 		case <-c.Done():
@@ -130,7 +137,6 @@ func (b *eventsBroker) Start(c context.Context) {
 
 func (b *eventsBroker) ServeHTTP() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
@@ -143,7 +149,9 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		}
 		uuid := string(uuidSK)
 		user := getUser(ctx)
-		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+		if err := loadUserPermissions(b.dbFunc(),
+			b.cache,
+			user); err != nil {
 			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
 		}
 

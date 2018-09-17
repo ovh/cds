@@ -51,7 +51,7 @@ func CreateBuiltinWorkflowOutgoingHookModels(db *gorp.DbMap) error {
 	if err != nil {
 		return sdk.WrapError(err, "CreateBuiltinWorkflowOutgoingHookModels> Unable to start transaction")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	if _, err := tx.Exec("LOCK TABLE workflow_outgoing_hook_model IN ACCESS EXCLUSIVE MODE"); err != nil {
 		return sdk.WrapError(err, "CreateBuiltinWorkflowOutgoingHookModels> Unable to lock table")
@@ -94,14 +94,14 @@ func checkBuiltinWorkflowOutgoingHookModelExist(db gorp.SqlExecutor, h *sdk.Work
 func LoadOutgoingHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
 	dbModels := []outgoingHookModel{}
 	if _, err := db.Select(&dbModels, "select id, name, type, command, author, description, identifier, icon from workflow_outgoing_hook_model"); err != nil {
-		return nil, sdk.WrapError(err, "outgoingHookModel> Unable to load WorkflowHookModel")
+		return nil, sdk.WrapError(err, "LoadOutgoingHookModels> Unable to load WorkflowHookModel")
 	}
 
 	models := make([]sdk.WorkflowHookModel, len(dbModels))
 	for i := range dbModels {
 		m := dbModels[i]
 		if err := m.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "outgoingHookModel> Unable to load WorkflowHookModel")
+			return nil, sdk.WrapError(err, "LoadOutgoingHookModels> Unable to load WorkflowHookModel")
 		}
 		models[i] = sdk.WorkflowHookModel(m)
 	}
