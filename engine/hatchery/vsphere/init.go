@@ -9,14 +9,10 @@ import (
 	"github.com/vmware/govmomi/vim25/soap"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
 )
 
 // Init create new client for vsphere
 func (h *HatcheryVSphere) Init() error {
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
 	ctx := context.Background()
 
 	// Connect and login to ESX or vCenter

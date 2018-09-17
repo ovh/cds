@@ -39,14 +39,9 @@ func New() *HatcheryKubernetes {
 
 // Init register local hatchery with its worker model
 func (h *HatcheryKubernetes) Init() error {
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
 	sdk.GoRoutine("hatchery kubernetes routines", func() {
 		h.routines(context.Background())
 	})
-
 	return nil
 }
 

@@ -352,11 +352,6 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 // Init register local hatchery with its worker model
 func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]workerCmd)
-
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
 	sdk.GoRoutine("startKillAwolWorkerRoutine", h.startKillAwolWorkerRoutine)
 	return nil
 }

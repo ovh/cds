@@ -275,8 +275,8 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, hatc
 		return nil, errL
 	}
 
-	if hatchery != nil {
-		if hatchery.GroupID != t.GroupID {
+	if hatchery != nil && hatchery.GroupID != nil {
+		if *hatchery.GroupID != t.GroupID {
 			return nil, sdk.ErrForbidden
 		}
 	}

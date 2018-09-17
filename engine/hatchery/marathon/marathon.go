@@ -488,10 +488,6 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 
 // Init only starts killing routine of worker not registered
 func (h *HatcheryMarathon) Init() error {
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
 	h.startKillAwolWorkerRoutine()
 	return nil
 }

@@ -37,10 +37,6 @@ func New() *HatcherySwarm {
 
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init() error {
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
