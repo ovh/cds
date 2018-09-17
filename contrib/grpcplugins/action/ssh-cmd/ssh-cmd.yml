@@ -1,0 +1,29 @@
+name: plugin-ssh-cmd
+type: action
+author: François SAMIN <francois.samin@corp.ovh.com>
+description: This plugin helps you to run cmd on remote server over ssh.
+parameters:
+  username:
+    type: string
+    description: Username
+    default: '{{.cds.env.username}}'
+  privateKey:
+    type: string
+    description: SSH RSA private key
+    default: '{{.cds.app.key}}'
+  hostnames:
+    type: string
+    description: Hostnames (comma separated values)
+    default: '{{.cds.env.hostnames}}'
+  command:
+    type: text
+    description: Command
+    default: 'echo \"Hello CDS !\"'
+  timeout:
+    type: string
+    description: Timeout (seconds)
+    default: '5'
+  commandTimeout:
+    type: string
+    description: Command Timeout (seconds)
+    default: '60'

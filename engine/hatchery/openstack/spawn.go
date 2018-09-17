@@ -22,7 +22,7 @@ import (
 // requirements are not supported
 func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
 	//generate a pretty cool name
-	name := spawnArgs.Model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
+	name := spawnArgs.Model.Name + "-" + strings.Replace(namesgenerator.GetRandomNameCDS(0), "_", "-", -1)
 	if spawnArgs.RegisterOnly {
 		name = "register-" + name
 	}

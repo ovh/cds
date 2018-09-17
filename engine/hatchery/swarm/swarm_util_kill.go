@@ -74,6 +74,7 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 		}
 
 		//Finally remove the network
+		log.Info("hatchery> swarm> remove network %s (%s)", network.Name, network.ID)
 		if err := dockerClient.NetworkRemove(context.Background(), network.ID); err != nil {
 			log.Error("hatchery> swarm> killAndRemove> unable to kill and remove network %s from %s err:%s", network.ID[:12], dockerClient.name, err)
 		}
@@ -128,11 +129,11 @@ func (h *HatcherySwarm) killAwolNetworks() error {
 			}
 
 			// if network created less than 10 min, keep it alive for now
-			if time.Since(nets[i].Created) < 10*time.Minute {
+			if time.Since(n.Created) < 10*time.Minute {
 				continue
 			}
 
-			log.Debug("hatchery> swarm> killAwolNetworks> Delete network %s from %s", n.Name, dockerClient.name)
+			log.Info("hatchery> swarm> killAwolNetworks> remove network[%s] %s on %s (created on %v)", n.ID, n.Name, dockerClient.name, n.Created)
 			if err := dockerClient.NetworkRemove(context.Background(), n.ID); err != nil {
 				log.Warning("hatchery> swarm> killAwolNetworks> Unable to delete network %s err:%s", n.Name, err)
 			}

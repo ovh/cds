@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"testing"
+	"time"
 
 	"github.com/ovh/venom"
 	"github.com/stretchr/testify/assert"
@@ -124,6 +125,15 @@ func TestWorkflowRunReport(t *testing.T) {
 }
 
 func TestWorkflowQueue_Sort(t *testing.T) {
+	now := time.Now()
+	t10, _ := time.Parse(time.RFC3339, "2018-09-01T10:00:00+00:00")
+	t11, _ := time.Parse(time.RFC3339, "2018-09-01T11:00:00+00:00")
+	t12, _ := time.Parse(time.RFC3339, "2018-09-01T12:00:00+00:00")
+	t13, _ := time.Parse(time.RFC3339, "2018-09-01T13:00:00+00:00")
+	t14, _ := time.Parse(time.RFC3339, "2018-09-01T14:00:00+00:00")
+	t15, _ := time.Parse(time.RFC3339, "2018-09-01T15:00:00+00:00")
+	t16, _ := time.Parse(time.RFC3339, "2018-09-01T16:00:00+00:00")
+
 	tests := []struct {
 		name     string
 		q        WorkflowQueue
@@ -133,30 +143,90 @@ func TestWorkflowQueue_Sort(t *testing.T) {
 			name: "test sort 1",
 			q: WorkflowQueue{
 				{
-					ProjectID: 1,
-					ID:        1,
+					ProjectID:     1,
+					ID:            1,
+					Queued:        t10,
+					QueuedSeconds: now.Unix() - t10.Unix(),
 				},
 				{
-					ProjectID: 1,
-					ID:        2,
+					ProjectID:     1,
+					ID:            2,
+					Queued:        t11,
+					QueuedSeconds: now.Unix() - t11.Unix(),
 				},
 				{
-					ProjectID: 2,
-					ID:        3,
+					ProjectID:     2,
+					ID:            3,
+					Queued:        t12,
+					QueuedSeconds: now.Unix() - t12.Unix(),
+				},
+				{
+					ProjectID:     1,
+					ID:            4,
+					Queued:        t13,
+					QueuedSeconds: now.Unix() - t13.Unix(),
+				},
+				{
+					ProjectID:     1,
+					ID:            5,
+					Queued:        t14,
+					QueuedSeconds: now.Unix() - t14.Unix(),
+				},
+				{
+					ProjectID:     2,
+					ID:            6,
+					Queued:        t15,
+					QueuedSeconds: now.Unix() - t15.Unix(),
+				},
+				{
+					ProjectID:     1,
+					ID:            7,
+					Queued:        t16,
+					QueuedSeconds: now.Unix() - t16.Unix(),
 				},
 			},
 			expected: WorkflowQueue{
 				{
-					ProjectID: 2,
-					ID:        3,
+					ProjectID:     2,
+					ID:            3,
+					Queued:        t12,
+					QueuedSeconds: now.Unix() - t12.Unix(),
 				},
 				{
-					ProjectID: 1,
-					ID:        1,
+					ProjectID:     2,
+					ID:            6,
+					Queued:        t15,
+					QueuedSeconds: now.Unix() - t15.Unix(),
 				},
 				{
-					ProjectID: 1,
-					ID:        2,
+					ProjectID:     1,
+					ID:            1,
+					Queued:        t10,
+					QueuedSeconds: now.Unix() - t10.Unix(),
+				},
+				{
+					ProjectID:     1,
+					ID:            2,
+					Queued:        t11,
+					QueuedSeconds: now.Unix() - t11.Unix(),
+				},
+				{
+					ProjectID:     1,
+					ID:            4,
+					Queued:        t13,
+					QueuedSeconds: now.Unix() - t13.Unix(),
+				},
+				{
+					ProjectID:     1,
+					ID:            5,
+					Queued:        t14,
+					QueuedSeconds: now.Unix() - t14.Unix(),
+				},
+				{
+					ProjectID:     1,
+					ID:            7,
+					Queued:        t16,
+					QueuedSeconds: now.Unix() - t16.Unix(),
 				},
 			},
 		},

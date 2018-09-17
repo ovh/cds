@@ -28,32 +28,25 @@ EOF
 }
 
 function generatePluginsDocumentation {
-  for plugin in `ls ../contrib/plugins/`; do
+  for plugin in `ls ../contrib/grpcplugins/action/*/*.yml`; do
 
-  if [[ "${plugin}" != plugin-* ]]; then
-    echo "skip ../contrib/plugins/${plugin}"
-    continue;
-  fi
+  filename=$(basename "$plugin")
+  pluginName=${filename/.yml/}
 
   mkdir -p content/workflows/pipelines/actions/plugins
   OLD=`pwd`
-  PLUGIN_FILE="$OLD/content/workflows/pipelines/actions/plugins/${plugin}.md"
-
-  cd ../contrib/plugins/${plugin}
-
-  echo "Compile plugin ${plugin}"
-  go build
+  PLUGIN_FILE="$OLD/content/workflows/pipelines/actions/plugins/plugin-${pluginName}.md"
 
   echo "generate ${PLUGIN_FILE}"
 
 cat << EOF > ${PLUGIN_FILE}
 +++
-title = "${plugin}"
+title = "plugin-${pluginName}"
 
 +++
 EOF
 
-  ./${plugin} info >> $PLUGIN_FILE
+  cdsctl admin plugins doc ${plugin} >> $PLUGIN_FILE
 
   cd $OLD
 

@@ -34,7 +34,7 @@ var adminPluginsActionAddBinaryCmd = cli.Command{
 
 var adminPluginsActionUpdateBinaryCmd = cli.Command{
 	Name:  "binary-update",
-	Short: "Add a binary",
+	Short: "Update a binary",
 	Args: []cli.Arg{
 		{
 			Name: "filename",

@@ -200,7 +200,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	name := "HATCHERY_TEST_" + namesgenerator.GetRandomName(0)
+	name := "HATCHERY_TEST_" + namesgenerator.GetRandomNameCDS(0)
 	hatch := sdk.Hatchery{
 		Name:    name,
 		GroupID: g.ID,

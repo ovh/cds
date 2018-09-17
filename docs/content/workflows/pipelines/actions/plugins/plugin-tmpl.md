@@ -7,6 +7,7 @@ This action helps you generates a file using a template file and text/template g
 
 Check documentation on text/template for more information https://golang.org/pkg/text/template.
 
+
 ## Parameters
 
 * **file**: Template file to use
@@ -16,5 +17,6 @@ Check documentation on text/template for more information https://golang.org/pkg
 
 ## More
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-tmpl/README.md)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/tmpl/README.md)
+
 
