@@ -1,5 +1,6 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
+import { WorkflowTriggerComponent } from 'app/shared/workflow/trigger/workflow.trigger.component';
 import {cloneDeep} from 'lodash';
 import {finalize} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
@@ -36,6 +37,8 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
     deleteHookModal: DeleteModalComponent;
     @ViewChild('workflowDetailsHook')
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
+    @ViewChild('workflowTrigger')
+    workflowTrigger: WorkflowTriggerComponent;
 
     loading = false;
     node: WorkflowNode;
@@ -43,6 +46,8 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
     hookDetails: WorkflowHookTask;
     _hook: WorkflowNodeHook;
     permissionEnum = PermissionValue;
+    newTrigger: WorkflowNode;
+
 
     constructor(
         private _workflowStore: WorkflowStore,
@@ -108,6 +113,16 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
     openHookDetailsModal(taskExec: TaskExecution) {
         if (this.workflowDetailsHook && this.workflowDetailsHook.show) {
             this.workflowDetailsHook.show(taskExec);
+        }
+    }
+
+    openTriggerModal(): void {
+        if (this.workflow.permission !== PermissionValue.READ_WRITE_EXECUTE) {
+            return;
+        }
+        this.newTrigger = new WorkflowNode();
+        if (this.workflowTrigger) {
+            this.workflowTrigger.show();
         }
     }
 }
