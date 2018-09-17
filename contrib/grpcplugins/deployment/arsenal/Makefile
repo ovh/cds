@@ -32,7 +32,7 @@ clean:
 	@rm -rf $(TARGET_DIR)
 
 build: $(TARGET_DIR)
-	@echo "$$PLUGIN_MANIFEST" > $(TARGET_DIR)/plugin.yml
+	@cp $TARGET_NAME.yml $(TARGET_DIR)/plugin.yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
