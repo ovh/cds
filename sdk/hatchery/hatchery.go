@@ -314,12 +314,9 @@ func Create(h Interface) error {
 
 			// Check at least one worker model can match
 			var chosenModel *sdk.Model
-			log.Warning("######## AAAAA ")
 			for i := range models {
-				log.Warning("######## BBB:%s ", models[i].Name)
 				if canRunJob(h, workerRequest, models[i]) {
 					chosenModel = &models[i]
-					log.Warning("######## CCC:%s ", models[i].Name)
 					break
 				}
 			}
@@ -394,7 +391,6 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	}
 
 	if len(j.execGroups) > 0 {
-		log.Warning("######## EEE:%d ", len(j.execGroups))
 		checkGroup := false
 		for _, g := range j.execGroups {
 			if g.ID == model.GroupID {
@@ -402,18 +398,14 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 				break
 			}
 		}
-		log.Warning("######## FFF:%t ", checkGroup)
 		if !checkGroup {
 			log.Debug("canRunJob> job %d - model %s attached to group %d can't run this job", j.id, model.Name, model.GroupID)
 			return false
 		}
-		log.Warning("######## GGG:%t ", checkGroup)
 	}
 
-	log.Warning("######## HHH")
 	var containsModelRequirement, containsHostnameRequirement bool
 	for _, r := range j.requirements {
-		log.Warning("######## III")
 		switch r.Type {
 		case sdk.ModelRequirement:
 			containsModelRequirement = true
@@ -422,9 +414,7 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 		}
 	}
 	// Common check
-	log.Warning("######## JJJ")
 	for _, r := range j.requirements {
-		log.Warning("######## KKK : %s", r.Name)
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
 		// r.Value could be: theModelName --port=8888:9999, so we take strings.Split(r.Value, " ")[0] to compare
 		// only modelName
@@ -475,7 +465,6 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 		}
 	}
 
-	log.Warning("######## LLL")
 	return h.CanSpawn(&model, j.id, j.requirements)
 }
 

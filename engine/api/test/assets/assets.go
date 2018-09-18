@@ -232,8 +232,6 @@ func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Service, method, ur
 	}
 
 	AuthentifyRequestFromService(t, req, h.Hash)
-
-	t.Log("####### req: %+v", req)
 	return req
 }
 
