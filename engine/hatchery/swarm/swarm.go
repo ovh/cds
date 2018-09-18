@@ -308,7 +308,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		"hatchery":            h.Config.Name,
 	}
 
-	dockerOpts, errDockerOpts := h.computeDockerOpts(spawnArgs.Requirements)
+	dockerOpts, errDockerOpts := h.computeDockerOpts(h.CDSClient().GetService().IsSharedInfra, spawnArgs.Requirements)
 	if errDockerOpts != nil {
 		return name, errDockerOpts
 	}

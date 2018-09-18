@@ -153,7 +153,7 @@ type dockerOpts struct {
 	extraHosts []string
 }
 
-func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dockerOpts, error) {
+func (h *HatcherySwarm) computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
 	dockerOpts := &dockerOpts{}
 
 	// support for add-host on hatchery configuration
@@ -170,11 +170,11 @@ func (h *HatcherySwarm) computeDockerOpts(requirements []sdk.Requirement) (*dock
 	for _, r := range requirements {
 		switch r.Type {
 		case sdk.ModelRequirement:
-			if err := dockerOpts.computeDockerOptsOnModelRequirement(h.CDSClient().GetService().IsSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnModelRequirement(isSharedInfra, r); err != nil {
 				return nil, err
 			}
 		case sdk.VolumeRequirement:
-			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(h.CDSClient().GetService().IsSharedInfra, r); err != nil {
+			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(isSharedInfra, r); err != nil {
 				return nil, err
 			}
 		}

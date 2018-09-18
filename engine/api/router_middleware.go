@@ -46,7 +46,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		headerSplitted := strings.Split(h, ":")
 		receivedValue := req.Header.Get(headerSplitted[0])
 		if receivedValue != headerSplitted[1] {
-			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s", req.Method, req.URL, req.RemoteAddr)
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied token on %s %s for %s", req.Method, req.URL, req.RemoteAddr)
 		}
 	}
 
@@ -57,13 +57,13 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			var err error
 			ctx, err = auth.CheckWorkerAuth(ctx, api.mustDB(), api.Cache, headers)
 			if err != nil {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s sdk.WorkerAgent agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
 		case sdk.ServiceAgent:
 			var err error
 			ctx, err = auth.CheckServiceAuth(ctx, api.mustDB(), api.Cache, headers)
 			if err != nil {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s sdk.ServiceAgent agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
 		default:
 			var err error
