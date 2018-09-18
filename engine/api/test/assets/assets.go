@@ -216,7 +216,7 @@ func NewAuthentifiedMultipartRequestFromWorker(t *testing.T, w *sdk.Worker, meth
 }
 
 // NewAuthentifiedRequestFromHatchery prepare a request
-func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Hatchery, method, uri string, i interface{}) *http.Request {
+func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Service, method, uri string, i interface{}) *http.Request {
 	var btes []byte
 	var err error
 	if i != nil {

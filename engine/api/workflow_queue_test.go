@@ -22,7 +22,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -46,7 +45,7 @@ type testRunWorkflowCtx struct {
 	job         *sdk.WorkflowNodeJobRun
 	worker      *sdk.Worker
 	workerToken string
-	hatchery    *sdk.Hatchery
+	hatchery    *sdk.Service
 }
 
 func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) testRunWorkflowCtx {
@@ -243,13 +242,12 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 	//Insert token
 	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent, "", ""))
 
-	ctx.hatchery = &sdk.Hatchery{
-		UID:     tk,
+	ctx.hatchery = &sdk.Service{
 		Name:    sdk.RandomString(10),
-		GroupID: ctx.user.Groups[0].ID,
+		GroupID: &ctx.user.Groups[0].ID,
 	}
 
-	err = hatchery.InsertHatchery(api.mustDB(), ctx.hatchery)
+	err = services.Insert(api.mustDB(), ctx.hatchery)
 	test.NoError(t, err)
 }
 

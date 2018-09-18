@@ -10,12 +10,14 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/sessionstore"
+
 	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -199,13 +201,22 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	}
 
 	name := "HATCHERY_TEST_" + namesgenerator.GetRandomNameCDS(0)
-	hatch := sdk.Hatchery{
+	hatch := sdk.Service{
 		Name:    name,
-		GroupID: g.ID,
+		Type:    services.TypeHatchery,
+		GroupID: &g.ID,
 	}
-	if err := hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
+	if err := services.Insert(api.mustDB(), &hatch); err != nil {
 		t.Fatal(err)
 	}
+
+	//Generate a hash
+	hash, errsession := sessionstore.NewSessionKey()
+	if errsession != nil {
+		t.Fatal(errsession)
+	}
+
+	hatch.Hash = string(hash)
 
 	request := []sdk.SpawnInfo{
 		{
@@ -218,7 +229,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.addSpawnInfosPipelineBuildJobHandler, vars)
 	req, err := http.NewRequest("POST", uri, body)
 	test.NoError(t, err)
-	basedHash := base64.StdEncoding.EncodeToString([]byte(hatch.UID))
+	basedHash := base64.StdEncoding.EncodeToString([]byte(hatch.Hash))
 	req.Header.Add(sdk.AuthHeader, basedHash)
 	req.Header.Add(cdsclient.RequestedNameHeader, name)
 	req.Header.Add(sdk.SessionTokenHeader, tk)

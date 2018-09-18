@@ -8,7 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
@@ -60,12 +60,11 @@ func Test_workerCheckingHandler(t *testing.T) {
 	}
 
 	//4. Registering worker
-	h := sdk.Hatchery{
+	h := sdk.Service{
 		Name:    "test-hatchery-Test_workerCheckingHandler",
-		GroupID: g.ID,
-		UID:     "UUID",
+		GroupID: &g.ID,
 	}
-	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
+	if err := services.Insert(api.mustDB(), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
@@ -145,12 +144,11 @@ func Test_workerWaitingHandler(t *testing.T) {
 	}
 
 	//4. Registering worker
-	h := sdk.Hatchery{
+	h := sdk.Service{
 		Name:    "test-hatchery-Test_workerWaitingHandler",
-		GroupID: g.ID,
-		UID:     "UUID",
+		GroupID: &g.ID,
 	}
-	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
+	if err := services.Insert(api.mustDB(), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
