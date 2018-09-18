@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS hatchery (
     last_beat timestamp with time zone
 );
 
-CREATE UNIQUE INDEX idx_hatchery_name ON hatchery USING btree (name);
 SELECT create_unique_index('hatchery', 'IDX_HATCHERY_NAME', 'name');
 
 CREATE TABLE IF NOT EXISTS "hatchery_model" (hatchery_id BIGINT, worker_model_id BIGINT, PRIMARY KEY(hatchery_id, worker_model_id));
