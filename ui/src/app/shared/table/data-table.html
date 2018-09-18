@@ -25,7 +25,7 @@
             </td>
         </tr>
     </tbody>
-    <tbody *ngIf="!loading && dataForCurrentPage.length == 0">
+    <tbody *ngIf="!loading && dataForCurrentPage.length === 0">
         <tr>
             <td class="center" [colSpan]="columns.length">
                 <div>{{ 'common_no_data' | translate }}</div>
