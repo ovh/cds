@@ -11,7 +11,7 @@ import (
 	"github.com/phayes/permbits"
 	"gopkg.in/urfave/cli.v1"
 
-	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
+	"github.com/ovh/cds/contrib/grpcplugins/action/kafka-publish/kafkapublisher"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
