@@ -200,23 +200,22 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	name := "HATCHERY_TEST_" + namesgenerator.GetRandomNameCDS(0)
-	hatch := sdk.Service{
-		Name:    name,
-		Type:    services.TypeHatchery,
-		GroupID: &g.ID,
-	}
-	if err := services.Insert(api.mustDB(), &hatch); err != nil {
-		t.Fatal(err)
-	}
-
 	//Generate a hash
 	hash, errsession := sessionstore.NewSessionKey()
 	if errsession != nil {
 		t.Fatal(errsession)
 	}
 
-	hatch.Hash = string(hash)
+	name := "HATCHERY_TEST_" + namesgenerator.GetRandomNameCDS(0)
+	hatch := sdk.Service{
+		Name:    name,
+		Type:    services.TypeHatchery,
+		GroupID: &g.ID,
+		Hash:    string(hash),
+	}
+	if err := services.Insert(api.mustDB(), &hatch); err != nil {
+		t.Fatal(err)
+	}
 
 	request := []sdk.SpawnInfo{
 		{
