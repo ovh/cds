@@ -231,8 +231,9 @@ func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Service, method, ur
 		t.FailNow()
 	}
 
-	// TODO yesnault
-	AuthentifyRequestFromService(t, req, "")
+	AuthentifyRequestFromService(t, req, h.Hash)
+
+	t.Log("####### req: %+v", req)
 	return req
 }
 
