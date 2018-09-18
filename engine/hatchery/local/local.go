@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -138,6 +139,8 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 			Image: h.Name,
 			Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
 		},
+		RegisteredArch:         runtime.GOARCH,
+		RegisteredOS:           runtime.GOOS,
 		RegisteredCapabilities: capa,
 		Provision:              int64(h.Config.NbProvision),
 	}

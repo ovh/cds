@@ -24,8 +24,6 @@ type HatcheryLocal struct {
 	sync.Mutex
 	hatch      *sdk.Hatchery
 	workers    map[string]workerCmd
-	os         string
-	arch       string
 	ModelLocal sdk.Model
 }
 
