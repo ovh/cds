@@ -139,6 +139,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	}(&nbWorkerToStart)
 
 	if h.CDSClient().GetService() == nil || h.ID() == 0 {
+		log.Warning("hatchery> spawnWorkerForJob> %d - job %d %s- hatchery not registered - srv:%t id:%d", j.timestamp, j.id, j.model.Name, h.CDSClient().GetService() == nil, h.ID())
 		return false, nil
 	}
 

@@ -11,9 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/token"
-	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -36,61 +34,6 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "DeleteWorker> unable to commit tx")
-	}
-
-	return nil
-}
-
-// DisableWorker disable a worker
-func DisableWorker(db *gorp.DbMap, id string) error {
-	tx, errb := db.Begin()
-	if errb != nil {
-		return fmt.Errorf("DisableWorker> Cannot start tx: %s", errb)
-	}
-	defer tx.Rollback() // nolint
-
-	query := `SELECT name, status, action_build_id, job_type FROM worker WHERE id = $1 FOR UPDATE`
-	var st, name string
-	var jobID sql.NullInt64
-	var jobType sql.NullString
-	if err := tx.QueryRow(query, id).Scan(&name, &st, &jobID, &jobType); err != nil {
-		log.Debug("DisableWorker[%s]> Cannot lock worker: %v", id, err)
-		return nil
-	}
-
-	if st == sdk.StatusBuilding.String() && jobID.Valid && jobType.Valid {
-		// Worker is awol while building !
-		// We need to restart this action
-		switch jobType.String {
-		case sdk.JobTypePipeline:
-			if err := pipeline.RestartPipelineBuildJob(tx, jobID.Int64); err != nil {
-				log.Error("DisableWorker[%s]> Cannot restart pipeline build job: %s", name, err)
-			} else {
-				log.Info("DisableWorker[%s]> PipelineBuildJob %d restarted after crash", name, jobID.Int64)
-			}
-		case sdk.JobTypeWorkflowNode:
-			wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)
-			if errL == nil && wNodeJob.Retry < 3 {
-				if err := workflow.RestartWorkflowNodeJob(nil, db, *wNodeJob); err != nil {
-					log.Warning("DisableWorker[%s]> Cannot restart workflow node run : %s", name, err)
-				} else {
-					log.Info("DisableWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
-				}
-			}
-		}
-
-		log.Info("DisableWorker> Worker %s crashed while building %d !", name, jobID.Int64)
-	}
-
-	if err := SetStatus(tx, id, sdk.StatusDisabled); err != nil {
-		if err == ErrNoWorker || err == sql.ErrNoRows {
-			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exists", id)
-		}
-		return sdk.WrapError(err, "DisableWorker> cannot update worker status")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
 	}
 
 	return nil

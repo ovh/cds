@@ -25,10 +25,10 @@ func isSharedInfraGroup(groupsID []int64) bool {
 }
 
 // CountNodeJobRunQueue count all workflow_node_run_job accessible
-func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hatcheryRatioService *int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
+func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, modelType string, hatcheryRatioService *int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
 	c := sdk.WorkflowNodeJobRunCount{}
 
-	queue, err := LoadNodeJobRunQueue(ctx, db, store, hatcheryRatioService, permission.PermissionRead, groupsID, usr, since, until, nil, statuses...)
+	queue, err := LoadNodeJobRunQueue(ctx, db, store, modelType, hatcheryRatioService, permission.PermissionRead, groupsID, usr, since, until, nil, statuses...)
 	if err != nil {
 		return c, sdk.WrapError(err, "CountNodeJobRunQueue> unable to load queue")
 	}
@@ -44,7 +44,7 @@ func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.
 }
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, hatcheryRatioService *int, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, modelType string, hatcheryRatioService *int, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := observability.Span(ctx, "LoadNodeJobRunQueue")
 	defer end()
 	if since == nil {
@@ -68,6 +68,13 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 			where = " AND contains_service = false "
 		}
 	}
+
+	args := []interface{}{*since, *until, strings.Join(statuses, ",")}
+
+	if modelType != "" {
+		where = " AND (model_type is NULL OR model_type = $4)"
+		args = append(args, modelType)
+	}
 	order := " ORDER BY workflow_node_run_job.queued ASC"
 
 	query := `select distinct workflow_node_run_job.*
@@ -76,8 +83,6 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	and workflow_node_run_job.queued <= $2
 	and workflow_node_run_job.status = ANY(string_to_array($3, ','))
 	` + where + order
-
-	args := []interface{}{*since, *until, strings.Join(statuses, ",")}
 
 	if usr != nil && !usr.Admin {
 		observability.Current(ctx, observability.Tag("isAdmin", false))

@@ -110,6 +110,8 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *WorkflowNod
 			}
 		case "model":
 			out.Model = string(in.String())
+		case "model_type":
+			out.ModelType = string(in.String())
 		case "bookedby":
 			easyjsonD7860c2dDecodeGithubComOvhCdsSdk3(in, &out.BookedBy)
 		case "spawninfos":
@@ -364,6 +366,16 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in WorkflowNo
 			out.RawString(prefix)
 		}
 		out.String(string(in.Model))
+	}
+	if in.ModelType != "" {
+		const prefix string = ",\"model_type\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.ModelType))
 	}
 	{
 		const prefix string = ",\"bookedby\":"
@@ -1653,6 +1665,10 @@ func easyjsonD7860c2dDecodeGithubComOvhCdsSdk3(in *jlexer.Lexer, out *Service) {
 			easyjsonD7860c2dDecodeGithubComOvhCdsSdk11(in, &out.MonitoringStatus)
 		case "is_shared_infra":
 			out.IsSharedInfra = bool(in.Bool())
+		case "version":
+			out.Version = string(in.String())
+		case "up_to_date":
+			out.Uptodate = bool(in.Bool())
 		default:
 			in.SkipRecursive()
 		}
@@ -1770,6 +1786,26 @@ func easyjsonD7860c2dEncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in Service) 
 			out.RawString(prefix)
 		}
 		out.Bool(bool(in.IsSharedInfra))
+	}
+	{
+		const prefix string = ",\"version\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.Version))
+	}
+	{
+		const prefix string = ",\"up_to_date\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Bool(bool(in.Uptodate))
 	}
 	out.RawByte('}')
 }

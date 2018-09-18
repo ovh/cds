@@ -181,7 +181,7 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 
 // ID must returns hatchery id
 func (h *HatcheryKubernetes) ID() int64 {
-	if h.hatch == nil {
+	if h.CDSClient().GetService() == nil {
 		return 0
 	}
 	return h.CDSClient().GetService().ID

@@ -681,7 +681,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 func (api *API) countWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		since, until, _, ratioService := getSinceUntilLimitHeader(ctx, w, r)
+		since, until, _, modelType, ratioService := getQueueHeaders(ctx, w, r)
 		groupsID := []int64{}
 		usr := getUser(ctx)
 		for _, g := range usr.Groups {
@@ -691,7 +691,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, ratioService, groupsID, usr, &since, &until)
+		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, modelType, ratioService, groupsID, usr, &since, &until)
 		if err != nil {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
@@ -702,7 +702,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 
 func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		since, until, limit, ratioService := getSinceUntilLimitHeader(ctx, w, r)
+		since, until, limit, modelType, ratioService := getQueueHeaders(ctx, w, r)
 
 		status, err := QueryStrings(r, "status")
 		if err != nil {
@@ -725,7 +725,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			usr = nil
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, ratioService, permissions, groupsID, usr, &since, &until, &limit, status...)
+		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, modelType, ratioService, permissions, groupsID, usr, &since, &until, &limit, status...)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
@@ -734,7 +734,8 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	}
 }
 
-func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *http.Request) (time.Time, time.Time, int, *int) {
+// getQueueHeaders returns since, until, limit, ratioService, modelType
+func getQueueHeaders(ctx context.Context, w http.ResponseWriter, r *http.Request) (time.Time, time.Time, int, string, *int) {
 	sinceHeader := r.Header.Get("If-Modified-Since")
 	since := time.Unix(0, 0)
 	if sinceHeader != "" {
@@ -760,7 +761,8 @@ func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *htt
 		ratioService = &iratioService
 	}
 
-	return since, until, limit, ratioService
+	modelTypeHeader := r.Header.Get("X-CDS-Model-Type")
+	return since, until, limit, modelTypeHeader, ratioService
 }
 
 func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {

@@ -43,7 +43,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, l int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, ratioService *int, exceptWfJobID *int64) error {
+func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error {
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
 	pbjobsTicker := time.NewTicker(delay * 5)
@@ -94,7 +94,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				if ratioService != nil {
 					ratio = string(*ratioService)
 				}
-				_, header, _, errReq := c.RequestJSON(http.MethodGet, "/queue/workflows", nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)), SetHeader("X-CDS-Ratio-Service", ratio))
+				_, header, _, errReq := c.RequestJSON(http.MethodGet, "/queue/workflows", nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)), SetHeader("X-CDS-Ratio-Service", ratio), SetHeader("X-CDS-Model-Type", modelType))
 				if errReq != nil {
 					errs <- sdk.WrapError(errReq, "Unable to load jobs")
 					continue
@@ -170,7 +170,7 @@ func (c *client) QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNo
 	return wJobs, nil
 }
 
-func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, ratioService *int) (sdk.WorkflowNodeJobRunCount, error) {
+func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error) {
 	if since == nil {
 		since = new(time.Time)
 	}
@@ -187,7 +187,8 @@ func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time
 		&countWJobs,
 		SetHeader(RequestedIfModifiedSinceHeader, since.Format(time.RFC1123)),
 		SetHeader("X-CDS-Until", until.Format(time.RFC1123)),
-		SetHeader("X-CDS-Ratio-Service", ratio))
+		SetHeader("X-CDS-Ratio-Service", ratio),
+		SetHeader("X-CDS-Model-Type", modelType))
 	return countWJobs, err
 }
 

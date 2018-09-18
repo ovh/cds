@@ -90,6 +90,7 @@ type JobRun struct {
 	PlatformPluginBinaries sql.NullString `db:"platform_plugin_binaries"`
 	BookedBy               sdk.Service    `db:"-"`
 	ContainsService        bool           `db:"contains_service"`
+	ModelType              sql.NullString `db:"model_type"`
 	Header                 sql.NullString `db:"header"`
 }
 
@@ -114,6 +115,8 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	j.Start = jr.Start
 	j.Done = jr.Done
 	j.Model = jr.Model
+	j.ModelType = sql.NullString{Valid: true, String: string(jr.ModelType)}
+	j.ContainsService = jr.ContainsService
 	j.ExecGroups, err = gorpmapping.JSONToNullString(jr.ExecGroups)
 	if err != nil {
 		return sdk.WrapError(err, "column exec_groups")

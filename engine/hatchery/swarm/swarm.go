@@ -571,7 +571,7 @@ func (h *HatcherySwarm) Configuration() hatchery.CommonConfiguration {
 
 // ID returns ID of the Hatchery
 func (h *HatcherySwarm) ID() int64 {
-	if h.hatch == nil {
+	if h.CDSClient().GetService() == nil {
 		return 0
 	}
 	return h.CDSClient().GetService().ID

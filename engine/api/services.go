@@ -66,6 +66,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
 		if oldSrv != nil {
 			srv.Hash = oldSrv.Hash
+			srv.ID = oldSrv.ID
 		} else if errOldSrv == sdk.ErrNotFound {
 			//Generate a hash
 			hash, errsession := sessionstore.NewSessionKey()
