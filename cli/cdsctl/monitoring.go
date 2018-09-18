@@ -444,7 +444,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		idx++
 	}
 	start = time.Now()
-	nWJobs, errw := client.QueueCountWorkflowNodeJobRun(nil, nil)
+	nWJobs, errw := client.QueueCountWorkflowNodeJobRun(nil, nil, nil)
 	elapsed = time.Since(start)
 	if errw != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", errw.Error())
@@ -464,7 +464,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	return msg
 }
 
-func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, executedJob sdk.ExecutedJob, queued time.Time, bookedBy sdk.Hatchery, baseURL, status string) (string, time.Duration) {
+func (ui *Termui) updateQueueJob(idx int, maxQueued time.Duration, id int64, isWJob bool, parameters []sdk.Parameter, executedJob sdk.ExecutedJob, queued time.Time, bookedBy sdk.Service, baseURL, status string) (string, time.Duration) {
 	req := ""
 	for _, r := range executedJob.Job.Action.Requirements {
 		req += fmt.Sprintf("%s:%s ", r.Type, r.Value)
