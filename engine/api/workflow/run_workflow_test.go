@@ -333,13 +333,13 @@ func TestManualRun3(t *testing.T) {
 	test.NoError(t, err)
 
 	// test nil since/until
-	_, err = workflow.CountNodeJobRunQueue(ctx, db, cache, nil, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil)
+	_, err = workflow.CountNodeJobRunQueue(ctx, db, cache, "", nil, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil)
 	test.NoError(t, err)
 
 	// queue should be empty with since 0,0 until 0,0
 	t0 := time.Unix(0, 0)
 	t1 := time.Unix(0, 0)
-	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueue(ctx, db, cache, nil, []int64{proj.ProjectGroups[0].Group.ID}, u, &t0, &t1)
+	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueue(ctx, db, cache, "", nil, []int64{proj.ProjectGroups[0].Group.ID}, u, &t0, &t1)
 	test.NoError(t, err)
 	assert.Equal(t, 0, int(countAlreadyInQueueNone.Count))
 
