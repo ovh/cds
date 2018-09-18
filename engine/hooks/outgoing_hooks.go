@@ -3,6 +3,7 @@ package hooks
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -66,7 +67,7 @@ func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHookRun) (sdk.Tas
 	return sdk.Task{}, fmt.Errorf("Unsupported hook: %s", h.Hook.WorkflowHookModel.Name)
 }
 
-func (s *Service) startOutgoingHookTask(t *sdk.Task) (*sdk.TaskExecution, error) {
+func (s *Service) startOutgoingWebHookTask(t *sdk.Task) (*sdk.TaskExecution, error) {
 	now := time.Now()
 
 	u := t.Config["URL"].Value
@@ -97,6 +98,114 @@ func (s *Service) startOutgoingHookTask(t *sdk.Task) (*sdk.TaskExecution, error)
 	log.Debug("Hooks> Outgoing hook task  %s ready", t.UUID)
 
 	return exec, nil
+}
+
+func (s *Service) startOutgoingWorkflowTask(t *sdk.Task) (*sdk.TaskExecution, error) {
+	now := time.Now()
+
+	//Craft a new execution
+	exec := &sdk.TaskExecution{
+		Timestamp: now.UnixNano(),
+		Status:    TaskExecutionScheduled,
+		Type:      t.Type,
+		UUID:      t.UUID,
+		Config:    t.Config,
+	}
+
+	s.Dao.SaveTaskExecution(exec) //We don't push in queue, we will the scheduler to run it
+	log.Debug("Hooks> Outgoing hook task  %s ready", t.UUID)
+
+	return exec, nil
+}
+
+func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
+	pkey := t.Config[sdk.HookConfigProject].Value
+	workflow := t.Config[sdk.HookConfigWorkflow].Value
+	run := t.Config[ConfigNumber].Value
+	hookRunID := t.Config[ConfigHookRunID].Value
+
+	targetProject := t.Config[sdk.HookConfigTargetProject].Value
+	targetWorkflow := t.Config[sdk.HookConfigTargetWorkflow].Value
+	targetHook := t.Config[sdk.HookConfigTargetHook].Value
+
+	log.Debug("Hooks> Processing outgoing workflow hook %s %s (%s/%s #%s) => (%s/%s/%s)",
+		t.UUID, t.Type, pkey, workflow, run, targetProject, targetWorkflow, targetHook)
+
+	runNumber, err := strconv.ParseInt(run, 10, 64)
+	if err != nil {
+		return sdk.WrapError(err, "hook> startOutgoingWorkflowTask")
+	}
+
+	callbackURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/callback", pkey, workflow, run, hookRunID)
+	hookID, _ := strconv.ParseInt(t.Config[ConfigHookID].Value, 10, 64)
+	callbackData := sdk.WorkflowNodeOutgoingHookRunCallback{
+		WorkflowNodeOutgoingHookID: hookID,
+		Start: time.Now(),
+	}
+
+	var handleError = func(err error) {
+		if err == nil {
+			return
+		}
+		log.Error(err.Error())
+		t.LastError = err.Error()
+		t.NbErrors++
+
+		if t.NbErrors >= s.Cfg.RetryError {
+			// Send error callback
+			callbackData.Done = time.Now()
+			callbackData.Status = sdk.StatusFail.String()
+			callbackData.Log = err.Error()
+
+			// Post the callback
+			if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
+				log.Error("unable to perform outgoing hook callback")
+			}
+		}
+	}
+
+	wr, err := s.Client.WorkflowRunGet(pkey, workflow, runNumber)
+	if err != nil {
+		handleError(err)
+		return nil
+	}
+
+	var hookRun *sdk.WorkflowNodeOutgoingHookRun
+loop:
+	for _, hrs := range wr.WorkflowNodeOutgoingHookRuns {
+		for i, hr := range hrs {
+			if hr.HookRunID == hookRunID {
+				hookRun = &hrs[i]
+				break loop
+			}
+		}
+	}
+
+	if hookRun == nil {
+		handleError(errors.New("unable to find hook" + hookRunID))
+		return nil
+	}
+
+	evt := sdk.WorkflowNodeRunHookEvent{
+		WorkflowNodeHookUUID: targetHook,
+		Payload:              hookRun.Params,
+	}
+	targetRun, err := s.Client.WorkflowRunFromHook(targetProject, targetWorkflow, evt)
+	if err != nil {
+		handleError(err)
+		return nil
+	}
+
+	callbackData.Done = time.Now()
+	callbackData.Log = fmt.Sprintf("Workflow %s/%s #%d.%d has been started", targetProject, targetWorkflow, targetRun.Number, targetRun.LastSubNumber)
+	callbackData.Status = sdk.StatusSuccess.String()
+
+	// Post the callback
+	if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
+		log.Error("unable to perform outgoing hook callback")
+		return err
+	}
+	return nil
 }
 
 func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {

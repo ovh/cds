@@ -145,7 +145,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 					// This will reprocess all the things
 					h := node.OutgoingHooks[j]
 					var err error
-					report, err = report.Merge(processWorkflowNodeOutgoingHook(ctx, db, store, proj, w, node, nodeRun.SubNumber, nodeRun.ID, &h))
+					report, err = report.Merge(processWorkflowNodeOutgoingHook(ctx, db, store, proj, w, nodeRun, &h))
 					if err != nil {
 						return nil, false, sdk.WrapError(err, "process> Cannot update node run")
 					}
@@ -369,7 +369,7 @@ func processWorklowOutgoingHookTrigger(ctx context.Context, db gorp.SqlExecutor,
 	return report
 }
 
-func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber, nodeRunID int64, hook *sdk.WorkflowNodeOutgoingHook) (*ProcessorReport, error) {
+func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun, hook *sdk.WorkflowNodeOutgoingHook) (*ProcessorReport, error) {
 	ctx, end := observability.Span(ctx, "workflow.processWorkflowNodeOutgoingHook")
 	defer end()
 
@@ -384,7 +384,7 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 	if ok {
 		var alreadyProcessed, isWaiting bool
 		for _, hr := range hrs {
-			if hr.Number == w.Number && hr.SubNumber == subnumber {
+			if hr.Number == w.Number && hr.SubNumber == nodeRun.SubNumber {
 				alreadyProcessed = true
 				break
 			}
@@ -399,7 +399,7 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 			for i := range hook.Triggers {
 				t := &hook.Triggers[i]
 				log.Debug("checking trigger %+v", t)
-				r1 := processWorklowOutgoingHookTrigger(ctx, db, store, p, w, subnumber, nodeRunID, t)
+				r1 := processWorklowOutgoingHookTrigger(ctx, db, store, p, w, nodeRun.SubNumber, nodeRun.ID, t)
 				report.Merge(r1, nil) // nolint
 			}
 
@@ -417,9 +417,10 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 		HookRunID:                  sdk.UUID(),
 		Status:                     sdk.StatusWaiting.String(),
 		Number:                     w.Number,
-		SubNumber:                  subnumber,
+		SubNumber:                  nodeRun.SubNumber,
 		WorkflowNodeOutgoingHookID: hook.ID,
-		Hook: *hook,
+		Hook:   *hook,
+		Params: sdk.ParametersToMap(nodeRun.BuildParameters),
 	}
 
 	var taskExecution sdk.TaskExecution

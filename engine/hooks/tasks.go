@@ -220,8 +220,10 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 		return nil, s.startKafkaHook(t)
 	case TypeRabbitMQ:
 		return nil, s.startRabbitMQHook(t)
-	case TypeOutgoingWebHook, TypeOutgoingWorkflow:
-		return s.startOutgoingHookTask(t)
+	case TypeOutgoingWebHook:
+		return s.startOutgoingWebHookTask(t)
+	case TypeOutgoingWorkflow:
+		return s.startOutgoingWorkflowTask(t)
 	default:
 		return nil, fmt.Errorf("Unsupported task type %s", t.Type)
 	}
@@ -325,6 +327,9 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	switch {
 	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
 		err = s.doOutgoingWebHookExecution(e)
+		doRestart = false
+	case e.Type == TypeOutgoingWorkflow:
+		err = s.doOutgoingWorkflowExecution(e)
 		doRestart = false
 	case e.WebHook != nil && e.Type == TypeWebHook:
 		h, err = s.doWebHookExecution(e)
