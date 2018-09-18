@@ -27,21 +27,29 @@
 </div>
 
 <div class="ui text active loader" *ngIf="!hook">{{ 'workflow_loading' | translate }}</div>
-    <app-workflow-node-hook-form
-      [project]="project"
-      [workflow]="workflow"
-      [node]="node"
-      (hookEvent)="updateOutgoingHook($event)"
-      [loading]="loading"
-      [readonly]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE"
-      isOutgoing="true"
-      [outgoingHook]="hook" #workflowEditHook>
-    </app-workflow-node-hook-form>
 
-    <app-delete-modal
-        [title]="'workflow_hook_delete_title' | translate"
-        [msg]="'workflow_hook_delete_msg' | translate"
-        (event)="deleteOutgoingHook()" #deleteHookModal>
-    </app-delete-modal>
+<app-workflow-node-hook-form
+    [project]="project"
+    [workflow]="workflow"
+    [node]="node"
+    (hookEvent)="updateOutgoingHook($event)"
+    [loading]="loading"
+    [readonly]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE"
+    isOutgoing="true"
+    [outgoingHook]="hook" #workflowEditHook>
+</app-workflow-node-hook-form>
+
+<app-delete-modal
+    [title]="'workflow_hook_delete_title' | translate"
+    [msg]="'workflow_hook_delete_msg' | translate"
+    (event)="deleteOutgoingHook()" #deleteHookModal>
+</app-delete-modal>
+
 <app-workflow-node-hook-details #workflowDetailsHook>
 </app-workflow-node-hook-details>
+
+<ng-container *ngIf="project && node">
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="hook?.model?.name"
+        [(trigger)]="newTrigger" (triggerChange)="saveTrigger()"
+        #workflowTrigger></app-workflow-trigger>
+</ng-container>

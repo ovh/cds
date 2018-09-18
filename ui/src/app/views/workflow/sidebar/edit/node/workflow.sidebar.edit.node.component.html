@@ -91,10 +91,11 @@
 <div class="ui text active loader" *ngIf="!node">{{ 'workflow_loading' | translate }}</div>
 
 <ng-container *ngIf="project && node">
-    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [triggerSrcNode]="node"
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node?.pipeline?.name"
                           [(trigger)]="newTrigger" (triggerChange)="saveTrigger()"
                           #workflowTrigger></app-workflow-trigger>
 </ng-container>
+
 <ng-container *ngIf="project && node && node.id === workflow.root.id">
     <ng-template let-context let-modal="modal" #nodeParentModal>
         <div class="header">{{ 'workflow_node_parent' | translate }}</div>
@@ -112,7 +113,7 @@
     </ng-template>
 </ng-container>
 <ng-container *ngIf="node">
-    <app-workflow-node-delete [loading]="loading" [node]="node" [isRoot]="node.id === workflow.root.id"
+    <app-workflow-node-delete [loading]="loading" [node]="node" [isRoot]="node.id === workflow.root.id" [isChildOfOutgoingHook]="isChildOfOutgoingHook"
                               (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
 </ng-container>
 <ng-container *ngIf="project && node">

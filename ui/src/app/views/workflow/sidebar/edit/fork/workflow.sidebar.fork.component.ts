@@ -142,10 +142,12 @@ export class WorkflowSidebarForkComponent implements OnInit {
             return;
         }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
+        let currentFork = Workflow.getForkByName(this.fork.name, clonedWorkflow);
+
         if (b === 'all') {
-            Workflow.removeFork(clonedWorkflow, this.fork.id);
+            Workflow.removeFork(clonedWorkflow, currentFork.id);
         } else if (b === 'only') {
-            Workflow.removeForkWithoutChild(clonedWorkflow, this.fork.id);
+            Workflow.removeForkWithoutChild(clonedWorkflow, currentFork.id);
         }
         this.updateWorkflow(clonedWorkflow, this.workflowDelete.modal, false);
     }
