@@ -37,9 +37,9 @@ build-all:
 				FILENAME=$$pluginname-$$GOOS-$$GOARCH$$EXTENSION; \
 				GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $$plugin/$(TARGET_DIR)/$$FILENAME ./$$pluginname; \
 				echo "$$PLUGIN_MANIFEST_BINARY" > $$plugin/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml; \
-				sed -i "" "s/%os%/$$GOOS/" $$plugin/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml; \
-				sed -i "" "s/%arch%/$$GOARCH/" $$plugin/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml; \
-				sed -i "" "s/%filename%/$$FILENAME/" $$plugin/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml; \
+				perl -pi -e s,%os%,$$GOOS,g $$plugin/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml; \
+				perl -pi -e s,%arch%,$$GOARCH,g $$plugin/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml; \
+				perl -pi -e s,%filename%,$$FILENAME,g $$plugin/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml; \
 			done; \
 		done; \
 	done
