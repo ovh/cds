@@ -93,7 +93,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				url, _ := url.Parse("/queue/workflows")
 				q := url.Query()
 				if ratioService != nil {
-					q.Add("ratioService", string(*ratioService))
+					q.Add("ratioService", fmt.Sprintf("%d", *ratioService))
 				}
 				if modelType != "" {
 					q.Add("modelType", modelType)
