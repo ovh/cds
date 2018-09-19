@@ -124,7 +124,12 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.RootID][0], nodeRun)
 
 	//TestLoadNodeJobRun
-	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache, "", nil, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache,
+		workflow.QueueFilter{
+			GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+			User:     u,
+			Rights:   permission.PermissionReadExecute,
+		})
 	test.NoError(t, err)
 	test.Equal(t, 2, len(jobs))
 
@@ -238,7 +243,12 @@ func TestManualRun2(t *testing.T) {
 	_, _, err = workflow.ManualRunFromNode(context.TODO(), db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 
-	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache, "", nil, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache,
+		workflow.QueueFilter{
+			GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+			User:     u,
+			Rights:   permission.PermissionReadExecute,
+		})
 	test.NoError(t, err)
 
 	assert.Len(t, jobs, 3)
@@ -332,18 +342,37 @@ func TestManualRun3(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
+	filter := workflow.QueueFilter{
+		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+		User:     u,
+	}
+
 	// test nil since/until
-	_, err = workflow.CountNodeJobRunQueue(ctx, db, cache, "", nil, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil)
+	_, err = workflow.CountNodeJobRunQueue(ctx, db, cache, filter)
 	test.NoError(t, err)
 
 	// queue should be empty with since 0,0 until 0,0
 	t0 := time.Unix(0, 0)
 	t1 := time.Unix(0, 0)
-	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueue(ctx, db, cache, "", nil, []int64{proj.ProjectGroups[0].Group.ID}, u, &t0, &t1)
+
+	filter2 := workflow.QueueFilter{
+		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+		User:     u,
+		Since:    &t0,
+		Until:    &t1,
+	}
+
+	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueue(ctx, db, cache, filter2)
 	test.NoError(t, err)
 	assert.Equal(t, 0, int(countAlreadyInQueueNone.Count))
 
-	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache, "", nil, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil, nil)
+	filter3 := workflow.QueueFilter{
+		Rights:   permission.PermissionReadExecute,
+		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+		User:     u,
+	}
+
+	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache, filter3)
 	test.NoError(t, err)
 
 	for i := range jobs {
@@ -439,7 +468,12 @@ func TestManualRun3(t *testing.T) {
 		tx.Commit()
 	}
 
-	jobs, err = workflow.LoadNodeJobRunQueue(ctx, db, cache, "", nil, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil, nil)
+	jobs, err = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+		workflow.QueueFilter{
+			GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+			User:     u,
+			Rights:   permission.PermissionReadExecute,
+		})
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(jobs))
 
@@ -453,7 +487,14 @@ func TestManualRun3(t *testing.T) {
 
 		t0 := since.Add(-2 * time.Minute)
 		t1 := since.Add(-1 * time.Minute)
-		jobsSince, errW := workflow.LoadNodeJobRunQueue(ctx, db, cache, "", nil, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, &t0, &t1, nil)
+		jobsSince, errW := workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+				User:     u,
+				Rights:   permission.PermissionReadExecute,
+				Since:    &t0,
+				Until:    &t1,
+			})
 		test.NoError(t, errW)
 		for _, job := range jobsSince {
 			if jobs[0].ID == job.ID {
@@ -461,7 +502,13 @@ func TestManualRun3(t *testing.T) {
 			}
 		}
 
-		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache, "", nil, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, &since, nil, nil)
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+				User:     u,
+				Rights:   permission.PermissionReadExecute,
+				Since:    &since,
+			})
 		test.NoError(t, errW)
 		var found bool
 		for _, job := range jobsSince {
@@ -475,7 +522,14 @@ func TestManualRun3(t *testing.T) {
 
 		t0 = since.Add(10 * time.Second)
 		t1 = since.Add(15 * time.Second)
-		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache, "", nil, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, &t0, &t1, nil)
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+				User:     u,
+				Rights:   permission.PermissionReadExecute,
+				Since:    &t0,
+				Until:    &t1,
+			})
 		test.NoError(t, errW)
 		for _, job := range jobsSince {
 			if jobs[0].ID == job.ID {

@@ -15,7 +15,6 @@ var (
 	health = cli.NewCommand(healthCmd, nil,
 		[]*cobra.Command{
 			cli.NewListCommand(healthStatusCmd, healthStatusRun, nil),
-			cli.NewGetCommand(healthMonDBTimesCmd, healthMonDBTimesRun, nil),
 			cli.NewListCommand(healthMonDBMigrateCmd, healthMonDBMigrateRun, nil),
 		})
 )
@@ -31,16 +30,6 @@ func healthStatusRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(s.Lines), nil
-}
-
-var healthMonDBTimesCmd = cli.Command{
-	Name:  "dbtimes",
-	Short: "Show some DB Times",
-}
-
-func healthMonDBTimesRun(v cli.Values) (interface{}, error) {
-	s, err := client.MonDBTimes()
-	return *s, err
 }
 
 var healthMonDBMigrateCmd = cli.Command{

@@ -90,11 +90,16 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			if jobs != nil {
 				queue := sdk.WorkflowQueue{}
 
-				var ratio string
+				url, _ := url.Parse("/queue/workflows")
+				q := url.Query()
 				if ratioService != nil {
-					ratio = string(*ratioService)
+					q.Add("ratioService", string(*ratioService))
 				}
-				_, header, _, errReq := c.RequestJSON(http.MethodGet, "/queue/workflows", nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)), SetHeader("X-CDS-Ratio-Service", ratio), SetHeader("X-CDS-Model-Type", modelType))
+				if modelType != "" {
+					q.Add("modelType", modelType)
+				}
+				url.RawQuery = q.Encode()
+				_, header, _, errReq := c.RequestJSON(http.MethodGet, url.String(), nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)))
 				if errReq != nil {
 					errs <- sdk.WrapError(errReq, "Unable to load jobs")
 					continue
@@ -178,17 +183,21 @@ func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time
 		now := time.Now()
 		until = &now
 	}
-	var ratio string
+	url, _ := url.Parse("/queue/workflows/count")
+	q := url.Query()
 	if ratioService != nil {
-		ratio = string(*ratioService)
+		q.Add("ratioService", string(*ratioService))
 	}
+	if modelType != "" {
+		q.Add("modelType", modelType)
+	}
+	url.RawQuery = q.Encode()
+
 	countWJobs := sdk.WorkflowNodeJobRunCount{}
-	_, _, err := c.GetJSONWithHeaders("/queue/workflows/count",
+	_, _, err := c.GetJSONWithHeaders(url.String(),
 		&countWJobs,
 		SetHeader(RequestedIfModifiedSinceHeader, since.Format(time.RFC1123)),
-		SetHeader("X-CDS-Until", until.Format(time.RFC1123)),
-		SetHeader("X-CDS-Ratio-Service", ratio),
-		SetHeader("X-CDS-Model-Type", modelType))
+		SetHeader("X-CDS-Until", until.Format(time.RFC1123)))
 	return countWJobs, err
 }
 

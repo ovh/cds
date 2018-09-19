@@ -277,7 +277,6 @@ type WorkflowClient interface {
 type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
 	MonVersion() (*sdk.Version, error)
-	MonDBTimes() (*sdk.MonDBTimes, error)
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
 }
 

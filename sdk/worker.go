@@ -44,13 +44,23 @@ type WorkerTakeForm struct {
 	Version     string
 }
 
-// Existing worker type
+// Existing worker model type
 const (
 	Docker      = "docker"
 	HostProcess = "host"
 	Openstack   = "openstack"
 	VSphere     = "vsphere"
 )
+
+// WorkerModelValidate returns if given strings are valid worker model type.
+func WorkerModelValidate(modelType string) bool {
+	for _, s := range AvailableWorkerModelType {
+		if s == modelType {
+			return true
+		}
+	}
+	return false
+}
 
 var (
 	// AvailableWorkerModelType List of all worker model type

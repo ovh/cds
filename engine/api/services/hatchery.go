@@ -1,4 +1,4 @@
-package hatchery
+package services
 
 import (
 	"github.com/go-gorp/gorp"
@@ -12,7 +12,7 @@ func CountHatcheries(db gorp.SqlExecutor, wfNodeRunID int64) (int64, error) {
 	SELECT COUNT(1)
 		FROM services
 		WHERE (
-			services.type = 'hatchery'
+			services.type = $1
 			AND services.group_id = ANY(
 				SELECT DISTINCT(project_group.group_id)
 					FROM workflow_node_run
@@ -20,14 +20,14 @@ func CountHatcheries(db gorp.SqlExecutor, wfNodeRunID int64) (int64, error) {
 						JOIN workflow ON workflow.id = workflow_run.workflow_id
 						JOIN project ON project.id = workflow.project_id
 						JOIN project_group ON project_group.project_id = project.id
-				WHERE workflow_node_run.id = $1
+				WHERE workflow_node_run.id = $2
 				AND project_group.role >= 5
 			)
 			OR
-			services.group_id = $2
+			services.group_id = $3
 		)
 	`
-	return db.SelectInt(query, wfNodeRunID, group.SharedInfraGroup.ID)
+	return db.SelectInt(query, TypeHatchery, wfNodeRunID, group.SharedInfraGroup.ID)
 }
 
 // LoadHatcheriesCountByNodeJobRunID retrieves in database the number of hatcheries given the node job run id
@@ -36,7 +36,7 @@ func LoadHatcheriesCountByNodeJobRunID(db gorp.SqlExecutor, wfNodeJobRunID int64
 	SELECT COUNT(1)
 		FROM services
 		WHERE (
-			services.type = 'hatchery'
+			services.type = $1
 			AND services.group_id = ANY(
 				SELECT DISTINCT(project_group.group_id)
 					FROM workflow_node_run_job
@@ -45,12 +45,12 @@ func LoadHatcheriesCountByNodeJobRunID(db gorp.SqlExecutor, wfNodeJobRunID int64
 						JOIN workflow ON workflow.id = workflow_run.workflow_id
 						JOIN project ON project.id = workflow.project_id
 						JOIN project_group ON project_group.project_id = project.id
-				WHERE workflow_node_run.id = $1
+				WHERE workflow_node_run.id = $2
 				AND project_group.role >= 5
 			)
 			OR
-			services.group_id = $2
+			services.group_id = $3
 		)
 	`
-	return db.SelectInt(query, wfNodeJobRunID, group.SharedInfraGroup.ID)
+	return db.SelectInt(query, TypeHatchery, wfNodeJobRunID, group.SharedInfraGroup.ID)
 }

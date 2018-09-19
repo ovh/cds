@@ -24,56 +24,69 @@ func isSharedInfraGroup(groupsID []int64) bool {
 	return sdk.IsInInt64Array(group.SharedInfraGroup.ID, groupsID)
 }
 
+// QueueFilter contains all criterias used to fetch queue
+type QueueFilter struct {
+	ModelType    string
+	RatioService *int
+	GroupsID     []int64
+	User         *sdk.User
+	Rights       int
+	Since        *time.Time
+	Until        *time.Time
+	Limit        *int
+	Statuses     []string
+}
+
 // CountNodeJobRunQueue count all workflow_node_run_job accessible
-func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, modelType string, hatcheryRatioService *int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
+func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter) (sdk.WorkflowNodeJobRunCount, error) {
 	c := sdk.WorkflowNodeJobRunCount{}
 
-	queue, err := LoadNodeJobRunQueue(ctx, db, store, modelType, hatcheryRatioService, permission.PermissionRead, groupsID, usr, since, until, nil, statuses...)
+	queue, err := LoadNodeJobRunQueue(ctx, db, store, filter)
 	if err != nil {
 		return c, sdk.WrapError(err, "CountNodeJobRunQueue> unable to load queue")
 	}
 
 	c.Count = int64(len(queue))
-	if since != nil {
-		c.Since = *since
+	if filter.Since != nil {
+		c.Since = *filter.Since
 	}
-	if until != nil {
-		c.Until = *until
+	if filter.Until != nil {
+		c.Until = *filter.Until
 	}
 	return c, nil
 }
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, modelType string, hatcheryRatioService *int, rights int, groupsID []int64, usr *sdk.User, since *time.Time, until *time.Time, limit *int, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.Store, filter QueueFilter) ([]sdk.WorkflowNodeJobRun, error) {
 	ctx, end := observability.Span(ctx, "LoadNodeJobRunQueue")
 	defer end()
-	if since == nil {
-		since = new(time.Time)
+	if filter.Since == nil {
+		filter.Since = new(time.Time)
 	}
 
-	if until == nil {
+	if filter.Until == nil {
 		now := time.Now()
-		until = &now
+		filter.Until = &now
 	}
 
-	if len(statuses) == 0 {
-		statuses = []string{sdk.StatusWaiting.String()}
+	if len(filter.Statuses) == 0 {
+		filter.Statuses = []string{sdk.StatusWaiting.String()}
 	}
 
 	var where string
-	if hatcheryRatioService != nil {
-		if *hatcheryRatioService == 100 {
+	if filter.RatioService != nil {
+		if *filter.RatioService == 100 {
 			where = " AND contains_service = true "
-		} else if *hatcheryRatioService == 0 {
+		} else if *filter.RatioService == 0 {
 			where = " AND contains_service = false "
 		}
 	}
 
-	args := []interface{}{*since, *until, strings.Join(statuses, ",")}
+	args := []interface{}{*filter.Since, *filter.Until, strings.Join(filter.Statuses, ",")}
 
-	if modelType != "" {
+	if filter.ModelType != "" {
 		where = " AND (model_type is NULL OR model_type = $4)"
-		args = append(args, modelType)
+		args = append(args, filter.ModelType)
 	}
 	order := " ORDER BY workflow_node_run_job.queued ASC"
 
@@ -84,7 +97,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	and workflow_node_run_job.status = ANY(string_to_array($3, ','))
 	` + where + order
 
-	if usr != nil && !usr.Admin {
+	if filter.User != nil && !filter.User.Admin {
 		observability.Current(ctx, observability.Tag("isAdmin", false))
 		query = `
 		SELECT DISTINCT workflow_node_run_job.*
@@ -106,7 +119,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		` + where + order
 
 		var groupID string
-		for i, g := range usr.Groups {
+		for i, g := range filter.User.Groups {
 			if i == 0 {
 				groupID = fmt.Sprintf("%d", g.ID)
 			} else {
@@ -118,11 +131,11 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		observability.Current(ctx, observability.Tag("isAdmin", true))
 	}
 
-	if limit != nil && *limit > 0 {
+	if filter.Limit != nil && *filter.Limit > 0 {
 		query += `
-		LIMIT ` + strconv.Itoa(*limit)
+		LIMIT ` + strconv.Itoa(*filter.Limit)
 	}
-	isSharedInfraGroup := isSharedInfraGroup(groupsID)
+	isSharedInfraGroup := isSharedInfraGroup(filter.GroupsID)
 	sqlJobs := []JobRun{}
 	_, next := observability.Span(ctx, "LoadNodeJobRunQueue.select")
 	if _, err := db.Select(&sqlJobs, query, args...); err != nil {
@@ -146,12 +159,12 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		var keepJobInQueue bool
 		// a shared.infra group can see all jobs
 		// a user (not a hatchery or worker) can see all jobs, even if jobs are only RO for him
-		if isSharedInfraGroup || rights == permission.PermissionRead {
+		if isSharedInfraGroup || filter.Rights == permission.PermissionRead {
 			keepJobInQueue = true
 		} else {
 			// if no shared.infra, we have to filter only executable jobs for worker or hatchery
 			for _, g := range jr.ExecGroups {
-				if sdk.IsInInt64Array(g.ID, groupsID) {
+				if sdk.IsInInt64Array(g.ID, filter.GroupsID) {
 					keepJobInQueue = true
 					break
 				}
