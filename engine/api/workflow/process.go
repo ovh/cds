@@ -243,8 +243,8 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				break
 			}
 
-			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusStopped.String() || nodeRun.SubNumber < maxsn {
-				//One of the sources have not been completed
+			// check status and subnumber
+			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.SubNumber < maxsn {
 				ok = false
 				break
 			}
@@ -598,8 +598,24 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		),
 	)
 
+	runContext := nodeRunContext{
+		Pipeline: pip,
+	}
+	app, has := n.Application()
+	if has {
+		runContext.Application = app
+	}
+	env, has := n.Environment()
+	if has {
+		runContext.Environment = env
+	}
+	prjPlat, has := n.ProjectPlatform()
+	if has {
+		runContext.ProjectPlatform = prjPlat
+	}
+
 	// Process parameters for the jobs
-	jobParams, errParam := getNodeRunBuildParameters(ctx, db, store, p, w, run)
+	jobParams, errParam := getNodeRunBuildParameters(ctx, p, w, run, runContext)
 
 	if errParam != nil {
 		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
@@ -655,7 +671,6 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	var vcsInfos vcsInfos
 	var errVcs error
-	app, _ := n.Application()
 	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
 	vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, gitValues, app.Name, app.VCSServer, app.RepositoryFullname, !isRoot, previousGitValues[tagGitRepository])
 	if errVcs != nil {
@@ -699,12 +714,12 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 			return report, false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processWorkflowNodeRun> Unable to find node %d", hook.WorkflowNodeID)
 		}
 
-		if !checkNodeRunCondition(w, *dest, params) {
+		if !checkNodeRunCondition(w, dest.Context.Conditions, params) {
 			log.Debug("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
 			return report, false, nil
 		}
 	} else {
-		if !checkNodeRunCondition(w, *n, run.BuildParameters) {
+		if !checkNodeRunCondition(w, n.Context.Conditions, run.BuildParameters) {
 			log.Debug("processWorkflowNodeRun> Condition failed %d/%d", w.ID, n.ID)
 			return report, false, nil
 		}
@@ -812,7 +827,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	//Execute the node run !
-	r1, err := execute(ctx, db, store, p, run)
+	r1, err := execute(ctx, db, store, p, run, runContext)
 	if err != nil {
 		return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to execute workflow run")
 	}
@@ -837,21 +852,12 @@ func setValuesGitInBuildParameters(run *sdk.WorkflowNodeRun, vcsInfos vcsInfos) 
 	sdk.ParameterAddOrSetValue(&run.BuildParameters, tagGitHTTPURL, sdk.StringParameter, vcsInfos.HTTPUrl)
 }
 
-func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []sdk.Parameter) bool {
-	//Check conditions
-	//Define specific destination parameters
-	sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, wr.Workflow.Pipelines[node.PipelineID].Name)
-	if node.Context.Application != nil {
-		sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, node.Context.Application.Name)
-	}
-	if node.Context.Environment != nil {
-		sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, node.Context.Environment.Name)
-	}
+func checkNodeRunCondition(wr *sdk.WorkflowRun, conditions sdk.WorkflowNodeConditions, params []sdk.Parameter) bool {
 
 	var conditionsOK bool
 	var errc error
-	if node.Context.Conditions.LuaScript == "" {
-		conditionsOK, errc = sdk.WorkflowCheckConditions(node.Context.Conditions.PlainConditions, params)
+	if conditions.LuaScript == "" {
+		conditionsOK, errc = sdk.WorkflowCheckConditions(conditions.PlainConditions, params)
 	} else {
 		luacheck, err := luascript.NewCheck()
 		if err != nil {
@@ -862,7 +868,7 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 			})
 		}
 		luacheck.SetVariables(sdk.ParametersToMap(params))
-		errc = luacheck.Perform(node.Context.Conditions.LuaScript)
+		errc = luacheck.Perform(conditions.LuaScript)
 		conditionsOK = luacheck.Result
 	}
 	if errc != nil {

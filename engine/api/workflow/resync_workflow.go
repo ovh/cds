@@ -109,9 +109,10 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, report *ProcessorReport) {
 	nodeRuns := report.nodes
 	for _, nodeRun := range nodeRuns {
-		if len(nodeRun.Commits) > 0 {
+		if len(nodeRun.Commits) > 0 || nodeRun.ApplicationID == 0 {
 			continue
 		}
+
 		go func(nr sdk.WorkflowNodeRun) {
 			wr, errL := LoadRunByID(db, nr.WorkflowRunID, LoadRunOptions{})
 			if errL != nil {

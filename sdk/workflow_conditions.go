@@ -8,7 +8,7 @@ import (
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
-// Workflow conditions operator
+// WorkflowData conditions operator
 const (
 	WorkflowConditionsOperatorEquals             = "eq"
 	WorkflowConditionsOperatorNotEquals          = "ne"
@@ -19,7 +19,7 @@ const (
 	WorkflowConditionsOperatorRegex              = "regex"
 )
 
-// Workflow conditions operator
+// WorkflowData conditions operator
 var (
 	WorkflowConditionsOperators = map[string]string{
 		WorkflowConditionsOperatorEquals:             "=",

@@ -110,11 +110,12 @@ func (w *Workflow) PostInsert(db gorp.SqlExecutor) error {
 // PostGet is a db hook
 func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {
-		Metadata  sql.NullString `db:"metadata"`
-		PurgeTags sql.NullString `db:"purge_tags"`
+		Metadata     sql.NullString `db:"metadata"`
+		PurgeTags    sql.NullString `db:"purge_tags"`
+		WorkflowData sql.NullString `db:"workflow_data"`
 	}{}
 
-	if err := db.SelectOne(&res, "SELECT metadata, purge_tags FROM workflow WHERE id = $1", w.ID); err != nil {
+	if err := db.SelectOne(&res, "SELECT metadata, purge_tags, workflow_data FROM workflow WHERE id = $1", w.ID); err != nil {
 		return sdk.WrapError(err, "PostGet> Unable to load marshalled workflow")
 	}
 
@@ -130,6 +131,12 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	}
 	w.PurgeTags = purgeTags
 
+	data := sdk.WorkflowData{}
+	if err := gorpmapping.JSONNullString(res.WorkflowData, &data); err != nil {
+		return sdk.WrapError(err, "Unable to unamrshall workflow data")
+	}
+	w.WorkflowData = &data
+
 	return nil
 }
 
@@ -138,7 +145,7 @@ func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
 	if w.FromRepository != "" && strings.HasPrefix(w.FromRepository, "http") {
 		fromRepoURL, err := url.Parse(w.FromRepository)
 		if err != nil {
-			return sdk.WrapError(err, "Workflow.PreUpdate> Cannot parse url %s", w.FromRepository)
+			return sdk.WrapError(err, "WorkflowData.PreUpdate> Cannot parse url %s", w.FromRepository)
 		}
 		fromRepoURL.User = nil
 		w.FromRepository = fromRepoURL.String()
@@ -157,7 +164,12 @@ func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
 	if errPt != nil {
 		return errPt
 	}
-	if _, err := db.Exec("update workflow set purge_tags = $1 where id = $2", pt, w.ID); err != nil {
+
+	data, errD := gorpmapping.JSONToNullString(w.WorkflowData)
+	if errD != nil {
+		return sdk.WrapError(errD, "Workflow.PostUpdate> Unable to marshall workflow data")
+	}
+	if _, err := db.Exec("update workflow set purge_tags = $1, workflow_data = $3 where id = $2", pt, w.ID, data); err != nil {
 		return err
 	}
 
@@ -402,6 +414,8 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	next()
 
 	res.Pipelines = map[int64]sdk.Pipeline{}
+	res.Applications = map[int64]sdk.Application{}
+	res.Environments = map[int64]sdk.Environment{}
 
 	if !opts.WithoutNode {
 		_, next = observability.Span(ctx, "workflow.load.loadNodes")
@@ -492,7 +506,7 @@ func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, erro
 
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
-	if err := IsValid(w, p); err != nil {
+	if err := IsValid(db, w, p); err != nil {
 		return err
 	}
 
@@ -695,7 +709,7 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 
 // Update updates a workflow
 func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
-	if err := IsValid(w, p); err != nil {
+	if err := IsValid(db, w, p); err != nil {
 		return err
 	}
 
@@ -816,7 +830,7 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 }
 
 // IsValid cheks workflow validity
-func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
+func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
@@ -856,10 +870,12 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 
 	//Checks application are in the current project
 	apps := w.InvolvedApplications()
+	w.Applications = make(map[int64]sdk.Application)
 	for _, appID := range apps {
 		var found bool
 		for _, a := range proj.Applications {
 			if appID == a.ID {
+				w.Applications[a.ID] = a
 				found = true
 				break
 			}
@@ -871,10 +887,12 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 
 	//Checks pipelines are in the current project
 	pips := w.InvolvedPipelines()
+	w.Pipelines = make(map[int64]sdk.Pipeline)
 	for _, pipID := range pips {
 		var found bool
 		for _, p := range proj.Pipelines {
 			if pipID == p.ID {
+				w.Pipelines[p.ID] = p
 				found = true
 				break
 			}
@@ -886,10 +904,12 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 
 	//Checks environments are in the current project
 	envs := w.InvolvedEnvironments()
+	w.Environments = make(map[int64]sdk.Environment)
 	for _, envID := range envs {
 		var found bool
 		for _, e := range proj.Environments {
 			if envID == e.ID {
+				w.Environments[e.ID] = e
 				found = true
 				break
 			}
@@ -901,10 +921,12 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 
 	//Checks platforms are in the current project
 	pfs := w.InvolvedPlatforms()
+	w.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
 	for _, id := range pfs {
 		var found bool
 		for _, p := range proj.Platforms {
 			if id == p.ID {
+				w.ProjectPlatforms[p.ID] = p
 				found = true
 				break
 			}
@@ -916,9 +938,36 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 
 	//Check contexts
 	nodes := w.Nodes(true)
+	w.HookModels = make(map[int64]sdk.WorkflowHookModel)
 	for _, n := range nodes {
 		if err := n.CheckApplicationDeploymentStrategies(proj); err != nil {
 			return sdk.NewError(sdk.ErrWorkflowInvalid, err)
+		}
+
+		// Check hook model
+		for _, h := range n.Hooks {
+			if h.WorkflowHookModelID != 0 {
+				if _, has := w.HookModels[h.WorkflowHookModelID]; !has {
+					m, err := LoadHookModelByID(db, h.WorkflowHookModelID)
+					if err != nil {
+						return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown hook model %d", h.WorkflowHookModelID))
+					}
+					w.HookModels[h.WorkflowHookModelID] = *m
+				}
+			}
+		}
+
+		// Check hook model
+		for _, h := range n.OutgoingHooks {
+			if h.WorkflowHookModelID != 0 {
+				if _, has := w.HookModels[h.WorkflowHookModelID]; !has {
+					m, err := LoadHookModelByID(db, h.WorkflowHookModelID)
+					if err != nil {
+						return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown outgoing hook model %d", h.WorkflowHookModelID))
+					}
+					w.HookModels[h.WorkflowHookModelID] = *m
+				}
+			}
 		}
 	}
 

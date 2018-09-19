@@ -119,7 +119,7 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
 	_, next := observability.Span(ctx, "workflow.LoadRunByID")
-	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
+	nodeRun, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, LoadRunOptions{})
 	next()
 	if errLoad != nil {
 		return nil, sdk.WrapError(errLoad, "workflow.UpdateNodeJobRunStatus> Unable to load node run id %d", job.WorkflowNodeRunID)
@@ -150,10 +150,10 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 		job.Status = status.String()
 
 		_, next := observability.Span(ctx, "workflow.LoadRunByID")
-		wf, errLoadWf := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{})
+		wf, errLoadWf := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{})
 		next()
 		if errLoadWf != nil {
-			return nil, sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", node.WorkflowRunID)
+			return nil, sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", nodeRun.WorkflowRunID)
 		}
 
 		wf.LastExecution = time.Now()
@@ -166,8 +166,8 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 
 	//If the job has been set to building, set the stage to building
 	var stageIndex int
-	for i := range node.Stages {
-		s := &node.Stages[i]
+	for i := range nodeRun.Stages {
+		s := &nodeRun.Stages[i]
 		for _, j := range s.Jobs {
 			if j.Action.ID == job.Job.Job.Action.ID {
 				stageIndex = i
@@ -184,24 +184,74 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
 		_, next := observability.Span(ctx, "workflow.LoadNodeRunByID")
-		nodeRun, errNR := LoadNodeRunByID(db, node.ID, LoadRunOptions{})
+		nodeRun, errNR := LoadNodeRunByID(db, nodeRun.ID, LoadRunOptions{})
 		next()
 
 		if errNR != nil {
-			return nil, sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot LoadNodeRunByID node run %d", node.ID)
+			return nil, sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot LoadNodeRunByID node run %d", nodeRun.ID)
 		}
 		return report.Merge(syncTakeJobInNodeRun(ctx, db, nodeRun, job, stageIndex))
 	}
 
-	var errReport error
-	report, errReport = report.Merge(execute(ctx, db, store, proj, node))
-
 	_, next = observability.Span(ctx, "workflow.LoadRunByID")
-	wr, err := LoadRunByID(db, node.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true, WithTests: true})
+	wr, err := LoadRunByID(db, nodeRun.WorkflowRunID, LoadRunOptions{DisableDetailledNodeRun: true, WithTests: true})
 	next()
 	if err != nil {
-		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", node.WorkflowRunID)
+		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot load run by ID %d", nodeRun.WorkflowRunID)
 	}
+
+	runContext := nodeRunContext{}
+	if wr.Version < 2 {
+		n := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
+		if n != nil {
+			if n.PipelineID != 0 {
+				pip, has := wr.Workflow.Pipelines[n.PipelineID]
+				if has {
+					runContext.Pipeline = pip
+				}
+			}
+			if app, has := n.Application(); has {
+				runContext.Application = app
+			}
+			if env, has := n.Environment(); has {
+				runContext.Environment = env
+			}
+			if pp, has := n.ProjectPlatform(); has {
+				runContext.ProjectPlatform = pp
+			}
+		}
+	} else {
+		node := wr.Workflow.WorkflowData.NodeByID(nodeRun.ID)
+		if node != nil && node.Context != nil {
+			if node.Context.PipelineID != 0 {
+				pip, has := wr.Workflow.Pipelines[node.Context.PipelineID]
+				if has {
+					runContext.Pipeline = pip
+				}
+			}
+			if node.Context.ApplicationID != 0 {
+				app, has := wr.Workflow.Applications[node.Context.ApplicationID]
+				if has {
+					runContext.Application = app
+				}
+			}
+			if node.Context.EnvironmentID != 0 {
+				env, has := wr.Workflow.Environments[node.Context.EnvironmentID]
+				if has {
+					runContext.Environment = env
+				}
+			}
+			if node.Context.ProjectPlatformID != 0 {
+				pp, has := wr.Workflow.ProjectPlatforms[node.Context.ProjectPlatformID]
+				if has {
+					runContext.ProjectPlatform = pp
+				}
+			}
+		}
+	}
+
+	var errReport error
+	report, errReport = report.Merge(execute(ctx, db, store, proj, nodeRun, runContext))
 
 	//Start a goroutine to update commit statuses in repositories manager
 	go func(wfRun *sdk.WorkflowRun) {
@@ -309,7 +359,36 @@ func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
 }
 
 // LoadNodeJobRunKeys loads all keys for a job run
-func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, p *sdk.Project) ([]sdk.Parameter, []sdk.Variable, error) {
+func LoadNodeJobRunKeys(p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
+	var app *sdk.Application
+	var env *sdk.Environment
+	if wr.Version < 2 {
+		n := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
+		if n == nil {
+			return nil, nil, sdk.WrapError(fmt.Errorf("LoadNodeJobRunKeys> Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+		}
+		if n.Context.Application != nil {
+			app = n.Context.Application
+		}
+		if n.Context.Environment != nil {
+			env = n.Context.Environment
+		}
+	} else {
+		n := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+		if n.Context.ApplicationID != 0 {
+			appMap, has := wr.Workflow.Applications[n.Context.ApplicationID]
+			if has {
+				app = &appMap
+			}
+		}
+		if n.Context.EnvironmentID != 0 {
+			envMap, has := wr.Workflow.Environments[n.Context.EnvironmentID]
+			if has {
+				env = &envMap
+			}
+		}
+	}
+
 	params := []sdk.Parameter{}
 	secrets := []sdk.Variable{}
 
@@ -332,12 +411,8 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 	}
 
 	//Load node definition
-	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
-	if n == nil {
-		return nil, nil, sdk.WrapError(fmt.Errorf("LoadNodeJobRunKeys> Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
-	}
-	if n.Context != nil && n.Context.Application != nil {
-		for _, k := range n.Context.Application.Keys {
+	if app != nil {
+		for _, k := range app.Keys {
 			params = append(params, sdk.Parameter{
 				Name:  "cds.key." + k.Name + ".pub",
 				Type:  "string",
@@ -355,7 +430,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 			}
 			decrypted, errD := secret.Decrypt([]byte(unBase64))
 			if errD != nil {
-				log.Error("LoadNodeJobRunKeys> Unable to decrypt app private key %s/%s: %v", n.Context.Application.Name, k.Name, errD)
+				log.Error("LoadNodeJobRunKeys> Unable to decrypt app private key %s/%s: %v", app.Name, k.Name, errD)
 			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
@@ -365,8 +440,8 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 		}
 	}
 
-	if n.Context != nil && n.Context.Environment != nil && n.Context.Environment.ID != sdk.DefaultEnv.ID {
-		for _, k := range n.Context.Environment.Keys {
+	if env != nil && env.ID != sdk.DefaultEnv.ID {
+		for _, k := range env.Keys {
 			params = append(params, sdk.Parameter{
 				Name:  "cds.key." + k.Name + ".pub",
 				Type:  "string",
@@ -384,7 +459,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 			}
 			decrypted, errD := secret.Decrypt([]byte(unBase64))
 			if errD != nil {
-				log.Error("LoadNodeJobRunKeys> Unable to decrypt env private key %s/%s: %v", n.Context.Environment.Name, k.Name, errD)
+				log.Error("LoadNodeJobRunKeys> Unable to decrypt env private key %s/%s: %v", env.Name, k.Name, errD)
 			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
@@ -398,44 +473,79 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 }
 
 // LoadNodeJobRunSecrets loads all secrets for a job run
-func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
+func LoadNodeJobRunSecrets(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
 	var secrets []sdk.Variable
 
 	pv = sdk.VariablesFilter(pv, sdk.SecretVariable, sdk.KeyVariable)
 	pv = sdk.VariablesPrefix(pv, "cds.proj.")
 	secrets = append(secrets, pv...)
 
-	//Load node definition
-	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
-	if n == nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+	var app *sdk.Application
+	var env *sdk.Environment
+	var pp *sdk.ProjectPlatform
+	if w.Version < 2 {
+		n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
+		if n == nil {
+			return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+		}
+		if n.Context.Application != nil {
+			app = n.Context.Application
+		}
+		if n.Context.Environment != nil {
+			env = n.Context.Environment
+		}
+		if n.Context.ProjectPlatform != nil {
+			pp = n.Context.ProjectPlatform
+		}
+	} else {
+		n := w.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+		if n.Context.ApplicationID != 0 {
+			appMap, has := w.Workflow.Applications[n.Context.ApplicationID]
+			if has {
+				app = &appMap
+			}
+		}
+		if n.Context.EnvironmentID != 0 {
+			envMap, has := w.Workflow.Environments[n.Context.EnvironmentID]
+			if has {
+				env = &envMap
+			}
+		}
+		if n.Context.ProjectPlatformID != 0 {
+			ppMap, has := w.Workflow.ProjectPlatforms[n.Context.ProjectPlatformID]
+			if has {
+				pp = &ppMap
+			}
+		}
+
 	}
+	//Load node definition
 
 	//Application variables
 	av := []sdk.Variable{}
-	if n.Context != nil && n.Context.Application != nil {
-		appv, errA := application.GetAllVariableByID(db, n.Context.Application.ID, application.WithClearPassword())
+	if app != nil {
+		appv, errA := application.GetAllVariableByID(db, app.ID, application.WithClearPassword())
 		if errA != nil {
 			return nil, sdk.WrapError(errA, "LoadNodeJobRunSecrets> Cannot load application variables")
 		}
 		av = sdk.VariablesFilter(appv, sdk.SecretVariable, sdk.KeyVariable)
 		av = sdk.VariablesPrefix(av, "cds.app.")
 
-		if err := application.DecryptVCSStrategyPassword(n.Context.Application); err != nil {
+		if err := application.DecryptVCSStrategyPassword(app); err != nil {
 			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot decrypt vcs configuration")
 		}
 		av = append(av, sdk.Variable{
 			Name:  "git.http.password",
 			Type:  sdk.SecretVariable,
-			Value: n.Context.Application.RepositoryStrategy.Password,
+			Value: app.RepositoryStrategy.Password,
 		})
 	}
 	secrets = append(secrets, av...)
 
 	//Environment variables
 	ev := []sdk.Variable{}
-	if n.Context != nil && n.Context.Environment != nil {
-		envv, errE := environment.GetAllVariableByID(db, n.Context.Environment.ID, environment.WithClearPassword())
+	if env != nil {
+		envv, errE := environment.GetAllVariableByID(db, env.ID, environment.WithClearPassword())
 		if errE != nil {
 			return nil, sdk.WrapError(errE, "LoadNodeJobRunSecrets> Cannot load environment variables")
 		}
@@ -444,10 +554,10 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.Work
 	}
 	secrets = append(secrets, ev...)
 
-	if n.Context.ProjectPlatform != nil {
-		pf, err := platform.LoadByID(db, n.Context.ProjectPlatformID, true)
+	if pp != nil {
+		pf, err := platform.LoadByID(db, pp.ID, true)
 		if err != nil {
-			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load platform %d", n.Context.ProjectPlatformID)
+			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load platform %d", pp.ID)
 		}
 
 		//Projeft platform variable
@@ -462,12 +572,12 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.Work
 		pfv = sdk.VariablesPrefix(pfv, "cds.platform.")
 		pfv = sdk.VariablesFilter(pfv, sdk.SecretVariable)
 
-		if n.Context.Application != nil && n.Context.Application.DeploymentStrategies != nil {
-			strats, err := application.LoadDeploymentStrategies(db, n.Context.ApplicationID, true)
+		if app != nil && app.DeploymentStrategies != nil {
+			strats, err := application.LoadDeploymentStrategies(db, app.ID, true)
 			if err != nil {
-				return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load application deployment strategies %d", n.Context.ApplicationID)
+				return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load application deployment strategies %d", app.ID)
 			}
-			strat, has := strats[n.Context.ProjectPlatform.Name]
+			strat, has := strats[pp.Name]
 
 			//Application deployment strategies variables
 			apv := []sdk.Variable{}

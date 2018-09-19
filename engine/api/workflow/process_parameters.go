@@ -9,7 +9,6 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -39,7 +38,7 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 }
 
 // GetNodeBuildParameters returns build parameters with default values for cds.version, cds.run, cds.run.number, cds.run.subnumber
-func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowNode, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
+func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
 	tmpProj := sdk.ParametersFromProjectVariables(*proj)
 	vars := make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
@@ -47,38 +46,35 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	// compute application variables
-	app, has := n.Application()
-	if has {
-		vars["cds.application"] = app.Name
-		tmp := sdk.ParametersFromApplicationVariables(app)
+	if runContext.Application.ID != 0 {
+		vars["cds.application"] = runContext.Application.Name
+		tmp := sdk.ParametersFromApplicationVariables(runContext.Application)
 		for k, v := range tmp {
 			vars[k] = v
 		}
 	}
 
 	// compute environment variables
-	env, has := n.Environment()
-	if has {
-		vars["cds.environment"] = env.Name
-		tmp := sdk.ParametersFromEnvironmentVariables(env)
+	if runContext.Environment.ID != 0 {
+		vars["cds.environment"] = runContext.Environment.Name
+		tmp := sdk.ParametersFromEnvironmentVariables(runContext.Environment)
 		for k, v := range tmp {
 			vars[k] = v
 		}
 	}
 
 	// compute parameters variables
-	ppf, has := n.ProjectPlatform()
-	if has {
-		vars["cds.platform"] = ppf.Name
-		tmp := sdk.ParametersFromPlatform(ppf.Config)
+	if runContext.ProjectPlatform.ID != 0 {
+		vars["cds.platform"] = runContext.ProjectPlatform.Name
+		tmp := sdk.ParametersFromPlatform(runContext.ProjectPlatform.Config)
 		for k, v := range tmp {
 			vars[k] = v
 		}
 
 		// Process deployment strategy of the chosen platform
-		if n.Context.Application != nil {
-			for pfName, pfConfig := range n.Context.Application.DeploymentStrategies {
-				if pfName == n.Context.ProjectPlatform.Name {
+		if runContext.Application.ID != 0 {
+			for pfName, pfConfig := range runContext.Application.DeploymentStrategies {
+				if pfName == runContext.ProjectPlatform.Name {
 					tmp := sdk.ParametersFromPlatform(pfConfig)
 					for k, v := range tmp {
 						vars[k] = v
@@ -113,21 +109,21 @@ func GetNodeBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	vars["cds.project"] = w.ProjectKey
 	vars["cds.workflow"] = w.Name
-	vars["cds.pipeline"] = w.Pipelines[n.PipelineID].Name
+	vars["cds.pipeline"] = runContext.Pipeline.Name
 
-	if n.Context != nil && n.Context.Application != nil && n.Context.Application.RepositoryStrategy.ConnectionType != "" {
-		vars["git.connection.type"] = n.Context.Application.RepositoryStrategy.ConnectionType
-		if n.Context.Application.RepositoryStrategy.SSHKey != "" {
-			vars["git.ssh.key"] = n.Context.Application.RepositoryStrategy.SSHKey
+	if runContext.Application.RepositoryStrategy.ConnectionType != "" {
+		vars["git.connection.type"] = runContext.Application.RepositoryStrategy.ConnectionType
+		if runContext.Application.RepositoryStrategy.SSHKey != "" {
+			vars["git.ssh.key"] = runContext.Application.RepositoryStrategy.SSHKey
 		}
-		if n.Context.Application.RepositoryStrategy.PGPKey != "" {
-			vars["git.pgp.key"] = n.Context.Application.RepositoryStrategy.PGPKey
+		if runContext.Application.RepositoryStrategy.PGPKey != "" {
+			vars["git.pgp.key"] = runContext.Application.RepositoryStrategy.PGPKey
 		}
-		if n.Context.Application.RepositoryStrategy.User != "" {
-			vars["git.http.user"] = n.Context.Application.RepositoryStrategy.User
+		if runContext.Application.RepositoryStrategy.User != "" {
+			vars["git.http.user"] = runContext.Application.RepositoryStrategy.User
 		}
-		if n.Context.Application.VCSServer != "" {
-			vars["git.server"] = n.Context.Application.VCSServer
+		if runContext.Application.VCSServer != "" {
+			vars["git.server"] = runContext.Application.VCSServer
 		}
 	} else {
 		// remove vcs strategy variable
@@ -153,9 +149,19 @@ func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.Workf
 			return nil, sdk.WrapError(errNR, "getParentParameters> Cannot get parent node run")
 		}
 
-		node := w.Workflow.GetNode(parentNodeRun.WorkflowNodeID)
-		if node == nil {
-			return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID), "getParentParameters>")
+		var nodeName string
+		if w.Version < 2 {
+			node := w.Workflow.GetNode(parentNodeRun.WorkflowNodeID)
+			if node == nil {
+				return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID), "getParentParameters>")
+			}
+			nodeName = node.Name
+		} else {
+			node := w.Workflow.WorkflowData.NodeByID(parentNodeRun.WorkflowNodeID)
+			if node == nil {
+				return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID), "getParentParameters>")
+			}
+			nodeName = node.Name
 		}
 
 		for i := range parentNodeRun.BuildParameters {
@@ -180,7 +186,7 @@ func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.Workf
 				continue
 			}
 
-			prefix := "workflow." + node.Name + "."
+			prefix := "workflow." + nodeName + "."
 			if strings.HasPrefix(p.Name, "cds.") {
 				p.Name = strings.Replace(p.Name, "cds.", prefix, 1)
 			} else {
@@ -192,7 +198,7 @@ func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.Workf
 	return params, nil
 }
 
-func getNodeRunBuildParameters(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
+func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) ([]sdk.Parameter, error) {
 	ctx, end := observability.Span(ctx, "workflow.getNodeRunBuildParameters",
 		observability.Tag(observability.TagWorkflow, w.Workflow.Name),
 		observability.Tag(observability.TagWorkflowRun, w.Number),
@@ -200,14 +206,8 @@ func getNodeRunBuildParameters(ctx context.Context, db gorp.SqlExecutor, store c
 	)
 	defer end()
 
-	//Load node definition
-	n := w.Workflow.GetNode(run.WorkflowNodeID)
-	if n == nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeRunParameters>")
-	}
-
 	//Get node build parameters
-	params, errparam := GetNodeBuildParameters(ctx, db, store, proj, &w.Workflow, n, run.PipelineParameters, run.Payload)
+	params, errparam := GetNodeBuildParameters(proj, &w.Workflow, runContext, run.PipelineParameters, run.Payload)
 	if errparam != nil {
 		return nil, sdk.WrapError(errparam, "getNodeRunParameters> Unable to compute node build parameters")
 	}

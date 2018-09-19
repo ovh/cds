@@ -22,32 +22,51 @@ var ColorRegexp = regexp.MustCompile(`^#\w{3,8}$`)
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID                      int64                  `json:"id" db:"id" cli:"-"`
-	Name                    string                 `json:"name" db:"name" cli:"name,key"`
-	Description             string                 `json:"description,omitempty" db:"description" cli:"description"`
-	Icon                    string                 `json:"icon,omitempty" db:"icon" cli:"-"`
-	LastModified            time.Time              `json:"last_modified" db:"last_modified" mapstructure:"-"`
-	ProjectID               int64                  `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey              string                 `json:"project_key" db:"-" cli:"-"`
-	RootID                  int64                  `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
-	Root                    *WorkflowNode          `json:"root" db:"-" cli:"-"`
-	Joins                   []WorkflowNodeJoin     `json:"joins,omitempty" db:"-" cli:"-"`
-	Groups                  []GroupPermission      `json:"groups,omitempty" db:"-" cli:"-"`
-	Permission              int                    `json:"permission,omitempty" db:"-" cli:"-"`
-	Metadata                Metadata               `json:"metadata" yaml:"metadata" db:"-"`
-	Usage                   *Usage                 `json:"usage,omitempty" db:"-" cli:"-"`
-	HistoryLength           int64                  `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags               []string               `json:"purge_tags,omitempty" db:"-" cli:"-"`
-	Notifications           []WorkflowNotification `json:"notifications,omitempty" db:"-" cli:"-"`
-	FromRepository          string                 `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
-	DerivedFromWorkflowID   int64                  `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
-	DerivedFromWorkflowName string                 `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
-	DerivationBranch        string                 `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
-	Audits                  []AuditWorklflow       `json:"audits" db:"-"`
-	Pipelines               map[int64]Pipeline     `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
-	Labels                  []Label                `json:"labels" db:"-" cli:"labels"`
-	ToDelete                bool                   `json:"to_delete" db:"to_delete" cli:"-"`
-	Favorite                bool                   `json:"favorite" db:"-" cli:"favorite"`
+	ID                      int64                       `json:"id" db:"id" cli:"-"`
+	Name                    string                      `json:"name" db:"name" cli:"name,key"`
+	Description             string                      `json:"description,omitempty" db:"description" cli:"description"`
+	Icon                    string                      `json:"icon,omitempty" db:"icon" cli:"-"`
+	LastModified            time.Time                   `json:"last_modified" db:"last_modified" mapstructure:"-"`
+	ProjectID               int64                       `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey              string                      `json:"project_key" db:"-" cli:"-"`
+	RootID                  int64                       `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
+	Root                    *WorkflowNode               `json:"root" db:"-" cli:"-"`
+	Joins                   []WorkflowNodeJoin          `json:"joins,omitempty" db:"-" cli:"-"`
+	Groups                  []GroupPermission           `json:"groups,omitempty" db:"-" cli:"-"`
+	Permission              int                         `json:"permission,omitempty" db:"-" cli:"-"`
+	Metadata                Metadata                    `json:"metadata" yaml:"metadata" db:"-"`
+	Usage                   *Usage                      `json:"usage,omitempty" db:"-" cli:"-"`
+	HistoryLength           int64                       `json:"history_length" db:"history_length" cli:"-"`
+	PurgeTags               []string                    `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	Notifications           []WorkflowNotification      `json:"notifications,omitempty" db:"-" cli:"-"`
+	FromRepository          string                      `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
+	DerivedFromWorkflowID   int64                       `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
+	DerivedFromWorkflowName string                      `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
+	DerivationBranch        string                      `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
+	Audits                  []AuditWorklflow            `json:"audits" db:"-"`
+	Pipelines               map[int64]Pipeline          `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
+	Applications            map[int64]Application       `json:"applications" db:"-" cli:"-"  mapstructure:"-"`
+	Environments            map[int64]Environment       `json:"environments" db:"-" cli:"-"  mapstructure:"-"`
+	ProjectPlatforms        map[int64]ProjectPlatform   `json:"project_platfroms" db:"-" cli:"-"  mapstructure:"-"`
+	HookModels              map[int64]WorkflowHookModel `json:"hook_models" db:"-" cli:"-"  mapstructure:"-"`
+	Labels                  []Label                     `json:"labels" db:"-" cli:"labels"`
+	ToDelete                bool                        `json:"to_delete" db:"to_delete" cli:"-"`
+	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
+	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
+}
+
+func (w *Workflow) Migrate() WorkflowData {
+	work := WorkflowData{}
+
+	// Add root node
+	work.Node = (*w.Root).migrate()
+
+	// Add Join
+	for _, j := range w.Joins {
+		work.Joins = append(work.Joins, j.migrate())
+	}
+
+	return work
 }
 
 // WorkflowNotification represents notifications on a workflow
@@ -556,6 +575,29 @@ type WorkflowNodeJoin struct {
 	Triggers       []WorkflowNodeJoinTrigger `json:"triggers,omitempty" db:"-"`
 }
 
+func (j WorkflowNodeJoin) migrate() Node {
+	newNode := Node{
+		Name:        j.Ref,
+		Ref:         j.Ref,
+		Type:        NodeTypeJoin,
+		JoinContext: make([]NodeJoin, 0, len(j.SourceNodeRefs)),
+	}
+	for i := range j.SourceNodeRefs {
+		newNode.JoinContext = append(newNode.JoinContext, NodeJoin{
+			ParentName: j.SourceNodeRefs[i],
+		})
+	}
+
+	for _, t := range j.Triggers {
+		child := t.WorkflowDestNode.migrate()
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: newNode.Name,
+			ChildNode:      child,
+		})
+	}
+	return newNode
+}
+
 //WorkflowNodeJoinTrigger is a trigger for joins
 type WorkflowNodeJoinTrigger struct {
 	ID                 int64        `json:"id" db:"id"`
@@ -582,6 +624,60 @@ type WorkflowNode struct {
 	Forks              []WorkflowNodeFork         `json:"forks,omitempty" db:"-"`
 	Triggers           []WorkflowNodeTrigger      `json:"triggers,omitempty" db:"-"`
 	OutgoingHooks      []WorkflowNodeOutgoingHook `json:"outgoing_hooks,omitempty" db:"-"`
+}
+
+func (n WorkflowNode) migrate() Node {
+	newNode := Node{
+		WorkflowID: n.WorkflowID,
+		Type:       NodeTypePipeline,
+		Name:       n.Name,
+		Ref:        n.Ref,
+		Context: &NodeContext{
+			PipelineID:                n.PipelineID,
+			ApplicationID:             n.Context.ApplicationID,
+			EnvironmentID:             n.Context.EnvironmentID,
+			ProjectPlatformID:         n.Context.ProjectPlatformID,
+			Conditions:                n.Context.Conditions,
+			DefaultPayload:            n.Context.DefaultPayload,
+			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
+			Mutex: n.Context.Mutex,
+		},
+	}
+
+	for _, h := range n.Hooks {
+		newNode.Hooks = append(newNode.Hooks, NodeHook{
+			Ref:         h.Ref,
+			HookModelID: h.WorkflowHookModelID,
+			Config:      h.Config,
+			UUID:        h.UUID,
+		})
+	}
+
+	for _, t := range n.Triggers {
+		triggeredNode := t.WorkflowDestNode.migrate()
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: n.Name,
+			ChildNode:      triggeredNode,
+		})
+	}
+
+	for _, f := range n.Forks {
+		forkNode := f.migrate()
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: n.Name,
+			ChildNode:      forkNode,
+		})
+	}
+
+	for _, h := range n.OutgoingHooks {
+		ogh := h.migrate()
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: n.Name,
+			ChildNode:      ogh,
+		})
+	}
+
+	return newNode
 }
 
 func (n *WorkflowNode) ForksMap(forkMap *map[int64]WorkflowNodeFork, triggerMap *map[int64]string) {

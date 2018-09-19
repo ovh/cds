@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	WorkflowRunHeader = "X-Workflow-Run"
-	WorkflowHeader    = "X-Workflow"
+	WorkflowRunHeader = "X-WorkflowData-Run"
+	WorkflowHeader    = "X-WorkflowData"
 	ProjectKeyHeader  = "X-Project-Key"
 )
 
@@ -55,6 +55,7 @@ type WorkflowRun struct {
 	ToDelete                     bool                                    `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun              map[int64]WorkflowNodeTriggerRun        `json:"join_triggers_run,omitempty" db:"-"`
 	Header                       WorkflowRunHeaders                      `json:"header,omitempty" db:"-"`
+	Version                      int                                     `json:"version" db:"version"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow

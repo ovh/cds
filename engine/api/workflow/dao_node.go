@@ -368,6 +368,22 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 	wn.Context = ctx
 
+	// Add application in maps
+	if w.Applications == nil {
+		w.Applications = map[int64]sdk.Application{}
+	}
+	if ctx.Application != nil {
+		w.Applications[ctx.Application.ID] = *ctx.Application
+	}
+
+	// Add environment in maps
+	if w.Environments == nil {
+		w.Environments = map[int64]sdk.Environment{}
+	}
+	if ctx.Environment != nil {
+		w.Environments[ctx.Environment.ID] = *ctx.Environment
+	}
+
 	//Load hooks
 	hooks, errHooks := loadHooks(db, &wn)
 	if errHooks != nil {

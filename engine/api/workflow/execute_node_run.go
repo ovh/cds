@@ -75,17 +75,17 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 	return report, nil
 }
 
-func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, n *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
+func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nr *sdk.WorkflowNodeRun, runContext nodeRunContext) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.execute",
-		observability.Tag(observability.TagWorkflowRun, n.Number),
-		observability.Tag(observability.TagWorkflowNodeRun, n.ID),
-		observability.Tag("workflow_node_run_status", n.Status),
+		observability.Tag(observability.TagWorkflowRun, nr.Number),
+		observability.Tag(observability.TagWorkflowNodeRun, nr.ID),
+		observability.Tag("workflow_node_run_status", nr.Status),
 	)
 	defer end()
-	wr, errWr := LoadRunByID(db, n.WorkflowRunID, LoadRunOptions{})
+	wr, errWr := LoadRunByID(db, nr.WorkflowRunID, LoadRunOptions{})
 	if errWr != nil {
-		return nil, sdk.WrapError(errWr, "workflow.execute> unable to load workflow run ID %d", n.WorkflowRunID)
+		return nil, sdk.WrapError(errWr, "workflow.execute> unable to load workflow run ID %d", nr.WorkflowRunID)
 	}
 
 	report := new(ProcessorReport)
@@ -93,25 +93,25 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 		if oldStatus != wNr.Status {
 			report.Add(*wNr)
 		}
-	}(n.Status, n)
+	}(nr.Status, nr)
 
 	//If status is not waiting neither build: nothing to do
-	if sdk.StatusIsTerminated(n.Status) {
+	if sdk.StatusIsTerminated(nr.Status) {
 		return nil, nil
 	}
 
-	var newStatus = n.Status
+	var newStatus = nr.Status
 
 	//If no stages ==> success
-	if len(n.Stages) == 0 {
+	if len(nr.Stages) == 0 {
 		newStatus = sdk.StatusSuccess.String()
-		n.Done = time.Now()
+		nr.Done = time.Now()
 	}
 
 	stagesTerminated := 0
 	//Browse stages
-	for stageIndex := range n.Stages {
-		stage := &n.Stages[stageIndex]
+	for stageIndex := range nr.Stages {
+		stage := &nr.Stages[stageIndex]
 		log.Debug("workflow.execute> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
 		if stage.Status.String() == "" {
@@ -128,7 +128,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				//Insert data in workflow_node_run_job
 				log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
 				var err error
-				report, err = report.Merge(addJobsToQueue(ctx, db, stage, wr, n))
+				report, err = report.Merge(addJobsToQueue(ctx, db, stage, wr, nr, runContext))
 				if err != nil {
 					return report, err
 				}
@@ -166,13 +166,13 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 			} else {
 				//The stage is over
 				if stage.Status == sdk.StatusFail {
-					n.Done = time.Now()
+					nr.Done = time.Now()
 					newStatus = sdk.StatusFail.String()
 					stagesTerminated++
 					break
 				}
 				if stage.Status == sdk.StatusStopped {
-					n.Done = time.Now()
+					nr.Done = time.Now()
 					newStatus = sdk.StatusStopped.String()
 					stagesTerminated++
 					break
@@ -180,67 +180,76 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 				if sdk.StatusIsTerminated(stage.Status.String()) {
 					stagesTerminated++
-					n.Done = time.Now()
+					nr.Done = time.Now()
 				}
 
-				if stageIndex == len(n.Stages)-1 {
-					n.Done = time.Now()
+				if stageIndex == len(nr.Stages)-1 {
+					nr.Done = time.Now()
 					newStatus = sdk.StatusSuccess.String()
 					stagesTerminated++
 					break
 				}
-				if stageIndex != len(n.Stages)-1 {
+				if stageIndex != len(nr.Stages)-1 {
 					continue
 				}
 			}
 		}
 	}
 
-	if stagesTerminated >= len(n.Stages) || (stagesTerminated >= len(n.Stages)-1 && (n.Stages[len(n.Stages)-1].Status == sdk.StatusDisabled || n.Stages[len(n.Stages)-1].Status == sdk.StatusSkipped)) {
+	if stagesTerminated >= len(nr.Stages) || (stagesTerminated >= len(nr.Stages)-1 && (nr.Stages[len(nr.Stages)-1].Status == sdk.StatusDisabled || nr.Stages[len(nr.Stages)-1].Status == sdk.StatusSkipped)) {
 		var counterStatus statusCounter
-		if len(n.Stages) > 0 {
-			for _, stage := range n.Stages {
+		if len(nr.Stages) > 0 {
+			for _, stage := range nr.Stages {
 				computeRunStatus(stage.Status.String(), &counterStatus)
 			}
 			newStatus = getRunStatus(counterStatus)
 		}
 	}
 
-	n.Status = newStatus
+	nr.Status = newStatus
 
-	if sdk.StatusIsTerminated(n.Status) && n.Status != sdk.StatusNeverBuilt.String() {
-		n.Done = time.Now()
+	if sdk.StatusIsTerminated(nr.Status) && nr.Status != sdk.StatusNeverBuilt.String() {
+		nr.Done = time.Now()
 	}
 
 	// Save the node run in database
-	if err := updateNodeRunStatusAndStage(db, n); err != nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.execute> Unable to execute node")
+	if err := updateNodeRunStatusAndStage(db, nr); err != nil {
+		return nil, sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", nr.ID, nr.Status, err), "workflow.execute> Unable to execute node")
 	}
 
 	//Reload the workflow
-	updatedWorkflowRun, err := LoadRunByID(db, n.WorkflowRunID, LoadRunOptions{})
+	updatedWorkflowRun, err := LoadRunByID(db, nr.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
-		return nil, sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", n.WorkflowRunID)
+		return nil, sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", nr.WorkflowRunID)
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	//Delete jobs only when node is over
-	if sdk.StatusIsTerminated(n.Status) {
-		if n.Status != sdk.StatusStopped.String() {
+	if sdk.StatusIsTerminated(nr.Status) {
+		if nr.Status != sdk.StatusStopped.String() {
 
-			r1, _, err := processWorkflowRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
-			if err != nil {
-				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
+			if updatedWorkflowRun.Version < 2 {
+				r1, _, err := processWorkflowRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
+				if err != nil {
+					return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
+				}
+				report, _ = report.Merge(r1, nil)
+			} else {
+				r1, _, err := processWorkflow2Run(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
+				if err != nil {
+					return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess2 workflow !")
+				}
+				report, _ = report.Merge(r1, nil)
 			}
-			report, _ = report.Merge(r1, nil)
+
 		}
 
 		//Delete the line in workflow_node_run_job
-		if err := DeleteNodeJobRuns(db, n.ID); err != nil {
-			return nil, sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
+		if err := DeleteNodeJobRuns(db, nr.ID); err != nil {
+			return nil, sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", nr.ID)
 		}
 
-		node := updatedWorkflowRun.Workflow.GetNode(n.WorkflowNodeID)
+		node := updatedWorkflowRun.Workflow.GetNode(nr.WorkflowNodeID)
 		//Do we release a mutex ?
 		//Try to find one node run of the same node from the same workflow at status Waiting
 		if node != nil && node.Context != nil && node.Context.Mutex {
@@ -291,7 +300,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
 			var err error
-			report, err = report.Merge(execute(ctx, db, store, proj, waitingRun))
+			report, err = report.Merge(execute(ctx, db, store, proj, waitingRun, runContext))
 			if err != nil {
 				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
 			}
@@ -302,7 +311,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	return report, nil
 }
 
-func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun) (*ProcessorReport, error) {
+func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.addJobsToQueue")
 	defer end()
@@ -324,14 +333,14 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	}
 
 	_, next = observability.Span(ctx, "workflow.getPlatformPluginBinaries")
-	platformPluginBinaries, err := getPlatformPluginBinaries(db, wr, run)
+	platformPluginBinaries, err := getPlatformPluginBinaries(db, runContext)
 	if err != nil {
 		return report, sdk.WrapError(err, "addJobsToQueue> unable to get platform plugins requirement")
 	}
 	next()
 
 	_, next = observability.Span(ctx, "workflow.getJobExecutablesGroups")
-	groups, errGroups := getJobExecutablesGroups(db, wr, run)
+	groups, errGroups := getJobExecutablesGroups(wr, runContext)
 	if errGroups != nil {
 		return report, sdk.WrapError(errGroups, "addJobsToQueue> error on getJobExecutablesGroups")
 	}
@@ -431,34 +440,21 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	return report, nil
 }
 
-func getPlatformPluginBinaries(db gorp.SqlExecutor, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun) ([]sdk.GRPCPluginBinary, error) {
-	node := wr.Workflow.GetNode(run.WorkflowNodeID)
-	if node == nil {
-		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find node")
-	}
-
-	if node.Context != nil && node.Context.ProjectPlatform != nil {
-		if node.Context.ProjectPlatform.Model.PluginName != "" {
-			p, err := plugin.LoadByName(db, node.Context.ProjectPlatform.Model.PluginName)
-			if err != nil {
-				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin %s", node.Context.ProjectPlatform.Model.PluginName)
-			}
-			return p.Binaries, nil
+func getPlatformPluginBinaries(db gorp.SqlExecutor, runContext nodeRunContext) ([]sdk.GRPCPluginBinary, error) {
+	if runContext.ProjectPlatform.Model.PluginName != "" {
+		p, err := plugin.LoadByName(db, runContext.ProjectPlatform.Model.PluginName)
+		if err != nil {
+			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin %s", runContext.ProjectPlatform.Model.PluginName)
 		}
+		return p.Binaries, nil
 	}
-
 	return nil, nil
 }
 
-func getJobExecutablesGroups(db gorp.SqlExecutor, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun) ([]sdk.Group, error) {
-	node := wr.Workflow.GetNode(run.WorkflowNodeID)
-	if node == nil {
-		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getJobExecutablesGroups> Cannot find node")
-	}
-
+func getJobExecutablesGroups(wr *sdk.WorkflowRun, runContext nodeRunContext) ([]sdk.Group, error) {
 	var groups []sdk.Group
-	if node.Context.Environment != nil {
-		for _, e := range node.Context.Environment.EnvironmentGroups {
+	if runContext.Environment.ID != 0 {
+		for _, e := range runContext.Environment.EnvironmentGroups {
 			if e.Permission >= permission.PermissionReadExecute {
 				for _, gp := range wr.Workflow.Groups {
 					if gp.Group.ID == e.Group.ID && gp.Permission >= permission.PermissionReadExecute {
@@ -570,10 +566,32 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
 func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.WorkflowNode, ancestorsIds []int64) ([]sdk.Parameter, error) {
 
+	runContext := nodeRunContext{}
+	if refNode != nil {
+		if refNode.PipelineID != 0 && wf.Pipelines != nil {
+			pip, has := wf.Pipelines[refNode.PipelineID]
+			if has {
+				runContext.Pipeline = pip
+			}
+		}
+		app, has := refNode.Application()
+		if has {
+			runContext.Application = app
+		}
+		env, has := refNode.Environment()
+		if has {
+			runContext.Environment = env
+		}
+		prjPlat, has := refNode.ProjectPlatform()
+		if has {
+			runContext.ProjectPlatform = prjPlat
+		}
+	}
+
 	res := []sdk.Parameter{}
 	if len(res) == 0 {
 		var err error
-		res, err = GetNodeBuildParameters(ctx, db, store, proj, wf, refNode, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload)
+		res, err = GetNodeBuildParameters(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
 		}

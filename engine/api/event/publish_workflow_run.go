@@ -76,10 +76,11 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 
 	var pipName string
 	node := w.GetNode(nr.WorkflowNodeID)
-	if node != nil {
-		pipName = w.Pipelines[node.PipelineID].Name
-		e.NodeName = node.Name
+	if node == nil {
+		return
 	}
+	pipName = w.Pipelines[node.PipelineID].Name
+	e.NodeName = node.Name
 	var envName string
 	var appName string
 	if node.Context != nil {

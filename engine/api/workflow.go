@@ -401,6 +401,26 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
 
+		tx2, errT2 := api.mustDB().Begin()
+		if errT2 == nil {
+			// Persist new Workflow
+			if err := workflow.DeleteWorkflowData(tx2, *wf1); err == nil {
+				d := wf1.Migrate()
+				wf1.WorkflowData = &d
+				if errI := workflow.InsertWorkflowData(tx2, wf1); errI != nil {
+					log.Warning("Update> Unable to insert workflow data: %v", errI)
+				} else {
+					errT2 := tx2.Commit()
+					if errT2 != nil {
+						log.Warning("Update> unable to commit transaction: %v", errT2)
+					}
+				}
+			} else {
+				log.Warning("Update> Unable to delete Workflow Data: %v", err)
+			}
+			tx2.Rollback()
+		}
+
 		usage, errU := loadWorkflowUsage(api.mustDB(), wf1.ID)
 		if errU != nil {
 			return sdk.WrapError(errU, "Cannot load usage")

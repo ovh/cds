@@ -61,12 +61,48 @@ type WorkflowNodeOutgoingHook struct {
 	Triggers            []WorkflowNodeOutgoingHookTrigger `json:"triggers,omitempty" db:"-"`
 }
 
+func (h WorkflowNodeOutgoingHook) migrate() Node {
+	newNode := Node{
+		Name: string(h.ID),
+		Ref:  h.Ref,
+		Type: NodeTypeOutGoingHook,
+		OutGoingHookContext: &NodeOutGoingHook{
+			Config:      h.Config,
+			HookModelID: h.WorkflowHookModelID,
+		},
+	}
+	for _, t := range h.Triggers {
+		child := t.WorkflowDestNode.migrate()
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: newNode.Name,
+			ChildNode:      child,
+		})
+	}
+	return newNode
+}
+
 //WorkflowNodeFork represents a hook which cann trigger the workflow from a given node
 type WorkflowNodeFork struct {
 	ID             int64                     `json:"id" db:"id"`
 	Name           string                    `json:"name" db:"name"`
 	WorkflowNodeID int64                     `json:"workflow_node_id" db:"workflow_node_id"`
 	Triggers       []WorkflowNodeForkTrigger `json:"triggers,omitempty" db:"-"`
+}
+
+func (f WorkflowNodeFork) migrate() Node {
+	newNode := Node{
+		Name: f.Name,
+		Ref:  f.Name,
+		Type: NodeTypeFork,
+	}
+	for _, t := range f.Triggers {
+		child := t.WorkflowDestNode.migrate()
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: newNode.Name,
+			ChildNode:      child,
+		})
+	}
+	return newNode
 }
 
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node

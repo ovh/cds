@@ -178,11 +178,12 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 	}
 
+	wr.Version = 2
 	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, report, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
-	r1, hasRun, errWR := processWorkflowRun(ctx, db, store, p, wr, nil, e, nil)
+	r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, nil)
 	if errWR != nil {
 		return wr, report, sdk.WrapError(errWR, "ManualRun")
 	}
