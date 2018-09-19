@@ -85,7 +85,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	args := []interface{}{*filter.Since, *filter.Until, strings.Join(filter.Statuses, ",")}
 
 	if filter.ModelType != "" {
-		where = " AND (model_type is NULL OR model_type = $4)"
+		where += " AND (model_type is NULL OR model_type = $4)"
 		args = append(args, filter.ModelType)
 	}
 	order := " ORDER BY workflow_node_run_job.queued ASC"
