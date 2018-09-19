@@ -73,29 +73,41 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		filter.Statuses = []string{sdk.StatusWaiting.String()}
 	}
 
-	var where string
+	var containsService []string
 	if filter.RatioService != nil {
 		if *filter.RatioService == 100 {
-			where = " AND contains_service = true "
+			containsService = []string{"true"}
 		} else if *filter.RatioService == 0 {
-			where = " AND contains_service = false "
+			containsService = []string{"false"}
 		}
+	} else {
+		containsService = []string{"true", "false"}
 	}
 
-	args := []interface{}{*filter.Since, *filter.Until, strings.Join(filter.Statuses, ",")}
-
+	var modelTypes []string
 	if filter.ModelType != "" {
-		where += " AND (model_type is NULL OR model_type = $4)"
-		args = append(args, filter.ModelType)
+		modelTypes = []string{filter.ModelType}
+	} else {
+		modelTypes = sdk.AvailableWorkerModelType
 	}
-	order := " ORDER BY workflow_node_run_job.queued ASC"
+
+	args := []interface{}{
+		*filter.Since,                      // $1
+		*filter.Until,                      // $2
+		strings.Join(filter.Statuses, ","), // $3
+		strings.Join(containsService, ","), // $4
+		strings.Join(modelTypes, ","),      // $5
+	}
 
 	query := `select distinct workflow_node_run_job.*
 	from workflow_node_run_job
 	where workflow_node_run_job.queued >= $1
 	and workflow_node_run_job.queued <= $2
 	and workflow_node_run_job.status = ANY(string_to_array($3, ','))
-	` + where + order
+	AND contains_service = ANY(string_to_array($4, ','))
+	AND (model_type is NULL OR model_type =ANY(string_to_array($5, ',')))
+	ORDER BY workflow_node_run_job.queued ASC
+	`
 
 	if filter.User != nil && !filter.User.Admin {
 		observability.Current(ctx, observability.Tag("isAdmin", false))
@@ -109,14 +121,17 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 			SELECT project_group.project_id
 			FROM project_group
 			WHERE
-				project_group.group_id = ANY(string_to_array($4, ',')::int[])
+				project_group.group_id = ANY(string_to_array($6, ',')::int[])
 			OR
-				$5 = ANY(string_to_array($4, ',')::int[])
+				$5 = ANY(string_to_array($5, ',')::int[])
 		)
 		AND workflow_node_run_job.queued >= $1
 		AND workflow_node_run_job.queued <= $2
 		AND workflow_node_run_job.status = ANY(string_to_array($3, ','))
-		` + where + order
+		AND contains_service = ANY(string_to_array($4, ','))
+		AND model_type = ANY(string_to_array($5, ','))
+		ORDER BY workflow_node_run_job.queued ASC
+		`
 
 		var groupID string
 		for i, g := range filter.User.Groups {
