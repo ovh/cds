@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"strconv"
@@ -88,5 +89,6 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	al := r.Header.Get("Accept-Language")
 	msg, sdkError := sdk.ProcessError(err, al)
 	sdkErr := sdk.Error{Message: msg}
+	fmt.Printf("Error --> %v\n", sdkErr)
 	writeJSON(w, sdkErr, sdkError.Status)
 }
