@@ -102,7 +102,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	and workflow_node_run_job.queued <= $2
 	and workflow_node_run_job.status = ANY(string_to_array($3, ','))
 	AND contains_service IN ($4, $5)
-	AND (model_type is NULL OR model_type = ANY(string_to_array($6, ',')))
+	AND (model_type is NULL OR model_type = '' OR model_type = ANY(string_to_array($6, ',')))
 	ORDER BY workflow_node_run_job.queued ASC
 	`
 
@@ -126,7 +126,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		AND workflow_node_run_job.queued <= $2
 		AND workflow_node_run_job.status = ANY(string_to_array($3, ','))
 		AND contains_service IN ($4, $5)
-		AND model_type = ANY(string_to_array($6, ','))
+		AND (model_type is NULL OR model_type = '' OR model_type = ANY(string_to_array($6, ',')))
 		ORDER BY workflow_node_run_job.queued ASC
 		`
 

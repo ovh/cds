@@ -8,6 +8,8 @@ ALTER TABLE workflow_node_run_job
     ADD COLUMN model_type TEXT,
     ADD COLUMN contains_service BOOLEAN DEFAULT false;
 
+UPDATE workflow_node_run_job set contains_service = false;
+
 CREATE TABLE services (
     id BIGSERIAL PRIMARY KEY,
     name character varying(256) NOT NULL,
