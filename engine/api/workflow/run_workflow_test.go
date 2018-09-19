@@ -302,8 +302,9 @@ func TestManualRun3(t *testing.T) {
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
-			Enabled: true,
-			Name:    "job20",
+			Enabled:      true,
+			Name:         "job20",
+			Requirements: []sdk.Requirement{{Name: "fooNameService", Value: "valueService", Type: sdk.ServiceRequirement}},
 		},
 	}
 	pipeline.InsertJob(db, j, s.ID, &pip2)
@@ -536,8 +537,37 @@ func TestManualRun3(t *testing.T) {
 				assert.Fail(t, " this job should not be in queue since/until")
 			}
 		}
-	}
 
+		cent := 100
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID:     []int64{proj.ProjectGroups[0].Group.ID},
+				User:         u,
+				Rights:       permission.PermissionReadExecute,
+				RatioService: &cent,
+			})
+		test.NoError(t, errW)
+		for _, job := range jobsSince {
+			if !job.ContainsService {
+				assert.Fail(t, " this job should not be in queue !job.ContainsService: job")
+			}
+		}
+
+		zero := 0
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID:     []int64{proj.ProjectGroups[0].Group.ID},
+				User:         u,
+				Rights:       permission.PermissionReadExecute,
+				RatioService: &zero,
+			})
+		test.NoError(t, errW)
+		for _, job := range jobsSince {
+			if job.ContainsService {
+				assert.Fail(t, " this job should not be in queue job.ContainsService")
+			}
+		}
+	}
 }
 
 func TestNoStage(t *testing.T) {

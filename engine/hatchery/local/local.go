@@ -151,7 +151,6 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 // checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
 // returns an error "Exit status X" if current host misses one requirement
 func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
-	var capa []sdk.Requirement
 	var tmp map[string]sdk.Requirement
 
 	tmp = make(map[string]sdk.Requirement)
@@ -166,6 +165,7 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 		}
 	}
 
+	capa := make([]sdk.Requirement, 0, len(tmp))
 	for _, r := range tmp {
 		capa = append(capa, r)
 	}

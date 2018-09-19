@@ -145,6 +145,7 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 		Start:             j.Start,
 		Done:              j.Done,
 		BookedBy:          j.BookedBy,
+		ContainsService:   j.ContainsService,
 	}
 	if j.SpawnAttempts != nil {
 		jr.SpawnAttempts = *j.SpawnAttempts
@@ -163,6 +164,9 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 	}
 	if err := gorpmapping.JSONNullString(j.Header, &jr.Header); err != nil {
 		return jr, sdk.WrapError(err, "header")
+	}
+	if j.ModelType.Valid {
+		jr.ModelType = j.ModelType.String
 	}
 	if defaultOS != "" && defaultArch != "" {
 		var modelFound, osArchFound bool
