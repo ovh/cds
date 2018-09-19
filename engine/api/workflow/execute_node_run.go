@@ -235,7 +235,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				}
 				report, _ = report.Merge(r1, nil)
 			} else {
-				r1, _, err := processWorkflow2Run(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
+				r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
 				if err != nil {
 					return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess2 workflow !")
 				}
