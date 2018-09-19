@@ -361,22 +361,38 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 		return sdk.WrapError(err, "redis zrange error")
 	}
 
-	for i := range members {
-		if i >= len(values) {
-			break
+	keys := make([]string, len(values))
+	for i, v := range values {
+		keys[i] = Key(key, v)
+	}
+
+	if len(keys) > 0 {
+		res, err := s.Client.MGet(keys...).Result()
+		if err != nil {
+			return sdk.WrapError(err, "redis mget error")
 		}
-		val := values[i]
-		memKey := Key(key, val)
-		if !s.Get(memKey, members[i]) {
-			//If the member is not found, return an error because the members are inconsistents
-			// but try to delete the member from the Redis ZSET
-			log.Error("redis>SetScan member %s not found", memKey)
-			if err := s.Client.ZRem(key, val).Err(); err != nil {
-				log.Error("redis>SetScan unable to delete member %s", memKey)
+
+		for i := range members {
+			if i >= len(values) {
+				break
+			}
+
+			if res[i] == nil {
+				//If the member is not found, return an error because the members are inconsistents
+				// but try to delete the member from the Redis ZSET
+				log.Error("redis>SetScan member %s not found", keys[i])
+				if err := s.Client.ZRem(key, values[i]).Err(); err != nil {
+					log.Error("redis>SetScan unable to delete member %s", keys[i])
+					return err
+				}
+				log.Info("redis> member %s deleted", keys[i])
+				return fmt.Errorf("SetScan member %s not found", keys[i])
+			}
+
+			if err := json.Unmarshal([]byte(res[i].(string)), members[i]); err != nil {
+				log.Warning("redis> cannot unmarshal %s :%s", keys[i], err)
 				return err
 			}
-			log.Info("redis> member %s deleted", memKey)
-			return fmt.Errorf("SetScan member %s not found", memKey)
 		}
 	}
 	return nil

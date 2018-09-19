@@ -5,6 +5,8 @@ import {AdminComponent} from './admin.component';
 import {BroadcastAddComponent} from './broadcast/add/broadcast.add.component';
 import {BroadcastEditComponent} from './broadcast/edit/broadcast.edit.component';
 import {BroadcastListComponent} from './broadcast/list/broadcast.list.component';
+import {HooksTaskComponent} from './hooks-tasks/details/hooks-task.component';
+import {HooksTasksComponent} from './hooks-tasks/hooks-tasks.component';
 import {WorkerModelPatternAddComponent} from './worker-model-pattern/add/worker-model-pattern.add.component';
 import {WorkerModelPatternEditComponent} from './worker-model-pattern/edit/worker-model-pattern.edit.component';
 import {WorkerModelPatternComponent} from './worker-model-pattern/worker-model-pattern.component';
@@ -45,6 +47,16 @@ const routes: Routes = [
                 path: 'broadcast/:id',
                 component: BroadcastEditComponent,
                 data: { title: 'Edit {id} • Broadcast' }
+            },
+            {
+                path: 'hooks-tasks',
+                component: HooksTasksComponent,
+                data: { title: 'Hooks tasks summary' }
+            },
+            {
+                path: 'hooks-tasks/:id',
+                component: HooksTaskComponent,
+                data: { title: 'Hooks task details' }
             }
         ]
     }

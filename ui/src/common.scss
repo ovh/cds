@@ -134,6 +134,10 @@ pre {
       border-color: transparent;
     }
   }
+
+  tfoot {
+    background-color: $greyBackground;
+  }
 }
 
 .ui.table th.center {

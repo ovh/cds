@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -115,6 +116,60 @@ func QueryStrings(r *http.Request, key string) ([]string, error) {
 		return v, nil
 	}
 	return nil, nil
+}
+
+// SortOrder constant.
+type SortOrder string
+
+// SortOrders.
+const (
+	ASC  SortOrder = "asc"
+	DESC SortOrder = "desc"
+)
+
+func validateSortOrder(s string) bool {
+	switch SortOrder(s) {
+	case ASC, DESC:
+		return true
+	}
+	return false
+}
+
+// SortCompareInt returns the result of the right compare equation depending of given sort order.
+func SortCompareInt(i, j int, o SortOrder) bool {
+	if o == ASC {
+		return i < j
+	}
+	return i > j
+}
+
+// QuerySort returns the a of key found in sort query param or nil if sort param not found.
+func QuerySort(r *http.Request) (map[string]SortOrder, error) {
+	if err := r.ParseForm(); err != nil {
+		return nil, err
+	}
+	v, ok := r.Form["sort"]
+	if !ok {
+		return nil, nil
+	}
+
+	res := map[string]SortOrder{}
+	for _, item := range strings.Split(v[0], ",") {
+		if item == "" {
+			return nil, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid given sort key"))
+		}
+		s := strings.Split(item, ":")
+		if len(s) > 1 {
+			if !validateSortOrder(s[1]) {
+				return nil, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid given sort param"))
+			}
+			res[s[0]] = SortOrder(s[1])
+		} else {
+			res[s[0]] = ASC
+		}
+	}
+
+	return res, nil
 }
 
 // FormInt return a int from query params
