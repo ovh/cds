@@ -206,9 +206,33 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 	go func(buildID int64, params []sdk.Parameter) {
 		//For the moment we consider that plugin name = action name
 		pluginName := a.Name
+
+		envs := make([]string, 0, len(w.currentJob.buildVariables))
+		//set up environment variables from job parameters
+		for _, p := range params {
+			// avoid put private key in environment var as it's a binary value
+			if (p.Type == sdk.KeyPGPParameter || p.Type == sdk.KeySSHParameter) && strings.HasSuffix(p.Name, ".priv") {
+				continue
+			}
+			if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
+				continue
+			}
+			envName := strings.Replace(p.Name, ".", "_", -1)
+			envName = strings.ToUpper(envName)
+			envs = append(envs, fmt.Sprintf("%s=%s", envName, p.Value))
+		}
+
+		for _, p := range w.currentJob.buildVariables {
+			envName := strings.Replace(p.Name, ".", "_", -1)
+			envName = strings.ToUpper(envName)
+			envs = append(envs, fmt.Sprintf("%s=%s", envName, p.Value))
+			sdk.AddParameter(&params, p.Name, p.Type, p.Value)
+		}
+
 		pluginSocket, err := startGRPCPlugin(context.Background(), pluginName, w, nil, startGRPCPluginOptions{
-			out: os.Stdout,
-			err: os.Stderr,
+			out:  os.Stdout,
+			err:  os.Stderr,
+			envs: envs,
 		})
 		if err != nil {
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to start grpc plugin... Aborting (%v)", err))
