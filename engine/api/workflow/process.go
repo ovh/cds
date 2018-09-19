@@ -127,7 +127,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 				for j := range node.Forks {
 					r1 := processWorkflowNodeFork(ctx, db, store, proj, w, nodeRun, node.Forks[j])
-					report.Merge(r1, nil)
+					report.Merge(r1, nil) //nolint
 				}
 
 				for j := range node.Triggers {
