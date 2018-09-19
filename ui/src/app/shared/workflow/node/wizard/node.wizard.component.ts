@@ -218,7 +218,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       if (!this.node.context.application_id) {
         return;
       }
-      let app = this.project.application_names.find((a) => a.id === this.node.context.application_id);
+      let app = this.project.application_names.find((a) => a.id === Number(this.node.context.application_id));
       if (!app) {
         return;
       }
