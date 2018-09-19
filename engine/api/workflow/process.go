@@ -244,7 +244,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			}
 
 			// check status and subnumber
-			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.SubNumber < maxsn {
+			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusStopped.String() || nodeRun.SubNumber < maxsn {
 				ok = false
 				break
 			}

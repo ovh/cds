@@ -70,7 +70,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	defer end()
 
 	switch n.Type {
-	case sdk.NodeTypeJoin, sdk.NodeTypeFork:
+	case sdk.NodeTypeFork:
 		r1, errT := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n)
 		_, _ = report.Merge(r1, nil)
 		return report, true, errT
@@ -474,5 +474,5 @@ func processNodeRunPipeline(ctx context.Context, db gorp.SqlExecutor, store cach
 		return report, false, sdk.WrapError(err, "processNodeRunPipeline> unable to execute workflow run")
 	}
 	_, _ = report.Merge(r1, nil)
-	return report, false, nil
+	return report, true, nil
 }

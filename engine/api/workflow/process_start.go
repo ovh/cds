@@ -133,6 +133,9 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 			sourcesParams = sdk.ParametersMapMerge(sourcesParams, sdk.ParametersToMap(nodeRun.BuildParameters))
 		}
 
+		if len(sources) != len(j.JoinContext) {
+			ok = false
+		}
 		//All the sources are completed
 		if ok {
 			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, sources, j)
