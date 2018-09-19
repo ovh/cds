@@ -23,6 +23,7 @@ export class WorkflowRunRequest {
 }
 
 export class WorkflowRun {
+
     id: number;
     num: number;
     last_subnumber: number;
@@ -39,10 +40,15 @@ export class WorkflowRun {
     commits: Array<Commit>;
     infos: Array<SpawnInfo>;
     outgoing_hooks: { [key: number]: Array<WorkflowNodeOutgoingHookRun>; };
+    version: number;
 
     // Useful for UI
     duration: string;
     force_update: boolean;
+
+    static retroMigrate(wr: WorkflowRun): any {
+        Workflow.retroMigrate(wr.workflow);
+    }
 
     static fromEventRunWorkflow(event: Event): WorkflowRun {
         let wr = new WorkflowRun();

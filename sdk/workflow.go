@@ -47,7 +47,7 @@ type Workflow struct {
 	Pipelines               map[int64]Pipeline          `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
 	Applications            map[int64]Application       `json:"applications" db:"-" cli:"-"  mapstructure:"-"`
 	Environments            map[int64]Environment       `json:"environments" db:"-" cli:"-"  mapstructure:"-"`
-	ProjectPlatforms        map[int64]ProjectPlatform   `json:"project_platfroms" db:"-" cli:"-"  mapstructure:"-"`
+	ProjectPlatforms        map[int64]ProjectPlatform   `json:"project_platforms" db:"-" cli:"-"  mapstructure:"-"`
 	HookModels              map[int64]WorkflowHookModel `json:"hook_models" db:"-" cli:"-"  mapstructure:"-"`
 	Labels                  []Label                     `json:"labels" db:"-" cli:"labels"`
 	ToDelete                bool                        `json:"to_delete" db:"to_delete" cli:"-"`
