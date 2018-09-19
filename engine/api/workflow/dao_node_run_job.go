@@ -73,30 +73,27 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 		filter.Statuses = []string{sdk.StatusWaiting.String()}
 	}
 
-	var containsService []string
+	containsService := []bool{true, false}
 	if filter.RatioService != nil {
 		if *filter.RatioService == 100 {
-			containsService = []string{"true"}
+			containsService = []bool{true, true}
 		} else if *filter.RatioService == 0 {
-			containsService = []string{"false"}
+			containsService = []bool{false, false}
 		}
-	} else {
-		containsService = []string{"true", "false"}
 	}
 
-	var modelTypes []string
+	modelTypes := sdk.AvailableWorkerModelType
 	if filter.ModelType != "" {
 		modelTypes = []string{filter.ModelType}
-	} else {
-		modelTypes = sdk.AvailableWorkerModelType
 	}
 
 	args := []interface{}{
 		*filter.Since,                      // $1
 		*filter.Until,                      // $2
 		strings.Join(filter.Statuses, ","), // $3
-		strings.Join(containsService, ","), // $4
-		strings.Join(modelTypes, ","),      // $5
+		containsService[0],                 // $4
+		containsService[1],                 // $5
+		strings.Join(modelTypes, ","),      // $6
 	}
 
 	query := `select distinct workflow_node_run_job.*
@@ -104,8 +101,8 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	where workflow_node_run_job.queued >= $1
 	and workflow_node_run_job.queued <= $2
 	and workflow_node_run_job.status = ANY(string_to_array($3, ','))
-	AND contains_service = ANY(string_to_array($4, ','))
-	AND (model_type is NULL OR model_type =ANY(string_to_array($5, ',')))
+	AND contains_service IN ($4, $5)
+	AND (model_type is NULL OR model_type = ANY(string_to_array($6, ',')))
 	ORDER BY workflow_node_run_job.queued ASC
 	`
 
@@ -121,15 +118,15 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 			SELECT project_group.project_id
 			FROM project_group
 			WHERE
-				project_group.group_id = ANY(string_to_array($6, ',')::int[])
+				project_group.group_id = ANY(string_to_array($7, ',')::int[])
 			OR
 				$5 = ANY(string_to_array($5, ',')::int[])
 		)
 		AND workflow_node_run_job.queued >= $1
 		AND workflow_node_run_job.queued <= $2
 		AND workflow_node_run_job.status = ANY(string_to_array($3, ','))
-		AND contains_service = ANY(string_to_array($4, ','))
-		AND model_type = ANY(string_to_array($5, ','))
+		AND contains_service IN ($4, $5)
+		AND model_type = ANY(string_to_array($6, ','))
 		ORDER BY workflow_node_run_job.queued ASC
 		`
 
