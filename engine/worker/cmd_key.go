@@ -28,11 +28,8 @@ type keyResponse struct {
 
 func cmdKey(w *currentWorker) *cobra.Command {
 	cmdKeyRoot := &cobra.Command{
-		Use: "key",
-		Long: `
-
-    `,
-		Short: "Inside a step script you can install/uninstall a ssh key generated in CDS in your ssh environment",
+		Use:  "key",
+		Long: "Inside a step script you can install/uninstall a ssh key generated in CDS in your ssh environment",
 	}
 	cmdKeyRoot.AddCommand(cmdKeyInstall(w))
 
