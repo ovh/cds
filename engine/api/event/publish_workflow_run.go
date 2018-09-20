@@ -75,23 +75,48 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 	}
 
 	var pipName string
-	node := w.GetNode(nr.WorkflowNodeID)
-	if node == nil {
-		return
+	var nodeName string
+	var app sdk.Application
+	var env sdk.Environment
+	n := w.GetNode(nr.WorkflowNodeID)
+	if n == nil {
+		// check on workflow data
+		wnode := w.WorkflowData.NodeByID(nr.WorkflowNodeID)
+		if wnode == nil {
+			return
+		}
+		nodeName = wnode.Name
+		if wnode.Context != nil && wnode.Context.PipelineID != 0 {
+			pipName = w.Pipelines[wnode.Context.PipelineID].Name
+		}
+
+		if wnode.Context != nil && wnode.Context.ApplicationID != 0 {
+			app = w.Applications[wnode.Context.ApplicationID]
+		}
+		if wnode.Context != nil && wnode.Context.EnvironmentID != 0 {
+			env = w.Environments[wnode.Context.EnvironmentID]
+		}
+	} else {
+		nodeName = n.Name
+		pipName = w.Pipelines[n.PipelineID].Name
+		if n.Context != nil && n.Context.Application != nil {
+			app = *n.Context.Application
+		}
+		if n.Context != nil && n.Context.Environment != nil {
+			env = *n.Context.Environment
+		}
 	}
-	pipName = w.Pipelines[node.PipelineID].Name
-	e.NodeName = node.Name
+
+	e.NodeName = nodeName
 	var envName string
 	var appName string
-	if node.Context != nil {
-		if node.Context.Application != nil {
-			appName = node.Context.Application.Name
-			e.RepositoryManagerName = node.Context.Application.VCSServer
-			e.RepositoryFullName = node.Context.Application.RepositoryFullname
-		}
-		if node.Context.Environment != nil {
-			envName = node.Context.Environment.Name
-		}
+	if app.ID != 0 {
+		appName = app.Name
+		e.RepositoryManagerName = app.VCSServer
+		e.RepositoryFullName = app.RepositoryFullname
+	}
+	if env.ID != 0 {
+		envName = env.Name
 	}
 	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()

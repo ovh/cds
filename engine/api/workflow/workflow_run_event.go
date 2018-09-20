@@ -44,7 +44,7 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 					log.Warning("SendEvent.workflow> Cannot load previous node run: %s", errN)
 				}
 			} else {
-				log.Warning("SendEvent.workflow > Unable to find node %d in workflow", wnr.WorkflowNodeID)
+				log.Info("SendEvent.workflow.previousNodeRun > Unable to find node %d in workflow", wnr.WorkflowNodeID)
 			}
 		}
 

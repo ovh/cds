@@ -45,10 +45,10 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 				})
 			}
 			_, _ = report.Merge(r1, nil)
-			return report, errPwnr
+			continue
 		}
 	}
-	return nil, nil
+	return report, nil
 }
 
 func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
