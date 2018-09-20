@@ -91,12 +91,12 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 		if oldSrv == nil {
 			s.Service.LastHeartbeat = time.Now()
 			if err := Insert(db, &s.Service); err != nil {
-				return fmt.Errorf("InitExternal> unable to insert external service")
+				return fmt.Errorf("InitExternal> unable to insert external service: %v", err)
 			}
 		} else {
 			tx, err := db.Begin()
 			if err != nil {
-				return fmt.Errorf("InitExternal> unable to start transaction")
+				return fmt.Errorf("InitExternal> unable to start transaction: %v", err)
 			}
 			var serv service
 			query := `select * from services where name = $1 for update nowait`
@@ -109,7 +109,7 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 			s.Service.MonitoringStatus = oldSrv.MonitoringStatus
 			if err := Update(tx, &s.Service); err != nil {
 				_ = tx.Rollback()
-				return fmt.Errorf("InitExternal> unable to update external service")
+				return fmt.Errorf("InitExternal> unable to update external service: %v", err)
 			}
 			if err := tx.Commit(); err != nil {
 				_ = tx.Rollback()

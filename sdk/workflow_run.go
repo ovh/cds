@@ -286,11 +286,13 @@ type WorkflowNodeJobRun struct {
 	Start                  time.Time          `json:"start,omitempty"`
 	Done                   time.Time          `json:"done,omitempty"`
 	Model                  string             `json:"model,omitempty"`
-	BookedBy               Hatchery           `json:"bookedby"`
+	ModelType              string             `json:"model_type,omitempty"`
+	BookedBy               Service            `json:"bookedby"`
 	SpawnInfos             []SpawnInfo        `json:"spawninfos"`
 	ExecGroups             []Group            `json:"exec_groups"`
 	PlatformPluginBinaries []GRPCPluginBinary `json:"platform_plugin_binaries,omitempty"`
 	Header                 WorkflowRunHeaders `json:"header,omitempty"`
+	ContainsService        bool               `json:"contains_service,omitempty"`
 }
 
 // /!\ DONT FORGET TO REGENERATE EASYJSON FILES /!\

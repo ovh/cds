@@ -10,18 +10,19 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 func Test_updateStepStatusHandler(t *testing.T) {
@@ -188,7 +189,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	}
 
 	h := http.Header{}
-	h.Set("User-Agent", string(sdk.HatcheryAgent))
+	h.Set("User-Agent", string(sdk.ServiceAgent))
 
 	tk, errg := token.GenerateToken()
 	if errg != nil {
@@ -198,12 +199,20 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	name := "HATCHERY_TEST_" + namesgenerator.GetRandomNameCDS(0)
-	hatch := sdk.Hatchery{
-		Name:    name,
-		GroupID: g.ID,
+	//Generate a hash
+	hash, errsession := sessionstore.NewSessionKey()
+	if errsession != nil {
+		t.Fatal(errsession)
 	}
-	if err := hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
+
+	name := "HATCHERY_TEST_" + namesgenerator.GetRandomNameCDS(0)
+	hatch := sdk.Service{
+		Name:    name,
+		Type:    services.TypeHatchery,
+		GroupID: &g.ID,
+		Hash:    string(hash),
+	}
+	if err := services.Insert(api.mustDB(), &hatch); err != nil {
 		t.Fatal(err)
 	}
 
@@ -218,11 +227,11 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.addSpawnInfosPipelineBuildJobHandler, vars)
 	req, err := http.NewRequest("POST", uri, body)
 	test.NoError(t, err)
-	basedHash := base64.StdEncoding.EncodeToString([]byte(hatch.UID))
+	basedHash := base64.StdEncoding.EncodeToString([]byte(hatch.Hash))
 	req.Header.Add(sdk.AuthHeader, basedHash)
 	req.Header.Add(cdsclient.RequestedNameHeader, name)
 	req.Header.Add(sdk.SessionTokenHeader, tk)
-	req.Header.Add("User-Agent", sdk.HatcheryAgent)
+	req.Header.Add("User-Agent", sdk.ServiceAgent)
 
 	// Do the request
 	w := httptest.NewRecorder()

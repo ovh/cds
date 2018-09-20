@@ -63,10 +63,9 @@ func Authorization(h string) {
 
 // Different values of agent
 const (
-	SDKAgent      = "CDS/sdk"
-	WorkerAgent   = "CDS/worker"
-	HatcheryAgent = "CDS/hatchery"
-	ServiceAgent  = "CDS/service"
+	SDKAgent     = "CDS/sdk"
+	WorkerAgent  = "CDS/worker"
+	ServiceAgent = "CDS/service"
 )
 
 //SetAgent set a agent value

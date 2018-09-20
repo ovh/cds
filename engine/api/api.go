@@ -20,7 +20,6 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/feature"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/metrics"
@@ -377,9 +376,9 @@ func getAgent(r *http.Request) string {
 	return r.Header.Get("User-Agent")
 }
 
-func isHatcheryOrWorker(r *http.Request) bool {
+func isServiceOrWorker(r *http.Request) bool {
 	switch getAgent(r) {
-	case sdk.HatcheryAgent:
+	case sdk.ServiceAgent:
 		return true
 	case sdk.WorkerAgent:
 		return true
@@ -400,12 +399,12 @@ func getWorker(c context.Context) *sdk.Worker {
 	return u
 }
 
-func getHatchery(c context.Context) *sdk.Hatchery {
+func getHatchery(c context.Context) *sdk.Service {
 	i := c.Value(auth.ContextHatchery)
 	if i == nil {
 		return nil
 	}
-	u, ok := i.(*sdk.Hatchery)
+	u, ok := i.(*sdk.Service)
 	if !ok {
 		return nil
 	}
@@ -635,7 +634,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine("warning.Start", func() { warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan) })
 	sdk.GoRoutine("queue.Pipelines", func() { queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
 	sdk.GoRoutine("pipeline.AWOLPipelineKiller", func() { pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
-	sdk.GoRoutine("hatchery.Heartbeat", func() { hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap) })
 	sdk.GoRoutine("auditCleanerRoutine(ctx", func() { auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap) })
 	sdk.GoRoutine("metrics.Initialize", func() { metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name) })
 	sdk.GoRoutine("repositoriesmanager.ReceiveEvents", func() { repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })

@@ -9,6 +9,6 @@ type service sdk.Service
 
 func init() {
 	gorpmapping.Register(
-		gorpmapping.New(service{}, "services", false, "name"),
+		gorpmapping.New(service{}, "services", true, "id"),
 	)
 }

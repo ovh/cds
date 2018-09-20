@@ -8,7 +8,6 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 
-	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -16,10 +15,6 @@ import (
 // then list available models
 // then list available images
 func (h *HatcheryOpenstack) Init() error {
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
 	workersAlive = map[string]int64{}
 
 	authOpts := gophercloud.AuthOptions{

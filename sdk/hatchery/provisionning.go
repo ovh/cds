@@ -25,10 +25,10 @@ func checkCapacities(h Interface) bool {
 	}
 
 	if len(workerPool) >= h.Configuration().Provision.MaxWorker {
-		log.Debug("hatchery> checkCapacities> %s has reached the max worker: %d (max: %d)", h.Hatchery().Name, len(workerPool), h.Configuration().Provision.MaxWorker)
+		log.Debug("hatchery> checkCapacities> %s has reached the max worker: %d (max: %d)", h.Service().Name, len(workerPool), h.Configuration().Provision.MaxWorker)
 		if len(workerPool) > h.Configuration().Provision.MaxWorker {
 			for _, w := range workerPool {
-				log.Debug("hatchery> checkCapacities> %s > pool > %s (status=%v)", h.Hatchery().Name, w.Name, w.Status)
+				log.Debug("hatchery> checkCapacities> %s > pool > %s (status=%v)", h.Service().Name, w.Name, w.Status)
 			}
 		}
 		return false
@@ -70,7 +70,7 @@ func provisioning(h Interface, models []sdk.Model) {
 		// but, a shared.infra hatchery can provision only a shared.infra model
 		// others hatcheries (not shared.infra): only worker models with same group are here
 		// DO NOT provision if hatchery group is not the same as model
-		if models[k].GroupID != h.Hatchery().GroupID {
+		if models[k].GroupID != *h.Service().GroupID {
 			continue
 		}
 		if models[k].Type == h.ModelType() {
@@ -79,7 +79,7 @@ func provisioning(h Interface, models []sdk.Model) {
 				go func(m sdk.Model) {
 					if name, errSpawn := h.SpawnWorker(context.Background(), SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
-						if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning: %v", h.Hatchery().Name, m.Name, errSpawn)); err != nil {
+						if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning: %v", h.Service().Name, m.Name, errSpawn)); err != nil {
 							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
 						}
 					}

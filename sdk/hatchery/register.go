@@ -3,34 +3,12 @@ package hatchery
 import (
 	"fmt"
 	"math"
-	"runtime"
 	"strings"
 	"sync/atomic"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-// Register calls CDS API to register current hatchery.
-func Register(h Interface) error {
-	newHatchery, err := h.CDSClient().HatcheryRegister(*h.Hatchery())
-	if err != nil {
-		return sdk.WrapError(err, "register> Got HTTP exiting")
-	}
-	h.Hatchery().ID = newHatchery.ID
-	h.Hatchery().GroupID = newHatchery.GroupID
-	h.Hatchery().Model = newHatchery.Model
-	h.Hatchery().Name = newHatchery.Name
-	h.Hatchery().IsSharedInfra = newHatchery.IsSharedInfra
-
-	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
-
-	if !newHatchery.Uptodate {
-		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s %s %s -=-=-=-=-",
-			sdk.VERSION, runtime.GOOS, runtime.GOARCH)
-	}
-	return nil
-}
 
 // workerRegister is called by a ticker.
 // the hatchery checks each worker model, and if a worker model needs to
@@ -74,7 +52,7 @@ func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) er
 		}
 
 		// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
-		if models[k].NbSpawnErr > 5 && h.Hatchery().GroupID != models[k].ID {
+		if models[k].NbSpawnErr > 5 && *h.Service().GroupID != models[k].ID {
 			log.Warning("hatchery> workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
 			continue
 		}

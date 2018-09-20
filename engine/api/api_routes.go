@@ -78,9 +78,7 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/token/{tokenid}", r.DELETE(api.deleteTokenHandler))
 
 	// Hatchery
-	r.Handle("/hatchery", r.POST(api.registerHatcheryHandler, Auth(false)))
 	r.Handle("/hatchery/count/{workflowNodeRunID}", r.GET(api.hatcheryCountHandler))
-	r.Handle("/hatchery/{id}", r.PUT(api.refreshHatcheryHandler))
 
 	// Hooks
 	r.Handle("/hook", r.POST(api.receiveHookHandler, Auth(false) /* Public handler called by third parties */))
@@ -100,7 +98,6 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/smtp/ping", r.GET(api.smtpPingHandler, Auth(true)))
 	r.Handle("/mon/version", r.GET(VersionHandler, Auth(false)))
 	r.Handle("/mon/db/migrate", r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
-	r.Handle("/mon/db/times", r.GET(api.getMonDBTimesDBHandler, NeedAdmin(true)))
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))

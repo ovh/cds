@@ -48,19 +48,8 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.Client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
-
+	h.hatch = &sdk.Hatchery{}
+	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
 	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
@@ -149,10 +138,15 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 
 // ID must returns hatchery id
 func (h *HatcheryMarathon) ID() int64 {
-	if h.hatch == nil {
+	if h.CDSClient().GetService() == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcheryMarathon) Service() *sdk.Service {
+	return h.CDSClient().GetService()
 }
 
 //Hatchery returns hatchery instance
@@ -173,6 +167,11 @@ func (h *HatcheryMarathon) Configuration() hatchery.CommonConfiguration {
 // ModelType returns type of hatchery
 func (*HatcheryMarathon) ModelType() string {
 	return sdk.Docker
+}
+
+// WorkerModelsEnabled returns Worker model enabled
+func (h *HatcheryMarathon) WorkerModelsEnabled() ([]sdk.Model, error) {
+	return h.CDSClient().WorkerModelsEnabled()
 }
 
 // CanSpawn return wether or not hatchery can spawn model
@@ -243,8 +242,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Name:              workerName,
 		TTL:               h.Config.WorkerTTL,
 		Model:             spawnArgs.Model.ID,
-		Hatchery:          h.hatch.ID,
-		HatcheryName:      h.hatch.Name,
+		HatcheryName:      h.Service().Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
@@ -309,7 +307,6 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
 	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
-	envsWm["CDS_HATCHERY"] = fmt.Sprintf("%d", udataParam.Hatchery)
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
@@ -486,10 +483,6 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 
 // Init only starts killing routine of worker not registered
 func (h *HatcheryMarathon) Init() error {
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
 	h.startKillAwolWorkerRoutine()
 	return nil
 }

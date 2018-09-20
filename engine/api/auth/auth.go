@@ -10,7 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
@@ -122,9 +122,12 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 		if err != nil {
 			return nil, fmt.Errorf("cannot load service: %s", err)
 		}
+		if srv.GroupID != nil && group.SharedInfraGroup.ID == *srv.GroupID {
+			srv.IsSharedInfra = true
+			srv.Uptodate = srv.Version == sdk.VERSION
+		}
 		store.Set(key, srv)
 	}
-
 	return srv, nil
 }
 
@@ -165,6 +168,9 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 	}
 
 	serviceHash := string(id)
+	if serviceHash == "" {
+		return ctx, fmt.Errorf("bad service id")
+	}
 
 	srv, err := GetService(db, store, serviceHash)
 	if err != nil {
@@ -172,24 +178,10 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 	}
 
 	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name})
-	ctx = context.WithValue(ctx, ContextService, srv)
-	return ctx, nil
-}
-
-// CheckHatcheryAuth checks hatchery authentication
-func CheckHatcheryAuth(ctx context.Context, db *gorp.DbMap, headers http.Header) (context.Context, error) {
-	uid, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
-	if err != nil {
-		return ctx, fmt.Errorf("bad worker key syntax: %s", err)
+	if srv.Type == services.TypeHatchery {
+		ctx = context.WithValue(ctx, ContextHatchery, srv)
+	} else {
+		ctx = context.WithValue(ctx, ContextService, srv)
 	}
-
-	name := headers.Get(cdsclient.RequestedNameHeader)
-	h, err := hatchery.LoadHatchery(db, string(uid), name)
-	if err != nil {
-		return ctx, fmt.Errorf("Invalid Hatchery UID:%s name:%s err:%s", string(uid), name, err)
-	}
-
-	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: h.Name})
-	ctx = context.WithValue(ctx, ContextHatchery, h)
 	return ctx, nil
 }

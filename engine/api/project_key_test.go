@@ -180,11 +180,11 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	kPGP, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
-	k.Key = kPGP
+	k.Key = kpgp
 
 	if err := project.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)

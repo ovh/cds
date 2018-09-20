@@ -50,7 +50,7 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, exceptWfJobID *int64) error {
+func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error {
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
 	pbjobsTicker := time.NewTicker(delay * 10)
@@ -96,7 +96,17 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 
 			if jobs != nil {
 				queue := sdk.WorkflowQueue{}
-				_, header, _, errReq := c.RequestJSON(http.MethodGet, "/queue/workflows", nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)))
+
+				url, _ := url.Parse("/queue/workflows")
+				q := url.Query()
+				if ratioService != nil {
+					q.Add("ratioService", fmt.Sprintf("%d", *ratioService))
+				}
+				if modelType != "" {
+					q.Add("modelType", modelType)
+				}
+				url.RawQuery = q.Encode()
+				_, header, _, errReq := c.RequestJSON(http.MethodGet, url.String(), nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)))
 				if errReq != nil {
 					errs <- sdk.WrapError(errReq, "Unable to load jobs")
 					continue
@@ -172,7 +182,7 @@ func (c *client) QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNo
 	return wJobs, nil
 }
 
-func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time) (sdk.WorkflowNodeJobRunCount, error) {
+func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error) {
 	if since == nil {
 		since = new(time.Time)
 	}
@@ -180,8 +190,21 @@ func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time
 		now := time.Now()
 		until = &now
 	}
+	url, _ := url.Parse("/queue/workflows/count")
+	q := url.Query()
+	if ratioService != nil {
+		q.Add("ratioService", string(*ratioService))
+	}
+	if modelType != "" {
+		q.Add("modelType", modelType)
+	}
+	url.RawQuery = q.Encode()
+
 	countWJobs := sdk.WorkflowNodeJobRunCount{}
-	_, _, err := c.GetJSONWithHeaders("/queue/workflows/count", &countWJobs, SetHeader(RequestedIfModifiedSinceHeader, since.Format(time.RFC1123)), SetHeader("X-CDS-Until", until.Format(time.RFC1123)))
+	_, _, err := c.GetJSONWithHeaders(url.String(),
+		&countWJobs,
+		SetHeader(RequestedIfModifiedSinceHeader, since.Format(time.RFC1123)),
+		SetHeader("X-CDS-Until", until.Format(time.RFC1123)))
 	return countWJobs, err
 }
 
