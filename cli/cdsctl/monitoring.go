@@ -349,7 +349,7 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 
 	for _, w := range workers {
 		var name string
-		if w.HatcheryID == 0 {
+		if w.HatcheryName == "" {
 			name = "Without hatchery"
 		} else {
 			name = w.HatcheryName
