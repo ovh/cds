@@ -201,22 +201,7 @@ func loadActionDependencies(db gorp.SqlExecutor, a *sdk.Action) error {
 		return fmt.Errorf("cannot loadActionChildren> %s", err)
 	}
 
-	// Requirements of children are requirement of parent
-	for _, c := range a.Actions {
-		// Now for each requirement of child, check if it exists in parent
-		for _, cr := range c.Requirements {
-			found := false
-			for _, pr := range a.Requirements {
-				if pr.Type == cr.Type && pr.Value == cr.Value {
-					found = true
-					break
-				}
-			}
-			if !found {
-				a.Requirements = append(a.Requirements, cr)
-			}
-		}
-	}
+	computeRequirements(a)
 
 	return nil
 }
@@ -268,21 +253,7 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 
 	//TODO we don't need to compute all job requirements here, but only when running the job
 	// Requirements of children are requirement of parent
-	for _, c := range a.Actions {
-		// Now for each requirement of child, check if it exists in parent
-		for _, cr := range c.Requirements {
-			found := false
-			for _, pr := range a.Requirements {
-				if pr.Type == cr.Type && pr.Value == cr.Value {
-					found = true
-					break
-				}
-			}
-			if !found {
-				a.Requirements = append(a.Requirements, cr)
-			}
-		}
-	}
+	computeRequirements(a)
 
 	// Checks if multiple requirements have the same name
 	if err := isRequirementsValid(a.Requirements); err != nil {
@@ -521,4 +492,30 @@ func GetPipelineUsingAction(db gorp.SqlExecutor, name string) ([]PipelineUsingAc
 	}
 
 	return response, nil
+}
+
+func computeRequirements(a *sdk.Action) {
+	if a.Enabled {
+		// Requirements of children are requirement of parent
+		for _, c := range a.Actions {
+			if !c.Enabled { // If action is not enabled we don't need their requirements
+				continue
+			}
+			// Now for each requirement of child, check if it exists in parent
+			for _, cr := range c.Requirements {
+				found := false
+				for _, pr := range a.Requirements {
+					if pr.Type == cr.Type && pr.Value == cr.Value {
+						found = true
+						break
+					}
+				}
+				if !found {
+					a.Requirements = append(a.Requirements, cr)
+				}
+			}
+		}
+	} else {
+		a.Requirements = []sdk.Requirement{}
+	}
 }
