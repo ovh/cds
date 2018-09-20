@@ -131,11 +131,11 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	}
 	w.PurgeTags = purgeTags
 
-	data := sdk.WorkflowData{}
-	if err := gorpmapping.JSONNullString(res.WorkflowData, &data); err != nil {
+	var data *sdk.WorkflowData
+	if err := gorpmapping.JSONNullString(res.WorkflowData, data); err != nil {
 		return sdk.WrapError(err, "Unable to unamrshall workflow data")
 	}
-	w.WorkflowData = &data
+	w.WorkflowData = data
 
 	return nil
 }
@@ -389,7 +389,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
 		}
-		return nil, sdk.WrapError(err, "Load> Unable to load workflow")
+		return nil, sdk.WrapError(err, "Load> Unable to load workflow: %s", query)
 	}
 	next()
 

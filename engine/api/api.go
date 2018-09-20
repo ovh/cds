@@ -662,6 +662,7 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine("broadcast.Initialize", func() { broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap) })
 	//sdk.GoRoutine("workflow.RestartAwolJobs", func() { workflow.RestartAwolJobs(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
 	sdk.GoRoutine("a.serviceAPIHeartbeat(ctx", func() { a.serviceAPIHeartbeat(ctx) })
+	sdk.GoRoutine("migrate.WorkflowData", func() { migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache) })
 
 	//Temporary migration code
 	go migrate.WorkflowNodeRunArtifacts(a.Cache, a.DBConnectionFactory.GetDBMap)
