@@ -1827,11 +1827,6 @@
     </li>
         </ul>
     </li>
-      <li data-nav-id="/cli/worker/register/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/worker/register/">
-          <span>register</span>
-        </a>
-    </li>
       <li data-nav-id="/cli/worker/tag/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/tag/">
           <span>tag</span>
@@ -2097,7 +2092,7 @@
 
 <h2 id="worker-download">worker download</h2>
 
-<p>worker download [&ndash;workflow=<workflow-name>] [&ndash;number=<run-number>] [&ndash;tag=<tag>] [&ndash;pattern=<pattern>]</p>
+<p><code>worker download [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]</code></p>
 
 <h3 id="synopsis">Synopsis</h3>
 
@@ -2105,15 +2100,24 @@
 
 <ul>
 <li>with a step using action Download Artifacts</li>
-
-<li><p>with a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), using the worker command: <code>worker download --tag=&lt;tag&gt; &lt;path&gt;</code></p>
-
-<p>worker download &ndash;pattern=&ldquo;files.*.yml&rdquo;</p>
-
-<p>#theses two commands have the same result:
-worker download
-worker download &ndash;workflow={{.cds.workflow}} &ndash;number={{.cds.run.number}}</p></li>
+<li>with a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), using the worker command.</li>
 </ul>
+
+<p>Worker Command:</p>
+
+<pre><code>worker download --tag=&lt;tag&gt; &lt;path&gt;
+</code></pre>
+
+<p>Example:</p>
+
+<pre><code>worker download --pattern=&quot;files.*.yml&quot;
+</code></pre>
+
+<p>Theses two commands have the same result:</p>
+
+<pre><code>worker download
+worker download --workflow={{.cds.workflow}} --number={{.cds.run.number}}
+</code></pre>
 
 <pre><code>worker download [flags]
 </code></pre>

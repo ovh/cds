@@ -1158,10 +1158,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/worker/register/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/group/user/removeadmin/</loc>
   </url>
   

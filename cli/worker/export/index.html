@@ -1827,11 +1827,6 @@
     </li>
         </ul>
     </li>
-      <li data-nav-id="/cli/worker/register/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/worker/register/">
-          <span>register</span>
-        </a>
-    </li>
       <li data-nav-id="/cli/worker/tag/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/tag/">
           <span>tag</span>
@@ -2100,14 +2095,13 @@
 
 <h2 id="worker-export">worker export</h2>
 
-<p>worker export <varname> <value></p>
+<p><code>worker export &lt;varname&gt; &lt;value&gt;</code></p>
 
 <h3 id="synopsis">Synopsis</h3>
 
 <p>Inside a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), you can create a build variable with the worker command:</p>
 
-<pre><code># worker export &lt;varname&gt; &lt;value&gt;
-worker export foo bar
+<pre><code>worker export foo bar
 </code></pre>
 
 <p>then, you can use new build variable:</p>

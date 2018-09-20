@@ -1827,11 +1827,6 @@
     </li>
         </ul>
     </li>
-      <li data-nav-id="/cli/worker/register/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/worker/register/">
-          <span>register</span>
-        </a>
-    </li>
       <li data-nav-id="/cli/worker/tag/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/tag/">
           <span>tag</span>
@@ -2097,11 +2092,21 @@
 
 <h2 id="worker-update">worker update</h2>
 
-<p>Update worker from CDS API or from CDS Release</p>
+<p><code>worker update [flags]</code></p>
 
 <h3 id="synopsis">Synopsis</h3>
 
 <p>Update worker from CDS API or from CDS Release</p>
+
+<p>Update from Github:</p>
+
+<pre><code>    worker update --from-github
+</code></pre>
+
+<p>Update from your CDS API:</p>
+
+<pre><code>    worker update --api https://your-cds-api.localhost
+</code></pre>
 
 <pre><code>worker update [flags]
 </code></pre>

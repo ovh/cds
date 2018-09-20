@@ -1827,11 +1827,6 @@
     </li>
         </ul>
     </li>
-      <li data-nav-id="/cli/worker/register/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/worker/register/">
-          <span>register</span>
-        </a>
-    </li>
       <li data-nav-id="/cli/worker/tag/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/tag/">
           <span>tag</span>
@@ -2070,12 +2065,6 @@
 <li><a href="#worker-upload">worker upload</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
-</ul></li>
-</ul></li>
-<li><a href="#worker-upload-tag-tag-path">worker upload &ndash;tag=<tag> <path></a>
-<ul>
-<li>
-<ul>
 <li><a href="#options">Options</a></li>
 <li><a href="#see-also">SEE ALSO</a></li>
 </ul></li>
@@ -2103,7 +2092,7 @@
 
 <h2 id="worker-upload">worker upload</h2>
 
-<p>worker upload &ndash;tag=tagValue {{.cds.workspace}}/fileToUpload</p>
+<p><code>worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload</code></p>
 
 <h3 id="synopsis">Synopsis</h3>
 
@@ -2111,13 +2100,10 @@
 
 <ul>
 <li>with a step using action Upload Artifacts</li>
-
-<li><p>with a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), using the worker command: <code>worker upload &lt;path&gt;</code></p>
-
-<h1 id="worker-upload-tag-tag-path">worker upload &ndash;tag=<tag> <path></h1>
-
-<p>worker upload &ndash;tag={{.cds.version}} {{.cds.workspace}}/files*.yml</p></li>
+<li>with a step script (<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</a>), using the worker command: <code>worker upload &lt;path&gt;</code></li>
 </ul>
+
+<p><code>worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml</code></p>
 
 <pre><code>worker upload [flags]
 </code></pre>

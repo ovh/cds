@@ -1552,6 +1552,43 @@
         <span>worker</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/cli/cdsctl/worker/disable/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/disable/">
+          <span>disable</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/worker/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/list/">
+          <span>list</span>
+        </a>
+    </li>
+    <li data-nav-id="/cli/cdsctl/worker/model/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/">
+        <span>model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/worker/model/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/worker/model/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/worker/model/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/worker/model/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/worker/model/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
         </ul>
     </li>
     <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item">
@@ -1789,11 +1826,6 @@
         </a>
     </li>
         </ul>
-    </li>
-      <li data-nav-id="/cli/worker/register/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/worker/register/">
-          <span>register</span>
-        </a>
     </li>
       <li data-nav-id="/cli/worker/tag/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/tag/">
@@ -2097,18 +2129,17 @@
 <h3 id="see-also">SEE ALSO</h3>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/worker/artifacts/">worker artifacts</a>     - worker artifacts [&ndash;workflow=<workflow-name>] [&ndash;number=<run-number>] [&ndash;tag=<tag>] [&ndash;pattern=<pattern>]</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/cache/">worker cache</a>     - Inside a project, you can create or retrieve a cache from your worker with a tag</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/download/">worker download</a>   - worker download [&ndash;workflow=<workflow-name>] [&ndash;number=<run-number>] [&ndash;tag=<tag>] [&ndash;pattern=<pattern>]</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/exit/">worker exit</a>   - worker exit</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/export/">worker export</a>   - worker export <varname> <value></li>
-<li><a href="https://ovh.github.io/cds/cli/worker/key/">worker key</a>     - Inside a step script you can install/uninstall a ssh key generated in CDS in your ssh environment</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/register/">worker register</a>   - worker register</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/tag/">worker tag</a>     - worker tag key=value key=value</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/tmpl/">worker tmpl</a>   - worker tmpl inputFile outputFile</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/update/">worker update</a>   - Update worker from CDS API or from CDS Release</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/upload/">worker upload</a>   - worker upload &ndash;tag=tagValue {{.cds.workspace}}/fileToUpload</li>
-<li><a href="https://ovh.github.io/cds/cli/worker/version/">worker version</a>     - Print the version of the worker binary</li>
+<li><a href="https://ovh.github.io/cds/cli/worker/artifacts/">worker artifacts</a>     - <code>worker artifacts [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]</code></li>
+<li><a href="https://ovh.github.io/cds/cli/worker/cache/">worker cache</a>     -</li>
+<li><a href="https://ovh.github.io/cds/cli/worker/download/">worker download</a>   - <code>worker download [--workflow=&lt;workflow-name&gt;] [--number=&lt;run-number&gt;] [--tag=&lt;tag&gt;] [--pattern=&lt;pattern&gt;]</code></li>
+<li><a href="https://ovh.github.io/cds/cli/worker/exit/">worker exit</a>   - <code>worker exit</code></li>
+<li><a href="https://ovh.github.io/cds/cli/worker/export/">worker export</a>   - <code>worker export &lt;varname&gt; &lt;value&gt;</code></li>
+<li><a href="https://ovh.github.io/cds/cli/worker/key/">worker key</a>     -</li>
+<li><a href="https://ovh.github.io/cds/cli/worker/tag/">worker tag</a>     - <code>worker tag key=value key=value</code></li>
+<li><a href="https://ovh.github.io/cds/cli/worker/tmpl/">worker tmpl</a>   - <code>worker tmpl inputFile outputFile</code></li>
+<li><a href="https://ovh.github.io/cds/cli/worker/update/">worker update</a>   - <code>worker update [flags]</code></li>
+<li><a href="https://ovh.github.io/cds/cli/worker/upload/">worker upload</a>   - <code>worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload</code></li>
+<li><a href="https://ovh.github.io/cds/cli/worker/version/">worker version</a>     - <code>Print the version of the worker binary</code></li>
 </ul>
 
 
