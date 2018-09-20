@@ -129,7 +129,6 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
         let workflowToUpdate = cloneDeep(this.workflow);
         this.loading = true;
         let h = Workflow.findOutgoingHook(workflowToUpdate, this.hook.id);
-        console.log(h);
         if (h) {
             if (!h.triggers) {
                 h.triggers = new Array<WorkflowNodeTrigger>();

@@ -264,6 +264,7 @@
   "common_favorites_all": "All bookmarks",
   "common_file_too_large": "Your file is too large (max 100Ko)",
   "common_vulnerabilities": "Vulnerabilities",
+  "common_waiting": "Waiting",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",

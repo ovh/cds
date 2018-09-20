@@ -159,7 +159,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 			// Post the callback
 			if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
-				log.Error("unable to perform outgoing hook callback")
+				log.Error("unable to perform outgoing hook callback: %v", err)
 			}
 		}
 	}
@@ -190,19 +190,24 @@ loop:
 		WorkflowNodeHookUUID: targetHook,
 		Payload:              hookRun.Params,
 	}
+	evt.ParentWorkflow.Key = pkey
+	evt.ParentWorkflow.Name = workflow
+	evt.ParentWorkflow.Run = runNumber
+	evt.ParentWorkflow.HookRunID = hookRunID
+
 	targetRun, err := s.Client.WorkflowRunFromHook(targetProject, targetWorkflow, evt)
 	if err != nil {
 		handleError(err)
 		return nil
 	}
 
-	callbackData.Done = time.Now()
 	callbackData.Log = fmt.Sprintf("Workflow %s/%s #%d.%d has been started", targetProject, targetWorkflow, targetRun.Number, targetRun.LastSubNumber)
-	callbackData.Status = sdk.StatusSuccess.String()
+	callbackData.Status = sdk.StatusBuilding.String()
+	callbackData.WorkflowRunNumber = &targetRun.Number
 
 	// Post the callback
 	if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
-		log.Error("unable to perform outgoing hook callback")
+		log.Error("unable to perform outgoing hook callback: %v", err)
 		return err
 	}
 	return nil
@@ -264,7 +269,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 
 			// Post the callback
 			if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
-				log.Error("unable to perform outgoing hook callback")
+				log.Error("unable to perform outgoing hook callback: %v", err)
 			}
 		}
 	}
@@ -313,7 +318,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 
 	// Post the callback
 	if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
-		log.Error("unable to perform outgoing hook callback")
+		log.Error("unable to perform outgoing hook callback: %v", err)
 		return err
 	}
 

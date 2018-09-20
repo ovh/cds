@@ -50,6 +50,7 @@ export class WorkflowNodeHookDetailsComponent {
     }
 
     showOutgoingHook(hr: WorkflowNodeOutgoingHookRun): void {
+        console.log('showOutgoingHook', hr);
         this.outgoingHookRun = cloneDeep(hr);
         this.task = null;
         this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookDetailsModal);

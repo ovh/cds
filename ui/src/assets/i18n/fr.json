@@ -264,6 +264,7 @@
   "common_favorites_all": "Tous les favoris",
   "common_file_too_large": "Votre fichier est trop volumineux (max 100Ko)",
   "common_vulnerabilities": "Vulnérabilités",
+  "common_waiting": "En attente",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
@@ -337,7 +338,7 @@
   "graph_vulnerability_title": "Vulnérabilités",
   "graph_vulnerability_x": "N° workflow",
   "graph_vulnerability_y": "Total",
-  "graph_vulnerability_title": "Tests unitaires",
+  "graph_unittes_title": "Tests unitaires",
   "graph_unittest_x": "N° workflow",
   "graph_unittest_y": "Total",
 

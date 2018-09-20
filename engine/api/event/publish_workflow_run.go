@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string) {
@@ -28,7 +27,6 @@ func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName
 		WorkflowRunNumSub: sub,
 		Status:            status,
 	}
-	log.Debug("publishing %+v", event)
 	publishEvent(event)
 }
 
@@ -110,6 +108,7 @@ func PublishWorkflowNodeOutgoingHookRun(db gorp.SqlExecutor, hr sdk.WorkflowNode
 		evt.Start = hr.Callback.Start.Unix()
 		evt.Done = hr.Callback.Done.Unix()
 		evt.Log = hr.Callback.Log
+		evt.WorkflowRunNumber = hr.Callback.WorkflowRunNumber
 	}
 
 	publishRunWorkflow(evt, w.ProjectKey, w.Name, "", "", "", hr.Number, hr.SubNumber, hr.Status)
