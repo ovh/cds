@@ -242,7 +242,6 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Name:              workerName,
 		TTL:               h.Config.WorkerTTL,
 		Model:             spawnArgs.Model.ID,
-		Hatchery:          h.ID(),
 		HatcheryName:      h.Service().Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
@@ -308,7 +307,6 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
 	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
-	envsWm["CDS_HATCHERY"] = fmt.Sprintf("%d", udataParam.Hatchery)
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)

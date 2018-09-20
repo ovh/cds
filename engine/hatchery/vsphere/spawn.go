@@ -197,7 +197,6 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jo
 		Name:              name,
 		Token:             h.Configuration().API.Token,
 		Model:             model.ID,
-		Hatchery:          h.ID(),
 		HatcheryName:      h.Service().Name,
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   true,

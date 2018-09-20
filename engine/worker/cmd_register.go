@@ -25,7 +25,6 @@ func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		form := sdk.WorkerRegistrationForm{
 			Name:         w.status.Name,
 			Token:        w.token,
-			Hatchery:     w.hatchery.id,
 			HatcheryName: w.hatchery.name,
 			ModelID:      w.model.ID,
 		}

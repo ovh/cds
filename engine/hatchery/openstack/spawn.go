@@ -89,7 +89,6 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		Name:              name,
 		Token:             h.Configuration().API.Token,
 		Model:             spawnArgs.Model.ID,
-		Hatchery:          h.ID(),
 		HatcheryName:      h.Service().Name,
 		TTL:               h.Config.WorkerTTL,
 		FromWorkerImage:   withExistingImage,

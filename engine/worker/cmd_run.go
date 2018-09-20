@@ -441,7 +441,6 @@ func (w *currentWorker) doRegister() error {
 		form := sdk.WorkerRegistrationForm{
 			Name:         w.status.Name,
 			Token:        w.token,
-			Hatchery:     w.hatchery.id,
 			HatcheryName: w.hatchery.name,
 			ModelID:      w.model.ID,
 		}

@@ -15,7 +15,6 @@ type Worker struct {
 	ModelID       int64     `json:"model_id" cli:"-"`
 	ActionBuildID int64     `json:"action_build_id" cli:"-"`
 	Model         *Model    `json:"model" cli:"-"`
-	HatcheryID    int64     `json:"hatchery_id" cli:"-"`
 	HatcheryName  string    `json:"hatchery_name" cli:"-"`
 	JobType       string    `json:"job_type" cli:"-"`    // sdk.JobType...
 	Status        Status    `json:"status" cli:"status"` // Waiting, Building, Disabled, Unknown
@@ -27,7 +26,6 @@ type WorkerRegistrationForm struct {
 	Name               string
 	Token              string
 	ModelID            int64
-	Hatchery           int64
 	HatcheryName       string
 	BinaryCapabilities []string
 	Version            string
@@ -167,7 +165,6 @@ type WorkerArgs struct {
 	BaseDir            string `json:"base_dir"`
 	HTTPInsecure       bool   `json:"http_insecure"`
 	Model              int64  `json:"model"`
-	Hatchery           int64  `json:"hatchery"`
 	HatcheryName       string `json:"hatchery_name"`
 	PipelineBuildJobID int64  `json:"pipeline_build_job_id"`
 	WorkflowJobID      int64  `json:"workflow_job_id"`
