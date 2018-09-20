@@ -199,10 +199,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 
 	Logf("Ack Received: %+v\n", ack)
 
-	return &actionplugin.ActionResult{
-		Status:  sdk.StatusSuccess.String(),
-		Details: fmt.Sprintf("Plugin failed with ACK.Result:%s", ack.Result),
-	}, nil
+	return fail("Plugin failed with ACK.Result:%s", ack.Result)
 }
 
 func (actPlugin *kafkaPublishActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
