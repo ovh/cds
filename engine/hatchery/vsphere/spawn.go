@@ -9,13 +9,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 type annotation struct {
