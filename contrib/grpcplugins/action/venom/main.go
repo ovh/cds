@@ -157,15 +157,15 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	v.OutputDir = output
 	v.Parallel = parallel
 
-	filepath := strings.Split(path, ",")
+	filepathVal := strings.Split(path, ",")
 	filepathExcluded := strings.Split(exclude, ",")
 
-	if len(filepath) == 1 {
-		filepath = strings.Split(filepath[0], " ")
+	if len(filepathVal) == 1 {
+		filepathVal = strings.Split(filepathVal[0], " ")
 	}
 
-	for _, fp := range filepath {
-		filepath, err = walkGlobFile(fp)
+	for _, fp := range filepathVal {
+		filepathVal, err = walkGlobFile(fp)
 		if err != nil {
 			return fail("VENOM - Error on walk files: %v\n", err)
 		}
@@ -182,7 +182,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		}
 	}
 
-	tests, err := v.Process(filepath, filepathExcluded)
+	tests, err := v.Process(filepathVal, filepathExcluded)
 	if err != nil {
 		return fail("VENOM - Fail on venom: %v\n", err)
 	}

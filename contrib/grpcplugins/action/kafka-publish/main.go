@@ -16,7 +16,7 @@ import (
 	shredder "github.com/fsamin/go-shredder"
 	"github.com/golang/protobuf/ptypes/empty"
 
-	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
+	"github.com/ovh/cds/contrib/grpcplugins/action/kafka-publish/kafkapublisher"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 )
@@ -137,7 +137,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 			}
 		}
 
-		chunks, err := shredder.ShredFile(f, q.GetOptions()[""], opts)
+		chunks, err := shredder.ShredFile(f, fmt.Sprintf("%d", q.GetJobID()), opts)
 		if err != nil {
 			return fail("Unable to shred file %s : %s", f, err)
 		}
@@ -199,10 +199,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 
 	Logf("Ack Received: %+v\n", ack)
 
-	return &actionplugin.ActionResult{
-		Status:  sdk.StatusSuccess.String(),
-		Details: fmt.Sprintf("Plugin failed with ACK.Result:%s", ack.Result),
-	}, nil
+	return fail("Plugin failed with ACK.Result:%s", ack.Result)
 }
 
 func (actPlugin *kafkaPublishActionPlugin) WorkerHTTPPort(ctx context.Context, q *actionplugin.WorkerHTTPPortQuery) (*empty.Empty, error) {
@@ -219,7 +216,6 @@ func main() {
 	})
 	_ = app.Run(os.Args)
 	return
-
 }
 
 func fail(format string, args ...interface{}) (*actionplugin.ActionResult, error) {

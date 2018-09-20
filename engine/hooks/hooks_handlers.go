@@ -11,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -162,28 +163,62 @@ func (s *Service) postAndExecuteTaskHandler() service.Handler {
 	}
 }
 
+const (
+	sortKeyNbExecutionsTotal = "nb_executions_total"
+	sortKeyNbExecutionsTodo  = "nb_executions_todo"
+)
+
 func (s *Service) getTasksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		sortParams, err := api.QuerySort(r)
+		if err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, err)
+		}
+		for k := range sortParams {
+			if k != sortKeyNbExecutionsTotal && k != sortKeyNbExecutionsTodo {
+				return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid given sort key"))
+			}
+		}
+
 		tasks, err := s.Dao.FindAllTasks()
 		if err != nil {
 			return sdk.WrapError(err, "Hooks> getTasksHandler")
 		}
-		for i := range tasks {
-			execs, err := s.Dao.FindAllTaskExecutions(&tasks[i])
-			if err != nil {
-				log.Error("getTasksHandler> Unable to find all task executions (%s): %v", tasks[i].UUID, err)
-				continue
-			}
 
+		execs, err := s.Dao.FindAllTaskExecutionsForTasks(tasks...)
+		if err != nil {
+			return sdk.WrapError(err, "Hooks> getTasksHandler")
+		}
+
+		m := make(map[string][]sdk.TaskExecution, len(tasks))
+		for _, e := range execs {
+			m[e.UUID] = append(m[e.UUID], e)
+		}
+
+		for i, t := range tasks {
 			var nbTodo int
-			for _, e := range execs {
+			for _, e := range m[t.UUID] {
 				if e.ProcessingTimestamp == 0 {
 					nbTodo++
 				}
 			}
-			tasks[i].NbExecutionsTotal = len(execs)
+			tasks[i].NbExecutionsTotal = len(m[t.UUID])
 			tasks[i].NbExecutionsTodo = nbTodo
 		}
+
+		for k, p := range sortParams {
+			switch k {
+			case sortKeyNbExecutionsTotal:
+				sort.Slice(tasks, func(i, j int) bool {
+					return api.SortCompareInt(tasks[i].NbExecutionsTotal, tasks[j].NbExecutionsTotal, p)
+				})
+			case sortKeyNbExecutionsTodo:
+				sort.Slice(tasks, func(i, j int) bool {
+					return api.SortCompareInt(tasks[i].NbExecutionsTodo, tasks[j].NbExecutionsTodo, p)
+				})
+			}
+		}
+
 		return service.WriteJSON(w, tasks, http.StatusOK)
 	}
 }

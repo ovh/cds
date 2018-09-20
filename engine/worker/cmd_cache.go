@@ -59,9 +59,7 @@ Here, an example of a script inside a CDS Job using the cache feature:
 	# put in cache the updated .m2/ directory
 	worker cache push $tag .m2/
 
-
     `,
-		Short: "Inside a project, you can create or retrieve a cache from your worker with a tag",
 	}
 	cmdCacheRoot.AddCommand(cmdCachePush(w), cmdCachePull(w))
 

@@ -14,7 +14,9 @@ func (c *gitlabClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 	var repos []sdk.VCSRepo
 
 	pp := 1000
-	opts := &gitlab.ListProjectsOptions{}
+	opts := &gitlab.ListProjectsOptions{
+		Membership: gitlab.Bool(true),
+	}
 	opts.PerPage = pp
 
 	projects, resp, err := c.client.Projects.ListProjects(opts)

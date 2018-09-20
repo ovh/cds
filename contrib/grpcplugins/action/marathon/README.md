@@ -15,7 +15,7 @@ Make sure go >=1.7 is installed and properly configured ($GOPATH must be set)
 ```shell
     $ mkdir -p $GOPATH/src/github/ovh/cds
     $ git clone $GOPATH/src/github/ovh/cds
-    $ cd $GOPATH/src/github/ovh/cds/contrib/plugins/plugin-marathon
+    $ cd $GOPATH/src/github/ovh/cds/contrib/grpcplugins/action/marathon
     $ go test ./...
     $ go build
 ```

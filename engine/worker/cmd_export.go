@@ -24,7 +24,6 @@ var cmdExport = &cobra.Command{
 	Long: `
 Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can create a build variable with the worker command:
 
-	# worker export <varname> <value>
 	worker export foo bar
 
 

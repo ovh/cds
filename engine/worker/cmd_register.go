@@ -11,9 +11,10 @@ import (
 
 func cmdRegister(w *currentWorker) *cobra.Command {
 	var cmdRegister = &cobra.Command{
-		Use:   "register",
-		Short: "worker register",
-		Run:   cmdRegisterRun(w),
+		Use:    "register",
+		Long:   "worker register is a subcommand used by hatchery. This is not directly useful for end user",
+		Hidden: true, // user should not use this command directly
+		Run:    cmdRegisterRun(w),
 	}
 	initFlagsRun(cmdRegister)
 	return cmdRegister

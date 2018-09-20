@@ -31,9 +31,9 @@ import (
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/reference"
 	"github.com/opencontainers/go-digest"
-	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/config"
-	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/docker/dockercli"
-	"github.com/ovh/cds/contrib/plugins/plugin-clair/clairctl/docker/dockerdist"
+	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/config"
+	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/docker/dockercli"
+	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/docker/dockerdist"
 )
 
 //RetrieveManifest get manifest from local or remote docker registry

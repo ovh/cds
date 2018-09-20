@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"path"
 	"runtime"
 	"strings"
@@ -16,9 +17,9 @@ import (
 )
 
 type startGRPCPluginOptions struct {
-	out io.Writer
-	err io.Writer
-	env []string
+	out  io.Writer
+	err  io.Writer
+	envs []string
 }
 
 type pluginClientSocket struct {
@@ -83,8 +84,17 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 		dir = w.basedir
 	}
 
-	log.Info("Starting GRPC Plugin %s in dir %s", binary.Name, w.basedir)
-	if err := grpcplugin.StartPlugin(ctx, dir, path.Join(w.basedir, binary.Cmd), binary.Args, opts.env, mOut, mErr); err != nil {
+	envs := make([]string, 0, len(opts.envs))
+	for _, env := range os.Environ() {
+		if strings.HasPrefix(env, "CDS_") {
+			continue
+		}
+		envs = append(envs, env)
+	}
+	envs = append(envs, opts.envs...)
+
+	log.Info("Starting GRPC Plugin %s in dir %s", binary.Name, dir)
+	if err := grpcplugin.StartPlugin(ctx, dir, path.Join(w.basedir, binary.Cmd), binary.Args, envs, mOut, mErr); err != nil {
 		return nil, sdk.WrapError(err, "Unable to start GRPC plugin... Aborting")
 	}
 	log.Info("GRPC Plugin %s started", binary.Name)

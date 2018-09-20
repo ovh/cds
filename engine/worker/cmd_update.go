@@ -18,8 +18,18 @@ import (
 func cmdUpdate(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "update",
-		Short: "Update worker from CDS API or from CDS Release",
-		Run:   updateCmd(w),
+		Short: "worker update [flags]",
+		Long: `Update worker from CDS API or from CDS Release
+
+Update from Github:
+
+		worker update --from-github
+
+Update from your CDS API:
+
+		worker update --api https://your-cds-api.localhost
+		`,
+		Run: updateCmd(w),
 	}
 	c.Flags().Bool(flagFromGithub, false, "Update binary from latest github release")
 	c.Flags().String(flagAPI, "", "URL of CDS API")

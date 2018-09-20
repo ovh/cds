@@ -14,7 +14,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/fsamin/go-shredder"
 
-	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
+	"github.com/ovh/cds/contrib/grpcplugins/action/kafka-publish/kafkapublisher"
 )
 
 func consumeFromKafka(kafka, topic, group, user, password, key string, gpgPrivatekey, gpgPassphrase []byte, execScript string) error {

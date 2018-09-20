@@ -10,7 +10,7 @@ import (
 	"github.com/Shopify/sarama"
 	"github.com/fsamin/go-shredder"
 
-	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
+	"github.com/ovh/cds/contrib/grpcplugins/action/kafka-publish/kafkapublisher"
 )
 
 //Wait for ACK to CDS through kafka. Entrypoint is the actionID from the context file. After a fimeout (seconds) it will return an error
