@@ -10,21 +10,19 @@ import (
 	"strconv"
 	"testing"
 
-	
-	
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/sdk/namesgenerator"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/namesgenerator"
 )
 
 func Test_updateStepStatusHandler(t *testing.T) {
