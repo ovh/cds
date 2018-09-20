@@ -82,6 +82,9 @@ func genMarkdownTreeCustom(cmd *cobra.Command, rootdir string, filePrepender, li
 		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 			continue
 		}
+		if c.Short != "" {
+			c.Short = fmt.Sprintf("`%s`", c.Short)
+		}
 		if err := genMarkdownTreeCustom(c, rootdir, filePrepender, linkHandler); err != nil {
 			return err
 		}
