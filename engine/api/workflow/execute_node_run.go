@@ -227,20 +227,11 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	//Delete jobs only when node is over
 	if sdk.StatusIsTerminated(nr.Status) {
 		if nr.Status != sdk.StatusStopped.String() {
-
-			if updatedWorkflowRun.Version < 2 {
-				r1, _, err := processWorkflowRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
-				if err != nil {
-					return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
-				}
-				report, _ = report.Merge(r1, nil)
-			} else {
-				r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
-				if err != nil {
-					return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess2 workflow !")
-				}
-				report, _ = report.Merge(r1, nil)
+			r1, _, err := processWorkflowRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
+			if err != nil {
+				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 			}
+			report, _ = report.Merge(r1, nil)
 
 		}
 

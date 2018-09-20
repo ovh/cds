@@ -16,6 +16,9 @@ const (
 	// FeatEnableTracing is the opencensus tracing feature id
 	FeatEnableTracing = "cds:tracing"
 
+	// FeatDisabledWNode wnode workflow representation
+	FeatDisabledWNode = "cds:wnode"
+
 	cacheFeatureKey = "feature:"
 )
 
@@ -34,7 +37,7 @@ type ProjectFeatures struct {
 
 // List all features
 func List() []string {
-	return []string{FeatWorkflowAsCode}
+	return []string{FeatWorkflowAsCode, FeatDisabledWNode}
 }
 
 // Init initialize izanami client

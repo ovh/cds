@@ -25,6 +25,10 @@ import (
 // processWorkflowRun triggers workflow node for every workflow.
 // It contains all the logic for triggers and joins processing.
 func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
+	if w.Version == 2 {
+		return processWorkflowDataRun(ctx, db, store, proj, w, hookEvent, manual, startingFromNode)
+	}
+
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.processWorkflowRun",
 		observability.Tag(observability.TagWorkflowRun, w.Number),

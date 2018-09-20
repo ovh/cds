@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 )
@@ -178,12 +179,16 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 	}
 
-	wr.Version = 2
+	ok, has := p.Features[feature.FeatDisabledWNode]
+	if has && !ok && wr.Workflow.WorkflowData != nil {
+		wr.Version = 2
+	}
+
 	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, report, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
-	r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, nil)
+	r1, hasRun, errWR := processWorkflowRun(ctx, db, store, p, wr, nil, e, nil)
 	if errWR != nil {
 		return wr, report, sdk.WrapError(errWR, "ManualRun")
 	}
