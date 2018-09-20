@@ -133,7 +133,6 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
             if (!h.triggers) {
                 h.triggers = new Array<WorkflowNodeTrigger>();
             }
-            console.log(h.triggers);
             let t = new WorkflowNodeTrigger();
             t.workflow_dest_node = this.newTrigger;
             h.triggers.push(t);
