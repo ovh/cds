@@ -398,7 +398,7 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 		return err
 	}
 
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint
 
 	parentProj, err := project.Load(
 		tx, store, run.RootRun().HookEvent.ParentWorkflow.Key,

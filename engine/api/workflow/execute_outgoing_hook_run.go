@@ -69,7 +69,7 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 		return err
 	}
 
-	defer tx.Rollback()
+	defer tx.Rollback() //nolint
 
 	hookrun := parentWR.GetOutgoingHookRun(wr.RootRun().HookEvent.ParentWorkflow.HookRunID)
 	if hookrun == nil {
