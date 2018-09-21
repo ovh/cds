@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -231,6 +232,21 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		})
 		if err != nil {
 			return err
+		}
+
+		pv, err := project.GetAllVariableInProject(tx, wr.Workflow.ProjectID, project.WithClearPassword())
+		if err != nil {
+			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> Cannot load project variable")
+		}
+
+		secrets, errSecret := workflow.LoadSecrets(tx, api.Cache, nil, wr, pv)
+		if errSecret != nil {
+			return sdk.WrapError(errSecret, "postWorkflowJobHookCallbackHandler> Cannot load secrets")
+		}
+
+		// Hide secrets in payload
+		for _, s := range secrets {
+			callback.Log = strings.Replace(callback.Log, s.Value, "**"+s.Name+"**", -1)
 		}
 
 		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, tx, api.Cache, proj, wr, hookRunID, callback)
