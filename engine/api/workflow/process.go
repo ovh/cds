@@ -288,10 +288,11 @@ func processWorklowNodeTrigger(ctx context.Context, db gorp.SqlExecutor, store c
 	}
 	report.Merge(r1, nil) // nolint
 
+	if nodeRun.TriggersRun == nil {
+		nodeRun.TriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
+	}
+
 	if conditionOk {
-		if nodeRun.TriggersRun == nil {
-			nodeRun.TriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
-		}
 		triggerStatus := sdk.StatusSuccess.String()
 		triggerRun := sdk.WorkflowNodeTriggerRun{
 			Status:             triggerStatus,
@@ -300,9 +301,6 @@ func processWorklowNodeTrigger(ctx context.Context, db gorp.SqlExecutor, store c
 		nodeRun.TriggersRun[t.ID] = triggerRun
 		haveToUpdate = true
 	} else {
-		if nodeRun.TriggersRun == nil {
-			nodeRun.TriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
-		}
 		wntr, ok := nodeRun.TriggersRun[t.ID]
 		if !ok || wntr.Status != sdk.StatusFail.String() {
 			triggerRun := sdk.WorkflowNodeTriggerRun{
