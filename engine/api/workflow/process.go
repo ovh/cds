@@ -382,27 +382,25 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 	//Check if the WorkflowNodeOutgoingHookRun already exist with the same subnumber
 	hrs, ok := w.WorkflowNodeOutgoingHookRuns[hook.ID]
 	if ok {
-		var alreadyProcessed, isWaiting bool
-		for _, hr := range hrs {
-			if hr.Number == w.Number && hr.SubNumber == nodeRun.SubNumber {
-				alreadyProcessed = true
+		var exitingHookRun *sdk.WorkflowNodeOutgoingHookRun
+		for i := range hrs {
+			if hrs[i].Number == w.Number && hrs[i].SubNumber == nodeRun.SubNumber {
+				exitingHookRun = &hrs[i]
 				break
 			}
 		}
-		if alreadyProcessed && isWaiting {
+		// If the hookrun is at status terminated, let's trigger outgoing children
+		if exitingHookRun != nil && !sdk.StatusIsTerminated(exitingHookRun.Status) {
 			log.Debug("hook %d already processed", hook.ID)
 			return nil, nil
-		} else if alreadyProcessed {
-
+		} else if exitingHookRun != nil {
 			log.Debug("hook %d is over, we have to reprocess al the things", hook.ID)
-
 			for i := range hook.Triggers {
 				t := &hook.Triggers[i]
 				log.Debug("checking trigger %+v", t)
 				r1 := processWorklowOutgoingHookTrigger(ctx, db, store, p, w, nodeRun.SubNumber, nodeRun.ID, t)
 				report.Merge(r1, nil) // nolint
 			}
-
 			return nil, nil
 		}
 	}
