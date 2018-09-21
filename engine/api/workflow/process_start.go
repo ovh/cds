@@ -26,11 +26,11 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 	log.Debug("processWorkflowRun> starting from node %#v", startingFromNode)
 	// Find ancestors
 	nodeIds := start.Ancestors(wr.Workflow.WorkflowData, mapNodes, false)
-	sourceNodesRun := make([]*sdk.WorkflowNodeRun, len(nodeIds))
+	sourceNodesRun := make([]*sdk.WorkflowNodeRun, 0, len(nodeIds))
 	for i := range nodeIds {
 		nodesRuns, ok := wr.WorkflowNodeRuns[nodeIds[i]]
 		if ok && len(nodesRuns) > 0 {
-			sourceNodesRun = append(sourceNodesRun, &nodeRuns[0])
+			sourceNodesRun = append(sourceNodesRun, &nodesRuns[0])
 		} else {
 			return report, false, sdk.ErrWorkflowNodeParentNotRun
 		}
@@ -79,7 +79,7 @@ func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cac
 		if sdk.StatusIsTerminated(nodeRun.Status) && nodeRun.Status != sdk.StatusNeverBuilt.String() {
 			//Find the node in the workflow
 			node := mapNodes[nodeRun.WorkflowNodeID]
-			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{nodeRun}, node)
+			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{nodeRun}, node, int(nodeRun.SubNumber))
 			_, _ = report.Merge(r1, nil)
 		}
 
@@ -138,7 +138,7 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		}
 		//All the sources are completed
 		if ok {
-			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, sources, j)
+			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, sources, j, int(maxsn))
 			_, _ = report.Merge(r1, nil)
 		}
 	}

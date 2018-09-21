@@ -152,7 +152,7 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.WorkflowNodeHook, error) {
 	return nodes, nil
 }
 
-func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeHook, error) {
+func loadHooks(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeHook, error) {
 	res := []NodeHook{}
 	if _, err := db.Select(&res, "select id, uuid, ref, workflow_hook_model_id, workflow_node_id from workflow_node_hook where workflow_node_id = $1", node.ID); err != nil {
 		if err == sql.ErrNoRows {
@@ -167,6 +167,7 @@ func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeH
 			return nil, sdk.WrapError(err, "loadHooks")
 		}
 		res[i].WorkflowNodeID = node.ID
+		w.HookModels[res[i].WorkflowHookModelID] = res[i].WorkflowHookModel
 		nodes = append(nodes, sdk.WorkflowNodeHook(res[i]))
 	}
 	return nodes, nil
@@ -188,6 +189,7 @@ func loadOutgoingHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 		}
 		res[i].WorkflowNodeID = node.ID
 		hooks[i] = sdk.WorkflowNodeOutgoingHook(res[i])
+		w.OutGoingHookModels[hooks[i].WorkflowHookModelID] = hooks[i].WorkflowHookModel
 
 		//Select triggers id
 		var triggerIDs []int64

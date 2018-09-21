@@ -418,6 +418,8 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	res.Pipelines = map[int64]sdk.Pipeline{}
 	res.Applications = map[int64]sdk.Application{}
 	res.Environments = map[int64]sdk.Environment{}
+	res.HookModels = map[int64]sdk.WorkflowHookModel{}
+	res.OutGoingHookModels = map[int64]sdk.WorkflowHookModel{}
 
 	if !opts.WithoutNode {
 		_, next = observability.Span(ctx, "workflow.load.loadNodes")
@@ -963,6 +965,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project) error {
 	//Check contexts
 	nodes := w.Nodes(true)
 	w.HookModels = make(map[int64]sdk.WorkflowHookModel)
+	w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
 	for _, n := range nodes {
 		if err := n.CheckApplicationDeploymentStrategies(proj); err != nil {
 			return sdk.NewError(sdk.ErrWorkflowInvalid, err)
@@ -984,12 +987,12 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project) error {
 		// Check hook model
 		for _, h := range n.OutgoingHooks {
 			if h.WorkflowHookModelID != 0 {
-				if _, has := w.HookModels[h.WorkflowHookModelID]; !has {
+				if _, has := w.OutGoingHookModels[h.WorkflowHookModelID]; !has {
 					m, err := LoadHookModelByID(db, h.WorkflowHookModelID)
 					if err != nil {
 						return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown outgoing hook model %d", h.WorkflowHookModelID))
 					}
-					w.HookModels[h.WorkflowHookModelID] = *m
+					w.OutGoingHookModels[h.WorkflowHookModelID] = *m
 				}
 			}
 		}

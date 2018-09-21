@@ -36,6 +36,7 @@ export class Workflow {
     environments: {[key: number]: Environment; };
     project_platforms: {[key: number]: ProjectPlatform; };
     hook_models: {[key: number]: WorkflowHookModel; };
+    outgoing_hook_models: {[key: number]: WorkflowHookModel; };
     labels: Label[];
     workflow_data: WorkflowData;
 
@@ -1321,7 +1322,7 @@ export class WNode {
         n.ref = node.ref;
         n.name = node.name;
         n.context = new WorkflowNodeContext();
-
+        n.pipeline_id = node.context.pipeline_id;
         if (node.context.application_id) {
             n.context.application = w.applications[node.context.application_id];
         }
@@ -1370,7 +1371,7 @@ export class WNode {
     static retroMigrateOutGoingHook(w: Workflow, outgoingHook: WNode): WorkflowNodeOutgoingHook {
         let h = new WorkflowNodeOutgoingHook();
         h.id = outgoingHook.id;
-        h.model = w.hook_models[outgoingHook.outgoing_hook.hook_model_id];
+        h.model = w.outgoing_hook_models[outgoingHook.outgoing_hook.hook_model_id];
         h.config = outgoingHook.outgoing_hook.config;
         h.ref = outgoingHook.ref;
 

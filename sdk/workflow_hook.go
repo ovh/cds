@@ -63,8 +63,8 @@ type WorkflowNodeOutgoingHook struct {
 
 func (h WorkflowNodeOutgoingHook) migrate() Node {
 	newNode := Node{
-		Name: string(h.ID),
-		Ref:  h.Ref,
+		Name: RandomString(10),
+		Ref:  RandomString(10),
 		Type: NodeTypeOutGoingHook,
 		OutGoingHookContext: &NodeOutGoingHook{
 			Config:      h.Config,

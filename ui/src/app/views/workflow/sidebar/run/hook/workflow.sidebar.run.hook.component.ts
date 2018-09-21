@@ -91,9 +91,13 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
         if (this.wr.outgoing_hooks &&  this.outgoingHook) {
             if (this.wr.outgoing_hooks[this.outgoingHook.id]) {
                 this.outgoingHookRuns = this.wr.outgoing_hooks[this.outgoingHook.id];
-                this.node = Workflow.findNode(this.wr.workflow, (node) => {
-                    return node.outgoing_hooks.find(h => h.id === this.outgoingHook.id );
-                });
+                if (this.wr.version === 2) {
+
+                } else {
+                    this.node = Workflow.findNode(this.wr.workflow, (node) => {
+                        return node.outgoing_hooks.find(h => h.id === this.outgoingHook.id );
+                    });
+                }
             }
         }
     }

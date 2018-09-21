@@ -67,7 +67,7 @@ CREATE TABLE w_node_outgoing_hook (
 );
 
 SELECT create_foreign_key_idx_cascade('FK_W_NODE_OUTGOING_HOOK_NODE', 'w_node_outgoing_hook', 'w_node', 'node_id', 'id');
-SELECT create_foreign_key('FK_W_NODE_OUTGOING_HOOK_MODEL', 'w_node_outgoing_hook', 'workflow_node_outgoing_hook', 'hook_model_id', 'id');
+SELECT create_foreign_key('FK_W_NODE_OUTGOING_HOOK_MODEL', 'w_node_outgoing_hook', 'workflow_outgoing_hook_model', 'hook_model_id', 'id');
 
 CREATE TABLE w_node_join (
   id BIGSERIAL PRIMARY KEY,

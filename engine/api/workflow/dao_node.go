@@ -385,7 +385,7 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	//Load hooks
-	hooks, errHooks := loadHooks(db, &wn)
+	hooks, errHooks := loadHooks(db, w, &wn)
 	if errHooks != nil {
 		return nil, sdk.WrapError(errHooks, "LoadNode> Unable to load hooks of %d", id)
 	}
