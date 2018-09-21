@@ -334,7 +334,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 	//Load node definition
 	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
 	if n == nil {
-		return nil, nil, sdk.WrapError(fmt.Errorf("LoadNodeJobRunKeys> Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+		return nil, nil, sdk.WrapError(fmt.Errorf("LoadNodeJobRunKeys> Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadSecrets>")
 	}
 	if n.Context != nil && n.Context.Application != nil {
 		for _, k := range n.Context.Application.Keys {
@@ -397,101 +397,103 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 	return params, secrets, nil
 }
 
-// LoadNodeJobRunSecrets loads all secrets for a job run
-func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
+// LoadSecrets loads all secrets for a job run
+func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
 	var secrets []sdk.Variable
 
 	pv = sdk.VariablesFilter(pv, sdk.SecretVariable, sdk.KeyVariable)
 	pv = sdk.VariablesPrefix(pv, "cds.proj.")
 	secrets = append(secrets, pv...)
 
-	//Load node definition
-	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
-	if n == nil {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
-	}
-
-	//Application variables
-	av := []sdk.Variable{}
-	if n.Context != nil && n.Context.Application != nil {
-		appv, errA := application.GetAllVariableByID(db, n.Context.Application.ID, application.WithClearPassword())
-		if errA != nil {
-			return nil, sdk.WrapError(errA, "LoadNodeJobRunSecrets> Cannot load application variables")
-		}
-		av = sdk.VariablesFilter(appv, sdk.SecretVariable, sdk.KeyVariable)
-		av = sdk.VariablesPrefix(av, "cds.app.")
-
-		if err := application.DecryptVCSStrategyPassword(n.Context.Application); err != nil {
-			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot decrypt vcs configuration")
-		}
-		av = append(av, sdk.Variable{
-			Name:  "git.http.password",
-			Type:  sdk.SecretVariable,
-			Value: n.Context.Application.RepositoryStrategy.Password,
-		})
-	}
-	secrets = append(secrets, av...)
-
-	//Environment variables
-	ev := []sdk.Variable{}
-	if n.Context != nil && n.Context.Environment != nil {
-		envv, errE := environment.GetAllVariableByID(db, n.Context.Environment.ID, environment.WithClearPassword())
-		if errE != nil {
-			return nil, sdk.WrapError(errE, "LoadNodeJobRunSecrets> Cannot load environment variables")
-		}
-		ev = sdk.VariablesFilter(envv, sdk.SecretVariable, sdk.KeyVariable)
-		ev = sdk.VariablesPrefix(ev, "cds.env.")
-	}
-	secrets = append(secrets, ev...)
-
-	if n.Context.ProjectPlatform != nil {
-		pf, err := platform.LoadByID(db, n.Context.ProjectPlatformID, true)
-		if err != nil {
-			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load platform %d", n.Context.ProjectPlatformID)
+	// Load node definition
+	if nodeRun != nil {
+		n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
+		if n == nil {
+			return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadSecrets>")
 		}
 
-		//Projeft platform variable
-		pfv := make([]sdk.Variable, 0, len(pf.Config))
-		for k, v := range pf.Config {
-			pfv = append(pfv, sdk.Variable{
-				Name:  k,
-				Type:  v.Type,
-				Value: v.Value,
+		// Application variables
+		av := []sdk.Variable{}
+		if n.Context != nil && n.Context.Application != nil {
+			appv, errA := application.GetAllVariableByID(db, n.Context.Application.ID, application.WithClearPassword())
+			if errA != nil {
+				return nil, sdk.WrapError(errA, "LoadSecrets> Cannot load application variables")
+			}
+			av = sdk.VariablesFilter(appv, sdk.SecretVariable, sdk.KeyVariable)
+			av = sdk.VariablesPrefix(av, "cds.app.")
+
+			if err := application.DecryptVCSStrategyPassword(n.Context.Application); err != nil {
+				return nil, sdk.WrapError(err, "LoadSecrets> Cannot decrypt vcs configuration")
+			}
+			av = append(av, sdk.Variable{
+				Name:  "git.http.password",
+				Type:  sdk.SecretVariable,
+				Value: n.Context.Application.RepositoryStrategy.Password,
 			})
 		}
-		pfv = sdk.VariablesPrefix(pfv, "cds.platform.")
-		pfv = sdk.VariablesFilter(pfv, sdk.SecretVariable)
+		secrets = append(secrets, av...)
 
-		if n.Context.Application != nil && n.Context.Application.DeploymentStrategies != nil {
-			strats, err := application.LoadDeploymentStrategies(db, n.Context.ApplicationID, true)
-			if err != nil {
-				return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Cannot load application deployment strategies %d", n.Context.ApplicationID)
+		// Environment variables
+		ev := []sdk.Variable{}
+		if n.Context != nil && n.Context.Environment != nil {
+			envv, errE := environment.GetAllVariableByID(db, n.Context.Environment.ID, environment.WithClearPassword())
+			if errE != nil {
+				return nil, sdk.WrapError(errE, "LoadSecrets> Cannot load environment variables")
 			}
-			strat, has := strats[n.Context.ProjectPlatform.Name]
-
-			//Application deployment strategies variables
-			apv := []sdk.Variable{}
-			if has {
-				for k, v := range strat {
-					apv = append(apv, sdk.Variable{
-						Name:  k,
-						Type:  v.Type,
-						Value: v.Value,
-					})
-				}
-			}
-			apv = sdk.VariablesPrefix(apv, "cds.platform.")
-			apv = sdk.VariablesFilter(apv, sdk.SecretVariable)
-			secrets = append(secrets, apv...)
+			ev = sdk.VariablesFilter(envv, sdk.SecretVariable, sdk.KeyVariable)
+			ev = sdk.VariablesPrefix(ev, "cds.env.")
 		}
-		secrets = append(secrets, pfv...)
+		secrets = append(secrets, ev...)
+
+		if n.Context.ProjectPlatform != nil {
+			pf, err := platform.LoadByID(db, n.Context.ProjectPlatformID, true)
+			if err != nil {
+				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load platform %d", n.Context.ProjectPlatformID)
+			}
+
+			// Project platform variable
+			pfv := make([]sdk.Variable, 0, len(pf.Config))
+			for k, v := range pf.Config {
+				pfv = append(pfv, sdk.Variable{
+					Name:  k,
+					Type:  v.Type,
+					Value: v.Value,
+				})
+			}
+			pfv = sdk.VariablesPrefix(pfv, "cds.platform.")
+			pfv = sdk.VariablesFilter(pfv, sdk.SecretVariable)
+
+			if n.Context.Application != nil && n.Context.Application.DeploymentStrategies != nil {
+				strats, err := application.LoadDeploymentStrategies(db, n.Context.ApplicationID, true)
+				if err != nil {
+					return nil, sdk.WrapError(err, "LoadSecrets> Cannot load application deployment strategies %d", n.Context.ApplicationID)
+				}
+				strat, has := strats[n.Context.ProjectPlatform.Name]
+
+				// Application deployment strategies variables
+				apv := []sdk.Variable{}
+				if has {
+					for k, v := range strat {
+						apv = append(apv, sdk.Variable{
+							Name:  k,
+							Type:  v.Type,
+							Value: v.Value,
+						})
+					}
+				}
+				apv = sdk.VariablesPrefix(apv, "cds.platform.")
+				apv = sdk.VariablesFilter(apv, sdk.SecretVariable)
+				secrets = append(secrets, apv...)
+			}
+			secrets = append(secrets, pfv...)
+		}
 	}
 
 	//Decrypt secrets
 	for i := range secrets {
 		s := &secrets[i]
 		if err := secret.DecryptVariable(s); err != nil {
-			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Unable to decrypt variables")
+			return nil, sdk.WrapError(err, "LoadSecrets> Unable to decrypt variables")
 		}
 	}
 	return secrets, nil

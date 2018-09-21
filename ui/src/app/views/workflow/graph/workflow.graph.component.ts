@@ -497,7 +497,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.svgContainer.insert(componentRef.hostView, 0);
         this.g.setNode('outgoing-hook-' + hook.ref, <any>{
             label: () => {
-                componentRef.location.nativeElement.style.width = '97%';
+                componentRef.location.nativeElement.style.width = '98%';
                 componentRef.location.nativeElement.style.height = '100%';
                 return componentRef.location.nativeElement;
             },

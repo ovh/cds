@@ -125,19 +125,19 @@ func ParametersToMap(params []Parameter) map[string]string {
 
 // ParametersFromProjectVariables returns a map from a slice of parameters
 func ParametersFromProjectVariables(proj Project) map[string]string {
-	params := variablesToParameters("cds.proj", proj.Variable)
+	params := VariablesToParameters("cds.proj", proj.Variable)
 	return ParametersToMap(params)
 }
 
 // ParametersFromApplicationVariables returns a map from a slice of parameters
 func ParametersFromApplicationVariables(app Application) map[string]string {
-	params := variablesToParameters("cds.app", app.Variable)
+	params := VariablesToParameters("cds.app", app.Variable)
 	return ParametersToMap(params)
 }
 
 // ParametersFromEnvironmentVariables returns a map from a slice of parameters
 func ParametersFromEnvironmentVariables(env Environment) map[string]string {
-	params := variablesToParameters("cds.env", env.Variable)
+	params := VariablesToParameters("cds.env", env.Variable)
 	return ParametersToMap(params)
 }
 
@@ -159,17 +159,19 @@ func ParametersFromPlatform(ppf PlatformConfig) map[string]string {
 		vars[i] = Variable{Name: k, Type: c.Type, Value: c.Value}
 		i++
 	}
-	params := variablesToParameters("cds.platform", vars)
+	params := VariablesToParameters("cds.platform", vars)
 	return ParametersToMap(params)
 }
 
-func variablesToParameters(prefix string, variables []Variable) []Parameter {
+func VariablesToParameters(prefix string, variables []Variable) []Parameter {
 	res := make([]Parameter, 0, len(variables))
 	for _, t := range variables {
 		if NeedPlaceholder(t.Type) {
 			continue
 		}
-		t.Name = prefix + "." + t.Name
+		if prefix != "" {
+			t.Name = prefix + "." + t.Name
+		}
 		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
 	}
 	return res

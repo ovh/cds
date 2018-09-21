@@ -170,7 +170,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(err, "takeJob> Cannot load project variable")
 	}
 
-	secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, store, job, noderun, workflowRun, pv)
+	secrets, errSecret := workflow.LoadSecrets(tx, store, noderun, workflowRun, pv)
 	if errSecret != nil {
 		return nil, sdk.WrapError(errSecret, "takeJob> Cannot load secrets")
 	}

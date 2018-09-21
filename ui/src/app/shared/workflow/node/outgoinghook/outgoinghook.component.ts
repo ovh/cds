@@ -75,7 +75,7 @@ export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit 
             this.isSelected = false;
         });
 
-        this.subCurrentHookRun = this._workflowEventStore.selectedRun().subscribe(
+        this.subCurrentRun = this._workflowEventStore.selectedRun().subscribe(
             wr => {
                 if (!wr || !this.currentRun || this.currentRun.id !== wr.id) {
                     this.currentHookRun = null;
@@ -96,7 +96,7 @@ export class WorkflowNodeOutgoingHookComponent implements OnInit, AfterViewInit 
             }
         );
 
-        this._workflowEventStore.outgoingHookEvents().subscribe(
+        this.subCurrentHookRun = this._workflowEventStore.outgoingHookEvents().subscribe(
             hr => {
                 if (hr && this.hook && this.hook.id === hr.workflow_node_outgoing_hook_id) {
                     if (this.currentRun && this.currentRun.id === hr.workflow_run_id && this.currentRun.num === hr.num) {

@@ -14,8 +14,8 @@
     </ng-container>
 
     <ng-container *ngIf="hook.model.name === 'Workflow'" >
-        <div class="details">
-            <ng-container *ngIf="currentHookRun && (
+        <div class="details"> 
+            <ng-container *ngIf="currentHookRun && currentHookRun.callback  && (
                 currentHookRun.callback.status === pipelineStatus.BUILDING  ||
                 currentHookRun.callback.status === pipelineStatus.SUCCESS ||
                 currentHookRun.callback.status === pipelineStatus.FAIL )">
