@@ -20,7 +20,6 @@ import (
 func cmdRun(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:    "run",
-		Short:  "worker run.",
 		Hidden: true, // user should not use this command directly
 		Run:    runCmd(w),
 	}

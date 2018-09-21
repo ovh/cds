@@ -339,7 +339,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 
 	tx, errTx := dbFunc().Begin()
 	if errTx != nil {
-		return nil, sdk.WrapError(errTx, "stopWorkflowRunHandler> Unable to create transaction")
+		return nil, sdk.WrapError(errTx, "stopWorkflowRun> Unable to create transaction")
 	}
 	defer tx.Rollback() //nolint
 
@@ -357,13 +357,13 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 		for _, wnr := range wn {
 			if wnr.SubNumber != run.LastSubNumber || (wnr.Status == sdk.StatusSuccess.String() ||
 				wnr.Status == sdk.StatusFail.String() || wnr.Status == sdk.StatusSkipped.String()) {
-				log.Debug("stopWorkflowRunHandler> cannot stop this workflow node run with current status %s", wnr.Status)
+				log.Debug("stopWorkflowRun> cannot stop this workflow node run with current status %s", wnr.Status)
 				continue
 			}
 
 			r1, errS := workflow.StopWorkflowNodeRun(ctx, dbFunc, store, p, wnr, stopInfos)
 			if errS != nil {
-				return nil, sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
+				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop workflow node run %d", wnr.ID)
 			}
 			_, _ = report.Merge(r1, nil)
 			wnr.Status = sdk.StatusStopped.String()
@@ -373,15 +373,66 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	run.LastExecution = time.Now()
 	run.Status = sdk.StatusStopped.String()
 	if errU := workflow.UpdateWorkflowRun(ctx, tx, run); errU != nil {
-		return nil, sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run %d", run.ID)
+		return nil, sdk.WrapError(errU, "stopWorkflowRun> Unable to update workflow run %d", run.ID)
 	}
 	report.Add(*run)
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "stopWorkflowRunHandler> Cannot commit transaction")
+		return nil, sdk.WrapError(err, "stopWorkflowRun> Cannot commit transaction")
+	}
+
+	if err := updateParentWorkflowRun(ctx, dbFunc, store, run); err != nil {
+		return nil, sdk.WrapError(err, "stopWorkflowRun")
 	}
 
 	return report, nil
+}
+
+func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, run *sdk.WorkflowRun) error {
+	if !run.HasParentWorkflow() {
+		return nil
+	}
+
+	tx, err := dbFunc().Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback() //nolint
+
+	parentProj, err := project.Load(
+		tx, store, run.RootRun().HookEvent.ParentWorkflow.Key,
+		getUser(ctx),
+		project.LoadOptions.WithVariables,
+		project.LoadOptions.WithFeatures,
+		project.LoadOptions.WithPlatforms,
+		project.LoadOptions.WithApplicationVariables,
+		project.LoadOptions.WithApplicationWithDeploymentStrategies,
+	)
+	if err != nil {
+		return sdk.WrapError(err, "updateParentWorkflowRun> Cannot load project")
+	}
+	parentWR, err := workflow.LoadRun(
+		tx,
+		run.RootRun().HookEvent.ParentWorkflow.Key,
+		run.RootRun().HookEvent.ParentWorkflow.Name,
+		run.RootRun().HookEvent.ParentWorkflow.Run,
+		workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	if err := workflow.UpdateParentWorkflowRun(ctx, dbFunc, store, run, parentProj, parentWR); err != nil {
+		return sdk.WrapError(err, "updateParentWorkflowRun")
+	}
+
+	return nil
 }
 
 func (api *API) getWorkflowNodeRunHistoryHandler() service.Handler {

@@ -1,0 +1,71 @@
+<div *ngIf="filterFunc" class="ui grid">
+    <div class="ui row">
+        <div class="ui wide column">
+            <div class="ui fluid input">
+                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter" (keyup)="filterChange()">
+            </div>
+        </div>
+    </div>
+</div>
+<table class="ui fixed celled table">
+    <thead>
+        <tr>
+            <th *ngFor="let c of columns" class="wide" [class.sortable]="c.sortable && c !== sortedColumn"
+                [class.ascending]="c === sortedColumn && sortedColumnDirection === 'asc'" [class.descending]="c === sortedColumn && sortedColumnDirection === 'desc'"
+                (click)="columnClick($event, c)">
+                {{ c.name | translate }}
+            </th>
+        </tr>
+    </thead>
+    <tbody *ngIf="loading">
+        <tr>
+            <td class="center" [colSpan]="columns.length">
+                <div class="ui active small inline loader"></div>
+                <div>{{ 'common_loading' | translate }}</div>
+            </td>
+        </tr>
+    </tbody>
+    <tbody *ngIf="!loading && dataForCurrentPage.length === 0">
+        <tr>
+            <td class="center" [colSpan]="columns.length">
+                <div>{{ 'common_no_data' | translate }}</div>
+            </td>
+        </tr>
+    </tbody>
+    <tbody *ngIf="!loading && dataForCurrentPage.length > 0">
+        <tr *ngFor="let d of dataForCurrentPage">
+            <ng-container *ngFor="let c of columns" [ngSwitch]="c.type">
+                <td *ngSwitchCase="'icon'" class="border">
+                    <i [ngClass]="c.selector(d)"></i>
+                </td>
+                <td *ngSwitchCase="'router-link'" class="border">
+                    <a class="ui" [routerLink]="c.selector(d).link">
+                        {{c.selector(d).value}}
+                    </a>
+                </td>
+                <td *ngSwitchCase="'link'" class="border">
+                    <a class="ui pointing" (click)="c.selector(d).callback()">
+                        {{c.selector(d).value}}
+                    </a>
+                </td>
+                <td *ngSwitchDefault class="border">{{c.selector(d)}}</td>
+            </ng-container>
+        </tr>
+    </tbody>
+    <tfoot tfoot *ngIf="nbElementsByPage && pagesCount > 1">
+        <tr>
+            <td [colSpan]="columns.length">
+                <div class="ui right floated pagination menu">
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
+                        [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </td>
+        </tr>
+    </tfoot>
+</table>

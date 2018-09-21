@@ -7,7 +7,7 @@
         <div class="ui form">
             <div class="grouped fields">
                 <div class="field">
-                    <sui-radio-button name="only" value="only" [(ngModel)]="deleteAll">{{ 'workflow_node_delete_alert_soft' | translate }}</sui-radio-button>
+                    <sui-radio-button name="only" value="only" [(ngModel)]="deleteAll" [isDisabled]="isChildOfOutgoingHook">{{ 'workflow_node_delete_alert_soft' | translate }}</sui-radio-button>
                 </div>
                 <div class="field">
                     <sui-radio-button name="all" value="all" [(ngModel)]="deleteAll"><span class="red">{{ 'workflow_node_delete_alert' | translate }}</span></sui-radio-button>

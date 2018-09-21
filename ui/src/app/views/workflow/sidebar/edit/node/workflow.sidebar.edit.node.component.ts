@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild} from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
@@ -35,7 +35,7 @@ import {WorkflowTriggerComponent} from '../../../../../shared/workflow/trigger/w
     styleUrls: ['./workflow.sidebar.edit.node.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarEditNodeComponent {
+export class WorkflowSidebarEditNodeComponent implements OnInit {
 
     // Project that contains the workflow
     @Input() project: Project;
@@ -72,15 +72,21 @@ export class WorkflowSidebarEditNodeComponent {
     loading = false;
     nameWarning: WorkflowPipelineNameImpact;
     permissionEnum = PermissionValue;
+    isChildOfOutgoingHook = false;
 
     constructor(private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
                 private _pipelineStore: PipelineStore, private _modalService: SuiModalService,
                 private _router: Router,
-                private _workflowCoreService: WorkflowCoreService, private _workflowEventStore: WorkflowEventStore) {
+                private _workflowCoreService: WorkflowCoreService, private _workflowEventStore: WorkflowEventStore) {}
+
+    ngOnInit(): void {
         this.nodeSub = this._workflowEventStore.selectedNode().subscribe(n => {
             if (n) {
                 if (!this.displayInputName) {
                     this.previousNodeName = n.name
+                }
+                if (this.workflow) {
+                    this.isChildOfOutgoingHook = Workflow.isChildOfOutgoingHook(this.workflow, null, null, n.id);
                 }
             }
             this.node = n;
@@ -236,9 +242,22 @@ export class WorkflowSidebarEditNodeComponent {
             } else {
                 clonedWorkflow = Workflow.removeNodesInNotifications(clonedWorkflow, clonedWorkflow.root, this.node.id, false);
 
-                clonedWorkflow.root.triggers.forEach((t, i) => {
-                    this.removeNode(clonedWorkflow, this.node.id, t.workflow_dest_node, clonedWorkflow.root, i);
-                });
+                if (clonedWorkflow.root.triggers) {
+                    clonedWorkflow.root.triggers.forEach((t, i) => {
+                        this.removeNode(clonedWorkflow, this.node.id, t.workflow_dest_node, clonedWorkflow.root, i);
+                    });
+                }
+
+                if (clonedWorkflow.root.outgoing_hooks) {
+                    clonedWorkflow.root.outgoing_hooks.forEach(h => {
+                        if (h.triggers) {
+                            h.triggers.forEach((t, i) => {
+                                this.removeNodeFromOutgoingHook(clonedWorkflow, this.node.id, t.workflow_dest_node, h, i);
+                            });
+                        }
+                    });
+                }
+
                 if (clonedWorkflow.joins) {
                     clonedWorkflow.joins.forEach(j => {
                         j.source_node_ref = j.source_node_ref.filter(id => {
@@ -275,6 +294,38 @@ export class WorkflowSidebarEditNodeComponent {
                 this.removeNode(workflow, id, t.workflow_dest_node, node, i);
             });
         }
+        if (node.outgoing_hooks) {
+            node.outgoing_hooks.forEach(h => {
+                if (h.triggers) {
+                    h.triggers.forEach((t, i) => {
+                        this.removeNodeFromOutgoingHook(workflow, id, t.workflow_dest_node, h, i);
+                    });
+                }
+            });
+        }
+    }
+
+    removeNodeFromOutgoingHook(workflow: Workflow, id: number, node: WorkflowNode, parent: WorkflowNodeOutgoingHook, index: number) {
+        if (!this.canEdit()) {
+            return;
+        }
+        if (node.id === id) {
+            parent.triggers.splice(index, 1);
+        }
+        if (node.triggers) {
+            node.triggers.forEach((t, i) => {
+                this.removeNode(workflow, id, t.workflow_dest_node, node, i);
+            });
+        }
+        if (node.outgoing_hooks) {
+            node.outgoing_hooks.forEach(h => {
+                if (h.triggers) {
+                    h.triggers.forEach((t, i) => {
+                        this.removeNodeFromOutgoingHook(workflow, id, t.workflow_dest_node, h, i);
+                    });
+                }
+            });
+        }
     }
 
     removeNode(workflow: Workflow, id: number, node: WorkflowNode, parent: WorkflowNode, index: number): Workflow {
@@ -288,6 +339,15 @@ export class WorkflowSidebarEditNodeComponent {
         if (node.triggers) {
             node.triggers.forEach((t, i) => {
                 workflow = this.removeNode(workflow, id, t.workflow_dest_node, node, i);
+            });
+        }
+        if (node.outgoing_hooks) {
+            node.outgoing_hooks.forEach(h => {
+                if (h.triggers) {
+                    h.triggers.forEach((t, i) => {
+                        this.removeNodeFromOutgoingHook(workflow, id, t.workflow_dest_node, h, i);
+                    });
+                }
             });
         }
         return workflow;

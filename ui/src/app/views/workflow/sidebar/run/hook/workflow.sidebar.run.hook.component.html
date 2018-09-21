@@ -8,16 +8,9 @@
             </div>
         </div>
     </h3>
-    <ng-container *ngIf="hook != null">
+    <ng-container *ngIf="hook">
         <div class="ui fluid vertical menu noborder">
         <a class="item noborder" (click)="openHookConfigModal()">
-            Configuration <i class="angle right icon"></i>
-        </a>
-        </div>
-    </ng-container>
-    <ng-container *ngIf="outgoingHook != null">
-        <div class="ui fluid vertical menu noborder">
-        <a class="item noborder" (click)="openOutgoingHookConfigModal()">
             Configuration <i class="angle right icon"></i>
         </a>
         </div>
@@ -64,15 +57,20 @@
             <div class="item padding pointing" *ngFor="let run of outgoingHookRuns" (click)="openOutgoingHookDetailsModal(run)">
                 <i class="icon ribbon-state"
                     [class.success]="run.status === pipelineStatusEnum.SUCCESS"
-                    [class.waiting]="run.status === pipelineStatusEnum.WAITING || run.status === pipelineStatusEnum.BUILING "
-                    [class.fail]="run.status === pipelineStatusEnum.FAILED">
+                    [class.waiting]="run.status === pipelineStatusEnum.WAITING || run.status === pipelineStatusEnum.BUILDING"
+                    [class.fail]="run.status === pipelineStatusEnum.FAIL">
                 </i>
                 <div class="content">
                     <div class="infoLine">
                         <i class="tag icon"></i> #{{ run.num }}.{{ run.subnumber }}
                     </div>
                     <div class="infoLine" *ngIf="run.callback">
-                        <i class="calendar icon"></i> {{ run.callback.done | amTimeAgo }}
+                        <ng-container *ngIf="run.status === pipelineStatusEnum.WAITING">
+                            <i class="calendar icon"></i> {{ 'common_waiting' | translate }}
+                        </ng-container>
+                        <ng-container *ngIf="run.status !== pipelineStatusEnum.WAITING">
+                            <i class="calendar icon"></i> {{ run.callback.start | amTimeAgo }}
+                        </ng-container>
                     </div>
                 </div>
             </div>

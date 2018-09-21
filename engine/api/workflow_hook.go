@@ -218,7 +218,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		defer tx.Rollback() // nolint
 
 		_, next := observability.Span(ctx, "project.Load")
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errP := project.Load(tx, api.Cache, key, getUser(ctx),
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures,
 			project.LoadOptions.WithPlatforms,
@@ -236,16 +236,23 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return err
 		}
 
-		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, api.mustDB, tx, api.Cache, proj, wr, hookRunID, callback)
+		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, tx, api.Cache, proj, wr, hookRunID, callback)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to update outgoing hook run status")
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
-		go workflow.SendEvent(api.mustDB(), key, report)
+		workflow.ResyncNodeRunsWithCommits(ctx, tx, api.Cache, proj, report)
 
 		if err := tx.Commit(); err != nil {
 			return err
+		}
+
+		log.Info("postWorkflowJobHookCallbackHandler> %+v", report)
+
+		go workflow.SendEvent(api.mustDB(), key, report)
+
+		if err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, wr); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler")
 		}
 
 		return nil

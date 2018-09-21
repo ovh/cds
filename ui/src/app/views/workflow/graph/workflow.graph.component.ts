@@ -319,7 +319,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
             join.triggers.forEach((t, id) => {
                 this.createNode(t.workflow_dest_node);
                 let options = {
-                    id: 'trigger-' + id,
+                    id: 'join-trigger-' + id,
                     style: 'stroke: ' + this.getJoinTriggerColor(t.id) + ';'
                 };
                 this.createEdge('join-' + join.ref, 'node-' + t.workflow_dest_node.ref, options);
@@ -420,6 +420,17 @@ export class WorkflowGraphComponent implements AfterViewInit {
                     style: 'stroke: #000000;'
                 };
                 this.createEdge('node-' + node.ref, 'outgoing-hook-' + h.ref, options);
+
+                if (h.triggers) {
+                    h.triggers.forEach(t => {
+                        this.createNode(t.workflow_dest_node);
+                        let opts = {
+                            id: 'outgoing-hook-trigger-' + t.id,
+                            style: 'stroke: ' + this.getTriggerColor(t.workflow_dest_node, t.id) + ';'
+                        };
+                        this.createEdge('outgoing-hook-' + h.ref, 'node-' + t.workflow_dest_node.ref, opts);
+                    });
+                }
             });
         }
 
@@ -427,8 +438,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
             node.forks.forEach(f => {
                 this.createFork(f);
                 let options = {
-                  id: 'fork-' + f.id,
-                  style: 'stroke: #000000;top: 20px;',
+                    id: 'fork-' + f.id,
+                    style: 'stroke: #000000;top: 20px;',
                     height: 10,
                 };
                 this.createEdge('node-' + node.ref, 'fork-' + f.name, options);
@@ -437,7 +448,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
                     f.triggers.forEach(t => {
                         this.createNode(t.workflow_dest_node);
                         let optForkTrig = {
-                            id: 'trigger-' + t.id,
+                            id: 'fork-trigger-' + t.id,
                             style: 'stroke: ' + this.getTriggerColor(node, t.id) + ';'
                         };
                         this.createEdge('fork-' + f.name, 'node-' + t.workflow_dest_node.ref, optForkTrig);

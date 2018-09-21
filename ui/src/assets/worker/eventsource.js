@@ -306,7 +306,11 @@ var EventSourcePolyfill = (function (global) {
                                 message = "EventSource's response has a Content-Type specifying an unsupported type: " + contentType.replace(/\s+/g, " ") + ". Aborting the connection.";
                             }
                             setTimeout(function () {
-                                throw new Error(message);
+                                event = new Event("error");
+                                that.dispatchEvent(event);
+                                fire(that, that.onerror, event);
+                                console.error(message);
+                                return;
                             }, 0);
                             isWrongStatusCodeOrContentType = true;
                         }

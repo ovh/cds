@@ -1,10 +1,9 @@
 
 export abstract class Table {
-
     protected currentPage = 1;
     public nbElementsByPage = 10;
 
-   abstract getData(): any[];
+    abstract getData(): any[];
 
     /**
      * Get the data for the current page.

@@ -7,7 +7,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {PermissionValue} from '../../../../../model/permission.model';
 import {Project} from '../../../../../model/project.model';
 import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/workflow.hook.model';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeOutgoingHook} from '../../../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeOutgoingHook, WorkflowNodeTrigger} from '../../../../../model/workflow.model';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
@@ -47,7 +47,6 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
     _hook: WorkflowNodeHook;
     permissionEnum = PermissionValue;
     newTrigger: WorkflowNode;
-
 
     constructor(
         private _workflowStore: WorkflowStore,
@@ -123,6 +122,30 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
         this.newTrigger = new WorkflowNode();
         if (this.workflowTrigger) {
             this.workflowTrigger.show();
+        }
+    }
+
+    saveTrigger(): void {
+        let workflowToUpdate = cloneDeep(this.workflow);
+        this.loading = true;
+        let h = Workflow.findOutgoingHook(workflowToUpdate, this.hook.id);
+        if (h) {
+            if (!h.triggers) {
+                h.triggers = new Array<WorkflowNodeTrigger>();
+            }
+            let t = new WorkflowNodeTrigger();
+            t.workflow_dest_node = this.newTrigger;
+            h.triggers.push(t);
+
+            this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
+                if (this.workflowTrigger && this.workflowTrigger.modal) {
+                    this.workflowTrigger.modal.approve(true);
+                }
+                this._workflowEventStore.unselectAll();
+                this._toast.success('', this._translate.instant('workflow_updated'));
+            });
         }
     }
 }

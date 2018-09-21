@@ -1,6 +1,6 @@
 <ng-template let-context let-modal="modal" #triggerModal>
-    <div class="header" *ngIf="!trigger || !trigger.id">{{ 'workflow_node_trigger_title' | translate: {pip: triggerSrcNode?.pipeline?.name} }}</div>
-    <div class="header" *ngIf="trigger && trigger.id">{{ 'workflow_node_trigger_title_edit' | translate: {pip: triggerSrcNode?.pipeline?.name} }}</div>
+    <div class="header" *ngIf="!trigger || !trigger.id">{{ 'workflow_node_trigger_title' | translate: {pip: source} }}</div>
+    <div class="header" *ngIf="trigger && trigger.id">{{ 'workflow_node_trigger_title_edit' | translate: {pip: source} }}</div>
     <div class="content">
         <div class="ui form" *ngIf="project && trigger">
             <ng-container *ngIf="!trigger|| !trigger.id">

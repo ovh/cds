@@ -24,7 +24,7 @@ export class WorkflowTriggerComponent {
     nodeWizard: WorkflowNodeAddWizardComponent;
 
     @Output() triggerChange = new EventEmitter<WorkflowNode>();
-    @Input() triggerSrcNode: WorkflowNode;
+    @Input() source: string;
     @Input() workflow: Workflow;
     @Input() project: Project;
     @Input() trigger: WorkflowNode;
@@ -32,8 +32,7 @@ export class WorkflowTriggerComponent {
 
     currentSection = 'pipeline';
 
-    constructor(private _modalService: SuiModalService) {
-    }
+    constructor(private _modalService: SuiModalService) {}
 
     show(): void {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.triggerModal);

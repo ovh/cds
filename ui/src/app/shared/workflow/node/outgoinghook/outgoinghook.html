@@ -1,6 +1,5 @@
 <div class="workflowHook pointing" (click)="openEditHookSidebar()" 
     [class.active]="isSelected"
-    [class.running]="currentHookRun?.status === pipelineStatus.BUILDING || currentHookRun?.status === pipelineStatus.WAITING"
     [class.building]="currentHookRun?.status === pipelineStatus.BUILDING || currentHookRun?.status === pipelineStatus.WAITING"
     [class.success]="currentHookRun?.status === pipelineStatus.SUCCESS"
     [class.fail]="currentHookRun?.status === pipelineStatus.FAIL || currentHookRun?.status === pipelineStatus.STOPPED">
@@ -16,7 +15,18 @@
 
     <ng-container *ngIf="hook.model.name === 'Workflow'" >
         <div class="details">
-            {{ hook.config['target_project']?.value }}/{{ hook.config['target_workflow']?.value }}//{{ hook.config['target_hook']?.value }}
+            <ng-container *ngIf="currentHookRun && (
+                currentHookRun.callback.status === pipelineStatus.BUILDING  ||
+                currentHookRun.callback.status === pipelineStatus.SUCCESS ||
+                currentHookRun.callback.status === pipelineStatus.FAIL )">
+                <a [routerLink]="['/project', hook.config['target_project'].value, 'workflow', hook.config['target_workflow'].value, 'run', currentHookRun.callback.workflow_run_number]"
+                    target="_blank">
+                        {{ hook.config['target_project']?.value }}/{{ hook.config['target_workflow']?.value }} #{{currentHookRun.callback.workflow_run_number}}
+                </a>
+            </ng-container>
+            <ng-container *ngIf="!currentHookRun || currentHookRun?.status === pipelineStatus.WAITING">
+                {{ hook.config['target_project']?.value }}/{{ hook.config['target_workflow']?.value }}/{{ hook.config['target_hook']?.value }}
+            </ng-container>
         </div>
     </ng-container>
 

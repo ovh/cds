@@ -17,15 +17,17 @@ export class WorkflowDeleteNodeComponent {
     @Output() deleteEvent = new EventEmitter<string>();
     @Input() node: WorkflowNode;
     @Input() isRoot: boolean;
+    @Input() isChildOfOutgoingHook: boolean;
     @Input() loading: boolean;
 
     deleteAll = 'only';
 
-    constructor(private _modalService: SuiModalService) {
-
-    }
+    constructor(private _modalService: SuiModalService) {}
 
     show(): void {
+        if (this.isChildOfOutgoingHook) {
+            this.deleteAll = 'all';
+        }
         const config = new TemplateModalConfig<boolean, boolean, void>(this.deleteModalTemplate);
         this.modal = this._modalService.open(config);
     }

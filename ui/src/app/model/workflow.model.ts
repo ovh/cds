@@ -353,6 +353,88 @@ export class Workflow {
         return hook;
     }
 
+    static findOutgoingHook(w: Workflow, id: number): WorkflowNodeOutgoingHook {
+        let hook = WorkflowNode.findOutgoingHook(w.root, id);
+        if (hook) {
+            return hook;
+        }
+        if (w.joins) {
+            for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        hook = WorkflowNode.findOutgoingHook(w.joins[i].triggers[j].workflow_dest_node, id);
+                        if (hook) {
+                            return hook;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    static isChildOfOutgoingHook(w: Workflow, n: WorkflowNode, h: WorkflowNodeOutgoingHook, nodeID: number): boolean {
+        if (h) {
+            if (h.triggers) {
+                for (let i = 0; i < h.triggers.length; i++) {
+                    if (h.triggers[i]) {
+                        if (h.triggers[i].workflow_dest_node.id === nodeID) {
+                            return true;
+                        }
+                        if (Workflow.isChildOfOutgoingHook(w, h.triggers[i].workflow_dest_node, null, nodeID)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        if (n) {
+            if (n.outgoing_hooks) {
+                for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                    if (Workflow.isChildOfOutgoingHook(w, null, n.outgoing_hooks[i], nodeID)) {
+                        return true;
+                    }
+                }
+            }
+            if (n.triggers) {
+                for (let i = 0; i < n.triggers.length; i++) {
+                    if (Workflow.isChildOfOutgoingHook(w, n.triggers[i].workflow_dest_node, null, nodeID)) {
+                        return true;
+                    }
+                }
+            }
+            if (n.forks) {
+                for (let i = 0; i < n.forks.length; i++) {
+                    if (n.forks[i].triggers) {
+                        for (let j = 0; j < n.forks[i].triggers.length; j++) {
+                            if (Workflow.isChildOfOutgoingHook(w, n.forks[i].triggers[j].workflow_dest_node, null, nodeID)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false
+        }
+
+        if (w.joins) {
+            for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        if (Workflow.isChildOfOutgoingHook(w, w.joins[i].triggers[j].workflow_dest_node, null, nodeID)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false
+        }
+
+        return Workflow.isChildOfOutgoingHook(w, w.root, null, nodeID);
+    }
+
     static removeOldRef(w: Workflow) {
         if (!w.joins) {
             return;

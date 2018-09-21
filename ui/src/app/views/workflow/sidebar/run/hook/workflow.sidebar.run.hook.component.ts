@@ -64,6 +64,27 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
                 this.loadOutgoingHookDetails();
             }
         });
+        this._workflowEventStore.outgoingHookEvents().subscribe(
+            hr => {
+                if (hr && this.outgoingHook && this.outgoingHook.id === hr.workflow_node_outgoing_hook_id) {
+                    if (this.wr && this.wr.id === hr.workflow_run_id && this.wr.num === hr.num) {
+                        if (!this.outgoingHookRuns) {
+                            this.outgoingHookRuns = new Array<WorkflowNodeOutgoingHookRun>();
+                        }
+                        let found = false;
+                        for (let i = 0; i < this.outgoingHookRuns.length; i++) {
+                            if (this.outgoingHookRuns[i].subnumber === hr.subnumber) {
+                                this.outgoingHookRuns[i] = hr;
+                                found = true;
+                            }
+                        }
+                        if (!found) {
+                            this.outgoingHookRuns.unshift(hr);
+                        }
+                    }
+                }
+            }
+        );
     }
 
     loadOutgoingHookDetails() {
@@ -114,13 +135,6 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
             this.workflowConfigHook.show();
         }
     }
-
-    openOutgoingHookConfigModal() {
-        if (this.workflowConfigOutgoingHook && this.workflowConfigOutgoingHook.show) {
-            this.workflowConfigOutgoingHook.show();
-        }
-    }
-
     openHookDetailsModal(taskExec: TaskExecution) {
         if (this.workflowDetailsHook && this.workflowDetailsHook.show) {
             this.workflowDetailsHook.show(taskExec);

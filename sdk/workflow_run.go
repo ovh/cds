@@ -127,6 +127,45 @@ func (r *WorkflowRun) TagExists(tag string) bool {
 	return false
 }
 
+func (r *WorkflowRun) RootRun() *WorkflowNodeRun {
+	rootNodeRuns, has := r.WorkflowNodeRuns[r.Workflow.Root.ID]
+	if !has || len(rootNodeRuns) < 1 {
+		return nil
+	}
+
+	rootRun := rootNodeRuns[0]
+	return &rootRun
+}
+
+func (r *WorkflowRun) HasParentWorkflow() bool {
+	rr := r.RootRun()
+	if rr == nil {
+		return false
+	}
+
+	if rr.HookEvent == nil {
+		return false
+	}
+
+	return rr.HookEvent.ParentWorkflow.Key != "" &&
+		rr.HookEvent.ParentWorkflow.Name != "" &&
+		rr.HookEvent.ParentWorkflow.Run != 0 &&
+		rr.HookEvent.ParentWorkflow.HookRunID != ""
+}
+
+func (r *WorkflowRun) GetOutgoingHookRun(id string) *WorkflowNodeOutgoingHookRun {
+	for i := range r.WorkflowNodeOutgoingHookRuns {
+		hookRuns := r.WorkflowNodeOutgoingHookRuns[i]
+		for j := range hookRuns {
+			hr := &hookRuns[j]
+			if hr.HookRunID == id {
+				return hr
+			}
+		}
+	}
+	return nil
+}
+
 //WorkflowRunInfo is an info on workflow run
 type WorkflowRunInfo struct {
 	APITime time.Time `json:"api_time,omitempty" db:"-"`
@@ -191,6 +230,7 @@ type WorkflowNodeOutgoingHookRun struct {
 	SubNumber                  int64                                `json:"subnumber"`
 	Hook                       WorkflowNodeOutgoingHook             `json:"hook"`
 	Callback                   *WorkflowNodeOutgoingHookRunCallback `json:"callback"`
+	Params                     map[string]string                    `json:"params"`
 }
 
 // WorkflowNodeOutgoingHookRunCallback is the callback coming from hooks uservice avec an outgoing hook execution
@@ -200,6 +240,7 @@ type WorkflowNodeOutgoingHookRunCallback struct {
 	Done                       time.Time `json:"done"`
 	Status                     string    `json:"status"`
 	Log                        string    `json:"log"`
+	WorkflowRunNumber          *int64    `json:"workflow_run_number"`
 }
 
 // WorkflowNodeRunVulnerabilityReport represents vulnerabilities report for the current node run
@@ -367,6 +408,12 @@ func (wnjr *WorkflowNodeJobRun) Translate(lang string) {
 type WorkflowNodeRunHookEvent struct {
 	Payload              map[string]string `json:"payload" db:"-"`
 	WorkflowNodeHookUUID string            `json:"uuid" db:"-"`
+	ParentWorkflow       struct {
+		Key       string `json:"key" db:"-"`
+		Name      string `json:"name" db:"-"`
+		Run       int64  `json:"run" db:"-"`
+		HookRunID string `hook_run_id:"uuid" db:"-"`
+	} `json:"parent_workflow" db:"-"`
 }
 
 //WorkflowNodeRunManual is an instanc of event received on a hook
