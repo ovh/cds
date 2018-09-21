@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -155,6 +156,19 @@ func (api *API) getUsersHandler() service.Handler {
 			return sdk.WrapError(err, "GetUsers: Cannot load user from db")
 		}
 		return service.WriteJSON(w, users, http.StatusOK)
+	}
+}
+
+// getUserMeHandler fetches current user data
+func (api *API) getUserMeHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		u := getUser(ctx)
+		if u == nil {
+			return fmt.Errorf("getUserMeHandler> user is nil")
+		}
+		u.Groups = nil
+		u.Permissions = sdk.UserPermissions{}
+		return service.WriteJSON(w, *u, http.StatusOK)
 	}
 }
 

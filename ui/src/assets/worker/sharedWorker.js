@@ -43,6 +43,7 @@ setInterval(() => {
         try {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', pingUrl , false, null, null);
+            xhr.setRequestHeader(headerKey, headerValue);
             xhr.send(null);
             if (xhr.status >= 400) {
                 if (!offline) {
@@ -57,6 +58,7 @@ setInterval(() => {
                 }
             }
         } catch (e) {
+            console.error(e);
             if (!offline) {
                 console.log('Closing SSE');
                 sse.close();
