@@ -354,6 +354,9 @@ func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
 	}
 
 	if code >= 400 {
+		if code == 404 {
+			return nil, fmt.Errorf("Cache not found")
+		}
 		return nil, fmt.Errorf("HTTP Code %d", code)
 	}
 
