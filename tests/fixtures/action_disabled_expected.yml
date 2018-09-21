@@ -1,0 +1,10 @@
+version: v1.0
+name: CDS_TestIT_Disabled
+enabled: false
+steps:
+- name: my empty script
+  script:
+  - '#!/bin/bash'
+  - set -e
+  - ""
+
