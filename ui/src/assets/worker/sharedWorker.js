@@ -58,6 +58,7 @@ setInterval(() => {
                 }
             }
         } catch (e) {
+            console.error(e);
             if (!offline) {
                 console.log('Closing SSE');
                 sse.close();
