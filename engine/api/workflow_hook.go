@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getWorkflowHooksHandler() service.Handler {
@@ -203,8 +203,6 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return errnum
 		}
 
-		log.Debug("postWorkflowJobHookCallbackHandler> receiving callback for %s", hookRunID)
-
 		var callback sdk.WorkflowNodeOutgoingHookRunCallback
 		if err := service.UnmarshalBody(r, &callback); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to unmarshal body")
@@ -236,6 +234,21 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return err
 		}
 
+		pv, err := project.GetAllVariableInProject(tx, wr.Workflow.ProjectID, project.WithClearPassword())
+		if err != nil {
+			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> Cannot load project variable")
+		}
+
+		secrets, errSecret := workflow.LoadSecrets(tx, api.Cache, nil, wr, pv)
+		if errSecret != nil {
+			return sdk.WrapError(errSecret, "postWorkflowJobHookCallbackHandler> Cannot load secrets")
+		}
+
+		// Hide secrets in payload
+		for _, s := range secrets {
+			callback.Log = strings.Replace(callback.Log, s.Value, "**"+s.Name+"**", -1)
+		}
+
 		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, tx, api.Cache, proj, wr, hookRunID, callback)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to update outgoing hook run status")
@@ -247,8 +260,6 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return err
 		}
 
-		log.Info("postWorkflowJobHookCallbackHandler> %+v", report)
-
 		go workflow.SendEvent(api.mustDB(), key, report)
 
 		if err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, wr); err != nil {
@@ -256,5 +267,45 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		}
 
 		return nil
+	}
+}
+
+func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+		hookRunID := vars["hookRunID"]
+		number, errnum := requestVarInt(r, "number")
+		if errnum != nil {
+			return errnum
+		}
+
+		db := api.mustDB()
+
+		wr, err := workflow.LoadRun(db, key, workflowName, number, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return err
+		}
+
+		hr := wr.GetOutgoingHookRun(hookRunID)
+		if hr == nil {
+			return sdk.ErrNotFound
+		}
+
+		pv, err := project.GetAllVariableInProject(db, wr.Workflow.ProjectID, project.WithClearPassword())
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowJobHookDetailsHandler> Cannot load project variable")
+		}
+
+		secrets, errSecret := workflow.LoadSecrets(db, api.Cache, nil, wr, pv)
+		if errSecret != nil {
+			return sdk.WrapError(errSecret, "getWorkflowJobHookDetailsHandler> Cannot load secrets")
+		}
+		mapSecrets := sdk.ParametersToMap(sdk.VariablesToParameters("", secrets))
+		hr.Params = sdk.ParametersMapMerge(hr.Params, mapSecrets)
+		return service.WriteJSON(w, hr, http.StatusOK)
 	}
 }

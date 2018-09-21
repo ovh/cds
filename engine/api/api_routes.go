@@ -255,6 +255,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", r.POST(api.postWorkflowJobHookCallbackHandler, AllowServices(true)))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/details", r.GET(api.getWorkflowJobHookDetailsHandler, NeedService()))
 
 	// Triggers
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger", r.GET(api.getTriggersHandler), r.POST(api.addTriggerHandler))

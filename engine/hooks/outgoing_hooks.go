@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -15,6 +14,7 @@ import (
 	"github.com/mitchellh/hashstructure"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -170,17 +170,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 		return nil
 	}
 
-	var hookRun *sdk.WorkflowNodeOutgoingHookRun
-loop:
-	for _, hrs := range wr.WorkflowNodeOutgoingHookRuns {
-		for i, hr := range hrs {
-			if hr.HookRunID == hookRunID {
-				hookRun = &hrs[i]
-				break loop
-			}
-		}
-	}
-
+	hookRun := wr.GetOutgoingHookRun(hookRunID)
 	if hookRun == nil {
 		handleError(errors.New("unable to find hook" + hookRunID))
 		return nil
@@ -232,20 +222,6 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 		return fmt.Errorf("workflow %s/%s #%s is not at status Building", pkey, workflow, run)
 	}
 
-	//Checking if the hook is still at status waiting
-	var hookRunFound bool
-	for _, hookRuns := range wr.WorkflowNodeOutgoingHookRuns {
-		for _, hookRun := range hookRuns {
-			if hookRun.HookRunID == hookRunID && hookRun.Status == sdk.StatusWaiting.String() {
-				hookRunFound = true
-			}
-		}
-	}
-
-	if !hookRunFound {
-		return fmt.Errorf("workflow %s/%s #%s has no hook run at status Waiting", pkey, workflow, run)
-	}
-
 	callbackURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/callback", pkey, workflow, run, hookRunID)
 	hookID, _ := strconv.ParseInt(t.Config[ConfigHookID].Value, 10, 64)
 	callbackData := sdk.WorkflowNodeOutgoingHookRunCallback{
@@ -274,14 +250,53 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 		}
 	}
 
-	req, err := http.NewRequest(t.WebHook.RequestMethod, t.WebHook.RequestURL, bytes.NewBuffer(t.WebHook.RequestBody))
+	hookRun := wr.GetOutgoingHookRun(hookRunID)
+	if hookRun == nil {
+		handleError(errors.New("unable to find hook" + hookRunID))
+		return nil
+	}
+
+	// Get Secrets
+	detailsURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/details", pkey, workflow, run, hookRunID)
+	if _, err := s.Client.(cdsclient.Raw).GetJSON(detailsURL, hookRun); err != nil {
+		handleError(sdk.WrapError(err, "unable to retrieve hook details"))
+		return nil
+	}
+
+	// Interpolate
+	method, err := interpolate.Do(t.WebHook.RequestMethod, hookRun.Params)
+	if err != nil {
+		handleError(err)
+		return nil
+	}
+
+	urls, err := interpolate.Do(t.WebHook.RequestURL, hookRun.Params)
+	if err != nil {
+		handleError(err)
+		return nil
+	}
+
+	body, err := interpolate.Do(string(t.WebHook.RequestBody), hookRun.Params)
+	if err != nil {
+		handleError(err)
+		return nil
+	}
+
+	req, err := http.NewRequest(method, urls, bytes.NewBuffer([]byte(body)))
 	if err != nil {
 		handleError(err)
 		return nil
 	}
 
 	for k, v := range t.WebHook.RequestHeader {
-		req.Header[k] = v
+		for _, val := range v {
+			val, err = interpolate.Do(val, hookRun.Params)
+			if err != nil {
+				handleError(err)
+				return nil
+			}
+			req.Header.Add(k, val)
+		}
 	}
 
 	var logBuffer bytes.Buffer
@@ -289,28 +304,23 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	dump, _ := httputil.DumpRequestOut(req, true)
 	logBuffer.Write(dump) // nolint
 
+	http.DefaultClient.Timeout = 60 * time.Second
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		handleError(err)
 		return nil
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		handleError(err)
-		return nil
-	}
-
-	if res.StatusCode >= 400 {
-		err := fmt.Errorf("HTTP Status %d : %v", res.StatusCode, string(body))
-		handleError(err)
-		return nil
-	}
-
 	// Prepare the callback
-	logBuffer.WriteString("\nResponse:\n")
+	logBuffer.WriteString("\n\nResponse:\n")
 	dump, _ = httputil.DumpResponse(res, true)
 	logBuffer.Write(dump) // nolint
+
+	if res.StatusCode >= 400 {
+		err := fmt.Errorf("HTTP Status %d", res.StatusCode)
+		handleError(err)
+		return nil
+	}
 
 	callbackData.Done = time.Now()
 	callbackData.Log = logBuffer.String()
