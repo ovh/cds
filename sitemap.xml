@@ -606,10 +606,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/health/dbtimes/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/action/delete/</loc>
   </url>
   
