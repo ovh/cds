@@ -9,6 +9,9 @@ import (
 
 // DeleteWorkflowData delete the relation representation of the workflow
 func DeleteWorkflowData(db gorp.SqlExecutor, w sdk.Workflow) error {
+	if w.WorkflowData == nil {
+		return nil
+	}
 	log.Debug("DeleteWorkflowData> deleting workflow data %d", w.ID)
 
 	// Delete all JOINs

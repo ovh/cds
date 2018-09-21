@@ -47,7 +47,9 @@ export class WorkflowRun {
     force_update: boolean;
 
     static retroMigrate(wr: WorkflowRun): any {
-        Workflow.retroMigrate(wr.workflow);
+        if (wr.version === 2) {
+            Workflow.retroMigrate(wr.workflow);
+        }
     }
 
     static fromEventRunWorkflow(event: Event): WorkflowRun {

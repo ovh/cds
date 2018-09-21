@@ -131,11 +131,13 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	}
 	w.PurgeTags = purgeTags
 
-	var data *sdk.WorkflowData
+	data := &sdk.WorkflowData{}
 	if err := gorpmapping.JSONNullString(res.WorkflowData, data); err != nil {
 		return sdk.WrapError(err, "Unable to unamrshall workflow data")
 	}
-	w.WorkflowData = data
+	if data.Node.ID != 0 {
+		w.WorkflowData = data
+	}
 
 	return nil
 }
@@ -389,7 +391,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
 		}
-		return nil, sdk.WrapError(err, "Load> Unable to load workflow: %s", query)
+		return nil, sdk.WrapError(err, "Load> Unable to load workflow")
 	}
 	next()
 
@@ -576,6 +578,17 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 	}
 
+	data := w.Migrate()
+	w.WorkflowData = &data
+	if err := InsertWorkflowData(db, w); err != nil {
+		return sdk.WrapError(err, "Insert> Unable to insert Workflow Data")
+	}
+
+	dbWorkflow := Workflow(*w)
+	if err := dbWorkflow.PostUpdate(db); err != nil {
+		return sdk.WrapError(err, "Insert> Unable to create workflow data")
+	}
+
 	event.PublishWorkflowAdd(p.Key, *w, u)
 
 	return nil
@@ -739,6 +752,11 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		}
 	}
 
+	// Delete workflow data
+	if err := DeleteWorkflowData(db, *oldWorkflow); err != nil {
+		return sdk.WrapError(err, "Update> unable to delete workflow data(%d)", w.ID)
+	}
+
 	// Delete all node ID
 	w.ResetIDs()
 
@@ -773,6 +791,12 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 
 	if w.Icon == "" {
 		w.Icon = oldWorkflow.Icon
+	}
+
+	d := w.Migrate()
+	w.WorkflowData = &d
+	if err := InsertWorkflowData(db, w); err != nil {
+		return sdk.WrapError(err, "Update> Unable to insert workflow data")
 	}
 
 	w.LastModified = time.Now()

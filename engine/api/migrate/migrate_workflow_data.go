@@ -73,6 +73,10 @@ func migrateWorkflowData(db *gorp.DbMap, store cache.Store, ID int64) error {
 	data := w.Migrate()
 	w.WorkflowData = &data
 
+	if err := workflow.InsertWorkflowData(tx, w); err != nil {
+		return sdk.WrapError(err, "migrateWorkflowData> Unable to insert Workflow Data")
+	}
+
 	dbWorkflow := workflow.Workflow(*w)
 	if err := dbWorkflow.PostUpdate(tx); err != nil {
 		return sdk.WrapError(err, "migrateWorkflowData> Unable to update workflow %d", ID)

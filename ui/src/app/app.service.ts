@@ -266,11 +266,10 @@ export class AppService {
                             event.workflow_name,
                             wnr.num,
                             wnr.id
-                        ).subscribe((wfNodeRun) => this._workflowEventStore.broadcastNodeRunEvents(wfNodeRun));
+                        ).subscribe((wfNodeRun) => this._workflowEventStore.broadcastNodeRunEvents(<WorkflowNodeRun>wfNodeRun));
                     } else {
                         this._workflowEventStore.broadcastNodeRunEvents(wnr);
                     }
-
                 }
                 break;
             case EventType.RUN_WORKFLOW_OUTGOING_HOOK:

@@ -27,8 +27,8 @@ type NodeHook struct {
 	ID          int64                  `json:"id" db:"id"`
 	UUID        string                 `json:"uuid" db:"uuid"`
 	Ref         string                 `json:"ref" db:"ref"`
-	NodeID      int64                  `json:"node_id" db:"workflow_node_id"`
-	HookModelID int64                  `json:"hook_model_id" db:"workflow_hook_model_id"`
+	NodeID      int64                  `json:"node_id" db:"node_id"`
+	HookModelID int64                  `json:"hook_model_id" db:"hook_model_id"`
 	Config      WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
