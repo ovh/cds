@@ -27,7 +27,7 @@ func (c *client) ServiceRegister(s sdk.Service) (string, error) {
 	c.service = &s
 
 	if !s.Uptodate {
-		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s %s %s -=-=-=-=-",
+		log.Warning("-=-=-=-=- Please update your cds engine binary - current version:%s %s %s -=-=-=-=-",
 			sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 	}
 
