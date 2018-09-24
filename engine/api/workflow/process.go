@@ -377,6 +377,11 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 		w.WorkflowNodeOutgoingHookRuns = make(map[int64][]sdk.WorkflowNodeOutgoingHookRun)
 	}
 
+	//FIX: For the moment, we trigger outgoing hooks on success
+	if nodeRun.Status != sdk.StatusSuccess.String() {
+		return report, nil
+	}
+
 	//Check if the WorkflowNodeOutgoingHookRun already exist with the same subnumber
 	hrs, ok := w.WorkflowNodeOutgoingHookRuns[hook.ID]
 	if ok {
@@ -391,7 +396,7 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 		if exitingHookRun != nil && !sdk.StatusIsTerminated(exitingHookRun.Status) {
 			log.Debug("hook %d already processed", hook.ID)
 			return nil, nil
-		} else if exitingHookRun != nil {
+		} else if exitingHookRun != nil && exitingHookRun.Status != sdk.StatusStopped.String() {
 			log.Debug("hook %d is over, we have to reprocess al the things", hook.ID)
 			for i := range hook.Triggers {
 				t := &hook.Triggers[i]
@@ -417,15 +422,21 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 		WorkflowNodeOutgoingHookID: hook.ID,
 		Hook:   *hook,
 		Params: sdk.ParametersToMap(nodeRun.BuildParameters),
+		Callback: &sdk.WorkflowNodeOutgoingHookRunCallback{
+			Start:  time.Now(),
+			Status: sdk.StatusWaiting.String(),
+		},
 	}
 
-	var taskExecution sdk.TaskExecution
-	if _, err := services.DoJSONRequest(ctx, srvs, "POST", "/task/execute", hookRun, &taskExecution); err != nil {
+	var task sdk.Task
+	if _, err := services.DoJSONRequest(ctx, srvs, "POST", "/task/execute", hookRun, &task); err != nil {
 		log.Warning("outgoing hook execution failed: %v", err)
 		hookRun.Status = sdk.StatusFail.String()
 	}
 
-	hookRun.Status = sdk.StatusWaiting.String()
+	if len(task.Executions) > 0 {
+		hookRun.TaskExecution = &task.Executions[0]
+	}
 
 	if w.WorkflowNodeOutgoingHookRuns[hook.ID] == nil {
 		w.WorkflowNodeOutgoingHookRuns[hook.ID] = make([]sdk.WorkflowNodeOutgoingHookRun, 0)

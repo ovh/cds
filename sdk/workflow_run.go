@@ -230,6 +230,7 @@ type WorkflowNodeOutgoingHookRun struct {
 	Hook                       WorkflowNodeOutgoingHook             `json:"hook"`
 	Callback                   *WorkflowNodeOutgoingHookRunCallback `json:"callback"`
 	Params                     map[string]string                    `json:"params"`
+	TaskExecution              *TaskExecution                       `json:"task_execution"`
 }
 
 // WorkflowNodeOutgoingHookRunCallback is the callback coming from hooks uservice avec an outgoing hook execution

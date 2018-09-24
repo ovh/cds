@@ -365,8 +365,51 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 			if errS != nil {
 				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop workflow node run %d", wnr.ID)
 			}
-			_, _ = report.Merge(r1, nil)
+			report.Merge(r1, nil) // nolint
 			wnr.Status = sdk.StatusStopped.String()
+		}
+	}
+
+	for _, hrs := range run.WorkflowNodeOutgoingHookRuns {
+		for i := range hrs {
+			hr := &hrs[i]
+			if hr.SubNumber != run.LastSubNumber || (hr.Status == sdk.StatusSuccess.String() ||
+				hr.Status == sdk.StatusFail.String() || hr.Status == sdk.StatusSkipped.String()) {
+				log.Debug("stopWorkflowRun> cannot stop this outgoing run with current status %s", hr.Status)
+				continue
+			}
+
+			r1, errS := workflow.StopWorkflowNodeOutgoingHookRun(ctx, tx, store, p, run, hr)
+			if errS != nil {
+				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop outgoing hook run %d", hr.HookRunID)
+			}
+			_, _ = report.Merge(r1, nil)
+			hr.Status = sdk.StatusStopped.String()
+
+			if hr.Hook.WorkflowHookModel.Name == sdk.WorkflowModelName && hr.Callback != nil && hr.Callback.WorkflowRunNumber != nil {
+				//Stop trigggered workflow
+				targetProject := hr.Hook.Config[sdk.HookConfigTargetProject].Value
+				targetWorkflow := hr.Hook.Config[sdk.HookConfigTargetWorkflow].Value
+
+				targetRun, errL := workflow.LoadRun(dbFunc(), targetProject, targetWorkflow, *hr.Callback.WorkflowRunNumber, workflow.LoadRunOptions{})
+				if errL != nil {
+					log.Error("stopWorkflowRunHandler> Unable to load last workflow run: %v", errL)
+					continue
+				}
+
+				targetProj, errP := project.Load(dbFunc(), store, targetProject, u)
+				if errP != nil {
+					log.Error("stopWorkflowRunHandler> Unable to load project", errP)
+					continue
+				}
+
+				r2, err := stopWorkflowRun(ctx, dbFunc, store, targetProj, targetRun, u)
+				if err != nil {
+					log.Error("stopWorkflowRun> Unable to stop workflow", err)
+					continue
+				}
+				report.Merge(r2, nil) // nolint
+			}
 		}
 	}
 

@@ -58,7 +58,7 @@
                 <i class="icon ribbon-state"
                     [class.success]="run.status === pipelineStatusEnum.SUCCESS"
                     [class.waiting]="run.status === pipelineStatusEnum.WAITING || run.status === pipelineStatusEnum.BUILDING"
-                    [class.fail]="run.status === pipelineStatusEnum.FAIL">
+                    [class.fail]="run.status === pipelineStatusEnum.FAIL || run.status === pipelineStatusEnum.STOPPED">
                 </i>
                 <div class="content">
                     <div class="infoLine">
