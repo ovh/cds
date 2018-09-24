@@ -80,7 +80,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				return report, false, sdk.ErrWorkflowNodeParentNotRun
 			}
 		}
-		r1, conditionOK, errP := processWorkflowNodeRun(ctx, db, store, proj, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual)
+		r1, conditionOK, errP := processWorkflowNodeRun(ctx, db, store, proj, w, start, int(nextSubNumber), sourceNodesRunID, nil, hookEvent, manual)
 		if errP != nil {
 			return report, false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -102,7 +102,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 			},
 		})
 
-		r1, conditionOK, errP := processWorkflowNodeRun(ctx, db, store, proj, w, w.Workflow.Root, 0, nil, hookEvent, manual)
+		r1, conditionOK, errP := processWorkflowNodeRun(ctx, db, store, proj, w, w.Workflow.Root, 0, nil, nil, hookEvent, manual)
 		if errP != nil {
 			return report, false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -278,7 +278,7 @@ func processWorklowNodeTrigger(ctx context.Context, db gorp.SqlExecutor, store c
 	}
 
 	//Keep the subnumber of the previous node in the graph
-	r1, conditionOk, errPwnr := processWorkflowNodeRun(ctx, db, store, proj, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil)
+	r1, conditionOk, errPwnr := processWorkflowNodeRun(ctx, db, store, proj, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil, nil)
 	if errPwnr != nil {
 		log.Error("processWorklowNodeTrigger> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, errPwnr)
 		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
@@ -328,7 +328,7 @@ func processWorklowNodeJoinTrigger(ctx context.Context, db gorp.SqlExecutor, sto
 	}
 
 	//Keep the subnumber of the previous node in the graph
-	r1, _, err := processWorkflowNodeRun(ctx, db, store, proj, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil)
+	r1, _, err := processWorkflowNodeRun(ctx, db, store, proj, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil, nil)
 	if err != nil {
 		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
@@ -341,7 +341,7 @@ func processWorklowNodeJoinTrigger(ctx context.Context, db gorp.SqlExecutor, sto
 	return report
 }
 
-func processWorklowOutgoingHookTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, subnumber int64, nodeRunID int64, t *sdk.WorkflowNodeOutgoingHookTrigger) *ProcessorReport {
+func processWorklowOutgoingHookTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, subnumber int64, hookRunID string, t *sdk.WorkflowNodeOutgoingHookTrigger) *ProcessorReport {
 	report := new(ProcessorReport)
 
 	// check if the destination node already exists on w.WorkflowNodeRuns with the same subnumber
@@ -354,7 +354,7 @@ func processWorklowOutgoingHookTrigger(ctx context.Context, db gorp.SqlExecutor,
 	}
 
 	//Keep the subnumber of the previous node in the graph
-	r1, _, errPwnr := processWorkflowNodeRun(ctx, db, store, proj, w, &t.WorkflowDestNode, int(subnumber), []int64{nodeRunID}, nil, nil)
+	r1, _, errPwnr := processWorkflowNodeRun(ctx, db, store, proj, w, &t.WorkflowDestNode, int(subnumber), nil, &hookRunID, nil, nil)
 	if errPwnr != nil {
 		log.Error("processWorklowOutgoingHookTrigger> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, errPwnr)
 		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
@@ -396,7 +396,7 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 			for i := range hook.Triggers {
 				t := &hook.Triggers[i]
 				log.Debug("checking trigger %+v", t)
-				r1 := processWorklowOutgoingHookTrigger(ctx, db, store, p, w, nodeRun.SubNumber, nodeRun.ID, t)
+				r1 := processWorklowOutgoingHookTrigger(ctx, db, store, p, w, nodeRun.SubNumber, exitingHookRun.HookRunID, t)
 				report.Merge(r1, nil) // nolint
 			}
 			return nil, nil
@@ -442,7 +442,7 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 }
 
 //processWorkflowNodeRun triggers execution of a node run
-func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
+func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, sourceOutgoingHookRun *string, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	exist, errN := nodeRunExist(db, n.ID, w.Number, subnumber)
 	if errN != nil {
 		return nil, true, sdk.WrapError(errN, "processWorkflowNodeRun> unable to check if node run exist")
@@ -518,8 +518,6 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 			}
 		}
 
-		//Merge the payloads from all the sources
-		_, next := observability.Span(ctx, "workflow.processWorkflowNodeRun.mergePayload")
 		for _, r := range runs {
 			e := dump.NewDefaultEncoder(new(bytes.Buffer))
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
@@ -539,7 +537,15 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
-		next()
+	}
+
+	if sourceOutgoingHookRun != nil {
+		hr := w.GetOutgoingHookRun(*sourceOutgoingHookRun)
+		if hr != nil {
+			if hr.Status == sdk.StatusFail.String() || hr.Status == sdk.StatusStopped.String() {
+				parentStatus = hr.Status
+			}
+		}
 	}
 
 	run.HookEvent = h
