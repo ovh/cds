@@ -120,7 +120,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 			WHERE
 				project_group.group_id = ANY(string_to_array($7, ',')::int[])
 			OR
-				$5 = ANY(string_to_array($5, ',')::int[])
+				$5 = ANY(string_to_array($7, ',')::int[])
 		)
 		AND workflow_node_run_job.queued >= $1
 		AND workflow_node_run_job.queued <= $2
