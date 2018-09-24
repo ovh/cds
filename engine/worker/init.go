@@ -44,7 +44,6 @@ const (
 	flagToken               = "token"
 	flagName                = "name"
 	flagModel               = "model"
-	flagHatchery            = "hatchery"
 	flagHatcheryName        = "hatchery-name"
 	flagDisableOldWorkflows = "disable-old-workflows"
 )
@@ -73,7 +72,6 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags.String(flagToken, "", "CDS Token")
 	flags.String(flagName, "", "Name of worker")
 	flags.Int(flagModel, 0, "Model of worker")
-	flags.Int(flagHatchery, 0, "Hatchery ID spawing worker")
 	flags.String(flagHatcheryName, "", "Hatchery Name spawing worker")
 	flags.Bool(flagDisableOldWorkflows, false, "Disable old workflows")
 }
