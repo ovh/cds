@@ -36,16 +36,7 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 
 	ui := newTermui()
 	ui.init()
-	ui.render()
-
-	go func() {
-		for range time.NewTicker(2 * time.Second).C {
-			if err := ui.loadData(); err != nil {
-				ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
-			}
-			ui.render()
-		}
-	}()
+	ui.staticRender()
 
 	termui.Loop()
 	return nil, nil
@@ -57,14 +48,12 @@ func newTermui() *Termui {
 
 // Termui wrapper designed for dashboard creation
 type Termui struct {
-	header, times *termui.Par
-
-	selected         string
+	baseURL          string
+	selected         int
 	queueTabSelected int
 	statusSelected   []sdk.Status
-	baseURL          string
-
-	msg string
+	currentJobURL    string
+	msg              string
 
 	me                             *sdk.User
 	status                         *sdk.MonitoringStatus
@@ -76,14 +65,12 @@ type Termui struct {
 	pipelineBuildJob               []sdk.PipelineBuildJob
 	workflowNodeJobRun             []sdk.WorkflowNodeJobRun
 	elapsedWorkflowNodeJobRun      time.Duration
-	workflowNodeJobRunCount        sdk.WorkflowNodeJobRunCount
 	elapsedWorkflowNodeJobRunCount time.Duration
 
-	// monitoring
+	header, times           *termui.Par
 	queue                   *cli.ScrollableList
 	statusHatcheriesWorkers *cli.ScrollableList
 	statusServices          *cli.ScrollableList
-	currentURL              string
 }
 
 func (ui *Termui) loadData() error {
@@ -137,8 +124,7 @@ func (ui *Termui) loadData() error {
 	}
 
 	start = time.Now()
-	ui.workflowNodeJobRunCount, err = client.QueueCountWorkflowNodeJobRun(nil, nil, "", nil)
-	if err != nil {
+	if _, err := client.QueueCountWorkflowNodeJobRun(nil, nil, "", nil); err != nil {
 		return err
 	}
 	ui.elapsedWorkflowNodeJobRunCount = time.Since(start)
@@ -170,13 +156,32 @@ func (ui *Termui) loadQueue() error {
 
 // Constants for each view of cds ui
 const (
-	QueueSelected = "queue"
+	queueSelected = iota
+	servicesSelected
 )
 
 func (ui *Termui) init() {
 	// init termui handlers
-	termui.Handle("/timer/1s", func(e termui.Event) {})
+	termui.Merge("/timer/2s", termui.NewTimerCh(time.Second*2))
+	termui.Handle("/timer/2s", func(e termui.Event) {
+		if err := ui.loadData(); err != nil {
+			ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+		}
+		ui.render()
+	})
+	termui.Handle("/sys/kbd/h", func(termui.Event) {
+		ui.msg = fmt.Sprintf("shortcuts: ⇥ to select panel, ↑ and ↓ to select line, ← and → to change filters, ↩ to open in ui")
+		ui.render()
+	})
 	termui.Handle("/sys/kbd/q", func(termui.Event) { termui.StopLoop() })
+	termui.Handle("/sys/kbd/<tab>", func(e termui.Event) {
+		if ui.selected < 1 {
+			ui.selected++
+		} else {
+			ui.selected = 0
+		}
+		ui.render()
+	})
 	termui.Handle("/sys/kbd", func(e termui.Event) {
 		ui.msg = fmt.Sprintf("No command for %v", e)
 		ui.render()
@@ -185,25 +190,19 @@ func (ui *Termui) init() {
 	termui.Handle("/sys/kbd/<up>", func(e termui.Event) { ui.moveUp() })
 	termui.Handle("/sys/kbd/<left>", func(e termui.Event) { ui.moveLeft() })
 	termui.Handle("/sys/kbd/<right>", func(e termui.Event) { ui.moveRight() })
-	termui.Handle("/sys/kbd/<enter>", func(e termui.Event) {
-		if ui.currentURL != "" {
-			open.Run(ui.currentURL)
-		}
-	})
+	termui.Handle("/sys/kbd/<enter>", func(e termui.Event) { ui.enter() })
 
 	ui.header = newPar()
 	ui.times = newPar()
 
-	ui.selected = QueueSelected
+	ui.selected = queueSelected
 
 	// prepare queue list
 	ui.queue = cli.NewScrollableList()
-	ui.queue.ItemFgColor = termui.ColorWhite
-	ui.queue.ItemBgColor = termui.ColorBlack
 	ui.queue.BorderLabel = " Queue "
 	ui.queue.Height = int(math.Max(float64(termui.TermHeight()-heightBottom), 4))
 	ui.queue.Width = termui.TermWidth()
-	ui.queue.Items = []string{"Loading..."}
+	ui.queue.SetItems("[loading...](fg-cyan)")
 	ui.queue.BorderBottom = false
 	ui.queue.BorderLeft = false
 	ui.queue.BorderRight = false
@@ -212,7 +211,7 @@ func (ui *Termui) init() {
 	ui.statusHatcheriesWorkers = cli.NewScrollableList()
 	ui.statusHatcheriesWorkers.BorderLabel = " Hatcheries "
 	ui.statusHatcheriesWorkers.Height = heightBottom
-	ui.statusHatcheriesWorkers.Items = []string{"[loading...](fg-cyan,bg-default)"}
+	ui.statusHatcheriesWorkers.SetItems("[loading...](fg-cyan)")
 	ui.statusHatcheriesWorkers.BorderBottom = false
 	ui.statusHatcheriesWorkers.BorderLeft = true
 	ui.statusHatcheriesWorkers.BorderRight = false
@@ -221,7 +220,7 @@ func (ui *Termui) init() {
 	ui.statusServices = cli.NewScrollableList()
 	ui.statusServices.BorderLabel = " Status "
 	ui.statusServices.Height = heightBottom
-	ui.statusServices.Items = []string{"[loading...](fg-cyan,bg-default)"}
+	ui.statusServices.SetItems("[loading...](fg-cyan)")
 	ui.statusServices.BorderBottom = false
 	ui.statusServices.BorderLeft = false
 	ui.statusServices.BorderRight = false
@@ -252,14 +251,14 @@ const (
 	heightBottom int = 25
 )
 
-func (ui *Termui) render() {
+func (ui *Termui) staticRender() {
 	checking, checkingColor := statusShort(sdk.StatusChecking.String())
 	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
 	building, buildingColor := statusShort(sdk.StatusBuilding.String())
 	success, successColor := statusShort(sdk.StatusSuccess.String())
 	fail, failColor := statusShort(sdk.StatusFail.String())
 	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
-	ui.header.Text = fmt.Sprintf("[CDS | (q)uit | Legend: ](fg-cyan)[Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s)",
+	ui.header.Text = fmt.Sprintf("[CDS | (h)elp | (q)uit | Legend: ](fg-cyan)[Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s)",
 		checking, checkingColor,
 		waiting, waitingColor,
 		building, buildingColor,
@@ -267,9 +266,13 @@ func (ui *Termui) render() {
 		fail, failColor,
 		disabled, disabledColor)
 
+	ui.commonRender()
+}
+
+func (ui *Termui) render() {
 	if ui.msg == "" {
 		ui.times.Text = fmt.Sprintf(
-			"[count queue wf %s](fg-cyan,bg-default) | [queue wf %s](fg-cyan,bg-default) | [workers %s](fg-cyan,bg-default) | [wModels %s](fg-cyan,bg-default) | [status %s](fg-cyan,bg-default)",
+			"[count queue wf %s](fg-cyan) | [queue wf %s](fg-cyan) | [workers %s](fg-cyan) | [wModels %s](fg-cyan) | [status %s](fg-cyan)",
 			sdk.Round(ui.elapsedWorkflowNodeJobRunCount, time.Millisecond).String(),
 			sdk.Round(ui.elapsedWorkflowNodeJobRun, time.Millisecond).String(),
 			sdk.Round(ui.elapsedWorkers, time.Millisecond).String(),
@@ -282,11 +285,14 @@ func (ui *Termui) render() {
 	}
 
 	ui.monitoringColorSelected()
-
 	ui.updateQueue(ui.baseURL)
 	ui.computeStatusHatcheriesWorkers(ui.workers)
 	ui.updateStatus()
 
+	ui.commonRender()
+}
+
+func (ui *Termui) commonRender() {
 	termui.Body.Align()
 	termui.Render(termui.Body)
 	termui.Render()
@@ -294,23 +300,27 @@ func (ui *Termui) render() {
 
 func (ui *Termui) moveDown() {
 	switch ui.selected {
-	case QueueSelected:
+	case queueSelected:
 		ui.queue.CursorDown()
+	case servicesSelected:
+		ui.statusServices.CursorDown()
 	}
 	ui.render()
 }
 
 func (ui *Termui) moveUp() {
 	switch ui.selected {
-	case QueueSelected:
+	case queueSelected:
 		ui.queue.CursorUp()
+	case servicesSelected:
+		ui.statusServices.CursorUp()
 	}
 	ui.render()
 }
 
 func (ui *Termui) moveLeft() {
 	switch ui.selected {
-	case QueueSelected:
+	case queueSelected:
 		ui.decrementQueueFilter()
 	}
 	ui.render()
@@ -318,10 +328,33 @@ func (ui *Termui) moveLeft() {
 
 func (ui *Termui) moveRight() {
 	switch ui.selected {
-	case QueueSelected:
+	case queueSelected:
 		ui.incrementQueueFilter()
 	}
 	ui.render()
+}
+
+func (ui *Termui) enter() {
+	switch ui.selected {
+	case queueSelected:
+		if ui.currentJobURL != "" {
+			if err := open.Run(ui.currentJobURL); err != nil {
+				ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+				ui.render()
+			}
+		}
+	case servicesSelected:
+		item := ui.statusServices.GetItems()[ui.statusServices.GetCursor()]
+		if ui.me != nil && ui.me.Admin && strings.Contains(item, "Global/hooks") {
+			if err := open.Run(fmt.Sprintf("%s/admin/hooks-tasks", ui.baseURL)); err != nil {
+				ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+				ui.render()
+			}
+		} else {
+			ui.msg = "nothing to do for this service"
+			ui.render()
+		}
+	}
 }
 
 func (ui *Termui) incrementQueueFilter() {
@@ -348,31 +381,43 @@ func (ui *Termui) decrementQueueFilter() {
 
 func (ui *Termui) monitoringColorSelected() {
 	ui.queue.BorderFg = termui.ColorDefault
-	ui.statusHatcheriesWorkers.BorderFg = termui.ColorDefault
 	ui.statusServices.BorderFg = termui.ColorDefault
+	ui.statusHatcheriesWorkers.BorderFg = termui.ColorDefault
+
+	ui.queue.SetCursorVisibility(ui.selected == queueSelected)
+	ui.statusServices.SetCursorVisibility(ui.selected == servicesSelected)
 
 	switch ui.selected {
-	case QueueSelected:
+	case queueSelected:
 		ui.queue.BorderFg = termui.ColorRed
+	case servicesSelected:
+		ui.statusServices.BorderFg = termui.ColorRed
 	}
 
 	termui.Render(ui.queue, ui.statusHatcheriesWorkers, ui.statusServices)
 }
 
 func (ui *Termui) updateStatus() {
-	items := []string{}
+	var items []string
 	if ui.status != nil {
 		for _, l := range ui.status.Lines {
-			if l.Status == sdk.MonitoringStatusWarn {
-				items = append(items, fmt.Sprintf("[%s](fg-yellow,bg-default)", l.String()))
-			} else if l.Status != sdk.MonitoringStatusOK {
-				items = append(items, fmt.Sprintf("[%s](fg-white,bg-red)", l.String()))
-			} else if strings.Contains(l.Component, "Global") {
-				items = append(items, fmt.Sprintf("[%s](fg-white,bg-default)", l.String()))
+			lineSelected := ui.selected == servicesSelected && len(items) == ui.statusServices.GetCursor()
+
+			if !lineSelected {
+				if l.Status == sdk.MonitoringStatusWarn {
+					items = append(items, fmt.Sprintf("[%s](fg-yellow)", l.String()))
+				} else if l.Status != sdk.MonitoringStatusOK {
+					items = append(items, fmt.Sprintf("[%s](bg-red)", l.String()))
+				} else if strings.Contains(l.Component, "Global") {
+					items = append(items, fmt.Sprintf("%s", l.String()))
+				}
+			} else if l.Status != sdk.MonitoringStatusOK ||
+				strings.Contains(l.Component, "Global") {
+				items = append(items, fmt.Sprintf("%s", l.String()))
 			}
 		}
 	}
-	ui.statusServices.Items = items
+	ui.statusServices.SetItems(items...)
 }
 
 func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
@@ -411,7 +456,7 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		status[w.Status.String()] = status[w.Status.String()] + 1
 	}
 
-	items := []string{}
+	var items []string
 	sort.Strings(hatcheryNames)
 	for _, name := range hatcheryNames {
 		v := hatcheries[name]
@@ -419,22 +464,22 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		for _, status := range statusTitle {
 			if v[status] > 0 {
 				icon, color := statusShort(status)
-				t += fmt.Sprintf("[ %d %s ](%s,bg-default)", v[status], icon, color)
+				t = fmt.Sprintf("%s[ %d %s ](%s)", t, v[status], icon, color)
 			}
 		}
 		if len(t) == 0 {
-			t += fmt.Sprintf("[ _ ](fg-white,bg-default)")
+			t = fmt.Sprintf("%s[ _ ](fg-white)", t)
 		}
-		t += fmt.Sprintf("[ %s](fg-white,bg-default)", name)
+		t = fmt.Sprintf("%s[ %s](fg-white)", t, name)
 		items = append(items, t)
 	}
-	ui.statusHatcheriesWorkers.Items = items
+	ui.statusHatcheriesWorkers.SetItems(items...)
 
 	sort.Strings(statusTitle)
 	title := " Hatcheries "
 	for _, s := range statusTitle {
 		icon, color := statusShort(s)
-		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
+		title = fmt.Sprintf("%s[%d %s](%s) ", title, status[s], icon, color)
 	}
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
@@ -461,8 +506,8 @@ func (ui *Termui) updateQueue(baseURL string) {
 		mapLines[s] = append(mapLines[s], ui.generateQueueJobLine(false, lineCount, job.ID,
 			job.Parameters, job.Job, duration, job.BookedBy, baseURL, job.Status))
 
-		if lineCount == ui.queue.Cursor-1 {
-			ui.currentURL = generateQueueJobURL(false, baseURL, job.Parameters)
+		if lineCount == ui.queue.GetCursor() {
+			ui.currentJobURL = generateQueueJobURL(false, baseURL, job.Parameters)
 		}
 
 		lineCount++
@@ -481,34 +526,36 @@ func (ui *Termui) updateQueue(baseURL string) {
 		mapLines[s] = append(mapLines[s], ui.generateQueueJobLine(true, lineCount, job.ID, job.Parameters, job.Job,
 			time.Since(job.Queued), job.BookedBy, baseURL, job.Status))
 
-		if lineCount == ui.queue.Cursor-1 {
-			ui.currentURL = generateQueueJobURL(true, baseURL, job.Parameters)
+		if lineCount == ui.queue.GetCursor() {
+			ui.currentJobURL = generateQueueJobURL(true, baseURL, job.Parameters)
 		}
 
 		lineCount++
 	}
 
-	ui.queue.Items = []string{fmt.Sprintf("[  _ %s %s%s %s ➤ %s ➤ %s ➤ %s](fg-cyan,bg-default)",
+	ui.queue.SetHeader(fmt.Sprintf("[_ %s %s%s %s ➤ %s ➤ %s ➤ %s](fg-cyan)",
 		pad("since", 9), pad("by", 27), pad("run", 7), pad("project/workflow", 30),
-		pad("node", 20), pad("triggered by", 17), "requirements")}
+		pad("node", 20), pad("triggered by", 17), "requirements"))
+	var items []string
 	for _, s := range ui.statusSelected {
 		if m, ok := mapLines[s]; ok {
 			for _, l := range m {
-				ui.queue.Items = append(ui.queue.Items, l)
+				items = append(items, l)
 			}
 		}
 	}
+	ui.queue.SetItems(items...)
 
-	ui.queue.BorderLabel = fmt.Sprintf("Queue(%s):%d", fmt.Sprintf("%v", ui.statusSelected),
-		ui.workflowNodeJobRunCount.Count+int64(len(ui.pipelineBuildJob)))
+	jobCount := len(ui.pipelineBuildJob) + len(ui.workflowNodeJobRun)
+	ui.queue.BorderLabel = fmt.Sprintf(" Queue(%s):%d ", fmt.Sprintf("%v", ui.statusSelected), jobCount)
 
 	for _, s := range ui.statusSelected {
 		switch s {
 		case sdk.StatusBuilding:
-			ui.queue.BorderLabel = fmt.Sprintf("%s - Max Building:%s", ui.queue.BorderLabel,
+			ui.queue.BorderLabel = fmt.Sprintf("%s- Max Building:%s ", ui.queue.BorderLabel,
 				sdk.Round(maxBuilding, time.Second).String())
 		case sdk.StatusWaiting:
-			ui.queue.BorderLabel = fmt.Sprintf("%s - Max Waiting:%s", ui.queue.BorderLabel,
+			ui.queue.BorderLabel = fmt.Sprintf("%s- Max Waiting:%s ", ui.queue.BorderLabel,
 				sdk.Round(maxWaiting, time.Second).String())
 		}
 	}
@@ -534,9 +581,9 @@ func generateQueueJobURL(isWJob bool, baseURL string, parameters []sdk.Parameter
 
 func (ui *Termui) generateQueueJobLine(isWJob bool, idx int, id int64, parameters []sdk.Parameter, executedJob sdk.ExecutedJob,
 	duration time.Duration, bookedBy sdk.Service, baseURL, status string) string {
-	req := ""
+	var req string
 	for _, r := range executedJob.Job.Action.Requirements {
-		req += fmt.Sprintf("%s:%s ", r.Type, r.Value)
+		req = fmt.Sprintf("%s%s:%s ", req, r.Type, r.Value)
 	}
 	prj := getVarsInPbj("cds.project", parameters)
 	app := getVarsInPbj("cds.application", parameters)
@@ -548,28 +595,14 @@ func (ui *Termui) generateQueueJobLine(isWJob bool, idx int, id int64, parameter
 	bra := getVarsInPbj("git.branch", parameters)
 	triggeredBy := getVarsInPbj("cds.triggered_by.username", parameters)
 
-	var fgColor string
-
 	row := make([]string, 6)
-
-	c := "bg-default"
-	if status == sdk.StatusWaiting.String() {
-		if duration > 60*time.Second {
-			c = "bg-red"
-		} else if duration > 15*time.Second {
-			c = "bg-yellow"
-		}
-	}
-
 	row[0] = pad(fmt.Sprintf(sdk.Round(duration, time.Second).String()), 9)
 	if isWJob {
-		fgColor = "fg-white"
 		row[2] = pad(fmt.Sprintf("%s", run), 7)
 		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+workflow, 30), pad(node, 20))
 	} else {
 		row[2] = pad(fmt.Sprintf("%d", id), 7)
 		row[3] = fmt.Sprintf("%s ➤ %s", pad(prj+"/"+app, 30), pad(pip+"/"+bra+"/"+env, 20))
-		fgColor = "fg-magenta"
 	}
 
 	if status == sdk.StatusBuilding.String() {
@@ -585,10 +618,23 @@ func (ui *Termui) generateQueueJobLine(isWJob bool, idx int, id int64, parameter
 
 	_, color := statusShort(status)
 	color = strings.Replace(color, "fg", "bg", 1)
-	item := fmt.Sprintf("  [ ](%s)[ ](bg-default)[%s](%s)[%s %s %s %s %s](%s,bg-default)",
-		color, row[0], c, row[1], row[2], row[3], row[4], row[5], fgColor)
 
-	return item
+	var c string
+	if status == sdk.StatusWaiting.String() {
+		if duration > 60*time.Second {
+			c = "fg-black,bg-red"
+		} else if duration > 15*time.Second {
+			c = "fg-black,bg-yellow"
+		}
+	}
+
+	if isWJob {
+		return fmt.Sprintf("[ ](%s) [%s](%s)%s %s %s %s %s",
+			color, row[0], c, row[1], row[2], row[3], row[4], row[5])
+	}
+
+	return fmt.Sprintf("[ ](%s) [%s](%s)[%s %s %s %s %s](fg-magenta)",
+		color, row[0], c, row[1], row[2], row[3], row[4], row[5])
 }
 
 func statusShort(status string) (string, string) {
