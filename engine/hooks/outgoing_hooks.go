@@ -173,8 +173,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 	hookRun := wr.GetOutgoingHookRun(hookRunID)
 	if hookRun == nil {
-		handleError(errors.New("unable to find hook" + hookRunID))
-		return nil
+		return handleError(errors.New("unable to find hook" + hookRunID))
 	}
 
 	evt := sdk.WorkflowNodeRunHookEvent{
