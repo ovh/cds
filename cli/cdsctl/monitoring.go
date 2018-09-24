@@ -156,8 +156,9 @@ func (ui *Termui) loadQueue() error {
 
 // Constants for each view of cds ui
 const (
-	queueSelected = iota
-	servicesSelected
+	nothingSelected  = -1
+	queueSelected    = 0
+	servicesSelected = 1
 )
 
 func (ui *Termui) init() {
@@ -170,7 +171,7 @@ func (ui *Termui) init() {
 		ui.render()
 	})
 	termui.Handle("/sys/kbd/h", func(termui.Event) {
-		ui.msg = fmt.Sprintf("shortcuts: ⇥ to select panel, ↑ and ↓ to select line, ← and → to change filters, ↩ to open in ui")
+		ui.msg = fmt.Sprintf("shortcuts: ⇥ to select panel, esc to deselect panel, ↑ and ↓ to select line, ← and → to change filters, ↩ to open in ui")
 		ui.render()
 	})
 	termui.Handle("/sys/kbd/q", func(termui.Event) { termui.StopLoop() })
@@ -180,6 +181,10 @@ func (ui *Termui) init() {
 		} else {
 			ui.selected = 0
 		}
+		ui.render()
+	})
+	termui.Handle("/sys/kbd/<escape>", func(e termui.Event) {
+		ui.selected = nothingSelected
 		ui.render()
 	})
 	termui.Handle("/sys/kbd", func(e termui.Event) {
@@ -195,7 +200,7 @@ func (ui *Termui) init() {
 	ui.header = newPar()
 	ui.times = newPar()
 
-	ui.selected = queueSelected
+	ui.selected = nothingSelected
 
 	// prepare queue list
 	ui.queue = cli.NewScrollableList()
@@ -547,7 +552,9 @@ func (ui *Termui) updateQueue(baseURL string) {
 	ui.queue.SetItems(items...)
 
 	jobCount := len(ui.pipelineBuildJob) + len(ui.workflowNodeJobRun)
-	ui.queue.BorderLabel = fmt.Sprintf(" Queue(%s):%d ", fmt.Sprintf("%v", ui.statusSelected), jobCount)
+
+	ui.queue.BorderLabel = fmt.Sprintf(" Queue(%s):%d ",
+		strings.Join(sdk.StatusToStrings(ui.statusSelected), ","), jobCount)
 
 	for _, s := range ui.statusSelected {
 		switch s {
