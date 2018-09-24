@@ -636,13 +636,12 @@ export class Workflow {
     }
 
     static getAllHooks(workflow: Workflow): Array<WorkflowNodeHook> {
-        let res = new Array<WorkflowNodeHook>();
-        res.push(...WorkflowNode.getAllHooks(workflow.root));
+        let res = WorkflowNode.getAllHooks(workflow.root);
         if (workflow.joins) {
             workflow.joins.forEach(j => {
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        res.push(...WorkflowNode.getAllHooks(t.workflow_dest_node));
+                        res = res.concat(WorkflowNode.getAllHooks(t.workflow_dest_node));
                     })
                 }
             })
@@ -1114,7 +1113,7 @@ export class WorkflowNode {
             for (let i = 0; i < n.outgoing_hooks.length; i++) {
                 if (n.outgoing_hooks[i].triggers) {
                     for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
-                        nodes.push(...WorkflowNode.getAllNodes(n.outgoing_hooks[i].triggers[j].workflow_dest_node));
+                        nodes = nodes.concat(WorkflowNode.getAllNodes(n.outgoing_hooks[i].triggers[j].workflow_dest_node));
                     }
                 }
             }
@@ -1163,11 +1162,10 @@ export class WorkflowNode {
     }
 
     static getAllHooks(n: WorkflowNode): Array<WorkflowNodeHook> {
-        let res = new Array<WorkflowNodeHook>();
-        res.push(...n.hooks);
+        let res = n.hooks;
         if (n.triggers) {
             n.triggers.forEach(t => {
-                res.push(...WorkflowNode.getAllHooks(t.workflow_dest_node));
+                res = res.concat(WorkflowNode.getAllHooks(t.workflow_dest_node));
             });
         }
         return res;

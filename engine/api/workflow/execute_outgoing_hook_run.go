@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// UpdateOutgoingHookRunStatus updates the status and callback of a outgoing hook run, and then it reprocess the whole workflow
 func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, hookRunID string, callback sdk.WorkflowNodeOutgoingHookRunCallback) (*ProcessorReport, error) {
 	ctx, end := observability.Span(ctx, "workflow.UpdateOutgoingHookRunStatus")
 	defer end()
@@ -49,6 +50,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 
 }
 
+// UpdateParentWorkflowRun updates the workflow which triggered the current workflow
 func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, wr *sdk.WorkflowRun, parentProj *sdk.Project, parentWR *sdk.WorkflowRun) error {
 	_, end := observability.Span(ctx, "workflow.UpdateParentWorkflowRun")
 	defer end()
