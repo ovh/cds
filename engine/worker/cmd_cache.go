@@ -85,30 +85,30 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		portS := os.Getenv(WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("worker cache push > %s not found, are you running inside a CDS worker job?\n", WorkerServerPort)
+			sdk.Exit("worker cache push > %s not found, are you running inside a CDS worker job?", WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
 		if errPort != nil {
-			sdk.Exit("worker cache push > Cannot parse '%s' as a port number : %s\n", portS, errPort)
+			sdk.Exit("worker cache push > Cannot parse '%s' as a port number : %s", portS, errPort)
 		}
 
 		if len(args) < 2 {
-			sdk.Exit("worker cache push > Wrong usage: Example : worker cache push myTagValue filea fileb filec\n")
+			sdk.Exit("worker cache push > Wrong usage: Example : worker cache push myTagValue filea fileb filec")
 		}
 
 		files := make([]string, len(args)-1)
 		for i, arg := range args[1:] {
 			absPath, err := filepath.Abs(arg)
 			if err != nil {
-				sdk.Exit("worker cache push > cannot have absolute path for (%s) : %s\n", absPath, err)
+				sdk.Exit("worker cache push > cannot have absolute path for (%s) : %s", absPath, err)
 			}
 			files[i] = absPath
 		}
 
 		cwd, err := os.Getwd()
 		if err != nil {
-			sdk.Exit("worker cache push > Cannot find working directory : %s\n", err)
+			sdk.Exit("worker cache push > Cannot find working directory : %s", err)
 		}
 
 		c := sdk.Cache{
@@ -119,7 +119,7 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		data, errMarshal := json.Marshal(c)
 		if errMarshal != nil {
-			sdk.Exit("worker cache push > internal error (%s)\n", errMarshal)
+			sdk.Exit("worker cache push > internal error (%s)", errMarshal)
 		}
 
 		fmt.Printf("Worker cache push in progress... (tag: %s)\n", args[0])
@@ -129,7 +129,7 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			bytes.NewReader(data),
 		)
 		if errRequest != nil {
-			sdk.Exit("worker cache push > cannot post worker cache push (Request): %s\n", errRequest)
+			sdk.Exit("worker cache push > cannot post worker cache push (Request): %s", errRequest)
 		}
 
 		client := http.DefaultClient
@@ -137,17 +137,17 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		resp, errDo := client.Do(req)
 		if errDo != nil {
-			sdk.Exit("worker cache push > cannot post worker cache push (Do): %s\n", errDo)
+			sdk.Exit("worker cache push > cannot post worker cache push (Do): %s", errDo)
 		}
 		defer resp.Body.Close()
 
 		if resp.StatusCode >= 300 {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				sdk.Exit("cache push HTTP error %v\n", err)
+				sdk.Exit("cache push HTTP error %v", err)
 			}
 			cdsError := sdk.DecodeError(body)
-			sdk.Exit("Error: http code %d : %v\n", resp.StatusCode, cdsError)
+			sdk.Exit("Error: http code %d : %v", resp.StatusCode, cdsError)
 		}
 
 		fmt.Printf("Worker cache push with success (tag: %s)\n", args[0])
@@ -183,7 +183,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 	if errTar != nil {
 		errTar = sdk.Error{
 			Message: "worker cache push > Cannot tar : " + errTar.Error(),
-			Status:  http.StatusInternalServerError,
+			Status:  http.StatusBadRequest,
 		}
 		log.Error("%v", errTar)
 		writeError(w, r, errTar)
@@ -257,7 +257,7 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		portS := os.Getenv(WorkerServerPort)
 		if portS == "" {
-			sdk.Exit("worker cache pull > %s not found, are you running inside a CDS worker job?\n", WorkerServerPort)
+			sdk.Exit("worker cache pull > %s not found, are you running inside a CDS worker job?", WorkerServerPort)
 		}
 
 		port, errPort := strconv.Atoi(portS)
@@ -271,7 +271,7 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 		if err != nil {
-			sdk.Exit("worker cache pull > cannot get current path: %s\n", err)
+			sdk.Exit("worker cache pull > cannot get current path: %s", err)
 		}
 
 		fmt.Printf("Worker cache pull in progress... (tag: %s)\n", args[0])
@@ -281,7 +281,7 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			nil,
 		)
 		if errRequest != nil {
-			sdk.Exit("worker cache pull > cannot post worker cache pull with tag %s (Request): %s\n", args[0], errRequest)
+			sdk.Exit("worker cache pull > cannot post worker cache pull with tag %s (Request): %s", args[0], errRequest)
 		}
 
 		client := http.DefaultClient
@@ -289,16 +289,16 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		resp, errDo := client.Do(req)
 		if errDo != nil {
-			sdk.Exit("worker cache pull > cannot post worker cache pull (Do): %s\n", errDo)
+			sdk.Exit("worker cache pull > cannot post worker cache pull (Do): %s", errDo)
 		}
 
 		if resp.StatusCode >= 300 {
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				sdk.Exit("cache pull HTTP error %v\n", err)
+				sdk.Exit("cache pull HTTP error %v", err)
 			}
 			cdsError := sdk.DecodeError(body)
-			sdk.Exit("Error: %v -> %s\n", cdsError, string(body))
+			sdk.Exit("Error: %v", cdsError)
 		}
 
 		fmt.Printf("Worker cache pull with success (tag: %s)\n", args[0])
@@ -321,7 +321,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		err = sdk.Error{
 			Message: "worker cache pull > Cannot pull cache : " + err.Error(),
-			Status:  http.StatusInternalServerError,
+			Status:  http.StatusNotFound,
 		}
 		writeError(w, r, err)
 		return
