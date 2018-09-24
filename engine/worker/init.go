@@ -173,14 +173,6 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 		}
 	}
 
-	hatchS := FlagString(cmd, flagHatchery)
-	var errH error
-	w.hatchery.id, errH = strconv.ParseInt(hatchS, 10, 64)
-	if errH != nil {
-		log.Error("WARNING: Invalid hatchery ID (%v)", errH)
-		os.Exit(2)
-	}
-
 	// could be empty
 	w.hatchery.name = FlagString(cmd, flagHatcheryName)
 	w.apiEndpoint = FlagString(cmd, flagAPI)
