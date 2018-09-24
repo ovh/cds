@@ -26,30 +26,28 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 	//Check if the WorkflowNodeOutgoingHookRun already exist with the same subnumber
 	hrs, ok := wr.WorkflowNodeOutgoingHookRuns[node.ID]
 	if ok {
-		var alreadyProcessed, isWaiting bool
-		for _, hr := range hrs {
-			if hr.Number == wr.Number && int(hr.SubNumber) == subNumber {
-				alreadyProcessed = true
+		var exitingHookRun *sdk.WorkflowNodeOutgoingHookRun
+		for i := range hrs {
+			if hrs[i].Number == wr.Number && int(hrs[i].SubNumber) == subNumber {
+				exitingHookRun = &hrs[i]
 				break
 			}
 		}
-		if alreadyProcessed && isWaiting {
+		// If the hookrun is at status terminated, let's trigger outgoing children
+		if exitingHookRun != nil && !sdk.StatusIsTerminated(exitingHookRun.Status) {
 			log.Debug("hook %d already processed", node.ID)
 			return nil, nil
-		} else if alreadyProcessed {
-
+		} else if exitingHookRun != nil {
 			log.Debug("hook %d is over, we have to reprocess al the things", node.ID)
-
 			for i := range node.Triggers {
 				t := &node.Triggers[i]
 				log.Debug("checking trigger %+v", t)
-				r1, err := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, parentNodeRun, node, subNumber)
+				r1, err := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{}, node, subNumber)
 				if err != nil {
-					return nil, sdk.WrapError(err, "processNodeOutGoingHook> Unable to process outgoing hook triggers")
+					return report, sdk.WrapError(err, "processNodeOutGoingHook> Unable to process outgoing hook triggers")
 				}
 				report.Merge(r1, nil) // nolint
 			}
-
 			return nil, nil
 		}
 	}

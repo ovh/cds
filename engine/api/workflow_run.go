@@ -421,7 +421,7 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 			DisableDetailledNodeRun: true,
 		})
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "Unable to load parent run: %v", run.RootRun().HookEvent)
 	}
 
 	if err := tx.Commit(); err != nil {
