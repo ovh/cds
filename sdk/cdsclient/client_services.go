@@ -2,9 +2,15 @@ package cdsclient
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
+
+func (c *client) GetService() *sdk.Service {
+	return c.service
+}
 
 func (c *client) ServiceRegister(s sdk.Service) (string, error) {
 	code, err := c.PostJSON("/services/register", &s, &s)
@@ -17,10 +23,12 @@ func (c *client) ServiceRegister(s sdk.Service) (string, error) {
 		return "", err
 	}
 	c.isService = true
+	c.config.Hash = s.Hash
+	c.service = &s
 
-	// TODO remove that when hatchery will be real CDS Services
-	if s.Type != "hatchery" {
-		c.config.Hash = s.Hash
+	if !s.Uptodate {
+		log.Warning("-=-=-=-=- Please update your cds engine binary - current version:%s %s %s -=-=-=-=-",
+			sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 	}
 
 	return s.Hash, nil

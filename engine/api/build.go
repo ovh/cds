@@ -601,8 +601,11 @@ func (api *API) getQueueHandler() service.Handler {
 		var queue []sdk.PipelineBuildJob
 		var errQ error
 		switch getAgent(r) {
-		case sdk.HatcheryAgent:
-			queue, errQ = pipeline.LoadGroupWaitingQueue(api.mustDB(), api.Cache, getHatchery(ctx).GroupID)
+		case sdk.ServiceAgent:
+			h := getHatchery(ctx)
+			if h != nil && h.GroupID != nil {
+				queue, errQ = pipeline.LoadGroupWaitingQueue(api.mustDB(), api.Cache, *h.GroupID)
+			}
 		case sdk.WorkerAgent:
 			queue, errQ = pipeline.LoadGroupWaitingQueue(api.mustDB(), api.Cache, getWorker(ctx).GroupID)
 		default:

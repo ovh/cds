@@ -42,7 +42,7 @@ func init() {
 func WithTags(ctx context.Context, h Interface) context.Context {
 	ctx, _ = tag.New(ctx,
 		tag.Upsert(TagHatchery, h.ServiceName()),
-		tag.Upsert(TagHatcheryName, h.Hatchery().Name),
+		tag.Upsert(TagHatcheryName, h.Service().Name),
 	)
 	return ctx
 }
@@ -70,20 +70,16 @@ func Create(h Interface) error {
 		}
 	}()
 
+	// Init call hatchery.Register()
 	if err := h.Init(); err != nil {
 		return fmt.Errorf("Create> Init error: %v", err)
 	}
 
-	// Register the current hatchery to be sure it's authentifed on CDS API before doing any call
-	if err := Register(h); err != nil {
-		return fmt.Errorf("Create> Register error: %v", err)
-	}
-
 	// Call WorkerModel Enabled first
 	var errwm error
-	models, errwm = h.CDSClient().WorkerModelsEnabled()
+	models, errwm = h.WorkerModelsEnabled()
 	if errwm != nil {
-		log.Error("error on h.CDSClient().WorkerModelsEnabled() (init call): %v", errwm)
+		log.Error("error on h.WorkerModelsEnabled() (init call): %v", errwm)
 	}
 
 	tickerProvision := time.NewTicker(time.Duration(h.Configuration().Provision.Frequency) * time.Second)
@@ -107,16 +103,9 @@ func Create(h Interface) error {
 	// hatchery is now fully Initialized
 	h.SetInitialized()
 
-	sdk.GoRoutine("heartbeat",
-		func() {
-			hearbeat(h, h.Configuration().API.Token, h.Configuration().API.MaxHeartbeatFailures)
-		},
-		PanicDump(h),
-	)
-
 	sdk.GoRoutine("queuePolling",
 		func() {
-			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, nil); err != nil {
+			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 				cancel()
 			}
@@ -171,9 +160,9 @@ func Create(h Interface) error {
 
 		case <-tickerGetModels.C:
 			var errwm error
-			models, errwm = h.CDSClient().WorkerModelsEnabled()
+			models, errwm = h.WorkerModelsEnabled()
 			if errwm != nil {
-				log.Error("error on h.CDSClient().WorkerModelsEnabled(): %v", errwm)
+				log.Error("error on h.WorkerModelsEnabled(): %v", errwm)
 			}
 
 		case j := <-pbjobs:
@@ -204,7 +193,7 @@ func Create(h Interface) error {
 
 			//Check if hatchery if able to start a new worker
 			if !checkCapacities(h) {
-				log.Info("hatchery %s is not able to provision new worker", h.Hatchery().Name)
+				log.Info("hatchery %s is not able to provision new worker", h.Service().Name)
 				continue
 			}
 
@@ -305,7 +294,7 @@ func Create(h Interface) error {
 
 			//Check if hatchery if able to start a new worker
 			if !checkCapacities(h) {
-				log.Info("hatchery %s is not able to provision new worker", h.Hatchery().Name)
+				log.Info("hatchery %s is not able to provision new worker", h.Service().Name)
 				endTrace("no capacities")
 				continue
 			}
@@ -339,7 +328,8 @@ func Create(h Interface) error {
 					isRun:        false,
 					temptToSpawn: true,
 				}
-				endTrace("no model or service ratio reached")
+				log.Debug("hatchery> no model")
+				endTrace("no model")
 				continue
 			}
 
@@ -384,6 +374,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 
 func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	if model.Type != h.ModelType() {
+		log.Debug("canRunJob> model %s type:%s current hatchery modelType: %s", model.Name, model.Type, h.ModelType())
 		return false
 	}
 
@@ -394,7 +385,7 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	}
 
 	// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
-	if model.NbSpawnErr > 5 && h.Hatchery().GroupID != model.ID {
+	if model.NbSpawnErr > 5 && *h.Service().GroupID != model.ID {
 		log.Warning("canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
 	}

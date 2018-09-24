@@ -34,8 +34,9 @@ type Configuration struct {
 	URL       string `default:"http://localhost:8087"`
 	Directory string `toml:"directory" comment:"SQL Migration files directory" default:"sql"`
 	HTTP      struct {
-		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
-		Port int    `toml:"port" default:"8087"`
+		Addr     string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
+		Port     int    `toml:"port" default:"8087"`
+		Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
 	} `toml:"http" comment:"######################\n CDS DB Migrate HTTP Configuration \n######################"`
 	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################"`
 	DB  database.DBConfiguration        `toml:"db" comment:"################################\n Postgresql Database settings \n###############################"`
@@ -64,7 +65,7 @@ func (s *dbmigservice) ApplyConfiguration(cfg interface{}) error {
 	s.cfg = dbCfg
 	log.Debug("%+v", s.cfg)
 
-	s.Client = cdsclient.NewService(s.cfg.API.HTTP.URL, 60*time.Second)
+	s.Client = cdsclient.NewService(s.cfg.API.HTTP.URL, 60*time.Second, s.cfg.API.HTTP.Insecure)
 	s.API = s.cfg.API.HTTP.URL
 	s.Name = s.cfg.Name
 	s.HTTPURL = s.cfg.URL

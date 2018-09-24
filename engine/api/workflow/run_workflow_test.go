@@ -9,11 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -125,7 +127,12 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.RootID][0], nodeRun)
 
 	//TestLoadNodeJobRun
-	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache,
+		workflow.QueueFilter{
+			GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+			User:     u,
+			Rights:   permission.PermissionReadExecute,
+		})
 	test.NoError(t, err)
 	test.Equal(t, 2, len(jobs))
 
@@ -240,7 +247,12 @@ func TestManualRun2(t *testing.T) {
 	_, _, err = workflow.ManualRunFromNode(context.TODO(), db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 
-	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache,
+		workflow.QueueFilter{
+			GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+			User:     u,
+			Rights:   permission.PermissionReadExecute,
+		})
 	test.NoError(t, err)
 
 	assert.Len(t, jobs, 3)
@@ -255,6 +267,33 @@ func TestManualRun3(t *testing.T) {
 	ctx := context.Background()
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
+
+	g, err := group.LoadGroup(db, "shared.infra")
+	if err != nil {
+		t.Fatalf("Error getting group : %s", err)
+	}
+	model, _ := worker.LoadWorkerModelByName(db, "TestManualRun")
+	if model == nil {
+		model = &sdk.Model{
+			Name:    "TestManualRun",
+			GroupID: g.ID,
+			Type:    sdk.Docker,
+			ModelDocker: sdk.ModelDocker{
+				Image: "buildpack-deps:jessie",
+			},
+			RegisteredCapabilities: sdk.RequirementList{
+				{
+					Name:  "capa1",
+					Type:  sdk.BinaryRequirement,
+					Value: "1",
+				},
+			},
+		}
+
+		if err := worker.InsertWorkerModel(db, model); err != nil {
+			t.Fatalf("Error inserting model : %s", err)
+		}
+	}
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -272,7 +311,9 @@ func TestManualRun3(t *testing.T) {
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
-			Enabled: true,
+			Enabled:      true,
+			Name:         "job20",
+			Requirements: []sdk.Requirement{{Name: "TestManualRun", Value: "TestManualRun", Type: sdk.ModelRequirement}},
 		},
 	}
 	pipeline.InsertJob(db, j, s.ID, &pip)
@@ -295,8 +336,9 @@ func TestManualRun3(t *testing.T) {
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
-			Enabled: true,
-			Name:    "job20",
+			Enabled:      true,
+			Name:         "job20",
+			Requirements: []sdk.Requirement{{Name: "fooNameService", Value: "valueService", Type: sdk.ServiceRequirement}},
 		},
 	}
 	pipeline.InsertJob(db, j, s.ID, &pip2)
@@ -335,18 +377,37 @@ func TestManualRun3(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
+	filter := workflow.QueueFilter{
+		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+		User:     u,
+	}
+
 	// test nil since/until
-	_, err = workflow.CountNodeJobRunQueue(ctx, db, cache, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil)
+	_, err = workflow.CountNodeJobRunQueue(ctx, db, cache, filter)
 	test.NoError(t, err)
 
 	// queue should be empty with since 0,0 until 0,0
 	t0 := time.Unix(0, 0)
 	t1 := time.Unix(0, 0)
-	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueue(ctx, db, cache, []int64{proj.ProjectGroups[0].Group.ID}, u, &t0, &t1)
+
+	filter2 := workflow.QueueFilter{
+		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+		User:     u,
+		Since:    &t0,
+		Until:    &t1,
+	}
+
+	countAlreadyInQueueNone, err := workflow.CountNodeJobRunQueue(ctx, db, cache, filter2)
 	test.NoError(t, err)
 	assert.Equal(t, 0, int(countAlreadyInQueueNone.Count))
 
-	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil, nil)
+	filter3 := workflow.QueueFilter{
+		Rights:   permission.PermissionReadExecute,
+		GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+		User:     u,
+	}
+
+	jobs, err := workflow.LoadNodeJobRunQueue(ctx, db, cache, filter3)
 	test.NoError(t, err)
 
 	for i := range jobs {
@@ -354,7 +415,7 @@ func TestManualRun3(t *testing.T) {
 		tx, _ := db.Begin()
 
 		//BookNodeJobRun
-		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Hatchery{
+		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Service{
 			Name: "Hatchery",
 			ID:   1,
 		})
@@ -442,7 +503,12 @@ func TestManualRun3(t *testing.T) {
 		tx.Commit()
 	}
 
-	jobs, err = workflow.LoadNodeJobRunQueue(ctx, db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, nil, nil, nil)
+	jobs, err = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+		workflow.QueueFilter{
+			GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+			User:     u,
+			Rights:   permission.PermissionReadExecute,
+		})
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(jobs))
 
@@ -456,7 +522,14 @@ func TestManualRun3(t *testing.T) {
 
 		t0 := since.Add(-2 * time.Minute)
 		t1 := since.Add(-1 * time.Minute)
-		jobsSince, errW := workflow.LoadNodeJobRunQueue(ctx, db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, &t0, &t1, nil)
+		jobsSince, errW := workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+				User:     u,
+				Rights:   permission.PermissionReadExecute,
+				Since:    &t0,
+				Until:    &t1,
+			})
 		test.NoError(t, errW)
 		for _, job := range jobsSince {
 			if jobs[0].ID == job.ID {
@@ -464,7 +537,13 @@ func TestManualRun3(t *testing.T) {
 			}
 		}
 
-		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, &since, nil, nil)
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+				User:     u,
+				Rights:   permission.PermissionReadExecute,
+				Since:    &since,
+			})
 		test.NoError(t, errW)
 		var found bool
 		for _, job := range jobsSince {
@@ -478,15 +557,75 @@ func TestManualRun3(t *testing.T) {
 
 		t0 = since.Add(10 * time.Second)
 		t1 = since.Add(15 * time.Second)
-		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache, permission.PermissionReadExecute, []int64{proj.ProjectGroups[0].Group.ID}, u, &t0, &t1, nil)
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID: []int64{proj.ProjectGroups[0].Group.ID},
+				User:     u,
+				Rights:   permission.PermissionReadExecute,
+				Since:    &t0,
+				Until:    &t1,
+			})
 		test.NoError(t, errW)
 		for _, job := range jobsSince {
 			if jobs[0].ID == job.ID {
 				assert.Fail(t, " this job should not be in queue since/until")
 			}
 		}
-	}
 
+		// there is one job with a CDS Service prerequisiste
+		// Getting queue with RatioService=100 -> we want this job only.
+		// If we get a job without a service, it's a failure
+		cent := 100
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID:     []int64{proj.ProjectGroups[0].Group.ID},
+				User:         u,
+				Rights:       permission.PermissionReadExecute,
+				RatioService: &cent,
+			})
+		test.NoError(t, errW)
+		for _, job := range jobsSince {
+			if !job.ContainsService {
+				assert.Fail(t, " this job should not be in queue !job.ContainsService: job")
+			}
+		}
+
+		// there is one job with a CDS Service prerequisiste
+		// Getting queue with RatioService=0 -> we want job only without CDS Service.
+		// If we get a job with a service, it's a failure
+		zero := 0
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID:     []int64{proj.ProjectGroups[0].Group.ID},
+				User:         u,
+				Rights:       permission.PermissionReadExecute,
+				RatioService: &zero,
+			})
+		test.NoError(t, errW)
+		for _, job := range jobsSince {
+			if job.ContainsService {
+				assert.Fail(t, " this job should not be in queue job.ContainsService")
+			}
+		}
+
+		// there is one job with a CDS Model prerequisiste
+		// we get the queue with a modelType openstack : we don't want
+		// job with worker model type docker in result
+		jobsSince, errW = workflow.LoadNodeJobRunQueue(ctx, db, cache,
+			workflow.QueueFilter{
+				GroupsID:  []int64{proj.ProjectGroups[0].Group.ID},
+				User:      u,
+				Rights:    permission.PermissionReadExecute,
+				ModelType: sdk.Openstack,
+			})
+		test.NoError(t, errW)
+		// we don't want the job with the worker model "TestManualRun"
+		for _, job := range jobsSince {
+			if job.ModelType == sdk.Docker {
+				assert.Fail(t, " this job should not be in queue with this model")
+			}
+		}
+	}
 }
 
 func TestNoStage(t *testing.T) {

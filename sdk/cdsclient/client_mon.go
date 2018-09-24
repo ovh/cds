@@ -27,11 +27,3 @@ func (c *client) MonDBMigrate() ([]sdk.MonDBMigrate, error) {
 	}
 	return monDBMigrate, nil
 }
-
-func (c *client) MonDBTimes() (*sdk.MonDBTimes, error) {
-	monDBTimes := sdk.MonDBTimes{}
-	if _, err := c.GetJSON("/mon/db/times", &monDBTimes); err != nil {
-		return nil, err
-	}
-	return &monDBTimes, nil
-}

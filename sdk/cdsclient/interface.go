@@ -142,8 +142,6 @@ type GroupClient interface {
 
 // HatcheryClient exposes hatcheries related functions
 type HatcheryClient interface {
-	HatcheryRefresh(int64) error
-	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, error)
 	HatcheryCount(wfNodeRunID int64) (int64, error)
 }
 
@@ -198,9 +196,9 @@ type ProjectVariablesClient interface {
 // QueueClient exposes queue related functions
 type QueueClient interface {
 	QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error)
-	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time) (sdk.WorkflowNodeJobRunCount, error)
+	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
-	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int, *int64) error
+	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*sdk.WorkflowNodeJobRunData, error)
 	QueueJobBook(isWorkflowJob bool, id int64) error
 	QueueJobRelease(isWorkflowJob bool, id int64) error
@@ -279,7 +277,6 @@ type WorkflowClient interface {
 type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
 	MonVersion() (*sdk.Version, error)
-	MonDBTimes() (*sdk.MonDBTimes, error)
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
 }
 
@@ -313,6 +310,7 @@ type Interface interface {
 	Navbar() ([]sdk.NavbarProjectData, error)
 	Requirements() ([]sdk.Requirement, error)
 	RepositoriesManagerInterface
+	GetService() *sdk.Service
 	ServiceRegister(sdk.Service) (string, error)
 	UserClient
 	WorkerClient

@@ -37,6 +37,7 @@ export class LogoutInterceptor implements HttpInterceptor {
 
                         if (navigationExtras.queryParams.redirect) {
                             this._router.navigate(['/account/login'], navigationExtras);
+                            this._authStore.removeUser();
                         }
                     } else {
                         // error formatted from CDS API

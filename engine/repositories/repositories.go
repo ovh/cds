@@ -35,7 +35,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid Repositories configuration")
 	}
 
-	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
+	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second, s.Cfg.API.HTTP.Insecure)
 	s.API = s.Cfg.API.HTTP.URL
 	s.Name = s.Cfg.Name
 	s.HTTPURL = s.Cfg.URL

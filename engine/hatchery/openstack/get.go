@@ -124,7 +124,7 @@ func (h *HatcheryOpenstack) getServers() []servers.Server {
 				continue
 			}
 			workerHatcheryName, _ := s.Metadata["hatchery_name"]
-			if workerHatcheryName == "" || workerHatcheryName != h.Hatchery().Name {
+			if workerHatcheryName == "" || workerHatcheryName != h.Service().Name {
 				continue
 			}
 			srvs = append(srvs, s)

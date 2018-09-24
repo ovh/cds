@@ -15,13 +15,13 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -238,7 +238,7 @@ func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
 			return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> job already booked")
 		}
 
-		hCount, err := hatchery.LoadHatcheriesCountByNodeJobRunID(api.mustDB(), id)
+		hCount, err := services.LoadHatcheriesCountByNodeJobRunID(api.mustDB(), id)
 		if err != nil {
 			return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> cannot get hatcheries count")
 		}
@@ -699,11 +699,25 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 		for _, g := range usr.Groups {
 			groupsID = append(groupsID, g.ID)
 		}
-		if isHatcheryOrWorker(r) {
+		if isServiceOrWorker(r) {
 			usr = nil
 		}
 
-		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, groupsID, usr, &since, &until)
+		modelType, ratioService, errM := getModelTypeRatioService(ctx, r)
+		if errM != nil {
+			return errM
+		}
+
+		filter := workflow.QueueFilter{
+			ModelType:    modelType,
+			RatioService: ratioService,
+			GroupsID:     groupsID,
+			User:         usr,
+			Since:        &since,
+			Until:        &until,
+		}
+
+		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		if err != nil {
 			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
 		}
@@ -715,13 +729,17 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until, limit := getSinceUntilLimitHeader(ctx, w, r)
-
 		status, err := QueryStrings(r, "status")
 		if err != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, err)
 		}
 		if !sdk.StatusValidate(status...) {
 			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given status"))
+		}
+
+		modelType, ratioService, errM := getModelTypeRatioService(ctx, r)
+		if errM != nil {
+			return errM
 		}
 
 		groupsID := make([]int64, len(getUser(ctx).Groups))
@@ -731,13 +749,24 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		}
 
 		permissions := permission.PermissionReadExecute
-		if !isHatcheryOrWorker(r) {
+		if !isServiceOrWorker(r) {
 			permissions = permission.PermissionRead
 		} else {
 			usr = nil
 		}
 
-		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, permissions, groupsID, usr, &since, &until, &limit, status...)
+		filter := workflow.QueueFilter{
+			ModelType:    modelType,
+			RatioService: ratioService,
+			GroupsID:     groupsID,
+			User:         usr,
+			Rights:       permissions,
+			Since:        &since,
+			Until:        &until,
+			Limit:        &limit,
+			Statuses:     status,
+		}
+		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
@@ -746,6 +775,26 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 	}
 }
 
+func getModelTypeRatioService(ctx context.Context, r *http.Request) (string, *int, error) {
+	modelType := FormString(r, "modelType")
+	if modelType != "" {
+		if !sdk.WorkerModelValidate(modelType) {
+			return "", nil, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given modelType"))
+		}
+	}
+	ratioService := FormString(r, "ratioService")
+	var ratio *int
+	if ratioService != "" {
+		i, err := strconv.Atoi(ratioService)
+		if err != nil {
+			return "", nil, sdk.WrapError(sdk.ErrInvalidNumber, "getModelTypeRatioService> %s is not a integer", ratioService)
+		}
+		ratio = &i
+	}
+	return modelType, ratio, nil
+}
+
+// getSinceUntilLimitHeader returns since, until, limit
 func getSinceUntilLimitHeader(ctx context.Context, w http.ResponseWriter, r *http.Request) (time.Time, time.Time, int) {
 	sinceHeader := r.Header.Get("If-Modified-Since")
 	since := time.Unix(0, 0)

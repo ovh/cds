@@ -466,9 +466,9 @@ func keyBookWorkerModel(id int64) string {
 }
 
 // BookForRegister books a worker model for register, used by hatcheries
-func BookForRegister(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
+func BookForRegister(store cache.Store, id int64, hatchery *sdk.Service) (*sdk.Service, error) {
 	k := keyBookWorkerModel(id)
-	h := sdk.Hatchery{}
+	h := sdk.Service{}
 	if !store.Get(k, &h) {
 		// worker model not already booked, book it for 6 min
 		store.SetWithTTL(k, hatchery, bookRegisterTTLInSeconds)

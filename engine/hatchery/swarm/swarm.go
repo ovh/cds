@@ -37,10 +37,6 @@ func New() *HatcherySwarm {
 
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init() error {
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
 	h.dockerClients = map[string]*dockerClient{}
 
 	if len(h.Config.DockerEngines) == 0 {
@@ -312,7 +308,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		"hatchery":            h.Config.Name,
 	}
 
-	dockerOpts, errDockerOpts := h.computeDockerOpts(spawnArgs.Requirements)
+	dockerOpts, errDockerOpts := h.computeDockerOpts(h.CDSClient().GetService().IsSharedInfra, spawnArgs.Requirements)
 	if errDockerOpts != nil {
 		return name, errDockerOpts
 	}
@@ -324,8 +320,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		Name:              name,
 		Model:             spawnArgs.Model.ID,
 		TTL:               h.Config.WorkerTTL,
-		Hatchery:          h.hatch.ID,
-		HatcheryName:      h.hatch.Name,
+		HatcheryName:      h.Service().Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
@@ -365,7 +360,6 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
 	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
-	envsWm["CDS_HATCHERY"] = fmt.Sprintf("%d", udataParam.Hatchery)
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
@@ -575,10 +569,20 @@ func (h *HatcherySwarm) Configuration() hatchery.CommonConfiguration {
 
 // ID returns ID of the Hatchery
 func (h *HatcherySwarm) ID() int64 {
-	if h.hatch == nil {
+	if h.CDSClient().GetService() == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcherySwarm) Service() *sdk.Service {
+	return h.CDSClient().GetService()
+}
+
+// WorkerModelsEnabled returns Worker model enabled
+func (h *HatcherySwarm) WorkerModelsEnabled() ([]sdk.Model, error) {
+	return h.CDSClient().WorkerModelsEnabled()
 }
 
 func (h *HatcherySwarm) routines(ctx context.Context) {
