@@ -36,23 +36,29 @@ func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClient
 		if ctx.Err() != nil {
 			shouldExit = true
 		}
+		defer func() {
+			sendLog(accumulator)
+		}()
 
 		b, err := c.BuffOut.ReadByte()
 		if err == io.EOF && shouldExit {
-			sendLog(accumulator)
 			return
 		}
+		if b == '\x00' {
+			continue
+		}
 
-		switch string(b) {
+		content := string(b)
+		switch content {
 		case "":
 			continue
 		case "\n":
-			accumulator += string(b)
+			accumulator += content
 			sendLog(accumulator)
 			accumulator = ""
 			continue
 		default:
-			accumulator += string(b)
+			accumulator += content
 			continue
 		}
 	}
