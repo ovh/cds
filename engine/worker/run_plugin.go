@@ -31,14 +31,16 @@ type pluginClientSocket struct {
 func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClientSocket) {
 	var accumulator string
 	var shouldExit bool
+	defer func() {
+		if accumulator != "" {
+			sendLog(accumulator)
+		}
+	}()
 
 	for {
 		if ctx.Err() != nil {
 			shouldExit = true
 		}
-		defer func() {
-			sendLog(accumulator)
-		}()
 
 		b, err := c.BuffOut.ReadByte()
 		if err == io.EOF {
