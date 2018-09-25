@@ -24,6 +24,9 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 
 	//Checking if the hook is still at status waiting or building
 	var hookRun = wr.GetOutgoingHookRun(hookRunID)
+	if hookRun == nil {
+		return nil, sdk.ErrNotFound
+	}
 	if hookRun.Status != sdk.StatusWaiting.String() && hookRun.Status != sdk.StatusBuilding.String() {
 		log.Debug("UpdateOutgoingHookRunStatus> hookRun status is %s. aborting", hookRun.Status)
 		hookRun = nil
