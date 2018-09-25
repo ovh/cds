@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"runtime"
@@ -31,6 +32,11 @@ type pluginClientSocket struct {
 func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClientSocket) {
 	var accumulator string
 	var shouldExit bool
+	defer func() {
+		if accumulator != "" {
+			sendLog(accumulator)
+		}
+	}()
 
 	for {
 		if ctx.Err() != nil {
@@ -39,7 +45,6 @@ func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClient
 
 		b, err := c.BuffOut.ReadByte()
 		if err == io.EOF && shouldExit {
-			sendLog(accumulator)
 			return
 		}
 
@@ -94,7 +99,25 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	envs = append(envs, opts.envs...)
 
 	log.Info("Starting GRPC Plugin %s in dir %s", binary.Name, dir)
-	if err := grpcplugin.StartPlugin(ctx, dir, path.Join(w.basedir, binary.Cmd), binary.Args, envs, mOut, mErr); err != nil {
+	fileContent, err := ioutil.ReadFile(path.Join(w.basedir, binary.GetName()))
+	if err != nil {
+		return nil, sdk.WrapError(err, "Unable to get plugin binary file... Aborting")
+	}
+
+	switch {
+	case sdk.IsTar(fileContent), sdk.IsGz(fileContent):
+		if err := sdk.Untar(w.basedir, bytes.NewReader(fileContent)); err != nil {
+			return nil, sdk.WrapError(err, "Unable to untar binary file")
+		}
+	case sdk.IsZip(fileContent):
+
+	}
+
+	if len(binary.Args) > 0 {
+		binary.Args[0] = path.Join(w.basedir, binary.Args[0])
+	}
+
+	if err := grpcplugin.StartPlugin(ctx, dir, binary.Cmd, binary.Args, envs, mOut, mErr); err != nil {
 		return nil, sdk.WrapError(err, "Unable to start GRPC plugin... Aborting")
 	}
 	log.Info("GRPC Plugin %s started", binary.Name)
@@ -107,6 +130,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	for {
 		b, err := c.BuffOut.ReadByte()
 		if err != nil && len(buff.String()) > 0 {
+			buff.Reset()
 			if time.Now().Before(tsStart.Add(5 * time.Second)) {
 				log.Warning("Error on ReadByte, retry in 500ms...")
 				time.Sleep(500 * time.Millisecond)
@@ -123,8 +147,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 			break
 		}
 	}
-
-	socket := strings.Replace(buff.String(), " is ready to accept new connection\n", "", 1)
+	socket := strings.TrimSpace(strings.Replace(buff.String(), " is ready to accept new connection\n", "", 1))
 	log.Info("socket %s ready", socket)
 
 	c.Socket = socket

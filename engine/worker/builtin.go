@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/log"
@@ -251,14 +250,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		}
 
 		pluginSocket.Client = c
-
-		m, err := c.Manifest(context.Background(), new(empty.Empty))
-		if err != nil {
-			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to call grpc plugin manifest... Aborting (%v)", err))
-			return
-		}
-		log.Debug("plugin successfully initialized: %#v", m)
-
 		pluginClient := pluginSocket.Client
 		actionPluginClient, ok := pluginClient.(actionplugin.ActionPluginClient)
 		if !ok {
@@ -275,6 +266,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to retrieve plugin manifest... Aborting (%v)", err))
 			return
 		}
+		log.Debug("plugin successfully initialized: %#v", manifest)
 
 		sendLog(fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 		query := actionplugin.ActionQuery{
@@ -287,6 +279,9 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Error running action: %v", err))
 			return
 		}
+
+		_ = os.Stdout.Sync()
+		_ = os.Stderr.Sync()
 
 		chanRes <- sdk.Result{
 			Status: result.GetStatus(),
