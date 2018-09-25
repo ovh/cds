@@ -41,10 +41,10 @@ func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClient
 		}()
 
 		b, err := c.BuffOut.ReadByte()
-		if err == io.EOF && shouldExit {
-			return
-		}
-		if b == '\x00' {
+		if err == io.EOF {
+			if shouldExit {
+				return
+			}
 			continue
 		}
 
