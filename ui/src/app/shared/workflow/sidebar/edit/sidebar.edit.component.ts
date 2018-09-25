@@ -7,8 +7,8 @@ import {WNode, Workflow} from '../../../../model/workflow.model';
 import {PipelineStore, WorkflowEventStore} from '../../../../service/services.module';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {WorkflowNodeConditionsComponent} from '../../modal/conditions/node.conditions.component';
+import {WorkflowNodeContextComponent} from '../../modal/context/workflow.node.context.component';
 import {WorkflowDeleteNodeComponent} from '../../modal/delete/workflow.node.delete.component';
-import {WorkflowNodeContextComponent} from '../../node/context/workflow.node.context.component';
 
 @Component({
     selector: 'app-workflow-sidebar-wnode-edit',

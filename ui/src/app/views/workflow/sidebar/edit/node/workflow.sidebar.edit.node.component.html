@@ -99,19 +99,8 @@
 <ng-container *ngIf="project && node && node.id === workflow.root.id">
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [(trigger)]="newParentNode" (triggerChange)="addNewParentNode()" #workflowTriggerParent></app-workflow-trigger>
 </ng-container>
-<ng-container *ngIf="node">
-    <app-workflow-node-delete [loading]="loading" [node]="node" [isRoot]="node.id === workflow.root.id" [isChildOfOutgoingHook]="isChildOfOutgoingHook"
-                              (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
-</ng-container>
-<ng-container *ngIf="project && node">
-    <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow"
-                               (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
-</ng-container>
-<ng-container *ngIf="project && node">
-    <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                                  (conditionsEvent)="updateNodeConditions($event)"
-                                  #workflowConditions></app-workflow-node-conditions>
-</ng-container>
+
+
 <ng-container *ngIf="project && node">
     <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
                                  [isOutgoing]="false" (hookEvent)="addHook($event)"

@@ -16,15 +16,11 @@ import {
     WorkflowNodeTrigger,
     WorkflowPipelineNameImpact,
 } from '../../../../../model/workflow.model';
-import {PipelineStore} from '../../../../../service/pipeline/pipeline.store';
 import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../../shared/toast/ToastService';
-import {WorkflowNodeConditionsComponent} from '../../../../../shared/workflow/modal/conditions/node.conditions.component';
-import {WorkflowDeleteNodeComponent} from '../../../../../shared/workflow/modal/delete/workflow.node.delete.component';
-import {WorkflowNodeContextComponent} from '../../../../../shared/workflow/node/context/workflow.node.context.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
 import {WorkflowTriggerComponent} from '../../../../../shared/workflow/trigger/workflow.trigger.component';
@@ -48,12 +44,6 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
     workflowTrigger: WorkflowTriggerComponent;
     @ViewChild('workflowTriggerParent')
     workflowTriggerParent: WorkflowTriggerComponent;
-    @ViewChild('workflowDeleteNode')
-    workflowDeleteNode: WorkflowDeleteNodeComponent;
-    @ViewChild('workflowContext')
-    workflowContext: WorkflowNodeContextComponent;
-    @ViewChild('workflowConditions')
-    workflowConditions: WorkflowNodeConditionsComponent;
     @ViewChild('worklflowAddHook')
     worklflowAddHook: WorkflowNodeHookFormComponent;
     @ViewChild('worklflowAddOutgoingHook')
@@ -65,11 +55,9 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
     @ViewChild('nodeParentModal')
     nodeParentModal: ModalTemplate<boolean, boolean, void>;
     newParentNode: WorkflowNode;
-    modalParentNode: ActiveModal<boolean, boolean, void>;
     newTrigger: WorkflowNode = new WorkflowNode();
     node: WNode;
     previousNodeName: string;
-    pipelineSubscription: Subscription;
     displayInputName = false;
     loading = false;
     nameWarning: WorkflowPipelineNameImpact;
@@ -77,7 +65,7 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
     isChildOfOutgoingHook = false;
 
     constructor(private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
-                private _pipelineStore: PipelineStore, private _modalService: SuiModalService,
+                private _modalService: SuiModalService,
                 private _router: Router,
                 private _workflowCoreService: WorkflowCoreService, private _workflowEventStore: WorkflowEventStore) {}
 
@@ -152,32 +140,6 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         this._modalService.open(tmpl);
     }
 
-    openDeleteNodeModal(): void {
-        if (!this.canEdit()) {
-            return;
-        }
-        if (this.workflowDeleteNode) {
-            this.workflowDeleteNode.show();
-        }
-    }
-
-    openEditContextModal(): void {
-        let sub = this.pipelineSubscription =
-            this._pipelineStore.getPipelines(this.project.key,
-                this.workflow.pipelines[this.node.context.pipeline_id].name).subscribe(pips => {
-                if (pips.get(this.project.key + '-' + this.workflow.pipelines[this.node.context.pipeline_id].name)) {
-                    setTimeout(() => {
-                        this.workflowContext.show();
-                        sub.unsubscribe();
-                    }, 100);
-                }
-            });
-    }
-
-    openEditRunConditions(): void {
-        this.workflowConditions.show();
-    }
-
     saveTrigger(): void {
         // TODO
         /*
@@ -205,82 +167,6 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         currentNode.triggers.push(trig);
         this.updateWorkflow(clonedWorkflow, this.workflowTrigger.modal);
         */
-    }
-
-    updateNodeConditions(n: WorkflowNode): void {
-        if (!this.canEdit()) {
-            return;
-        }
-        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-        let node = Workflow.getNodeByID(n.id, clonedWorkflow);
-        if (!node) {
-            return;
-        }
-        node.context.conditions = cloneDeep(n.context.conditions);
-        this.updateWorkflow(clonedWorkflow, this.workflowConditions.modal);
-    }
-
-    updateNode(n: WNode): void {
-        if (!this.canEdit()) {
-            return;
-        }
-        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-        let node = Workflow.getNodeByID(n.id, clonedWorkflow);
-        if (!node) {
-            return;
-        }
-        node.name = n.name;
-        node.context = cloneDeep(n.context);
-        this.updateWorkflow(clonedWorkflow, this.workflowContext.modal);
-    }
-
-    deleteNode(b: string): void {
-        if (!this.canEdit()) {
-            return;
-        }
-        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-        if (b === 'all') {
-            // Delete Node with Child
-            if (clonedWorkflow.root.id === this.node.id) {
-                this.deleteWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
-                return;
-            } else {
-                clonedWorkflow = Workflow.removeNodesInNotifications(clonedWorkflow, clonedWorkflow.root, this.node.id, false);
-
-                if (clonedWorkflow.root.triggers) {
-                    clonedWorkflow.root.triggers.forEach((t, i) => {
-                        this.removeNode(clonedWorkflow, this.node.id, t.workflow_dest_node, clonedWorkflow.root, i);
-                    });
-                }
-
-                if (clonedWorkflow.root.outgoing_hooks) {
-                    clonedWorkflow.root.outgoing_hooks.forEach(h => {
-                        if (h.triggers) {
-                            h.triggers.forEach((t, i) => {
-                                this.removeNodeFromOutgoingHook(clonedWorkflow, this.node.id, t.workflow_dest_node, h, i);
-                            });
-                        }
-                    });
-                }
-
-                if (clonedWorkflow.joins) {
-                    clonedWorkflow.joins.forEach(j => {
-                        j.source_node_ref = j.source_node_ref.filter(id => {
-                           return id !== this.node.id.toString();
-                        });
-                        if (j.triggers) {
-                            j.triggers.forEach((t, i) => {
-                                this.removeNodeFromJoin(clonedWorkflow, this.node.id, t.workflow_dest_node, j, i);
-                            });
-                        }
-                    });
-                }
-            }
-        } else if (b === 'only') {
-
-
-        }
-        this.updateWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
     }
 
     removeNodeFromJoin(workflow: Workflow, id: number, node: WorkflowNode, parent: WorkflowNodeJoin, index: number) {
@@ -468,12 +354,5 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         this.updateWorkflow(this.workflow, this.worklflowAddOutgoingHook.modal);
          */
         // TODO
-    }
-
-    rename(): void {
-        if (!this.canEdit()) {
-            return;
-        }
-        this.updateNode(this.node);
     }
 }
