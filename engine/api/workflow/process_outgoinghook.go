@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"sort"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -23,6 +24,13 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		wr.WorkflowNodeOutgoingHookRuns = make(map[int64][]sdk.WorkflowNodeOutgoingHookRun)
 	}
 
+	//FIX: For the moment, we trigger outgoing hooks on success
+	for _, p := range parentNodeRun {
+		if p.Status != sdk.StatusSuccess.String() {
+			return report, nil
+		}
+	}
+
 	//Check if the WorkflowNodeOutgoingHookRun already exist with the same subnumber
 	hrs, ok := wr.WorkflowNodeOutgoingHookRuns[node.ID]
 	if ok {
@@ -37,7 +45,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		if exitingHookRun != nil && !sdk.StatusIsTerminated(exitingHookRun.Status) {
 			log.Debug("hook %d already processed", node.ID)
 			return nil, nil
-		} else if exitingHookRun != nil {
+		} else if exitingHookRun != nil && exitingHookRun.Status != sdk.StatusStopped.String() {
 			log.Debug("hook %d is over, we have to reprocess al the things", node.ID)
 			for i := range node.Triggers {
 				t := &node.Triggers[i]
@@ -80,15 +88,21 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		WorkflowNodeOutgoingHookID: node.ID,
 		Hook:   hook,
 		Params: mapParams,
+		Callback: &sdk.WorkflowNodeOutgoingHookRunCallback{
+			Start:  time.Now(),
+			Status: sdk.StatusWaiting.String(),
+		},
 	}
 
-	var taskExecution sdk.TaskExecution
-	if _, err := services.DoJSONRequest(ctx, srvs, "POST", "/task/execute", hookRun, &taskExecution); err != nil {
+	var task sdk.Task
+	if _, err := services.DoJSONRequest(ctx, srvs, "POST", "/task/execute", hookRun, &task); err != nil {
 		log.Warning("outgoing hook execution failed: %v", err)
 		hookRun.Status = sdk.StatusFail.String()
 	}
 
-	hookRun.Status = sdk.StatusWaiting.String()
+	if len(task.Executions) > 0 {
+		hookRun.TaskExecution = &task.Executions[0]
+	}
 
 	if wr.WorkflowNodeOutgoingHookRuns[node.ID] == nil {
 		wr.WorkflowNodeOutgoingHookRuns[node.ID] = make([]sdk.WorkflowNodeOutgoingHookRun, 0)
