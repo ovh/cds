@@ -1,7 +1,7 @@
 .PHONY: clean
 
 VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
-GITHASH := $(if ${GIT_HASH},${GIT_HASH},`git`)
+GITHASH := $(if ${GIT_HASH},${GIT_HASH},`git log -1 --format="%H"`)
 BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 
 TARGET_DIR = ./dist
