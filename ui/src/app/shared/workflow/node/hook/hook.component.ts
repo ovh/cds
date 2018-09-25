@@ -1,7 +1,7 @@
-import {AfterViewInit, Component, ElementRef, Input} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input, OnInit} from '@angular/core';
 import {Subscription} from 'rxjs/Subscription';
 import {Project} from '../../../../model/project.model';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
+import {WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
 import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 
 @Component({
@@ -9,18 +9,13 @@ import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.st
     templateUrl: './hook.html',
     styleUrls: ['./hook.scss']
 })
-export class WorkflowNodeHookComponent implements AfterViewInit {
+export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
 
-    _hook: WorkflowNodeHook;
+    _hook: WNodeHook;
     @Input('hook')
-    set hook(data: WorkflowNodeHook) {
+    set hook(data: WNodeHook) {
         if (data) {
             this._hook = data;
-            if (this._hook.config['hookIcon']) {
-                this.icon = (<WorkflowNodeHookConfigValue>this._hook.config['hookIcon']).value.toLowerCase();
-            } else {
-                this.icon = this._hook.model.icon.toLowerCase();
-            }
         }
     }
     get hook() {
@@ -29,7 +24,7 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
     @Input() readonly = false;
     @Input() workflow: Workflow;
     @Input() project: Project;
-    @Input() node: WorkflowNode;
+    @Input() node: WNode;
 
     icon: string;
     loading = false;
@@ -45,6 +40,16 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
             }
             this.isSelected = false;
         });
+    }
+
+    ngOnInit(): void {
+        if (this._hook) {
+            if (this._hook.config['hookIcon']) {
+                this.icon = (<WorkflowNodeHookConfigValue>this._hook.config['hookIcon']).value.toLowerCase();
+            } else {
+                this.icon = this.workflow.hook_models[this.hook.hook_model_id].icon.toLowerCase();
+            }
+        }
     }
 
     ngAfterViewInit() {

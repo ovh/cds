@@ -6,7 +6,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {PermissionValue} from '../../../../../model/permission.model';
 import {Project} from '../../../../../model/project.model';
 import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/workflow.hook.model';
-import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
+import {WNodeHook, Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
@@ -28,7 +28,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
     @Input() project: Project;
     @Input() workflow: Workflow;
 
-    hook: WorkflowNodeHook;
+    hook: WNodeHook;
     subHook: Subscription;
 
     @ViewChild('workflowEditHook')

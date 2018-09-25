@@ -7,7 +7,7 @@ import {Subscription} from 'rxjs';
 import {finalize, first} from 'rxjs/operators';
 import {PermissionValue} from '../../../model/permission.model';
 import {Project} from '../../../model/project.model';
-import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
+import {WNode, Workflow, WorkflowNodeJoin} from '../../../model/workflow.model';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
@@ -43,7 +43,7 @@ export class WorkflowShowComponent {
     @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;
 
-    selectedNode: WorkflowNode;
+    selectedNode: WNode;
     selectedJoin: WorkflowNodeJoin;
 
     selectedTab = 'workflows';
@@ -177,7 +177,7 @@ export class WorkflowShowComponent {
         }
     }
 
-    public addSourceToJoin(data: { source: WorkflowNode, target: WorkflowNodeJoin }): void {
+    public addSourceToJoin(data: { source: WNode, target: WorkflowNodeJoin }): void {
         let clonedWorkflow: Workflow = cloneDeep(this.detailedWorkflow);
         let currentJoin = clonedWorkflow.joins.find(j => j.id === data.target.id);
         this.selectedNode = data.source;

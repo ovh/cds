@@ -9,7 +9,6 @@ import {WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest} from '../../../m
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
-import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
 import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
 
 @Component({
@@ -32,8 +31,6 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     loading = false;
     loadingRun = false;
 
-    @ViewChild('workflowDeleteJoin')
-    workflowDeleteJoin: WorkflowDeleteJoinComponent;
     @ViewChild('workflowJoinTrigger')
     workflowJoinTrigger: WorkflowTriggerJoinComponent;
 

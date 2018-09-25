@@ -17,7 +17,10 @@
         </button>
     </div>
     <div class="sidebar-toggle">
-        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUNS">
+        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.EDIT">
+            <app-workflow-sidebar-wnode-edit [project]="project" [workflow]="workflow"></app-workflow-sidebar-wnode-edit>
+        </ng-container>
+        <!--ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUNS">
             <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow" [scrolled]="onScroll"></app-workflow-sidebar-run-list>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && (sidebarMode === sidebarModes.EDIT_FORK || sidebarMode === sidebarModes.EDIT_HOOK || sidebarMode === sidebarModes.EDIT_OUTGOING_HOOK || sidebarMode === sidebarModes.EDIT_JOIN ||sidebarMode === sidebarModes.EDIT_NODE)">
@@ -29,7 +32,7 @@
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_NODE">
             <app-workflow-sidebar-run-node [project]="project" [workflow]="workflow">
             </app-workflow-sidebar-run-node>
-        </ng-container>
+        </ng-container-->
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_HOOK">
           <app-workflow-sidebar-run-hook
             [project]="project">

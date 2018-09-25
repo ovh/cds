@@ -7,7 +7,14 @@ import {Subscription} from 'rxjs/Subscription';
 import {PermissionValue} from '../../../../../model/permission.model';
 import {Project} from '../../../../../model/project.model';
 import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/workflow.hook.model';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeOutgoingHook, WorkflowNodeTrigger} from '../../../../../model/workflow.model';
+import {
+    WNodeHook,
+    Workflow,
+    WorkflowNode,
+    WorkflowNodeHook,
+    WorkflowNodeOutgoingHook,
+    WorkflowNodeTrigger
+} from '../../../../../model/workflow.model';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
@@ -84,7 +91,7 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
     }
 
     deleteOutgoingHook() {
-        let hEvent = new HookEvent('delete', new WorkflowNodeHook());
+        let hEvent = new HookEvent('delete', new WNodeHook());
         hEvent.hook.id = this.hook.id;
         this.updateOutgoingHook(hEvent);
     }

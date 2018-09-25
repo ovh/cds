@@ -3,11 +3,11 @@ import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
 
 export class WorkflowSidebarMode {
+    static EDIT = 'sidebar:edit';
     static RUNS = 'sidebar:runs';
     static RUN_NODE = 'sidebar:run:node';
     static RUN_HOOK = 'sidebar:run:hook';
     static RUN_FORK = 'sidebar:run:fork';
-    static EDIT_NODE = 'sidebar:edit:node';
     static EDIT_HOOK = 'sidebar:edit:hook';
     static EDIT_OUTGOING_HOOK = 'sidebar:edit:outgoinghook';
     static EDIT_FORK = 'sidebar:edit:fork';

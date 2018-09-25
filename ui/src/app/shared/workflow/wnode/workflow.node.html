@@ -1,0 +1,34 @@
+<div class="node" (click)="clickOnNode()" (dblclick)="dblClickOnNode()">
+    <ng-container [ngSwitch]="node.type">
+        <ng-container *ngSwitchCase="'pipeline'">
+            <app-workflow-wnode-pipeline
+                    [workflow]="workflow"
+                    [node]="node"
+                    [noderun]="currentNodeRun"
+                    [selected]="selectedNodeID === node.id"></app-workflow-wnode-pipeline>
+        </ng-container>
+        <ng-container *ngSwitchCase="'join'">
+            <app-workflow-wnode-join
+                    [workflow]="workflow"
+                    [node]="node"
+                    [noderun]="currentNodeRun"
+                    [selected]="selectedNodeID === node.id"
+                    [workflowrun]="workflowRun"
+                ></app-workflow-wnode-join>
+        </ng-container>
+        <ng-container *ngSwitchCase="'fork'">
+            <app-workflow-wnode-fork
+                    [workflow]="workflow"
+                    [node]="node"
+                    [noderun]="currentNodeRun"
+                    [selected]="selectedNodeID === node.id"></app-workflow-wnode-fork>
+        </ng-container>
+        <ng-container *ngSwitchCase="'outgoinghook'">
+            <app-workflow-wnode-outgoing-hook
+                    [workflow]="workflow"
+                    [node]="node"
+                    [noderun]="currentNodeRun"
+                    [selected]="selectedNodeID === node.id"></app-workflow-wnode-outgoing-hook>
+        </ng-container>
+    </ng-container>
+</div>

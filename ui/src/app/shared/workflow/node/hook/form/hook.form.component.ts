@@ -9,6 +9,7 @@ import {ProjectPlatform} from '../../../../../model/platform.model';
 import {IdName, Project} from '../../../../../model/project.model';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {
+    WNodeHook,
     Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeOutgoingHook
 } from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
@@ -22,7 +23,7 @@ import {HookEvent} from '../hook.event';
 })
 export class WorkflowNodeHookFormComponent implements OnInit {
 
-    _hook: WorkflowNodeHook = new WorkflowNodeHook();
+    _hook: WNodeHook = new WNodeHook();
     _outgoingHook: WorkflowNodeOutgoingHook = new WorkflowNodeOutgoingHook();
     canDelete = false;
 
@@ -33,10 +34,10 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     @Input() loading: boolean;
     @Input() readonly: boolean;
     @Input('hook')
-    set hook(data: WorkflowNodeHook) {
+    set hook(data: WNodeHook) {
         if (data) {
             this.canDelete = true;
-            this._hook = cloneDeep<WorkflowNodeHook>(data);
+            this._hook = cloneDeep<WNodeHook>(data);
             if (this.hooksModel) {
                 this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
             }
@@ -55,7 +56,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
                 this.selectedOutgoingHookModel = this.outgoingHookModels.find(hm => hm.id === this._outgoingHook.model.id);
             }
             this.displayConfig = Object.keys(this._outgoingHook.config).length !== 0;
-            this._hook = new WorkflowNodeHook();
+            this._hook = new WNodeHook();
             this._hook.id = this.outgoingHook.id;
             this._hook.config = cloneDeep(this.outgoingHook.config);
             this._hook.model = cloneDeep(this.outgoingHook.model);

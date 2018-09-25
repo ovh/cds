@@ -8,9 +8,9 @@ import {Subscription} from 'rxjs';
 import {PermissionValue} from '../../../../../model/permission.model';
 import {Project} from '../../../../../model/project.model';
 import {
+    WNode, WNodeHook,
     Workflow,
-    WorkflowNode, WorkflowNodeFork,
-    WorkflowNodeHook,
+    WorkflowNode,
     WorkflowNodeJoin,
     WorkflowNodeOutgoingHook,
     WorkflowNodeTrigger,
@@ -22,9 +22,9 @@ import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../../shared/toast/ToastService';
+import {WorkflowDeleteNodeComponent} from '../../../../../shared/workflow/modal/delete/workflow.node.delete.component';
 import {WorkflowNodeConditionsComponent} from '../../../../../shared/workflow/node/conditions/node.conditions.component';
 import {WorkflowNodeContextComponent} from '../../../../../shared/workflow/node/context/workflow.node.context.component';
-import {WorkflowDeleteNodeComponent} from '../../../../../shared/workflow/node/delete/workflow.node.delete.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
 import {WorkflowTriggerComponent} from '../../../../../shared/workflow/trigger/workflow.trigger.component';
@@ -65,7 +65,7 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
     newParentNode: WorkflowNode;
     modalParentNode: ActiveModal<boolean, boolean, void>;
     newTrigger: WorkflowNode = new WorkflowNode();
-    node: WorkflowNode;
+    node: WNode;
     previousNodeName: string;
     pipelineSubscription: Subscription;
     displayInputName = false;
@@ -160,8 +160,9 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
 
     openEditContextModal(): void {
         let sub = this.pipelineSubscription =
-            this._pipelineStore.getPipelines(this.project.key, this.node.pipeline_name).subscribe(pips => {
-                if (pips.get(this.project.key + '-' + this.node.pipeline_name)) {
+            this._pipelineStore.getPipelines(this.project.key,
+                this.workflow.pipelines[this.node.context.pipeline_id].name).subscribe(pips => {
+                if (pips.get(this.project.key + '-' + this.workflow.pipelines[this.node.context.pipeline_id].name)) {
                     setTimeout(() => {
                         this.workflowContext.show();
                         sub.unsubscribe();
@@ -175,6 +176,8 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
     }
 
     saveTrigger(): void {
+        // TODO
+        /*
         if (!this.canEdit()) {
             return;
         }
@@ -198,6 +201,7 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         trig.workflow_dest_node = this.newTrigger;
         currentNode.triggers.push(trig);
         this.updateWorkflow(clonedWorkflow, this.workflowTrigger.modal);
+        */
     }
 
     updateNodeConditions(n: WorkflowNode): void {
@@ -213,7 +217,7 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         this.updateWorkflow(clonedWorkflow, this.workflowConditions.modal);
     }
 
-    updateNode(n: WorkflowNode): void {
+    updateNode(n: WNode): void {
         if (!this.canEdit()) {
             return;
         }
@@ -224,8 +228,6 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         }
         node.name = n.name;
         node.context = cloneDeep(n.context);
-        delete node.context.application;
-        delete node.context.environment;
         this.updateWorkflow(clonedWorkflow, this.workflowContext.modal);
     }
 
@@ -272,12 +274,8 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
                 }
             }
         } else if (b === 'only') {
-            let ok = Workflow.removeNodeWithoutChild(clonedWorkflow, this.node);
-            if (!ok) {
-                this._toast.error('', this._translate.instant('workflow_node_remove_multiple_parent'));
-                return;
-            }
-            clonedWorkflow = Workflow.removeNodeInNotifications(clonedWorkflow, this.node);
+
+
         }
         this.updateWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
     }
@@ -380,11 +378,13 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
     }
 
     createFork(): void {
+        // TODO
+        /*
         if (!this.canEdit()) {
             return;
         }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-        let currentNode: WorkflowNode;
+        let currentNode: WNode;
         if (clonedWorkflow.root.id === this.node.id) {
             currentNode = clonedWorkflow.root;
         } else {
@@ -403,6 +403,7 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         currentNode.forks.push(f);
 
         this.updateWorkflow(clonedWorkflow);
+        */
     }
 
     createJoin(): void {
@@ -442,17 +443,18 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
             return;
         }
         if (!this.node.hooks) {
-            this.node.hooks = new Array<WorkflowNodeHook>();
+            this.node.hooks = new Array<WNodeHook>();
         }
         this.node.hooks.push(he.hook);
         this.updateWorkflow(this.workflow, this.worklflowAddHook.modal);
     }
 
     addOutgoingHook(he: HookEvent): void {
+        /*
         if (!this.canEdit()) {
             return;
         }
-        if (!this.node.outgoing_hooks) {
+        if (!this.node.triggers) {
             this.node.outgoing_hooks = new Array<WorkflowNodeOutgoingHook>();
         }
         let oh = new WorkflowNodeOutgoingHook();
@@ -461,6 +463,8 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         oh.model = he.hook.model
         this.node.outgoing_hooks.push(oh);
         this.updateWorkflow(this.workflow, this.worklflowAddOutgoingHook.modal);
+         */
+        // TODO
     }
 
     rename(): void {

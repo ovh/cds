@@ -1,11 +1,11 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject, Observable} from 'rxjs';
-import {Workflow, WorkflowNode} from '../../model/workflow.model';
+import {WNode, Workflow} from '../../model/workflow.model';
 
 @Injectable()
 export class WorkflowCoreService {
 
-    private _linkJoinEvent: BehaviorSubject<WorkflowNode> = new BehaviorSubject(null);
+    private _linkJoinEvent: BehaviorSubject<WNode> = new BehaviorSubject(null);
     private _asCodeEditorEvent: BehaviorSubject<{open: boolean, save: boolean}> = new BehaviorSubject(null);
     private _previewWorkflow: BehaviorSubject<Workflow> = new BehaviorSubject(null);
 
@@ -29,11 +29,11 @@ export class WorkflowCoreService {
         this._previewWorkflow.next(wf);
     }
 
-    getLinkJoinEvent(): Observable<WorkflowNode> {
-        return new Observable<WorkflowNode>(fn => this._linkJoinEvent.subscribe(fn));
+    getLinkJoinEvent(): Observable<WNode> {
+        return new Observable<WNode>(fn => this._linkJoinEvent.subscribe(fn));
     }
 
-    linkJoinEvent(node: WorkflowNode): void {
+    linkJoinEvent(node: WNode): void {
         this._linkJoinEvent.next(node);
     }
 }

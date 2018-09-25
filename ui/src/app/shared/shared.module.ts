@@ -76,26 +76,27 @@ import {VulnerabilitiesComponent} from './vulnerability/vulnerabilities.componen
 import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.component';
 import {WarningMarkComponent} from './warning/mark-single/warning.mark.component';
 import {WarningTabComponent} from './warning/tab/warning.tab.component';
-import {WorkflowDeleteForkComponent} from './workflow/fork/delete/workflow.fork.delete.component';
-import {WorkflowNodeForkComponent} from './workflow/fork/fork.component';
-import {WorkflowDeleteJoinComponent} from './workflow/join/delete/workflow.join.delete.component';
 import {WorkflowJoinTriggerSrcComponent} from './workflow/join/trigger/src/trigger.src.component';
 import {WorkflowTriggerJoinComponent} from './workflow/join/trigger/trigger.join.component';
 import {WorkflowJoinComponent} from './workflow/join/workflow.join.component';
+import {WorkflowDeleteNodeComponent} from './workflow/modal/delete/workflow.node.delete.component';
 import {WorkflowNodeConditionFormComponent} from './workflow/node/conditions/condition-form/condition.component';
 import {WorkflowNodeConditionListComponent} from './workflow/node/conditions/condition-list/condition.list.component';
 import {WorkflowNodeConditionsComponent} from './workflow/node/conditions/node.conditions.component';
 import {WorkflowNodeContextComponent} from './workflow/node/context/workflow.node.context.component';
-import {WorkflowDeleteNodeComponent} from './workflow/node/delete/workflow.node.delete.component';
 import {WorkflowNodeFormComponent} from './workflow/node/form/workflow.node.form.component';
 import {WorkflowNodeHookDetailsComponent} from './workflow/node/hook/details/hook.details.component';
 import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/hook.form.component';
 import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
-import { WorkflowNodeOutgoingHookComponent } from './workflow/node/outgoinghook/outgoinghook.component';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeAddWizardComponent} from './workflow/node/wizard/node.wizard.component';
-import {WorkflowNodeComponent} from './workflow/node/workflow.node.component';
+import {WorkflowWNodeSidebarEditComponent} from './workflow/sidebar/edit/sidebar.edit.component';
 import {WorkflowTriggerComponent} from './workflow/trigger/workflow.trigger.component';
+import {WorkflowWNodeForkComponent} from './workflow/wnode/fork/node.fork.component';
+import {WorkflowWNodeJoinComponent} from './workflow/wnode/join/node.join.component';
+import {WorkflowWNodeOutGoingHookComponent} from './workflow/wnode/outgoinghook/node.outgoinghook.component';
+import {WorkflowWNodePipelineComponent} from './workflow/wnode/pipeline/wnode.pipeline.component';
+import {WorkflowWNodeComponent} from './workflow/wnode/wnode.component';
 import {ZoneContentComponent} from './zone/zone-content/content.component';
 import {ZoneComponent} from './zone/zone.component';
 
@@ -151,11 +152,16 @@ import {ZoneComponent} from './zone/zone.component';
         WarningTabComponent,
         WarningMarkComponent,
         WarningMarkListComponent,
-        WorkflowNodeComponent,
+
+        WorkflowWNodeComponent,
+        WorkflowWNodeForkComponent,
+        WorkflowWNodeJoinComponent,
+        WorkflowWNodeOutGoingHookComponent,
+        WorkflowWNodePipelineComponent,
+        WorkflowWNodeSidebarEditComponent,
+
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
-        WorkflowDeleteForkComponent,
-        WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
         WorkflowJoinComponent,
         WorkflowJoinTriggerSrcComponent,
@@ -165,12 +171,10 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeHookFormComponent,
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
-        WorkflowNodeOutgoingHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         WorkflowNodeConditionFormComponent,
         WorkflowNodeConditionListComponent,
-        WorkflowNodeForkComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,
@@ -252,10 +256,15 @@ import {ZoneComponent} from './zone/zone.component';
         WarningModalComponent,
         DeleteModalComponent,
         LabelsEditComponent,
-        WorkflowNodeComponent,
+
+        WorkflowWNodeComponent,
+        WorkflowWNodeJoinComponent,
+        WorkflowWNodeOutGoingHookComponent,
+        WorkflowWNodePipelineComponent,
+        WorkflowWNodeForkComponent,
+        WorkflowWNodeSidebarEditComponent,
+
         WorkflowNodeAddWizardComponent,
-        WorkflowDeleteForkComponent,
-        WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
         WorkflowJoinComponent,
         WorkflowJoinTriggerSrcComponent,
@@ -266,8 +275,6 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
-        WorkflowNodeOutgoingHookComponent,
-        WorkflowNodeForkComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         ZoneComponent,

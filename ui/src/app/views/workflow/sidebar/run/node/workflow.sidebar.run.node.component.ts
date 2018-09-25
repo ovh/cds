@@ -7,8 +7,8 @@ import {PermissionValue} from '../../../../../model/permission.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {
-    Workflow,
-    WorkflowNode
+    WNode,
+    Workflow
 } from '../../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
@@ -37,7 +37,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     currentNodeRunSub: Subscription;
     currentWorkflowNodeRun: WorkflowNodeRun;
 
-    node: WorkflowNode;
+    node: WNode;
     subNode: Subscription;
 
     // Modal
@@ -114,7 +114,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     }
 
     displayLogs() {
-        let pip = this.node.pipeline_name;
+        let pip = this.workflow.pipelines[this.node.context.pipeline_id];
         this._router.navigate([
             '/project', this.project.key,
             'workflow', this.workflow.name,
@@ -138,8 +138,8 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
 
     getCanBeRun(): boolean {
         // Get Env permission
-        let envForbid = this.node && this.node.context.environment && this.node.context.environment.permission
-            && this.node.context.environment.permission < PermissionValue.READ_EXECUTE;
+        let envForbid = this.node && this.node.context.environment_id && this.workflow.environments[this.node.context.environment_id].permission
+            && this.workflow.environments[this.node.context.environment_id].permission < PermissionValue.READ_EXECUTE;
 
         if (this.workflow && this.workflow.permission < PermissionValue.READ_EXECUTE || envForbid) {
             return false;
@@ -226,10 +226,11 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     }
 
     goToEditNode(): void {
-      this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_NODE);
+      this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
       this._workflowEventStore.setSelectedNodeRun(null, false);
       this._workflowEventStore.setSelectedRun(null);
       this._workflowEventStore.setSelectedNode(this.node, true);
-      this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name], {queryParams: {'node_id': this.node.id}});
+      this._router.navigate(
+          ['/project', this.project.key, 'workflow', this.workflow.name], {queryParams: {'node_id': this.node.id}});
     }
 }
