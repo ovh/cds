@@ -545,17 +545,17 @@ See $ engine config command for more details.
 }
 
 func start(c context.Context, s service.Service, cfg interface{}, serviceName string) {
-	if err := serve(c, s, serviceName); err != nil {
+	if err := serve(c, s, serviceName, cfg); err != nil {
 		sdk.Exit("Service has been stopped: %s %v", serviceName, err)
 	}
 }
 
-func serve(c context.Context, s service.Service, serviceName string) error {
+func serve(c context.Context, s service.Service, serviceName string, cfg interface{}) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
 	// first register
-	if err := s.Register(s.Status); err != nil {
+	if err := s.Register(s.Status, cfg); err != nil {
 		log.Error("%s> Unable to register: %v", serviceName, err)
 		return err
 	}
@@ -563,7 +563,7 @@ func serve(c context.Context, s service.Service, serviceName string) error {
 
 	// start the heartbeat goroutine
 	go func() {
-		if err := s.Heartbeat(ctx, s.Status); err != nil {
+		if err := s.Heartbeat(ctx, s.Status, cfg); err != nil {
 			log.Error("%v", err)
 			cancel()
 		}
