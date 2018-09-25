@@ -44,7 +44,6 @@ export class WorkflowTriggerComponent {
     }
 
     destNodeChange(node: WorkflowNode): void {
-        console.log(node);
         this.trigger = node;
     }
 
