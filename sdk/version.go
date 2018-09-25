@@ -46,5 +46,5 @@ func VersionCurrent() Version {
 
 // VersionString returns a string contains all about current version
 func VersionString() string {
-	return fmt.Sprintf("CDS %s version:%s os:%s architecture:%s git.hash=%s build.time:%s", BINARY, VERSION, GOOS, GOARCH, GITHASH, BUILDTIME)
+	return fmt.Sprintf("CDS %s version:%s os:%s architecture:%s git.hash:%s build.time:%s", BINARY, VERSION, GOOS, GOARCH, GITHASH, BUILDTIME)
 }
