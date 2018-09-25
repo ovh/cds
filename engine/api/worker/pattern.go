@@ -33,7 +33,7 @@ func UpdateWorkerModelPattern(db gorp.SqlExecutor, modelPattern *sdk.ModelPatter
 	return nil
 }
 
-// DeleteWorkerModelPatter removes from database worker model pattern
+// DeleteWorkerModelPattern removes from database worker model pattern
 func DeleteWorkerModelPattern(db gorp.SqlExecutor, ID int64) error {
 	wmp := workerModelPattern(sdk.ModelPattern{ID: ID})
 	count, err := db.Delete(&wmp)
@@ -91,7 +91,6 @@ export CDS_API={{.API}}
 export CDS_TOKEN={{.Token}}
 export CDS_NAME={{.Name}}
 export CDS_MODEL={{.Model}}
-export CDS_HATCHERY={{.Hatchery}}
 export CDS_HATCHERY_NAME={{.HatcheryName}}
 export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
 export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
@@ -175,7 +174,7 @@ chmod +x worker
 				Type: sdk.HostProcess,
 				Name: "basic_unix",
 				Model: sdk.ModelCmds{
-					Cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery={{.Hatchery}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
+					Cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
 				},
 			},
 		},

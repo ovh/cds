@@ -13,7 +13,6 @@ import (
 
 func (api *API) getTimelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
 		u := getUser(ctx)
 		currentItem, errS := FormInt(r, "currentItem")
 		if errS != nil {

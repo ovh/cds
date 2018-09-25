@@ -627,13 +627,12 @@ export class Workflow {
     }
 
     static getAllHooks(workflow: Workflow): Array<WorkflowNodeHook> {
-        let res = new Array<WorkflowNodeHook>();
-        res.push(...WorkflowNode.getAllHooks(workflow.root));
+        let res = WorkflowNode.getAllHooks(workflow.root);
         if (workflow.joins) {
             workflow.joins.forEach(j => {
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        res.push(...WorkflowNode.getAllHooks(t.workflow_dest_node));
+                        res = res.concat(WorkflowNode.getAllHooks(t.workflow_dest_node));
                     })
                 }
             })
@@ -1112,11 +1111,10 @@ export class WorkflowNode {
     }
 
     static getAllHooks(n: WorkflowNode): Array<WorkflowNodeHook> {
-        let res = new Array<WorkflowNodeHook>();
-        res.push(...n.hooks);
+        let res = n.hooks;
         if (n.triggers) {
             n.triggers.forEach(t => {
-                res.push(...WorkflowNode.getAllHooks(t.workflow_dest_node));
+                res = res.concat(WorkflowNode.getAllHooks(t.workflow_dest_node));
             });
         }
         return res;

@@ -8,14 +8,22 @@
             </div>
         </div>
     </h3>
-    <ng-container *ngIf="hook">
+    <ng-container *ngIf="hook && !wr">
         <div class="ui fluid vertical menu noborder">
-        <a class="item noborder" (click)="openHookConfigModal()">
+            <a class="item noborder" (click)="openHookConfigModal()">
             Configuration <i class="angle right icon"></i>
         </a>
         </div>
     </ng-container>
-    <ng-container *ngIf="!loading && hookDetails != null && hookDetails.executions != null">
+    <ng-container *ngIf="!loading && wr && nodeRun && nodeRun.hook_event && nodeRun.hook_event.parent_workflow">
+        <div class="ui fluid vertical menu noborder">
+            <a class="item" [routerLink]="['/project', nodeRun.hook_event.parent_workflow.key, 'workflow', nodeRun.hook_event.parent_workflow.name, 'run', nodeRun.hook_event.parent_workflow.run]"
+                target="_blank">
+                    {{ nodeRun.hook_event.parent_workflow.key }}/{{ nodeRun.hook_event.parent_workflow.name }} #{{nodeRun.hook_event.parent_workflow.run}}
+            </a>
+        </div>
+    </ng-container>
+    <ng-container *ngIf="!loading && hookDetails && hookDetails.executions && hookDetails.executions.length > 0">
         <h4 class="ui header ml5">
             <i class="newspaper icon"></i>
             <div class="content">
@@ -46,7 +54,7 @@
             </div>
         </div>
     </ng-container>
-    <ng-container *ngIf="!loading && outgoingHookRuns != null">
+    <ng-container *ngIf="!loading && outgoingHookRuns">
         <h4 class="ui header ml5">
             <i class="newspaper icon"></i>
             <div class="content">
@@ -58,7 +66,7 @@
                 <i class="icon ribbon-state"
                     [class.success]="run.status === pipelineStatusEnum.SUCCESS"
                     [class.waiting]="run.status === pipelineStatusEnum.WAITING || run.status === pipelineStatusEnum.BUILDING"
-                    [class.fail]="run.status === pipelineStatusEnum.FAIL">
+                    [class.fail]="run.status === pipelineStatusEnum.FAIL || run.status === pipelineStatusEnum.STOPPED">
                 </i>
                 <div class="content">
                     <div class="infoLine">

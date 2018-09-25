@@ -341,7 +341,7 @@
   "graph_vulnerability_title": "Vulnérabilités",
   "graph_vulnerability_x": "N° workflow",
   "graph_vulnerability_y": "Total",
-  "graph_unittes_title": "Tests unitaires",
+  "graph_unittest_title": "Tests unitaires",
   "graph_unittest_x": "N° workflow",
   "graph_unittest_y": "Total",
 

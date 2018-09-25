@@ -8,7 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
@@ -20,25 +20,15 @@ func Test_workerCheckingHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	//1. Load all workers and hatcheries
+	//1. Load all workers
 	workers, err := worker.LoadWorkers(api.mustDB(), "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := hatchery.LoadHatcheries(api.mustDB())
-	if err != nil {
-		t.Fatalf("Unable to load hatcheries : %s", err)
-	}
-	//2. Delete all workers and hatcheries
+	//2. Delete all workers
 	for _, w := range workers {
 		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
-		}
-	}
-	for _, h := range hs {
-		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
-		if err != nil {
-			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
@@ -71,12 +61,11 @@ func Test_workerCheckingHandler(t *testing.T) {
 	}
 
 	//4. Registering worker
-	h := sdk.Hatchery{
-		Name:    "test-hatchery",
-		GroupID: g.ID,
-		UID:     "UUID",
+	h := sdk.Service{
+		Name:    "test-hatchery-Test_workerCheckingHandler",
+		GroupID: &g.ID,
 	}
-	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
+	if err := services.Insert(api.mustDB(), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
@@ -116,25 +105,15 @@ func Test_workerWaitingHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	//1. Load all workers and hatcheries
+	//1. Load all workers
 	workers, errlw := worker.LoadWorkers(api.mustDB(), "")
 	if errlw != nil {
 		t.Fatal(errlw)
 	}
-	hs, errlh := hatchery.LoadHatcheries(api.mustDB())
-	if errlh != nil {
-		t.Fatalf("Unable to load hatcheries : %s", errlh)
-	}
-	//2. Delete all workers and hatcheries
+	//2. Delete all workers
 	for _, w := range workers {
 		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
-		}
-	}
-	for _, h := range hs {
-		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
-		if err != nil {
-			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
@@ -167,12 +146,11 @@ func Test_workerWaitingHandler(t *testing.T) {
 	}
 
 	//4. Registering worker
-	h := sdk.Hatchery{
-		Name:    "test-hatchery",
-		GroupID: g.ID,
-		UID:     "UUID",
+	h := sdk.Service{
+		Name:    "test-hatchery-Test_workerWaitingHandler",
+		GroupID: &g.ID,
 	}
-	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
+	if err := services.Insert(api.mustDB(), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 

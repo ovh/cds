@@ -6,15 +6,21 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/cds/sdk/log"
 )
 
-func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) (sdk.RequirementList, *sdk.MultiError) {
+// getNodeJobRunRequirements returns requirements list interpolated, and true or false if at least
+// one requirement is of type "Service"
+func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) (sdk.RequirementList, bool, string, *sdk.MultiError) {
 	requirements := sdk.RequirementList{}
 	tmp := map[string]string{}
 	errm := &sdk.MultiError{}
 
+	var containsService bool
+	var model string
 	for _, v := range run.BuildParameters {
 		tmp[v.Name] = v.Value
 	}
@@ -31,12 +37,28 @@ func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Workflow
 			continue
 		}
 		sdk.AddRequirement(&requirements, v.ID, name, v.Type, value)
+		if v.Type == sdk.ServiceRequirement {
+			containsService = true
+		}
+		if v.Type == sdk.ModelRequirement {
+			model = value
+		}
+	}
+
+	var modelType string
+	if model != "" {
+		wm, err := worker.LoadWorkerModelByName(db, model)
+		if err != nil {
+			log.Error("getNodeJobRunRequirements> error while getting worker model %s: %v", model, err)
+		} else {
+			modelType = wm.Type
+		}
 	}
 
 	if errm.IsEmpty() {
-		return requirements, nil
+		return requirements, containsService, modelType, nil
 	}
-	return requirements, errm
+	return requirements, containsService, modelType, errm
 }
 
 func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.Parameter {

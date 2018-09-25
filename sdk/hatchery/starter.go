@@ -138,7 +138,8 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		atomic.AddInt64(i, -1)
 	}(&nbWorkerToStart)
 
-	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
+	if h.CDSClient().GetService() == nil || h.ID() == 0 {
+		log.Warning("hatchery> spawnWorkerForJob> %d - job %d %s- hatchery not registered - srv:%t id:%d", j.timestamp, j.id, j.model.Name, h.CDSClient().GetService() == nil, h.ID())
 		return false, nil
 	}
 
@@ -150,13 +151,13 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		return false, nil
 	}
 	next()
-	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s by hatchery %d isWorkflowJob:%t", j.timestamp, j.id, j.model.Name, h.Hatchery().ID, j.isWorkflowJob)
+	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s by hatchery %d isWorkflowJob:%t", j.timestamp, j.id, j.model.Name, h.ID(), j.isWorkflowJob)
 
 	start := time.Now()
 	infos := []sdk.SpawnInfo{
 		{
 			RemoteTime: start,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{h.Hatchery().Name, fmt.Sprintf("%d", h.Hatchery().ID), j.model.Name}},
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name}},
 		},
 	}
 	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", j.model.Name, j.id)
@@ -165,12 +166,12 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		log.Warning("spawnWorkerForJob> %d - cannot spawn worker %s for job %d: %s", j.timestamp, j.model.Name, j.id, errSpawn)
 		infos = append(infos, sdk.SpawnInfo{
 			RemoteTime: time.Now(),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{h.Hatchery().Name, fmt.Sprintf("%d", h.Hatchery().ID), j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
 		})
 		if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
 			log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", j.timestamp, j.id, err)
 		}
-		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Hatchery().Name, j.model.Name, j.id, errSpawn)
+		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, j.model.Name, j.id, errSpawn)
 
 		return false, nil
 	}
@@ -179,8 +180,8 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		RemoteTime: time.Now(),
 		Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
 			Args: []interface{}{
-				h.Hatchery().Name,
-				fmt.Sprintf("%d", h.Hatchery().ID),
+				h.Service().Name,
+				fmt.Sprintf("%d", h.ID()),
 				workerName,
 				sdk.Round(time.Since(start), time.Second).String()},
 		},

@@ -561,3 +561,38 @@ func (s *Service) getTaskExecutionHandler() service.Handler {
 		return sdk.ErrNotFound
 	}
 }
+
+func (s *Service) postStopTaskExecutionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		timestamp := vars["timestamp"]
+
+		//Load the task
+		t := s.Dao.FindTask(uuid)
+		if t == nil {
+			return service.WriteJSON(w, t, http.StatusOK)
+		}
+
+		//Load the executions
+		execs, err := s.Dao.FindAllTaskExecutions(t)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
+		}
+
+		for i := range execs {
+			e := &execs[i]
+			if strconv.FormatInt(e.Timestamp, 10) == timestamp && e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled {
+				e.Status = TaskExecutionDone
+				e.LastError = TaskExecutionDone
+				e.NbErrors = s.Cfg.RetryError + 1
+				s.Dao.SaveTaskExecution(e)
+				log.Info("Hooks> postStopTaskExecutionHandler> task executions %s:%d has been stoppped", uuid, timestamp)
+				return nil
+			}
+		}
+
+		return nil
+	}
+}

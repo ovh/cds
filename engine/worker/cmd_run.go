@@ -136,7 +136,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		go func(ctx context.Context, exceptID *int64) {
-			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, 0, exceptID); err != nil {
+			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, 0, "", nil, exceptID); err != nil {
 				log.Info("Queues polling stopped: %v", err)
 			}
 		}(ctx, &exceptJobID)
@@ -453,7 +453,6 @@ func (w *currentWorker) doRegister() error {
 		form := sdk.WorkerRegistrationForm{
 			Name:         w.status.Name,
 			Token:        w.token,
-			Hatchery:     w.hatchery.id,
 			HatcheryName: w.hatchery.name,
 			ModelID:      w.model.ID,
 		}

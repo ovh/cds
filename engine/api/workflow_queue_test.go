@@ -22,13 +22,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
@@ -46,7 +46,7 @@ type testRunWorkflowCtx struct {
 	job         *sdk.WorkflowNodeJobRun
 	worker      *sdk.Worker
 	workerToken string
-	hatchery    *sdk.Hatchery
+	hatchery    *sdk.Service
 }
 
 func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) testRunWorkflowCtx {
@@ -202,7 +202,6 @@ func testGetWorkflowJobAsHatchery(t *testing.T, api *API, router *Router, ctx *t
 
 	//Register the worker
 	testRegisterHatchery(t, api, router, ctx)
-
 	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "GET", uri, nil)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
@@ -244,14 +243,21 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 	//Insert token
 	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent, "", ""))
 
-	ctx.hatchery = &sdk.Hatchery{
-		UID:      tk,
-		LastBeat: time.Now(),
-		Name:     sdk.RandomString(10),
-		GroupID:  ctx.user.Groups[0].ID,
+	//Generate a hash
+	hash, errsession := sessionstore.NewSessionKey()
+	if errsession != nil {
+		t.Fatal(errsession)
 	}
 
-	err = hatchery.InsertHatchery(api.mustDB(), ctx.hatchery)
+	ctx.hatchery = &sdk.Service{
+		Name:    sdk.RandomString(10),
+		GroupID: &ctx.user.Groups[0].ID,
+		Type:    services.TypeHatchery,
+		Token:   tk,
+		Hash:    string(hash),
+	}
+
+	err = services.Insert(api.mustDB(), ctx.hatchery)
 	test.NoError(t, err)
 }
 

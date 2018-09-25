@@ -38,7 +38,7 @@ func (s *Service) ApplyConfiguration(config interface{}) error {
 		return fmt.Errorf("ApplyConfiguration> Invalid Elasticsearch configuration")
 	}
 
-	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second)
+	s.Client = cdsclient.NewService(s.Cfg.API.HTTP.URL, 60*time.Second, s.Cfg.API.HTTP.Insecure)
 	s.API = s.Cfg.API.HTTP.URL
 	s.Name = s.Cfg.Name
 	s.HTTPURL = s.Cfg.URL
@@ -101,7 +101,7 @@ func (s *Service) Serve(c context.Context) error {
 	//Start the http server
 	log.Info("ElasticSearch> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Error("ElasticSearch> Listen and serve failed: %s", err)
+		log.Error("ElasticSearch> Listen and serve failed: %v", err)
 	}
 
 	return ctx.Err()

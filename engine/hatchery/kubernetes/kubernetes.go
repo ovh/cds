@@ -39,15 +39,9 @@ func New() *HatcheryKubernetes {
 
 // Init register local hatchery with its worker model
 func (h *HatcheryKubernetes) Init() error {
-
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
 	sdk.GoRoutine("hatchery kubernetes routines", func() {
 		h.routines(context.Background())
 	})
-
 	return nil
 }
 
@@ -110,19 +104,8 @@ func (h *HatcheryKubernetes) ApplyConfiguration(cfg interface{}) error {
 		}
 	}
 
-	h.hatch = &sdk.Hatchery{
-		Name:    h.Configuration().Name,
-		Version: sdk.VERSION,
-	}
-
-	h.Client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		h.hatch.Name,
-	)
-
+	h.hatch = &sdk.Hatchery{}
+	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
 	h.API = h.Config.API.HTTP.URL
 	h.Name = h.Config.Name
 	h.HTTPURL = h.Config.URL
@@ -198,10 +181,15 @@ func (h *HatcheryKubernetes) CheckConfiguration(cfg interface{}) error {
 
 // ID must returns hatchery id
 func (h *HatcheryKubernetes) ID() int64 {
-	if h.hatch == nil {
+	if h.CDSClient().GetService() == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcheryKubernetes) Service() *sdk.Service {
+	return h.CDSClient().GetService()
 }
 
 //Hatchery returns hatchery instance
@@ -222,6 +210,11 @@ func (h *HatcheryKubernetes) Configuration() hatchery.CommonConfiguration {
 // ModelType returns type of hatchery
 func (*HatcheryKubernetes) ModelType() string {
 	return sdk.Docker
+}
+
+// WorkerModelsEnabled returns Worker model enabled
+func (h *HatcheryKubernetes) WorkerModelsEnabled() ([]sdk.Model, error) {
+	return h.CDSClient().WorkerModelsEnabled()
 }
 
 // CanSpawn return wether or not hatchery can spawn model.
@@ -268,8 +261,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              name,
 		Model:             spawnArgs.Model.ID,
-		Hatchery:          h.hatch.ID,
-		HatcheryName:      h.hatch.Name,
+		HatcheryName:      h.Service().Name,
 		TTL:               h.Config.WorkerTTL,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
@@ -309,7 +301,6 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	envsWm["CDS_TOKEN"] = udataParam.Token
 	envsWm["CDS_NAME"] = udataParam.Name
 	envsWm["CDS_MODEL"] = fmt.Sprintf("%d", udataParam.Model)
-	envsWm["CDS_HATCHERY"] = fmt.Sprintf("%d", udataParam.Hatchery)
 	envsWm["CDS_HATCHERY_NAME"] = udataParam.HatcheryName
 	envsWm["CDS_FROM_WORKER_IMAGE"] = fmt.Sprintf("%v", udataParam.FromWorkerImage)
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
