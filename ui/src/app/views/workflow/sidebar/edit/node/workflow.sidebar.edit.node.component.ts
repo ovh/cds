@@ -21,9 +21,9 @@ import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../../shared/toast/ToastService';
+import {WorkflowTriggerComponent} from '../../../../../shared/workflow/modal/trigger/workflow.trigger.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
-import {WorkflowTriggerComponent} from '../../../../../shared/workflow/trigger/workflow.trigger.component';
 
 @Component({
     selector: 'app-workflow-sidebar-edit-node',

@@ -1,6 +1,6 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
-import { WorkflowTriggerComponent } from 'app/shared/workflow/trigger/workflow.trigger.component';
+import { WorkflowTriggerComponent } from 'app/shared/workflow/modal/trigger/workflow.trigger.component';
 import {cloneDeep} from 'lodash';
 import {finalize} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';

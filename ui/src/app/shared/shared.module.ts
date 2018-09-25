@@ -84,6 +84,7 @@ import {WorkflowNodeConditionListComponent} from './workflow/modal/conditions/co
 import {WorkflowNodeConditionsComponent} from './workflow/modal/conditions/node.conditions.component';
 import {WorkflowNodeContextComponent} from './workflow/modal/context/workflow.node.context.component';
 import {WorkflowDeleteNodeComponent} from './workflow/modal/delete/workflow.node.delete.component';
+import {WorkflowTriggerComponent} from './workflow/modal/trigger/workflow.trigger.component';
 import {WorkflowNodeFormComponent} from './workflow/node/form/workflow.node.form.component';
 import {WorkflowNodeHookDetailsComponent} from './workflow/node/hook/details/hook.details.component';
 import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/hook.form.component';
@@ -91,7 +92,6 @@ import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeAddWizardComponent} from './workflow/node/wizard/node.wizard.component';
 import {WorkflowWNodeSidebarEditComponent} from './workflow/sidebar/edit/sidebar.edit.component';
-import {WorkflowTriggerComponent} from './workflow/trigger/workflow.trigger.component';
 import {WorkflowWNodeForkComponent} from './workflow/wnode/fork/node.fork.component';
 import {WorkflowWNodeJoinComponent} from './workflow/wnode/join/node.join.component';
 import {WorkflowWNodeOutGoingHookComponent} from './workflow/wnode/outgoinghook/node.outgoinghook.component';
