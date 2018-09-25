@@ -22,8 +22,8 @@ import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../../shared/toast/ToastService';
+import {WorkflowNodeConditionsComponent} from '../../../../../shared/workflow/modal/conditions/node.conditions.component';
 import {WorkflowDeleteNodeComponent} from '../../../../../shared/workflow/modal/delete/workflow.node.delete.component';
-import {WorkflowNodeConditionsComponent} from '../../../../../shared/workflow/node/conditions/node.conditions.component';
 import {WorkflowNodeContextComponent} from '../../../../../shared/workflow/node/context/workflow.node.context.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';

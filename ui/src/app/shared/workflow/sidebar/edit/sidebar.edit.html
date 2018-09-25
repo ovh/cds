@@ -135,18 +135,34 @@
 
 
 <!-- MODALS -->
+<ng-container *ngIf="project && node && workflow">
 
-<!-- Delete Node -->
-<ng-container *ngIf="node">
+    <!-- Context -->
+    <ng-container *ngIf="pnode.type === 'pipeline'">
+        <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow"
+                                   (contextEvent)="updateWorkflow($event)" #workflowContext></app-workflow-node-context>
+    </ng-container>
+
+    <!-- Conditions -->
+    <ng-container *ngIf="node.type === 'pipeline'">
+        <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
+                                      (conditionsEvent)="updateNodeConditions($event)"
+                                      #workflowConditions></app-workflow-node-conditions>
+    </ng-container>
+
+    <!-- Delete Node -->
     <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event)" #workflowDeleteNode></app-workflow-node-delete>
-</ng-container>
 
-<!-- Add trigger -->
-<ng-container *ngIf="project && node">
+    <!-- Add trigger -->
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node"
                           [(trigger)]="newTrigger" (triggerChange)="saveTrigger()"
                           #workflowTrigger></app-workflow-trigger>
 </ng-container>
+
+
+
+
+
 
 <!--
 <ng-container *ngIf="project && node && node.id === workflow.root.id">

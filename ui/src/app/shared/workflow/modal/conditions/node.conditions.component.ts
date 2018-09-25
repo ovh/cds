@@ -1,10 +1,11 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {cloneDeep} from 'lodash';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {finalize, first} from 'rxjs/operators';
 import {PermissionValue} from '../../../../model/permission.model';
 import {Project} from '../../../../model/project.model';
-import {Workflow, WorkflowNode, WorkflowNodeConditions} from '../../../../model/workflow.model';
+import {WNode, Workflow, WorkflowNodeConditions} from '../../../../model/workflow.model';
 import {VariableService} from '../../../../service/variable/variable.service';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 
@@ -15,16 +16,16 @@ import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 })
 export class WorkflowNodeConditionsComponent {
 
-    @Output() conditionsEvent = new EventEmitter<WorkflowNode>();
+    @Output() conditionsEvent = new EventEmitter<Workflow>();
 
-    _node: WorkflowNode;
+    _node: WNode;
     @Input('node')
-    set node(data: WorkflowNode) {
+    set node(data: WNode) {
         if (data) {
             if (!data.context.conditions) {
                 data.context.conditions = new WorkflowNodeConditions();
             }
-            this._node = data;
+            this._node = cloneDeep(data);
             if (data.context.conditions.lua_script) {
                 this.mode = 'advanced';
             } else {
@@ -61,7 +62,7 @@ export class WorkflowNodeConditionsComponent {
     show(): void {
         this.loadingConditions = true;
         this.suggest = [];
-        this._variableService.getContextVariable(this.project.key, this.node.pipeline_id)
+        this._variableService.getContextVariable(this.project.key, this.node.context.pipeline_id)
             .subscribe((suggest) => this.suggest = suggest);
 
         this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
@@ -81,6 +82,9 @@ export class WorkflowNodeConditionsComponent {
     }
 
     saveConditions(): void {
-        this.conditionsEvent.emit(this.node);
+        let clonedWorkflow = cloneDeep(this.workflow);
+        let n = Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        n.context.conditions = this.node.context.conditions;
+        this.conditionsEvent.emit(clonedWorkflow);
     }
 }
