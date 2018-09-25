@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"fmt"
+	"runtime"
 )
 
 var (
@@ -23,6 +24,15 @@ var (
 	//BINARY is set with -ldflags "-X github.com/ovh/cds/sdk.BINARY=$(BINARY)"
 	BINARY = ""
 )
+
+func init() {
+	if GOOS == "" {
+		GOOS = runtime.GOOS
+	}
+	if GOARCH == "" {
+		GOARCH = runtime.GOARCH
+	}
+}
 
 // Version is used by /mon/version
 type Version struct {
