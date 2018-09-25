@@ -47,6 +47,8 @@ func syncTakeJobInNodeRun(ctx context.Context, db gorp.SqlExecutor, n *sdk.Workf
 			rj.Start = j.Start
 			rj.Done = j.Done
 			rj.Model = j.Model
+			rj.ModelType = j.ModelType
+			rj.ContainsService = j.ContainsService
 			rj.Job = j.Job
 			rj.Header = j.Header
 		}
@@ -352,7 +354,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		}
 
 		_, next = observability.Span(ctx, "workflow.getNodeJobRunRequirements")
-		jobRequirements, errReq := getNodeJobRunRequirements(db, *job, run)
+		jobRequirements, containsService, modelType, errReq := getNodeJobRunRequirements(db, *job, run)
 		next()
 
 		if errReq != nil {
@@ -381,7 +383,9 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			Job: sdk.ExecutedJob{
 				Job: *job,
 			},
-			Header: run.Header,
+			Header:          run.Header,
+			ContainsService: containsService,
+			ModelType:       modelType,
 		}
 		wjob.Job.Job.Action.Requirements = jobRequirements // Set the interpolated requirements on the job run only
 
@@ -498,6 +502,8 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 				runJob.Start = runJobDB.Start
 				runJob.Done = runJobDB.Done
 				runJob.Model = runJobDB.Model
+				runJob.ModelType = runJobDB.ModelType
+				runJob.ContainsService = runJobDB.ContainsService
 				runJob.Job = runJobDB.Job
 			}
 		}

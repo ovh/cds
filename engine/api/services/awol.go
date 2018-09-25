@@ -30,6 +30,7 @@ func KillDeadServices(ctx context.Context, dbFunc func() *gorp.DbMap) {
 		case <-ctx.Done():
 			if err := ctx.Err(); err != nil {
 				log.Error("Exiting KillDeadServices: %v", err)
+				return
 			}
 		}
 	}

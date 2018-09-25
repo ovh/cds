@@ -27,4 +27,6 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/task/{uuid}/stop", r.GET(s.stopTaskHandler))
 	r.Handle("/task/{uuid}/execution", r.GET(s.getTaskExecutionsHandler), r.DELETE(s.deleteAllTaskExecutionsHandler))
 	r.Handle("/task/{uuid}/execution/{timestamp}", r.GET(s.getTaskExecutionHandler))
+	r.Handle("/task/{uuid}/execution/{timestamp}/stop", r.POST(s.postStopTaskExecutionHandler))
+
 }

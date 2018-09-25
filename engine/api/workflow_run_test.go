@@ -240,15 +240,6 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	vars = map[string]string{
 		"permProjectKey": proj.Key,
 	}
-	uri = router.GetRoute("GET", api.getWorkflowAllRunsHandler, vars)
-	test.NotEmpty(t, uri)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
-
-	//Do the request
-	rec = httptest.NewRecorder()
-	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
-	assert.Equal(t, "0-10/10", rec.Header().Get("Content-Range"))
 
 	//Prepare request
 	vars = map[string]string{

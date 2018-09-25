@@ -28,7 +28,7 @@ func processWorkflowNodeFork(ctx context.Context, db gorp.SqlExecutor, store cac
 
 		if !abortTrigger {
 			//Keep the subnumber of the previous node in the graph
-			r1, _, errPwnr := processWorkflowNodeRun(ctx, db, store, proj, wr, &t.WorkflowDestNode, int(parentNodeRun.SubNumber), []int64{parentNodeRun.ID}, nil, nil)
+			r1, _, errPwnr := processWorkflowNodeRun(ctx, db, store, proj, wr, &t.WorkflowDestNode, int(parentNodeRun.SubNumber), []int64{parentNodeRun.ID}, nil, nil, nil)
 			if errPwnr != nil {
 				log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, errPwnr)
 				AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{

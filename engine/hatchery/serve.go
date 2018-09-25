@@ -241,7 +241,7 @@ func getStatusHandler(h hatchery.Interface) service.HandlerFunc {
 			}
 			srv, ok := h.(service.Service)
 			if !ok {
-				return fmt.Errorf("unable to get status from %s", h.Hatchery().Name)
+				return fmt.Errorf("unable to get status from %s", h.Service().Name)
 			}
 			status := srv.Status()
 			return service.WriteJSON(w, status, status.HTTPStatusCode())

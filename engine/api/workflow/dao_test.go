@@ -21,7 +21,8 @@ import (
 )
 
 func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -34,7 +35,8 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 }
 
 func TestInsertSimpleWorkflowAndExport(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
@@ -89,7 +91,8 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 }
 
 func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
@@ -120,7 +123,8 @@ func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 }
 
 func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -181,7 +185,8 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 }
 
 func TestInsertComplexeWorkflowAndExport(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -319,7 +324,8 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 }
 
 func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -455,7 +461,8 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
 	}
 }
 func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -591,7 +598,8 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 }
 
 func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -800,7 +808,8 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 }
 
 func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -1059,7 +1068,8 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 }
 
 func TestUpdateWorkflowWithJoins(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -1168,7 +1178,8 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 }
 
 func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	test.NoError(t, workflow.CreateBuiltinWorkflowOutgoingHookModels(db))
 
@@ -1308,5 +1319,5 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	fmt.Println(string(btes))
 
-	//test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, &w))
+	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, &w))
 }

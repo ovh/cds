@@ -143,9 +143,9 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 		Start: time.Now(),
 	}
 
-	var handleError = func(err error) {
+	var handleError = func(err error) error {
 		if err == nil {
-			return
+			return nil
 		}
 		log.Error(err.Error())
 		t.LastError = err.Error()
@@ -160,20 +160,20 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 			// Post the callback
 			if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
 				log.Error("unable to perform outgoing hook callback: %v", err)
+				return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
 			}
 		}
+		return nil
 	}
 
 	wr, err := s.Client.WorkflowRunGet(pkey, workflow, runNumber)
 	if err != nil {
-		handleError(err)
-		return nil
+		return handleError(err)
 	}
 
 	hookRun := wr.GetOutgoingHookRun(hookRunID)
 	if hookRun == nil {
-		handleError(errors.New("unable to find hook" + hookRunID))
-		return nil
+		return handleError(errors.New("unable to find hook" + hookRunID))
 	}
 
 	evt := sdk.WorkflowNodeRunHookEvent{
@@ -187,8 +187,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 	targetRun, err := s.Client.WorkflowRunFromHook(targetProject, targetWorkflow, evt)
 	if err != nil {
-		handleError(err)
-		return nil
+		return handleError(err)
 	}
 
 	callbackData.Log = fmt.Sprintf("Workflow %s/%s #%d.%d has been started", targetProject, targetWorkflow, targetRun.Number, targetRun.LastSubNumber)
@@ -229,9 +228,9 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 		Start: time.Now(),
 	}
 
-	var handleError = func(err error) {
+	var handleError = func(err error) error {
 		if err == nil {
-			return
+			return nil
 		}
 		log.Error(err.Error())
 		t.LastError = err.Error()
@@ -246,54 +245,49 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 			// Post the callback
 			if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
 				log.Error("unable to perform outgoing hook callback: %v", err)
+				return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
 			}
 		}
+		return nil
 	}
 
 	hookRun := wr.GetOutgoingHookRun(hookRunID)
 	if hookRun == nil {
-		handleError(errors.New("unable to find hook" + hookRunID))
-		return nil
+		return handleError(errors.New("unable to find hook" + hookRunID))
 	}
 
 	// Get Secrets
 	detailsURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/details", pkey, workflow, run, hookRunID)
 	if _, err := s.Client.(cdsclient.Raw).GetJSON(detailsURL, hookRun); err != nil {
-		handleError(sdk.WrapError(err, "unable to retrieve hook details"))
-		return nil
+		return handleError(sdk.WrapError(err, "unable to retrieve hook details"))
 	}
 
 	// Interpolate
 	method, err := interpolate.Do(t.WebHook.RequestMethod, hookRun.Params)
 	if err != nil {
-		handleError(err)
-		return nil
+		return handleError(err)
 	}
 
 	urls, err := interpolate.Do(t.WebHook.RequestURL, hookRun.Params)
 	if err != nil {
-		handleError(err)
-		return nil
+		return handleError(err)
 	}
 
 	body, err := interpolate.Do(string(t.WebHook.RequestBody), hookRun.Params)
 	if err != nil {
-		handleError(err)
-		return nil
+		return handleError(err)
 	}
 
 	req, err := http.NewRequest(method, urls, bytes.NewBuffer([]byte(body)))
 	if err != nil {
-		handleError(err)
-		return nil
+		return handleError(err)
 	}
 
 	for k, v := range t.WebHook.RequestHeader {
 		for _, val := range v {
 			val, err = interpolate.Do(val, hookRun.Params)
 			if err != nil {
-				handleError(err)
-				return nil
+				return handleError(err)
 			}
 			req.Header.Add(k, val)
 		}
@@ -307,8 +301,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	http.DefaultClient.Timeout = 60 * time.Second
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		handleError(err)
-		return nil
+		return handleError(err)
 	}
 
 	// Prepare the callback
@@ -318,8 +311,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 
 	if res.StatusCode >= 400 {
 		err := fmt.Errorf("HTTP Status %d", res.StatusCode)
-		handleError(err)
-		return nil
+		return handleError(err)
 	}
 
 	callbackData.Done = time.Now()

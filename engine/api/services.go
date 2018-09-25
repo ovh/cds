@@ -51,6 +51,10 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrUnauthorized, "postServiceRegisterHandler> Cannot register service for group %d with service %s", t.GroupID, srv.Type)
 		}
 
+		srv.GroupID = &t.GroupID
+		srv.IsSharedInfra = srv.GroupID == &group.SharedInfraGroup.ID
+		srv.Uptodate = srv.Version == sdk.VERSION
+
 		//Insert or update the service
 		tx, err := api.mustDB().Begin()
 		if err != nil {
@@ -62,6 +66,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
 		if oldSrv != nil {
 			srv.Hash = oldSrv.Hash
+			srv.ID = oldSrv.ID
 		} else if errOldSrv == sdk.ErrNotFound {
 			//Generate a hash
 			hash, errsession := sessionstore.NewSessionKey()

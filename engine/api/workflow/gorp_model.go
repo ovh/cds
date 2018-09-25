@@ -90,7 +90,9 @@ type JobRun struct {
 	Model                  string         `db:"model"`
 	ExecGroups             sql.NullString `db:"exec_groups"`
 	PlatformPluginBinaries sql.NullString `db:"platform_plugin_binaries"`
-	BookedBy               sdk.Hatchery   `db:"-"`
+	BookedBy               sdk.Service    `db:"-"`
+	ContainsService        bool           `db:"contains_service"`
+	ModelType              sql.NullString `db:"model_type"`
 	Header                 sql.NullString `db:"header"`
 }
 
@@ -115,6 +117,8 @@ func (j *JobRun) ToJobRun(jr *sdk.WorkflowNodeJobRun) (err error) {
 	j.Start = jr.Start
 	j.Done = jr.Done
 	j.Model = jr.Model
+	j.ModelType = sql.NullString{Valid: true, String: string(jr.ModelType)}
+	j.ContainsService = jr.ContainsService
 	j.ExecGroups, err = gorpmapping.JSONToNullString(jr.ExecGroups)
 	if err != nil {
 		return sdk.WrapError(err, "column exec_groups")
@@ -143,6 +147,7 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 		Start:             j.Start,
 		Done:              j.Done,
 		BookedBy:          j.BookedBy,
+		ContainsService:   j.ContainsService,
 	}
 	if j.SpawnAttempts != nil {
 		jr.SpawnAttempts = *j.SpawnAttempts
@@ -161,6 +166,9 @@ func (j JobRun) WorkflowNodeRunJob() (sdk.WorkflowNodeJobRun, error) {
 	}
 	if err := gorpmapping.JSONNullString(j.Header, &jr.Header); err != nil {
 		return jr, sdk.WrapError(err, "header")
+	}
+	if j.ModelType.Valid {
+		jr.ModelType = j.ModelType.String
 	}
 	if defaultOS != "" && defaultArch != "" {
 		var modelFound, osArchFound bool

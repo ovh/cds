@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -43,16 +44,9 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	}
 
 	genname := h.Configuration().Name
-	h.Client = cdsclient.NewHatchery(
-		h.Configuration().API.HTTP.URL,
-		h.Configuration().API.Token,
-		h.Configuration().Provision.RegisterFrequency,
-		h.Configuration().API.HTTP.Insecure,
-		genname,
-	)
-
+	h.Client = cdsclient.NewService(h.Config.API.HTTP.URL, 60*time.Second, h.Config.API.HTTP.Insecure)
 	h.API = h.Config.API.HTTP.URL
-	h.Name = h.Config.Name
+	h.Name = genname
 	h.HTTPURL = h.Config.URL
 	h.Token = h.Config.API.Token
 	h.Type = services.TypeHatchery
@@ -108,10 +102,15 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 
 // ID must returns hatchery id
 func (h *HatcheryLocal) ID() int64 {
-	if h.hatch == nil {
+	if h.CDSClient().GetService() == nil {
 		return 0
 	}
-	return h.hatch.ID
+	return h.CDSClient().GetService().ID
+}
+
+//Service returns service instance
+func (h *HatcheryLocal) Service() *sdk.Service {
+	return h.CDSClient().GetService()
 }
 
 //Hatchery returns hatchery instance
@@ -121,31 +120,57 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 
 // Serve start the hatchery server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
+	h.hatch = &sdk.Hatchery{}
+
 	req, err := h.CDSClient().Requirements()
 	if err != nil {
-		return fmt.Errorf("Cannot fetch requirements: %s", err)
+		return fmt.Errorf("Cannot fetch requirements: %v", err)
 	}
 
 	capa, err := checkCapabilities(req)
 	if err != nil {
-		return fmt.Errorf("Cannot check local capabilities: %s", err)
+		return fmt.Errorf("Cannot check local capabilities: %v", err)
 	}
 
-	h.hatch = &sdk.Hatchery{
+	h.ModelLocal = sdk.Model{
 		Name: h.Name,
-		Model: sdk.Model{
-			Name: h.Name,
-			Type: sdk.HostProcess,
-			ModelVirtualMachine: sdk.ModelVirtualMachine{
-				Image: h.Name,
-			},
-			RegisteredCapabilities: capa,
-			Provision:              int64(h.Config.NbProvision),
+		Type: sdk.HostProcess,
+		ModelVirtualMachine: sdk.ModelVirtualMachine{
+			Image: h.Name,
+			Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
 		},
-		Version: sdk.VERSION,
+		RegisteredArch:         runtime.GOARCH,
+		RegisteredOS:           runtime.GOOS,
+		RegisteredCapabilities: capa,
+		Provision:              int64(h.Config.NbProvision),
 	}
 
 	return h.CommonServe(ctx, h)
+}
+
+// checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
+// returns an error "Exit status X" if current host misses one requirement
+func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
+	var tmp map[string]sdk.Requirement
+
+	tmp = make(map[string]sdk.Requirement)
+	for _, r := range req {
+		ok, err := hatchery.CheckRequirement(r)
+		if err != nil {
+			return nil, err
+		}
+
+		if ok {
+			tmp[r.Name] = r
+		}
+	}
+
+	capa := make([]sdk.Requirement, 0, len(tmp))
+	for _, r := range tmp {
+		capa = append(capa, r)
+	}
+
+	return capa, nil
 }
 
 //Configuration returns Hatchery CommonConfiguration
@@ -165,10 +190,14 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		log.Debug("CanSpawn false Hatchery nil")
 		return false
 	}
-	if model.ID != h.Hatchery().Model.ID {
-		log.Debug("CanSpawn false ID different model.ID:%d h.workerModelID:%d ", model.ID, h.Hatchery().Model.ID)
-		return false
+
+	for _, r := range requirements {
+		ok, err := hatchery.CheckRequirement(r)
+		if err != nil || !ok {
+			return false
+		}
 	}
+
 	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			return false
@@ -186,7 +215,7 @@ func (h *HatcheryLocal) killWorker(name string, workerCmd workerCmd) error {
 
 // SpawnWorker starts a new worker process
 func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
-	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomNameCDS(0))
+	wName := fmt.Sprintf("%s-%s", h.Service().Name, namesgenerator.GetRandomNameCDS(0))
 	if spawnArgs.RegisterOnly {
 		wName = "register-" + wName
 	}
@@ -206,8 +235,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              wName,
 		Model:             spawnArgs.Model.ID,
-		Hatchery:          h.hatch.ID,
-		HatcheryName:      h.hatch.Name,
+		HatcheryName:      h.Service().Name,
 		GraylogHost:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Host,
 		GraylogPort:       h.Configuration().Provision.WorkerLogsOptions.Graylog.Port,
 		GraylogExtraKey:   h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey,
@@ -301,6 +329,12 @@ func (h *HatcheryLocal) WorkersStarted() []string {
 	return workers
 }
 
+// WorkerModelsEnabled returns worker model enabled
+func (h *HatcheryLocal) WorkerModelsEnabled() ([]sdk.Model, error) {
+	h.ModelLocal.GroupID = *h.Service().GroupID
+	return []sdk.Model{h.ModelLocal}, nil
+}
+
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryLocal) WorkersStartedByModel(model *sdk.Model) int {
@@ -318,39 +352,9 @@ func (h *HatcheryLocal) WorkersStartedByModel(model *sdk.Model) int {
 	return x
 }
 
-// checkCapabilities checks all requirements, foreach type binary, check if binary is on current host
-// returns an error "Exit status X" if current host misses one requirement
-func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
-	var capa []sdk.Requirement
-	var tmp map[string]sdk.Requirement
-
-	tmp = make(map[string]sdk.Requirement)
-	for _, r := range req {
-		ok, err := hatchery.CheckRequirement(r)
-		if err != nil {
-			return nil, err
-		}
-
-		if ok {
-			tmp[r.Name] = r
-		}
-	}
-
-	for _, r := range tmp {
-		capa = append(capa, r)
-	}
-
-	return capa, nil
-}
-
 // Init register local hatchery with its worker model
 func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]workerCmd)
-
-	if err := hatchery.Register(h); err != nil {
-		return fmt.Errorf("Cannot register: %s", err)
-	}
-
 	sdk.GoRoutine("startKillAwolWorkerRoutine", h.startKillAwolWorkerRoutine)
 	return nil
 }
@@ -374,7 +378,7 @@ func (h *HatcheryLocal) localWorkerIndexCleanup() {
 
 func (h *HatcheryLocal) startKillAwolWorkerRoutine() {
 	t := time.NewTicker(5 * time.Second)
-	for _ = range t.C {
+	for range t.C {
 		if err := h.killAwolWorkers(); err != nil {
 			log.Warning("Cannot kill awol workers: %s", err)
 		}
@@ -431,8 +435,5 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryLocal) NeedRegistration(m *sdk.Model) bool {
-	if m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix() {
-		return true
-	}
-	return false
+	return m.NeedRegistration || m.LastRegistration.Unix() < m.UserLastModified.Unix()
 }

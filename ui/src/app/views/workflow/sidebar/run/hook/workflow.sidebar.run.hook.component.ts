@@ -3,14 +3,13 @@ import {PipelineStatus} from 'app/model/pipeline.model';
 import {Project} from 'app/model/project.model';
 import {HookStatus, TaskExecution, WorkflowHookTask} from 'app/model/workflow.hook.model';
 import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeOutgoingHook} from 'app/model/workflow.model';
-import {WorkflowNodeOutgoingHookRun, WorkflowRun} from 'app/model/workflow.run.model';
+import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 import {finalize} from 'rxjs/operators';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {WorkflowNodeHookDetailsComponent} from '../../../../../shared/workflow/node/hook/details/hook.details.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
-
 
 @Component({
     selector: 'app-workflow-sidebar-run-hook',
@@ -36,6 +35,7 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     hookDetails: WorkflowHookTask;
     hook: WorkflowNodeHook;
     wr: WorkflowRun;
+    nodeRun: WorkflowNodeRun;
     outgoingHook: WorkflowNodeOutgoingHook;
     outgoingHookRuns: Array<WorkflowNodeOutgoingHookRun>;
     pipelineStatusEnum = PipelineStatus;
@@ -56,6 +56,11 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
                 this.loadHookDetails();
             } else if (this.wr && this.outgoingHook) {
                 this.loadOutgoingHookDetails();
+            }
+            if (this.wr && this.wr.nodes && this.node && this.wr.nodes[this.node.id] && this.wr.nodes[this.node.id].length > 0) {
+                this.nodeRun = this.wr.nodes[this.node.id][0];
+            } else {
+                this.nodeRun = null;
             }
         });
         this._workflowEventStore.selectedOutgoingHook().subscribe(oh => {

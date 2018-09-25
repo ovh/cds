@@ -40,6 +40,6 @@ type Options struct {
 	Enable   bool
 	User     *sdk.User
 	Worker   *sdk.Worker
-	Hatchery *sdk.Hatchery
+	Hatchery *sdk.Service
 	SpanKind int
 }

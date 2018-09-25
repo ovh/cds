@@ -80,12 +80,12 @@ func (c *Common) Register(status func() sdk.MonitoringStatus) error {
 		Token:            c.Token,
 		Type:             c.Type,
 		MonitoringStatus: status(),
+		Version:          sdk.VERSION,
 	})
 	if err != nil {
 		return sdk.WrapError(err, "Register>")
 	}
 
 	c.Hash = hash
-
 	return nil
 }
