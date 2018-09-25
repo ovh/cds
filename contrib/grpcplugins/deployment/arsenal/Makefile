@@ -1,6 +1,8 @@
 .PHONY: clean
 
 VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
+GITHASH := $(if ${GIT_HASH},${GIT_HASH},`git`)
+BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 
 TARGET_DIR = ./dist
 TARGET_NAME = arsenal
@@ -15,7 +17,7 @@ cmd: ./%filename%
 endef
 export PLUGIN_MANIFEST_BINARY
 
-TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
+TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_NAME)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 

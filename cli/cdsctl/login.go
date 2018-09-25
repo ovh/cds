@@ -6,12 +6,12 @@ import (
 	"path"
 	"reflect"
 	"regexp"
-	"runtime"
 	"strings"
 
 	"github.com/howeyc/gopass"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
@@ -106,7 +106,7 @@ func doLogin(url, username, password string, env bool) error {
 		return fmt.Errorf("login failed")
 	}
 
-	if env && runtime.GOOS == "windows" {
+	if env && sdk.GOOS == "windows" {
 		fmt.Println("env option is not supported on windows yet")
 		os.Exit(1)
 	}

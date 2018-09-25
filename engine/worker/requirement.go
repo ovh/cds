@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -86,8 +85,8 @@ func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	var currentOS = strings.ToLower(runtime.GOOS)
-	var currentARCH = strings.ToLower(runtime.GOARCH)
+	var currentOS = strings.ToLower(sdk.GOOS)
+	var currentARCH = strings.ToLower(sdk.GOARCH)
 
 	binary, err := w.client.PluginGetBinaryInfos(r.Name, currentOS, currentARCH)
 	if err != nil {
@@ -229,12 +228,12 @@ func checkOSArchRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		return false, fmt.Errorf("invalid requirement %s", r.Value)
 	}
 
-	return osarch[0] == strings.ToLower(runtime.GOOS) && osarch[1] == strings.ToLower(runtime.GOARCH), nil
+	return osarch[0] == strings.ToLower(sdk.GOOS) && osarch[1] == strings.ToLower(sdk.GOARCH), nil
 }
 
 func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
-	var currentOS = strings.ToLower(runtime.GOOS)
-	var currentARCH = strings.ToLower(runtime.GOARCH)
+	var currentOS = strings.ToLower(sdk.GOOS)
+	var currentARCH = strings.ToLower(sdk.GOARCH)
 	var binary *sdk.GRPCPluginBinary
 
 	if len(j.PlatformPluginBinaries) == 0 {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"runtime"
 
 	"github.com/inconshreveable/go-update"
 
@@ -26,19 +25,19 @@ var updateCmd = cli.Command{
 }
 
 func updateRun(v cli.Values) error {
-	fmt.Printf("CDS cdsctl version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+	fmt.Println(sdk.VersionString())
 
 	var urlBinary string
 	if v.GetBool("from-github") {
 		// no need to have apiEndpoint here
 		var errGH error
-		urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("cdsctl", runtime.GOOS, runtime.GOARCH))
+		urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("cdsctl", sdk.GOOS, sdk.GOARCH))
 		if errGH != nil {
 			return fmt.Errorf("Error while getting URL from Github url:%s err:%s", urlBinary, errGH)
 		}
 		fmt.Printf("Updating binary from Github on %s...\n", urlBinary)
 	} else {
-		urlBinary = client.DownloadURLFromAPI("cdsctl", runtime.GOOS, runtime.GOARCH)
+		urlBinary = client.DownloadURLFromAPI("cdsctl", sdk.GOOS, sdk.GOARCH)
 		fmt.Printf("Updating binary from CDS API on %s...\n", urlBinary)
 	}
 

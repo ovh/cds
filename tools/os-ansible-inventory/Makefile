@@ -1,10 +1,12 @@
 .PHONY: clean
 
 VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
+GITHASH := $(if ${GIT_HASH},${GIT_HASH},`git`)
+BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 
 TARGET_DIR = ./dist
-TARGET_BIN = os-ansible-inventory
-TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
+TARGET_BINARY = os-ansible-inventory
+TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_BINARY)"
 TARGET_OS = linux
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 
@@ -28,8 +30,8 @@ build: $(TARGET_DIR)
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
-			echo Compiling $(TARGET_DIR)/$(TARGET_BIN)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
-			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BIN)-$$GOOS-$$GOARCH$$EXTENSION; \
+			echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH$$EXTENSION $(VERSION); \
+			GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done
 

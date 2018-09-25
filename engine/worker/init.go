@@ -160,6 +160,8 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 		GraylogExtraKey:        FlagString(cmd, flagGraylogExtraKey),
 		GraylogExtraValue:      FlagString(cmd, flagGraylogExtraValue),
 		GraylogFieldCDSVersion: sdk.VERSION,
+		GraylogFieldCDSOS:      sdk.GOOS,
+		GraylogFieldCDSArch:    sdk.GOARCH,
 		GraylogFieldCDSName:    w.status.Name,
 	})
 

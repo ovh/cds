@@ -7,13 +7,13 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"runtime"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
 )
 
-const dummyBinaryFile = "https://github.com/ovh/cds/releases/download/0.8.1/plugin-download-" + runtime.GOOS + "-amd64"
+const dummyBinaryFile = "https://github.com/ovh/cds/releases/download/0.8.1/plugin-download-" + sdk.GOOS + "-amd64"
 
 func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 	t.Logf("Downloading file %s", url)

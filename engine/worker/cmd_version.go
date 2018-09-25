@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/spf13/cobra"
 
@@ -14,6 +13,6 @@ var cmdVersion = &cobra.Command{
 	Aliases: []string{"v"},
 	Short:   "Print the version of the worker binary",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("CDS Worker version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+		fmt.Printf("CDS Worker version:%s os:%s architecture:%s git.hash:%s build.time:%s\n", sdk.VERSION, sdk.GOOS, sdk.GOARCH, sdk.GITHASH, sdk.BUILDTIME)
 	},
 }

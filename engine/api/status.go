@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"runtime"
 	"sort"
 	"strings"
 
@@ -24,12 +23,7 @@ import (
 // VersionHandler returns version of current uservice
 func VersionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		s := sdk.Version{
-			Version:      sdk.VERSION,
-			Architecture: runtime.GOARCH,
-			OS:           runtime.GOOS,
-		}
-		return service.WriteJSON(w, s, http.StatusOK)
+		return service.WriteJSON(w, sdk.VersionCurrent(), http.StatusOK)
 	}
 }
 
