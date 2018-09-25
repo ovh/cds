@@ -89,7 +89,6 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		fmt.Printf("Cannot get service: %v\n", err)
 		return nil, err
 	}
-	fmt.Printf("Retrieving repository client\n")
 
 	ctx := context.Background()
 	authConfig, err := GetAuthCredentials(image.String())
@@ -133,7 +132,6 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		if isInsecureRegistry(endpoint.URL.Host) {
 			endpoint.URL.Scheme = "http"
 		}
-		fmt.Printf("endpoint.TLSConfig.InsecureSkipVerify: %v\n", endpoint.TLSConfig.InsecureSkipVerify)
 		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
 		if err != nil {
 			fmt.Printf("cannot instanciate new v2 repository on %v\n", endpoint.URL)
@@ -273,7 +271,7 @@ func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distl
 			return nil, nil, verr
 		}
 	case *schema2.DeserializedManifest:
-		fmt.Printf("retrieved schema2 manifest, no verification\n")
+		fmt.Printf("retrieved schema2 manifest\n")
 	default:
 		log.Printf("Could not verify manifest for image %v: not signed", image)
 	}
