@@ -70,7 +70,7 @@ func All(db gorp.SqlExecutor) ([]sdk.Service, error) {
 		if err == sdk.ErrNotFound {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "All> Unable to find dead services")
+		return nil, sdk.WrapError(err, "All> Unable to find all services")
 	}
 	return services, nil
 }

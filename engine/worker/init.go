@@ -44,7 +44,6 @@ const (
 	flagToken               = "token"
 	flagName                = "name"
 	flagModel               = "model"
-	flagHatchery            = "hatchery"
 	flagHatcheryName        = "hatchery-name"
 	flagDisableOldWorkflows = "disable-old-workflows"
 )
@@ -73,7 +72,6 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags.String(flagToken, "", "CDS Token")
 	flags.String(flagName, "", "Name of worker")
 	flags.Int(flagModel, 0, "Model of worker")
-	flags.Int(flagHatchery, 0, "Hatchery ID spawing worker")
 	flags.String(flagHatcheryName, "", "Hatchery Name spawing worker")
 	flags.Bool(flagDisableOldWorkflows, false, "Disable old workflows")
 }
@@ -171,14 +169,6 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 			log.Error("Cannot retrieve hostname: %v", err)
 			os.Exit(1)
 		}
-	}
-
-	hatchS := FlagString(cmd, flagHatchery)
-	var errH error
-	w.hatchery.id, errH = strconv.ParseInt(hatchS, 10, 64)
-	if errH != nil {
-		log.Error("WARNING: Invalid hatchery ID (%v)", errH)
-		os.Exit(2)
 	}
 
 	// could be empty

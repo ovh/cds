@@ -12,16 +12,37 @@ import (
 	ui "github.com/gizak/termui"
 )
 
+// Default color values.
+const (
+	DefaultItemFgColor   = ui.ColorWhite
+	DefaultItemBgColor   = ui.ColorBlack
+	DefaultCursorFgColor = ui.ColorBlack
+	DefaultCursorBgColor = ui.ColorWhite
+)
+
+// NewScrollableList returns a new *ScrollableList with current theme.
+func NewScrollableList() *ScrollableList {
+	return &ScrollableList{
+		Block:         *ui.NewBlock(),
+		ItemFgColor:   DefaultItemFgColor,
+		ItemBgColor:   DefaultItemBgColor,
+		CursorFgColor: DefaultCursorFgColor,
+		CursorBgColor: DefaultCursorBgColor,
+	}
+}
+
 // ScrollableList is a scrollable list with a cursor. To "deactivate" the cursor, just make the
 // cursor colors the same as the item colors.
 type ScrollableList struct {
 	ui.Block
 
-	// The items in the list
-	Items []string
+	header string
 
-	// The window's offset relative to the start of `Items`
-	Offset int
+	// The items in the list
+	items []string
+
+	// The window's offset relative to the start of `items`
+	offset int
 
 	// The foreground color for non-cursor items
 	ItemFgColor ui.Attribute
@@ -35,34 +56,40 @@ type ScrollableList struct {
 	// The background color for the cursor
 	CursorBgColor ui.Attribute
 
-	// The position of the cursor relative to the start of `Items`
-	Cursor int
+	// The position of the cursor relative to the start of `items`
+	cursor int
+
+	cursorVisible bool
 }
 
-// NewScrollableList returns a new *ScrollableList with current theme.
-func NewScrollableList() *ScrollableList {
-	l := &ScrollableList{Block: *ui.NewBlock()}
-	l.CursorBgColor = ui.ColorBlue
-	l.CursorFgColor = ui.ColorWhite
-	return l
-}
+// SetCursorVisibility state.
+func (sl *ScrollableList) SetCursorVisibility(b bool) { sl.cursorVisible = b }
 
-// Add an element to the list
-func (sl *ScrollableList) Add(s string) {
-	sl.Items = append(sl.Items, s)
-	sl.render()
-}
+// GetCursor returns cursor value.
+func (sl *ScrollableList) GetCursor() int { return sl.cursor }
 
-func (sl *ScrollableList) render() {
-	ui.Render(sl)
-}
+// GetItems returns list's items.
+func (sl *ScrollableList) GetItems() []string { return sl.items }
 
-func (sl *ScrollableList) colorsForItem(i int) (fg, bg ui.Attribute) {
-	if i == sl.Cursor {
-		return sl.CursorFgColor, sl.CursorBgColor
+// SetItems update list's items and fix cursor.
+func (sl *ScrollableList) SetItems(is ...string) {
+	sl.items = is
+
+	h := sl.getInnerheight()
+
+	// fix cursor and offset
+	if len(sl.items) < h+sl.offset {
+		sl.offset = 0
 	}
-	return sl.ItemFgColor, sl.ItemBgColor
+	if len(sl.items) <= sl.cursor {
+		sl.cursor = 0
+	}
 }
+
+// SetHeader to list.
+func (sl *ScrollableList) SetHeader(h string) { sl.header = h }
+
+func (sl *ScrollableList) render() { ui.Render(sl) }
 
 func min(a, b int) int {
 	if a < b {
@@ -80,177 +107,80 @@ func max(a, b int) int {
 
 // Buffer implements the termui.Bufferer interface
 func (sl *ScrollableList) Buffer() ui.Buffer {
-	buf := sl.Block.Buffer()
-	start := min(sl.Offset, len(sl.Items))
-	end := min(sl.Offset+sl.InnerHeight(), len(sl.Items))
-	for i, item := range sl.Items[start:end] {
-		fg, bg := sl.colorsForItem(start + i)
-		if item == "" {
-			item = " "
-		}
-		cells := ui.DefaultTxBuilder.Build(item, fg, bg)
-		cells = ui.DTrimTxCls(cells, sl.InnerWidth())
-		offsetX := 0
-		for _, cell := range cells {
-			width := cell.Width()
-			buf.Set(
-				sl.InnerBounds().Min.X+offsetX,
-				sl.InnerBounds().Min.Y+i,
-				cell,
-			)
-			offsetX += width
-		}
+	b := sl.Block.Buffer()
+
+	h := sl.getInnerheight()
+	startItem, endItem := sl.offset, min(sl.offset+h, len(sl.items))
+
+	var idx int
+	if sl.header != "" {
+		sl.printLine(b, sl.header, idx, DefaultItemFgColor, DefaultItemBgColor)
+		idx++
 	}
-	return buf
+
+	for i, item := range sl.items[startItem:endItem] {
+		fg, bg := sl.ItemFgColor, sl.ItemBgColor
+		if i+startItem == sl.cursor && sl.cursorVisible {
+			fg, bg = sl.CursorFgColor, sl.CursorBgColor
+		}
+		sl.printLine(b, item, idx, fg, bg)
+		idx++
+	}
+
+	return b
 }
 
-// ScrollUp move the window up one row
-func (sl *ScrollableList) ScrollUp() {
-	if sl.Offset > 0 {
-		sl.Offset--
-		if sl.Cursor >= sl.Offset+sl.InnerHeight() {
-			sl.Cursor = sl.Offset + sl.InnerHeight() - 1
-		}
-		sl.render()
+func (sl *ScrollableList) printLine(b ui.Buffer, l string, index int, fg, bg ui.Attribute) {
+	if l == "" {
+		l = " "
 	}
-}
 
-// ScrollDown move the window down one row
-func (sl *ScrollableList) ScrollDown() {
-	if sl.Offset < len(sl.Items) {
-		sl.Offset++
-		if sl.Offset > sl.Cursor {
-			sl.Cursor = sl.Offset
-		}
-		sl.render()
+	cells := ui.DefaultTxBuilder.Build(l, fg, bg)
+	cells = ui.DTrimTxCls(cells, sl.InnerWidth())
+	offsetX := 0
+	for _, cell := range cells {
+		width := cell.Width()
+		b.Set(
+			sl.InnerBounds().Min.X+offsetX,
+			sl.InnerBounds().Min.Y+index,
+			cell,
+		)
+		offsetX += width
 	}
 }
 
-// MoveUp swap current row with previous row, then move
-// cursor to previous row
-func (sl *ScrollableList) MoveUp(n int) {
-	if sl.Cursor >= n {
-		cur := sl.Items[sl.Cursor]
-		up := sl.Items[sl.Cursor-n]
-		sl.Items[sl.Cursor] = up
-		sl.Items[sl.Cursor-n] = cur
+func (sl *ScrollableList) getInnerheight() int {
+	h := sl.InnerHeight()
+	if sl.header != "" {
+		return h - 1
 	}
-	sl.CursorUpLines(n)
-}
-
-// MoveDown swap current row with next row, then move
-// cursor to next row
-func (sl *ScrollableList) MoveDown(n int) {
-	if sl.Cursor < len(sl.Items)-n {
-		cur := sl.Items[sl.Cursor]
-		down := sl.Items[sl.Cursor+n]
-		sl.Items[sl.Cursor] = down
-		sl.Items[sl.Cursor+n] = cur
-	}
-	sl.CursorDownLines(n)
+	return h
 }
 
 // CursorDown move the cursor down one row; moving the cursor out of the window will cause
 // scrolling.
 func (sl *ScrollableList) CursorDown() {
-	sl.CursorDownLines(1)
-}
+	if sl.cursor < len(sl.items)-1 {
+		sl.cursor++
+	}
 
-// CursorDownLines ...
-func (sl *ScrollableList) CursorDownLines(n int) {
-	sl.SilentCursorDownLines(n)
+	h := sl.getInnerheight()
+	if sl.cursor >= h+sl.offset {
+		sl.offset = (sl.cursor - h) + 1
+	}
+
 	sl.render()
-}
-
-// SilentCursorDownLines ...
-func (sl *ScrollableList) SilentCursorDownLines(n int) {
-	if sl.Cursor < len(sl.Items)-n {
-		sl.Cursor += n
-	} else {
-		sl.Cursor = len(sl.Items) - 1
-	}
-	if sl.Cursor > sl.Offset+sl.InnerHeight()-n {
-		sl.Offset += n
-	}
 }
 
 // CursorUp move the cursor up one row; moving the cursor out of the window will cause
 // scrolling.
 func (sl *ScrollableList) CursorUp() {
-	sl.CursorUpLines(1)
-}
-
-// CursorUpLines ...
-func (sl *ScrollableList) CursorUpLines(n int) {
-	sl.SilentCursorUpLines(n)
-	sl.render()
-}
-
-// SilentCursorUpLines ...
-func (sl *ScrollableList) SilentCursorUpLines(n int) {
-	if sl.Cursor > n {
-		sl.Cursor -= n
-	} else {
-		sl.Cursor = 0
+	if sl.cursor > 0 {
+		sl.cursor--
 	}
-	if sl.Cursor < sl.Offset {
-		sl.Offset = sl.Cursor
+	if sl.cursor < sl.offset {
+		sl.offset = sl.cursor
 	}
-}
 
-// SetCursorLine ...
-func (sl *ScrollableList) SetCursorLine(n int) {
-	if n > len(sl.Items) || n < 0 {
-		return
-	}
-	if !(n >= sl.Offset && n < min(sl.Offset+sl.InnerHeight(), len(sl.Items))) {
-		// not on same page
-		if n < sl.Cursor {
-			// scrolling up to new line
-			if sl.Offset > n {
-				sl.Offset = n
-			}
-		} else {
-			// scrolling down to new line
-			if sl.Offset < n {
-				sl.Offset = n
-			}
-		}
-	}
-	sl.Cursor = n
-	sl.render()
-}
-
-// PageDown move the window down one frame; this will move the cursor as well.
-func (sl *ScrollableList) PageDown() {
-	if sl.Offset < len(sl.Items)-sl.InnerHeight() {
-		sl.Offset += sl.InnerHeight()
-		if sl.Offset > sl.Cursor {
-			sl.Cursor = sl.Offset
-		}
-		sl.render()
-	}
-}
-
-// PageUp move the window up one frame; this will move the cursor as well.
-func (sl *ScrollableList) PageUp() {
-	sl.Offset = max(0, sl.Offset-sl.InnerHeight())
-	if sl.Cursor >= sl.Offset+sl.InnerHeight() {
-		sl.Cursor = sl.Offset + sl.InnerHeight() - 1
-	}
-	sl.render()
-}
-
-// ScrollToBottom scroll to the bottom of the list
-func (sl *ScrollableList) ScrollToBottom() {
-	if len(sl.Items) >= sl.InnerHeight() {
-		sl.Offset = len(sl.Items) - sl.InnerHeight()
-		sl.render()
-	}
-}
-
-// ScrollToTop scroll to the top of the list
-func (sl *ScrollableList) ScrollToTop() {
-	sl.Offset = 0
 	sl.render()
 }
