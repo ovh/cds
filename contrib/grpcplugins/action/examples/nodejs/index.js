@@ -16,7 +16,7 @@ function manifest(call, callback) {
 
 function run(call, callback) {
   var reply = new messages.ActionResult();
-  console.log('Here is a test');
+  console.log('This is a test');
   reply.setStatus('Success');
   callback(null, reply);
 }

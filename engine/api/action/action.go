@@ -387,8 +387,8 @@ func isRequirementsValid(requirements sdk.RequirementList) error {
 	nbModelReq, nbHostnameReq := 0, 0
 	for i := range requirements {
 		for j := range requirements {
-			if requirements[i].Name == requirements[j].Name && i != j {
-				return sdk.ErrInvalidJobRequirement
+			if requirements[i].Name == requirements[j].Name && requirements[i].Type == requirements[j].Type && i != j {
+				return sdk.WrapError(sdk.ErrInvalidJobRequirement, "For requirement name %s and type %s", requirements[i].Name, requirements[i].Type)
 			}
 		}
 		switch requirements[i].Type {
