@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"net/url"
@@ -38,7 +39,38 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 	ui.init()
 	ui.staticRender()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	ui.loadChan = make(chan func() error)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case f := <-ui.loadChan:
+				if err := f(); err != nil {
+					ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+				}
+				ui.render()
+			}
+		}
+	}()
+
+	ui.renderChan = make(chan func())
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case f := <-ui.renderChan:
+				f()
+			}
+		}
+	}()
+
 	termui.Loop()
+
 	return nil, nil
 }
 
@@ -71,9 +103,14 @@ type Termui struct {
 	queue                   *cli.ScrollableList
 	statusHatcheriesWorkers *cli.ScrollableList
 	statusServices          *cli.ScrollableList
+
+	loadChan   chan func() error
+	renderChan chan func()
 }
 
-func (ui *Termui) loadData() error {
+func (ui *Termui) loadData() { ui.loadChan <- ui.execLoadData }
+
+func (ui *Termui) execLoadData() error {
 	urlUI, err := client.ConfigUser()
 	if err != nil {
 		return err
@@ -119,10 +156,6 @@ func (ui *Termui) loadData() error {
 		return err
 	}
 
-	if err := ui.loadQueue(); err != nil {
-		return err
-	}
-
 	start = time.Now()
 	if _, err := client.QueueCountWorkflowNodeJobRun(nil, nil, "", nil); err != nil {
 		return err
@@ -132,16 +165,9 @@ func (ui *Termui) loadData() error {
 	return nil
 }
 
-func (ui *Termui) loadQueue() error {
-	switch ui.queueTabSelected {
-	case 0:
-		ui.statusSelected = []sdk.Status{sdk.StatusWaiting}
-	case 1:
-		ui.statusSelected = []sdk.Status{sdk.StatusBuilding}
-	case 2:
-		ui.statusSelected = []sdk.Status{sdk.StatusBuilding, sdk.StatusWaiting}
-	}
+func (ui *Termui) loadQueue() { ui.loadChan <- ui.execLoadQueue }
 
+func (ui *Termui) execLoadQueue() error {
 	var err error
 
 	start := time.Now()
@@ -165,10 +191,8 @@ func (ui *Termui) init() {
 	// init termui handlers
 	termui.Merge("/timer/2s", termui.NewTimerCh(time.Second*2))
 	termui.Handle("/timer/2s", func(e termui.Event) {
-		if err := ui.loadData(); err != nil {
-			ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
-		}
-		ui.render()
+		ui.loadData()
+		ui.loadQueue()
 	})
 	termui.Handle("/sys/kbd/h", func(termui.Event) {
 		ui.msg = fmt.Sprintf("shortcuts: ⇥ to select panel, esc to deselect panel, ↑ and ↓ to select line, ← and → to change filters, ↩ to open in ui")
@@ -201,6 +225,7 @@ func (ui *Termui) init() {
 	ui.times = newPar()
 
 	ui.selected = nothingSelected
+	ui.updateSelectStatus()
 
 	// prepare queue list
 	ui.queue = cli.NewScrollableList()
@@ -274,7 +299,9 @@ func (ui *Termui) staticRender() {
 	ui.commonRender()
 }
 
-func (ui *Termui) render() {
+func (ui *Termui) render() { ui.renderChan <- ui.execRender }
+
+func (ui *Termui) execRender() {
 	if ui.msg == "" {
 		ui.times.Text = fmt.Sprintf(
 			"[count queue wf %s](fg-cyan) | [queue wf %s](fg-cyan) | [workers %s](fg-cyan) | [wModels %s](fg-cyan) | [status %s](fg-cyan)",
@@ -368,9 +395,8 @@ func (ui *Termui) incrementQueueFilter() {
 	} else {
 		ui.queueTabSelected = 0
 	}
-	if err := ui.loadQueue(); err != nil {
-		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
-	}
+	ui.updateSelectStatus()
+	ui.loadQueue()
 }
 
 func (ui *Termui) decrementQueueFilter() {
@@ -379,8 +405,18 @@ func (ui *Termui) decrementQueueFilter() {
 	} else {
 		ui.queueTabSelected = 2
 	}
-	if err := ui.loadQueue(); err != nil {
-		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+	ui.updateSelectStatus()
+	ui.loadQueue()
+}
+
+func (ui *Termui) updateSelectStatus() {
+	switch ui.queueTabSelected {
+	case 0:
+		ui.statusSelected = []sdk.Status{sdk.StatusWaiting}
+	case 1:
+		ui.statusSelected = []sdk.Status{sdk.StatusBuilding}
+	case 2:
+		ui.statusSelected = []sdk.Status{sdk.StatusBuilding, sdk.StatusWaiting}
 	}
 }
 
@@ -551,10 +587,8 @@ func (ui *Termui) updateQueue(baseURL string) {
 	}
 	ui.queue.SetItems(items...)
 
-	jobCount := len(ui.pipelineBuildJob) + len(ui.workflowNodeJobRun)
-
 	ui.queue.BorderLabel = fmt.Sprintf(" Queue(%s):%d ",
-		strings.Join(sdk.StatusToStrings(ui.statusSelected), ","), jobCount)
+		strings.Join(sdk.StatusToStrings(ui.statusSelected), ","), len(items))
 
 	for _, s := range ui.statusSelected {
 		switch s {
