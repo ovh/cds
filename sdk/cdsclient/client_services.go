@@ -2,7 +2,6 @@ package cdsclient
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -27,8 +26,7 @@ func (c *client) ServiceRegister(s sdk.Service) (string, error) {
 	c.service = &s
 
 	if !s.Uptodate {
-		log.Warning("-=-=-=-=- Please update your cds engine binary - current version:%s %s %s -=-=-=-=-",
-			sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+		log.Warning("-=-=-=-=- Please update your cds engine binary - current version:%s -=-=-=-=-", sdk.VersionString())
 	}
 
 	return s.Hash, nil

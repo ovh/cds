@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"runtime"
 	"strconv"
 
 	repo "github.com/fsamin/go-repo"
@@ -29,9 +28,9 @@ type config struct {
 
 func userHomeDir() string {
 	env := "HOME"
-	if runtime.GOOS == "windows" {
+	if sdk.GOOS == "windows" {
 		env = "USERPROFILE"
-	} else if runtime.GOOS == "plan9" {
+	} else if sdk.GOOS == "plan9" {
 		env = "home"
 	}
 	return os.Getenv(env)
