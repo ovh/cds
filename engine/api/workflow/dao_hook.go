@@ -174,7 +174,7 @@ func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeH
 
 func loadOutgoingHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeOutgoingHook, error) {
 	res := []nodeOutgoingHook{}
-	if _, err := db.Select(&res, "select id, workflow_hook_model_id from workflow_node_outgoing_hook where workflow_node_id = $1", node.ID); err != nil {
+	if _, err := db.Select(&res, "select id, name, workflow_hook_model_id from workflow_node_outgoing_hook where workflow_node_id = $1", node.ID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}

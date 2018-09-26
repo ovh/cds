@@ -95,9 +95,8 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
         if (h.type === 'delete') {
             Workflow.removeOutgoingHook(workflowToUpdate, h.hook.id);
         } else {
-            Workflow.updateOutgoingHook(workflowToUpdate, h.hook.id, h.hook.config);
+            Workflow.updateOutgoingHook(workflowToUpdate, h.hook.id, h.name, h.hook.config);
         }
-
         this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate)
             .pipe(finalize(() => this.loading = false))
             .subscribe(() => {

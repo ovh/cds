@@ -19,6 +19,7 @@ SELECT create_unique_index('workflow_outgoing_hook_model', 'IDX_WORKFLOW_OUTGOIN
 CREATE TABLE workflow_node_outgoing_hook
 (
     id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
     workflow_node_id BIGINT NOT NULL,
     workflow_hook_model_id BIGINT NOT NULL,
     config JSONB
