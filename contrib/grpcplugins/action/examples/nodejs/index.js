@@ -16,8 +16,7 @@ function manifest(call, callback) {
 
 function run(call, callback) {
   var reply = new messages.ActionResult();
-  console.log('coucou test ');
-  console.log('caca boudin');
+  console.log('Here is a test');
   reply.setStatus('Success');
   callback(null, reply);
 }
@@ -36,7 +35,7 @@ function main() {
     .then((port) => {
       server.bind(localIP + ':' + port, grpc.ServerCredentials.createInsecure());
       server.start();
-      console.log(`${localIP}:${port} is ready to accept new connection\n`);//must be in this mandatory form (worker will use this log));
+      console.log(`${localIP}:${port} is ready to accept new connection`);//must be in this mandatory form (worker will use this log));
     });
 }
 

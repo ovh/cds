@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -19,6 +20,29 @@ func AddBinary(db gorp.SqlExecutor, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, 
 
 	b.ObjectPath = objectPath
 	p.Binaries = append(p.Binaries, *b)
+
+	if p.Type == sdk.GRPCPluginAction {
+		act, errA := action.LoadPublicAction(db, p.Name)
+		if errA != nil {
+			return sdk.WrapError(errA, "AddBinary> Cannot load public action for plugin type action")
+		}
+
+		// Add action requirement
+		for _, req := range b.Requirements {
+			found := false
+			for _, reqAct := range act.Requirements {
+				if req.Name == reqAct.Name && req.Type == reqAct.Type {
+					found = true
+					break
+				}
+			}
+			if !found {
+				if err := action.InsertActionRequirement(db, act.ID, req); err != nil {
+					return sdk.WrapError(err, "AddBinary> Cannot insert action requirement %s", req.Name)
+				}
+			}
+		}
+	}
 
 	return Update(db, p)
 }
@@ -50,6 +74,32 @@ func UpdateBinary(db gorp.SqlExecutor, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinar
 
 	b.ObjectPath = objectPath
 	p.Binaries[index] = *b
+
+	if p.Type == sdk.GRPCPluginAction {
+		act, errA := action.LoadPublicAction(db, p.Name)
+		if errA != nil {
+			return sdk.WrapError(errA, "AddBinary> Cannot load public action for plugin type action")
+		}
+
+		if err := action.DeleteActionRequirements(db, act.ID); err != nil {
+			return sdk.WrapError(err, "AddBinary> Cannot delete requirements for action of plugin type action")
+		}
+
+		plgReq := sdk.Requirement{
+			Name:  p.Name,
+			Type:  sdk.PluginRequirement,
+			Value: p.Name,
+		}
+		if err := action.InsertActionRequirement(db, act.ID, plgReq); err != nil {
+			return sdk.WrapError(err, "AddBinary> Cannot insert plugin action requirement %s", plgReq.Name)
+		}
+		// Add action requirement
+		for _, req := range b.Requirements {
+			if err := action.InsertActionRequirement(db, act.ID, req); err != nil {
+				return sdk.WrapError(err, "AddBinary> Cannot insert action requirement %s", req.Name)
+			}
+		}
+	}
 
 	return Update(db, p)
 }

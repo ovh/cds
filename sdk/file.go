@@ -8,14 +8,6 @@ import (
 	"path/filepath"
 )
 
-// IsZip returns true if the content is a zip
-func IsZip(buf []byte) bool {
-	return len(buf) > 3 &&
-		buf[0] == 0x50 && buf[1] == 0x4B &&
-		(buf[2] == 0x3 || buf[2] == 0x5 || buf[2] == 0x7) &&
-		(buf[3] == 0x4 || buf[3] == 0x6 || buf[3] == 0x8)
-}
-
 // IsTar returns true if the content is a tar
 func IsTar(buf []byte) bool {
 	return len(buf) > 261 &&
@@ -30,16 +22,22 @@ func IsGz(buf []byte) bool {
 		buf[0] == 0x1F && buf[1] == 0x8B && buf[2] == 0x8
 }
 
-// Untar takes a destination path and a reader; a tar reader loops over the tarfile
+// UntarGz takes a destination path and a reader; a tar.gz reader loops over the tarfile
 // creating the file structure at 'dst' along the way, and writing any files
-func Untar(dst string, r io.Reader) error {
+func UntarGz(dst string, r io.Reader) error {
 	gzr, err := gzip.NewReader(r)
 	if err != nil {
 		return err
 	}
 	defer gzr.Close()
 
-	tr := tar.NewReader(gzr)
+	return Untar(dst, gzr)
+}
+
+// Untar takes a destination path and a reader; a tar reader loops over the tarfile
+// creating the file structure at 'dst' along the way, and writing any files
+func Untar(dst string, r io.Reader) error {
+	tr := tar.NewReader(r)
 
 	for {
 		header, err := tr.Next()

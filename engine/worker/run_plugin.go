@@ -110,12 +110,14 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	}
 
 	switch {
-	case sdk.IsTar(fileContent), sdk.IsGz(fileContent):
+	case sdk.IsTar(fileContent):
 		if err := sdk.Untar(w.basedir, bytes.NewReader(fileContent)); err != nil {
 			return nil, sdk.WrapError(err, "Unable to untar binary file")
 		}
-	case sdk.IsZip(fileContent):
-
+	case sdk.IsGz(fileContent):
+		if err := sdk.UntarGz(w.basedir, bytes.NewReader(fileContent)); err != nil {
+			return nil, sdk.WrapError(err, "Unable to untarGz binary file")
+		}
 	}
 
 	for i := range binary.Entrypoints {

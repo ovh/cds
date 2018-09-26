@@ -11,6 +11,10 @@ arch: %arch%
 cmd: node
 entrypoints:
 - index.js
+requirements:
+- name: node
+  type: binary
+  value: node
 endef
 export PLUGIN_MANIFEST_BINARY
 
