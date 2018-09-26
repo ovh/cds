@@ -456,6 +456,10 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 				defer txg.Rollback() // nolint
 				if err := workflow.Delete(context.Background(), txg, api.Cache, p, oldW); err != nil {
 					log.Error("deleteWorkflowHandler> unable to delete workflow: %v", err)
+					return
+				}
+				if err := txg.Commit(); err != nil {
+					log.Error("deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
 			})
 
