@@ -136,10 +136,6 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	args = append(args, binary.Entrypoints...)
 	args = append(args, binary.Args...)
 
-	log.Info("dir %s", dir)
-	log.Info("cmd %+v", cmd)
-	log.Info("args %+v", args)
-	log.Info("entrypoints %+v", binary.Entrypoints)
 	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, mOut, mErr); err != nil {
 		return nil, sdk.WrapError(err, "Unable to start GRPC plugin... Aborting")
 	}
