@@ -9,13 +9,15 @@ licence: https://github.com/mikepea/go-jira-ui/blob/master/LICENSE
 */
 
 import (
+	"sync"
+
 	ui "github.com/gizak/termui"
 )
 
 // Default color values.
 const (
 	DefaultItemFgColor   = ui.ColorWhite
-	DefaultItemBgColor   = ui.ColorBlack
+	DefaultItemBgColor   = ui.ColorDefault
 	DefaultCursorFgColor = ui.ColorBlack
 	DefaultCursorBgColor = ui.ColorWhite
 )
@@ -40,6 +42,10 @@ type ScrollableList struct {
 
 	// The items in the list
 	items []string
+
+	// lock should be used to prevent inconsistency between offset, cursor and items
+	// because termui rendering is async (Buffer func)
+	dataLock sync.Mutex
 
 	// The window's offset relative to the start of `items`
 	offset int
@@ -73,23 +79,23 @@ func (sl *ScrollableList) GetItems() []string { return sl.items }
 
 // SetItems update list's items and fix cursor.
 func (sl *ScrollableList) SetItems(is ...string) {
-	sl.items = is
+	sl.dataLock.Lock()
+	defer sl.dataLock.Unlock()
 
 	h := sl.getInnerheight()
-
 	// fix cursor and offset
-	if len(sl.items) < h+sl.offset {
+	if len(is) < h+sl.offset {
 		sl.offset = 0
 	}
-	if len(sl.items) <= sl.cursor {
+	if len(is) <= sl.cursor {
 		sl.cursor = 0
 	}
+
+	sl.items = is
 }
 
 // SetHeader to list.
 func (sl *ScrollableList) SetHeader(h string) { sl.header = h }
-
-func (sl *ScrollableList) render() { ui.Render(sl) }
 
 func min(a, b int) int {
 	if a < b {
@@ -107,6 +113,9 @@ func max(a, b int) int {
 
 // Buffer implements the termui.Bufferer interface
 func (sl *ScrollableList) Buffer() ui.Buffer {
+	sl.dataLock.Lock()
+	defer sl.dataLock.Unlock()
+
 	b := sl.Block.Buffer()
 
 	h := sl.getInnerheight()
@@ -160,6 +169,9 @@ func (sl *ScrollableList) getInnerheight() int {
 // CursorDown move the cursor down one row; moving the cursor out of the window will cause
 // scrolling.
 func (sl *ScrollableList) CursorDown() {
+	sl.dataLock.Lock()
+	defer sl.dataLock.Unlock()
+
 	if sl.cursor < len(sl.items)-1 {
 		sl.cursor++
 	}
@@ -168,19 +180,18 @@ func (sl *ScrollableList) CursorDown() {
 	if sl.cursor >= h+sl.offset {
 		sl.offset = (sl.cursor - h) + 1
 	}
-
-	sl.render()
 }
 
 // CursorUp move the cursor up one row; moving the cursor out of the window will cause
 // scrolling.
 func (sl *ScrollableList) CursorUp() {
+	sl.dataLock.Lock()
+	defer sl.dataLock.Unlock()
+
 	if sl.cursor > 0 {
 		sl.cursor--
 	}
 	if sl.cursor < sl.offset {
 		sl.offset = sl.cursor
 	}
-
-	sl.render()
 }
