@@ -142,8 +142,10 @@ func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		return false, nil
 	}
 	t := strings.Split(r.Value, " ")
-	wm, err := w.client.WorkerModel(t[0])
-	return wm.ID == w.model.ID, err
+	if len(t) > 0 {
+		return t[0] == w.model.Name, nil
+	}
+	return false, nil
 }
 
 func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
