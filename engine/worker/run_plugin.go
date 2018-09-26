@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"runtime"
 	"strings"
@@ -117,11 +118,27 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 
 	}
 
-	if len(binary.Args) > 0 {
-		binary.Args[0] = path.Join(w.basedir, binary.Args[0])
+	for i := range binary.Entrypoints {
+		binary.Entrypoints[i] = path.Join(w.basedir, binary.Entrypoints[i])
 	}
 
-	if err := grpcplugin.StartPlugin(ctx, dir, binary.Cmd, binary.Args, envs, mOut, mErr); err != nil {
+	cmd := binary.Cmd
+	if _, err := exec.LookPath(cmd); err != nil {
+		cmd = path.Join(w.basedir, cmd)
+		_, err = exec.LookPath(cmd)
+		if err != nil {
+			return nil, sdk.WrapError(err, "Unable to start GRPC plugin, binary command not found.")
+		}
+	}
+	args := make([]string, 0, len(binary.Args)+len(binary.Entrypoints))
+	args = append(args, binary.Entrypoints...)
+	args = append(args, binary.Args...)
+
+	log.Info("dir %s", dir)
+	log.Info("cmd %+v", cmd)
+	log.Info("args %+v", args)
+	log.Info("entrypoints %+v", binary.Entrypoints)
+	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, mOut, mErr); err != nil {
 		return nil, sdk.WrapError(err, "Unable to start GRPC plugin... Aborting")
 	}
 	log.Info("GRPC Plugin %s started", binary.Name)

@@ -9,7 +9,7 @@ define PLUGIN_MANIFEST_BINARY
 os: %os%
 arch: %arch%
 cmd: node
-args:
+entrypoints:
 - index.js
 endef
 export PLUGIN_MANIFEST_BINARY

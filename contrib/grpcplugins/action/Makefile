@@ -78,12 +78,12 @@ build:
 
 publish:
 	@echo "Updating plugin $(TARGET_NAME)..."
-	cdsctl -f /Users/bcoenen/.cdsrcp19 admin plugins import $(TARGET_NAME)/$(TARGET_DIR)/plugin.yml
+	cdsctl admin plugins import $(TARGET_NAME)/$(TARGET_DIR)/plugin.yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl -f /Users/bcoenen/.cdsrcp19 admin plugins binary-add plugin-$(TARGET_NAME) $(TARGET_NAME)/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_NAME)/$(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			cdsctl admin plugins binary-add plugin-$(TARGET_NAME) $(TARGET_NAME)/$(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_NAME)/$(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done

@@ -58,8 +58,6 @@ func UploadPlugin(filePath string, update bool) ([]byte, error) {
 	}
 	defer file.Close()
 
-	//_, name := filepath.Split(filePath)
-
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile("UploadFile", filepath.Base(filePath))
@@ -141,6 +139,7 @@ type GRPCPluginBinary struct {
 	SHA512sum        string          `json:"sha512sum,omitempty" yaml:"-"`
 	TempURL          string          `json:"temp_url,omitempty" yaml:"-"`
 	TempURLSecretKey string          `json:"-" yaml:"-"`
+	Entrypoints      []string        `json:"entrypoints,omitempty" yaml:"entrypoints"`
 	Cmd              string          `json:"cmd,omitempty" yaml:"cmd"`
 	Args             []string        `json:"args,omitempty" yaml:"args"`
 	Requirements     RequirementList `json:"requirements,omitempty" yaml:"requirements"`

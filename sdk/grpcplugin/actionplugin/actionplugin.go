@@ -34,20 +34,17 @@ func Start(ctx context.Context, srv ActionPluginServer) error {
 
 // Client gives us a grpcplugin client
 func Client(ctx context.Context, socket string) (ActionPluginClient, error) {
-	var conn *grpc.ClientConn
-	var err error
-	if !strings.Contains(socket, ".socket") {
-		conn, err = grpc.Dial(socket, grpc.WithInsecure(), grpc.WithBackoffMaxDelay(500*time.Millisecond))
-	} else {
-		conn, err = grpc.DialContext(ctx,
-			socket,
-			grpc.WithInsecure(),
-			grpc.WithBackoffMaxDelay(500*time.Millisecond),
-			grpc.WithDialer(func(address string, timeout time.Duration) (net.Conn, error) {
+	conn, err := grpc.DialContext(ctx,
+		socket,
+		grpc.WithInsecure(),
+		grpc.WithBackoffMaxDelay(500*time.Millisecond),
+		grpc.WithDialer(func(address string, timeout time.Duration) (net.Conn, error) {
+			if strings.Contains(socket, ".sock") {
 				return net.DialTimeout("unix", socket, timeout)
-			}),
-		)
-	}
+			}
+			return net.DialTimeout("tcp", socket, timeout)
+		}),
+	)
 
 	if err != nil {
 		return nil, err
