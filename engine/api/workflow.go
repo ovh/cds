@@ -449,7 +449,12 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 
 		sdk.GoRoutine("deleteWorkflowHandler",
 			func() {
-				if err := workflow.Delete(context.Background(), api.mustDB(), api.Cache, p, oldW); err != nil {
+				txg, errT := api.mustDB().Begin()
+				if errT != nil {
+					log.Error("deleteWorkflowHandler> Cannot start transaction: %v", errT)
+				}
+				defer txg.Rollback()
+				if err := workflow.Delete(context.Background(), txg, api.Cache, p, oldW); err != nil {
 					log.Error("deleteWorkflowHandler> unable to delete workflow: %v", err)
 				}
 			})
