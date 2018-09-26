@@ -1,6 +1,5 @@
 <ng-template let-context let-modal="modal" #triggerModal>
-    <div class="header" *ngIf="source && (!trigger || !trigger.id)">{{ 'workflow_node_trigger_title' | translate: {pip: source} }}</div>
-    <div class="header" *ngIf="source && trigger && trigger.id">{{ 'workflow_node_trigger_title_edit' | translate: {pip: source} }}</div>
+    <div class="header" *ngIf="source">{{ 'workflow_node_trigger_title' | translate: {pip: source} }}</div>
     <div class="header" *ngIf="!source">{{ 'workflow_node_parent' | translate }}</div>
     <div class="content">
         <div class="ui form" *ngIf="project">
@@ -16,6 +15,6 @@
     </div>
     <div class="actions">
         <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" [disabled]="loading || trigger == null" [class.loading]="loading" (click)="nextStep()">{{ 'btn_next' | translate }}</button>
+        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="nextStep()">{{ 'btn_next' | translate }}</button>
     </div>
 </ng-template>

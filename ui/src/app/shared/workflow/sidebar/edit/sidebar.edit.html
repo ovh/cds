@@ -163,7 +163,7 @@
 
     <!-- Add trigger -->
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node"
-                          (triggerChange)="updateWorkflow($event, workflowTrigger.modal)"
+                          (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)"
                           #workflowTrigger></app-workflow-trigger>
 </ng-container>
 

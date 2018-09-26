@@ -8,11 +8,11 @@
                 (click)="pipelineSection = 'pipeline'">
                 <i class="sitemap icon"></i>
                 <div class="content">
-                  <div class="title">{{'common_pipeline' | translate}} <i class="green check icon" *ngIf="node.pipeline_id"></i></div>
+                  <div class="title">{{'common_pipeline' | translate}} <i class="green check icon" *ngIf="node.context.pipeline_id"></i></div>
                 </div>
               </div>
               <div class="step pointing"
-                [class.disabled]="node == null || !node.pipeline_id"
+                [class.disabled]="node == null || !node.context.pipeline_id"
                 [class.active]="pipelineSection === 'application'"
                 (click)="pipelineSection = 'application'">
                 <i class="rocket icon"></i>
@@ -22,7 +22,7 @@
                 </div>
               </div>
               <div class="step pointing"
-                [class.disabled]="node == null || !node.pipeline_id"
+                [class.disabled]="node == null || !node.context.pipeline_id"
                 [class.active]="pipelineSection === 'environment'"
                 (click)="pipelineSection = 'environment'">
                 <i class="tree icon"></i>
@@ -32,7 +32,7 @@
                 </div>
               </div>
               <div class="step pointing"
-                [class.disabled]="node == null || !node.pipeline_id || !node.context.application_id || (!loadingPlatforms && (!platforms || !platforms.length))"
+                [class.disabled]="node == null || !node.context.pipeline_id || !node.context.application_id || (!loadingPlatforms && (!platforms || !platforms.length))"
                 [class.active]="pipelineSection === 'platform'"
                 (click)="pipelineSection = 'platform'">
                 <i class="plug icon"></i>
@@ -73,7 +73,7 @@
                               <sm-select
                                   class="search"
                                   placeholder="{{ 'common_pipeline' | translate }}"
-                                  [(model)]="node.pipeline_id"
+                                  [(model)]="node.context.pipeline_id"
                                   [options]="{'fullTextSearch': true}"
                                   id="WorkflowPipelineSelect">
                                   <option *ngFor="let p of project.pipeline_names" [value]="p.id">{{ p.name}}</option>
@@ -106,7 +106,7 @@
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" (click)="goToNextSection().subscribe()"
                              *ngIf="!hideNext"
-                            [disabled]="!node.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
+                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
                             {{ 'btn_next' | translate }}
                     </button>
                   </div>
@@ -163,7 +163,7 @@
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" (click)="goToNextSection().subscribe()"
                             *ngIf="!hideNext"
-                            [disabled]="!node.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
+                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreatePipeline">
                             {{ 'btn_next' | translate }}
                     </button>
                   </div>
@@ -216,7 +216,7 @@
                   <div class="ui sixteen wide column">
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
-                            [disabled]="!node.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment">
+                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment">
                             <span *ngIf="node.context.application_id && (loadingPlatforms || (platforms && platforms.length))">{{ 'btn_next' | translate }}</span>
                             <span *ngIf="!node.context.application_id || (!loadingPlatforms && (!platforms || !platforms.length))">{{ 'btn_finish' | translate }}</span>
                     </button>
@@ -248,7 +248,7 @@
                   <div class="ui sixteen wide column">
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
-                            [disabled]="!node.pipeline_id && !newPipeline.name">
+                            [disabled]="!node.context.pipeline_id && !newPipeline.name">
                             {{ 'btn_finish' | translate }}
                     </button>
                   </div>

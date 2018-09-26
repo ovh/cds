@@ -433,7 +433,8 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		// Load joins
 		if !opts.OnlyRootNode {
 			_, next = observability.Span(ctx, "workflow.load.loadJoins")
-			joins, errJ := loadJoins(ctx, db, store, proj, &res, u, opts)
+			joins, errJ :=
+				loadJoins(ctx, db, store, proj, &res, u, opts)
 			next()
 
 			if errJ != nil {
@@ -532,7 +533,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.ErrWorkflowInvalidRoot
 	}
 
-	if err := renameNodeFork(db, w); err != nil {
+	if err := RenameNode(db, w); err != nil {
 		return sdk.WrapError(err, "Insert> Cannot rename node")
 	}
 
@@ -594,130 +595,133 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	return nil
 }
 
-func renameNodeFork(db gorp.SqlExecutor, w *sdk.Workflow) error {
-	nameByPipeline := map[int64][]*sdk.WorkflowNode{}
-	unamedFork := make([]*sdk.WorkflowNodeFork, 0)
-	maxNumberFork := 0
-	maxNumberByPipeline := map[int64]int64{}
+func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
+	nodes := w.WorkflowData.Array()
+	var maxJoinNumber int
+	maxNumberByPipeline := map[int64]int{}
+	maxNumberByHookModel := map[int64]int{}
+	var maxForkNumber int
 
-	// browse node
-	var errS error
-	unamedFork, errS = saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &maxNumberFork, unamedFork, w.Root, w)
-	if errS != nil {
-		return errS
-	}
-
-	// browse join
-	for i := range w.Joins {
-		join := &w.Joins[i]
-		for j := range join.Triggers {
-			var errJ error
-			unamedFork, errJ = saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &maxNumberFork, unamedFork, &join.Triggers[j].WorkflowDestNode, w)
-			if errJ != nil {
-				return errJ
-			}
+	nodesToNamed := []*sdk.Node{}
+	// Search max numbers by nodes type
+	for i := range nodes {
+		if nodes[i].Name == "" {
+			nodesToNamed = append(nodesToNamed, nodes[i])
+			continue
 		}
-	}
 
-	// Generate node name
-	for _, v := range nameByPipeline {
-		for _, n := range v {
-			if n.Name == "" {
-				nextNumber := maxNumberByPipeline[n.PipelineID] + 1
-				if nextNumber > 1 {
-					n.Name = fmt.Sprintf("%s_%d", w.Pipelines[n.PipelineID].Name, nextNumber)
-				} else {
-					n.Name = w.Pipelines[n.PipelineID].Name
+		switch nodes[i].Type {
+		case sdk.NodeTypePipeline:
+			pip, has := w.Pipelines[nodes[i].Context.PipelineID]
+			if !has {
+				p, errPip := pipeline.LoadPipelineByID(context.TODO(), db, nodes[i].Context.PipelineID, true)
+				if errPip != nil {
+					return sdk.WrapError(errPip, "renameNode> Unable to load pipeline %d", nodes[i].Context.PipelineID)
 				}
-				maxNumberByPipeline[n.PipelineID] = nextNumber
+				if w.Pipelines == nil {
+					w.Pipelines = make(map[int64]sdk.Pipeline)
+				}
+				w.Pipelines[nodes[i].Context.PipelineID] = *p
+				pip = *p
 			}
+			// Check if node is named pipName_12
+			if nodes[i].Name == pip.Name || strings.HasPrefix(nodes[i].Name, pip.Name+"_") {
+				var pipNumber = 0
+				if nodes[i].Name == pip.Name {
+					pipNumber = 1
+				} else {
+					// Retrieve Number
+					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, pip.Name+"_", "", 1))
+					if errI == nil {
+						pipNumber = current
+					}
+				}
+				currentMax, ok := maxNumberByPipeline[pip.ID]
+				if !ok || currentMax < pipNumber {
+					maxNumberByPipeline[pip.ID] = pipNumber
+				}
+			}
+		case sdk.NodeTypeJoin:
+			if nodes[i].Name == sdk.NodeTypeJoin || strings.HasPrefix(nodes[i].Name, sdk.NodeTypeJoin+"_") {
+				var joinNumber = 0
+				if nodes[i].Name == sdk.NodeTypeJoin {
+					joinNumber = 1
+				} else {
+					// Retrieve Number
+					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, sdk.NodeTypeJoin+"_", "", 1))
+					if errI == nil {
+						joinNumber = current
+					}
+				}
+				if maxJoinNumber < joinNumber {
+					maxJoinNumber = joinNumber
+				}
+			}
+		case sdk.NodeTypeFork:
+			if nodes[i].Name == sdk.NodeTypeFork || strings.HasPrefix(nodes[i].Name, sdk.NodeTypeFork+"_") {
+				var forkNumber = 0
+				if nodes[i].Name == sdk.NodeTypeFork {
+					forkNumber = 1
+				} else {
+					// Retrieve Number
+					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, sdk.NodeTypeFork+"_", "", 1))
+					if errI == nil {
+						forkNumber = current
+					}
+				}
+				if maxForkNumber < forkNumber {
+					maxForkNumber = forkNumber
+				}
+			}
+		case sdk.NodeTypeOutGoingHook:
+			model := w.OutGoingHookModels[nodes[i].OutGoingHookContext.HookModelID]
+			// Check if node is named pipName_12
+			if nodes[i].Name == model.Type || strings.HasPrefix(nodes[i].Name, model.Type+"_") {
+				var hookNumber = 0
+				if nodes[i].Name == model.Type {
+					hookNumber = 1
+				} else {
+					// Retrieve Number
+					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, model.Type+"_", "", 1))
+					if errI == nil {
+						hookNumber = current
+					}
+				}
+				currentMax, ok := maxNumberByHookModel[model.ID]
+				if !ok || currentMax < hookNumber {
+					maxNumberByHookModel[model.ID] = hookNumber
+				}
+			}
+		}
+
+		if nodes[i].Ref == "" {
+			nodes[i].Ref = nodes[i].Name
 		}
 	}
 
-	// Generate fork name
-	for _, f := range unamedFork {
-		maxNumberFork++
-		f.Name = fmt.Sprintf("fork_%d", maxNumberFork)
+	// Name node
+	for i := range nodesToNamed {
+		switch nodesToNamed[i].Type {
+		case sdk.NodeTypePipeline:
+			pipID := nodesToNamed[i].Context.PipelineID
+			nodesToNamed[i].Name = fmt.Sprintf("%s_%d", w.Pipelines[pipID].Name, maxNumberByPipeline[pipID]+1)
+			maxNumberByPipeline[pipID] = maxNumberByPipeline[pipID] + 1
+		case sdk.NodeTypeJoin:
+			nodesToNamed[i].Name = fmt.Sprintf("%s_%d", sdk.NodeTypeJoin, maxJoinNumber+1)
+			maxJoinNumber++
+		case sdk.NodeTypeFork:
+			nodesToNamed[i].Name = fmt.Sprintf("%s_%d", sdk.NodeTypeFork, maxForkNumber+1)
+			maxForkNumber++
+		case sdk.NodeTypeOutGoingHook:
+			hookModelID := nodesToNamed[i].OutGoingHookContext.HookModelID
+			nodesToNamed[i].Name = fmt.Sprintf("%s_%d", w.OutGoingHookModels[hookModelID].Name, maxNumberByHookModel[hookModelID]+1)
+			maxNumberByHookModel[hookModelID] = maxNumberByHookModel[hookModelID] + 1
+		}
+		if nodesToNamed[i].Ref == "" {
+			nodesToNamed[i].Ref = nodesToNamed[i].Name
+		}
 	}
-
 	return nil
-}
-
-func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, maxForkNumber *int, unamedFork []*sdk.WorkflowNodeFork, n *sdk.WorkflowNode, w *sdk.Workflow) ([]*sdk.WorkflowNodeFork, error) {
-	// Load pipeline to have name
-	pip, has := w.Pipelines[n.PipelineID]
-	if !has {
-		pip2, errorP := pipeline.LoadPipelineByID(context.TODO(), db, n.PipelineID, true)
-		if errorP != nil {
-			return unamedFork, sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", n.PipelineID)
-		}
-		if w.Pipelines == nil {
-			w.Pipelines = map[int64]sdk.Pipeline{}
-		}
-		w.Pipelines[n.PipelineID] = *pip2
-		pip = *pip2
-	}
-	n.PipelineName = pip.Name
-
-	// Save node in pipeline node map
-	if _, ok := (*dict)[n.PipelineID]; !ok {
-		(*dict)[n.PipelineID] = []*sdk.WorkflowNode{}
-	}
-	(*dict)[n.PipelineID] = append((*dict)[n.PipelineID], n)
-
-	// Check max number for current pipeline
-	if n.Name == n.PipelineName || (n.Name != "" && strings.HasPrefix(n.Name, n.PipelineName+"_")) {
-		pipNumber, errI := strconv.ParseInt(strings.Replace(n.Name, n.PipelineName+"_", "", 1), 10, 64)
-
-		if n.Name == n.PipelineName {
-			pipNumber = 1
-		}
-
-		if errI == nil || pipNumber == 1 {
-			currentMax, ok := (*mapMaxNumber)[n.PipelineID]
-			if !ok || currentMax < pipNumber {
-				(*mapMaxNumber)[n.PipelineID] = pipNumber
-			}
-		}
-	}
-
-	for k := range n.Triggers {
-		var errT error
-		unamedFork, errT = saveNodeByPipeline(db, dict, mapMaxNumber, maxForkNumber, unamedFork, &n.Triggers[k].WorkflowDestNode, w)
-		if errT != nil {
-			return unamedFork, errT
-		}
-	}
-
-	for i := range n.OutgoingHooks {
-		for j := range n.OutgoingHooks[i].Triggers {
-			var errO error
-			unamedFork, errO = saveNodeByPipeline(db, dict, mapMaxNumber, maxForkNumber, unamedFork, &n.OutgoingHooks[i].Triggers[j].WorkflowDestNode, w)
-			if errO != nil {
-				return unamedFork, errO
-			}
-		}
-	}
-
-	for i := range n.Forks {
-		if n.Forks[i].Name == "" {
-			unamedFork = append(unamedFork, &n.Forks[i])
-		} else if strings.HasPrefix(n.Forks[i].Name, "fork_") {
-			forkNumber, errI := strconv.Atoi(strings.Replace(n.Forks[i].Name, "fork_", "", 1))
-			if errI == nil && forkNumber > *maxForkNumber {
-				*maxForkNumber = forkNumber
-			}
-		}
-		for j := range n.Forks[i].Triggers {
-			var errF error
-			unamedFork, errF = saveNodeByPipeline(db, dict, mapMaxNumber, maxForkNumber, unamedFork, &n.Forks[i].Triggers[j].WorkflowDestNode, w)
-			if errF != nil {
-				return unamedFork, errF
-			}
-		}
-	}
-
-	return unamedFork, nil
 }
 
 // Update updates a workflow
@@ -726,7 +730,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		return err
 	}
 
-	if err := renameNodeFork(db, w); err != nil {
+	if err := RenameNode(db, w); err != nil {
 		return sdk.WrapError(err, "Update> cannot check pipeline name")
 	}
 

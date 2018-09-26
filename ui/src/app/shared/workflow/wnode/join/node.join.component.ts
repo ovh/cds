@@ -50,4 +50,30 @@ export class WorkflowWNodeJoinComponent implements OnInit, AfterViewInit {
         });
         this.canRun = this.node.parents.length === lengthParentRun;
     }
+
+    playJoin(): void {
+        // TODO
+        /*
+        let request = new WorkflowRunRequest();
+        if (!this.node || !Array.isArray(this.node.triggers)) {
+            return;
+        }
+        this.loading = true;
+        this.loadingRun = true;
+
+        request.manual = new WorkflowNodeRunManual();
+        request.from_nodes = this.join.triggers.map((trig) => trig.workflow_dest_node_id);
+        request.number = this.currentWorkflowRun.num;
+
+        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request)
+            .pipe(finalize(() => {
+                this.loading = false;
+                this.loadingRun = false;
+            }))
+            .subscribe((wr) => {
+                this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
+                    {queryParams: { subnum: wr.last_subnumber }});
+            });
+            */
+    }
 }

@@ -358,6 +358,10 @@ func (api *API) putWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot read body")
 		}
 
+		if err := workflow.RenameNode(api.mustDB(), &wf); err != nil {
+			return sdk.WrapError(err, "Update> cannot check pipeline name")
+		}
+
 		// TODO : Delete in migration step 3
 		// Retro migrate workflow
 		(&wf).RetroMigrate()

@@ -76,9 +76,6 @@ import {VulnerabilitiesComponent} from './vulnerability/vulnerabilities.componen
 import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.component';
 import {WarningMarkComponent} from './warning/mark-single/warning.mark.component';
 import {WarningTabComponent} from './warning/tab/warning.tab.component';
-import {WorkflowJoinTriggerSrcComponent} from './workflow/join/trigger/src/trigger.src.component';
-import {WorkflowTriggerJoinComponent} from './workflow/join/trigger/trigger.join.component';
-import {WorkflowJoinComponent} from './workflow/join/workflow.join.component';
 import {WorkflowNodeConditionFormComponent} from './workflow/modal/conditions/condition-form/condition.component';
 import {WorkflowNodeConditionListComponent} from './workflow/modal/conditions/condition-list/condition.list.component';
 import {WorkflowNodeConditionsComponent} from './workflow/modal/conditions/node.conditions.component';
@@ -163,8 +160,6 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
         WorkflowDeleteNodeComponent,
-        WorkflowJoinComponent,
-        WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowNodeConditionsComponent,
@@ -172,7 +167,6 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeHookComponent,
         WorkflowNodeHookDetailsComponent,
         WorkflowTriggerComponent,
-        WorkflowTriggerJoinComponent,
         WorkflowNodeConditionFormComponent,
         WorkflowNodeConditionListComponent,
         ZoneComponent,
@@ -266,8 +260,6 @@ import {ZoneComponent} from './zone/zone.component';
 
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,
-        WorkflowJoinComponent,
-        WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowNodeConditionsComponent,
@@ -276,7 +268,6 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeHookDetailsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowTriggerComponent,
-        WorkflowTriggerJoinComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,

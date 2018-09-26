@@ -68,6 +68,22 @@ export class Workflow {
         return nodes;
     }
 
+    static getNodeByRef(ref: string, w: Workflow): WNode {
+        let node = WNode.getNodeByRef(w.workflow_data.node, ref);
+        if (node) {
+            return node;
+        }
+        if (w.workflow_data.joins) {
+            for (let i = 0; i < w.workflow_data.joins.length; i++) {
+                let n = WNode.getNodeByRef(w.workflow_data.joins[i], ref);
+                if (n) {
+                    return n;
+                }
+            }
+        }
+        return null;
+    }
+
     static getNodeByID(id: number, w: Workflow): WNode {
         let node = WNode.getNodeByID(w.workflow_data.node, id);
         if (node) {
@@ -1355,6 +1371,21 @@ export class WNode {
         return j;
     }
 
+    static getNodeByRef(node: WNode, ref: string): WNode {
+        if (node.ref === ref) {
+            return node;
+        }
+        if (node.triggers) {
+            for (let i = 0; i < node.triggers.length; i++) {
+                let n = WNode.getNodeByRef(node.triggers[i].child_node, ref);
+                if (n) {
+                    return n;
+                }
+            }
+        }
+        return null;
+    }
+
     static getNodeByID(node: WNode, id: number): WNode {
         if (node.id === id) {
             return node;
@@ -1431,6 +1462,10 @@ export class WNode {
                 WNode.prepareRequestForAPI(t.child_node);
             });
         }
+    }
+
+    constructor() {
+        this.context = new WNodeContext();
     }
 }
 

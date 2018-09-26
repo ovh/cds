@@ -5,11 +5,20 @@ type WorkflowData struct {
 	Joins []Node `json:"joins" db:"-" cli:"-"`
 }
 
+func (w *WorkflowData) Array() []*Node {
+	nodes := make([]*Node, 0)
+	nodes = w.Node.array(nodes)
+	for i := range w.Joins {
+		nodes = w.Joins[i].array(nodes)
+	}
+	return nodes
+}
+
 func (w *WorkflowData) Maps() map[int64]*Node {
 	nodes := make(map[int64]*Node, 0)
-	w.Node.maps(&nodes)
+	nodes = w.Node.maps(nodes)
 	for i := range w.Joins {
-		w.Joins[i].maps(&nodes)
+		nodes = w.Joins[i].maps(nodes)
 	}
 	return nodes
 }

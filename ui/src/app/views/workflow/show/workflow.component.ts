@@ -15,7 +15,6 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 
@@ -36,8 +35,6 @@ export class WorkflowShowComponent {
 
     @ViewChild('workflowGraph')
     workflowGraph: WorkflowGraphComponent;
-    @ViewChild('workflowJoinTriggerSrc')
-    workflowJoinTriggerSrc: WorkflowJoinTriggerSrcComponent;
     @ViewChild('workflowNodeRunParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
     @ViewChild('permWarning')
@@ -93,6 +90,9 @@ export class WorkflowShowComponent {
                             }
                             this.detailedWorkflow = updatedWorkflow;
 
+                            // If a node is selected, update it
+                            this._workflowEventStore.updateSelectedNode(this.detailedWorkflow);
+
                             this.direction = this._workflowStore.getDirection(projkey, this.detailedWorkflow.name);
                             this._workflowStore.updateRecentWorkflow(projkey, updatedWorkflow);
 
@@ -131,18 +131,6 @@ export class WorkflowShowComponent {
 
     showTab(tab: string): void {
         this._router.navigateByUrl('/project/' + this.project.key + '/workflow/' + this.detailedWorkflow.name + '?tab=' + tab);
-    }
-
-    public openDeleteJoinSrcModal(data: { source, target }) {
-        let pID = Number(data.source.replace('node-', ''));
-        let cID = Number(data.target.replace('join-', ''));
-
-        this.selectedNode = Workflow.getNodeByID(pID, this.detailedWorkflow);
-        this.selectedJoin = this.detailedWorkflow.joins.find(j => j.id === cID);
-
-        if (this.workflowJoinTriggerSrc) {
-            this.workflowJoinTriggerSrc.show();
-        }
     }
 
     showAsCodeEditor() {
@@ -186,22 +174,6 @@ export class WorkflowShowComponent {
         }
         currentJoin.source_node_ref.push(this.selectedNode.ref);
         this.updateWorkflow(clonedWorkflow);
-    }
-
-    deleteJoinSrc(action: string): void {
-        let clonedWorkflow: Workflow = cloneDeep(this.detailedWorkflow);
-
-        switch (action) {
-            case 'delete_join':
-                clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !== this.selectedJoin.id);
-                Workflow.removeOldRef(clonedWorkflow);
-                break;
-            default:
-                let currentJoin = clonedWorkflow.joins.find(j => j.id === this.selectedJoin.id);
-                currentJoin.source_node_ref = currentJoin.source_node_ref.filter(ref => ref !== this.selectedNode.ref);
-        }
-
-        this.updateWorkflow(clonedWorkflow, this.workflowJoinTriggerSrc.modal);
     }
 
     updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {

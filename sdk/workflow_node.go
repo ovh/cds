@@ -98,11 +98,20 @@ func (n *Node) nodeByID(ID int64) *Node {
 	return nil
 }
 
-func (n *Node) maps(m *map[int64]*Node) {
-	(*m)[n.ID] = n
+func (n *Node) array(a []*Node) []*Node {
+	a = append(a, n)
 	for i := range n.Triggers {
-		(&n.Triggers[i].ChildNode).maps(m)
+		a = (&n.Triggers[i].ChildNode).array(a)
 	}
+	return a
+}
+
+func (n *Node) maps(m map[int64]*Node) map[int64]*Node {
+	m[n.ID] = n
+	for i := range n.Triggers {
+		m = (&n.Triggers[i].ChildNode).maps(m)
+	}
+	return m
 }
 
 func (n *Node) Ancestors(w *WorkflowData, mapNodes map[int64]*Node, deep bool) []int64 {

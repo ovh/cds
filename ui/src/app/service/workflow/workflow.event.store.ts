@@ -4,7 +4,7 @@ import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
 import {
     WNode,
-    WNodeHook,
+    WNodeHook, Workflow,
 } from '../../model/workflow.model';
 import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
 import {WorkflowRunService} from './run/workflow.run.service';
@@ -158,5 +158,14 @@ export class WorkflowEventStore {
 
     outgoingHookEvents(): Observable<WorkflowNodeOutgoingHookRun> {
         return new Observable<WorkflowNodeOutgoingHookRun>(fn => this._outgoingHookEvents.subscribe(fn));
+    }
+
+    updateSelectedNode(detailedWorkflow: Workflow) {
+        let n = this._selectedNode.getValue();
+        if (!n) {
+            return;
+        }
+        let updatedNode = Workflow.getNodeByRef(n.ref, detailedWorkflow);
+        this.setSelectedNode(updatedNode, false);
     }
 }

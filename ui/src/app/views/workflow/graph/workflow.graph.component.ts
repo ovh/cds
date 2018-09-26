@@ -40,7 +40,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     @Input('workflowData')
     set workflowData(data: Workflow) {
-        // check if nodes have to be updated
         this.workflow = data;
         this.nodeHeight = 78;
         if (data.forceRefresh) {

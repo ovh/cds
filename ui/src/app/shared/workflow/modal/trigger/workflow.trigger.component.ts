@@ -1,11 +1,13 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {cloneDeep} from 'lodash';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {finalize} from 'rxjs/operators';
+import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {
-    WNode,
-    Workflow
+    WNode, WNodeTrigger,
+    Workflow, WorkflowNodeCondition, WorkflowNodeConditions
 } from '../../../../model/workflow.model';
 import {WorkflowNodeAddWizardComponent} from '../../node/wizard/node.wizard.component';
 
@@ -56,10 +58,6 @@ export class WorkflowTriggerComponent {
         this.nodeWizard.goToNextSection()
           .pipe(finalize(() => this.loading = false))
           .subscribe(() => {
-                /*
-                if (!this.destNode.context) {
-                    this.destNode.context = new WorkflowNodeContext();
-                }
                 this.destNode.context.conditions = new WorkflowNodeConditions();
                 this.destNode.context.conditions.plain = new Array<WorkflowNodeCondition>();
                 let c = new  WorkflowNodeCondition();
@@ -67,9 +65,19 @@ export class WorkflowTriggerComponent {
                 c.value = PipelineStatus.SUCCESS;
                 c.operator = 'eq';
                 this.destNode.context.conditions.plain.push(c);
-            this.triggerChange.emit(this.trigger);
-            */
-                // TODO
+
+                if (this.source) {
+                    let clonedWorkflow = cloneDeep(this.workflow);
+                    let n = Workflow.getNodeByID(this.source.id, clonedWorkflow);
+                    if (!n.triggers) {
+                        n.triggers = new Array<WNodeTrigger>();
+                    }
+                    let newTrigger = new WNodeTrigger();
+                    newTrigger.parent_node_name = n.ref;
+                    newTrigger.child_node = this.destNode;
+                    n.triggers.push(newTrigger);
+                    this.triggerEvent.emit(clonedWorkflow);
+                }
           });
     }
 
