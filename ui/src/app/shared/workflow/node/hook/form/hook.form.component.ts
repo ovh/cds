@@ -116,7 +116,6 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         }
 
         let outgoingHooks = Workflow.getAllOutgoingHooks(this.workflow);
-        console.table(outgoingHooks);
         let nb = 0;
         if (outgoingHooks) {
             for (let i = 0; i < outgoingHooks.length; i++) {
