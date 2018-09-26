@@ -216,10 +216,12 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     getPlatforms() {
       this.loadingPlatforms = true;
       if (!this.node.context.application_id) {
+        this.loadingPlatforms = false;
         return;
       }
       let app = this.project.application_names.find((a) => a.id === Number(this.node.context.application_id));
       if (!app) {
+        this.loadingPlatforms = false;
         return;
       }
       this._appStore.getDeploymentStrategies(this.project.key, app.name).pipe(
@@ -227,7 +229,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
           finalize(() => this.loadingPlatforms = false)
       ).subscribe(
           (data) => {
-              this.platforms = [new IdName()];
+              this.platforms = [];
               let pfNames = Object.keys(data);
               pfNames.forEach(s => {
                   let pf = this.project.platforms.find(p => p.name === s);
@@ -238,6 +240,9 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
                       this.platforms.push(idName);
                   }
               })
+              if (this.platforms.length) {
+                  this.platforms.unshift(new IdName());
+              }
           }
       );
     }
@@ -266,7 +271,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
         return this.createEnvironment().pipe(
           map(() => 'platform'));
       }
-      if (!this.node.context.application_id) {
+      let noPlatformsAvailable = !this.loadingPlatforms && (!this.platforms || !this.platforms.length);
+      if (!this.node.context.application_id || noPlatformsAvailable) {
           this.createNode();
           return observableOf('done');
       }

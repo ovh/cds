@@ -46,6 +46,8 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
     // Child component
     @ViewChild('workflowTrigger')
     workflowTrigger: WorkflowTriggerComponent;
+    @ViewChild('workflowTriggerParent')
+    workflowTriggerParent: WorkflowTriggerComponent;
     @ViewChild('workflowDeleteNode')
     workflowDeleteNode: WorkflowDeleteNodeComponent;
     @ViewChild('workflowContext')
@@ -124,8 +126,9 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
             return;
         }
         this.newParentNode = new WorkflowNode();
-        let tmpl = new TemplateModalConfig<boolean, boolean, void>(this.nodeParentModal);
-        this.modalParentNode = this._modalService.open(tmpl);
+        if (this.workflowTriggerParent) {
+          this.workflowTriggerParent.show();
+        }
     }
 
     addNewParentNode(): void {
@@ -133,7 +136,7 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         let oldRoot = cloneDeep(this.workflow.root);
         workflowToUpdate.root = this.newParentNode;
         if (oldRoot.hooks) {
-            this.newParentNode.hooks = oldRoot.hooks;
+            workflowToUpdate.root.hooks = oldRoot.hooks;
         }
         delete oldRoot.hooks;
         workflowToUpdate.root.triggers = new Array<WorkflowNodeTrigger>();
@@ -141,7 +144,7 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         t.workflow_dest_node = oldRoot;
         workflowToUpdate.root.triggers.push(t);
 
-        this.updateWorkflow(workflowToUpdate, this.modalParentNode);
+        this.updateWorkflow(workflowToUpdate, this.workflowTriggerParent.modal);
     }
 
     openWarningModal(): void {
