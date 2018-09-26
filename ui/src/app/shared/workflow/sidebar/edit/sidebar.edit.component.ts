@@ -1,14 +1,18 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs';
 import {PermissionValue} from '../../../../model/permission.model';
 import {Project} from '../../../../model/project.model';
-import {WNode, Workflow} from '../../../../model/workflow.model';
-import {PipelineStore, WorkflowEventStore} from '../../../../service/services.module';
+import {WNode, WNodeJoin, WNodeTrigger, WNodeType, Workflow} from '../../../../model/workflow.model';
+import {PipelineStore, WorkflowEventStore, WorkflowStore} from '../../../../service/services.module';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import {ToastService} from '../../../toast/ToastService';
 import {WorkflowNodeConditionsComponent} from '../../modal/conditions/node.conditions.component';
 import {WorkflowNodeContextComponent} from '../../modal/context/workflow.node.context.component';
 import {WorkflowDeleteNodeComponent} from '../../modal/delete/workflow.node.delete.component';
+import {WorkflowTriggerComponent} from '../../modal/trigger/workflow.trigger.component';
 
 @Component({
     selector: 'app-workflow-sidebar-wnode-edit',
@@ -38,11 +42,14 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
     workflowContext: WorkflowNodeContextComponent;
     @ViewChild('workflowConditions')
     workflowConditions: WorkflowNodeConditionsComponent;
+    @ViewChild('workflowTrigger')
+    workflowTrigger: WorkflowTriggerComponent;
 
     // Subscription
     pipelineSubscription: Subscription;
 
-    constructor(private _workflowEventStore: WorkflowEventStore, private _pipelineStore: PipelineStore) {
+    constructor(private _workflowEventStore: WorkflowEventStore, private _pipelineStore: PipelineStore,
+        private _workflowStore: WorkflowStore, private _toast: ToastService, private _translate: TranslateService) {
 
     }
 
@@ -71,7 +78,7 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
             return;
         }
         node.name = this.node.name;
-        this.updateWorkflow(clonedWorkflow);
+        this.updateWorkflow(clonedWorkflow, null);
     }
 
     openDeleteNodeModal(): void {
@@ -100,7 +107,62 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
         this.workflowConditions.show();
     }
 
-    updateWorkflow(w: Workflow): void {
-        console.log(w);
+    openTriggerModal(): void {
+        if (!this.canEdit()) {
+            return;
+        }
+        if (this.workflowTrigger) {
+            this.workflowTrigger.show();
+        }
+    }
+
+    createFork(): void {
+        let clonedWorkflow = cloneDeep(this.workflow);
+        let n = Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        if (!n.triggers) {
+            n.triggers = new Array<WNodeTrigger>();
+        }
+        let fork = new WNode();
+        fork.type = WNodeType.FORK;
+        let t = new WNodeTrigger();
+        t.child_node = fork;
+        t.parent_node_id = n.id;
+        t.parent_node_name = n.ref;
+        n.triggers.push(t);
+        this.updateWorkflow(clonedWorkflow, null);
+    }
+
+    createJoin(): void {
+        let clonedWorkflow = cloneDeep(this.workflow);
+        let join = new WNode();
+        join.type = WNodeType.JOIN;
+        join.parents = new Array<WNodeJoin>();
+        let p = new WNodeJoin();
+        p.parent_id = this.node.id;
+        p.parent_name = this.node.ref;
+        join.parents.push(p);
+
+        if (!clonedWorkflow.workflow_data.joins) {
+            clonedWorkflow.workflow_data.joins = new Array<WNode>();
+        }
+        clonedWorkflow.workflow_data.joins.push(join);
+        this.updateWorkflow(clonedWorkflow, null);
+    }
+
+    updateWorkflow(w: Workflow, modal: ActiveModal<boolean, boolean, void>): void {
+        this.loading = true;
+        this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
+            this.loading = false;
+            this._toast.success('', this._translate.instant('workflow_updated'));
+            this._workflowEventStore.unselectAll();
+            if (modal) {
+                modal.approve(null);
+            }
+        }, () => {
+            if (Array.isArray(this.node.hooks) && this.node.hooks.length) {
+                this.node.hooks.pop();
+            }
+            this.loading = false;
+        });
     }
 }

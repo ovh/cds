@@ -9,9 +9,6 @@ export class WorkflowSidebarMode {
     static RUN_HOOK = 'sidebar:run:hook';
     static RUN_FORK = 'sidebar:run:fork';
     static EDIT_HOOK = 'sidebar:edit:hook';
-    static EDIT_OUTGOING_HOOK = 'sidebar:edit:outgoinghook';
-    static EDIT_FORK = 'sidebar:edit:fork';
-    static EDIT_JOIN = 'sidebar:edit:join';
 }
 
 @Injectable()

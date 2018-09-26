@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, Input, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import { WorkflowTriggerComponent } from 'app/shared/workflow/modal/trigger/workflow.trigger.component';
 import {cloneDeep} from 'lodash';
@@ -6,7 +6,7 @@ import {finalize} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
 import {PermissionValue} from '../../../../../model/permission.model';
 import {Project} from '../../../../../model/project.model';
-import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/workflow.hook.model';
+import {TaskExecution} from '../../../../../model/workflow.hook.model';
 import {
     WNodeHook,
     Workflow,
@@ -30,7 +30,7 @@ import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
     styleUrls: ['./workflow.sidebar.outgoinghook.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarOutgoingHookComponent implements OnInit {
+export class WorkflowSidebarOutgoingHookComponent {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -49,8 +49,6 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
 
     loading = false;
     node: WorkflowNode;
-    hookStatus = HookStatus;
-    hookDetails: WorkflowHookTask;
     _hook: WorkflowNodeHook;
     permissionEnum = PermissionValue;
     newTrigger: WorkflowNode;
@@ -61,19 +59,6 @@ export class WorkflowSidebarOutgoingHookComponent implements OnInit {
         private _translate: TranslateService,
         private _workflowEventStore: WorkflowEventStore
     ) {}
-
-    ngOnInit(): void {
-        this.subHook = this._workflowEventStore.selectedOutgoingHook().subscribe(h => {
-            this.hook = h;
-            if (this.hook) {
-                this.node = Workflow.findNode(this.workflow,
-                    n => {
-                        return Array.isArray(n.outgoing_hooks) && n.outgoing_hooks.find(h1 => h1.id === h.id);
-                    }
-                );
-            }
-        });
-    }
 
     openHookEditModal() {
         if (this.workflowEditHook && this.workflowEditHook.show) {

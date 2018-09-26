@@ -1,5 +1,6 @@
 import {Component, ElementRef, Input, OnInit} from '@angular/core';
 import {PipelineStatus} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
 import {WorkflowHookModel} from '../../../../model/workflow.hook.model';
 import {WNode, Workflow, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
 import {WorkflowNodeRun} from '../../../../model/workflow.run.model';
@@ -23,6 +24,7 @@ export class WorkflowWNodeOutGoingHookComponent implements OnInit {
         return this._node;
     }
 
+    @Input() public project: Project;
     @Input() public workflow: Workflow;
     @Input() public noderun: WorkflowNodeRun;
     @Input() public selected: boolean;

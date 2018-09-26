@@ -2,7 +2,7 @@ import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {PipelineStatus} from 'app/model/pipeline.model';
 import {Project} from 'app/model/project.model';
 import {HookStatus, TaskExecution, WorkflowHookTask} from 'app/model/workflow.hook.model';
-import {Workflow, WorkflowNode, WorkflowNodeOutgoingHook} from 'app/model/workflow.model';
+import {WNode, WNodeType, Workflow, WorkflowNode} from 'app/model/workflow.model';
 import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 import {finalize} from 'rxjs/operators';
 import {WNodeHook} from '../../../../../model/workflow.model';
@@ -37,7 +37,7 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     hook: WNodeHook;
     wr: WorkflowRun;
     nodeRun: WorkflowNodeRun;
-    outgoingHook: WorkflowNodeOutgoingHook;
+    outgoingHook: WNode;
     outgoingHookRuns: Array<WorkflowNodeOutgoingHookRun>;
     pipelineStatusEnum = PipelineStatus;
 
@@ -64,10 +64,12 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
                 this.nodeRun = null;
             }
         });
-        this._workflowEventStore.selectedOutgoingHook().subscribe(oh => {
-            this.outgoingHook = oh;
-            if (this.wr && this.outgoingHook) {
-                this.loadOutgoingHookDetails();
+        this._workflowEventStore.selectedNode().subscribe(oh => {
+            if (oh && oh.type === WNodeType.OUTGOINGHOOK) {
+                this.outgoingHook = oh;
+                if (this.wr && this.outgoingHook) {
+                    this.loadOutgoingHookDetails();
+                }
             }
         });
         this._workflowEventStore.outgoingHookEvents().subscribe(

@@ -5,9 +5,6 @@ import {Observable} from 'rxjs/Observable';
 import {
     WNode,
     WNodeHook,
-    WorkflowNodeFork,
-    WorkflowNodeJoin,
-    WorkflowNodeOutgoingHook
 } from '../../model/workflow.model';
 import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
 import {WorkflowRunService} from './run/workflow.run.service';
@@ -23,10 +20,7 @@ export class WorkflowEventStore {
     private _outgoingHookEvents: BehaviorSubject<WorkflowNodeOutgoingHookRun> = new BehaviorSubject(null);
 
     private _selectedNode: BehaviorSubject<WNode> = new BehaviorSubject<WNode>(null);
-    private _selectedJoin: BehaviorSubject<WorkflowNodeJoin> = new BehaviorSubject<WorkflowNodeJoin>(null);
     private _selectedHook: BehaviorSubject<WNodeHook> = new BehaviorSubject<WNodeHook>(null);
-    private _selectedOutgoingHook: BehaviorSubject<WorkflowNodeOutgoingHook> = new BehaviorSubject<WorkflowNodeOutgoingHook>(null);
-    private _selectedFork: BehaviorSubject<WorkflowNodeFork> = new BehaviorSubject<WorkflowNodeFork>(null);
 
     private _isListingRuns: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
@@ -83,29 +77,11 @@ export class WorkflowEventStore {
             this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
         }
         this._selectedNode.next(n);
-        this._selectedJoin.next(null);
         this._selectedHook.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(null);
     }
 
     selectedNode(): Observable<WNode> {
         return new Observable<WNode>(fn => this._selectedNode.subscribe(fn));
-    }
-
-    setSelectedJoin(n: WorkflowNodeJoin) {
-        if (n) {
-            this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_JOIN);
-        }
-        this._selectedNode.next(null);
-        this._selectedJoin.next(n);
-        this._selectedHook.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(null);
-    }
-
-    selectedJoin(): Observable<WorkflowNodeJoin> {
-        return new Observable<WorkflowNodeJoin>(fn => this._selectedJoin.subscribe(fn));
     }
 
     setSelectedHook(h: WNodeHook) {
@@ -117,9 +93,6 @@ export class WorkflowEventStore {
             }
         }
         this._selectedNode.next(null);
-        this._selectedJoin.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(null);
         this._selectedHook.next(h);
     }
 
@@ -127,51 +100,10 @@ export class WorkflowEventStore {
         return new Observable<WNodeHook>(fn => this._selectedHook.subscribe(fn));
     }
 
-    selectedFork(): Observable<WorkflowNodeFork> {
-        return new Observable<WorkflowNodeFork>(fn => this._selectedFork.subscribe(fn));
-    }
-
-    setSelectedFork(f: WorkflowNodeFork) {
-        if (f) {
-            if (!this.isRunSelected()) {
-                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_FORK);
-            } else {
-                this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_FORK);
-            }
-        }
-        this._selectedNode.next(null);
-        this._selectedJoin.next(null);
-        this._selectedHook.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(f);
-    }
-
-    selectedOutgoingHook(): Observable<WorkflowNodeOutgoingHook> {
-        return new Observable<WorkflowNodeOutgoingHook>(fn => this._selectedOutgoingHook.subscribe(fn));
-    }
-
-    setSelectedOutgoingHook(h: WorkflowNodeOutgoingHook) {
-        if (h) {
-            if (!this.isRunSelected()) {
-                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_OUTGOING_HOOK);
-            } else {
-                this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_HOOK);
-            }
-        }
-        this._selectedNode.next(null);
-        this._selectedJoin.next(null);
-        this._selectedHook.next(null);
-        this._selectedFork.next(null);
-        this._selectedOutgoingHook.next(h);
-    }
-
     unselectAll(): void {
         this._selectedNode.next(null);
         this._currentWorkflowRun.next(null);
         this._selectedHook.next(null);
-        this._selectedJoin.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(null);
         this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
     }
 

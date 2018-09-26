@@ -117,6 +117,9 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return sdk.WrapError(errE, "Import> Cannot check if workflow exists")
 	}
 
+	d := w.Migrate()
+	w.WorkflowData = &d
+
 	if !doUpdate {
 		if err := Insert(db, store, w, proj, u); err != nil {
 			return sdk.WrapError(err, "Import> Unable to insert workflow")

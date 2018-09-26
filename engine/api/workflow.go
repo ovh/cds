@@ -284,6 +284,9 @@ func (api *API) postWorkflowHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &wf); err != nil {
 			return sdk.WrapError(err, "Cannot read body")
 		}
+
+		(&wf).RetroMigrate()
+
 		wf.ProjectID = p.ID
 		wf.ProjectKey = key
 
@@ -354,6 +357,11 @@ func (api *API) putWorkflowHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &wf); err != nil {
 			return sdk.WrapError(err, "Cannot read body")
 		}
+
+		// TODO : Delete in migration step 3
+		// Retro migrate workflow
+		(&wf).RetroMigrate()
+
 		wf.ID = oldW.ID
 		wf.RootID = oldW.RootID
 		wf.Root.ID = oldW.RootID

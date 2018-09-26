@@ -63,7 +63,7 @@
         </ng-container>
         <!-- Pipeline -->
         <ng-container *ngIf="node.type === 'pipeline'">
-            <a class="item noborder" [routerLink]="['/project', project.key, 'pipeline', node.pipeline_name]"
+            <a class="item noborder" [routerLink]="['/project', project.key, 'pipeline', workflow.pipelines[node.context.pipeline_id].name]"
                [queryParams]="{workflow: workflow.name }">
                 <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'pipeline_label_edit' | translate }}</span><span
                     *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{ 'pipeline_label_show' | translate }}</span>
@@ -86,6 +86,7 @@
                 {{ 'workflow_node_outgoing_hook' | translate }} <i class="angle right icon"></i>
             </a>
         </ng-container>
+        <!-- Parent node -->
         <ng-container *ngIf="node.type === 'pipeline'">
             <a class="item noborder" (click)="openAddParentModal()"
                *ngIf="workflow && workflow.root.id === node.id && !(workflow.from_repository && workflow.from_repository.length > 0)"
@@ -93,7 +94,7 @@
                 {{ 'workflow_node_parent' | translate }} <i class="angle right icon"></i>
             </a>
         </ng-container>
-
+        <!-- Add a pipeline -->
         <ng-container>
             <a class="item noborder" (click)="openTriggerModal()"
                *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
@@ -101,25 +102,32 @@
                 {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
             </a>
         </ng-container>
-        <ng-container>
+        <!-- Add a fork -->
+        <ng-container *ngIf="node.type === 'pipeline'">
             <a class="item noborder" (click)="createFork()"
                *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
                [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_fork_add' | translate }} <i class="angle right icon"></i>
             </a>
         </ng-container>
-        <ng-container>
+        <!-- Add a Join -->
+        <ng-container *ngIf="node.type === 'pipeline'">
             <a class="item noborder" (click)="createJoin()"
                *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
                [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_join_add' | translate }} <i class="angle right icon"></i>
             </a>
         </ng-container>
-        <ng-container>
+        <ng-container *ngIf="node.type === 'pipeline'">
             <a class="item noborder" (click)="linkJoin()"
                *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
                [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_join_link' | translate }} <i class="angle right icon"></i>
+            </a>
+        </ng-container>
+        <ng-container *ngIf="node.type === 'outgoinghook'">
+            <a class="item noborder" (click)="openHookEditModal()">
+                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{'btn_edit' | translate}}</span><span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">Configuration</span> <i class="angle right icon"></i>
             </a>
         </ng-container>
         <ng-container>
@@ -138,24 +146,24 @@
 <ng-container *ngIf="project && node && workflow">
 
     <!-- Context -->
-    <ng-container *ngIf="pnode.type === 'pipeline'">
+    <ng-container *ngIf="node.type === 'pipeline'">
         <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow"
-                                   (contextEvent)="updateWorkflow($event)" #workflowContext></app-workflow-node-context>
+                                   (contextEvent)="updateWorkflow($event, workflowContext.modal)" #workflowContext></app-workflow-node-context>
     </ng-container>
 
     <!-- Conditions -->
     <ng-container *ngIf="node.type === 'pipeline'">
         <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                                      (conditionsEvent)="updateNodeConditions($event)"
+                                      (conditionsEvent)="updateWorkflow($event, workflowConditions.modal)"
                                       #workflowConditions></app-workflow-node-conditions>
     </ng-container>
 
     <!-- Delete Node -->
-    <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event)" #workflowDeleteNode></app-workflow-node-delete>
+    <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)" #workflowDeleteNode></app-workflow-node-delete>
 
     <!-- Add trigger -->
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node"
-                          [(trigger)]="newTrigger" (triggerChange)="saveTrigger()"
+                          (triggerChange)="updateWorkflow($event, workflowTrigger.modal)"
                           #workflowTrigger></app-workflow-trigger>
 </ng-container>
 
@@ -182,15 +190,8 @@
     </ng-template>
 </ng-container>
 
-<ng-container *ngIf="project && node">
-    <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow"
-                               (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
-</ng-container>
-<ng-container *ngIf="project && node">
-    <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
-                                  (conditionsEvent)="updateNodeConditions($event)"
-                                  #workflowConditions></app-workflow-node-conditions>
-</ng-container>
+
+
 <ng-container *ngIf="project && node">
     <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
                                  [isOutgoing]="false" (hookEvent)="addHook($event)"

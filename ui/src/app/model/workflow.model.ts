@@ -458,19 +458,26 @@ export class Workflow {
     }
 
     static prepareRequestForAPI(workflow: Workflow) {
-        WorkflowNode.prepareRequestForAPI(workflow.root);
-        if (workflow.joins) {
-            workflow.joins.forEach(j => {
+        WNode.prepareRequestForAPI(workflow.workflow_data.node);
+        if (workflow.workflow_data.joins) {
+            workflow.workflow_data.joins.forEach(j => {
                 j.id = 0;
-                j.source_node_id = [];
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        WorkflowNode.prepareRequestForAPI(t.workflow_dest_node);
+                        WNode.prepareRequestForAPI(t.child_node);
                     });
                 }
             });
         }
+        delete workflow.root;
+        delete workflow.joins;
         delete workflow.usage;
+        delete workflow.applications;
+        delete workflow.environments;
+        delete workflow.pipelines;
+        delete workflow.project_platforms;
+        delete workflow.hook_models;
+        delete workflow.outgoing_hook_models;
     }
 
     static getParentNodeIds(workflow: Workflow, currentNodeID: number): number[] {
@@ -1084,32 +1091,6 @@ export class WorkflowNode {
         return map;
     }
 
-    static prepareRequestForAPI(n: WorkflowNode) {
-        n.id = 0;
-        if (n.context.application && n.context.application.id > 0) {
-            n.context.application_id = n.context.application.id;
-            delete n.context.application;
-        }
-        if (n.context.environment && n.context.environment.id > 0) {
-            n.context.environment_id = n.context.environment.id;
-            delete n.context.environment;
-        }
-        if (n.triggers) {
-            n.triggers.forEach(t => {
-                WorkflowNode.prepareRequestForAPI(t.workflow_dest_node);
-            });
-        }
-        if (n.outgoing_hooks) {
-            for (let i = 0; i < n.outgoing_hooks.length; i++) {
-                if (n.outgoing_hooks[i].triggers) {
-                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
-                        WorkflowNode.prepareRequestForAPI(n.outgoing_hooks[i].triggers[j].workflow_dest_node);
-                    }
-                }
-            }
-        }
-    }
-
     static getAllHooks(n: WorkflowNode): Array<WorkflowNodeHook> {
         let res = n.hooks;
         if (n.triggers) {
@@ -1441,6 +1422,15 @@ export class WNode {
             });
         }
         return nodes;
+    }
+
+    static prepareRequestForAPI(node: WNode) {
+        node.id = 0;
+        if (node.triggers) {
+            node.triggers.forEach(t => {
+                WNode.prepareRequestForAPI(t.child_node);
+            });
+        }
     }
 }
 

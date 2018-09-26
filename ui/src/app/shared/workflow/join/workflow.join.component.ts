@@ -55,14 +55,6 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
             }
         };
 
-        this.subSelect = this._workflowEventStore.selectedJoin().subscribe(j => {
-            if (j && this.join) {
-                this.isSelected = this.join.id === j.id;
-                return;
-            }
-            this.isSelected = false;
-        });
-
         this.workflowCoreSub = this._workflowEventStore.selectedRun().subscribe(wr => {
             this.currentWorkflowRun = wr;
             this.readonly = this.currentWorkflowRun != null;
@@ -79,10 +71,6 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
 
     selectJoinToLink(): void {
         this.selectEvent.emit(this.join);
-    }
-
-    selectJoin(): void {
-        this._workflowEventStore.setSelectedJoin(this.join);
     }
 
     canBeLaunched() {

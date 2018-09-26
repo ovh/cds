@@ -561,27 +561,33 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 }
 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
-func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.WorkflowNode, ancestorsIds []int64) ([]sdk.Parameter, error) {
+func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
 
 	runContext := nodeRunContext{}
-	if refNode != nil {
-		if refNode.PipelineID != 0 && wf.Pipelines != nil {
-			pip, has := wf.Pipelines[refNode.PipelineID]
+	if refNode != nil && refNode.Context != nil {
+		if refNode.Context.PipelineID != 0 && wf.Pipelines != nil {
+			pip, has := wf.Pipelines[refNode.Context.PipelineID]
 			if has {
 				runContext.Pipeline = pip
 			}
 		}
-		app, has := refNode.Application()
-		if has {
-			runContext.Application = app
+		if refNode.Context.ApplicationID != 0 && wf.Applications != nil {
+			app, has := wf.Applications[refNode.Context.ApplicationID]
+			if has {
+				runContext.Application = app
+			}
 		}
-		env, has := refNode.Environment()
-		if has {
-			runContext.Environment = env
+		if refNode.Context.EnvironmentID != 0 && wf.Environments != nil {
+			env, has := wf.Environments[refNode.Context.EnvironmentID]
+			if has {
+				runContext.Environment = env
+			}
 		}
-		prjPlat, has := refNode.ProjectPlatform()
-		if has {
-			runContext.ProjectPlatform = prjPlat
+		if refNode.Context.ProjectPlatformID != 0 && wf.ProjectPlatforms != nil {
+			pp, has := wf.ProjectPlatforms[refNode.Context.ProjectPlatformID]
+			if has {
+				runContext.ProjectPlatform = pp
+			}
 		}
 	}
 

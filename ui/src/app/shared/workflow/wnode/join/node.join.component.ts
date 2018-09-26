@@ -1,5 +1,6 @@
 import {AfterViewInit, Component, ElementRef, Input, OnInit} from '@angular/core';
 import {PipelineStatus} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
 import {WNode, Workflow} from '../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
@@ -12,6 +13,7 @@ import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 @AutoUnsubscribe()
 export class WorkflowWNodeJoinComponent implements OnInit, AfterViewInit {
 
+    @Input() public project: Project;
     @Input() public node: WNode;
     @Input() public workflow: Workflow;
     @Input() public noderun: WorkflowNodeRun;

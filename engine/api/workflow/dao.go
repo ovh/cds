@@ -580,8 +580,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 	}
 
-	data := w.Migrate()
-	w.WorkflowData = &data
 	if err := InsertWorkflowData(db, w); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert Workflow Data")
 	}
@@ -795,8 +793,6 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		w.Icon = oldWorkflow.Icon
 	}
 
-	d := w.Migrate()
-	w.WorkflowData = &d
 	if err := InsertWorkflowData(db, w); err != nil {
 		return sdk.WrapError(err, "Update> Unable to insert workflow data")
 	}

@@ -2,6 +2,7 @@
     <ng-container [ngSwitch]="node.type">
         <ng-container *ngSwitchCase="'pipeline'">
             <app-workflow-wnode-pipeline
+                    [project]="project"
                     [workflow]="workflow"
                     [node]="node"
                     [noderun]="currentNodeRun"
@@ -9,6 +10,7 @@
         </ng-container>
         <ng-container *ngSwitchCase="'join'">
             <app-workflow-wnode-join
+                    [project]="project"
                     [workflow]="workflow"
                     [node]="node"
                     [noderun]="currentNodeRun"
@@ -18,6 +20,7 @@
         </ng-container>
         <ng-container *ngSwitchCase="'fork'">
             <app-workflow-wnode-fork
+                    [project]="project"
                     [workflow]="workflow"
                     [node]="node"
                     [noderun]="currentNodeRun"
@@ -25,6 +28,7 @@
         </ng-container>
         <ng-container *ngSwitchCase="'outgoinghook'">
             <app-workflow-wnode-outgoing-hook
+                    [project]="project"
                     [workflow]="workflow"
                     [node]="node"
                     [noderun]="currentNodeRun"

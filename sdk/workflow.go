@@ -56,6 +56,18 @@ type Workflow struct {
 	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
 }
 
+func (w *Workflow) RetroMigrate() {
+	root := w.WorkflowData.Node.retroMigrate()
+	w.Root = &root
+
+	if len(w.WorkflowData.Joins) > 0 {
+		w.Joins = make([]WorkflowNodeJoin, 0, len(w.WorkflowData.Joins))
+		for _, j := range w.WorkflowData.Joins {
+			w.Joins = append(w.Joins, j.retroMigrateJoin())
+		}
+	}
+}
+
 func (w *Workflow) Migrate() WorkflowData {
 	work := WorkflowData{}
 
@@ -625,6 +637,123 @@ type WorkflowNode struct {
 	Forks              []WorkflowNodeFork         `json:"forks,omitempty" db:"-"`
 	Triggers           []WorkflowNodeTrigger      `json:"triggers,omitempty" db:"-"`
 	OutgoingHooks      []WorkflowNodeOutgoingHook `json:"outgoing_hooks,omitempty" db:"-"`
+}
+
+func (n Node) retroMigrate() WorkflowNode {
+	newNode := WorkflowNode{
+		Ref:        n.Ref,
+		Name:       n.Name,
+		WorkflowID: n.WorkflowID,
+		Context: &WorkflowNodeContext{
+			ProjectPlatformID:         n.Context.ProjectPlatformID,
+			EnvironmentID:             n.Context.EnvironmentID,
+			ApplicationID:             n.Context.ApplicationID,
+			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
+			DefaultPayload:            n.Context.DefaultPayload,
+			Mutex:                     n.Context.Mutex,
+			Conditions:                n.Context.Conditions,
+		},
+		PipelineID:    n.Context.PipelineID,
+		OutgoingHooks: nil,
+		Hooks:         nil,
+		Triggers:      nil,
+		Forks:         nil,
+	}
+
+	for _, h := range n.Hooks {
+		hook := WorkflowNodeHook{
+			UUID:                h.UUID,
+			Ref:                 h.Ref,
+			WorkflowHookModelID: h.HookModelID,
+			Config:              h.Config,
+		}
+		newNode.Hooks = append(newNode.Hooks, hook)
+	}
+
+	for _, t := range n.Triggers {
+		switch t.ChildNode.Type {
+		case NodeTypePipeline:
+			trig := WorkflowNodeTrigger{
+				WorkflowDestNode: t.ChildNode.retroMigrate(),
+			}
+			newNode.Triggers = append(newNode.Triggers, trig)
+		case NodeTypeFork:
+			newNode.Forks = append(newNode.Forks, t.ChildNode.retroMigrateFork())
+			break
+		case NodeTypeOutGoingHook:
+			newNode.OutgoingHooks = append(newNode.OutgoingHooks, t.ChildNode.retroMigrateOutGoingHook())
+		}
+	}
+	return newNode
+}
+
+func (n Node) retroMigrateFork() WorkflowNodeFork {
+	fork := WorkflowNodeFork{
+		Name: n.Name,
+	}
+	if len(n.Triggers) > 0 {
+		fork.Triggers = make([]WorkflowNodeForkTrigger, 0, len(n.Triggers))
+	}
+	for _, t := range n.Triggers {
+		trig := WorkflowNodeForkTrigger{}
+		switch t.ChildNode.Type {
+		case NodeTypePipeline:
+			trig.WorkflowDestNode = t.ChildNode.retroMigrate()
+		default:
+			continue
+		}
+		fork.Triggers = append(fork.Triggers, trig)
+	}
+	return fork
+}
+
+func (n Node) retroMigrateOutGoingHook() WorkflowNodeOutgoingHook {
+	h := WorkflowNodeOutgoingHook{
+		Config:              n.OutGoingHookContext.Config,
+		WorkflowHookModelID: n.OutGoingHookContext.HookModelID,
+		Ref:                 n.Ref,
+	}
+	if len(n.Triggers) > 0 {
+		h.Triggers = make([]WorkflowNodeOutgoingHookTrigger, 0, len(n.Triggers))
+		for _, t := range n.Triggers {
+			trig := WorkflowNodeOutgoingHookTrigger{}
+			switch t.ChildNode.Type {
+			case NodeTypePipeline:
+				trig.WorkflowDestNode = t.ChildNode.retroMigrate()
+			default:
+				continue
+			}
+			h.Triggers = append(h.Triggers, trig)
+		}
+	}
+	return h
+}
+
+func (n Node) retroMigrateJoin() WorkflowNodeJoin {
+	j := WorkflowNodeJoin{
+		Ref: n.Ref,
+	}
+
+	j.SourceNodeRefs = make([]string, 0, len(n.JoinContext))
+	for _, jc := range n.JoinContext {
+		j.SourceNodeRefs = append(j.SourceNodeRefs, jc.ParentName)
+	}
+
+	if len(n.Triggers) > 0 {
+		j.Triggers = make([]WorkflowNodeJoinTrigger, 0, len(n.Triggers))
+		for _, t := range n.Triggers {
+			trig := WorkflowNodeJoinTrigger{}
+			switch t.ChildNode.Type {
+			case NodeTypePipeline:
+				trig.WorkflowDestNode = t.ChildNode.retroMigrate()
+			default:
+				continue
+			}
+			j.Triggers = append(j.Triggers, trig)
+		}
+	}
+
+	return j
 }
 
 func (n WorkflowNode) migrate() Node {
