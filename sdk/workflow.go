@@ -174,6 +174,11 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 				res = append(res, t.WorkflowDestNode.Nodes()...)
 			}
 		}
+		for i := range w.Root.OutgoingHooks {
+			for j := range w.Root.OutgoingHooks[i].Triggers {
+				res = append(res, w.Root.OutgoingHooks[i].Triggers[j].WorkflowDestNode.Nodes()...)
+			}
+		}
 	}
 
 	for _, j := range w.Joins {
@@ -181,6 +186,22 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 			res = append(res, t.WorkflowDestNode.Nodes()...)
 		}
 	}
+	return res
+}
+
+func (w *Workflow) OutgoingHooks() []WorkflowNodeOutgoingHook {
+	if w.Root == nil {
+		return nil
+	}
+
+	res := []WorkflowNodeOutgoingHook{}
+	res = append(res, w.Root.OutgoingHooks...)
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.OutgoingHooks...)
+		}
+	}
+
 	return res
 }
 
@@ -869,27 +890,6 @@ func ancestor(id int64, node *WorkflowNode, deep bool) (map[int64]bool, bool) {
 				res[node.ID] = true
 			}
 			return res, true
-		}
-	}
-	for i := range node.OutgoingHooks {
-		for j := range node.OutgoingHooks[i].Triggers {
-			destNode := &node.OutgoingHooks[i].Triggers[j].WorkflowDestNode
-			if destNode.ID == id {
-				res[node.ID] = true
-				return res, true
-			}
-			ids, ok := ancestor(id, destNode, deep)
-			if ok {
-				if len(ids) == 1 || deep {
-					for k := range ids {
-						res[k] = true
-					}
-				}
-				if deep {
-					res[node.ID] = true
-				}
-				return res, true
-			}
 		}
 	}
 	for i := range node.Forks {
