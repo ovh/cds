@@ -66,6 +66,88 @@ const (
 	WorkflowVersion1 = "v1.0"
 )
 
+func craftNodeEntry(w sdk.Workflow, n sdk.WorkflowNode) (NodeEntry, error) {
+	entry := NodeEntry{}
+	_, forksTriggerMap := w.Forks()
+	if n.TriggerSrcForkID != 0 {
+		entry.DependsOn = []string{forksTriggerMap[n.TriggerSrcForkID]}
+	} else {
+		ancestorIDs := n.Ancestors(&w, false)
+		ancestors := make([]string, 0, len(ancestorIDs))
+		for _, aID := range ancestorIDs {
+			a := w.GetNode(aID)
+			if a == nil {
+				return entry, sdk.ErrWorkflowNodeNotFound
+			}
+			ancestors = append(ancestors, a.Name)
+		}
+		sort.Strings(ancestors)
+		entry.DependsOn = ancestors
+	}
+	entry.PipelineName = n.PipelineName
+
+	conditions := []sdk.WorkflowNodeCondition{}
+	for _, c := range n.Context.Conditions.PlainConditions {
+		if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
+			c.Value == "Success" &&
+			c.Variable == "cds.status" {
+			entry.When = append(entry.When, "success")
+		} else if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
+			c.Value == "true" &&
+			c.Variable == "cds.manual" {
+			entry.When = append(entry.When, "manual")
+		} else {
+			conditions = append(conditions, c)
+		}
+	}
+
+	if len(conditions) > 0 || n.Context.Conditions.LuaScript != "" {
+		entry.Conditions = &sdk.WorkflowNodeConditions{
+			PlainConditions: conditions,
+			LuaScript:       n.Context.Conditions.LuaScript,
+		}
+	}
+
+	if n.Context.Application != nil {
+		entry.ApplicationName = n.Context.Application.Name
+	}
+	if n.Context.Environment != nil {
+		entry.EnvironmentName = n.Context.Environment.Name
+	}
+	if n.Context.ProjectPlatform != nil {
+		entry.ProjectPlatformName = n.Context.ProjectPlatform.Name
+	}
+
+	if n.Context.Mutex {
+		entry.OneAtATime = &n.Context.Mutex
+	}
+
+	if n.Context.HasDefaultPayload() {
+		enc := dump.NewDefaultEncoder(nil)
+		enc.ExtraFields.DetailedMap = false
+		enc.ExtraFields.DetailedStruct = false
+		enc.ExtraFields.Len = false
+		enc.ExtraFields.Type = false
+		enc.Formatters = nil
+		m, err := enc.ToMap(n.Context.DefaultPayload)
+		if err != nil {
+			return entry, err
+		}
+		entry.Payload = m
+	}
+
+	if len(n.Context.DefaultPipelineParameters) > 0 {
+		entry.Parameters = sdk.ParametersToMap(n.Context.DefaultPipelineParameters)
+	}
+
+	return entry, nil
+}
+
+func craftNodeEntryFromOutgoingWekHook(w sdk.Workflow, n sdk.WorkflowNodeOutgoingHook) (NodeEntry, error) {
+	entry := NodeEntry{}
+	return entry, nil
+}
+
 //NewWorkflow creates a new exportable workflow
 func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	exportedWorkflow := Workflow{}
@@ -97,87 +179,8 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		}
 	}
 
-	forksMap, forksTriggerMap := (&w).Forks()
-
-	var craftNodeEntry = func(n *sdk.WorkflowNode) (NodeEntry, error) {
-		entry := NodeEntry{}
-
-		if n.TriggerSrcForkID != 0 {
-			entry.DependsOn = []string{forksTriggerMap[n.TriggerSrcForkID]}
-		} else {
-			ancestorIDs := n.Ancestors(&w, false)
-			ancestors := make([]string, 0, len(ancestorIDs))
-			for _, aID := range ancestorIDs {
-				a := w.GetNode(aID)
-				if a == nil {
-					return entry, sdk.ErrWorkflowNodeNotFound
-				}
-				ancestors = append(ancestors, a.Name)
-			}
-			sort.Strings(ancestors)
-			entry.DependsOn = ancestors
-		}
-		entry.PipelineName = n.PipelineName
-
-		conditions := []sdk.WorkflowNodeCondition{}
-		for _, c := range n.Context.Conditions.PlainConditions {
-			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
-				c.Value == "Success" &&
-				c.Variable == "cds.status" {
-				entry.When = append(entry.When, "success")
-			} else if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
-				c.Value == "true" &&
-				c.Variable == "cds.manual" {
-				entry.When = append(entry.When, "manual")
-			} else {
-				conditions = append(conditions, c)
-			}
-		}
-
-		if len(conditions) > 0 || n.Context.Conditions.LuaScript != "" {
-			entry.Conditions = &sdk.WorkflowNodeConditions{
-				PlainConditions: conditions,
-				LuaScript:       n.Context.Conditions.LuaScript,
-			}
-		}
-
-		if n.Context.Application != nil {
-			entry.ApplicationName = n.Context.Application.Name
-		}
-		if n.Context.Environment != nil {
-			entry.EnvironmentName = n.Context.Environment.Name
-		}
-		if n.Context.ProjectPlatform != nil {
-			entry.ProjectPlatformName = n.Context.ProjectPlatform.Name
-		}
-
-		if n.Context.Mutex {
-			entry.OneAtATime = &n.Context.Mutex
-		}
-
-		if n.Context.HasDefaultPayload() {
-			enc := dump.NewDefaultEncoder(nil)
-			enc.ExtraFields.DetailedMap = false
-			enc.ExtraFields.DetailedStruct = false
-			enc.ExtraFields.Len = false
-			enc.ExtraFields.Type = false
-			enc.Formatters = nil
-			m, err := enc.ToMap(n.Context.DefaultPayload)
-			if err != nil {
-				return entry, err
-			}
-			entry.Payload = m
-		}
-
-		if len(n.Context.DefaultPipelineParameters) > 0 {
-			entry.Parameters = sdk.ParametersToMap(n.Context.DefaultPipelineParameters)
-		}
-
-		return entry, nil
-	}
-
+	forksMap, _ := (&w).Forks()
 	hooks := w.GetHooks()
-
 	for _, v := range forksMap {
 		entry := NodeEntry{}
 		if w.RootID == v.WorkflowNodeID {
@@ -197,7 +200,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		if n == nil {
 			return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
 		}
-		entry, err := craftNodeEntry(n)
+		entry, err := craftNodeEntry(w, *n)
 		if err != nil {
 			return exportedWorkflow, err
 		}
@@ -224,12 +227,8 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		exportedWorkflow.Parameters = entry.Parameters
 	} else {
 		nodes = append(nodes, *w.Root)
-		for i := range nodes {
-			n := &nodes[i]
-			if n == nil {
-				return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
-			}
-			entry, err := craftNodeEntry(n)
+		for _, n := range nodes {
+			entry, err := craftNodeEntry(w, n)
 			if err != nil {
 				return exportedWorkflow, err
 			}

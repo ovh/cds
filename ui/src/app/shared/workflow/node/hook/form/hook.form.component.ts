@@ -114,6 +114,22 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             // Load the workflow for the current project, but exclude the current workflow
             this.availableWorkflows = this.project.workflow_names.filter(idName => idName.name !== this.workflow.name);
         }
+
+        let outgoingHooks = Workflow.getAllOutgoingHooks(this.workflow);
+        let nb = 0;
+        if (outgoingHooks) {
+            for (let i = 0; i < outgoingHooks.length; i++) {
+                if (outgoingHooks[i].model.name === this.hook.model.name) {
+                    nb++;
+                }
+            }
+        }
+
+        if (nb === 0) {
+            this.outgoingHook.name = this.hook.model.name;
+        } else {
+            this.outgoingHook.name = this.hook.model.name + '_' + nb;
+        }
     }
 
     updatePlatform(): void {
@@ -182,7 +198,11 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
 
     addHook(): void {
-        this.hookEvent.emit(new HookEvent('add', this.hook));
+        let h = new HookEvent('add', this.hook);
+        if (this.isOutgoing) {
+            h.name = this.outgoingHook.name;
+        }
+        this.hookEvent.emit(h);
     }
 
     deleteHook(): void {

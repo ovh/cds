@@ -462,6 +462,7 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         oh.config = he.hook.config
         oh.id = he.hook.id
         oh.model = he.hook.model
+        oh.name = he.name;
         this.node.outgoing_hooks.push(oh);
         this.updateWorkflow(this.workflow, this.worklflowAddOutgoingHook.modal);
     }

@@ -243,7 +243,7 @@ export class Workflow {
         return
     }
 
-    static updateOutgoingHook(workflow: Workflow, id: number, config: Map<string, WorkflowNodeHookConfigValue>) {
+    static updateOutgoingHook(workflow: Workflow, id: number, name: string, config: Map<string, WorkflowNodeHookConfigValue>) {
         let oldH = WorkflowNode.findOutgoingHook(workflow.root, id);
         if (!oldH) {
             if (workflow.joins) {
@@ -263,6 +263,7 @@ export class Workflow {
 
         if (oldH) {
             oldH.config = config;
+            oldH.name = name;
         }
     };
 
@@ -658,6 +659,20 @@ export class Workflow {
                 if (j.triggers) {
                     j.triggers.forEach(t => {
                         res = res.concat(WorkflowNode.getAllHooks(t.workflow_dest_node));
+                    })
+                }
+            })
+        }
+        return res;
+    }
+
+    static getAllOutgoingHooks(workflow: Workflow): Array<WorkflowNodeOutgoingHook> {
+        let res = WorkflowNode.getAllOutgoingHooks(workflow.root);
+        if (workflow.joins) {
+            workflow.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        res = res.concat(WorkflowNode.getAllOutgoingHooks(t.workflow_dest_node));
                     })
                 }
             })
@@ -1184,6 +1199,38 @@ export class WorkflowNode {
                 res = res.concat(WorkflowNode.getAllHooks(t.workflow_dest_node));
             });
         }
+        if (n.outgoing_hooks) {
+            for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                if (n.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
+                        res = res.concat(WorkflowNode.getAllHooks(n.outgoing_hooks[i].triggers[j].workflow_dest_node));
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
+
+    static getAllOutgoingHooks(n: WorkflowNode): Array<WorkflowNodeOutgoingHook> {
+        let res = new Array<WorkflowNodeOutgoingHook>();
+        if (n.outgoing_hooks) {
+            res = n.outgoing_hooks;
+        }
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                res = res.concat(WorkflowNode.getAllOutgoingHooks(t.workflow_dest_node));
+            });
+        }
+        if (n.outgoing_hooks) {
+            for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                if (n.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
+                        res = res.concat(WorkflowNode.getAllOutgoingHooks(n.outgoing_hooks[i].triggers[j].workflow_dest_node));
+                    }
+                }
+            }
+        }
         return res;
     }
 
@@ -1222,6 +1269,7 @@ export class WorkflowNodeHook {
 
 export class WorkflowNodeOutgoingHook {
     id: number;
+    name: string;
     ref: string;
     model: WorkflowHookModel;
     config: Map<string, WorkflowNodeHookConfigValue>;
