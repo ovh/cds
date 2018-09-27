@@ -33,9 +33,11 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} group user removeAdmin ITCLIGRP_TEST_2 cds.integration.tests.ro
 
-- name: group remove user
+- name: group remove user, can't delete last user from a group
   steps:
   - script: {{.cds.build.cdsctl}} group user delete ITCLIGRP_TEST_2 cds.integration.tests.ro
+    assertions:
+      - result.code ShouldEqual 1
 
 - name: group show
   steps:
