@@ -27,7 +27,7 @@ testcases:
 
 - name: group set admin
   steps:
-  - script: {{.cds.build.cdsctl}} group setAdmin ITCLIGRP_TEST_2 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group user setAdmin ITCLIGRP_TEST_2 cds.integration.tests.ro
 
 - name: group remove admin
   steps:
