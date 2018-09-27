@@ -229,6 +229,9 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
+				if err := w.client.WorkerSetStatus(sdk.StatusChecking); err != nil {
+					log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
+				}
 				requirementsOK, _ := checkRequirements(w, &j.Job.Action, j.ExecGroups, j.ID)
 
 				t := ""
@@ -364,6 +367,9 @@ func (w *currentWorker) processBookedPBJob(pbjobs chan<- sdk.PipelineBuildJob) {
 		return
 	}
 
+	if err := w.client.WorkerSetStatus(sdk.StatusChecking); err != nil {
+		log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
+	}
 	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action, j.ExecGroups, w.bookedPBJobID)
 	if !requirementsOK {
 		var details string

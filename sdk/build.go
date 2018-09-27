@@ -161,7 +161,7 @@ func StatusToStrings(ss []Status) []string {
 // Action status in queue
 const (
 	StatusWaiting           Status = "Waiting"
-	StatusChecking          Status = "Checking"
+	StatusChecking          Status = "Checking" // DEPRECATED, to remove when removing pipelineBuild
 	StatusBuilding          Status = "Building"
 	StatusSuccess           Status = "Success"
 	StatusFail              Status = "Fail"

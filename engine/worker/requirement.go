@@ -34,9 +34,6 @@ var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement)
 func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, bookedJobID int64) (bool, []sdk.Requirement) {
 	requirementsOK := true
 	errRequirements := []sdk.Requirement{}
-	if err := w.client.WorkerSetStatus(sdk.StatusChecking); err != nil {
-		log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
-	}
 
 	log.Debug("checkRequirements> for JobID:%d model of worker: %s", bookedJobID, w.model.Name)
 
@@ -145,8 +142,10 @@ func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		return false, nil
 	}
 	t := strings.Split(r.Value, " ")
-	wm, err := w.client.WorkerModel(t[0])
-	return wm.ID == w.model.ID, err
+	if len(t) > 0 {
+		return t[0] == w.model.Name, nil
+	}
+	return false, nil
 }
 
 func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
