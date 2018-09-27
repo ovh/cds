@@ -382,7 +382,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 					Message: "worker cache pull > Unable to open file : " + err.Error(),
 					Status:  http.StatusInternalServerError,
 				}
-				writeJSON(w, err, http.StatusInternalServerError)
+				writeJSON(w, err, err.Status)
 				return
 			}
 
@@ -393,7 +393,7 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 					Message: "worker cache pull > Cannot copy content file : " + err.Error(),
 					Status:  http.StatusInternalServerError,
 				}
-				writeJSON(w, err, http.StatusInternalServerError)
+				writeJSON(w, err, err.Status)
 				return
 			}
 

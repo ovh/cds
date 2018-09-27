@@ -86,7 +86,6 @@ func writeJSON(w http.ResponseWriter, data interface{}, status int) {
 
 func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	al := r.Header.Get("Accept-Language")
-	msg, sdkError := sdk.ProcessError(err, al)
-	sdkErr := sdk.Error{Message: msg}
+	sdkErr := sdk.ExtractHTTPError(err, al)
 	writeJSON(w, sdkErr, sdkError.Status)
 }

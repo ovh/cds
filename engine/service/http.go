@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pborman/uuid"
+	"github.com/sirupsen/logrus"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
@@ -88,17 +91,28 @@ func WriteProcessTime(w http.ResponseWriter) {
 // WriteError is a helper function to return error in a language the called understand
 func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	al := r.Header.Get("Accept-Language")
-	msg, errProcessed := sdk.ProcessError(err, al)
-	sdkErr := sdk.Error{Message: msg}
+	httpErr := sdk.ExtractHTTPError(err, al)
+	isErrWithStack := sdk.IsErrorWithStack(err)
 
-	// ErrAlreadyTaken and ErrWorkerModelAlreadyBooked are not useful to log in warning
-	if sdk.ErrorIs(errProcessed, sdk.ErrAlreadyTaken) ||
-		sdk.ErrorIs(errProcessed, sdk.ErrWorkerModelAlreadyBooked) ||
-		sdk.ErrorIs(errProcessed, sdk.ErrJobAlreadyBooked) || r.URL.Path == "/user/me" {
-		log.Debug("%-7s | %-4d | %s \t %s", r.Method, errProcessed.Status, r.RequestURI, err)
-	} else {
-		log.Warning("%-7s | %-4d | %s \t %s", r.Method, errProcessed.Status, r.RequestURI, err)
+	entry := logrus.WithField("method", r.Method).
+		WithField("request_uri", r.RequestURI).
+		WithField("status", httpErr.Status).
+		WithField("message", httpErr.Message)
+	if isErrWithStack {
+		httpErr.UUID = uuid.NewUUID().String()
+		entry = entry.WithField("error_uuid", httpErr.UUID)
+		entry = entry.WithField("stack_trace", fmt.Sprintf("%+v", err))
 	}
 
-	_ = WriteJSON(w, sdkErr, errProcessed.Status)
+	// ErrAlreadyTaken and ErrWorkerModelAlreadyBooked are not useful to log in warning
+	if sdk.ErrorIs(httpErr, sdk.ErrAlreadyTaken) ||
+		sdk.ErrorIs(httpErr, sdk.ErrWorkerModelAlreadyBooked) ||
+		sdk.ErrorIs(httpErr, sdk.ErrJobAlreadyBooked) || r.URL.Path == "/user/me" {
+		entry.Debugf("%s", err)
+	} else {
+		entry.Warningf("%s", err)
+	}
+
+	// safely ignore error returned by WriteJSON
+	WriteJSON(w, httpErr, httpErr.Status)
 }

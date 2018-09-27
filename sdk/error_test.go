@@ -42,27 +42,29 @@ func TestErrorIs(t *testing.T) {
 }
 
 func TestNewError(t *testing.T) {
-	err := fmt.Errorf("this is an error generated from vendor")
-	cdsErr := NewError(ErrWrongRequest, err)
-	// print the CDS error line
-	fmt.Printf("%s\n", cdsErr)
-	// print the root error message and stack trace
-	fmt.Printf("%+v\n", cdsErr.(Error).Root)
+	err := NewError(ErrWrongRequest, fmt.Errorf("this is an error generated from vendor"))
+	// print the error call stack
+	fmt.Println(err)
+	// print the error stack trace
+	fmt.Printf("%+v\n", err)
+
+	httpErr := ExtractHTTPError(err, "fr")
+	// print the http error
+	fmt.Println(httpErr)
 }
 
 func TestWrapError(t *testing.T) {
 	err := oneForStackTest()
-	// print the CDS error line
-	fmt.Printf("%s\n", err)
-	// print the root error message and stack trace
-	fmt.Printf("%+v\n", err.(Error).Root)
+	// print the error call stack
+	fmt.Println(err)
+	// print the error stack trace
+	fmt.Printf("%+v\n", err)
 }
 
-func oneForStackTest() error   { return twoForStackTest() }
-func twoForStackTest() error   { return threeForStackTest() }
-func threeForStackTest() error { return fourForStackTest() }
-func fourForStackTest() error  { return fiveForStackTest() }
+func oneForStackTest() error   { return WrapError(twoForStackTest(), "one") }
+func twoForStackTest() error   { return WrapError(threeForStackTest(), "two") }
+func threeForStackTest() error { return WrapError(fourForStackTest(), "three") }
+func fourForStackTest() error  { return WrapError(fiveForStackTest(), "four") }
 func fiveForStackTest() error {
-	err := fmt.Errorf("this is an error generated from vendor")
-	return WrapError(err, "cds custom message %d", 50)
+	return WrapError(fmt.Errorf("this is an error generated from vendor"), "five")
 }
