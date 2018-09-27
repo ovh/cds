@@ -155,11 +155,8 @@ func Create(h Interface) error {
 	// read the errs channel in another goroutine too
 	sdk.GoRoutine("checkErrs",
 		func() {
-			for {
-				select {
-				case err := <-errs:
-					log.Error("%v", err)
-				}
+			for err := range errs {
+				log.Error("%v", err)
 			}
 		},
 		PanicDump(h),
