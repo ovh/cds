@@ -31,11 +31,11 @@ testcases:
 
 - name: group remove admin
   steps:
-  - script: {{.cds.build.cdsctl}} group removeAdmin ITCLIGRP_TEST_2 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group user removeAdmin ITCLIGRP_TEST_2 cds.integration.tests.ro
 
 - name: group remove user
   steps:
-  - script: {{.cds.build.cdsctl}} group deleteuser ITCLIGRP_TEST_2 cds.integration.tests.ro
+  - script: {{.cds.build.cdsctl}} group user delete ITCLIGRP_TEST_2 cds.integration.tests.ro
 
 - name: group show
   steps:
