@@ -458,10 +458,11 @@ var errorsLanguages = []map[int]string{
 
 // Error type.
 type Error struct {
-	ID      int    `json:"-"`
-	Status  int    `json:"-"`
-	Message string `json:"message"`
-	UUID    string `json:"uuid,omitempty"`
+	ID         int    `json:"-"`
+	Status     int    `json:"-"`
+	Message    string `json:"message"`
+	UUID       string `json:"uuid,omitempty"`
+	StackTrace string `json:"stack_trace,omitempty"`
 }
 
 type errorWithStack struct {
@@ -482,7 +483,7 @@ func (w errorWithStack) Format(s fmt.State, verb rune) {
 		}
 		fallthrough
 	case 's':
-		io.WriteString(s, fmt.Sprintf("%s: %s", w.stack.String(), w.Cause().Error()))
+		_, _ = io.WriteString(s, fmt.Sprintf("%s: %s", w.stack.String(), w.Cause().Error()))
 	}
 }
 

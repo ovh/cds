@@ -92,15 +92,14 @@ func WriteProcessTime(w http.ResponseWriter) {
 func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	al := r.Header.Get("Accept-Language")
 	httpErr := sdk.ExtractHTTPError(err, al)
+	httpErr.UUID = uuid.NewUUID().String()
 	isErrWithStack := sdk.IsErrorWithStack(err)
 
 	entry := logrus.WithField("method", r.Method).
 		WithField("request_uri", r.RequestURI).
 		WithField("status", httpErr.Status).
-		WithField("message", httpErr.Message)
+		WithField("error_uuid", httpErr.UUID)
 	if isErrWithStack {
-		httpErr.UUID = uuid.NewUUID().String()
-		entry = entry.WithField("error_uuid", httpErr.UUID)
 		entry = entry.WithField("stack_trace", fmt.Sprintf("%+v", err))
 	}
 
@@ -114,5 +113,5 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	}
 
 	// safely ignore error returned by WriteJSON
-	WriteJSON(w, httpErr, httpErr.Status)
+	_ = WriteJSON(w, httpErr, httpErr.Status)
 }

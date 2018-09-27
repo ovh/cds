@@ -170,6 +170,10 @@ type Configuration struct {
 	} `toml:"status" comment:"###########################\n CDS Status Settings \n Documentation: https://ovh.github.io/cds/hosting/monitoring/ \n##########################" json:"status"`
 	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
 	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
+	Graylog     struct {
+		AccessToken string `toml:"accessToken" json:"accessToken"`
+		URL         string `toml:"url" comment:"Example: http://localhost:9000" json:"url"`
+	} `toml:"graylog"  json:"graylog"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
