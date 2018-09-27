@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"runtime"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -23,8 +22,8 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 	log.Debug("Checking %d requirements", len(requirements))
 	form.BinaryCapabilities = LoopPath(w, requirements)
 	form.Version = sdk.VERSION
-	form.OS = runtime.GOOS
-	form.Arch = runtime.GOARCH
+	form.OS = sdk.GOOS
+	form.Arch = sdk.GOARCH
 
 	worker, uptodate, err := w.client.WorkerRegister(form)
 	if err != nil {
@@ -42,10 +41,10 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 
 	if !uptodate {
 		if w.autoUpdate {
-			log.Warning("-=-=-=-=- your worker binary is not up to date %s %s %s. Auto-updating it... -=-=-=-=-", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+			log.Warning("-=-=-=-=- your worker binary is not up to date %s %s %s. Auto-updating it... -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
 			sdk.Exit("Exiting this cds worker process - auto updating worker")
 		}
-		log.Warning("-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+		log.Warning("-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, sdk.GOOS, sdk.GOARCH)
 	}
 
 	return nil

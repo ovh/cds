@@ -69,7 +69,7 @@ func (layers *layering) pushAll() error {
 		}
 
 		lUID := xstrings.Substr(digest, 0, 12)
-		fmt.Printf("Pushing Layer %d/%d [%v]", index+1, layerCount, lUID)
+		fmt.Printf("Pushing Layer %d/%d [%v]\n", index+1, layerCount, lUID)
 		domain := reference.Domain(layers.image)
 		insertRegistryMapping(digest, domain)
 		u, _ := dockerdist.GetPushURL(domain)
@@ -88,7 +88,7 @@ func (layers *layering) pushAll() error {
 		}
 
 		if err := pushLayer(payload); err != nil {
-			fmt.Printf("adding layer %d/%d [%v]: %v", index+1, layerCount, lUID, err)
+			fmt.Printf("adding layer %d/%d [%v]: %v\n", index+1, layerCount, lUID, err)
 			if err != ErrUnanalizedLayer {
 				return err
 			}
@@ -114,10 +114,9 @@ func (layers *layering) analyzeAll() (ImageAnalysis, error) {
 		if a, err := analyzeLayer(digest); err != nil {
 			return ImageAnalysis{}, fmt.Errorf("analysing layer [%v] %d/%d: %v", lShort, index+1, layerCount, err)
 		} else {
-			fmt.Printf("analysing layer [%v] %d/%d", lShort, index+1, layerCount)
+			fmt.Printf("analysing layer [%v] %d/%d\n", lShort, index+1, layerCount)
 			res = append(res, a)
 		}
-		return ImageAnalysis{}, nil
 	}
 	return ImageAnalysis{
 		Registry:  xstrings.TrimPrefixSuffix(reference.Domain(layers.image), "http://", "/v2"),

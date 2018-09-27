@@ -46,7 +46,6 @@ func LocalServerIP() (string, error) {
 	localInterfaceConfig := viper.GetString("clairctl.interface")
 
 	if localIP == "" {
-		fmt.Printf("retrieving interface for local IP\n")
 		var err error
 		var localInterface net.Interface
 		localInterface, err = translateInterface(localInterfaceConfig)
@@ -72,10 +71,10 @@ func translateInterface(localInterface string) (net.Interface, error) {
 		return *netInterface, nil
 	}
 
-	fmt.Printf("no interface provided, looking for docker0\n")
+	// no interface provided, looking for docker0
 	netInterface, err := net.InterfaceByName("docker0")
 	if err != nil {
-		fmt.Printf("docker0 not found, looking for first connected broadcast interface\n")
+		fmt.Printf("interface docker0 not found, looking for first connected broadcast interface\n")
 		interfaces, err := net.Interfaces()
 		if err != nil {
 			return net.Interface{}, err
@@ -89,5 +88,4 @@ func translateInterface(localInterface string) (net.Interface, error) {
 	}
 
 	return *netInterface, nil
-
 }

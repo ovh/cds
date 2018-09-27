@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"runtime"
 
 	"github.com/inconshreveable/go-update"
 	"github.com/spf13/cobra"
@@ -29,18 +28,18 @@ var updateCmd = &cobra.Command{
 		conf := cdsclient.Config{Host: updateURLAPI}
 		client := cdsclient.New(conf)
 
-		fmt.Printf("CDS engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+		fmt.Println(sdk.VersionString())
 
 		if updateFromGithub {
 			// no need to have apiEndpoint here
 			var errGH error
-			urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("engine", runtime.GOOS, runtime.GOARCH))
+			urlBinary, errGH = client.DownloadURLFromGithub(sdk.GetArtifactFilename("engine", sdk.GOOS, sdk.GOARCH))
 			if errGH != nil {
 				sdk.Exit("Error while getting URL from Github url:%s err:%s\n", urlBinary, errGH)
 			}
 			fmt.Printf("Updating binary from Github on %s...\n", urlBinary)
 		} else {
-			urlBinary = client.DownloadURLFromAPI("engine", runtime.GOOS, runtime.GOARCH)
+			urlBinary = client.DownloadURLFromAPI("engine", sdk.GOOS, sdk.GOARCH)
 			fmt.Printf("Updating binary from CDS API on %s...\n", urlBinary)
 		}
 

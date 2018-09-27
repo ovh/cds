@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -22,8 +21,8 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	in := sdk.WorkerTakeForm{
 		Time:    time.Now(),
 		Version: sdk.VERSION,
-		OS:      runtime.GOOS,
-		Arch:    runtime.GOARCH,
+		OS:      sdk.GOOS,
+		Arch:    sdk.GOARCH,
 	}
 	if isBooked {
 		in.BookedJobID = pipelineBuildJobID

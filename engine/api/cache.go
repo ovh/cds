@@ -75,7 +75,7 @@ func (api *API) getPullCacheHandler() service.Handler {
 
 		ioread, err := objectstore.Fetch(&cacheObject)
 		if err != nil {
-			return sdk.WrapError(err, "getPullCacheHandler> Cannot fetch artifact cache.tar")
+			return sdk.WrapError(sdk.ErrNotFound, "getPullCacheHandler> Cannot fetch artifact cache.tar : %v", err)
 		}
 		if _, err := io.Copy(w, ioread); err != nil {
 			_ = ioread.Close()

@@ -13,7 +13,7 @@ Type of requirements:
 - [Network access]({{< relref "/workflows/pipelines/requirements/network_access/_index.md" >}})
 - [Service]({{< relref "/workflows/pipelines/requirements/service/_index.md" >}})
 - Memory
-- OS & Architecture
+- [OS & Architecture]({{< relref "/workflows/pipelines/requirements/os_architecture/_index.md" >}})
 
 A [Job]({{< relref "gettingstarted/concepts/job.md" >}}) will be executed by a **worker**.
 

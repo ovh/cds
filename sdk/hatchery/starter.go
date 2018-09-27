@@ -110,7 +110,6 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 			}
 			atomic.AddInt64(&nbWorkerToStart, -1)
 			atomic.AddInt64(&nbRegisteringWorkerModels, -1)
-
 		}
 	}
 }
@@ -161,8 +160,10 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		},
 	}
 	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", j.model.Name, j.id)
+	_, next = observability.Span(ctx, "hatchery.SpawnWorker")
 	workerName, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: j.model, IsWorkflowJob: j.isWorkflowJob, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
 	if errSpawn != nil {
+		next()
 		log.Warning("spawnWorkerForJob> %d - cannot spawn worker %s for job %d: %s", j.timestamp, j.model.Name, j.id, errSpawn)
 		infos = append(infos, sdk.SpawnInfo{
 			RemoteTime: time.Now(),
@@ -175,6 +176,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 
 		return false, nil
 	}
+	next()
 
 	infos = append(infos, sdk.SpawnInfo{
 		RemoteTime: time.Now(),
