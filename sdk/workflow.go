@@ -1183,7 +1183,7 @@ type WorkflowNodeTrigger struct {
 	WorkflowDestNode   WorkflowNode `json:"workflow_dest_node" db:"-"`
 }
 
-//WorkflowNodeTrigger is a ling between a fork and a node
+// WorkflowNodeForkTrigger is a link between a fork and a node
 type WorkflowNodeForkTrigger struct {
 	ID                 int64        `json:"id" db:"id"`
 	WorkflowForkID     int64        `json:"workflow_node_fork_id" db:"workflow_node_fork_id"`
@@ -1191,7 +1191,7 @@ type WorkflowNodeForkTrigger struct {
 	WorkflowDestNode   WorkflowNode `json:"workflow_dest_node" db:"-"`
 }
 
-//WorkflowNodeOutgoingHookTrigger is a ling between an outgoing hook and pipeline in a workflow
+//WorkflowNodeOutgoingHookTrigger is a link between an outgoing hook and pipeline in a workflow
 type WorkflowNodeOutgoingHookTrigger struct {
 	ID                         int64        `json:"id" db:"id"`
 	WorkflowNodeOutgoingHookID int64        `json:"workflow_node_outgoing_hook_id" db:"workflow_node_outgoing_hook_id"`
