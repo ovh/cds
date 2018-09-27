@@ -51,13 +51,6 @@ func Pipelines(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) 
 }
 
 func runPipeline(DBFunc func() *gorp.DbMap, store cache.Store, pbID int64) {
-	//Check if CDS is in maintenance mode
-	var m bool
-	store.Get("maintenance", &m)
-	if m {
-		log.Info("⚠ CDS maintenance in ON")
-	}
-
 	db := DBFunc()
 	tx, errb := db.Begin()
 	if errb != nil {
@@ -104,7 +97,7 @@ func runPipeline(DBFunc func() *gorp.DbMap, store cache.Store, pbID int64) {
 		stage := &pb.Stages[stageIndex]
 
 		//We only add jobs to queue if we are not in maintenance
-		if stage.Status == sdk.StatusWaiting && !m {
+		if stage.Status == sdk.StatusWaiting {
 			if err := addJobsToQueue(tx, stage, pb); err != nil {
 				log.Warning("queue.RunActions> Cannot add job to queue: %s", err)
 				return
@@ -158,7 +151,7 @@ func runPipeline(DBFunc func() *gorp.DbMap, store cache.Store, pbID int64) {
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("RunActions> Cannot commit tx on pb %d: %s\n", pb.ID, err)
+		log.Warning("RunActions> Cannot commit tx on pb %d: %v", pb.ID, err)
 		return
 	}
 }
