@@ -155,7 +155,7 @@ func (s *service) PostGet(db gorp.SqlExecutor) error {
 	query := "SELECT monitoring_status, config FROM services WHERE name = $1"
 	var monitoringStatus, config []byte
 	if err := db.QueryRow(query, s.Name).Scan(&monitoringStatus, &config); err != nil {
-		return sdk.WrapError(err, "PostGet> error on queryRow")
+		return sdk.WrapError(err, "PostGet> error on queryRow where name:%s id:%d type:%s", s.Name, s.ID, s.Type)
 	}
 
 	if len(monitoringStatus) > 0 {

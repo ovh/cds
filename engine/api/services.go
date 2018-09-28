@@ -149,6 +149,7 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 	}
 
 	if oldSrv != nil {
+		srv.ID = oldSrv.ID
 		if err := services.Update(tx, srv); err != nil {
 			log.Error("serviceAPIHeartbeat> Unable to update service %s: %v", srv.Name, err)
 			return
