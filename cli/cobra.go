@@ -28,7 +28,7 @@ func ExitOnError(err error, helpFunc ...func() error) {
 		return
 	}
 
-	var code int
+	code := 50 // default error code
 
 	switch e := err.(type) {
 	case sdk.Error:

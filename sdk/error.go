@@ -566,6 +566,15 @@ func WrapError(err error, format string, args ...interface{}) error {
 		return e
 	}
 
+	// if it's a Error wrap it in error with stack
+	if e, ok := err.(Error); ok {
+		return errorWithStack{
+			root:      errors.Wrap(err, m),
+			stack:     callers(),
+			httpError: e,
+		}
+	}
+
 	return errorWithStack{
 		root:      errors.Wrap(err, m),
 		stack:     callers(),
@@ -583,6 +592,15 @@ func WithStack(err error) error {
 	// if it's already a CDS error do not override the stack
 	if e, ok := err.(errorWithStack); ok {
 		return e
+	}
+
+	// if it's a Error wrap it in error with stack
+	if e, ok := err.(Error); ok {
+		return errorWithStack{
+			root:      errors.WithStack(err),
+			stack:     callers(),
+			httpError: e,
+		}
 	}
 
 	return errorWithStack{
