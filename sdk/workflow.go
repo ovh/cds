@@ -665,6 +665,9 @@ func (n WorkflowNode) migrate() Node {
 			Mutex: n.Context.Mutex,
 		},
 	}
+	if n.Ref == "" {
+		n.Ref = n.Name
+	}
 
 	for _, h := range n.Hooks {
 		newNode.Hooks = append(newNode.Hooks, NodeHook{

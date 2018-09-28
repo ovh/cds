@@ -72,6 +72,9 @@ func (h WorkflowNodeOutgoingHook) migrate() Node {
 			HookModelID: h.WorkflowHookModelID,
 		},
 	}
+	if h.Ref == "" {
+		h.Ref = h.Name
+	}
 	for _, t := range h.Triggers {
 		child := t.WorkflowDestNode.migrate()
 		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
