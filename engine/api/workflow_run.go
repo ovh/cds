@@ -331,6 +331,17 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, proj.Key)
 
+		if len(workflowRuns) > 0 {
+			observability.Current(ctx,
+				observability.Tag(observability.TagProjectKey, proj.Key),
+				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
+			)
+
+			if workflowRuns[0].Status == sdk.StatusFail.String() {
+				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+			}
+		}
+
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
@@ -519,7 +530,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
 
-		report, err := stopWorkflowNodeRun(ctx, api.mustDB, api.Cache, p, nodeRun, name, getUser(ctx))
+		report, err := api.stopWorkflowNodeRun(ctx, api.mustDB, api.Cache, p, nodeRun, name, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to stop workflow run")
 		}
@@ -531,7 +542,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 	}
 }
 
-func stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) (*workflow.ProcessorReport, error) {
+func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) (*workflow.ProcessorReport, error) {
 	tx, errTx := dbFunc().Begin()
 	if errTx != nil {
 		return nil, sdk.WrapError(errTx, "stopWorkflowNodeRunHandler> Unable to create transaction")
@@ -559,6 +570,14 @@ func stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	}
 
 	_, _ = report.Merge(r1, nil)
+
+	observability.Current(ctx,
+		observability.Tag(observability.TagProjectKey, p.Key),
+		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
+	)
+	if wr.Status == sdk.StatusFail.String() {
+		observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+	}
 
 	if errC := tx.Commit(); errC != nil {
 		return nil, sdk.WrapError(errC, "stopWorkflowNodeRunHandler> Unable to commit")
@@ -597,8 +616,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		u := getUser(ctx)
 
-		observability.Current(ctx, observability.Tag(observability.TagWorkflow, name))
-		observability.Record(ctx, api.Stats.WorkflowRuns, 1)
+		observability.Current(ctx,
+			observability.Tag(observability.TagProjectKey, key),
+			observability.Tag(observability.TagWorkflow, name),
+		)
+		observability.Record(ctx, api.Stats.WorkflowRunStarted, 1)
 
 		_, next := observability.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
