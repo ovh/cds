@@ -22,9 +22,6 @@ type SSEvent struct {
 	Data io.Reader
 }
 
-//Client is the default client used for requests.
-var sseClient = &http.Client{}
-
 // RequestSSEGet takes the uri of an SSE stream and channel, and will send an Event
 // down the channel when recieved, until the stream is closed. It will then
 // close the stream. This is blocking, and so you will likely want to call this
