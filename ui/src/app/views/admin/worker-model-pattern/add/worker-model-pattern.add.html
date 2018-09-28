@@ -43,7 +43,9 @@
               </textarea>
             </div>
             <div class="field">
-              <label>{{'worker_model_cmd' | translate}}</label>
+              <label suiPopup [popupText]="'worker_model_cmd_tooltip' | translate" popupPlacement="top left">
+                {{'worker_model_cmd' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
+              </label>
               <input class="ui input"
                 type="text" name="cmd" [(ngModel)]="pattern.model.cmd"
                 [disabled]="loading || !currentUser.admin">

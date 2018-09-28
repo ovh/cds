@@ -42,7 +42,7 @@ func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		if w.hatchery.id > 0 {
+		if w.hatchery.name != "" {
 			log.Info("Waiting 30min to be killed by hatchery, if not killed, worker will exit")
 			time.Sleep(30 * time.Minute)
 		}

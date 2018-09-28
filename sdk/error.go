@@ -481,6 +481,9 @@ func ProcessError(target error, al string) (string, Error) {
 	target = errors.Cause(target)
 	cdsErr, ok := target.(Error)
 	if !ok || cdsErr.ID == 0 {
+		if ok && cdsErr.Message != "" {
+			return cdsErr.Message, cdsErr
+		}
 		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
 	}
 	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
@@ -503,6 +506,7 @@ func ProcessError(target error, al string) (string, Error) {
 			break
 		}
 	} else {
+		ok = true
 		msg = cdsErr.Message
 	}
 

@@ -147,14 +147,21 @@ func StatusFromString(in string) Status {
 	}
 }
 
-func (t Status) String() string {
-	return string(t)
+func (t Status) String() string { return string(t) }
+
+// StatusToStrings returns []string from given []status.
+func StatusToStrings(ss []Status) []string {
+	res := make([]string, len(ss))
+	for i, s := range ss {
+		res[i] = s.String()
+	}
+	return res
 }
 
 // Action status in queue
 const (
 	StatusWaiting           Status = "Waiting"
-	StatusChecking          Status = "Checking"
+	StatusChecking          Status = "Checking" // DEPRECATED, to remove when removing pipelineBuild
 	StatusBuilding          Status = "Building"
 	StatusSuccess           Status = "Success"
 	StatusFail              Status = "Fail"
@@ -173,7 +180,6 @@ func (p *PipelineBuildJob) Translate(lang string) {
 		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
 		p.SpawnInfos[ki].UserMessage = m.String(lang)
 	}
-
 }
 
 // StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)

@@ -194,6 +194,11 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 				res = append(res, t.WorkflowDestNode.Nodes()...)
 			}
 		}
+		for i := range w.Root.OutgoingHooks {
+			for j := range w.Root.OutgoingHooks[i].Triggers {
+				res = append(res, w.Root.OutgoingHooks[i].Triggers[j].WorkflowDestNode.Nodes()...)
+			}
+		}
 	}
 
 	for _, j := range w.Joins {
@@ -201,6 +206,22 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 			res = append(res, t.WorkflowDestNode.Nodes()...)
 		}
 	}
+	return res
+}
+
+func (w *Workflow) OutgoingHooks() []WorkflowNodeOutgoingHook {
+	if w.Root == nil {
+		return nil
+	}
+
+	res := []WorkflowNodeOutgoingHook{}
+	res = append(res, w.Root.OutgoingHooks...)
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.OutgoingHooks...)
+		}
+	}
+
 	return res
 }
 
@@ -968,27 +989,6 @@ func ancestor(id int64, node *WorkflowNode, deep bool) (map[int64]bool, bool) {
 			return res, true
 		}
 	}
-	for i := range node.OutgoingHooks {
-		for j := range node.OutgoingHooks[i].Triggers {
-			destNode := &node.OutgoingHooks[i].Triggers[j].WorkflowDestNode
-			if destNode.ID == id {
-				res[node.ID] = true
-				return res, true
-			}
-			ids, ok := ancestor(id, destNode, deep)
-			if ok {
-				if len(ids) == 1 || deep {
-					for k := range ids {
-						res[k] = true
-					}
-				}
-				if deep {
-					res[node.ID] = true
-				}
-				return res, true
-			}
-		}
-	}
 	for i := range node.Forks {
 		for j := range node.Forks[i].Triggers {
 			destNode := &node.Forks[i].Triggers[j].WorkflowDestNode
@@ -1280,7 +1280,7 @@ type WorkflowNodeTrigger struct {
 	WorkflowDestNode   WorkflowNode `json:"workflow_dest_node" db:"-"`
 }
 
-//WorkflowNodeTrigger is a ling between a fork and a node
+// WorkflowNodeForkTrigger is a link between a fork and a node
 type WorkflowNodeForkTrigger struct {
 	ID                 int64        `json:"id" db:"id"`
 	WorkflowForkID     int64        `json:"workflow_node_fork_id" db:"workflow_node_fork_id"`
@@ -1288,7 +1288,7 @@ type WorkflowNodeForkTrigger struct {
 	WorkflowDestNode   WorkflowNode `json:"workflow_dest_node" db:"-"`
 }
 
-//WorkflowNodeOutgoingHookTrigger is a ling between an outgoing hook and pipeline in a workflow
+//WorkflowNodeOutgoingHookTrigger is a link between an outgoing hook and pipeline in a workflow
 type WorkflowNodeOutgoingHookTrigger struct {
 	ID                         int64        `json:"id" db:"id"`
 	WorkflowNodeOutgoingHookID int64        `json:"workflow_node_outgoing_hook_id" db:"workflow_node_outgoing_hook_id"`
