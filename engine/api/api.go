@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/ovh/cds/engine/api/group"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
@@ -131,7 +133,7 @@ type Configuration struct {
 	} `toml:"events" comment:"#######################\n CDS Events Settings \n######################" json:"events"`
 	Features struct {
 		Izanami struct {
-			ApiURL       string `toml:"apiurl" json:"apiurl"`
+			APIURL       string `toml:"apiurl" json:"apiurl"`
 			ClientID     string `toml:"clientid" json:"clientid"`
 			ClientSecret string `toml:"clientsecret" json:"clientsecret"`
 			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
@@ -174,20 +176,20 @@ type Configuration struct {
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
 type ProviderConfiguration struct {
-	Name  string `toml:"name"`
-	Token string `toml:"token"`
+	Name  string `toml:"name" json:"name"`
+	Token string `toml:"token" json:"-"`
 }
 
 // ServiceConfiguration is the configuration of external service
 type ServiceConfiguration struct {
-	Name       string `toml:"name"`
-	URL        string `toml:"url"`
-	Port       string `toml:"port"`
-	Path       string `toml:"path"`
-	HealthURL  string `toml:"healthUrl"`
-	HealthPort string `toml:"healthPort"`
-	HealthPath string `toml:"healthPath"`
-	Type       string `toml:"type"`
+	Name       string `toml:"name" json:"name"`
+	URL        string `toml:"url" json:"url"`
+	Port       string `toml:"port" json:"port"`
+	Path       string `toml:"path" json:"path"`
+	HealthURL  string `toml:"healthUrl" json:"healthUrl"`
+	HealthPort string `toml:"healthPort" json:"healthPort"`
+	HealthPath string `toml:"healthPath" json:"healthPath"`
+	Type       string `toml:"type" json:"type"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -466,9 +468,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	// Initialize feature packages
-	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.ApiURL)
-	if a.Config.Features.Izanami.ApiURL != "" {
-		if err := feature.Init(a.Config.Features.Izanami.ApiURL, a.Config.Features.Izanami.ClientID, a.Config.Features.Izanami.ClientSecret); err != nil {
+	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.APIURL)
+	if a.Config.Features.Izanami.APIURL != "" {
+		if err := feature.Init(a.Config.Features.Izanami.APIURL, a.Config.Features.Izanami.ClientID, a.Config.Features.Izanami.ClientSecret); err != nil {
 			return fmt.Errorf("Feature flipping not enabled with izanami: %s", err)
 		}
 	}
@@ -666,6 +668,7 @@ func (a *API) Serve(ctx context.Context) error {
 				Name:    s.Name,
 				Type:    s.Type,
 				HTTPURL: fmt.Sprintf("%s:%s%s", s.URL, s.Port, s.Path),
+				GroupID: &group.SharedInfraGroup.ID,
 			},
 			HealthPort: s.HealthPort,
 			HealthPath: s.HealthPath,

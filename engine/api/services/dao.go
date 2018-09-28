@@ -104,6 +104,8 @@ func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Serv
 			return nil, sdk.WrapError(err, "findAll> postGet on srv id:%d name:%s type:%s lastHeartbeat:%v", s.ID, s.Name, s.Type, s.LastHeartbeat)
 		}
 		ss[i] = sdk.Service(sdbs[i])
+		ss[i].Hash = ""
+		ss[i].Token = ""
 	}
 	return ss, nil
 }

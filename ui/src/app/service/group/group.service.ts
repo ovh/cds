@@ -52,6 +52,7 @@ export class GroupService {
     removeToken(groupName: string, tokenId: number): Observable<{}> {
         return this._http.delete<{}>(`/group/${groupName}/token/${tokenId}`);
     }
+
     /**
      * Add a token linked to a specific group that the user can access.
      * @returns {Observable<Token>}
@@ -59,7 +60,6 @@ export class GroupService {
     addToken(groupName: string, expiration: string, description: string): Observable<Token> {
         return this._http.post<Token>(`/group/${groupName}/token`, { expiration, description });
     }
-
 
     /**
      * Create a new group

@@ -14,6 +14,7 @@ type Service struct {
 	Hash             string           `json:"hash" db:"hash"`
 	Token            string           `json:"token" db:"-"`
 	GroupID          *int64           `json:"group_id" db:"group_id"`
+	Group            *Group           `json:"group" db:"-"`
 	MonitoringStatus MonitoringStatus `json:"monitoring_status" db:"-" cli:"-"`
 	Config           interface{}      `json:"config" db:"-" cli:"-"`
 	IsSharedInfra    bool             `json:"is_shared_infra" db:"-"`
@@ -23,7 +24,7 @@ type Service struct {
 
 // ExternalService represents an external service
 type ExternalService struct {
-	Service
+	Service    `json:"-"`
 	HealthURL  string `json:"health_url"`
 	HealthPort string `json:"health_port"`
 	HealthPath string `json:"health_path"`
