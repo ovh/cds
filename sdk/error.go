@@ -471,8 +471,10 @@ type errorWithStack struct {
 	httpError Error
 }
 
-func (w errorWithStack) Error() string { return w.stack.String() + ": " + w.root.Error() }
-func (w errorWithStack) Cause() error  { return w.root }
+func (w errorWithStack) Error() string {
+	return fmt.Sprintf("%s: %s (caused by: %s)", w.stack.String(), w.httpError, w.root)
+}
+func (w errorWithStack) Cause() error { return w.root }
 
 func (w errorWithStack) Format(s fmt.State, verb rune) {
 	switch verb {
@@ -483,7 +485,7 @@ func (w errorWithStack) Format(s fmt.State, verb rune) {
 		}
 		fallthrough
 	case 's':
-		_, _ = io.WriteString(s, fmt.Sprintf("%s: %s", w.stack.String(), w.Cause().Error()))
+		_, _ = io.WriteString(s, w.Error())
 	}
 }
 

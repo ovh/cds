@@ -278,6 +278,7 @@ type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
 	MonVersion() (*sdk.Version, error)
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
+	MonErrorsGet(uuid string) (*sdk.Error, error)
 }
 
 // PlatformClient exposes platform functions

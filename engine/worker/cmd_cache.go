@@ -378,22 +378,22 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 		case tar.TypeReg, tar.TypeLink:
 			f, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
 			if err != nil {
-				err = sdk.Error{
+				sdkErr := sdk.Error{
 					Message: "worker cache pull > Unable to open file : " + err.Error(),
 					Status:  http.StatusInternalServerError,
 				}
-				writeJSON(w, err, err.Status)
+				writeJSON(w, sdkErr, sdkErr.Status)
 				return
 			}
 
 			// copy over contents
 			if _, err := io.Copy(f, tr); err != nil {
 				_ = f.Close()
-				err = sdk.Error{
+				sdkErr := sdk.Error{
 					Message: "worker cache pull > Cannot copy content file : " + err.Error(),
 					Status:  http.StatusInternalServerError,
 				}
-				writeJSON(w, err, err.Status)
+				writeJSON(w, sdkErr, sdkErr.Status)
 				return
 			}
 

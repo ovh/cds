@@ -147,8 +147,10 @@ func (c *client) Request(method string, path string, body io.Reader, mods ...Req
 		}
 	}
 
-	if err := sdk.DecodeError(bodyBtes); err != nil {
-		return nil, nil, code, err
+	if code >= 400 {
+		if err := sdk.DecodeError(bodyBtes); err != nil {
+			return nil, nil, code, err
+		}
 	}
 
 	return bodyBtes, respHeader, code, nil

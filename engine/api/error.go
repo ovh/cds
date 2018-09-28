@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
 
 	"github.com/ovh/cds/engine/service"
@@ -22,7 +23,8 @@ type graylogResponse struct {
 
 func (api *API) getErrorHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		errorUUID := FormString(r, "errorUUID")
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
 
 		if api.Config.Graylog.URL == "" || api.Config.Graylog.AccessToken == "" {
 			return sdk.ErrNotImplemented
@@ -34,7 +36,7 @@ func (api *API) getErrorHandler() service.Handler {
 		}
 
 		q := req.URL.Query()
-		q.Add("query", fmt.Sprintf("error_uuid:%s", errorUUID))
+		q.Add("query", fmt.Sprintf("error_uuid:%s", uuid))
 		q.Add("from", "1970-01-01 00:00:00.000")
 		q.Add("to", time.Now().Format("2006-01-02 15:04:05"))
 		q.Add("limit", "1")

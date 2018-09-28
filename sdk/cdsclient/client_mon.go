@@ -1,6 +1,9 @@
 package cdsclient
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -26,4 +29,18 @@ func (c *client) MonDBMigrate() ([]sdk.MonDBMigrate, error) {
 		return nil, err
 	}
 	return monDBMigrate, nil
+}
+
+func (c *client) MonErrorsGet(uuid string) (*sdk.Error, error) {
+	res, _, _, err := c.Request("GET", fmt.Sprintf("/mon/errors/%s", uuid), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var sdkError sdk.Error
+	if err := json.Unmarshal(res, &sdkError); err != nil {
+		return nil, err
+	}
+
+	return &sdkError, nil
 }

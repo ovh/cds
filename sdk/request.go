@@ -199,11 +199,10 @@ func Request(method string, path string, args []byte, mods ...RequestModifier) (
 		return nil, code, err
 	}
 
-	if err := DecodeError(body); err != nil {
-		return nil, code, err
-	}
-
 	if code >= 400 {
+		if err := DecodeError(body); err != nil {
+			return nil, code, err
+		}
 		return body, code, fmt.Errorf("HTTP %d", code)
 	}
 
