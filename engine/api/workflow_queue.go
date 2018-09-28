@@ -419,8 +419,11 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		workflowRuns := report.WorkflowRuns()
 		if len(workflowRuns) > 0 {
 			observability.Current(ctx,
-				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
-			)
+				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
+
+			if workflowRuns[0].Status == sdk.StatusFail.String() {
+				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+			}
 		}
 
 		db := api.mustDB()
