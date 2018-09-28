@@ -226,8 +226,9 @@ type API struct {
 	warnChan            chan sdk.Event
 	Cache               cache.Store
 	Stats               struct {
-		WorkflowRuns *stats.Int64Measure
-		Sessions     *stats.Int64Measure
+		WorkflowRunFailed  *stats.Int64Measure
+		WorkflowRunStarted *stats.Int64Measure
+		Sessions           *stats.Int64Measure
 	}
 }
 
@@ -739,16 +740,25 @@ func (a *API) Serve(ctx context.Context) error {
 }
 
 func (a *API) initStats() error {
-	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs", a.Name)
-	a.Stats.WorkflowRuns = stats.Int64(label, "number of workflow runs", stats.UnitDimensionless)
+	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", a.Name)
+	a.Stats.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
+
+	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", a.Name)
+	a.Stats.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
 
 	log.Info("api> Stats initialized")
 
 	return observability.RegisterView(
 		&view.View{
-			Name:        "workflow_runs",
-			Description: a.Stats.WorkflowRuns.Description(),
-			Measure:     a.Stats.WorkflowRuns,
+			Name:        "workflow_runs_started",
+			Description: a.Stats.WorkflowRunStarted.Description(),
+			Measure:     a.Stats.WorkflowRunStarted,
+			Aggregation: view.Count(),
+		},
+		&view.View{
+			Name:        "workflow_runs_failed",
+			Description: a.Stats.WorkflowRunFailed.Description(),
+			Measure:     a.Stats.WorkflowRunFailed,
 			Aggregation: view.Count(),
 		},
 	)

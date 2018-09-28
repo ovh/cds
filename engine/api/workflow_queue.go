@@ -418,12 +418,16 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
 		}
 
+		observability.Record(ctx, api.Stats.WorkflowRunStarted, 1)
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
 
 		if len(workflowRuns) > 0 {
 			observability.Current(ctx,
-				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
-			)
+				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
+
+			if workflowRuns[0].Status == sdk.StatusFail.String() {
+				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+			}
 		}
 
 		db := api.mustDB()

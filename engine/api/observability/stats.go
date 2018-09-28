@@ -24,6 +24,9 @@ func RegisterView(views ...*view.View) error {
 // StatsHandler returns a Handler to exposer prometheus views
 func StatsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if statsExporter == nil {
+			return nil
+		}
 		statsExporter.ServeHTTP(w, r)
 		return nil
 	}
