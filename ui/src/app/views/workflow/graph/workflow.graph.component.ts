@@ -225,7 +225,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         switch (this.direction) {
             case 'LR':
                 let mapDeep = new Map<string, number>();
-                mapDeep.set(this.workflow.root.ref, 1);
+                mapDeep.set(this.workflow.workflow_data.node.ref, 1);
                 this.getWorkflowNodeDeep(this.workflow.workflow_data.node, mapDeep);
                 this.getWorkflowJoinDeep(mapDeep);
                 nbofNodes = Math.max(...Array.from(mapDeep.values()));

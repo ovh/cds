@@ -73,13 +73,6 @@ export class WorkflowSidebarHookComponent implements OnInit {
     }
 
     loadHookDetails() {
-        let hookId = this.hook.id;
-        // Find node linked to this hook
-        this.node = Workflow.findNode(this.workflow, (node) => {
-            return Array.isArray(node.hooks) && node.hooks.length &&
-                node.hooks.find((h) => h.id === hookId);
-        });
-
         this.loading = true;
         this._hookService.getHookLogs(this.project.key, this.workflow.name, this.hook.uuid)
             .pipe(finalize(() => this.loading = false))

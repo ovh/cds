@@ -2,7 +2,7 @@ import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {PipelineStatus} from 'app/model/pipeline.model';
 import {Project} from 'app/model/project.model';
 import {HookStatus, TaskExecution, WorkflowHookTask} from 'app/model/workflow.hook.model';
-import {WNode, WNodeType, Workflow, WorkflowNode} from 'app/model/workflow.model';
+import {WNode, WNodeType, WorkflowNode} from 'app/model/workflow.model';
 import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 import {finalize} from 'rxjs/operators';
 import {WNodeHook} from '../../../../../model/workflow.model';
@@ -103,21 +103,24 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
                 if (this.wr.version === 2) {
 
                 } else {
+                    /*
                     this.node = Workflow.findNode(this.wr.workflow, (node) => {
                         return node.outgoing_hooks.find(h => h.id === this.outgoingHook.id );
                     });
+                    */
                 }
             }
         }
     }
 
     loadHookDetails() {
-        let hookId = this.hook.id;
         // Find node linked to this hook
+        /*
         this.node = Workflow.findNode(this.wr.workflow, (node) => {
             return Array.isArray(node.hooks) && node.hooks.length &&
                 node.hooks.find((h) => h.id === hookId);
         });
+        */
 
         this.loading = true;
         this._hookService.getHookLogs(this.project.key, this.wr.workflow.name, this.hook.uuid)

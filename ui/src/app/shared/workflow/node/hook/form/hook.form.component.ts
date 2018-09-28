@@ -95,36 +95,6 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         this.displayConfig = Object.keys(this.hook.config).length !== 0;
     }
 
-    updateOutgoingHook(): void {
-        this.hook.model = this.selectedOutgoingHookModel;
-        this.hook.config = cloneDeep(this.selectedOutgoingHookModel.default_config);
-        this.displayConfig = Object.keys(this.hook.config).length !== 0;
-
-        // Specific behavior for the 'workflow' hooks
-        if (this.hook.model.name === 'Workflow') {
-            // Current limitation: trigger only workflow in the same project
-            this.hook.config['target_project'].value = this.project.key;
-            // Load the workflow for the current project, but exclude the current workflow
-            this.availableWorkflows = this.project.workflow_names.filter(idName => idName.name !== this.workflow.name);
-        }
-
-        let outgoingHooks = Workflow.getAllOutgoingHooks(this.workflow);
-        let nb = 0;
-        if (outgoingHooks) {
-            for (let i = 0; i < outgoingHooks.length; i++) {
-                if (this.workflow.outgoing_hook_models[outgoingHooks[i].outgoing_hook.hook_model_id].name === this.hook.model.name) {
-                    nb++;
-                }
-            }
-        }
-
-        if (nb === 0) {
-            this.outgoingHook.name = this.hook.model.name;
-        } else {
-            this.outgoingHook.name = this.hook.model.name + '_' + nb;
-        }
-    }
-
     updatePlatform(): void {
         Object.keys(this.hook.config).forEach( k => {
             if (k === 'platform') {
