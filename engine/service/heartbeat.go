@@ -31,7 +31,7 @@ func (c *Common) CommonMonitoring() sdk.MonitoringStatus {
 }
 
 // Heartbeat have to be launch as a goroutine, call DoHeartBeat each 30s
-func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error {
+func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus, cfg interface{}) error {
 	// no heartbeat for api
 	if c.Type == "api" {
 		return nil
@@ -50,7 +50,7 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 			return ctx.Err()
 		case <-ticker.C:
 			// try to register, on success reset the failure count
-			if err := c.Register(status); err != nil {
+			if err := c.Register(status, cfg); err != nil {
 				heartbeatFailures++
 				log.Error("%s> Heartbeat> Register failed %d/%d", c.Name,
 					heartbeatFailures, c.MaxHeartbeatFailures)
@@ -67,7 +67,7 @@ func (c *Common) Heartbeat(ctx context.Context, status func() sdk.MonitoringStat
 }
 
 // Register the service to CDS api and store session hash.
-func (c *Common) Register(status func() sdk.MonitoringStatus) error {
+func (c *Common) Register(status func() sdk.MonitoringStatus, cfg interface{}) error {
 	// no need to register for api
 	if c.Type == "api" {
 		return nil
@@ -80,6 +80,7 @@ func (c *Common) Register(status func() sdk.MonitoringStatus) error {
 		Token:            c.Token,
 		Type:             c.Type,
 		MonitoringStatus: status(),
+		Config:           cfg,
 		Version:          sdk.VERSION,
 	})
 	if err != nil {

@@ -138,6 +138,7 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 		Hash:             string(hash),
 		LastHeartbeat:    time.Now(),
 		Type:             services.TypeAPI,
+		Config:           api.Config,
 	}
 
 	//Try to find the service, and keep; else generate a new one
