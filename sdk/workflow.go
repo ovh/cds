@@ -595,6 +595,9 @@ func (j WorkflowNodeJoin) migrate() Node {
 		Type:        NodeTypeJoin,
 		JoinContext: make([]NodeJoin, 0, len(j.SourceNodeRefs)),
 	}
+	if newNode.Ref == "" {
+		newNode.Ref = RandomString(5)
+	}
 	for i := range j.SourceNodeRefs {
 		newNode.JoinContext = append(newNode.JoinContext, NodeJoin{
 			ParentName: j.SourceNodeRefs[i],
@@ -772,6 +775,9 @@ func (n WorkflowNode) migrate() Node {
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
 			Mutex: n.Context.Mutex,
 		},
+	}
+	if n.Ref == "" {
+		n.Ref = n.Name
 	}
 
 	for _, h := range n.Hooks {

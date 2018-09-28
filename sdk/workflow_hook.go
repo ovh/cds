@@ -72,6 +72,9 @@ func (h WorkflowNodeOutgoingHook) migrate() Node {
 			HookModelID: h.WorkflowHookModelID,
 		},
 	}
+	if h.Ref == "" {
+		h.Ref = h.Name
+	}
 	for _, t := range h.Triggers {
 		child := t.WorkflowDestNode.migrate()
 		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
@@ -95,6 +98,9 @@ func (f WorkflowNodeFork) migrate() Node {
 		Name: f.Name,
 		Ref:  f.Name,
 		Type: NodeTypeFork,
+	}
+	if newNode.Ref == "" {
+		newNode.Ref = newNode.Name
 	}
 	for _, t := range f.Triggers {
 		child := t.WorkflowDestNode.migrate()

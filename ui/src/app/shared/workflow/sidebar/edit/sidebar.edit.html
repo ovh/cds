@@ -79,13 +79,6 @@
                 {{ 'workflow_node_hook_add' | translate }} <i class="angle right icon"></i>
             </a>
         </ng-container>
-        <!-- Out Going Hook -->
-        <ng-container *ngIf="node.type === 'pipeline'">
-            <a class="item noborder" (click)="openAddOutgoingHookModal()"
-               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
-                {{ 'workflow_node_outgoing_hook' | translate }} <i class="angle right icon"></i>
-            </a>
-        </ng-container>
         <!-- Parent node -->
         <ng-container *ngIf="node.type === 'pipeline'">
             <a class="item noborder" (click)="openAddParentModal()"
@@ -96,7 +89,7 @@
         </ng-container>
         <!-- Add a pipeline -->
         <ng-container>
-            <a class="item noborder" (click)="openTriggerModal()"
+            <a class="item noborder" (click)="openTriggerModal('pipeline')"
                *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
                [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
@@ -118,6 +111,15 @@
                 {{ 'workflow_node_join_add' | translate }} <i class="angle right icon"></i>
             </a>
         </ng-container>
+        <!-- Out Going Hook -->
+        <ng-container *ngIf="node.type === 'pipeline'">
+            <a class="item noborder" (click)="openTriggerModal('outgoinghook')"
+               [class.disabled]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
+                {{ 'workflow_node_outgoing_hook' | translate }} <i class="angle right icon"></i>
+            </a>
+        </ng-container>
+
+
         <ng-container *ngIf="node.type === 'pipeline'">
             <a class="item noborder" (click)="linkJoin()"
                *ngIf="!(workflow.from_repository && workflow.from_repository.length > 0)"
@@ -125,8 +127,9 @@
                 {{ 'workflow_node_join_link' | translate }} <i class="angle right icon"></i>
             </a>
         </ng-container>
+        <!-- Add outgoing hook -->
         <ng-container *ngIf="node.type === 'outgoinghook'">
-            <a class="item noborder" (click)="openHookEditModal()">
+            <a class="item noborder" (click)="openEditOutgoingHookModal('outgoinghook')">
                 <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{'btn_edit' | translate}}</span><span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">Configuration</span> <i class="angle right icon"></i>
             </a>
         </ng-container>
@@ -162,9 +165,14 @@
     <app-workflow-node-delete [loading]="loading" [node]="node" [workflow]="workflow" (deleteEvent)="updateWorkflow($event, workflowDeleteNode.modal)" #workflowDeleteNode></app-workflow-node-delete>
 
     <!-- Add trigger -->
-    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node"
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [source]="node" [type]="selectedType"
                           (triggerEvent)="updateWorkflow($event, workflowTrigger.modal)"
                           #workflowTrigger></app-workflow-trigger>
+    <!-- Add outgoing hook -->
+    <app-workflow-node-outgoinghook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
+                                 (outgoingHookEvent)="updateWorkflow($event, workflowEditOutgoingHook.modal)"
+                                 #workflowEditOutgoingHook></app-workflow-node-outgoinghook-modal>
+
 </ng-container>
 
 

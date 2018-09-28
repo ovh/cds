@@ -1,8 +1,6 @@
 
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {cloneDeep} from 'lodash';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {zip as observableZip} from 'rxjs';
 import {finalize, first} from 'rxjs/operators';
 import {ProjectPlatform} from '../../../../../model/platform.model';
@@ -89,13 +87,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     selectedPlatform: ProjectPlatform;
     availablePlatforms: Array<ProjectPlatform>;
 
-    // Ng semantic modal
-    @ViewChild('nodeHookFormModal')
-    public nodeHookFormModal: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
-    modalConfig: TemplateModalConfig<boolean, boolean, void>;
-
-    constructor(private _hookService: HookService, private _modalService: SuiModalService, private _workflowStore: WorkflowStore) { }
+    constructor(private _hookService: HookService, private _workflowStore: WorkflowStore) { }
 
     updateHook(): void {
         this.hook.model = this.selectedHookModel;
@@ -120,7 +112,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         let nb = 0;
         if (outgoingHooks) {
             for (let i = 0; i < outgoingHooks.length; i++) {
-                if (outgoingHooks[i].model.name === this.hook.model.name) {
+                if (this.workflow.outgoing_hook_models[outgoingHooks[i].outgoing_hook.hook_model_id].name === this.hook.model.name) {
                     nb++;
                 }
             }
@@ -155,7 +147,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
                     let key = this.project.key + '-' + this.hook.config['target_workflow'].value;
                     let wf = data.get(key);
                     if (wf) {
-                        this.availableHooks = Workflow.getAllHooks(wf).filter(h => h.model.name === 'Workflow');
+                        this.availableHooks = Workflow.getAllHooks(wf).filter(h => wf.hook_models[h.hook_model_id].name === 'Workflow');
                     }
                 }
             );
@@ -165,11 +157,9 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         this.loadingModels = true;
         observableZip(
             this._hookService.getHookModel(this.project, this.workflow, this.node),
-            this._hookService.getOutgoingHookModel(this.project, this.workflow, this.node),
             this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id),
-            (hookModels, outgoingHookModels, triggerConditions) => {
+            (hookModels, triggerConditions) => {
                 this.hooksModel = hookModels;
-                this.outgoingHookModels = outgoingHookModels;
 
                 if (this._hook && this._hook.model) {
                     this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
@@ -192,10 +182,6 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             finalize(() => this.loadingModels = false)
         )
         .subscribe();
-
-        this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookFormModal);
-        this.modalConfig.mustScroll = true;
-        this.modal = this._modalService.open(this.modalConfig);
     }
 
     addHook(): void {
@@ -234,5 +220,6 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             autoRefresh: true,
             readOnly: this.readonly,
         };
+        this.show();
     }
 }

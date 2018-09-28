@@ -1,5 +1,4 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {finalize} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
@@ -9,10 +8,8 @@ import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/
 import {WNodeHook, Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {DeleteModalComponent} from '../../../../../shared/modal/delete/delete.component';
-import {ToastService} from '../../../../../shared/toast/ToastService';
 import {WorkflowNodeHookDetailsComponent} from '../../../../../shared/workflow/node/hook/details/hook.details.component';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/hook.form.component';
 import {HookEvent} from '../../../../../shared/workflow/node/hook/hook.event';
@@ -46,9 +43,6 @@ export class WorkflowSidebarHookComponent implements OnInit {
     permissionEnum = PermissionValue;
 
     constructor(
-        private _workflowStore: WorkflowStore,
-        private _toast: ToastService,
-        private _translate: TranslateService,
         private _hookService: HookService,
         private _workflowEventStore: WorkflowEventStore
     ) {
@@ -116,15 +110,7 @@ export class WorkflowSidebarHookComponent implements OnInit {
             Workflow.updateHook(workflowToUpdate, h.hook);
         }
 
-        this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate)
-            .pipe(finalize(() => this.loading = false))
-            .subscribe(() => {
-                if (this.workflowEditHook && this.workflowEditHook.modal) {
-                    this.workflowEditHook.modal.approve(true);
-                }
-                this._workflowEventStore.unselectAll();
-                this._toast.success('', this._translate.instant('workflow_updated'));
-            });
+        // TODO Update workflow
     }
 
     openHookDetailsModal(taskExec: TaskExecution) {

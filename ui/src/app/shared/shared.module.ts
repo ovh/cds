@@ -81,11 +81,13 @@ import {WorkflowNodeConditionListComponent} from './workflow/modal/conditions/co
 import {WorkflowNodeConditionsComponent} from './workflow/modal/conditions/node.conditions.component';
 import {WorkflowNodeContextComponent} from './workflow/modal/context/workflow.node.context.component';
 import {WorkflowDeleteNodeComponent} from './workflow/modal/delete/workflow.node.delete.component';
+import {WorkflowNodeOutGoingHookEditComponent} from './workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
 import {WorkflowTriggerComponent} from './workflow/modal/trigger/workflow.trigger.component';
-import {WorkflowNodeFormComponent} from './workflow/node/form/workflow.node.form.component';
 import {WorkflowNodeHookDetailsComponent} from './workflow/node/hook/details/hook.details.component';
 import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/hook.form.component';
 import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
+import {WorkflowNodeOutGoingHookFormComponent} from './workflow/node/outgoinghook-form/outgoinghook.form.component';
+import {WorkflowNodeFormComponent} from './workflow/node/pipeline-form/workflow.node.form.component';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeAddWizardComponent} from './workflow/node/wizard/node.wizard.component';
 import {WorkflowWNodeSidebarEditComponent} from './workflow/sidebar/edit/sidebar.edit.component';
@@ -156,6 +158,8 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowWNodeOutGoingHookComponent,
         WorkflowWNodePipelineComponent,
         WorkflowWNodeSidebarEditComponent,
+        WorkflowNodeOutGoingHookFormComponent,
+        WorkflowNodeOutGoingHookEditComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -252,10 +256,6 @@ import {ZoneComponent} from './zone/zone.component';
         LabelsEditComponent,
 
         WorkflowWNodeComponent,
-        WorkflowWNodeJoinComponent,
-        WorkflowWNodeOutGoingHookComponent,
-        WorkflowWNodePipelineComponent,
-        WorkflowWNodeForkComponent,
         WorkflowWNodeSidebarEditComponent,
 
         WorkflowNodeAddWizardComponent,

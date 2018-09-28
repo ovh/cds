@@ -6,12 +6,13 @@ import {Subscription} from 'rxjs';
 import {PermissionValue} from '../../../../model/permission.model';
 import {Project} from '../../../../model/project.model';
 import {WNode, WNodeJoin, WNodeTrigger, WNodeType, Workflow} from '../../../../model/workflow.model';
-import {PipelineStore, WorkflowEventStore, WorkflowStore} from '../../../../service/services.module';
+import {PipelineStore, WorkflowCoreService, WorkflowEventStore, WorkflowStore} from '../../../../service/services.module';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {ToastService} from '../../../toast/ToastService';
 import {WorkflowNodeConditionsComponent} from '../../modal/conditions/node.conditions.component';
 import {WorkflowNodeContextComponent} from '../../modal/context/workflow.node.context.component';
 import {WorkflowDeleteNodeComponent} from '../../modal/delete/workflow.node.delete.component';
+import {WorkflowNodeOutGoingHookEditComponent} from '../../modal/outgoinghook-edit/outgoinghook.edit.component';
 import {WorkflowTriggerComponent} from '../../modal/trigger/workflow.trigger.component';
 
 @Component({
@@ -44,12 +45,15 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
     workflowConditions: WorkflowNodeConditionsComponent;
     @ViewChild('workflowTrigger')
     workflowTrigger: WorkflowTriggerComponent;
+    @ViewChild('workflowEditOutgoingHook')
+    workflowEditOutgoingHook: WorkflowNodeOutGoingHookEditComponent;
 
     // Subscription
     pipelineSubscription: Subscription;
 
     constructor(private _workflowEventStore: WorkflowEventStore, private _pipelineStore: PipelineStore,
-        private _workflowStore: WorkflowStore, private _toast: ToastService, private _translate: TranslateService) {
+                private _workflowCoreService: WorkflowCoreService, private _workflowStore: WorkflowStore, private _toast: ToastService,
+                private _translate: TranslateService) {
 
     }
 
@@ -107,12 +111,21 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
         this.workflowConditions.show();
     }
 
-    openTriggerModal(): void {
+    openTriggerModal(t: string): void {
         if (!this.canEdit()) {
             return;
         }
         if (this.workflowTrigger) {
-            this.workflowTrigger.show();
+            this.workflowTrigger.show(t);
+        }
+    }
+
+    openEditOutgoingHookModal(): void {
+        if (!this.canEdit()) {
+            return;
+        }
+        if (this.workflowEditOutgoingHook) {
+            this.workflowEditOutgoingHook.show();
         }
     }
 
@@ -164,5 +177,12 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
             }
             this.loading = false;
         });
+    }
+
+    linkJoin(): void {
+        if (!this.canEdit()) {
+            return;
+        }
+        this._workflowCoreService.linkJoinEvent(this.node);
     }
 }

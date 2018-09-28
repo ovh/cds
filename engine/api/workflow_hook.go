@@ -56,7 +56,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return sdk.WrapError(errW, "getWorkflowHookModelsHandler > workflow.Load")
 		}
 
-		node := wf.GetNode(nodeID)
+		node := wf.WorkflowData.NodeByID(nodeID)
 		if node == nil {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowHookModelsHandler")
 		}
@@ -69,13 +69,13 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 		// Post processing  on repositoryWebHook
 		hasRepoManager := false
 		repoWebHookEnable, repoPollerEnable := false, false
-		if node.IsLinkedToRepo() {
+		if node.IsLinkedToRepo(wf) {
 			hasRepoManager = true
 		}
 		var webHookInfo repositoriesmanager.WebhooksInfos
 		if hasRepoManager {
 			// Call VCS to know if repository allows webhook and get the configuration fields
-			vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
+			vcsServer := repositoriesmanager.GetProjectVCSServer(p, wf.Applications[node.Context.ApplicationID].VCSServer)
 			if vcsServer != nil {
 				client, errclient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 				if errclient != nil {

@@ -207,6 +207,18 @@ export class Workflow {
         }
     }
 
+    static getMapNodesRef(data: Workflow): Map<string, WNode> {
+        let nodes = new Map<string, WNode>();
+        nodes = WNode.getMapNodesRef(nodes, data.workflow_data.node);
+
+        if (data.workflow_data.joins) {
+            data.workflow_data.joins.forEach(j => {
+                nodes = WNode.getMapNodesRef(nodes, j);
+            });
+        }
+        return nodes;
+    }
+
     ///// MIGRATE
 
     static updateHook(workflow: Workflow, h: WNodeHook) {
@@ -650,13 +662,16 @@ export class Workflow {
         return workflow;
     }
 
-    static getAllHooks(workflow: Workflow): Array<WorkflowNodeHook> {
-        let res = WorkflowNode.getAllHooks(workflow.root);
-        if (workflow.joins) {
-            workflow.joins.forEach(j => {
+    static getAllHooks(workflow: Workflow): Array<WNodeHook> {
+        let res = WNode.getAllHooks(workflow.workflow_data.node);
+        if (workflow.workflow_data.joins) {
+            workflow.workflow_data.joins.forEach(j => {
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        res = res.concat(WorkflowNode.getAllHooks(t.workflow_dest_node));
+                        let hooks = WNode.getAllHooks(t.child_node);
+                        if (hooks) {
+                            res = res.concat(hooks)
+                        }
                     })
                 }
             })
@@ -664,13 +679,13 @@ export class Workflow {
         return res;
     }
 
-    static getAllOutgoingHooks(workflow: Workflow): Array<WorkflowNodeOutgoingHook> {
-        let res = WorkflowNode.getAllOutgoingHooks(workflow.root);
-        if (workflow.joins) {
-            workflow.joins.forEach(j => {
+    static getAllOutgoingHooks(workflow: Workflow): Array<WNode> {
+        let res = WNode.getAllOutgoingHooks(workflow.workflow_data.node);
+        if (workflow.workflow_data.joins) {
+            workflow.workflow_data.joins.forEach(j => {
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        res = res.concat(WorkflowNode.getAllOutgoingHooks(t.workflow_dest_node));
+                        res = res.concat(WNode.getAllOutgoingHooks(t.child_node));
                     })
                 }
             })
@@ -1097,6 +1112,8 @@ export class WorkflowNode {
         }
     }
 
+
+
     static getMapNodes(map: Map<number, WorkflowNode>, n: WorkflowNode): Map<number, WorkflowNode> {
         let smallNode = new WorkflowNode();
         smallNode.id = n.id;
@@ -1419,6 +1436,16 @@ export class WNode {
         return j;
     }
 
+    static getMapNodesRef(nodes: Map<string, WNode>, node: WNode): Map<string, WNode> {
+        nodes.set(node.ref, node);
+        if (node.triggers) {
+            node.triggers.forEach(t => {
+               nodes = WNode.getMapNodesRef(nodes, t.child_node);
+            });
+        }
+        return nodes;
+    }
+
     static getNodeByRef(node: WNode, ref: string): WNode {
         if (node.ref === ref) {
             return node;
@@ -1510,6 +1537,33 @@ export class WNode {
                 WNode.prepareRequestForAPI(t.child_node);
             });
         }
+    }
+
+    static getAllHooks(n: WNode): Array<WNodeHook> {
+        let res = n.hooks;
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                let hooks = WNode.getAllHooks(t.child_node)
+                if (hooks) {
+                    res = res.concat(hooks);
+                }
+
+            });
+        }
+        return res;
+    }
+
+    static getAllOutgoingHooks(n: WNode): Array<WNode> {
+        let res = new Array<WNode>();
+        if (n.type === WNodeType.OUTGOINGHOOK) {
+            res.push(n);
+        }
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                res.push(...WNode.getAllOutgoingHooks(t.child_node));
+            });
+        }
+        return res;
     }
 
     constructor() {

@@ -21,9 +21,6 @@ export class WorkflowWNodeComponent {
     @Input() workflow: Workflow;
     @Input() project: Project;
 
-    // Disable join selector
-    disabled = false;
-
     // Selected node
     selectedNodeID: number;
 
@@ -96,6 +93,9 @@ export class WorkflowWNodeComponent {
             }
         });
     }
+
+
+
 
     clickOnNode(): void {
         if (this.workflow.previewMode) {

@@ -4,7 +4,7 @@ import {cloneDeep} from 'lodash';
 import { finalize, first } from 'rxjs/operators';
 import {Environment} from '../../../../model/environment.model';
 import {IdName, Project} from '../../../../model/project.model';
-import {WorkflowNode} from '../../../../model/workflow.model';
+import {WNode} from '../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-node-form',
@@ -14,8 +14,8 @@ import {WorkflowNode} from '../../../../model/workflow.model';
 export class WorkflowNodeFormComponent implements OnInit {
 
     @Input() project: Project;
-    @Input() node: WorkflowNode;
-    @Output() nodeChange = new EventEmitter<WorkflowNode>();
+    @Input() node: WNode;
+    @Output() nodeChange = new EventEmitter<WNode>();
 
     environments: Environment[];
     applications: IdName[];
@@ -47,7 +47,7 @@ export class WorkflowNodeFormComponent implements OnInit {
     change(): void {
         this.node.context.application_id = Number(this.node.context.application_id);
         this.node.context.environment_id = Number(this.node.context.environment_id);
-        this.node.pipeline_id = Number(this.node.pipeline_id);
+        this.node.context.pipeline_id = Number(this.node.context.pipeline_id);
         this.nodeChange.emit(this.node);
 
         let appName = this.applications.find(k => Number(k.id) === this.node.context.application_id).name
@@ -73,7 +73,6 @@ export class WorkflowNodeFormComponent implements OnInit {
         } else {
             this.platforms = [];
             this.initPlatformList();
-            this.node.context.project_platform = null;
             this.node.context.project_platform_id = 0;
         }
     }

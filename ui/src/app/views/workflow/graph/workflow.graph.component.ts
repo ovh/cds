@@ -14,7 +14,6 @@ import {
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
-import {Subscription} from 'rxjs';
 import {Project} from '../../../model/project.model';
 import {WNode, Workflow} from '../../../model/workflow.model';
 import {WorkflowRun} from '../../../model/workflow.run.model';
@@ -45,6 +44,16 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (data.forceRefresh) {
             this.nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
             this.hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
+        } else {
+            let nodesRef = Workflow.getMapNodesRef(this.workflow);
+            // Update node reference inside component
+            this.nodesComponent.forEach((v, k, m) => {
+                let n = nodesRef.get(v.instance.node.ref);
+                if (n) {
+                    v.instance.node = n;
+                    v.instance.workflow = this.workflow;
+                }
+            });
         }
         this.calculateDynamicWidth();
         this.changeDisplay();
@@ -102,8 +111,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
     nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
     hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
 
-    linkJoinSubscription: Subscription;
-
     nodeWidth: number;
     nodeHeight: number;
 
@@ -112,16 +119,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         private _cd: ChangeDetectorRef,
         private _workflowStore: WorkflowStore,
         private _workflowCore: WorkflowCoreService
-    ) {
-        this.linkJoinSubscription = this._workflowCore.getLinkJoinEvent().subscribe(n => {
-            if (n) {
-                this.nodeToLink = n;
-                this.toggleLinkJoin(true);
-            } else {
-              this.toggleLinkJoin(false);
-            }
-        });
-    }
+    ) {}
 
     @HostListener('window:resize', ['$event'])
     onResize() {
@@ -377,16 +375,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
         componentRef.instance.node = node;
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
-        componentRef.instance.disabled = this.linkWithJoin;
 
         return componentRef;
-    }
-
-    toggleLinkJoin(b: boolean): void {
-        this.linkWithJoin = b;
-        this.nodesComponent.forEach(c => {
-            (<WorkflowWNodeComponent>c.instance).disabled = this.linkWithJoin;
-        });
     }
 
     private getWorkflowMaxNodeByLevel(node: WNode, levelMap: Map<number, number>, level: number,

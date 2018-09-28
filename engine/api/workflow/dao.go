@@ -701,6 +701,7 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 
 	// Name node
 	for i := range nodesToNamed {
+		log.Warning("%s", nodesToNamed[i].Type)
 		switch nodesToNamed[i].Type {
 		case sdk.NodeTypePipeline:
 			pipID := nodesToNamed[i].Context.PipelineID
@@ -716,6 +717,8 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			hookModelID := nodesToNamed[i].OutGoingHookContext.HookModelID
 			nodesToNamed[i].Name = fmt.Sprintf("%s_%d", w.OutGoingHookModels[hookModelID].Name, maxNumberByHookModel[hookModelID]+1)
 			maxNumberByHookModel[hookModelID] = maxNumberByHookModel[hookModelID] + 1
+			log.Warning("%s", nodesToNamed[i].Name)
+
 		}
 		if nodesToNamed[i].Ref == "" {
 			nodesToNamed[i].Ref = nodesToNamed[i].Name
