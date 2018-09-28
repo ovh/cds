@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -31,6 +30,11 @@ type pluginClientSocket struct {
 func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClientSocket) {
 	var accumulator string
 	var shouldExit bool
+	defer func() {
+		if accumulator != "" {
+			sendLog(accumulator)
+		}
+	}()
 
 	for {
 		if ctx.Err() != nil {
@@ -38,29 +42,32 @@ func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClient
 		}
 
 		b, err := c.BuffOut.ReadByte()
-		if err == io.EOF && shouldExit {
-			sendLog(accumulator)
-			return
+		if err == io.EOF {
+			if shouldExit {
+				return
+			}
+			continue
 		}
 
-		switch string(b) {
+		content := string(b)
+		switch content {
 		case "":
 			continue
 		case "\n":
-			accumulator += string(b)
+			accumulator += content
 			sendLog(accumulator)
 			accumulator = ""
 			continue
 		default:
-			accumulator += string(b)
+			accumulator += content
 			continue
 		}
 	}
 }
 
 func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p *sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
-	currentOS := strings.ToLower(runtime.GOOS)
-	currentARCH := strings.ToLower(runtime.GOARCH)
+	currentOS := strings.ToLower(sdk.GOOS)
+	currentARCH := strings.ToLower(sdk.GOARCH)
 	pluginSocket, has := w.mapPluginClient[pluginName]
 	if has {
 		return pluginSocket, nil

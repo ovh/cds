@@ -258,6 +258,11 @@ export class WorkflowNodeRunHookEvent {
     payload: {};
     pipeline_parameter: Array<Parameter>;
     workflow_node_hook_id: number;
+    parent_workflow: {
+        key: string;
+        name: string;
+        run: string;
+    };
 }
 
 // WorkflowNodeRunManual is an instanc of event received on a hook

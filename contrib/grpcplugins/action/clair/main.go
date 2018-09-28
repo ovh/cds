@@ -51,16 +51,16 @@ func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 
 	dockerImage := q.GetOptions()["image"]
 
-	fmt.Printf("Pushing image %s into clair", dockerImage)
+	fmt.Printf("Pushing image %s into clair\n", dockerImage)
 	image, manifest, err := pushImage(dockerImage)
 	if err != nil {
 		return fail("Unable to push image on Clair: %s", err)
 	}
 
-	fmt.Printf("Running analysis")
+	fmt.Printf("Running analysis\n")
 	analysis, err := clair.Analyze(image, manifest)
 	if err != nil {
-		return fail("Error on running analys with Clair: %v", err)
+		return fail("Error on running analysis with Clair: %v", err)
 	}
 
 	fmt.Printf("Creating report")
@@ -85,7 +85,6 @@ func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 
 				count := summary[v.Severity]
 				summary[v.Severity] = count + 1
-
 			}
 		}
 	}

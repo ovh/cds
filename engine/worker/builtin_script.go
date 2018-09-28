@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"strings"
 
 	"github.com/kardianos/osext"
@@ -42,7 +41,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			var opts []string
 
 			// except on windows where it's powershell
-			if runtime.GOOS == "windows" {
+			if sdk.GOOS == "windows" {
 				shell = "PowerShell"
 				opts = append(opts, "-ExecutionPolicy", "Bypass", "-Command")
 				// on windows, we add ErrorActionPreference just below
@@ -89,7 +88,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			oldPath := tmpscript.Name()
 			tmpscript.Close()
 			var scriptPath string
-			if runtime.GOOS == "windows" {
+			if sdk.GOOS == "windows" {
 				//Remove all .txt Extensions, there is not always a .txt extension
 				newPath := strings.Replace(oldPath, ".txt", "", -1)
 				//and add .PS1 extension

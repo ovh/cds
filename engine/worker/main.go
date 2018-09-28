@@ -28,7 +28,6 @@ type currentWorker struct {
 	}
 	exportPort int32
 	hatchery   struct {
-		id   int64
 		name string
 	}
 	grpc struct {

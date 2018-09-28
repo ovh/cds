@@ -84,6 +84,7 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
                             if (this.outgoingHookRuns[i].subnumber === hr.subnumber) {
                                 this.outgoingHookRuns[i] = hr;
                                 found = true;
+                                break;
                             }
                         }
                         if (!found) {

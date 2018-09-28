@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
 	"sort"
 	"strings"
 	"syscall"
@@ -104,7 +103,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Display CDS version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("CDS Engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+		fmt.Println(sdk.VersionString())
 	},
 }
 
@@ -505,6 +504,8 @@ See $ engine config command for more details.
 			GraylogExtraKey:        conf.Log.Graylog.ExtraKey,
 			GraylogExtraValue:      conf.Log.Graylog.ExtraValue,
 			GraylogFieldCDSVersion: sdk.VERSION,
+			GraylogFieldCDSOS:      sdk.GOOS,
+			GraylogFieldCDSArch:    sdk.GOARCH,
 			GraylogFieldCDSName:    strings.Join(names, "_"),
 			Ctx:                    ctx,
 		})

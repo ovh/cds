@@ -14,10 +14,11 @@ export abstract class Table {
         if (this.currentPage > 1) {
             indexStart = (this.currentPage - 1) * this.nbElementsByPage;
         }
-        if (!this.getData()) {
+        const data = this.getData();
+        if (!data) {
             return [];
         }
-        return this.getData().slice(indexStart, this.nbElementsByPage * this.currentPage);
+        return data.slice(indexStart, this.nbElementsByPage * this.currentPage);
     }
 
     /**

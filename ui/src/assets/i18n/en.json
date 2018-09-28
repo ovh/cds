@@ -853,6 +853,7 @@
   "worker_model_cmd_docker": "Command",
   "worker_model_shell_docker": "Shell command",
   "worker_model_cmd": "Main worker command",
+  "worker_model_cmd_tooltip": "The command must end with ./worker",
   "worker_model_post_cmd": "Post worker command",
   "worker_model_shell_cmd": "Main shell command",
 

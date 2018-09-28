@@ -9,10 +9,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"syscall"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/vcs"
 )
 
@@ -96,7 +96,7 @@ func runGitCommandsOverSSH(commands []cmd, auth *AuthOpts, output *OutputOpts) e
 	gitSSHCmd += " -o StrictHostKeyChecking=no"
 
 	var wrapper string
-	if runtime.GOOS == "windows" {
+	if sdk.GOOS == "windows" {
 		gitSSHCmd += " %*"
 		wrapper = gitSSHCmd
 	} else {

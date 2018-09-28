@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"runtime"
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
@@ -39,7 +38,7 @@ Update from your CDS API:
 
 func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
-		fmt.Printf("CDS Worker version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+		fmt.Println(sdk.VersionString())
 		var urlBinary string
 		if !FlagBool(cmd, "from-github") {
 			w.apiEndpoint = FlagString(cmd, flagAPI)
@@ -53,14 +52,14 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				},
 			})
 
-			urlBinary = w.client.DownloadURLFromAPI("worker", runtime.GOOS, runtime.GOARCH)
+			urlBinary = w.client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH)
 			fmt.Printf("Updating worker binary from CDS API on %s...\n", urlBinary)
 		} else {
 			// no need to have apiEndpoint here
 			w.client = cdsclient.NewWorker("", "download", nil)
 
 			var errGH error
-			urlBinary, errGH = w.client.DownloadURLFromGithub(sdk.GetArtifactFilename("worker", runtime.GOOS, runtime.GOARCH))
+			urlBinary, errGH = w.client.DownloadURLFromGithub(sdk.GetArtifactFilename("worker", sdk.GOOS, sdk.GOARCH))
 			if errGH != nil {
 				sdk.Exit("Error while getting URL from Github: %s", errGH)
 			}
