@@ -327,6 +327,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "stopWorkflowRun> Unable to stop workflow")
 		}
+		workflowRuns := report.WorkflowRuns()
 
 		go workflow.SendEvent(api.mustDB(), proj.Key, report)
 
