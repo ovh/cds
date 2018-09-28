@@ -17,18 +17,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// GetWorkflowRunEventData read channel to get elements to push
-// TODO: refactor this useless function
-func GetWorkflowRunEventData(report *ProcessorReport, projectKey string) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun) {
-	return report.workflows, report.nodes
-}
-
 // SendEvent Send event on workflow run
-func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNodeRun, key string) {
-	for _, wr := range wrs {
+func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
+	for _, wr := range report.workflows {
 		event.PublishWorkflowRun(wr, key)
 	}
-	for _, wnr := range wnrs {
+	for _, wnr := range report.nodes {
 		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, LoadRunOptions{
 			WithLightTests: true,
 		})
@@ -55,6 +49,10 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 		}
 
 		event.PublishWorkflowNodeRun(db, wnr, wr.Workflow, &previousNodeRun)
+	}
+
+	for _, jobrun := range report.jobs {
+		event.PublishWorkflowNodeJobRun(db, jobrun)
 	}
 }
 

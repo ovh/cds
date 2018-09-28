@@ -169,7 +169,7 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 
 	serviceHash := string(id)
 	if serviceHash == "" {
-		return ctx, fmt.Errorf("bad service id")
+		return ctx, fmt.Errorf("missing service Hash")
 	}
 
 	srv, err := GetService(db, store, serviceHash)
@@ -177,7 +177,7 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 		return ctx, err
 	}
 
-	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name})
+	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name, Admin: true})
 	if srv.Type == services.TypeHatchery {
 		ctx = context.WithValue(ctx, ContextHatchery, srv)
 	} else {

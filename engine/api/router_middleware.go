@@ -132,6 +132,10 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to find connected user")
 	}
 
+	if rc.Options["allowServices"] == "true" && getService(ctx) != nil {
+		return ctx, nil
+	}
+
 	if rc.Options["needHatchery"] == "true" && getHatchery(ctx) != nil {
 		return ctx, nil
 	}
@@ -141,10 +145,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		if !permissionOk {
 			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Worker not authorized")
 		}
-		return ctx, nil
-	}
-
-	if rc.Options["allowServices"] == "true" && getService(ctx) != nil {
 		return ctx, nil
 	}
 

@@ -328,8 +328,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(err, "stopWorkflowRun> Unable to stop workflow")
 		}
 
-		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, proj.Key)
+		go workflow.SendEvent(api.mustDB(), proj.Key, report)
 
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
@@ -524,8 +523,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to stop workflow run")
 		}
 
-		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
+		go workflow.SendEvent(api.mustDB(), p.Key, report)
 
 		return service.WriteJSON(w, nodeRun, http.StatusOK)
 	}
@@ -691,9 +689,8 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		if errS != nil {
 			return sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", key, name)
 		}
-		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, p.Key)
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, workflowNodeRuns)
-		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, p.Key)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
+		go workflow.SendEvent(api.mustDB(), p.Key, report)
 
 		// Purge workflow run
 		sdk.GoRoutine(
@@ -705,8 +702,8 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			})
 
 		var wr *sdk.WorkflowRun
-		if len(workflowRuns) > 0 {
-			wr = &workflowRuns[0]
+		if len(report.WorkflowRuns()) > 0 {
+			wr = &report.WorkflowRuns()[0]
 			wr.Translate(r.Header.Get("Accept-Language"))
 		}
 		return service.WriteJSON(w, wr, http.StatusAccepted)

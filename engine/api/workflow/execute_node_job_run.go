@@ -31,6 +31,11 @@ type ProcessorReport struct {
 	errors    []error
 }
 
+// WorkflowRuns returns the list of concerned workflow runs
+func (r *ProcessorReport) WorkflowRuns() []sdk.WorkflowRun {
+	return r.workflows
+}
+
 // Add something to the report
 func (r *ProcessorReport) Add(i ...interface{}) {
 	r.mutex.Lock()

@@ -330,7 +330,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing()), r.DELETE(api.deleteBookWorkflowJobHandler, NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/vulnerability", r.POSTEXECUTE(api.postVulnerabilityReportHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing()))
@@ -423,7 +423,7 @@ func (api *API) InitRouter() {
 	r.Handle("/workflow/hook/model/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
-	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP))
+	r.Handle("/events", r.GET(api.eventsBroker.ServeHTTP, AllowServices(true)))
 
 	// Feature
 	r.Handle("/feature/clean", r.POST(api.cleanFeatureHandler, NeedToken("X-Izanami-Token", api.Config.Features.Izanami.Token), Auth(false)))
