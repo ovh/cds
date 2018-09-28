@@ -67,7 +67,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 	}
 	allMsg, errE := extractWorkflow(ctx, db, store, p, w, ope, u, decryptFunc, uuid)
 	if errE != nil {
-		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to extract workflow")
+		return nil, sdk.WrapError(errE, "CreateFromRepository> Unable to extract workflow. msgs:%v", allMsg)
 	}
 
 	return allMsg, nil
