@@ -14,6 +14,7 @@ export class HooksTasksComponent {
     columns: Array<Column>;
     tasks: Array<WorkflowHookTask>;
     filter: Filter;
+    dataCount: number;
 
     constructor(
         private _hookService: HookService,
@@ -80,5 +81,9 @@ export class HooksTasksComponent {
             this.tasks = ts;
             this.loading = false;
         });
+    }
+
+    dataChange(count: number) {
+        this.dataCount = count;
     }
 }

@@ -30,7 +30,8 @@ export class Column {
 })
 export class DataTableComponent extends Table {
     @Input() columns: Array<Column>;
-    @Output() sortChange = new EventEmitter<any>();
+    @Output() sortChange = new EventEmitter<string>();
+    @Output() dataChange = new EventEmitter<number>();
     @Input() loading: boolean;
 
     @Input() set data(d: any) {
@@ -84,6 +85,9 @@ export class DataTableComponent extends Table {
         if (this.filter && this.filterFunc) {
             this.filteredData = this.data.filter(this.filterFunc(this.filter));
         }
+
+        this.dataChange.emit(this.filteredData.length);
+
         return this.filteredData;
     }
 
