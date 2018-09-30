@@ -24,8 +24,7 @@ export class HooksTasksComponent {
             return d => {
                 return d.uuid.toLowerCase().indexOf(lowerFilter) !== -1 ||
                     d.type.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.config['project'].value.toLowerCase().indexOf(lowerFilter) !== -1 ||
-                    d.config['workflow'].value.toLowerCase().indexOf(lowerFilter) !== -1 ||
+                    (d.config['project'].value + '/' + d.config['workflow'].value).toLowerCase().indexOf(lowerFilter) !== -1 ||
                     d.nb_executions_todo.toString().toLowerCase().indexOf(lowerFilter) !== -1 ||
                     d.nb_executions_total.toString().toLowerCase().indexOf(lowerFilter) !== -1;
             }

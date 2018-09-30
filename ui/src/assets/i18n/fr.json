@@ -152,6 +152,7 @@
   "btn_next": "Suivant",
   "btn_edit": "Éditer",
   "btn_add": "Ajouter",
+  "btn_back": "Retour",
 
   "commit_author": "Auteur",
   "commit_id": "ID",
