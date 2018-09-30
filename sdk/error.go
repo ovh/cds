@@ -458,7 +458,7 @@ var errorsLanguages = []map[int]string{
 
 // Error type.
 type Error struct {
-	ID         int    `json:"-"`
+	ID         int    `json:"id"`
 	Status     int    `json:"-"`
 	Message    string `json:"message"`
 	UUID       string `json:"uuid,omitempty"`
