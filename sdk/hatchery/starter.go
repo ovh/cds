@@ -48,12 +48,6 @@ func PanicDump(h Interface) func(s string) (io.WriteCloser, error) {
 	}
 }
 
-var starters map[int]starter
-
-type starter struct {
-	status string
-}
-
 // Start all goroutines which manage the hatchery worker spawning routine.
 // the purpose is to avoid go routines leak when there is a bunch of worker to start
 func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerStarterResult) {
@@ -64,13 +58,10 @@ func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerS
 	if maxProv < 1 {
 		maxProv = defaultMaxProvisioning
 	}
-	starters = map[int]starter{}
 	for workerNum := 0; workerNum < maxProv; workerNum++ {
-		starters[workerNum] = starter{status: "init"}
 		sdk.GoRoutine("workerStarter",
 			func() {
-				s := starters[workerNum]
-				s.run(h, jobs, results)
+				workerStarter(h, jobs, results)
 			},
 			PanicDump(h),
 		)
@@ -78,12 +69,10 @@ func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerS
 	return jobs, results
 }
 
-func (st starter) run(h Interface, jobs <-chan workerStarterRequest, results chan<- workerStarterResult) {
+func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<- workerStarterResult) {
 	for j := range jobs {
-		st.status = "receive"
 		// Start a worker for a job
 		if m := j.registerWorkerModel; m == nil {
-			st.status = "spawning"
 			ctx2, end := observability.Span(j.ctx, "hatchery.workerStarter")
 			//Try to start the worker
 			isRun, err := spawnWorkerForJob(h, j)
@@ -106,9 +95,7 @@ func (st starter) run(h Interface, jobs <-chan workerStarterRequest, results cha
 				j.cancel("")
 			}
 			end()
-			st.status = "spawnEnd"
 		} else { // Start a worker for registering
-			st.status = "registering"
 			log.Debug("Spawning worker for register model %s", m.Name)
 			if atomic.LoadInt64(&nbWorkerToStart) > int64(h.Configuration().Provision.MaxConcurrentProvisioning) {
 				continue
@@ -118,14 +105,12 @@ func (st starter) run(h Interface, jobs <-chan workerStarterRequest, results cha
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			if _, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, errSpawn)
-				st.status = "sendSpawnInfoError"
 				if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("cannot spawn worker for register: %s", errSpawn)); err != nil {
 					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 				}
 			}
 			atomic.AddInt64(&nbWorkerToStart, -1)
 			atomic.AddInt64(&nbRegisteringWorkerModels, -1)
-			st.status = "registerEnd"
 		}
 	}
 }
