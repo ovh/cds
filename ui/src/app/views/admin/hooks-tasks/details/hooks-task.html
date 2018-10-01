@@ -1,4 +1,10 @@
-<h2>{{ 'hook_task_details' | translate }}</h2>
+<h2 class="ui header">
+    <button class="ui button" [routerLink]="['/admin/hooks-tasks']">
+        <i class="arrow left icon"></i>
+        {{ 'btn_back' | translate}}
+    </button>
+    {{ 'hook_task_details' | translate }}
+</h2>
 <br />
 <ng-tamplate>
     <div class="ui form">
@@ -23,7 +29,7 @@
             <div class="ui row">
                 <div [ngClass]="{sixteen: !selectedExecution, eight: selectedExecution, wide: true, column: true}">
                     <h3>{{ 'hook_task_execs' | translate }}</h3>
-                    <app-data-table [withPagination]="5" [columns]="columns" [data]="executions" [loading]="loading"></app-data-table>
+                    <app-data-table [withPagination]="10" [columns]="columns" [data]="executions" [loading]="loading"></app-data-table>
                 </div>
                 <div class="eight wide column" *ngIf="selectedExecution">
                     <h3>{{'workflow_hook_log_title' | translate}}</h3>
