@@ -308,6 +308,7 @@
   "environment_variable_list_title": "Liste des variables",
 
   "filter": "Filtrer",
+  "filter_list_click": "Cliquer pour filtrer la liste",
 
   "favorite_title": "Gestion des favoris",
   "favorite_add": "Ajouter un favori",
@@ -341,7 +342,7 @@
   "graph_vulnerability_title": "Vulnérabilités",
   "graph_vulnerability_x": "N° workflow",
   "graph_vulnerability_y": "Total",
-  "graph_vulnerability_title": "Tests unitaires",
+  "graph_unittest_title": "Tests unitaires",
   "graph_unittest_x": "N° workflow",
   "graph_unittest_y": "Total",
 
@@ -413,7 +414,6 @@
   "navbar_actions": "Actions",
   "navbar_project_create": "Créer un projet",
   "navbar_admin_broadcast": "Informations",
-  "navbar_admin_status": "Statut",
   "navbar_documentation": "Documentation",
   "navbar_downloads": "Télécharger",
   "navbar_groups": "Groupes",
@@ -668,6 +668,16 @@
   "scheduler_workflow_label": "Scheduler : ",
 
   "settings_tips": "Conseils",
+  
+  "services_list": "CDS Services",
+  "service_view_details": "Voir les details",
+  "service_details": "Service",
+  "service_binary_not_up_to_date": "ce service n'est pas à jour, mettez le à jour",
+  "service_binary_up_to_date": "ce service est à jour",
+  "service_group": "Groupe",
+  "service_alert": "Status Alert - vérifier le status ci-dessous",
+  "service_warning": "Status Warning - vérifier le status ci-dessous",
+  "service_ok": "Status OK - tout est ok",
 
   "stage_add_label": "Ajouter un stage",
   "stage_added": "Stage ajouté",

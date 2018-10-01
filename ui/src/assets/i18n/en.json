@@ -308,6 +308,7 @@
   "environment_variable_list_title": "Variables list",
 
   "filter": "Filter",
+  "filter_list_click": "Click for filter list",
 
   "favorite_title": "Bookmarks management",
   "favorite_add": "Add a bookmark",
@@ -413,7 +414,6 @@
   "navbar_actions": "Actions",
   "navbar_project_create": "Create a project",
   "navbar_admin_broadcast": "Broadcasts",
-  "navbar_admin_status": "CDS Engine Status",
   "navbar_documentation": "Documentation",
   "navbar_downloads": "Download",
   "navbar_groups": "Groups",
@@ -668,6 +668,16 @@
   "scheduler_workflow_label": "Scheduler: ",
 
   "settings_tips": "Tips",
+
+  "services_list": "CDS Services",
+  "service_view_details": "Voir les details",
+  "service_details": "Service",
+  "service_binary_not_up_to_date": "this service is not up to date, need update",
+  "service_binary_up_to_date": "this service is up to date",
+  "service_group": "Group",
+  "service_alert": "Status Alert - please check status below",
+  "service_warning": "Status Warning - please check status below",
+  "service_ok": "Status OK - All is fine",
 
   "stage_add_label": "Add stage",
   "stage_added": "Stage added",
