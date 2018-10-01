@@ -23,7 +23,7 @@ type SSEvent struct {
 }
 
 // RequestSSEGet takes the uri of an SSE stream and channel, and will send an Event
-// down the channel when recieved, until the stream is closed. It will then
+// down the channel when received, until the stream is closed. It will then
 // close the stream. This is blocking, and so you will likely want to call this
 // in a new goroutine (via `go c.RequestSSEGet(..)`)
 func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSEvent, mods ...RequestModifier) error {
@@ -74,8 +74,9 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 	delim := []byte{':', ' '}
 
 	var currEvent *SSEvent
+	var EOF bool
 
-	for {
+	for !EOF {
 		if ctx.Err() != nil {
 			break
 		}
@@ -105,7 +106,7 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 			evCh <- *currEvent
 		}
 		if err == io.EOF {
-			break
+			EOF = true
 		}
 	}
 
