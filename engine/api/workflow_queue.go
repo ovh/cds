@@ -351,10 +351,12 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		_, next := observability.Span(ctx, "receiveSpawnInfosWorkflowJob")
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
+			next()
 			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
 		}
 		var s []sdk.SpawnInfo
 		if err := UnmarshalBody(r, &s); err != nil {
+			next()
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
 		}
 		observability.Current(ctx, observability.Tag(observability.TagWorkflowNodeJobRun, id))
@@ -368,10 +370,12 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 
 		_, next = observability.Span(ctx, "workflow.AddSpawnInfosNodeJobRun")
 		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
+			next()
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
 		}
 
 		if err := tx.Commit(); err != nil {
+			next()
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot commit tx")
 		}
 		next()

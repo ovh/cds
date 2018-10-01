@@ -221,7 +221,6 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	ctx, end := observability.Span(ctx, "hatcheryMarathon.SpawnWorker")
 	defer end()
 
-	_, next := observability.Span(ctx, "SpawnWorker.prepareConfiguration")
 	if spawnArgs.JobID > 0 {
 		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
@@ -356,9 +355,9 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Labels:    &h.marathonLabels,
 	}
 
-	next()
-	_, next = observability.Span(ctx, "marathonClient.CreateApplication")
+	_, next := observability.Span(ctx, "marathonClient.CreateApplication")
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
+		next()
 		return "", err
 	}
 	next()
@@ -387,13 +386,12 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress, please wait...", logJob, application.ID)
 	_, next = observability.Span(ctx, "marathonClient.ApplicationDeployments")
 	deployments, err := h.marathonClient.ApplicationDeployments(application.ID)
+	next()
 	if err != nil {
 		ticker.Stop()
-		next()
 		return "", fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
 	}
 
-	next()
 	if len(deployments) == 0 {
 		ticker.Stop()
 		return "", nil
