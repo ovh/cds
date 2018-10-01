@@ -369,16 +369,14 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		defer tx.Rollback()
 
 		_, next = observability.Span(ctx, "workflow.AddSpawnInfosNodeJobRun")
+		defer next()
 		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
-			next()
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
 		}
 
 		if err := tx.Commit(); err != nil {
-			next()
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot commit tx")
 		}
-		next()
 
 		return nil
 	}
