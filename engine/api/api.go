@@ -7,8 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/ovh/cds/engine/api/group"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
@@ -22,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/feature"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/metrics"
