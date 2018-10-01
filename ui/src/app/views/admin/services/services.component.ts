@@ -19,6 +19,8 @@ export class ServicesComponent {
     filteredStatusLines: Array<MonitoringStatusLine>;
 
     globals: Array<Global> = [];
+    globalStatus: Global;
+    globalVersion: Global;
 
     constructor(private _monitoringService: MonitoringService,
                 private _serviceService: ServiceService) {
@@ -47,13 +49,25 @@ export class ServicesComponent {
                             r.lines.forEach(g => {
                                 if (g.component.startsWith('Global/')) {
                                     let type = g.component.slice(7);
-                                    let global = new Global();
-                                    global.name = type;
-                                    global.value = g.value;
-                                    global.status = g.status;
-                                    global.services = [];
-                                    global.services = services.filter((srv) => { return srv.type === type})
-                                    this.globals.push(global);
+                                    if (type === 'Status') {
+                                        this.globalStatus = new Global();
+                                        this.globalStatus.value = g.value;
+                                        this.globalStatus.name = type;
+                                        this.globalStatus.status = g.status;
+                                    } else if (type === 'Version') {
+                                        this.globalVersion = new Global();
+                                        this.globalVersion.value = g.value;
+                                        this.globalVersion.name = type;
+                                        this.globalVersion.status = g.status;
+                                    } else {
+                                        let global = new Global();
+                                        global.name = type;
+                                        global.value = g.value;
+                                        global.status = g.status;
+                                        global.services = [];
+                                        global.services = services.filter((srv) => { return srv.type === type})
+                                        this.globals.push(global);
+                                    }
                                 }
                             });
                             this.loading = false;
@@ -71,6 +85,13 @@ export class ServicesComponent {
         if (this.filter === 'NOTICE') {
             this.filteredStatusLines = this.status.lines.filter(line => {
                 return line.status.indexOf('AL') !== -1 || line.status.indexOf('WARN') !== -1
+            });
+            return
+        }
+
+        if (this.filter === 'AL' || this.filter === 'WARN' || this.filter === 'OK') {
+            this.filteredStatusLines = this.status.lines.filter(line => {
+                return line.status.indexOf(this.filter) !== -1
             });
             return
         }

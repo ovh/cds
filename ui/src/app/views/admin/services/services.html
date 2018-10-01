@@ -4,8 +4,19 @@
     <div class="paddingContent">
         <div class="viewContent">
             <div class="ui grid">
-                <div class="eight wide column">
-                    <h1 translate="services_list"></h1>
+                <div class="wide column">
+                    <h1>
+                        {{'services_list' | translate}}
+                        <div class="right floated">
+                            <div class="ui pointer label" [ngClass]="{'red': globalStatus.status==='AL', 'orange': globalStatus.status==='WARN', 'teal': globalStatus.status==='OK'}" (click)="filter=globalStatus.status;filterChange()">
+                                {{globalStatus.name}} {{globalStatus.status}} - {{globalStatus.value}}
+                            </div>
+
+                            <div class="ui pointer label" [ngClass]="{'red': globalVersion.status==='AL', 'orange': globalVersion.status==='WARN', 'teal': globalVersion.status==='OK'}" (click)="filter='/Version';filterChange()">
+                                {{globalVersion.name}} {{globalVersion.status}} - {{globalVersion.value}}
+                            </div>
+                        </div>
+                    </h1>
                 </div>
             </div>
             <div *ngIf="globals && globals.length > 0;then globalslist;else noglobalslist"></div>
@@ -22,12 +33,12 @@
                             </div>
                         </div>
                         <div class="extra content">
-                            <div class="mini ui left labeled button" tabindex="0" *ngFor="let srv of g.services">
+                            <div class="mini ui left labeled button" *ngFor="let srv of g.services">
                                 <a class="ui basic label" suiPopup [popupText]="'filter_list_click' | translate" popupPlacement="top left" (click)="filter=srv.name;filterChange()" [ngClass]="{'red': srv.status==='AL', 'orange': srv.status==='WARN', 'teal': srv.status==='OK'}">
                                     {{srv.name}}
                                 </a>
-                                <div class="mini ui icon button" [routerLink]="[srv.name]" suiPopup [popupText]="'service_view_details' | translate" popupPlacement="top left" title="setting">
-                                    <i class="cogs icon"></i>
+                                <div class="mini ui icon button" [routerLink]="[srv.name]" suiPopup [popupText]="'service_view_details' | translate" popupPlacement="top left">
+                                    <i class="eye icon"></i>
                                 </div>
                             </div>
                         </div>
