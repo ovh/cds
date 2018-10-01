@@ -42,6 +42,15 @@ func (c *Common) initStats(hatcheryName string) error {
 	label = fmt.Sprintf("cds/%s/%s/disabled_workers", c.ServiceName(), hatcheryName)
 	c.stats.DisabledWorkers = stats.Int64(label, "number of disabled workers", stats.UnitDimensionless)
 
+	label = fmt.Sprintf("cds/%s/%s/starters/spawning", c.ServiceName(), hatcheryName)
+	c.stats.StartersSpawning = stats.Int64(label, "starters spawning a worker", stats.UnitDimensionless)
+
+	label = fmt.Sprintf("cds/%s/%s/starters/waiting", c.ServiceName(), hatcheryName)
+	c.stats.StartersWaiting = stats.Int64(label, "starters waiting for a job", stats.UnitDimensionless)
+
+	label = fmt.Sprintf("cds/%s/%s/starters/registering", c.ServiceName(), hatcheryName)
+	c.stats.StartersRegistering = stats.Int64(label, "starters registering a worker model", stats.UnitDimensionless)
+
 	log.Info("hatchery> Stats initialized on %s", c.ServiceName())
 
 	tags := []tag.Key{hatchery.TagHatchery, hatchery.TagHatcheryName}
@@ -100,6 +109,27 @@ func (c *Common) initStats(hatcheryName string) error {
 			Name:        "disabled_workers",
 			Description: c.stats.DisabledWorkers.Description(),
 			Measure:     c.stats.DisabledWorkers,
+			Aggregation: view.LastValue(),
+			TagKeys:     tags,
+		},
+		&view.View{
+			Name:        "starters_spawning",
+			Description: c.stats.StartersSpawning.Description(),
+			Measure:     c.stats.StartersSpawning,
+			Aggregation: view.LastValue(),
+			TagKeys:     tags,
+		},
+		&view.View{
+			Name:        "starters_waiting",
+			Description: c.stats.StartersWaiting.Description(),
+			Measure:     c.stats.StartersWaiting,
+			Aggregation: view.LastValue(),
+			TagKeys:     tags,
+		},
+		&view.View{
+			Name:        "starters_registering",
+			Description: c.stats.StartersRegistering.Description(),
+			Measure:     c.stats.StartersRegistering,
 			Aggregation: view.LastValue(),
 			TagKeys:     tags,
 		},

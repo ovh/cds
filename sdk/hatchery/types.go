@@ -99,12 +99,15 @@ type Interface interface {
 }
 
 type Stats struct {
-	Jobs               *stats.Int64Measure
-	SpawnedWorkers     *stats.Int64Measure
-	PendingWorkers     *stats.Int64Measure
-	RegisteringWorkers *stats.Int64Measure
-	CheckingWorkers    *stats.Int64Measure
-	WaitingWorkers     *stats.Int64Measure
-	BuildingWorkers    *stats.Int64Measure
-	DisabledWorkers    *stats.Int64Measure
+	Jobs                *stats.Int64Measure
+	SpawnedWorkers      *stats.Int64Measure
+	PendingWorkers      *stats.Int64Measure
+	RegisteringWorkers  *stats.Int64Measure
+	CheckingWorkers     *stats.Int64Measure
+	WaitingWorkers      *stats.Int64Measure
+	BuildingWorkers     *stats.Int64Measure
+	DisabledWorkers     *stats.Int64Measure
+	StartersSpawning    *stats.Int64Measure
+	StartersWaiting     *stats.Int64Measure
+	StartersRegistering *stats.Int64Measure
 }
