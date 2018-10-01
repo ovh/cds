@@ -101,7 +101,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 }
 
 // PublishWorkflowNodeJobRun publish a WorkflowNodeJobRun
-func PublishWorkflowNodeJobRun(db gorp.SqlExecutor, jr sdk.WorkflowNodeJobRun) {
+func PublishWorkflowNodeJobRun(db gorp.SqlExecutor, pkey, wname string, jr sdk.WorkflowNodeJobRun) {
 	e := sdk.EventRunWorkflowJob{
 		ID:     jr.ID,
 		Status: jr.Status,
@@ -111,5 +111,5 @@ func PublishWorkflowNodeJobRun(db gorp.SqlExecutor, jr sdk.WorkflowNodeJobRun) {
 	if sdk.StatusIsTerminated(jr.Status) {
 		e.Done = jr.Done.Unix()
 	}
-	publishRunWorkflow(e, "", "", "", "", "", 0, 0, jr.Status, nil)
+	publishRunWorkflow(e, pkey, wname, "", "", "", 0, 0, jr.Status, nil)
 }

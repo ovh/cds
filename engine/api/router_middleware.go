@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/auth"

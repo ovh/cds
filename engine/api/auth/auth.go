@@ -177,7 +177,7 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 		return ctx, err
 	}
 
-	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name, Admin: true})
+	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name})
 	if srv.Type == services.TypeHatchery {
 		ctx = context.WithValue(ctx, ContextHatchery, srv)
 	} else {
