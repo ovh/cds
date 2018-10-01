@@ -348,6 +348,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 
 func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
+		_, next := observability.Span(ctx, "receiveSpawnInfosWorkflowJob")
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
 			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
@@ -356,6 +357,8 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		if err := UnmarshalBody(r, &s); err != nil {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
 		}
+		observability.Current(ctx, observability.Tag(observability.TagWorkflowNodeJobRun, id))
+		next()
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
@@ -363,6 +366,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
+		_, next = observability.Span(ctx, "workflow.AddSpawnInfosNodeJobRun")
 		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
 		}
@@ -370,6 +374,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot commit tx")
 		}
+		next()
 
 		return nil
 	}

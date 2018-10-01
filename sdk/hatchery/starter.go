@@ -48,6 +48,12 @@ func PanicDump(h Interface) func(s string) (io.WriteCloser, error) {
 	}
 }
 
+var starters map[int]starter
+
+type starter struct {
+	status string
+}
+
 // Start all goroutines which manage the hatchery worker spawning routine.
 // the purpose is to avoid go routines leak when there is a bunch of worker to start
 func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerStarterResult) {
@@ -58,23 +64,27 @@ func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerS
 	if maxProv < 1 {
 		maxProv = defaultMaxProvisioning
 	}
-	for i := 0; i < maxProv; i++ {
+	starters = map[int]starter{}
+	for workerNum := 0; workerNum < maxProv; workerNum++ {
+		starters[workerNum] = starter{status: "init"}
 		sdk.GoRoutine("workerStarter",
 			func() {
-				workerStarter(h, jobs, results)
+				s := starters[workerNum]
+				s.run(h, jobs, results)
 			},
 			PanicDump(h),
 		)
 	}
-
 	return jobs, results
 }
 
-func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<- workerStarterResult) {
+func (st starter) run(h Interface, jobs <-chan workerStarterRequest, results chan<- workerStarterResult) {
 	for j := range jobs {
+		st.status = "receive"
 		// Start a worker for a job
 		if m := j.registerWorkerModel; m == nil {
-			_, end := observability.Span(j.ctx, "hatchery.workerStarter")
+			st.status = "spawning"
+			ctx2, end := observability.Span(j.ctx, "hatchery.workerStarter")
 			//Try to start the worker
 			isRun, err := spawnWorkerForJob(h, j)
 			//Check the result
@@ -84,17 +94,21 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 				isRun:        isRun,
 				temptToSpawn: true,
 			}
+
+			_, cend := observability.Span(ctx2, "sendResult")
 			//Send the result back
 			results <- res
-			end()
+			cend()
 
 			if err != nil {
 				j.cancel(err.Error())
 			} else {
 				j.cancel("")
 			}
-
+			end()
+			st.status = "spawnEnd"
 		} else { // Start a worker for registering
+			st.status = "registering"
 			log.Debug("Spawning worker for register model %s", m.Name)
 			if atomic.LoadInt64(&nbWorkerToStart) > int64(h.Configuration().Provision.MaxConcurrentProvisioning) {
 				continue
@@ -104,12 +118,14 @@ func workerStarter(h Interface, jobs <-chan workerStarterRequest, results chan<-
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
 			if _, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, errSpawn)
+				st.status = "sendSpawnInfoError"
 				if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("cannot spawn worker for register: %s", errSpawn)); err != nil {
 					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 				}
 			}
 			atomic.AddInt64(&nbWorkerToStart, -1)
 			atomic.AddInt64(&nbRegisteringWorkerModels, -1)
+			st.status = "registerEnd"
 		}
 	}
 }
@@ -162,8 +178,9 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", j.model.Name, j.id)
 	_, next = observability.Span(ctx, "hatchery.SpawnWorker")
 	workerName, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: j.model, IsWorkflowJob: j.isWorkflowJob, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
+	next()
 	if errSpawn != nil {
-		next()
+		_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "errSpawn"))
 		log.Warning("spawnWorkerForJob> %d - cannot spawn worker %s for job %d: %s", j.timestamp, j.model.Name, j.id, errSpawn)
 		infos = append(infos, sdk.SpawnInfo{
 			RemoteTime: time.Now(),
@@ -173,10 +190,9 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 			log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", j.timestamp, j.id, err)
 		}
 		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, j.model.Name, j.id, errSpawn)
-
+		next()
 		return false, nil
 	}
-	next()
 
 	infos = append(infos, sdk.SpawnInfo{
 		RemoteTime: time.Now(),
@@ -189,7 +205,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		},
 	})
 
-	_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo")
+	_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "spawnOK"))
 	if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
 		next()
 		log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", j.timestamp, j.id, err)

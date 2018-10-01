@@ -19,6 +19,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -217,6 +218,10 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
 func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.SpawnArguments) (string, error) {
+	ctx, end := observability.Span(ctx, "hatcheryMarathon.SpawnWorker")
+	defer end()
+
+	_, next := observability.Span(ctx, "SpawnWorker.prepareConfiguration")
 	if spawnArgs.JobID > 0 {
 		log.Debug("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.ModelDocker.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
@@ -351,9 +356,12 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		Labels:    &h.marathonLabels,
 	}
 
+	next()
+	_, next = observability.Span(ctx, "marathonClient.CreateApplication")
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
 		return "", err
 	}
+	next()
 
 	ticker := time.NewTicker(time.Second * 5)
 	// ticker.Stop -> do not close goroutine..., so
@@ -377,18 +385,21 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	}()
 
 	log.Debug("spawnMarathonDockerWorker> %s worker %s spawning in progress, please wait...", logJob, application.ID)
-
+	_, next = observability.Span(ctx, "marathonClient.ApplicationDeployments")
 	deployments, err := h.marathonClient.ApplicationDeployments(application.ID)
 	if err != nil {
 		ticker.Stop()
+		next()
 		return "", fmt.Errorf("spawnMarathonDockerWorker> %s failed to list deployments: %s", logJob, err.Error())
 	}
 
+	next()
 	if len(deployments) == 0 {
 		ticker.Stop()
 		return "", nil
 	}
 
+	_, next = observability.Span(ctx, "waitDeployment")
 	wg := &sync.WaitGroup{}
 	var done bool
 	var successChan = make(chan bool, len(deployments))
@@ -422,6 +433,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	}
 
 	wg.Wait()
+	next()
 
 	var success = true
 	for b := range successChan {
