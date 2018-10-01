@@ -54,6 +54,7 @@ func (c *Common) initStats(hatcheryName string) error {
 	log.Info("hatchery> Stats initialized on %s", c.ServiceName())
 
 	tags := []tag.Key{hatchery.TagHatchery, hatchery.TagHatcheryName}
+	tagsWithStarters := []tag.Key{hatchery.TagHatchery, hatchery.TagHatcheryName, hatchery.TagHatcheryKeyStarter}
 
 	return observability.RegisterView(
 		&view.View{
@@ -116,22 +117,22 @@ func (c *Common) initStats(hatcheryName string) error {
 			Name:        "starters_spawning",
 			Description: c.stats.StartersSpawning.Description(),
 			Measure:     c.stats.StartersSpawning,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
+			Aggregation: view.Count(),
+			TagKeys:     tagsWithStarters,
 		},
 		&view.View{
 			Name:        "starters_waiting",
 			Description: c.stats.StartersWaiting.Description(),
 			Measure:     c.stats.StartersWaiting,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
+			Aggregation: view.Count(),
+			TagKeys:     tagsWithStarters,
 		},
 		&view.View{
 			Name:        "starters_registering",
 			Description: c.stats.StartersRegistering.Description(),
 			Measure:     c.stats.StartersRegistering,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
+			Aggregation: view.Count(),
+			TagKeys:     tagsWithStarters,
 		},
 	)
 }

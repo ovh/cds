@@ -29,13 +29,15 @@ var (
 	models                 []sdk.Model
 
 	// Opencensus tags
-	TagHatchery     tag.Key
-	TagHatcheryName tag.Key
+	TagHatchery           tag.Key
+	TagHatcheryName       tag.Key
+	TagHatcheryKeyStarter tag.Key
 )
 
 func init() {
 	TagHatchery, _ = tag.NewKey("hatchery")
 	TagHatcheryName, _ = tag.NewKey("hatchery_name")
+	TagHatcheryKeyStarter, _ = tag.NewKey("hatchery_starter")
 }
 
 // WithTags returns a context with opencenstus tags
@@ -114,7 +116,7 @@ func Create(h Interface) error {
 	)
 
 	// run the starters pool
-	workersStartChan, workerStartResultChan := startWorkerStarters(h)
+	workersStartChan, workerStartResultChan := startWorkerStarters(ctx, h)
 
 	hostname, errh := os.Hostname()
 	if errh != nil {

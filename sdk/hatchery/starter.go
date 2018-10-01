@@ -51,7 +51,7 @@ func PanicDump(h Interface) func(s string) (io.WriteCloser, error) {
 
 // Start all goroutines which manage the hatchery worker spawning routine.
 // the purpose is to avoid go routines leak when there is a bunch of worker to start
-func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerStarterResult) {
+func startWorkerStarters(ctx context.Context, h Interface) (chan<- workerStarterRequest, chan workerStarterResult) {
 	jobs := make(chan workerStarterRequest, 1)
 	results := make(chan workerStarterResult, 1)
 
@@ -62,7 +62,7 @@ func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerS
 	for workerNum := 0; workerNum < maxProv; workerNum++ {
 		sdk.GoRoutine("workerStarter",
 			func() {
-				workerStarter(h, fmt.Sprintf("%d", workerNum), jobs, results)
+				workerStarter(ctx, h, fmt.Sprintf("%d", workerNum), jobs, results)
 			},
 			PanicDump(h),
 		)
@@ -70,16 +70,12 @@ func startWorkerStarters(h Interface) (chan<- workerStarterRequest, chan workerS
 	return jobs, results
 }
 
-var (
-	keyWorker, _ = tag.NewKey("worker")
-)
-
-func workerStarter(h Interface, workerNum string, jobs <-chan workerStarterRequest, results chan<- workerStarterResult) {
+func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-chan workerStarterRequest, results chan<- workerStarterResult) {
 	for j := range jobs {
-		ctx, err := tag.New(context.Background(),
+		ctx, err := tag.New(ctx,
 			tag.Upsert(TagHatchery, h.ServiceName()),
 			tag.Upsert(TagHatcheryName, h.Service().Name),
-			tag.Upsert(keyWorker, workerNum),
+			tag.Upsert(TagHatcheryKeyStarter, workerNum),
 		)
 		if err != nil {
 			log.Error("workerRegister> error on tag.New starter:%d err:%v", workerNum, err)
