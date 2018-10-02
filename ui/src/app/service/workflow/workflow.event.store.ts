@@ -110,11 +110,10 @@ export class WorkflowEventStore {
     setSelectedRun(wr: WorkflowRun) {
         if (wr) {
             this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
+            if (wr.version === 2) {
+                WorkflowRun.retroMigrate(wr);
+            }
         }
-        if (wr.version === 2) {
-            WorkflowRun.retroMigrate(wr);
-        }
-
         this._currentWorkflowRun.next(wr);
     }
 

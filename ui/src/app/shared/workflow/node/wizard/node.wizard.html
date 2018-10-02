@@ -216,7 +216,7 @@
                   <div class="ui sixteen wide column">
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
-                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment">
+                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment || loading">
                             <span *ngIf="node.context.application_id && (loadingPlatforms || (platforms && platforms.length))">{{ 'btn_next' | translate }}</span>
                             <span *ngIf="!node.context.application_id || (!loadingPlatforms && (!platforms || !platforms.length))">{{ 'btn_finish' | translate }}</span>
                     </button>
@@ -248,7 +248,7 @@
                   <div class="ui sixteen wide column">
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
-                            [disabled]="!node.context.pipeline_id && !newPipeline.name">
+                            [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loading">
                             {{ 'btn_finish' | translate }}
                     </button>
                   </div>

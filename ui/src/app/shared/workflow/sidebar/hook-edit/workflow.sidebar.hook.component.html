@@ -50,15 +50,16 @@
       <div class="ui active centered inline loader" *ngIf="loading"></div>
 </div>
 <div class="ui text active loader" *ngIf="!hook">{{ 'workflow_loading' | translate }}</div>
-    <app-workflow-node-hook-form
-      [project]="project"
-      [workflow]="workflow"
-      [node]="node"
-      (hookEvent)="updateHook($event)"
-      [loading]="loading"
-      [readonly]="workflow.permission < permissionEnum.READ_WRITE_EXECUTE"
-      [hook]="hook" #workflowEditHook>
-    </app-workflow-node-hook-form>
+    <app-hook-modal
+            [project]="project"
+            [workflow]="workflow"
+            [node]="node"
+            [hook]="hook"
+            [loading]="loading"
+            (hookEvent)="updateWorkflow($event, workflowEditHook.modal)"
+            #workflowEditHook>
+
+    </app-hook-modal>
 <app-delete-modal
     [title]="'workflow_hook_delete_title' | translate"
     [msg]="'workflow_hook_delete_msg' | translate"

@@ -73,7 +73,7 @@ export class WorkflowShowComponent {
             this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
             this._workflowCoreService.setWorkflowPreview(null);
 
-            if (!this.activatedRoute.snapshot.queryParams['node_id']) {
+            if (!this.activatedRoute.snapshot.queryParams['node_id'] && !this.activatedRoute.snapshot.queryParams['node_ref']) {
                 this._workflowEventStore.unselectAll();
             }
             if (projkey && workflowName) {
@@ -91,8 +91,6 @@ export class WorkflowShowComponent {
                             this.detailedWorkflow = updatedWorkflow;
 
                             // If a node is selected, update it
-                            this._workflowEventStore.updateSelectedNode(this.detailedWorkflow);
-
                             this.direction = this._workflowStore.getDirection(projkey, this.detailedWorkflow.name);
                             this._workflowStore.updateRecentWorkflow(projkey, updatedWorkflow);
 

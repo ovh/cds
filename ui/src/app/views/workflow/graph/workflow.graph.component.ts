@@ -20,7 +20,7 @@ import {WorkflowRun} from '../../../model/workflow.run.model';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook.component';
+import {WorkflowNodeHookComponent} from '../../../shared/workflow/wnode/hook/hook.component';
 import {WorkflowWNodeComponent} from '../../../shared/workflow/wnode/wnode.component';
 
 @Component({
@@ -28,7 +28,8 @@ import {WorkflowWNodeComponent} from '../../../shared/workflow/wnode/wnode.compo
     templateUrl: './workflow.graph.html',
     styleUrls: ['./workflow.graph.scss'],
     entryComponents: [
-        WorkflowWNodeComponent
+        WorkflowWNodeComponent,
+        WorkflowNodeHookComponent
     ]
 })
 @AutoUnsubscribe()
@@ -43,7 +44,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.nodeHeight = 78;
         if (data.forceRefresh) {
             this.nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
-            this.hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
+            this.hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
         } else {
             let nodesRef = Workflow.getMapNodesRef(this.workflow);
             // Update node reference inside component
@@ -109,7 +110,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     previousWorkflowRunId = 0;
 
     nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
-    hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
+    hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
 
     nodeWidth: number;
     nodeHeight: number;
@@ -258,21 +259,19 @@ export class WorkflowGraphComponent implements AfterViewInit {
             return;
         }
 
-        node.hooks.forEach((h, index) => {
-            let hookId = index;
-            if (h.id) {
-              hookId = h.id;
-            }
+        node.hooks.forEach(h => {
+            let hookId = h.uuid;
             let componentRef = this.hooksComponent.get(hookId);
             if (!componentRef) {
                 let hookComponent = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeHookComponent);
                 componentRef = hookComponent.create(this.svgContainer.parentInjector);
-                componentRef.instance.hook = h;
-                componentRef.instance.workflow = this.workflow;
-                componentRef.instance.project = this.project;
-                componentRef.instance.node = node;
-                this.hooksComponent.set(hookId, componentRef);
+
             }
+            componentRef.instance.hook = h;
+            componentRef.instance.workflow = this.workflow;
+            componentRef.instance.project = this.project;
+            componentRef.instance.node = node;
+            this.hooksComponent.set(hookId, componentRef);
 
             this.svgContainer.insert(componentRef.hostView, 0);
             this.g.setNode(

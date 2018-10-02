@@ -1,4 +1,4 @@
-import {Location} from '@angular/common';
+
 import {Component, Input} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
@@ -23,6 +23,7 @@ export class WorkflowWNodeComponent {
 
     // Selected node
     selectedNodeID: number;
+    selectedNodeRef: string;
 
     // Selected workflow run
     workflowRun: WorkflowRun;
@@ -34,16 +35,20 @@ export class WorkflowWNodeComponent {
     subNodeRun: Subscription;
     subWorkflowRun: Subscription;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _router: Router, private _workflowEventStore: WorkflowEventStore,
-                private _location: Location) {
+    constructor(private _activatedRoute: ActivatedRoute, private _router: Router, private _workflowEventStore: WorkflowEventStore) {
         if (_activatedRoute.snapshot.queryParams['node_id']) {
             this.selectedNodeID = parseInt(_activatedRoute.snapshot.queryParams['node_id'], 10);
+        }
+        if (_activatedRoute.snapshot.queryParams['node_ref']) {
+            this.selectedNodeRef = _activatedRoute.snapshot.queryParams['node_ref'];
         }
 
         // Subscribe to node selection
         this.subNodeSelected = this._workflowEventStore.selectedNode().subscribe(n => {
             if (n) {
                 this.selectedNodeID = n.id;
+            } else {
+                delete this.selectedNodeID;
             }
         });
 
@@ -63,6 +68,9 @@ export class WorkflowWNodeComponent {
         // Subscribe to workflow run events
         this.subWorkflowRun = this._workflowEventStore.selectedRun().subscribe(wr => {
             this.warnings = 0;
+            if (!wr && !this.workflowRun) {
+                return;
+            }
             if (wr) {
                 if (this.workflowRun && this.workflowRun.id !== wr.id) {
                     this.currentNodeRun = null;
@@ -110,8 +118,9 @@ export class WorkflowWNodeComponent {
             this._workflowEventStore.setSelectedNode(this.node, true);
         }
 
-        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute, queryParams: { 'node_id': this.node.id}});
-        this._location.go(url.toString());
+        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
+            queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref}});
+        this._router.navigateByUrl(url.toString()).then(() => {});
     }
 
     dblClickOnNode() {

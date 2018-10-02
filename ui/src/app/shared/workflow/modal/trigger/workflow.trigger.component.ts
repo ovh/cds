@@ -36,11 +36,13 @@ export class WorkflowTriggerComponent {
     destNode: WNode;
     currentSection = 'pipeline';
     selectedType: string;
+    isParent: boolean;
 
     constructor(private _modalService: SuiModalService) {}
 
-    show(t: string): void {
+    show(t: string, isP: boolean): void {
         this.selectedType = t;
+        this.isParent = isP;
         const config = new TemplateModalConfig<boolean, boolean, void>(this.triggerModal);
         this.modal = this._modalService.open(config);
     }
@@ -71,8 +73,8 @@ export class WorkflowTriggerComponent {
         c.operator = 'eq';
         this.destNode.context.conditions.plain.push(c);
 
-        if (this.source) {
-            let clonedWorkflow = cloneDeep(this.workflow);
+        let clonedWorkflow = cloneDeep(this.workflow);
+        if (this.source && !this.isParent) {
             let n = Workflow.getNodeByID(this.source.id, clonedWorkflow);
             if (!n.triggers) {
                 n.triggers = new Array<WNodeTrigger>();
@@ -81,6 +83,15 @@ export class WorkflowTriggerComponent {
             newTrigger.parent_node_name = n.ref;
             newTrigger.child_node = this.destNode;
             n.triggers.push(newTrigger);
+            this.triggerEvent.emit(clonedWorkflow);
+        } else if (this.isParent) {
+            this.destNode.triggers = new Array<WNodeTrigger>();
+            let newTrigger = new WNodeTrigger();
+            newTrigger.child_node = clonedWorkflow.workflow_data.node;
+            this.destNode.triggers.push(newTrigger);
+            this.destNode.hooks = cloneDeep(clonedWorkflow.workflow_data.node.hooks);
+            clonedWorkflow.workflow_data.node.hooks = [];
+            clonedWorkflow.workflow_data.node = this.destNode;
             this.triggerEvent.emit(clonedWorkflow);
         }
     }

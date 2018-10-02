@@ -1,4 +1,5 @@
 import {AfterViewInit, Component, ElementRef, Input, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
 import {Subscription} from 'rxjs/Subscription';
@@ -37,7 +38,8 @@ export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
     subRun: Subscription;
     nodeRun: WorkflowNodeRun;
 
-    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore) {}
+    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore,
+                private _activatedRoute: ActivatedRoute, private _router: Router) {}
 
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
@@ -77,5 +79,8 @@ export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
           return;
         }
         this._workflowEventStore.setSelectedHook(this.hook);
+        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
+            queryParams: { 'hook_ref': this.hook.ref}});
+        this._router.navigateByUrl(url.toString()).then(() => {});
     }
 }

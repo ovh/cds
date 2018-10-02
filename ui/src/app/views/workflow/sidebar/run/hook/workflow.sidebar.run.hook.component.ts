@@ -147,9 +147,11 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     }
 
     openHookConfigModal() {
+        /*
         if (this.workflowConfigHook && this.workflowConfigHook.show) {
             this.workflowConfigHook.show();
         }
+        */
     }
     openHookDetailsModal(taskExec: TaskExecution) {
         if (this.workflowDetailsHook && this.workflowDetailsHook.show) {

@@ -20,6 +20,9 @@
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.EDIT">
             <app-workflow-sidebar-wnode-edit [project]="project" [workflow]="workflow"></app-workflow-sidebar-wnode-edit>
         </ng-container>
+        <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.EDIT_HOOK">
+            <app-workflow-sidebar-hook [project]="project" [workflow]="workflow"></app-workflow-sidebar-hook>
+        </ng-container>
         <!--ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUNS">
             <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow" [scrolled]="onScroll"></app-workflow-sidebar-run-list>
         </ng-container>

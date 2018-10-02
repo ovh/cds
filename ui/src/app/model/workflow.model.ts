@@ -67,6 +67,22 @@ export class Workflow {
         return nodes;
     }
 
+    static getHookByRef(ref: string, w: Workflow): WNodeHook {
+        let hook = WNode.getHookByRef(w.workflow_data.node, ref);
+        if (hook) {
+            return hook;
+        }
+        if (w.workflow_data.joins) {
+            for (let i = 0; i < w.workflow_data.joins.length; i++) {
+                let h = WNode.getHookByRef(w.workflow_data.joins[i], ref);
+                if (h) {
+                    return h;
+                }
+            }
+        }
+        return null;
+    }
+
     static getNodeByRef(ref: string, w: Workflow): WNode {
         let node = WNode.getNodeByRef(w.workflow_data.node, ref);
         if (node) {
@@ -145,13 +161,13 @@ export class Workflow {
             result = true;
         }
         if (!result) {
-            let b = WNode.removeNodeOnly(null, w.workflow_data.node, nodeID);
+            let b = WNode.removeNodeOnly(w, null, w.workflow_data.node, nodeID, -1);
             if (b) {
                 result = true;
             }
             if (!result && w.workflow_data.joins) {
                 for (let i = 0; i < w.workflow_data.joins.length; i++) {
-                    let bb = WNode.removeNodeOnly(null, w.workflow_data.joins[i], nodeID)
+                    let bb = WNode.removeNodeOnly(w, null, w.workflow_data.joins[i], nodeID, i)
                     if (bb) {
                         result = true;
                         break;
@@ -319,14 +335,10 @@ export class Workflow {
 
     static getNodeNameImpact(workflow: Workflow, name: string): WorkflowPipelineNameImpact {
         let warnings = new WorkflowPipelineNameImpact();
-        WorkflowNode.getNodeNameImpact(workflow.root, name, warnings);
-        if (workflow.joins) {
-            workflow.joins.forEach(j => {
-                if (j.triggers) {
-                    j.triggers.forEach(t => {
-                        WorkflowNode.getNodeNameImpact(t.workflow_dest_node, name, warnings);
-                    });
-                }
+        WNode.getNodeNameImpact(workflow.workflow_data.node, name, warnings);
+        if (workflow.workflow_data.joins) {
+            workflow.workflow_data.joins.forEach(j => {
+                WNode.getNodeNameImpact(j, name, warnings);
             });
         }
         return warnings;
@@ -460,6 +472,7 @@ export class Workflow {
 
     constructor() {
         this.root = new WorkflowNode();
+        this.workflow_data = new WorkflowData();
     }
 }
 
@@ -539,24 +552,6 @@ export class WorkflowNode {
         return null;
     }
 
-    static getNodeNameImpact(n: WorkflowNode, name: string, nodeWarn: WorkflowPipelineNameImpact): void {
-        let varName = 'workflow.' + name;
-        if (n.context.conditions && n.context.conditions.plain) {
-            n.context.conditions.plain.forEach(c => {
-                if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
-                    nodeWarn.nodes.push(n);
-                }
-            });
-        }
-        if (n.triggers) {
-            n.triggers.forEach(t => {
-                WorkflowNode.getNodeNameImpact(t.workflow_dest_node, name, nodeWarn);
-            });
-        }
-    }
-
-
-
     static getMapNodes(map: Map<number, WorkflowNode>, n: WorkflowNode): Map<number, WorkflowNode> {
         let smallNode = new WorkflowNode();
         smallNode.id = n.id;
@@ -607,7 +602,7 @@ export class WorkflowNode {
 }
 
 export class WorkflowPipelineNameImpact {
-    nodes = new Array<WorkflowNode>();
+    nodes = new Array<WNode>();
 }
 
 // WorkflowNodeContext represents a context attached on a node
@@ -866,6 +861,25 @@ export class WNode {
         return nodes;
     }
 
+    static getHookByRef(node: WNode, ref: string): WNodeHook {
+        if (node.hooks) {
+            for (let i = 0; i < node.hooks.length; i++) {
+                if (node.hooks[i].ref === ref) {
+                    return node.hooks[i];
+                }
+            }
+        }
+        if (node.triggers) {
+            for (let i = 0; i < node.triggers.length; i++) {
+                let h = WNode.getHookByRef(node.triggers[i].child_node, ref);
+                if (h) {
+                    return h;
+                }
+            }
+        }
+        return null;
+    }
+
     static getNodeByRef(node: WNode, ref: string): WNode {
         if (node.ref === ref) {
             return node;
@@ -915,22 +929,29 @@ export class WNode {
         return false;
     }
 
-    static removeNodeOnly(parentNode: WNode, node: WNode, nodeID: number): boolean {
+    static removeNodeOnly(w: Workflow, parentNode: WNode, node: WNode, nodeID: number, index: number): boolean {
         if (node.id === nodeID) {
-            if (node.type === WNodeType.JOIN || !parentNode) {
+            if (index === -1) {
+                // deletion of root node
                 return false;
             }
-            if (!parentNode.triggers) {
-                parentNode.triggers = new Array<WNodeTrigger>();
-            }
-            if (node.triggers) {
-                parentNode.triggers.push(...node.triggers);
+            if (parentNode) {
+                if (!parentNode.triggers) {
+                    parentNode.triggers = new Array<WNodeTrigger>();
+                }
+                if (node.triggers) {
+                    parentNode.triggers.push(...node.triggers);
+                }
+                parentNode.triggers.splice(index, 1);
+            } else {
+                // JOin
+                w.joins.splice(index, 1);
             }
             return true;
         }
         if (node.triggers) {
             for (let i = 0; i < node.triggers.length; i++) {
-                let b = WNode.removeNodeOnly(node, node.triggers[i].child_node, nodeID);
+                let b = WNode.removeNodeOnly(w, node, node.triggers[i].child_node, nodeID, i);
                 if (b) {
                     return true;
                 }
@@ -986,9 +1007,27 @@ export class WNode {
         return res;
     }
 
+    static getNodeNameImpact(node: WNode, name: string, nodeWarn: WorkflowPipelineNameImpact) {
+        let varName = 'workflow.' + name;
+        if (node.context && node.context.conditions && node.context.conditions.plain) {
+            node.context.conditions.plain.forEach(c => {
+                if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
+                    nodeWarn.nodes.push(node);
+                }
+            });
+        }
+        if (node.triggers) {
+            node.triggers.forEach(t => {
+                WNode.getNodeNameImpact(t.child_node, name, nodeWarn);
+            });
+        }
+    }
+
     constructor() {
         this.context = new WNodeContext();
     }
+
+
 }
 
 export class WNodeTrigger {

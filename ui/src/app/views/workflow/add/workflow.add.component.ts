@@ -9,7 +9,7 @@ import {Operation, PerformAsCodeResponse} from '../../../model/operation.model';
 import {Project} from '../../../model/project.model';
 import {Repository} from '../../../model/repositories.model';
 import {VCSStrategy} from '../../../model/vcs.model';
-import {Workflow, WorkflowNode} from '../../../model/workflow.model';
+import {WNode, Workflow} from '../../../model/workflow.model';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ImportAsCodeService} from '../../../service/import-as-code/import.service';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
@@ -85,9 +85,9 @@ workflow:
         this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'workflows'}});
     }
 
-    createWorkflow(node: WorkflowNode): void {
+    createWorkflow(node: WNode): void {
         this.loading = true;
-        this.workflow.root = node;
+        this.workflow.workflow_data.node = node;
         this._workflowStore.addWorkflow(this.project.key, this.workflow)
             .pipe(
                 first(),

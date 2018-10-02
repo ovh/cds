@@ -31,12 +31,13 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     }
     @Input() hideCancel: boolean;
     @Input() hideNext: boolean;
+    @Input() loading: boolean;
     @Output() nodeCreated: EventEmitter<WNode> = new EventEmitter<WNode>();
     @Output() pipelineSectionChanged: EventEmitter<string> = new EventEmitter<string>();
 
     _project: Project;
     node: WNode = new WNode();
-    loading = false;
+
     applicationsName: IdName[] = [];
     environmentsName: IdName[] = [];
 
@@ -136,7 +137,6 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     }
 
     createNode(): void {
-        this.loading = true;
         if (this.node.context.pipeline_id) {
             this.node.type = WNodeType.PIPELINE;
             this.node.context.pipeline_id = Number(this.node.context.pipeline_id);

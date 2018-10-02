@@ -1,34 +1,17 @@
 <ng-container>
-    <div class="header">
-        <div class="deleteButton" *ngIf="canDelete && !readonly">
-            <app-delete-button [loading]="loading" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)" (event)="deleteHook()"></app-delete-button>
-        </div>
-    </div>
     <div class="content">
         <div class="ui form">
             <h3 class="inline">{{ 'workflow_node_hook_form_title' | translate }}</h3>
             <div class="right floated mb15">
                 <i class="book icon"></i><a href="https://ovh.github.io/cds/workflows/design/hooks/" target="_blank">{{'common_documentation' | translate}}</a>
             </div>
-            <ng-container *ngIf="!loadingModels && !isOutgoing">
+            <ng-container *ngIf="!loadingModels">
                 <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}"
                   [(ngModel)]="selectedHookModel"
                   (ngModelChange)="updateHook()"
                   [options]="hooksModel"
                   [isSearchable]="true"
-                  [isDisabled]="updateMode"
-                  labelField="name" #select>
-                    <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
-                    </sui-select-option>
-                </sui-select>
-            </ng-container>
-            <ng-container *ngIf="!loadingModels && isOutgoing">
-                <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}"
-                  [(ngModel)]="selectedOutgoingHookModel"
-                  (ngModelChange)="updateOutgoingHook()"
-                  [options]="outgoingHookModels"
-                  [isSearchable]="true"
-                  [isDisabled]="updateMode"
+                  [isDisabled]="hook.id"
                   labelField="name" #select>
                     <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
                     </sui-select-option>
@@ -38,15 +21,6 @@
                 <sui-select class="selection" placeholder="{{'common_loading' | translate}}">
                     <sui-select-option value="">{{'common_loading' | translate}}</sui-select-option>
                 </sui-select>
-            </ng-container>
-            <ng-container *ngIf="_hook.model && isOutgoing">
-                <h3>{{ 'workflow_node_hook_form_name' | translate }}</h3>
-                <div class="inline fields">
-                    <div class="four wide field"><label>Name</label></div>
-                    <div class="twelve wide field">
-                        <input type="text" [(ngModel)]="outgoingHook.name"/>
-                    </div>
-                </div>
             </ng-container>
             <ng-container *ngIf="_hook.model && displayConfig">
                 <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
@@ -80,43 +54,6 @@
                                     </sui-select-option>
                                 </sui-select>
                           </ng-container>
-                        </div>
-                    </div>
-                </ng-container>
-                <ng-container *ngIf="isOutgoing && _hook.config && _hook.model && _hook.model.name === 'Workflow'">
-                    <div class="inline fields">
-                        <div class="four wide field"><label>project</label></div>
-                        <div class="twelve wide field">
-                            <!-- Know limitation: trigger only workflow in the current project -->
-                            <input type="text" [(ngModel)]="_hook.config['target_project'].value" readonly/>
-                        </div>
-                    </div>
-                    <div class="inline fields">
-                            <div class="four wide field"><label>workflow</label></div>
-                            <div class="twelve wide field">
-                                <sui-select class="selection" placeholder="{{'workflow_name' | translate}}"
-                                    [(ngModel)]="_hook.config['target_workflow'].value"
-                                    (ngModelChange)="updateWorkflow()"
-                                    [options]="availableWorkflows"
-                                    [isSearchable]="true"
-                                    labelField="name" #selectWorkflow
-                                    valueField="name">
-                                        <sui-select-option *ngFor="let option of selectWorkflow.filteredOptions" [value]="option">{{option.name}}</sui-select-option>
-                                </sui-select>
-                            </div>
-                    </div>
-                    <div class="inline fields">
-                        <div class="four wide field"><label>hook</label></div>
-                        <div class="twelve wide field">
-                            <sui-select class="selection" placeholder="{{'hook' | translate}}"
-                                [(ngModel)]="_hook.config['target_hook'].value"
-                                [options]="availableHooks"
-                                [isSearchable]="true"
-                                labelField="uuid" 
-                                valueField="uuid"
-                                #selectHook>
-                                    <sui-select-option *ngFor="let option of selectHook.filteredOptions" [value]="option">{{option.name}} </sui-select-option>
-                            </sui-select>
                         </div>
                     </div>
                 </ng-container>
