@@ -32,6 +32,8 @@ export class WorkflowWNodeJoinComponent implements OnInit, AfterViewInit {
     elementRef: ElementRef;
     linkJoinSubscription: Subscription;
     nodeToLink: WNode;
+    loading = false;
+    loadingRun = false;
 
     constructor(elt: ElementRef, private _workflowCore: WorkflowCoreService, private _workflowStore: WorkflowStore,
                 private _toast: ToastService, private _translate: TranslateService) {

@@ -1,13 +1,11 @@
 import {Component, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Subscription} from 'rxjs';
 import {finalize, first} from 'rxjs/operators';
 import {PermissionValue} from '../../../model/permission.model';
 import {Project} from '../../../model/project.model';
-import {WNode, Workflow, WorkflowNodeJoin} from '../../../model/workflow.model';
+import {WNode, Workflow} from '../../../model/workflow.model';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
@@ -41,7 +39,6 @@ export class WorkflowShowComponent {
     permWarningModal: WarningModalComponent;
 
     selectedNode: WNode;
-    selectedJoin: WorkflowNodeJoin;
 
     selectedTab = 'workflows';
 
@@ -161,35 +158,6 @@ export class WorkflowShowComponent {
                     break;
             }
         }
-    }
-
-    public addSourceToJoin(data: { source: WNode, target: WorkflowNodeJoin }): void {
-        let clonedWorkflow: Workflow = cloneDeep(this.detailedWorkflow);
-        let currentJoin = clonedWorkflow.joins.find(j => j.id === data.target.id);
-        this.selectedNode = data.source;
-        if (currentJoin.source_node_id.find(id => id === this.selectedNode.id)) {
-            return;
-        }
-        currentJoin.source_node_ref.push(this.selectedNode.ref);
-        this.updateWorkflow(clonedWorkflow);
-    }
-
-    updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
-        this.loading = true;
-        this._workflowStore.updateWorkflow(this.project.key, w).pipe(
-            finalize(() => this.loading = false),
-            first()
-          )
-          .subscribe(() => {
-            this._toast.success('', this._translate.instant('workflow_updated'));
-            if (modal) {
-                modal.approve(true);
-            }
-            if (this.workflowGraph) {
-                this._workflowCoreService.linkJoinEvent(null);
-            }
-            this._router.navigate(['/project', this.project.key, 'workflow', w.name]);
-        });
     }
 
     runWithParameter(): void {

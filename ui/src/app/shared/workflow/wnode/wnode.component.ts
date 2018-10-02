@@ -1,5 +1,5 @@
 
-import {Component, Input} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {PipelineStatus} from '../../../model/pipeline.model';
@@ -15,7 +15,7 @@ import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
     styleUrls: ['./workflow.node.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowWNodeComponent {
+export class WorkflowWNodeComponent implements OnInit {
 
     @Input() node: WNode;
     @Input() workflow: Workflow;
@@ -52,6 +52,12 @@ export class WorkflowWNodeComponent {
             }
         });
 
+
+
+
+    }
+
+    ngOnInit(): void {
         // Subscribe to node run events
         this.subNodeRun = this._workflowEventStore.nodeRunEvents().subscribe(wnr => {
             if (wnr) {

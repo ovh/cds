@@ -3,20 +3,20 @@ import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import 'rxjs/add/observable/zip';
 import {first} from 'rxjs/operators';
-import {PermissionValue} from '../../../../../model/permission.model';
-import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {Project} from '../../../../../model/project.model';
+import {PermissionValue} from '../../../../model/permission.model';
+import {PipelineStatus} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
 import {
     WNode,
     Workflow
-} from '../../../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
-import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
-import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
-import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../../../../service/workflow/workflow.sidebar.store';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {DurationService} from '../../../../../shared/duration/duration.service';
-import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
+} from '../../../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
+import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../../../service/workflow/workflow.sidebar.store';
+import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import {DurationService} from '../../../duration/duration.service';
+import {WorkflowNodeRunParamComponent} from '../../node/run/node.run.param.component';
 
 
 @Component({
@@ -46,7 +46,6 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     loading = true;
 
     displayEditOption = false;
-    displaySummary = true;
     duration: string;
     canBeRun = false;
     perm = PermissionValue;
@@ -166,7 +165,8 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
         }
 
         if (this.node && this.currentWorkflowRun) {
-            if (workflowRunIsNotActive && !this.currentWorkflowNodeRun && this.node.id === this.currentWorkflowRun.workflow.root_id) {
+            if (workflowRunIsNotActive && !this.currentWorkflowNodeRun &&
+                this.node.id === this.currentWorkflowRun.workflow.workflow_data.node.id) {
                 return true;
             }
 

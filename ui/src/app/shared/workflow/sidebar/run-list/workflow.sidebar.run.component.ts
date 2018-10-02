@@ -2,14 +2,14 @@ import {Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild
 import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {finalize} from 'rxjs/operators';
-import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {Project} from '../../../../../model/project.model';
-import {Workflow} from '../../../../../model/workflow.model';
-import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.model';
-import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
-import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {DurationService} from '../../../../../shared/duration/duration.service';
+import {PipelineStatus} from '../../../../model/pipeline.model';
+import {Project} from '../../../../model/project.model';
+import {Workflow} from '../../../../model/workflow.model';
+import {WorkflowRun, WorkflowRunTags} from '../../../../model/workflow.run.model';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
+import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import {DurationService} from '../../../duration/duration.service';
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',

@@ -5,8 +5,9 @@ import {ProjectPlatform} from '../../../../../model/platform.model';
 import {Project} from '../../../../../model/project.model';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {
+    WNode,
     WNodeHook,
-    Workflow, WorkflowNode
+    Workflow
 } from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 
@@ -22,7 +23,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
 
     @Input() project: Project;
     @Input() workflow: Workflow;
-    @Input() node: WorkflowNode;
+    @Input() node: WNode;
     @Input('hook')
     set hook(data: WNodeHook) {
         if (data) {

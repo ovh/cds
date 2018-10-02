@@ -3,7 +3,7 @@
     <div class="content">
         <div class="ui form" *ngIf="project && editableNode">
             <h3>{{ 'workflow_node_form_title' | translate }}</h3>
-            <app-workflow-node-form [project]="project" [(node)]="editableNode"></app-workflow-node-form>
+            <app-workflow-node-form [project]="project" [workflow]="workflow" [(node)]="editableNode"></app-workflow-node-form>
             <ng-container *ngIf="pipParamsReady && editableNode.context.default_pipeline_parameters && editableNode.context.default_pipeline_parameters.length > 0">
                 <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
                 <app-parameter-list

@@ -1,9 +1,9 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {PipelineStatus} from '../../../../../../../model/pipeline.model';
-import {Stage} from '../../../../../../../model/stage.model';
-import {WorkflowNode} from '../../../../../../../model/workflow.model';
-import {WorkflowNodeJobRun, WorkflowRun} from '../../../../../../../model/workflow.run.model';
+import {PipelineStatus} from '../../../../../../model/pipeline.model';
+import {Stage} from '../../../../../../model/stage.model';
+import {WNode} from '../../../../../../model/workflow.model';
+import {WorkflowNodeJobRun, WorkflowRun} from '../../../../../../model/workflow.run.model';
 
 @Component({
     selector: 'app-job-step-summary',
@@ -14,7 +14,7 @@ export class JobStepSummaryComponent implements OnInit {
 
     @Input() job: WorkflowNodeJobRun;
     @Input() workflowRun: WorkflowRun;
-    @Input() workflowNode: WorkflowNode;
+    @Input() workflowNode: WNode;
     @Input() stage: Stage;
 
     open = false;

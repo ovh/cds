@@ -47,7 +47,8 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
                 if ((!this.nodeRun || !this.nodeRun.payload ) &&
-                    (!this.workflowRun  || !this.workflowRun.nodes || !this.workflowRun.nodes[this.workflowRun.workflow.root.id])) {
+                    (!this.workflowRun  || !this.workflowRun.nodes ||
+                        !this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id])) {
                         this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
                 }
             }
@@ -92,8 +93,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.linkedToRepo = this._nodeToRun.context.application_id !== 0
-            && this.workflow.applications[this._nodeToRun.context.application_id].repository_fullname != null;
+        this.linkedToRepo = WNode.linkedToRepo(this._nodeToRun, this.workflow);
     }
 
     show(): void {
@@ -104,7 +104,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             num = this.nodeRun.num;
             nodeRunID = this.nodeRun.id;
         } else if (this.workflowRun && this.workflowRun.nodes) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
             num = rootNodeRun.num;
             nodeRunID = rootNodeRun.id;
         }
@@ -136,7 +136,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             let isPipelineRoot = false;
             if (!this.workflowRun) {
                 isPipelineRoot = true;
-            } else if (this.workflowRun && this.workflowRun.workflow.root_id === this.nodeToRun.id) {
+            } else if (this.workflowRun && this.workflowRun.workflow.workflow_data.node.id === this.nodeToRun.id) {
                 isPipelineRoot = true;
             }
             // run a workflow or a child pipeline, first run
@@ -145,7 +145,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             // if it's not the pipeline root, we take the payload on the pipelineRoot
             if (!isPipelineRoot) {
                 this.readOnly = true;
-                let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
+                let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
                 payload = rootNodeRun.payload;
             }
             this.prepareDisplay(payload);
@@ -242,7 +242,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         if (this.nodeRun && this.nodeRun.payload) {
             currentContext = this.nodeRun.payload;
         } else if (this.workflowRun && this.workflowRun.nodes) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id];
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id];
             if (rootNodeRun) {
                 currentContext = rootNodeRun[0].payload;
             }
@@ -250,7 +250,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             if (this.nodeToRun.context.default_payload && Object.keys(this.nodeToRun.context.default_payload).length > 0) {
                 currentContext = this.nodeToRun.context.default_payload;
             } else {
-                currentContext = this.workflow.root.context.default_payload;
+                currentContext = this.workflow.workflow_data.node.context.default_payload;
             }
         }
 

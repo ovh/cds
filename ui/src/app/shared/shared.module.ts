@@ -90,8 +90,13 @@ import {WorkflowNodeOutGoingHookFormComponent} from './workflow/node/outgoinghoo
 import {WorkflowNodeFormComponent} from './workflow/node/pipeline-form/workflow.node.form.component';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeAddWizardComponent} from './workflow/node/wizard/node.wizard.component';
-import {WorkflowSidebarHookComponent} from './workflow/sidebar/hook-edit/workflow.sidebar.hook.component';
-import {WorkflowWNodeSidebarEditComponent} from './workflow/sidebar/node-edit/sidebar.edit.component';
+import {WorkflowSidebarHookComponent} from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
+import {WorkflowWNodeSidebarEditComponent} from './workflow/sidebar/edit-node/sidebar.edit.component';
+import {WorkflowSidebarRunListComponent} from './workflow/sidebar/run-list/workflow.sidebar.run.component';
+import {ActionStepSummaryComponent} from './workflow/sidebar/run-node/stage/job/action/action.summary.component';
+import {JobStepSummaryComponent} from './workflow/sidebar/run-node/stage/job/job.summary.component';
+import {StageStepSummaryComponent} from './workflow/sidebar/run-node/stage/stage.summary.component';
+import {WorkflowSidebarRunNodeComponent} from './workflow/sidebar/run-node/workflow.sidebar.run.node.component';
 import {WorkflowWNodeForkComponent} from './workflow/wnode/fork/node.fork.component';
 import {WorkflowNodeHookComponent} from './workflow/wnode/hook/hook.component';
 import {WorkflowWNodeJoinComponent} from './workflow/wnode/join/node.join.component';
@@ -164,6 +169,11 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowNodeOutGoingHookEditComponent,
         WorkflowHookModalComponent,
         WorkflowSidebarHookComponent,
+        WorkflowSidebarRunListComponent,
+        WorkflowSidebarRunNodeComponent,
+        StageStepSummaryComponent,
+        JobStepSummaryComponent,
+        ActionStepSummaryComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -262,6 +272,8 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowWNodeComponent,
         WorkflowWNodeSidebarEditComponent,
         WorkflowSidebarHookComponent,
+        WorkflowSidebarRunListComponent,
+        WorkflowSidebarRunNodeComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,

@@ -1,9 +1,9 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {PipelineStatus} from '../../../../../../model/pipeline.model';
-import {Stage} from '../../../../../../model/stage.model';
-import {WorkflowNode} from '../../../../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../../../../../model/workflow.run.model';
+import {PipelineStatus} from '../../../../../model/pipeline.model';
+import {Stage} from '../../../../../model/stage.model';
+import {WNode} from '../../../../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
 
 @Component({
     selector: 'app-stage-step-summary',
@@ -15,7 +15,7 @@ export class StageStepSummaryComponent implements OnInit {
     @Input() stage: Stage;
     @Input() workflowRun: WorkflowRun;
     @Input() workflowNodeRun: WorkflowNodeRun;
-    @Input() workflowNode: WorkflowNode;
+    @Input() workflowNode: WNode;
 
     open = false;
     warning = false;

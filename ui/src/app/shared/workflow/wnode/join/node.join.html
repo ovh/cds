@@ -1,6 +1,6 @@
 <div class="join">
-    <div [hidden]="currentWorkflowRun?.status === pipelineStatusEnum.WAITING
-        || currentWorkflowRun?.status === pipelineStatusEnum.BUILDING || !canRun"
+    <div [hidden]="workflowrun?.status === pipelineStatusEnum.WAITING
+        || workflowrun?.status === pipelineStatusEnum.BUILDING || !canRun"
          [class.disabled]="loading" class="playIconPosition" (click)="!loading && playJoin()">
         <i class="play icon"></i>
     </div>

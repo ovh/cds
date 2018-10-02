@@ -103,8 +103,6 @@
                                 <div class="graph">
                                     <app-workflow-graph [workflowData]="previewWorkflow || detailedWorkflow" [project]="project"
                                                         [direction]="direction"
-                                                        (addSrcToJoinEvent)="addSourceToJoin($event)"
-                                                        (deleteJoinSrcEvent)="openDeleteJoinSrcModal($event)"
                                                         #workflowGraph></app-workflow-graph>
                                 </div>
                             </ng-container>

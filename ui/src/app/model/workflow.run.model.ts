@@ -46,12 +46,6 @@ export class WorkflowRun {
     duration: string;
     force_update: boolean;
 
-    static retroMigrate(wr: WorkflowRun): any {
-        if (wr.version === 2) {
-            Workflow.retroMigrate(wr.workflow);
-        }
-    }
-
     static fromEventRunWorkflow(event: Event): WorkflowRun {
         let wr = new WorkflowRun();
         wr.id = event.payload['ID'];

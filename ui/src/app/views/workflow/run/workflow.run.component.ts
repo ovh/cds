@@ -6,7 +6,7 @@ import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
-import {Workflow, WorkflowNode} from '../../../model/workflow.model';
+import {WNode, Workflow} from '../../../model/workflow.model';
 import {WorkflowRun} from '../../../model/workflow.run.model';
 import {NotificationService} from '../../../service/notification/notification.service';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
@@ -41,7 +41,7 @@ export class WorkflowRunComponent implements OnInit {
     loadingRun = false;
 
     // copy of root node to send it into run modal
-    nodeToRun: WorkflowNode;
+    nodeToRun: WNode;
 
     constructor(
       private _activatedRoute: ActivatedRoute,
@@ -139,8 +139,8 @@ export class WorkflowRunComponent implements OnInit {
 
     relaunch() {
         if (this.runWithParamComponent && this.runWithParamComponent.show) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
-            this.nodeToRun = cloneDeep(this.workflowRun.workflow.root);
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
+            this.nodeToRun = cloneDeep(this.workflowRun.workflow.workflow_data.node);
             if (rootNodeRun.hook_event) {
                 this.nodeToRun.context.default_payload = rootNodeRun.hook_event.payload;
                 this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.hook_event.pipeline_parameter;

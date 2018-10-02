@@ -18,6 +18,6 @@ export class WorkflowWNodePipelineComponent {
     @Input() public workflow: Workflow;
     @Input() public noderun: WorkflowNodeRun;
     @Input() public selected: boolean;
-
+    @Input() public warnings: number;
     pipelineStatus = PipelineStatus;
 }

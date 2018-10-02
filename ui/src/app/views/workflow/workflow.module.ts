@@ -22,11 +22,6 @@ import {WorkflowNotificationListComponent} from './show/notification/list/workfl
 import {WorkflowShowComponent} from './show/workflow.component';
 import {WorkflowSidebarCodeComponent} from './sidebar/code/sidebar.code.component';
 import {WorkflowSidebarRunHookComponent} from './sidebar/run/hook/workflow.sidebar.run.hook.component';
-import {WorkflowSidebarRunListComponent} from './sidebar/run/list/workflow.sidebar.run.component';
-import {ActionStepSummaryComponent} from './sidebar/run/node/stage/job/action/action.summary.component';
-import {JobStepSummaryComponent} from './sidebar/run/node/stage/job/job.summary.component';
-import {StageStepSummaryComponent} from './sidebar/run/node/stage/stage.summary.component';
-import {WorkflowSidebarRunNodeComponent} from './sidebar/run/node/workflow.sidebar.run.node.component';
 import {WorkflowComponent} from './workflow.component';
 import {workflowRouting} from './workflow.routing';
 
@@ -48,12 +43,7 @@ import {workflowRouting} from './workflow.routing';
         WorkflowRunSummaryComponent,
         WorkflowSidebarRunHookComponent,
         WorkflowNodeRunHistoryComponent,
-        WorkflowSidebarRunListComponent,
-        WorkflowSidebarRunNodeComponent,
         WorkflowSidebarCodeComponent,
-        StageStepSummaryComponent,
-        JobStepSummaryComponent,
-        ActionStepSummaryComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
         WorkflowServiceLogComponent,

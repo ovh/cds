@@ -90,7 +90,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
 
     @Output() deleteJoinSrcEvent = new EventEmitter<{ source, target }>();
-    @Output() addSrcToJoinEvent = new EventEmitter<{ source, target }>();
 
     ready: boolean;
     _direction: string;
@@ -183,7 +182,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.render(d3.select('svg g'), this.g);
 
         // Add listener on graph element
-        this.addListener(d3.select('svg'));
         this.svgHeight = this.g.graph().height + 40;
         this.svgWidth = this.g.graph().width;
     }
@@ -206,19 +204,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 .style('stroke-dasharray', '1,0');
             dagreD3['util'].applyStyle(path, edge[type + 'Style']);
         };
-    }
-
-    private addListener(svg: d3.Selection<any>) {
-        svg.selectAll('g.edgePath').on('click', d => {
-            if (this.linkWithJoin) {
-                return;
-            }
-
-            // Node Join Src
-            if (d.v.indexOf('node-') === 0 && d.w.indexOf('join-') === 0) {
-                this.deleteJoinSrcEvent.emit({source: d.v, target: d.w});
-            }
-        });
     }
 
     private calculateDynamicWidth() {
@@ -431,7 +416,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     private getWorkflowJoinDeep(maxDeep: Map<string, number>) {
         if (this.workflow.workflow_data && this.workflow.workflow_data.joins) {
-            for (let i = 0; i < this.workflow.joins.length; i++) {
+            for (let i = 0; i < this.workflow.workflow_data.joins.length; i++) {
                 this.workflow.workflow_data.joins.forEach(j => {
 
                     let canCheck = true;

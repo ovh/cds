@@ -8,8 +8,8 @@
               (click)="goToEditNode()">
               <i class="pencil icon float"></i>
             </a>
-            <div class="sub header">
-              <span>{{ 'common_pipeline' | translate }} : {{node.pipeline_name}}</span>
+            <div class="sub header" *ngIf="node.context && node.context.pipeline_id">
+              <span>{{ 'common_pipeline' | translate }} : {{workflow.pipelines[node.context.pipeline_id].name}}</span>
             </div>
         </div>
     </h3>
@@ -31,12 +31,12 @@
             *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
             <i class="stop icon"></i>
         </button>
-        <button class="ui icon blue button" [class.disabled]="!displaySummary || !currentWorkflowNodeRun" [title]="'btn_logs' | translate" (click)="displayLogs()">
+        <button class="ui icon blue button" [class.disabled]="!currentWorkflowNodeRun" [title]="'btn_logs' | translate" (click)="displayLogs()">
             <i class="file text icon"></i>
         </button>
       </div>
     </div>
-    <ng-container *ngIf="displaySummary && currentWorkflowNodeRun">
+    <ng-container *ngIf="currentWorkflowNodeRun && currentWorkflowRun">
         <div class="ui list ml5 listmrt">
             <div class="item padding" *ngIf="currentWorkflowNodeRun.tests">
                 <div class="content pointing"
@@ -92,7 +92,7 @@
     </ng-container>
 </div>
 <div class="ui text active loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>
-<ng-container *ngIf="project && node">
+<ng-container *ngIf="project && node && currentWorkflowRun">
     <app-workflow-node-run-param
         [workflow]="workflow"
         [project]="project"

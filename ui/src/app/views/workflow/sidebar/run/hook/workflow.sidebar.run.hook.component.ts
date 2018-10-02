@@ -2,7 +2,7 @@ import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {PipelineStatus} from 'app/model/pipeline.model';
 import {Project} from 'app/model/project.model';
 import {HookStatus, TaskExecution, WorkflowHookTask} from 'app/model/workflow.hook.model';
-import {WNode, WNodeType, WorkflowNode} from 'app/model/workflow.model';
+import {WNode, WNodeType} from 'app/model/workflow.model';
 import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 import {finalize} from 'rxjs/operators';
 import {WNodeHook} from '../../../../../model/workflow.model';
@@ -31,7 +31,7 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     loading = false;
-    node: WorkflowNode;
+    node: WNode;
     hookStatus = HookStatus;
     hookDetails: WorkflowHookTask;
     hook: WNodeHook;
