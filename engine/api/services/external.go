@@ -63,9 +63,9 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 	}
 	var pingURL string
 	if s.HealthPort == "0" || s.HealthPort == "" {
-		pingURL = fmt.Sprintf("%s:%s", s.HealthURL, s.HealthPort)
-	} else {
 		pingURL = s.HealthURL
+	} else {
+		pingURL = fmt.Sprintf("%s:%s", s.HealthURL, s.HealthPort)
 	}
 	_, code, err := doRequest(context.Background(), pingURL, "", "GET", s.HealthPath, nil)
 	if err != nil || code >= 400 {
