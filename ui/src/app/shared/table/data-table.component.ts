@@ -86,7 +86,9 @@ export class DataTableComponent extends Table {
             this.filteredData = this.data.filter(this.filterFunc(this.filter));
         }
 
-        this.dataChange.emit(this.filteredData.length);
+        if (this.filteredData) {
+            this.dataChange.emit(this.filteredData.length);
+        }
 
         return this.filteredData;
     }
