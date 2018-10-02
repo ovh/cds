@@ -117,7 +117,7 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 					versionOk = false
 					linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
 						Status:    sdk.MonitoringStatusWarn,
-						Component: "Global/Version Diff",
+						Component: "Global/Version",
 						Value:     fmt.Sprintf("%s vs %s", version, l.Value),
 					})
 				}
