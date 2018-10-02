@@ -84,6 +84,9 @@ export class ServicesComponent {
                                     m.label.forEach(lb => {
                                         if (lb.name === 'range') {
                                             let global = new Global();
+                                            if (lb.value === 'all') {
+                                                return;
+                                            }
                                             global.name = lb.value;
                                             switch (lb.value) {
                                             case '10_less_10s':
