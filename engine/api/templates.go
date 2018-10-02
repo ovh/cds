@@ -30,7 +30,10 @@ func (api *API) executeTemplateHandler() service.Handler {
 
 		tmpl := tmpls[id]
 
-		res, err := tmpl.Execute()
+		req := workflowtemplate.Request{}
+		tmpl.CheckParams(req)
+
+		res, err := tmpl.Execute(req)
 		if err != nil {
 			return err
 		}

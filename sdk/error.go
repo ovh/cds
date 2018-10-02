@@ -163,6 +163,7 @@ var (
 	ErrWorkerModelDeploymentFailed            = Error{ID: 146, Status: http.StatusBadRequest}
 	ErrJobLocked                              = Error{ID: 147, Status: http.StatusConflict}
 	ErrWorkflowNodeRunLocked                  = Error{ID: 148, Status: http.StatusConflict}
+	ErrInvalidData                            = Error{ID: 149, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -309,9 +310,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowConditionBadOperator.ID:           "Your run conditions have bad operator",
 	ErrColorBadFormat.ID:                         "The format of color isn't correct. You must use hexadecimal format (example: #FFFF)",
 	ErrInvalidHookConfiguration.ID:               "Invalid hook configuration",
-	ErrWorkerModelDeploymentFailed.ID:            "Worker deployment failed",
-	ErrJobLocked.ID:                              "Job already locked",
-	ErrWorkflowNodeRunLocked.ID:                  "Workflow node run already locked",
+	ErrInvalidData.ID:                            "Cannot validate given data",
 }
 
 var errorsFrench = map[int]string{
@@ -458,9 +457,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowConditionBadOperator.ID:           "Opérateur de condition de lancement incorrect",
 	ErrColorBadFormat.ID:                         "Format de la couleur incorrect. Vous devez utiliser le format hexadécimal (exemple: #FFFF)",
 	ErrInvalidHookConfiguration.ID:               "Configuration de hook invalide",
-	ErrWorkerModelDeploymentFailed.ID:            "Échec de déploiement du modèle de worker",
-	ErrJobLocked.ID:                              "Job déjà verrouillé",
-	ErrWorkflowNodeRunLocked.ID:                  "Noeud de workflow run déjà verrouillé",
+	ErrInvalidData.ID:                            "Impossible de valider les données",
 }
 
 var errorsLanguages = []map[int]string{

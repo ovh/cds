@@ -10,14 +10,51 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// CheckParams returns template parameters validity.
+func (t *Template) CheckParams(r Request) error {
+	if r.Name == "" {
+		return sdk.ErrInvalidData
+	}
+
+	for _, p := range t.Parameters {
+		v, ok := r.Parameters[p.Key]
+		if !ok && p.Required {
+			return sdk.ErrInvalidData
+		}
+		if ok {
+			if p.Required && v == "" {
+				return sdk.ErrInvalidData
+			}
+			if p.Type == Boolean && v != "" && !(v == "true" || v == "false") {
+				return sdk.ErrInvalidData
+			}
+		}
+	}
+
+	return nil
+}
+
+func (t *Template) prepareParams(r Request) interface{} {
+	m := map[string]interface{}{}
+	for _, p := range t.Parameters {
+		v, ok := r.Parameters[p.Key]
+		if ok {
+			switch p.Type {
+			case Boolean:
+				m[p.Key] = v == "true"
+			default:
+				m[p.Key] = v
+			}
+		}
+	}
+	return m
+}
+
 // Execute returns yaml file from template.
-func (t *Template) Execute() (Result, error) {
+func (t *Template) Execute(r Request) (Result, error) {
 	data := map[string]interface{}{
-		"params": map[string]interface{}{
-			"name":       "my-workflow",
-			"withDeploy": true,
-			"deployWhen": "failure",
-		},
+		"name":   r.Name,
+		"params": t.prepareParams(r),
 	}
 
 	var res Result

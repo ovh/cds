@@ -11,7 +11,15 @@ import (
 func TestExecuteTemplate(t *testing.T) {
 	tmpl := workflowtemplate.GetAll()
 
-	res, err := tmpl[0].Execute()
+	req := workflowtemplate.Request{
+		Name: "my-workflow",
+		Parameters: map[string]string{
+			"withDeploy": "true",
+			"deployWhen": "failure",
+		},
+	}
+
+	res, err := tmpl[0].Execute(req)
 	assert.Nil(t, err)
 
 	fmt.Println(res.Workflow)
