@@ -411,6 +411,8 @@
   "job_save": "Sauvegarder le job",
   "job_spawn_title": "Informations",
 
+  "monitoring": "Monitoring",
+  
   "navbar_actions": "Actions",
   "navbar_project_create": "Créer un projet",
   "navbar_admin_broadcast": "Informations",
@@ -609,6 +611,8 @@
 
   "provider_hook": "hook",
   "provider_deployment": "déploiement",
+
+  "queue_monitoring": "Queue Monitoring",
 
   "repo_name": "Nom du dépôt",
   "repoman_delete_msg_ok": "Le gestionnaire de dépôt n'est plus lié au projet",

@@ -411,6 +411,8 @@
   "job_save": "Save job",
   "job_spawn_title": "Information",
 
+  "monitoring": "Monitoring",
+  
   "navbar_actions": "Actions",
   "navbar_project_create": "Create a project",
   "navbar_admin_broadcast": "Broadcasts",
@@ -609,6 +611,8 @@
 
   "provider_hook": "hook",
   "provider_deployment": "deployment",
+
+  "queue_monitoring": "Queue Monitoring",
 
   "repo_name": "Repository",
   "repoman_delete_msg_ok": "Repository mananger is detached from the project",
