@@ -1,6 +1,5 @@
 <div *ngIf="!loading; then globalsPart;else loadingPart"></div>
 <ng-template #globalsPart>
-    
     <div class="paddingContent">
         <div class="viewContent">
             <div class="ui grid">
@@ -8,11 +7,11 @@
                     <h1>
                         {{'services_list' | translate}}
                         <div class="right floated">
-                            <div class="ui pointer label" [ngClass]="{'red': globalStatus.status==='AL', 'orange': globalStatus.status==='WARN', 'teal': globalStatus.status==='OK'}" (click)="filter=globalStatus.status;filterChange()">
+                            <div class="ui pointer label" [ngClass]="{'red': globalStatus.status==='AL', 'orange': globalStatus.status==='WARN', 'green': globalStatus.status==='OK'}" (click)="filter=globalStatus.status;filterChange()">
                                 {{globalStatus.name}} {{globalStatus.status}} - {{globalStatus.value}}
                             </div>
 
-                            <div class="ui pointer label" [ngClass]="{'red': globalVersion.status==='AL', 'orange': globalVersion.status==='WARN', 'teal': globalVersion.status==='OK'}" (click)="filter='/Version';filterChange()">
+                            <div class="ui pointer label" [ngClass]="{'red': globalVersion.status==='AL', 'orange': globalVersion.status==='WARN', 'green': globalVersion.status==='OK'}" (click)="filter='/Version';filterChange()">
                                 {{globalVersion.name}} {{globalVersion.status}} - {{globalVersion.value}}
                             </div>
                         </div>
@@ -23,23 +22,40 @@
             <ng-template #globalslist>
                 <div class="ui stackable four cards">
                     <div class="ui card" *ngFor="let g of globals">
-                        <div class="content" >
-                            <div class="ui horizontal label right floated" [ngClass]="{'red': g.status==='AL', 'orange': g.status==='WARN', 'teal': g.status==='OK'}">
+                        <div class="content pointer" suiPopup [popupText]="'filter_list_click' | translate" (click)="filter=g.name;filterChange()" >
+                            <div class="ui horizontal label right floated" [ngClass]="{'red': g.status==='AL', 'orange': g.status==='WARN', 'green': g.status==='OK'}">
                                 {{g.status}}
                             </div>
                             <div class="header" [innerText]="g.name"></div>
-                            <div class="meta" *ngIf="g.value">
-                                  {{g.value}}
-                            </div>
                         </div>
                         <div class="extra content">
-                            <div class="mini ui left labeled button" *ngFor="let srv of g.services">
-                                <a class="ui basic label" suiPopup [popupText]="'filter_list_click' | translate" popupPlacement="top left" (click)="filter=srv.name;filterChange()" [ngClass]="{'red': srv.status==='AL', 'orange': srv.status==='WARN', 'teal': srv.status==='OK'}">
-                                    {{srv.name}}
-                                </a>
-                                <div class="mini ui icon button" [routerLink]="[srv.name]" suiPopup [popupText]="'service_view_details' | translate" popupPlacement="top left">
-                                    <i class="eye icon"></i>
+                            <div class="meta" *ngIf="g.value=='0'">
+                                n/a
+                            </div>
+                            <div class="ui middle aligned divided list" *ngFor="let srv of g.services; index as idx; first as isFirst">
+                                <div class="item" *ngIf="isFirst || displayAll">
+                                    <div class="right floated content">
+                                        <i class="filter icon pointer" suiPopup [popupText]="'filter_list_click' | translate" popupPlacement="top left" (click)="filter=srv.name;filterChange()"></i>
+                                    </div>
+                                    <div class="content">
+                                        <a class="ui basic" [routerLink]="[srv.name]" suiPopup [popupText]="'service_view_details' | translate">
+                                            <ng-container [ngSwitch]="srv.status">
+                                                <i class="check green icon" *ngSwitchCase="'OK'" title="{{srv.status}}"></i>
+                                                <i class="remove red icon" *ngSwitchCase="'AL'" title="{{srv.status}}"></i>
+                                                <i class="warning sign icon orange" *ngSwitchCase="'WARN'" title="{{srv.status}}"></i>
+                                            </ng-container>
+                                            {{srv.name}}
+                                        </a>
+                                    </div>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="ui bottom attached button" *ngIf="g.value>1">
+                            <div class="meta pointer" *ngIf="!displayAll" (click)="displayAll=!displayAll">
+                                {{g.value}} {{'services' | translate}} - {{'services_see_all' | translate}}
+                            </div>
+                            <div class="meta pointer" *ngIf="displayAll" (click)="displayAll=!displayAll">
+                                {{'services_minimize' | translate}}
                             </div>
                         </div>
                     </div>
@@ -70,7 +86,6 @@
                         </tr>
                     </tbody>
                 </table>
-
             </ng-template>
             <ng-template #noglobalslist>
                 <span translate="service_no"></span>

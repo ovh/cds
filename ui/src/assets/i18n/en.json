@@ -669,7 +669,10 @@
 
   "settings_tips": "Tips",
 
+  "services": "services",
   "services_list": "CDS Services",
+  "services_see_all": "see all",
+  "services_minimize": "Minimize",
   "service_view_details": "Voir les details",
   "service_details": "Service",
   "service_binary_not_up_to_date": "this service is not up to date, need update",
