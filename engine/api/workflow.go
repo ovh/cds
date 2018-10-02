@@ -285,6 +285,10 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot read body")
 		}
 
+		if err := workflow.RenameNode(api.mustDB(), &wf); err != nil {
+			return sdk.WrapError(err, "postWorkflowHandler> Cannot rename node")
+		}
+
 		(&wf).RetroMigrate()
 
 		wf.ProjectID = p.ID

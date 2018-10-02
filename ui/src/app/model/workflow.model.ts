@@ -222,6 +222,18 @@ export class Workflow {
         }
     }
 
+    static getMapNodes(data: Workflow): Map<number, WNode> {
+        let nodes = new Map<number, WNode>();
+        nodes = WNode.getMapNodes(nodes, data.workflow_data.node);
+
+        if (data.workflow_data.joins) {
+            data.workflow_data.joins.forEach(j => {
+                nodes = WNode.getMapNodes(nodes, data.workflow_data.node);
+            });
+        }
+        return nodes;
+    }
+
     static getMapNodesRef(data: Workflow): Map<string, WNode> {
         let nodes = new Map<string, WNode>();
         nodes = WNode.getMapNodesRef(nodes, data.workflow_data.node);
@@ -288,51 +300,6 @@ export class Workflow {
         }
     }
 
-    ///// MIGRATE
-
-    static updateHook(workflow: Workflow, h: WNodeHook) {
-        let oldH = WorkflowNode.findHook(workflow.root, h.id);
-        if (!oldH) {
-            if (workflow.joins) {
-                quit: for (let i = 0; i < workflow.joins.length; i++) {
-                    let j = workflow.joins[i];
-                    if (j.triggers) {
-                        for (let k = 0; k < j.triggers.length; k++) {
-                            oldH = WorkflowNode.findHook(j.triggers[k].workflow_dest_node, h.id);
-                            if (oldH) {
-                                break quit;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        if (oldH) {
-            oldH.config = h.config;
-        }
-    };
-
-    static removeHook(workflow: Workflow, h: WNodeHook) {
-        let done = WorkflowNode.removeHook(workflow.root, h.id);
-        if (!done) {
-            if (workflow.joins) {
-                for (let i = 0; i < workflow.joins.length; i++) {
-                    let j = workflow.joins[i];
-                    if (j.triggers) {
-                        for (let k = 0; k < j.triggers.length; k++) {
-                            done = WorkflowNode.removeHook(j.triggers[k].workflow_dest_node, h.id);
-                            if (done) {
-                                return
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return
-    }
-
     static getNodeNameImpact(workflow: Workflow, name: string): WorkflowPipelineNameImpact {
         let warnings = new WorkflowPipelineNameImpact();
         WNode.getNodeNameImpact(workflow.workflow_data.node, name, warnings);
@@ -344,21 +311,24 @@ export class Workflow {
         return warnings;
     }
 
-    static getMapNodes(data: Workflow): Map<number, WorkflowNode> {
-        let nodes = new Map<number, WorkflowNode>();
-        nodes = WorkflowNode.getMapNodes(nodes, data.root);
-
-        if (data.joins) {
-            data.joins.forEach(j => {
+    static getAllHooks(workflow: Workflow): Array<WNodeHook> {
+        let res = WNode.getAllHooks(workflow.workflow_data.node);
+        if (workflow.workflow_data.joins) {
+            workflow.workflow_data.joins.forEach(j => {
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        nodes = WorkflowNode.getMapNodes(nodes, t.workflow_dest_node);
-                    });
+                        let hooks = WNode.getAllHooks(t.child_node);
+                        if (hooks) {
+                            res = res.concat(hooks)
+                        }
+                    })
                 }
-            });
+            })
         }
-        return nodes;
+        return res;
     }
+
+    ///// MIGRATE
 
     static getParentNodeIds(workflow: Workflow, currentNodeID: number): number[] {
         // TODO
@@ -439,37 +409,6 @@ export class Workflow {
         return {found: false};
     }
 
-    static removeNodeInNotifications(workflow: Workflow, node: WorkflowNode): Workflow {
-        if (!Array.isArray(workflow.notifications) || !workflow.notifications.length) {
-            return workflow;
-        }
-
-        workflow.notifications = workflow.notifications.map((notif) => {
-            notif.source_node_id = notif.source_node_id.filter((srcId) => srcId !== node.id);
-            notif.source_node_ref = notif.source_node_ref.filter((ref) => ref !== node.ref);
-            return notif;
-        });
-
-        return workflow;
-    }
-
-    static getAllHooks(workflow: Workflow): Array<WNodeHook> {
-        let res = WNode.getAllHooks(workflow.workflow_data.node);
-        if (workflow.workflow_data.joins) {
-            workflow.workflow_data.joins.forEach(j => {
-                if (j.triggers) {
-                    j.triggers.forEach(t => {
-                        let hooks = WNode.getAllHooks(t.child_node);
-                        if (hooks) {
-                            res = res.concat(hooks)
-                        }
-                    })
-                }
-            })
-        }
-        return res;
-    }
-
     constructor() {
         this.root = new WorkflowNode();
         this.workflow_data = new WorkflowData();
@@ -514,68 +453,6 @@ export class WorkflowNode {
     outgoing_hooks: Array<WorkflowNodeOutgoingHook>;
     triggers: Array<WorkflowNodeTrigger>;
 
-    static removeHook(n: WorkflowNode, id: number): boolean {
-        if (n.hooks) {
-            let lengthBefore = n.hooks.length;
-            n.hooks = n.hooks.filter(h => h.id !== id);
-            if (lengthBefore !== n.hooks.length) {
-                return true;
-            }
-        }
-        if (n.triggers) {
-            for (let i = 0; i < n.triggers.length; i++) {
-                let h = WorkflowNode.removeHook(n.triggers[i].workflow_dest_node, id);
-                if (h) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    static findHook(n: WorkflowNode, id: number): WorkflowNodeHook {
-        if (n.hooks) {
-            for (let i = 0; i < n.hooks.length; i++) {
-                if (n.hooks[i].id === id) {
-                    return n.hooks[i];
-                }
-            }
-            if (n.triggers) {
-                for (let i = 0; i < n.triggers.length; i++) {
-                    let h = WorkflowNode.findHook(n.triggers[i].workflow_dest_node, id);
-                    if (h) {
-                        return h;
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    static getMapNodes(map: Map<number, WorkflowNode>, n: WorkflowNode): Map<number, WorkflowNode> {
-        let smallNode = new WorkflowNode();
-        smallNode.id = n.id;
-        smallNode.name = n.name;
-        map.set(n.id, smallNode);
-
-        if (n.triggers) {
-            n.triggers.forEach(t => {
-                map = WorkflowNode.getMapNodes(map, t.workflow_dest_node);
-            });
-        }
-
-        if (n.outgoing_hooks) {
-            for (let i = 0; i < n.outgoing_hooks.length; i++) {
-                if (n.outgoing_hooks[i].triggers) {
-                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
-                        map = WorkflowNode.getMapNodes(map, n.outgoing_hooks[i].triggers[j].workflow_dest_node);
-                    }
-                }
-            }
-        }
-
-        return map;
-    }
 
     static getAllHooks(n: WorkflowNode): Array<WorkflowNodeHook> {
         let res = n.hooks;
@@ -849,6 +726,16 @@ export class WNode {
             });
         }
         return j;
+    }
+
+    static getMapNodes(nodes: Map<number, WNode>, node: WNode): Map<number, WNode> {
+        nodes.set(node.id, node);
+        if (node.triggers) {
+            node.triggers.forEach(t => {
+                nodes = WNode.getMapNodes(nodes, t.child_node);
+            });
+        }
+        return nodes;
     }
 
     static getMapNodesRef(nodes: Map<string, WNode>, node: WNode): Map<string, WNode> {

@@ -533,10 +533,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.ErrWorkflowInvalidRoot
 	}
 
-	if err := RenameNode(db, w); err != nil {
-		return sdk.WrapError(err, "Insert> Cannot rename node")
-	}
-
 	if errIN := insertNode(db, store, w, w.Root, u, false); errIN != nil {
 		return sdk.WrapError(errIN, "Insert> Unable to insert workflow root node")
 	}
@@ -607,12 +603,14 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	for i := range nodes {
 		if nodes[i].Name == "" {
 			nodesToNamed = append(nodesToNamed, nodes[i])
-			continue
 		}
 
 		switch nodes[i].Type {
 		case sdk.NodeTypePipeline:
-			pip, has := w.Pipelines[nodes[i].Context.PipelineID]
+			if w.Pipelines == nil {
+				w.Pipelines = make(map[int64]sdk.Pipeline)
+			}
+			_, has := w.Pipelines[nodes[i].Context.PipelineID]
 			if !has {
 				p, errPip := pipeline.LoadPipelineByID(context.TODO(), db, nodes[i].Context.PipelineID, true)
 				if errPip != nil {
@@ -622,8 +620,24 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 					w.Pipelines = make(map[int64]sdk.Pipeline)
 				}
 				w.Pipelines[nodes[i].Context.PipelineID] = *p
-				pip = *p
 			}
+		case sdk.NodeTypeOutGoingHook:
+			if w.OutGoingHookModels == nil {
+				w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
+			}
+			_, has := w.OutGoingHookModels[nodes[i].OutGoingHookContext.HookModelID]
+			if !has {
+				m, errM := LoadOutgoingHookModelByID(db, nodes[i].OutGoingHookContext.HookModelID)
+				if errM != nil {
+					return sdk.WrapError(errM, "renameNode> Unable to load outgoing hook model %d", nodes[i].OutGoingHookContext.HookModelID)
+				}
+				w.OutGoingHookModels[nodes[i].OutGoingHookContext.HookModelID] = *m
+			}
+		}
+
+		switch nodes[i].Type {
+		case sdk.NodeTypePipeline:
+			pip := w.Pipelines[nodes[i].Context.PipelineID]
 			// Check if node is named pipName_12
 			if nodes[i].Name == pip.Name || strings.HasPrefix(nodes[i].Name, pip.Name+"_") {
 				var pipNumber = 0
@@ -701,7 +715,6 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 
 	// Name node
 	for i := range nodesToNamed {
-		log.Warning("%s", nodesToNamed[i].Type)
 		switch nodesToNamed[i].Type {
 		case sdk.NodeTypePipeline:
 			pipID := nodesToNamed[i].Context.PipelineID
@@ -717,8 +730,6 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			hookModelID := nodesToNamed[i].OutGoingHookContext.HookModelID
 			nodesToNamed[i].Name = fmt.Sprintf("%s_%d", w.OutGoingHookModels[hookModelID].Name, maxNumberByHookModel[hookModelID]+1)
 			maxNumberByHookModel[hookModelID] = maxNumberByHookModel[hookModelID] + 1
-			log.Warning("%s", nodesToNamed[i].Name)
-
 		}
 		if nodesToNamed[i].Ref == "" {
 			nodesToNamed[i].Ref = nodesToNamed[i].Name
@@ -800,6 +811,18 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		w.Icon = oldWorkflow.Icon
 	}
 
+	// TODO: DELETE in step 3: Synchronize HOOK datas
+	hooks := w.GetHooks()
+	w.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
+	for _, h := range hooks {
+		w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
+			Ref:         h.Ref,
+			HookModelID: h.WorkflowHookModelID,
+			Config:      h.Config,
+			UUID:        h.UUID,
+		})
+	}
+
 	if err := InsertWorkflowData(db, w); err != nil {
 		return sdk.WrapError(err, "Update> Unable to insert workflow data")
 	}
@@ -847,6 +870,10 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 	//Delete root
 	if err := deleteNode(db, w, w.Root); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to delete workflow root")
+	}
+
+	if err := DeleteWorkflowData(db, *w); err != nil {
+		return sdk.WrapError(err, "Delete> Unable to delete workflow data")
 	}
 
 	//Delete workflow
