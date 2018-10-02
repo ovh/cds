@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -48,6 +49,10 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 	var serv service
 	query := `select * from services where name = $1 for update nowait`
 	if err := db.SelectOne(&serv, query, s.Name); err != nil {
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == "55P03" {
+			log.Debug("services.ping> Unable to lock service %s: %v", s.Name, err)
+			return nil
+		}
 		log.Warning("services.ping> Unable to lock service %s: %v", s.Name, err)
 		return err
 	}
