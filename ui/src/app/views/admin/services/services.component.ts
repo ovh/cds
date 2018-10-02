@@ -105,7 +105,7 @@ export class ServicesComponent {
                                                 global.name = '<10min';
                                                 break;
                                             case '70_more_10min':
-                                                global.name = '< 10min';
+                                                global.name = '> 10min';
                                                 break;
                                             default:
                                                 global.name = lb.value;
