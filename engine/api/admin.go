@@ -36,6 +36,11 @@ func (api *API) getAdminServicesHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getAdminServicesHandler")
 		}
+		for i := range srvs {
+			srv := &srvs[i]
+			srv.Hash = ""
+			srv.Token = ""
+		}
 		return service.WriteJSON(w, srvs, http.StatusOK)
 	}
 }
