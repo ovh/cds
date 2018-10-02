@@ -119,7 +119,7 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 			}
 			s.Service.LastHeartbeat = oldSrv.LastHeartbeat
 			s.Service.MonitoringStatus = oldSrv.MonitoringStatus
-			s.Service.Config = oldSrv.Config
+			s.Service.Config = s
 			if err := Update(tx, &s.Service); err != nil {
 				_ = tx.Rollback()
 				return fmt.Errorf("InitExternal> unable to update external service: %v", err)
