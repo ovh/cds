@@ -32,14 +32,11 @@ func (api *API) getMetricsHandler() service.Handler {
 		header.Set("Content-Length", fmt.Sprint(writer.Len()))
 
 		contentTypeRequested := r.Header.Get("Content-Type")
-		fmt.Println("###############")
-		fmt.Printf("#contentTypeRequested : %s\n", contentTypeRequested)
-		fmt.Println("###############")
 		switch contentTypeRequested {
 		case "application/json":
 			return service.WriteJSON(w, mfs, http.StatusOK)
 		default:
-			w.Write(writer.Bytes())
+			w.Write(writer.Bytes()) // nolint
 		}
 		return nil
 	}
