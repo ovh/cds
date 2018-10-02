@@ -429,6 +429,10 @@ func (api *API) InitRouter() {
 	r.Handle("/services/register", r.POST(api.postServiceRegisterHandler, Auth(false)))
 	r.Handle("/services/{type}", r.GET(api.getExternalServiceHandler, NeedWorker()))
 
+	// Templates
+	r.Handle("/templates", r.GET(api.getTemplatesHandler, Auth(false)))          // TODO remove auth false
+	r.Handle("/templates/{id}", r.POST(api.executeTemplateHandler, Auth(false))) // TODO remove auth false
+
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 }
