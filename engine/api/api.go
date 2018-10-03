@@ -133,8 +133,8 @@ type Configuration struct {
 	Features struct {
 		Izanami struct {
 			APIURL       string `toml:"apiurl" json:"apiurl"`
-			ClientID     string `toml:"clientid" json:"clientid"`
-			ClientSecret string `toml:"clientsecret" json:"clientsecret"`
+			ClientID     string `toml:"clientid" json:"-"`
+			ClientSecret string `toml:"clientsecret" json:"-"`
 			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
 		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami" json:"izanami"`
 	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################" json:"features"`
