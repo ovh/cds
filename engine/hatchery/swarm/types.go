@@ -27,7 +27,7 @@ type HatcheryConfiguration struct {
 	// DockerOpts Docker options
 	DockerOpts string `mapstructure:"dockerOpts" toml:"dockerOpts" default:"" commented:"true" comment:"Docker Options. --add-host and --privileged supported. Example: dockerOpts=\"--add-host=myhost:x.x.x.x,myhost2:y.y.y.y --privileged\"" json:"dockerOpts"`
 
-	DockerEngines map[string]DockerEngineConfiguration `mapstructure:"dockerEngines" toml:"dockerEngines" comment:"List of Docker Engines" json:"dockerEngines"`
+	DockerEngines map[string]DockerEngineConfiguration `mapstructure:"dockerEngines" toml:"dockerEngines" comment:"List of Docker Engines" json:"dockerEngines,omitempty"`
 }
 
 // HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
@@ -47,7 +47,7 @@ type dockerClient struct {
 // DockerEngineConfiguration is a configuration to be able to connect to a docker engine
 type DockerEngineConfiguration struct {
 	Host                  string `mapstructure:"host" toml:"host" comment:"DOCKER_HOST" json:"host"`                                                                        // DOCKER_HOST
-	CertPath              string `mapstructure:"certPath" toml:"certPath" comment:"DOCKER_CERT_PATH" json:"certPath"`                                                       // DOCKER_CERT_PATH
+	CertPath              string `mapstructure:"certPath" toml:"certPath" comment:"DOCKER_CERT_PATH" json:"-"`                                                              // DOCKER_CERT_PATH
 	InsecureSkipTLSVerify bool   `mapstructure:"insecureSkipTLSVerify" toml:"insecureSkipTLSVerify" comment:"DOCKER_INSECURE_SKIP_TLS_VERIFY" json:"insecureSkipTLSVerify"` // !DOCKER_TLS_VERIFY
 	TLSCAPEM              string `mapstructure:"TLSCAPEM" toml:"TLSCAPEM" comment:"content of your ca.pem" json:"-"`
 	TLSCERTPEM            string `mapstructure:"TLSCERTPEM" toml:"TLSCERTPEM" comment:"content of your cert.pem" json:"-"`

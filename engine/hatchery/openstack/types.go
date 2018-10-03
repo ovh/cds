@@ -18,10 +18,10 @@ type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
 
 	// Tenant openstack-tenant
-	Tenant string `mapstructure:"tenant" toml:"tenant" default:"" commented:"false" comment:"Openstack Tenant, generally value of $OS_TENANT_NAME, v2 auth only" json:"-"`
+	Tenant string `mapstructure:"tenant" toml:"tenant" default:"" commented:"false" comment:"Openstack Tenant, generally value of $OS_TENANT_NAME, v2 auth only" json:"tenant,omitempty"`
 
 	// Domain openstack-domain
-	Domain string `mapstructure:"domain" toml:"domain" default:"" commented:"true" comment:"Openstack Domain, generally value of $OS_DOMAIN_NAME, v3 auth only" json:"domain"`
+	Domain string `mapstructure:"domain" toml:"domain" default:"" commented:"true" comment:"Openstack Domain, generally value of $OS_DOMAIN_NAME, v3 auth only" json:"domain,omitempty"`
 
 	// User  openstack-user
 	User string `mapstructure:"user" toml:"user" default:"" commented:"false" comment:"Openstack User" json:"user"`
@@ -36,10 +36,10 @@ type HatcheryConfiguration struct {
 	Region string `mapstructure:"region" toml:"region" default:"" commented:"false" comment:"Openstack Region" json:"region"`
 
 	// NetworkString openstack-network
-	NetworkString string `mapstructure:"networkString" toml:"networkString" default:"Ext-Net" commented:"false" comment:"Hatchery will use this Network to spawn CDS Worker (Virtual Machine)." json:"networkString"`
+	NetworkString string `mapstructure:"networkString" toml:"networkString" default:"Ext-Net" commented:"false" comment:"Hatchery will use this Network to spawn CDS Worker (Virtual Machine)." json:"networkString,omitempty"`
 
 	// IPRange IP Range
-	IPRange string `mapstructure:"iprange" toml:"iprange" default:"" commented:"false" comment:"Facultative. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).\nIf not set, it will get an address from the neutron service" json:"iprange"`
+	IPRange string `mapstructure:"iprange" toml:"iprange" default:"" commented:"false" comment:"Facultative. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).\nIf not set, it will get an address from the neutron service" json:"iprange,omitempty"`
 
 	// WorkerTTL Worker TTL (minutes)
 	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"30" commented:"false" comment:"Worker TTL (minutes)" json:"workerTTL"`
