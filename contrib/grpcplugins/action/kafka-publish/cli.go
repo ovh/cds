@@ -30,12 +30,6 @@ func initCli(mainFunc func()) *cli.App {
 				Action:    helpAction,
 			},
 			cli.Command{
-				Name:    "info",
-				Aliases: []string{"i"},
-				Usage:   "Show CDS Plugin information",
-				Action:  infoAction,
-			},
-			cli.Command{
 				Name:      "listen",
 				Aliases:   []string{"l"},
 				Usage:     "Listen a Kafka topic and wait for chunks",

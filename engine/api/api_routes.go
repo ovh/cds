@@ -57,11 +57,6 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/services", r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
 	r.Handle("/admin/services/call", r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
 
-	// Action plugin
-	r.Handle("/plugin", r.POST(api.addPluginHandler, NeedAdmin(true)), r.PUT(api.updatePluginHandler, NeedAdmin(true)))
-	r.Handle("/plugin/{name}", r.DELETE(api.deletePluginHandler, NeedAdmin(true)))
-	r.Handle("/plugin/download/{name}", r.GET(api.downloadPluginHandler))
-
 	// Download file
 	r.Handle("/download", r.GET(api.downloadsHandler))
 	r.Handle("/download/{name}/{os}/{arch}", r.GET(api.downloadHandler, Auth(false)))

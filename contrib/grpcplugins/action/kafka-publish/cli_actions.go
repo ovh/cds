@@ -12,7 +12,6 @@ import (
 	"gopkg.in/urfave/cli.v1"
 
 	"github.com/ovh/cds/contrib/grpcplugins/action/kafka-publish/kafkapublisher"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 //This shows the help
@@ -23,12 +22,6 @@ func helpAction(c *cli.Context) error {
 	}
 
 	_ = cli.ShowAppHelp(c)
-	return nil
-}
-
-//This shows information about the plugin
-func infoAction(c *cli.Context) error {
-	fmt.Print(plugin.InfoMarkdown(&KafkaPlugin{}))
 	return nil
 }
 
