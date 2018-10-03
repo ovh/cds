@@ -26,7 +26,7 @@ const (
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
-func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
+func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.RunFromHook")
 	defer end()
@@ -72,6 +72,11 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 		// Add ass code spawn info
 		for _, msg := range asCodeMsg {
 			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
+		}
+
+		ok, has := p.Features[feature.FeatDisabledWNode]
+		if has && !ok && wr.Workflow.WorkflowData != nil {
+			wr.Version = 2
 		}
 
 		//Insert it

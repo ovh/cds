@@ -540,8 +540,8 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		var env sdk.Environment
 		var node *sdk.Node
 		var wNode *sdk.WorkflowNode
-		if wfRun != nil && wfRun.Version < 2 {
-			wNode = wfRun.Workflow.GetNodeByName(nodeName)
+		if wfRun == nil || wfRun.Version < 2 {
+			wNode = wf.GetNodeByName(nodeName)
 			if wNode == nil {
 				return sdk.WrapError(sdk.ErrNotFound, "getWorkflowCommitsHandler> Unable to load workflow node context")
 			}
@@ -554,8 +554,8 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			if wNode.Context != nil && wNode.Context.Environment != nil {
 				env = *wNode.Context.Environment
 			}
-		} else {
-			node = wfRun.Workflow.WorkflowData.NodeByName(nodeName)
+		} else if wfRun != nil && wfRun.Version == 2 {
+			node = wf.WorkflowData.NodeByName(nodeName)
 			if node == nil {
 				return sdk.WrapError(sdk.ErrNotFound, "getWorkflowCommitsHandler> Unable to load workflow data node")
 			}
@@ -946,7 +946,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 
 	//Run from hook
 	if opts.Hook != nil {
-		_, r1, err := workflow.RunFromHook(ctx, db, tx, store, p, wf, opts.Hook, asCodeInfos)
+		_, r1, err := workflow.RunFromHook(ctx, tx, store, p, wf, opts.Hook, asCodeInfos)
 		if err != nil {
 			return nil, sdk.WrapError(err, "startWorkflowRun> Unable to run workflow from hook")
 		}
