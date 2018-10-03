@@ -21,13 +21,15 @@ import (
 func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (bool, error) {
 	info, err := w.client.QueueTakeJob(job, w.bookedWJobID == job.ID)
 	if err != nil {
-		return true, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can work on another job.")
+		if w.bookedWJobID == job.ID {
+			return false, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can't work on another job.")
+		} else {
+			return true, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can work on another job.")
+		}
 	}
 	t := ""
 	if w.bookedWJobID == job.ID {
 		t = ", this was my booked job"
-	} else if w.bookedWJobID > 0 {
-		return false, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker didn't find booked job, can't work on another job.")
 	}
 	log.Info("takeWorkflowJob> Job %d taken%s", job.ID, t)
 
