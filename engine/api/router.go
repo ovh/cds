@@ -488,7 +488,7 @@ func EnableTracing() HandlerConfigParam {
 	return f
 }
 
-func notFoundHandler(w http.ResponseWriter, req *http.Request) {
+func NotFoundHandler(w http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	defer func() {
 		end := time.Now()
