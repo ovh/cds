@@ -517,14 +517,14 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	parentStatus := sdk.StatusSuccess.String()
 	run.SourceNodeRuns = sourceNodeRuns
+	runs := []*sdk.WorkflowNodeRun{}
 	if sourceNodeRuns != nil {
 		//Get all the nodeRun from the sources
-		runs := []sdk.WorkflowNodeRun{}
 		for _, id := range sourceNodeRuns {
 			for _, v := range w.WorkflowNodeRuns {
 				for _, run := range v {
 					if id == run.ID {
-						runs = append(runs, run)
+						runs = append(runs, &run)
 						if run.Status == sdk.StatusFail.String() || run.Status == sdk.StatusStopped.String() {
 							parentStatus = run.Status
 						}
@@ -658,9 +658,9 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	run.BuildParameters = append(run.BuildParameters, jobParams...)
 
 	// Inherit parameter from parent job
-	if len(sourceNodeRuns) > 0 {
+	if len(runs) > 0 {
 		_, next := observability.Span(ctx, "workflow.getParentParameters")
-		parentsParams, errPP := getParentParameters(db, w, run, sourceNodeRuns, runPayload)
+		parentsParams, errPP := getParentParameters(w, runs, runPayload)
 		next()
 		if errPP != nil {
 			return report, false, sdk.WrapError(errPP, "processWorkflowNodeRun> getParentParameters failed")
