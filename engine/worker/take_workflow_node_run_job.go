@@ -26,6 +26,8 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	t := ""
 	if w.bookedWJobID == job.ID {
 		t = ", this was my booked job"
+	} else if w.bookedWJobID > 0 {
+		return false, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker didn't find booked job, can't work on another job.")
 	}
 	log.Info("takeWorkflowJob> Job %d taken%s", job.ID, t)
 
