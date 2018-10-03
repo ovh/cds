@@ -1,0 +1,68 @@
+
+
+<div *ngIf="!loading; then servicePart;else loadingPart"></div>
+<ng-template #servicePart>
+    <h2>{{ 'service_details' | translate }} {{service.type}} - {{service.name}} </h2>
+
+    <div class="ui red message" *ngIf="service.status==='AL'">
+        {{'service_alert' | translate}}
+    </div>
+
+    <div class="ui orange message" *ngIf="service.status==='WARN'">
+        {{'service_warning' | translate}}
+    </div>
+
+    <div class="ui green message" *ngIf="service.status==='OK'">
+        {{'service_ok' | translate}}
+    </div>
+
+    <h4>Group</h4>
+    <p *ngIf="service.group">
+        <a sm-item href="#" [routerLink]="['/settings', 'group', service.group.name]">{{service.group.name}}</a>
+    </p>
+
+    <h4>Heartbeat</h4>
+    <p>
+        <span suiPopup [popupText]="service.last_heartbeat| date:'short'" popupPlacement="top left">{{service.last_heartbeat | amTimeAgo}}</span>
+    </p>
+
+    <h4 *ngIf="service.version">Version</h4>
+    <p *ngIf="service.version">
+        {{service.version}}
+        <span class="ui red tag label" *ngIf="!service.up_to_date">{{'service_binary_not_up_to_date' | translate}}</span>
+        <span class="ui teal tag label" *ngIf="service.up_to_date">{{'service_binary_up_to_date' | translate}}</span>
+    </p>
+
+    <div class="ui two column grid">
+        <div class="column">
+            <h4>Configuration</h4>
+            <codemirror
+                [(ngModel)]="config"
+                [config]="codeMirrorConfig"
+                #textareaCodeMirror>
+            </codemirror>
+        </div>
+        <div class="column">
+            <h4>Status</h4>
+            <table class="ui definition table">
+                <tbody>
+                    <tr *ngFor="let line of service.monitoring_status.lines" [ngClass]="{'error': line.status==='AL', 'warning': line.status==='WARN', 'positive': line.status==='WARN'}">
+                        <td>
+                            {{line.component}}
+                        </td>
+                        <td>
+                            {{line.status}}
+                        </td>
+                        <td>
+                            {{line.value}}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</ng-template>
+<ng-template #loadingPart>
+    <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
+</ng-template>
+

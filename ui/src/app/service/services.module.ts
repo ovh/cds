@@ -47,6 +47,7 @@ import {RepoManagerService} from './repomanager/project.repomanager.service';
 import {RequirementService} from './requirement/requirement.service';
 import {RequirementStore} from './requirement/requirement.store';
 import {RouterService} from './router/router.service';
+import {ServiceService} from './service/service.service';
 import {TimelineService} from './timeline/timeline.service';
 import {TimelineStore} from './timeline/timeline.store';
 import {UserService} from './user/user.service';
@@ -112,6 +113,7 @@ export class ServicesModule {
                 RequirementStore,
                 RequirementService,
                 RouterService,
+                ServiceService,
                 TimelineService,
                 TimelineStore,
                 UserService,
@@ -179,6 +181,7 @@ export {
     RepoManagerService,
     RequirementStore,
     RouterService,
+    ServiceService,
     TimelineStore,
     UserService,
     VariableService,

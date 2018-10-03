@@ -140,6 +140,9 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 		Type:             services.TypeAPI,
 		Config:           api.Config,
 	}
+	if group.SharedInfraGroup != nil {
+		srv.GroupID = &group.SharedInfraGroup.ID
+	}
 
 	//Try to find the service, and keep; else generate a new one
 	oldSrv, errOldSrv := services.FindByName(tx, srv.Name)

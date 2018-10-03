@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -48,6 +49,10 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 	var serv service
 	query := `select * from services where name = $1 for update nowait`
 	if err := db.SelectOne(&serv, query, s.Name); err != nil {
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == "55P03" {
+			log.Debug("services.ping> Unable to lock service %s: %v", s.Name, err)
+			return nil
+		}
 		log.Warning("services.ping> Unable to lock service %s: %v", s.Name, err)
 		return err
 	}
@@ -61,7 +66,13 @@ func ping(db gorp.SqlExecutor, s sdk.ExternalService) error {
 			},
 		},
 	}
-	_, code, err := doRequest(context.Background(), fmt.Sprintf("%s:%s", s.HealthURL, s.HealthPort), "", "GET", s.HealthPath, nil)
+	var pingURL string
+	if s.HealthPort == "0" || s.HealthPort == "" {
+		pingURL = s.HealthURL
+	} else {
+		pingURL = fmt.Sprintf("%s:%s", s.HealthURL, s.HealthPort)
+	}
+	_, code, err := doRequest(context.Background(), pingURL, "", "GET", s.HealthPath, nil)
 	if err != nil || code >= 400 {
 		mon.Lines[0].Status = sdk.MonitoringStatusWarn
 		mon.Lines[0].Value = "Health: KO"
@@ -90,6 +101,7 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 
 		if oldSrv == nil {
 			s.Service.LastHeartbeat = time.Now()
+			s.Service.Config = s
 			if err := Insert(db, &s.Service); err != nil {
 				return fmt.Errorf("InitExternal> unable to insert external service: %v", err)
 			}
@@ -107,6 +119,7 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 			}
 			s.Service.LastHeartbeat = oldSrv.LastHeartbeat
 			s.Service.MonitoringStatus = oldSrv.MonitoringStatus
+			s.Service.Config = s
 			if err := Update(tx, &s.Service); err != nil {
 				_ = tx.Rollback()
 				return fmt.Errorf("InitExternal> unable to update external service: %v", err)

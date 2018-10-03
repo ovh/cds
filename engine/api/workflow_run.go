@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -693,7 +694,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				var errCreate error
 				asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, u, project.DecryptWithBuiltinKey)
 				if errCreate != nil {
-					return sdk.WrapError(errCreate, "postWorkflowRunHandler> Unable to get workflow from repository")
+					var msgListString string
+					if len(asCodeInfosMsg) > 0 {
+						msgListString = strings.Join(translate(r, asCodeInfosMsg), " ")
+					}
+					return sdk.WrapError(errCreate, "postWorkflowRunHandler> Unable to get workflow from repository.%s", msgListString)
 				}
 			} else {
 				var errl error
