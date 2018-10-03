@@ -411,6 +411,8 @@
   "job_save": "Save job",
   "job_spawn_title": "Information",
 
+  "monitoring": "Monitoring",
+
   "navbar_actions": "Actions",
   "navbar_project_create": "Create a project",
   "navbar_admin_broadcast": "Broadcasts",
@@ -610,6 +612,8 @@
   "provider_hook": "hook",
   "provider_deployment": "deployment",
 
+  "queue_monitoring": "Queue Monitoring",
+
   "repo_name": "Repository",
   "repoman_delete_msg_ok": "Repository mananger is detached from the project",
   "repoman_name": "Repository manager",
@@ -669,11 +673,12 @@
 
   "settings_tips": "Tips",
 
+  "services": "services",
   "services_list": "CDS Services",
+  "services_see_all": "see all",
+  "services_minimize": "Minimize",
   "service_view_details": "Voir les details",
   "service_details": "Service",
-  "service_binary_not_up_to_date": "this service is not up to date, need update",
-  "service_binary_up_to_date": "this service is up to date",
   "service_group": "Group",
   "service_alert": "Status Alert - please check status below",
   "service_warning": "Status Warning - please check status below",

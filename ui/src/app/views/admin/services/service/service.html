@@ -29,8 +29,6 @@
     <h4 *ngIf="service.version">Version</h4>
     <p *ngIf="service.version">
         {{service.version}}
-        <span class="ui red tag label" *ngIf="!service.up_to_date">{{'service_binary_not_up_to_date' | translate}}</span>
-        <span class="ui teal tag label" *ngIf="service.up_to_date">{{'service_binary_up_to_date' | translate}}</span>
     </p>
 
     <div class="ui two column grid">
