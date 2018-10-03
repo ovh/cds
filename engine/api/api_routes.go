@@ -428,5 +428,5 @@ func (api *API) InitRouter() {
 	r.Handle("/services/{type}", r.GET(api.getExternalServiceHandler, NeedWorker()))
 
 	//Not Found handler
-	r.Mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 }
