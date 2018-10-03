@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/user"
@@ -516,11 +515,6 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 			if err := hook.DeleteHook(tx, h.ID); err != nil {
 				return sdk.WrapError(err, "detachRepositoriesManager> Cannot get hook")
 			}
-		}
-
-		// Remove reposmanager poller
-		if err := poller.DeleteAll(tx, app.ID); err != nil {
-			return sdk.WrapError(err, "detachRepositoriesManager> error on poller.DeleteAll")
 		}
 
 		if err := tx.Commit(); err != nil {

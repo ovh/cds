@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hook"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
@@ -257,13 +256,6 @@ func cleanApplication(db *gorp.DbMap, wg *sync.WaitGroup, chErr chan<- error, ap
 	log.Debug("cleanApplication> Start deleting scheduler/poller/trigger/warining")
 	if err := scheduler.DeleteByApplicationID(db, app.ID); err != nil {
 		errF := fmt.Errorf("cleanApplication> Unable to delete scheduler for application %s: %s", app.Name, err)
-		log.Warning("%s", errF)
-		chErr <- errF
-		return
-	}
-
-	if err := poller.DeleteAll(db, app.ID); err != nil {
-		errF := fmt.Errorf("cleanApplication> Unable to delete poller for application %s: %s", app.Name, err)
 		log.Warning("%s", errF)
 		chErr <- errF
 		return

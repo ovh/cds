@@ -30,7 +30,6 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -642,7 +641,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine("action.RequirementsCacheLoader", func() { action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache) })
 	sdk.GoRoutine("hookRecoverer(ctx", func() { hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
 	sdk.GoRoutine("services.KillDeadServices", func() { services.KillDeadServices(ctx, a.mustDB) })
-	sdk.GoRoutine("poller.Initialize", func() { poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap) })
 	sdk.GoRoutine("migrate.CleanOldWorkflow", func() { migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API) })
 	sdk.GoRoutine("migrate.KeyMigration", func() { migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true}) })
 	sdk.GoRoutine("broadcast.Initialize", func() { broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap) })
