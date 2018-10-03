@@ -46,7 +46,9 @@ func (h *HatcherySwarm) Init() error {
 			log.Error("hatchery> swarm> unable to connect to a docker client:%s", errc)
 			return errc
 		}
-		if _, errPing := d.Ping(context.Background()); errPing != nil {
+		ctxDocker, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, errPing := d.Ping(ctxDocker); errPing != nil {
 			log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
 			return errPing
 		}
@@ -119,7 +121,9 @@ func (h *HatcherySwarm) Init() error {
 				log.Error("hatchery> swarm> unable to connect to a docker client:%s for host %s (%s)", hostName, cfg.Host, errc)
 				continue
 			}
-			if _, errPing := d.Ping(context.Background()); errPing != nil {
+			ctxDocker, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if _, errPing := d.Ping(ctxDocker); errPing != nil {
 				log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
 				continue
 			}

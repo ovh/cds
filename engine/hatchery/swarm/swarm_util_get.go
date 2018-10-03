@@ -11,7 +11,7 @@ import (
 )
 
 func (h *HatcherySwarm) getContainers(dockerClient *dockerClient, options types.ContainerListOptions) ([]types.Container, error) {
-	ctxList, cancelList := context.WithTimeout(context.Background(), 5*time.Second)
+	ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancelList()
 	s, err := dockerClient.ContainerList(ctxList, options)
 	if err != nil {
