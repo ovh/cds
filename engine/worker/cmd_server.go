@@ -40,7 +40,6 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	r.HandleFunc("/download", w.downloadHandler)
 	r.HandleFunc("/exit", w.exitHandler)
 	r.HandleFunc("/key/{key}/install", w.keyInstallHandler)
-	r.HandleFunc("/log", w.logHandler)
 	r.HandleFunc("/services/{type}", w.serviceHandler)
 	r.HandleFunc("/tag", w.tagHandler)
 	r.HandleFunc("/tmpl", w.tmplHandler)

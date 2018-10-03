@@ -33,10 +33,12 @@ type kafkaPublishActionPlugin struct {
 func (actPlugin *kafkaPublishActionPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
 		Name:   "plugin-kafka-publish",
-		Author: "Alexandre JIN  <alexandre.jin@corp.ovh.com>",
-		Description: `This action helps you generates a file using a template file and text/template golang package.
+		Author: "François SAMIN <francois.samin@corp.ovh.com>",
+		Description: `This action helps you to send data through Kafka across every network.
 
-	Check documentation on text/template for more information https://golang.org/pkg/text/template.`,
+		You are able to send a custom "message" file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase.
+	  
+		This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consumer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin.`,
 		Version: sdk.VERSION,
 	}, nil
 }
