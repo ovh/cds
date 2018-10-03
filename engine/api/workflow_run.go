@@ -505,6 +505,7 @@ func (api *API) getWorkflowNodeRunHistoryHandler() service.Handler {
 	}
 }
 
+// TODO Clean old workflow structure
 func (api *API) getWorkflowCommitsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -524,37 +525,53 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project %s", key)
 		}
 
-		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
-		if errW != nil {
-			return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow %s", name)
-		}
-
-		var errCtx error
-		var nodeCtx *sdk.WorkflowNodeContext
-		var wNode *sdk.WorkflowNode
+		var wf *sdk.Workflow
 		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
-		if errW == nil {
-			wNode = wfRun.Workflow.GetNodeByName(nodeName)
-		}
-
-		if wNode == nil || errW != nil {
-			log.Debug("getWorkflowCommitsHandler> node not found")
-			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, proj, getUser(ctx), name, nodeName, workflow.LoadOptions{})
-			if errCtx != nil {
-				return sdk.WrapError(errCtx, "getWorkflowCommitsHandler> Unable to load workflow node context")
+		if errW != nil {
+			wf, errW = workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
+			if errW != nil {
+				return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow %s", name)
 			}
-		} else if wNode != nil {
-			nodeCtx = wNode.Context
 		} else {
-			return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow node run")
+			wf = &wfRun.Workflow
 		}
 
-		if nodeCtx == nil || nodeCtx.Application == nil {
-			return service.WriteJSON(w, []sdk.VCSCommit{}, http.StatusOK)
+		var app sdk.Application
+		var env sdk.Environment
+		var node *sdk.Node
+		var wNode *sdk.WorkflowNode
+		if wfRun == nil || wfRun.Version < 2 {
+			wNode = wf.GetNodeByName(nodeName)
+			if wNode == nil {
+				return sdk.WrapError(sdk.ErrNotFound, "getWorkflowCommitsHandler> Unable to load workflow node context")
+			}
+			if wNode.Context != nil && wNode.Context.Application == nil {
+				return service.WriteJSON(w, []sdk.VCSCommit{}, http.StatusOK)
+			}
+			if wNode.Context != nil && wNode.Context.Application != nil {
+				app = *wNode.Context.Application
+			}
+			if wNode.Context != nil && wNode.Context.Environment != nil {
+				env = *wNode.Context.Environment
+			}
+		} else if wfRun != nil && wfRun.Version == 2 {
+			node = wf.WorkflowData.NodeByName(nodeName)
+			if node == nil {
+				return sdk.WrapError(sdk.ErrNotFound, "getWorkflowCommitsHandler> Unable to load workflow data node")
+			}
+			if node.Context != nil && node.Context.ApplicationID == 0 {
+				return service.WriteJSON(w, []sdk.VCSCommit{}, http.StatusOK)
+			}
+			if node.Context != nil && node.Context.ApplicationID != 0 {
+				app = wfRun.Workflow.Applications[node.Context.ApplicationID]
+			}
+			if node.Context != nil && node.Context.EnvironmentID != 0 {
+				env = wfRun.Workflow.Environments[node.Context.EnvironmentID]
+			}
 		}
 
 		if wfRun == nil {
-			wfRun = &sdk.WorkflowRun{Number: number}
+			wfRun = &sdk.WorkflowRun{Number: number, Workflow: *wf}
 		}
 		wfNodeRun := &sdk.WorkflowNodeRun{}
 		if branch != "" {
@@ -565,11 +582,19 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		}
 		if hash != "" {
 			wfNodeRun.VCSHash = hash
-		} else if wNode != nil && errW == nil && wNode.ID != wfRun.Workflow.Root.ID {
+		} else {
 			// Find hash and branch of ancestor node run
-			nodeIDsAncestors := wNode.Ancestors(&wfRun.Workflow, false)
+			var nodeIDsAncestors []int64
+			if wNode != nil {
+				nodeIDsAncestors = wNode.Ancestors(&wfRun.Workflow, false)
+			}
+			if node != nil {
+				mapNodes := wfRun.Workflow.WorkflowData.Maps()
+				nodeIDsAncestors = node.Ancestors(wfRun.Workflow.WorkflowData, mapNodes, false)
+			}
+
 			for _, ancestorID := range nodeIDsAncestors {
-				if wfRun.WorkflowNodeRuns[ancestorID][0].VCSRepository == nodeCtx.Application.RepositoryFullname {
+				if wfRun.WorkflowNodeRuns != nil && wfRun.WorkflowNodeRuns[ancestorID][0].VCSRepository == app.RepositoryFullname {
 					wfNodeRun.VCSHash = wfRun.WorkflowNodeRuns[ancestorID][0].VCSHash
 					wfNodeRun.VCSBranch = wfRun.WorkflowNodeRuns[ancestorID][0].VCSBranch
 					break
@@ -578,7 +603,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		}
 
 		log.Debug("getWorkflowCommitsHandler> VCSHash: %s VCSBranch: %s", wfNodeRun.VCSHash, wfNodeRun.VCSBranch)
-		commits, _, errC := workflow.GetNodeRunBuildCommits(ctx, api.mustDB(), api.Cache, proj, wf, nodeName, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
+		commits, _, errC := workflow.GetNodeRunBuildCommits(ctx, api.mustDB(), api.Cache, proj, wf, nodeName, wfRun.Number, wfNodeRun, &app, &env)
 		if errC != nil {
 			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits: %v", errC)
 		}
@@ -921,7 +946,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 
 	//Run from hook
 	if opts.Hook != nil {
-		_, r1, err := workflow.RunFromHook(ctx, db, tx, store, p, wf, opts.Hook, asCodeInfos)
+		_, r1, err := workflow.RunFromHook(ctx, tx, store, p, wf, opts.Hook, asCodeInfos)
 		if err != nil {
 			return nil, sdk.WrapError(err, "startWorkflowRun> Unable to run workflow from hook")
 		}
