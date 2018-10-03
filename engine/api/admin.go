@@ -40,6 +40,7 @@ func (api *API) getAdminServicesHandler() service.Handler {
 			srv := &srvs[i]
 			srv.Hash = ""
 			srv.Token = ""
+			srv.Uptodate = sdk.VERSION == srv.Version
 		}
 		return service.WriteJSON(w, srvs, http.StatusOK)
 	}
@@ -55,6 +56,7 @@ func (api *API) getAdminServiceHandler() service.Handler {
 		}
 		srv.Hash = ""
 		srv.Token = ""
+		srv.Uptodate = sdk.VERSION == srv.Version
 		if srv.GroupID != nil {
 			g, err := group.LoadGroupByID(api.mustDB(), *srv.GroupID)
 			if err != nil {
