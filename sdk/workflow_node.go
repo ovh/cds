@@ -178,3 +178,28 @@ func (n *Node) ancestor(id int64, deep bool) (map[int64]bool, bool) {
 	}
 	return res, false
 }
+
+// IsLinkedToRepo returns boolean to know if the node is linked to an application which is also linked to a repository
+func (n *Node) IsLinkedToRepo(w *Workflow) bool {
+	if n == nil {
+		return false
+	}
+	return n.Context != nil && n.Context.ApplicationID != 0 && w.Applications[n.Context.ApplicationID].RepositoryFullname != ""
+}
+
+// GetNodeByName retrieve a node by his name
+func (n *Node) GetNodeByName(name interface{}) *Node {
+	if n == nil {
+		return nil
+	}
+	if n.Name == name {
+		return n
+	}
+	for _, t := range n.Triggers {
+		n2 := t.ChildNode.GetNodeByName(name)
+		if n2 != nil {
+			return n2
+		}
+	}
+	return nil
+}
