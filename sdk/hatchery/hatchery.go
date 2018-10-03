@@ -29,15 +29,13 @@ var (
 	models                 []sdk.Model
 
 	// Opencensus tags
-	TagHatchery           tag.Key
-	TagHatcheryName       tag.Key
-	TagHatcheryKeyStarter tag.Key
+	TagHatchery     tag.Key
+	TagHatcheryName tag.Key
 )
 
 func init() {
 	TagHatchery, _ = tag.NewKey("hatchery")
 	TagHatcheryName, _ = tag.NewKey("hatchery_name")
-	TagHatcheryKeyStarter, _ = tag.NewKey("hatchery_starter")
 }
 
 // WithTags returns a context with opencenstus tags

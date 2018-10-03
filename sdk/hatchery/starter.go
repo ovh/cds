@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"go.opencensus.io/stats"
-	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
@@ -72,18 +71,9 @@ func startWorkerStarters(ctx context.Context, h Interface) (chan<- workerStarter
 
 func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-chan workerStarterRequest, results chan<- workerStarterResult) {
 	for j := range jobs {
-		ctx, err := tag.New(ctx,
-			tag.Upsert(TagHatchery, h.ServiceName()),
-			tag.Upsert(TagHatcheryName, h.Service().Name),
-			tag.Upsert(TagHatcheryKeyStarter, workerNum),
-		)
-		if err != nil {
-			log.Error("workerRegister> error on tag.New starter:%d err:%v", workerNum, err)
-		}
 		// Start a worker for a job
 		if m := j.registerWorkerModel; m == nil {
 			ctx2, end := observability.Span(j.ctx, "hatchery.workerStarter")
-			stats.Record(ctx, h.Stats().StartersSpawning.M(1))
 			isRun, err := spawnWorkerForJob(h, j)
 			//Check the result
 			res := workerStarterResult{
@@ -112,7 +102,6 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 
 			atomic.AddInt64(&nbWorkerToStart, 1)
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
-			stats.Record(ctx, h.Stats().StartersRegistering.M(1))
 			if _, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, errSpawn)
 				if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("cannot spawn worker for register: %s", errSpawn)); err != nil {
@@ -122,7 +111,6 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 			atomic.AddInt64(&nbWorkerToStart, -1)
 			atomic.AddInt64(&nbRegisteringWorkerModels, -1)
 		}
-		stats.Record(ctx, h.Stats().StartersWaiting.M(1))
 	}
 }
 
