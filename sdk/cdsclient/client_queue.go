@@ -117,8 +117,17 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			}
 
 			if jobs != nil {
+				reqMods := []RequestModifier{}
+				if ratioService != nil {
+					reqMods = append(reqMods, SetHeader("ratioService", strconv.Itoa(*ratioService)))
+				}
+
+				if modelType != "" {
+					reqMods = append(reqMods, SetHeader("modelType", modelType))
+				}
+
 				queue := sdk.WorkflowQueue{}
-				if _, err := c.GetJSON("/queue/workflows", &queue); err != nil {
+				if _, err := c.GetJSON("/queue/workflows", &queue, reqMods...); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load old jobs")
 				}
 
