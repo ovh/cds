@@ -49,7 +49,7 @@ func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 		for dockerName, dockerClient := range h.dockerClients {
 			//Check images
 			status := sdk.MonitoringStatusOK
-			ctxList, cancelList := context.WithTimeout(context.Background(), 3*time.Second)
+			ctxList, cancelList := context.WithTimeout(context.Background(), 20*time.Second)
 			defer cancelList()
 			images, err := dockerClient.ImageList(ctxList, types.ImageListOptions{All: true})
 			if err != nil {
