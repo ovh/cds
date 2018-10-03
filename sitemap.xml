@@ -502,15 +502,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins-action/binary-add/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins/binary-add/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins-action/binary-update/</loc>
   </url>
   
   <url>
@@ -1078,10 +1070,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/api/plugin/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-clair/</loc>
   </url>
   
@@ -1119,10 +1107,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/plugins-action/</loc>
   </url>
   
   <url>

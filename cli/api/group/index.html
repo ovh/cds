@@ -701,11 +701,6 @@
           <span>platform</span>
         </a>
     </li>
-      <li data-nav-id="/cli/api/plugin/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/api/plugin/">
-          <span>plugin</span>
-        </a>
-    </li>
       <li data-nav-id="/cli/api/project/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/project/">
           <span>project</span>
@@ -968,23 +963,6 @@
       <li data-nav-id="/cli/cdsctl/admin/plugins/list/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/list/">
           <span>list</span>
-        </a>
-    </li>
-        </ul>
-    </li>
-    <li data-nav-id="/cli/cdsctl/admin/plugins-action/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins-action/">
-        <span>plugins-action</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/admin/plugins-action/binary-add/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins-action/binary-add/">
-          <span>binary-add</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/admin/plugins-action/binary-update/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins-action/binary-update/">
-          <span>binary-update</span>
         </a>
     </li>
         </ul>
@@ -2064,18 +2042,18 @@
 <ul>
 <li>
 <ul>
-<li><a href="#get-group">GET <code>/group</code></a></li>
 <li><a href="#post-group">POST <code>/group</code></a></li>
-<li><a href="#get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></a></li>
+<li><a href="#get-group">GET <code>/group</code></a></li>
 <li><a href="#delete-group-group-name">DELETE <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#put-group-group-name">PUT <code>/group/&lt;group-name&gt;</code></a></li>
-<li><a href="#generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</a></li>
+<li><a href="#get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></a></li>
 <li><a href="#get-group-group-name-token">GET <code>/group/&lt;group-name&gt;/token</code></a></li>
+<li><a href="#generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</a></li>
 <li><a href="#delete-group-group-name-token-tokenid">DELETE <code>/group/&lt;group-name&gt;/token/&lt;tokenid&gt;</code></a></li>
 <li><a href="#post-group-group-name-user">POST <code>/group/&lt;group-name&gt;/user</code></a></li>
 <li><a href="#delete-group-group-name-user-user-name">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;</code></a></li>
-<li><a href="#delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
 <li><a href="#post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
+<li><a href="#delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></a></li>
 <li><a href="#get-group-public">GET <code>/group/public</code></a></li>
 </ul></li>
 </ul></li>
@@ -2099,34 +2077,6 @@
 
 
 
-
-<h3 id="get-group">GET <code>/group</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupsHandler%22">getGroupsHandler</a></td>
-</tr>
-</tbody>
-</table>
 
 <h3 id="post-group">POST <code>/group</code></h3>
 
@@ -2156,13 +2106,13 @@
 </tbody>
 </table>
 
-<h3 id="get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></h3>
+<h3 id="get-group">GET <code>/group</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
+<th><strong><code>/group</code></strong></th>
 </tr>
 </thead>
 
@@ -2179,7 +2129,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22">getGroupHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupsHandler%22">getGroupsHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2240,20 +2190,20 @@
 </tbody>
 </table>
 
-<h3 id="generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</h3>
+<h3 id="get-group-group-name">GET <code>/group/&lt;group-name&gt;</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/token</code></strong></th>
+<th><strong><code>/group/&lt;group-name&gt;</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>GET</td>
 </tr>
 
 <tr>
@@ -2263,7 +2213,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+generateTokenHandler%22">generateTokenHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupHandler%22">getGroupHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2292,6 +2242,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getGroupTokenListHandler%22">getGroupTokenListHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="generatetoken-allows-a-user-to-generate-a-token-associated-to-a-group-permission">generateToken allows a user to generate a token associated to a group permission</h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/token</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+generateTokenHandler%22">generateTokenHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2380,34 +2358,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserGroupAdminHandler%22">removeUserGroupAdminHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-group-group-name-user-user-name-admin">POST <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h3>
 
 <table>
@@ -2432,6 +2382,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+setUserGroupAdminHandler%22">setUserGroupAdminHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-group-group-name-user-user-name-admin">DELETE <code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/group/&lt;group-name&gt;/user/&lt;user-name&gt;/admin</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+removeUserGroupAdminHandler%22">removeUserGroupAdminHandler</a></td>
 </tr>
 </tbody>
 </table>
