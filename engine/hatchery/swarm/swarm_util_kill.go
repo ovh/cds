@@ -25,10 +25,10 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 	if err != nil {
 		//If there is an error, we try to remove the container
 		if strings.Contains(err.Error(), "No such container") {
-			log.Debug("hatchery> swarm> killAndRemove> cannot InspectContainer: %v", err)
+			log.Debug("hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
 			return nil
 		}
-		log.Info("hatchery> swarm> killAndRemove> cannot InspectContainer: %v", err)
+		log.Info("hatchery> swarm> killAndRemove> cannot InspectContainer: %v on %s", err, dockerClient.name)
 	} else {
 		// If its a worker "register", check registration before deleting it
 		if strings.Contains(container.Name, "register-") {
