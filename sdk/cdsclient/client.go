@@ -49,9 +49,12 @@ func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bo
 	cli.HTTPClient = &http.Client{
 		Timeout: timeout,
 		Transport: &httpcontrol.Transport{
-			RequestTimeout:  timeout,
-			MaxTries:        5,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
+			RequestTimeout:        timeout,
+			DialTimeout:           timeout,
+			ResponseHeaderTimeout: timeout,
+			RetryAfterTimeout:     true,
+			MaxTries:              5,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
 		},
 	}
 	cli.isService = true
