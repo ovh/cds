@@ -10,37 +10,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// CheckParams returns template parameters validity.
-func (t *Template) CheckParams(r Request) error {
-	if r.Name == "" {
-		return sdk.ErrInvalidData
-	}
-
-	for _, p := range t.Parameters {
-		v, ok := r.Parameters[p.Key]
-		if !ok && p.Required {
-			return sdk.ErrInvalidData
-		}
-		if ok {
-			if p.Required && v == "" {
-				return sdk.ErrInvalidData
-			}
-			if p.Type == Boolean && v != "" && !(v == "true" || v == "false") {
-				return sdk.ErrInvalidData
-			}
-		}
-	}
-
-	return nil
-}
-
-func (t *Template) prepareParams(r Request) interface{} {
+func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) interface{} {
 	m := map[string]interface{}{}
-	for _, p := range t.Parameters {
+	for _, p := range wt.Parameters {
 		v, ok := r.Parameters[p.Key]
 		if ok {
 			switch p.Type {
-			case Boolean:
+			case sdk.ParameterTypeBoolean:
 				m[p.Key] = v == "true"
 			default:
 				m[p.Key] = v
@@ -50,31 +26,43 @@ func (t *Template) prepareParams(r Request) interface{} {
 	return m
 }
 
-// Execute returns yaml file from template.
-func (t *Template) Execute(r Request) (Result, error) {
-	data := map[string]interface{}{
-		"name":   r.Name,
-		"params": t.prepareParams(r),
+func executeTemplate(t string, data map[string]interface{}) (string, error) {
+	tmpl, err := template.New(fmt.Sprintf("template")).Parse(escapeVars(t))
+	if err != nil {
+		return "", sdk.WrapError(err, "cannot parse workflow template")
 	}
 
-	var res Result
-	for i, v := range append([]string{t.Workflow}, t.Pipelines...) {
-		tmpl, err := template.New(fmt.Sprintf("template-%d", i)).Parse(escapeVars(v))
+	var buffer bytes.Buffer
+	if err := tmpl.Execute(&buffer, data); err != nil {
+		return "", sdk.WrapError(err, "cannot execute workflow template")
+	}
+
+	return unescapeVars(buffer.String()), nil
+}
+
+// Execute returns yaml file from template.
+func Execute(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) (sdk.WorkflowTemplateResult, error) {
+	data := map[string]interface{}{
+		"name":   r.Name,
+		"params": prepareParams(wt, r),
+	}
+
+	out, err := executeTemplate(wt.Value, data)
+	if err != nil {
+		return sdk.WorkflowTemplateResult{}, err
+	}
+
+	res := sdk.WorkflowTemplateResult{
+		Workflow:  out,
+		Pipelines: make([]string, len(wt.Pipelines)),
+	}
+
+	for i, p := range wt.Pipelines {
+		out, err := executeTemplate(p.Value, data)
 		if err != nil {
-			return Result{}, sdk.WrapError(err, "cannot parse workflow template")
+			return sdk.WorkflowTemplateResult{}, err
 		}
-
-		var buffer bytes.Buffer
-		if err := tmpl.Execute(&buffer, data); err != nil {
-			return Result{}, sdk.WrapError(err, "cannot execute workflow template")
-		}
-
-		output := unescapeVars(buffer.String())
-		if i == 0 {
-			res.Workflow = output
-		} else {
-			res.Pipelines = append(res.Pipelines, output)
-		}
+		res.Pipelines[i] = out
 	}
 
 	return res, nil

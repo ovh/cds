@@ -1,17 +1,54 @@
 package workflowtemplate_test
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/workflowtemplate"
+	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestExecuteTemplate(t *testing.T) {
-	tmpl := workflowtemplate.GetAll()
+	tmpl := &sdk.WorkflowTemplate{
+		Parameters: []sdk.WorkflowTemplateParameter{
+			{Key: "name", Type: sdk.ParameterTypeString, Required: true},
+			{Key: "withDeploy", Type: sdk.ParameterTypeBoolean, Required: true},
+			{Key: "deployWhen", Type: sdk.ParameterTypeString},
+		},
+		Value: `
+      name: {{.name}}
+      description: Test simple workflow
+      version: v1.0
+      workflow:
+        Node-1:
+          pipeline: Pipeline-1
+        {{if .params.withDeploy}}
+        Node-2:
+          depends_on:
+          - Node-1
+          when:
+          - {{.params.deployWhen}}
+          pipeline: Pipeline-1
+        {{end}}`,
+		Pipelines: []sdk.PipelineTemplate{{
+			Value: `
+        version: v1.0
+        name: Pipeline-1
+        stages:
+        - Stage 1
+        jobs:
+        - job: Job 1
+          stage: Stage 1
+          steps:
+          - script:
+            - echo "Hello World!"
+          - script:
+            - echo "{{.cds.project.name}}"
+        `,
+		}},
+	}
 
-	req := workflowtemplate.Request{
+	req := sdk.WorkflowTemplateRequest{
 		Name: "my-workflow",
 		Parameters: map[string]string{
 			"withDeploy": "true",
@@ -19,12 +56,12 @@ func TestExecuteTemplate(t *testing.T) {
 		},
 	}
 
-	res, err := tmpl[0].Execute(req)
+	res, err := workflowtemplate.Execute(tmpl, req)
 	assert.Nil(t, err)
 
-	fmt.Println(res.Workflow)
+	t.Log(res.Workflow)
 	for _, p := range res.Pipelines {
-		fmt.Println(p)
+		t.Log(p)
 	}
 
 	assert.Equal(t, true, true)
