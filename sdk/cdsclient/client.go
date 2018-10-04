@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"crypto/tls"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -48,13 +49,14 @@ func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bo
 	cli.config = conf
 	cli.HTTPClient = &http.Client{
 		Timeout: timeout,
-		Transport: &httpcontrol.Transport{
-			RequestTimeout:        timeout,
-			DialTimeout:           timeout,
-			ResponseHeaderTimeout: timeout,
-			RetryAfterTimeout:     true,
-			MaxTries:              5,
-			TLSClientConfig:       &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
+			MaxIdleConns:        500,
+			MaxIdleConnsPerHost: 500,
+			TLSHandshakeTimeout: 5 * time.Second,
+			TLSClientConfig:     &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
 		},
 	}
 	cli.isService = true
