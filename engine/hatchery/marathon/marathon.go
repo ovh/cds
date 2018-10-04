@@ -115,6 +115,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 
 	//Custom http client with 3 retries
 	httpClient := &http.Client{
+		Timeout: time.Minute,
 		Transport: &httpcontrol.Transport{
 			RequestTimeout:  time.Minute,
 			MaxTries:        3,
