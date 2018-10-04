@@ -47,6 +47,7 @@ func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bo
 	cli := new(client)
 	cli.config = conf
 	cli.HTTPClient = &http.Client{
+		Timeout: timeout,
 		Transport: &httpcontrol.Transport{
 			RequestTimeout:  timeout,
 			MaxTries:        5,

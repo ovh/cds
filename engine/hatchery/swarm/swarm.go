@@ -15,6 +15,7 @@ import (
 	types "github.com/docker/docker/api/types"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/go-connections/tlsconfig"
+	"github.com/facebookgo/httpcontrol"
 	"github.com/gorilla/mux"
 	context "golang.org/x/net/context"
 
@@ -46,7 +47,9 @@ func (h *HatcherySwarm) Init() error {
 			log.Error("hatchery> swarm> unable to connect to a docker client:%s", errc)
 			return errc
 		}
-		if _, errPing := d.Ping(context.Background()); errPing != nil {
+		ctxDocker, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, errPing := d.Ping(ctxDocker); errPing != nil {
 			log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
 			return errPing
 		}
@@ -61,6 +64,7 @@ func (h *HatcherySwarm) Init() error {
 		for hostName, cfg := range h.Config.DockerEngines {
 			log.Info("hatchery> swarm> connecting to %s: %s", hostName, cfg.Host)
 			httpClient := new(http.Client)
+			httpClient.Timeout = 30 * time.Second
 			if cfg.CertPath != "" {
 				options := tlsconfig.Options{
 					CAFile:             filepath.Join(cfg.CertPath, "ca.pem"),
@@ -108,18 +112,21 @@ func (h *HatcherySwarm) Init() error {
 					continue
 				}
 
-				httpClient.Transport = &http.Transport{
+				httpClient.Transport = &httpcontrol.Transport{
+					RequestTimeout:  30 * time.Second,
 					TLSClientConfig: tlsc,
 				}
 			} else {
-				httpClient.Transport = &http.Transport{}
+				httpClient.Transport = &httpcontrol.Transport{RequestTimeout: 30 * time.Second}
 			}
 			d, errc := docker.NewClientWithOpts(docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion), docker.WithHTTPClient(httpClient))
 			if errc != nil {
 				log.Error("hatchery> swarm> unable to connect to a docker client:%s for host %s (%s)", hostName, cfg.Host, errc)
 				continue
 			}
-			if _, errPing := d.Ping(context.Background()); errPing != nil {
+			ctxDocker, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if _, errPing := d.Ping(ctxDocker); errPing != nil {
 				log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
 				continue
 			}
