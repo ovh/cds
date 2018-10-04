@@ -230,6 +230,7 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 
 		if err := rc.Handler(ctx, w, req); err != nil {
 			observability.Record(ctx, r.Stats.Errors, 1)
+			observability.End(ctx, w, req)
 			service.WriteError(w, req, err)
 			return
 		}
