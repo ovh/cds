@@ -305,10 +305,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/hook", r.POST(api.addHookHandler), r.GET(api.getHooksHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/hook/{id}", r.PUT(api.updateHookHandler), r.DELETE(api.deleteHookHandler))
 
-	// Pollers
-	r.Handle("/project/{key}/application/{permApplicationName}/polling", r.GET(api.getApplicationPollersHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/polling", r.POST(api.addPollerHandler), r.GET(api.getPollersHandler), r.PUT(api.updatePollerHandler), r.DELETE(api.deletePollerHandler))
-
 	// Build queue
 	r.Handle("/queue", r.GET(api.getQueueHandler))
 	r.Handle("/queue/{id}/take", r.POST(api.takePipelineBuildJobHandler))
