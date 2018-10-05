@@ -43,7 +43,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 
 	start := time.Now()
 
-	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
+	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
 	ctx, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)
 	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
@@ -57,7 +57,9 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 					return
 				}
 				j := &sdk.WorkflowNodeJobRun{}
-				code, err := w.client.(cdsclient.Raw).GetJSON(fmt.Sprintf("/queue/workflows/%d/infos", jobID), j)
+				ctxT, cancel2 := context.WithTimeout(ctx, 5*time.Second)
+				defer cancel2()
+				code, err := w.client.(cdsclient.Raw).GetJSON(ctxT, fmt.Sprintf("/queue/workflows/%d/infos", jobID), j)
 				if err != nil {
 					if code == http.StatusNotFound {
 						log.Info("takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)

@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
@@ -23,7 +24,7 @@ func (c *client) BroadcastCreate(broadcast *sdk.Broadcast) error {
 
 func (c *client) BroadcastGet(id string) (*sdk.Broadcast, error) {
 	bc := &sdk.Broadcast{}
-	if _, err := c.GetJSON("/broadcast/"+id, bc); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/broadcast/"+id, bc); err != nil {
 		return nil, err
 	}
 	return bc, nil
@@ -31,7 +32,7 @@ func (c *client) BroadcastGet(id string) (*sdk.Broadcast, error) {
 
 func (c *client) Broadcasts() ([]sdk.Broadcast, error) {
 	bcs := []sdk.Broadcast{}
-	if _, err := c.GetJSON("/broadcast", &bcs); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/broadcast", &bcs); err != nil {
 		return nil, err
 	}
 	return bcs, nil

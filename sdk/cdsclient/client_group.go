@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
@@ -23,7 +24,7 @@ func (c *client) GroupDelete(name string) error {
 
 func (c *client) GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error) {
 	group := &sdk.Group{}
-	if _, err := c.GetJSON("/group/"+name, group, mods...); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/group/"+name, group, mods...); err != nil {
 		return nil, err
 	}
 	return group, nil
@@ -31,7 +32,7 @@ func (c *client) GroupGet(name string, mods ...RequestModifier) (*sdk.Group, err
 
 func (c *client) GroupList() ([]sdk.Group, error) {
 	groups := []sdk.Group{}
-	if _, err := c.GetJSON("/group", &groups); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/group", &groups); err != nil {
 		return nil, err
 	}
 	return groups, nil
@@ -39,7 +40,7 @@ func (c *client) GroupList() ([]sdk.Group, error) {
 
 func (c *client) GroupRename(oldGroupname, newGroupname string) error {
 	group := &sdk.Group{}
-	if _, err := c.GetJSON("/group/"+oldGroupname, group); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/group/"+oldGroupname, group); err != nil {
 		return err
 	}
 

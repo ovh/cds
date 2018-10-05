@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -8,7 +9,7 @@ import (
 
 func (c *client) ProjectVariablesList(key string) ([]sdk.Variable, error) {
 	k := []sdk.Variable{}
-	if _, err := c.GetJSON("/project/"+key+"/variable", &k); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/project/"+key+"/variable", &k); err != nil {
 		return nil, err
 	}
 	return k, nil
@@ -20,7 +21,7 @@ func (c *client) ProjectVariableCreate(projectKey string, variable *sdk.Variable
 }
 
 func (c *client) ProjectVariableDelete(projectKey string, varName string) error {
-	_, _, _, err := c.Request("DELETE", "/project/"+projectKey+"/variable/"+url.QueryEscape(varName), nil)
+	_, _, _, err := c.Request(context.Background(), "DELETE", "/project/"+projectKey+"/variable/"+url.QueryEscape(varName), nil)
 	return err
 }
 
@@ -31,7 +32,7 @@ func (c *client) ProjectVariableUpdate(projectKey string, variable *sdk.Variable
 
 func (c *client) ProjectVariableGet(projectKey string, varName string) (*sdk.Variable, error) {
 	variable := &sdk.Variable{}
-	if _, err := c.GetJSON("/project/"+projectKey+"/variable/"+url.QueryEscape(varName), variable, nil); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/project/"+projectKey+"/variable/"+url.QueryEscape(varName), variable, nil); err != nil {
 		return nil, err
 	}
 	return variable, nil

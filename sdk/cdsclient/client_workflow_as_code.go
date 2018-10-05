@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
@@ -22,7 +23,7 @@ func (c *client) WorkflowAsCodeStart(projectKey string, repoURL string, repoStra
 func (c *client) WorkflowAsCodeInfo(projectKey string, operationID string) (*sdk.Operation, error) {
 	ope := new(sdk.Operation)
 	path := fmt.Sprintf("/import/%s/%s", projectKey, operationID)
-	if _, err := c.GetJSON(path, ope); err != nil {
+	if _, err := c.GetJSON(context.Background(), path, ope); err != nil {
 		return nil, err
 	}
 	return ope, nil

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -29,7 +31,9 @@ var workerListCmd = cli.Command{
 }
 
 func workerListRun(v cli.Values) (cli.ListResult, error) {
-	workers, err := client.WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	workers, err := client.WorkerList(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +56,9 @@ $ cdsctl worker disable $(cdsctl worker list)`,
 func workerDisableRun(v cli.Values) error {
 	names := v.GetStringSlice("name")
 
-	workers, err := client.WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	workers, err := client.WorkerList(ctx)
 	if err != nil {
 		return err
 	}

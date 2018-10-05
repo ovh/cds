@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -83,7 +84,7 @@ func (c *client) ApplicationPipelineTriggersGet(projectKey string, appName strin
 	}
 
 	var triggers []sdk.PipelineTrigger
-	code, err := c.GetJSON(uri, &triggers)
+	code, err := c.GetJSON(context.Background(), uri, &triggers)
 	if err != nil {
 		return nil, err
 	}

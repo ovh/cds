@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -8,7 +9,7 @@ import (
 
 func (c *client) PlatformModelList() ([]sdk.PlatformModel, error) {
 	models := []sdk.PlatformModel{}
-	if _, err := c.GetJSON("/platform/models", &models); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/platform/models", &models); err != nil {
 		return nil, err
 	}
 	return models, nil
@@ -16,7 +17,7 @@ func (c *client) PlatformModelList() ([]sdk.PlatformModel, error) {
 
 func (c *client) PlatformModelGet(name string) (sdk.PlatformModel, error) {
 	var model sdk.PlatformModel
-	if _, err := c.GetJSON("/platform/models/"+url.QueryEscape(name), &model); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/platform/models/"+url.QueryEscape(name), &model); err != nil {
 		return model, err
 	}
 	return model, nil

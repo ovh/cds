@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,7 +22,7 @@ func (c *client) ApplicationDelete(key string, appName string) error {
 
 func (c *client) ApplicationGet(key string, appName string, mods ...RequestModifier) (*sdk.Application, error) {
 	app := &sdk.Application{}
-	if _, err := c.GetJSON("/project/"+key+"/application/"+appName, app, mods...); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/project/"+key+"/application/"+appName, app, mods...); err != nil {
 		return nil, err
 	}
 	return app, nil
@@ -29,7 +30,7 @@ func (c *client) ApplicationGet(key string, appName string, mods ...RequestModif
 
 func (c *client) ApplicationList(key string) ([]sdk.Application, error) {
 	apps := []sdk.Application{}
-	if _, err := c.GetJSON("/project/"+key+"/applications", &apps); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/project/"+key+"/applications", &apps); err != nil {
 		return nil, err
 	}
 	return apps, nil
@@ -43,7 +44,7 @@ func (c *client) ApplicationGroupsImport(projectKey, appName string, content io.
 		uri += "&forceUpdate=true"
 	}
 
-	btes, _, _, errReq := c.Request("POST", uri, content)
+	btes, _, _, errReq := c.Request(context.Background(), "POST", uri, content)
 	if errReq != nil {
 		return app, errReq
 	}
@@ -58,6 +59,6 @@ func (c *client) ApplicationGroupsImport(projectKey, appName string, content io.
 //ApplicationAttachToReposistoriesManager attachs the application to the repo identified by its fullname in the reposManager
 func (c *client) ApplicationAttachToReposistoriesManager(projectKey, appName, reposManager, repoFullname string) error {
 	uri := fmt.Sprintf("/project/%s/repositories_manager/%s/application/%s/attach?fullname=%s", projectKey, reposManager, appName, url.QueryEscape(repoFullname))
-	_, _, _, err := c.Request("POST", uri, nil)
+	_, _, _, err := c.Request(context.Background(), "POST", uri, nil)
 	return err
 }

@@ -227,7 +227,7 @@ type UserClient interface {
 // WorkerClient exposes workers functions
 type WorkerClient interface {
 	WorkerModelBook(id int64) error
-	WorkerList() ([]sdk.Worker, error)
+	WorkerList(ctx context.Context) ([]sdk.Worker, error)
 	WorkerRefresh() error
 	WorkerDisable(id string) error
 	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
@@ -334,7 +334,7 @@ type InterfaceDeprecated interface {
 type Raw interface {
 	PostJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
 	PutJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
-	GetJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
+	GetJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
 	DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
 	Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
 }

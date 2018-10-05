@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -37,7 +38,7 @@ func (c *client) GroupListToken(groupName string) ([]sdk.Token, error) {
 	path := fmt.Sprintf("/group/%s/token", url.QueryEscape(groupName))
 
 	tokens := []sdk.Token{}
-	_, err := c.GetJSON(path, &tokens)
+	_, err := c.GetJSON(context.Background(), path, &tokens)
 
 	return tokens, err
 }

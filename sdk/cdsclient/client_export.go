@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 
@@ -38,7 +39,7 @@ func (c *client) ApplicationExport(projectKey, name string, exportWithPermission
 	if exportWithPermissions {
 		path += "&withPermissions=true"
 	}
-	body, _, _, err := c.Request("GET", path, nil)
+	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func (c *client) EnvironmentExport(projectKey, name string, exportWithPermission
 	if exportWithPermissions {
 		path += "&withPermissions=true"
 	}
-	body, _, _, err := c.Request("GET", path, nil)
+	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +63,7 @@ func (c *client) WorkflowExport(projectKey, name string, exportWithPermissions b
 	if exportWithPermissions {
 		path += "&withPermissions=true"
 	}
-	bodyReader, _, _, err := c.Stream("GET", path, nil, true)
+	bodyReader, _, _, err := c.Stream(context.Background(), "GET", path, nil, true)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func (c *client) WorkflowPull(projectKey, name string, exportWithPermissions boo
 	if exportWithPermissions {
 		path += "?withPermissions=true"
 	}
-	body, _, _, err := c.Request("GET", path, nil)
+	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}

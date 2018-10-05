@@ -632,7 +632,9 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 }
 
 func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Container, error) {
-	apiworkers, err := h.CDSClient().WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	apiworkers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		return nil, sdk.WrapError(err, "hatchery> swarm> listAwolWorkers> Cannot get workers on %s", dockerClient.name)
 	}

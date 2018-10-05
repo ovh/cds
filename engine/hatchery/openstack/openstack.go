@@ -223,7 +223,9 @@ func (h *HatcheryOpenstack) updateServerList() {
 }
 
 func (h *HatcheryOpenstack) killAwolServers() {
-	workers, err := h.CDSClient().WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	workers, err := h.CDSClient().WorkerList(ctx)
 	now := time.Now().Unix()
 	if err != nil {
 		log.Warning("killAwolServers> Cannot fetch worker list: %s", err)
@@ -383,7 +385,9 @@ func (h *HatcheryOpenstack) killErrorServers() {
 }
 
 func (h *HatcheryOpenstack) killDisabledWorkers() {
-	workers, err := h.CDSClient().WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	workers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
 		return

@@ -1,15 +1,16 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) WorkerList() ([]sdk.Worker, error) {
+func (c *client) WorkerList(ctx context.Context) ([]sdk.Worker, error) {
 	p := []sdk.Worker{}
-	if _, err := c.GetJSON("/worker", &p); err != nil {
+	if _, err := c.GetJSON(ctx, "/worker", &p); err != nil {
 		return nil, err
 	}
 	return p, nil

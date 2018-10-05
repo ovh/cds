@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"archive/tar"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,7 +21,7 @@ func (c *client) PipelineImport(projectKey string, content io.Reader, format str
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, code, errReq := c.Request("POST", url, content)
+	btes, _, code, errReq := c.Request(context.Background(), "POST", url, content)
 	if errReq != nil {
 		return nil, errReq
 	}
@@ -62,7 +63,7 @@ func (c *client) ApplicationImport(projectKey string, content io.Reader, format 
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, _, code, err := c.Request("POST", url, content, mods...)
+	btes, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +112,7 @@ func (c *client) EnvironmentImport(projectKey string, content io.Reader, format 
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, _, code, err := c.Request("POST", url, content, mods...)
+	btes, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +154,7 @@ func (c *client) WorkflowImport(projectKey string, content io.Reader, format str
 		return nil, exportentities.ErrUnsupportedFormat
 	}
 
-	btes, _, code, err := c.Request("POST", url, content, mods...)
+	btes, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +179,7 @@ func (c *client) WorkflowPush(projectKey string, tarContent io.Reader, mods ...R
 			r.Header.Set("Content-Type", "application/tar")
 		})
 
-	btes, headers, code, err := c.Request("POST", url, tarContent, mods...)
+	btes, headers, code, err := c.Request(context.Background(), "POST", url, tarContent, mods...)
 	if err != nil {
 		return nil, nil, err
 	}

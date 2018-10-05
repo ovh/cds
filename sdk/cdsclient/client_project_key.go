@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -8,7 +9,7 @@ import (
 
 func (c *client) ProjectKeysList(key string) ([]sdk.ProjectKey, error) {
 	k := []sdk.ProjectKey{}
-	if _, err := c.GetJSON("/project/"+key+"/keys", &k); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/project/"+key+"/keys", &k); err != nil {
 		return nil, err
 	}
 	return k, nil
@@ -20,6 +21,6 @@ func (c *client) ProjectKeyCreate(projectKey string, keyProject *sdk.ProjectKey)
 }
 
 func (c *client) ProjectKeysDelete(projectKey string, keyName string) error {
-	_, _, _, err := c.Request("DELETE", "/project/"+projectKey+"/keys/"+url.QueryEscape(keyName), nil)
+	_, _, _, err := c.Request(context.Background(), "DELETE", "/project/"+projectKey+"/keys/"+url.QueryEscape(keyName), nil)
 	return err
 }

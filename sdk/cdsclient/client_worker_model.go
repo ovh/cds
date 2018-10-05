@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -52,7 +53,7 @@ func (c *client) workerModels(withDisabled bool, binary, state string) ([]sdk.Mo
 	}
 
 	var models []sdk.Model
-	if _, errr := c.GetJSON(uri, &models); errr != nil {
+	if _, errr := c.GetJSON(context.Background(), uri, &models); errr != nil {
 		return nil, errr
 	}
 	return models, nil
@@ -151,7 +152,7 @@ func (c *client) WorkerModelUpdate(ID int64, name string, modelType string, dock
 func (c *client) WorkerModel(name string) (sdk.Model, error) {
 	uri := fmt.Sprintf("/worker/model?name=" + name)
 	var model sdk.Model
-	_, err := c.GetJSON(uri, &model)
+	_, err := c.GetJSON(context.Background(), uri, &model)
 	return model, err
 }
 

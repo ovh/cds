@@ -75,7 +75,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 
 			if jobs != nil {
 				queue := sdk.WorkflowQueue{}
-				if _, err := c.GetJSON("/queue/workflows", &queue); err != nil {
+				if _, err := c.GetJSON(context.Background(), "/queue/workflows", &queue); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load old jobs")
 				}
 
@@ -105,11 +105,14 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 					q.Add("modelType", modelType)
 				}
 				url.RawQuery = q.Encode()
-				_, header, _, errReq := c.RequestJSON(http.MethodGet, url.String(), nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)))
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				_, header, _, errReq := c.RequestJSON(ctx, http.MethodGet, url.String(), nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)))
 				if errReq != nil {
+					cancel()
 					errs <- sdk.WrapError(errReq, "Unable to load jobs")
 					continue
 				}
+				cancel()
 
 				apiTimeHeader := header.Get(ResponseAPITimeHeader)
 
@@ -152,7 +155,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 
 			if pbjobs != nil {
 				queue := []sdk.PipelineBuildJob{}
-				if _, err := c.GetJSON("/queue?status=all", &queue); err != nil {
+				if _, err := c.GetJSON(context.Background(), "/queue?status=all", &queue); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load pipeline build jobs")
 				}
 				for _, j := range queue {
@@ -175,7 +178,7 @@ func (c *client) QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNo
 		url.RawQuery = q.Encode()
 	}
 
-	if _, err := c.GetJSON(url.String(), &wJobs); err != nil {
+	if _, err := c.GetJSON(context.Background(), url.String(), &wJobs); err != nil {
 		return nil, err
 	}
 	return wJobs, nil
@@ -209,7 +212,7 @@ func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time
 
 func (c *client) QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error) {
 	pbJobs := []sdk.PipelineBuildJob{}
-	if _, err := c.GetJSON("/queue?status=all", &pbJobs); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/queue?status=all", &pbJobs); err != nil {
 		return nil, err
 	}
 	return pbJobs, nil
@@ -240,7 +243,7 @@ func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
 	path := fmt.Sprintf("/queue/workflows/%d/infos", id)
 	var job sdk.WorkflowNodeJobRun
 
-	if _, err := c.GetJSON(path, &job); err != nil {
+	if _, err := c.GetJSON(context.Background(), path, &job); err != nil {
 		return nil, err
 	}
 	return &job, nil
@@ -298,7 +301,7 @@ func (c *client) QueueSendResult(id int64, res sdk.Result) error {
 func (c *client) QueueArtifactUpload(id int64, tag, filePath string) (bool, time.Duration, error) {
 	t0 := time.Now()
 	store := new(sdk.ArtifactsStore)
-	_, _ = c.GetJSON("/artifact/store", store)
+	_, _ = c.GetJSON(context.Background(), "/artifact/store", store)
 	if store.TemporaryURLSupported {
 		err := c.queueIndirectArtifactUpload(id, tag, filePath)
 		return true, time.Since(t0), err
