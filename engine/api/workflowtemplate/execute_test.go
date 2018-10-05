@@ -15,7 +15,7 @@ func TestExecuteTemplate(t *testing.T) {
 			{Key: "withDeploy", Type: sdk.ParameterTypeBoolean, Required: true},
 			{Key: "deployWhen", Type: sdk.ParameterTypeString},
 		},
-		Value: `
+		Content: `
       name: {{.name}}
       description: Test simple workflow
       version: v1.0

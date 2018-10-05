@@ -1,5 +1,11 @@
 package sdk
 
+import (
+	"database/sql/driver"
+	json "encoding/json"
+	"fmt"
+)
+
 // WorkflowTemplateRequest struct use for execution request.
 type WorkflowTemplateRequest struct {
 	Name       string            `json:"name"`
@@ -14,11 +20,11 @@ type WorkflowTemplateResult struct {
 
 // WorkflowTemplate struct.
 type WorkflowTemplate struct {
-	ID         int64                       `json:"id" db:"id" `
-	Name       string                      `json:"name" db:"name"`
-	Parameters []WorkflowTemplateParameter `json:"parameters" db:"-"`
-	Value      string                      `json:"value" db:"value"`
-	Pipelines  []PipelineTemplate          `json:"pipelines" db:"-"`
+	ID         int64                      `json:"id" db:"id" `
+	Name       string                     `json:"name" db:"name"`
+	Parameters WorkflowTemplateParameters `json:"parameters" db:"parameters"`
+	Value      string                     `json:"value" db:"value"`
+	Pipelines  PipelineTemplates          `json:"pipelines" db:"pipelines"`
 }
 
 // ValidateStruct returns workflow template validity.
@@ -68,7 +74,7 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 
 // PipelineTemplate struct.
 type PipelineTemplate struct {
-	Value string `json:"value" db:"value"`
+	Value string `json:"value"`
 }
 
 // ValidateStruct returns pipeline template validity.
@@ -76,7 +82,6 @@ func (p *PipelineTemplate) ValidateStruct() error {
 	if p.Value == "" {
 		return ErrInvalidData
 	}
-
 	return nil
 }
 
@@ -100,9 +105,45 @@ func (t TemplateParameterType) IsValid() bool {
 
 // WorkflowTemplateParameter struct.
 type WorkflowTemplateParameter struct {
-	Key      string                `json:"key" db:"key"`
-	Type     TemplateParameterType `json:"type" db:"type"`
-	Required bool                  `json:"required" db:"required"`
+	Key      string                `json:"key"`
+	Type     TemplateParameterType `json:"type"`
+	Required bool                  `json:"required"`
+}
+
+// WorkflowTemplateParameters struct.
+type WorkflowTemplateParameters []WorkflowTemplateParameter
+
+// Value returns driver.Value from workflow template parameters.
+func (w WorkflowTemplateParameters) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal WorkflowTemplateParameters")
+}
+
+// Scan workflow template parameters.
+func (w *WorkflowTemplateParameters) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("WorkflowTemplateParameters> type assertion .([]byte) failed") // TODO withstack
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateParameters")
+}
+
+// PipelineTemplates struct.
+type PipelineTemplates []PipelineTemplate
+
+// Value returns driver.Value from workflow template parameters.
+func (p PipelineTemplates) Value() (driver.Value, error) {
+	j, err := json.Marshal(p)
+	return j, WrapError(err, "cannot marshal PipelineTemplates")
+}
+
+// Scan workflow template parameters.
+func (p *PipelineTemplates) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("PipelineTemplates> type assertion .([]byte) failed") // TODO withstack
+	}
+	return WrapError(json.Unmarshal(source, p), "cannot unmarshal WorkflowTemplateParameters")
 }
 
 // ValidateStruct returns pipeline template validity.
@@ -110,6 +151,5 @@ func (w *WorkflowTemplateParameter) ValidateStruct() error {
 	if w.Key == "" || !w.Type.IsValid() {
 		return ErrInvalidData
 	}
-
 	return nil
 }

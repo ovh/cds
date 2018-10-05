@@ -5,12 +5,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-const tableWorkflowTemplates = "workflow_templates"
-
-type workflow sdk.WorkflowTemplate
-
 func init() {
 	gorpmapping.Register(
-		gorpmapping.New(workflow{}, tableWorkflowTemplates, true, "id"),
+		gorpmapping.New(sdk.WorkflowTemplate{}, "workflow_templates", true, "id"),
 	)
 }
