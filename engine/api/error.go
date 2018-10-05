@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/ovh/cds/sdk"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/service"
 )
 

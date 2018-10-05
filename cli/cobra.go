@@ -14,9 +14,10 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/olekukonko/tablewriter"
-	"github.com/ovh/cds/sdk"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // ShellMode will os.Exit if false, display only exit code if true
