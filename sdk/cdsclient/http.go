@@ -111,15 +111,19 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 		return nil, nil, code, err
 	}
 
+	if code >= 400 {
+		if err := sdk.DecodeError(res); err != nil {
+			return res, nil, code, err
+		}
+		return res, nil, code, fmt.Errorf("HTTP %d", code)
+	}
+
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
 			return res, nil, code, err
 		}
 	}
 
-	if code >= 400 {
-		return res, nil, code, fmt.Errorf("HTTP %d", code)
-	}
 	return res, header, code, nil
 }
 
@@ -147,8 +151,11 @@ func (c *client) Request(method string, path string, body io.Reader, mods ...Req
 		}
 	}
 
-	if err := sdk.DecodeError(bodyBtes); err != nil {
-		return nil, nil, code, err
+	if code >= 400 {
+		if err := sdk.DecodeError(bodyBtes); err != nil {
+			return bodyBtes, nil, code, err
+		}
+		return bodyBtes, nil, code, fmt.Errorf("HTTP %d", code)
 	}
 
 	return bodyBtes, respHeader, code, nil

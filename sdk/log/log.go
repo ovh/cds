@@ -122,50 +122,45 @@ func Initialize(conf *Conf) {
 
 // Debug prints debug log
 func Debug(format string, values ...interface{}) {
-	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
-		logger.Logf("[DEBUG]    " + input)
+		logger.Logf("[DEBUG]    "+format, values...)
 	} else {
-		log.Debugf(input)
+		log.Debugf(format, values...)
 	}
 }
 
 // Info prints information log
 func Info(format string, values ...interface{}) {
-	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
-		logger.Logf("[INFO]    " + input)
+		logger.Logf("[INFO]    "+format, values...)
 	} else {
-		log.Infof(input)
+		log.Infof(format, values...)
 	}
 }
 
 // Warning prints warnings for user
 func Warning(format string, values ...interface{}) {
-	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
-		logger.Logf("[WARN]    " + input)
+		logger.Logf("[WARN]    "+format, values...)
 	} else {
-		log.Warnf(input)
+		log.Warnf(format, values...)
 	}
 }
 
 // Error prints error informations
 func Error(format string, values ...interface{}) {
-	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
-		logger.Logf("[ERROR]    " + input)
+		logger.Logf("[ERROR]    "+format, values...)
 	} else {
-		log.Errorf(input)
+		log.Errorf(format, values...)
 	}
 }
 
 // Fatalf prints fatal informations, then os.Exit(1)
 func Fatalf(format string, values ...interface{}) {
-	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
-		logger.Logf("[FATAL]    " + input)
+		logger.Logf("[FATAL]    "+format, values...)
 	} else {
-		log.Fatalf(input)
+		log.Fatalf(format, values...)
 	}
 }

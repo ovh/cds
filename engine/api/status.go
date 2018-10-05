@@ -61,7 +61,7 @@ func (api *API) statusHandler() service.Handler {
 
 		srvs, err := services.All(api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "statusHandler> error on q.All()")
+			return err
 		}
 
 		mStatus := api.computeGlobalStatus(srvs)
