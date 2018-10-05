@@ -146,7 +146,7 @@
         </ng-container>
         <ng-container>
             <app-workflow-node-run-param #workflowNodeRunParam [project]="project" [workflow]="detailedWorkflow"
-                                         [nodeToRun]="detailedWorkflow.root"></app-workflow-node-run-param>
+                                         [nodeToRun]="detailedWorkflow.workflow_data.node"></app-workflow-node-run-param>
         </ng-container>
     </div>
 </ng-template>

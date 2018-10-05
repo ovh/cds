@@ -42,7 +42,7 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 	//If the hook is on the root, it will trigger a new workflow run
 	//Else if will trigger a new subnumber of the last workflow run
 	var number int64
-	if h.WorkflowNodeID == w.RootID {
+	if h.WorkflowNodeID == w.Root.ID {
 
 		//Get the next number from our sequence
 		var errnum error

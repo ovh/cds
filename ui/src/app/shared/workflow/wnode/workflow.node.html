@@ -7,7 +7,7 @@
                     [node]="node"
                     [noderun]="currentNodeRun"
                     [warnings]="warnings"
-                    [selected]="selectedNodeID === node.id"></app-workflow-wnode-pipeline>
+                    ></app-workflow-wnode-pipeline>
         </ng-container>
         <ng-container *ngSwitchCase="'join'">
             <app-workflow-wnode-join
@@ -15,7 +15,7 @@
                     [workflow]="workflow"
                     [node]="node"
                     [noderun]="currentNodeRun"
-                    [selected]="selectedNodeID === node.id"
+                    [selected]="isSelected"
                     [workflowrun]="workflowRun"
                 ></app-workflow-wnode-join>
         </ng-container>
@@ -25,7 +25,7 @@
                     [workflow]="workflow"
                     [node]="node"
                     [noderun]="currentNodeRun"
-                    [selected]="selectedNodeID === node.id"></app-workflow-wnode-fork>
+                    [selected]="isSelected"></app-workflow-wnode-fork>
         </ng-container>
         <ng-container *ngSwitchCase="'outgoinghook'">
             <app-workflow-wnode-outgoing-hook
@@ -33,7 +33,7 @@
                     [workflow]="workflow"
                     [node]="node"
                     [noderun]="currentNodeRun"
-                    [selected]="selectedNodeID === node.id"></app-workflow-wnode-outgoing-hook>
+                    [selected]="isSelected"></app-workflow-wnode-outgoing-hook>
         </ng-container>
     </ng-container>
 </div>

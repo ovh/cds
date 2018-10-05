@@ -4,7 +4,7 @@ import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
 import {
     WNode,
-    WNodeHook, Workflow,
+    WNodeHook,
 } from '../../model/workflow.model';
 import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
 import {WorkflowRunService} from './run/workflow.run.service';
@@ -73,8 +73,13 @@ export class WorkflowEventStore {
     }
 
     setSelectedNode(n: WNode, changeSideBar: boolean) {
-        if (n && changeSideBar) {
-            this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
+        if (changeSideBar) {
+            if (n) {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
+            } else {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
+            }
+
         }
         this._selectedNode.next(n);
         this._selectedHook.next(null);
@@ -92,7 +97,6 @@ export class WorkflowEventStore {
                 this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_HOOK);
             }
         }
-        this._selectedNode.next(null);
         this._selectedHook.next(h);
     }
 
@@ -154,14 +158,5 @@ export class WorkflowEventStore {
 
     outgoingHookEvents(): Observable<WorkflowNodeOutgoingHookRun> {
         return new Observable<WorkflowNodeOutgoingHookRun>(fn => this._outgoingHookEvents.subscribe(fn));
-    }
-
-    updateSelectedNode(detailedWorkflow: Workflow) {
-        let n = this._selectedNode.getValue();
-        if (!n) {
-            return;
-        }
-        let updatedNode = Workflow.getNodeByRef(n.ref, detailedWorkflow);
-        this.setSelectedNode(updatedNode, false);
     }
 }

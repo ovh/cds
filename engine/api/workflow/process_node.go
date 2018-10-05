@@ -409,6 +409,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	if n.Type == sdk.NodeTypeFork || n.Type == sdk.NodeTypeJoin {
 		run.Status = sdk.StatusSuccess.String()
+		run.Done = time.Now()
 	}
 
 	if err := insertWorkflowNodeRun(db, run); err != nil {

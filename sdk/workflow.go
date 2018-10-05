@@ -30,7 +30,7 @@ type Workflow struct {
 	ProjectID               int64                       `json:"project_id,omitempty" db:"project_id" cli:"-"`
 	ProjectKey              string                      `json:"project_key" db:"-" cli:"-"`
 	RootID                  int64                       `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
-	Root                    *WorkflowNode               `json:"root" db:"-" cli:"-"`
+	Root                    *WorkflowNode               `json:"root,omitempty" db:"-" cli:"-"`
 	Joins                   []WorkflowNodeJoin          `json:"joins,omitempty" db:"-" cli:"-"`
 	Groups                  []GroupPermission           `json:"groups,omitempty" db:"-" cli:"-"`
 	Permission              int                         `json:"permission,omitempty" db:"-" cli:"-"`

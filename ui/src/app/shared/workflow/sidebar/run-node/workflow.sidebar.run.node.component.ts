@@ -1,4 +1,4 @@
-import {Component, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {ChangeDetectorRef, Component, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import 'rxjs/add/observable/zip';
@@ -59,14 +59,24 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
       private _durationService: DurationService,
       private _workflowEventStore: WorkflowEventStore,
       private _sidebarStore: WorkflowSidebarStore,
+      private _cd: ChangeDetectorRef
     ) {
 
     }
+
 
     ngOnInit(): void {
         this.subNode = this._workflowEventStore.selectedNode().subscribe(n => {
             this.node = n;
             this.refreshData();
+            if (this.currentWorkflowRun && this.loading) {
+                this.loading = false;
+                this._cd.detectChanges();
+            }
+            if (!this.node) {
+                this.loading = true;
+                this._cd.detectChanges();
+            }
         });
         this.currentWorkflowRunSub = this._workflowEventStore.selectedRun().subscribe(wr => {
             this.currentWorkflowRun = wr;
@@ -74,7 +84,13 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
                 return;
             }
 
-            this.loading = false;
+            if (this.node && this.loading) {
+                this.loading = false;
+                this._cd.detectChanges();
+            } else {
+                this.loading  = true;
+                this._cd.detectChanges();
+            }
 
             // If not the same run => display loading
             if (this.currentWorkflowNodeRun && this.currentWorkflowRun
@@ -230,8 +246,9 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
       this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
       this._workflowEventStore.setSelectedNodeRun(null, false);
       this._workflowEventStore.setSelectedRun(null);
-      this._workflowEventStore.setSelectedNode(this.node, true);
+      // this._workflowEventStore.setSelectedNode(this.node, true);
       this._router.navigate(
-          ['/project', this.project.key, 'workflow', this.workflow.name], {queryParams: {'node_id': this.node.id}});
+          ['/project', this.project.key, 'workflow', this.workflow.name],
+          {queryParams: {'node_id': this.node.id, 'node_ref': this.node.ref}});
     }
 }

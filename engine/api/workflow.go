@@ -82,7 +82,9 @@ func (api *API) getWorkflowHandler() service.Handler {
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
-
+		// TODO REMOVE
+		w1.Root = nil
+		w1.Joins = nil
 		return service.WriteJSON(w, w1, http.StatusOK)
 	}
 }
@@ -305,6 +307,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, getUser(ctx), &wf); err != nil {
 				log.Warning("postWorkflowHandler> Cannot set default payload : %v", err)
 			}
+			wf.WorkflowData.Node.Context.DefaultPayload = wf.Root.Context.DefaultPayload
 		}
 
 		if err := workflow.Insert(tx, api.Cache, &wf, p, getUser(ctx)); err != nil {
@@ -336,6 +339,9 @@ func (api *API) postWorkflowHandler() service.Handler {
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
+		// TODO REMOVE
+		wf1.Root = nil
+		wf1.Joins = nil
 		return service.WriteJSON(w, wf1, http.StatusCreated)
 	}
 }
@@ -382,11 +388,13 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
+		// TODO Remove old struct
+		if wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
 			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, getUser(ctx), &wf); err != nil {
 				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
 			}
+			wf.WorkflowData.Node.Context.DefaultPayload = wf.Root.Context.DefaultPayload
 		}
 
 		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
@@ -425,7 +433,9 @@ func (api *API) putWorkflowHandler() service.Handler {
 
 		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
-
+		// TODO REMOVE
+		wf1.Root = nil
+		wf1.Joins = nil
 		return service.WriteJSON(w, wf1, http.StatusOK)
 	}
 }

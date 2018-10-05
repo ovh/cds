@@ -1,5 +1,4 @@
-
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input, NgZone, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {PipelineStatus} from '../../../model/pipeline.model';
@@ -22,8 +21,7 @@ export class WorkflowWNodeComponent implements OnInit {
     @Input() project: Project;
 
     // Selected node
-    selectedNodeID: number;
-    selectedNodeRef: string;
+    isSelected = false;
 
     // Selected workflow run
     workflowRun: WorkflowRun;
@@ -31,31 +29,14 @@ export class WorkflowWNodeComponent implements OnInit {
     warnings = 0;
 
     // Subscription
-    subNodeSelected: Subscription;
+    subSelectedNode: Subscription;
     subNodeRun: Subscription;
     subWorkflowRun: Subscription;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _router: Router, private _workflowEventStore: WorkflowEventStore) {
-        if (_activatedRoute.snapshot.queryParams['node_id']) {
-            this.selectedNodeID = parseInt(_activatedRoute.snapshot.queryParams['node_id'], 10);
-        }
-        if (_activatedRoute.snapshot.queryParams['node_ref']) {
-            this.selectedNodeRef = _activatedRoute.snapshot.queryParams['node_ref'];
-        }
+    zone = new NgZone({});
 
-        // Subscribe to node selection
-        this.subNodeSelected = this._workflowEventStore.selectedNode().subscribe(n => {
-            if (n) {
-                this.selectedNodeID = n.id;
-            } else {
-                delete this.selectedNodeID;
-            }
-        });
-
-
-
-
-    }
+    constructor(private _activatedRoute: ActivatedRoute, private _router: Router,
+                private _workflowEventStore: WorkflowEventStore) {}
 
     ngOnInit(): void {
         // Subscribe to node run events
@@ -68,6 +49,14 @@ export class WorkflowWNodeComponent implements OnInit {
                     return;
                 }
                 this.currentNodeRun = wnr;
+            }
+        });
+
+        this.subSelectedNode = this._workflowEventStore.selectedNode().subscribe(n => {
+            if (n) {
+                this.isSelected = (n.id === this.node.id);
+            } else {
+                this.isSelected = false;
             }
         });
 
@@ -92,24 +81,11 @@ export class WorkflowWNodeComponent implements OnInit {
                 this.workflowRun = null;
             }
 
-            if (this._activatedRoute.snapshot.queryParams['node_id']) {
-                this.selectedNodeID = parseInt(this._activatedRoute.snapshot.queryParams['node_id'], 10);
-            }
-
-            if (this.node && this.selectedNodeID && this.node.id === this.selectedNodeID) {
-                this._workflowEventStore.setSelectedNode(this.node, false);
-                this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun, false);
-            }
-
-
             if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
                 this.computeWarnings();
             }
         });
     }
-
-
-
 
     clickOnNode(): void {
         if (this.workflow.previewMode) {
@@ -117,30 +93,25 @@ export class WorkflowWNodeComponent implements OnInit {
         }
 
         if (this.workflowRun) {
-            this._workflowEventStore.setSelectedNode(this.node, false);
             this._workflowEventStore.setSelectedRun(this.workflowRun);
             this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun, true);
-        } else {
-            this._workflowEventStore.setSelectedNode(this.node, true);
         }
 
-        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
+         let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
             queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref}});
         this._router.navigateByUrl(url.toString()).then(() => {});
     }
 
     dblClickOnNode() {
         if (this._workflowEventStore.isRunSelected() && this.currentNodeRun) {
-            this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun);
             this._router.navigate([
                 'node', this.currentNodeRun.id
             ], {relativeTo: this._activatedRoute, queryParams: {name: this.node.name}});
         } else {
-            this._workflowEventStore.setSelectedNode(this.node, true);
             this._router.navigate([
                 '/project', this.project.key,
                 'pipeline', Workflow.getPipeline(this.workflow, this.node).name
-            ], {queryParams: {workflow: this.workflow.name}});
+            ], {queryParams: {workflow: this.workflow.name, node_id: this.node.id, node_ref: this.node.ref}});
         }
     }
 

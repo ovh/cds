@@ -127,12 +127,22 @@ func (r *WorkflowRun) TagExists(tag string) bool {
 	return false
 }
 
+// TODO remove old struct
 func (r *WorkflowRun) RootRun() *WorkflowNodeRun {
-	rootNodeRuns, has := r.WorkflowNodeRuns[r.Workflow.Root.ID]
-	if !has || len(rootNodeRuns) < 1 {
-		return nil
+	var rootNodeRuns []WorkflowNodeRun
+	if r.Version == 2 {
+		var has bool
+		rootNodeRuns, has = r.WorkflowNodeRuns[r.Workflow.WorkflowData.Node.ID]
+		if !has || len(rootNodeRuns) < 1 {
+			return nil
+		}
+	} else {
+		var has bool
+		rootNodeRuns, has = r.WorkflowNodeRuns[r.Workflow.Root.ID]
+		if !has || len(rootNodeRuns) < 1 {
+			return nil
+		}
 	}
-
 	rootRun := rootNodeRuns[0]
 	return &rootRun
 }

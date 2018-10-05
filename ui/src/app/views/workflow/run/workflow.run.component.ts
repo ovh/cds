@@ -36,6 +36,9 @@ export class WorkflowRunComponent implements OnInit {
     version: string;
     direction: string;
 
+    selectedNodeID: number;
+    selectedNodeRef: string;
+
     pipelineStatusEnum = PipelineStatus;
     notificationSubscription: Subscription;
     loadingRun = false;
@@ -53,7 +56,6 @@ export class WorkflowRunComponent implements OnInit {
       private _titleService: Title
     ) {
         this._workflowEventStore.setSelectedNodeRun(null, false);
-        this._workflowEventStore.setSelectedNode(null, false);
 
         // Get project
         this._activatedRoute.data.subscribe(datas => {
@@ -100,6 +102,36 @@ export class WorkflowRunComponent implements OnInit {
                 }
             }
         });
+
+        this._activatedRoute.queryParams.subscribe(params => {
+            if (params['node_id']) {
+                this.selectedNodeID = params['node_id'];
+            }
+            if (params['node_ref']) {
+                this.selectedNodeRef = params['node_ref'];
+            }
+            this.selectNode();
+        });
+    }
+
+    selectNode() {
+        if (!this.workflow) {
+            return;
+        }
+        if (this.selectedNodeID) {
+            let n = Workflow.getNodeByID(this.selectedNodeID, this.workflow);
+            if (n) {
+                this._workflowEventStore.setSelectedNode(n, false);
+                return;
+            }
+        }
+        if (this.selectedNodeRef) {
+            let n = Workflow.getNodeByRef(this.selectedNodeRef, this.workflow);
+            if (n) {
+                this._workflowEventStore.setSelectedNode(n, false);
+                return;
+            }
+        }
     }
 
     initWorkflowRun(num): void {

@@ -295,7 +295,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 			var err error
 			report, err = report.Merge(execute(ctx, db, store, proj, waitingRun, runContext))
 			if err != nil {
-				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
+				return nil, sdk.WrapError(err, "workflow.execute> Unable to merge report from execute")
 			}
 
 			next()

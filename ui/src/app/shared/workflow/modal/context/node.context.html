@@ -16,7 +16,7 @@
                     (event)="parameterEvent($event)">
                 </app-parameter-list>
             </ng-container>
-            <ng-container *ngIf="(node.hooks && node.hooks.length > 0) || (node.id === workflow.root.id)">
+            <ng-container *ngIf="(node.hooks && node.hooks.length > 0) || (node.id === workflow.workflow_data.node.id)">
                 <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
                 <ng-container *ngIf="!loadingBranches">
                     <codemirror

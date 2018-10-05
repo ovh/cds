@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {Subscription} from 'rxjs';
@@ -22,7 +22,7 @@ import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
     styleUrls: ['./workflow.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowShowComponent {
+export class WorkflowShowComponent implements OnInit {
 
     project: Project;
     detailedWorkflow: Workflow;
@@ -39,6 +39,8 @@ export class WorkflowShowComponent {
     permWarningModal: WarningModalComponent;
 
     selectedNode: WNode;
+    selectedNodeID: number;
+    selectedNodeRef: string;
 
     selectedTab = 'workflows';
 
@@ -52,16 +54,14 @@ export class WorkflowShowComponent {
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
                 private _translate: TranslateService, private _toast: ToastService,
                 private _workflowCoreService: WorkflowCoreService, private _workflowEventStore: WorkflowEventStore) {
+    }
+
+    ngOnInit(): void {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
-        this.activatedRoute.queryParams.subscribe(params => {
-            if (params['tab']) {
-                this.selectedTab = params['tab'];
-            }
-        });
 
         this.activatedRoute.params.subscribe(params => {
             let workflowName = params['workflowName'];
@@ -107,6 +107,23 @@ export class WorkflowShowComponent {
             }
         });
 
+        this.activatedRoute.queryParams.subscribe(params => {
+            if (params['tab']) {
+                this.selectedTab = params['tab'];
+            }
+            if (params['node_id']) {
+                this.selectedNodeID = params['node_id'];
+            } else {
+                delete this.selectedNodeID;
+            }
+            if (params['node_ref']) {
+                this.selectedNodeRef = params['node_ref'];
+            } else {
+                delete this.selectedNodeRef;
+            }
+            this.selectNode();
+        });
+
         this.workflowPreviewSubscription = this._workflowCoreService.getWorkflowPreview()
             .subscribe((wfPreview) => {
                 this.previewWorkflow = wfPreview;
@@ -114,6 +131,29 @@ export class WorkflowShowComponent {
                     this._workflowCoreService.toggleAsCodeEditor({open: false, save: false});
                 }
             });
+    }
+
+    selectNode() {
+        if (!this.detailedWorkflow) {
+            return;
+        }
+        if (this.selectedNodeID) {
+            let n = Workflow.getNodeByID(this.selectedNodeID, this.detailedWorkflow);
+            if (n) {
+                this.selectedNode = n;
+                this._workflowEventStore.setSelectedNode(n, true);
+                return;
+            }
+        }
+        if (this.selectedNodeRef) {
+            let n = Workflow.getNodeByRef(this.selectedNodeRef, this.detailedWorkflow);
+            if (n) {
+                this.selectedNode = n;
+                this._workflowEventStore.setSelectedNode(n, true);
+                return;
+            }
+        }
+        this._workflowEventStore.setSelectedNode(null, true);
     }
 
     savePreview() {

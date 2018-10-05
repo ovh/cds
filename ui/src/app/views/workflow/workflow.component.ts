@@ -38,7 +38,7 @@ export class WorkflowComponent implements OnInit {
     sidebarModes = WorkflowSidebarMode;
 
     asCodeEditorSubscription: Subscription;
-    asCodeEditorOpen: boolean;
+    asCodeEditorOpen = false;
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
@@ -116,9 +116,7 @@ export class WorkflowComponent implements OnInit {
                                     if (n) {
                                         let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
                                             queryParams: { 'node_id': n.id, 'node_ref': n.ref}});
-                                        // this._location.go(url.toString());
                                         this._router.navigateByUrl(url.toString()).then(() => {});
-                                        this._workflowEventStore.setSelectedNode(n, true);
                                     }
                                 }
                                 if (this.selectecHookRef) {
@@ -187,7 +185,6 @@ export class WorkflowComponent implements OnInit {
     changeToRunsMode(): void {
         let activatedRoute = this._routerService.getActivatedRoute(this._activatedRoute);
         this._router.navigate([], {relativeTo: activatedRoute});
-        this._workflowEventStore.setSelectedNode(null, false);
         if (!activatedRoute.snapshot.params['nodeId']) {
             this._workflowEventStore.setSelectedNodeRun(null, false);
         }

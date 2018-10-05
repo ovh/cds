@@ -8,7 +8,6 @@ export class WorkflowSidebarMode {
     static RUNS = 'sidebar:runs';
     static RUN_NODE = 'sidebar:run:node';
     static RUN_HOOK = 'sidebar:run:hook';
-    static RUN_FORK = 'sidebar:run:fork';
 
 }
 

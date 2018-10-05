@@ -9,7 +9,7 @@
                 <sm-select
                     class="search"
                     placeholder="{{ 'common_pipeline' | translate }}"
-                    [(model)]="node.pipeline_id"
+                    [(model)]="node.context.pipeline_id"
                     [options]="{'fullTextSearch': true}"
                     (onChange)="change()"
                     id="WorkflowPipelineSelect">
