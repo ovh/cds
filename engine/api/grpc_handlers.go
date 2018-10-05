@@ -104,7 +104,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 		return new(empty.Empty), sdk.WrapError(err, "SendResult> Cannot post job result")
 	}
 
-	workflow.ResyncNodeRunsWithCommits(c, db, h.store, p, report)
+	workflow.ResyncNodeRunsWithCommits(db, h.store, p, report)
 	go workflow.SendEvent(db, p.Key, report)
 
 	return new(empty.Empty), nil

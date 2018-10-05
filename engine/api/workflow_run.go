@@ -815,7 +815,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		if errS != nil {
 			return sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", key, name)
 		}
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
+		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, report)
 		go workflow.SendEvent(api.mustDB(), p.Key, report)
 
 		// Purge workflow run

@@ -254,7 +254,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to update outgoing hook run status")
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, tx, api.Cache, proj, report)
+		workflow.ResyncNodeRunsWithCommits(tx, api.Cache, proj, report)
 
 		if err := tx.Commit(); err != nil {
 			return err
