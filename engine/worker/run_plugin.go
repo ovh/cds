@@ -131,9 +131,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 			return nil, sdk.WrapError(err, "Unable to start GRPC plugin, binary command not found.")
 		}
 	}
-	args := make([]string, 0, len(binary.Args)+len(binary.Entrypoints))
-	args = append(args, binary.Entrypoints...)
-	args = append(args, binary.Args...)
+	args := append(binary.Entrypoints, binary.Args...)
 
 	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, mOut, mErr); err != nil {
 		return nil, sdk.WrapError(err, "Unable to start GRPC plugin... Aborting")
