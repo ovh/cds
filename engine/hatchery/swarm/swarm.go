@@ -65,7 +65,9 @@ func (h *HatcherySwarm) Init() error {
 		for hostName, cfg := range h.Config.DockerEngines {
 			log.Info("hatchery> swarm> connecting to %s: %s", hostName, cfg.Host)
 			httpClient := new(http.Client)
-			httpClient.Timeout = 30 * time.Second
+			// max time for a docker pull, but for most of docker request, there is a request with
+			// a lower timeout, using context.WithTimeout
+			httpClient.Timeout = 10 * time.Minute
 			var tlsc *tls.Config
 			if cfg.CertPath != "" {
 				options := tlsconfig.Options{
