@@ -318,30 +318,25 @@ export class Workflow {
 
         if (workflow.workflow_data.joins) {
             for (let join of workflow.workflow_data.joins) {
-                if (join.triggers) {
-                    for (let trigger of join.triggers) {
-                        if (trigger.child_node) {
-                            let parentNodeInfos = Workflow.getParentNode(workflow, trigger.child_node, currentNodeID);
-                            if (parentNodeInfos.found) {
-                                if (parentNodeInfos.node) {
-                                    ancestors[parentNodeInfos.node.id] = true;
-                                } else {
-                                    ancestors[workflow.workflow_data.node.id] = true;
-                                    join.parents.forEach((source) => ancestors[source.parent_id] = true);
-                                    return Object.keys(ancestors).map((ancestor) => parseInt(ancestor, 10));
-                                }
-                            }
-                        }
+
+                let parentNodeInfos = Workflow.getParentNode(workflow, join, currentNodeID);
+                if (parentNodeInfos.found) {
+                    if (parentNodeInfos.node) {
+                        ancestors[parentNodeInfos.node.id] = true;
+                    } else {
+                        ancestors[workflow.workflow_data.node.id] = true;
+                        join.parents.forEach((source) => ancestors[source.parent_id] = true);
+                        return Object.keys(ancestors).map((ancestor) => parseInt(ancestor, 10));
                     }
                 }
 
                 for (let parent of join.parents) {
                     let nodeFound = Workflow.getNodeByID(parent.parent_id, workflow);
                     if (nodeFound) {
-                        let parentNodeInfos = Workflow.getParentNode(workflow, nodeFound, currentNodeID);
-                        if (parentNodeInfos.found) {
-                            if (parentNodeInfos.node) {
-                                ancestors[parentNodeInfos.node.id] = true;
+                        let pni = Workflow.getParentNode(workflow, nodeFound, currentNodeID);
+                        if (pni.found) {
+                            if (pni.node) {
+                                ancestors[pni.node.id] = true;
                             }
                         }
                     }

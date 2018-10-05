@@ -896,7 +896,6 @@ func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 			}
 		}
 		go func(fromNode *sdk.Node) {
-			log.Warning("%v", fromNode)
 			r1, err := runFromNodeV2(ctx, db, store, optsCopy, p, wf, lastRun, u, fromNode)
 			if err != nil {
 				log.Error("error: %v", err)

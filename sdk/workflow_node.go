@@ -122,33 +122,31 @@ func (n *Node) Ancestors(w *WorkflowData, mapNodes map[int64]*Node, deep bool) [
 	res, ok := w.Node.ancestor(n.ID, deep)
 
 	if !ok {
-	joinLoop:
 		for _, j := range w.Joins {
-			for _, t := range j.Triggers {
-				resAncestor, ok := (&t.ChildNode).ancestor(n.ID, deep)
-				if ok {
-					if len(resAncestor) == 1 || deep {
-						for id := range resAncestor {
-							res[id] = true
-						}
-					}
+			resAncestor, ok := (&j).ancestor(j.ID, deep)
 
-					if len(resAncestor) == 0 || deep {
-						for _, jc := range j.JoinContext {
-							res[jc.ParentID] = true
-							if deep {
-								node := mapNodes[jc.ParentID]
-								if node != nil {
-									ancerstorRes := node.Ancestors(w, mapNodes, deep)
-									for _, id := range ancerstorRes {
-										res[id] = true
-									}
+			if ok {
+				if len(resAncestor) == 1 || deep {
+					for id := range resAncestor {
+						res[id] = true
+					}
+				}
+
+				if len(resAncestor) == 0 || deep {
+					for _, jc := range j.JoinContext {
+						res[jc.ParentID] = true
+						if deep {
+							node := mapNodes[jc.ParentID]
+							if node != nil {
+								ancerstorRes := node.Ancestors(w, mapNodes, deep)
+								for _, id := range ancerstorRes {
+									res[id] = true
 								}
 							}
 						}
 					}
-					break joinLoop
 				}
+				break
 			}
 		}
 	}

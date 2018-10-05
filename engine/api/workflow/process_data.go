@@ -84,7 +84,10 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 	report, _ = report.Merge(r1, nil)
 
-	r2 := processAllJoins(ctx, db, store, proj, w, mapNodes, maxsn)
+	r2, errJ := processAllJoins(ctx, db, store, proj, w, mapNodes, maxsn)
+	if errJ != nil {
+		return report, false, errJ
+	}
 	report, _ = report.Merge(r2, nil)
 
 	// Recompute status counter, it's mandatory to resync
