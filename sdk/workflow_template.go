@@ -29,7 +29,7 @@ type WorkflowTemplate struct {
 
 // ValidateStruct returns workflow template validity.
 func (w *WorkflowTemplate) ValidateStruct() error {
-	if w.Name == "" || w.Value == "" {
+	if w.Name == "" || len(w.Value) == 0 {
 		return ErrInvalidData
 	}
 
@@ -79,7 +79,7 @@ type PipelineTemplate struct {
 
 // ValidateStruct returns pipeline template validity.
 func (p *PipelineTemplate) ValidateStruct() error {
-	if p.Value == "" {
+	if len(p.Value) == 0 {
 		return ErrInvalidData
 	}
 	return nil

@@ -2,6 +2,7 @@ package workflowtemplate
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"regexp"
@@ -47,7 +48,12 @@ func Execute(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) (sdk.Workf
 		"params": prepareParams(wt, r),
 	}
 
-	out, err := executeTemplate(wt.Value, data)
+	v, err := base64.StdEncoding.DecodeString(wt.Value)
+	if err != nil {
+		return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse workflow template")
+	}
+
+	out, err := executeTemplate(string(v), data)
 	if err != nil {
 		return sdk.WorkflowTemplateResult{}, err
 	}
@@ -58,7 +64,12 @@ func Execute(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) (sdk.Workf
 	}
 
 	for i, p := range wt.Pipelines {
-		out, err := executeTemplate(p.Value, data)
+		v, err := base64.StdEncoding.DecodeString(p.Value)
+		if err != nil {
+			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse workflow template")
+		}
+
+		out, err := executeTemplate(string(v), data)
 		if err != nil {
 			return sdk.WorkflowTemplateResult{}, err
 		}

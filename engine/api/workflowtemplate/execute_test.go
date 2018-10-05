@@ -1,6 +1,7 @@
 package workflowtemplate_test
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -15,23 +16,23 @@ func TestExecuteTemplate(t *testing.T) {
 			{Key: "withDeploy", Type: sdk.ParameterTypeBoolean, Required: true},
 			{Key: "deployWhen", Type: sdk.ParameterTypeString},
 		},
-		Content: `
-      name: {{.name}}
-      description: Test simple workflow
-      version: v1.0
-      workflow:
-        Node-1:
-          pipeline: Pipeline-1
-        {{if .params.withDeploy}}
-        Node-2:
-          depends_on:
-          - Node-1
-          when:
-          - {{.params.deployWhen}}
-          pipeline: Pipeline-1
-        {{end}}`,
+		Value: base64.StdEncoding.EncodeToString([]byte(`
+    name: {{.name}}
+    description: Test simple workflow
+    version: v1.0
+    workflow:
+      Node-1:
+        pipeline: Pipeline-1
+      {{if .params.withDeploy}}
+      Node-2:
+        depends_on:
+        - Node-1
+        when:
+        - {{.params.deployWhen}}
+        pipeline: Pipeline-1
+      {{end}}`)),
 		Pipelines: []sdk.PipelineTemplate{{
-			Value: `
+			Value: base64.StdEncoding.EncodeToString([]byte(`
         version: v1.0
         name: Pipeline-1
         stages:
@@ -43,8 +44,7 @@ func TestExecuteTemplate(t *testing.T) {
           - script:
             - echo "Hello World!"
           - script:
-            - echo "{{.cds.project.name}}"
-        `,
+            - echo "{{.cds.run.number}}"`)),
 		}},
 	}
 
