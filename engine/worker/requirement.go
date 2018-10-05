@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -35,9 +34,6 @@ var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement)
 func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, bookedJobID int64) (bool, []sdk.Requirement) {
 	requirementsOK := true
 	errRequirements := []sdk.Requirement{}
-	if err := w.client.WorkerSetStatus(sdk.StatusChecking); err != nil {
-		log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
-	}
 
 	log.Debug("checkRequirements> for JobID:%d model of worker: %s", bookedJobID, w.model.Name)
 
@@ -86,8 +82,8 @@ func checkRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	var currentOS = strings.ToLower(runtime.GOOS)
-	var currentARCH = strings.ToLower(runtime.GOARCH)
+	var currentOS = strings.ToLower(sdk.GOOS)
+	var currentARCH = strings.ToLower(sdk.GOARCH)
 
 	binary, err := w.client.PluginGetBinaryInfos(r.Name, currentOS, currentARCH)
 	if err != nil {
@@ -146,8 +142,10 @@ func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		return false, nil
 	}
 	t := strings.Split(r.Value, " ")
-	wm, err := w.client.WorkerModel(t[0])
-	return wm.ID == w.model.ID, err
+	if len(t) > 0 {
+		return t[0] == w.model.Name, nil
+	}
+	return false, nil
 }
 
 func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
@@ -229,12 +227,12 @@ func checkOSArchRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		return false, fmt.Errorf("invalid requirement %s", r.Value)
 	}
 
-	return osarch[0] == strings.ToLower(runtime.GOOS) && osarch[1] == strings.ToLower(runtime.GOARCH), nil
+	return osarch[0] == strings.ToLower(sdk.GOOS) && osarch[1] == strings.ToLower(sdk.GOARCH), nil
 }
 
 func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
-	var currentOS = strings.ToLower(runtime.GOOS)
-	var currentARCH = strings.ToLower(runtime.GOARCH)
+	var currentOS = strings.ToLower(sdk.GOOS)
+	var currentARCH = strings.ToLower(sdk.GOARCH)
 	var binary *sdk.GRPCPluginBinary
 
 	if len(j.PlatformPluginBinaries) == 0 {

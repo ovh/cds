@@ -89,6 +89,7 @@ export class HooksTaskComponent {
     selectExecution(e: TaskExecution) {
         return _ => {
             this.selectedExecution = e
+            this.selectedExecutionBody = null;
             if (e.webhook) {
                 this.selectedExecutionBody = this.decodeBody(e.webhook.request_body);
             } else if (e.rabbitmq) {

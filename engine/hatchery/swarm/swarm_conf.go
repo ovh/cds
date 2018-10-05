@@ -49,7 +49,9 @@ func (h *HatcherySwarm) Status() sdk.MonitoringStatus {
 		for dockerName, dockerClient := range h.dockerClients {
 			//Check images
 			status := sdk.MonitoringStatusOK
-			images, err := dockerClient.ImageList(context.Background(), types.ImageListOptions{All: true})
+			ctxList, cancelList := context.WithTimeout(context.Background(), 20*time.Second)
+			defer cancelList()
+			images, err := dockerClient.ImageList(ctxList, types.ImageListOptions{All: true})
 			if err != nil {
 				log.Warning("hatchery> swarm> %s> Status> Unable to list images on %s: %s", h.Name, dockerName, err)
 				status = sdk.MonitoringStatusAlert

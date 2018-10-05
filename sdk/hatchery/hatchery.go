@@ -114,7 +114,7 @@ func Create(h Interface) error {
 	)
 
 	// run the starters pool
-	workersStartChan, workerStartResultChan := startWorkerStarters(h)
+	workersStartChan, workerStartResultChan := startWorkerStarters(ctx, h)
 
 	hostname, errh := os.Hostname()
 	if errh != nil {
@@ -147,6 +147,16 @@ func Create(h Interface) error {
 						}
 					}
 				}
+			}
+		},
+		PanicDump(h),
+	)
+
+	// read the errs channel in another goroutine too
+	sdk.GoRoutine("checkErrs",
+		func() {
+			for err := range errs {
+				log.Error("%v", err)
 			}
 		},
 		PanicDump(h),
@@ -339,9 +349,6 @@ func Create(h Interface) error {
 			//Ask to start
 			log.Debug("hatchery> Request a worker for job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
 			workersStartChan <- workerRequest
-
-		case err := <-errs:
-			log.Error("%v", err)
 
 		case <-tickerProvision.C:
 			provisioning(h, models)

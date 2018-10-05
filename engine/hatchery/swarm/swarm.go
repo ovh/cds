@@ -2,9 +2,11 @@ package swarm
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -46,7 +48,9 @@ func (h *HatcherySwarm) Init() error {
 			log.Error("hatchery> swarm> unable to connect to a docker client:%s", errc)
 			return errc
 		}
-		if _, errPing := d.Ping(context.Background()); errPing != nil {
+		ctxDocker, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, errPing := d.Ping(ctxDocker); errPing != nil {
 			log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
 			return errPing
 		}
@@ -61,6 +65,8 @@ func (h *HatcherySwarm) Init() error {
 		for hostName, cfg := range h.Config.DockerEngines {
 			log.Info("hatchery> swarm> connecting to %s: %s", hostName, cfg.Host)
 			httpClient := new(http.Client)
+			httpClient.Timeout = 30 * time.Second
+			var tlsc *tls.Config
 			if cfg.CertPath != "" {
 				options := tlsconfig.Options{
 					CAFile:             filepath.Join(cfg.CertPath, "ca.pem"),
@@ -68,16 +74,12 @@ func (h *HatcherySwarm) Init() error {
 					KeyFile:            filepath.Join(cfg.CertPath, "key.pem"),
 					InsecureSkipVerify: cfg.InsecureSkipTLSVerify,
 				}
-				tlsc, err := tlsconfig.Client(options)
+				var err error
+				tlsc, err = tlsconfig.Client(options)
 				if err != nil {
 					log.Error("hatchery> swarm> docker client error (CertPath=%s): %v", cfg.CertPath, err)
 					continue
 				}
-
-				httpClient.Transport = &http.Transport{
-					TLSClientConfig: tlsc,
-				}
-
 			} else if cfg.TLSCAPEM != "" && cfg.TLSCERTPEM != "" && cfg.TLSKEYPEM != "" {
 				tempDir, err := ioutil.TempDir("", "cert-"+hostName)
 				if err != nil {
@@ -102,24 +104,41 @@ func (h *HatcherySwarm) Init() error {
 					KeyFile:            filepath.Join(tempDir, "key.pem"),
 					InsecureSkipVerify: cfg.InsecureSkipTLSVerify,
 				}
-				tlsc, err := tlsconfig.Client(options)
+				tlsc, err = tlsconfig.Client(options)
 				if err != nil {
 					log.Error("hatchery> swarm> docker client error: unable to set tlsconfig: %v", err)
 					continue
 				}
+			}
 
+			if tlsc != nil {
 				httpClient.Transport = &http.Transport{
-					TLSClientConfig: tlsc,
+					Dial: (&net.Dialer{
+						Timeout: 30 * time.Second,
+					}).Dial,
+					MaxIdleConns:        500,
+					MaxIdleConnsPerHost: 500,
+					TLSHandshakeTimeout: 30 * time.Second,
+					TLSClientConfig:     tlsc,
 				}
 			} else {
-				httpClient.Transport = &http.Transport{}
+				httpClient.Transport = &http.Transport{
+					Dial: (&net.Dialer{
+						Timeout: 30 * time.Second,
+					}).Dial,
+					MaxIdleConns:        500,
+					MaxIdleConnsPerHost: 500,
+				}
 			}
+
 			d, errc := docker.NewClientWithOpts(docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion), docker.WithHTTPClient(httpClient))
 			if errc != nil {
 				log.Error("hatchery> swarm> unable to connect to a docker client:%s for host %s (%s)", hostName, cfg.Host, errc)
 				continue
 			}
-			if _, errPing := d.Ping(context.Background()); errPing != nil {
+			ctxDocker, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if _, errPing := d.Ping(ctxDocker); errPing != nil {
 				log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
 				continue
 			}

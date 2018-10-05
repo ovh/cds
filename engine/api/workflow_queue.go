@@ -348,14 +348,19 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 
 func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
+		_, next := observability.Span(ctx, "receiveSpawnInfosWorkflowJob")
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
+			next()
 			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
 		}
 		var s []sdk.SpawnInfo
 		if err := UnmarshalBody(r, &s); err != nil {
+			next()
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
 		}
+		observability.Current(ctx, observability.Tag(observability.TagWorkflowNodeJobRun, id))
+		next()
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
@@ -363,6 +368,8 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
+		_, next = observability.Span(ctx, "workflow.AddSpawnInfosNodeJobRun")
+		defer next()
 		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
 		}
@@ -418,12 +425,16 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
 		}
 
+		observability.Record(ctx, api.Stats.WorkflowRunStarted, 1)
 		workflowRuns, workflowNodeRuns := workflow.GetWorkflowRunEventData(report, proj.Key)
 
 		if len(workflowRuns) > 0 {
 			observability.Current(ctx,
-				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
-			)
+				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
+
+			if workflowRuns[0].Status == sdk.StatusFail.String() {
+				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+			}
 		}
 
 		db := api.mustDB()

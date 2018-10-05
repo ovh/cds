@@ -42,7 +42,6 @@ func (api *API) InitRouter() {
 
 	// Admin
 	r.Handle("/admin/warning", r.DELETE(api.adminTruncateWarningsHandler, NeedAdmin(true)))
-	r.Handle("/admin/maintenance", r.POST(api.postAdminMaintenanceHandler, NeedAdmin(true)), r.GET(api.getAdminMaintenanceHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminMaintenanceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug", r.GET(api.getProfileIndexHandler, Auth(false)))
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)), r.GET(api.getCPUProfileHandler, NeedAdmin(true)))
@@ -57,11 +56,6 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
 	r.Handle("/admin/services", r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
 	r.Handle("/admin/services/call", r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
-
-	// Action plugin
-	r.Handle("/plugin", r.POST(api.addPluginHandler, NeedAdmin(true)), r.PUT(api.updatePluginHandler, NeedAdmin(true)))
-	r.Handle("/plugin/{name}", r.DELETE(api.deletePluginHandler, NeedAdmin(true)))
-	r.Handle("/plugin/download/{name}", r.GET(api.downloadPluginHandler))
 
 	// Download file
 	r.Handle("/download", r.GET(api.downloadsHandler))
@@ -333,7 +327,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/vulnerability", r.POSTEXECUTE(api.postVulnerabilityReportHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery()))
+	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1), NeedWorker()))
 	r.Handle("/queue/workflows/log/service", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), NeedHatchery()))
@@ -434,5 +428,5 @@ func (api *API) InitRouter() {
 	r.Handle("/services/{type}", r.GET(api.getExternalServiceHandler, NeedWorker()))
 
 	//Not Found handler
-	r.Mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 }

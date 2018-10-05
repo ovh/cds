@@ -30,7 +30,8 @@ export class Column {
 })
 export class DataTableComponent extends Table {
     @Input() columns: Array<Column>;
-    @Output() sortChange = new EventEmitter<any>();
+    @Output() sortChange = new EventEmitter<string>();
+    @Output() dataChange = new EventEmitter<number>();
     @Input() loading: boolean;
 
     @Input() set data(d: any) {
@@ -45,7 +46,6 @@ export class DataTableComponent extends Table {
     }
     get withPagination() { return this.nbElementsByPage; }
 
-
     @Input() set withFilter(f: Filter) {
         this.filterFunc = f;
         this.getDataForCurrentPage();
@@ -59,6 +59,7 @@ export class DataTableComponent extends Table {
     pagesCount: number;
     filterFunc: Filter;
     filter: string;
+    filteredData: any;
 
     columnClick(event: Event, c: Column) {
         if (!c.sortable) {
@@ -80,13 +81,24 @@ export class DataTableComponent extends Table {
     }
 
     getData(): any[] {
-        if (this.filter && this.filter) {
-            return this.data.filter(this.filterFunc(this.filter));
+        this.filteredData = this.data;
+        if (this.filter && this.filterFunc) {
+            this.filteredData = this.data.filter(this.filterFunc(this.filter));
         }
-        return this.data;
+
+        if (this.filteredData) {
+            this.dataChange.emit(this.filteredData.length);
+        }
+
+        return this.filteredData;
     }
 
     getDataForCurrentPage(): any[] {
+        this.pagesCount = this.getNbOfPages();
+        if (this.pagesCount < this.currentPage) {
+            this.currentPage = 1;
+        }
+
         let data: any[];
         if (!this.withPagination) {
             data = this.getData();
@@ -94,16 +106,15 @@ export class DataTableComponent extends Table {
             data = super.getDataForCurrentPage();
         }
         this.dataForCurrentPage = data;
-        this.pagesCount = this.getNbOfPages();
-
-        if (this.pagesCount < this.currentPage) {
-            this.currentPage = 1;
-        }
 
         return data;
     }
 
     filterChange() {
         this.getDataForCurrentPage();
+    }
+
+    pageChange(n: number) {
+        this.goTopage(n);
     }
 }

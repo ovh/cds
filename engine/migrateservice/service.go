@@ -30,16 +30,16 @@ type dbmigservice struct {
 
 // Configuration is the exposed type for database API configuration
 type Configuration struct {
-	Name      string `toml:"name" comment:"Name of this CDS Database Migrate service\n Enter a name to enable this service"`
-	URL       string `default:"http://localhost:8087"`
-	Directory string `toml:"directory" comment:"SQL Migration files directory" default:"sql"`
+	Name      string `toml:"name" comment:"Name of this CDS Database Migrate service\n Enter a name to enable this service" json:"name"`
+	URL       string `default:"http://localhost:8087" json:"url"`
+	Directory string `toml:"directory" comment:"SQL Migration files directory" default:"sql" json:"directory"`
 	HTTP      struct {
-		Addr     string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
-		Port     int    `toml:"port" default:"8087"`
-		Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
-	} `toml:"http" comment:"######################\n CDS DB Migrate HTTP Configuration \n######################"`
-	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################"`
-	DB  database.DBConfiguration        `toml:"db" comment:"################################\n Postgresql Database settings \n###############################"`
+		Addr     string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
+		Port     int    `toml:"port" default:"8087" json:"port"`
+		Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API" json:"insecure"`
+	} `toml:"http" comment:"######################\n CDS DB Migrate HTTP Configuration \n######################" json:"http"`
+	API service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
+	DB  database.DBConfiguration        `toml:"db" comment:"################################\n Postgresql Database settings \n###############################" json:"db"`
 }
 
 // New instanciates a new API object

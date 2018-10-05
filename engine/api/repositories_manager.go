@@ -81,9 +81,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":                  url,
-			"request_token":        token,
-			"username":             getUser(ctx).Username,
+			"url":           url,
+			"request_token": token,
+			"username":      getUser(ctx).Username,
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
@@ -202,7 +202,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 
 		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
 		if errVCSServer != nil {
-			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
+			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot create VCS Server Consumer project:%s repoManager:%s", proj.Key, rmName)
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -213,7 +213,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 
 		token, secret, err := vcsServer.AuthorizeToken(ctx, token, verifier)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s project:%s", err, proj.Key)
 		}
 		log.Debug("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s", projectKey, token, secret)
 

@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -220,8 +219,8 @@ func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.W
 	in := sdk.WorkerTakeForm{
 		Time:    time.Now(),
 		Version: sdk.VERSION,
-		OS:      runtime.GOOS,
-		Arch:    runtime.GOARCH,
+		OS:      sdk.GOOS,
+		Arch:    sdk.GOARCH,
 	}
 	if isBooked {
 		in.BookedJobID = job.ID

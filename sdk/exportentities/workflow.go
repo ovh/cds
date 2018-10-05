@@ -361,7 +361,7 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	var attempt int
 	fakeID := rand.Int63n(5000)
 	// attempt is there to avoid infinit loop, but it should not happend becase we check validty and dependencies earlier
-	for len(entries) != 0 && attempt < 1000 {
+	for len(entries) != 0 && attempt < 10000 {
 		for name, entry := range entries {
 			entry.ID = fakeID
 			ok, err := entry.processNode(name, wf)

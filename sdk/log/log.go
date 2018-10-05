@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"runtime"
 	"strings"
 
 	loghook "github.com/ovh/cds/sdk/log/hook"
@@ -23,6 +22,8 @@ type Conf struct {
 	GraylogExtraValue      string
 	GraylogFieldCDSName    string
 	GraylogFieldCDSVersion string
+	GraylogFieldCDSOS      string
+	GraylogFieldCDSArch    string
 	Ctx                    context.Context
 }
 
@@ -85,9 +86,12 @@ func Initialize(conf *Conf) {
 		if conf.GraylogFieldCDSVersion != "" {
 			extra["CDSVersion"] = conf.GraylogFieldCDSVersion
 		}
-
-		extra["CDSOS"] = runtime.GOOS
-		extra["CDSArch"] = runtime.GOARCH
+		if conf.GraylogFieldCDSOS != "" {
+			extra["CDSOS"] = conf.GraylogFieldCDSOS
+		}
+		if conf.GraylogFieldCDSArch != "" {
+			extra["CDSArch"] = conf.GraylogFieldCDSArch
+		}
 
 		// no need to check error here
 		hostname, _ := os.Hostname()

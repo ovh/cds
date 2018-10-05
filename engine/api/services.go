@@ -54,6 +54,17 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		srv.GroupID = &t.GroupID
 		srv.IsSharedInfra = srv.GroupID == &group.SharedInfraGroup.ID
 		srv.Uptodate = srv.Version == sdk.VERSION
+		for i := range srv.MonitoringStatus.Lines {
+			s := &srv.MonitoringStatus.Lines[i]
+			if s.Component == "Version" {
+				if sdk.VERSION != s.Value {
+					s.Status = sdk.MonitoringStatusWarn
+				} else {
+					s.Status = sdk.MonitoringStatusOK
+				}
+				break
+			}
+		}
 
 		//Insert or update the service
 		tx, err := api.mustDB().Begin()
@@ -138,6 +149,10 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 		Hash:             string(hash),
 		LastHeartbeat:    time.Now(),
 		Type:             services.TypeAPI,
+		Config:           api.Config,
+	}
+	if group.SharedInfraGroup != nil {
+		srv.GroupID = &group.SharedInfraGroup.ID
 	}
 
 	//Try to find the service, and keep; else generate a new one
@@ -148,6 +163,7 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 	}
 
 	if oldSrv != nil {
+		srv.ID = oldSrv.ID
 		if err := services.Update(tx, srv); err != nil {
 			log.Error("serviceAPIHeartbeat> Unable to update service %s: %v", srv.Name, err)
 			return

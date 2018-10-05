@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"path/filepath"
 	"time"
@@ -185,6 +186,16 @@ func (c *Common) initRouter(ctx context.Context, h hatchery.Interface) {
 	r.Handle("/mon/metrics", r.GET(observability.StatsHandler, api.Auth(false)))
 	r.Handle("/mon/errors", r.GET(c.getPanicDumpListHandler, api.Auth(false)))
 	r.Handle("/mon/errors/{id}", r.GET(c.getPanicDumpHandler, api.Auth(false)))
+
+	r.Mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.Mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.Mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.Mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	// need 2 routes for index, one for index page, another with {action}
+	r.Mux.HandleFunc("/debug/pprof/{action}", pprof.Index)
+	r.Mux.HandleFunc("/debug/pprof/", pprof.Index)
+
+	r.Mux.NotFoundHandler = http.HandlerFunc(api.NotFoundHandler)
 }
 
 func (c *Common) getPanicDumpListHandler() service.Handler {

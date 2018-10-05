@@ -88,6 +88,12 @@
   revision = "cd65e8bd7da20cdcee450f7cbdd9cc04f78bc02f"
 
 [[projects]]
+  name = "github.com/bsm/sarama-cluster"
+  packages = ["."]
+  revision = "c618e605e15c0d7535f6c96ff8efbb0dba4fd66c"
+  version = "v2.1.15"
+
+[[projects]]
   name = "github.com/buger/goterm"
   packages = ["."]
   revision = "d443b9114f9c050367638a536310fbec36a0de11"
@@ -891,6 +897,7 @@
     "executors/exec",
     "executors/http",
     "executors/imap",
+    "executors/kafka",
     "executors/ovhapi",
     "executors/readfile",
     "executors/redis",
@@ -898,8 +905,8 @@
     "executors/ssh",
     "executors/web"
   ]
-  revision = "9ec4044cda41dec8a1ccbd5db066f6c8d350c70f"
-  version = "0.21.3"
+  revision = "936246765cb756e8966e8733247c3121ad296682"
+  version = "0.22.0"
 
 [[projects]]
   branch = "master"
@@ -1586,6 +1593,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f37dc9664c73099fc0c9f399ccb3398f94129c055df9c3f098f30931988436b6"
+  inputs-digest = "7e639f43f81e17e6effe79b95ced4b885953f6155329ea45341dd67ef4f00bc2"
   solver-name = "gps-cdcl"
   solver-version = 1

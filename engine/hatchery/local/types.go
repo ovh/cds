@@ -12,9 +12,9 @@ import (
 
 // HatcheryConfiguration is the configuration for local hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration"`
-	Basedir                      string `mapstructure:"basedir" toml:"basedir" default:"/tmp" comment:"BaseDir for worker workspace"`
-	NbProvision                  int    `mapstructure:"nbProvision" toml:"nbProvision" default:"1" comment:"Nb Workers to provision"`
+	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration" json:"commonConfiguration"`
+	Basedir                      string `mapstructure:"basedir" toml:"basedir" default:"/tmp" comment:"BaseDir for worker workspace" json:"basedir"`
+	NbProvision                  int    `mapstructure:"nbProvision" toml:"nbProvision" default:"1" comment:"Nb Workers to provision" json:"nbProvision"`
 }
 
 // HatcheryLocal implements HatcheryMode interface for local usage

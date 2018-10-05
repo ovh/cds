@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 var mapBuiltinActions = map[string]BuiltInActionFunc{}
@@ -69,140 +67,15 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 	return f(w)(ctx, a, buildID, params, secrets, sendLog)
 }
 
-func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
-	log.Info("runPlugin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
-	defer func() {
-		log.Info("runPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
-	}()
-
-	chanRes := make(chan sdk.Result, 1)
-
-	go func(buildID int64, params []sdk.Parameter) {
-		res := sdk.Result{Status: sdk.StatusFail.String()}
-
-		//For the moment we consider that plugin name = action name = plugin binary file name
-		pluginName := a.Name
-		//The binary file has been downloaded during requirement check in /tmp
-		pluginBinary := path.Join(w.basedir, a.Name)
-
-		var tlsskipverify bool
-		if os.Getenv("CDS_SKIP_VERIFY") != "" {
-			tlsskipverify = true
-		}
-
-		env := []string{}
-		//set up environment variables from pipeline build job parameters
-		for _, p := range params {
-			// avoid put private key in environment var as it's a binary value
-			if (p.Type == sdk.KeyPGPParameter || p.Type == sdk.KeySSHParameter) && strings.HasSuffix(p.Name, ".priv") {
-				continue
-			}
-			if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
-				continue
-			}
-			envName := strings.Replace(p.Name, ".", "_", -1)
-			envName = strings.ToUpper(envName)
-			env = append(env, fmt.Sprintf("%s=%s", envName, p.Value))
-		}
-
-		for _, p := range w.currentJob.buildVariables {
-			envName := strings.Replace(p.Name, ".", "_", -1)
-			envName = strings.ToUpper(envName)
-			env = append(env, fmt.Sprintf("%s=%s", envName, p.Value))
-		}
-
-		//Create the rpc server
-		pluginClient := plugin.NewClient(ctx, pluginName, pluginBinary, w.id, w.apiEndpoint, tlsskipverify, env...)
-		defer pluginClient.Kill()
-
-		//Get the plugin interface
-		_plugin, err := pluginClient.Instance()
-		if err != nil {
-			result := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable to init plugin %s: %s\n", pluginName, err),
-			}
-			sendLog(result.Reason)
-			chanRes <- result
-		}
-
-		sendLog(fmt.Sprintf("Starting plugin: %s version %s\n", _plugin.Name(), _plugin.Version()))
-		log.Info("runPlugin> Starting plugin:%s version:%s stepOrder:%d", _plugin.Name(), _plugin.Version(), stepOrder)
-
-		//Manage all parameters
-		pluginSecrets := plugin.Secrets{
-			Data: map[string]string{},
-		}
-
-		pluginArgs := plugin.Arguments{
-			Data: map[string]string{},
-		}
-		for _, p := range a.Parameters {
-			pluginArgs.Data[p.Name] = p.Value
-		}
-		for _, p := range params {
-			pluginArgs.Data[p.Name] = p.Value
-			if sdk.NeedPlaceholder(p.Type) {
-				pluginSecrets.Data[p.Name] = p.Value
-			}
-		}
-		for _, v := range w.currentJob.buildVariables {
-			pluginArgs.Data[v.Name] = v.Value
-		}
-
-		//Call the Run function on the plugin interface
-		id := w.currentJob.pbJob.PipelineBuildID
-		if w.currentJob.wJob != nil {
-			id = w.currentJob.wJob.WorkflowNodeRunID
-		}
-
-		pluginAction := plugin.Job{
-			IDPipelineBuild:    id,
-			IDPipelineJobBuild: buildID,
-			OrderStep:          stepOrder,
-			Args:               pluginArgs,
-			Secrts:             pluginSecrets,
-			HTTPPortWorker:     int(w.exportPort),
-		}
-		if w.currentJob.wJob != nil && w.currentJob.wJob.WorkflowNodeRunID > 0 {
-			pluginAction.IDWorkflowNodeRun = w.currentJob.wJob.WorkflowNodeRunID
-		}
-
-		pluginResult := _plugin.Run(pluginAction)
-		if pluginResult == plugin.Success {
-			res.Status = sdk.StatusSuccess.String()
-			log.Info("runPlugin> plugin success on stepOrder:%d", stepOrder)
-		} else {
-			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("Plugin Failure: %v", pluginResult)
-			log.Info("runPlugin> plugin failure on stepOrder:%d", stepOrder)
-		}
-
-		chanRes <- res
-	}(buildID, *params)
-
-	select {
-	case <-ctx.Done():
-		log.Error("CDS Worker execution canceled: %v", ctx.Err())
-		w.sendLog(buildID, "CDS Worker execution canceled\n", stepOrder, false)
-		return sdk.Result{
-			Status: sdk.StatusFail.String(),
-			Reason: "CDS Worker execution canceled",
-		}
-	case res := <-chanRes:
-		return res
-	}
-}
-
 func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
-	log.Debug("runPlugin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
+	log.Debug("runGRPCPlugin> Begin buildID:%d stepOrder:%d", buildID, stepOrder)
 	defer func() {
-		log.Debug("runPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
+		log.Debug("runGRPCPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
 	}()
 
 	chanRes := make(chan sdk.Result, 1)
-
-	go func(buildID int64, params []sdk.Parameter) {
+	sdk.GoRoutine("runGRPCPlugin", func() {
+		params := *params
 		//For the moment we consider that plugin name = action name
 		pluginName := a.Name
 
@@ -287,7 +160,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			Status: result.GetStatus(),
 			Reason: result.GetDetails(),
 		}
-	}(buildID, *params)
+	})
 
 	select {
 	case <-ctx.Done():

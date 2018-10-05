@@ -118,28 +118,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if !w.disableOldWorkflows && w.bookedPBJobID != 0 {
 			w.processBookedPBJob(pbjobs)
 		}
-		var exceptJobID int64
-		if w.bookedWJobID != 0 {
-			if errP := w.processBookedWJob(wjobs); errP != nil {
-				// Unbook job
-				if errR := w.client.QueueJobRelease(true, w.bookedWJobID); errR != nil {
-					log.Error("runCmd> QueueJobRelease> Cannot release job")
-				}
-				exceptJobID = w.bookedWJobID
-				w.bookedWJobID = 0
-			} else {
-				exceptJobID = w.bookedWJobID
-			}
-		}
-		if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
-			log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
-		}
-
-		go func(ctx context.Context, exceptID *int64) {
-			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, 0, "", nil, exceptID); err != nil {
-				log.Info("Queues polling stopped: %v", err)
-			}
-		}(ctx, &exceptJobID)
 
 		//Definition of the function which must be called to stop the worker
 		var endFunc = func() {
@@ -168,6 +146,34 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				log.Info("Exiting worker")
 			}
 		}
+
+		var exceptJobID int64
+		if w.bookedWJobID != 0 {
+			if errP := w.processBookedWJob(wjobs); errP != nil {
+				// Unbook job
+				if errR := w.client.QueueJobRelease(true, w.bookedWJobID); errR != nil {
+					log.Error("runCmd> QueueJobRelease> Cannot release job")
+				}
+				exceptJobID = w.bookedWJobID
+				w.bookedWJobID = 0
+				// this worker was spawned for a job
+				// this job can't be process (errP != nil)
+				// so, call endFunc() now, this worker don't have to work
+				// on another job
+				endFunc()
+				return
+			}
+			exceptJobID = w.bookedWJobID
+		}
+		if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
+			log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+		}
+
+		go func(ctx context.Context, exceptID *int64) {
+			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, 0, "", nil, exceptID); err != nil {
+				log.Info("Queues polling stopped: %v", err)
+			}
+		}(ctx, &exceptJobID)
 
 		// Errors check loops
 		go func(errs chan error) {
@@ -229,6 +235,9 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
+				if err := w.client.WorkerSetStatus(sdk.StatusChecking); err != nil {
+					log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
+				}
 				requirementsOK, _ := checkRequirements(w, &j.Job.Action, j.ExecGroups, j.ID)
 
 				t := ""
@@ -364,6 +373,9 @@ func (w *currentWorker) processBookedPBJob(pbjobs chan<- sdk.PipelineBuildJob) {
 		return
 	}
 
+	if err := w.client.WorkerSetStatus(sdk.StatusChecking); err != nil {
+		log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
+	}
 	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action, j.ExecGroups, w.bookedPBJobID)
 	if !requirementsOK {
 		var details string

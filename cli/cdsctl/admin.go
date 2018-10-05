@@ -34,7 +34,6 @@ func admin() *cobra.Command {
 			adminHooks,
 			adminPlatformModels,
 			adminPlugins,
-			adminPluginsAction,
 			adminBroadcasts,
 		})
 }

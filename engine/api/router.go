@@ -230,6 +230,7 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 
 		if err := rc.Handler(ctx, w, req); err != nil {
 			observability.Record(ctx, r.Stats.Errors, 1)
+			observability.End(ctx, w, req)
 			service.WriteError(w, req, err)
 			return
 		}
@@ -488,7 +489,7 @@ func EnableTracing() HandlerConfigParam {
 	return f
 }
 
-func notFoundHandler(w http.ResponseWriter, req *http.Request) {
+func NotFoundHandler(w http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	defer func() {
 		end := time.Now()

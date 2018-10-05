@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"runtime"
 	"strings"
 	"time"
 
@@ -69,8 +68,8 @@ func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClient
 }
 
 func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p *sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
-	currentOS := strings.ToLower(runtime.GOOS)
-	currentARCH := strings.ToLower(runtime.GOARCH)
+	currentOS := strings.ToLower(sdk.GOOS)
+	currentARCH := strings.ToLower(sdk.GOARCH)
 	pluginSocket, has := w.mapPluginClient[pluginName]
 	if has {
 		return pluginSocket, nil
