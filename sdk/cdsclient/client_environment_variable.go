@@ -16,7 +16,7 @@ func (c *client) EnvironmentVariablesList(key string, envName string) ([]sdk.Var
 }
 
 func (c *client) EnvironmentVariableCreate(projectKey string, envName string, variable *sdk.Variable) error {
-	_, err := c.PostJSON("/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(variable.Name), variable, variable)
+	_, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(variable.Name), variable, variable)
 	return err
 }
 

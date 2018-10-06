@@ -61,8 +61,8 @@ func SetHeader(key, value string) RequestModifier {
 }
 
 // PostJSON post the *in* struct as json. If set, it unmarshalls the response to *out*
-func (c *client) PostJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
-	_, _, code, err := c.RequestJSON(context.Background(), http.MethodPost, path, in, out, mods...)
+func (c *client) PostJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
+	_, _, code, err := c.RequestJSON(ctx, http.MethodPost, path, in, out, mods...)
 	return code, err
 }
 

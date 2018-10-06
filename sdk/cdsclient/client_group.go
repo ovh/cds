@@ -8,7 +8,7 @@ import (
 )
 
 func (c *client) GroupCreate(group *sdk.Group) error {
-	code, err := c.PostJSON("/group", group, nil)
+	code, err := c.PostJSON(context.Background(), "/group", group, nil)
 	if code != 201 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)

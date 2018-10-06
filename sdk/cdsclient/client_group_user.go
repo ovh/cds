@@ -6,7 +6,7 @@ import (
 )
 
 func (c *client) GroupUserAdd(groupname string, users []string) error {
-	_, err := c.PostJSON("/group/"+url.QueryEscape(groupname)+"/user", users, nil)
+	_, err := c.PostJSON(context.Background(), "/group/"+url.QueryEscape(groupname)+"/user", users, nil)
 	return err
 }
 
@@ -16,7 +16,7 @@ func (c *client) GroupUserRemove(groupname, username string) error {
 }
 
 func (c *client) GroupUserAdminSet(groupname string, username string) error {
-	_, err := c.PostJSON("/group/"+url.QueryEscape(groupname)+"/user/"+url.QueryEscape(username)+"/admin", nil, nil)
+	_, err := c.PostJSON(context.Background(), "/group/"+url.QueryEscape(groupname)+"/user/"+url.QueryEscape(username)+"/admin", nil, nil)
 	return err
 }
 

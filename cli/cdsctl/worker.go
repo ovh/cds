@@ -69,7 +69,7 @@ func workerDisableRun(v cli.Values) error {
 			if w.ID == n || strings.ToLower(w.Name) == strings.ToLower(n) {
 				found = true
 				fmt.Printf("Disabling worker %s [status %s]... ", cli.Magenta(w.Name), w.Status)
-				if err := client.WorkerDisable(w.ID); err != nil {
+				if err := client.WorkerDisable(context.Background(), w.ID); err != nil {
 					fmt.Printf("Error disabling worker %s : %s\n", w.ID, err)
 				} else {
 					fmt.Printf("Done\n")

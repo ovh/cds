@@ -136,15 +136,19 @@ func Create(h Interface) error {
 						}
 					}
 					if !found {
-						if hCount, err := h.CDSClient().HatcheryCount(startWorkerRes.request.workflowNodeRunID); err == nil {
+						ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
+						if hCount, err := h.CDSClient().HatcheryCount(ctxt, startWorkerRes.request.workflowNodeRunID); err == nil {
 							if int64(len(startWorkerRes.request.spawnAttempts)) < hCount {
-								if _, errQ := h.CDSClient().QueueJobIncAttempts(startWorkerRes.request.id); errQ != nil {
+								ctxt2, cancel2 := context.WithTimeout(ctx, 10*time.Second)
+								if _, errQ := h.CDSClient().QueueJobIncAttempts(ctxt2, startWorkerRes.request.id); errQ != nil {
 									log.Warning("Hatchery> Create> cannot inc spawn attempts %v", errQ)
 								}
+								cancel2()
 							}
 						} else {
 							log.Warning("Hatchery> Create> cannot get hatchery count: %v", err)
 						}
+						cancel()
 					}
 				}
 			}

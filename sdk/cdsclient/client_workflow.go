@@ -111,7 +111,7 @@ func (c *client) WorkflowRunNumberGet(projectKey string, workflowName string) (*
 func (c *client) WorkflowRunNumberSet(projectKey string, workflowName string, number int64) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/num", projectKey, workflowName)
 	runNumber := sdk.WorkflowRunNumber{Num: number}
-	code, err := c.PostJSON(url, runNumber, nil)
+	code, err := c.PostJSON(context.Background(), url, runNumber, nil)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName
 
 func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/release", projectKey, workflowName, runNumber, nodeRunID)
-	code, err := c.PostJSON(url, release, nil)
+	code, err := c.PostJSON(context.Background(), url, release, nil)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func (c *client) WorkflowRunFromHook(projectKey string, workflowName string, hoo
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs", projectKey, workflowName)
 	content := sdk.WorkflowRunPostHandlerOption{Hook: &hook}
 	run := &sdk.WorkflowRun{}
-	code, err := c.PostJSON(url, &content, run)
+	code, err := c.PostJSON(context.Background(), url, &content, run)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (c *client) WorkflowRunFromManual(projectKey string, workflowName string, m
 		content.FromNodeIDs = []int64{fromNodeID}
 	}
 	run := &sdk.WorkflowRun{}
-	code, err := c.PostJSON(url, &content, run)
+	code, err := c.PostJSON(context.Background(), url, &content, run)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +208,7 @@ func (c *client) WorkflowStop(projectKey string, workflowName string, number int
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/stop", projectKey, workflowName, number)
 
 	run := &sdk.WorkflowRun{}
-	code, err := c.PostJSON(url, nil, run)
+	code, err := c.PostJSON(context.Background(), url, nil, run)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +223,7 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/stop", projectKey, workflowName, number, fromNodeID)
 
 	nodeRun := &sdk.WorkflowNodeRun{}
-	code, err := c.PostJSON(url, nil, nodeRun)
+	code, err := c.PostJSON(context.Background(), url, nil, nodeRun)
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +271,7 @@ func (c *client) workflowCachePushIndirectUpload(projectKey, ref string, tarCont
 	url := fmt.Sprintf("/project/%s/cache/%s/url", projectKey, ref)
 
 	cacheObj := sdk.Cache{}
-	code, err := c.PostJSON(url, nil, &cacheObj)
+	code, err := c.PostJSON(context.Background(), url, nil, &cacheObj)
 	if err != nil {
 		return err
 	}

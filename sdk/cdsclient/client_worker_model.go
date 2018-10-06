@@ -99,7 +99,7 @@ func (c *client) WorkerModelAdd(name, modelType, patternName string, dockerModel
 	}
 
 	modelCreated := sdk.Model{}
-	code, err := c.PostJSON(uri, model, &modelCreated)
+	code, err := c.PostJSON(context.Background(), uri, model, &modelCreated)
 	if err != nil {
 		return modelCreated, err
 	}

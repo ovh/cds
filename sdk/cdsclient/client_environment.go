@@ -11,7 +11,7 @@ import (
 )
 
 func (c *client) EnvironmentCreate(key string, env *sdk.Environment) error {
-	if _, err := c.PostJSON("/project/"+key+"/environment", env, nil); err != nil {
+	if _, err := c.PostJSON(context.Background(), "/project/"+key+"/environment", env, nil); err != nil {
 		return err
 	}
 	return nil

@@ -22,7 +22,7 @@ func (c *client) ProjectCreate(p *sdk.Project, groupName string) error {
 		}
 	}
 
-	if _, err := c.PostJSON("/project", p, nil); err != nil {
+	if _, err := c.PostJSON(context.Background(), "/project", p, nil); err != nil {
 		return err
 	}
 	return nil

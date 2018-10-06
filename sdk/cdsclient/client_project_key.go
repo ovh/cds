@@ -16,7 +16,7 @@ func (c *client) ProjectKeysList(key string) ([]sdk.ProjectKey, error) {
 }
 
 func (c *client) ProjectKeyCreate(projectKey string, keyProject *sdk.ProjectKey) error {
-	_, err := c.PostJSON("/project/"+projectKey+"/keys", keyProject, keyProject)
+	_, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/keys", keyProject, keyProject)
 	return err
 }
 

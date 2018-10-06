@@ -24,7 +24,7 @@ func (c *client) UserLogin(username, password string) (bool, string, error) {
 		Token    string   `json:"token,omitempty"`
 	}{}
 
-	if _, err := c.PostJSON("/login", r, &response); err != nil {
+	if _, err := c.PostJSON(context.Background(), "/login", r, &response); err != nil {
 		return false, "", err
 	}
 
@@ -52,7 +52,7 @@ func (c *client) UserSignup(username, fullname, email, callback string) error {
 		Callback: callback,
 	}
 
-	code, err := c.PostJSON("/user/signup", request, nil)
+	code, err := c.PostJSON(context.Background(), "/user/signup", request, nil)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (c *client) UserReset(username, email, callback string) error {
 		Callback: callback,
 	}
 
-	code, err := c.PostJSON("/user/"+url.QueryEscape(username)+"/reset", req, nil)
+	code, err := c.PostJSON(context.Background(), "/user/"+url.QueryEscape(username)+"/reset", req, nil)
 	if err != nil {
 		return err
 	}
@@ -130,20 +130,20 @@ func (c *client) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) 
 	switch params.Type {
 	case "workflow":
 		var wf sdk.Workflow
-		if _, err := c.PostJSON("/user/favorite", params, &wf); err != nil {
+		if _, err := c.PostJSON(context.Background(), "/user/favorite", params, &wf); err != nil {
 			return wf, err
 		}
 		return wf, nil
 	case "project":
 		var proj sdk.Project
-		if _, err := c.PostJSON("/user/favorite", params, &proj); err != nil {
+		if _, err := c.PostJSON(context.Background(), "/user/favorite", params, &proj); err != nil {
 			return proj, err
 		}
 		return proj, nil
 	}
 
 	var res interface{}
-	if _, err := c.PostJSON("/user/favorite", params, &res); err != nil {
+	if _, err := c.PostJSON(context.Background(), "/user/favorite", params, &res); err != nil {
 		return res, err
 	}
 	return res, nil

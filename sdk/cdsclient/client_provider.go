@@ -31,7 +31,7 @@ func (c *client) ApplicationsList(projectKey string, opts ...RequestModifier) ([
 
 func (c *client) ApplicationDeploymentStrategyUpdate(projectKey, applicationName, platformName string, config sdk.PlatformConfig) error {
 	path := fmt.Sprintf("/project/%s/application/%s/deployment/config/%s", projectKey, applicationName, platformName)
-	if _, err := c.PostJSON(path, config, nil); err != nil {
+	if _, err := c.PostJSON(context.Background(), path, config, nil); err != nil {
 		return err
 	}
 	return nil
@@ -110,7 +110,7 @@ func (c *client) ProjectPlatformImport(projectKey string, content io.Reader, for
 	oldPF, _ := c.ProjectPlatformGet(projectKey, pf.Name, false)
 	if oldPF.Name == "" {
 		path := fmt.Sprintf("/project/%s/platforms", projectKey)
-		if _, err := c.PostJSON(path, &pf, &pf); err != nil {
+		if _, err := c.PostJSON(context.Background(), path, &pf, &pf); err != nil {
 			return pf, err
 		}
 		return pf, nil

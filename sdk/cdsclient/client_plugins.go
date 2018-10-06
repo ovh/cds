@@ -26,7 +26,7 @@ func (c client) PluginsGet(name string) (*sdk.GRPCPlugin, error) {
 }
 
 func (c client) PluginAdd(p *sdk.GRPCPlugin) error {
-	_, err := c.PostJSON("/admin/plugin", p, p)
+	_, err := c.PostJSON(context.Background(), "/admin/plugin", p, p)
 	return err
 }
 
@@ -43,7 +43,7 @@ func (c client) PluginDelete(name string) error {
 
 func (c client) PluginAddBinary(p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary) error {
 	path := fmt.Sprintf("/admin/plugin/%s/binary", p.Name)
-	_, err := c.PostJSON(path, b, b)
+	_, err := c.PostJSON(context.Background(), path, b, b)
 	return err
 }
 

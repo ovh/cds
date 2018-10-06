@@ -16,7 +16,7 @@ func (c *client) ProjectVariablesList(key string) ([]sdk.Variable, error) {
 }
 
 func (c *client) ProjectVariableCreate(projectKey string, variable *sdk.Variable) error {
-	_, err := c.PostJSON("/project/"+projectKey+"/variable/"+url.QueryEscape(variable.Name), variable, variable)
+	_, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/variable/"+url.QueryEscape(variable.Name), variable, variable)
 	return err
 }
 
@@ -44,7 +44,7 @@ func (c *client) VariableEncrypt(projectKey string, varName string, content stri
 		Value: content,
 		Type:  sdk.SecretVariable,
 	}
-	if _, err := c.PostJSON("/project/"+projectKey+"/encrypt", variable, variable); err != nil {
+	if _, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/encrypt", variable, variable); err != nil {
 		return nil, err
 	}
 	return variable, nil

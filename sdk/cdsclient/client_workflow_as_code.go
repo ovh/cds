@@ -13,7 +13,7 @@ func (c *client) WorkflowAsCodeStart(projectKey string, repoURL string, repoStra
 	ope.RepositoryStrategy = repoStrategy
 
 	path := fmt.Sprintf("/import/%s", projectKey)
-	if _, err := c.PostJSON(path, ope, ope); err != nil {
+	if _, err := c.PostJSON(context.Background(), path, ope, ope); err != nil {
 		return nil, err
 	}
 
@@ -32,7 +32,7 @@ func (c *client) WorkflowAsCodeInfo(projectKey string, operationID string) (*sdk
 func (c *client) WorkflowAsCodePerform(projectKey string, operationID string) ([]string, error) {
 	messages := []string{}
 	path := fmt.Sprintf("/import/%s/%s/perform", projectKey, operationID)
-	if _, err := c.PostJSON(path, nil, &messages); err != nil {
+	if _, err := c.PostJSON(context.Background(), path, nil, &messages); err != nil {
 		return nil, err
 	}
 	return messages, nil

@@ -16,7 +16,7 @@ func (c *client) EnvironmentKeysList(key string, envName string) ([]sdk.Environm
 }
 
 func (c *client) EnvironmentKeyCreate(projectKey string, envName string, keyEnvironment *sdk.EnvironmentKey) error {
-	_, err := c.PostJSON("/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/keys", keyEnvironment, keyEnvironment)
+	_, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/keys", keyEnvironment, keyEnvironment)
 	return err
 }
 

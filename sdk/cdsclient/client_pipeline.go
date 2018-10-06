@@ -19,7 +19,7 @@ func (c *client) PipelineGet(projectKey, name string) (*sdk.Pipeline, error) {
 }
 
 func (c *client) PipelineCreate(projectKey string, pip *sdk.Pipeline) error {
-	_, err := c.PostJSON("/project/"+projectKey+"/pipeline", pip, nil)
+	_, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/pipeline", pip, nil)
 	return err
 }
 

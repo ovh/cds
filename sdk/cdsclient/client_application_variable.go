@@ -16,7 +16,7 @@ func (c *client) ApplicationVariablesList(key string, appName string) ([]sdk.Var
 }
 
 func (c *client) ApplicationVariableCreate(projectKey string, appName string, variable *sdk.Variable) error {
-	_, err := c.PostJSON("/project/"+projectKey+"/application/"+appName+"/variable/"+url.QueryEscape(variable.Name), variable, variable)
+	_, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/application/"+appName+"/variable/"+url.QueryEscape(variable.Name), variable, variable)
 	return err
 }
 

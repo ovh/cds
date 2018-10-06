@@ -10,7 +10,7 @@ import (
 
 func (c *client) ApplicationPipelinesAttach(projectKey string, appName string, pipelineNames ...string) error {
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/attach", projectKey, appName)
-	code, err := c.PostJSON(uri, pipelineNames, nil)
+	code, err := c.PostJSON(context.Background(), uri, pipelineNames, nil)
 	if err != nil {
 		return err
 	}
@@ -30,7 +30,7 @@ func (c *client) ApplicationDoMigrationWorkflow(projectKey string, appName strin
 	params.Add("withRepositoryWebHook", fmt.Sprintf("%t", withRepositoryWebHook))
 	uri := fmt.Sprintf("/project/%s/application/%s/workflow/migrate?%s", projectKey, appName, params.Encode())
 
-	code, err := c.PostJSON(uri, nil, nil)
+	code, err := c.PostJSON(context.Background(), uri, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func (c *client) ApplicationDoMigrationWorkflow(projectKey string, appName strin
 func (c *client) ApplicationCleanOldWorkflow(projectKey string, appName string) error {
 	uri := fmt.Sprintf("/project/%s/application/%s/workflow/clean", projectKey, appName)
 
-	code, err := c.PostJSON(uri, nil, nil)
+	code, err := c.PostJSON(context.Background(), uri, nil, nil)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (c *client) ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error {
 		uri = fmt.Sprintf("%s?env=%s", uri, url.QueryEscape(t.SrcEnvironment.Name))
 	}
 
-	code, err := c.PostJSON(uri, t, nil)
+	code, err := c.PostJSON(context.Background(), uri, t, nil)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func (c *client) AddHookOnRepositoriesManager(projectKey, appName, reposManager,
 	}
 
 	app := &sdk.Application{}
-	code, err := c.PostJSON(uri, data, app)
+	code, err := c.PostJSON(context.Background(), uri, data, app)
 	if err != nil {
 		return err
 	}

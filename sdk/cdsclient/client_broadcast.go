@@ -13,7 +13,7 @@ func (c *client) BroadcastDelete(id string) error {
 }
 
 func (c *client) BroadcastCreate(broadcast *sdk.Broadcast) error {
-	code, err := c.PostJSON("/broadcast", broadcast, nil)
+	code, err := c.PostJSON(context.Background(), "/broadcast", broadcast, nil)
 	if code != 201 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)

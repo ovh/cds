@@ -24,7 +24,7 @@ func (c *client) PlatformModelGet(name string) (sdk.PlatformModel, error) {
 }
 
 func (c *client) PlatformModelAdd(m *sdk.PlatformModel) error {
-	if _, err := c.PostJSON("/platform/models", m, m); err != nil {
+	if _, err := c.PostJSON(context.Background(), "/platform/models", m, m); err != nil {
 		return err
 	}
 	return nil

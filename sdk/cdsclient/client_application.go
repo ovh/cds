@@ -11,7 +11,7 @@ import (
 )
 
 func (c *client) ApplicationCreate(key string, app *sdk.Application) error {
-	_, err := c.PostJSON("/project/"+key+"/applications", app, nil)
+	_, err := c.PostJSON(context.Background(), "/project/"+key+"/applications", app, nil)
 	return err
 }
 

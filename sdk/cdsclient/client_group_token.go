@@ -17,7 +17,7 @@ func (c *client) GroupGenerateToken(groupName, expiration, description string) (
 	}{Description: description, Expiration: expiration}
 
 	var token sdk.Token
-	if _, err := c.PostJSON(path, desc, &token); err != nil {
+	if _, err := c.PostJSON(context.Background(), path, desc, &token); err != nil {
 		return nil, err
 	}
 	return &token, nil
