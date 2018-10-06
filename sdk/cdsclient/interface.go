@@ -336,7 +336,7 @@ type Raw interface {
 	PutJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
 	GetJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
 	DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
-	Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
+	Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
 }
 
 // GRPCPluginsClient exposes plugins API
