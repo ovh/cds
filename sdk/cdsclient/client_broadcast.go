@@ -8,7 +8,7 @@ import (
 )
 
 func (c *client) BroadcastDelete(id string) error {
-	_, err := c.DeleteJSON("/broadcast/"+id, nil)
+	_, err := c.DeleteJSON(context.Background(), "/broadcast/"+id, nil)
 	return err
 }
 

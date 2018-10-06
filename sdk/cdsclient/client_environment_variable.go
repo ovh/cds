@@ -26,7 +26,7 @@ func (c *client) EnvironmentVariableDelete(projectKey string, envName string, va
 }
 
 func (c *client) EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error {
-	_, err := c.PutJSON("/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(variable.Name), variable, variable, nil)
+	_, err := c.PutJSON(context.Background(), "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(variable.Name), variable, variable, nil)
 	return err
 }
 

@@ -27,7 +27,7 @@ func (c *client) GroupGenerateToken(groupName, expiration, description string) (
 func (c *client) GroupDeleteToken(groupName string, tokenID int64) error {
 	path := fmt.Sprintf("/group/%s/token/%d", url.QueryEscape(groupName), tokenID)
 
-	if _, err := c.DeleteJSON(path, nil); err != nil {
+	if _, err := c.DeleteJSON(context.Background(), path, nil); err != nil {
 		return err
 	}
 	return nil

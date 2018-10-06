@@ -18,7 +18,7 @@ func (c *client) GroupCreate(group *sdk.Group) error {
 }
 
 func (c *client) GroupDelete(name string) error {
-	_, err := c.DeleteJSON("/group/"+name, nil, nil)
+	_, err := c.DeleteJSON(context.Background(), "/group/"+name, nil, nil)
 	return err
 }
 
@@ -45,7 +45,7 @@ func (c *client) GroupRename(oldGroupname, newGroupname string) error {
 	}
 
 	group.Name = newGroupname
-	code, err := c.PutJSON("/group/"+oldGroupname, group, nil)
+	code, err := c.PutJSON(context.Background(), "/group/"+oldGroupname, group, nil)
 	if code > 400 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)

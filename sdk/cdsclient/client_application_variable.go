@@ -26,7 +26,7 @@ func (c *client) ApplicationVariableDelete(projectKey string, appName string, va
 }
 
 func (c *client) ApplicationVariableUpdate(projectKey string, appName string, variable *sdk.Variable) error {
-	_, err := c.PutJSON("/project/"+projectKey+"/application/"+appName+"/variable/"+url.QueryEscape(variable.Name), variable, variable, nil)
+	_, err := c.PutJSON(context.Background(), "/project/"+projectKey+"/application/"+appName+"/variable/"+url.QueryEscape(variable.Name), variable, variable, nil)
 	return err
 }
 

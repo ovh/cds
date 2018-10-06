@@ -18,7 +18,7 @@ func (c *client) EnvironmentCreate(key string, env *sdk.Environment) error {
 }
 
 func (c *client) EnvironmentDelete(key string, envName string) error {
-	if _, err := c.DeleteJSON("/project/"+key+"/environment/"+url.QueryEscape(envName), nil, nil); err != nil {
+	if _, err := c.DeleteJSON(context.Background(), "/project/"+key+"/environment/"+url.QueryEscape(envName), nil, nil); err != nil {
 		return err
 	}
 	return nil

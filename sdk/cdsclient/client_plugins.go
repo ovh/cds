@@ -31,13 +31,13 @@ func (c client) PluginAdd(p *sdk.GRPCPlugin) error {
 }
 
 func (c client) PluginUpdate(p *sdk.GRPCPlugin) error {
-	_, err := c.PutJSON("/admin/plugin/"+p.Name, p, p)
+	_, err := c.PutJSON(context.Background(), "/admin/plugin/"+p.Name, p, p)
 	return err
 }
 
 func (c client) PluginDelete(name string) error {
 	path := "/admin/plugin/" + name
-	_, err := c.DeleteJSON(path, nil)
+	_, err := c.DeleteJSON(context.Background(), path, nil)
 	return err
 }
 
@@ -49,7 +49,7 @@ func (c client) PluginAddBinary(p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary) erro
 
 func (c client) PluginDeleteBinary(name, os, arch string) error {
 	path := fmt.Sprintf("/admin/plugin/%s/binary/%s/%s", name, os, arch)
-	_, err := c.DeleteJSON(path, nil, nil)
+	_, err := c.DeleteJSON(context.Background(), path, nil, nil)
 	return err
 }
 

@@ -83,7 +83,7 @@ func (c *client) ProjectPlatformList(projectKey string) ([]sdk.ProjectPlatform, 
 func (c *client) ProjectPlatformDelete(projectKey string, platformName string) error {
 	path := fmt.Sprintf("/project/%s/platforms/%s", projectKey, platformName)
 	var pf sdk.ProjectPlatform
-	if _, err := c.DeleteJSON(path, &pf); err != nil {
+	if _, err := c.DeleteJSON(context.Background(), path, &pf); err != nil {
 		return err
 	}
 	return nil
@@ -117,7 +117,7 @@ func (c *client) ProjectPlatformImport(projectKey string, content io.Reader, for
 	}
 
 	path := fmt.Sprintf("/project/%s/platforms/%s", projectKey, pf.Name)
-	if _, err := c.PutJSON(path, &pf, &pf); err != nil {
+	if _, err := c.PutJSON(context.Background(), path, &pf, &pf); err != nil {
 		return pf, err
 	}
 	return pf, nil

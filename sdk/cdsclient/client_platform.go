@@ -31,14 +31,14 @@ func (c *client) PlatformModelAdd(m *sdk.PlatformModel) error {
 }
 
 func (c *client) PlatformModelUpdate(m *sdk.PlatformModel) error {
-	if _, err := c.PutJSON("/platform/models/"+m.Name, m, m); err != nil {
+	if _, err := c.PutJSON(context.Background(), "/platform/models/"+m.Name, m, m); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (c *client) PlatformModelDelete(name string) error {
-	if _, err := c.DeleteJSON("/platform/models/"+name, nil, nil); err != nil {
+	if _, err := c.DeleteJSON(context.Background(), "/platform/models/"+name, nil, nil); err != nil {
 		return err
 	}
 	return nil

@@ -16,7 +16,7 @@ func (c *client) ApplicationCreate(key string, app *sdk.Application) error {
 }
 
 func (c *client) ApplicationDelete(key string, appName string) error {
-	_, err := c.DeleteJSON("/project/"+key+"/application/"+appName, nil)
+	_, err := c.DeleteJSON(context.Background(), "/project/"+key+"/application/"+appName, nil)
 	return err
 }
 

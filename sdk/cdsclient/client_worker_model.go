@@ -10,7 +10,7 @@ import (
 
 // WorkerModelBook books a worker model for register, used by hatcheries
 func (c *client) WorkerModelBook(id int64) error {
-	code, err := c.PutJSON(fmt.Sprintf("/worker/model/book/%d", id), nil, nil)
+	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/book/%d", id), nil, nil)
 	if code > 300 && err == nil {
 		return fmt.Errorf("WorkerModelBook> HTTP %d", code)
 	} else if err != nil {
@@ -61,7 +61,7 @@ func (c *client) workerModels(withDisabled bool, binary, state string) ([]sdk.Mo
 
 func (c *client) WorkerModelSpawnError(id int64, info string) error {
 	data := sdk.SpawnErrorForm{Error: info}
-	code, err := c.PutJSON(fmt.Sprintf("/worker/model/error/%d", id), &data, nil)
+	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/error/%d", id), &data, nil)
 	if code > 300 && err == nil {
 		return fmt.Errorf("WorkerModelSpawnError> HTTP %d", code)
 	} else if err != nil {
@@ -138,7 +138,7 @@ func (c *client) WorkerModelUpdate(ID int64, name string, modelType string, dock
 	}
 
 	modelUpdated := sdk.Model{}
-	code, err := c.PutJSON(uri, model, &modelUpdated)
+	code, err := c.PutJSON(context.Background(), uri, model, &modelUpdated)
 	if err != nil {
 		return modelUpdated, err
 	}
@@ -163,6 +163,6 @@ func (c *client) WorkerModelDelete(name string) error {
 	}
 
 	uri := fmt.Sprintf("/worker/model/%d", wm.ID)
-	_, errDelete := c.DeleteJSON(uri, nil)
+	_, errDelete := c.DeleteJSON(context.Background(), uri, nil)
 	return errDelete
 }

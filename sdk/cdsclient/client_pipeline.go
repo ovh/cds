@@ -24,7 +24,7 @@ func (c *client) PipelineCreate(projectKey string, pip *sdk.Pipeline) error {
 }
 
 func (c *client) PipelineDelete(projectKey, name string) error {
-	_, err := c.DeleteJSON("/project/"+projectKey+"/pipeline/"+url.QueryEscape(name), nil, nil)
+	_, err := c.DeleteJSON(context.Background(), "/project/"+projectKey+"/pipeline/"+url.QueryEscape(name), nil, nil)
 	return err
 }
 

@@ -292,7 +292,7 @@ func (c *client) QueueJobRelease(isWorkflowJob bool, id int64) error {
 		return fmt.Errorf("Not implemented")
 	}
 
-	_, err := c.DeleteJSON(path, nil)
+	_, err := c.DeleteJSON(context.Background(), path, nil)
 	return err
 }
 

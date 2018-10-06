@@ -19,7 +19,7 @@ func (c *client) Requirements() ([]sdk.Requirement, error) {
 }
 
 func (c *client) ActionDelete(actionName string) error {
-	_, err := c.DeleteJSON("/action/"+actionName, nil)
+	_, err := c.DeleteJSON(context.Background(), "/action/"+actionName, nil)
 	return err
 }
 

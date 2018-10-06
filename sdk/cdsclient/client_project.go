@@ -29,7 +29,7 @@ func (c *client) ProjectCreate(p *sdk.Project, groupName string) error {
 }
 
 func (c *client) ProjectDelete(key string) error {
-	_, err := c.DeleteJSON("/project/"+key, nil, nil)
+	_, err := c.DeleteJSON(context.Background(), "/project/"+key, nil, nil)
 	return err
 }
 

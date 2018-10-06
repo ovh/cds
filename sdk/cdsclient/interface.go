@@ -333,9 +333,9 @@ type InterfaceDeprecated interface {
 // Raw is a low-level interface exposing HTTP functions
 type Raw interface {
 	PostJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
-	PutJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
+	PutJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
 	GetJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
-	DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
+	DeleteJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
 	Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
 }
 

@@ -77,7 +77,7 @@ func (c *client) WorkflowRunList(projectKey string, workflowName string, offset,
 }
 
 func (c *client) WorkflowDelete(projectKey string, workflowName string) error {
-	_, err := c.DeleteJSON(fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
+	_, err := c.DeleteJSON(context.Background(), fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
 	return err
 }
 
