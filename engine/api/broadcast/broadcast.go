@@ -99,7 +99,7 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Broadcast, error) {
 
 	rows, err := db.Query(query, u.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "LoadAllBroadcasts> Cannot query")
+		return nil, sdk.WrapError(err, "Cannot query")
 	}
 
 	broadcasts := []sdk.Broadcast{}
@@ -110,7 +110,7 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Broadcast, error) {
 			&broadcast.Created, &broadcast.Updated, &broadcast.Archived, &broadcast.ProjectID, &projectKey, &broadcast.Read)
 
 		if err != nil {
-			return nil, sdk.WrapError(err, "LoadAllBroadcasts> cannot scan row")
+			return nil, sdk.WrapError(err, "cannot scan row")
 		}
 		if projectKey.Valid {
 			broadcast.ProjectKey = projectKey.String

@@ -222,7 +222,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	//Reload the workflow
 	updatedWorkflowRun, err := LoadRunByID(db, n.WorkflowRunID, LoadRunOptions{})
 	if err != nil {
-		return nil, sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", n.WorkflowRunID)
+		return nil, sdk.WrapError(err, "Unable to reload workflow run id=%d", n.WorkflowRunID)
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
@@ -232,14 +232,14 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 			r1, _, err := processWorkflowRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
 			if err != nil {
-				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
+				return nil, sdk.WrapError(err, "Unable to reprocess workflow !")
 			}
 			report, _ = report.Merge(r1, nil)
 		}
 
 		//Delete the line in workflow_node_run_job
 		if err := DeleteNodeJobRuns(db, n.ID); err != nil {
-			return nil, sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
+			return nil, sdk.WrapError(err, "Unable to delete node %d job runs ", n.ID)
 		}
 
 		node := updatedWorkflowRun.Workflow.GetNode(n.WorkflowNodeID)
@@ -288,14 +288,14 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 			})
 
 			if err := UpdateWorkflowRun(ctx, db, workflowRun); err != nil {
-				return nil, sdk.WrapError(err, "workflow.execute> Unable to update workflow run %d after mutex release", workflowRun.ID)
+				return nil, sdk.WrapError(err, "Unable to update workflow run %d after mutex release", workflowRun.ID)
 			}
 
 			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
 			var err error
 			report, err = report.Merge(execute(ctx, db, store, proj, waitingRun))
 			if err != nil {
-				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
+				return nil, sdk.WrapError(err, "Unable to reprocess workflow")
 			}
 
 			next()
@@ -315,7 +315,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
 	next()
 	if err != nil {
-		return report, sdk.WrapError(err, "addJobsToQueue> Cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
+		return report, sdk.WrapError(err, "Cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
 	}
 
 	if !conditionsOK {
@@ -328,7 +328,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	_, next = observability.Span(ctx, "workflow.getPlatformPluginBinaries")
 	platformPluginBinaries, err := getPlatformPluginBinaries(db, wr, run)
 	if err != nil {
-		return report, sdk.WrapError(err, "addJobsToQueue> unable to get platform plugins requirement")
+		return report, sdk.WrapError(err, "unable to get platform plugins requirement")
 	}
 	next()
 
@@ -418,7 +418,7 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		_, next = observability.Span(ctx, "workflow.insertWorkflowNodeJobRun")
 		if err := insertWorkflowNodeJobRun(db, &wjob); err != nil {
 			next()
-			return report, sdk.WrapError(err, "addJobsToQueue> Unable to insert in table workflow_node_run_job")
+			return report, sdk.WrapError(err, "Unable to insert in table workflow_node_run_job")
 		}
 		next()
 
@@ -503,7 +503,7 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 			}
 			spawnInfos, err := loadNodeRunJobInfo(db, runJob.ID)
 			if err != nil {
-				return false, sdk.WrapError(err, "syncStage> unable to load spawn infos for runJob: %d", runJob.ID)
+				return false, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", runJob.ID)
 			}
 			runJob.SpawnInfos = spawnInfos
 
@@ -717,7 +717,7 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 		}
 
 		if err := AddSpawnInfosNodeJobRun(tx, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
-			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot save spawn info job %d", njr.ID)
+			chanErr <- sdk.WrapError(err, "Cannot save spawn info job %d", njr.ID)
 			tx.Rollback()
 			wg.Done()
 			return report
@@ -725,14 +725,14 @@ func stopWorkflowNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, stor
 
 		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
 		if _, err := report.Merge(UpdateNodeJobRunStatus(ctx, dbFunc, tx, store, proj, njr, sdk.StatusStopped)); err != nil {
-			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
+			chanErr <- sdk.WrapError(err, "Cannot update node job run")
 			tx.Rollback()
 			wg.Done()
 			return report
 		}
 
 		if err := tx.Commit(); err != nil {
-			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot commit transaction")
+			chanErr <- sdk.WrapError(err, "Cannot commit transaction")
 			tx.Rollback()
 			wg.Done()
 			return report
@@ -757,7 +757,7 @@ func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.Wo
 			if runJob.ID == nodeJobRun.ID {
 				spawnInfos, err := loadNodeRunJobInfo(db, runJob.ID)
 				if err != nil {
-					return false, sdk.WrapError(err, "SyncNodeRunRunJob> unable to load spawn infos for runJobID: %d", runJob.ID)
+					return false, sdk.WrapError(err, "unable to load spawn infos for runJobID: %d", runJob.ID)
 				}
 				runJob.SpawnInfos = spawnInfos
 				runJob.Job.StepStatus = nodeJobRun.Job.StepStatus
@@ -840,7 +840,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 		//The input repository is not the same as the application, we have to check if it is a fork
 		forks, err := client.ListForks(ctx, applicationRepositoryFullname)
 		if err != nil {
-			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get forks for %s", applicationRepositoryFullname)
+			return vcsInfos, sdk.WrapError(err, "Cannot get forks for %s", applicationRepositoryFullname)
 		}
 		var forkFound bool
 		for _, fork := range forks {
@@ -871,7 +871,7 @@ func getVCSInfos(ctx context.Context, db gorp.SqlExecutor, store cache.Store, vc
 		vcsInfos.Repository = applicationRepositoryFullname
 		repo, err = client.RepoByFullname(ctx, applicationRepositoryFullname)
 		if err != nil {
-			return vcsInfos, sdk.WrapError(err, "computeVCSInfos> Cannot get repo %s", applicationRepositoryFullname)
+			return vcsInfos, sdk.WrapError(err, "Cannot get repo %s", applicationRepositoryFullname)
 		}
 	}
 	vcsInfos.URL = repo.SSHCloneURL

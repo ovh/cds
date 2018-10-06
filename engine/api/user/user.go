@@ -260,7 +260,7 @@ func DeleteUserWithDependencies(db gorp.SqlExecutor, u *sdk.User) error {
 	}
 
 	if err := deleteUser(db, u); err != nil {
-		return sdk.WrapError(err, "DeleteUserWithDependencies> User cannot be removed from user table")
+		return sdk.WrapError(err, "User cannot be removed from user table")
 	}
 	return nil
 }
@@ -325,7 +325,7 @@ func LoadPersistentSessionToken(db gorp.SqlExecutor, k sessionstore.SessionKey) 
 func InsertPersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
 	tdb := persistentSessionToken(t)
 	if err := db.Insert(&tdb); err != nil {
-		return sdk.WrapError(err, "InsertPersistentSessionToken> Unable to insert persistent session token for user %d", t.UserID)
+		return sdk.WrapError(err, "Unable to insert persistent session token for user %d", t.UserID)
 	}
 	return nil
 }
@@ -334,7 +334,7 @@ func InsertPersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
 func UpdatePersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
 	tdb := persistentSessionToken(t)
 	if _, err := db.Update(&tdb); err != nil {
-		return sdk.WrapError(err, "UpdatePersistentSessionToken> Unable to update persistent session token for user %d", t.UserID)
+		return sdk.WrapError(err, "Unable to update persistent session token for user %d", t.UserID)
 	}
 	return nil
 }

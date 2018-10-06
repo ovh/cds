@@ -55,13 +55,13 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 			if k.Name == keyName {
 				envKey = k
 				if err := environment.DeleteEnvironmentKey(tx, env.ID, keyName); err != nil {
-					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot delete key %s", k.Name)
+					return sdk.WrapError(err, "Cannot delete key %s", k.Name)
 				}
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishEnvironmentKeyDelete(key, *env, envKey, getUser(ctx))
@@ -121,11 +121,11 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := environment.InsertKey(tx, &newKey); err != nil {
-			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot insert application key")
+			return sdk.WrapError(err, "Cannot insert application key")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishEnvironmentKeyAdd(key, *env, newKey, getUser(ctx))

@@ -23,7 +23,7 @@ func (api *API) getProjectPlatformHandler() service.Handler {
 
 		platform, err := platform.LoadPlatformsByName(api.mustDB(), projectKey, platformName, clearPassword)
 		if err != nil {
-			return sdk.WrapError(err, "getProjectPlatformHandler> Cannot load platform %s/%s", projectKey, platformName)
+			return sdk.WrapError(err, "Cannot load platform %s/%s", projectKey, platformName)
 		}
 		return service.WriteJSON(w, platform, http.StatusOK)
 	}
@@ -42,7 +42,7 @@ func (api *API) putProjectPlatformHandler() service.Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot load project")
+			return sdk.WrapError(err, "Cannot load project")
 		}
 
 		ppDB, errP := platform.LoadPlatformsByName(api.mustDB(), projectKey, platformName, true)
@@ -77,11 +77,11 @@ func (api *API) putProjectPlatformHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := platform.UpdatePlatform(tx, ppBody); err != nil {
-			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot update project platform")
+			return sdk.WrapError(err, "Cannot update project platform")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishUpdateProjectPlatform(p, ppBody, ppDB, getUser(ctx))
@@ -98,7 +98,7 @@ func (api *API) deleteProjectPlatformHandler() service.Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot load project")
+			return sdk.WrapError(err, "Cannot load project")
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -116,14 +116,14 @@ func (api *API) deleteProjectPlatformHandler() service.Handler {
 
 				deletedPlatform = plat
 				if err := platform.DeletePlatform(tx, plat); err != nil {
-					return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot delete project platform")
+					return sdk.WrapError(err, "Cannot delete project platform")
 				}
 				break
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteProjectPlatformHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishDeleteProjectPlatform(p, deletedPlatform, getUser(ctx))
@@ -151,12 +151,12 @@ func (api *API) postProjectPlatformHandler() service.Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot load project")
+			return sdk.WrapError(err, "Cannot load project")
 		}
 
 		var pp sdk.ProjectPlatform
 		if err := service.UnmarshalBody(r, &pp); err != nil {
-			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot read body")
+			return sdk.WrapError(err, "Cannot read body")
 		}
 
 		pp.ProjectID = p.ID
@@ -193,11 +193,11 @@ func (api *API) postProjectPlatformHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := platform.InsertPlatform(tx, &pp); err != nil {
-			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot insert project platform")
+			return sdk.WrapError(err, "Cannot insert project platform")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postProjectPlatformHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishAddProjectPlatform(p, pp, getUser(ctx))

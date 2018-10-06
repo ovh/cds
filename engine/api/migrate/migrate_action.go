@@ -35,7 +35,7 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 
 		tx, err := DBFunc().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "MigrateActionDEPRECATEDGitClone> Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		var id int64
 		// Lock the job (action)
@@ -52,7 +52,7 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "MigrateActionDEPRECATEDGitClone> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		log.Info("MigrateActionDEPRECATEDGitClone> Migrate %s/%s DONE", p.ProjKey, p.PipName)

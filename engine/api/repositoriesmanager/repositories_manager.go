@@ -26,7 +26,7 @@ import (
 func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) ([]string, error) {
 	srvs, err := services.FindByType(db, services.TypeVCS)
 	if err != nil {
-		return nil, sdk.WrapError(err, "repositoriesmanager.LoadAll> Unable to load services")
+		return nil, sdk.WrapError(err, "Unable to load services")
 	}
 
 	vcsServers := map[string]interface{}{}
@@ -91,7 +91,7 @@ func (c *vcsConsumer) AuthorizeRedirect(ctx context.Context) (string, string, er
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
 	log.Info("Performing request on %s", path)
 	if _, err := services.DoJSONRequest(ctx, srv, "GET", path, nil, &res); err != nil {
-		return "", "", sdk.WrapError(err, "repositoriesmanager.AuthorizeRedirect> ")
+		return "", "", sdk.WrapError(err, "")
 	}
 
 	return res["token"], res["url"], nil
@@ -307,7 +307,7 @@ func (c *vcsClient) Branch(ctx context.Context, fullname string, branchName stri
 func DefaultBranch(ctx context.Context, c sdk.VCSAuthorizedClient, fullname string) (string, error) {
 	branches, err := c.Branches(ctx, fullname)
 	if err != nil {
-		return "", sdk.WrapError(err, "DefaultBranch> Unable to list branches")
+		return "", sdk.WrapError(err, "Unable to list branches")
 	}
 	for _, b := range branches {
 		if b.Default {
@@ -547,7 +547,7 @@ func GetPollingInfos(ctx context.Context, c sdk.VCSAuthorizedClient, prj sdk.Pro
 	res := PollingInfos{}
 	path := fmt.Sprintf("/vcs/%s/polling", client.name)
 	if _, err := client.doJSONRequest(ctx, "GET", path, nil, &res); err != nil {
-		return PollingInfos{}, sdk.WrapError(err, "GetPollingInfos> project %s", prj.Key)
+		return PollingInfos{}, sdk.WrapError(err, "project %s", prj.Key)
 	}
 	return res, nil
 }

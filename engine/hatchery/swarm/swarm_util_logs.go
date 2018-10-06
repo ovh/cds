@@ -15,7 +15,7 @@ func (h *HatcherySwarm) getServicesLogs() error {
 	for _, dockerClient := range h.dockerClients {
 		containers, err := h.getContainers(dockerClient, types.ContainerListOptions{All: true})
 		if err != nil {
-			return sdk.WrapError(err, "hatchery> swarm> getServicesLogs> Cannot get containers list from %s", dockerClient.name)
+			return sdk.WrapError(err, "Cannot get containers list from %s", dockerClient.name)
 		}
 
 		servicesLogs := make([]sdk.ServiceLog, 0, len(containers))

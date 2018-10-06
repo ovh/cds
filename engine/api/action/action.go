@@ -106,7 +106,7 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 
 	for i := range a.Parameters {
 		if err := InsertActionParameter(tx, a.ID, a.Parameters[i]); err != nil {
-			return sdk.WrapError(err, "InsertAction> Cannot InsertActionParameter %s", a.Parameters[i].Name)
+			return sdk.WrapError(err, "Cannot InsertActionParameter %s", a.Parameters[i].Name)
 		}
 	}
 
@@ -242,7 +242,7 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 	}
 	for i := range a.Parameters {
 		if err := InsertActionParameter(db, a.ID, a.Parameters[i]); err != nil {
-			return sdk.WrapError(err, "UpdateAction> InsertActionParameter for %s failed", a.Parameters[i].Name)
+			return sdk.WrapError(err, "InsertActionParameter for %s failed", a.Parameters[i].Name)
 		}
 	}
 
@@ -460,7 +460,7 @@ func GetPipelineUsingAction(db gorp.SqlExecutor, name string) ([]PipelineUsingAc
 			&pipName, &appName, &projName, &projKey,
 			&wName, &nodeID, &wnodeName,
 		); err != nil {
-			return nil, sdk.WrapError(err, "getPipelineUsingAction> Cannot read sql response")
+			return nil, sdk.WrapError(err, "Cannot read sql response")
 		}
 		if stageID.Valid {
 			a.StageID = stageID.Int64

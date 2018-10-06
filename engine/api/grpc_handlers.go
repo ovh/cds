@@ -39,7 +39,7 @@ func (h *grpcHandlers) AddBuildLog(stream grpc.BuildLog_AddBuildLogServer) error
 
 		db := h.dbConnectionFactory.GetDBMap()
 		if err := pipeline.AddBuildLog(db, in); err != nil {
-			return sdk.WrapError(err, "grpc.AddBuildLog> Unable to insert log ")
+			return sdk.WrapError(err, "Unable to insert log ")
 		}
 	}
 }
@@ -60,7 +60,7 @@ func (h *grpcHandlers) SendLog(stream grpc.WorkflowQueue_SendLogServer) error {
 
 		db := h.dbConnectionFactory.GetDBMap()
 		if err := workflow.AddLog(db, nil, in); err != nil {
-			return sdk.WrapError(err, "grpc.SendLog> Unable to insert log ")
+			return sdk.WrapError(err, "Unable to insert log ")
 		}
 	}
 }
@@ -101,7 +101,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	}
 	report, err := postJobResult(c, dbFunc, h.store, p, wr, res)
 	if err != nil {
-		return new(empty.Empty), sdk.WrapError(err, "SendResult> Cannot post job result")
+		return new(empty.Empty), sdk.WrapError(err, "Cannot post job result")
 	}
 
 	workflow.ResyncNodeRunsWithCommits(c, db, h.store, p, report)

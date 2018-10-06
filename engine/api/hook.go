@@ -89,7 +89,7 @@ func (api *API) receiveHookHandler() service.Handler {
 		}
 
 		if err = r.ParseForm(); err != nil {
-			return sdk.WrapError(err, "receiveHook> cannot parse query params")
+			return sdk.WrapError(err, "cannot parse query params")
 		}
 
 		var rh hook.ReceivedHook
@@ -204,7 +204,7 @@ func (api *API) getApplicationHooksHandler() service.Handler {
 
 		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application %s/%s", projectName, appName)
+			return sdk.WrapError(err, "cannot load application %s/%s", projectName, appName)
 		}
 
 		return service.WriteJSON(w, a.Hooks, http.StatusOK)
@@ -228,12 +228,12 @@ func (api *API) getHooksHandler() service.Handler {
 
 		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getHooks> cannot load application %s/%s", projectName, appName)
+			return sdk.WrapError(err, "cannot load application %s/%s", projectName, appName)
 		}
 
 		hooks, err := hook.LoadPipelineHooks(api.mustDB(), p.ID, a.ID)
 		if err != nil {
-			return sdk.WrapError(err, "getHooks> cannot load hooks")
+			return sdk.WrapError(err, "cannot load hooks")
 		}
 
 		return service.WriteJSON(w, hooks, http.StatusOK)
@@ -253,13 +253,13 @@ func (api *API) deleteHookHandler() service.Handler {
 
 		_, err = hook.LoadHook(api.mustDB(), id)
 		if err != nil {
-			return sdk.WrapError(err, "deleteHook> cannot load hook")
+			return sdk.WrapError(err, "cannot load hook")
 
 		}
 
 		err = hook.DeleteHook(api.mustDB(), id)
 		if err != nil {
-			return sdk.WrapError(err, "deleteHook> cannot delete hook")
+			return sdk.WrapError(err, "cannot delete hook")
 
 		}
 		return nil
@@ -301,13 +301,13 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 
 	// Logging stuff
 	if err := hook.InsertReceivedHook(db, h.URL.String(), string(h.Data)); err != nil {
-		return sdk.WrapError(err, "processHook> cannot insert received hook in db")
+		return sdk.WrapError(err, "cannot insert received hook in db")
 	}
 
 	// Actual search of hook binding
 	hooks, err := hook.LoadHooks(db, h.ProjectKey, h.Repository)
 	if err != nil {
-		return sdk.WrapError(err, "processHook> cannot load hook for %s/%s", h.ProjectKey, h.Repository)
+		return sdk.WrapError(err, "cannot load hook for %s/%s", h.ProjectKey, h.Repository)
 	}
 
 	// If branch is DELETE'd, remove all builds related to this branch
@@ -340,25 +340,25 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 		// create pipeline object
 		p, err := pipeline.LoadPipelineByID(context.TODO(), tx, hooks[i].Pipeline.ID, true)
 		if err != nil {
-			return sdk.WrapError(err, "processHook> Cannot load pipeline")
+			return sdk.WrapError(err, "Cannot load pipeline")
 		}
 
 		// get Project
 		// Load project
 		projectData, err := project.LoadByPipelineID(tx, store, nil, p.ID)
 		if err != nil {
-			return sdk.WrapError(err, "processHook> Cannot load project for pipeline %s", p.Name)
+			return sdk.WrapError(err, "Cannot load project for pipeline %s", p.Name)
 		}
 
 		projectsVar, err := project.GetAllVariableInProject(tx, projectData.ID)
 		if err != nil {
-			return sdk.WrapError(err, "processHook> Cannot load project variable")
+			return sdk.WrapError(err, "Cannot load project variable")
 		}
 		projectData.Variable = projectsVar
 
 		pb, err := application.TriggerPipeline(tx, store, hooks[i], h.Branch, h.Hash, h.Author, p, projectData)
 		if err != nil {
-			return sdk.WrapError(err, "processHook> cannot trigger pipeline %d", hooks[i].Pipeline.ID)
+			return sdk.WrapError(err, "cannot trigger pipeline %d", hooks[i].Pipeline.ID)
 		}
 		if pb != nil {
 			log.Debug("processHook> Triggered %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
@@ -429,7 +429,7 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 
 		//Check if the polling if disabled
 		if info, err := repositoriesmanager.GetPollingInfos(ctx, client, *proj); err != nil {
-			return sdk.WrapError(err, "getHookPollingVCSEvents> cannot check if polling is enabled")
+			return sdk.WrapError(err, "cannot check if polling is enabled")
 		} else if info.PollingDisabled || !info.PollingSupported {
 			log.Info("getHookPollingVCSEvents> %s polling is disabled", vcsServer.Name)
 			return service.WriteJSON(w, nil, http.StatusOK)
@@ -437,16 +437,16 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 
 		events, pollingDelay, err := client.GetEvents(ctx, h.Config["repoFullName"].Value, lastExec)
 		if err != nil && err.Error() != "No new events" {
-			return sdk.WrapError(err, "Polling> Unable to get events for %s %s", proj.Key, vcsServerParam)
+			return sdk.WrapError(err, "Unable to get events for %s %s", proj.Key, vcsServerParam)
 		}
 		pushEvents, err := client.PushEvents(ctx, h.Config["repoFullName"].Value, events)
 		if err != nil {
-			return sdk.WrapError(err, "getHookPollingVCSEvent> ")
+			return sdk.WrapError(err, "")
 		}
 
 		pullRequestEvents, err := client.PullRequestEvents(ctx, h.Config["repoFullName"].Value, events)
 		if err != nil {
-			return sdk.WrapError(err, "getHookPollingVCSEvent> ")
+			return sdk.WrapError(err, "")
 		}
 
 		repoEvents := sdk.RepositoryEvents{}

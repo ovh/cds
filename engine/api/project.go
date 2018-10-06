@@ -44,10 +44,10 @@ func (api *API) getProjectsHandler() service.Handler {
 				if err == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
 				}
-				return sdk.WrapError(err, "getProjectsHandler> unable to load user '%s'", requestedUserName)
+				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
 			}
 			if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
-				return sdk.WrapError(err, "getProjectsHandler> unable to load user '%s' permissions", requestedUserName)
+				return sdk.WrapError(err, "unable to load user '%s' permissions", requestedUserName)
 			}
 		}
 
@@ -145,7 +145,7 @@ func (api *API) updateProjectHandler() service.Handler {
 
 		proj := &sdk.Project{}
 		if err := service.UnmarshalBody(r, proj); err != nil {
-			return sdk.WrapError(err, "updateProject> Unmarshall error")
+			return sdk.WrapError(err, "Unmarshall error")
 		}
 
 		if proj.Name == "" {
@@ -316,22 +316,22 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 
 		for _, lblToDelete := range labelsToDelete {
 			if err := project.DeleteLabel(tx, lblToDelete.ID); err != nil {
-				return sdk.WrapError(err, "putProjectLabelsHandler> cannot delete label %s with id %d", lblToDelete.Name, lblToDelete.ID)
+				return sdk.WrapError(err, "cannot delete label %s with id %d", lblToDelete.Name, lblToDelete.ID)
 			}
 		}
 		for _, lblToUpdate := range labelsToUpdate {
 			if err := project.UpdateLabel(tx, &lblToUpdate); err != nil {
-				return sdk.WrapError(err, "putProjectLabelsHandler> cannot update label %s with id %d", lblToUpdate.Name, lblToUpdate.ID)
+				return sdk.WrapError(err, "cannot update label %s with id %d", lblToUpdate.Name, lblToUpdate.ID)
 			}
 		}
 		for _, lblToAdd := range labelsToAdd {
 			if err := project.InsertLabel(tx, &lblToAdd); err != nil {
-				return sdk.WrapError(err, "putProjectLabelsHandler> cannot add label %s with id %d", lblToAdd.Name, lblToAdd.ID)
+				return sdk.WrapError(err, "cannot add label %s with id %d", lblToAdd.Name, lblToAdd.ID)
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "putProjectLabelsHandler> cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		p, errP := project.Load(db, api.Cache, key, getUser(ctx), project.LoadOptions.WithLabels, project.LoadOptions.WithWorkflowNames)
@@ -414,7 +414,7 @@ func (api *API) addProjectHandler() service.Handler {
 		}
 
 		if err := project.Insert(tx, api.Cache, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addProjectHandler> Cannot insert project")
+			return sdk.WrapError(err, "Cannot insert project")
 		}
 
 		// Add group
@@ -434,13 +434,13 @@ func (api *API) addProjectHandler() service.Handler {
 
 			// Add group on project
 			if err := group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission); err != nil {
-				return sdk.WrapError(err, "addProjectHandler> Cannot add group %s in project %s", groupPermission.Group.Name, p.Name)
+				return sdk.WrapError(err, "Cannot add group %s in project %s", groupPermission.Group.Name, p.Name)
 			}
 
 			// Add user in group
 			if new {
 				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, getUser(ctx).ID, true); err != nil {
-					return sdk.WrapError(err, "addProjectHandler> Cannot add user %s in group %s", getUser(ctx).Username, groupPermission.Group.Name)
+					return sdk.WrapError(err, "Cannot add user %s in group %s", getUser(ctx).Username, groupPermission.Group.Name)
 				}
 			}
 		}
@@ -480,12 +480,12 @@ func (api *API) addProjectHandler() service.Handler {
 		for i := range platformModels {
 			pf := &platformModels[i]
 			if err := propagatePublicPlatformModelOnProject(tx, api.Cache, *pf, *p, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "addProjectHandler> propagatePublicPlatformModelOnProject error")
+				return sdk.WrapError(err, "propagatePublicPlatformModelOnProject error")
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addProjectHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishAddProject(p, getUser(ctx))
@@ -523,10 +523,10 @@ func (api *API) deleteProjectHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := project.Delete(tx, api.Cache, p.Key); err != nil {
-			return sdk.WrapError(err, "deleteProject> cannot delete project %s", key)
+			return sdk.WrapError(err, "cannot delete project %s", key)
 		}
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteProject> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishDeleteProject(p, getUser(ctx))

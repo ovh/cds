@@ -113,13 +113,13 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			file, err := files[0].Open()
 			if err != nil {
 				file.Close()
-				return sdk.WrapError(err, "postWorkflowJobArtifactHandler> cannot open file")
+				return sdk.WrapError(err, "cannot open file")
 
 			}
 
 			if err := artifact.SaveWorkflowFile(&art, file); err != nil {
 				file.Close()
-				return sdk.WrapError(err, "postWorkflowJobArtifactHandler> Cannot save artifact in store")
+				return sdk.WrapError(err, "Cannot save artifact in store")
 			}
 			file.Close()
 		}
@@ -127,7 +127,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
 			_ = objectstore.Delete(&art)
-			return sdk.WrapError(err, "postWorkflowJobArtifactHandler> Cannot update workflow node run")
+			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 		return nil
 	}
@@ -186,7 +186,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 
 		url, key, err := store.StoreURL(&art)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowJobArtifacWithTempURLHandler> Could not generate hash")
+			return sdk.WrapError(err, "Could not generate hash")
 		}
 
 		art.TempURL = url
@@ -228,7 +228,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
 			_ = objectstore.Delete(&art)
-			return sdk.WrapError(err, "postWorkflowJobArtifactWithTempURLCallbackHandler> Cannot update workflow node run")
+			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 
 		return nil

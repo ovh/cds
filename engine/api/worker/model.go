@@ -112,7 +112,7 @@ func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
 	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, modelColumns)
 	if _, err := db.Select(&wms, query); err != nil {
-		return nil, sdk.WrapError(err, "LoadAllWorkerModels> ")
+		return nil, sdk.WrapError(err, "")
 	}
 	return scanWorkerModels(db, wms)
 }
@@ -202,7 +202,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 		}
 
 		if _, err := db.Select(&wms, query); err != nil {
-			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for admin")
+			return nil, sdk.WrapError(err, "for admin")
 		}
 	} else {
 		query := fmt.Sprintf(`select %s
@@ -218,7 +218,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 		}
 
 		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
-			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
+			return nil, sdk.WrapError(err, "for user")
 		}
 	}
 	var err error
@@ -279,7 +279,7 @@ func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary
 					WHERE worker_capability.type = 'binary' AND worker_capability.argument = $1
 		`, modelColumns)
 		if _, err := db.Select(&wms, query, binary); err != nil {
-			return nil, sdk.WrapError(err, "LoadWorkerModelsByUserAndBinary> for admin")
+			return nil, sdk.WrapError(err, "for admin")
 		}
 	} else {
 		query := fmt.Sprintf(`
@@ -296,7 +296,7 @@ func LoadWorkerModelsByUserAndBinary(db gorp.SqlExecutor, user *sdk.User, binary
 				WHERE group_id = $2 AND worker_capability.type = 'binary' AND worker_capability.argument = $3
 		`, modelColumns, modelColumns)
 		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID, binary); err != nil {
-			return nil, sdk.WrapError(err, "LoadWorkerModelsByUserAndBinary> for user")
+			return nil, sdk.WrapError(err, "for user")
 		}
 	}
 	return scanWorkerModels(db, wms)

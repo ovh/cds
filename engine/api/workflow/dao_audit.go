@@ -19,7 +19,7 @@ func LoadAudits(db gorp.SqlExecutor, workflowID int64) ([]sdk.AuditWorklflow, er
 	`
 	var audits []auditWorkflow
 	if _, err := db.Select(&audits, query, workflowID); err != nil {
-		return nil, sdk.WrapError(err, "workflow.loadAudits> Unable to load audits")
+		return nil, sdk.WrapError(err, "Unable to load audits")
 	}
 
 	workflowAudits := make([]sdk.AuditWorklflow, len(audits), len(audits))
@@ -33,7 +33,7 @@ func LoadAudits(db gorp.SqlExecutor, workflowID int64) ([]sdk.AuditWorklflow, er
 func LoadAudit(db gorp.SqlExecutor, auditID int64) (sdk.AuditWorklflow, error) {
 	var audit auditWorkflow
 	if err := db.SelectOne(&audit, "SELECT * FROM workflow_audit WHERE id = $1", auditID); err != nil {
-		return sdk.AuditWorklflow{}, sdk.WrapError(err, "workflow.LoadAudit> Unable to load audit")
+		return sdk.AuditWorklflow{}, sdk.WrapError(err, "Unable to load audit")
 	}
 
 	return sdk.AuditWorklflow(audit), nil

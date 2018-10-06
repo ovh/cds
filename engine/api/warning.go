@@ -45,13 +45,13 @@ func (api *API) putWarningsHandler() service.Handler {
 
 		var wa sdk.Warning
 		if err := service.UnmarshalBody(r, &wa); err != nil {
-			return sdk.WrapError(err, "putWarningsHandler> Unable to read body")
+			return sdk.WrapError(err, "Unable to read body")
 		}
 
 		// Just update ignored flag
 		warn.Ignored = wa.Ignored
 		if err := warning.Update(api.mustDB(), warn); err != nil {
-			return sdk.WrapError(err, "putWarningsHandler> Unable to update warning")
+			return sdk.WrapError(err, "Unable to update warning")
 		}
 
 		event.PublishUpdateWarning(warn, getUser(ctx))

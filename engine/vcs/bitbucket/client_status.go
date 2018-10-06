@@ -55,11 +55,11 @@ func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error 
 
 	values, err := json.Marshal(status)
 	if err != nil {
-		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to marshall status")
+		return sdk.WrapError(err, "Unable to marshall status")
 	}
 
 	if err := b.do(ctx, "POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil, nil); err != nil {
-		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to post build-status name:%s status:%s", status.Name, state)
+		return sdk.WrapError(err, "Unable to post build-status name:%s status:%s", status.Name, state)
 	}
 	return nil
 }
@@ -77,7 +77,7 @@ func (b *bitbucketClient) ListStatuses(ctx context.Context, repo string, ref str
 
 		var response ResponseStatus
 		if err := b.do(ctx, "GET", "build-status", path, nil, nil, &response, nil); err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> Repos> Unable to get statuses")
+			return nil, sdk.WrapError(err, "Unable to get statuses")
 		}
 
 		ss = append(ss, response.Values...)
@@ -126,7 +126,7 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "bitbucketClient.processWorkflowNodeRunEvent> Error during consumption")
+		return data, sdk.WrapError(err, "Error during consumption")
 	}
 	data.key = fmt.Sprintf("%s-%s-%s",
 		event.ProjectKey,
@@ -151,7 +151,7 @@ func processPipelineBuildEvent(event sdk.Event, uiURL string) (statusData, error
 	data := statusData{}
 	var eventpb sdk.EventPipelineBuild
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		return data, sdk.WrapError(err, "bitbucketClient.processPipelineBuildEvent> Error during consumption")
+		return data, sdk.WrapError(err, "Error during consumption")
 	}
 	cdsProject := eventpb.ProjectKey
 	cdsApplication := eventpb.ApplicationName

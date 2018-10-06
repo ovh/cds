@@ -17,14 +17,14 @@ func AddBuildLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 
 	if existingLogs == nil {
 		if err := InsertLog(db, logs); err != nil {
-			return sdk.WrapError(err, "AddBuildLog> Cannot insert log")
+			return sdk.WrapError(err, "Cannot insert log")
 		}
 	} else {
 		existingLogs.Val += logs.Val
 		existingLogs.LastModified = logs.LastModified
 		existingLogs.Done = logs.Done
 		if err := UpdateLog(db, existingLogs); err != nil {
-			return sdk.WrapError(err, "AddBuildLog> Cannot update log")
+			return sdk.WrapError(err, "Cannot update log")
 		}
 	}
 	return nil

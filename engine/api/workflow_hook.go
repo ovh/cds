@@ -159,7 +159,7 @@ func (api *API) postWorkflowHookModelHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowHookModelHandler> Unable to commit transaction")
+			return sdk.WrapError(err, "Unable to commit transaction")
 		}
 
 		return service.WriteJSON(w, m, http.StatusCreated)

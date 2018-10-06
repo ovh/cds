@@ -127,7 +127,7 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 
 		u := &sdk.User{}
 		if err := json.Unmarshal(jsonUser, u); err != nil {
-			return sdk.WrapError(err, "LoadUserGroup> Error while converting jsonUser")
+			return sdk.WrapError(err, "Error while converting jsonUser")
 		}
 
 		if admin {
@@ -200,7 +200,7 @@ func LoadTokens(db gorp.SqlExecutor, groupName string) ([]sdk.Token, error) {
 		var creator, description sql.NullString
 		tok := sdk.Token{}
 		if err := rows.Scan(&tok.ID, &tok.Token, &creator, &description, &tok.Expiration, &tok.Created, &tok.GroupName); err != nil {
-			return nil, sdk.WrapError(err, "LoadTokens> Cannot scan the token line")
+			return nil, sdk.WrapError(err, "Cannot scan the token line")
 		}
 
 		if creator.Valid {

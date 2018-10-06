@@ -22,7 +22,7 @@ func (api *API) getPlatformModelsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		p, err := platform.LoadModels(api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "getPlatformModels> Cannot get platform models")
+			return sdk.WrapError(err, "Cannot get platform models")
 		}
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -36,7 +36,7 @@ func (api *API) getPlatformModelHandler() service.Handler {
 
 		p, err := platform.LoadModelByName(api.mustDB(), name, clearPassword)
 		if err != nil {
-			return sdk.WrapError(err, "getPlatformModelHandler> Cannot get platform model")
+			return sdk.WrapError(err, "Cannot get platform model")
 		}
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -51,13 +51,13 @@ func (api *API) postPlatformModelHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "postPlatformModelHandler> Unable to start tx")
+			return sdk.WrapError(err, "Unable to start tx")
 		}
 
 		defer tx.Rollback()
 
 		if exist, err := platform.ModelExists(tx, m.Name); err != nil {
-			return sdk.WrapError(err, "postPlatformModelHandler> Unable to check if model %s exist", m.Name)
+			return sdk.WrapError(err, "Unable to check if model %s exist", m.Name)
 		} else if exist {
 			return sdk.NewError(sdk.ErrConflict, fmt.Errorf("platform model %s already exist", m.Name))
 		}
@@ -71,11 +71,11 @@ func (api *API) postPlatformModelHandler() service.Handler {
 		}
 
 		if err := platform.InsertModel(tx, m); err != nil {
-			return sdk.WrapError(err, "postPlatformModelHandler> unable to insert model %s", m.Name)
+			return sdk.WrapError(err, "unable to insert model %s", m.Name)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postPlatformModelHandler> Unable to commit tx")
+			return sdk.WrapError(err, "Unable to commit tx")
 		}
 
 		if m.Public {
@@ -102,13 +102,13 @@ func (api *API) putPlatformModelHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "putPlatformModelHandler> Unable to start tx")
+			return sdk.WrapError(err, "Unable to start tx")
 		}
 		defer tx.Rollback()
 
 		old, err := platform.LoadModelByName(tx, name, true)
 		if err != nil {
-			return sdk.WrapError(err, "putPlatformModelHandler> Unable to load model")
+			return sdk.WrapError(err, "Unable to load model")
 		}
 
 		if old.IsBuiltin() {
@@ -131,11 +131,11 @@ func (api *API) putPlatformModelHandler() service.Handler {
 		}
 
 		if err := platform.UpdateModel(tx, m); err != nil {
-			return sdk.WrapError(err, "putPlatformModelHandler> ")
+			return sdk.WrapError(err, "")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "putPlatformModelHandler> Unable to commit tx")
+			return sdk.WrapError(err, "Unable to commit tx")
 		}
 
 		if m.Public {
@@ -191,7 +191,7 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 				ProjectID:       p.ID,
 			}
 			if err := platform.InsertPlatform(db, &pp); err != nil {
-				return sdk.WrapError(err, "propagatePublicPlatformModelOnProject> Unable to insert project platform %s", pp.Name)
+				return sdk.WrapError(err, "Unable to insert project platform %s", pp.Name)
 			}
 			event.PublishAddProjectPlatform(&p, pp, u)
 			continue
@@ -207,7 +207,7 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 		}
 		oldPP.Config = m.DefaultConfig
 		if err := platform.UpdatePlatform(db, pp); err != nil {
-			return sdk.WrapError(err, "propagatePublicPlatformModelOnProject> unable to update project platform %s", pp.Name)
+			return sdk.WrapError(err, "unable to update project platform %s", pp.Name)
 		}
 		event.PublishUpdateProjectPlatform(&p, oldPP, pp, u)
 	}
@@ -221,13 +221,13 @@ func (api *API) deletePlatformModelHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "deletePlatformModelHandler> Unable to start tx")
+			return sdk.WrapError(err, "Unable to start tx")
 		}
 		defer tx.Rollback()
 
 		old, err := platform.LoadModelByName(tx, name, false)
 		if err != nil {
-			return sdk.WrapError(err, "deletePlatformModelHandler> Unable to load model")
+			return sdk.WrapError(err, "Unable to load model")
 		}
 
 		if err := platform.DeleteModel(tx, old.ID); err != nil {
@@ -235,7 +235,7 @@ func (api *API) deletePlatformModelHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deletePlatformModelHandler> Unable to commit tx")
+			return sdk.WrapError(err, "Unable to commit tx")
 		}
 
 		return nil

@@ -31,7 +31,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 
 		tx, err := db.Begin()
 		if err != nil {
-			return sdk.WrapError(err, "postPGRPCluginHandler> Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() //nolint
 
@@ -39,26 +39,26 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 			// Check that action does not already exists
 			conflict, err := action.Exists(db, p.Name)
 			if err != nil {
-				return sdk.WrapError(err, "postPGRPCluginHandler> %v", err)
+				return sdk.WrapError(err, "%v", err)
 			}
 			if conflict {
 				if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, u.ID); err != nil {
-					return sdk.WrapError(err, "postPGRPCluginHandler> Error while updating action %s in database", p.Name)
+					return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
 				}
 			} else {
 				//Insert in database
 				if _, err := actionplugin.InsertWithGRPCPlugin(tx, &p, p.Parameters); err != nil {
-					return sdk.WrapError(err, "postPGRPCluginHandler> Error while inserting action %s in database", p.Name)
+					return sdk.WrapError(err, "Error while inserting action %s in database", p.Name)
 				}
 			}
 		}
 
 		if err := plugin.Insert(tx, &p); err != nil {
-			return sdk.WrapError(err, "postPGRPCluginHandler> unable to insert plugin")
+			return sdk.WrapError(err, "unable to insert plugin")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postPGRPCluginHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
@@ -70,7 +70,7 @@ func (api *API) getAllGRPCluginHandler() service.Handler {
 
 		ps, err := plugin.LoadAll(api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "getAllGRPCluginHandler> unable to load all plugins")
+			return sdk.WrapError(err, "unable to load all plugins")
 		}
 
 		return service.WriteJSON(w, ps, http.StatusOK)
@@ -101,7 +101,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		var name = mux.Vars(r)["name"]
 		old, err := plugin.LoadByName(api.mustDB(), name)
 		if err != nil {
-			return sdk.WrapError(err, "putGRPCluginHandler> unable to load old plugin")
+			return sdk.WrapError(err, "unable to load old plugin")
 		}
 
 		p.ID = old.ID
@@ -109,22 +109,22 @@ func (api *API) putGRPCluginHandler() service.Handler {
 
 		tx, err := db.Begin()
 		if err != nil {
-			return sdk.WrapError(err, "putGRPCluginHandler> Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() //nolint
 
 		if p.Type == sdk.GRPCPluginAction {
 			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, getUser(ctx).ID); err != nil {
-				return sdk.WrapError(err, "putGRPCluginHandler> Error while updating action %s in database", p.Name)
+				return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
 			}
 		}
 
 		if err := plugin.Update(tx, &p); err != nil {
-			return sdk.WrapError(err, "putGRPCluginHandler> unable to insert plugin")
+			return sdk.WrapError(err, "unable to insert plugin")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "putGRPCluginHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
@@ -136,11 +136,11 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 		var name = mux.Vars(r)["name"]
 		old, err := plugin.LoadByName(api.mustDB(), name)
 		if err != nil {
-			return sdk.WrapError(err, "deleteGRPCluginHandler> unable to load old plugin")
+			return sdk.WrapError(err, "unable to load old plugin")
 		}
 
 		if err := plugin.Delete(api.mustDB(), old); err != nil {
-			return sdk.WrapError(err, "deleteGRPCluginHandler> unable to delete plugin")
+			return sdk.WrapError(err, "unable to delete plugin")
 		}
 
 		return nil
@@ -160,7 +160,7 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "postGRPCluginBinaryHandler> unable to start tx")
+			return sdk.WrapError(err, "unable to start tx")
 		}
 		defer tx.Rollback()
 
@@ -175,16 +175,16 @@ func (api *API) postGRPCluginBinaryHandler() service.Handler {
 		old := p.GetBinary(b.OS, b.Arch)
 		if old == nil {
 			if err := plugin.AddBinary(tx, p, &b, ioutil.NopCloser(buff)); err != nil {
-				return sdk.WrapError(err, "postGRPCluginBinaryHandler> unable to add plugin binary")
+				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		} else {
 			if err := plugin.UpdateBinary(tx, p, &b, ioutil.NopCloser(buff)); err != nil {
-				return sdk.WrapError(err, "postGRPCluginBinaryHandler> unable to add plugin binary")
+				return sdk.WrapError(err, "unable to add plugin binary")
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postGRPCluginBinaryHandler> unable to commit tx")
+			return sdk.WrapError(err, "unable to commit tx")
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
@@ -212,7 +212,7 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 		if acceptRedirect && objectstore.Instance().TemporaryURLSupported {
 			url, err := objectstore.FetchTempURL(b)
 			if err != nil {
-				return sdk.WrapError(err, "getGRPCluginBinaryHandler> unable to get a temp URL")
+				return sdk.WrapError(err, "unable to get a temp URL")
 			}
 			http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 			return nil
@@ -220,7 +220,7 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 
 		f, err := objectstore.Fetch(b)
 		if err != nil {
-			return sdk.WrapError(err, "getGRPCluginBinaryHandler> unable to get object")
+			return sdk.WrapError(err, "unable to get object")
 		}
 
 		w.Header().Add("Content-Type", "application/octet-stream")
@@ -228,11 +228,11 @@ func (api *API) getGRPCluginBinaryHandler() service.Handler {
 
 		if _, err := io.Copy(w, f); err != nil {
 			_ = f.Close()
-			return sdk.WrapError(err, "getGRPCluginBinaryHandler> Cannot stream artifact")
+			return sdk.WrapError(err, "Cannot stream artifact")
 		}
 
 		if err := f.Close(); err != nil {
-			return sdk.WrapError(err, "getGRPCluginBinaryHandler> Cannot close artifact")
+			return sdk.WrapError(err, "Cannot close artifact")
 		}
 
 		return nil

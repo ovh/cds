@@ -17,7 +17,7 @@ import (
 func (api *API) adminTruncateWarningsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, err := api.mustDB().Exec("delete from warning"); err != nil {
-			return sdk.WrapError(err, "adminTruncateWarningsHandler> Unable to truncate warning ")
+			return sdk.WrapError(err, "Unable to truncate warning ")
 		}
 		return nil
 	}
@@ -119,7 +119,7 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 		query := r.FormValue("query")
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			return sdk.WrapError(err, "putPostAdminServiceCallHandler> Unable to read body")
+			return sdk.WrapError(err, "Unable to read body")
 		}
 		defer r.Body.Close()
 

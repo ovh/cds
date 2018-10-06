@@ -61,7 +61,7 @@ func getSSHPrivateKey(r io.Reader) (*rsa.PrivateKey, error) {
 	//Parse the block
 	key, err := x509.ParsePKCS1PrivateKey(privBlock.Bytes)
 	if err != nil {
-		return nil, sdk.WrapError(err, "GetSSHPrivateKey> Unable to parse PKCS1 private key")
+		return nil, sdk.WrapError(err, "Unable to parse PKCS1 private key")
 	}
 
 	return key, nil

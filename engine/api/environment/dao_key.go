@@ -27,7 +27,7 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
 			err = sdk.ErrKeyAlreadyExist
 		}
-		return sdk.WrapError(err, "InsertKey> Cannot insert project key")
+		return sdk.WrapError(err, "Cannot insert project key")
 	}
 	*key = sdk.EnvironmentKey(dbEnvironmentKey)
 	return nil
@@ -46,7 +46,7 @@ func LoadAllEnvironmentKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.E
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "LoadAllEnvironmentKeysByProject> Cannot load keys")
+		return nil, sdk.WrapError(err, "Cannot load keys")
 	}
 
 	keys := make([]sdk.EnvironmentKey, len(res))
@@ -65,7 +65,7 @@ func LoadAllKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+		return sdk.WrapError(err, "Cannot load keys")
 	}
 
 	keys := make([]sdk.EnvironmentKey, len(res))
@@ -85,7 +85,7 @@ func LoadAllBase64Keys(db gorp.SqlExecutor, env *sdk.Environment) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return sdk.WrapError(err, "LoadAllBase64Keys> Cannot load keys")
+		return sdk.WrapError(err, "Cannot load keys")
 	}
 
 	keys := make([]sdk.EnvironmentKey, len(res))
@@ -105,7 +105,7 @@ func LoadAllDecryptedKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return sdk.WrapError(err, "LoadAllDecryptedKeys> Cannot load keys")
+		return sdk.WrapError(err, "Cannot load keys")
 	}
 
 	keys := make([]sdk.EnvironmentKey, len(res))
@@ -125,5 +125,5 @@ func LoadAllDecryptedKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 // DeleteEnvironmentKey Delete the given key from the given project
 func DeleteEnvironmentKey(db gorp.SqlExecutor, envID int64, keyName string) error {
 	_, err := db.Exec("DELETE FROM environment_key WHERE environment_id = $1 AND name = $2", envID, keyName)
-	return sdk.WrapError(err, "DeleteEnvironmentKey> Cannot delete key %s", keyName)
+	return sdk.WrapError(err, "Cannot delete key %s", keyName)
 }

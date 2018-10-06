@@ -94,11 +94,11 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 
 		if oldSrv != nil {
 			if err := services.Update(tx, srv); err != nil {
-				return sdk.WrapError(err, "postServiceRegisterHandler> Unable to update service %s", srv.Name)
+				return sdk.WrapError(err, "Unable to update service %s", srv.Name)
 			}
 		} else {
 			if err := services.Insert(tx, srv); err != nil {
-				return sdk.WrapError(err, "postServiceRegisterHandler> Unable to insert service %s", srv.Name)
+				return sdk.WrapError(err, "Unable to insert service %s", srv.Name)
 			}
 		}
 

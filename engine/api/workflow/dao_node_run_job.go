@@ -43,7 +43,7 @@ func CountNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.
 
 	queue, err := LoadNodeJobRunQueue(ctx, db, store, filter)
 	if err != nil {
-		return c, sdk.WrapError(err, "CountNodeJobRunQueue> unable to load queue")
+		return c, sdk.WrapError(err, "unable to load queue")
 	}
 
 	c.Count = int64(len(queue))
@@ -152,7 +152,7 @@ func LoadNodeJobRunQueue(ctx context.Context, db gorp.SqlExecutor, store cache.S
 	_, next := observability.Span(ctx, "LoadNodeJobRunQueue.select")
 	if _, err := db.Select(&sqlJobs, query, args...); err != nil {
 		next()
-		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
+		return nil, sdk.WrapError(err, "Unable to load job runs (Select)")
 	}
 	next()
 
@@ -319,12 +319,12 @@ func getHatcheryInfo(store cache.Store, j *JobRun) {
 func replaceWorkflowJobRunInQueue(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
 	query := "UPDATE workflow_node_run_job SET status = $1, retry = $2, worker_id = NULL WHERE id = $3"
 	if _, err := db.Exec(query, sdk.StatusWaiting.String(), wNodeJob.Retry+1, wNodeJob.ID); err != nil {
-		return sdk.WrapError(err, "replaceWorkflowJobRunInQueue> Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting.String())
+		return sdk.WrapError(err, "Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting.String())
 	}
 
 	query = "UPDATE worker SET status = $2, action_build_id = NULL where action_build_id = $1"
 	if _, err := db.Exec(query, wNodeJob.ID, sdk.StatusDisabled); err != nil {
-		return sdk.WrapError(err, "replaceWorkflowJobRunInQueue> Unable to set workers")
+		return sdk.WrapError(err, "Unable to set workers")
 	}
 
 	return nil

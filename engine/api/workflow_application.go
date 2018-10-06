@@ -83,7 +83,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 
 		client, err := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, rm)
 		if err != nil {
-			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.VCSServer)
+			return sdk.WrapError(err, "Cannot get client got %s %s", key, workflowNode.Context.Application.VCSServer)
 		}
 
 		release, errRelease := client.Release(ctx, workflowNode.Context.Application.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)
@@ -111,7 +111,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		for _, a := range artifactToUpload {
 			f, err := objectstore.Fetch(&a)
 			if err != nil {
-				return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot fetch artifact")
+				return sdk.WrapError(err, "Cannot fetch artifact")
 			}
 
 			if err := client.UploadReleaseFile(ctx, workflowNode.Context.Application.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, f); err != nil {

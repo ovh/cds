@@ -48,7 +48,7 @@ func (api *API) getActionsRequirements() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		req, err := action.LoadAllBinaryRequirements(api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "getActionsRequirements> Cannot load action requirements")
+			return sdk.WrapError(err, "Cannot load action requirements")
 		}
 		return service.WriteJSON(w, req, http.StatusOK)
 	}
@@ -84,11 +84,11 @@ func (api *API) deleteActionHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := action.DeleteAction(tx, a.ID, getUser(ctx).ID); err != nil {
-			return sdk.WrapError(err, "deleteAction> Cannot delete action %s", name)
+			return sdk.WrapError(err, "Cannot delete action %s", name)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteAction> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishActionDelete(*a, getUser(ctx))
@@ -112,12 +112,12 @@ func (api *API) updateActionHandler() service.Handler {
 		// Check that action  already exists
 		actionDB, err := action.LoadPublicAction(api.mustDB(), name)
 		if err != nil {
-			return sdk.WrapError(err, "updateAction> Cannot check if action %s exist", a.Name)
+			return sdk.WrapError(err, "Cannot check if action %s exist", a.Name)
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "updateAction> Cannot begin tx")
+			return sdk.WrapError(err, "Cannot begin tx")
 		}
 		defer tx.Rollback()
 
@@ -128,7 +128,7 @@ func (api *API) updateActionHandler() service.Handler {
 		}
 
 		if err = tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateAction> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishActionUpdate(*actionDB, a, getUser(ctx))
@@ -187,7 +187,7 @@ func (api *API) getActionAuditHandler() service.Handler {
 		// Load action
 		a, err := action.LoadAuditAction(api.mustDB(), actionID, true)
 		if err != nil {
-			return sdk.WrapError(err, "getActionAuditHandler> Cannot load audit for action %d", actionID)
+			return sdk.WrapError(err, "Cannot load audit for action %d", actionID)
 		}
 		return service.WriteJSON(w, a, http.StatusOK)
 	}
@@ -216,7 +216,7 @@ func (api *API) getActionExportHandler() service.Handler {
 		}
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
-			return sdk.WrapError(err, "getActionExportHandler> Format invalid")
+			return sdk.WrapError(err, "Format invalid")
 		}
 
 		if _, err := action.Export(api.mustDB(), name, f, w); err != nil {

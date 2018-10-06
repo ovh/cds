@@ -15,14 +15,14 @@ import (
 func (pp *dbProjectPlatform) PostGet(db gorp.SqlExecutor) error {
 	model, err := LoadModel(db, pp.PlatformModelID, false)
 	if err != nil {
-		return sdk.WrapError(err, "dbProjectPlatform.PostGet> Cannot load model")
+		return sdk.WrapError(err, "Cannot load model")
 	}
 	pp.Model = model
 
 	query := "SELECT config FROM project_platform where id = $1"
 	s, err := db.SelectNullStr(query, pp.ID)
 	if err != nil {
-		return sdk.WrapError(err, "dbProjectPlatform.PostGet> Cannot get config")
+		return sdk.WrapError(err, "Cannot get config")
 	}
 	if err := gorpmapping.JSONNullString(s, &pp.Config); err != nil {
 		return err
@@ -34,7 +34,7 @@ func (pp *dbProjectPlatform) PostGet(db gorp.SqlExecutor) error {
 func DeletePlatform(db gorp.SqlExecutor, platform sdk.ProjectPlatform) error {
 	pp := dbProjectPlatform(platform)
 	if _, err := db.Delete(&pp); err != nil {
-		return sdk.WrapError(err, "DeletePlatform> Cannot remove project platform")
+		return sdk.WrapError(err, "Cannot remove project platform")
 	}
 	return nil
 }
@@ -49,7 +49,7 @@ func LoadPlatformsByName(db gorp.SqlExecutor, key string, name string, clearPwd 
 		WHERE project.projectkey = $1 AND project_platform.name = $2
 	`
 	if err := db.SelectOne(&pp, query, key, name); err != nil {
-		return sdk.ProjectPlatform{}, sdk.WrapError(err, "LoadPlatformsByName> Cannot load platform")
+		return sdk.ProjectPlatform{}, sdk.WrapError(err, "Cannot load platform")
 	}
 	p := sdk.ProjectPlatform(pp)
 	for k, v := range p.Config {
@@ -115,7 +115,7 @@ func LoadPlatformsByProjectID(db gorp.SqlExecutor, id int64, clearPassword bool)
 	for i := range res {
 		pp := &res[i]
 		if err := pp.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadPlatformByID> Cannot post get")
+			return nil, sdk.WrapError(err, "Cannot post get")
 		}
 
 		for k, v := range pp.Config {
@@ -172,7 +172,7 @@ func InsertPlatform(db gorp.SqlExecutor, pp *sdk.ProjectPlatform) error {
 	}
 	ppDb := dbProjectPlatform(*pp)
 	if err := db.Insert(&ppDb); err != nil {
-		return sdk.WrapError(err, "InsertPlatform> Cannot insert project platform")
+		return sdk.WrapError(err, "Cannot insert project platform")
 	}
 	*pp = sdk.ProjectPlatform(ppDb)
 	return nil
@@ -192,7 +192,7 @@ func UpdatePlatform(db gorp.SqlExecutor, pp sdk.ProjectPlatform) error {
 	}
 	ppDb := dbProjectPlatform(pp)
 	if _, err := db.Update(&ppDb); err != nil {
-		return sdk.WrapError(err, "UpdatePlatform> Cannot update project platform")
+		return sdk.WrapError(err, "Cannot update project platform")
 	}
 	return nil
 }
@@ -201,11 +201,11 @@ func UpdatePlatform(db gorp.SqlExecutor, pp sdk.ProjectPlatform) error {
 func (pp *dbProjectPlatform) PostUpdate(db gorp.SqlExecutor) error {
 	configB, err := gorpmapping.JSONToNullString(pp.Config)
 	if err != nil {
-		return sdk.WrapError(err, "PostInsert.projectPlatform> Cannot post insert project platform")
+		return sdk.WrapError(err, "Cannot post insert project platform")
 	}
 
 	if _, err := db.Exec("UPDATE project_platform set config = $1 WHERE id = $2", configB, pp.ID); err != nil {
-		return sdk.WrapError(err, "PostInsert.projectPlatform> Cannot update config")
+		return sdk.WrapError(err, "Cannot update config")
 	}
 	return nil
 }
@@ -213,7 +213,7 @@ func (pp *dbProjectPlatform) PostUpdate(db gorp.SqlExecutor) error {
 // PostInsert is a db hook
 func (pp *dbProjectPlatform) PostInsert(db gorp.SqlExecutor) error {
 	if err := pp.PostUpdate(db); err != nil {
-		return sdk.WrapError(err, "PostInsert.projectPlatform> Cannot update")
+		return sdk.WrapError(err, "Cannot update")
 	}
 	return nil
 }

@@ -105,14 +105,14 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 			if k.Name == keyName {
 				deletedKey = k
 				if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
-					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
+					return sdk.WrapError(err, "Cannot delete key %s", k.Name)
 				}
 				break
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishDeleteProjectKey(p, deletedKey, getUser(ctx))
@@ -171,11 +171,11 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := project.InsertKey(tx, &newKey); err != nil {
-			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot insert project key")
+			return sdk.WrapError(err, "Cannot insert project key")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishAddProjectKey(p, newKey, getUser(ctx))

@@ -30,7 +30,7 @@ func (b *bitbucketClient) Branches(ctx context.Context, fullname string) ([]sdk.
 
 		var response BranchResponse
 		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> branches> Unable to get branches %s", path)
+			return nil, sdk.WrapError(err, "Unable to get branches %s", path)
 		}
 
 		stashBranches = append(stashBranches, response.Values...)
@@ -63,7 +63,7 @@ func (b *bitbucketClient) Branch(ctx context.Context, fullname string, filter st
 	path := fmt.Sprintf("/projects/%s/repos/%s/branches?filterText=%s", t[0], t[1], url.QueryEscape(filter))
 
 	if err := b.do(ctx, "GET", "core", path, nil, nil, &branches, nil); err != nil {
-		return nil, sdk.WrapError(err, "vcs> bitbucket> branches> Unable to get branch %s %s", filter, path)
+		return nil, sdk.WrapError(err, "Unable to get branch %s %s", filter, path)
 	}
 
 	if len(branches.Values) == 0 {

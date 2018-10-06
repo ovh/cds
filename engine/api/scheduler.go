@@ -63,14 +63,14 @@ func (api *API) getSchedulerApplicationPipelineHandler() service.Handler {
 			var err error
 			schedulers, err = scheduler.GetByApplicationPipeline(api.mustDB(), app, pip)
 			if err != nil {
-				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> cmdApplicationPipelineSchedulerAddEnvCannot load pipeline schedulers")
+				return sdk.WrapError(err, "cmdApplicationPipelineSchedulerAddEnvCannot load pipeline schedulers")
 
 			}
 		} else {
 			var err error
 			schedulers, err = scheduler.GetByApplicationPipelineEnv(api.mustDB(), app, pip, env)
 			if err != nil {
-				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers")
+				return sdk.WrapError(err, "Cannot load pipeline schedulers")
 
 			}
 		}
@@ -129,14 +129,14 @@ func (api *API) addSchedulerApplicationPipelineHandler() service.Handler {
 			env = &sdk.DefaultEnv
 			schedulers, err = scheduler.GetByApplicationPipeline(api.mustDB(), app, pip)
 			if err != nil {
-				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers")
+				return sdk.WrapError(err, "Cannot load pipeline schedulers")
 
 			}
 		} else {
 			var err error
 			schedulers, err = scheduler.GetByApplicationPipelineEnv(api.mustDB(), app, pip, env)
 			if err != nil {
-				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers")
+				return sdk.WrapError(err, "Cannot load pipeline schedulers")
 
 			}
 		}
@@ -197,12 +197,12 @@ func (api *API) addSchedulerApplicationPipelineHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := scheduler.Insert(tx, s); err != nil {
-			return sdk.WrapError(err, "addSchedulerApplicationPipelineHandler> cannot insert scheduler")
+			return sdk.WrapError(err, "cannot insert scheduler")
 
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addSchedulerApplicationPipelineHandler> cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		var errW error
@@ -240,7 +240,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() service.Handler {
 			var err error
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if err != nil {
-				return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> ")
+				return sdk.WrapError(err, "")
 			}
 
 			if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadExecute) {
@@ -257,7 +257,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() service.Handler {
 		//Load the scheduler
 		sOld, err := scheduler.Load(api.mustDB(), s.ID)
 		if err != nil {
-			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> ")
+			return sdk.WrapError(err, "")
 
 		}
 
@@ -277,7 +277,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := scheduler.Update(tx, sOld); err != nil {
-			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot update scheduler")
+			return sdk.WrapError(err, "Cannot update scheduler")
 		}
 
 		nx, errN := scheduler.LoadNextExecution(tx, sOld.ID, sOld.Timezone)
@@ -287,12 +287,12 @@ func (api *API) updateSchedulerApplicationPipelineHandler() service.Handler {
 
 		if nx != nil {
 			if err := scheduler.DeleteExecution(tx, nx); err != nil {
-				return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot delete next execution")
+				return sdk.WrapError(err, "Cannot delete next execution")
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		var errW error
@@ -341,7 +341,7 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteSchedulerApplicationPipelineHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		var errW error

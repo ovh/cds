@@ -73,7 +73,7 @@ func LoadOldApplicationWorkflowToClean(db gorp.SqlExecutor) ([]sdk.Application, 
 		if err == sql.ErrNoRows {
 			return apps, nil
 		}
-		return nil, sdk.WrapError(err, "LoadOldApplicationWorkflowToClean> Cannot load application to clean")
+		return nil, sdk.WrapError(err, "Cannot load application to clean")
 	}
 	return apps, nil
 }
@@ -214,7 +214,7 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 		if err == sql.ErrNoRows {
 			return apps, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load applications linked to workflow id %d", workflowID)
+		return nil, sdk.WrapError(err, "Unable to load applications linked to workflow id %d", workflowID)
 	}
 
 	return apps, nil
@@ -233,7 +233,7 @@ func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Applicat
 		if err == sql.ErrNoRows {
 			return apps, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByEnvName> Unable to load applications linked to environment %s", envName)
+		return nil, sdk.WrapError(err, "Unable to load applications linked to environment %s", envName)
 	}
 
 	return apps, nil
@@ -291,7 +291,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOpti
 // Insert add an application id database
 func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, u *sdk.User) error {
 	if err := app.IsValid(); err != nil {
-		return sdk.WrapError(err, "application.Insert> application is not valid")
+		return sdk.WrapError(err, "application is not valid")
 	}
 
 	switch proj.WorkflowMigration {
@@ -320,7 +320,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 // Update updates application id database
 func Update(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 	if err := app.IsValid(); err != nil {
-		return sdk.WrapError(err, "application.Update> application is not valid")
+		return sdk.WrapError(err, "application is not valid")
 	}
 
 	app.LastModified = time.Now()

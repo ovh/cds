@@ -122,7 +122,7 @@ checkImage:
 		_, next := observability.Span(ctx, "swarm.dockerClient.pullImage", observability.Tag("image", cArgs.image))
 		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage); err != nil {
 			next()
-			return sdk.WrapError(err, "createAndStartContainer> Unable to pull image %s on %s", cArgs.image, dockerClient.name)
+			return sdk.WrapError(err, "Unable to pull image %s on %s", cArgs.image, dockerClient.name)
 		}
 		next()
 	}
@@ -131,14 +131,14 @@ checkImage:
 	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, name)
 	if err != nil {
 		next()
-		return sdk.WrapError(err, "createAndStartContainer> Unable to create container %s on %s", name, dockerClient.name)
+		return sdk.WrapError(err, "Unable to create container %s on %s", name, dockerClient.name)
 	}
 	next()
 
 	_, next = observability.Span(ctx, "swarm.dockerClient.ContainerStart", observability.Tag(observability.TagWorker, cArgs.name), observability.Tag("network", fmt.Sprintf("%v", networkingConfig)))
 	if err := dockerClient.ContainerStart(ctx, c.ID, types.ContainerStartOptions{}); err != nil {
 		next()
-		return sdk.WrapError(err, "createAndStartContainer> Unable to start container on %s: %s", dockerClient.name, c.ID[:12])
+		return sdk.WrapError(err, "Unable to start container on %s: %s", dockerClient.name, c.ID[:12])
 	}
 	next()
 	return nil

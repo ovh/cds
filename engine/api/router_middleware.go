@@ -90,7 +90,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		//Refresh the worker
 		workerCtx := getWorker(ctx)
 		if err := worker.RefreshWorker(api.mustDB(), workerCtx); err != nil {
-			return ctx, sdk.WrapError(err, "Router> Unable to refresh worker")
+			return ctx, sdk.WrapError(err, "Unable to refresh worker")
 		}
 
 		if workerCtx.ModelID != 0 {

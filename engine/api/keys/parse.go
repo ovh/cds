@@ -20,7 +20,7 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 	if kval.Value != "" {
 		privateKey, err := decryptFunc(db, projID, kval.Value)
 		if err != nil {
-			return nil, sdk.WrapError(err, "keys.Parse> Unable to decrypt secret")
+			return nil, sdk.WrapError(err, "Unable to decrypt secret")
 		}
 		k.Private = privateKey
 
@@ -65,14 +65,14 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 		case sdk.KeyTypePGP:
 			ktemp, err := GeneratePGPKeyPair(kname)
 			if err != nil {
-				return nil, sdk.WrapError(err, "keys.Parse> Unable to generate PGP key pair")
+				return nil, sdk.WrapError(err, "Unable to generate PGP key pair")
 			}
 			k = &ktemp
 		//Compute SSH Keys
 		case sdk.KeyTypeSSH:
 			ktemp, err := GenerateSSHKey(kname)
 			if err != nil {
-				return nil, sdk.WrapError(err, "keys.Parse> Unable to generate SSH key pair")
+				return nil, sdk.WrapError(err, "Unable to generate SSH key pair")
 			}
 			k = &ktemp
 		default:

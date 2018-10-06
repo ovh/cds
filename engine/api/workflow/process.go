@@ -154,7 +154,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 			if haveToUpdate {
 				if err := updateNodeRunStatusAndTriggersRun(db, nodeRun); err != nil {
-					return nil, false, sdk.WrapError(err, "process> Cannot update node run")
+					return nil, false, sdk.WrapError(err, "Cannot update node run")
 				}
 			}
 		}
@@ -227,7 +227,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	_, next := observability.Span(ctx, "workflow.syncNodeRuns")
 	if err := syncNodeRuns(db, w, LoadRunOptions{}); err != nil {
 		next()
-		return report, false, sdk.WrapError(err, "processWorkflowRun> Unable to sync workflow node runs")
+		return report, false, sdk.WrapError(err, "Unable to sync workflow node runs")
 	}
 	next()
 
@@ -770,7 +770,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 
 	if err := insertWorkflowNodeRun(db, run); err != nil {
-		return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run (node id : %d, node name : %s, subnumber : %d)", run.WorkflowNodeID, run.WorkflowNodeName, run.SubNumber)
+		return report, true, sdk.WrapError(err, "unable to insert run (node id : %d, node name : %s, subnumber : %d)", run.WorkflowNodeID, run.WorkflowNodeName, run.SubNumber)
 	}
 	w.LastExecution = time.Now()
 
@@ -787,7 +787,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 
 		if err := UpdateNodeRunBuildParameters(db, run.ID, run.BuildParameters); err != nil {
-			return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow node run build parameters")
+			return report, true, sdk.WrapError(err, "unable to update workflow node run build parameters")
 		}
 	}
 
@@ -801,7 +801,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
 
 	if err := UpdateWorkflowRun(ctx, db, w); err != nil {
-		return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
+		return report, true, sdk.WrapError(err, "unable to update workflow run")
 	}
 
 	//Check the context.mutex to know if we are allowed to run it
@@ -817,7 +817,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		and workflow_node_run.status = $4`
 		nbMutex, err := db.SelectInt(mutexQuery, n.WorkflowID, run.ID, n.Name, string(sdk.StatusBuilding))
 		if err != nil {
-			return report, false, sdk.WrapError(err, "processWorkflowNodeRun> unable to check mutexes")
+			return report, false, sdk.WrapError(err, "unable to check mutexes")
 		}
 		if nbMutex > 0 {
 			log.Debug("processWorkflowNodeRun> Noderun %s processed but not executed because of mutex", n.Name)
@@ -827,7 +827,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 			})
 
 			if err := UpdateWorkflowRun(ctx, db, w); err != nil {
-				return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
+				return report, true, sdk.WrapError(err, "unable to update workflow run")
 			}
 
 			//Mutex is locked. exit without error
@@ -839,7 +839,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	//Execute the node run !
 	r1, err := execute(ctx, db, store, p, run)
 	if err != nil {
-		return report, true, sdk.WrapError(err, "processWorkflowNodeRun> unable to execute workflow run")
+		return report, true, sdk.WrapError(err, "unable to execute workflow run")
 	}
 	_, _ = report.Merge(r1, nil)
 	return report, true, nil

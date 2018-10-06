@@ -72,7 +72,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 	and workflow_node_run.id = $4`, nodeRunFields, testsField)
 
 	if err := db.SelectOne(&rr, query, projectkey, workflowname, number, id); err != nil {
-		return nil, sdk.WrapError(err, "workflow.LoadNodeRun> Unable to load workflow_node_run proj=%s, workflow=%s, num=%d, node=%d", projectkey, workflowname, number, id)
+		return nil, sdk.WrapError(err, "Unable to load workflow_node_run proj=%s, workflow=%s, num=%d, node=%d", projectkey, workflowname, number, id)
 	}
 
 	r, err := fromDBNodeRun(rr, loadOpts)
@@ -124,7 +124,7 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 	where workflow_node_run_job.id = $1`, nodeRunFields, testsField)
 
 	if err := db.SelectOne(&rr, query, nodeJobRunID); err != nil {
-		return nil, sdk.WrapError(err, "workflow.LoadNodeRunByNodeJobID> Unable to load workflow_node_run node_job_id=%d", nodeJobRunID)
+		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node_job_id=%d", nodeJobRunID)
 	}
 
 	r, err := fromDBNodeRun(rr, loadOpts)
@@ -159,7 +159,7 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, 
 		query += " nowait"
 	}
 	if err := db.SelectOne(&rr, query, id); err != nil {
-		return nil, sdk.WrapError(err, "workflow.LoadAndLockNodeRunByID> Unable to load workflow_node_run node=%d", id)
+		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
 	}
 	return fromDBNodeRun(rr, LoadRunOptions{})
 }
@@ -178,7 +178,7 @@ func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*s
 	from workflow_node_run
 	where workflow_node_run.id = $1`, nodeRunFields, testsField)
 	if err := db.SelectOne(&rr, query, id); err != nil {
-		return nil, sdk.WrapError(err, "workflow.LoadNodeRunByID> Unable to load workflow_node_run node=%d", id)
+		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
 	}
 
 	r, err := fromDBNodeRun(rr, loadOpts)
@@ -352,76 +352,76 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	if n.TriggersRun != nil {
 		s, err := gorpmapping.JSONToNullString(n.TriggersRun)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from TriggerRun")
+			return nil, sdk.WrapError(err, "unable to get json from TriggerRun")
 		}
 		nodeRunDB.TriggersRun = s
 	}
 	if n.Stages != nil {
 		s, err := gorpmapping.JSONToNullString(n.Stages)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from Stages")
+			return nil, sdk.WrapError(err, "unable to get json from Stages")
 		}
 		nodeRunDB.Stages = s
 	}
 	if n.SourceNodeRuns != nil {
 		s, err := gorpmapping.JSONToNullString(n.SourceNodeRuns)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from SourceNodeRuns")
+			return nil, sdk.WrapError(err, "unable to get json from SourceNodeRuns")
 		}
 		nodeRunDB.SourceNodeRuns = s
 	}
 	if n.HookEvent != nil {
 		s, err := gorpmapping.JSONToNullString(n.HookEvent)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from hook_event")
+			return nil, sdk.WrapError(err, "unable to get json from hook_event")
 		}
 		nodeRunDB.HookEvent = s
 	}
 	if n.Manual != nil {
 		s, err := gorpmapping.JSONToNullString(n.Manual)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from manual")
+			return nil, sdk.WrapError(err, "unable to get json from manual")
 		}
 		nodeRunDB.Manual = s
 	}
 	if n.Payload != nil {
 		s, err := gorpmapping.JSONToNullString(n.Payload)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from payload")
+			return nil, sdk.WrapError(err, "unable to get json from payload")
 		}
 		nodeRunDB.Payload = s
 	}
 	if n.PipelineParameters != nil {
 		s, err := gorpmapping.JSONToNullString(n.PipelineParameters)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from pipeline_parameters")
+			return nil, sdk.WrapError(err, "unable to get json from pipeline_parameters")
 		}
 		nodeRunDB.PipelineParameters = s
 	}
 	if n.BuildParameters != nil {
 		s, err := gorpmapping.JSONToNullString(n.BuildParameters)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from build_parameters")
+			return nil, sdk.WrapError(err, "unable to get json from build_parameters")
 		}
 		nodeRunDB.BuildParameters = s
 	}
 	if n.Tests != nil {
 		s, err := gorpmapping.JSONToNullString(n.Tests)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from tests")
+			return nil, sdk.WrapError(err, "unable to get json from tests")
 		}
 		nodeRunDB.Tests = s
 	}
 	if n.Commits != nil {
 		s, err := gorpmapping.JSONToNullString(n.Commits)
 		if err != nil {
-			return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from commits")
+			return nil, sdk.WrapError(err, "unable to get json from commits")
 		}
 		nodeRunDB.Commits = s
 	}
 	sh, err := gorpmapping.JSONToNullString(n.Header)
 	if err != nil {
-		return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from header")
+		return nil, sdk.WrapError(err, "unable to get json from header")
 	}
 	nodeRunDB.Header = sh
 
@@ -436,7 +436,7 @@ func UpdateNodeRunBuildParameters(db gorp.SqlExecutor, nodeID int64, buildParame
 
 	bts, err := json.Marshal(&buildParameters)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateNodeRunBuildParameters> unable to get json from build_parameters")
+		return sdk.WrapError(err, "unable to get json from build_parameters")
 	}
 
 	_, errU := db.Exec("UPDATE workflow_node_run SET build_parameters = $1 WHERE id = $2", bts, nodeID)
@@ -525,7 +525,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 		//If we only have the current branch, search for the branch
 		br, err := client.Branch(ctx, repo, cur.Branch)
 		if err != nil {
-			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get branch %s", cur.Branch)
+			return nil, cur, sdk.WrapError(err, "Cannot get branch %s", cur.Branch)
 		}
 		if br != nil {
 			if br.LatestCommit == "" {
@@ -559,14 +559,14 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 			if cur.Hash == "" {
 				br, err := client.Branch(ctx, repo, cur.Branch)
 				if err != nil {
-					return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get branch %s", cur.Branch)
+					return nil, cur, sdk.WrapError(err, "Cannot get branch %s", cur.Branch)
 				}
 				cur.Hash = br.LatestCommit
 			}
 			//If we are lucky, return a true diff
 			commits, err := client.Commits(ctx, repo, cur.Branch, prev.Hash, cur.Hash)
 			if err != nil {
-				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
+				return nil, cur, sdk.WrapError(err, "Cannot get commits")
 			}
 			if commits != nil {
 				res = commits
@@ -576,7 +576,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 		if cur.Hash == "" && cur.Tag != "" {
 			c, err := client.CommitsBetweenRefs(ctx, repo, prev.Hash, cur.Tag)
 			if err != nil {
-				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
+				return nil, cur, sdk.WrapError(err, "Cannot get commits")
 			}
 			if c != nil {
 				res = c
@@ -592,7 +592,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 			}
 			c, err := client.CommitsBetweenRefs(ctx, repo, base, cur.Tag)
 			if err != nil {
-				return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
+				return nil, cur, sdk.WrapError(err, "Cannot get commits")
 			}
 			if c != nil {
 				res = c
@@ -603,7 +603,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 		log.Debug("GetNodeRunBuildCommits>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(ctx, repo, cur.Branch, "", cur.Hash)
 		if err != nil {
-			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
+			return nil, cur, sdk.WrapError(err, "Cannot get commits")
 		}
 		if c != nil {
 			res = c
@@ -633,7 +633,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 
 	var rr = NodeRun{}
 	if err := db.SelectOne(&rr, query, workflowID, n.Name, nr.VCSBranch, nr.VCSTag, nr.Number, nr.ID); err != nil {
-		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run on workflow %d node %s nr.VCSBranch:%s nr.VCSTag:%s nr.Number:%d nr.ID:%d ", workflowID, n.Name, nr.VCSBranch, nr.VCSTag, nr.Number, nr.ID)
+		return nodeRun, sdk.WrapError(err, "Cannot load previous run on workflow %d node %s nr.VCSBranch:%s nr.VCSTag:%s nr.Number:%d nr.ID:%d ", workflowID, n.Name, nr.VCSBranch, nr.VCSTag, nr.Number, nr.ID)
 	}
 	pNodeRun, errF := fromDBNodeRun(rr, LoadRunOptions{})
 	if errF != nil {
@@ -705,7 +705,7 @@ func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit
 	}
 
 	if _, err := db.Exec("UPDATE workflow_node_run SET commits = $1 where id = $2", commitsBtes, id); err != nil {
-		return sdk.WrapError(err, "updateNodeRunCommits> Unable to update workflow_node_run id=%d", id)
+		return sdk.WrapError(err, "Unable to update workflow_node_run id=%d", id)
 	}
 	return nil
 }
@@ -718,7 +718,7 @@ func updateNodeRunStatusAndStage(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeR
 	}
 
 	if _, err := db.Exec("UPDATE workflow_node_run SET status = $1, stages = $2, done = $3 where id = $4", nodeRun.Status, stagesBts, nodeRun.Done, nodeRun.ID); err != nil {
-		return sdk.WrapError(err, "updateNodeRunStatusAndStage> Unable to update workflow_node_run %s", nodeRun.WorkflowNodeName)
+		return sdk.WrapError(err, "Unable to update workflow_node_run %s", nodeRun.WorkflowNodeName)
 	}
 	return nil
 }
@@ -730,7 +730,7 @@ func updateNodeRunStatusAndTriggersRun(db gorp.SqlExecutor, nodeRun *sdk.Workflo
 	}
 
 	if _, err := db.Exec("UPDATE workflow_node_run SET status = $1, triggers_run = $2 where id = $3", nodeRun.Status, triggersRunbts, nodeRun.ID); err != nil {
-		return sdk.WrapError(err, "updateNodeRunStatusAndStage> Unable to update workflow_node_run %s", nodeRun.WorkflowNodeName)
+		return sdk.WrapError(err, "Unable to update workflow_node_run %s", nodeRun.WorkflowNodeName)
 	}
 	return nil
 }

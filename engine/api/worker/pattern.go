@@ -51,7 +51,7 @@ func LoadWorkerModelPatterns(db gorp.SqlExecutor) ([]sdk.ModelPattern, error) {
 	var wmPatterns []workerModelPattern
 	query := fmt.Sprintf(`SELECT %s from WORKER_MODEL_PATTERN ORDER BY name`, patternColumns)
 	if _, err := db.Select(&wmPatterns, query); err != nil {
-		return nil, sdk.WrapError(err, "LoadWorkerModelPatterns> ")
+		return nil, sdk.WrapError(err, "")
 	}
 
 	workerModelPatterns := make([]sdk.ModelPattern, len(wmPatterns))
@@ -69,7 +69,7 @@ func LoadWorkerModelPatternByName(db gorp.SqlExecutor, patternType, name string)
 	var wmp workerModelPattern
 	query := fmt.Sprintf(`SELECT %s FROM worker_model_pattern WHERE name = $1 AND type = $2`, patternColumns)
 	if err := db.SelectOne(&wmp, query, name, patternType); err != nil {
-		return nil, sdk.WrapError(err, "LoadWorkerModelPatternByName> ")
+		return nil, sdk.WrapError(err, "")
 	}
 	workerModelPattern := sdk.ModelPattern(wmp)
 

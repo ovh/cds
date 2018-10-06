@@ -18,10 +18,10 @@ import (
 func UpdateHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
 	dbhook := NodeHook(*h)
 	if _, err := db.Update(&dbhook); err != nil {
-		return sdk.WrapError(err, "updateHook> Cannot update hook")
+		return sdk.WrapError(err, "Cannot update hook")
 	}
 	if err := dbhook.PostInsert(db); err != nil {
-		return sdk.WrapError(err, "updateHook> Cannot post update hook")
+		return sdk.WrapError(err, "Cannot post update hook")
 	}
 	return nil
 }
@@ -30,7 +30,7 @@ func UpdateHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
 func DeleteHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
 	dbhook := NodeHook(*h)
 	if _, err := db.Delete(&dbhook); err != nil {
-		return sdk.WrapError(err, "updateHook> Cannot update hook")
+		return sdk.WrapError(err, "Cannot update hook")
 	}
 	return nil
 }
@@ -85,7 +85,7 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 
 	dbhook := NodeHook(*hook)
 	if err := db.Insert(&dbhook); err != nil {
-		return sdk.WrapError(err, "insertHook> Unable to insert hook")
+		return sdk.WrapError(err, "Unable to insert hook")
 	}
 	*hook = sdk.WorkflowNodeHook(dbhook)
 	return nil
@@ -232,7 +232,7 @@ func LoadHookByUUID(db gorp.SqlExecutor, uuid string) (*sdk.WorkflowNodeHook, er
 	}
 
 	if err := res.PostGet(db); err != nil {
-		return nil, sdk.WrapError(err, "LoadHookByUUID> cannot load postget")
+		return nil, sdk.WrapError(err, "cannot load postget")
 	}
 	wNodeHook := sdk.WorkflowNodeHook(res)
 
@@ -257,7 +257,7 @@ func LoadHooksByNodeID(db gorp.SqlExecutor, nodeID int64) ([]sdk.WorkflowNodeHoo
 	nodeHooks := make([]sdk.WorkflowNodeHook, len(res))
 	for i, nh := range res {
 		if err := nh.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadHookByNodeID> cannot load postget")
+			return nil, sdk.WrapError(err, "cannot load postget")
 		}
 		nodeHooks[i] = sdk.WorkflowNodeHook(nh)
 	}

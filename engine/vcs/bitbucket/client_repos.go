@@ -22,7 +22,7 @@ func (b *bitbucketClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 
 		var response Response
 		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> Repos> Unable to get repos")
+			return nil, sdk.WrapError(err, "Unable to get repos")
 		}
 
 		bbRepos = append(bbRepos, response.Values...)
@@ -73,7 +73,7 @@ func (b *bitbucketClient) RepoByFullname(ctx context.Context, fullname string) (
 
 	var repo sdk.VCSRepo
 	if err := b.do(ctx, "GET", "core", path, nil, nil, &r, nil); err != nil {
-		return repo, sdk.WrapError(err, "vcs> bitbucket> RepoByFullname> Unable to get repo")
+		return repo, sdk.WrapError(err, "Unable to get repo")
 	}
 
 	var sshURL, httpURL, repoURL string
@@ -116,7 +116,7 @@ func (b *bitbucketClient) GrantReadPermission(ctx context.Context, repo string) 
 
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return sdk.WrapError(err, "vcs> bitbucket> GrantReadPermission>")
+		return sdk.WrapError(err, "GrantReadPermission>")
 	}
 	path := fmt.Sprintf("/projects/%s/repos/%s/permissions/users", project, slug)
 	params := url.Values{}

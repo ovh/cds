@@ -13,7 +13,7 @@ func (c *client) HatcheryCount(ctx context.Context, workflowNodeRunID int64) (in
 	if code > 300 && err == nil {
 		return hatcheriesCount, fmt.Errorf("HatcheryCount> HTTP %d", code)
 	} else if err != nil {
-		return hatcheriesCount, sdk.WrapError(err, "HatcheryCount> Error")
+		return hatcheriesCount, sdk.WrapError(err, "Error")
 	}
 	return hatcheriesCount, nil
 }

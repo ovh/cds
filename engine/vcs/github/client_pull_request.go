@@ -122,20 +122,20 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id i
 	values, _ := json.Marshal(payload)
 	res, err := g.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
 	if err != nil {
-		return sdk.WrapError(err, "github.PullRequestComment> Unable to post status")
+		return sdk.WrapError(err, "Unable to post status")
 	}
 
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return sdk.WrapError(err, "github.PullRequestComment> Unable to read body")
+		return sdk.WrapError(err, "Unable to read body")
 	}
 
 	log.Debug("%v", string(body))
 
 	if res.StatusCode != 201 {
-		return sdk.WrapError(err, "github.PullRequestComment>  Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
+		return sdk.WrapError(err, " Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
 	}
 
 	return nil

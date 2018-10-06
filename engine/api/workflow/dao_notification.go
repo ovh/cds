@@ -14,7 +14,7 @@ import (
 func deleteNotifications(db gorp.SqlExecutor, workflowID int64) error {
 	_, err := db.Exec("DELETE FROM workflow_notification where workflow_id = $1", workflowID)
 	if err != nil {
-		return sdk.WrapError(err, "deleteNotification> Cannot delete notifications on workflow %d", workflowID)
+		return sdk.WrapError(err, "Cannot delete notifications on workflow %d", workflowID)
 	}
 	return nil
 }
@@ -26,7 +26,7 @@ func loadNotifications(db gorp.SqlExecutor, w *sdk.Workflow) ([]sdk.WorkflowNoti
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "loadNotification> Unable to load notification IDs on workflow %d", w.ID)
+		return nil, sdk.WrapError(err, "Unable to load notification IDs on workflow %d", w.ID)
 	}
 
 	notifications := make([]sdk.WorkflowNotification, len(notifIDs))
@@ -45,13 +45,13 @@ func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.Workf
 	dbnotif := Notification{}
 	//Load the notification
 	if err := db.SelectOne(&dbnotif, "select * from workflow_notification where id = $1", id); err != nil {
-		return sdk.WorkflowNotification{}, sdk.WrapError(err, "loadNotification> Unable to load notification %d", id)
+		return sdk.WorkflowNotification{}, sdk.WrapError(err, "Unable to load notification %d", id)
 	}
 	dbnotif.WorkflowID = w.ID
 
 	//Load sources
 	if _, err := db.Select(&dbnotif.SourceNodeIDs, "select workflow_node_id from workflow_notification_source where workflow_notification_id = $1", id); err != nil {
-		return sdk.WorkflowNotification{}, sdk.WrapError(err, "loadNotification> Unable to load notification %d sources", id)
+		return sdk.WorkflowNotification{}, sdk.WrapError(err, "Unable to load notification %d sources", id)
 	}
 	n := sdk.WorkflowNotification(dbnotif)
 
@@ -84,7 +84,7 @@ func insertNotification(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 
 	//Insert the notification
 	if err := db.Insert(&dbNotif); err != nil {
-		return sdk.WrapError(err, "insertNotification> Unable to insert workflow notification")
+		return sdk.WrapError(err, "Unable to insert workflow notification")
 	}
 	n.ID = dbNotif.ID
 
@@ -92,7 +92,7 @@ func insertNotification(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 	query := "insert into workflow_notification_source(workflow_node_id, workflow_notification_id) values ($1, $2)"
 	for _, source := range n.SourceNodeIDs {
 		if _, err := db.Exec(query, source, n.ID); err != nil {
-			return sdk.WrapError(err, "insertNotification> Unable to insert associations between node %d and notification %d", source, n.ID)
+			return sdk.WrapError(err, "Unable to insert associations between node %d and notification %d", source, n.ID)
 		}
 	}
 
@@ -118,7 +118,7 @@ func (no *Notification) PostGet(db gorp.SqlExecutor) error {
 	}{}
 
 	if err := db.SelectOne(&res, "SELECT settings FROM workflow_notification WHERE id = $1", no.ID); err != nil {
-		return sdk.WrapError(err, "PostGet> Unable to load marshalled workflow notification")
+		return sdk.WrapError(err, "Unable to load marshalled workflow notification")
 	}
 
 	var errN error

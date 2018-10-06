@@ -61,7 +61,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addJobToStageHandler> Cannot create audit")
+			return sdk.WrapError(err, "Cannot create audit")
 		}
 
 		reqs, errlb := action.LoadAllBinaryRequirements(tx)
@@ -73,11 +73,11 @@ func (api *API) addJobToStageHandler() service.Handler {
 		job.Action.Enabled = true
 		job.Enabled = true
 		if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
-			return sdk.WrapError(err, "addJobToStageHandler> Cannot insert job in database")
+			return sdk.WrapError(err, "Cannot insert job in database")
 		}
 
 		if err := worker.ComputeRegistrationNeeds(tx, reqs, job.Action.Requirements); err != nil {
-			return sdk.WrapError(err, "addJobToStageHandler> Cannot compute registration needs")
+			return sdk.WrapError(err, "Cannot compute registration needs")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -85,7 +85,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pip); err != nil {
-			return sdk.WrapError(err, "addJobToStageHandler> Cannot load stages")
+			return sdk.WrapError(err, "Cannot load stages")
 		}
 
 		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, getUser(ctx))
@@ -151,12 +151,12 @@ func (api *API) updateJobHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "updateJobHandler> Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateJobHandler> Cannot create audit")
+			return sdk.WrapError(err, "Cannot create audit")
 		}
 
 		reqs, errlb := action.LoadAllBinaryRequirements(tx)
@@ -165,19 +165,19 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 
 		if err := pipeline.UpdateJob(tx, &job, getUser(ctx).ID); err != nil {
-			return sdk.WrapError(err, "updateJobHandler> Cannot update in database")
+			return sdk.WrapError(err, "Cannot update in database")
 		}
 
 		if err := worker.ComputeRegistrationNeeds(tx, reqs, job.Action.Requirements); err != nil {
-			return sdk.WrapError(err, "updateJobHandler> Cannot compute registration needs")
+			return sdk.WrapError(err, "Cannot compute registration needs")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateJobHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
-			return sdk.WrapError(err, "updateJobHandler> Cannot load stages")
+			return sdk.WrapError(err, "Cannot load stages")
 		}
 
 		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, getUser(ctx))
@@ -234,19 +234,19 @@ func (api *API) deleteJobHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "deleteJobHandler> Cannot create audit")
+			return sdk.WrapError(err, "Cannot create audit")
 		}
 
 		if err := pipeline.DeleteJob(tx, jobToDelete, getUser(ctx).ID); err != nil {
-			return sdk.WrapError(err, "deleteJobHandler> Cannot delete pipeline action")
+			return sdk.WrapError(err, "Cannot delete pipeline action")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteJobHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
-			return sdk.WrapError(err, "deleteJobHandler> Cannot load stages")
+			return sdk.WrapError(err, "Cannot load stages")
 		}
 
 		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, getUser(ctx))

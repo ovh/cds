@@ -113,7 +113,7 @@ func LoadTokenWithGroup(db gorp.SqlExecutor, token string) (*sdk.Token, error) {
 // Delete delete a token in db given his value
 func Delete(db gorp.SqlExecutor, tokenID int64) error {
 	_, err := db.Exec("DELETE FROM token WHERE id = $1", tokenID)
-	return sdk.WrapError(err, "DeleteToken> Cannot delete token %d", tokenID)
+	return sdk.WrapError(err, "Cannot delete token %d", tokenID)
 }
 
 // LoadTokens load all tokens linked that a user can see
@@ -159,7 +159,7 @@ func LoadTokens(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Token, error) {
 		var creator, description sql.NullString
 		tok := sdk.Token{}
 		if err := rows.Scan(&tok.ID, &creator, &description, &tok.Expiration, &tok.Created, &tok.GroupName); err != nil {
-			return nil, sdk.WrapError(err, "LoadTokens> Cannot scan the token line")
+			return nil, sdk.WrapError(err, "Cannot scan the token line")
 		}
 
 		if creator.Valid {

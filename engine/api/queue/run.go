@@ -19,11 +19,11 @@ func RunPipeline(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecut
 	// Load pipeline + Args + stage + action
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
-		return nil, sdk.WrapError(err, "queue.Run> Cannot load pipeline %s", pipelineName)
+		return nil, sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 	}
 	parameters, err := pipeline.GetAllParametersInPipeline(context.TODO(), db, p.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "queue.Run> Cannot load pipeline %s parameters", pipelineName)
+		return nil, sdk.WrapError(err, "Cannot load pipeline %s parameters", pipelineName)
 	}
 	p.Parameter = parameters
 
@@ -37,24 +37,24 @@ func RunPipeline(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecut
 
 	applicationPipelineParams, err := application.GetAllPipelineParam(db, app.ID, p.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "queue.Run> Cannot load application pipeline args")
+		return nil, sdk.WrapError(err, "Cannot load application pipeline args")
 	}
 
 	// Load project + var
 	projectData, err := project.Load(db, store, projectKey, user)
 	if err != nil {
-		return nil, sdk.WrapError(err, "queue.Run> Cannot load project %s", projectKey)
+		return nil, sdk.WrapError(err, "Cannot load project %s", projectKey)
 	}
 	projectsVar, err := project.GetAllVariableInProject(db, projectData.ID, project.WithClearPassword())
 	if err != nil {
-		return nil, sdk.WrapError(err, "queue.Run> Cannot load project variable")
+		return nil, sdk.WrapError(err, "Cannot load project variable")
 	}
 	projectData.Variable = projectsVar
 	var env *sdk.Environment
 	if environmentName != "" && environmentName != sdk.DefaultEnv.Name {
 		env, err = environment.LoadEnvironmentByName(db, projectKey, environmentName)
 		if err != nil {
-			return nil, sdk.WrapError(err, "queue.Run> Cannot load environment %s for project %s", environmentName, projectKey)
+			return nil, sdk.WrapError(err, "Cannot load environment %s for project %s", environmentName, projectKey)
 		}
 	} else {
 		env = &sdk.DefaultEnv
@@ -62,7 +62,7 @@ func RunPipeline(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecut
 
 	pb, err := pipeline.InsertPipelineBuild(db, store, projectData, p, app, applicationPipelineParams, params, env, version, trigger)
 	if err != nil {
-		return nil, sdk.WrapError(err, "queue.Run> Cannot start pipeline %s", pipelineName)
+		return nil, sdk.WrapError(err, "Cannot start pipeline %s", pipelineName)
 	}
 
 	go func() {

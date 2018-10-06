@@ -59,7 +59,7 @@ type addWorkflowAudit struct{}
 func (a addWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowAdd
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "addWorkflowAudit.Compute> Unable to decode payload")
+		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
 	buffer := bytes.NewBufferString("")
@@ -84,7 +84,7 @@ type updateWorkflowAudit struct{}
 func (u updateWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowUpdate
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "updateWorkflowAudit.Compute> Unable to decode payload")
+		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
 	oldWorkflowBuffer := bytes.NewBufferString("")
@@ -115,7 +115,7 @@ type deleteWorkflowAudit struct{}
 func (d deleteWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowDelete
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "deleteWorkflowAudit.Compute> Unable to decode payload")
+		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
 	oldWorkflowBuffer := bytes.NewBufferString("")
@@ -140,12 +140,12 @@ type addWorkflowPermissionAudit struct{}
 func (a addWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionAdd
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "addWorkflowPermissionAudit.Compute> Unable to decode payload")
+		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
 	b, err := json.MarshalIndent(wEvent.Permission, "", "  ")
 	if err != nil {
-		return sdk.WrapError(err, "addWorkflowPermissionAudit.Compute> Unable to marshal permission")
+		return sdk.WrapError(err, "Unable to marshal permission")
 	}
 
 	audit := sdk.AuditWorklflow{
@@ -165,17 +165,17 @@ type updateWorkflowPermissionAudit struct{}
 func (u updateWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionUpdate
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "updateWorkflowPermissionAudit.Compute> Unable to decode payload")
+		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
 	oldPerm, err := json.MarshalIndent(wEvent.OldPermission, "", "  ")
 	if err != nil {
-		return sdk.WrapError(err, "updateWorkflowPermissionAudit.Compute> Unable to marshal old permission")
+		return sdk.WrapError(err, "Unable to marshal old permission")
 	}
 
 	newPerm, err := json.MarshalIndent(wEvent.NewPermission, "", "  ")
 	if err != nil {
-		return sdk.WrapError(err, "updateWorkflowPermissionAudit.Compute> Unable to marshal new permission")
+		return sdk.WrapError(err, "Unable to marshal new permission")
 	}
 
 	audit := sdk.AuditWorklflow{
@@ -196,12 +196,12 @@ type deleteWorkflowPermissionAudit struct{}
 func (a deleteWorkflowPermissionAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	var wEvent sdk.EventWorkflowPermissionDelete
 	if err := mapstructure.Decode(e.Payload, &wEvent); err != nil {
-		return sdk.WrapError(err, "deleteWorkflowPermissionAudit.Compute> Unable to decode payload")
+		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
 	b, err := json.MarshalIndent(wEvent.Permission, "", " ")
 	if err != nil {
-		return sdk.WrapError(err, "deleteWorkflowPermissionAudit.Compute> Unable to marshal permission")
+		return sdk.WrapError(err, "Unable to marshal permission")
 	}
 
 	audit := sdk.AuditWorklflow{

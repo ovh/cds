@@ -20,14 +20,14 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.PipelineSchedulerExecution,
 	//Load schedulers
 	ps, err := LoadAll(tx)
 	if err != nil {
-		return nil, sdk.WrapError(err, "CleanerRun> Unable to load pipeline schedulers")
+		return nil, sdk.WrapError(err, "Unable to load pipeline schedulers")
 	}
 
 	deleted := []sdk.PipelineSchedulerExecution{}
 	for _, s := range ps {
 		exs, err := LoadPastExecutions(tx, s.ID)
 		if err != nil {
-			return nil, sdk.WrapError(err, "CleanerRun> Unable to load pipeline schedulers execution")
+			return nil, sdk.WrapError(err, "Unable to load pipeline schedulers execution")
 		}
 
 		nbToDelete := len(exs) - nbToKeep
@@ -45,7 +45,7 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.PipelineSchedulerExecution,
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "CleanerRun> Unable to commit a transaction")
+		return nil, sdk.WrapError(err, "Unable to commit a transaction")
 	}
 
 	return deleted, nil

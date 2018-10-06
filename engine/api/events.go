@@ -187,7 +187,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		w.Header().Set("X-Accel-Buffering", "no")
 
 		if _, err := w.Write([]byte(fmt.Sprintf("data: ACK: %s \n\n", uuid))); err != nil {
-			return sdk.WrapError(err, "events.write> Unable to send ACK to client")
+			return sdk.WrapError(err, "Unable to send ACK to client")
 		}
 		f.Flush()
 
@@ -207,7 +207,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 				break leave
 			case <-tick.C:
 				if _, err := w.Write([]byte("")); err != nil {
-					return sdk.WrapError(err, "events.write> Unable to ping client")
+					return sdk.WrapError(err, "Unable to ping client")
 				}
 				f.Flush()
 			}

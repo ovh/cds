@@ -70,7 +70,7 @@ func (api *API) searchWorkflowRun(ctx context.Context, w http.ResponseWriter, r 
 	w.Header().Add("Accept-Range", "run 50")
 	runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit, mapFilters)
 	if err != nil {
-		return sdk.WrapError(err, "searchWorkflowRun> Unable to load workflow runs")
+		return sdk.WrapError(err, "Unable to load workflow runs")
 	}
 
 	code := http.StatusOK
@@ -171,7 +171,7 @@ func (api *API) getWorkflowRunNumHandler() service.Handler {
 
 		num, err := workflow.LoadCurrentRunNum(api.mustDB(), key, name)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowRunNumHandler> Cannot load current run num")
+			return sdk.WrapError(err, "Cannot load current run num")
 		}
 
 		return service.WriteJSON(w, sdk.WorkflowRunNumber{Num: num}, http.StatusOK)
@@ -195,7 +195,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 
 		num, err := workflow.LoadCurrentRunNum(api.mustDB(), key, name)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowRunNumHandler> Cannot load current run num")
+			return sdk.WrapError(err, "Cannot load current run num")
 		}
 
 		if m.Num < num {
@@ -204,7 +204,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowRunNumHandler> unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		options := workflow.LoadOptions{
@@ -237,7 +237,7 @@ func (api *API) getLatestWorkflowRunHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		run, err := workflow.LoadLastRun(api.mustDB(), key, name, workflow.LoadRunOptions{WithArtifacts: true})
 		if err != nil {
-			return sdk.WrapError(err, "getLatestWorkflowRunHandler> Unable to load last workflow run")
+			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
 		return service.WriteJSON(w, run, http.StatusOK)
@@ -256,12 +256,12 @@ func (api *API) resyncWorkflowRunHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "resyncWorkflowRunHandler> unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		run, err := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{})
 		if err != nil {
-			return sdk.WrapError(err, "resyncWorkflowRunHandler> Unable to load last workflow run [%s/%d]", name, number)
+			return sdk.WrapError(err, "Unable to load last workflow run [%s/%d]", name, number)
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -270,11 +270,11 @@ func (api *API) resyncWorkflowRunHandler() service.Handler {
 		}
 
 		if err := workflow.Resync(tx, api.Cache, proj, run, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "resyncWorkflowRunHandler> Cannot resync pipelines")
+			return sdk.WrapError(err, "Cannot resync pipelines")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "resyncWorkflowRunHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
@@ -297,7 +297,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 			},
 		)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load workflow %s run number %d", name, number)
+			return sdk.WrapError(err, "Unable to load workflow %s run number %d", name, number)
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
 		return service.WriteJSON(w, run, http.StatusOK)
@@ -326,7 +326,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 
 		report, err := stopWorkflowRun(ctx, api.mustDB, api.Cache, proj, run, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "stopWorkflowRun> Unable to stop workflow")
+			return sdk.WrapError(err, "Unable to stop workflow")
 		}
 		workflowRuns := report.WorkflowRuns()
 
@@ -429,16 +429,16 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 	run.LastExecution = time.Now()
 	run.Status = sdk.StatusStopped.String()
 	if errU := workflow.UpdateWorkflowRun(ctx, tx, run); errU != nil {
-		return nil, sdk.WrapError(errU, "stopWorkflowRun> Unable to update workflow run %d", run.ID)
+		return nil, sdk.WrapError(errU, "Unable to update workflow run %d", run.ID)
 	}
 	report.Add(*run)
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "stopWorkflowRun> Cannot commit transaction")
+		return nil, sdk.WrapError(err, "Cannot commit transaction")
 	}
 
 	if err := updateParentWorkflowRun(ctx, dbFunc, store, run); err != nil {
-		return nil, sdk.WrapError(err, "stopWorkflowRun")
+		return nil, sdk.WithStack(err)
 	}
 
 	return report, nil
@@ -622,12 +622,12 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 		// Load node run
 		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{})
 		if err != nil {
-			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
+			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
 
 		report, err := api.stopWorkflowNodeRun(ctx, api.mustDB, api.Cache, p, nodeRun, name, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to stop workflow run")
+			return sdk.WrapError(err, "Unable to stop workflow run")
 		}
 
 		go workflow.SendEvent(api.mustDB(), p.Key, report)
@@ -695,7 +695,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 		}
 		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithTests: true, WithArtifacts: true, WithCoverage: true, WithVulnerabilities: true})
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowNodeRunHandler> Unable to load last workflow run")
+			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
 
 		run.Translate(r.Header.Get("Accept-Language"))
@@ -846,12 +846,12 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 	if opts.Hook != nil {
 		_, r1, err := workflow.RunFromHook(ctx, db, tx, store, p, wf, opts.Hook, asCodeInfos)
 		if err != nil {
-			return nil, sdk.WrapError(err, "startWorkflowRun> Unable to run workflow from hook")
+			return nil, sdk.WrapError(err, "Unable to run workflow from hook")
 		}
 
 		//Commit and return success
 		if err := tx.Commit(); err != nil {
-			return nil, sdk.WrapError(err, "startWorkflowRun> Unable to commit transaction")
+			return nil, sdk.WrapError(err, "Unable to commit transaction")
 		}
 
 		return report.Merge(r1, nil)
@@ -933,7 +933,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 
 	//Commit and return success
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "startWorkflowRun> Unable to commit transaction")
+		return nil, sdk.WrapError(err, "Unable to commit transaction")
 	}
 
 	return report, nil
@@ -982,7 +982,7 @@ func runFromNode(ctx context.Context, db *gorp.DbMap, store cache.Store, opts sd
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "runFromNode> Unable to commit transaction")
+		return nil, sdk.WrapError(err, "Unable to commit transaction")
 
 	}
 	return report, nil
@@ -995,7 +995,7 @@ func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {
 
 		art, err := workflow.LoadWorkfowArtifactByHash(api.mustDB(), hash)
 		if err != nil {
-			return sdk.WrapError(err, "downloadworkflowArtifactDirectHandler> Could not load artifact with hash %s", hash)
+			return sdk.WrapError(err, "Could not load artifact with hash %s", hash)
 		}
 
 		w.Header().Add("Content-Type", "application/octet-stream")
@@ -1003,16 +1003,16 @@ func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {
 
 		f, err := objectstore.Fetch(art)
 		if err != nil {
-			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot fetch artifact")
+			return sdk.WrapError(err, "Cannot fetch artifact")
 		}
 
 		if _, err := io.Copy(w, f); err != nil {
 			_ = f.Close()
-			return sdk.WrapError(err, "downloadPluginHandler> Cannot stream artifact")
+			return sdk.WrapError(err, "Cannot stream artifact")
 		}
 
 		if err := f.Close(); err != nil {
-			return sdk.WrapError(err, "downloadPluginHandler> Cannot close artifact")
+			return sdk.WrapError(err, "Cannot close artifact")
 		}
 		return nil
 	}
@@ -1031,7 +1031,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "getDownloadArtifactHandler> unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		options := workflow.LoadOptions{
@@ -1053,16 +1053,16 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 		f, err := objectstore.Fetch(art)
 		if err != nil {
 			_ = f.Close()
-			return sdk.WrapError(err, "getDownloadArtifactHandler> Cannot fetch artifact")
+			return sdk.WrapError(err, "Cannot fetch artifact")
 		}
 
 		if _, err := io.Copy(w, f); err != nil {
 			_ = f.Close()
-			return sdk.WrapError(err, "getDownloadArtifactHandler> Cannot stream artifact")
+			return sdk.WrapError(err, "Cannot stream artifact")
 		}
 
 		if err := f.Close(); err != nil {
-			return sdk.WrapError(err, "getDownloadArtifactHandler> Cannot close artifact")
+			return sdk.WrapError(err, "Cannot close artifact")
 		}
 		return nil
 	}
@@ -1123,7 +1123,7 @@ func (api *API) getWorkflowNodeRunJobServiceLogsHandler() service.Handler {
 
 		logsServices, err := workflow.LoadServicesLogsByJob(db, runJobID)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowNodeRunJobServiceLogsHandler> cannot load service logs for node run job id %d", runJobID)
+			return sdk.WrapError(err, "cannot load service logs for node run job id %d", runJobID)
 		}
 
 		return service.WriteJSON(w, logsServices, http.StatusOK)
@@ -1208,7 +1208,7 @@ func (api *API) getWorkflowRunTagsHandler() service.Handler {
 
 		res, err := workflow.GetTagsAndValue(api.mustDB(), projectKey, workflowName)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowRunTagsHandler> Error")
+			return sdk.WrapError(err, "Error")
 		}
 
 		return service.WriteJSON(w, res, http.StatusOK)
@@ -1237,7 +1237,7 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 		}
 
 		if err := workflow.ResyncCommitStatus(ctx, db, api.Cache, proj, wfr); err != nil {
-			return sdk.WrapError(err, "postResyncVCSWorkflowRunHandler> Cannot resync workflow run commit status")
+			return sdk.WrapError(err, "Cannot resync workflow run commit status")
 		}
 
 		return nil

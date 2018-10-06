@@ -38,7 +38,7 @@ func AddBinary(db gorp.SqlExecutor, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinary, 
 			}
 			if !found {
 				if err := action.InsertActionRequirement(db, act.ID, req); err != nil {
-					return sdk.WrapError(err, "AddBinary> Cannot insert action requirement %s", req.Name)
+					return sdk.WrapError(err, "Cannot insert action requirement %s", req.Name)
 				}
 			}
 		}
@@ -82,7 +82,7 @@ func UpdateBinary(db gorp.SqlExecutor, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinar
 		}
 
 		if err := action.DeleteActionRequirements(db, act.ID); err != nil {
-			return sdk.WrapError(err, "AddBinary> Cannot delete requirements for action of plugin type action")
+			return sdk.WrapError(err, "Cannot delete requirements for action of plugin type action")
 		}
 
 		plgReq := sdk.Requirement{
@@ -91,12 +91,12 @@ func UpdateBinary(db gorp.SqlExecutor, p *sdk.GRPCPlugin, b *sdk.GRPCPluginBinar
 			Value: p.Name,
 		}
 		if err := action.InsertActionRequirement(db, act.ID, plgReq); err != nil {
-			return sdk.WrapError(err, "AddBinary> Cannot insert plugin action requirement %s", plgReq.Name)
+			return sdk.WrapError(err, "Cannot insert plugin action requirement %s", plgReq.Name)
 		}
 		// Add action requirement
 		for _, req := range b.Requirements {
 			if err := action.InsertActionRequirement(db, act.ID, req); err != nil {
-				return sdk.WrapError(err, "AddBinary> Cannot insert action requirement %s", req.Name)
+				return sdk.WrapError(err, "Cannot insert action requirement %s", req.Name)
 			}
 		}
 	}

@@ -21,7 +21,7 @@ func (s *Service) checkOrCreateRootFS() error {
 
 func (s *Service) checkOrCreateFS(r *sdk.OperationRepo) error {
 	if err := s.checkOrCreateRootFS(); err != nil {
-		return sdk.WrapError(err, "checkOrCreateFS> ")
+		return sdk.WrapError(err, "")
 	}
 	path := filepath.Join(s.Cfg.Basedir, r.ID())
 	fi, err := os.Stat(path)

@@ -30,7 +30,7 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, 
 	if withPermissions {
 		perms, err := group.LoadGroupsByApplication(db, app.ID)
 		if err != nil {
-			return 0, sdk.WrapError(err, "application.Export> Cannot load application %s permissions", appName)
+			return 0, sdk.WrapError(err, "Cannot load application %s permissions", appName)
 		}
 		app.ApplicationGroups = perms
 	}
@@ -48,7 +48,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 		case sdk.SecretVariable:
 			content, err := encryptFunc(db, app.ProjectID, fmt.Sprintf("appID:%d:%s", app.ID, v.Name), v.Value)
 			if err != nil {
-				return 0, sdk.WrapError(err, "application.Export> Unknown key type")
+				return 0, sdk.WrapError(err, "Unknown key type")
 			}
 			v.Value = content
 			appvars = append(appvars, v)
@@ -64,7 +64,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 	for _, k := range app.Keys {
 		content, err := encryptFunc(db, app.ProjectID, fmt.Sprintf("appID:%d:%s", app.ID, k.Name), k.Private)
 		if err != nil {
-			return 0, sdk.WrapError(err, "application.Export> Unable to encrypt key")
+			return 0, sdk.WrapError(err, "Unable to encrypt key")
 		}
 		ek := exportentities.EncryptedKey{
 			Type:    k.Type,
@@ -77,7 +77,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 	if app.RepositoryStrategy.Password != "" {
 		content, err := encryptFunc(db, app.ProjectID, fmt.Sprintf("appID:%d:%s", app.ID, "vcs:password"), app.RepositoryStrategy.Password)
 		if err != nil {
-			return 0, sdk.WrapError(err, "application.Export> Unable to encrypt password")
+			return 0, sdk.WrapError(err, "Unable to encrypt password")
 		}
 		app.RepositoryStrategy.Password = content
 	}
@@ -87,7 +87,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 			if v.Type == sdk.SecretVariable {
 				content, err := encryptFunc(db, app.ProjectID, fmt.Sprintf("appID:%d:%s:%s:%s", app.ID, pfName, k, "deployment:password"), v.Value)
 				if err != nil {
-					return 0, sdk.WrapError(err, "application.Export> Unable to encrypt password")
+					return 0, sdk.WrapError(err, "Unable to encrypt password")
 				}
 				v.Value = content
 				app.DeploymentStrategies[pfName][k] = v
@@ -97,7 +97,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 
 	eapp, err := exportentities.NewApplication(app, withPermissions, keys)
 	if err != nil {
-		return 0, sdk.WrapError(err, "application.Export> Unable to export application")
+		return 0, sdk.WrapError(err, "Unable to export application")
 	}
 
 	// Marshal to the desired format

@@ -22,7 +22,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 		proj.Key,
 		pip.Name, true)
 	if err != nil {
-		return sdk.WrapError(err, "ImportUpdate> Unable to load pipeline %s %s", proj.Key, pip.Name)
+		return sdk.WrapError(err, "Unable to load pipeline %s %s", proj.Key, pip.Name)
 	}
 
 	pip.ID = oldPipeline.ID
@@ -38,10 +38,10 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 						//Update group permission
 						g, err := group.LoadGroup(db, gp.Group.Name)
 						if err != nil {
-							return sdk.WrapError(err, "ImportUpdate> Unable to load group %s", gp.Group.Name)
+							return sdk.WrapError(err, "Unable to load group %s", gp.Group.Name)
 						}
 						if err := group.UpdateGroupRoleInPipeline(db, pip.ID, g.ID, gp.Permission); err != nil {
-							return sdk.WrapError(err, "ImportUpdate> Unable to udapte group %s in %s", gp.Group.Name, pip.Name)
+							return sdk.WrapError(err, "Unable to udapte group %s in %s", gp.Group.Name, pip.Name)
 						}
 						if msgChan != nil {
 							msgChan <- sdk.NewMessage(sdk.MsgPipelineGroupUpdated, gp.Group.Name, pip.Name)
@@ -54,10 +54,10 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 				//Insert group permission
 				g, err := group.LoadGroup(db, gp.Group.Name)
 				if err != nil {
-					return sdk.WrapError(err, "ImportUpdate> Unable to load group %s", gp.Group.Name)
+					return sdk.WrapError(err, "Unable to load group %s", gp.Group.Name)
 				}
 				if err := group.InsertGroupInPipeline(db, pip.ID, g.ID, gp.Permission); err != nil {
-					return sdk.WrapError(err, "ImportUpdate> Unable to insert group %s in %s", gp.Group.Name, pip.Name)
+					return sdk.WrapError(err, "Unable to insert group %s in %s", gp.Group.Name, pip.Name)
 				}
 				if msgChan != nil {
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineGroupAdded, gp.Group.Name, pip.Name)
@@ -77,7 +77,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			if !ogpFound {
 				//Delete group permission
 				if err := group.DeleteGroupFromPipeline(db, pip.ID, ogp.Group.ID); err != nil {
-					return sdk.WrapError(err, "ImportUpdate> Unable to delete group %s in %s", ogp.Group.Name, pip.Name)
+					return sdk.WrapError(err, "Unable to delete group %s in %s", ogp.Group.Name, pip.Name)
 				}
 				if msgChan != nil {
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineGroupDeleted, ogp.Group.Name, pip.Name)
@@ -102,7 +102,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			log.Debug("Inserting stage %s", s.Name)
 			s.PipelineID = pip.ID
 			if err := InsertStage(db, s); err != nil {
-				return sdk.WrapError(err, "ImportUpdate> Unable to insert stage %s in %s", s.Name, pip.Name)
+				return sdk.WrapError(err, "Unable to insert stage %s in %s", s.Name, pip.Name)
 			}
 			//Insert stage's Jobs
 			for x := range s.Jobs {
@@ -115,7 +115,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 				jobAction.Action.Type = sdk.JoinedAction
 				log.Debug("Creating job %s on stage %s on pipeline %s", jobAction.Action.Name, s.Name, pip.Name)
 				if err := InsertJob(db, jobAction, s.ID, pip); err != nil {
-					return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", jobAction.Action.Name, pip.Name)
+					return sdk.WrapError(err, "Unable to insert job %s in %s", jobAction.Action.Name, pip.Name)
 				}
 				if msgChan != nil {
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobAdded, jobAction.Action.Name, s.Name)
@@ -140,7 +140,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			// Delete all existing jobs in existing stage
 			for _, oj := range oldStage.Jobs {
 				if err := DeleteJob(db, oj, u.ID); err != nil {
-					return sdk.WrapError(err, "ImportUpdate> Unable to delete job %s in %s", oj.Action.Name, pip.Name)
+					return sdk.WrapError(err, "Unable to delete job %s in %s", oj.Action.Name, pip.Name)
 				}
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, oj.Action.Name, s.Name)
 			}
@@ -153,7 +153,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 				j.Action.Type = sdk.JoinedAction
 				log.Debug(">> Creating job %s on stage %s on pipeline %s stageID: %d", j.Action.Name, s.Name, pip.Name, oldStage.ID)
 				if err := InsertJob(db, j, oldStage.ID, pip); err != nil {
-					return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", j.Action.Name, pip.Name)
+					return sdk.WrapError(err, "Unable to insert job %s in %s", j.Action.Name, pip.Name)
 				}
 				if msgChan != nil {
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobAdded, j.Action.Name, s.Name)
@@ -163,7 +163,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			if oldStage.BuildOrder != s.BuildOrder {
 				s.ID = oldStage.ID
 				if err := updateStageOrder(db, s.ID, s.BuildOrder); err != nil {
-					return sdk.WrapError(err, "ImportUpdate> Unable to update stage %s", s.Name)
+					return sdk.WrapError(err, "Unable to update stage %s", s.Name)
 				}
 			}
 
@@ -187,14 +187,14 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			for x := range os.Jobs {
 				j := os.Jobs[x]
 				if err := DeleteJob(db, j, u.ID); err != nil {
-					return sdk.WrapError(err, "ImportUpdate> Unable to delete job %s in %s", j.Action.Name, pip.Name)
+					return sdk.WrapError(err, "Unable to delete job %s in %s", j.Action.Name, pip.Name)
 				}
 				if msgChan != nil {
 					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, j.Action.Name, os.Name)
 				}
 			}
 			if err := DeleteStageByID(db, &os, u.ID); err != nil {
-				return sdk.WrapError(err, "ImportUpdate> Unable to delete stage %d", os.ID)
+				return sdk.WrapError(err, "Unable to delete stage %d", os.ID)
 			}
 			if msgChan != nil {
 				msgChan <- sdk.NewMessage(sdk.MsgPipelineStageDeleted, os.Name)
@@ -208,14 +208,14 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			if param.Name == oldParam.Name {
 				found = true
 				if err := UpdateParameterInPipeline(db, pip.ID, oldParam.Name, param); err != nil {
-					return sdk.WrapError(err, "ImportUpdate> cannot update parameter %s", param.Name)
+					return sdk.WrapError(err, "cannot update parameter %s", param.Name)
 				}
 				break
 			}
 		}
 		if !found {
 			if err := InsertParameterInPipeline(db, pip.ID, &param); err != nil {
-				return sdk.WrapError(err, "ImportUpdate> cannot insert parameter %s", param.Name)
+				return sdk.WrapError(err, "cannot insert parameter %s", param.Name)
 			}
 		}
 	}
@@ -264,7 +264,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 	//Reload the pipeline
 	pip2, err := LoadPipeline(db, proj.Key, pip.Name, false)
 	if err != nil {
-		return sdk.WrapError(err, "Import> Unable to load imported pipeline project:%s pipeline:%s", proj.Name, pip.Name)
+		return sdk.WrapError(err, "Unable to load imported pipeline project:%s pipeline:%s", proj.Name, pip.Name)
 	}
 	//Be confident: use the pipeline
 	*pip = *pip2

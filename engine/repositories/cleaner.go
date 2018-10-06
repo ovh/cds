@@ -13,7 +13,7 @@ import (
 
 func (s *Service) vacuumCleaner(ctx context.Context) error {
 	if err := s.checkOrCreateRootFS(); err != nil {
-		return sdk.WrapError(err, "checkOrCreateFS> ")
+		return sdk.WrapError(err, "")
 	}
 
 	tick := time.NewTicker(1 * time.Hour)

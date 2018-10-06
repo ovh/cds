@@ -25,14 +25,14 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 	}{}
 
 	if _, err := db.Select(&res, query, appID); err != nil {
-		return nil, sdk.WrapError(err, "application.LoadDeploymentStrategies> unable to load deployment strategies")
+		return nil, sdk.WrapError(err, "unable to load deployment strategies")
 	}
 
 	deps := make(map[string]sdk.PlatformConfig, len(res))
 	for _, r := range res {
 		cfg := sdk.PlatformConfig{}
 		if err := gorpmapping.JSONNullString(r.Config, &cfg); err != nil {
-			return nil, sdk.WrapError(err, "application.LoadDeploymentStrategies> unable to parse config")
+			return nil, sdk.WrapError(err, "unable to parse config")
 		}
 		//Parse the config and replace password values
 		newCfg := sdk.PlatformConfig{}
@@ -46,12 +46,12 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 				} else {
 					s, err := base64.StdEncoding.DecodeString(v.Value)
 					if err != nil {
-						return nil, sdk.WrapError(err, "application.LoadDeploymentStrategies> unable to decode encrypted value")
+						return nil, sdk.WrapError(err, "unable to decode encrypted value")
 					}
 
 					decryptedValue, err := secret.Decrypt(s)
 					if err != nil {
-						return nil, sdk.WrapError(err, "application.LoadDeploymentStrategies> unable to decrypt secret value")
+						return nil, sdk.WrapError(err, "unable to decrypt secret value")
 					}
 
 					newCfg[k] = sdk.PlatformConfigValue{
@@ -87,7 +87,7 @@ func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) er
 	)`
 
 	_, err := db.Exec(query, appID, projID, pfID)
-	return sdk.WrapError(err, "DeleteDeploymentStrategy> unable to delete deployment strategy appID=%d pfID=%d projID=%d", appID, pfID, projID)
+	return sdk.WrapError(err, "unable to delete deployment strategy appID=%d pfID=%d projID=%d", appID, pfID, projID)
 }
 
 // SetDeploymentStrategy update the application_deployment_strategy table
@@ -98,7 +98,7 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 		if v.Type == sdk.PlatformConfigTypePassword {
 			e, err := secret.Encrypt([]byte(v.Value))
 			if err != nil {
-				return sdk.WrapError(err, "SetDeploymentStrategy> unable to encrypt data")
+				return sdk.WrapError(err, "unable to encrypt data")
 			}
 			newcfg[k] = sdk.PlatformConfigValue{
 				Type:  sdk.PlatformConfigTypePassword,
@@ -121,12 +121,12 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 	AND project_platform.name = $4`, projID, pfID, appID, ppfName)
 
 	if err != nil {
-		return sdk.WrapError(err, "SetDeploymentStrategy> unable to check if deployment strategy exist")
+		return sdk.WrapError(err, "unable to check if deployment strategy exist")
 	}
 
 	scfg, err := gorpmapping.JSONToNullString(newcfg)
 	if err != nil {
-		return sdk.WrapError(err, "SetDeploymentStrategy> unable to parse deployment strategy ")
+		return sdk.WrapError(err, "unable to parse deployment strategy ")
 	}
 
 	if count == 1 {
@@ -139,7 +139,7 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 		AND project_platform.platform_model_id = $4
 		AND project_platform.name = $5`
 		if _, err := db.Exec(query, scfg, appID, projID, pfID, ppfName); err != nil {
-			return sdk.WrapError(err, "SetDeploymentStrategy> unable to update deployment strategy")
+			return sdk.WrapError(err, "unable to update deployment strategy")
 		}
 		return nil
 	}
@@ -155,7 +155,7 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 		)
 	)`
 	if _, err := db.Exec(query, scfg, appID, projID, pfID, ppfName); err != nil {
-		return sdk.WrapError(err, "SetDeploymentStrategy> unable to update deployment strategy")
+		return sdk.WrapError(err, "unable to update deployment strategy")
 	}
 	return nil
 }

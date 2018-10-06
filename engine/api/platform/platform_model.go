@@ -19,12 +19,12 @@ var (
 func CreateBuiltinModels(db *gorp.DbMap) error {
 	tx, err := db.Begin()
 	if err != nil {
-		return sdk.WrapError(err, "CreateBuiltinModels> Unable to start transaction")
+		return sdk.WrapError(err, "Unable to start transaction")
 	}
 	defer tx.Rollback()
 
 	if _, err := tx.Exec("LOCK TABLE platform_model IN ACCESS EXCLUSIVE MODE"); err != nil {
-		return sdk.WrapError(err, "CreateBuiltinModels> Unable to lock table")
+		return sdk.WrapError(err, "Unable to lock table")
 	}
 
 	for i := range BuiltinModels {
@@ -37,17 +37,17 @@ func CreateBuiltinModels(db *gorp.DbMap) error {
 		if !ok {
 			log.Debug("CreateBuiltinModels> inserting platform config: %s", p.Name)
 			if err := InsertModel(tx, p); err != nil {
-				return sdk.WrapError(err, "CreateBuiltinModels> error on insert")
+				return sdk.WrapError(err, "error on insert")
 			}
 		} else {
 			log.Debug("CreateBuiltinModels> updating platform config: %s", p.Name)
 			oldM, err := LoadModelByName(tx, p.Name, true)
 			if err != nil {
-				return sdk.WrapError(err, "CreateBuiltinModels>  error on load")
+				return sdk.WrapError(err, " error on load")
 			}
 			p.ID = oldM.ID
 			if err := UpdateModel(tx, p); err != nil {
-				return sdk.WrapError(err, "CreateBuiltinModels>  error on update")
+				return sdk.WrapError(err, " error on update")
 			}
 		}
 	}

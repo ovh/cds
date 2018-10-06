@@ -23,19 +23,19 @@ func (g *githubClient) Release(ctx context.Context, fullname string, tagName str
 	}
 	b, err := json.Marshal(req)
 	if err != nil {
-		return nil, sdk.WrapError(err, "github.Release > Cannot marshal body %+v", req)
+		return nil, sdk.WrapError(err, "Cannot marshal body %+v", req)
 	}
 
 	res, err := g.post(url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
-		return nil, sdk.WrapError(err, "github.Release > Cannot create release on github")
+		return nil, sdk.WrapError(err, "Cannot create release on github")
 	}
 
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, sdk.WrapError(err, "github.Release > Cannot read release response")
+		return nil, sdk.WrapError(err, "Cannot read release response")
 	}
 
 	if res.StatusCode != 201 {
@@ -44,7 +44,7 @@ func (g *githubClient) Release(ctx context.Context, fullname string, tagName str
 
 	var response ReleaseResponse
 	if err := json.Unmarshal(body, &response); err != nil {
-		return nil, sdk.WrapError(err, "github.Release>  Cannot unmarshal response: %s", string(body))
+		return nil, sdk.WrapError(err, " Cannot unmarshal response: %s", string(body))
 	}
 
 	release := &sdk.VCSRelease{

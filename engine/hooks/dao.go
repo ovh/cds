@@ -18,7 +18,7 @@ func (d *dao) FindAllTasks() ([]sdk.Task, error) {
 		tasks[i] = &sdk.Task{}
 	}
 	if err := d.store.SetScan(rootKey, sdk.InterfaceSlice(tasks)...); err != nil {
-		return nil, sdk.WrapError(err, "hooks>FindAllLongRunningTasks> Unable to scan %s", rootKey)
+		return nil, sdk.WrapError(err, "Unable to scan %s", rootKey)
 	}
 
 	alltasks := make([]sdk.Task, nbTasks)
@@ -80,7 +80,7 @@ func (d *dao) FindAllTaskExecutions(t *sdk.Task) ([]sdk.TaskExecution, error) {
 		execs[i] = &sdk.TaskExecution{}
 	}
 	if err := d.store.SetScan(cache.Key(executionRootKey, t.Type, t.UUID), sdk.InterfaceSlice(execs)...); err != nil {
-		return nil, sdk.WrapError(err, "hooks>FindAllTaskExecutions> Unable to scan %s", rootKey)
+		return nil, sdk.WrapError(err, "Unable to scan %s", rootKey)
 	}
 
 	allexecs := make([]sdk.TaskExecution, nbExecutions)

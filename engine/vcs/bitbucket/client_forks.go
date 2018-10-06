@@ -12,7 +12,7 @@ func (b *bitbucketClient) ListForks(ctx context.Context, repo string) ([]sdk.VCS
 	bbRepos := []Repo{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return nil, sdk.WrapError(err, "vcs> bitbucket> ListForks>")
+		return nil, sdk.WrapError(err, "ListForks>")
 	}
 	path := fmt.Sprintf("/projects/%s/repos/%s/forks", project, slug)
 	params := url.Values{}
@@ -24,7 +24,7 @@ func (b *bitbucketClient) ListForks(ctx context.Context, repo string) ([]sdk.VCS
 
 		var response Response
 		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> ListForks> Unable to get repos")
+			return nil, sdk.WrapError(err, "Unable to get repos")
 		}
 
 		bbRepos = append(bbRepos, response.Values...)

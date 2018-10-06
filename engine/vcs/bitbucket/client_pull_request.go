@@ -13,7 +13,7 @@ import (
 func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.VCSPullRequest, error) {
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests>")
+		return nil, sdk.WrapError(err, "PullRequests>")
 	}
 
 	bbPR := []PullRequest{}
@@ -29,7 +29,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 
 		var response PullRequestResponse
 		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> Unable to get repos")
+			return nil, sdk.WrapError(err, "Unable to get repos")
 		}
 
 		bbPR = append(bbPR, response.Values...)
@@ -68,7 +68,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 
 		baseBranch, err := b.Branch(ctx, repo, pr.Base.Branch.ID)
 		if err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> unable to get branch %v", baseBranch)
+			return nil, sdk.WrapError(err, "unable to get branch %v", baseBranch)
 		}
 		pr.Base.Branch = *baseBranch
 		pr.Base.Commit = sdk.VCSCommit{
@@ -77,7 +77,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 
 		headBranch, err := b.Branch(ctx, r.FromRef.Repository.Project.Key+"/"+r.FromRef.Repository.Slug, pr.Head.Branch.ID)
 		if err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> PullRequests> unable to get branch %v", headBranch)
+			return nil, sdk.WrapError(err, "unable to get branch %v", headBranch)
 		}
 		pr.Head.Branch = *headBranch
 
@@ -91,7 +91,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, prID int, text string) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return sdk.WrapError(err, "vcs> bitbucket> PullRequestComment>")
+		return sdk.WrapError(err, "PullRequestComment>")
 	}
 	payload := map[string]string{
 		"text": text,

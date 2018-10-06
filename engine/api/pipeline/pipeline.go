@@ -106,7 +106,7 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Pipeline, er
 		if err == sql.ErrNoRows {
 			return pips, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load pipelines linked to workflow id %d", workflowID)
+		return nil, sdk.WrapError(err, "Unable to load pipelines linked to workflow id %d", workflowID)
 	}
 
 	return pips, nil
@@ -124,7 +124,7 @@ func LoadByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) (*sdk.Pipeline, error
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByNodeRunID> Unable to load pipelines linked to node run id %d", nodeRunID)
+		return nil, sdk.WrapError(err, "Unable to load pipelines linked to node run id %d", nodeRunID)
 	}
 
 	return &pip, nil
@@ -143,7 +143,7 @@ func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Pipeline
 		if err == sql.ErrNoRows {
 			return pips, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByEnvName> Unable to load pipelines linked to environment %s", envName)
+		return nil, sdk.WrapError(err, "Unable to load pipelines linked to environment %s", envName)
 	}
 
 	return pips, nil
@@ -162,7 +162,7 @@ func LoadByApplicationName(db gorp.SqlExecutor, projKey, appName string) ([]sdk.
 		if err == sql.ErrNoRows {
 			return pips, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByApplicationName> Unable to load pipelines linked to application %s", appName)
+		return nil, sdk.WrapError(err, "Unable to load pipelines linked to application %s", appName)
 	}
 
 	return pips, nil

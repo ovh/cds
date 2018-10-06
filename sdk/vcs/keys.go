@@ -39,7 +39,7 @@ func CleanSSHKeys(path string, key *sdk.Variable) error {
 
 		for i := range dirFiles {
 			if err := os.RemoveAll(path + dirFiles[i].Name()); err != nil {
-				return sdk.WrapError(err, "CleanSSHKeys> Cannot remote file %s", path+dirFiles[i].Name())
+				return sdk.WrapError(err, "Cannot remote file %s", path+dirFiles[i].Name())
 			}
 		}
 		return nil

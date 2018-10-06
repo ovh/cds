@@ -30,7 +30,7 @@ func (api *API) getRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		rms, err := repositoriesmanager.LoadAll(ctx, api.mustDB(), api.Cache)
 		if err != nil {
-			return sdk.WrapError(err, "getRepositoriesManagerHandler> error")
+			return sdk.WrapError(err, "error")
 		}
 		return service.WriteJSON(w, rms, http.StatusOK)
 	}
@@ -154,7 +154,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		}
 
 		if err := repositoriesmanager.InsertForProject(tx, proj, vcsServerForProject); err != nil {
-			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with InsertForProject")
+			return sdk.WrapError(err, "Error with InsertForProject")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -226,7 +226,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 		}
 
 		if err := repositoriesmanager.InsertForProject(tx, proj, vcsServerForProject); err != nil {
-			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
+			return sdk.WrapError(err, "Error with SaveDataForProject")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -263,11 +263,11 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := repositoriesmanager.DeleteForProject(tx, p, vcsServer); err != nil {
-			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> error deleting %s-%s", projectKey, rmName)
+			return sdk.WrapError(err, "error deleting %s-%s", projectKey, rmName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishDeleteVCSServer(p, vcsServer.Name, getUser(ctx))
@@ -353,7 +353,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 
 		repo, err := client.RepoByFullname(ctx, repoName)
 		if err != nil {
-			return sdk.WrapError(err, "getRepoFromRepositoriesManagerHandler> Cannot get repos")
+			return sdk.WrapError(err, "Cannot get repos")
 		}
 		return service.WriteJSON(w, repo, http.StatusOK)
 	}
@@ -371,7 +371,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 
 		app, err := application.LoadByName(db, api.Cache, projectKey, appName, u)
 		if err != nil {
-			return sdk.WrapError(err, "attachRepositoriesManager> Cannot load application %s", appName)
+			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
 
 		//Load the repositoriesManager for the project
@@ -400,11 +400,11 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := repositoriesmanager.InsertForApplication(tx, app, projectKey); err != nil {
-			return sdk.WrapError(err, "attachRepositoriesManager> Cannot insert for application")
+			return sdk.WrapError(err, "Cannot insert for application")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "attachRepositoriesManager> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		usage, errU := loadApplicationUsage(db, projectKey, appName)
@@ -447,7 +447,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 				}
 				wf.Root.Context.DefaultPayload = defaultPayload
 				if err := workflow.UpdateNodeContext(db, wf.Root.Context); err != nil {
-					return sdk.WrapError(err, "attachRepositoriesManager> Cannot update node context %d", wf.Root.Context.ID)
+					return sdk.WrapError(err, "Cannot update node context %d", wf.Root.Context.ID)
 				}
 			}
 		}
@@ -492,7 +492,7 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := repositoriesmanager.DeleteForApplication(tx, app); err != nil {
-			return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete for application")
+			return sdk.WrapError(err, "Cannot delete for application")
 		}
 
 		//TODO: to delete after DEPRECATED workflows are deleted
@@ -513,12 +513,12 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 			}
 
 			if err := hook.DeleteHook(tx, h.ID); err != nil {
-				return sdk.WrapError(err, "detachRepositoriesManager> Cannot get hook")
+				return sdk.WrapError(err, "Cannot get hook")
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "detachRepositoriesManager> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		usage, errU := loadApplicationUsage(db, projectKey, appName)
@@ -537,7 +537,7 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 			for _, wf := range usage.Workflows {
 				nodeHooks, err := workflow.LoadHooksByNodeID(db, wf.RootID)
 				if err != nil {
-					return sdk.WrapError(err, "detachRepositoriesManager> Cannot load node hook by nodeID %d", wf.RootID)
+					return sdk.WrapError(err, "Cannot load node hook by nodeID %d", wf.RootID)
 				}
 
 				for _, nodeHook := range nodeHooks {
@@ -559,15 +559,15 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 
 				for _, nodeHook := range hookToDelete {
 					if err := workflow.DeleteHook(txDel, &nodeHook); err != nil {
-						return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete hooks")
+						return sdk.WrapError(err, "Cannot delete hooks")
 					}
 				}
 				if err := workflow.DeleteHookConfiguration(ctx, txDel, api.Cache, proj, hookToDelete); err != nil {
-					return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete hooks vcs configuration")
+					return sdk.WrapError(err, "Cannot delete hooks vcs configuration")
 				}
 
 				if err := txDel.Commit(); err != nil {
-					return sdk.WrapError(err, "detachRepositoriesManager> Cannot commit delete transaction")
+					return sdk.WrapError(err, "Cannot commit delete transaction")
 				}
 			}
 		}
@@ -609,27 +609,27 @@ func (api *API) addHookOnRepositoriesManagerHandler() service.Handler {
 		}
 
 		if !permission.AccessToPipeline(projectKey, sdk.DefaultEnv.Name, pipeline.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "addHookOnRepositoriesManagerHandler> You don't have enought right on this pipeline %s", pipeline.Name)
+			return sdk.WrapError(sdk.ErrForbidden, "You don't have enough right on this pipeline %s", pipeline.Name)
 		}
 
 		//Load the repositoriesManager for the project
 		rm := repositoriesmanager.GetProjectVCSServer(proj, rmName)
 		if rm == nil {
-			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s", projectKey, rmName)
+			return sdk.WrapError(sdk.ErrNoReposManager, "Error loading %s-%s", projectKey, rmName)
 		}
 
 		tx, errb := api.mustDB().Begin()
 		if errb != nil {
-			return sdk.WrapError(errb, "addHookOnRepositoriesManagerHandler> cannot start transaction")
+			return sdk.WrapError(errb, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if _, err := hook.CreateHook(tx, api.Cache, proj, rmName, repoFullname, app, pipeline); err != nil {
-			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot create hook")
+			return sdk.WrapError(err, "Cannot create hook")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		var errlah error

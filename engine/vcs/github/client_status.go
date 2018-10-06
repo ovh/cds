@@ -47,7 +47,7 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 		return nil
 	}
 	if err != nil {
-		return sdk.WrapError(err, "githubClient.SetStatus> Cannot process Event")
+		return sdk.WrapError(err, "Cannot process Event")
 	}
 
 	if data.status == "" {
@@ -66,29 +66,29 @@ func (g *githubClient) SetStatus(ctx context.Context, event sdk.Event) error {
 
 	b, err := json.Marshal(ghStatus)
 	if err != nil {
-		return sdk.WrapError(err, "github.SetStatus> Unable to marshal github status")
+		return sdk.WrapError(err, "Unable to marshal github status")
 	}
 	buf := bytes.NewBuffer(b)
 
 	res, err := g.post(path, "application/json", buf, nil)
 	if err != nil {
-		return sdk.WrapError(err, "github.SetStatus> Unable to post status")
+		return sdk.WrapError(err, "Unable to post status")
 	}
 
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return sdk.WrapError(err, "github.SetStatus> Unable to read body")
+		return sdk.WrapError(err, "Unable to read body")
 	}
 
 	if res.StatusCode != 201 {
-		return sdk.WrapError(err, "github.SetStatus>  Unable to create status on github. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
+		return sdk.WrapError(err, " Unable to create status on github. Status code : %d - Body: %s - target:%s", res.StatusCode, body, data.urlPipeline)
 	}
 
 	s := &Status{}
 	if err := json.Unmarshal(body, s); err != nil {
-		return sdk.WrapError(err, "github.SetStatus> Unable to unmarshal body")
+		return sdk.WrapError(err, "Unable to unmarshal body")
 	}
 
 	log.Debug("SetStatus> Status %d %s created at %v", s.ID, s.URL, s.CreatedAt)
@@ -113,7 +113,7 @@ func (g *githubClient) ListStatuses(ctx context.Context, repo string, ref string
 		g.Cache.Get(cache.Key("vcs", "github", "statuses", g.OAuthToken, url), &ss)
 	} else {
 		if err := json.Unmarshal(body, &ss); err != nil {
-			return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "githubClient.ListStatuses> Unable to parse github commit: %s", ref)
+			return []sdk.VCSCommitStatus{}, sdk.WrapError(err, "Unable to parse github commit: %s", ref)
 		}
 		//Put the body on cache for one hour and one minute
 		g.Cache.SetWithTTL(cache.Key("vcs", "github", "statuses", g.OAuthToken, url), ss, 61*60)
@@ -150,7 +150,7 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "githubClient.processEventWorkflowNodeRun> Error durring consumption")
+		return data, sdk.WrapError(err, "Error durring consumption")
 	}
 	//We only manage status Success and Failure
 	if eventNR.Status == sdk.StatusChecking.String() ||
@@ -195,7 +195,7 @@ func processEventPipelineBuild(event sdk.Event, githubURL string, disabledStatus
 	data := statusData{}
 	var eventpb sdk.EventPipelineBuild
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		return data, sdk.WrapError(err, "githubClient.processEventPipelineBuild> Error durring consumption")
+		return data, sdk.WrapError(err, "Error durring consumption")
 	}
 	//We only manage status Success and Failure
 	if eventpb.Status == sdk.StatusChecking ||

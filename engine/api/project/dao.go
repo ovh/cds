@@ -162,7 +162,7 @@ const BuiltinGPGKey = "builtin"
 // Insert a new project in database
 func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 	if err := proj.IsValid(); err != nil {
-		return sdk.WrapError(err, "project.Insert> project is not valid")
+		return sdk.WrapError(err, "project is not valid")
 	}
 
 	if proj.WorkflowMigration == "" {
@@ -178,7 +178,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 
 	k, err := keys.GeneratePGPKeyPair(BuiltinGPGKey)
 	if err != nil {
-		return sdk.WrapError(err, "project.Insert> Unable to generate PGPKeyPair: %v", err)
+		return sdk.WrapError(err, "Unable to generate PGPKeyPair: %v", err)
 	}
 
 	pk := sdk.ProjectKey{}
@@ -191,7 +191,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 	pk.Builtin = true
 
 	if err := InsertKey(db, &pk); err != nil {
-		return sdk.WrapError(err, "project.Insert> Unable to insert PGPKeyPair")
+		return sdk.WrapError(err, "Unable to insert PGPKeyPair")
 	}
 
 	return nil
@@ -200,7 +200,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 // Update a new project in database
 func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 	if err := proj.IsValid(); err != nil {
-		return sdk.WrapError(err, "project.Update> project is not valid")
+		return sdk.WrapError(err, "project is not valid")
 	}
 
 	proj.LastModified = time.Now()
@@ -348,7 +348,7 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoProject
 		}
-		return nil, sdk.WrapError(err, "loadprojects> db.Select")
+		return nil, sdk.WrapError(err, "db.Select")
 	}
 
 	projs := make([]sdk.Project, 0, len(res))
@@ -421,7 +421,7 @@ func Labels(db gorp.SqlExecutor, projectID int64) ([]sdk.Label, error) {
 		if err == sql.ErrNoRows {
 			return labels, nil
 		}
-		return labels, sdk.WrapError(err, "Labels> Cannot load labels")
+		return labels, sdk.WrapError(err, "Cannot load labels")
 	}
 
 	return labels, nil
@@ -442,7 +442,7 @@ func DeleteLabel(db gorp.SqlExecutor, labelID int64) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return sdk.WrapError(err, "DeleteLabel> Cannot delete labels")
+		return sdk.WrapError(err, "Cannot delete labels")
 	}
 
 	return nil
@@ -456,7 +456,7 @@ func InsertLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 
 	lbl := dbLabel(*label)
 	if err := db.Insert(&lbl); err != nil {
-		return sdk.WrapError(err, "InsertLabel> Cannot insert labels")
+		return sdk.WrapError(err, "Cannot insert labels")
 	}
 	*label = sdk.Label(lbl)
 
@@ -471,7 +471,7 @@ func UpdateLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 
 	lbl := dbLabel(*label)
 	if _, err := db.Update(&lbl); err != nil {
-		return sdk.WrapError(err, "UpdateLabel> Cannot update labels")
+		return sdk.WrapError(err, "Cannot update labels")
 	}
 	*label = sdk.Label(lbl)
 

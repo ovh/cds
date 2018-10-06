@@ -66,12 +66,12 @@ func (s *Service) synchronizeTasks() error {
 	//Get all hooks from CDS, and synchronize the tasks in cache
 	hooks, err := s.Client.WorkflowAllHooksList()
 	if err != nil {
-		return sdk.WrapError(err, "synchronizeTasks> Unable to get hooks")
+		return sdk.WrapError(err, "Unable to get hooks")
 	}
 
 	allOldTasks, err := s.Dao.FindAllTasks()
 	if err != nil {
-		return sdk.WrapError(err, "synchronizeTasks> Unable to get allOldTasks")
+		return sdk.WrapError(err, "Unable to get allOldTasks")
 	}
 
 	//Delete all old task which are not referenced in CDS API anymore
@@ -175,7 +175,7 @@ func (s *Service) startTasks(ctx context.Context) error {
 	//Load all the tasks
 	tasks, err := s.Dao.FindAllTasks()
 	if err != nil {
-		return sdk.WrapError(err, "Hook> startTasks> Unable to find all tasks")
+		return sdk.WrapError(err, "Unable to find all tasks")
 	}
 
 	//Start the tasks
@@ -193,7 +193,7 @@ func (s *Service) stopTasks() error {
 	//Load all the tasks
 	tasks, err := s.Dao.FindAllTasks()
 	if err != nil {
-		return sdk.WrapError(err, "Hook> stopTasks> Unable to find all tasks")
+		return sdk.WrapError(err, "Unable to find all tasks")
 	}
 
 	//Start the tasks
@@ -237,7 +237,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	//Load the last execution of this task
 	execs, err := s.Dao.FindAllTaskExecutions(t)
 	if err != nil {
-		return sdk.WrapError(err, "startTask> unable to load last executions")
+		return sdk.WrapError(err, "unable to load last executions")
 	}
 
 	//The last execution has not been executed, let it go
@@ -250,7 +250,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 	confTimezone := t.Config[sdk.SchedulerModelTimezone]
 	loc, err := time.LoadLocation(confTimezone.Value)
 	if err != nil {
-		return sdk.WrapError(err, "startTask> unable to parse timezone: %v", t.Config[sdk.SchedulerModelTimezone])
+		return sdk.WrapError(err, "unable to parse timezone: %v", t.Config[sdk.SchedulerModelTimezone])
 	}
 
 	var exec *sdk.TaskExecution
@@ -261,7 +261,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *sdk.Task) error {
 		confCron := t.Config[sdk.SchedulerModelCron]
 		cronExpr, err := cronexpr.Parse(confCron.Value)
 		if err != nil {
-			return sdk.WrapError(err, "startTask> unable to parse cron expression: %v", t.Config[sdk.SchedulerModelCron])
+			return sdk.WrapError(err, "unable to parse cron expression: %v", t.Config[sdk.SchedulerModelCron])
 		}
 
 		//Compute a new date
@@ -373,7 +373,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	}
 
 	if globalErr != nil {
-		return doRestart, sdk.WrapError(globalErr, "Hooks> Unable to run workflow")
+		return doRestart, sdk.WrapError(globalErr, "Unable to run workflow")
 	}
 
 	return doRestart, nil

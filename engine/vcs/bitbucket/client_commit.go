@@ -15,7 +15,7 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 	commits := []sdk.VCSCommit{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return nil, sdk.WrapError(err, "vcs> bitbucket> commits>")
+		return nil, sdk.WrapError(err, "commits>")
 	}
 
 	stashCommits := []Commit{}
@@ -42,7 +42,7 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 				if err == sdk.ErrNotFound {
 					return nil, nil
 				}
-				return nil, sdk.WrapError(err, "vcs> bitbucket> commits> Unable to get commits %s", path)
+				return nil, sdk.WrapError(err, "Unable to get commits %s", path)
 			}
 
 			stashCommits = append(stashCommits, response.Values...)
@@ -103,14 +103,14 @@ func (b *bitbucketClient) Commit(ctx context.Context, repo, hash string) (sdk.VC
 	commit := sdk.VCSCommit{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return commit, sdk.WrapError(err, "vcs> bitbucket> commit>")
+		return commit, sdk.WrapError(err, "commit>")
 	}
 	var stashURL, _ = url.Parse(b.consumer.URL)
 
 	sc := Commit{}
 	path := fmt.Sprintf("/projects/%s/repos/%s/commits/%s", project, slug, hash)
 	if err := b.do(ctx, "GET", "core", path, nil, nil, &sc, nil); err != nil {
-		return commit, sdk.WrapError(err, "vcs> bitbucket> commits> Unable to get commit %s", path)
+		return commit, sdk.WrapError(err, "Unable to get commit %s", path)
 	}
 
 	urlCommit := stashURL.String() + "/projects/" + project + "/repos/" + slug + "/commits/" + sc.Hash
@@ -152,7 +152,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 	var commits []sdk.VCSCommit
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return nil, sdk.WrapError(err, "vcs> bitbucket> CommitsBetweenRefs>")
+		return nil, sdk.WrapError(err, "CommitsBetweenRefs>")
 	}
 
 	var stashCommits []Commit
@@ -179,7 +179,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 				if err == sdk.ErrNotFound {
 					return nil, nil
 				}
-				return nil, sdk.WrapError(err, "vcs> bitbucket> CommitsBetweenRefs> Unable to get commits %s", path)
+				return nil, sdk.WrapError(err, "Unable to get commits %s", path)
 			}
 
 			stashCommits = append(stashCommits, response.Values...)

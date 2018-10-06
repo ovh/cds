@@ -90,7 +90,7 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 
 		if !groupAttachedToApp {
 			if err := group.InsertGroupInApplication(db, a.ID, g.ID, gp.Permission); err != nil {
-				return sdk.WrapError(err, "AddGroup> Unable to inserting in application_group %d %d %d - application %s project:%s", a.ID, g.ID, gp.Permission, a.Name, proj.Name)
+				return sdk.WrapError(err, "Unable to inserting in application_group %d %d %d - application %s project:%s", a.ID, g.ID, gp.Permission, a.Name, proj.Name)
 			}
 		}
 		// If the group has only read permission on application, let it go with read permission on projet, pipeline and environment
@@ -108,7 +108,7 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 
 		if !groupAttachedToProject {
 			if err := group.InsertGroupInProject(db, proj.ID, g.ID, perm); err != nil {
-				return sdk.WrapError(err, "AddGroup> Cannot add group %s in project %s", g.Name, proj.Name)
+				return sdk.WrapError(err, "Cannot add group %s in project %s", g.Name, proj.Name)
 			}
 		}
 
@@ -122,7 +122,7 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 			}
 			if !groupAttachedToPipeline {
 				if err := group.InsertGroupInPipeline(db, p.Pipeline.ID, g.ID, perm); err != nil {
-					return sdk.WrapError(err, "AddGroup> Cannot add group %s in pipeline %s", g.Name, p.Pipeline.Name)
+					return sdk.WrapError(err, "Cannot add group %s in pipeline %s", g.Name, p.Pipeline.Name)
 				}
 			}
 
@@ -136,7 +136,7 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 
 					if !groupAttachedToEnv && sdk.DefaultEnv.ID != t.DestEnvironment.ID {
 						if err := group.InsertGroupInEnvironment(db, t.DestEnvironment.ID, g.ID, perm); err != nil {
-							return sdk.WrapError(err, "AddGroup> Cannot add group %s in env %s", g.Name, t.DestEnvironment.Name)
+							return sdk.WrapError(err, "Cannot add group %s in env %s", g.Name, t.DestEnvironment.Name)
 						}
 					}
 				}
@@ -148,7 +148,7 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 
 					if !groupAttachedToEnv && sdk.DefaultEnv.ID != t.SrcEnvironment.ID {
 						if err := group.InsertGroupInEnvironment(db, t.SrcEnvironment.ID, g.ID, perm); err != nil {
-							return sdk.WrapError(err, "AddGroup> Cannot add group %s in env %s", g.Name, t.SrcEnvironment.Name)
+							return sdk.WrapError(err, "Cannot add group %s in env %s", g.Name, t.SrcEnvironment.Name)
 						}
 					}
 				}

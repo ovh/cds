@@ -24,7 +24,7 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 
 		variable := new(sdk.Variable)
 		if err := service.UnmarshalBody(r, variable); err != nil {
-			return sdk.WrapError(err, "postEncryptVariableHandler> unable to read body")
+			return sdk.WrapError(err, "Unable to read body")
 		}
 
 		encryptedValue, erre := project.EncryptWithBuiltinKey(api.mustDB(), p.ID, variable.Name, variable.Value)

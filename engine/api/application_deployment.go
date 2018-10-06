@@ -50,7 +50,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 
 		proj, err := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to load project")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		var pf *sdk.ProjectPlatform
@@ -71,7 +71,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 
 		app, err := application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithClearDeploymentStrategies)
 		if err != nil {
-			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to load application")
+			return sdk.WrapError(err, "unable to load application")
 		}
 
 		oldPfConfig, has := app.DeploymentStrategies[pfName]
@@ -90,11 +90,11 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 
 		app, err = application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
-			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to load application")
+			return sdk.WrapError(err, "unable to load application")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler> unable to commit tx")
+			return sdk.WrapError(err, "unable to commit tx")
 		}
 
 		if getProvider(ctx) != nil {
@@ -121,7 +121,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 
 		proj, err := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to load project")
+			return sdk.WrapError(err, "unable to load project")
 		}
 
 		var pf *sdk.ProjectPlatform
@@ -142,12 +142,12 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 
 		app, err := application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
-			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to load application")
+			return sdk.WrapError(err, "unable to load application")
 		}
 
 		isUsed, err := workflow.IsDeploymentPlatformUsed(tx, proj.ID, app.ID, pfName)
 		if err != nil {
-			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to check if platform is used")
+			return sdk.WrapError(err, "unable to check if platform is used")
 		}
 
 		if isUsed {
@@ -164,7 +164,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteApplicationDeploymentStrategyConfigHandler> unable to commit tx")
+			return sdk.WrapError(err, "unable to commit tx")
 		}
 
 		return service.WriteJSON(w, app, http.StatusOK)

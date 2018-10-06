@@ -23,7 +23,7 @@ func (api *API) registerWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		params := &sdk.WorkerRegistrationForm{}
 		if err := service.UnmarshalBody(r, params); err != nil {
-			return sdk.WrapError(err, "registerWorkerHandler> Unable to parse registration form")
+			return sdk.WrapError(err, "Unable to parse registration form")
 		}
 
 		// Check that hatchery exists
@@ -40,7 +40,7 @@ func (api *API) registerWorkerHandler() service.Handler {
 		worker, err := worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, hatch, params.BinaryCapabilities, params.OS, params.Arch)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
-			return sdk.WrapError(err, "registerWorkerHandler> [%s] Registering failed", params.Name)
+			return sdk.WrapError(err, "[%s] Registering failed", params.Name)
 		}
 
 		worker.Uptodate = params.Version == sdk.VERSION
@@ -55,7 +55,7 @@ func (api *API) registerWorkerHandler() service.Handler {
 func (api *API) getWorkersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(err, "getWorkerModels> cannot parse form")
+			return sdk.WrapError(err, "cannot parse form")
 		}
 
 		var hatcheryName string
@@ -81,7 +81,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 		wor, err := worker.LoadWorker(api.mustDB(), id)
 		if err != nil {
 			if err != sql.ErrNoRows {
-				return sdk.WrapError(err, "disabledWorkerHandler> Cannot load worker %s", id)
+				return sdk.WrapError(err, "Cannot load worker %s", id)
 			}
 			return sdk.WrapError(sdk.ErrNotFound, "disabledWorkerHandler> Cannot load worker %s", id)
 		}
@@ -94,7 +94,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 			if err == worker.ErrNoWorker || err == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exists", id)
 			}
-			return sdk.WrapError(err, "disableWorkerHandler> cannot update worker status")
+			return sdk.WrapError(err, "cannot update worker status")
 		}
 
 		//Remove the worker from the cache
@@ -108,7 +108,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 func (api *API) refreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
-			return sdk.WrapError(err, "refreshWorkerHandler> cannot refresh last beat of %s", getWorker(ctx).ID)
+			return sdk.WrapError(err, "cannot refresh last beat of %s", getWorker(ctx).ID)
 		}
 		return nil
 	}
@@ -117,7 +117,7 @@ func (api *API) refreshWorkerHandler() service.Handler {
 func (api *API) unregisterWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := DisableWorker(api.mustDB(), getWorker(ctx).ID); err != nil {
-			return sdk.WrapError(err, "unregisterWorkerHandler> cannot delete worker %s", getWorker(ctx).ID)
+			return sdk.WrapError(err, "cannot delete worker %s", getWorker(ctx).ID)
 		}
 		return nil
 	}
@@ -132,7 +132,7 @@ func (api *API) workerCheckingHandler() service.Handler {
 		}
 
 		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusChecking); err != nil {
-			return sdk.WrapError(err, "workerCheckingHandler> cannot update worker %s", workerC.ID)
+			return sdk.WrapError(err, "cannot update worker %s", workerC.ID)
 		}
 		key := cache.Key("worker", wk.ID)
 		wk.Status = sdk.StatusChecking
@@ -160,7 +160,7 @@ func (api *API) workerWaitingHandler() service.Handler {
 		}
 
 		if err := worker.SetStatus(api.mustDB(), wk.ID, sdk.StatusWaiting); err != nil {
-			return sdk.WrapError(err, "workerWaitingHandler> cannot update worker %s", workerC.ID)
+			return sdk.WrapError(err, "cannot update worker %s", workerC.ID)
 		}
 		key := cache.Key("worker", wk.ID)
 		wk.Status = sdk.StatusWaiting
@@ -218,7 +218,7 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 		if err == worker.ErrNoWorker || err == sql.ErrNoRows {
 			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exists", id)
 		}
-		return sdk.WrapError(err, "DisableWorker> cannot update worker status")
+		return sdk.WrapError(err, "cannot update worker status")
 	}
 
 	return tx.Commit()
