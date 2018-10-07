@@ -125,6 +125,8 @@ Login successful
 Please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
 If you don't want to use the keychain, you can select the version i386.
 
+See: [cdsctl documentation]({{< relref "cli/cdsctl/_index.md" >}})
+
 - Test cdsctl
 ```bash
 $ cdsctl user me
