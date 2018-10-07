@@ -134,13 +134,14 @@ func doLogin(url, username, password string, env bool) error {
 		if !cli.AskForConfirmation(fmt.Sprintf("File %s exists, do you want to overwrite?", configFile)) {
 			return fmt.Errorf("aborted")
 		}
-		fi, errfi = os.OpenFile(configFile, os.O_RDWR, os.FileMode(0600))
-	} else {
-		fi, errfi = os.Create(configFile)
+		if errre := os.Remove(configFile); errre != nil {
+			return fmt.Errorf("Error while removing old file %s: %s", configFile, errre)
+		}
 	}
 
+	fi, errfi = os.Create(configFile)
 	if errfi != nil {
-		return errfi
+		return fmt.Errorf("Error while creating file %s: %s", configFile, errfi)
 	}
 
 	tomlConf := config{
@@ -154,6 +155,10 @@ func doLogin(url, username, password string, env bool) error {
 
 	if err := storeSecret(fi, &tomlConf); err != nil {
 		return err
+	}
+
+	if errm := fi.Chmod(os.FileMode(0600)); errm != nil {
+		return fmt.Errorf("Error while chmod 600 file %s: %s", configFile, errm)
 	}
 
 	fmt.Println("Login successful")
