@@ -285,15 +285,11 @@ func (ui *Termui) staticRender() {
 	checking, checkingColor := statusShort(sdk.StatusChecking.String())
 	waiting, waitingColor := statusShort(sdk.StatusWaiting.String())
 	building, buildingColor := statusShort(sdk.StatusBuilding.String())
-	success, successColor := statusShort(sdk.StatusSuccess.String())
-	fail, failColor := statusShort(sdk.StatusFail.String())
 	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
-	ui.header.Text = fmt.Sprintf("[CDS | (h)elp | (q)uit | Legend: ](fg-cyan)[Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s)",
+	ui.header.Text = fmt.Sprintf("[CDS | (h)elp | (q)uit | Legend: ](fg-cyan)[Checking:%s](%s) [Waiting:%s](%s) [Building:%s](%s) [Disabled:%s](%s)",
 		checking, checkingColor,
 		waiting, waitingColor,
 		building, buildingColor,
-		success, successColor,
-		fail, failColor,
 		disabled, disabledColor)
 
 	ui.commonRender()
@@ -505,7 +501,7 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 		for _, status := range statusTitle {
 			if v[status] > 0 {
 				icon, color := statusShort(status)
-				t = fmt.Sprintf("%s[ %d %s ](%s)", t, v[status], icon, color)
+				t = fmt.Sprintf("%s[ %d%s ](%s)", t, v[status], icon, color)
 			}
 		}
 		if len(t) == 0 {
@@ -520,7 +516,7 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 	title := " Hatcheries "
 	for _, s := range statusTitle {
 		icon, color := statusShort(s)
-		title = fmt.Sprintf("%s[%d %s](%s) ", title, status[s], icon, color)
+		title = fmt.Sprintf("%s[%d%s](%s) ", title, status[s], icon, color)
 	}
 	ui.statusHatcheriesWorkers.BorderLabel = title
 }
@@ -681,17 +677,13 @@ func (ui *Termui) generateQueueJobLine(isWJob bool, idx int, id int64, parameter
 func statusShort(status string) (string, string) {
 	switch status {
 	case sdk.StatusWaiting.String():
-		return "☕", "fg-cyan"
+		return "w", "fg-cyan"
 	case sdk.StatusBuilding.String():
-		return "▶", "fg-blue"
+		return "b", "fg-blue"
 	case sdk.StatusDisabled.String():
-		return "⏏", "fg-grey"
+		return "d", "fg-grey"
 	case sdk.StatusChecking.String():
-		return "♻", "fg-yellow"
-	case sdk.StatusSuccess.String():
-		return "✔", "fg-green"
-	case sdk.StatusFail.String():
-		return "✖", "fg-red"
+		return "c", "fg-yellow"
 	}
 	return status, "fg-default"
 }
