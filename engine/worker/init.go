@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/facebookgo/httpcontrol"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
@@ -198,7 +198,10 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 
 	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name, &http.Client{
 		Timeout: time.Second * 360,
-		Transport: &httpcontrol.Transport{
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: FlagBool(cmd, flagInsecure)},
 		},
 	})

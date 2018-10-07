@@ -6,13 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/facebookgo/httpcontrol"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -21,9 +20,11 @@ import (
 
 var (
 	httpClient = &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout: time.Second * 30,
-			MaxTries:       5,
+		Timeout: time.Second * 30,
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
 		},
 	}
 )

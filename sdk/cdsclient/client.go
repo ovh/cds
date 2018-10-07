@@ -8,8 +8,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/facebookgo/httpcontrol"
-
 	"github.com/ovh/cds/sdk"
 )
 
@@ -53,8 +51,6 @@ func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bo
 			Dial: (&net.Dialer{
 				Timeout: 5 * time.Second,
 			}).Dial,
-			MaxIdleConns:        500,
-			MaxIdleConnsPerHost: 500,
 			TLSHandshakeTimeout: 5 * time.Second,
 			TLSClientConfig:     &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
 		},
@@ -111,10 +107,13 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 	cli := new(client)
 	cli.config = conf
 	cli.HTTPClient = &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout:  time.Duration(cfg.RequestSecondsTimeout) * time.Second,
-			MaxTries:        5,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.InsecureSkipVerifyTLS},
+		Timeout: time.Duration(cfg.RequestSecondsTimeout) * time.Second,
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 5 * time.Second,
+			TLSClientConfig:     &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
 		},
 	}
 	cli.isProvider = true

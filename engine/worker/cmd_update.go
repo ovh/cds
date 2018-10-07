@@ -3,10 +3,10 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"time"
 
-	"github.com/facebookgo/httpcontrol"
 	"github.com/inconshreveable/go-update"
 	"github.com/spf13/cobra"
 
@@ -47,7 +47,10 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 			w.client = cdsclient.NewWorker(w.apiEndpoint, "download", &http.Client{
 				Timeout: time.Second * 360,
-				Transport: &httpcontrol.Transport{
+				Transport: &http.Transport{
+					Dial: (&net.Dialer{
+						Timeout: 5 * time.Second,
+					}).Dial,
 					TLSClientConfig: &tls.Config{InsecureSkipVerify: FlagBool(cmd, flagInsecure)},
 				},
 			})

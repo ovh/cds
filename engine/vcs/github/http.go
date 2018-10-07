@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -15,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk/log"
 
-	"github.com/facebookgo/httpcontrol"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -26,9 +26,11 @@ var (
 	RateLimitReset     int
 
 	httpClient = &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout: time.Second * 30,
-			MaxTries:       5,
+		Timeout: time.Second * 30,
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
 		},
 	}
 )

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"math"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -14,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
 	"github.com/gorilla/mux"
 
@@ -116,10 +116,12 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	//Custom http client with 3 retries
 	httpClient := &http.Client{
 		Timeout: time.Minute,
-		Transport: &httpcontrol.Transport{
-			RequestTimeout:  time.Minute,
-			MaxTries:        3,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: hconfig.API.HTTP.Insecure},
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 5 * time.Second,
+			TLSClientConfig:     &tls.Config{InsecureSkipVerify: hconfig.API.HTTP.Insecure},
 		},
 	}
 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,7 +17,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/facebookgo/httpcontrol"
 	marathon "github.com/gambol99/go-marathon"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/xeipuuv/gojsonschema"
@@ -82,10 +82,13 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 
 	//Custom http client with 3 retries
 	httpClient := &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout:  time.Minute,
-			MaxTries:        3,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
+		Timeout: time.Minute,
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 5 * time.Second,
+			TLSClientConfig:     &tls.Config{InsecureSkipVerify: insecureSkipVerify},
 		},
 	}
 
