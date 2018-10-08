@@ -29,6 +29,11 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *s
 		return 0, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
 	}
 
+	// If repo is from as-code do not export WorkflowSkipIfOnlyOneRepoWebhook
+	if wf.FromRepository != "" {
+		opts = append(opts, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
+	}
+
 	return exportWorkflow(*wf, f, w, opts...)
 }
 
