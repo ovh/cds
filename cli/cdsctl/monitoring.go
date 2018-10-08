@@ -131,8 +131,10 @@ func (ui *Termui) execLoadData() error {
 	}
 	ui.elapsedStatus = time.Since(start)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 	start = time.Now()
-	ui.workers, err = client.WorkerList()
+	ui.workers, err = client.WorkerList(ctx)
 	if err != nil {
 		return err
 	}

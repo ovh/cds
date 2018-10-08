@@ -19,7 +19,9 @@ import (
 // If Take is not possible (as Job already booked for example)
 // it will return true (-> can work on another job), false, otherwise
 func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (bool, error) {
-	info, err := w.client.QueueTakeJob(job, w.bookedWJobID == job.ID)
+	ctxQueueTakeJob, cancelQueueTakeJob := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelQueueTakeJob()
+	info, err := w.client.QueueTakeJob(ctxQueueTakeJob, job, w.bookedWJobID == job.ID)
 	if err != nil {
 		if w.bookedWJobID == job.ID {
 			return false, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can't work on another job.")
@@ -43,7 +45,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 
 	start := time.Now()
 
-	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
+	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
 	ctx, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)
 	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
@@ -57,7 +59,9 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 					return
 				}
 				j := &sdk.WorkflowNodeJobRun{}
-				code, err := w.client.(cdsclient.Raw).GetJSON(fmt.Sprintf("/queue/workflows/%d/infos", jobID), j)
+				ctxGetJSON, cancelGetJSON := context.WithTimeout(ctx, 5*time.Second)
+				defer cancelGetJSON()
+				code, err := w.client.(cdsclient.Raw).GetJSON(ctxGetJSON, fmt.Sprintf("/queue/workflows/%d/infos", jobID), j)
 				if err != nil {
 					if code == http.StatusNotFound {
 						log.Info("takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
@@ -114,11 +118,14 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	var lasterr error
 	for try := 1; try <= 10; try++ {
 		log.Info("takeWorkflowJob> Sending build result...")
-		lasterr = w.client.QueueSendResult(job.ID, res)
+		ctxSendResult, cancelSendResult := context.WithTimeout(ctx, 5*time.Second)
+		lasterr = w.client.QueueSendResult(ctxSendResult, job.ID, res)
 		if lasterr == nil {
 			log.Info("takeWorkflowJob> Send build result OK")
+			cancelSendResult()
 			return false, nil
 		}
+		cancelSendResult()
 		log.Warning("takeWorkflowJob> Cannot send build result: HTTP %v - try: %d - new try in 15s", lasterr, try)
 		time.Sleep(15 * time.Second)
 	}

@@ -508,7 +508,9 @@ func (h *HatcheryMarathon) startKillAwolWorkerRoutine() {
 }
 
 func (h *HatcheryMarathon) killDisabledWorkers() error {
-	workers, err := h.CDSClient().WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	workers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		return err
 	}
@@ -539,7 +541,9 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 }
 
 func (h *HatcheryMarathon) killAwolWorkers() error {
-	workers, err := h.CDSClient().WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	workers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		return err
 	}

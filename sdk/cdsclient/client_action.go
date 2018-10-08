@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,20 +12,20 @@ import (
 
 func (c *client) Requirements() ([]sdk.Requirement, error) {
 	var req []sdk.Requirement
-	if _, err := c.GetJSON("/action/requirement", &req); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/action/requirement", &req); err != nil {
 		return nil, err
 	}
 	return req, nil
 }
 
 func (c *client) ActionDelete(actionName string) error {
-	_, err := c.DeleteJSON("/action/"+actionName, nil)
+	_, err := c.DeleteJSON(context.Background(), "/action/"+actionName, nil)
 	return err
 }
 
 func (c *client) ActionGet(actionName string, mods ...RequestModifier) (*sdk.Action, error) {
 	action := &sdk.Action{}
-	if _, err := c.GetJSON("/action/"+actionName, action, mods...); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/action/"+actionName, action, mods...); err != nil {
 		return nil, err
 	}
 	return action, nil
@@ -32,7 +33,7 @@ func (c *client) ActionGet(actionName string, mods ...RequestModifier) (*sdk.Act
 
 func (c *client) ActionList() ([]sdk.Action, error) {
 	actions := []sdk.Action{}
-	if _, err := c.GetJSON("/action", &actions); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/action", &actions); err != nil {
 		return nil, err
 	}
 	return actions, nil
@@ -58,7 +59,7 @@ func (c *client) ActionImport(content io.Reader, format string) error {
 		return exportentities.ErrUnsupportedFormat
 	}
 
-	_, _, code, err := c.Request("POST", url, content, mods...)
+	_, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
 	if err != nil {
 		return err
 	}
@@ -72,7 +73,7 @@ func (c *client) ActionImport(content io.Reader, format string) error {
 
 func (c *client) ActionExport(name string, format string) ([]byte, error) {
 	path := fmt.Sprintf("/action/%s/export?format=%s", name, format)
-	body, _, _, err := c.Request("GET", path, nil)
+	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
