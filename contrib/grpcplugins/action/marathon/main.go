@@ -2,13 +2,10 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math"
-	"net"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -22,6 +19,7 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/interpolate"
 )
@@ -80,17 +78,7 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 		return fail("Error parsing timeout value :  %s\n", err.Error())
 	}
 
-	//Custom http client with 3 retries
-	httpClient := &http.Client{
-		Timeout: time.Minute,
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout: 5 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 5 * time.Second,
-			TLSClientConfig:     &tls.Config{InsecureSkipVerify: insecureSkipVerify},
-		},
-	}
+	httpClient := cdsclient.NewHTTPClient(time.Minute, insecureSkipVerify)
 
 	fmt.Printf("Connecting on %s\n", URL)
 	config := marathon.NewDefaultConfig()

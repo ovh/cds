@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"net/url"
 	"sort"
@@ -15,18 +14,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
 var (
-	httpClient = &http.Client{
-		Timeout: time.Second * 30,
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout: 5 * time.Second,
-			}).Dial,
-		},
-	}
+	httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
 )
 
 func requestString(method string, uri string, params map[string]string) string {

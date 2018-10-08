@@ -3,12 +3,9 @@ package marathon
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"html/template"
 	"math"
-	"net"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -113,17 +110,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 		}
 	}
 
-	//Custom http client with 3 retries
-	httpClient := &http.Client{
-		Timeout: time.Minute,
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout: 5 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 5 * time.Second,
-			TLSClientConfig:     &tls.Config{InsecureSkipVerify: hconfig.API.HTTP.Insecure},
-		},
-	}
+	httpClient := cdsclient.NewHTTPClient(time.Minute, hconfig.API.HTTP.Insecure)
 
 	config := marathon.NewDefaultConfig()
 	config.URL = hconfig.MarathonURL

@@ -21,17 +21,26 @@ type client struct {
 	service    *sdk.Service
 }
 
+// NewHTTPClient returns a new HTTP Client
+func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Client {
+	return &http.Client{
+		Timeout: timeout,
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			Dial: (&net.Dialer{
+				Timeout: 5 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout: 5 * time.Second,
+			TLSClientConfig:     &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
+		},
+	}
+}
+
 // New returns a client from a config struct
 func New(c Config) Interface {
 	cli := new(client)
 	cli.config = c
-	cli.HTTPClient = &http.Client{
-		Timeout: time.Second * 60,
-		Transport: &http.Transport{
-			Proxy:           http.ProxyFromEnvironment,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: c.InsecureSkipVerifyTLS},
-		},
-	}
+	cli.HTTPClient = NewHTTPClient(time.Second*60, c.InsecureSkipVerifyTLS)
 	cli.init()
 	return cli
 }
@@ -45,16 +54,7 @@ func NewService(endpoint string, timeout time.Duration, insecureSkipVerifyTLS bo
 	}
 	cli := new(client)
 	cli.config = conf
-	cli.HTTPClient = &http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout: 5 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 5 * time.Second,
-			TLSClientConfig:     &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
-		},
-	}
+	cli.HTTPClient = NewHTTPClient(timeout, conf.InsecureSkipVerifyTLS)
 	cli.isService = true
 	cli.init()
 	return cli
@@ -70,7 +70,7 @@ func NewWorker(endpoint string, name string, c HTTPClient) Interface {
 	cli.config = conf
 
 	if c == nil {
-		cli.HTTPClient = &http.Client{Timeout: time.Second * 360}
+		cli.HTTPClient = NewHTTPClient(time.Second*360, false)
 	} else {
 		cli.HTTPClient = c
 	}
@@ -106,16 +106,7 @@ func NewProviderClient(cfg ProviderConfig) ProviderClient {
 
 	cli := new(client)
 	cli.config = conf
-	cli.HTTPClient = &http.Client{
-		Timeout: time.Duration(cfg.RequestSecondsTimeout) * time.Second,
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout: 5 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 5 * time.Second,
-			TLSClientConfig:     &tls.Config{InsecureSkipVerify: conf.InsecureSkipVerifyTLS},
-		},
-	}
+	cli.HTTPClient = NewHTTPClient(time.Duration(cfg.RequestSecondsTimeout)*time.Second, conf.InsecureSkipVerifyTLS)
 	cli.isProvider = true
 	cli.name = cfg.Name
 	cli.init()

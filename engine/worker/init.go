@@ -1,10 +1,7 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -196,15 +193,7 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 	w.bookedPBJobID = FlagInt64(cmd, flagBookedPBJobID)
 	w.bookedWJobID = FlagInt64(cmd, flagBookedWorkflowJobID)
 
-	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name, &http.Client{
-		Timeout: time.Second * 360,
-		Transport: &http.Transport{
-			Dial: (&net.Dialer{
-				Timeout: 5 * time.Second,
-			}).Dial,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: FlagBool(cmd, flagInsecure)},
-		},
-	})
+	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name, cdsclient.NewHTTPClient(time.Second*360, FlagBool(cmd, flagInsecure)))
 
 	w.autoUpdate = FlagBool(cmd, flagAutoUpdate)
 	w.singleUse = FlagBool(cmd, flagSingleUse)

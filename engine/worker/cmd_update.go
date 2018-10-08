@@ -1,9 +1,7 @@
 package main
 
 import (
-	"crypto/tls"
 	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -45,16 +43,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			if w.apiEndpoint == "" {
 				sdk.Exit("--api not provided, aborting update.")
 			}
-			w.client = cdsclient.NewWorker(w.apiEndpoint, "download", &http.Client{
-				Timeout: time.Second * 360,
-				Transport: &http.Transport{
-					Dial: (&net.Dialer{
-						Timeout: 5 * time.Second,
-					}).Dial,
-					TLSClientConfig: &tls.Config{InsecureSkipVerify: FlagBool(cmd, flagInsecure)},
-				},
-			})
-
+			w.client = cdsclient.NewWorker(w.apiEndpoint, "download", cdsclient.NewHTTPClient(time.Second*360, FlagBool(cmd, flagInsecure)))
 			urlBinary = w.client.DownloadURLFromAPI("worker", sdk.GOOS, sdk.GOARCH)
 			fmt.Printf("Updating worker binary from CDS API on %s...\n", urlBinary)
 		} else {
