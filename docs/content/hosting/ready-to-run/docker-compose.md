@@ -40,9 +40,12 @@ $ docker-compose up cds-api cds-ui
 
 ```
 
-Open a browser on http://localhost:2015, then register a new user.
+Open a browser on http://localhost:2015, then register a new user `admin`,
+with a email `admin@localhost.local` for example.
 As there is no SMTP server configured in docker-compose.yml file,
 run `docker-compose logs` to get URL for validate the registration.
+
+After registration on UI, keep the password displayed, we will use it after.
 
 ## Prepare Project, Pipeline and Application
 
@@ -106,13 +109,31 @@ Now, you have to create worker model of type `docker`, please follow [how to cre
 
 ## Next with Actions, Plugins
 
-- You can download CDS CLI from https://github.com/ovh/cds/releases
-- Run:
+- You can download CDS CLI from https://github.com/ovh/cds/releases or from http://localhost:2015/settings/downloads
 ```bash
-$ mv cds-linux-amd64 cds
-$ chmod +x cds
-$ ./cds login
-# enter: http://${HOSTNAME}:8081 as CDS Endpoint
+# on a linux workstation:
+$ wget http://localhost:2015/cdsapi/download/engine/linux/amd64 -O cdsctl
+$ chmod +x cdsctl
+$ ./cdsctl login --api-url http://localhost:8081 -u admin
+CDS API URL: http://localhost:8081
+Username: admin
+Password:
+          You didn't specify config file location; /Users/yourhome/.cdsrc will be used.
+Login successful
+```
+
+Please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
+If you don't want to use the keychain, you can select the version i386.
+
+See: [cdsctl documentation]({{< relref "cli/cdsctl/_index.md" >}})
+
+- Test cdsctl
+```bash
+$ cdsctl user me
+CDS API:http://localhost:8081
+fullname  admin
+email     admin@localhost.local
+username  admin
 ```
 
 - Import actions, example:
@@ -121,12 +142,7 @@ $ ./cds login
 $ cdsctl action import cds-docker-package.yml
 ```
 
-- Import plugins, example:
-```bash
-# download plugin-download-linux-amd64 from  https://github.com/ovh/cds/releases
-$ mv plugin-download-linux-amd64 plugin-download
-$ cds admin plugin add ./plugin-download
-```
+- Import plugins: Please read [Plugins]({{< relref "workflows/pipelines/actions/plugins/_index.md" >}})
 
 # Go further
 
