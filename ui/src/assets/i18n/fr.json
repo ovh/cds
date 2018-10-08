@@ -411,6 +411,8 @@
   "job_save": "Sauvegarder le job",
   "job_spawn_title": "Informations",
 
+  "monitoring": "Monitoring",
+
   "navbar_actions": "Actions",
   "navbar_project_create": "Créer un projet",
   "navbar_admin_broadcast": "Informations",
@@ -610,6 +612,8 @@
   "provider_hook": "hook",
   "provider_deployment": "déploiement",
 
+  "queue_monitoring": "Queue Monitoring",
+
   "repo_name": "Nom du dépôt",
   "repoman_delete_msg_ok": "Le gestionnaire de dépôt n'est plus lié au projet",
   "repoman_name": "Gestionnaire de dépôt",
@@ -669,11 +673,12 @@
 
   "settings_tips": "Conseils",
   
+  "services": "services",
   "services_list": "CDS Services",
+  "services_see_all": "Voir tous",
+  "services_minimize": "Minimiser",
   "service_view_details": "Voir les details",
   "service_details": "Service",
-  "service_binary_not_up_to_date": "ce service n'est pas à jour, mettez le à jour",
-  "service_binary_up_to_date": "ce service est à jour",
   "service_group": "Groupe",
   "service_alert": "Status Alert - vérifier le status ci-dessous",
   "service_warning": "Status Warning - vérifier le status ci-dessous",

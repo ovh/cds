@@ -69,7 +69,7 @@ func All(db gorp.SqlExecutor) ([]sdk.Service, error) {
 		if err == sdk.ErrNotFound {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "All> Unable to find all services")
+		return nil, sdk.WrapError(err, "Unable to find all services")
 	}
 	return services, nil
 }
@@ -95,13 +95,13 @@ func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Serv
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNotFound
 		}
-		return nil, sdk.WrapError(err, "findAll> no service found")
+		return nil, sdk.WithStack(err)
 	}
 	ss := make([]sdk.Service, len(sdbs))
 	for i := 0; i < len(sdbs); i++ {
 		s := &sdbs[i]
 		if err := s.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "findAll> postGet on srv id:%d name:%s type:%s lastHeartbeat:%v", s.ID, s.Name, s.Type, s.LastHeartbeat)
+			return nil, sdk.WrapError(err, "postGet on srv id:%d name:%s type:%s lastHeartbeat:%v", s.ID, s.Name, s.Type, s.LastHeartbeat)
 		}
 		ss[i] = sdk.Service(sdbs[i])
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/ovh/cds/sdk/grpcplugin"
@@ -36,10 +37,15 @@ func Client(ctx context.Context, socket string) (ActionPluginClient, error) {
 	conn, err := grpc.DialContext(ctx,
 		socket,
 		grpc.WithInsecure(),
+		grpc.WithBackoffMaxDelay(500*time.Millisecond),
 		grpc.WithDialer(func(address string, timeout time.Duration) (net.Conn, error) {
-			return net.DialTimeout("unix", socket, timeout)
+			if strings.Contains(socket, ".sock") {
+				return net.DialTimeout("unix", socket, timeout)
+			}
+			return net.DialTimeout("tcp", socket, timeout)
 		}),
 	)
+
 	if err != nil {
 		return nil, err
 	}

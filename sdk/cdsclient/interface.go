@@ -121,7 +121,6 @@ type ActionClient interface {
 	ActionList() ([]sdk.Action, error)
 	ActionImport(content io.Reader, format string) error
 	ActionExport(name string, format string) ([]byte, error)
-	ActionAddPlugin(content io.Reader, filePath string, update bool) error
 }
 
 // GroupClient exposes groups related functions
@@ -278,6 +277,7 @@ type MonitoringClient interface {
 	MonStatus() (*sdk.MonitoringStatus, error)
 	MonVersion() (*sdk.Version, error)
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
+	MonErrorsGet(uuid string) (*sdk.Error, error)
 }
 
 // PlatformClient exposes platform functions

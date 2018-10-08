@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"strings"
 	"time"
 
@@ -15,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 var logsecrets []sdk.Variable
@@ -196,21 +193,4 @@ func (wk *currentWorker) drainLogsAndCloseLogger(c context.Context) error {
 		time.Sleep(1 * time.Second)
 	}
 	return c.Err()
-}
-
-func (wk *currentWorker) logHandler(w http.ResponseWriter, r *http.Request) {
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, errRead)
-		writeError(w, r, newError)
-		return
-	}
-
-	var pluginLog plugin.Log
-	if err := json.Unmarshal(data, &pluginLog); err != nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, err)
-		writeError(w, r, newError)
-		return
-	}
-	wk.sendLog(pluginLog.BuildID, pluginLog.Value, pluginLog.StepOrder, false)
 }

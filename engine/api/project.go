@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"net/http"
 	"regexp"
 	"strings"
@@ -40,6 +41,9 @@ func (api *API) getProjectsHandler() service.Handler {
 			//Load the specific user
 			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
 			if err != nil {
+				if err == sql.ErrNoRows {
+					return sdk.ErrUserNotFound
+				}
 				return sdk.WrapError(err, "getProjectsHandler> unable to load user '%s'", requestedUserName)
 			}
 			if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {

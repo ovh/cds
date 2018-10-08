@@ -114,7 +114,7 @@ func Create(h Interface) error {
 	)
 
 	// run the starters pool
-	workersStartChan, workerStartResultChan := startWorkerStarters(h)
+	workersStartChan, workerStartResultChan := startWorkerStarters(ctx, h)
 
 	hostname, errh := os.Hostname()
 	if errh != nil {

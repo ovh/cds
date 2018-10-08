@@ -12,3 +12,24 @@ export class MonitoringStatusLine {
     component: string;
     value: string;
 }
+
+export interface MonitoringMetricsLabel {
+    name: string;
+    value: string;
+}
+
+export interface MonitoringMetricsGauge {
+    value: number;
+}
+
+export interface MonitoringMetricsMetric {
+    label: MonitoringMetricsLabel[];
+    gauge: MonitoringMetricsGauge;
+}
+
+export interface MonitoringMetricsLine {
+    name: string;
+    help: string;
+    type: number;
+    metric: MonitoringMetricsMetric[];
+}

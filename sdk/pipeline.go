@@ -113,7 +113,6 @@ type CDPipeline struct {
 	Trigger      PipelineTrigger     `json:"trigger"`
 	Schedulers   []PipelineScheduler `json:"schedulers"`
 	Hooks        []Hook              `json:"hooks"`
-	Poller       *RepositoryPoller   `json:"poller"`
 }
 
 // RunRequest  Request to run a pipeline

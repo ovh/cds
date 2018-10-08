@@ -1043,8 +1043,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
 	if err != nil {
 		log.Error("Push> Unable to import workflow: %v", err)
-		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
-		return nil, nil, sdk.WrapError(err, "Push> %v ", err)
+		return nil, nil, sdk.WrapError(err, "Push> unable to import workflow %s", wrkflw.Name)
 	}
 
 	// TODO workflow as code, manage derivation workflow

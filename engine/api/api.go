@@ -30,7 +30,6 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -133,8 +132,8 @@ type Configuration struct {
 	Features struct {
 		Izanami struct {
 			APIURL       string `toml:"apiurl" json:"apiurl"`
-			ClientID     string `toml:"clientid" json:"clientid"`
-			ClientSecret string `toml:"clientsecret" json:"clientsecret"`
+			ClientID     string `toml:"clientid" json:"-"`
+			ClientSecret string `toml:"clientsecret" json:"-"`
 			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
 		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami" json:"izanami"`
 	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################" json:"features"`
@@ -171,6 +170,10 @@ type Configuration struct {
 	} `toml:"status" comment:"###########################\n CDS Status Settings \n Documentation: https://ovh.github.io/cds/hosting/monitoring/ \n##########################" json:"status"`
 	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
 	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
+	Graylog     struct {
+		AccessToken string `toml:"accessToken" json:"-"`
+		URL         string `toml:"url" comment:"Example: http://localhost:9000" json:"url"`
+	} `toml:"graylog"  json:"graylog"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
@@ -642,7 +645,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine("action.RequirementsCacheLoader", func() { action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache) })
 	sdk.GoRoutine("hookRecoverer(ctx", func() { hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
 	sdk.GoRoutine("services.KillDeadServices", func() { services.KillDeadServices(ctx, a.mustDB) })
-	sdk.GoRoutine("poller.Initialize", func() { poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap) })
 	sdk.GoRoutine("migrate.CleanOldWorkflow", func() { migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API) })
 	sdk.GoRoutine("migrate.KeyMigration", func() { migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true}) })
 	sdk.GoRoutine("broadcast.Initialize", func() { broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap) })

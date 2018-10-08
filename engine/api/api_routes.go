@@ -57,11 +57,6 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/services", r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
 	r.Handle("/admin/services/call", r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
 
-	// Action plugin
-	r.Handle("/plugin", r.POST(api.addPluginHandler, NeedAdmin(true)), r.PUT(api.updatePluginHandler, NeedAdmin(true)))
-	r.Handle("/plugin/{name}", r.DELETE(api.deletePluginHandler, NeedAdmin(true)))
-	r.Handle("/plugin/download/{name}", r.GET(api.downloadPluginHandler))
-
 	// Download file
 	r.Handle("/download", r.GET(api.downloadsHandler))
 	r.Handle("/download/{name}/{os}/{arch}", r.GET(api.downloadHandler, Auth(false)))
@@ -101,6 +96,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 	r.Handle("/mon/stats", r.GET(observability.StatsHandler, Auth(false)))
+	r.Handle("/mon/errors/{uuid}", r.GET(api.getErrorHandler, NeedAdmin(true)))
 
 	r.Handle("/ui/navbar", r.GET(api.getNavbarHandler))
 	r.Handle("/ui/project/{key}/application/{permApplicationName}/overview", r.GET(api.getApplicationOverviewHandler))
@@ -310,10 +306,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/hook", r.POST(api.addHookHandler), r.GET(api.getHooksHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/hook/{id}", r.PUT(api.updateHookHandler), r.DELETE(api.deleteHookHandler))
 
-	// Pollers
-	r.Handle("/project/{key}/application/{permApplicationName}/polling", r.GET(api.getApplicationPollersHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/polling", r.POST(api.addPollerHandler), r.GET(api.getPollersHandler), r.PUT(api.updatePollerHandler), r.DELETE(api.deletePollerHandler))
-
 	// Build queue
 	r.Handle("/queue", r.GET(api.getQueueHandler))
 	r.Handle("/queue/{id}/take", r.POST(api.takePipelineBuildJobHandler))
@@ -332,7 +324,7 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/vulnerability", r.POSTEXECUTE(api.postVulnerabilityReportHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery()))
+	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1), NeedWorker()))
 	r.Handle("/queue/workflows/log/service", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), NeedHatchery()))
@@ -433,5 +425,5 @@ func (api *API) InitRouter() {
 	r.Handle("/services/{type}", r.GET(api.getExternalServiceHandler, NeedWorker()))
 
 	//Not Found handler
-	r.Mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 }
