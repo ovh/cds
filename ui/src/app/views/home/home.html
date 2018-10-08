@@ -15,17 +15,7 @@
           <div class="one wide column">
           </div>
           <div class="ten wide column border-right">
-              <ng-container *ngIf="!user.admin">
-                  <h3>{{'navbar_favorites' | translate}}</h3>
-                  <div class="ui raised padded text container segment" *ngIf="!loading && (!favorites || !favorites.length)">
-                      {{'common_no_favorites' | translate}}
-                  </div>
-                  <app-favorite-cards [favorites]="favorites" [centered]="false"></app-favorite-cards>
-              </ng-container>
-              <ng-container *ngIf="user.admin">
-                  <app-home-timeline></app-home-timeline>
-              </ng-container>
-
+            <app-home-timeline></app-home-timeline>
           </div>
           <div class="five wide column">
               <div>
