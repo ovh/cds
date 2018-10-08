@@ -63,7 +63,7 @@ func (a addWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	}
 
 	buffer := bytes.NewBufferString("")
-	_, errE := exportWorkflow(wEvent.Workflow, exportentities.FormatYAML, false, buffer)
+	_, errE := exportWorkflow(wEvent.Workflow, exportentities.FormatYAML, buffer)
 	if errE != nil {
 		return sdk.WrapError(errE, "addWorkflowAudit.Compute> Unable to export workflow")
 	}
@@ -88,12 +88,12 @@ func (u updateWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	}
 
 	oldWorkflowBuffer := bytes.NewBufferString("")
-	_, errE := exportWorkflow(wEvent.OldWorkflow, exportentities.FormatYAML, false, oldWorkflowBuffer)
+	_, errE := exportWorkflow(wEvent.OldWorkflow, exportentities.FormatYAML, oldWorkflowBuffer)
 	if errE != nil {
 		return sdk.WrapError(errE, "updateWorkflowAudit.Compute> Unable to export workflow")
 	}
 	newWorkflowBuffer := bytes.NewBufferString("")
-	_, errN := exportWorkflow(wEvent.NewWorkflow, exportentities.FormatYAML, false, newWorkflowBuffer)
+	_, errN := exportWorkflow(wEvent.NewWorkflow, exportentities.FormatYAML, newWorkflowBuffer)
 	if errN != nil {
 		return sdk.WrapError(errN, "updateWorkflowAudit.Compute> Unable to export workflow")
 	}
@@ -119,7 +119,7 @@ func (d deleteWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	}
 
 	oldWorkflowBuffer := bytes.NewBufferString("")
-	_, errE := exportWorkflow(wEvent.Workflow, exportentities.FormatYAML, false, oldWorkflowBuffer)
+	_, errE := exportWorkflow(wEvent.Workflow, exportentities.FormatYAML, oldWorkflowBuffer)
 	if errE != nil {
 		return sdk.WrapError(errE, "deleteWorkflowAudit.Compute> Unable to export workflow")
 	}

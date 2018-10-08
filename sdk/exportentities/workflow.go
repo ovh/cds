@@ -66,8 +66,22 @@ const (
 	WorkflowVersion1 = "v1.0"
 )
 
+type WorkflowOptions func(sdk.Workflow, *Workflow) error
+
+func WorkflowWithPermissions(w sdk.Workflow, exportedWorkflow *Workflow) error {
+	exportedWorkflow.Permissions = make(map[string]int, len(w.Groups))
+	for _, p := range w.Groups {
+		exportedWorkflow.Permissions[p.Group.Name] = p.Permission
+	}
+	return nil
+}
+
+func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow) error {
+	return nil
+}
+
 //NewWorkflow creates a new exportable workflow
-func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
+func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	exportedWorkflow := Workflow{}
 	exportedWorkflow.Name = w.Name
 	exportedWorkflow.Description = w.Description
@@ -89,13 +103,6 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 	exportedWorkflow.PurgeTags = w.PurgeTags
 	nodes := w.Nodes(false)
-
-	if withPermission {
-		exportedWorkflow.Permissions = make(map[string]int, len(w.Groups))
-		for _, p := range w.Groups {
-			exportedWorkflow.Permissions[p.Group.Name] = p.Permission
-		}
-	}
 
 	var craftNodeEntry = func(n *sdk.WorkflowNode) (NodeEntry, error) {
 		entry := NodeEntry{}
@@ -225,6 +232,12 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 				Ref:    h.Ref,
 				Config: h.Config.Values(),
 			})
+		}
+	}
+
+	for _, f := range opts {
+		if err := f(w, &exportedWorkflow); err != nil {
+			return exportedWorkflow, err
 		}
 	}
 

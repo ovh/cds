@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"reflect"
 
 	"github.com/go-gorp/gorp"
 
@@ -19,7 +20,7 @@ import (
 )
 
 // Export a workflow
-func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
+func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, u *sdk.User, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
 	ctx, end := observability.Span(ctx, "workflow.Export")
 	defer end()
 
@@ -28,11 +29,11 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *s
 		return 0, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
 	}
 
-	return exportWorkflow(*wf, f, withPermissions, w)
+	return exportWorkflow(*wf, f, w, opts...)
 }
 
-func exportWorkflow(wf sdk.Workflow, f exportentities.Format, withPermissions bool, w io.Writer) (int, error) {
-	e, err := exportentities.NewWorkflow(wf, withPermissions)
+func exportWorkflow(wf sdk.Workflow, f exportentities.Format, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
+	e, err := exportentities.NewWorkflow(wf, opts...)
 	if err != nil {
 		return 0, err
 	}
@@ -52,7 +53,7 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, withPermissions bo
 }
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
-func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer) error {
+func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer, opts ...exportentities.WorkflowOptions) error {
 	ctx, end := observability.Span(ctx, "workflow.Pull")
 	defer end()
 
@@ -99,7 +100,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	tw := tar.NewWriter(w)
 
 	buffw := new(bytes.Buffer)
-	size, errw := exportWorkflow(*wf, f, withPermissions, buffw)
+	size, errw := exportWorkflow(*wf, f, buffw, opts...)
 	if errw != nil {
 		tw.Close()
 		return sdk.WrapError(errw, "workflow.Pull> Unable to export workflow")
@@ -117,6 +118,13 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	if _, err := io.Copy(tw, buffw); err != nil {
 		tw.Close()
 		return sdk.WrapError(err, "workflow.Pull> Unable to copy workflow buffer")
+	}
+
+	var withPermissions bool
+	for _, f := range opts {
+		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(exportentities.WorkflowWithPermissions).Pointer() {
+			withPermissions = true
+		}
 	}
 
 	for _, a := range apps {
