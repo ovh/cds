@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 const (
@@ -188,6 +189,17 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		}
 
 		req = req.WithContext(ctx)
+
+		if c.config.Verbose {
+			log.Println("Stream > context> %s", tracingutils.DumpContext(ctx))
+		}
+		spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
+		if c.config.Verbose {
+			log.Println("setup tracing = %v (%v) on request to %s", ok, spanCtx, req.URL.String())
+		}
+		if ok {
+			tracingutils.DefaultFormat.SpanContextToRequest(spanCtx, req)
+		}
 
 		for i := range mods {
 			if mods[i] != nil {

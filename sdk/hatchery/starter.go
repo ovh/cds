@@ -194,13 +194,13 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		},
 	})
 
-	ctxt2, cancel2 := context.WithTimeout(ctx, 10*time.Second)
+	ctxtJobSendSpawnInfo, cancelJobSendSpawnInfo := context.WithTimeout(ctx, 10*time.Second)
 	_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "spawnOK"))
-	if err := h.CDSClient().QueueJobSendSpawnInfo(ctxt2, j.isWorkflowJob, j.id, infos); err != nil {
+	if err := h.CDSClient().QueueJobSendSpawnInfo(ctxtJobSendSpawnInfo, j.isWorkflowJob, j.id, infos); err != nil {
 		next()
 		log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", j.timestamp, j.id, err)
 	}
 	next()
-	cancel2()
+	cancelJobSendSpawnInfo()
 	return true, nil // ok for this job
 }

@@ -1,9 +1,6 @@
 package observability
 
 import (
-	"go.opencensus.io/plugin/ochttp/propagation/b3"
-	"go.opencensus.io/trace/propagation"
-
 	"github.com/ovh/cds/sdk"
 )
 
@@ -16,8 +13,6 @@ const (
 	UserAgentAttribute  = "http.user_agent"
 	StatusCodeAttribute = "http.status_code"
 )
-
-var DefaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
 
 // Configuration is the global tracing configuration
 type Configuration struct {

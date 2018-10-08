@@ -19,9 +19,9 @@ import (
 // If Take is not possible (as Job already booked for example)
 // it will return true (-> can work on another job), false, otherwise
 func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (bool, error) {
-	ctxt, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	info, err := w.client.QueueTakeJob(ctxt, job, w.bookedWJobID == job.ID)
+	ctxQueueTakeJob, cancelQueueTakeJob := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelQueueTakeJob()
+	info, err := w.client.QueueTakeJob(ctxQueueTakeJob, job, w.bookedWJobID == job.ID)
 	if err != nil {
 		if w.bookedWJobID == job.ID {
 			return false, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can't work on another job.")
@@ -46,7 +46,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	start := time.Now()
 
 	//This goroutine try to get the job every 5 seconds, if it fails, it cancel the build.
-	ctx, cancel2 := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)
 	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
 		var nbConnrefused int
@@ -59,13 +59,13 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 					return
 				}
 				j := &sdk.WorkflowNodeJobRun{}
-				ctxT, cancel3 := context.WithTimeout(ctx, 5*time.Second)
-				defer cancel3()
-				code, err := w.client.(cdsclient.Raw).GetJSON(ctxT, fmt.Sprintf("/queue/workflows/%d/infos", jobID), j)
+				ctxGetJSON, cancelGetJSON := context.WithTimeout(ctx, 5*time.Second)
+				defer cancelGetJSON()
+				code, err := w.client.(cdsclient.Raw).GetJSON(ctxGetJSON, fmt.Sprintf("/queue/workflows/%d/infos", jobID), j)
 				if err != nil {
 					if code == http.StatusNotFound {
 						log.Info("takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
-						cancel2()
+						cancel()
 						return
 					}
 					log.Error("takeWorkflowJob> Unable to load workflow job (Request) %d: %v", jobID, err)
@@ -75,7 +75,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 						nbConnrefused++
 					}
 					if nbConnrefused >= 5 {
-						cancel2()
+						cancel()
 						return
 					}
 
@@ -84,7 +84,7 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 
 				if j.Status != sdk.StatusBuilding.String() {
 					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context - err: %v", j.Status, err)
-					cancel2()
+					cancel()
 					return
 				}
 
@@ -118,14 +118,14 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	var lasterr error
 	for try := 1; try <= 10; try++ {
 		log.Info("takeWorkflowJob> Sending build result...")
-		ctxt, cancel := context.WithTimeout(ctx, 5*time.Second)
-		lasterr = w.client.QueueSendResult(ctxt, job.ID, res)
+		ctxSendResult, cancelSendResult := context.WithTimeout(ctx, 5*time.Second)
+		lasterr = w.client.QueueSendResult(ctxSendResult, job.ID, res)
 		if lasterr == nil {
 			log.Info("takeWorkflowJob> Send build result OK")
-			cancel()
+			cancelSendResult()
 			return false, nil
 		}
-		cancel()
+		cancelSendResult()
 		log.Warning("takeWorkflowJob> Cannot send build result: HTTP %v - try: %d - new try in 15s", lasterr, try)
 		time.Sleep(15 * time.Second)
 	}
