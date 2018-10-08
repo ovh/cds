@@ -12,14 +12,14 @@ A step is :
 * a user action [read more]({{< relref "workflows/pipelines/actions/user-actions/_index.md" >}})
 * a plugin action
 
-A Plugin is simply an executable which expose a GRPC server corresponding to the right [proto file](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/actionplugin.proto). You can use any languages. The CDS worker will simply query in GRPC the plugin (which is the GRPC server).
+A Plugin is simply an executable which expose a GRPC server corresponding to the right [proto file](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/actionplugin.proto). You can use the programming language of your choice. The CDS worker will simply query the GRPC server of the plugin.
 
-So a CDS plugin have these requirements in order to communicate with worker:
+In order to communicate with a CDS worker, a plugin MUST fill the following requirements:
 
-+ Must expose a GRPC server
-+ Must implement methods and messages coming from this [proto file](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/actionplugin.proto)
-+ And last but not least at the launch of your plugin you can use random unix socket or random tcp port but in order to inform worker what is your address you have to display this log at the launch of your plugin `XXX is ready to accept new connection` where `XXX` is your ip address with port or your unix socket (example: `127.0.0.1:55939 is ready to accept new connection`).
++ Expose a GRPC server
++ Implement methods and messages coming from this [proto file](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/actionplugin.proto)
++ Display this log at the launch of your plugin XXX is ready to accept new connection where XXX is your ip address with port or your unix socket (example: 127.0.0.1:55939 is ready to accept new connection). Note that your plugin can use any unix socket or tcp port as long as it informs the worker using the log line above.
 
-We give you some resources to help you develop a CDS plugin like [SDK in this directory](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin) and examples [here](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/examples).
+More resources that may help you in developing a CDS plugin are available: [SDK in this directory](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin) with some examples [here](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/examples).
 
 Contribute on https://github.com/ovh/cds/tree/master/contrib/grpcplugin/action

@@ -2,7 +2,7 @@
 
 ## How to use
 
-+ First you have to create a link on npm locally with this package, so in this directory you just have to execute:
++ First you have to create a link on npm locally with this package by typing the following command in its directory:
 
 ```
 $ npm link
@@ -14,7 +14,7 @@ $ npm link
 $ npm link sdk-grpcplugin-cds-nodejs
 ```
 
-+ That's all you just have to write:
++ Now you can develop locally with the SDK (example below):
 
 ```javascript
 const sdk = require('sdk-grpcplugin-cds-nodejs');
@@ -34,4 +34,4 @@ function main() {
 main();
 ```
 
-For a more complete example you can [go there](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/examples/nodejs)
+You can find a richer example [here](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/examples/nodejs)
