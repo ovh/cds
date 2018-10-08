@@ -143,13 +143,16 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	}
 
 	_, next := observability.Span(ctx, "hatchery.QueueJobBook")
-	if err := h.CDSClient().QueueJobBook(j.isWorkflowJob, j.id); err != nil {
+	ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
+	if err := h.CDSClient().QueueJobBook(ctxt, j.isWorkflowJob, j.id); err != nil {
 		next()
 		// perhaps already booked by another hatchery
 		log.Info("hatchery> spawnWorkerForJob> %d - cannot book job %d %s: %s", j.timestamp, j.id, j.model.Name, err)
+		cancel()
 		return false, nil
 	}
 	next()
+	cancel()
 	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s by hatchery %d isWorkflowJob:%t", j.timestamp, j.id, j.model.Name, h.ID(), j.isWorkflowJob)
 
 	start := time.Now()
@@ -170,11 +173,13 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
 		})
-		if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
+		ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
+		if err := h.CDSClient().QueueJobSendSpawnInfo(ctxt, j.isWorkflowJob, j.id, infos); err != nil {
 			log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", j.timestamp, j.id, err)
 		}
 		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, j.model.Name, j.id, errSpawn)
 		next()
+		cancel()
 		return false, nil
 	}
 
@@ -189,11 +194,13 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		},
 	})
 
+	ctxtJobSendSpawnInfo, cancelJobSendSpawnInfo := context.WithTimeout(ctx, 10*time.Second)
 	_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "spawnOK"))
-	if err := h.CDSClient().QueueJobSendSpawnInfo(j.isWorkflowJob, j.id, infos); err != nil {
+	if err := h.CDSClient().QueueJobSendSpawnInfo(ctxtJobSendSpawnInfo, j.isWorkflowJob, j.id, infos); err != nil {
 		next()
 		log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", j.timestamp, j.id, err)
 	}
 	next()
+	cancelJobSendSpawnInfo()
 	return true, nil // ok for this job
 }

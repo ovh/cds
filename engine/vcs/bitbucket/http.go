@@ -12,20 +12,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/facebookgo/httpcontrol"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
 var (
-	httpClient = &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout: time.Second * 30,
-			MaxTries:       5,
-		},
-	}
+	httpClient = cdsclient.NewHTTPClient(time.Second*30, false)
 )
 
 func requestString(method string, uri string, params map[string]string) string {

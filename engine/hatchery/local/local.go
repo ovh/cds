@@ -390,7 +390,9 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 	h.Lock()
 	defer h.Unlock()
 
-	apiWorkers, err := h.CDSClient().WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	apiWorkers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		return err
 	}

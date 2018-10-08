@@ -300,11 +300,14 @@ func (w *currentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 
 	for try := 1; try <= 10; try++ {
 		log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d", status, buildID, stepOrder)
-		code, lasterr := w.client.(cdsclient.Raw).PostJSON(path, step, nil)
+		ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
+		code, lasterr := w.client.(cdsclient.Raw).PostJSON(ctxt, path, step, nil)
 		if lasterr == nil && code < 300 {
 			log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d OK", status, buildID, stepOrder)
+			cancel()
 			return nil
 		}
+		cancel()
 		log.Warning("updateStepStatus> Cannot send step %d result: HTTP %d err: %s - try: %d - new try in 15s", stepOrder, code, lasterr, try)
 		time.Sleep(15 * time.Second)
 	}

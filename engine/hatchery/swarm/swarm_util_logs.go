@@ -77,9 +77,11 @@ func (h *HatcherySwarm) getServicesLogs() error {
 
 			if len(servicesLogs) > 0 {
 				// Do call api
-				if err := h.Client.QueueServiceLogs(servicesLogs); err != nil {
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
 					log.Error("Hatchery> Swarm> Cannot send service logs : %v", err)
 				}
+				cancel()
 			}
 		}
 	}

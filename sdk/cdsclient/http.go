@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -13,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/tracingutils"
 )
 
 const (
@@ -60,37 +62,37 @@ func SetHeader(key, value string) RequestModifier {
 }
 
 // PostJSON post the *in* struct as json. If set, it unmarshalls the response to *out*
-func (c *client) PostJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
-	_, _, code, err := c.RequestJSON(http.MethodPost, path, in, out, mods...)
+func (c *client) PostJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
+	_, _, code, err := c.RequestJSON(ctx, http.MethodPost, path, in, out, mods...)
 	return code, err
 }
 
 // PostJSON ut the *in* struct as json. If set, it unmarshalls the response to *out*
-func (c *client) PutJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
-	_, _, code, err := c.RequestJSON(http.MethodPut, path, in, out, mods...)
+func (c *client) PutJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error) {
+	_, _, code, err := c.RequestJSON(ctx, http.MethodPut, path, in, out, mods...)
 	return code, err
 }
 
 // GetJSON get the requested path If set, it unmarshalls the response to *out*
-func (c *client) GetJSON(path string, out interface{}, mods ...RequestModifier) (int, error) {
-	_, _, code, err := c.RequestJSON(http.MethodGet, path, nil, out, mods...)
+func (c *client) GetJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error) {
+	_, _, code, err := c.RequestJSON(ctx, http.MethodGet, path, nil, out, mods...)
 	return code, err
 }
 
 // GetJSONWithHeaders get the requested path If set, it unmarshalls the response to *out* and return response headers
 func (c *client) GetJSONWithHeaders(path string, out interface{}, mods ...RequestModifier) (http.Header, int, error) {
-	_, header, code, err := c.RequestJSON(http.MethodGet, path, nil, out, mods...)
+	_, header, code, err := c.RequestJSON(context.Background(), http.MethodGet, path, nil, out, mods...)
 	return header, code, err
 }
 
 // DeleteJSON deletes the requested path If set, it unmarshalls the response to *out*
-func (c *client) DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error) {
-	_, _, code, err := c.RequestJSON(http.MethodDelete, path, nil, out, mods...)
+func (c *client) DeleteJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error) {
+	_, _, code, err := c.RequestJSON(ctx, http.MethodDelete, path, nil, out, mods...)
 	return code, err
 }
 
 // RequestJSON does a request with the *in* struct as json. If set, it unmarshalls the response to *out*
-func (c *client) RequestJSON(method, path string, in interface{}, out interface{}, mods ...RequestModifier) ([]byte, http.Header, int, error) {
+func (c *client) RequestJSON(ctx context.Context, method, path string, in interface{}, out interface{}, mods ...RequestModifier) ([]byte, http.Header, int, error) {
 	var b = []byte{}
 	var err error
 
@@ -106,7 +108,7 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 		body = bytes.NewBuffer(b)
 	}
 
-	res, header, code, err := c.Request(method, path, body, mods...)
+	res, header, code, err := c.Request(ctx, method, path, body, mods...)
 	if err != nil {
 		return nil, nil, code, err
 	}
@@ -128,8 +130,8 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 }
 
 // Request executes an authentificated HTTP request on $path given $method and $args
-func (c *client) Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error) {
-	respBody, respHeader, code, err := c.Stream(method, path, body, false, mods...)
+func (c *client) Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error) {
+	respBody, respHeader, code, err := c.Stream(ctx, method, path, body, false, mods...)
 	if err != nil {
 		return nil, nil, 0, err
 	}
@@ -162,7 +164,7 @@ func (c *client) Request(method string, path string, body io.Reader, mods ...Req
 }
 
 // Stream makes an authenticated http request and return io.ReadCloser
-func (c *client) Stream(method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
+func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
 	var savederror error
 
 	var bodyContent []byte
@@ -184,6 +186,19 @@ func (c *client) Stream(method string, path string, body io.Reader, noTimeout bo
 		if requestError != nil {
 			savederror = requestError
 			continue
+		}
+
+		req = req.WithContext(ctx)
+
+		if c.config.Verbose {
+			log.Printf("Stream > context> %s\n", tracingutils.DumpContext(ctx))
+		}
+		spanCtx, ok := tracingutils.ContextToSpanContext(ctx)
+		if c.config.Verbose {
+			log.Printf("setup tracing = %v (%v) on request to %s\n", ok, spanCtx, req.URL.String())
+		}
+		if ok {
+			tracingutils.DefaultFormat.SpanContextToRequest(spanCtx, req)
 		}
 
 		for i := range mods {

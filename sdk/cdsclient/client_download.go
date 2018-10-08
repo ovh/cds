@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 
 func (c *client) Download() ([]sdk.Download, error) {
 	var res []sdk.Download
-	if _, err := c.GetJSON("/download", &res); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/download", &res); err != nil {
 		return nil, err
 	}
 	return res, nil

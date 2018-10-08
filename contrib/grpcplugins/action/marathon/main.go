@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"math"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -16,12 +14,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/facebookgo/httpcontrol"
 	marathon "github.com/gambol99/go-marathon"
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/xeipuuv/gojsonschema"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
 	"github.com/ovh/cds/sdk/interpolate"
 )
@@ -80,14 +78,7 @@ func (actPlugin *marathonActionPlugin) Run(ctx context.Context, q *actionplugin.
 		return fail("Error parsing timeout value :  %s\n", err.Error())
 	}
 
-	//Custom http client with 3 retries
-	httpClient := &http.Client{
-		Transport: &httpcontrol.Transport{
-			RequestTimeout:  time.Minute,
-			MaxTries:        3,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerify},
-		},
-	}
+	httpClient := cdsclient.NewHTTPClient(time.Minute, insecureSkipVerify)
 
 	fmt.Printf("Connecting on %s\n", URL)
 	config := marathon.NewDefaultConfig()

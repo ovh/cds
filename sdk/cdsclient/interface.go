@@ -141,7 +141,7 @@ type GroupClient interface {
 
 // HatcheryClient exposes hatcheries related functions
 type HatcheryClient interface {
-	HatcheryCount(wfNodeRunID int64) (int64, error)
+	HatcheryCount(ctx context.Context, wfNodeRunID int64) (int64, error)
 }
 
 // BroadcastClient expose all function for CDS Broadcasts
@@ -198,16 +198,16 @@ type QueueClient interface {
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
 	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
 	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error
-	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*sdk.WorkflowNodeJobRunData, error)
-	QueueJobBook(isWorkflowJob bool, id int64) error
+	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error)
+	QueueJobBook(ctx context.Context, isWorkflowJob bool, id int64) error
 	QueueJobRelease(isWorkflowJob bool, id int64) error
 	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)
-	QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
-	QueueSendResult(int64, sdk.Result) error
-	QueueArtifactUpload(id int64, tag, filePath string) (bool, time.Duration, error)
-	QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error
-	QueueJobIncAttempts(jobID int64) ([]int64, error)
-	QueueServiceLogs(logs []sdk.ServiceLog) error
+	QueueJobSendSpawnInfo(ctx context.Context, isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
+	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
+	QueueArtifactUpload(ctx context.Context, id int64, tag, filePath string) (bool, time.Duration, error)
+	QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error
+	QueueJobIncAttempts(ctx context.Context, jobID int64) ([]int64, error)
+	QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error
 }
 
 // UserClient exposes users functions
@@ -227,9 +227,9 @@ type UserClient interface {
 // WorkerClient exposes workers functions
 type WorkerClient interface {
 	WorkerModelBook(id int64) error
-	WorkerList() ([]sdk.Worker, error)
-	WorkerRefresh() error
-	WorkerDisable(id string) error
+	WorkerList(ctx context.Context) ([]sdk.Worker, error)
+	WorkerRefresh(ctx context.Context) error
+	WorkerDisable(ctx context.Context, id string) error
 	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(name string) (sdk.Model, error)
@@ -239,8 +239,8 @@ type WorkerClient interface {
 	WorkerModels() ([]sdk.Model, error)
 	WorkerModelsByBinary(binary string) ([]sdk.Model, error)
 	WorkerModelsByState(state string) ([]sdk.Model, error)
-	WorkerRegister(sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
-	WorkerSetStatus(sdk.Status) error
+	WorkerRegister(ctx context.Context, form sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error)
+	WorkerSetStatus(ctx context.Context, status sdk.Status) error
 }
 
 // HookClient exposes functions used for hooks services
@@ -332,11 +332,11 @@ type InterfaceDeprecated interface {
 
 // Raw is a low-level interface exposing HTTP functions
 type Raw interface {
-	PostJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
-	PutJSON(path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
-	GetJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
-	DeleteJSON(path string, out interface{}, mods ...RequestModifier) (int, error)
-	Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
+	PostJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
+	PutJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)
+	GetJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
+	DeleteJSON(ctx context.Context, path string, out interface{}, mods ...RequestModifier) (int, error)
+	Request(ctx context.Context, method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, http.Header, int, error)
 }
 
 // GRPCPluginsClient exposes plugins API

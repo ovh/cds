@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -102,7 +103,9 @@ func (wk *currentWorker) tagHandler(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if err := wk.client.QueueJobTag(wk.currentJob.wJob.ID, tags); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := wk.client.QueueJobTag(ctx, wk.currentJob.wJob.ID, tags); err != nil {
 		writeError(w, r, err)
 		return
 	}

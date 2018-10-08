@@ -116,7 +116,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		//Before start the loop, take the bookJobID
 		if !w.disableOldWorkflows && w.bookedPBJobID != 0 {
-			w.processBookedPBJob(pbjobs)
+			w.processBookedPBJob(ctx, pbjobs)
 		}
 
 		//Definition of the function which must be called to stop the worker
@@ -149,7 +149,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		var exceptJobID int64
 		if w.bookedWJobID != 0 {
-			if errP := w.processBookedWJob(wjobs); errP != nil {
+			if errP := w.processBookedWJob(ctx, wjobs); errP != nil {
 				// Unbook job
 				if errR := w.client.QueueJobRelease(true, w.bookedWJobID); errR != nil {
 					log.Error("runCmd> QueueJobRelease> Cannot release job")
@@ -165,8 +165,9 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 			exceptJobID = w.bookedWJobID
 		}
-		if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
-			log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+
+		if err := w.client.WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
+			log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
 		}
 
 		go func(ctx context.Context, exceptID *int64) {
@@ -197,13 +198,14 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				case <-ctx.Done():
 					return
 				case <-refreshTick.C:
-					if err := w.client.WorkerRefresh(); err != nil {
+					if err := w.client.WorkerRefresh(ctx); err != nil {
 						log.Error("Heartbeat failed: %v", err)
 						nbErrors++
 						if nbErrors == 5 {
 							errs <- err
 						}
 					}
+					cancel()
 					nbErrors = 0
 				case <-registerTick.C:
 					if err := w.doRegister(); err != nil {
@@ -235,8 +237,8 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				if err := w.client.WorkerSetStatus(sdk.StatusChecking); err != nil {
-					log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
+				if err := w.client.WorkerSetStatus(ctx, sdk.StatusChecking); err != nil {
+					log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusChecking): %s", err)
 				}
 				requirementsOK, _ := checkRequirements(w, &j.Job.Action, j.ExecGroups, j.ID)
 
@@ -253,8 +255,8 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 						continue
 					}
 				} else if ttl > 0 {
-					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
-						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+					if err := w.client.WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
+						log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
 					}
 					log.Debug("Unable to run pipeline build job %d, requirements not OK, let's continue %s", j.ID, t)
 					continue
@@ -273,8 +275,8 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if continueTakeJob {
 					//Continue
-					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
-						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+					if err := w.client.WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
+						log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
 					}
 					continue
 				}
@@ -320,8 +322,8 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					}
 				} else if ttl > 0 {
 					// If requirements are KO and the ttl > 0, keep alive
-					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
-						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+					if err := w.client.WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
+						log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
 					}
 					w.bookedWJobID = 0
 					log.Debug("Unable to run this job %d%s, requirements not ok. let's continue", j.ID, t)
@@ -342,8 +344,8 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if continueTakeJob {
 					//Continue
-					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
-						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+					if err := w.client.WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
+						log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
 					}
 					w.bookedWJobID = 0
 					continue
@@ -359,7 +361,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	}
 }
 
-func (w *currentWorker) processBookedPBJob(pbjobs chan<- sdk.PipelineBuildJob) {
+func (w *currentWorker) processBookedPBJob(ctx context.Context, pbjobs chan<- sdk.PipelineBuildJob) {
 	log.Debug("Try to take the pipeline build job %d", w.bookedPBJobID)
 	b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedPBJobID), nil)
 	if err != nil {
@@ -373,8 +375,8 @@ func (w *currentWorker) processBookedPBJob(pbjobs chan<- sdk.PipelineBuildJob) {
 		return
 	}
 
-	if err := w.client.WorkerSetStatus(sdk.StatusChecking); err != nil {
-		log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
+	if err := w.client.WorkerSetStatus(ctx, sdk.StatusChecking); err != nil {
+		log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusChecking): %s", err)
 	}
 	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action, j.ExecGroups, w.bookedPBJobID)
 	if !requirementsOK {
@@ -396,7 +398,7 @@ func (w *currentWorker) processBookedPBJob(pbjobs chan<- sdk.PipelineBuildJob) {
 	pbjobs <- *j
 }
 
-func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) error {
+func (w *currentWorker) processBookedWJob(ctx context.Context, wjobs chan<- sdk.WorkflowNodeJobRun) error {
 	log.Debug("Try to take the workflow node job %d", w.bookedWJobID)
 	wjob, err := w.client.QueueJobInfo(w.bookedWJobID)
 	if err != nil {
@@ -413,7 +415,7 @@ func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) e
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
 		}}
-		if err := w.client.QueueJobSendSpawnInfo(true, wjob.ID, infos); err != nil {
+		if err := w.client.QueueJobSendSpawnInfo(ctx, true, wjob.ID, infos); err != nil {
 			return sdk.WrapError(err, "processBookedWJob> Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
 		}
 		return fmt.Errorf("processBookedWJob> the worker have no all requirements")
@@ -427,7 +429,7 @@ func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) e
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
 		}}
-		if err := w.client.QueueJobSendSpawnInfo(true, wjob.ID, infos); err != nil {
+		if err := w.client.QueueJobSendSpawnInfo(ctx, true, wjob.ID, infos); err != nil {
 			return sdk.WrapError(err, "processBookedWJob> Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
 		}
 		return fmt.Errorf("processBookedWJob> the worker have no all plugins")

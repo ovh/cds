@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
@@ -9,7 +10,7 @@ import (
 func (c *client) WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error) {
 	url := fmt.Sprintf("/workflow/hook")
 	w := []sdk.WorkflowNodeHook{}
-	if _, err := c.GetJSON(url, &w); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &w); err != nil {
 		return nil, err
 	}
 	return w, nil

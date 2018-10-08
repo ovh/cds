@@ -237,7 +237,9 @@ func (h *HatcheryVSphere) updateServerList() {
 
 // killDisabledWorkers kill workers which are disabled
 func (h *HatcheryVSphere) killDisabledWorkers() {
-	workers, err := h.CDSClient().WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	workers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		log.Warning("killDisabledWorkers> Cannot fetch worker list: %s", err)
 		return

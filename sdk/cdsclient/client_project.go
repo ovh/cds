@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,20 +22,20 @@ func (c *client) ProjectCreate(p *sdk.Project, groupName string) error {
 		}
 	}
 
-	if _, err := c.PostJSON("/project", p, nil); err != nil {
+	if _, err := c.PostJSON(context.Background(), "/project", p, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (c *client) ProjectDelete(key string) error {
-	_, err := c.DeleteJSON("/project/"+key, nil, nil)
+	_, err := c.DeleteJSON(context.Background(), "/project/"+key, nil, nil)
 	return err
 }
 
 func (c *client) ProjectGet(key string, mods ...RequestModifier) (*sdk.Project, error) {
 	p := &sdk.Project{}
-	if _, err := c.GetJSON("/project/"+key, p, mods...); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/project/"+key, p, mods...); err != nil {
 		return nil, err
 	}
 	return p, nil
@@ -48,7 +49,7 @@ func (c *client) ProjectList(withApplications, withWorkflows bool, filters ...Fi
 		path += fmt.Sprintf("&%s=%s", url.QueryEscape(f.Name), url.QueryEscape(f.Value))
 	}
 
-	if _, err := c.GetJSON(path, &p); err != nil {
+	if _, err := c.GetJSON(context.Background(), path, &p); err != nil {
 		return nil, err
 	}
 	return p, nil
@@ -62,7 +63,7 @@ func (c *client) ProjectGroupsImport(projectKey string, content io.Reader, forma
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, _, errReq := c.Request("POST", url, content)
+	btes, _, _, errReq := c.Request(context.Background(), "POST", url, content)
 	if errReq != nil {
 		return proj, errReq
 	}

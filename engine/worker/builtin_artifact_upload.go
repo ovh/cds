@@ -145,7 +145,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			go func(path string) {
 				log.Debug("Uploading %s", path)
 				defer wg.Done()
-				throughTempURL, duration, err := w.client.QueueArtifactUpload(buildID, tag.Value, path)
+				throughTempURL, duration, err := w.client.QueueArtifactUpload(ctx, buildID, tag.Value, path)
 				if err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 					wgErrors.Add(1)
