@@ -205,7 +205,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 							errs <- err
 						}
 					}
-					cancel()
 					nbErrors = 0
 				case <-registerTick.C:
 					if err := w.doRegister(); err != nil {
