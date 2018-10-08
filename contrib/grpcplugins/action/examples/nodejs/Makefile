@@ -26,7 +26,8 @@ build:
 	@mkdir -p $(TARGET_DIR)
 	@cp $(TARGET_NAME).yml $(TARGET_DIR)/plugin.yml
 	@npm install
-	@tar -czvf $(TARGET_DIR)/$(TARGET_TAR) node_modules *.js *.json
+	@npm link sdk-grpcplugin-cds-nodejs
+	@tar -cHhzvf $(TARGET_DIR)/$(TARGET_TAR) node_modules *.js *.json *.yml
 	@for OS in $(TARGET_OS); do \
 		for ARCH in $(TARGET_ARCH); do \
 			echo "$$PLUGIN_MANIFEST_BINARY" > $(TARGET_DIR)/plugin-$$OS-$$ARCH.yml; \

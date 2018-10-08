@@ -1,0 +1,3 @@
+# CDS GRPC Plugin example in Node.Js
+
+Here is an example of CDS plugin working with GRPC in Node.Js. If you want to test or if you want to create a GRPC Plugin in Node.Js please be aware that when you use GRPC with Node.Js, inside `node_modules` there is a binary which is downloaded for your host OS. Moreover we wrote a SDK for NodeJs [just here](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/nodejs) with a [README](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/nodejs/README.md) to explain you how to use it. So if you want to build and publish the plugin for linux/amd64 you must be on a linux/amd64. There already an example of `Makefile` which is working, feel free to update it for your needs.
