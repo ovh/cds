@@ -73,7 +73,7 @@ export class WorkerModelListComponent extends Table {
 
     searchBinary(binary: string) {
         this.filter = '';
-        this.selectedFilter = null;
+        this._selectedFilter = null;
         if (!binary) {
             this.searchView = true;
             this.filteredWorkerModels = this.workerModels;
