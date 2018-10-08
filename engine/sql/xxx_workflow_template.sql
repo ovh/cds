@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS "workflow_templates" (
     id BIGSERIAL PRIMARY KEY,
     group_id BIGINT NOT NULL,
-    name TEXT,
+    name TEXT NOT NULL,
     value TEXT,
     pipelines JSONB,
     parameters JSONB

@@ -32,8 +32,8 @@ func (api *API) getTemplatesHandler() service.Handler {
 
 func (api *API) postTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		t := &sdk.WorkflowTemplate{}
-		if err := service.UnmarshalBody(r, t); err != nil {
+		var t sdk.WorkflowTemplate
+		if err := service.UnmarshalBody(r, &t); err != nil {
 			return sdk.WrapError(err, "Unmarshall body error")
 		}
 
@@ -59,7 +59,7 @@ func (api *API) postTemplateHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 		}
 
-		if err := workflowtemplate.InsertWorkflow(api.mustDB(), t); err != nil {
+		if err := workflowtemplate.InsertWorkflow(api.mustDB(), &t); err != nil {
 			return err
 		}
 
@@ -113,7 +113,7 @@ func (api *API) executeTemplateHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "importPipelineHandler: Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer func() { _ = tx.Rollback() }()
 
 		var msgListString []string
 
