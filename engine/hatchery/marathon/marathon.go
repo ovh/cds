@@ -3,18 +3,15 @@ package marathon
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"html/template"
 	"math"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
 	"github.com/gorilla/mux"
 
@@ -113,15 +110,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 		}
 	}
 
-	//Custom http client with 3 retries
-	httpClient := &http.Client{
-		Timeout: time.Minute,
-		Transport: &httpcontrol.Transport{
-			RequestTimeout:  time.Minute,
-			MaxTries:        3,
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: hconfig.API.HTTP.Insecure},
-		},
-	}
+	httpClient := cdsclient.NewHTTPClient(time.Minute, hconfig.API.HTTP.Insecure)
 
 	config := marathon.NewDefaultConfig()
 	config.URL = hconfig.MarathonURL
