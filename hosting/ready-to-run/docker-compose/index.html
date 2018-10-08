@@ -854,6 +854,18 @@
     </li>
         </ul>
     </li>
+    <li data-nav-id="/cli/cdsctl/admin/errors/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/errors/">
+        <span>errors</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/errors/get/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/errors/get/">
+          <span>get</span>
+        </a>
+    </li>
+        </ul>
+    </li>
     <li data-nav-id="/cli/cdsctl/admin/hooks/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/hooks/">
         <span>hooks</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -2106,9 +2118,12 @@ $ docker-compose up cds-api cds-ui
 
 </code></pre>
 
-<p>Open a browser on <a href="http://localhost:2015">http://localhost:2015</a>, then register a new user.
+<p>Open a browser on <a href="http://localhost:2015">http://localhost:2015</a>, then register a new user <code>admin</code>,
+with a email <code>admin@localhost.local</code> for example.
 As there is no SMTP server configured in docker-compose.yml file,
 run <code>docker-compose logs</code> to get URL for validate the registration.</p>
+
+<p>After registration on UI, keep the password displayed, we will use it after.</p>
 
 <h2 id="prepare-project-pipeline-and-application">Prepare Project, Pipeline and Application</h2>
 
@@ -2172,14 +2187,33 @@ This ensures isolation of the workspaces and resources.</p>
 <h2 id="next-with-actions-plugins">Next with Actions, Plugins</h2>
 
 <ul>
-<li>You can download CDS CLI from <a href="https://github.com/ovh/cds/releases">https://github.com/ovh/cds/releases</a></li>
+<li><p>You can download CDS CLI from <a href="https://github.com/ovh/cds/releases">https://github.com/ovh/cds/releases</a> or from <a href="http://localhost:2015/settings/downloads">http://localhost:2015/settings/downloads</a></p>
 
-<li><p>Run:</p>
+<pre><code class="language-bash"># on a linux workstation:
+$ wget http://localhost:2015/cdsapi/download/engine/linux/amd64 -O cdsctl
+$ chmod +x cdsctl
+$ ./cdsctl login --api-url http://localhost:8081 -u admin
+CDS API URL: http://localhost:8081
+Username: admin
+Password:
+      You didn't specify config file location; /Users/yourhome/.cdsrc will be used.
+Login successful
+</code></pre></li>
+</ul>
 
-<pre><code class="language-bash">$ mv cds-linux-amd64 cds
-$ chmod +x cds
-$ ./cds login
-# enter: http://${HOSTNAME}:8081 as CDS Endpoint
+<p>Please note that the version linux/amd64, darwin/amd64 and windows/amd64 use libsecret / keychain to store the CDS Password.
+If you don&rsquo;t want to use the keychain, you can select the version i386.</p>
+
+<p>See: <a href="https://ovh.github.io/cds/cli/cdsctl/">cdsctl documentation</a></p>
+
+<ul>
+<li><p>Test cdsctl</p>
+
+<pre><code class="language-bash">$ cdsctl user me
+CDS API:http://localhost:8081
+fullname  admin
+email     admin@localhost.local
+username  admin
 </code></pre></li>
 
 <li><p>Import actions, example:</p>
@@ -2188,12 +2222,7 @@ $ ./cds login
 $ cdsctl action import cds-docker-package.yml
 </code></pre></li>
 
-<li><p>Import plugins, example:</p>
-
-<pre><code class="language-bash"># download plugin-download-linux-amd64 from  https://github.com/ovh/cds/releases
-$ mv plugin-download-linux-amd64 plugin-download
-$ cds admin plugin add ./plugin-download
-</code></pre></li>
+<li><p>Import plugins: Please read <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/">Plugins</a></p></li>
 </ul>
 
 <h1 id="go-further">Go further</h1>

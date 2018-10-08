@@ -856,6 +856,18 @@
     </li>
         </ul>
     </li>
+    <li data-nav-id="/cli/cdsctl/admin/errors/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/errors/">
+        <span>errors</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/errors/get/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/errors/get/">
+          <span>get</span>
+        </a>
+    </li>
+        </ul>
+    </li>
     <li data-nav-id="/cli/cdsctl/admin/hooks/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/hooks/">
         <span>hooks</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -2043,9 +2055,9 @@
 <li>
 <ul>
 <li><a href="#getusers-fetches-all-users-from-databases">GetUsers fetches all users from databases</a></li>
-<li><a href="#updateuser-modifies-user-informations">UpdateUser modifies user informations</a></li>
-<li><a href="#deleteuser-removes-a-user">DeleteUser removes a user</a></li>
 <li><a href="#getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</a></li>
+<li><a href="#deleteuser-removes-a-user">DeleteUser removes a user</a></li>
+<li><a href="#updateuser-modifies-user-informations">UpdateUser modifies user informations</a></li>
 <li><a href="#confirmuser-verify-token-send-via-email-and-mark-user-as-verified">ConfirmUser verify token send via email and mark user as verified</a></li>
 <li><a href="#getusergroups-returns-groups-of-the-user">getUserGroups returns groups of the user</a></li>
 <li><a href="#post-user-username-reset">POST <code>/user/&lt;username&gt;/reset</code></a></li>
@@ -2109,7 +2121,7 @@
 </tbody>
 </table>
 
-<h3 id="updateuser-modifies-user-informations">UpdateUser modifies user informations</h3>
+<h3 id="getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</h3>
 
 <table>
 <thead>
@@ -2122,7 +2134,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>GET</td>
 </tr>
 
 <tr>
@@ -2132,7 +2144,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateUserHandler%22">updateUserHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2165,7 +2177,7 @@
 </tbody>
 </table>
 
-<h3 id="getuser-returns-a-specific-user-s-information">GetUser returns a specific user&rsquo;s information</h3>
+<h3 id="updateuser-modifies-user-informations">UpdateUser modifies user informations</h3>
 
 <table>
 <thead>
@@ -2178,7 +2190,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -2188,7 +2200,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserHandler%22">getUserHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateUserHandler%22">updateUserHandler</a></td>
 </tr>
 </tbody>
 </table>
