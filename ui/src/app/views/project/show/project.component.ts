@@ -9,6 +9,7 @@ import {LoadOpts, Project} from '../../../model/project.model';
 import {User} from '../../../model/user.model';
 import {Warning} from '../../../model/warning.model';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {HelpersService} from '../../../service/helpers/helpers.service';
 import {ProjectStore} from '../../../service/project/project.store';
 import {WarningStore} from '../../../service/warning/warning.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
@@ -48,9 +49,14 @@ export class ProjectShowComponent implements OnInit {
     warnEnvironment: Array<Warning>;
     warningsSub: Subscription;
 
-    constructor(private _projectStore: ProjectStore, private _route: ActivatedRoute, private _router: Router,
-                private _toast: ToastService, public _translate: TranslateService,
-                private _authentificationStore: AuthentificationStore, private _warningStore: WarningStore) {
+    constructor(private _projectStore: ProjectStore,
+                private _route: ActivatedRoute,
+                private _router: Router,
+                private _toast: ToastService,
+                public _translate: TranslateService,
+                private _authentificationStore: AuthentificationStore,
+                private _warningStore: WarningStore,
+                private _helpersService: HelpersService) {
         this.currentUser = this._authentificationStore.getUser();
     }
 
@@ -105,6 +111,12 @@ export class ProjectShowComponent implements OnInit {
             let proj = prjs.get(key);
             if (proj) {
                 if (!proj.externalChange) {
+                    if (proj.labels) {
+                      proj.labels = proj.labels.map((lbl) => {
+                        lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);
+                        return lbl;
+                      });
+                    }
                     this.project = proj;
                     if (goToDefaultTab) {
                         if (this.project.workflow_migration !== 'NOT_BEGUN' && this.selectedTab === 'applications') {

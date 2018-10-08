@@ -14,7 +14,9 @@
             </a>
             <div class="extra content">
               <span class="left floated">
-                <div *ngFor="let label of wf?.labels?.slice(0, 3)" [style.background-color]="label.color" class="ui horizontal label">
+                <div *ngFor="let label of wf?.labels?.slice(0, 3)"
+                    [style.background-color]="label.color"
+                    [style.color]="label.font_color" class="ui horizontal label">
                     {{label.name}}
                 </div>
                 <div class="ui horizontal label" *ngIf="wf?.labels?.length > 3">
