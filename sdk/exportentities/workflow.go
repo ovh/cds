@@ -77,6 +77,22 @@ func WorkflowWithPermissions(w sdk.Workflow, exportedWorkflow *Workflow) error {
 }
 
 func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow) error {
+	if len(exportedWorkflow.Workflow) == 0 {
+		if len(exportedWorkflow.PipelineHooks) == 1 && exportedWorkflow.PipelineHooks[0].Model == sdk.RepositoryWebHookModelName {
+			exportedWorkflow.PipelineHooks = nil
+		}
+		return nil
+	}
+
+	for nodeName, hs := range exportedWorkflow.Hooks {
+		if nodeName == w.Root.Name && len(hs) == 1 {
+			if hs[0].Model == sdk.RepositoryWebHookModelName {
+				delete(exportedWorkflow.Hooks, nodeName)
+				break
+			}
+		}
+	}
+
 	return nil
 }
 
