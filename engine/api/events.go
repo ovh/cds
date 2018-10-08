@@ -13,8 +13,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -137,19 +137,10 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
-		uuidSK, errS := sessionstore.NewSessionKey()
-		if errS != nil {
-			return sdk.WrapError(errS, "eventsBroker.Serve> Cannot generate UUID")
-		}
-		uuid := string(uuidSK)
-		user := getUser(ctx)
-		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
-			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
-		}
-
+		uuid := sdk.UUID()
 		client := eventsBrokerSubscribe{
 			UUID:  uuid,
-			User:  user,
+			User:  getUser(ctx),
 			Queue: make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
 		}
 
@@ -237,38 +228,46 @@ func (b *eventsBroker) canSend(client eventsBrokerSubscribe) bool {
 }
 
 func (s *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
+	var isSharedInfra bool
+	for _, g := range s.User.Groups {
+		if g.ID == group.SharedInfraGroup.ID {
+			isSharedInfra = true
+			break
+		}
+	}
+
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if s.User.Admin || permission.ProjectPermission(event.ProjectKey, s.User) >= permission.PermissionRead {
+		if s.User.Admin || isSharedInfra || permission.ProjectPermission(event.ProjectKey, s.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
-		if s.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, s.User) >= permission.PermissionRead {
+		if s.User.Admin || isSharedInfra || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, s.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if s.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, s.User) >= permission.PermissionRead {
+		if s.User.Admin || isSharedInfra || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, s.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if s.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, s.User) >= permission.PermissionRead {
+		if s.User.Admin || isSharedInfra || permission.PipelinePermission(event.ProjectKey, event.PipelineName, s.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if s.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, s.User) >= permission.PermissionRead {
+		if s.User.Admin || isSharedInfra || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, s.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
-		if s.User.Admin || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, s.User, permission.PermissionRead) {
+		if s.User.Admin || isSharedInfra || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, s.User, permission.PermissionRead) {
 			return true
 		}
 		return false

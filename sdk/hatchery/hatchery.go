@@ -105,7 +105,7 @@ func Create(h Interface) error {
 
 	sdk.GoRoutine("queuePolling",
 		func() {
-			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
+			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Minute, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 				cancel()
 			}
@@ -286,13 +286,6 @@ func Create(h Interface) error {
 			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
 				log.Debug("job %d already spawned in previous routine", j.ID)
 				endTrace("already spawned")
-				continue
-			}
-
-			//Check gracetime
-			if j.QueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
-				log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID, j.QueuedSeconds)
-				endTrace("too fresh")
 				continue
 			}
 

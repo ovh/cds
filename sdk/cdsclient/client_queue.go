@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -50,17 +52,25 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 }
 
 func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error {
-	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
-	pbjobsTicker := time.NewTicker(delay * 10)
-	oldJobsTicker := time.NewTicker(delay * 5)
+	pbjobsTicker := time.NewTicker(delay * 2)
+
+	// This goroutine call the SSE route
+	chanSSEvt := make(chan SSEvent)
+	sdk.GoRoutine("RequestSSEGet", func() {
+		for ctx.Err() == nil {
+			if err := c.RequestSSEGet(ctx, "/events", chanSSEvt); err != nil {
+				log.Println(err)
+			}
+			time.Sleep(2 * time.Second)
+		}
+	})
 
 	for {
 		select {
 		case <-ctx.Done():
-			jobsTicker.Stop()
 			pbjobsTicker.Stop()
-			oldJobsTicker.Stop()
+			jobsTicker.Stop()
 			if jobs != nil {
 				close(jobs)
 			}
@@ -68,105 +78,101 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				close(pbjobs)
 			}
 			return ctx.Err()
-		case <-oldJobsTicker.C:
-			if c.config.Verbose {
-				fmt.Println("oldJobsTicker")
+		case evt := <-chanSSEvt:
+			if jobs == nil {
+				continue
 			}
 
-			if jobs != nil {
-				queue := sdk.WorkflowQueue{}
-				ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-				if _, err := c.GetJSON(ctxt, "/queue/workflows", &queue); err != nil {
-					errs <- sdk.WrapError(err, "Unable to load old jobs")
-				}
-				cancel()
+			content, _ := ioutil.ReadAll(evt.Data)
 
-				if c.config.Verbose {
-					fmt.Println("Old Jobs Queue size: ", len(queue))
-				}
+			var apiEvent sdk.Event
+			_ = json.Unmarshal(content, &apiEvent) // ignore errors
+			// filter only EventRunWorkflowJob
+			if apiEvent.EventType == "sdk.EventRunWorkflowJob" {
+				jobRunID, ok := apiEvent.Payload["ID"].(float64)
+				status, okStatus := apiEvent.Payload["Status"].(string)
+				if ok && okStatus && status == sdk.StatusWaiting.String() {
+					// wait for the grace time before pushing the job in the channel
+					go func() {
+						time.Sleep(time.Duration(graceTime) * time.Second)
+						job, err := c.QueueJobInfo(int64(jobRunID))
 
-				shrinkQueue(&queue, cap(jobs))
-				for _, j := range queue {
-					jobs <- j
+						// Do not log the error if the job does not exist
+						if sdk.ErrorIs(err, sdk.ErrWorkflowNodeRunJobNotFound) {
+							return
+						}
+
+						if err != nil {
+							errs <- fmt.Errorf("unable to get job %v info: %v", jobRunID, err)
+							return
+						}
+
+						// push the job in the channel
+						if job.Status == sdk.StatusWaiting.String() && job.BookedBy.Name == "" {
+							jobs <- *job
+						}
+					}()
 				}
 			}
+
 		case <-jobsTicker.C:
 			if c.config.Verbose {
 				fmt.Println("jobsTicker")
 			}
 
-			if jobs != nil {
-				queue := sdk.WorkflowQueue{}
-
-				url, _ := url.Parse("/queue/workflows")
-				q := url.Query()
-				if ratioService != nil {
-					q.Add("ratioService", fmt.Sprintf("%d", *ratioService))
-				}
-				if modelType != "" {
-					q.Add("modelType", modelType)
-				}
-				url.RawQuery = q.Encode()
-				ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-				_, header, _, errReq := c.RequestJSON(ctxt, http.MethodGet, url.String(), nil, &queue, SetHeader(RequestedIfModifiedSinceHeader, t0.Format(time.RFC1123)))
-				if errReq != nil {
-					cancel()
-					errs <- sdk.WrapError(errReq, "Unable to load jobs")
-					continue
-				}
-				cancel()
-
-				apiTimeHeader := header.Get(ResponseAPITimeHeader)
-
-				var errParse error
-				t0, errParse = time.Parse(time.RFC3339, apiTimeHeader)
-				if errParse != nil {
-					errs <- sdk.WrapError(errParse, "Unable to load jobs, failed to parse API Time")
-					continue
-				}
-
-				if c.config.Verbose {
-					fmt.Println("Queue size: ", len(queue))
-				}
-				t0 = shrinkQueue(&queue, cap(jobs))
-
-				// Gracetime to remove, see https://github.com/ovh/cds/issues/1214
-				t0 = t0.Add(-time.Duration(graceTime) * time.Second)
-
-				for _, j := range queue {
-					// if there is a grace time, check it
-					if j.QueuedSeconds > int64(graceTime) {
-						if c.config.Verbose {
-							fmt.Printf("job %d send on chan\n", j.ID)
-						}
-						// Useful to not relaunch a job on a worker with bad requirements
-						if exceptWfJobID == nil || *exceptWfJobID != j.ID {
-							jobs <- j
-						}
-					} else {
-						if c.config.Verbose {
-							fmt.Printf("job %d too new\n", j.ID)
-						}
-					}
-				}
+			if jobs == nil {
+				continue
 			}
+
+			reqMods := []RequestModifier{}
+			if ratioService != nil {
+				reqMods = append(reqMods, SetHeader("ratioService", strconv.Itoa(*ratioService)))
+			}
+
+			if modelType != "" {
+				reqMods = append(reqMods, SetHeader("modelType", modelType))
+			}
+
+			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
+
+			queue := sdk.WorkflowQueue{}
+			if _, err := c.GetJSON(ctxt, "/queue/workflows", &queue, reqMods...); err != nil {
+				errs <- sdk.WrapError(err, "Unable to load jobs")
+				cancel()
+				continue
+			}
+
+			cancel()
+
+			if c.config.Verbose {
+				fmt.Println("Jobs Queue size: ", len(queue))
+			}
+
+			shrinkQueue(&queue, cap(jobs))
+			for _, j := range queue {
+				jobs <- j
+			}
+
 		case <-pbjobsTicker.C:
 			if c.config.Verbose {
 				fmt.Println("pbjobsTicker")
 			}
 
-			if pbjobs != nil {
-				queue := []sdk.PipelineBuildJob{}
-				ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-				if _, err := c.GetJSON(ctxt, "/queue?status=all", &queue); err != nil {
-					errs <- sdk.WrapError(err, "Unable to load pipeline build jobs")
-				}
-				for _, j := range queue {
-					pbjobs <- j
-				}
-				cancel()
+			if pbjobs == nil {
+				continue
 			}
+
+			queue := []sdk.PipelineBuildJob{}
+			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
+			if _, err := c.GetJSON(ctxt, "/queue?status=all", &queue); err != nil {
+				errs <- sdk.WrapError(err, "Unable to load pipeline build jobs")
+			}
+			for _, j := range queue {
+				pbjobs <- j
+			}
+			cancel()
 		}
+
 	}
 }
 

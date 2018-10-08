@@ -665,7 +665,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Con
 				found = true
 				// If worker is disabled, kill it
 				if n.Status == sdk.StatusDisabled {
-					log.Debug("lhatchery> swarm> listAwolWorkers> Worker %s is disabled. Kill it with fire!", c.Names[0])
+					log.Debug("hatchery> swarm> listAwolWorkers> Worker %s is disabled. Kill it with fire!", c.Names[0])
 					oldContainers = append(oldContainers, c)
 					break
 				}
