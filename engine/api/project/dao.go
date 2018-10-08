@@ -3,12 +3,12 @@ package project
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
@@ -43,16 +43,7 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo str
 				OR
 				$2 = ANY(string_to_array($1, ',')::int[])
 		)`
-
-		var groupID string
-		for i, g := range u.Groups {
-			if i == 0 {
-				groupID = fmt.Sprintf("%d", g.ID)
-			} else {
-				groupID += "," + fmt.Sprintf("%d", g.ID)
-			}
-		}
-		args = []interface{}{groupID, group.SharedInfraGroup.ID}
+		args = []interface{}{database.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID}
 	}
 
 	args = append(args, repo)
@@ -84,15 +75,7 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk
 						$2 = ANY(string_to_array($1, ',')::int[])
 				)
 				ORDER by project.name, project.projectkey ASC`
-		var groupID string
-		for i, g := range u.Groups {
-			if i == 0 {
-				groupID = fmt.Sprintf("%d", g.ID)
-			} else {
-				groupID += "," + fmt.Sprintf("%d", g.ID)
-			}
-		}
-		args = []interface{}{groupID, group.SharedInfraGroup.ID}
+		args = []interface{}{database.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID}
 	}
 	return loadprojects(db, store, u, opts, query, args...)
 }

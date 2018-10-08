@@ -2,11 +2,11 @@ package navbar
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
@@ -158,18 +158,9 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data
 			)
 		ORDER BY project.name
 	)
-	`
+  `
 
-	var groupID string
-	for i, g := range u.Groups {
-		if i == 0 {
-			groupID = fmt.Sprintf("%d", g.ID)
-		} else {
-			groupID += "," + fmt.Sprintf("%d", g.ID)
-		}
-	}
-
-	rows, err := db.Query(query, u.ID, groupID, group.SharedInfraGroup.ID)
+	rows, err := db.Query(query, u.ID, database.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
 	if err != nil {
 		return data, err
 	}

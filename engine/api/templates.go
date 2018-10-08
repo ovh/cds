@@ -18,8 +18,10 @@ import (
 
 func (api *API) getTemplatesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO implement group owner for templates
-		ts, err := workflowtemplate.GetAll(api.mustDB())
+		u := getUser(ctx)
+
+		ts, err := workflowtemplate.GetAll(api.mustDB(), workflowtemplate.NewCriteria().
+			GroupIDs(sdk.GroupsToIDs(u.Groups)...))
 		if err != nil {
 			return err
 		}
@@ -31,7 +33,7 @@ func (api *API) getTemplatesHandler() service.Handler {
 func (api *API) postTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		t := &sdk.WorkflowTemplate{}
-		if err := UnmarshalBody(r, t); err != nil {
+		if err := service.UnmarshalBody(r, t); err != nil {
 			return sdk.WrapError(err, "Unmarshall body error")
 		}
 
@@ -39,7 +41,23 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
-		// TODO implement group owner for templates
+		u := getUser(ctx)
+
+		var isAdminForGroup bool
+		for _, g := range u.Groups {
+			if g.ID == t.GroupID {
+				for _, a := range g.Admins {
+					if a.ID == u.ID {
+						isAdminForGroup = true
+						break
+					}
+				}
+				break
+			}
+		}
+		if !isAdminForGroup {
+			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+		}
 
 		if err := workflowtemplate.InsertWorkflow(api.mustDB(), t); err != nil {
 			return err
@@ -66,9 +84,10 @@ func (api *API) executeTemplateHandler() service.Handler {
 			return sdk.ErrNotFound
 		}
 
-		// TODO implement group owner for templates
+		u := getUser(ctx)
 
-		t, err := workflowtemplate.GetByID(api.mustDB(), id)
+		t, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().
+			IDs(id).GroupIDs(sdk.GroupsToIDs(u.Groups)...))
 		if err != nil {
 			return err
 		}
@@ -77,7 +96,7 @@ func (api *API) executeTemplateHandler() service.Handler {
 		}
 
 		var req sdk.WorkflowTemplateRequest
-		if err := UnmarshalBody(r, &req); err != nil {
+		if err := service.UnmarshalBody(r, &req); err != nil {
 			return sdk.WrapError(err, "Unmarshall body error")
 		}
 

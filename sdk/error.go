@@ -164,6 +164,7 @@ var (
 	ErrJobLocked                              = Error{ID: 147, Status: http.StatusConflict}
 	ErrWorkflowNodeRunLocked                  = Error{ID: 148, Status: http.StatusConflict}
 	ErrInvalidData                            = Error{ID: 149, Status: http.StatusBadRequest}
+	ErrInvalidGroupAdmin                      = Error{ID: 150, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -311,6 +312,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrColorBadFormat.ID:                         "The format of color isn't correct. You must use hexadecimal format (example: #FFFF)",
 	ErrInvalidHookConfiguration.ID:               "Invalid hook configuration",
 	ErrInvalidData.ID:                            "Cannot validate given data",
+	ErrInvalidGroupAdmin.ID:                      "User is not a group's admin",
 }
 
 var errorsFrench = map[int]string{
@@ -458,6 +460,7 @@ var errorsFrench = map[int]string{
 	ErrColorBadFormat.ID:                         "Format de la couleur incorrect. Vous devez utiliser le format hexadécimal (exemple: #FFFF)",
 	ErrInvalidHookConfiguration.ID:               "Configuration de hook invalide",
 	ErrInvalidData.ID:                            "Impossible de valider les données",
+	ErrInvalidGroupAdmin.ID:                      "L'utilisateur n'est pas administrateur du groupe",
 }
 
 var errorsLanguages = []map[int]string{

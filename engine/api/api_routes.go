@@ -430,8 +430,8 @@ func (api *API) InitRouter() {
 	r.Handle("/services/{type}", r.GET(api.getExternalServiceHandler, NeedWorker()))
 
 	// Templates
-	r.Handle("/templates", r.GET(api.getTemplatesHandler, NeedAdmin(true)), r.POST(api.postTemplateHandler, NeedAdmin(true))) // FIXME wip
-	r.Handle("/project/{permProjectKey}/templates/{id}/execute", r.POST(api.executeTemplateHandler))
+	r.Handle("/template", r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))
+	r.Handle("/project/{permProjectKey}/template/{id}/execute", r.POST(api.executeTemplateHandler))
 
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
