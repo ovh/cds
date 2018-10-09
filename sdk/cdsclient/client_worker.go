@@ -17,14 +17,20 @@ func (c *client) WorkerList(ctx context.Context) ([]sdk.Worker, error) {
 	return p, nil
 }
 
+func (c *client) WorkerDisableForce(ctx context.Context, id string) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	url := fmt.Sprintf("/worker/%s/disable?force=true", id)
+	_, err := c.PostJSON(ctx, url, nil, nil)
+	return err
+}
+
 func (c *client) WorkerDisable(ctx context.Context, id string) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	url := fmt.Sprintf("/worker/%s/disable", id)
-	if _, err := c.PostJSON(ctx, url, nil, nil); err != nil {
-		return err
-	}
-	return nil
+	_, err := c.PostJSON(ctx, url, nil, nil)
+	return err
 }
 
 func (c *client) WorkerRefresh(ctx context.Context) error {

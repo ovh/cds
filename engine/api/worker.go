@@ -77,6 +77,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		id := vars["id"]
+		force := FormBool(r, "force")
 
 		wor, err := worker.LoadWorker(api.mustDB(), id)
 		if err != nil {
@@ -86,7 +87,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "disabledWorkerHandler> Cannot load worker %s", id)
 		}
 
-		if wor.Status == sdk.StatusBuilding {
+		if wor.Status == sdk.StatusBuilding && !force {
 			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wor.Status)
 		}
 
