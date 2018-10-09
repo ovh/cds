@@ -76,13 +76,13 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 	var currEvent *SSEvent
 	var EOF bool
 
+	go func(stop *bool) {
+		<-ctx.Done()
+		*stop = true
+	}(&EOF)
+
 	for !EOF {
-		if ctx.Err() != nil {
-			break
-		}
-
 		bs, err := br.ReadBytes('\n')
-
 		if err != nil && err != io.EOF {
 			return err
 		}
