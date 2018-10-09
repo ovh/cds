@@ -7,6 +7,7 @@ import (
 
 func init() {
 	gorpmapping.Register(
-		gorpmapping.New(sdk.WorkflowTemplate{}, "workflow_templates", true, "id"),
+		gorpmapping.New(sdk.WorkflowTemplate{}, "workflow_template", true, "id"),
+		gorpmapping.New(sdk.WorkflowTemplateWorkflow{}, "workflow_template_workflow", true, "id"),
 	)
 }

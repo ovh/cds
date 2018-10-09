@@ -431,6 +431,7 @@ func (api *API) InitRouter() {
 
 	// Templates
 	r.Handle("/template", r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))
+	r.Handle("/template/{id}", r.PUT(api.putTemplateHandler))
 	r.Handle("/project/{permProjectKey}/template/{id}/execute", r.POST(api.executeTemplateHandler))
 
 	//Not Found handler

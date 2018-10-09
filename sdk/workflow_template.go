@@ -3,13 +3,29 @@ package sdk
 import (
 	"database/sql/driver"
 	json "encoding/json"
-	"fmt"
+
+	"github.com/pkg/errors"
 )
 
 // WorkflowTemplateRequest struct use for execution request.
 type WorkflowTemplateRequest struct {
 	Name       string            `json:"name"`
 	Parameters map[string]string `json:"parameters"`
+}
+
+// Value returns driver.Value from workflow template request.
+func (w WorkflowTemplateRequest) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal WorkflowTemplateRequest")
+}
+
+// Scan workflow template request.
+func (w *WorkflowTemplateRequest) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateRequest")
 }
 
 // WorkflowTemplateResult struct.
@@ -26,12 +42,13 @@ type WorkflowTemplate struct {
 	Parameters WorkflowTemplateParameters `json:"parameters" db:"parameters"`
 	Value      string                     `json:"value" db:"value"`
 	Pipelines  PipelineTemplates          `json:"pipelines" db:"pipelines"`
+	Version    int64                      `json:"version" db:"version"`
 }
 
 // ValidateStruct returns workflow template validity.
 func (w *WorkflowTemplate) ValidateStruct() error {
 	if w.Name == "" || len(w.Value) == 0 {
-		return ErrInvalidData
+		return WithStack(ErrInvalidData)
 	}
 
 	for _, p := range w.Pipelines {
@@ -81,7 +98,7 @@ type PipelineTemplate struct {
 // ValidateStruct returns pipeline template validity.
 func (p *PipelineTemplate) ValidateStruct() error {
 	if len(p.Value) == 0 {
-		return ErrInvalidData
+		return WithStack(ErrInvalidData)
 	}
 	return nil
 }
@@ -124,7 +141,7 @@ func (w WorkflowTemplateParameters) Value() (driver.Value, error) {
 func (w *WorkflowTemplateParameters) Scan(src interface{}) error {
 	source, ok := src.([]byte)
 	if !ok {
-		return fmt.Errorf("WorkflowTemplateParameters> type assertion .([]byte) failed") // TODO withstack
+		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateParameters")
 }
@@ -142,15 +159,24 @@ func (p PipelineTemplates) Value() (driver.Value, error) {
 func (p *PipelineTemplates) Scan(src interface{}) error {
 	source, ok := src.([]byte)
 	if !ok {
-		return fmt.Errorf("PipelineTemplates> type assertion .([]byte) failed") // TODO withstack
+		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
-	return WrapError(json.Unmarshal(source, p), "cannot unmarshal WorkflowTemplateParameters")
+	return WrapError(json.Unmarshal(source, p), "cannot unmarshal PipelineTemplates")
 }
 
 // ValidateStruct returns pipeline template validity.
 func (w *WorkflowTemplateParameter) ValidateStruct() error {
 	if w.Key == "" || !w.Type.IsValid() {
-		return ErrInvalidData
+		return WithStack(ErrInvalidData)
 	}
 	return nil
+}
+
+// WorkflowTemplateWorkflow struct.
+type WorkflowTemplateWorkflow struct {
+	ID                      int64                   `json:"id" db:"id" `
+	WorkflowTemplateID      int64                   `json:"workflow_template_id" db:"workflow_template_id"`
+	WorkflowID              int64                   `json:"workflow_id" db:"workflow_id"`
+	WorkflowTemplateVersion int64                   `json:"workflow_template_version" db:"workflow_template_version"`
+	Request                 WorkflowTemplateRequest `json:"request" db:"request"`
 }
