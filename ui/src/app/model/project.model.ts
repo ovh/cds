@@ -61,4 +61,6 @@ export class Label {
   color: string;
   project_id: number;
   workflow_id: number;
+  // ui params
+  font_color: string;
 }

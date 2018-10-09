@@ -3,6 +3,7 @@ import {cloneDeep} from 'lodash';
 import {finalize} from 'rxjs/operators';
 import {IdName, Label, Project} from '../../../../../model/project.model';
 import {Warning} from '../../../../../model/warning.model';
+import {HelpersService} from '../../../../../service/helpers/helpers.service';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {LabelsEditComponent} from '../../../../../shared/labels/edit/labels.edit.component';
 
@@ -40,6 +41,9 @@ export class ProjectWorkflowListLabelsComponent {
         this.workflowLabelsMap[wf.name] = {};
         if (wf.labels && wf.labels.length > 0) {
           wf.labels.forEach((lbl) => {
+            if (!lbl.font_color) {
+              lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);
+            }
             this.workflowLabelsMap[wf.name][lbl.name] = true;
             if (!this.workflowLabelsMapByLabels[lbl.name]) {
               this.workflowLabelsMapByLabels[lbl.name] = [];
@@ -96,7 +100,7 @@ export class ProjectWorkflowListLabelsComponent {
   filteredLabels: Array<Label> = [];
   loadingLabel = false;
 
-  constructor(private _workflowStore: WorkflowStore) { }
+  constructor(private _workflowStore: WorkflowStore, private _helpersService: HelpersService) { }
 
   linkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;
