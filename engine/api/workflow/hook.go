@@ -295,8 +295,12 @@ func mergeAndDiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[str
 
 // DefaultPayload returns the default payload for the workflow root
 func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, u *sdk.User, wf *sdk.Workflow) (interface{}, error) {
+	if wf.Root.Context == nil {
+		return nil, nil
+	}
 	var defaultPayload interface{}
-	if wf.Root.Context == nil || wf.Root.Context.Application == nil || wf.Root.Context.Application.ID == 0 {
+	// Load application if not available
+	if wf.Root.Context != nil && wf.Root.Context.Application == nil && wf.Root.Context.ApplicationID != 0 {
 		app, errLa := application.LoadByID(db, store, wf.Root.Context.ApplicationID, u)
 		if errLa != nil {
 			return wf.Root.Context.DefaultPayload, sdk.WrapError(errLa, "DefaultPayload> unable to load application by id %d", wf.Root.Context.ApplicationID)
