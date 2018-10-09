@@ -175,6 +175,17 @@ func variablesToParameters(prefix string, variables []Variable) []Parameter {
 	return res
 }
 
+// ParametersMerge merges two slices of parameters preserving all values
+func ParametersMerge(src []Parameter, overwritter []Parameter) []Parameter {
+	params := make([]Parameter, 0, len(src)+len(overwritter))
+	params = append(params, src...)
+	for _, param := range overwritter {
+		ParameterAddOrSetValue(&params, param.Name, param.Type, param.Value)
+	}
+
+	return params
+}
+
 // ParametersMapMerge merges two maps of parameters preserving all values
 func ParametersMapMerge(params map[string]string, otherParams map[string]string) map[string]string {
 	for k, v := range otherParams {

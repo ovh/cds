@@ -435,7 +435,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 			runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		}
 		run.Payload = runPayload
-		run.PipelineParameters = n.Context.DefaultPipelineParameters
+		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
 		next()
 	}
 
@@ -443,7 +443,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if h != nil {
 		runPayload = sdk.ParametersMapMerge(runPayload, h.Payload)
 		run.Payload = runPayload
-		run.PipelineParameters = n.Context.DefaultPipelineParameters
+		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
 	}
 
 	run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
@@ -466,7 +466,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 		runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		run.Payload = runPayload
-		run.PipelineParameters = m.PipelineParameters
+		run.PipelineParameters = sdk.ParametersMerge(m.PipelineParameters, n.Context.DefaultPipelineParameters)
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
 			Type:  sdk.StringParameter,
