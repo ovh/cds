@@ -2085,14 +2085,22 @@
 <ul>
 <li>a builtin action, as GitClone, etc&hellip; <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/">read more</a></li>
 <li>a user action <a href="">read more</a></li>
-<li>a Plugin Action</li>
+<li>a plugin action</li>
 </ul>
 
-<p>A Plugin is a Golang Binary.</p>
+<p>A Plugin is simply an executable which expose a GRPC server corresponding to the right <a href="https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/actionplugin.proto">proto file</a>. You can use the programming language of your choice. The CDS worker will simply query the GRPC server of the plugin.</p>
 
-<p>Take a look at <a href="https://github.com/ovh/cds/tree/master/sdk/plugin/dummy/dummy_plugin.go">https://github.com/ovh/cds/tree/master/sdk/plugin/dummy/dummy_plugin.go</a></p>
+<p>In order to communicate with a CDS worker, a plugin MUST fill the following requirements:</p>
 
-<p>Contribute on <a href="https://github.com/ovh/cds/tree/master/contrib/plugins">https://github.com/ovh/cds/tree/master/contrib/plugins</a></p>
+<ul>
+<li>Expose a GRPC server</li>
+<li>Implement methods and messages coming from this <a href="https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/actionplugin.proto">proto file</a></li>
+<li>Display this message at the launch of your plugin XXX is ready to accept new connection where XXX is your ip address with port or your unix socket (example: <code>127.0.0.1:55939 is ready to accept new connection</code> or for a unix socket <code>XXX.sock is ready to accept new connection</code>). Note that your plugin can use any unix socket or tcp port as long as it informs the worker using the log line above.</li>
+</ul>
+
+<p>More resources that may help you in developing a CDS plugin are available: <a href="https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin">SDK in this directory</a> with some examples <a href="https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/examples">here</a>.</p>
+
+<p>Contribute on <a href="https://github.com/ovh/cds/tree/master/contrib/grpcplugin/action">https://github.com/ovh/cds/tree/master/contrib/grpcplugin/action</a></p>
 
 
 <footer class=" footline" >
