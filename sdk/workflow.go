@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"regexp"
 	"sort"
 	"time"
@@ -945,6 +946,49 @@ type WorkflowNodeContextDefaultPayloadVCS struct {
 	GitHashBefore string `json:"git.hash.before" db:"-"`
 	GitRepository string `json:"git.repository" db:"-"`
 	GitMessage    string `json:"git.message" db:"-"`
+}
+
+// IsWorkflowNodeContextDefaultPayloadVCS checks with several way if the workflow node context has a default vcs payloas
+func IsWorkflowNodeContextDefaultPayloadVCS(i interface{}) bool {
+	_, ok := i.(WorkflowNodeContextDefaultPayloadVCS)
+	if ok {
+		return true
+	}
+
+	dumper := dump.NewDefaultEncoder(nil)
+	dumper.ExtraFields.DetailedMap = false
+	dumper.ExtraFields.DetailedStruct = false
+	dumper.ExtraFields.Len = false
+	dumper.ExtraFields.Type = false
+
+	mI, _ := dumper.ToMap(i)
+	mD, _ := dumper.ToMap(WorkflowNodeContextDefaultPayloadVCS{})
+	var kI, kD []string
+	for k := range mI {
+		kI = append(kI, k)
+	}
+	for k := range mD {
+		kD = append(kD, k)
+	}
+
+	if reflect.DeepEqual(kI, kD) {
+		return true
+	}
+
+	hasKey := func(s string) bool {
+		_, has := mI[s]
+		return has
+	}
+
+	if hasKey("git.branch") &&
+		hasKey("git.hash") &&
+		hasKey("git.author") &&
+		hasKey("git.hash.before") &&
+		hasKey("git.repository") &&
+		hasKey("git.message") {
+		return true
+	}
+	return false
 }
 
 //WorkflowList return the list of the workflows for a project

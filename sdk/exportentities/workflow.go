@@ -66,8 +66,10 @@ const (
 	WorkflowVersion1 = "v1.0"
 )
 
+// WorkflowOptions is the type for several workflow-as-code options
 type WorkflowOptions func(sdk.Workflow, *Workflow) error
 
+// WorkflowWithPermissions export workflow with permissions
 func WorkflowWithPermissions(w sdk.Workflow, exportedWorkflow *Workflow) error {
 	exportedWorkflow.Permissions = make(map[string]int, len(w.Groups))
 	for _, p := range w.Groups {
@@ -76,6 +78,7 @@ func WorkflowWithPermissions(w sdk.Workflow, exportedWorkflow *Workflow) error {
 	return nil
 }
 
+// WorkflowSkipIfOnlyOneRepoWebhook skips the repo webhook if it's the only one
 func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow) error {
 	if len(exportedWorkflow.Workflow) == 0 {
 		if len(exportedWorkflow.PipelineHooks) == 1 && exportedWorkflow.PipelineHooks[0].Model == sdk.RepositoryWebHookModelName {
@@ -172,7 +175,12 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 			entry.OneAtATime = &n.Context.Mutex
 		}
 
-		if n.Context.HasDefaultPayload() {
+		var skipPayload bool
+		if n.Context.HasDefaultPayload() && n.Context.Application != nil && n.Context.Application.RepositoryFullname != "" {
+			skipPayload = sdk.IsWorkflowNodeContextDefaultPayloadVCS(n.Context.DefaultPayload)
+		}
+
+		if !skipPayload {
 			enc := dump.NewDefaultEncoder(nil)
 			enc.ExtraFields.DetailedMap = false
 			enc.ExtraFields.DetailedStruct = false

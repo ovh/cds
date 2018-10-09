@@ -328,9 +328,13 @@ func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 		defaultPayload = wf.Root.Context.DefaultPayload
 		if !wf.Root.Context.HasDefaultPayload() {
-			defaultPayload = sdk.WorkflowNodeContextDefaultPayloadVCS{
+			structuredDefaultPayload := sdk.WorkflowNodeContextDefaultPayloadVCS{
 				GitBranch:     defaultBranch,
 				GitRepository: wf.Root.Context.Application.RepositoryFullname,
+			}
+			defaultPayloadBtes, _ := json.Marshal(structuredDefaultPayload)
+			if err := json.Unmarshal(defaultPayloadBtes, &defaultPayload); err != nil {
+				return nil, err
 			}
 		} else if defaultPayloadMap, err := wf.Root.Context.DefaultPayloadToMap(); err == nil && defaultPayloadMap["git.branch"] == "" {
 			defaultPayloadMap["git.branch"] = defaultBranch
