@@ -1,4 +1,4 @@
-# SDK Node.Js for CDS GRPC action plugins
+# SDK Node.js for CDS GRPC action plugins
 
 ## How to use
 

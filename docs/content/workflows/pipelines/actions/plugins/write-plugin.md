@@ -18,7 +18,7 @@ In order to communicate with a CDS worker, a plugin MUST fill the following requ
 
 + Expose a GRPC server
 + Implement methods and messages coming from this [proto file](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin/actionplugin.proto)
-+ Display this log at the launch of your plugin XXX is ready to accept new connection where XXX is your ip address with port or your unix socket (example: 127.0.0.1:55939 is ready to accept new connection). Note that your plugin can use any unix socket or tcp port as long as it informs the worker using the log line above.
++ Display this message at the launch of your plugin XXX is ready to accept new connection where XXX is your ip address with port or your unix socket (example: `127.0.0.1:55939 is ready to accept new connection` or for a unix socket `XXX.sock is ready to accept new connection`). Note that your plugin can use any unix socket or tcp port as long as it informs the worker using the log line above.
 
 More resources that may help you in developing a CDS plugin are available: [SDK in this directory](https://github.com/ovh/cds/tree/master/sdk/grpcplugin/actionplugin) with some examples [here](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/examples).
 
