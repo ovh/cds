@@ -298,6 +298,11 @@ func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	if wf.Root.Context == nil {
 		return nil, nil
 	}
+
+	if wf.Root.Context.Application == nil {
+		return wf.Root.Context.DefaultPayload, nil
+	}
+
 	var defaultPayload interface{}
 	// Load application if not available
 	if wf.Root.Context != nil && wf.Root.Context.Application == nil && wf.Root.Context.ApplicationID != 0 {
