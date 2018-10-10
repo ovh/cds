@@ -27,11 +27,16 @@ func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Clie
 		Timeout: timeout,
 		Transport: &http.Transport{
 			Proxy: http.ProxyFromEnvironment,
-			Dial: (&net.Dialer{
-				Timeout: 5 * time.Second,
-			}).Dial,
-			TLSHandshakeTimeout: 5 * time.Second,
-			TLSClientConfig:     &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			MaxIdleConns:          50,
+			IdleConnTimeout:       30 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
 		},
 	}
 }
