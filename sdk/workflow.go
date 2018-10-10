@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"regexp"
 	"sort"
 	"time"
@@ -963,32 +962,29 @@ func IsWorkflowNodeContextDefaultPayloadVCS(i interface{}) bool {
 
 	mI, _ := dumper.ToMap(i)
 	mD, _ := dumper.ToMap(WorkflowNodeContextDefaultPayloadVCS{})
-	var kI, kD []string
-	for k := range mI {
-		kI = append(kI, k)
-	}
-	for k := range mD {
-		kD = append(kD, k)
-	}
 
-	if reflect.DeepEqual(kI, kD) {
-		return true
-	}
-
+	// compare interface keys with default payload keys
 	hasKey := func(s string) bool {
 		_, has := mI[s]
 		return has
 	}
 
-	if hasKey("git.branch") &&
+	if len(mI) == len(mD) {
+		for k := range mD {
+			if !hasKey(k) {
+				goto checkGitKey
+			}
+		}
+		return true
+	}
+
+checkGitKey:
+	return hasKey("git.branch") &&
 		hasKey("git.hash") &&
 		hasKey("git.author") &&
 		hasKey("git.hash.before") &&
 		hasKey("git.repository") &&
-		hasKey("git.message") {
-		return true
-	}
-	return false
+		hasKey("git.message")
 }
 
 //WorkflowList return the list of the workflows for a project
