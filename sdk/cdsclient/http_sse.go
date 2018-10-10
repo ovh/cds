@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"io"
 	"net/http"
+	"runtime/pprof"
 	"strings"
 )
 
@@ -27,6 +28,10 @@ type SSEvent struct {
 // close the stream. This is blocking, and so you will likely want to call this
 // in a new goroutine (via `go c.RequestSSEGet(..)`)
 func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSEvent, mods ...RequestModifier) error {
+	labels := pprof.Labels("user-agent", c.config.userAgent, "path", path, "method", "GET")
+	ctx = pprof.WithLabels(ctx, labels)
+	pprof.SetGoroutineLabels(ctx)
+
 	uri := c.config.Host + path
 	if strings.HasPrefix(path, "http") {
 		uri = path
