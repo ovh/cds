@@ -197,7 +197,7 @@ func (c *client) WorkflowPush(projectKey string, tarContent io.Reader, mods ...R
 	if wName == "" {
 		return messages, nil, nil
 	}
-	tarReader, err := c.WorkflowPull(projectKey, wName, false)
+	tarReader, err := c.WorkflowPull(projectKey, wName, mods...)
 	if err != nil {
 		return nil, nil, err
 	}

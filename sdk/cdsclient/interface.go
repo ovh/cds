@@ -31,8 +31,8 @@ type ExportImportInterface interface {
 	PipelineImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
 	ApplicationExport(projectKey, name string, exportWithPermissions bool, format string) ([]byte, error)
 	ApplicationImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
-	WorkflowExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
-	WorkflowPull(projectKey, name string, exportWithPermissions bool) (*tar.Reader, error)
+	WorkflowExport(projectKey, name string, mods ...RequestModifier) ([]byte, error)
+	WorkflowPull(projectKey, name string, mods ...RequestModifier) (*tar.Reader, error)
 	WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
 	WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error)
 	WorkflowAsCodeInterface

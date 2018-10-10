@@ -66,8 +66,41 @@ const (
 	WorkflowVersion1 = "v1.0"
 )
 
+// WorkflowOptions is the type for several workflow-as-code options
+type WorkflowOptions func(sdk.Workflow, *Workflow) error
+
+// WorkflowWithPermissions export workflow with permissions
+func WorkflowWithPermissions(w sdk.Workflow, exportedWorkflow *Workflow) error {
+	exportedWorkflow.Permissions = make(map[string]int, len(w.Groups))
+	for _, p := range w.Groups {
+		exportedWorkflow.Permissions[p.Group.Name] = p.Permission
+	}
+	return nil
+}
+
+// WorkflowSkipIfOnlyOneRepoWebhook skips the repo webhook if it's the only one
+func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow) error {
+	if len(exportedWorkflow.Workflow) == 0 {
+		if len(exportedWorkflow.PipelineHooks) == 1 && exportedWorkflow.PipelineHooks[0].Model == sdk.RepositoryWebHookModelName {
+			exportedWorkflow.PipelineHooks = nil
+		}
+		return nil
+	}
+
+	for nodeName, hs := range exportedWorkflow.Hooks {
+		if nodeName == w.Root.Name && len(hs) == 1 {
+			if hs[0].Model == sdk.RepositoryWebHookModelName {
+				delete(exportedWorkflow.Hooks, nodeName)
+				break
+			}
+		}
+	}
+
+	return nil
+}
+
 //NewWorkflow creates a new exportable workflow
-func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
+func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	exportedWorkflow := Workflow{}
 	exportedWorkflow.Name = w.Name
 	exportedWorkflow.Description = w.Description
@@ -89,13 +122,6 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 	exportedWorkflow.PurgeTags = w.PurgeTags
 	nodes := w.Nodes(false)
-
-	if withPermission {
-		exportedWorkflow.Permissions = make(map[string]int, len(w.Groups))
-		for _, p := range w.Groups {
-			exportedWorkflow.Permissions[p.Group.Name] = p.Permission
-		}
-	}
 
 	var craftNodeEntry = func(n *sdk.WorkflowNode) (NodeEntry, error) {
 		entry := NodeEntry{}
@@ -149,7 +175,12 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			entry.OneAtATime = &n.Context.Mutex
 		}
 
-		if n.Context.HasDefaultPayload() {
+		var skipPayload bool
+		if n.Context.HasDefaultPayload() && n.Context.Application != nil && n.Context.Application.RepositoryFullname != "" {
+			skipPayload = sdk.IsWorkflowNodeContextDefaultPayloadVCS(n.Context.DefaultPayload)
+		}
+
+		if !skipPayload {
 			enc := dump.NewDefaultEncoder(nil)
 			enc.ExtraFields.DetailedMap = false
 			enc.ExtraFields.DetailedStruct = false
@@ -225,6 +256,12 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 				Ref:    h.Ref,
 				Config: h.Config.Values(),
 			})
+		}
+	}
+
+	for _, f := range opts {
+		if err := f(w, &exportedWorkflow); err != nil {
+			return exportedWorkflow, err
 		}
 	}
 
