@@ -253,7 +253,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					network = name + "-net"
 					networkAlias = "worker"
 					if err := h.createNetwork(ctx, dockerClient, network); err != nil {
-						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dname, spawnArgs.JobID, err)
+						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
 						next()
 						return "", err
 					}
@@ -314,7 +314,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dname, err)
+					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dockerClient.name, err)
 					return "", err
 				}
 				services = append(services, serviceName)
