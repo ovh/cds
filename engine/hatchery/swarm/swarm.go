@@ -120,10 +120,11 @@ func (h *HatcherySwarm) Init() error {
 						KeepAlive: 0 * time.Second,
 						DualStack: true,
 					}).DialContext,
-					MaxIdleConns:          500,
-					MaxIdleConnsPerHost:   500,
-					TLSHandshakeTimeout:   30 * time.Second,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       20 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
 					ExpectContinueTimeout: 1 * time.Second,
+					ResponseHeaderTimeout: 30 * time.Second,
 					TLSClientConfig:       tlsc,
 				}
 			} else {
@@ -133,9 +134,11 @@ func (h *HatcherySwarm) Init() error {
 						KeepAlive: 0 * time.Second,
 						DualStack: true,
 					}).DialContext,
-					MaxIdleConns:          500,
-					MaxIdleConnsPerHost:   500,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       20 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
 					ExpectContinueTimeout: 1 * time.Second,
+					ResponseHeaderTimeout: 30 * time.Second,
 				}
 			}
 
