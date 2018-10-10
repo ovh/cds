@@ -64,7 +64,7 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 		req.SetBasicAuth(c.config.User, c.config.Token)
 	}
 
-	resp, err := NoTimeout(c.HTTPClient).Do(req)
+	resp, err := c.HTTPSSEClient.Do(req)
 	if err != nil {
 		return err
 	}

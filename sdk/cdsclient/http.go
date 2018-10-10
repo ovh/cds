@@ -49,11 +49,6 @@ type HTTPClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-// NoTimeout returns a http.DefaultClient from a HTTPClient
-func NoTimeout(c HTTPClient) HTTPClient {
-	return http.DefaultClient
-}
-
 // SetHeader modify headers of http.Request
 func SetHeader(key, value string) RequestModifier {
 	return func(req *http.Request) {
@@ -243,7 +238,7 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 		var errDo error
 		var resp *http.Response
 		if noTimeout {
-			resp, errDo = NoTimeout(c.HTTPClient).Do(req)
+			resp, errDo = c.HTTPSSEClient.Do(req)
 		} else {
 			resp, errDo = c.HTTPClient.Do(req)
 		}
@@ -334,7 +329,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 		}
 	}
 
-	resp, err := NoTimeout(c.HTTPClient).Do(req)
+	resp, err := c.HTTPSSEClient.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}
