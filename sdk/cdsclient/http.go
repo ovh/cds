@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"runtime/pprof"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -165,6 +166,10 @@ func (c *client) Request(ctx context.Context, method string, path string, body i
 
 // Stream makes an authenticated http request and return io.ReadCloser
 func (c *client) Stream(ctx context.Context, method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, http.Header, int, error) {
+	labels := pprof.Labels("user-agent", c.config.userAgent, "path", path, "method", method)
+	ctx = pprof.WithLabels(ctx, labels)
+	pprof.SetGoroutineLabels(ctx)
+
 	var savederror error
 
 	var bodyContent []byte
