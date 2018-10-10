@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"html/template"
 	"strings"
+	"text/template"
 )
 
 var funcMap template.FuncMap = template.FuncMap{

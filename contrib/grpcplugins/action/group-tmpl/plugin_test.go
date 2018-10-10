@@ -3,22 +3,17 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"html/template"
 	"io/ioutil"
-	"log"
 	"os"
 	"reflect"
 	"testing"
+	"text/template"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 func TestRun(t *testing.T) {
-	// replace plugin logger
-	plugin.Trace = log.New(os.Stderr, "", 0)
-
 	outputfile := "result.json"
 
 	tmpdir := os.TempDir()
