@@ -9,5 +9,6 @@ func init() {
 	gorpmapping.Register(
 		gorpmapping.New(sdk.WorkflowTemplate{}, "workflow_template", true, "id"),
 		gorpmapping.New(sdk.WorkflowTemplateWorkflow{}, "workflow_template_workflow", true, "id"),
+		gorpmapping.New(sdk.AuditWorkflowTemplate{}, "workflow_template_audit", true, "id"),
 	)
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -63,6 +64,8 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
+		event.PublishWorkflowTemplateAdd(t, u)
+
 		return service.WriteJSON(w, t, http.StatusOK)
 	}
 }
@@ -94,26 +97,29 @@ func (api *API) putTemplateHandler() service.Handler {
 			}
 		}
 
-		t, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().
+		old, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().
 			IDs(id).GroupIDs(sdk.GroupsToIDs(userGroupsWithAdmin)...))
 		if err != nil {
 			return err
 		}
-		if t == nil {
+		if old == nil {
 			return sdk.WithStack(sdk.ErrNotFound)
 		}
 
-		// update fields
-		t.Value = data.Value
-		t.Parameters = data.Parameters
-		t.Pipelines = data.Pipelines
-		t.Version = t.Version + 1
+		// update fields from request data
+		new := sdk.WorkflowTemplate(*old)
+		new.Value = data.Value
+		new.Parameters = data.Parameters
+		new.Pipelines = data.Pipelines
+		new.Version = old.Version + 1
 
-		if err := workflowtemplate.Update(api.mustDB(), t); err != nil {
+		if err := workflowtemplate.Update(api.mustDB(), &new); err != nil {
 			return err
 		}
 
-		return service.WriteJSON(w, t, http.StatusOK)
+		event.PublishWorkflowTemplateUpdate(*old, new, u)
+
+		return service.WriteJSON(w, new, http.StatusOK)
 	}
 }
 

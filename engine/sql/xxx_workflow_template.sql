@@ -23,7 +23,21 @@ CREATE TABLE IF NOT EXISTS "workflow_template_workflow" (
 
 SELECT create_unique_index('workflow_template_workflow', 'IDX_WORKFLOW_TEMPLATES_WORKFLOW_KEY_ID', 'workflow_template_id,workflow_id');
 
+CREATE TABLE IF NOT EXISTS workflow_template_audit (
+  id BIGSERIAL PRIMARY KEY,
+  triggered_by VARCHAR(100),
+  created TIMESTAMP WITH TIME ZONE,
+  data_before TEXT,
+  data_after TEXT,
+  event_type VARCHAR(100),
+  data_type VARCHAR(20),
+  workflow_template_id BIGINT
+);
+
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TEMPLATE_AUDIT', 'workflow_template_audit', 'workflow_template', 'workflow_template_id', 'id');
+
 -- +migrate Down
 
-DROP TABLE IF EXISTS workflow_template;
+DROP TABLE IF EXISTS workflow_template_audit;
 DROP TABLE IF EXISTS workflow_template_workflow;
+DROP TABLE IF EXISTS workflow_template;

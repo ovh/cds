@@ -59,3 +59,8 @@ func DeleteRelationsForWorkflowID(db gorp.SqlExecutor, workflowID int64) error {
 	_, err := db.Exec("DELETE FROM workflow_template_workflow WHERE workflow_id = $1", workflowID)
 	return sdk.WrapError(err, "Unable to remove all relations for workflow %d", workflowID)
 }
+
+// InsertAudit for workflow template in database.
+func InsertAudit(db gorp.SqlExecutor, awt *sdk.AuditWorkflowTemplate) error {
+	return sdk.WrapError(database.Insert(db, awt), "Unable to insert audit for workflow template %d", awt.WorkflowTemplateID)
+}

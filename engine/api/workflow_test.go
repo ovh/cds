@@ -490,15 +490,17 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 
 	// INSERT AUDIT
 
-	wfAudit := sdk.AuditWorklflow{
-		Created:     time.Now(),
-		DataBefore:  string(wfBts),
-		DataAfter:   string(wfUpdatedBts),
-		EventType:   "WorkflowUpdate",
-		DataType:    "yaml",
-		ProjectKey:  proj.Key,
-		WorkflowID:  wf.ID,
-		TriggeredBy: u.Username,
+	wfAudit := sdk.AuditWorkflow{
+		AuditCommon: sdk.AuditCommon{
+			Created:     time.Now(),
+			DataBefore:  string(wfBts),
+			DataAfter:   string(wfUpdatedBts),
+			EventType:   "WorkflowUpdate",
+			DataType:    "yaml",
+			TriggeredBy: u.Username,
+		},
+		ProjectKey: proj.Key,
+		WorkflowID: wf.ID,
 	}
 	test.NoError(t, workflow.InsertAudit(api.mustDB(), &wfAudit))
 

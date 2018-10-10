@@ -43,7 +43,7 @@ type Workflow struct {
 	DerivedFromWorkflowID   int64                       `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
 	DerivedFromWorkflowName string                      `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
 	DerivationBranch        string                      `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
-	Audits                  []AuditWorklflow            `json:"audits" db:"-"`
+	Audits                  []AuditWorkflow             `json:"audits" db:"-"`
 	Pipelines               map[int64]Pipeline          `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
 	Applications            map[int64]Application       `json:"applications" db:"-" cli:"-"  mapstructure:"-"`
 	Environments            map[int64]Environment       `json:"environments" db:"-" cli:"-"  mapstructure:"-"`
@@ -776,7 +776,7 @@ func (n WorkflowNode) migrate(withID bool) Node {
 			Conditions:                n.Context.Conditions,
 			DefaultPayload:            n.Context.DefaultPayload,
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
-			Mutex:                     n.Context.Mutex,
+			Mutex: n.Context.Mutex,
 		},
 		Hooks:    make([]NodeHook, 0, len(n.Hooks)),
 		Triggers: make([]NodeTrigger, 0, len(n.Triggers)+len(n.Forks)+len(n.OutgoingHooks)),

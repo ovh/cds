@@ -13,11 +13,9 @@ const (
 	AuditDelete = "delete"
 )
 
-// AuditWorklflow represents an audit data on a workflow
-type AuditWorklflow struct {
+// AuditCommon contains basic stuff for audits.
+type AuditCommon struct {
 	ID          int64     `json:"id" db:"id"`
-	ProjectKey  string    `json:"project_key" db:"project_key"`
-	WorkflowID  int64     `json:"workflow_id" db:"workflow_id"`
 	TriggeredBy string    `json:"triggered_by" db:"triggered_by"`
 	Created     time.Time `json:"created" db:"created" mapstructure:"-"`
 	DataBefore  string    `json:"data_before" db:"data_before"`
@@ -26,7 +24,20 @@ type AuditWorklflow struct {
 	DataType    string    `json:"data_type" db:"data_type"`
 }
 
-// Audit represents audit interface
+// AuditWorkflow represents an audit data on a workflow.
+type AuditWorkflow struct {
+	AuditCommon
+	ProjectKey string `json:"project_key" db:"project_key"`
+	WorkflowID int64  `json:"workflow_id" db:"workflow_id"`
+}
+
+// Audit represents audit interface.
 type Audit interface {
 	Compute(db gorp.SqlExecutor, e Event) error
+}
+
+// AuditWorkflowTemplate respresents an audit data on a workflow template.
+type AuditWorkflowTemplate struct {
+	AuditCommon
+	WorkflowTemplateID int64 `json:"workflow_template_id" db:"workflow_template_id"`
 }
