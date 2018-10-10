@@ -253,7 +253,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					network = name + "-net"
 					networkAlias = "worker"
 					if err := h.createNetwork(ctx, dockerClient, network); err != nil {
-						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s for jobID %d : %v", network, spawnArgs.JobID, err)
+						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dname, spawnArgs.JobID, err)
 						next()
 						return "", err
 					}
@@ -279,7 +279,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 						m := strings.Replace(e, "CDS_SERVICE_MEMORY=", "", -1)
 						i, err := strconv.Atoi(m)
 						if err != nil {
-							log.Warning("hatchery> swarm> SpawnWorker> Unable to parse service option %s : %s", e, err)
+							log.Warning("hatchery> swarm> SpawnWorker> Unable to parse service option %s : %v", e, err)
 							continue
 						}
 						serviceMemory = int64(i)
@@ -314,7 +314,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container: %s", err)
+					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dname, err)
 					return "", err
 				}
 				services = append(services, serviceName)
