@@ -37,6 +37,7 @@ func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Clie
 			IdleConnTimeout:       30 * time.Second,
 			TLSHandshakeTimeout:   10 * time.Second,
 			ExpectContinueTimeout: 1 * time.Second,
+			ResponseHeaderTimeout: 30 * time.Second,
 			TLSClientConfig:       &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
 		},
 	}
