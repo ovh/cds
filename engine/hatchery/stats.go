@@ -21,6 +21,9 @@ func (c *Common) initStats(hatcheryName string) error {
 	label := fmt.Sprintf("cds/%s/%s/jobs", c.ServiceName(), hatcheryName)
 	c.stats.Jobs = stats.Int64(label, "number of analyzed jobs", stats.UnitDimensionless)
 
+	label = fmt.Sprintf("cds/%s/%s/jobs_sse", c.ServiceName(), hatcheryName)
+	c.stats.JobsSSE = stats.Int64(label, "number of analyzed jobs from SSE", stats.UnitDimensionless)
+
 	label = fmt.Sprintf("cds/%s/%s/spawned_workers", c.ServiceName(), hatcheryName)
 	c.stats.SpawnedWorkers = stats.Int64(label, "number of spawned workers", stats.UnitDimensionless)
 
@@ -51,6 +54,13 @@ func (c *Common) initStats(hatcheryName string) error {
 			Name:        "jobs_count",
 			Description: c.stats.Jobs.Description(),
 			Measure:     c.stats.Jobs,
+			Aggregation: view.Count(),
+			TagKeys:     tags,
+		},
+		&view.View{
+			Name:        "jobs_sse_count",
+			Description: c.stats.JobsSSE.Description(),
+			Measure:     c.stats.JobsSSE,
 			Aggregation: view.Count(),
 			TagKeys:     tags,
 		},
