@@ -15,7 +15,8 @@
   "dependencies": {
     "get-port": "^4.0.0",
     "google-protobuf": "^3.6.1",
-    "grpc": "^1.15.1"
+    "grpc": "^1.15.1",
+    "atob": "^2.1.2"
   },
   "devDependencies": {
     "webpack": "^4.12.0",
