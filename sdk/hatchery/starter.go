@@ -59,12 +59,9 @@ func startWorkerStarters(ctx context.Context, h Interface) (chan<- workerStarter
 		maxProv = defaultMaxProvisioning
 	}
 	for workerNum := 0; workerNum < maxProv; workerNum++ {
-		sdk.GoRoutine("workerStarter",
-			func() {
-				workerStarter(ctx, h, fmt.Sprintf("%d", workerNum), jobs, results)
-			},
-			PanicDump(h),
-		)
+		sdk.GoRoutine(ctx, "workerStarter", func(ctx context.Context) {
+			workerStarter(ctx, h, fmt.Sprintf("%d", workerNum), jobs, results)
+		}, PanicDump(h))
 	}
 	return jobs, results
 }

@@ -57,7 +57,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 
 	// This goroutine call the SSE route
 	chanSSEvt := make(chan SSEvent)
-	sdk.GoRoutine("RequestSSEGet", func() {
+	sdk.GoRoutine(ctx, "RequestSSEGet", func(ctx context.Context) {
 		for ctx.Err() == nil {
 			if err := c.RequestSSEGet(ctx, "/events", chanSSEvt); err != nil {
 				log.Println(err)

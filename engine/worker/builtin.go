@@ -74,7 +74,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 	}()
 
 	chanRes := make(chan sdk.Result, 1)
-	sdk.GoRoutine("runGRPCPlugin", func() {
+	sdk.GoRoutine(ctx, "runGRPCPlugin", func(ctx context.Context) {
 		params := *params
 		//For the moment we consider that plugin name = action name
 		pluginName := a.Name

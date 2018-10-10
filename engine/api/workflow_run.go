@@ -721,13 +721,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		go workflow.SendEvent(api.mustDB(), p.Key, report)
 
 		// Purge workflow run
-		sdk.GoRoutine(
-			"workflow.PurgeWorkflowRun",
-			func() {
-				if err := workflow.PurgeWorkflowRun(api.mustDB(), *wf); err != nil {
-					log.Error("workflow.PurgeWorkflowRun> error %v", err)
-				}
-			})
+		sdk.GoRoutine(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
+			if err := workflow.PurgeWorkflowRun(api.mustDB(), *wf); err != nil {
+				log.Error("workflow.PurgeWorkflowRun> error %v", err)
+			}
+		})
 
 		var wr *sdk.WorkflowRun
 		if len(report.WorkflowRuns()) > 0 {
