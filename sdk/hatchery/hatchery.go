@@ -261,6 +261,13 @@ func Create(h Interface) error {
 					observability.Tag(observability.TagProjectKey, p),
 					observability.Tag(observability.TagWorkflowNodeJobRun, j.ID),
 				)
+
+				if _, ok := j.Header["SSE"]; ok {
+					log.Debug("hatchery> received job from SSE")
+					observability.Current(currentCtx,
+						observability.Tag("from", "sse"),
+					)
+				}
 			}
 			endTrace := func(reason string) {
 				if reason != "" {
@@ -281,6 +288,10 @@ func Create(h Interface) error {
 			}()
 
 			stats.Record(currentCtx, h.Stats().Jobs.M(1))
+
+			if _, ok := j.Header["SSE"]; ok {
+				stats.Record(currentCtx, h.Stats().JobsSSE.M(1))
+			}
 
 			//Check if the jobs is concerned by a pending worker creation
 			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {

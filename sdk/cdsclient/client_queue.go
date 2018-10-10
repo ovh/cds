@@ -109,6 +109,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 
 						// push the job in the channel
 						if job.Status == sdk.StatusWaiting.String() && job.BookedBy.Name == "" {
+							job.Header["SSE"] = "true"
 							jobs <- *job
 						}
 					}()

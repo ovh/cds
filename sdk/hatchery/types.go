@@ -100,6 +100,7 @@ type Interface interface {
 
 type Stats struct {
 	Jobs               *stats.Int64Measure
+	JobsSSE            *stats.Int64Measure
 	SpawnedWorkers     *stats.Int64Measure
 	PendingWorkers     *stats.Int64Measure
 	RegisteringWorkers *stats.Int64Measure
