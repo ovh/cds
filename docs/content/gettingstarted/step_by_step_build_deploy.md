@@ -184,7 +184,7 @@ In this example, we create a Workflow to build & deploy an application. This is 
 standard Continous Integration & Continous Delivery Workflow.
 
 So, we have to trigger this workflow on each commit, on every git branches. This will be 
-useful to compile code from all developper and deploy master branch is the buid is Ok.
+useful to compile code from all developpers and deploy master branch if the buid is Ok.
 
 The application is linked to a Github Git Repository, we have two choice to trigger automatically the workflow:
 
