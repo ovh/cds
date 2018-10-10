@@ -292,7 +292,9 @@ func (c *client) Stream(ctx context.Context, method string, path string, body io
 			}
 			continue
 		}
-		resp.Body.Close()
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
 		if errDo != nil {
 			return nil, nil, 0, errDo
 		}
