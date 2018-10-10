@@ -11,13 +11,10 @@ import (
 )
 
 // GetAll returns all workflow templates for given criteria.
-func GetAll(db *gorp.DbMap, c Criteria) ([]sdk.WorkflowTemplate, error) {
-	wts := []sdk.WorkflowTemplate{}
+func GetAll(db *gorp.DbMap, c Criteria) ([]*sdk.WorkflowTemplate, error) {
+	wts := []*sdk.WorkflowTemplate{}
 
 	if _, err := db.Select(&wts, fmt.Sprintf("SELECT * FROM workflow_template WHERE %s", c.where()), c.args()); err != nil {
-		if err == sql.ErrNoRows {
-			err = sdk.NewError(sdk.ErrNotFound, err)
-		}
 		return nil, sdk.WrapError(err, "Cannot get workflows")
 	}
 

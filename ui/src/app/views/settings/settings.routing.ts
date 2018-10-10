@@ -14,6 +14,7 @@ import {UserListComponent} from './user/list/user.list.component';
 import {WorkerModelAddComponent} from './worker-model/add/worker-model.add.component';
 import {WorkerModelEditComponent} from './worker-model/edit/worker-model.edit.component';
 import {WorkerModelListComponent} from './worker-model/list/worker-model.list.component';
+import { WorkflowTemplateListComponent } from './workflow-template/list/workflow-template.list.component';
 
 const routes: Routes = [
     {
@@ -23,8 +24,8 @@ const routes: Routes = [
         canActivate: [CanActivateAuthRoute],
         children: [
             { path: 'profile/:username', component: UserEditComponent, data: { title: 'Profile' }},
-            { path: 'worker-model', component: WorkerModelListComponent, data: { title: 'Worker Model' } },
-            { path: 'worker-model/add', component: WorkerModelAddComponent, data: { title: 'Add • Worker Model' } },
+            { path: 'worker-model', component: WorkerModelListComponent, data: { title: 'Worker model' } },
+            { path: 'worker-model/add', component: WorkerModelAddComponent, data: { title: 'Add • Worker model' } },
             {
                 path: 'worker-model/:workerModelName',
                 component: WorkerModelEditComponent,
@@ -38,7 +39,8 @@ const routes: Routes = [
             { path: 'action/add', component: ActionAddComponent, data: { title: 'Add • Action' } },
             { path: 'action/:name', component: ActionEditComponent, data: { title: '{name} • Action' } },
             { path: 'queue', component: QueueComponent, data: { title: 'Queue' }},
-            { path: 'downloads', component: DownloadComponent, data: { title: 'Downloads' } }
+            { path: 'downloads', component: DownloadComponent, data: { title: 'Downloads' } },
+            { path: 'workflow-template', component: WorkflowTemplateListComponent, data: { title: 'Workflow template' } }
         ]
     }
 ];

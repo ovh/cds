@@ -8,6 +8,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -24,6 +25,10 @@ func (api *API) getTemplatesHandler() service.Handler {
 		ts, err := workflowtemplate.GetAll(api.mustDB(), workflowtemplate.NewCriteria().
 			GroupIDs(sdk.GroupsToIDs(u.Groups)...))
 		if err != nil {
+			return err
+		}
+
+		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), ts...); err != nil {
 			return err
 		}
 
@@ -65,6 +70,10 @@ func (api *API) postTemplateHandler() service.Handler {
 		}
 
 		event.PublishWorkflowTemplateAdd(t, u)
+
+		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &t); err != nil {
+			return err
+		}
 
 		return service.WriteJSON(w, t, http.StatusOK)
 	}
@@ -108,6 +117,7 @@ func (api *API) putTemplateHandler() service.Handler {
 
 		// update fields from request data
 		new := sdk.WorkflowTemplate(*old)
+		new.Description = data.Description
 		new.Value = data.Value
 		new.Parameters = data.Parameters
 		new.Pipelines = data.Pipelines
@@ -118,6 +128,10 @@ func (api *API) putTemplateHandler() service.Handler {
 		}
 
 		event.PublishWorkflowTemplateUpdate(*old, new, u)
+
+		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &new); err != nil {
+			return err
+		}
 
 		return service.WriteJSON(w, new, http.StatusOK)
 	}

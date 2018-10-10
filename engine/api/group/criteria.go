@@ -1,4 +1,4 @@
-package workflowtemplate
+package group
 
 import (
 	"github.com/ovh/cds/engine/api/database"
@@ -7,7 +7,7 @@ import (
 func NewCriteria() Criteria { return Criteria{} }
 
 type Criteria struct {
-	ids, groupIDs []int64
+	ids []int64
 }
 
 func (c Criteria) IDs(ids ...int64) Criteria {
@@ -15,18 +15,10 @@ func (c Criteria) IDs(ids ...int64) Criteria {
 	return c
 }
 
-func (c Criteria) GroupIDs(ids ...int64) Criteria {
-	c.groupIDs = ids
-	return c
-}
-
 func (c Criteria) where() string {
 	var reqs []string
 	if c.ids != nil {
 		reqs = append(reqs, "id = ANY(string_to_array(:ids, ',')::int[])")
-	}
-	if c.groupIDs != nil {
-		reqs = append(reqs, "group_id = ANY(string_to_array(:groupIDs, ',')::int[])")
 	}
 
 	if len(reqs) == 0 {
@@ -38,7 +30,6 @@ func (c Criteria) where() string {
 
 func (c Criteria) args() interface{} {
 	return map[string]interface{}{
-		"ids":      database.IDsToQueryString(c.ids),
-		"groupIDs": database.IDsToQueryString(c.groupIDs),
+		"ids": database.IDsToQueryString(c.ids),
 	}
 }

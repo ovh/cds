@@ -36,13 +36,16 @@ type WorkflowTemplateResult struct {
 
 // WorkflowTemplate struct.
 type WorkflowTemplate struct {
-	ID         int64                      `json:"id" db:"id" `
-	GroupID    int64                      `json:"group_id" db:"group_id"`
-	Name       string                     `json:"name" db:"name"`
-	Parameters WorkflowTemplateParameters `json:"parameters" db:"parameters"`
-	Value      string                     `json:"value" db:"value"`
-	Pipelines  PipelineTemplates          `json:"pipelines" db:"pipelines"`
-	Version    int64                      `json:"version" db:"version"`
+	ID          int64                      `json:"id" db:"id" `
+	GroupID     int64                      `json:"group_id" db:"group_id"`
+	Name        string                     `json:"name" db:"name"`
+	Description string                     `json:"description" db:"description"`
+	Parameters  WorkflowTemplateParameters `json:"parameters" db:"parameters"`
+	Value       string                     `json:"value" db:"value"`
+	Pipelines   PipelineTemplates          `json:"pipelines" db:"pipelines"`
+	Version     int64                      `json:"version" db:"version"`
+	// aggregates
+	Group *Group `json:"group,omitempty" db:"-"`
 }
 
 // ValidateStruct returns workflow template validity.
@@ -88,6 +91,15 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 	}
 
 	return nil
+}
+
+// WorkflowTemplatesToGroupIDs returns group ids of given workflow templates.
+func WorkflowTemplatesToGroupIDs(wts []*WorkflowTemplate) []int64 {
+	ids := make([]int64, len(wts))
+	for i := 0; i < len(wts); i++ {
+		ids[i] = wts[i].GroupID
+	}
+	return ids
 }
 
 // PipelineTemplate struct.

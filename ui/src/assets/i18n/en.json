@@ -429,7 +429,8 @@
   "navbar_users": "Users",
   "navbar_search": "Search...",
   "navbar_settings": "Settings",
-  "navbar_worker_models": "Worker Models",
+  "navbar_worker_models": "Worker models",
+  "navbar_workflow_templates": "Workflow templates",
   "navbar_application_in": "Application in ",
   "navbar_workflow_in": "Workflow in ",
   "navbar_all_projects": "All projects",
@@ -1023,5 +1024,10 @@
   "workflow_wizard_select_repo_loading": "Loading repositories...",
   "workflow_wizard_repo_analyse" : "Analyzing repository...",
   "workflow_wizard_select_repo_man_add" : "Or add a repository manager",
-  "wizard_repo_files" : "Files found: "
+  "wizard_repo_files" : "Files found: ",
+
+  "workflow_templates": "Workflow templates",
+  "workflow_template_name": "Name",
+  "workflow_template_description": "Description",
+  "workflow_template_group": "Group"
 }

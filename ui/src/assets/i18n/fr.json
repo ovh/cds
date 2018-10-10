@@ -430,6 +430,7 @@
   "navbar_search": "Rechercher...",
   "navbar_settings": "Paramètres",
   "navbar_worker_models": "Modèles de worker",
+  "navbar_workflow_templates": "Modèles de workflow",
   "navbar_application_in": "Application dans ",
   "navbar_workflow_in": "Workflow dans ",
   "navbar_all_projects": "Tous les projets",
@@ -1023,5 +1024,10 @@
   "workflow_wiazrd_select_repo_loading": "Chargement des dépots...",
   "workflow_wizard_repo_analyse" : "Analyse du dépôt...",
   "workflow_wizard_select_repo_man_add" : "Ou ajouter un gestionnaire de dépôt",
-  "wizard_repo_files" : "Fichiers trouvés : "
+  "wizard_repo_files" : "Fichiers trouvés : ",
+
+  "workflow_templates": "Templates de workflow",
+  "workflow_template_name": "Nom",
+  "workflow_template_description": "Description",
+  "workflow_template_group": "Groupe"
 }

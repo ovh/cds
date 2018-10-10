@@ -56,6 +56,7 @@ import {VariableService} from './variable/variable.service';
 import {WarningService} from './warning/warning.service';
 import {WarningStore} from './warning/warning.store';
 import {WorkerModelService} from './worker-model/worker-model.service';
+import {WorkflowTemplateService} from './workflow-template/workflow-template.service';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
 import {WorkflowCoreService} from './workflow/workflow.core.service';
 import {WorkflowEventStore} from './workflow/workflow.event.store';
@@ -123,6 +124,7 @@ export class ServicesModule {
                 WarningService,
                 WarningStore,
                 WorkerModelService,
+                WorkflowTemplateService,
                 WorkflowEventStore,
                 WorkflowSidebarStore,
                 WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
@@ -190,6 +192,7 @@ export {
     VariableService,
     WarningStore,
     WorkerModelService,
+    WorkflowTemplateService,
     WorkflowStore,
     WorkflowRunService,
     WorkflowCoreService,

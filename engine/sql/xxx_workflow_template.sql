@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS "workflow_template" (
   id BIGSERIAL PRIMARY KEY,
   group_id BIGINT NOT NULL,
   name TEXT NOT NULL,
+  description TEXT,
   version BIGINT NOT NULL,
   value TEXT,
   pipelines JSONB,
