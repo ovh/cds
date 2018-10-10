@@ -230,6 +230,7 @@ type WorkerClient interface {
 	WorkerList(ctx context.Context) ([]sdk.Worker, error)
 	WorkerRefresh(ctx context.Context) error
 	WorkerDisable(ctx context.Context, id string) error
+	WorkerDisableForce(ctx context.Context, id string) error
 	WorkerModelAdd(name, modelType, patternName string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(name string) (sdk.Model, error)

@@ -50,7 +50,7 @@ func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
 		}
 		if !found && w.Status != sdk.StatusDisabled {
 			log.Error("Hatchery > WorkerPool> Worker %s (status = %s) inconsistency", w.Name, w.Status.String())
-			if err := h.CDSClient().WorkerDisable(ctx, w.ID); err != nil {
+			if err := h.CDSClient().WorkerDisableForce(ctx, w.ID); err != nil {
 				log.Error("Hatchery > WorkerPool> Unable to disable worker [%s]%s", w.ID, w.Name)
 			}
 			w.Status = sdk.StatusDisabled
