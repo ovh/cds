@@ -466,7 +466,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 		runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		run.Payload = runPayload
-		run.PipelineParameters = sdk.ParametersMerge(m.PipelineParameters, n.Context.DefaultPipelineParameters)
+		run.PipelineParameters = sdk.ParametersMerge(n.Context.DefaultPipelineParameters, m.PipelineParameters)
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
 			Type:  sdk.StringParameter,
