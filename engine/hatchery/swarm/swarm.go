@@ -115,21 +115,27 @@ func (h *HatcherySwarm) Init() error {
 
 			if tlsc != nil {
 				httpClient.Transport = &http.Transport{
-					Dial: (&net.Dialer{
-						Timeout: 30 * time.Second,
-					}).Dial,
-					MaxIdleConns:        500,
-					MaxIdleConnsPerHost: 500,
-					TLSHandshakeTimeout: 30 * time.Second,
-					TLSClientConfig:     tlsc,
+					DialContext: (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 0 * time.Second,
+						DualStack: true,
+					}).DialContext,
+					MaxIdleConns:          500,
+					MaxIdleConnsPerHost:   500,
+					TLSHandshakeTimeout:   30 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+					TLSClientConfig:       tlsc,
 				}
 			} else {
 				httpClient.Transport = &http.Transport{
-					Dial: (&net.Dialer{
-						Timeout: 30 * time.Second,
-					}).Dial,
-					MaxIdleConns:        500,
-					MaxIdleConnsPerHost: 500,
+					DialContext: (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 0 * time.Second,
+						DualStack: true,
+					}).DialContext,
+					MaxIdleConns:          500,
+					MaxIdleConnsPerHost:   500,
+					ExpectContinueTimeout: 1 * time.Second,
 				}
 			}
 
