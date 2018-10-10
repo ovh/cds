@@ -47,8 +47,10 @@ type Router struct {
 	nbPanic                int
 	lastPanic              *time.Time
 	Stats                  struct {
-		Errors *stats.Int64Measure
-		Hits   *stats.Int64Measure
+		Errors     *stats.Int64Measure
+		Hits       *stats.Int64Measure
+		SSEClients *stats.Int64Measure
+		SSEEvents  *stats.Int64Measure
 	}
 }
 
@@ -516,6 +518,10 @@ func (r *Router) InitStats(service, name string) error {
 	r.Stats.Errors = stats.Int64(label, "number of errors", stats.UnitDimensionless)
 	label = fmt.Sprintf("cds/%s/%s/router_hits", service, name)
 	r.Stats.Hits = stats.Int64(label, "number of hits", stats.UnitDimensionless)
+	label = fmt.Sprintf("cds/%s/%s/sse_clients", service, name)
+	r.Stats.SSEClients = stats.Int64(label, "number of sse clients", stats.UnitDimensionless)
+	label = fmt.Sprintf("cds/%s/%s/sse_events", service, name)
+	r.Stats.SSEEvents = stats.Int64(label, "number of sse events", stats.UnitDimensionless)
 
 	log.Info("api> Stats initialized")
 
@@ -530,6 +536,18 @@ func (r *Router) InitStats(service, name string) error {
 			Name:        "router_hits",
 			Description: r.Stats.Hits.Description(),
 			Measure:     r.Stats.Hits,
+			Aggregation: view.Count(),
+		},
+		&view.View{
+			Name:        "sse_clients",
+			Description: r.Stats.SSEClients.Description(),
+			Measure:     r.Stats.SSEClients,
+			Aggregation: view.Count(),
+		},
+		&view.View{
+			Name:        "sse_events",
+			Description: r.Stats.SSEEvents.Description(),
+			Measure:     r.Stats.SSEEvents,
 			Aggregation: view.Count(),
 		},
 	)

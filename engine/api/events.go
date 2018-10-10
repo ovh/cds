@@ -14,6 +14,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -37,14 +38,16 @@ type eventsBroker struct {
 	dbFunc            func() *gorp.DbMap
 	cache             cache.Store
 	clientsLen        int64
+	router            *Router
 }
 
 // AddClient add a client to the client map
-func (b *eventsBroker) addClient(client eventsBrokerSubscribe) {
+func (b *eventsBroker) addClient(ctx context.Context, client eventsBrokerSubscribe) {
 	b.mutex.Lock()
 	defer b.mutex.Unlock()
 	b.clients[client.UUID] = client
 	b.clientsLen++
+	observability.Record(ctx, b.router.Stats.SSEClients, 1)
 }
 
 // CleanAll cleans all clients
@@ -55,22 +58,24 @@ func (b *eventsBroker) cleanAll() {
 		for c, v := range b.clients {
 			close(v.Queue)
 			delete(b.clients, c)
+			observability.Record(b.router.Background, b.router.Stats.SSEClients, -1)
 		}
 	}
 	b.clientsLen = 0
 }
 
-func (b *eventsBroker) disconnectClient(uuid string) {
+func (b *eventsBroker) disconnectClient(ctx context.Context, uuid string) {
 	b.disconnectedMutex.Lock()
 	defer b.disconnectedMutex.Unlock()
 	b.disconnected[uuid] = true
+	observability.Record(ctx, b.router.Stats.SSEClients, -1)
 }
 
 //Init the eventsBroker
 func (b *eventsBroker) Init(c context.Context) {
 	// Start cache Subscription
 	subscribeFunc := func() {
-		cacheSubscribe(c, b.messages, b.cache)
+		b.cacheSubscribe(c, b.messages, b.cache)
 	}
 	sdk.GoRoutine("eventsBroker.Init.CacheSubscribe", subscribeFunc)
 
@@ -80,7 +85,7 @@ func (b *eventsBroker) Init(c context.Context) {
 	sdk.GoRoutine("eventsBroker.Init.Start", startFunc)
 }
 
-func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
+func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
 	pubSub := store.Subscribe("events_pubsub")
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
@@ -107,6 +112,7 @@ func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cach
 			case "sdk.EventPipelineBuild", "sdk.EventJob":
 				continue
 			}
+			observability.Record(c, b.router.Stats.SSEEvents, 1)
 			cacheMsgChan <- e
 		}
 	}
@@ -145,7 +151,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		}
 
 		// Add this client to the map of those that should receive updates
-		b.addClient(client)
+		b.addClient(ctx, client)
 
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -166,11 +172,11 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			select {
 			case <-ctx.Done():
 				log.Info("events.Http: context done")
-				b.disconnectClient(client.UUID)
+				b.disconnectClient(ctx, client.UUID)
 				break leave
 			case <-r.Context().Done():
 				log.Info("events.Http: client disconnected")
-				b.disconnectClient(client.UUID)
+				b.disconnectClient(ctx, client.UUID)
 				break leave
 			case event := <-client.Queue:
 				if ok := client.manageEvent(event); !ok {
