@@ -113,6 +113,10 @@ export class WorkflowRunComponent implements OnInit {
     }
 
     handleNotification() {
+        if (this.workflowRun.num !== parseInt(this._activatedRoute.snapshot.params['number'], 10)) {
+            return;
+        }
+
         switch (this.workflowRun.status) {
             case PipelineStatus.SUCCESS:
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_success', {
