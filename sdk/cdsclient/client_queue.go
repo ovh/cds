@@ -60,9 +60,9 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	sdk.GoRoutine(ctx, "RequestSSEGet", func(ctx context.Context) {
 		for ctx.Err() == nil {
 			if err := c.RequestSSEGet(ctx, "/events", chanSSEvt); err != nil {
-				log.Println(err)
+				log.Println("QueuePolling", err)
 			}
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 		}
 	})
 

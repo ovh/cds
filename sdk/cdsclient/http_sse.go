@@ -87,12 +87,14 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 		}
 
 		bs, err := br.ReadBytes('\n')
-		if err != nil && err != io.EOF {
-			return err
-		}
 
-		if err == io.EOF {
-			EOF = true
+		if err != nil {
+			switch err {
+			case io.EOF, io.ErrUnexpectedEOF, io.ErrClosedPipe:
+				EOF = true
+			default:
+				return err
+			}
 		}
 
 		if len(bs) < 2 {
