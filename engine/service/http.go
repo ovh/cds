@@ -106,7 +106,7 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 	// ErrAlreadyTaken and ErrWorkerModelAlreadyBooked are not useful to log in warning
 	if sdk.ErrorIs(httpErr, sdk.ErrAlreadyTaken) ||
 		sdk.ErrorIs(httpErr, sdk.ErrWorkerModelAlreadyBooked) ||
-		sdk.ErrorIs(httpErr, sdk.ErrJobAlreadyBooked) || r.URL.Path == "/user/me" {
+		sdk.ErrorIs(httpErr, sdk.ErrJobAlreadyBooked) || r.URL.Path == "/user/logged" {
 		entry.Debugf("%s", err)
 	} else {
 		entry.Warningf("%s", err)
