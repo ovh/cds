@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"net/http"
-	"sync"
 
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
@@ -22,7 +21,6 @@ func (api *API) InitRouter() {
 		clients:  make(map[string]eventsBrokerSubscribe),
 		dbFunc:   api.DBConnectionFactory.GetDBMap,
 		messages: make(chan sdk.Event),
-		mutex:    &sync.Mutex{},
 	}
 	api.eventsBroker.Init(context.Background())
 

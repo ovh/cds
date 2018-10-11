@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -30,25 +29,18 @@ type eventsBrokerSubscribe struct {
 
 // lastUpdateBroker keeps connected client of the current route,
 type eventsBroker struct {
-	clients  map[string]eventsBrokerSubscribe
-	messages chan sdk.Event
-	mutex    *sync.Mutex
-	dbFunc   func() *gorp.DbMap
-	cache    cache.Store
-	router   *Router
-}
-
-// AddClient add a client to the client map
-func (b *eventsBroker) addClient(ctx context.Context, client eventsBrokerSubscribe) {
-	b.mutex.Lock()
-	b.clients[client.UUID] = client
-	b.mutex.Unlock()
-	go observability.Record(ctx, b.router.Stats.SSEClients, 1)
+	clients          map[string]eventsBrokerSubscribe
+	messages         chan sdk.Event
+	dbFunc           func() *gorp.DbMap
+	cache            cache.Store
+	router           *Router
+	chanAddClient    chan (eventsBrokerSubscribe)
+	chanRemoveClient chan (string)
+	chanCleanall     chan (struct{})
 }
 
 // CleanAll cleans all clients
-func (b *eventsBroker) cleanAll() {
-	b.mutex.Lock()
+func (b *eventsBroker) selectCleanAll() {
 	if b.clients != nil {
 		defer observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
 		for c, v := range b.clients {
@@ -56,22 +48,6 @@ func (b *eventsBroker) cleanAll() {
 			delete(b.clients, c)
 		}
 	}
-	b.mutex.Unlock()
-}
-
-func (b *eventsBroker) disconnectClient(ctx context.Context, uuid string) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-
-	client, has := b.clients[uuid]
-	if !has {
-		return
-	}
-
-	close(client.Queue)
-	delete(b.clients, uuid)
-
-	go observability.Record(ctx, b.router.Stats.SSEClients, -1)
 }
 
 //Init the eventsBroker
@@ -120,17 +96,37 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 }
 
 // Start the broker
-func (b *eventsBroker) Start(c context.Context) {
+func (b *eventsBroker) Start(ctx context.Context) {
+	b.chanAddClient = make(chan (eventsBrokerSubscribe))
+	b.chanRemoveClient = make(chan (string))
+	b.chanCleanall = make(chan (struct{}))
+
 	for {
 		select {
-		case <-c.Done():
-			b.cleanAll()
-			if c.Err() != nil {
-				log.Error("eventsBroker.Start> Exiting: %v", c.Err())
+		case <-ctx.Done():
+			b.selectCleanAll()
+			if ctx.Err() != nil {
+				log.Error("eventsBroker.Start> Exiting: %v", ctx.Err())
 				return
 			}
 		case receivedEvent := <-b.messages:
-			b.manageEvent(receivedEvent)
+			for _, c := range b.clients {
+				log.Debug("send data to %s", c.UUID)
+				c.Queue <- receivedEvent
+			}
+		case client := <-b.chanAddClient:
+			b.clients[client.UUID] = client
+			go observability.Record(ctx, b.router.Stats.SSEClients, 1)
+		case uuid := <-b.chanRemoveClient:
+			client, has := b.clients[uuid]
+			if !has {
+				return
+			}
+			close(client.Queue)
+			delete(b.clients, uuid)
+			go observability.Record(ctx, b.router.Stats.SSEClients, -1)
+		case <-b.chanCleanall:
+			b.selectCleanAll()
 		}
 	}
 }
@@ -152,7 +148,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		}
 
 		// Add this client to the map of those that should receive updates
-		b.addClient(ctx, client)
+		b.chanAddClient <- client
 
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -173,11 +169,11 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			select {
 			case <-ctx.Done():
 				log.Info("events.Http: context done")
-				b.disconnectClient(ctx, client.UUID)
+				b.chanRemoveClient <- client.UUID
 				break leave
 			case <-r.Context().Done():
 				log.Info("events.Http: client disconnected")
-				b.disconnectClient(ctx, client.UUID)
+				b.chanRemoveClient <- client.UUID
 				break leave
 			case event := <-client.Queue:
 				if ok := client.manageEvent(event); !ok {
@@ -208,23 +204,6 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		}
 
 		return nil
-	}
-}
-
-func (b *eventsBroker) manageEvent(receivedEvent sdk.Event) {
-	// Create a slice of clients with a mutex
-	b.mutex.Lock()
-	clients := make([]eventsBrokerSubscribe, len(b.clients))
-	var i int
-	for _, client := range b.clients {
-		clients[i] = client
-		i++
-	}
-	b.mutex.Unlock()
-	// Then iterate over it outside the mutex
-	for _, c := range clients {
-		log.Debug("send data to %s", c.UUID)
-		c.Queue <- receivedEvent
 	}
 }
 
