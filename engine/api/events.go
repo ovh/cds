@@ -88,22 +88,17 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 func (b *eventsBroker) Start(ctx context.Context) {
 	b.chanAddClient = make(chan (eventsBrokerSubscribe))
 	b.chanRemoveClient = make(chan (string))
-	b.chanCleanall = make(chan (struct{}))
-
-	cleanAll := func() {
-		if b.clients != nil {
-			defer observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
-			for c, v := range b.clients {
-				close(v.Queue)
-				delete(b.clients, c)
-			}
-		}
-	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			cleanAll()
+			if b.clients != nil {
+				defer observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
+				for c, v := range b.clients {
+					close(v.Queue)
+					delete(b.clients, c)
+				}
+			}
 			if ctx.Err() != nil {
 				log.Error("eventsBroker.Start> Exiting: %v", ctx.Err())
 				return
@@ -124,8 +119,6 @@ func (b *eventsBroker) Start(ctx context.Context) {
 			close(client.Queue)
 			delete(b.clients, uuid)
 			go observability.Record(ctx, b.router.Stats.SSEClients, -1)
-		case <-b.chanCleanall:
-			cleanAll()
 		}
 	}
 }
