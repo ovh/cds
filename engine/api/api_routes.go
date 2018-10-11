@@ -378,6 +378,7 @@ func (api *API) InitRouter() {
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
 	r.Handle("/user/logged", r.GET(api.getUserLoggedHandler, Auth(false)))
+	r.Handle("/user/me", r.GET(api.getUserLoggedHandler, Auth(false), DEPRECATED))
 	r.Handle("/user/favorite", r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/timeline", r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
