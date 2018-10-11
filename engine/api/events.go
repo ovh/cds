@@ -92,7 +92,7 @@ func (b *eventsBroker) Start(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			if b.clients != nil {
-				defer observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
+				go observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
 				for c, v := range b.clients {
 					close(v.Queue)
 					delete(b.clients, c)
