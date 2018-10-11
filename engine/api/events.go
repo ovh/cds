@@ -126,6 +126,7 @@ func (b *eventsBroker) Start(ctx context.Context) {
 				return
 			}
 			close(client.Queue)
+			client.Queue = nil
 			delete(b.clients, uuid)
 			go observability.Record(ctx, b.router.Stats.SSEClients, -1)
 		}
