@@ -91,6 +91,10 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 			return err
 		}
 
+		if err == io.EOF {
+			EOF = true
+		}
+
 		if len(bs) < 2 {
 			continue
 		}
@@ -109,9 +113,7 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 			currEvent.Data = bytes.NewBuffer(bytes.TrimSpace(spl[1]))
 			evCh <- *currEvent
 		}
-		if err == io.EOF {
-			EOF = true
-		}
+
 	}
 
 	return nil
