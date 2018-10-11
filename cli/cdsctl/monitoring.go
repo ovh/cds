@@ -69,6 +69,19 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 		}
 	}()
 
+	urlUI, err := client.ConfigUser()
+	if err != nil {
+		return nil, err
+	}
+	if b, ok := urlUI[sdk.ConfigURLUIKey]; ok {
+		ui.baseURL = b
+	}
+
+	ui.me, err = client.UserGet(cfg.User)
+	if err != nil {
+		return nil, fmt.Errorf("Can't get current user: %v", err)
+	}
+
 	termui.Loop()
 
 	return nil, nil
@@ -111,18 +124,7 @@ type Termui struct {
 func (ui *Termui) loadData() { ui.loadChan <- ui.execLoadData }
 
 func (ui *Termui) execLoadData() error {
-	urlUI, err := client.ConfigUser()
-	if err != nil {
-		return err
-	}
-	if b, ok := urlUI[sdk.ConfigURLUIKey]; ok {
-		ui.baseURL = b
-	}
-
-	ui.me, err = client.UserGet(cfg.User)
-	if err != nil {
-		return fmt.Errorf("Can't get current user: %v", err)
-	}
+	var err error
 
 	start := time.Now()
 	ui.status, err = client.MonStatus()
