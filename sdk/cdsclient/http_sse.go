@@ -83,8 +83,7 @@ func (c *client) RequestSSEGet(ctx context.Context, path string, evCh chan<- SSE
 
 	for !EOF {
 		if ctx.Err() != nil {
-			EOF = true
-			continue
+			return nil
 		}
 
 		bs, err := br.ReadBytes('\n')
