@@ -357,9 +357,9 @@ func parseApplicationConfigFile(f string) (*marathon.Application, error) {
 	if !result.Valid() {
 		fmt.Printf("The document is not valid. see following errors\n")
 		for _, desc := range result.Errors() {
-			fmt.Printf(" - %s", desc.Details())
+			fmt.Println(desc.Details())
 		}
-		return nil, fmt.Errorf("IMarathonPlugin invalid json document")
+		return nil, fmt.Errorf("invalid json document")
 	}
 
 	return appConfig, nil
