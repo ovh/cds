@@ -635,21 +635,48 @@ func (a *API) Serve(ctx context.Context) error {
 	event.Subscribe(a.warnChan)
 
 	log.Info("Initializing internal routines...")
-	sdk.GoRoutine("workflow.ComputeAudit", func() { workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("warning.Start", func() { warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan) })
-	sdk.GoRoutine("queue.Pipelines", func() { queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("pipeline.AWOLPipelineKiller", func() { pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
-	sdk.GoRoutine("auditCleanerRoutine(ctx", func() { auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("metrics.Initialize", func() { metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name) })
-	sdk.GoRoutine("repositoriesmanager.ReceiveEvents", func() { repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
-	sdk.GoRoutine("action.RequirementsCacheLoader", func() { action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache) })
-	sdk.GoRoutine("hookRecoverer(ctx", func() { hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
-	sdk.GoRoutine("services.KillDeadServices", func() { services.KillDeadServices(ctx, a.mustDB) })
-	sdk.GoRoutine("migrate.CleanOldWorkflow", func() { migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API) })
-	sdk.GoRoutine("migrate.KeyMigration", func() { migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true}) })
-	sdk.GoRoutine("broadcast.Initialize", func() { broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap) })
-	//sdk.GoRoutine("workflow.RestartAwolJobs", func() { workflow.RestartAwolJobs(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("a.serviceAPIHeartbeat(ctx", func() { a.serviceAPIHeartbeat(ctx) })
+	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
+		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	})
+	sdk.GoRoutine(ctx, "warning.Start", func(ctx context.Context) {
+		warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan)
+	})
+	sdk.GoRoutine(ctx, "queue.Pipelines", func(ctx context.Context) {
+		queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
+	})
+	sdk.GoRoutine(ctx, "pipeline.AWOLPipelineKiller", func(ctx context.Context) {
+		pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
+	})
+	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
+		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
+	})
+	sdk.GoRoutine(ctx, "metrics.Initialize", func(ctx context.Context) {
+		metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)
+	})
+	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
+		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
+	})
+	sdk.GoRoutine(ctx, "action.RequirementsCacheLoader", func(ctx context.Context) {
+		action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
+	})
+	sdk.GoRoutine(ctx, "hookRecoverer(ctx", func(ctx context.Context) {
+		hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
+	})
+	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
+		services.KillDeadServices(ctx, a.mustDB)
+	})
+	sdk.GoRoutine(ctx, "migrate.CleanOldWorkflow", func(ctx context.Context) {
+		migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
+	})
+	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
+		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	})
+	sdk.GoRoutine(ctx, "broadcast.Initialize", func(ctx context.Context) {
+		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap)
+	})
+	sdk.GoRoutine(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
+		a.serviceAPIHeartbeat(ctx)
+	})
 
 	//Temporary migration code
 	go migrate.WorkflowNodeRunArtifacts(a.Cache, a.DBConnectionFactory.GetDBMap)
@@ -683,7 +710,7 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := services.InitExternal(a.mustDB, a.Cache, externalServices); err != nil {
 		return fmt.Errorf("unable to init external service: %v", err)
 	}
-	sdk.GoRoutine("pings-external-services", func() { services.Pings(ctx, a.mustDB, externalServices) })
+	sdk.GoRoutine(ctx, "pings-external-services", func(ctx context.Context) { services.Pings(ctx, a.mustDB, externalServices) })
 
 	// TODO: to delete after migration
 	if os.Getenv("CDS_MIGRATE_GIT_CLONE") == "true" {
@@ -700,12 +727,12 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 
-	sdk.GoRoutine("workflow.Initialize", func() {
+	sdk.GoRoutine(ctx, "workflow.Initialize", func(ctx context.Context) {
 		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
 	})
-	sdk.GoRoutine("PushInElasticSearch", func() { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
+	sdk.GoRoutine(ctx, "PushInElasticSearch", func(ctx context.Context) { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
 	metrics.Init(ctx, a.DBConnectionFactory.GetDBMap)
-	sdk.GoRoutine("Purge", func() { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine(ctx, "Purge", func(ctx context.Context) { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),

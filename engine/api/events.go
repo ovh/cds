@@ -72,17 +72,15 @@ func (b *eventsBroker) disconnectClient(ctx context.Context, uuid string) {
 }
 
 //Init the eventsBroker
-func (b *eventsBroker) Init(c context.Context) {
+func (b *eventsBroker) Init(ctx context.Context) {
 	// Start cache Subscription
-	subscribeFunc := func() {
-		b.cacheSubscribe(c, b.messages, b.cache)
-	}
-	sdk.GoRoutine("eventsBroker.Init.CacheSubscribe", subscribeFunc)
+	sdk.GoRoutine(ctx, "eventsBroker.Init.CacheSubscribe", func(ctx context.Context) {
+		b.cacheSubscribe(ctx, b.messages, b.cache)
+	})
 
-	startFunc := func() {
-		b.Start(c)
-	}
-	sdk.GoRoutine("eventsBroker.Init.Start", startFunc)
+	sdk.GoRoutine(ctx, "eventsBroker.Init.Start", func(ctx context.Context) {
+		b.Start(ctx)
+	})
 }
 
 func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {

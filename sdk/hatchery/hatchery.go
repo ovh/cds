@@ -103,8 +103,8 @@ func Create(h Interface) error {
 	// hatchery is now fully Initialized
 	h.SetInitialized()
 
-	sdk.GoRoutine("queuePolling",
-		func() {
+	sdk.GoRoutine(ctx, "queuePolling",
+		func(ctx context.Context) {
 			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 20*time.Second, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 				cancel()
@@ -121,50 +121,46 @@ func Create(h Interface) error {
 		return fmt.Errorf("Create> Cannot retrieve hostname: %s", errh)
 	}
 	// read the result channel in another goroutine to let the main goroutine start new workers
-	sdk.GoRoutine("checkStarterResult",
-		func() {
-			for startWorkerRes := range workerStartResultChan {
-				if startWorkerRes.err != nil {
-					errs <- startWorkerRes.err
+	sdk.GoRoutine(ctx, "checkStarterResult", func(ctx context.Context) {
+		for startWorkerRes := range workerStartResultChan {
+			if startWorkerRes.err != nil {
+				errs <- startWorkerRes.err
+			}
+			if startWorkerRes.temptToSpawn {
+				found := false
+				for _, hID := range startWorkerRes.request.spawnAttempts {
+					if hID == h.ID() {
+						found = true
+						break
+					}
 				}
-				if startWorkerRes.temptToSpawn {
-					found := false
-					for _, hID := range startWorkerRes.request.spawnAttempts {
-						if hID == h.ID() {
-							found = true
-							break
-						}
-					}
-					if !found {
-						ctxHatcheryCount, cancelHatcheryCount := context.WithTimeout(ctx, 10*time.Second)
-						if hCount, err := h.CDSClient().HatcheryCount(ctxHatcheryCount, startWorkerRes.request.workflowNodeRunID); err == nil {
-							if int64(len(startWorkerRes.request.spawnAttempts)) < hCount {
-								ctxtJobIncAttemps, cancelJobIncAttemps := context.WithTimeout(ctx, 10*time.Second)
-								if _, errQ := h.CDSClient().QueueJobIncAttempts(ctxtJobIncAttemps, startWorkerRes.request.id); errQ != nil {
-									log.Warning("Hatchery> Create> cannot inc spawn attempts %v", errQ)
-								}
-								cancelJobIncAttemps()
+				if !found {
+					ctxHatcheryCount, cancelHatcheryCount := context.WithTimeout(ctx, 10*time.Second)
+					if hCount, err := h.CDSClient().HatcheryCount(ctxHatcheryCount, startWorkerRes.request.workflowNodeRunID); err == nil {
+						if int64(len(startWorkerRes.request.spawnAttempts)) < hCount {
+							ctxtJobIncAttemps, cancelJobIncAttemps := context.WithTimeout(ctx, 10*time.Second)
+							if _, errQ := h.CDSClient().QueueJobIncAttempts(ctxtJobIncAttemps, startWorkerRes.request.id); errQ != nil {
+								log.Warning("Hatchery> Create> cannot inc spawn attempts %v", errQ)
 							}
-						} else {
-							log.Warning("Hatchery> Create> cannot get hatchery count: %v", err)
+							cancelJobIncAttemps()
 						}
-						cancelHatcheryCount()
+					} else {
+						log.Warning("Hatchery> Create> cannot get hatchery count: %v", err)
 					}
+					cancelHatcheryCount()
 				}
 			}
-		},
+		}
+	},
 		PanicDump(h),
 	)
 
 	// read the errs channel in another goroutine too
-	sdk.GoRoutine("checkErrs",
-		func() {
-			for err := range errs {
-				log.Error("%v", err)
-			}
-		},
-		PanicDump(h),
-	)
+	sdk.GoRoutine(ctx, "checkErrs", func(ctx context.Context) {
+		for err := range errs {
+			log.Error("%v", err)
+		}
+	}, PanicDump(h))
 
 	// the main goroutine
 	for {

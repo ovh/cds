@@ -447,8 +447,8 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 
 		event.PublishWorkflowDelete(key, *oldW, getUser(ctx))
 
-		sdk.GoRoutine("deleteWorkflowHandler",
-			func() {
+		sdk.GoRoutine(ctx, "deleteWorkflowHandler",
+			func(ctx context.Context) {
 				txg, errT := api.mustDB().Begin()
 				if errT != nil {
 					log.Error("deleteWorkflowHandler> Cannot start transaction: %v", errT)

@@ -36,8 +36,8 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 	api.warnChan = make(chan sdk.Event)
 	event.Subscribe(api.warnChan)
 
-	sdk.GoRoutine("workflow.ComputeAudit", func() { workflow.ComputeAudit(context.Background(), api.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("warning.Start", func() { warning.Start(context.Background(), api.DBConnectionFactory.GetDBMap, api.warnChan) })
+	sdk.GoRoutine(context.TODO(), "workflow.ComputeAudit", func(ctx context.Context) { workflow.ComputeAudit(ctx, api.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine(context.TODO(), "warning.Start", func(ctx context.Context) { warning.Start(ctx, api.DBConnectionFactory.GetDBMap, api.warnChan) })
 
 	return api, db, router
 }
