@@ -17,14 +17,12 @@ func (api *API) InitRouter() {
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
 
 	api.eventsBroker = &eventsBroker{
-		router:            api.Router,
-		cache:             api.Cache,
-		clients:           make(map[string]eventsBrokerSubscribe),
-		dbFunc:            api.DBConnectionFactory.GetDBMap,
-		messages:          make(chan sdk.Event),
-		mutex:             &sync.Mutex{},
-		disconnectedMutex: &sync.Mutex{},
-		disconnected:      make(map[string]bool),
+		router:   api.Router,
+		cache:    api.Cache,
+		clients:  make(map[string]eventsBrokerSubscribe),
+		dbFunc:   api.DBConnectionFactory.GetDBMap,
+		messages: make(chan sdk.Event),
+		mutex:    &sync.Mutex{},
 	}
 	api.eventsBroker.Init(context.Background())
 

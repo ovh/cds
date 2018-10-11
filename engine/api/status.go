@@ -42,7 +42,6 @@ func (api *API) Status() sdk.MonitoringStatus {
 	m.Lines = append(m.Lines, getStatusLine(objectstore.Status()))
 	m.Lines = append(m.Lines, getStatusLine(mail.Status()))
 	m.Lines = append(m.Lines, getStatusLine(api.DBConnectionFactory.Status()))
-	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "SSE Connected", Value: fmt.Sprintf("%d", api.eventsBroker.clientsLen), Status: sdk.MonitoringStatusOK}))
 	m.Lines = append(m.Lines, getStatusLine(worker.Status(api.mustDB())))
 
 	return m

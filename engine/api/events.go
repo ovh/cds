@@ -30,45 +30,48 @@ type eventsBrokerSubscribe struct {
 
 // lastUpdateBroker keeps connected client of the current route,
 type eventsBroker struct {
-	clients           map[string]eventsBrokerSubscribe
-	messages          chan sdk.Event
-	mutex             *sync.Mutex
-	disconnected      map[string]bool
-	disconnectedMutex *sync.Mutex
-	dbFunc            func() *gorp.DbMap
-	cache             cache.Store
-	clientsLen        int64
-	router            *Router
+	clients  map[string]eventsBrokerSubscribe
+	messages chan sdk.Event
+	mutex    *sync.Mutex
+	dbFunc   func() *gorp.DbMap
+	cache    cache.Store
+	router   *Router
 }
 
 // AddClient add a client to the client map
 func (b *eventsBroker) addClient(ctx context.Context, client eventsBrokerSubscribe) {
 	b.mutex.Lock()
-	defer b.mutex.Unlock()
 	b.clients[client.UUID] = client
-	b.clientsLen++
-	observability.Record(ctx, b.router.Stats.SSEClients, 1)
+	b.mutex.Unlock()
+	go observability.Record(ctx, b.router.Stats.SSEClients, 1)
 }
 
 // CleanAll cleans all clients
 func (b *eventsBroker) cleanAll() {
 	b.mutex.Lock()
-	defer b.mutex.Unlock()
 	if b.clients != nil {
+		defer observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
 		for c, v := range b.clients {
 			close(v.Queue)
 			delete(b.clients, c)
-			observability.Record(b.router.Background, b.router.Stats.SSEClients, -1)
 		}
 	}
-	b.clientsLen = 0
+	b.mutex.Unlock()
 }
 
 func (b *eventsBroker) disconnectClient(ctx context.Context, uuid string) {
-	b.disconnectedMutex.Lock()
-	defer b.disconnectedMutex.Unlock()
-	b.disconnected[uuid] = true
-	observability.Record(ctx, b.router.Stats.SSEClients, -1)
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+
+	client, has := b.clients[uuid]
+	if !has {
+		return
+	}
+
+	close(client.Queue)
+	delete(b.clients, uuid)
+
+	go observability.Record(ctx, b.router.Stats.SSEClients, -1)
 }
 
 //Init the eventsBroker
@@ -209,26 +212,20 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 }
 
 func (b *eventsBroker) manageEvent(receivedEvent sdk.Event) {
+	// Create a slice of clients with a mutex
 	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	for _, i := range b.clients {
-		if b.canSend(i) {
-			i.Queue <- receivedEvent
-		}
+	clients := make([]eventsBrokerSubscribe, len(b.clients))
+	var i int
+	for _, client := range b.clients {
+		clients[i] = client
+		i++
 	}
-}
-
-// canSend Test if client is connected. If not, close channel and remove client from map
-func (b *eventsBroker) canSend(client eventsBrokerSubscribe) bool {
-	b.disconnectedMutex.Lock()
-	defer b.disconnectedMutex.Unlock()
-	if _, ok := b.disconnected[client.UUID]; !ok {
-		return true
+	b.mutex.Unlock()
+	// Then iterate over it outside the mutex
+	for _, c := range clients {
+		log.Debug("send data to %s", c.UUID)
+		c.Queue <- receivedEvent
 	}
-	close(client.Queue)
-	delete(b.clients, client.UUID)
-	b.clientsLen--
-	return false
 }
 
 func (s *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
