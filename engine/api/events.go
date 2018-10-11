@@ -39,17 +39,6 @@ type eventsBroker struct {
 	chanCleanall     chan (struct{})
 }
 
-// CleanAll cleans all clients
-func (b *eventsBroker) selectCleanAll() {
-	if b.clients != nil {
-		defer observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
-		for c, v := range b.clients {
-			close(v.Queue)
-			delete(b.clients, c)
-		}
-	}
-}
-
 //Init the eventsBroker
 func (b *eventsBroker) Init(ctx context.Context) {
 	// Start cache Subscription
@@ -95,16 +84,38 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 	}
 }
 
+// CleanAll cleans all clients
+// /!\ this have to be used only
+func (b *eventsBroker) cleanAll() {
+	if b.clients != nil {
+		defer observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
+		for c, v := range b.clients {
+			close(v.Queue)
+			delete(b.clients, c)
+		}
+	}
+}
+
 // Start the broker
 func (b *eventsBroker) Start(ctx context.Context) {
 	b.chanAddClient = make(chan (eventsBrokerSubscribe))
 	b.chanRemoveClient = make(chan (string))
 	b.chanCleanall = make(chan (struct{}))
 
+	cleanAll := func() {
+		if b.clients != nil {
+			defer observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
+			for c, v := range b.clients {
+				close(v.Queue)
+				delete(b.clients, c)
+			}
+		}
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
-			b.selectCleanAll()
+			cleanAll()
 			if ctx.Err() != nil {
 				log.Error("eventsBroker.Start> Exiting: %v", ctx.Err())
 				return
@@ -126,7 +137,7 @@ func (b *eventsBroker) Start(ctx context.Context) {
 			delete(b.clients, uuid)
 			go observability.Record(ctx, b.router.Stats.SSEClients, -1)
 		case <-b.chanCleanall:
-			b.selectCleanAll()
+			cleanAll()
 		}
 	}
 }
