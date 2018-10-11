@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -159,16 +158,21 @@ func (api *API) getUsersHandler() service.Handler {
 	}
 }
 
-// getUserMeHandler fetches current user data
-func (api *API) getUserMeHandler() service.Handler {
+// getUserLoggedHandler check if the current user is connected
+func (api *API) getUserLoggedHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := getUser(ctx)
-		if u == nil {
-			return fmt.Errorf("getUserMeHandler> user is nil")
+		h := r.Header.Get(sdk.SessionTokenHeader)
+		if h == "" {
+			return sdk.ErrUnauthorized
 		}
-		u.Groups = nil
-		u.Permissions = sdk.UserPermissions{}
-		return service.WriteJSON(w, *u, http.StatusOK)
+
+		store := api.Router.AuthDriver.Store()
+		key := sessionstore.SessionKey(h)
+		if ok, _ := store.Exists(key); !ok {
+			return sdk.ErrUnauthorized
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 
