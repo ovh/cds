@@ -672,7 +672,7 @@
   "scheduler_workflow_label": "Scheduler : ",
 
   "settings_tips": "Conseils",
-  
+
   "services": "services",
   "services_list": "CDS Services",
   "services_see_all": "Voir tous",
@@ -1004,6 +1004,7 @@
   "workflow_notification_list": "Liste des notifications",
   "workflow_notification_form": "Ajouter une notification",
   "workflow_notification_copy": "Copié",
+  "workflow_logs_all": "Afficher tous les logs",
 
   "workflow_wizard_select_repo_man": "Sélectionner un gestionnaire de dépôt",
   "workflow_wizard_select_repo": "Sélectionner un dépot",
