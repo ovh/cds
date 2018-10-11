@@ -103,10 +103,20 @@ func (b *eventsBroker) Start(ctx context.Context) {
 				return
 			}
 		case receivedEvent := <-b.messages:
-			for _, c := range b.clients {
-				log.Debug("send data to %s", c.UUID)
-				c.Queue <- receivedEvent
+			clients := make([]eventsBrokerSubscribe, len(b.clients))
+			var i int
+			for _, client := range b.clients {
+				clients[i] = client
+				i++
 			}
+			go func() {
+				for _, c := range clients {
+					log.Debug("send data to %s", c.UUID)
+					if c.Queue != nil {
+						c.Queue <- receivedEvent
+					}
+				}
+			}()
 		case client := <-b.chanAddClient:
 			b.clients[client.UUID] = client
 			go observability.Record(ctx, b.router.Stats.SSEClients, 1)
