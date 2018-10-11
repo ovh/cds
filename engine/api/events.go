@@ -36,7 +36,6 @@ type eventsBroker struct {
 	router           *Router
 	chanAddClient    chan (eventsBrokerSubscribe)
 	chanRemoveClient chan (string)
-	chanCleanall     chan (struct{})
 }
 
 //Init the eventsBroker
