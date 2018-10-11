@@ -115,21 +115,30 @@ func (h *HatcherySwarm) Init() error {
 
 			if tlsc != nil {
 				httpClient.Transport = &http.Transport{
-					Dial: (&net.Dialer{
-						Timeout: 30 * time.Second,
-					}).Dial,
-					MaxIdleConns:        500,
-					MaxIdleConnsPerHost: 500,
-					TLSHandshakeTimeout: 30 * time.Second,
-					TLSClientConfig:     tlsc,
+					DialContext: (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 0 * time.Second,
+						DualStack: true,
+					}).DialContext,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       20 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+					ResponseHeaderTimeout: 30 * time.Second,
+					TLSClientConfig:       tlsc,
 				}
 			} else {
 				httpClient.Transport = &http.Transport{
-					Dial: (&net.Dialer{
-						Timeout: 30 * time.Second,
-					}).Dial,
-					MaxIdleConns:        500,
-					MaxIdleConnsPerHost: 500,
+					DialContext: (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 0 * time.Second,
+						DualStack: true,
+					}).DialContext,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       20 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+					ResponseHeaderTimeout: 30 * time.Second,
 				}
 			}
 
@@ -247,7 +256,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					network = name + "-net"
 					networkAlias = "worker"
 					if err := h.createNetwork(ctx, dockerClient, network); err != nil {
-						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s for jobID %d : %v", network, spawnArgs.JobID, err)
+						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
 						next()
 						return "", err
 					}
@@ -273,7 +282,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 						m := strings.Replace(e, "CDS_SERVICE_MEMORY=", "", -1)
 						i, err := strconv.Atoi(m)
 						if err != nil {
-							log.Warning("hatchery> swarm> SpawnWorker> Unable to parse service option %s : %s", e, err)
+							log.Warning("hatchery> swarm> SpawnWorker> Unable to parse service option %s : %v", e, err)
 							continue
 						}
 						serviceMemory = int64(i)
@@ -308,7 +317,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container: %s", err)
+					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dockerClient.name, err)
 					return "", err
 				}
 				services = append(services, serviceName)

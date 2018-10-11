@@ -33,6 +33,12 @@ func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) er
 		if models[k].Type != h.ModelType() {
 			continue
 		}
+		if h.NeedRegistration(&models[k]) || models[k].CheckRegistration {
+			log.Debug("hatchery> workerRegister> need register")
+		} else {
+			continue
+		}
+
 		maxRegistration := int64(math.Floor(float64(h.Configuration().Provision.MaxWorker) / 4))
 		if atomic.LoadInt64(&nbRegisteringWorkerModels) > maxRegistration {
 			log.Debug("hatchery> workerRegister> max registering worker reached")
