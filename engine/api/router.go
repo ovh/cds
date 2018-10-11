@@ -83,9 +83,10 @@ type HandlerConfigFunc func(service.Handler, ...HandlerConfigParam) *service.Han
 func (r *Router) pprofLabel(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		labels := pprof.Labels("http-path", r.URL.Path)
-		pprof.Do(r.Context(), labels, func(ctx context.Context) {
-			fn.ServeHTTP(w, r)
-		})
+		ctx := pprof.WithLabels(r.Context(), labels)
+		pprof.SetGoroutineLabels(ctx)
+		r = r.WithContext(ctx)
+		fn(w, r)
 	}
 }
 
