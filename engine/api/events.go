@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
@@ -22,9 +23,10 @@ import (
 
 // eventsBrokerSubscribe is the information needed to subscribe
 type eventsBrokerSubscribe struct {
-	UUID  string
-	User  *sdk.User
-	Queue chan sdk.Event
+	UUID    string
+	User    *sdk.User
+	Queue   chan sdk.Event
+	IsAlive *abool.AtomicBool
 }
 
 // lastUpdateBroker keeps connected client of the current route,
@@ -103,20 +105,16 @@ func (b *eventsBroker) Start(ctx context.Context) {
 				return
 			}
 		case receivedEvent := <-b.messages:
-			clients := make([]eventsBrokerSubscribe, len(b.clients))
-			var i int
-			for _, client := range b.clients {
-				clients[i] = client
-				i++
-			}
-			go func() {
-				for _, c := range clients {
-					log.Debug("send data to %s", c.UUID)
-					if c.Queue != nil {
+			for i := range b.clients {
+				client := b.clients[i]
+				c := &client
+				go func() {
+					if c.IsAlive.IsSet() {
+						log.Debug("send data to %s", c.UUID)
 						c.Queue <- receivedEvent
 					}
-				}
-			}()
+				}()
+			}
 		case client := <-b.chanAddClient:
 			b.clients[client.UUID] = client
 			go observability.Record(ctx, b.router.Stats.SSEClients, 1)
@@ -144,10 +142,12 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 
 		uuid := sdk.UUID()
 		client := eventsBrokerSubscribe{
-			UUID:  uuid,
-			User:  getUser(ctx),
-			Queue: make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
+			UUID:    uuid,
+			User:    getUser(ctx),
+			Queue:   make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
+			IsAlive: abool.New(),
 		}
+		client.IsAlive.Set()
 
 		// Add this client to the map of those that should receive updates
 		b.chanAddClient <- client
@@ -171,13 +171,18 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			select {
 			case <-ctx.Done():
 				log.Info("events.Http: context done")
+				client.IsAlive.UnSet()
 				b.chanRemoveClient <- client.UUID
 				break leave
 			case <-r.Context().Done():
 				log.Info("events.Http: client disconnected")
+				client.IsAlive.UnSet()
 				b.chanRemoveClient <- client.UUID
 				break leave
 			case event := <-client.Queue:
+				if !client.IsAlive.IsSet() {
+					break leave
+				}
 				if ok := client.manageEvent(event); !ok {
 					continue
 				}
