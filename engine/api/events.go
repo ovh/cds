@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/tevino/abool"
@@ -28,6 +29,7 @@ type eventsBrokerSubscribe struct {
 	User    *sdk.User
 	isAlive *abool.AtomicBool
 	w       http.ResponseWriter
+	mutex   sync.Mutex
 }
 
 // lastUpdateBroker keeps connected client of the current route,
@@ -257,6 +259,9 @@ func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 
 // Send an event to a client
 func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
 	if client == nil || client.w == nil {
 		return nil
 	}
