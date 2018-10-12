@@ -68,6 +68,7 @@ export class WorkflowNodeRunParamComponent {
     lastNum: number;
     codeMirrorConfig: {};
     commits: Commit[] = [];
+    parameters: Parameter[] = [];
     branches: string[] = [];
     remotes: string[] = [];
     tags: string[] = [];
@@ -126,7 +127,6 @@ export class WorkflowNodeRunParamComponent {
                             this._nodeToRun.context.default_pipeline_parameters = nodeRun.manual.pipeline_parameter;
                         }
                     }
-
                     this.prepareDisplay(null);
             });
         } else {
@@ -280,13 +280,12 @@ export class WorkflowNodeRunParamComponent {
         }
 
         if (this._nodeToRun.context) {
-            this._nodeToRun.context.default_pipeline_parameters =
-                Pipeline.mergeParams(pipToRun.parameters, this._nodeToRun.context.default_pipeline_parameters);
+            this.parameters =
+                Pipeline.mergeParams(cloneDeep(pipToRun.parameters), this._nodeToRun.context.default_pipeline_parameters);
         } else {
             this._nodeToRun.context = new WorkflowNodeContext();
-            this._nodeToRun.context.default_pipeline_parameters = pipToRun.parameters;
+            this.parameters = cloneDeep(pipToRun.parameters);
         }
-
     }
 
     resync(): void {
@@ -314,7 +313,7 @@ export class WorkflowNodeRunParamComponent {
         let request = new WorkflowRunRequest();
         request.manual = new WorkflowNodeRunManual();
         request.manual.payload = this.payloadString ? JSON.parse(this.payloadString) : null;
-        request.manual.pipeline_parameter = Parameter.formatForAPI(this.nodeToRun.context.default_pipeline_parameters);
+        request.manual.pipeline_parameter = Parameter.formatForAPI(this.parameters);
 
         if (this.nodeRun) {
             request.from_nodes = [this.nodeRun.workflow_node_id];
