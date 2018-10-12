@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/tevino/abool"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
@@ -23,10 +23,10 @@ import (
 
 // eventsBrokerSubscribe is the information needed to subscribe
 type eventsBrokerSubscribe struct {
-	UUID    string
-	User    *sdk.User
-	Queue   chan sdk.Event
-	IsAlive *abool.AtomicBool
+	UUID  string
+	User  *sdk.User
+	Queue chan sdk.Event
+	Mutex *sync.Mutex
 }
 
 // lastUpdateBroker keeps connected client of the current route,
@@ -94,11 +94,14 @@ func (b *eventsBroker) Start(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			if b.clients != nil {
+				panic("#################################")
+
 				go observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
 				for c, v := range b.clients {
 					close(v.Queue)
 					delete(b.clients, c)
 				}
+
 			}
 			if ctx.Err() != nil {
 				log.Error("eventsBroker.Start> Exiting: %v", ctx.Err())
@@ -109,7 +112,9 @@ func (b *eventsBroker) Start(ctx context.Context) {
 				client := b.clients[i]
 				c := &client
 				go func() {
-					if c.IsAlive.IsSet() {
+					c.Mutex.Lock()
+					defer c.Mutex.Unlock()
+					if c.Queue != nil {
 						log.Debug("send data to %s", c.UUID)
 						c.Queue <- receivedEvent
 					}
@@ -123,10 +128,15 @@ func (b *eventsBroker) Start(ctx context.Context) {
 			if !has {
 				return
 			}
-			close(client.Queue)
-			client.Queue = nil
-			delete(b.clients, uuid)
-			go observability.Record(ctx, b.router.Stats.SSEClients, -1)
+			c := &client
+			go func() {
+				c.Mutex.Lock()
+				close(c.Queue)
+				c.Queue = nil
+				delete(b.clients, uuid)
+				c.Mutex.Unlock()
+				observability.Record(ctx, b.router.Stats.SSEClients, -1)
+			}()
 		}
 	}
 }
@@ -142,12 +152,11 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 
 		uuid := sdk.UUID()
 		client := eventsBrokerSubscribe{
-			UUID:    uuid,
-			User:    getUser(ctx),
-			Queue:   make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
-			IsAlive: abool.New(),
+			UUID:  uuid,
+			User:  getUser(ctx),
+			Queue: make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
+			Mutex: new(sync.Mutex),
 		}
-		client.IsAlive.Set()
 
 		// Add this client to the map of those that should receive updates
 		b.chanAddClient <- client
@@ -171,18 +180,13 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			select {
 			case <-ctx.Done():
 				log.Info("events.Http: context done")
-				client.IsAlive.UnSet()
 				b.chanRemoveClient <- client.UUID
 				break leave
 			case <-r.Context().Done():
 				log.Info("events.Http: client disconnected")
-				client.IsAlive.UnSet()
 				b.chanRemoveClient <- client.UUID
 				break leave
 			case event := <-client.Queue:
-				if !client.IsAlive.IsSet() {
-					break leave
-				}
 				if ok := client.manageEvent(event); !ok {
 					continue
 				}
