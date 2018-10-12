@@ -93,11 +93,16 @@ func (b *eventsBroker) Start(ctx context.Context) {
 	b.chanAddClient = make(chan (*eventsBrokerSubscribe))
 	b.chanRemoveClient = make(chan (string))
 
+	tickerMetrics := time.NewTicker(30 * time.Second)
+	defer tickerMetrics.Stop()
+
 	for {
 		select {
+		case <-tickerMetrics.C:
+			observability.Record(b.router.Background, b.router.Stats.SSEClients, int64(len(b.clients)))
+
 		case <-ctx.Done():
 			if b.clients != nil {
-				go observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
 				for c, v := range b.clients {
 					close(v.Queue)
 					delete(b.clients, c)
@@ -121,7 +126,6 @@ func (b *eventsBroker) Start(ctx context.Context) {
 			}
 		case client := <-b.chanAddClient:
 			b.clients[client.UUID] = client
-			go observability.Record(ctx, b.router.Stats.SSEClients, 1)
 		case uuid := <-b.chanRemoveClient:
 			client, has := b.clients[uuid]
 			if !has {
@@ -132,7 +136,6 @@ func (b *eventsBroker) Start(ctx context.Context) {
 				close(c.Queue)
 				c.IsAlive.UnSet()
 				c.Mutex.Unlock()
-				observability.Record(ctx, b.router.Stats.SSEClients, -1)
 			}(client)
 			delete(b.clients, uuid)
 		}
