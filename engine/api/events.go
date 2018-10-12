@@ -23,10 +23,11 @@ import (
 
 // eventsBrokerSubscribe is the information needed to subscribe
 type eventsBrokerSubscribe struct {
-	UUID  string
-	User  *sdk.User
-	Queue chan sdk.Event
-	Mutex *sync.Mutex
+	UUID    string
+	User    *sdk.User
+	Queue   chan sdk.Event
+	Mutex   *sync.Mutex
+	IsAlive bool
 }
 
 // lastUpdateBroker keeps connected client of the current route,
@@ -94,8 +95,6 @@ func (b *eventsBroker) Start(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			if b.clients != nil {
-				panic("#################################")
-
 				go observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
 				for c, v := range b.clients {
 					close(v.Queue)
@@ -114,7 +113,7 @@ func (b *eventsBroker) Start(ctx context.Context) {
 				go func() {
 					c.Mutex.Lock()
 					defer c.Mutex.Unlock()
-					if c.Queue != nil {
+					if c.IsAlive {
 						log.Debug("send data to %s", c.UUID)
 						c.Queue <- receivedEvent
 					}
@@ -132,11 +131,11 @@ func (b *eventsBroker) Start(ctx context.Context) {
 			go func() {
 				c.Mutex.Lock()
 				close(c.Queue)
-				c.Queue = nil
-				delete(b.clients, uuid)
+				c.IsAlive = false
 				c.Mutex.Unlock()
 				observability.Record(ctx, b.router.Stats.SSEClients, -1)
 			}()
+			delete(b.clients, uuid)
 		}
 	}
 }
@@ -152,10 +151,11 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 
 		uuid := sdk.UUID()
 		client := eventsBrokerSubscribe{
-			UUID:  uuid,
-			User:  getUser(ctx),
-			Queue: make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
-			Mutex: new(sync.Mutex),
+			UUID:    uuid,
+			User:    getUser(ctx),
+			Queue:   make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
+			Mutex:   new(sync.Mutex),
+			IsAlive: true,
 		}
 
 		// Add this client to the map of those that should receive updates
