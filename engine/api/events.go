@@ -255,7 +255,7 @@ func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 }
 
 // Send an event to a client
-func (client *eventsBrokerSubscribe) Send(event sdk.Event) error {
+func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
 	if client == nil || client.w == nil {
 		return nil
 	}
@@ -283,6 +283,13 @@ func (client *eventsBrokerSubscribe) Send(event sdk.Event) error {
 	if !client.isAlive.IsSet() {
 		return nil
 	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+
 	if _, err := client.w.Write(buffer.Bytes()); err != nil {
 		return sdk.WrapError(err, "unable to write to client")
 	}
