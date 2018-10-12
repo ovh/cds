@@ -543,7 +543,7 @@ func (r *Router) InitStats(service, name string) error {
 			Name:        "sse_clients",
 			Description: r.Stats.SSEClients.Description(),
 			Measure:     r.Stats.SSEClients,
-			Aggregation: view.Count(),
+			Aggregation: view.LastValue(),
 		},
 		&view.View{
 			Name:        "sse_events",
