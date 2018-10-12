@@ -18,7 +18,7 @@ func (api *API) InitRouter() {
 	api.eventsBroker = &eventsBroker{
 		router:   api.Router,
 		cache:    api.Cache,
-		clients:  make(map[string]eventsBrokerSubscribe),
+		clients:  make(map[string]*eventsBrokerSubscribe),
 		dbFunc:   api.DBConnectionFactory.GetDBMap,
 		messages: make(chan sdk.Event),
 	}

@@ -83,11 +83,6 @@
   version = "v3.5.1"
 
 [[projects]]
-  name = "github.com/briandowns/spinner"
-  packages = ["."]
-  revision = "cd65e8bd7da20cdcee450f7cbdd9cc04f78bc02f"
-
-[[projects]]
   name = "github.com/bsm/sarama-cluster"
   packages = ["."]
   revision = "c618e605e15c0d7535f6c96ff8efbb0dba4fd66c"
@@ -556,11 +551,6 @@
   revision = "757bef944d0f21880861c2dd9c871ca543023cba"
 
 [[projects]]
-  name = "github.com/gosuri/uilive"
-  packages = ["."]
-  revision = "efb88ccd059957c48f24f9d351d33a0eb00ede41"
-
-[[projects]]
   branch = "master"
   name = "github.com/gregjones/httpcache"
   packages = [
@@ -585,13 +575,6 @@
   name = "github.com/hashicorp/go-multierror"
   packages = ["."]
   revision = "b7773ae218740a7be65057fc60b366a49b538a44"
-
-[[projects]]
-  branch = "ye-cds"
-  name = "github.com/hashicorp/go-plugin"
-  packages = ["."]
-  revision = "bb20eeea62eb19fcb525c4b545b9e65e9f550bc1"
-  source = "https://github.com/yesnault/go-plugin.git"
 
 [[projects]]
   branch = "master"
@@ -623,11 +606,6 @@
     "helper/jsonutil"
   ]
   revision = "f1c8b772fdecdd20f483653d18619d41b25ef934"
-
-[[projects]]
-  name = "github.com/hashicorp/yamux"
-  packages = ["."]
-  revision = "d1caa6c97c9fc1cc9e83bbe34d0603f9ff0ce8bd"
 
 [[projects]]
   name = "github.com/howeyc/gopass"
@@ -1140,6 +1118,12 @@
   revision = "d77da356e56a7428ad25149ca77381849a6a5232"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/tevino/abool"
+  packages = ["."]
+  revision = "9b9efcf221b50905aab9bbabd3daed56dc10f339"
+
+[[projects]]
   name = "github.com/ugorji/go"
   packages = ["codec"]
   revision = "faddd6128c66c4708f45fdc007f575f75e592a3c"
@@ -1593,6 +1577,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7e639f43f81e17e6effe79b95ced4b885953f6155329ea45341dd67ef4f00bc2"
+  inputs-digest = "1b39f485cd213af7e225a44fb6ff3003beba3b97ad2e29f8d81bc905bc1f6a7f"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tevino/abool"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -27,17 +29,17 @@ type eventsBrokerSubscribe struct {
 	User    *sdk.User
 	Queue   chan sdk.Event
 	Mutex   *sync.Mutex
-	IsAlive bool
+	IsAlive *abool.AtomicBool
 }
 
 // lastUpdateBroker keeps connected client of the current route,
 type eventsBroker struct {
-	clients          map[string]eventsBrokerSubscribe
+	clients          map[string]*eventsBrokerSubscribe
 	messages         chan sdk.Event
 	dbFunc           func() *gorp.DbMap
 	cache            cache.Store
 	router           *Router
-	chanAddClient    chan (eventsBrokerSubscribe)
+	chanAddClient    chan (*eventsBrokerSubscribe)
 	chanRemoveClient chan (string)
 }
 
@@ -88,7 +90,7 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 
 // Start the broker
 func (b *eventsBroker) Start(ctx context.Context) {
-	b.chanAddClient = make(chan (eventsBrokerSubscribe))
+	b.chanAddClient = make(chan (*eventsBrokerSubscribe))
 	b.chanRemoveClient = make(chan (string))
 
 	for {
@@ -108,16 +110,14 @@ func (b *eventsBroker) Start(ctx context.Context) {
 			}
 		case receivedEvent := <-b.messages:
 			for i := range b.clients {
-				client := b.clients[i]
-				c := &client
-				go func() {
+				go func(c *eventsBrokerSubscribe) {
 					c.Mutex.Lock()
 					defer c.Mutex.Unlock()
-					if c.IsAlive {
+					if c.IsAlive.IsSet() {
 						log.Debug("send data to %s", c.UUID)
 						c.Queue <- receivedEvent
 					}
-				}()
+				}(b.clients[i])
 			}
 		case client := <-b.chanAddClient:
 			b.clients[client.UUID] = client
@@ -127,14 +127,13 @@ func (b *eventsBroker) Start(ctx context.Context) {
 			if !has {
 				return
 			}
-			c := &client
-			go func() {
+			go func(c *eventsBrokerSubscribe) {
 				c.Mutex.Lock()
 				close(c.Queue)
-				c.IsAlive = false
+				c.IsAlive.UnSet()
 				c.Mutex.Unlock()
 				observability.Record(ctx, b.router.Stats.SSEClients, -1)
-			}()
+			}(client)
 			delete(b.clients, uuid)
 		}
 	}
@@ -150,12 +149,12 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		}
 
 		uuid := sdk.UUID()
-		client := eventsBrokerSubscribe{
+		client := &eventsBrokerSubscribe{
 			UUID:    uuid,
 			User:    getUser(ctx),
 			Queue:   make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
 			Mutex:   new(sync.Mutex),
-			IsAlive: true,
+			IsAlive: abool.NewBool(true),
 		}
 
 		// Add this client to the map of those that should receive updates
@@ -202,6 +201,9 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 				buffer.Write(msg)
 				buffer.WriteString("\n\n")
 
+				if !client.IsAlive.IsSet() {
+					break leave
+				}
 				if _, err := w.Write(buffer.Bytes()); err != nil {
 					return sdk.WrapError(err, "events.write> Unable to write to client")
 				}
