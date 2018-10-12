@@ -101,10 +101,10 @@ func (b *eventsBroker) Start(ctx context.Context) {
 
 		case <-ctx.Done():
 			if b.clients != nil {
-				go observability.Record(b.router.Background, b.router.Stats.SSEClients, -1*int64(len(b.clients)))
 				for uuid := range b.clients {
 					delete(b.clients, uuid)
 				}
+				observability.Record(b.router.Background, b.router.Stats.SSEClients, 0)
 
 			}
 			if ctx.Err() != nil {
