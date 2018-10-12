@@ -238,7 +238,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this.loadingMore = true;
         setTimeout(() => {
             this.limitFrom = null;
-            if (this.splittedLogs.length > 3000) {
+            if (this.splittedLogs.length > 3500) {
                 this.basicView = true;
             }
             this.splittedLogsToDisplay = this.splittedLogs;

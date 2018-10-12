@@ -2,11 +2,11 @@
 
 $squareSize: 32px;
 $yellowLogs: #FFFF91;
-.mb20 {
-  margin-bottom: 20px;
+.mb25 {
+  margin-bottom: 25px;
 }
-.ml10 {
-  margin-left: 10px;
+.ml50 {
+  margin-left: 50px;
 }
 
 .logHeader {
@@ -105,9 +105,10 @@ $yellowLogs: #FFFF91;
         padding-bottom: 1px;
         hr {
           width: 50%;
+          margin-left: 0;
           border: 0;
           height: 1px;
-          background-image: linear-gradient(to right, rgba(255, 255, 145, 0), rgba(255, 255, 145, 0.75), rgba(255, 255, 145, 0));
+          background-image: linear-gradient(to right, rgba(255, 255, 145, 1), rgba(255, 255, 145, 0.75), rgba(255, 255, 145, 0));
         }
         &.number {
             width: 40px;
