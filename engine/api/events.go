@@ -128,6 +128,7 @@ func (b *eventsBroker) Start(ctx context.Context) {
 							log.Debug("send data to %s", c.UUID)
 							if err := c.Send(receivedEvent); err != nil {
 								log.Error("eventsBroker> unable to send event to %s: %v", c.UUID, err)
+								b.chanRemoveClient <- c.UUID
 							}
 						}
 					},
