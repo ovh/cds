@@ -1004,6 +1004,7 @@
   "workflow_notification_list": "Notifications list",
   "workflow_notification_form": "Add a notification",
   "workflow_notification_copy": "Copy",
+  "workflow_logs_all": "Show all logs",
 
   "workflow_wizard_select_repo_man": "Select a repository manager",
   "workflow_wizard_select_repo": "Select a repository",
