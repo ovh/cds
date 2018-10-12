@@ -730,7 +730,8 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 
 // MarkAsDelete marks a workflow to be deleted
 func MarkAsDelete(db gorp.SqlExecutor, w *sdk.Workflow) error {
-	if _, err := db.Exec("update workflow set to_delete = true where id = $1", w.ID); err != nil {
+	tmpWfName := w.Name + "_cds_to_delete_" + sdk.RandomString(5)
+	if _, err := db.Exec("update workflow set name = $1, to_delete = true where id = $2", tmpWfName, w.ID); err != nil {
 		return sdk.WrapError(err, "MarkAsDelete> Unable to mark as delete workflow id %d", w.ID)
 	}
 	return nil
