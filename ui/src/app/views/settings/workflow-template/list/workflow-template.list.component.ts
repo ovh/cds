@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { finalize } from 'rxjs/internal/operators/finalize';
 import { WorkflowTemplate } from '../../../../model/workflow-template.model';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
-import { Column } from '../../../../shared/table/data-table.component';
+import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 
 @Component({
     selector: 'app-workflow-template-list',
@@ -21,8 +21,14 @@ export class WorkflowTemplateListComponent {
     ) {
         this.columns = [
             <Column>{
+                type: ColumnType.ROUTER_LINK,
                 name: this._translate.instant('workflow_template_name'),
-                selector: wt => wt.name
+                selector: wt => {
+                    return {
+                        link: '/settings/workflow-template/' + wt.id,
+                        value: wt.name
+                    };
+                }
             },
             <Column>{
                 name: this._translate.instant('workflow_template_description'),

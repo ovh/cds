@@ -18,6 +18,61 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
+type contextKey int
+
+const (
+	contextWorkflowTemplate contextKey = iota
+)
+
+// TODO create real middleware
+func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
+		// try to get template for given id that match user's groups with admin grants
+		id, err := requestVarInt(r, "id")
+		if err != nil {
+			return nil, sdk.WithStack(sdk.ErrNotFound)
+		}
+
+		u := getUser(ctx)
+		var userGroups []sdk.Group
+		if needAdmin {
+			for _, g := range u.Groups {
+				for _, a := range g.Admins {
+					if a.ID == u.ID {
+						userGroups = append(userGroups, g)
+						break
+					}
+				}
+			}
+		} else {
+			userGroups = u.Groups
+		}
+
+		wt, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().
+			IDs(id).GroupIDs(sdk.GroupsToIDs(userGroups)...))
+		if err != nil {
+			return nil, err
+		}
+		if wt == nil {
+			return nil, sdk.WithStack(sdk.ErrNotFound)
+		}
+
+		return context.WithValue(ctx, contextWorkflowTemplate, wt), nil
+	}
+}
+
+func getWorkflowTemplate(c context.Context) *sdk.WorkflowTemplate {
+	i := c.Value(contextWorkflowTemplate)
+	if i == nil {
+		return nil
+	}
+	wt, ok := i.(*sdk.WorkflowTemplate)
+	if !ok {
+		return nil
+	}
+	return wt
+}
+
 func (api *API) getTemplatesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := getUser(ctx)
@@ -79,6 +134,23 @@ func (api *API) postTemplateHandler() service.Handler {
 	}
 }
 
+func (api *API) getTemplateHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(true)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+
+		t := getWorkflowTemplate(ctx)
+
+		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), t); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, t, http.StatusOK)
+	}
+}
+
 func (api *API) putTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		data := sdk.WorkflowTemplate{}
@@ -89,31 +161,13 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		// try to get template for given id that match user's groups with admin grants
-		id, err := requestVarInt(r, "id")
-		if err != nil {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
-
-		u := getUser(ctx)
-		var userGroupsWithAdmin []sdk.Group
-		for _, g := range u.Groups {
-			for _, a := range g.Admins {
-				if a.ID == u.ID {
-					userGroupsWithAdmin = append(userGroupsWithAdmin, g)
-					break
-				}
-			}
-		}
-
-		old, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().
-			IDs(id).GroupIDs(sdk.GroupsToIDs(userGroupsWithAdmin)...))
+		var err error
+		ctx, err = api.middlewareTemplate(true)(ctx, w, r)
 		if err != nil {
 			return err
 		}
-		if old == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
+
+		old := getWorkflowTemplate(ctx)
 
 		// update fields from request data
 		new := sdk.WorkflowTemplate(*old)
@@ -127,6 +181,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
+		u := getUser(ctx)
 		event.PublishWorkflowTemplateUpdate(*old, new, u)
 
 		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &new); err != nil {
@@ -149,22 +204,11 @@ func (api *API) executeTemplateHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load project %s", projectKey)
 		}
 
-		// try to get template for given id that match user's groups
-		id, err := requestVarInt(r, "id")
-		if err != nil {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
-
-		u := getUser(ctx)
-
-		t, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().
-			IDs(id).GroupIDs(sdk.GroupsToIDs(u.Groups)...))
+		ctx, err = api.middlewareTemplate(false)(ctx, w, r)
 		if err != nil {
 			return err
 		}
-		if t == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
+		t := getWorkflowTemplate(ctx)
 
 		// parse and check request
 		var req sdk.WorkflowTemplateRequest

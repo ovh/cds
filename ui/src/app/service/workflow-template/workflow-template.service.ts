@@ -21,4 +21,20 @@ export class WorkflowTemplateService {
         return this._http.get<Array<WorkflowTemplate>>('/template');
     }
 
+    /**
+     * Get a workflow template by id
+     * @returns {Observable<WorkflowTemplate>}
+     */
+    getWorkflowTemplate(id: number): Observable<WorkflowTemplate> {
+        return this._http.get<WorkflowTemplate>('/template/' + id);
+    }
+
+    /**
+     * Update a workflow template by id
+     * @returns {Observable<WorkflowTemplate>}
+     */
+    updateWorkflowTemplate(wt: WorkflowTemplate): Observable<WorkflowTemplate> {
+        return this._http.put<WorkflowTemplate>('/template/' + wt.id, wt);
+    }
+
 }

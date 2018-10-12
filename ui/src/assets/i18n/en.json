@@ -207,6 +207,7 @@
   "common_loading_environments": "Loading environments",
   "common_loading_workflow": "Loading workflow...",
   "common_name": "Name",
+  "common_group": "Group",
   "common_color": "Color",
   "common_label": "Label",
   "common_labels": "Labels",
