@@ -115,6 +115,11 @@ func (b *eventsBroker) Start(ctx context.Context) {
 		case receivedEvent := <-b.messages:
 			for i := range b.clients {
 				c := b.clients[i]
+				if c == nil {
+					delete(b.clients, i)
+					continue
+				}
+
 				// Send the event to the client sse within a goroutine
 				s := "sse-" + b.clients[i].UUID
 				sdk.GoRoutine(ctx, s,
@@ -251,7 +256,7 @@ func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 
 // Send an event to a client
 func (client *eventsBrokerSubscribe) Send(event sdk.Event) error {
-	if client.w == nil {
+	if client == nil || client.w == nil {
 		return nil
 	}
 
