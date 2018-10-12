@@ -29,13 +29,14 @@ type pluginClientSocket struct {
 	Client  interface{}
 }
 
-func enablePluginLogger(ctx context.Context, sendLog LoggerFunc, c *pluginClientSocket) {
+func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerFunc, c *pluginClientSocket) {
 	var accumulator string
 	var shouldExit bool
 	defer func() {
 		if accumulator != "" {
 			sendLog(accumulator)
 		}
+		close(done)
 	}()
 
 	for {

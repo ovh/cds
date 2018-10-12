@@ -74,6 +74,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 	}()
 
 	chanRes := make(chan sdk.Result, 1)
+	done := make(chan struct{})
 	sdk.GoRoutine(ctx, "runGRPCPlugin", func(ctx context.Context) {
 		params := *params
 		//For the moment we consider that plugin name = action name
@@ -131,7 +132,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		}
 
 		logCtx, stopLogs := context.WithCancel(ctx)
-		go enablePluginLogger(logCtx, sendLog, pluginSocket)
+		go enablePluginLogger(logCtx, done, sendLog, pluginSocket)
 		defer stopLogs()
 
 		manifest, err := actionPluginClient.Manifest(ctx, &empty.Empty{})
@@ -165,12 +166,13 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 	select {
 	case <-ctx.Done():
 		log.Error("CDS Worker execution cancelled: %v", ctx.Err())
-		_ = w.sendLog(buildID, "CDS Worker execution cancelled\n", stepOrder, false)
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: "CDS Worker execution cancelled",
 		}
 	case res := <-chanRes:
+		// Useful to wait all logs are send before sending final status and log
+		<-done
 		return res
 	}
 }
