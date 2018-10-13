@@ -19,7 +19,7 @@ import (
 // If Take is not possible (as Job already booked for example)
 // it will return true (-> can work on another job), false, otherwise
 func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (bool, error) {
-	ctxQueueTakeJob, cancelQueueTakeJob := context.WithTimeout(ctx, 5*time.Second)
+	ctxQueueTakeJob, cancelQueueTakeJob := context.WithTimeout(ctx, 20*time.Second)
 	defer cancelQueueTakeJob()
 	info, err := w.client.QueueTakeJob(ctxQueueTakeJob, job, w.bookedWJobID == job.ID)
 	if err != nil {
