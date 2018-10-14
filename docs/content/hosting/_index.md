@@ -7,7 +7,7 @@ weight = 6
 
 ## Introduction
 
-This section will help you to undestand how to start all the differents components of CDS: UI, API and the other µServices.
+This section will help you to understand how to start all the different components of CDS: UI, API and the other µServices.
 
 ## Pre-requisites
 
@@ -23,7 +23,7 @@ You need:
 The CDS engine is made of following components:
 
 - API
-- [Hatcheries (local, docker, openstack, swarm, vsphere)]({{< relref "hatchery/_index.md">}})
+- [Hatcheries (local, Docker, OpenStack, Swarm, vSphere)]({{< relref "hatchery/_index.md">}})
 - Hooks
 
 To start a services you just have to run `$PATH_TO_CDS/engine start <service>`.
@@ -38,10 +38,10 @@ Start CDS Engine Services:
  * Hatcheries:
 	They are the components responsible for spawning workers. Supported platforms/orchestrators are:
 	 * Local machine
-	 * Openstack
+	 * OpenStack
 	 * Docker Swarm
-	 * Openstack
-	 * Vsphere
+	 * OpenStack
+	 * vSphere
  * Hooks:
  	This component operates CDS workflow hooks
  * VCS:
@@ -112,13 +112,13 @@ $ cp config.api.toml config.hatchery.swarm-3.toml
 $ cp config.api.toml config.hooks.toml
 $ cp config.api.toml config.vcs.toml
 
-$ vi config.hatchery.local.toml # Edit the file an keep only the [logs] and [hatchery]/[hatchery.local] sections
-$ vi config.hatchery.docker.toml # Edit the file an keep only the [logs] and [hatchery]/[hatchery.docker] sections
-$ vi config.hatchery.swarm-1.toml # Edit the file an keep only the [logs] and [hatchery]/[hatchery.swarm] sections
-$ vi config.hatchery.swarm-2.toml # Edit the file an keep only the [logs] and [hatchery]/[hatchery.swarm] sections
-$ vi config.hatchery.swarm-3.toml # Edit the file an keep only the [logs] and [hatchery]/[hatchery.swarm] sections
-$ vi config.hooks.toml # Edit the file an keep only the [logs] and [hooks] sections
-$ vi config.vcs.toml # Edit the file an keep only the [logs] and [vcs] sections
+$ vi config.hatchery.local.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.local] sections
+$ vi config.hatchery.docker.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.docker] sections
+$ vi config.hatchery.swarm-1.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
+$ vi config.hatchery.swarm-2.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
+$ vi config.hatchery.swarm-3.toml # Edit the file and keep only the [logs] and [hatchery]/[hatchery.swarm] sections
+$ vi config.hooks.toml # Edit the file and keep only the [logs] and [hooks] sections
+$ vi config.vcs.toml # Edit the file and keep only the [logs] and [vcs] sections
 
 ...
 ```

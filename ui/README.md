@@ -6,7 +6,7 @@ This project was generated with [angular-cli](https://github.com/angular/angular
 
 ## Prerequisites
 
-The project have dependencies that require Node 6.9.0 or higher, together with NPM 3 or higher.
+The project have dependencies that require Node.js 6.9.0 or higher, together with npm 3 or higher.
 
 ## Development server
 

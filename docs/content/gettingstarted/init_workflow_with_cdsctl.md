@@ -50,8 +50,8 @@ This will ask you to choose:
  	github [1]
  Your choice [1-1]: 1
  application FIRSTPROJECT/cdsdemo (sguiheux/cdsdemo) found in CDS
- Do you want to reuse an existing pipeline ? [y/n]: n
- Enter your pipeline name : MyPipeline
+ Do you want to reuse an existing pipeline? [y/n]: n
+ Enter your pipeline name: MyPipeline
  File .cds/cdsdemo.yml created
  File .cds/MyPipeline.pip.yml created
  Pushing workflow to CDS...
@@ -93,7 +93,7 @@ This will ask you to choose:
  ssh-rsa AAAAB3NzaC1yc2EAA30AADAQABAA06ACAQDyUXiY45Z9Bai7nsj8Tk2olZIwaDhYlBjw60TOlNLWVSvzNS5K+Rps8AA1985A7pcS1tbWtfC2xNMjRN7NznVatioHXgozLTQ/EhKOuEevOp4mCCuebUc62m/14pGKsCN/ikHb6Ca/rf0+NOKt+UUYAOvyVt7FM3NydyT8VrPZWonxULzOIDcPpyZPfbnpuooCZjK2IuaU1pzPxDgszks77bkPePKujhp17Ckfzi+Ke3SgHGr9399UgY8dD6wqvRd+xNQA+EUQNa9SGg5MJ4LgTlqiE+0s/qg7pVUtCLqTo6fSUK0oumkpClmsdwmgnBtfG+5Belli3sMJUHOdw9fQpKUYITQ6jFAaciVzXpdt9j0ImQytz8nP5cd4lpPuv5fHNbx39G7KqdraVsqe3I9Y8RSf2kCVvRON9TthRleYHoxukztsSuxcxeZ0GtaIbIauYymrAvRrAV1harOwSrFThY6sTWyofpZnKesG6S7omIGn5ZjZDtT2p5tiGnZh3gZlS2sHLALyoShUjHxgcOd2h4CMuC1JN63t94rXWfbTYH+eraAhufmnayLC8p4UM/lc0syQBy1aKywR+acScICww20xEt8SG3D5rAlJD5d2EPhJaEzGS0NC6apiaQ2CNlvaceWFoEDbkXj0TL4M0iX42va5Ry1jvo8IPwJ9MoAXrVlowyw== app-ssh-github@cds
 ```
 
- * CDS generated 3 files for you :
+ * CDS generated 3 files for you:
  
    One for the application
    
@@ -169,8 +169,8 @@ jobs:
 - job: First job
   steps:
   - checkout: '{{.cds.workspace}}'
-  - script : mvn package
-  - artifactUpload : target/*.jar
+  - script: mvn package
+  - artifactUpload: target/*.jar
   requirements:
   - binary: mvn
   - binary: git

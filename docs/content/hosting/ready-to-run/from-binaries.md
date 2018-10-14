@@ -8,16 +8,16 @@ weight = 2
 
 This article contains the steps to start CDS locally, with API, UI and a local Hatchery.
 
-- Download CDS from Github
+- Download CDS from GitHub
 - Prepare Database
 - Launch CDS API, CDS UI and a Local Hatchery
 
 ### Prerequisite
 
-- a redis
-- a postgresql 9.4 min
+- a Redis
+- a PostgreSQL 9.4 min
 
-### Get latest release from Github
+### Get latest release from GitHub
 
 ```bash
 mkdir $HOME/cds
@@ -27,7 +27,7 @@ LAST_RELEASE=$(curl -s https://api.github.com/repos/ovh/cds/releases | grep tag_
 OS=linux # could be linux, darwin, windows
 ARCH=amd64 # could be 386, arm, amd64
 
-# GET Binaries from github
+# GET Binaries from GitHub
 wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-engine-$OS-$ARCH
 wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cds-worker-$OS-$ARCH
 wget https://github.com/ovh/cds/releases/download/$LAST_RELEASE/cdsctl-$OS-$ARCH
@@ -73,14 +73,14 @@ cd $HOME/cds
 tar xzf ui.tar.gz # this command generates a $HOME/cds/dist/ directory
 ```
 
-The `dist/` directory contains all HTML, Javascript, css... files.
+The `dist/` directory contains all HTML, JavaScript, CSS... files.
 
 You can serve theses files with a simple web server, but there is a ready-to-run Caddyfile to launch CDS UI quickly.
 
 ```bash
 cd dist/
 
-# BACKEND_HOST contains a url to CDS Engine
+# BACKEND_HOST contains a URL to CDS Engine
 export BACKEND_HOST="http://localhost:8081"
 
 # if you expose CDS on a domain as https://your-domain/your-cds, enter "/your-cds"
@@ -128,12 +128,12 @@ Then, start the local hatchery
 ```bash
 ./cds-engine-linux-amd64 start hatchery:local --config $HOME/cds/conf.toml
 
-# notice that you can run api and hatchery with a one common only:
+# notice that you can run api and hatchery with one common only:
 # ./cds-engine-linux-amd64 start api hatchery:local --config $HOME/cds/conf.toml
 ```
 
 # Go further
 
-- How to use Openstack infrastructure to spawn CDS container [read more]({{< relref "hatchery/openstack.md" >}})
-- Link CDS to a repository manager, as Github, Bitbucket Server or Gitlab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
+- How to use OpenStack infrastructure to spawn CDS container [read more]({{< relref "hatchery/openstack.md" >}})
+- Link CDS to a repository manager, as GitHub, Bitbucket Server or GitLab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
 - Learn more about CDS variables [read more]({{< relref "workflows/pipelines/variables.md" >}})

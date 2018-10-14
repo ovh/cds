@@ -8,7 +8,7 @@ You want to run a workflow from a [RabbitMQ](http://www.rabbitmq.com/) message? 
 
 This kind of hook will connect to a RabbitMQ queue and consume message. For each message, it will trigger your workflow.
 
-The RabbitMQ message have to be a JSON message, it in will be used as a payload for your workflow [See playload documentation]({{< relref "workflows/design/payload.md" >}}).
+The RabbitMQ message have to be a JSON message, it in will be used as a payload for your workflow [See payload documentation]({{< relref "workflows/design/payload.md" >}}).
 
 ## How to use it
 

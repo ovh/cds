@@ -5,7 +5,7 @@ weight = 2
 +++
 
 ## Authorize CDS on your Bitbucket instance
-You need to perform the following steps :
+You need to perform the following steps:
 
  - Bitbucket admin privileges
  - A RSA Key Pair
@@ -29,23 +29,23 @@ $ openssl rsa -in key.pem -pubout
 This will display the public key, you will have to copy-paste it inside `Public Key` field on Bitbucket.
 
 
-### Create a CDS application in BitBucket
-In Bitbucket go to *Administration Settings* / *Application Links*. Create a new Application with :
+### Create a CDS application in Bitbucket
+In Bitbucket go to *Administration Settings* / *Application Links*. Create a new Application with:
 
- - Name : **CDS**
- - Type : **Generic Application**
- - Application URL : *Your CDS URL*
- - Display URL : *Your CDS URL*
+ - Name: **CDS**
+ - Type: **Generic Application**
+ - Application URL: *Your CDS URL*
+ - Display URL: *Your CDS URL*
 
-On this application, you just have to set up *OAuth Incoming Authentication* :
+On this application, you just have to set up *OAuth Incoming Authentication*:
 
- - Consumer Key : **CDS** (you can change it in your configuration file)
- - Consumer Name : **CDS**
- - Public Key : *Your CDS RSA public key*
- - Consumer Callback URL : None
- - Allow 2-Legged OAuth : false
- - Execute as : None
- - Allow user impersonation through 2-Legged OAuth : false
+ - Consumer Key: **CDS** (you can change it in your configuration file)
+ - Consumer Name: **CDS**
+ - Public Key: *Your CDS RSA public key*
+ - Consumer Callback URL: None
+ - Allow 2-Legged OAuth: false
+ - Execute as: None
+ - Allow user impersonation through 2-Legged OAuth: false
 
 ### Complete CDS Configuration File
 
@@ -74,7 +74,7 @@ Set value to `privateKey`. You can modify `consumerKey` if you want.
         disableWebHooks = false
         privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
 
-        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = ""
 
         # optional, Bitbucket Token associated to username, used to add comment on Pull Request
@@ -114,7 +114,7 @@ You can configure many instances of Bitbucket:
         disableWebHooksCreation = false
         privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
 
-        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = "https://myproxy.com"
 
         [vcs.servers.mybitbucket_instance1.bitbucket.Status]
@@ -143,7 +143,7 @@ You can configure many instances of Bitbucket:
         disableWebHooksCreation = false
         privateKey = "-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----"
 
-        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = "https://myproxy.com"
 
         [vcs.servers.mybitbucket_instance2.bitbucket.Status]

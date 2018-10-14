@@ -76,9 +76,9 @@ ssh -i $PKEY myuser@myhost echo "test" #PKEY only works with SSH key
 
 Pay attention, to use a PGP key, please add in your pipeline requirements the binary named `gpg`.
 
-#### Using worker cli in a script
+#### Using worker CLI in a script
 
-You can use worker cli to make different actions
+You can use worker CLI to make different actions
 
 + [worker artifacts]({{< relref "cli/worker/artifacts.md" >}})
 + [worker download]({{< relref "cli/worker/download.md" >}})

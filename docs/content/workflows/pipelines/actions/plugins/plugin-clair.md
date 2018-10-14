@@ -12,6 +12,6 @@ This is a plugin to run clair analysis
 
 ## More
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/clair/README.md)
+More documentation on [GitHub](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/clair/README.md)
 
 

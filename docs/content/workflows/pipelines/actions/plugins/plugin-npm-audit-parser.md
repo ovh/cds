@@ -12,6 +12,4 @@ This is a plugin to parse npm audit report
 
 ## More
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/npm-audit-parser/README.md)
-
-
+More documentation on [GitHub](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/npm-audit-parser/README.md)

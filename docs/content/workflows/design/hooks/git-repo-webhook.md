@@ -12,4 +12,4 @@ You have to:
 * link an application to a git repository
 * add a Repository Webhook on the root pipeline, this pipeline have the application linked in the [context]({{< relref "workflows/design/pipeline-context.md" >}})
 
-Github / Bitbucket & Gitlab are supported by CDS.
+GitHub / Bitbucket & GitLab are supported by CDS.
