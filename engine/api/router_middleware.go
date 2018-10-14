@@ -65,10 +65,38 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s sdk.ServiceAgent agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
 		default:
-			var err error
-			ctx, err = api.Router.AuthDriver.CheckAuth(ctx, w, req)
-			if err != nil {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
+			if len(api.Config.Auth.AuthenticationConfig.SigningKey) == 0 {
+				// Old and deprecated way to check request
+				var err error
+				ctx, err = api.Router.AuthDriver.CheckAuth(ctx, w, req)
+				if err != nil {
+					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
+				}
+			} else {
+
+				// Checks JWT Token
+				jwt := strings.TrimPrefix(headers.Get("Authorization"), "Bearer ")
+				claims, err := api.parseToken(jwt)
+				if err != nil {
+					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> JWT Parse error: %v", err)
+				}
+				w := claimsWorker(claims)
+				u := claimsUser(claims)
+				s := claimsService(claims)
+				h := claimsHatchery(claims)
+				switch {
+				case u != nil:
+					ctx = context.WithValue(ctx, auth.ContextUser, u)
+				case w != nil:
+					ctx = context.WithValue(ctx, auth.ContextWorker, w)
+				case h != nil:
+					ctx = context.WithValue(ctx, auth.ContextHatchery, h)
+				case s != nil:
+					ctx = context.WithValue(ctx, auth.ContextService, s)
+				default:
+					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> claims not supported")
+				}
+				context.WithValue(ctx, auth.ContextUserSession, jwt)
 			}
 		}
 	}

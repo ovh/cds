@@ -95,6 +95,7 @@ type Configuration struct {
 		Local struct {
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
 		} `toml:"local" json:"local"`
+		AuthenticationConfig AuthenticationConfig `toml:"tokens" json:"tokens"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################" json:"auth"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true" json:"disable"`

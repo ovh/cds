@@ -31,6 +31,8 @@ func (api *API) InitRouter() {
 	}
 	api.eventsBroker.Init(context.Background(), api.PanicDump())
 
+	r.Handle("/request-token", r.POST(api.postRequestTokenHanler, Auth(false)))
+
 	// Action
 	r.Handle("/action", r.GET(api.getActionsHandler))
 	r.Handle("/action/import", r.POST(api.importActionHandler, NeedAdmin(true)))
