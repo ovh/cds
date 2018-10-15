@@ -20,26 +20,26 @@ type nodeRunContext struct {
 	ProjectPlatform sdk.ProjectPlatform
 }
 
-func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
+func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
 	//TRACABILITY
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.processWorkflowRun",
-		observability.Tag(observability.TagWorkflowRun, w.Number),
-		observability.Tag(observability.TagWorkflow, w.Workflow.Name),
+		observability.Tag(observability.TagWorkflowRun, wr.Number),
+		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 	)
 	defer end()
 
-	if w.Header == nil {
-		w.Header = sdk.WorkflowRunHeaders{}
+	if wr.Header == nil {
+		wr.Header = sdk.WorkflowRunHeaders{}
 	}
-	w.Header.Set(sdk.WorkflowRunHeader, strconv.FormatInt(w.Number, 10))
-	w.Header.Set(sdk.WorkflowHeader, w.Workflow.Name)
-	w.Header.Set(sdk.ProjectKeyHeader, proj.Key)
+	wr.Header.Set(sdk.WorkflowRunHeader, strconv.FormatInt(wr.Number, 10))
+	wr.Header.Set(sdk.WorkflowHeader, wr.Workflow.Name)
+	wr.Header.Set(sdk.ProjectKeyHeader, proj.Key)
 
 	// Push data in header to allow tracing
 	if observability.Current(ctx).SpanContext().IsSampled() {
-		w.Header.Set(tracingutils.SampledHeader, "1")
-		w.Header.Set(tracingutils.TraceIDHeader, fmt.Sprintf("%v", observability.Current(ctx).SpanContext().TraceID))
+		wr.Header.Set(tracingutils.SampledHeader, "1")
+		wr.Header.Set(tracingutils.TraceIDHeader, fmt.Sprintf("%v", observability.Current(ctx).SpanContext().TraceID))
 	}
 	//////
 
@@ -49,73 +49,90 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		if oldStatus != wr.Status {
 			report.Add(*wr)
 		}
-	}(w.Status, w)
+	}(wr.Status, wr)
 	////
 
-	w.Status = string(sdk.StatusBuilding)
-	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
-	w.LastSubNumber = maxsn
+	wr.Status = string(sdk.StatusBuilding)
+	maxsn := MaxSubNumber(wr.WorkflowNodeRuns)
+	wr.LastSubNumber = maxsn
 
-	mapNodes := w.Workflow.WorkflowData.Maps()
+	mapNodes := wr.Workflow.WorkflowData.Maps()
 
 	//Checks startingFromNode
 	if startingFromNode != nil {
-		r1, conditionOK, err := processStartFromNode(ctx, db, store, proj, w, mapNodes, startingFromNode, maxsn, hookEvent, manual)
+		r1, conditionOK, err := processStartFromNode(ctx, db, store, proj, wr, mapNodes, startingFromNode, maxsn, hookEvent, manual)
 		if err != nil {
-			return report, false, sdk.WrapError(err, "processWorkflow2Run> Unable to processStartFromNode")
+			return report, false, sdk.WrapError(err, "processWorkflowDataRun> Unable to processStartFromNode")
 		}
 		report, _ = report.Merge(r1, nil)
 		return report, conditionOK, nil
 	}
 
 	//Checks the root
-	if len(w.WorkflowNodeRuns) == 0 && len(w.WorkflowNodeOutgoingHookRuns) == 0 {
-		r1, conditionOK, err := processStartFromRootNode(ctx, db, store, proj, w, mapNodes, hookEvent, manual)
+	if len(wr.WorkflowNodeRuns) == 0 {
+		r1, conditionOK, err := processStartFromRootNode(ctx, db, store, proj, wr, mapNodes, hookEvent, manual)
 		if err != nil {
-			return report, false, sdk.WrapError(err, "processWorkflow2Run> Unable to processStartFromRootNode")
+			return report, false, sdk.WrapError(err, "processWorkflowDataRun> Unable to processStartFromRootNode")
 		}
 		report, _ = report.Merge(r1, nil)
 		return report, conditionOK, err
 	}
 
-	r1, errT := processAllNodesTriggers(ctx, db, store, proj, w, mapNodes)
+	r1, errT := processAllNodesTriggers(ctx, db, store, proj, wr, mapNodes)
 	if errT != nil {
 		return report, false, errT
 	}
 	report, _ = report.Merge(r1, nil)
 
-	r2 := processAllJoins(ctx, db, store, proj, w, mapNodes, maxsn)
+	r2, errJ := processAllJoins(ctx, db, store, proj, wr, mapNodes, maxsn)
+	if errJ != nil {
+		return report, false, errJ
+	}
 	report, _ = report.Merge(r2, nil)
 
+	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
+	if err != nil {
+		return report, false, sdk.WrapError(err, "processWorkflowDataRun> unable to compute workflow run status")
+	}
+	report.Merge(r1, nil) // nolint
+
+	return report, true, nil
+}
+
+func computeAndUpdateWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*ProcessorReport, error) {
+	report := new(ProcessorReport)
 	// Recompute status counter, it's mandatory to resync
 	// the map of workflow node runs of the workflow run to get the right statuses
 	// After resync, recompute all status counter compute the workflow status
 	// All of this is useful to get the right workflow status is the last node status is skipped
-	_, next := observability.Span(ctx, "workflow.syncNodeRuns")
-	if err := syncNodeRuns(db, w, LoadRunOptions{}); err != nil {
+	_, next := observability.Span(ctx, "workflow.computeAndUpdateWorkflowRunStatus")
+	if err := syncNodeRuns(db, wr, LoadRunOptions{}); err != nil {
 		next()
-		return report, false, sdk.WrapError(err, "processWorkflow2Run> Unable to sync workflow node runs")
+		return report, sdk.WrapError(err, "computeAndUpdateWorkflowRunStatus> Unable to sync workflow node runs")
 	}
 	next()
 
 	// Reinit the counters
 	var counterStatus statusCounter
-	for k, v := range w.WorkflowNodeRuns {
-		lastCurrentSn := lastSubNumber(w.WorkflowNodeRuns[k])
+	for k, v := range wr.WorkflowNodeRuns {
+		lastCurrentSn := lastSubNumber(wr.WorkflowNodeRuns[k])
 		// Subversion of workflowNodeRun
 		for i := range v {
-			nodeRun := &w.WorkflowNodeRuns[k][i]
+			nodeRun := &wr.WorkflowNodeRuns[k][i]
 			// Compute for the last subnumber only
 			if lastCurrentSn == nodeRun.SubNumber {
 				computeRunStatus(nodeRun.Status, &counterStatus)
 			}
 		}
 	}
-
-	w.Status = getRunStatus(counterStatus)
-	if err := UpdateWorkflowRun(ctx, db, w); err != nil {
-		return report, false, sdk.WrapError(err, "processWorkflow2Run>")
+	newStatus := getRunStatus(counterStatus)
+	if wr.Status == newStatus {
+		return report, nil
 	}
-
-	return report, true, nil
+	wr.Status = newStatus
+	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
+		return report, sdk.WrapError(err, "computeAndUpdateWorkflowRunStatus>")
+	}
+	report.Add(wr)
+	return report, nil
 }

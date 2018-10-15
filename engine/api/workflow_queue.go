@@ -100,7 +100,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(errT, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
+		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, report)
 		go workflow.SendEvent(api.mustDB(), p.Key, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
@@ -425,7 +425,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		db := api.mustDB()
 
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, report)
+		workflow.ResyncNodeRunsWithCommits(db, api.Cache, proj, report)
 		next()
 
 		go workflow.SendEvent(db, proj.Key, report)

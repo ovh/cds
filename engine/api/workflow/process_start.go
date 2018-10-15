@@ -92,11 +92,18 @@ func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cac
 	return report, nil
 }
 
-func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, maxsn int64) *ProcessorReport {
+func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, maxsn int64) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 	//Checks the joins
 	for i := range wr.Workflow.WorkflowData.Joins {
 		j := &wr.Workflow.WorkflowData.Joins[i]
+
+		// Find node run
+		_, has := wr.WorkflowNodeRuns[j.ID]
+		if has {
+			continue
+		}
+
 		sources := make([]*sdk.WorkflowNodeRun, 0)
 
 		//we have to check noderun for every sources
@@ -138,9 +145,12 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		}
 		//All the sources are completed
 		if ok {
-			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, sources, j, int(maxsn))
+			r1, _, err := processNode(ctx, db, store, proj, wr, mapNodes, j, int(wr.LastSubNumber), sources, nil, nil)
+			if err != nil {
+				return report, sdk.WrapError(err, "processAllJoins> Unable to process join node")
+			}
 			_, _ = report.Merge(r1, nil)
 		}
 	}
-	return report
+	return report, nil
 }

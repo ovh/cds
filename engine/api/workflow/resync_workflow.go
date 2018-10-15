@@ -74,14 +74,6 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 		}
 	}
 
-	for _, wnrs := range wr.WorkflowNodeOutgoingHookRuns {
-		for _, wnr := range wnrs {
-			if wr.LastSubNumber == wnr.SubNumber {
-				computeRunStatus(wnr.Status, &counterStatus)
-			}
-		}
-	}
-
 	var isInError bool
 	var newStatus string
 	for _, info := range wr.Infos {
@@ -106,7 +98,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 }
 
 // ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
-func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, report *ProcessorReport) {
+func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, report *ProcessorReport) {
 	nodeRuns := report.nodes
 	for _, nodeRun := range nodeRuns {
 		if len(nodeRun.Commits) > 0 || nodeRun.ApplicationID == 0 {

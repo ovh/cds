@@ -1,7 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
 import {fakeAsync, TestBed} from '@angular/core/testing';
-import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger, WorkflowNodeTrigger} from './workflow.model';
 import {Parameter} from './parameter.model';
 import {Pipeline} from './pipeline.model';
 

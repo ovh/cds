@@ -45,7 +45,12 @@ workflow_node_run.vcs_branch,
 workflow_node_run.vcs_tag,
 workflow_node_run.vcs_server,
 workflow_node_run.workflow_node_name,
-workflow_node_run.header
+workflow_node_run.header,
+workflow_node_run.uuid,
+workflow_node_run.outgoinghook,
+workflow_node_run.hook_execution_timestamp,
+workflow_node_run.execution_id,
+workflow_node_run.callback
 `
 
 const nodeRunTestsField string = ", workflow_node_run.tests"
@@ -318,6 +323,30 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 		}
 	}
 
+	if rr.UUID.Valid {
+		r.UUID = rr.UUID.String
+	}
+
+	if rr.ExecutionID.Valid {
+		r.HookExecutionID = rr.ExecutionID.String
+	}
+
+	if rr.HookExecutionTimestamp.Valid {
+		r.HookExecutionTimeStamp = rr.HookExecutionTimestamp.Int64
+	}
+
+	if rr.OutgoingHook.Valid {
+		if err := gorpmapping.JSONNullString(rr.OutgoingHook, &r.OutgoingHook); err != nil {
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: OutgoingHook", r.ID)
+		}
+	}
+
+	if rr.Callback.Valid {
+		if err := gorpmapping.JSONNullString(rr.Callback, &r.Callback); err != nil {
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Callback", r.ID)
+		}
+	}
+
 	return r, nil
 }
 
@@ -348,6 +377,12 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB.VCSTag.String = n.VCSTag
 	nodeRunDB.VCSRepository.Valid = true
 	nodeRunDB.VCSRepository.String = n.VCSRepository
+	nodeRunDB.ExecutionID.Valid = true
+	nodeRunDB.ExecutionID.String = n.HookExecutionID
+	nodeRunDB.HookExecutionTimestamp.Valid = true
+	nodeRunDB.HookExecutionTimestamp.Int64 = n.HookExecutionTimeStamp
+	nodeRunDB.UUID.Valid = true
+	nodeRunDB.UUID.String = n.UUID
 
 	if n.TriggersRun != nil {
 		s, err := gorpmapping.JSONToNullString(n.TriggersRun)
@@ -424,6 +459,18 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 		return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from header")
 	}
 	nodeRunDB.Header = sh
+
+	cb, err := gorpmapping.JSONToNullString(n.Callback)
+	if err != nil {
+		return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from callback")
+	}
+	nodeRunDB.Callback = cb
+
+	oh, err := gorpmapping.JSONToNullString(n.OutgoingHook)
+	if err != nil {
+		return nil, sdk.WrapError(err, "makeDBNodeRun> unable to get json from outgoing hook")
+	}
+	nodeRunDB.OutgoingHook = oh
 
 	return nodeRunDB, nil
 }

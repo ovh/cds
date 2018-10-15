@@ -140,15 +140,10 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 	return params, nil
 }
 
-func getParentParameters(db gorp.SqlExecutor, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, nodeRunIds []int64, payload map[string]string) ([]sdk.Parameter, error) {
+func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun, payload map[string]string) ([]sdk.Parameter, error) {
 	repos := w.Workflow.GetRepositories()
-	params := make([]sdk.Parameter, 0, len(nodeRunIds))
-	for _, nodeRunID := range nodeRunIds {
-		parentNodeRun, errNR := LoadNodeRunByID(db, nodeRunID, LoadRunOptions{})
-		if errNR != nil {
-			return nil, sdk.WrapError(errNR, "getParentParameters> Cannot get parent node run")
-		}
-
+	params := make([]sdk.Parameter, 0, len(nodeRuns))
+	for _, parentNodeRun := range nodeRuns {
 		var nodeName string
 		if w.Version < 2 {
 			node := w.Workflow.GetNode(parentNodeRun.WorkflowNodeID)

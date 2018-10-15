@@ -56,7 +56,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return sdk.WrapError(errW, "getWorkflowHookModelsHandler > workflow.Load")
 		}
 
-		node := wf.GetNode(nodeID)
+		node := wf.WorkflowData.NodeByID(nodeID)
 		if node == nil {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowHookModelsHandler")
 		}
@@ -69,13 +69,13 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 		// Post processing  on repositoryWebHook
 		hasRepoManager := false
 		repoWebHookEnable, repoPollerEnable := false, false
-		if node.IsLinkedToRepo() {
+		if node.IsLinkedToRepo(wf) {
 			hasRepoManager = true
 		}
 		var webHookInfo repositoriesmanager.WebhooksInfos
 		if hasRepoManager {
 			// Call VCS to know if repository allows webhook and get the configuration fields
-			vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
+			vcsServer := repositoriesmanager.GetProjectVCSServer(p, wf.Applications[node.Context.ApplicationID].VCSServer)
 			if vcsServer != nil {
 				client, errclient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
 				if errclient != nil {
@@ -231,7 +231,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> Cannot load workflow run")
 		}
 
 		pv, err := project.GetAllVariableInProject(tx, wr.Workflow.ProjectID, project.WithClearPassword())
@@ -254,7 +254,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to update outgoing hook run status")
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, tx, api.Cache, proj, report)
+		//workflow.ResyncNodeRunsWithCommits(tx, api.Cache, proj, report)
 
 		if err := tx.Commit(); err != nil {
 			return err
@@ -304,8 +304,7 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 		if errSecret != nil {
 			return sdk.WrapError(errSecret, "getWorkflowJobHookDetailsHandler> Cannot load secrets")
 		}
-		mapSecrets := sdk.ParametersToMap(sdk.VariablesToParameters("", secrets))
-		hr.Params = sdk.ParametersMapMerge(hr.Params, mapSecrets)
+		hr.BuildParameters = append(hr.BuildParameters, sdk.VariablesToParameters("", secrets)...)
 		return service.WriteJSON(w, hr, http.StatusOK)
 	}
 }

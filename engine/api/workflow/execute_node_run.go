@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -295,7 +296,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 			var err error
 			report, err = report.Merge(execute(ctx, db, store, proj, waitingRun, runContext))
 			if err != nil {
-				return nil, sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
+				return nil, sdk.WrapError(err, "workflow.execute> Unable to merge report from execute")
 			}
 
 			next()
@@ -561,27 +562,33 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 }
 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
-func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.WorkflowNode, ancestorsIds []int64) ([]sdk.Parameter, error) {
+func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
 
 	runContext := nodeRunContext{}
-	if refNode != nil {
-		if refNode.PipelineID != 0 && wf.Pipelines != nil {
-			pip, has := wf.Pipelines[refNode.PipelineID]
+	if refNode != nil && refNode.Context != nil {
+		if refNode.Context.PipelineID != 0 && wf.Pipelines != nil {
+			pip, has := wf.Pipelines[refNode.Context.PipelineID]
 			if has {
 				runContext.Pipeline = pip
 			}
 		}
-		app, has := refNode.Application()
-		if has {
-			runContext.Application = app
+		if refNode.Context.ApplicationID != 0 && wf.Applications != nil {
+			app, has := wf.Applications[refNode.Context.ApplicationID]
+			if has {
+				runContext.Application = app
+			}
 		}
-		env, has := refNode.Environment()
-		if has {
-			runContext.Environment = env
+		if refNode.Context.EnvironmentID != 0 && wf.Environments != nil {
+			env, has := wf.Environments[refNode.Context.EnvironmentID]
+			if has {
+				runContext.Environment = env
+			}
 		}
-		prjPlat, has := refNode.ProjectPlatform()
-		if has {
-			runContext.ProjectPlatform = prjPlat
+		if refNode.Context.ProjectPlatformID != 0 && wf.ProjectPlatforms != nil {
+			pp, has := wf.ProjectPlatforms[refNode.Context.ProjectPlatformID]
+			if has {
+				runContext.ProjectPlatform = pp
+			}
 		}
 	}
 
@@ -623,10 +630,9 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 	return res, nil
 }
 
-// StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
-func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
+	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodePipeline")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -672,6 +678,56 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	if errU := UpdateNodeRun(dbFunc(), &nodeRun); errU != nil {
 		return report, sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
 	}
+	return report, nil
+}
+
+func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap, nodeRun sdk.WorkflowNodeRun) error {
+	db := dbFunc()
+	if nodeRun.Callback == nil {
+		nodeRun.Callback = new(sdk.WorkflowNodeOutgoingHookRunCallback)
+	}
+	nodeRun.Callback.Done = time.Now()
+	nodeRun.Callback.Log += "\nStopped"
+	nodeRun.Callback.Status = sdk.StatusStopped.String()
+	nodeRun.Status = nodeRun.Callback.Status
+
+	srvs, err := services.FindByType(db, services.TypeHooks)
+	if err != nil {
+		return fmt.Errorf("unable to get hooks services: %v", err)
+	}
+
+	if nodeRun.HookExecutionID != "" {
+		path := fmt.Sprintf("/task/%s/execution/%d/stop", nodeRun.HookExecutionID, nodeRun.HookExecutionTimeStamp)
+		if _, err := services.DoJSONRequest(ctx, srvs, "POST", path, nil, nil); err != nil {
+			return fmt.Errorf("unable to stop task execution: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
+func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+	var end func()
+	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
+	defer end()
+
+	report := new(ProcessorReport)
+
+	var r1 *ProcessorReport
+	var errS error
+	if nodeRun.Stages != nil && len(nodeRun.Stages) > 0 {
+		r1, errS = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, nodeRun, stopInfos)
+	}
+	if nodeRun.OutgoingHook != nil {
+		errS = stopWorkflowNodeOutGoingHook(ctx, dbFunc, nodeRun)
+	}
+
+	if errS != nil {
+		return report, sdk.WrapError(errS, "Unable to stop workflow node run")
+	}
+
+	report.Merge(r1, nil) // nolint
 	report.Add(nodeRun)
 
 	return report, nil

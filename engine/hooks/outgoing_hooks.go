@@ -5,51 +5,54 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"github.com/mitchellh/hashstructure"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"strconv"
 	"time"
 
-	"github.com/mitchellh/hashstructure"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHookRun) (sdk.Task, error) {
-	if h.Hook.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
-		return sdk.Task{}, fmt.Errorf("Unsupported hook type: %s", h.Hook.WorkflowHookModel.Type)
+func (s *Service) nodeRunToTask(nr sdk.WorkflowNodeRun) (sdk.Task, error) {
+	if nr.OutgoingHook == nil {
+		return sdk.Task{}, fmt.Errorf("Unsupported node type: %d", nr.WorkflowNodeID)
 	}
-	configHash, err := hashstructure.Hash(h.Hook.Config, nil)
+	if nr.OutgoingHook.Config[sdk.HookConfigModelType].Value != sdk.WorkflowHookModelBuiltin {
+		return sdk.Task{}, fmt.Errorf("Unsupported hook type: %s", nr.OutgoingHook.Config[sdk.HookConfigModelType].Value)
+	}
+	configHash, err := hashstructure.Hash(nr.OutgoingHook.Config, nil)
 	if err != nil {
-		return sdk.Task{}, sdk.WrapError(err, "outgoingHookToTask> unable to hash hook config")
+		return sdk.Task{}, sdk.WrapError(err, "nodeRunToTask> unable to hash hook config")
 	}
-	identifier := fmt.Sprintf("%s/%d", h.Hook.WorkflowHookModel.Name, configHash)
+	identifier := fmt.Sprintf("%s/%d", nr.OutgoingHook.Config[sdk.HookConfigModelName].Value, configHash)
 	uuid := base64.StdEncoding.EncodeToString([]byte(identifier))
 
-	config := h.Hook.Config.Clone()
+	config := nr.OutgoingHook.Config.Clone()
 	config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{
-		Value: h.Hook.Config[sdk.HookConfigProject].Value,
+		Value: nr.OutgoingHook.Config[sdk.HookConfigProject].Value,
 	}
 	config[sdk.HookConfigTypeWorkflow] = sdk.WorkflowNodeHookConfigValue{
-		Value: h.Hook.Config[sdk.HookConfigTypeWorkflow].Value,
+		Value: nr.OutgoingHook.Config[sdk.HookConfigTypeWorkflow].Value,
 	}
 	config[ConfigHookRunID] = sdk.WorkflowNodeHookConfigValue{
-		Value: h.HookRunID,
+		Value: nr.UUID,
 	}
 	config[ConfigNumber] = sdk.WorkflowNodeHookConfigValue{
-		Value: strconv.FormatInt(h.Number, 10),
+		Value: strconv.FormatInt(nr.Number, 10),
 	}
 	config[ConfigSubNumber] = sdk.WorkflowNodeHookConfigValue{
-		Value: strconv.FormatInt(h.SubNumber, 10),
+		Value: strconv.FormatInt(nr.SubNumber, 10),
 	}
 	config[ConfigHookID] = sdk.WorkflowNodeHookConfigValue{
-		Value: strconv.FormatInt(h.WorkflowNodeOutgoingHookID, 10),
+		Value: strconv.FormatInt(nr.WorkflowNodeID, 10),
 	}
 
-	switch h.Hook.WorkflowHookModel.Name {
+	switch nr.OutgoingHook.Config[sdk.HookConfigModelName].Value {
 	case sdk.WebHookModelName:
 		return sdk.Task{
 			UUID:   uuid,
@@ -64,7 +67,7 @@ func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHookRun) (sdk.Tas
 		}, nil
 	}
 
-	return sdk.Task{}, fmt.Errorf("Unsupported hook: %s", h.Hook.WorkflowHookModel.Name)
+	return sdk.Task{}, fmt.Errorf("Unsupported hook: %s", nr.OutgoingHook.Config[sdk.HookConfigModelName].Value)
 }
 
 func (s *Service) startOutgoingWebHookTask(t *sdk.Task) (*sdk.TaskExecution, error) {
@@ -139,8 +142,8 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 	callbackURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/callback", pkey, workflow, run, hookRunID)
 	hookID, _ := strconv.ParseInt(t.Config[ConfigHookID].Value, 10, 64)
 	callbackData := sdk.WorkflowNodeOutgoingHookRunCallback{
-		WorkflowNodeOutgoingHookID: hookID,
-		Start: time.Now(),
+		NodeHookID: hookID,
+		Start:      time.Now(),
 	}
 
 	var handleError = func(err error) error {
@@ -163,7 +166,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 				return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
 			}
 		}
-		return nil
+		return err
 	}
 
 	wr, err := s.Client.WorkflowRunGet(pkey, workflow, runNumber)
@@ -178,7 +181,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 	evt := sdk.WorkflowNodeRunHookEvent{
 		WorkflowNodeHookUUID: targetHook,
-		Payload:              hookRun.Params,
+		Payload:              sdk.ParametersToMap(hookRun.BuildParameters),
 	}
 	evt.ParentWorkflow.Key = pkey
 	evt.ParentWorkflow.Name = workflow
@@ -224,8 +227,8 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	callbackURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/callback", pkey, workflow, run, hookRunID)
 	hookID, _ := strconv.ParseInt(t.Config[ConfigHookID].Value, 10, 64)
 	callbackData := sdk.WorkflowNodeOutgoingHookRunCallback{
-		WorkflowNodeOutgoingHookID: hookID,
-		Start: time.Now(),
+		NodeHookID: hookID,
+		Start:      time.Now(),
 	}
 
 	var handleError = func(err error) error {
@@ -262,18 +265,20 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 		return handleError(sdk.WrapError(err, "unable to retrieve hook details"))
 	}
 
+	mapParams := sdk.ParametersToMap(hookRun.BuildParameters)
+
 	// Interpolate
-	method, err := interpolate.Do(t.WebHook.RequestMethod, hookRun.Params)
+	method, err := interpolate.Do(t.WebHook.RequestMethod, mapParams)
 	if err != nil {
 		return handleError(err)
 	}
 
-	urls, err := interpolate.Do(t.WebHook.RequestURL, hookRun.Params)
+	urls, err := interpolate.Do(t.WebHook.RequestURL, mapParams)
 	if err != nil {
 		return handleError(err)
 	}
 
-	body, err := interpolate.Do(string(t.WebHook.RequestBody), hookRun.Params)
+	body, err := interpolate.Do(string(t.WebHook.RequestBody), mapParams)
 	if err != nil {
 		return handleError(err)
 	}
@@ -285,7 +290,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 
 	for k, v := range t.WebHook.RequestHeader {
 		for _, val := range v {
-			val, err = interpolate.Do(val, hookRun.Params)
+			val, err = interpolate.Do(val, mapParams)
 			if err != nil {
 				return handleError(err)
 			}

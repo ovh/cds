@@ -1,0 +1,13 @@
+<div class="join">
+    <div [hidden]="!nodeToLink" class="iconPosition" (click)="selectJoinToLink()">
+        <i class="selected radio icon"></i>
+    </div>
+    <div class="circle" [class.active]="selected"
+         [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
+         [class.success]="noderun?.status === pipelineStatus.SUCCESS"
+         [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
+         [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
+    ></div>
+    <div class="content">{{node.name}}</div>
+</div>
+

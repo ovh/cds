@@ -2,8 +2,11 @@ import {Injectable} from '@angular/core';
 import {Map} from 'immutable';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
-import {WorkflowNode, WorkflowNodeFork, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeOutgoingHook} from '../../model/workflow.model';
-import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
+import {
+    WNode,
+    WNodeHook,
+} from '../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
 import {WorkflowRunService} from './run/workflow.run.service';
 import {WorkflowSidebarMode, WorkflowSidebarStore} from './workflow.sidebar.store';
 
@@ -14,13 +17,9 @@ export class WorkflowEventStore {
     private _currentWorkflowRun: BehaviorSubject<WorkflowRun> = new BehaviorSubject(null);
     private _currentWorkflowNodeRun: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
     private _nodeRunEvents: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
-    private _outgoingHookEvents: BehaviorSubject<WorkflowNodeOutgoingHookRun> = new BehaviorSubject(null);
 
-    private _selectedNode: BehaviorSubject<WorkflowNode> = new BehaviorSubject<WorkflowNode>(null);
-    private _selectedJoin: BehaviorSubject<WorkflowNodeJoin> = new BehaviorSubject<WorkflowNodeJoin>(null);
-    private _selectedHook: BehaviorSubject<WorkflowNodeHook> = new BehaviorSubject<WorkflowNodeHook>(null);
-    private _selectedOutgoingHook: BehaviorSubject<WorkflowNodeOutgoingHook> = new BehaviorSubject<WorkflowNodeOutgoingHook>(null);
-    private _selectedFork: BehaviorSubject<WorkflowNodeFork> = new BehaviorSubject<WorkflowNodeFork>(null);
+    private _selectedNode: BehaviorSubject<WNode> = new BehaviorSubject<WNode>(null);
+    private _selectedHook: BehaviorSubject<WNodeHook> = new BehaviorSubject<WNodeHook>(null);
 
     private _isListingRuns: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
 
@@ -72,37 +71,24 @@ export class WorkflowEventStore {
         return this._currentWorkflowRun.getValue() != null;
     }
 
-    setSelectedNode(n: WorkflowNode, changeSideBar: boolean) {
-        if (n && changeSideBar) {
-            this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_NODE);
+    setSelectedNode(n: WNode, changeSideBar: boolean) {
+        if (changeSideBar) {
+            if (n) {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT);
+            } else {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
+            }
+
         }
         this._selectedNode.next(n);
-        this._selectedJoin.next(null);
         this._selectedHook.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(null);
     }
 
-    selectedNode(): Observable<WorkflowNode> {
-        return new Observable<WorkflowNode>(fn => this._selectedNode.subscribe(fn));
+    selectedNode(): Observable<WNode> {
+        return new Observable<WNode>(fn => this._selectedNode.subscribe(fn));
     }
 
-    setSelectedJoin(n: WorkflowNodeJoin) {
-        if (n) {
-            this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_JOIN);
-        }
-        this._selectedNode.next(null);
-        this._selectedJoin.next(n);
-        this._selectedHook.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(null);
-    }
-
-    selectedJoin(): Observable<WorkflowNodeJoin> {
-        return new Observable<WorkflowNodeJoin>(fn => this._selectedJoin.subscribe(fn));
-    }
-
-    setSelectedHook(h: WorkflowNodeHook) {
+    setSelectedHook(h: WNodeHook) {
         if (h) {
             if (!this.isRunSelected()) {
                 this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_HOOK);
@@ -110,62 +96,17 @@ export class WorkflowEventStore {
                 this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_HOOK);
             }
         }
-        this._selectedNode.next(null);
-        this._selectedJoin.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(null);
         this._selectedHook.next(h);
     }
 
-    selectedHook(): Observable<WorkflowNodeHook> {
-        return new Observable<WorkflowNodeHook>(fn => this._selectedHook.subscribe(fn));
-    }
-
-    selectedFork(): Observable<WorkflowNodeFork> {
-        return new Observable<WorkflowNodeFork>(fn => this._selectedFork.subscribe(fn));
-    }
-
-    setSelectedFork(f: WorkflowNodeFork) {
-        if (f) {
-            if (!this.isRunSelected()) {
-                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_FORK);
-            } else {
-                this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_FORK);
-            }
-        }
-        this._selectedNode.next(null);
-        this._selectedJoin.next(null);
-        this._selectedHook.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(f);
-    }
-
-    selectedOutgoingHook(): Observable<WorkflowNodeOutgoingHook> {
-        return new Observable<WorkflowNodeOutgoingHook>(fn => this._selectedOutgoingHook.subscribe(fn));
-    }
-
-    setSelectedOutgoingHook(h: WorkflowNodeOutgoingHook) {
-        if (h) {
-            if (!this.isRunSelected()) {
-                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_OUTGOING_HOOK);
-            } else {
-                this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_HOOK);
-            }
-        }
-        this._selectedNode.next(null);
-        this._selectedJoin.next(null);
-        this._selectedHook.next(null);
-        this._selectedFork.next(null);
-        this._selectedOutgoingHook.next(h);
+    selectedHook(): Observable<WNodeHook> {
+        return new Observable<WNodeHook>(fn => this._selectedHook.subscribe(fn));
     }
 
     unselectAll(): void {
         this._selectedNode.next(null);
         this._currentWorkflowRun.next(null);
         this._selectedHook.next(null);
-        this._selectedJoin.next(null);
-        this._selectedOutgoingHook.next(null);
-        this._selectedFork.next(null);
         this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
     }
 
@@ -173,10 +114,6 @@ export class WorkflowEventStore {
         if (wr) {
             this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
         }
-        if (wr.version === 2) {
-            WorkflowRun.retroMigrate(wr);
-        }
-
         this._currentWorkflowRun.next(wr);
     }
 
@@ -212,13 +149,5 @@ export class WorkflowEventStore {
 
     nodeRunEvents(): Observable<WorkflowNodeRun> {
         return new Observable<WorkflowNodeRun>(fn => this._nodeRunEvents.subscribe(fn));
-    }
-
-   broadcastOutgoingHookEvents(hr: WorkflowNodeOutgoingHookRun) {
-        this._outgoingHookEvents.next(hr);
-    }
-
-    outgoingHookEvents(): Observable<WorkflowNodeOutgoingHookRun> {
-        return new Observable<WorkflowNodeOutgoingHookRun>(fn => this._outgoingHookEvents.subscribe(fn));
     }
 }

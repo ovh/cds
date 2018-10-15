@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild} from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
@@ -10,7 +10,7 @@ import {Parameter} from '../../../../model/parameter.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Commit} from '../../../../model/repositories.model';
-import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
+import {WNode, WNodeContext, Workflow} from '../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
@@ -25,7 +25,7 @@ declare var CodeMirror: any;
     styleUrls: ['./node.run.param.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeRunParamComponent {
+export class WorkflowNodeRunParamComponent implements OnInit {
 
     @ViewChild('runWithParamModal')
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
@@ -41,25 +41,24 @@ export class WorkflowNodeRunParamComponent {
     @Input() num: number;
 
     @Input('nodeToRun')
-    set nodeToRun(data: WorkflowNode) {
+    set nodeToRun(data: WNode) {
         if (data) {
             this._nodeToRun = cloneDeep(data);
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
                 if ((!this.nodeRun || !this.nodeRun.payload ) &&
-                    (!this.workflowRun  || !this.workflowRun.nodes || !this.workflowRun.nodes[this.workflowRun.workflow.root.id])) {
+                    (!this.workflowRun  || !this.workflowRun.nodes ||
+                        !this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id])) {
                         this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
                 }
-                this.linkedToRepo = this._nodeToRun.context.application != null
-                    && this._nodeToRun.context.application.repository_fullname != null;
             }
         }
     }
-    get nodeToRun(): WorkflowNode {
+    get nodeToRun(): WNode {
         return this._nodeToRun;
     }
 
-    _nodeToRun: WorkflowNode;
+    _nodeToRun: WNode;
     _previousBranch: string;
     _completionListener: any;
     _keyUpListener: any;
@@ -93,6 +92,10 @@ export class WorkflowNodeRunParamComponent {
         };
     }
 
+    ngOnInit(): void {
+        this.linkedToRepo = WNode.linkedToRepo(this._nodeToRun, this.workflow);
+    }
+
     show(): void {
         let num: number;
         let nodeRunID: number;
@@ -101,7 +104,7 @@ export class WorkflowNodeRunParamComponent {
             num = this.nodeRun.num;
             nodeRunID = this.nodeRun.id;
         } else if (this.workflowRun && this.workflowRun.nodes) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
             num = rootNodeRun.num;
             nodeRunID = rootNodeRun.id;
         }
@@ -133,7 +136,7 @@ export class WorkflowNodeRunParamComponent {
             let isPipelineRoot = false;
             if (!this.workflowRun) {
                 isPipelineRoot = true;
-            } else if (this.workflowRun && this.workflowRun.workflow.root_id === this.nodeToRun.id) {
+            } else if (this.workflowRun && this.workflowRun.workflow.workflow_data.node.id === this.nodeToRun.id) {
                 isPipelineRoot = true;
             }
             // run a workflow or a child pipeline, first run
@@ -142,7 +145,7 @@ export class WorkflowNodeRunParamComponent {
             // if it's not the pipeline root, we take the payload on the pipelineRoot
             if (!isPipelineRoot) {
                 this.readOnly = true;
-                let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
+                let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
                 payload = rootNodeRun.payload;
             }
             this.prepareDisplay(payload);
@@ -166,12 +169,12 @@ export class WorkflowNodeRunParamComponent {
 
         this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: this.readOnly});
 
-        if (!this.nodeToRun.context.application) {
+        if (!this.nodeToRun.context.application_id) {
             return;
         }
 
         if (this.linkedToRepo) {
-            if (this.nodeToRun.context.application.repository_fullname) {
+            if (this.workflow.applications[this.nodeToRun.context.application_id].repository_fullname) {
                 this.loadingBranches = true;
                 this.refreshVCSInfos();
             }
@@ -193,7 +196,7 @@ export class WorkflowNodeRunParamComponent {
     }
 
     getCommits(num: number, change: boolean) {
-        if (!WorkflowNode.isLinkedToRepo(this.nodeToRun)) {
+        if (!this.linkedToRepo) {
             return;
         }
         let branch, hash, repository;
@@ -239,7 +242,7 @@ export class WorkflowNodeRunParamComponent {
         if (this.nodeRun && this.nodeRun.payload) {
             currentContext = this.nodeRun.payload;
         } else if (this.workflowRun && this.workflowRun.nodes) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id];
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id];
             if (rootNodeRun) {
                 currentContext = rootNodeRun[0].payload;
             }
@@ -247,7 +250,7 @@ export class WorkflowNodeRunParamComponent {
             if (this.nodeToRun.context.default_payload && Object.keys(this.nodeToRun.context.default_payload).length > 0) {
                 currentContext = this.nodeToRun.context.default_payload;
             } else {
-                currentContext = this.workflow.root.context.default_payload;
+                currentContext = this.workflow.workflow_data.node.context.default_payload;
             }
         }
 
@@ -283,7 +286,7 @@ export class WorkflowNodeRunParamComponent {
             this._nodeToRun.context.default_pipeline_parameters =
                 Pipeline.mergeParams(pipToRun.parameters, this._nodeToRun.context.default_pipeline_parameters);
         } else {
-            this._nodeToRun.context = new WorkflowNodeContext();
+            this._nodeToRun.context = new WNodeContext();
             this._nodeToRun.context.default_pipeline_parameters = pipToRun.parameters;
         }
 
@@ -337,7 +340,8 @@ export class WorkflowNodeRunParamComponent {
     }
 
     refreshVCSInfos(remote?: string) {
-        this._appWorkflowService.getVCSInfos(this.project.key, this.nodeToRun.context.application.name, remote)
+        this._appWorkflowService.getVCSInfos(this.project.key,
+            this.workflow.applications[this.nodeToRun.context.application_id].name, remote)
             .pipe(finalize(() => this.loadingBranches = false))
             .subscribe((vcsInfos) => {
                 if (vcsInfos.branches) {
@@ -371,7 +375,7 @@ export class WorkflowNodeRunParamComponent {
 
         if (!this._completionListener) {
             this._completionListener = this.codemirror.instance.on('endCompletion', (cm, event) => {
-                if (!WorkflowNode.isLinkedToRepo(this.nodeToRun)) {
+                if (!this.linkedToRepo) {
                     return;
                 }
                 let currentContext = this.getCurrentPayload();

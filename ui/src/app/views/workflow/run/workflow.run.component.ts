@@ -6,8 +6,8 @@ import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
-import {Workflow, WorkflowNode} from '../../../model/workflow.model';
-import {WorkflowRun} from '../../../model/workflow.run.model';
+import {WNode, Workflow} from '../../../model/workflow.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {NotificationService} from '../../../service/notification/notification.service';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
@@ -29,19 +29,19 @@ export class WorkflowRunComponent implements OnInit {
     workflowRun: WorkflowRun;
     subRun: Subscription;
 
-    workflow: Workflow;
-    subWorkflow: Subscription;
-
     workflowName: string;
     version: string;
     direction: string;
+
+    selectedNodeID: number;
+    selectedNodeRef: string;
 
     pipelineStatusEnum = PipelineStatus;
     notificationSubscription: Subscription;
     loadingRun = false;
 
     // copy of root node to send it into run modal
-    nodeToRun: WorkflowNode;
+    nodeToRun: WNode;
 
     constructor(
       private _activatedRoute: ActivatedRoute,
@@ -53,7 +53,6 @@ export class WorkflowRunComponent implements OnInit {
       private _titleService: Title
     ) {
         this._workflowEventStore.setSelectedNodeRun(null, false);
-        this._workflowEventStore.setSelectedNode(null, false);
 
         // Get project
         this._activatedRoute.data.subscribe(datas => {
@@ -70,11 +69,6 @@ export class WorkflowRunComponent implements OnInit {
         });
 
 
-        this.subWorkflow = this._workflowStore.getWorkflows(this.project.key, this.workflowName).subscribe(ws => {
-            this.workflow = ws.get(this.project.key + '-' + this.workflowName);
-        });
-
-
         // Get workflow run
         this.subRun = this._workflowEventStore.selectedRun().subscribe(wr => {
             let previousWR: WorkflowRun;
@@ -87,6 +81,7 @@ export class WorkflowRunComponent implements OnInit {
                 this.handleNotification();
             }
             this.updateTitle();
+            this.selectNode();
         });
 
         // Subscribe to route event
@@ -100,6 +95,46 @@ export class WorkflowRunComponent implements OnInit {
                 }
             }
         });
+
+        this._activatedRoute.queryParams.subscribe(params => {
+            if (params['node_id']) {
+                this.selectedNodeID = params['node_id'];
+            }
+            if (params['node_ref']) {
+                this.selectedNodeRef = params['node_ref'];
+            }
+            this.selectNode();
+        });
+    }
+
+    selectNode() {
+        if (!this.workflowRun) {
+            return;
+        }
+        if (this.selectedNodeID) {
+            let n = Workflow.getNodeByID(this.selectedNodeID, this.workflowRun.workflow);
+            if (n) {
+                this._workflowEventStore.setSelectedNode(n, false);
+                let nr: WorkflowNodeRun;
+                if (this.workflowRun.nodes && this.workflowRun.nodes[n.id]) {
+                    nr = this.workflowRun.nodes[n.id][0];
+                }
+                this._workflowEventStore.setSelectedNodeRun(nr, true);
+                return;
+            }
+        }
+        if (this.selectedNodeRef) {
+            let n = Workflow.getNodeByRef(this.selectedNodeRef, this.workflowRun.workflow);
+            if (n) {
+                this._workflowEventStore.setSelectedNode(n, false);
+                let nr: WorkflowNodeRun;
+                if (this.workflowRun.nodes && this.workflowRun.nodes[n.id]) {
+                    nr = this.workflowRun.nodes[n.id][0];
+                }
+                this._workflowEventStore.setSelectedNodeRun(nr, true);
+                return;
+            }
+        }
     }
 
     initWorkflowRun(num): void {
@@ -139,8 +174,8 @@ export class WorkflowRunComponent implements OnInit {
 
     relaunch() {
         if (this.runWithParamComponent && this.runWithParamComponent.show) {
-            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
-            this.nodeToRun = cloneDeep(this.workflowRun.workflow.root);
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
+            this.nodeToRun = cloneDeep(this.workflowRun.workflow.workflow_data.node);
             if (rootNodeRun.hook_event) {
                 this.nodeToRun.context.default_payload = rootNodeRun.hook_event.payload;
                 this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.hook_event.pipeline_parameter;

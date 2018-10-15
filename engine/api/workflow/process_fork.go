@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// old way
 func processWorkflowNodeFork(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, parentNodeRun *sdk.WorkflowNodeRun, f sdk.WorkflowNodeFork) *ProcessorReport {
 	report := new(ProcessorReport)
 	for j := range f.Triggers {

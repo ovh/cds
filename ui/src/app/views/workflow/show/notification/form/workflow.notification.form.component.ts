@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {cloneDeep} from 'lodash';
 import {notificationOnFailure, notificationOnSuccess, notificationTypes} from '../../../../../model/notification.model';
 import {Project} from '../../../../../model/project.model';
-import {Workflow, WorkflowNode, WorkflowNotification} from '../../../../../model/workflow.model';
+import {WNode, Workflow, WorkflowNotification} from '../../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-notifications-form',
@@ -34,7 +34,7 @@ export class WorkflowNotificationFormComponent {
     selectedUsers: string;
     nodeError = false;
 
-    nodes: Array<WorkflowNode>;
+    nodes: Array<WNode>;
     _workflow: Workflow;
     @Input('workflow')
     set workflow(data: Workflow) {

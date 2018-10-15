@@ -24,12 +24,11 @@ import (
 
 // ProcessorReport represents the state of the workflow processor
 type ProcessorReport struct {
-	mutex         sync.Mutex
-	jobs          []sdk.WorkflowNodeJobRun
-	nodes         []sdk.WorkflowNodeRun
-	workflows     []sdk.WorkflowRun
-	outgoingHooks []sdk.WorkflowNodeOutgoingHookRun
-	errors        []error
+	mutex     sync.Mutex
+	jobs      []sdk.WorkflowNodeJobRun
+	nodes     []sdk.WorkflowNodeRun
+	workflows []sdk.WorkflowRun
+	errors    []error
 }
 
 // WorkflowRuns returns the list of concerned workflow runs
@@ -58,10 +57,6 @@ func (r *ProcessorReport) Add(i ...interface{}) {
 			r.workflows = append(r.workflows, x)
 		case *sdk.WorkflowRun:
 			r.workflows = append(r.workflows, *x)
-		case sdk.WorkflowNodeOutgoingHookRun:
-			r.outgoingHooks = append(r.outgoingHooks, x)
-		case *sdk.WorkflowNodeOutgoingHookRun:
-			r.outgoingHooks = append(r.outgoingHooks, *x)
 		default:
 			log.Warning("ProcessorReport> unknown type %T", w)
 		}
@@ -77,7 +72,6 @@ func (r *ProcessorReport) All() []interface{} {
 	res = append(res, sdk.InterfaceSlice(r.nodes)...)
 	res = append(res, sdk.InterfaceSlice(r.jobs)...)
 	res = append(res, sdk.InterfaceSlice(r.errors)...)
-	res = append(res, sdk.InterfaceSlice(r.outgoingHooks)...)
 	return res
 }
 

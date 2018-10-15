@@ -60,7 +60,6 @@ type NodeOutGoingHook struct {
 	ID          int64                  `json:"id" db:"id"`
 	NodeID      int64                  `json:"node_id" db:"node_id"`
 	HookModelID int64                  `json:"hook_model_id" db:"hook_model_id"`
-	UUID        string                 `json:"uuid" db:"uuid"`
 	Config      WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
@@ -70,6 +69,23 @@ type NodeJoin struct {
 	NodeID     int64  `json:"node_id" db:"node_id"`
 	ParentName string `json:"parent_name,omitempty" db:"-"`
 	ParentID   int64  `json:"parent_id,omitempty" db:"parent_id"`
+}
+
+//GetHooks returns all hooks for the node and its children
+func (n *Node) GetHooks() map[string]NodeHook {
+	res := map[string]NodeHook{}
+
+	for _, h := range n.Hooks {
+		res[h.UUID] = h
+	}
+
+	for _, t := range n.Triggers {
+		b := t.ChildNode.GetHooks()
+		for k, v := range b {
+			res[k] = v
+		}
+	}
+	return res
 }
 
 func (n *Node) nodeByRef(ref string) *Node {
@@ -98,11 +114,20 @@ func (n *Node) nodeByID(ID int64) *Node {
 	return nil
 }
 
-func (n *Node) maps(m *map[int64]*Node) {
-	(*m)[n.ID] = n
+func (n *Node) array(a []*Node) []*Node {
+	a = append(a, n)
 	for i := range n.Triggers {
-		(&n.Triggers[i].ChildNode).maps(m)
+		a = (&n.Triggers[i].ChildNode).array(a)
 	}
+	return a
+}
+
+func (n *Node) maps(m map[int64]*Node) map[int64]*Node {
+	m[n.ID] = n
+	for i := range n.Triggers {
+		m = (&n.Triggers[i].ChildNode).maps(m)
+	}
+	return m
 }
 
 func (n *Node) Ancestors(w *WorkflowData, mapNodes map[int64]*Node, deep bool) []int64 {
@@ -113,33 +138,31 @@ func (n *Node) Ancestors(w *WorkflowData, mapNodes map[int64]*Node, deep bool) [
 	res, ok := w.Node.ancestor(n.ID, deep)
 
 	if !ok {
-	joinLoop:
 		for _, j := range w.Joins {
-			for _, t := range j.Triggers {
-				resAncestor, ok := (&t.ChildNode).ancestor(n.ID, deep)
-				if ok {
-					if len(resAncestor) == 1 || deep {
-						for id := range resAncestor {
-							res[id] = true
-						}
-					}
+			resAncestor, ok := (&j).ancestor(j.ID, deep)
 
-					if len(resAncestor) == 0 || deep {
-						for _, jc := range j.JoinContext {
-							res[jc.ParentID] = true
-							if deep {
-								node := mapNodes[jc.ParentID]
-								if node != nil {
-									ancerstorRes := node.Ancestors(w, mapNodes, deep)
-									for _, id := range ancerstorRes {
-										res[id] = true
-									}
+			if ok {
+				if len(resAncestor) == 1 || deep {
+					for id := range resAncestor {
+						res[id] = true
+					}
+				}
+
+				if len(resAncestor) == 0 || deep {
+					for _, jc := range j.JoinContext {
+						res[jc.ParentID] = true
+						if deep {
+							node := mapNodes[jc.ParentID]
+							if node != nil {
+								ancerstorRes := node.Ancestors(w, mapNodes, deep)
+								for _, id := range ancerstorRes {
+									res[id] = true
 								}
 							}
 						}
 					}
-					break joinLoop
 				}
+				break
 			}
 		}
 	}
