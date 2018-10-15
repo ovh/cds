@@ -74,14 +74,6 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 		}
 	}
 
-	for _, wnrs := range wr.WorkflowNodeOutgoingHookRuns {
-		for _, wnr := range wnrs {
-			if wr.LastSubNumber == wnr.SubNumber {
-				computeRunStatus(wnr.Status, &counterStatus)
-			}
-		}
-	}
-
 	var isInError bool
 	var newStatus string
 	for _, info := range wr.Infos {

@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Input, OnInit} from '@angular/core';
+import {Component, ElementRef, Input} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs';
@@ -17,7 +17,7 @@ import {ToastService} from '../../../toast/ToastService';
     styleUrls: ['./node.join.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowWNodeJoinComponent implements OnInit, AfterViewInit {
+export class WorkflowWNodeJoinComponent {
 
     @Input() public project: Project;
     @Input() public node: WNode;
@@ -26,14 +26,12 @@ export class WorkflowWNodeJoinComponent implements OnInit, AfterViewInit {
     @Input() public workflowrun: WorkflowRun;
     @Input() public selected: boolean;
 
-    canRun: boolean;
-    pipelineStatusEnum = PipelineStatus;
+    pipelineStatus = PipelineStatus;
 
     elementRef: ElementRef;
     linkJoinSubscription: Subscription;
     nodeToLink: WNode;
     loading = false;
-    loadingRun = false;
 
     constructor(elt: ElementRef, private _workflowCore: WorkflowCoreService, private _workflowStore: WorkflowStore,
                 private _toast: ToastService, private _translate: TranslateService) {
@@ -42,28 +40,6 @@ export class WorkflowWNodeJoinComponent implements OnInit, AfterViewInit {
         this.linkJoinSubscription = _workflowCore.getLinkJoinEvent().subscribe(n => {
             this.nodeToLink = n;
         });
-    }
-
-    ngOnInit(): void {
-        this.canBeLaunched();
-    }
-
-    ngAfterViewInit() {
-        this.elementRef.nativeElement.style.position = 'fixed';
-    }
-
-    canBeLaunched() {
-        if (!this.workflowrun || !this.workflowrun.nodes) {
-            return false;
-        }
-        let lengthParentRun = 0;
-        Object.keys(this.workflowrun.nodes).forEach((key) => {
-            if (this.workflowrun.nodes[key].length &&
-                this.node.parents.findIndex(p => p.parent_id === this.workflowrun.nodes[key][0].workflow_node_id) !== -1) {
-                lengthParentRun++;
-            }
-        });
-        this.canRun = this.node.parents.length === lengthParentRun;
     }
 
     selectJoinToLink(): void {
@@ -82,31 +58,5 @@ export class WorkflowWNodeJoinComponent implements OnInit, AfterViewInit {
         this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_updated'));
         });
-    }
-
-    playJoin(): void {
-        // TODO
-        /*
-        let request = new WorkflowRunRequest();
-        if (!this.node || !Array.isArray(this.node.triggers)) {
-            return;
-        }
-        this.loading = true;
-        this.loadingRun = true;
-
-        request.manual = new WorkflowNodeRunManual();
-        request.from_nodes = this.join.triggers.map((trig) => trig.workflow_dest_node_id);
-        request.number = this.currentWorkflowRun.num;
-
-        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request)
-            .pipe(finalize(() => {
-                this.loading = false;
-                this.loadingRun = false;
-            }))
-            .subscribe((wr) => {
-                this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
-                    {queryParams: { subnum: wr.last_subnumber }});
-            });
-            */
     }
 }

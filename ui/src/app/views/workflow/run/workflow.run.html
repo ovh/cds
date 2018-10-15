@@ -2,7 +2,7 @@
     <app-workflow-run-summary
         [(direction)]="direction"
         [project]="project"
-        [workflow]="workflow"
+        [workflow]="workflowRun.workflow"
         [workflowName]="workflowName"
         (relaunch)="relaunch()">
     </app-workflow-run-summary>
@@ -27,7 +27,7 @@
   *ngIf="workflowRun"
   #workflowNodeRunParam
   [project]="project"
-  [workflow]="workflow"
+  [workflow]="workflowRun.workflow"
   [workflowRun]="workflowRun"
   [num]="workflowRun.num"
   [nodeToRun]="nodeToRun">

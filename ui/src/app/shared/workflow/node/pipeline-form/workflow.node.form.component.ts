@@ -4,7 +4,7 @@ import {cloneDeep} from 'lodash';
 import { finalize, first } from 'rxjs/operators';
 import {Environment} from '../../../../model/environment.model';
 import {IdName, Project} from '../../../../model/project.model';
-import {WNode} from '../../../../model/workflow.model';
+import {WNode, Workflow} from '../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-node-form',
@@ -15,6 +15,7 @@ export class WorkflowNodeFormComponent implements OnInit {
 
     @Input() project: Project;
     @Input() node: WNode;
+    @Input() workflow: Workflow;
     @Output() nodeChange = new EventEmitter<WNode>();
 
     environments: Environment[];

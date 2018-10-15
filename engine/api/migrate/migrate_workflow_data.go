@@ -70,7 +70,7 @@ func migrateWorkflowData(db *gorp.DbMap, store cache.Store, ID int64) error {
 		return nil
 	}
 
-	data := w.Migrate()
+	data := w.Migrate(false)
 	w.WorkflowData = &data
 
 	if err := workflow.InsertWorkflowData(tx, w); err != nil {

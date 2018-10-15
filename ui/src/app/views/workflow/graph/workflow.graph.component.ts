@@ -295,8 +295,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 height = this.nodeHeight;
                 break;
             case 'join':
-                width = 50;
-                height = 50;
+                width = 70;
+                height = 70;
                 break;
             case 'outgoinghook':
                 componentRefWidth = '98%';

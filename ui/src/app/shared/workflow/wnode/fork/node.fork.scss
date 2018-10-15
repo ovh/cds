@@ -21,7 +21,21 @@
       top: 14px;
       background-color: transparent;
     }
-
+    .container.success {
+      border: 2px solid $cds_color_green;
+      background-color: $cds_color_light_green;
+    }
+    .container.building {
+      border: 2px solid $cds_color_teal;
+      background-color: $cds_color_light_teal;
+    }
+    .container.fail {
+      border: 2px solid $cds_color_red;
+      background-color: $cds_color_light_red;
+    }
+    .container.inactive {
+      border: 2px solid $cds_color_light_grey;
+    }
     .container.active {
       border: 2px solid $cds_color_teal;
     }
@@ -36,5 +50,6 @@
     display:flex;
     justify-content:center;
     align-items:center;
+    position: absolute;
   }
 }

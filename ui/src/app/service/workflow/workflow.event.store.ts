@@ -6,7 +6,7 @@ import {
     WNode,
     WNodeHook,
 } from '../../model/workflow.model';
-import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
 import {WorkflowRunService} from './run/workflow.run.service';
 import {WorkflowSidebarMode, WorkflowSidebarStore} from './workflow.sidebar.store';
 
@@ -17,7 +17,6 @@ export class WorkflowEventStore {
     private _currentWorkflowRun: BehaviorSubject<WorkflowRun> = new BehaviorSubject(null);
     private _currentWorkflowNodeRun: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
     private _nodeRunEvents: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
-    private _outgoingHookEvents: BehaviorSubject<WorkflowNodeOutgoingHookRun> = new BehaviorSubject(null);
 
     private _selectedNode: BehaviorSubject<WNode> = new BehaviorSubject<WNode>(null);
     private _selectedHook: BehaviorSubject<WNodeHook> = new BehaviorSubject<WNodeHook>(null);
@@ -150,13 +149,5 @@ export class WorkflowEventStore {
 
     nodeRunEvents(): Observable<WorkflowNodeRun> {
         return new Observable<WorkflowNodeRun>(fn => this._nodeRunEvents.subscribe(fn));
-    }
-
-   broadcastOutgoingHookEvents(hr: WorkflowNodeOutgoingHookRun) {
-        this._outgoingHookEvents.next(hr);
-    }
-
-    outgoingHookEvents(): Observable<WorkflowNodeOutgoingHookRun> {
-        return new Observable<WorkflowNodeOutgoingHookRun>(fn => this._outgoingHookEvents.subscribe(fn));
     }
 }

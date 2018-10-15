@@ -76,17 +76,8 @@ type EventRunWorkflowNode struct {
 	BranchName            string                    `json:"branch_name"`
 	NodeName              string                    `json:"node_name"`
 	StagesSummary         []StageSummary            `json:"stages_summary"`
-}
-
-type EventRunWorkflowOutgoingHook struct {
-	HookID            int64  `json:"hook_id"`
-	ID                string `json:"id"`
-	Status            string `json:"status,omitempty"`
-	Start             int64  `json:"start,omitempty"`
-	Done              int64  `json:"done,omitempty"`
-	Log               string `json:"log,omitempty"`
-	WorkflowRunID     int64  `json:"workflow_run_id"`
-	WorkflowRunNumber *int64 `json:"workflow_run_number,omitempty"`
+	HookUUID              string                    `json:"hook_uuid"`
+	HookLog               string                    `json:"log,omitempty"`
 }
 
 // EventRunWorkflow contains event data for a workflow run

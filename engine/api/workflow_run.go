@@ -367,48 +367,45 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 			}
 			report.Merge(r1, nil) // nolint
 			wnr.Status = sdk.StatusStopped.String()
-		}
-	}
 
-	for _, hrs := range run.WorkflowNodeOutgoingHookRuns {
-		for i := range hrs {
-			hr := &hrs[i]
-			if hr.SubNumber != run.LastSubNumber || (hr.Status == sdk.StatusSuccess.String() ||
-				hr.Status == sdk.StatusFail.String() || hr.Status == sdk.StatusSkipped.String()) {
-				log.Debug("stopWorkflowRun> cannot stop this outgoing run with current status %s", hr.Status)
-				continue
-			}
-
-			r1, errS := workflow.StopWorkflowNodeOutgoingHookRun(ctx, tx, store, p, run, hr)
-			if errS != nil {
-				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop outgoing hook run %d", hr.HookRunID)
-			}
-			_, _ = report.Merge(r1, nil)
-			hr.Status = sdk.StatusStopped.String()
-
-			if hr.Hook.WorkflowHookModel.Name == sdk.WorkflowModelName && hr.Callback != nil && hr.Callback.WorkflowRunNumber != nil {
-				//Stop trigggered workflow
-				targetProject := hr.Hook.Config[sdk.HookConfigTargetProject].Value
-				targetWorkflow := hr.Hook.Config[sdk.HookConfigTargetWorkflow].Value
-
-				targetRun, errL := workflow.LoadRun(dbFunc(), targetProject, targetWorkflow, *hr.Callback.WorkflowRunNumber, workflow.LoadRunOptions{})
-				if errL != nil {
-					log.Error("stopWorkflowRunHandler> Unable to load last workflow run: %v", errL)
-					continue
+			if wnr.OutgoingHook != nil {
+				if run.Workflow.OutGoingHookModels == nil {
+					run.Workflow.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
 				}
-
-				targetProj, errP := project.Load(dbFunc(), store, targetProject, u)
-				if errP != nil {
-					log.Error("stopWorkflowRunHandler> Unable to load project", errP)
-					continue
+				model, has := run.Workflow.OutGoingHookModels[wnr.OutgoingHook.HookModelID]
+				if !has {
+					m, errM := workflow.LoadOutgoingHookModelByID(dbFunc(), wnr.OutgoingHook.HookModelID)
+					if errM != nil {
+						sdk.WrapError(errM, "stopWorkflowRun> Unable to load outgoing hook model")
+						continue
+					}
+					model = *m
+					run.Workflow.OutGoingHookModels[wnr.OutgoingHook.HookModelID] = *m
 				}
+				if model.Name == sdk.WorkflowModelName && wnr.Callback != nil && wnr.Callback.WorkflowRunNumber != nil {
+					//Stop trigggered workflow
+					targetProject := wnr.OutgoingHook.Config[sdk.HookConfigTargetProject].Value
+					targetWorkflow := wnr.OutgoingHook.Config[sdk.HookConfigTargetWorkflow].Value
 
-				r2, err := stopWorkflowRun(ctx, dbFunc, store, targetProj, targetRun, u)
-				if err != nil {
-					log.Error("stopWorkflowRun> Unable to stop workflow", err)
-					continue
+					targetRun, errL := workflow.LoadRun(dbFunc(), targetProject, targetWorkflow, *wnr.Callback.WorkflowRunNumber, workflow.LoadRunOptions{})
+					if errL != nil {
+						log.Error("stopWorkflowRunHandler> Unable to load last workflow run: %v", errL)
+						continue
+					}
+
+					targetProj, errP := project.Load(dbFunc(), store, targetProject, u)
+					if errP != nil {
+						log.Error("stopWorkflowRunHandler> Unable to load project", errP)
+						continue
+					}
+
+					r2, err := stopWorkflowRun(ctx, dbFunc, store, targetProj, targetRun, u)
+					if err != nil {
+						log.Error("stopWorkflowRun> Unable to stop workflow", err)
+						continue
+					}
+					report.Merge(r2, nil) // nolint
 				}
-				report.Merge(r2, nil) // nolint
 			}
 		}
 	}
@@ -455,20 +452,21 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 	if err != nil {
 		return sdk.WrapError(err, "updateParentWorkflowRun> Cannot load project")
 	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
 	parentWR, err := workflow.LoadRun(
-		tx,
+		dbFunc(),
 		run.RootRun().HookEvent.ParentWorkflow.Key,
 		run.RootRun().HookEvent.ParentWorkflow.Name,
 		run.RootRun().HookEvent.ParentWorkflow.Run,
 		workflow.LoadRunOptions{
-			DisableDetailledNodeRun: true,
+			DisableDetailledNodeRun: false,
 		})
 	if err != nil {
 		return sdk.WrapError(err, "Unable to load parent run: %v", run.RootRun().HookEvent)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return err
 	}
 
 	if err := workflow.UpdateParentWorkflowRun(ctx, dbFunc, store, run, parentProj, parentWR); err != nil {

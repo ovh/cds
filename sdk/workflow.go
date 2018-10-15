@@ -68,15 +68,15 @@ func (w *Workflow) RetroMigrate() {
 	}
 }
 
-func (w *Workflow) Migrate() WorkflowData {
+func (w *Workflow) Migrate(withID bool) WorkflowData {
 	work := WorkflowData{}
 
 	// Add root node
-	work.Node = (*w.Root).migrate()
+	work.Node = (*w.Root).migrate(withID)
 
 	// Add Join
 	for _, j := range w.Joins {
-		work.Joins = append(work.Joins, j.migrate())
+		work.Joins = append(work.Joins, j.migrate(withID))
 	}
 
 	return work
@@ -609,7 +609,7 @@ type WorkflowNodeJoin struct {
 	Triggers       []WorkflowNodeJoinTrigger `json:"triggers,omitempty" db:"-"`
 }
 
-func (j WorkflowNodeJoin) migrate() Node {
+func (j WorkflowNodeJoin) migrate(withID bool) Node {
 	newNode := Node{
 		Name:        j.Ref,
 		Ref:         j.Ref,
@@ -619,6 +619,9 @@ func (j WorkflowNodeJoin) migrate() Node {
 	if newNode.Ref == "" {
 		newNode.Ref = RandomString(5)
 	}
+	if withID {
+		newNode.ID = j.ID
+	}
 	for i := range j.SourceNodeRefs {
 		newNode.JoinContext = append(newNode.JoinContext, NodeJoin{
 			ParentName: j.SourceNodeRefs[i],
@@ -626,7 +629,7 @@ func (j WorkflowNodeJoin) migrate() Node {
 	}
 
 	for _, t := range j.Triggers {
-		child := t.WorkflowDestNode.migrate()
+		child := t.WorkflowDestNode.migrate(withID)
 		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
 			ParentNodeName: newNode.Name,
 			ChildNode:      child,
@@ -736,6 +739,7 @@ func (n Node) retroMigrateOutGoingHook() WorkflowNodeOutgoingHook {
 		Config:              n.OutGoingHookContext.Config,
 		WorkflowHookModelID: n.OutGoingHookContext.HookModelID,
 		Ref:                 n.Ref,
+		Name:                n.Name,
 	}
 	if len(n.Triggers) > 0 {
 		h.Triggers = make([]WorkflowNodeOutgoingHookTrigger, 0, len(n.Triggers))
@@ -780,7 +784,7 @@ func (n Node) retroMigrateJoin() WorkflowNodeJoin {
 	return j
 }
 
-func (n WorkflowNode) migrate() Node {
+func (n WorkflowNode) migrate(withID bool) Node {
 	newNode := Node{
 		WorkflowID: n.WorkflowID,
 		Type:       NodeTypePipeline,
@@ -797,21 +801,28 @@ func (n WorkflowNode) migrate() Node {
 			Mutex: n.Context.Mutex,
 		},
 	}
+	if withID {
+		newNode.ID = n.ID
+	}
 	if n.Ref == "" {
 		n.Ref = n.Name
 	}
 
 	for _, h := range n.Hooks {
-		newNode.Hooks = append(newNode.Hooks, NodeHook{
+		nh := NodeHook{
 			Ref:         h.Ref,
 			HookModelID: h.WorkflowHookModelID,
 			Config:      h.Config,
 			UUID:        h.UUID,
-		})
+		}
+		if withID {
+			nh.ID = h.ID
+		}
+		newNode.Hooks = append(newNode.Hooks, nh)
 	}
 
 	for _, t := range n.Triggers {
-		triggeredNode := t.WorkflowDestNode.migrate()
+		triggeredNode := t.WorkflowDestNode.migrate(withID)
 		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
 			ParentNodeName: n.Name,
 			ChildNode:      triggeredNode,
@@ -819,7 +830,7 @@ func (n WorkflowNode) migrate() Node {
 	}
 
 	for _, f := range n.Forks {
-		forkNode := f.migrate()
+		forkNode := f.migrate(withID)
 		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
 			ParentNodeName: n.Name,
 			ChildNode:      forkNode,
@@ -827,7 +838,7 @@ func (n WorkflowNode) migrate() Node {
 	}
 
 	for _, h := range n.OutgoingHooks {
-		ogh := h.migrate()
+		ogh := h.migrate(withID)
 		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
 			ParentNodeName: n.Name,
 			ChildNode:      ogh,

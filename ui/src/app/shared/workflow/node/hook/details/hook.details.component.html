@@ -53,7 +53,7 @@
                 <div class="ui info message" *ngIf="!task.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
             </ng-container>
 
-            <ng-container *ngIf="outgoingHookRun && outgoingHookRun.callback">
+            <!--ng-container *ngIf="outgoingHookRun && outgoingHookRun.callback">
                 <h3>{{'workflow_hook_log_title' | translate}}</h3>
                 <div class="inline fields">
                     <div class="four wide field"><label>{{'worker_model_status' | translate}}</label></div>
@@ -71,7 +71,7 @@
                     <div class="four wide field"><label>{{'workflow_hook_log_title' | translate}}</label></div>
                     <div class="twelve wide field"><textarea readonly>{{outgoingHookRun.callback.log}}</textarea></div>
                 </div>
-            </ng-container>
+            </ng-container-->
         </div>
     </div>
     <div class="actions">

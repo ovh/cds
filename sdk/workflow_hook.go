@@ -62,7 +62,7 @@ type WorkflowNodeOutgoingHook struct {
 	Triggers            []WorkflowNodeOutgoingHookTrigger `json:"triggers,omitempty" db:"-"`
 }
 
-func (h WorkflowNodeOutgoingHook) migrate() Node {
+func (h WorkflowNodeOutgoingHook) migrate(withID bool) Node {
 	newNode := Node{
 		Name: h.Name,
 		Ref:  h.Ref,
@@ -72,11 +72,14 @@ func (h WorkflowNodeOutgoingHook) migrate() Node {
 			HookModelID: h.WorkflowHookModelID,
 		},
 	}
+	if withID {
+		newNode.ID = h.ID
+	}
 	if h.Ref == "" {
 		h.Ref = h.Name
 	}
 	for _, t := range h.Triggers {
-		child := t.WorkflowDestNode.migrate()
+		child := t.WorkflowDestNode.migrate(withID)
 		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
 			ParentNodeName: newNode.Name,
 			ChildNode:      child,
@@ -93,17 +96,20 @@ type WorkflowNodeFork struct {
 	Triggers       []WorkflowNodeForkTrigger `json:"triggers,omitempty" db:"-"`
 }
 
-func (f WorkflowNodeFork) migrate() Node {
+func (f WorkflowNodeFork) migrate(withID bool) Node {
 	newNode := Node{
 		Name: f.Name,
 		Ref:  f.Name,
 		Type: NodeTypeFork,
 	}
+	if withID {
+		newNode.ID = f.ID
+	}
 	if newNode.Ref == "" {
 		newNode.Ref = newNode.Name
 	}
 	for _, t := range f.Triggers {
-		child := t.WorkflowDestNode.migrate()
+		child := t.WorkflowDestNode.migrate(withID)
 		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
 			ParentNodeName: newNode.Name,
 			ChildNode:      child,

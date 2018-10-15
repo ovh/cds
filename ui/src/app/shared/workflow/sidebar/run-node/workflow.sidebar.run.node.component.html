@@ -31,9 +31,12 @@
             *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
             <i class="stop icon"></i>
         </button>
-        <button class="ui icon blue button" [class.disabled]="!currentWorkflowNodeRun" [title]="'btn_logs' | translate" (click)="displayLogs()">
-            <i class="file text icon"></i>
-        </button>
+          <ng-container *ngIf="node.context && node.context.pipeline_id" >
+              <button class="ui icon blue button" [class.disabled]="!currentWorkflowNodeRun" [title]="'btn_logs' | translate" (click)="displayLogs()">
+                  <i class="file text icon"></i>
+              </button>
+          </ng-container>
+
       </div>
     </div>
     <ng-container *ngIf="currentWorkflowNodeRun && currentWorkflowRun">
@@ -89,6 +92,17 @@
             </div>
           </ng-container>
         </div>
+    </ng-container>
+    <ng-container *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.callback">
+        <h4 class="ui header">
+            <i class="newspaper icon"></i>
+            <div class="content">
+                <span>Logs</span>
+            </div>
+        </h4>
+        <pre>
+            {{ currentWorkflowNodeRun.callback.log.trim() }}
+        </pre>
     </ng-container>
 </div>
 <div class="ui text active loader" *ngIf="loading">{{ 'common_loading' | translate }}</div>

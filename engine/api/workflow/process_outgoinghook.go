@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"time"
 
@@ -20,8 +21,33 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 
 	report := new(ProcessorReport)
 
-	if wr.WorkflowNodeOutgoingHookRuns == nil {
-		wr.WorkflowNodeOutgoingHookRuns = make(map[int64][]sdk.WorkflowNodeOutgoingHookRun)
+	//Check if the WorkflowNodeOutgoingHookRun already exist with the same subnumber
+	nrs, ok := wr.WorkflowNodeRuns[node.ID]
+	if ok {
+		var exitingNodeRun *sdk.WorkflowNodeRun
+		for i := range nrs {
+			if nrs[i].Number == wr.Number && int(nrs[i].SubNumber) == subNumber {
+				exitingNodeRun = &nrs[i]
+				break
+			}
+		}
+		// If the hookrun is at status terminated, let's trigger outgoing children
+		if exitingNodeRun != nil && !sdk.StatusIsTerminated(exitingNodeRun.Status) {
+			log.Debug("hook %d already processed", node.ID)
+			return nil, nil
+		} else if exitingNodeRun != nil && exitingNodeRun.Status != sdk.StatusStopped.String() {
+			log.Debug("hook %d is over, we have to reprocess al the things", node.ID)
+			for i := range node.Triggers {
+				t := &node.Triggers[i]
+				log.Debug("checking trigger %+v", t)
+				r1, err := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{exitingNodeRun}, node, subNumber)
+				if err != nil {
+					return report, sdk.WrapError(err, "processNodeOutGoingHook> Unable to process outgoing hook triggers")
+				}
+				report.Merge(r1, nil) // nolint
+			}
+			return report, nil
+		}
 	}
 
 	//FIX: For the moment, we trigger outgoing hooks on success
@@ -31,38 +57,9 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		}
 	}
 
-	//Check if the WorkflowNodeOutgoingHookRun already exist with the same subnumber
-	hrs, ok := wr.WorkflowNodeOutgoingHookRuns[node.ID]
-	if ok {
-		var exitingHookRun *sdk.WorkflowNodeOutgoingHookRun
-		for i := range hrs {
-			if hrs[i].Number == wr.Number && int(hrs[i].SubNumber) == subNumber {
-				exitingHookRun = &hrs[i]
-				break
-			}
-		}
-		// If the hookrun is at status terminated, let's trigger outgoing children
-		if exitingHookRun != nil && !sdk.StatusIsTerminated(exitingHookRun.Status) {
-			log.Debug("hook %d already processed", node.ID)
-			return nil, nil
-		} else if exitingHookRun != nil && exitingHookRun.Status != sdk.StatusStopped.String() {
-			log.Debug("hook %d is over, we have to reprocess al the things", node.ID)
-			for i := range node.Triggers {
-				t := &node.Triggers[i]
-				log.Debug("checking trigger %+v", t)
-				r1, err := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{}, node, subNumber)
-				if err != nil {
-					return report, sdk.WrapError(err, "processNodeOutGoingHook> Unable to process outgoing hook triggers")
-				}
-				report.Merge(r1, nil) // nolint
-			}
-			return nil, nil
-		}
-	}
-
 	srvs, err := services.FindByType(db, services.TypeHooks)
 	if err != nil {
-		return nil, sdk.WrapError(err, "process> Cannot get hooks service")
+		return nil, sdk.WrapError(err, "processNodeOutGoingHook> Cannot get hooks service")
 	}
 
 	mapParams := map[string]string{}
@@ -71,27 +68,35 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		sdk.ParametersMapMerge(mapParams, m)
 	}
 
-	hook := sdk.WorkflowNodeOutgoingHook{
-		ID:                  node.ID,
-		WorkflowNodeID:      node.ID,
-		WorkflowHookModelID: node.OutGoingHookContext.HookModelID,
-		Ref:                 node.Ref,
-		WorkflowHookModel:   wr.Workflow.OutGoingHookModels[node.OutGoingHookContext.HookModelID],
-		Config:              node.OutGoingHookContext.Config,
+	node.OutGoingHookContext.Config[sdk.HookConfigModelName] = sdk.WorkflowNodeHookConfigValue{
+		Value:        wr.Workflow.OutGoingHookModels[node.OutGoingHookContext.HookModelID].Name,
+		Configurable: false,
+		Type:         sdk.HookConfigTypeString,
 	}
-	var hookRun = sdk.WorkflowNodeOutgoingHookRun{
-		WorkflowRunID:              wr.ID,
-		HookRunID:                  sdk.UUID(),
-		Status:                     sdk.StatusWaiting.String(),
-		Number:                     wr.Number,
-		SubNumber:                  int64(subNumber),
-		WorkflowNodeOutgoingHookID: node.ID,
-		Hook:   hook,
-		Params: mapParams,
-		Callback: &sdk.WorkflowNodeOutgoingHookRunCallback{
-			Start:  time.Now(),
-			Status: sdk.StatusWaiting.String(),
-		},
+	node.OutGoingHookContext.Config[sdk.HookConfigModelType] = sdk.WorkflowNodeHookConfigValue{
+		Value:        wr.Workflow.OutGoingHookModels[node.OutGoingHookContext.HookModelID].Type,
+		Configurable: false,
+		Type:         sdk.HookConfigTypeString,
+	}
+
+	parentsIDs := make([]int64, 0, len(parentNodeRun))
+	for _, r := range parentNodeRun {
+		parentsIDs = append(parentsIDs, r.ID)
+	}
+	var hookRun = sdk.WorkflowNodeRun{
+		WorkflowRunID:    wr.ID,
+		WorkflowID:       wr.Workflow.ID,
+		WorkflowNodeID:   node.ID,
+		WorkflowNodeName: node.Name,
+		Number:           wr.Number,
+		SubNumber:        int64(subNumber),
+		Status:           sdk.StatusWaiting.String(),
+		Start:            time.Now(),
+		LastModified:     time.Now(),
+		SourceNodeRuns:   parentsIDs,
+		BuildParameters:  sdk.ParametersFromMap(mapParams),
+		UUID:             sdk.UUID(),
+		OutgoingHook:     node.OutGoingHookContext,
 	}
 
 	var task sdk.Task
@@ -101,19 +106,47 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 	}
 
 	if len(task.Executions) > 0 {
-		hookRun.TaskExecution = &task.Executions[0]
+		hookRun.HookExecutionID = task.Executions[0].UUID
+		hookRun.HookExecutionTimeStamp = task.Executions[0].Timestamp
 	}
 
-	if wr.WorkflowNodeOutgoingHookRuns[node.ID] == nil {
-		wr.WorkflowNodeOutgoingHookRuns[node.ID] = make([]sdk.WorkflowNodeOutgoingHookRun, 0)
+	if err := insertWorkflowNodeRun(db, &hookRun); err != nil {
+		return report, sdk.WrapError(err, "processNodeOutGoingHook> unable to insert run (node id : %d, node name : %s, subnumber : %d)", hookRun.WorkflowNodeID, hookRun.WorkflowNodeName, hookRun.SubNumber)
 	}
-	wr.WorkflowNodeOutgoingHookRuns[node.ID] = append(wr.WorkflowNodeOutgoingHookRuns[node.ID], hookRun)
+	wr.LastExecution = time.Now()
 
-	sort.Slice(wr.WorkflowNodeOutgoingHookRuns[node.ID], func(i, j int) bool {
-		return wr.WorkflowNodeOutgoingHookRuns[node.ID][i].SubNumber > wr.WorkflowNodeOutgoingHookRuns[node.ID][j].SubNumber
-	})
+	buildParameters := sdk.ParametersToMap(hookRun.BuildParameters)
+	_, okID := buildParameters["cds.node.id"]
+	if !okID {
+		if !okID {
+			sdk.AddParameter(&hookRun.BuildParameters, "cds.node.id", sdk.StringParameter, fmt.Sprintf("%d", hookRun.ID))
+		}
+
+		if err := UpdateNodeRunBuildParameters(db, hookRun.ID, hookRun.BuildParameters); err != nil {
+			return report, sdk.WrapError(err, "processNodeOutGoingHook> unable to update workflow node run build parameters")
+		}
+	}
 
 	report.Add(hookRun)
+
+	//Update workflow run
+	if wr.WorkflowNodeRuns == nil {
+		wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
+	}
+	if wr.WorkflowNodeRuns[node.ID] == nil {
+		wr.WorkflowNodeRuns[node.ID] = make([]sdk.WorkflowNodeRun, 0)
+	}
+	wr.WorkflowNodeRuns[node.ID] = append(wr.WorkflowNodeRuns[node.ID], hookRun)
+
+	sort.Slice(wr.WorkflowNodeRuns[node.ID], func(i, j int) bool {
+		return wr.WorkflowNodeRuns[node.ID][i].SubNumber > wr.WorkflowNodeRuns[node.ID][j].SubNumber
+	})
+
+	wr.LastSubNumber = MaxSubNumber(wr.WorkflowNodeRuns)
+
+	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
+		return report, sdk.WrapError(err, "processNodeOutGoingHook> unable to update workflow run")
+	}
 
 	return report, nil
 }

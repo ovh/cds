@@ -62,7 +62,6 @@ CREATE TABLE w_node_outgoing_hook (
   id BIGSERIAL PRIMARY KEY,
   node_id BIGINT,
   hook_model_id BIGINT,
-  uuid VARCHAR(255),
   config JSONB
 );
 
@@ -78,6 +77,12 @@ CREATE TABLE w_node_join (
 SELECT create_foreign_key_idx_cascade('FK_W_NODE_JOIN_NODE', 'w_node_join', 'w_node', 'node_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_W_NODE_JOIN_PARENT', 'w_node_join', 'w_node', 'parent_id', 'id');
 
+ALTER TABLE workflow_node_run ADD COLUMN uuid VARCHAR(255);
+ALTER TABLE workflow_node_run ADD COLUMN outgoinghook JSONB;
+ALTER TABLE workflow_node_run ADD COLUMN hook_execution_timestamp VARCHAR(20);
+ALTER TABLE workflow_node_run ADD COLUMN execution_id VARCHAR(255);
+ALTER TABLE workflow_node_run ADD COLUMN callback JSONB;
+
 -- +migrate Down
 ALTER TABLE workflow DROP COLUMN workflow_data;
 DROP TABLE w_node CASCADE;
@@ -86,3 +91,9 @@ DROP TABLE w_node_context CASCADE;
 DROP TABLE w_node_trigger CASCADE;
 DROP TABLE w_node_outgoing_hook CASCADE;
 DROP TABLE w_node_join CASCADE;
+
+ALTER TABLE workflow_node_run DROP COLUMN uuid;
+ALTER TABLE workflow_node_run DROP COLUMN outgoinghook;
+ALTER TABLE workflow_node_run DROP COLUMN hook_execution_timestamp;
+ALTER TABLE workflow_node_run DROP COLUMN execution_id;
+ALTER TABLE workflow_node_run DROP COLUMN callback;

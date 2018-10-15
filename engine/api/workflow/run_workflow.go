@@ -74,8 +74,8 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 		}
 
-		ok, has := p.Features[feature.FeatDisabledWNode]
-		if has && !ok && wr.Workflow.WorkflowData != nil {
+		ok, has := p.Features[feature.FeatWNode]
+		if has && ok && wr.Workflow.WorkflowData != nil {
 			wr.Version = 2
 		}
 
@@ -184,8 +184,8 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 	}
 
-	ok, has := p.Features[feature.FeatDisabledWNode]
-	if has && !ok && wr.Workflow.WorkflowData != nil {
+	ok, has := p.Features[feature.FeatWNode]
+	if has && ok && wr.Workflow.WorkflowData != nil {
 		wr.Version = 2
 	}
 

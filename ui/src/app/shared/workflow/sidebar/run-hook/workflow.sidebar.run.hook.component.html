@@ -54,36 +54,6 @@
             </div>
         </div>
     </ng-container>
-    <ng-container *ngIf="!loading && outgoingHookRuns">
-        <h4 class="ui header ml5">
-            <i class="newspaper icon"></i>
-            <div class="content">
-                <span>Executions</span>
-            </div>
-        </h4>
-        <div class="ui list divided no-mrt">
-            <div class="item padding pointing" *ngFor="let run of outgoingHookRuns" (click)="openOutgoingHookDetailsModal(run)">
-                <i class="icon ribbon-state"
-                    [class.success]="run.status === pipelineStatusEnum.SUCCESS"
-                    [class.waiting]="run.status === pipelineStatusEnum.WAITING || run.status === pipelineStatusEnum.BUILDING"
-                    [class.fail]="run.status === pipelineStatusEnum.FAIL || run.status === pipelineStatusEnum.STOPPED">
-                </i>
-                <div class="content">
-                    <div class="infoLine">
-                        <i class="tag icon"></i> #{{ run.num }}.{{ run.subnumber }}
-                    </div>
-                    <div class="infoLine" *ngIf="run.callback">
-                        <ng-container *ngIf="run.status === pipelineStatusEnum.WAITING">
-                            <i class="calendar icon"></i> {{ 'common_waiting' | translate }}
-                        </ng-container>
-                        <ng-container *ngIf="run.status !== pipelineStatusEnum.WAITING">
-                            <i class="calendar icon"></i> {{ run.callback.start | amTimeAgo }}
-                        </ng-container>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </ng-container>
     <div class="ui active centered inline loader" *ngIf="loading"></div>
 </div>
 <ng-container *ngIf="hook && node">
@@ -98,15 +68,3 @@
     </app-workflow-node-hook-form>
 </ng-container>
 <app-workflow-node-hook-details #workflowDetailsHook></app-workflow-node-hook-details>
-
-<ng-container *ngIf="outgoingHook && node">
-    <app-workflow-node-hook-form
-    [project]="project"
-    [workflow]="wr.workflow"
-    [node]="node"
-    [loading]="loading"
-    [readonly]="true"
-    [isoutgoing]="true"
-    [outgoingHook]="outgoingHook" #workflowConfigOutgoingHook>
-    </app-workflow-node-hook-form>
-</ng-container>

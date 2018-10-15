@@ -153,7 +153,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
 
     getCanBeRun(): boolean {
         // Get Env permission
-        let envForbid = this.node && this.node.context.environment_id
+        let envForbid = this.node && this.node.context && this.node.context.environment_id > 1
             && this.workflow.environments[this.node.context.environment_id].permission
             && this.workflow.environments[this.node.context.environment_id].permission < PermissionValue.READ_EXECUTE;
 

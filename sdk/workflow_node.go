@@ -60,7 +60,6 @@ type NodeOutGoingHook struct {
 	ID          int64                  `json:"id" db:"id"`
 	NodeID      int64                  `json:"node_id" db:"node_id"`
 	HookModelID int64                  `json:"hook_model_id" db:"hook_model_id"`
-	UUID        string                 `json:"uuid" db:"uuid"`
 	Config      WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
@@ -70,6 +69,23 @@ type NodeJoin struct {
 	NodeID     int64  `json:"node_id" db:"node_id"`
 	ParentName string `json:"parent_name,omitempty" db:"-"`
 	ParentID   int64  `json:"parent_id,omitempty" db:"parent_id"`
+}
+
+//GetHooks returns all hooks for the node and its children
+func (n *Node) GetHooks() map[string]NodeHook {
+	res := map[string]NodeHook{}
+
+	for _, h := range n.Hooks {
+		res[h.UUID] = h
+	}
+
+	for _, t := range n.Triggers {
+		b := t.ChildNode.GetHooks()
+		for k, v := range b {
+			res[k] = v
+		}
+	}
+	return res
 }
 
 func (n *Node) nodeByRef(ref string) *Node {

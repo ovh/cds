@@ -92,6 +92,7 @@ import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.
 import {WorkflowNodeAddWizardComponent} from './workflow/node/wizard/node.wizard.component';
 import {WorkflowSidebarHookComponent} from './workflow/sidebar/edit-hook/workflow.sidebar.hook.component';
 import {WorkflowWNodeSidebarEditComponent} from './workflow/sidebar/edit-node/sidebar.edit.component';
+import {WorkflowSidebarRunHookComponent} from './workflow/sidebar/run-hook/workflow.sidebar.run.hook.component';
 import {WorkflowSidebarRunListComponent} from './workflow/sidebar/run-list/workflow.sidebar.run.component';
 import {ActionStepSummaryComponent} from './workflow/sidebar/run-node/stage/job/action/action.summary.component';
 import {JobStepSummaryComponent} from './workflow/sidebar/run-node/stage/job/job.summary.component';
@@ -174,6 +175,7 @@ import {ZoneComponent} from './zone/zone.component';
         StageStepSummaryComponent,
         JobStepSummaryComponent,
         ActionStepSummaryComponent,
+        WorkflowSidebarRunHookComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -274,6 +276,7 @@ import {ZoneComponent} from './zone/zone.component';
         WorkflowSidebarHookComponent,
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
+        WorkflowSidebarRunHookComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,

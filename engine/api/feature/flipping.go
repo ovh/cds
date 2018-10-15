@@ -17,7 +17,7 @@ const (
 	FeatEnableTracing = "cds:tracing"
 
 	// FeatDisabledWNode wnode workflow representation
-	FeatDisabledWNode = "cds:wnode"
+	FeatWNode = "cds:wnode"
 
 	cacheFeatureKey = "feature:"
 )
@@ -37,7 +37,7 @@ type ProjectFeatures struct {
 
 // List all features
 func List() []string {
-	return []string{FeatWorkflowAsCode, FeatDisabledWNode}
+	return []string{FeatWorkflowAsCode, FeatWNode}
 }
 
 // Init initialize izanami client

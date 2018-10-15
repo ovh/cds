@@ -3,7 +3,7 @@ import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {WorkflowHookModel} from '../../../../model/workflow.hook.model';
 import {WNode, Workflow, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
-import {WorkflowNodeRun} from '../../../../model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 
 @Component({
@@ -27,6 +27,7 @@ export class WorkflowWNodeOutGoingHookComponent implements OnInit {
     @Input() public project: Project;
     @Input() public workflow: Workflow;
     @Input() public noderun: WorkflowNodeRun;
+    @Input() public workflowrun: WorkflowRun;
     @Input() public selected: boolean;
 
     model: WorkflowHookModel;

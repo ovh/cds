@@ -231,7 +231,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			DisableDetailledNodeRun: true,
 		})
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> Cannot load workflow run")
 		}
 
 		pv, err := project.GetAllVariableInProject(tx, wr.Workflow.ProjectID, project.WithClearPassword())
@@ -254,7 +254,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to update outgoing hook run status")
 		}
 
-		workflow.ResyncNodeRunsWithCommits(tx, api.Cache, proj, report)
+		//workflow.ResyncNodeRunsWithCommits(tx, api.Cache, proj, report)
 
 		if err := tx.Commit(); err != nil {
 			return err
@@ -304,8 +304,7 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 		if errSecret != nil {
 			return sdk.WrapError(errSecret, "getWorkflowJobHookDetailsHandler> Cannot load secrets")
 		}
-		mapSecrets := sdk.ParametersToMap(sdk.VariablesToParameters("", secrets))
-		hr.Params = sdk.ParametersMapMerge(hr.Params, mapSecrets)
+		hr.BuildParameters = append(hr.BuildParameters, sdk.VariablesToParameters("", secrets)...)
 		return service.WriteJSON(w, hr, http.StatusOK)
 	}
 }

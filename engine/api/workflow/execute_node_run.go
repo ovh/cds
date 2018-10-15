@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -629,10 +630,9 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 	return res, nil
 }
 
-// StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
-func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
+	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodePipeline")
 	defer end()
 
 	report := new(ProcessorReport)
@@ -678,6 +678,56 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	if errU := UpdateNodeRun(dbFunc(), &nodeRun); errU != nil {
 		return report, sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
 	}
+	return report, nil
+}
+
+func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap, nodeRun sdk.WorkflowNodeRun) error {
+	db := dbFunc()
+	if nodeRun.Callback == nil {
+		nodeRun.Callback = new(sdk.WorkflowNodeOutgoingHookRunCallback)
+	}
+	nodeRun.Callback.Done = time.Now()
+	nodeRun.Callback.Log += "\nStopped"
+	nodeRun.Callback.Status = sdk.StatusStopped.String()
+	nodeRun.Status = nodeRun.Callback.Status
+
+	srvs, err := services.FindByType(db, services.TypeHooks)
+	if err != nil {
+		return fmt.Errorf("unable to get hooks services: %v", err)
+	}
+
+	if nodeRun.HookExecutionID != "" {
+		path := fmt.Sprintf("/task/%s/execution/%d/stop", nodeRun.HookExecutionID, nodeRun.HookExecutionTimeStamp)
+		if _, err := services.DoJSONRequest(ctx, srvs, "POST", path, nil, nil); err != nil {
+			return fmt.Errorf("unable to stop task execution: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
+func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+	var end func()
+	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeRun")
+	defer end()
+
+	report := new(ProcessorReport)
+
+	var r1 *ProcessorReport
+	var errS error
+	if nodeRun.Stages != nil && len(nodeRun.Stages) > 0 {
+		r1, errS = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, nodeRun, stopInfos)
+	}
+	if nodeRun.OutgoingHook != nil {
+		errS = stopWorkflowNodeOutGoingHook(ctx, dbFunc, nodeRun)
+	}
+
+	if errS != nil {
+		return report, sdk.WrapError(errS, "Unable to stop workflow node run")
+	}
+
+	report.Merge(r1, nil) // nolint
 	report.Add(nodeRun)
 
 	return report, nil

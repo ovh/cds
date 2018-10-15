@@ -66,6 +66,11 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 		NodeID:         nr.WorkflowNodeID,
 		RunID:          nr.WorkflowRunID,
 		StagesSummary:  make([]sdk.StageSummary, len(nr.Stages)),
+		HookUUID:       nr.UUID,
+	}
+
+	if nr.Callback != nil {
+		e.HookLog = nr.Callback.Log
 	}
 
 	for i := range nr.Stages {
@@ -120,22 +125,4 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 		e.Done = nr.Done.Unix()
 	}
 	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status)
-}
-
-func PublishWorkflowNodeOutgoingHookRun(db gorp.SqlExecutor, hr sdk.WorkflowNodeOutgoingHookRun, w sdk.Workflow) {
-	evt := sdk.EventRunWorkflowOutgoingHook{
-		ID:            hr.HookRunID,
-		HookID:        hr.Hook.ID,
-		Status:        hr.Status,
-		WorkflowRunID: hr.WorkflowRunID,
-	}
-
-	if hr.Callback != nil {
-		evt.Start = hr.Callback.Start.Unix()
-		evt.Done = hr.Callback.Done.Unix()
-		evt.Log = hr.Callback.Log
-		evt.WorkflowRunNumber = hr.Callback.WorkflowRunNumber
-	}
-
-	publishRunWorkflow(evt, w.ProjectKey, w.Name, "", "", "", hr.Number, hr.SubNumber, hr.Status)
 }

@@ -3,7 +3,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
-import {WNode, Workflow} from '../../../model/workflow.model';
+import {WNode, WNodeType, Workflow} from '../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
@@ -92,28 +92,28 @@ export class WorkflowWNodeComponent implements OnInit {
             return;
         }
 
-        if (this.workflowRun) {
-            this._workflowEventStore.setSelectedRun(this.workflowRun);
-            this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun, true);
-        }
-
          let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
             queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref}});
         this._router.navigateByUrl(url.toString()).then(() => {});
     }
 
     dblClickOnNode() {
-        if (this._workflowEventStore.isRunSelected() && this.currentNodeRun) {
-            this._router.navigate([
-                'node', this.currentNodeRun.id
-            ], {relativeTo: this._activatedRoute, queryParams: {name: this.node.name}});
-        } else {
-            this._router.navigate([
-                '/project', this.project.key,
-                'pipeline', Workflow.getPipeline(this.workflow, this.node).name
-            ], {queryParams: {workflow: this.workflow.name, node_id: this.node.id, node_ref: this.node.ref}});
+        switch (this.node.type) {
+            case WNodeType.PIPELINE:
+                if (this._workflowEventStore.isRunSelected() && this.currentNodeRun) {
+                    this._router.navigate([
+                        'node', this.currentNodeRun.id
+                    ], {relativeTo: this._activatedRoute, queryParams: {name: this.node.name}});
+                } else {
+                    this._router.navigate([
+                        '/project', this.project.key,
+                        'pipeline', Workflow.getPipeline(this.workflow, this.node).name
+                    ], {queryParams: {workflow: this.workflow.name, node_id: this.node.id, node_ref: this.node.ref}});
+                    break;
+                }
         }
     }
+
 
     computeWarnings() {
         this.warnings = 0;

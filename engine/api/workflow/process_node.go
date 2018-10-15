@@ -73,7 +73,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		// r1, errT := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber)
 		r1, conditionOK, errT := processNode(ctx, db, store, proj, wr, mapNodes, n, subNumber, parentNodeRuns, hookEvent, manual)
 		_, _ = report.Merge(r1, nil)
-		return report, conditionOK, sdk.WrapError(errT, "processNode> Unable to processNodeTriggers")
+		return report, conditionOK, sdk.WrapError(errT, "processNode> Unable to processNode")
 	case sdk.NodeTypeOutGoingHook:
 		r1, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber)
 		_, _ = report.Merge(r1, nil)
@@ -347,7 +347,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// Check Run Conditions
 	if hookEvent != nil {
-		hooks := wr.Workflow.GetHooks()
+		hooks := wr.Workflow.WorkflowData.GetHooks()
 		hook, ok := hooks[hookEvent.WorkflowNodeHookUUID]
 		if !ok {
 			return report, false, sdk.WrapError(sdk.ErrNoHook, "processNode> Unable to find hook %s", hookEvent.WorkflowNodeHookUUID)
@@ -356,9 +356,9 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		// Check conditions
 		var params = run.BuildParameters
 		// Define specific destination parameters
-		dest := mapNodes[hook.WorkflowNodeID]
+		dest := mapNodes[hook.NodeID]
 		if dest == nil {
-			return report, false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processNode> Unable to find node %d", hook.WorkflowNodeID)
+			return report, false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processNode> Unable to find node %d", hook.NodeID)
 		}
 
 		if !checkNodeRunCondition(wr, dest.Context.Conditions, params) {

@@ -7,7 +7,7 @@ import {Subscription} from 'rxjs';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {WNode, Workflow} from '../../../model/workflow.model';
-import {WorkflowRun} from '../../../model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {NotificationService} from '../../../service/notification/notification.service';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
@@ -28,9 +28,6 @@ export class WorkflowRunComponent implements OnInit {
     project: Project;
     workflowRun: WorkflowRun;
     subRun: Subscription;
-
-    workflow: Workflow;
-    subWorkflow: Subscription;
 
     workflowName: string;
     version: string;
@@ -72,11 +69,6 @@ export class WorkflowRunComponent implements OnInit {
         });
 
 
-        this.subWorkflow = this._workflowStore.getWorkflows(this.project.key, this.workflowName).subscribe(ws => {
-            this.workflow = ws.get(this.project.key + '-' + this.workflowName);
-        });
-
-
         // Get workflow run
         this.subRun = this._workflowEventStore.selectedRun().subscribe(wr => {
             let previousWR: WorkflowRun;
@@ -89,6 +81,7 @@ export class WorkflowRunComponent implements OnInit {
                 this.handleNotification();
             }
             this.updateTitle();
+            this.selectNode();
         });
 
         // Subscribe to route event
@@ -115,20 +108,30 @@ export class WorkflowRunComponent implements OnInit {
     }
 
     selectNode() {
-        if (!this.workflow) {
+        if (!this.workflowRun) {
             return;
         }
         if (this.selectedNodeID) {
-            let n = Workflow.getNodeByID(this.selectedNodeID, this.workflow);
+            let n = Workflow.getNodeByID(this.selectedNodeID, this.workflowRun.workflow);
             if (n) {
                 this._workflowEventStore.setSelectedNode(n, false);
+                let nr: WorkflowNodeRun;
+                if (this.workflowRun.nodes && this.workflowRun.nodes[n.id]) {
+                    nr = this.workflowRun.nodes[n.id][0];
+                }
+                this._workflowEventStore.setSelectedNodeRun(nr, true);
                 return;
             }
         }
         if (this.selectedNodeRef) {
-            let n = Workflow.getNodeByRef(this.selectedNodeRef, this.workflow);
+            let n = Workflow.getNodeByRef(this.selectedNodeRef, this.workflowRun.workflow);
             if (n) {
                 this._workflowEventStore.setSelectedNode(n, false);
+                let nr: WorkflowNodeRun;
+                if (this.workflowRun.nodes && this.workflowRun.nodes[n.id]) {
+                    nr = this.workflowRun.nodes[n.id][0];
+                }
+                this._workflowEventStore.setSelectedNodeRun(nr, true);
                 return;
             }
         }
