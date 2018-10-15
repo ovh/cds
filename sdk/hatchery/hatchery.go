@@ -424,6 +424,12 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 			containsHostnameRequirement = true
 		}
 	}
+
+	if model.IsDeprecated && !containsModelRequirement {
+		log.Debug("canRunJob> %d - job %d - Cannot launch this model because it is deprecated", j.timestamp, j.id)
+		return false
+	}
+
 	// Common check
 	for _, r := range j.requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
