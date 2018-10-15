@@ -184,8 +184,8 @@ func (w *WorkflowTemplateParameter) ValidateStruct() error {
 	return nil
 }
 
-// WorkflowTemplateWorkflow struct.
-type WorkflowTemplateWorkflow struct {
+// WorkflowTemplateInstance struct.
+type WorkflowTemplateInstance struct {
 	ID                      int64                   `json:"id" db:"id" `
 	WorkflowTemplateID      int64                   `json:"workflow_template_id" db:"workflow_template_id"`
 	WorkflowID              int64                   `json:"workflow_id" db:"workflow_id"`

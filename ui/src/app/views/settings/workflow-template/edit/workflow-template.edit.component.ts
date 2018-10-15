@@ -19,13 +19,20 @@ export class WorkflowTemplateEditComponent {
     pipelineKeys: Array<number>;
     pipelineValueAdd: string;
     descriptionRows: number;
+    parameterKeys: Array<string>;
+    parameterValues: any;
+    parameterValueAdd: any;
+    templateParameterTypes: Array<string>;
 
     constructor(
         private _sharedService: SharedService,
         private _workflowTemplateService: WorkflowTemplateService,
         private _route: ActivatedRoute
     ) {
+        this.templateParameterTypes = ['boolean', 'string'];
+
         this.initPipelineValue();
+        this.initParameterValue();
 
         this.codeMirrorConfig = this.codeMirrorConfig = {
             matchBrackets: true,
@@ -44,6 +51,10 @@ export class WorkflowTemplateEditComponent {
 
     initPipelineValue() {
         this.pipelineValueAdd = '\n\n';
+    }
+
+    initParameterValue() {
+        this.parameterValueAdd = {};
     }
 
     getTemplate(id: number) {
@@ -68,6 +79,9 @@ export class WorkflowTemplateEditComponent {
         this.workflowTemplate.pipelines = Object.keys(this.pipelineValues).map(k => {
             return { value: btoa(this.pipelineValues[k]) };
         });
+        this.workflowTemplate.parameters = Object.keys(this.parameterValues).map(k => {
+            return this.parameterValues[k];
+        })
         this.loading = true;
         this._workflowTemplateService.updateWorkflowTemplate(this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
@@ -90,6 +104,14 @@ export class WorkflowTemplateEditComponent {
 
     setTemplate(wt: WorkflowTemplate) {
         this.workflowTemplate = wt;
+
+        this.parameterKeys = [];
+        this.parameterValues = {};
+        wt.parameters.forEach((p, i) => {
+            this.parameterValues[p.key] = p;
+            this.parameterKeys.push(p.key);
+        });
+
         this.workflowValue = atob(wt.value);
         this.pipelineValues = {};
         this.pipelineKeys = [];
@@ -97,6 +119,19 @@ export class WorkflowTemplateEditComponent {
             this.pipelineValues[i] = p;
             this.pipelineKeys.push(i);
         });
+
         this.descriptionChange();
+    }
+
+    clickAddParameter() {
+        let k = this.parameterValueAdd.key;
+        this.parameterKeys.push(k)
+        this.parameterValues[k] = this.parameterValueAdd;
+        this.initParameterValue();
+    }
+
+    clickRemoveParameter(key: string) {
+        this.parameterKeys = this.parameterKeys.filter(k => k !== key);
+        delete (this.parameterValues[key]);
     }
 }

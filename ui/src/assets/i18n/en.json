@@ -270,6 +270,7 @@
   "common_vulnerabilities": "Vulnerabilities",
   "common_waiting": "Waiting",
   "common_no_data": "No data found",
+  "common_required": "Required",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",

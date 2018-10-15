@@ -42,3 +42,33 @@ func (c Criteria) args() interface{} {
 		"groupIDs": database.IDsToQueryString(c.groupIDs),
 	}
 }
+
+func NewCriteriaInstance() CriteriaInstance { return CriteriaInstance{} }
+
+type CriteriaInstance struct {
+	workflowTemplateIDs []int64
+}
+
+func (c CriteriaInstance) WorkflowTemplateIDs(ids ...int64) CriteriaInstance {
+	c.workflowTemplateIDs = ids
+	return c
+}
+
+func (c CriteriaInstance) where() string {
+	var reqs []string
+	if c.workflowTemplateIDs != nil {
+		reqs = append(reqs, "workflow_template_id = ANY(string_to_array(:workflowTemplateIDs, ',')::int[])")
+	}
+
+	if len(reqs) == 0 {
+		return "false"
+	}
+
+	return database.And(reqs...)
+}
+
+func (c CriteriaInstance) args() interface{} {
+	return map[string]interface{}{
+		"workflowTemplateIDs": database.IDsToQueryString(c.workflowTemplateIDs),
+	}
+}

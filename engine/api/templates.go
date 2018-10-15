@@ -270,7 +270,7 @@ func (api *API) executeTemplateHandler() service.Handler {
 		}
 
 		// create new relation between workflow and template
-		if err := workflowtemplate.InsertRelation(tx, &sdk.WorkflowTemplateWorkflow{
+		if err := workflowtemplate.InsertRelation(tx, &sdk.WorkflowTemplateInstance{
 			WorkflowTemplateID:      t.ID,
 			WorkflowID:              workflow.ID,
 			WorkflowTemplateVersion: t.Version,
@@ -284,5 +284,22 @@ func (api *API) executeTemplateHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
+	}
+}
+
+func (api *API) getTemplateInstancesHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(true)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+		t := getWorkflowTemplate(ctx)
+
+		is, err := workflowtemplate.GetInstances(api.mustDB(), workflowtemplate.NewCriteriaInstance().WorkflowTemplateIDs(t.ID))
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, is, http.StatusOK)
 	}
 }

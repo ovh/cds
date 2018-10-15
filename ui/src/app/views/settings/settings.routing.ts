@@ -45,7 +45,7 @@ const routes: Routes = [
             {
                 path: 'workflow-template/:id',
                 component: WorkflowTemplateEditComponent,
-                data: { title: 'Workflow template {workflowTemplate}' }
+                data: { title: 'Edit • Workflow template' }
             },
         ]
     }

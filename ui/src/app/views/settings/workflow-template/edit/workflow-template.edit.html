@@ -24,11 +24,56 @@
                             [rows]="descriptionRows"></textarea>
                     </div>
                     <div class="wide field">
-                        <label>Workflow</label>
+                        <label>{{ 'common_parameters' | translate }}</label>
+                    </div>
+                    <div class="sixteen wide fields" *ngFor="let k of parameterKeys; let index = index">
+                        <div class="eleven wide field">
+                            <input type="text" name="parameter-key-{{index}}" [placeholder]="'common_name' | translate"
+                                [(ngModel)]="parameterValues[k].key">
+                        </div>
+                        <div class="three wide field">
+                            <sui-select class="selection" name="parameter-type-{{index}}" placeholder="{{'common_select' | translate}}"
+                                [options]="templateParameterTypes" isSearchable="true" [(ngModel)]="parameterValues[k].type"
+                                #selectType>
+                                <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
+                                </sui-select-option>
+                            </sui-select>
+                        </div>
+                        <div class="two wide field">
+                            <label>{{'common_required' | translate}}</label>
+                            <input type="checkbox" name="parameter-required-{{index}}" [(ngModel)]="parameterValues[k].required">
+                        </div>
+                        <button class="ui icon red button" (click)="clickRemoveParameter(k)">
+                            <i class="trash icon"></i>
+                        </button>
+                    </div>
+                    <div class="sixteen wide fields">
+                        <div class="eleven wide field">
+                            <input type="text" name="parameter-key-add" [placeholder]="'common_name' | translate"
+                                [(ngModel)]="parameterValueAdd.key">
+                        </div>
+                        <div class="three wide field">
+                            <sui-select class="selection" name="parameter-type-add" placeholder="{{'common_select' | translate}}"
+                                [options]="templateParameterTypes" isSearchable="true" [(ngModel)]="parameterValueAdd.type"
+                                #selectType>
+                                <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
+                                </sui-select-option>
+                            </sui-select>
+                        </div>
+                        <div class="two wide field">
+                            <label>{{'common_required' | translate}}</label>
+                            <input type="checkbox" name="parameter-required-add" [(ngModel)]="parameterValueAdd.required">
+                        </div>
+                        <button class="ui icon green button" (click)="clickAddParameter()">
+                            <i class="plus icon"></i>
+                        </button>
+                    </div>
+                    <div class="wide field">
+                        <label>{{ 'common_workflow' | translate }}</label>
                         <codemirror name="workflow-value" [(ngModel)]="workflowValue" [config]="codeMirrorConfig"></codemirror>
                     </div>
                     <div class="wide field">
-                        <label>Pipelines</label>
+                        <label>{{ 'common_pipelines' | translate }}</label>
                         <div class="codeContainer field" *ngFor="let k of pipelineKeys">
                             <codemirror class="code" name="pipeline-value-{{k}}" [(ngModel)]="pipelineValues[k]"
                                 [config]="codeMirrorConfig">
