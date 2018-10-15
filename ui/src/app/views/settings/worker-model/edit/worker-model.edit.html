@@ -1,4 +1,4 @@
-<h2 *ngIf="workerModel && workerModel.id">{{ 'worker_model_edit_title' | translate }} {{workerModel.name}}</h2>
+<h2>{{ 'worker_model_edit_title' | translate }} <span *ngIf="workerModel && workerModel.id">{{workerModel.name}}</span></h2>
 
 <div *ngIf="workerModel;then showWorkerModel;else loadWorkerModel"></div>
 <ng-template #showWorkerModel>

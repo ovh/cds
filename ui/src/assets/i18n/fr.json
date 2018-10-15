@@ -944,7 +944,7 @@
   "workflow_node_hook_add": "Ajouter un hook",
   "workflow_node_hook_details_modal_title": "Détails du hook",
   "workflow_node_hook_select": "Sélectionner un type de hook",
-  "workflow_node_hook_modal_title": "Edition du hook",
+  "workflow_node_hook_modal_title": "Édition du hook",
   "workflow_node_hook_modal_config_title": "Configuration du hook",
   "workflow_node_hook_condition_form": "Ajouter une condition de lancement",
   "workflow_node_hook_condition_list": "Conditions de lancement",
@@ -1027,8 +1027,6 @@
   "workflow_wizard_select_repo_man_add" : "Ou ajouter un gestionnaire de dépôt",
   "wizard_repo_files" : "Fichiers trouvés : ",
 
-  "workflow_templates": "Templates de workflow",
-  "workflow_template_name": "Nom",
-  "workflow_template_description": "Description",
-  "workflow_template_group": "Groupe"
+  "workflow_template_edit_title": "Édition du modèle de workflow",
+  "workflow_templates": "Modèles de workflow"
 }

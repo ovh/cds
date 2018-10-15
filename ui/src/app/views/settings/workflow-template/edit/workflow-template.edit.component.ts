@@ -18,6 +18,7 @@ export class WorkflowTemplateEditComponent {
     pipelineValues: any;
     pipelineKeys: Array<number>;
     pipelineValueAdd: string;
+    descriptionRows: number;
 
     constructor(
         private _sharedService: SharedService,
@@ -31,7 +32,8 @@ export class WorkflowTemplateEditComponent {
             autoCloseBrackets: true,
             mode: 'text/x-yaml',
             lineWrapping: true,
-            autoRefresh: true
+            autoRefresh: true,
+            lineNumbers: true,
         };
 
         this._route.params.subscribe(params => {
@@ -53,13 +55,16 @@ export class WorkflowTemplateEditComponent {
             });
     }
 
+    descriptionChange() {
+        this.descriptionRows = this.getDescriptionHeight();
+    }
+
     getDescriptionHeight(): number {
         return this._sharedService.getTextAreaheight(this.workflowTemplate.description);
     }
 
     clickSave() {
         this.workflowTemplate.value = btoa(this.workflowValue);
-        this.workflowTemplate.pipelines = [];
         this.workflowTemplate.pipelines = Object.keys(this.pipelineValues).map(k => {
             return { value: btoa(this.pipelineValues[k]) };
         });
@@ -71,15 +76,16 @@ export class WorkflowTemplateEditComponent {
             });
     }
 
-    clickAddPipeline(wt: WorkflowTemplate) {
-        this.workflowTemplate = wt;
-        this.workflowValue = atob(wt.value);
-        this.pipelineValues = {};
-        this.pipelineKeys = [];
-        wt.pipelines.map(p => atob(p.value)).forEach((p, i) => {
-            this.pipelineValues[i] = p;
-            this.pipelineKeys.push(i);
-        });
+    clickAddPipeline() {
+        let k = this.pipelineKeys[this.pipelineKeys.length - 1] + 1;
+        this.pipelineKeys.push(k)
+        this.pipelineValues[k] = this.pipelineValueAdd;
+        this.initPipelineValue();
+    }
+
+    clickRemovePipeline(key: number) {
+        this.pipelineKeys = this.pipelineKeys.filter(k => k !== key);
+        delete (this.pipelineValues[key]);
     }
 
     setTemplate(wt: WorkflowTemplate) {
@@ -91,5 +97,6 @@ export class WorkflowTemplateEditComponent {
             this.pipelineValues[i] = p;
             this.pipelineKeys.push(i);
         });
+        this.descriptionChange();
     }
 }

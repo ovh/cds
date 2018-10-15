@@ -22,7 +22,7 @@ export class WorkflowTemplateListComponent {
         this.columns = [
             <Column>{
                 type: ColumnType.ROUTER_LINK,
-                name: this._translate.instant('workflow_template_name'),
+                name: this._translate.instant('common_name'),
                 selector: wt => {
                     return {
                         link: '/settings/workflow-template/' + wt.id,
@@ -31,11 +31,11 @@ export class WorkflowTemplateListComponent {
                 }
             },
             <Column>{
-                name: this._translate.instant('workflow_template_description'),
+                name: this._translate.instant('common_description'),
                 selector: wt => wt.description
             },
             <Column>{
-                name: this._translate.instant('workflow_template_group'),
+                name: this._translate.instant('common_group'),
                 selector: wt => wt.group.name
             }
         ];

@@ -1,4 +1,4 @@
-<h2 *ngIf="workflowTemplate && workflowTemplate.id">{{ 'workflow_template' | translate }} {{workflowTemplate.name}}</h2>
+<h2>{{ 'workflow_template_edit_title' | translate }} <span *ngIf="workflowTemplate && workflowTemplate.id">{{workflowTemplate.name}}</span></h2>
 
 <div *ngIf="workflowTemplate;then showWorkflowTemplate;else loadWorkflowTemplate"></div>
 <ng-template #showWorkflowTemplate>
@@ -20,7 +20,8 @@
                     </div>
                     <div class="field">
                         <label>{{'common_description' | translate}}</label>
-                        <textarea name="description" [(ngModel)]="workflowTemplate.description" rows="{{getDescriptionHeight()}}"></textarea>
+                        <textarea name="description" [(ngModel)]="workflowTemplate.description" (ngModelChange)="descriptionChange()"
+                            [rows]="descriptionRows"></textarea>
                     </div>
                     <div class="wide field">
                         <label>Workflow</label>
@@ -28,18 +29,18 @@
                     </div>
                     <div class="wide field">
                         <label>Pipelines</label>
-                        <div class="codeContainer">
-                            <codemirror class="code" name="pipeline-value-{{k}}" *ngFor="let k of pipelineKeys" [(ngModel)]="pipelineValues[k]"
+                        <div class="codeContainer field" *ngFor="let k of pipelineKeys">
+                            <codemirror class="code" name="pipeline-value-{{k}}" [(ngModel)]="pipelineValues[k]"
                                 [config]="codeMirrorConfig">
                             </codemirror>
-                            <button class="codeButton ui icon red button" (click)="removePipeline(k)">
+                            <button class="codeButton ui icon red button" (click)="clickRemovePipeline(k)">
                                 <i class="trash icon"></i>
                             </button>
                         </div>
                     </div>
                     <div class="wide field codeContainer">
                         <codemirror class="code" name="pipeline-value-add" [(ngModel)]="pipelineValueAdd" [config]="codeMirrorConfig"></codemirror>
-                        <button class="codeButton ui icon green button" (click)="addPipeline()">
+                        <button class="codeButton ui icon green button" (click)="clickAddPipeline()">
                             <i class="plus icon"></i>
                         </button>
                     </div>
@@ -54,5 +55,5 @@
     </div>
 </ng-template>
 <ng-template #loadWorkflowTemplate>
-    <div class="ui text active loader">{{ 'workflow_template_load_worker_model' | translate }}</div>
+    <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
 </ng-template>
