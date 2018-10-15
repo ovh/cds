@@ -2,6 +2,7 @@ package swarm
 
 import (
 	"strings"
+	"time"
 
 	types "github.com/docker/docker/api/types"
 	context "golang.org/x/net/context"
@@ -10,9 +11,11 @@ import (
 )
 
 func (h *HatcherySwarm) getContainers(dockerClient *dockerClient, options types.ContainerListOptions) ([]types.Container, error) {
-	s, err := dockerClient.ContainerList(context.Background(), options)
+	ctxList, cancelList := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelList()
+	s, err := dockerClient.ContainerList(ctxList, options)
 	if err != nil {
-		return nil, sdk.WrapError(err, "hatchery> swarm> getContainers> unable to list containers")
+		return nil, sdk.WrapError(err, "hatchery> swarm> getContainers> unable to list containers on %s", dockerClient.name)
 	}
 	return s, nil
 }
@@ -20,7 +23,7 @@ func (h *HatcherySwarm) getContainers(dockerClient *dockerClient, options types.
 func (h *HatcherySwarm) getContainer(dockerClient *dockerClient, name string, options types.ContainerListOptions) (*types.Container, error) {
 	containers, err := h.getContainers(dockerClient, options)
 	if err != nil {
-		return nil, sdk.WrapError(err, "hatchery> swarm> getContainer> cannot getContainers")
+		return nil, sdk.WrapError(err, "hatchery> swarm> getContainer> cannot getContainers on %s", dockerClient.name)
 	}
 
 	for i := range containers {

@@ -152,6 +152,7 @@
   "btn_next": "Next",
   "btn_edit": "Edit",
   "btn_add": "Add",
+  "btn_back": "Back",
 
   "commit_author": "Author",
   "commit_id": "ID",
@@ -308,6 +309,7 @@
   "environment_variable_list_title": "Variables list",
 
   "filter": "Filter",
+  "filter_list_click": "Click for filter list",
 
   "favorite_title": "Bookmarks management",
   "favorite_add": "Add a bookmark",
@@ -410,10 +412,11 @@
   "job_save": "Save job",
   "job_spawn_title": "Information",
 
+  "monitoring": "Monitoring",
+
   "navbar_actions": "Actions",
   "navbar_project_create": "Create a project",
   "navbar_admin_broadcast": "Broadcasts",
-  "navbar_admin_status": "CDS Engine Status",
   "navbar_documentation": "Documentation",
   "navbar_downloads": "Download",
   "navbar_groups": "Groups",
@@ -610,6 +613,8 @@
   "provider_hook": "hook",
   "provider_deployment": "deployment",
 
+  "queue_monitoring": "Queue Monitoring",
+
   "repo_name": "Repository",
   "repoman_delete_msg_ok": "Repository mananger is detached from the project",
   "repoman_name": "Repository manager",
@@ -668,6 +673,17 @@
   "scheduler_workflow_label": "Scheduler: ",
 
   "settings_tips": "Tips",
+
+  "services": "services",
+  "services_list": "CDS Services",
+  "services_see_all": "see all",
+  "services_minimize": "Minimize",
+  "service_view_details": "Voir les details",
+  "service_details": "Service",
+  "service_group": "Group",
+  "service_alert": "Status Alert - please check status below",
+  "service_warning": "Status Warning - please check status below",
+  "service_ok": "Status OK - All is fine",
 
   "stage_add_label": "Add stage",
   "stage_added": "Stage added",
@@ -995,6 +1011,7 @@
   "workflow_notification_list": "Notifications list",
   "workflow_notification_form": "Add a notification",
   "workflow_notification_copy": "Copy",
+  "workflow_logs_all": "Show all logs",
 
   "workflow_wizard_select_repo_man": "Select a repository manager",
   "workflow_wizard_select_repo": "Select a repository",

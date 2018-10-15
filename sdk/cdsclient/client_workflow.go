@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,7 +17,7 @@ import (
 func (c *client) WorkflowList(projectKey string) ([]sdk.Workflow, error) {
 	url := fmt.Sprintf("/project/%s/workflows", projectKey)
 	w := []sdk.Workflow{}
-	if _, err := c.GetJSON(url, &w); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &w); err != nil {
 		return nil, err
 	}
 	return w, nil
@@ -25,7 +26,7 @@ func (c *client) WorkflowList(projectKey string) ([]sdk.Workflow, error) {
 func (c *client) WorkflowGet(projectKey, workflowName string) (*sdk.Workflow, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName)
 	w := &sdk.Workflow{}
-	if _, err := c.GetJSON(url, &w); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &w); err != nil {
 		return nil, err
 	}
 	return w, nil
@@ -34,7 +35,7 @@ func (c *client) WorkflowGet(projectKey, workflowName string) (*sdk.Workflow, er
 func (c *client) WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d", projectKey, workflowName, number)
 	run := sdk.WorkflowRun{}
-	if _, err := c.GetJSON(url, &run); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &run); err != nil {
 		return nil, err
 	}
 	return &run, nil
@@ -53,7 +54,7 @@ func (c *client) WorkflowRunSearch(projectKey string, offset, limit int64, filte
 		path += fmt.Sprintf("&%s=%s", url.QueryEscape(f.Name), url.QueryEscape(f.Value))
 	}
 	runs := []sdk.WorkflowRun{}
-	if _, err := c.GetJSON(path, &runs); err != nil {
+	if _, err := c.GetJSON(context.Background(), path, &runs); err != nil {
 		return nil, err
 	}
 	return runs, nil
@@ -69,21 +70,21 @@ func (c *client) WorkflowRunList(projectKey string, workflowName string, offset,
 
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs?offset=%d&limit=%d", projectKey, workflowName, offset, limit)
 	runs := []sdk.WorkflowRun{}
-	if _, err := c.GetJSON(url, &runs); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &runs); err != nil {
 		return nil, err
 	}
 	return runs, nil
 }
 
 func (c *client) WorkflowDelete(projectKey string, workflowName string) error {
-	_, err := c.DeleteJSON(fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
+	_, err := c.DeleteJSON(context.Background(), fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
 	return err
 }
 
 func (c *client) WorkflowRunArtifacts(projectKey string, workflowName string, number int64) ([]sdk.WorkflowNodeRunArtifact, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/artifacts", projectKey, workflowName, number)
 	arts := []sdk.WorkflowNodeRunArtifact{}
-	if _, err := c.GetJSON(url, &arts); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &arts); err != nil {
 		return nil, err
 	}
 	return arts, nil
@@ -92,7 +93,7 @@ func (c *client) WorkflowRunArtifacts(projectKey string, workflowName string, nu
 func (c *client) WorkflowNodeRun(projectKey string, workflowName string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d", projectKey, workflowName, number, nodeRunID)
 	run := sdk.WorkflowNodeRun{}
-	if _, err := c.GetJSON(url, &run); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &run); err != nil {
 		return nil, err
 	}
 	return &run, nil
@@ -101,7 +102,7 @@ func (c *client) WorkflowNodeRun(projectKey string, workflowName string, number 
 func (c *client) WorkflowRunNumberGet(projectKey string, workflowName string) (*sdk.WorkflowRunNumber, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/num", projectKey, workflowName)
 	runNumber := sdk.WorkflowRunNumber{}
-	if _, err := c.GetJSON(url, &runNumber); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &runNumber); err != nil {
 		return nil, err
 	}
 	return &runNumber, nil
@@ -110,7 +111,7 @@ func (c *client) WorkflowRunNumberGet(projectKey string, workflowName string) (*
 func (c *client) WorkflowRunNumberSet(projectKey string, workflowName string, number int64) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/num", projectKey, workflowName)
 	runNumber := sdk.WorkflowRunNumber{Num: number}
-	code, err := c.PostJSON(url, runNumber, nil)
+	code, err := c.PostJSON(context.Background(), url, runNumber, nil)
 	if err != nil {
 		return err
 	}
@@ -123,7 +124,7 @@ func (c *client) WorkflowRunNumberSet(projectKey string, workflowName string, nu
 func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/job/%d/step/%d", projectKey, workflowName, number, nodeRunID, job, step)
 	buildState := sdk.BuildState{}
-	if _, err := c.GetJSON(url, &buildState); err != nil {
+	if _, err := c.GetJSON(context.Background(), url, &buildState); err != nil {
 		return nil, err
 	}
 	return &buildState, nil
@@ -138,7 +139,7 @@ func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName
 		url = a.TempURL
 	}
 
-	reader, _, _, err = c.Stream("GET", url, nil, true)
+	reader, _, _, err = c.Stream(context.Background(), "GET", url, nil, true)
 	if err != nil {
 		return err
 	}
@@ -150,7 +151,7 @@ func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName
 
 func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/release", projectKey, workflowName, runNumber, nodeRunID)
-	code, err := c.PostJSON(url, release, nil)
+	code, err := c.PostJSON(context.Background(), url, release, nil)
 	if err != nil {
 		return err
 	}
@@ -168,7 +169,7 @@ func (c *client) WorkflowRunFromHook(projectKey string, workflowName string, hoo
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs", projectKey, workflowName)
 	content := sdk.WorkflowRunPostHandlerOption{Hook: &hook}
 	run := &sdk.WorkflowRun{}
-	code, err := c.PostJSON(url, &content, run)
+	code, err := c.PostJSON(context.Background(), url, &content, run)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +193,7 @@ func (c *client) WorkflowRunFromManual(projectKey string, workflowName string, m
 		content.FromNodeIDs = []int64{fromNodeID}
 	}
 	run := &sdk.WorkflowRun{}
-	code, err := c.PostJSON(url, &content, run)
+	code, err := c.PostJSON(context.Background(), url, &content, run)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +208,7 @@ func (c *client) WorkflowStop(projectKey string, workflowName string, number int
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/stop", projectKey, workflowName, number)
 
 	run := &sdk.WorkflowRun{}
-	code, err := c.PostJSON(url, nil, run)
+	code, err := c.PostJSON(context.Background(), url, nil, run)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +223,7 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/stop", projectKey, workflowName, number, fromNodeID)
 
 	nodeRun := &sdk.WorkflowNodeRun{}
-	code, err := c.PostJSON(url, nil, nodeRun)
+	code, err := c.PostJSON(context.Background(), url, nil, nodeRun)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +236,7 @@ func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number
 
 func (c *client) WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error {
 	store := new(sdk.ArtifactsStore)
-	_, _ = c.GetJSON("/artifact/store", store)
+	_, _ = c.GetJSON(context.Background(), "/artifact/store", store)
 	if store.TemporaryURLSupported {
 		err := c.workflowCachePushIndirectUpload(projectKey, ref, tarContent)
 		return err
@@ -254,7 +255,7 @@ func (c *client) workflowCachePushDirectUpload(projectKey, ref string, tarConten
 		}),
 	}
 
-	_, _, code, err := c.Stream("POST", url, tarContent, true, mods...)
+	_, _, code, err := c.Stream(context.Background(), "POST", url, tarContent, true, mods...)
 	if err != nil {
 		return err
 	}
@@ -270,7 +271,7 @@ func (c *client) workflowCachePushIndirectUpload(projectKey, ref string, tarCont
 	url := fmt.Sprintf("/project/%s/cache/%s/url", projectKey, ref)
 
 	cacheObj := sdk.Cache{}
-	code, err := c.PostJSON(url, nil, &cacheObj)
+	code, err := c.PostJSON(context.Background(), url, nil, &cacheObj)
 	if err != nil {
 		return err
 	}
@@ -326,13 +327,13 @@ func (c *client) workflowCachePushIndirectUploadPost(url string, tarContent io.R
 func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
 	downloadURL := fmt.Sprintf("/project/%s/cache/%s", projectKey, ref)
 	store := new(sdk.ArtifactsStore)
-	_, _ = c.GetJSON("/artifact/store", store)
+	_, _ = c.GetJSON(context.Background(), "/artifact/store", store)
 
 	if store.TemporaryURLSupported {
 		url := fmt.Sprintf("/project/%s/cache/%s/url", projectKey, ref)
 
 		var cacheObj sdk.Cache
-		code, err := c.GetJSON(url, &cacheObj)
+		code, err := c.GetJSON(context.Background(), url, &cacheObj)
 		if err != nil {
 			return nil, err
 		}
@@ -348,7 +349,7 @@ func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
 		}),
 	}
 
-	res, _, code, err := c.Stream("GET", downloadURL, nil, true, mods...)
+	res, _, code, err := c.Stream(context.Background(), "GET", downloadURL, nil, true, mods...)
 	if err != nil {
 		return nil, err
 	}

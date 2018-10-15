@@ -9,12 +9,12 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/spf13/viper"
 
+	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/clair"
 	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/config"
 	"github.com/ovh/cds/contrib/grpcplugins/action/clair/clairctl/docker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 /* Inside contrib/grpcplugins/action
@@ -38,7 +38,7 @@ func (actPlugin *clairActionPlugin) Manifest(ctx context.Context, _ *empty.Empty
 func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.ActionQuery) (*actionplugin.ActionResult, error) {
 	// get clair configuration
 	fmt.Printf("Retrieve clair configuration...")
-	serv, err := plugin.GetExternalServices(actPlugin.HTTPPort, "clair")
+	serv, err := grpcplugins.GetExternalServices(actPlugin.HTTPPort, "clair")
 	if err != nil {
 		return fail("Unable to get clair configuration: %s", err)
 	}
@@ -94,7 +94,7 @@ func (actPlugin *clairActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 		Summary:         summary,
 		Type:            "docker",
 	}
-	if err := plugin.SendVulnerabilityReport(actPlugin.HTTPPort, report); err != nil {
+	if err := grpcplugins.SendVulnerabilityReport(actPlugin.HTTPPort, report); err != nil {
 		return fail("Unable to send report: %s", err)
 	}
 	return &actionplugin.ActionResult{

@@ -1,6 +1,13 @@
 @import "../../../../../../../common";
 
 $squareSize: 32px;
+$yellowLogs: #FFFF91;
+.mb25 {
+  margin-bottom: 25px;
+}
+.ml50 {
+  margin-left: 50px;
+}
 
 .logHeader {
   display:  flex;
@@ -23,7 +30,7 @@ $squareSize: 32px;
     padding-top: 6px;
     padding-left: 5px;
     font-weight: 600;
-    color: #FFFF91;
+    color: $yellowLogs;
   }
   .flags {
     height: $squareSize;
@@ -31,7 +38,7 @@ $squareSize: 32px;
     padding-left: 5px;
     padding-right: 5px;
     font-weight: 600;
-    color: #FFFF91;
+    color: $yellowLogs;
   }
   .stepWarn {
     display: inline;
@@ -51,7 +58,7 @@ $squareSize: 32px;
   padding-left: 0px;
 
   .yellow {
-    color: #FFFF91;
+    color: $yellowLogs;
   }
 
   .fakeInput {
@@ -80,10 +87,29 @@ $squareSize: 32px;
           background-color: #444 !important;
           color: inherit !important;
         }
+        &.fold-log {
+          height: 2.5em;
+          font-size: 2.5em;
+          font-family: 'Lato', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+          a {
+            color: $yellowLogs;
+            opacity: 0.8;
+            &:hover {
+              opacity: 1;
+            }
+          }
+        }
       }
       td {
         padding-top: 1px;
         padding-bottom: 1px;
+        hr {
+          width: 50%;
+          margin-left: 0;
+          border: 0;
+          height: 1px;
+          background-image: linear-gradient(to right, rgba(255, 255, 145, 1), rgba(255, 255, 145, 0.75), rgba(255, 255, 145, 0));
+        }
         &.number {
             width: 40px;
         }

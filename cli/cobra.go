@@ -16,6 +16,8 @@ import (
 	"github.com/olekukonko/tablewriter"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // ShellMode will os.Exit if false, display only exit code if true
@@ -27,18 +29,23 @@ func ExitOnError(err error, helpFunc ...func() error) {
 		return
 	}
 
-	if e, ok := err.(*Error); ok {
+	code := 50 // default error code
+
+	switch e := err.(type) {
+	case sdk.Error:
+		fmt.Printf("Error(%s): %s\n", e.UUID, e.Message)
+	case *Error:
+		code = e.Code
 		fmt.Println("Error:", e.Error())
-		for _, f := range helpFunc {
-			f()
-		}
-		OSExit(e.Code)
+	default:
+		fmt.Println("Error:", err.Error())
 	}
-	fmt.Println("Error:", err.Error())
+
 	for _, f := range helpFunc {
 		f()
 	}
-	OSExit(50)
+
+	OSExit(code)
 }
 
 // OSExit will os.Exit if ShellMode is false, display only exit code if true

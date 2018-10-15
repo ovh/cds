@@ -49,7 +49,6 @@ func FindByType(db gorp.SqlExecutor, t string) ([]sdk.Service, error) {
 	if ss, ok := servicesCacheByType[t]; ok {
 		return ss, nil
 	}
-
 	query := `SELECT * FROM services WHERE type = $1`
 	services, err := findAll(db, query, t)
 	if err != nil {
@@ -70,7 +69,7 @@ func All(db gorp.SqlExecutor) ([]sdk.Service, error) {
 		if err == sdk.ErrNotFound {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "All> Unable to find all services")
+		return nil, sdk.WrapError(err, "Unable to find all services")
 	}
 	return services, nil
 }
@@ -96,13 +95,13 @@ func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Serv
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNotFound
 		}
-		return nil, sdk.WrapError(err, "findAll> no service found")
+		return nil, sdk.WithStack(err)
 	}
 	ss := make([]sdk.Service, len(sdbs))
 	for i := 0; i < len(sdbs); i++ {
 		s := &sdbs[i]
 		if err := s.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "findAll> postGet")
+			return nil, sdk.WrapError(err, "postGet on srv id:%d name:%s type:%s lastHeartbeat:%v", s.ID, s.Name, s.Type, s.LastHeartbeat)
 		}
 		ss[i] = sdk.Service(sdbs[i])
 	}
@@ -153,16 +152,16 @@ func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
 
 // PostGet is a dbHook on Select to get json column
 func (s *service) PostGet(db gorp.SqlExecutor) error {
-	query := "SELECT monitoring_status FROM services WHERE name = $1"
-	var content []byte
-	if err := db.QueryRow(query, s.Name).Scan(&content); err != nil {
-		return sdk.WrapError(err, "PostGet> error on queryRow")
+	query := "SELECT monitoring_status, config FROM services WHERE name = $1"
+	var monitoringStatus, config []byte
+	if err := db.QueryRow(query, s.Name).Scan(&monitoringStatus, &config); err != nil {
+		return sdk.WrapError(err, "PostGet> error on queryRow where name:%s id:%d type:%s", s.Name, s.ID, s.Type)
 	}
 
-	if len(content) > 0 {
+	if len(monitoringStatus) > 0 {
 		m := sdk.MonitoringStatus{}
-		if err := json.Unmarshal(content, &m); err != nil {
-			return sdk.WrapError(err, "PostGet> error on unmarshal job")
+		if err := json.Unmarshal(monitoringStatus, &m); err != nil {
+			return sdk.WrapError(err, "PostGet> error on unmarshal monitoringStatus service")
 		}
 		for i := range m.Lines {
 			m.Lines[i].Component = fmt.Sprintf("%s/%s", s.Name, m.Lines[i].Component)
@@ -170,7 +169,11 @@ func (s *service) PostGet(db gorp.SqlExecutor) error {
 		}
 		s.MonitoringStatus = m
 	}
-
+	if len(config) > 0 {
+		if err := json.Unmarshal(config, &s.Config); err != nil {
+			return sdk.WrapError(err, "PostGet> error on unmarshal config service")
+		}
+	}
 	return nil
 }
 
@@ -185,10 +188,14 @@ func (s *service) PostUpdate(db gorp.SqlExecutor) error {
 	if err != nil {
 		return err
 	}
+	config, errc := json.Marshal(s.Config)
+	if errc != nil {
+		return errc
+	}
 
-	query := "update services set monitoring_status = $1 where name = $2"
-	if _, err := db.Exec(query, content, s.Name); err != nil {
-		return sdk.WrapError(err, "PostUpdate> err on update sql")
+	query := "update services set monitoring_status = $1, config = $2 where name = $3"
+	if _, err := db.Exec(query, content, config, s.Name); err != nil {
+		return sdk.WrapError(err, "PostUpdate> err on update sql service")
 	}
 	return nil
 }

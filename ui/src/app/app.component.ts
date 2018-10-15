@@ -157,7 +157,7 @@ export class AppComponent  implements OnInit {
             urlSubscribe: environment.apiURL + '/events/subscribe',
             urlUnsubscribe: environment.apiURL + 'events/unsubscribe',
             sseURL: environment.apiURL + '/events',
-            pingURL: environment.apiURL + '/user/me'
+            pingURL: environment.apiURL + '/user/logged'
         });
         this.sseWorker.response().subscribe(e => {
             if (e == null) {

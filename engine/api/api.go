@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/feature"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/metrics"
@@ -30,7 +31,6 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -48,147 +48,151 @@ import (
 
 // Configuration is the configuraton structure for CDS API
 type Configuration struct {
-	Name string `toml:"name" default:"cdsinstance" comment:"Name of this CDS Instance"`
+	Name string `toml:"name" default:"cdsinstance" comment:"Name of this CDS Instance" json:"name"`
 	URL  struct {
-		API string `toml:"api" default:"http://localhost:8081"`
-		UI  string `toml:"ui" default:"http://localhost:2015"`
-	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################"`
+		API string `toml:"api" default:"http://localhost:8081" json:"api"`
+		UI  string `toml:"ui" default:"http://localhost:2015" json:"ui"`
+	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
 	HTTP struct {
-		Addr       string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1"`
-		Port       int    `toml:"port" default:"8081"`
-		SessionTTL int    `toml:"sessionTTL" default:"60"`
-	} `toml:"http"`
+		Addr       string `toml:"addr" default:"" commented:"true" comment:"Listen HTTP address without port, example: 127.0.0.1" json:"addr"`
+		Port       int    `toml:"port" default:"8081" json:"port"`
+		SessionTTL int    `toml:"sessionTTL" default:"60" json:"sessionTTL"`
+	} `toml:"http" json:"http"`
 	GRPC struct {
-		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen GRPC address without port, example: 127.0.0.1"`
-		Port int    `toml:"port" default:"8082"`
-	} `toml:"grpc"`
+		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen GRPC address without port, example: 127.0.0.1" json:"addr"`
+		Port int    `toml:"port" default:"8082" json:"port"`
+	} `toml:"grpc" json:"grpc"`
 	Secrets struct {
-		Key string `toml:"key"`
-	} `toml:"secrets"`
-	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
+		Key string `toml:"key" json:"-"`
+	} `toml:"secrets" json:"secrets"`
+	Database database.DBConfiguration `toml:"database" comment:"################################\n Postgresql Database settings \n###############################" json:"database"`
 	Cache    struct {
-		TTL   int `toml:"ttl" default:"60"`
+		TTL   int `toml:"ttl" default:"60" json:"ttl"`
 		Redis struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379"`
-			Password string `toml:"password"`
-		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup"`
-	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\n"`
+			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax! <clustername>@sentinel1:26379,sentinel2:26379,sentinel3:26379" json:"host"`
+			Password string `toml:"password" json:"-"`
+		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup" json:"redis"`
+	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\n" json:"cache"`
 	Directories struct {
-		Download string `toml:"download" default:"/tmp/cds/download"`
-		Keys     string `toml:"keys" default:"/tmp/cds/keys"`
-	} `toml:"directories"`
+		Download string `toml:"download" default:"/tmp/cds/download" json:"download"`
+		Keys     string `toml:"keys" default:"/tmp/cds/keys" json:"keys"`
+	} `toml:"directories" json:"directories"`
 	Auth struct {
-		DefaultGroup     string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup"`
-		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory."`
+		DefaultGroup     string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup" json:"defaultGroup"`
+		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory." json:"-"`
 		LDAP             struct {
-			Enable   bool   `toml:"enable" default:"false"`
-			Host     string `toml:"host"`
-			Port     int    `toml:"port" default:"636"`
-			SSL      bool   `toml:"ssl" default:"true"`
-			Base     string `toml:"base" default:"dc=myorganization,dc=com"`
-			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com"`
-			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}"`
-			BindDN   string `toml:"bindDN" default:"" comment:"Define it if ldapsearch need to be authenticated"`
-			BindPwd  string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated"`
-		} `toml:"ldap"`
+			Enable   bool   `toml:"enable" default:"false" json:"enable"`
+			Host     string `toml:"host" json:"host"`
+			Port     int    `toml:"port" default:"636" json:"port"`
+			SSL      bool   `toml:"ssl" default:"true" json:"ssl"`
+			Base     string `toml:"base" default:"dc=myorganization,dc=com" json:"base"`
+			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com" json:"dn"`
+			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}" json:"fullname"`
+			BindDN   string `toml:"bindDN" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"bindDN"`
+			BindPwd  string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
+		} `toml:"ldap" json:"ldap"`
 		Local struct {
-			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true"`
-		} `toml:"local"`
-	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################"`
+			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
+		} `toml:"local" json:"local"`
+	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################" json:"auth"`
 	SMTP struct {
-		Disable  bool   `toml:"disable" default:"true"`
-		Host     string `toml:"host"`
-		Port     string `toml:"port"`
-		TLS      bool   `toml:"tls"`
-		User     string `toml:"user"`
-		Password string `toml:"password"`
-		From     string `toml:"from" default:"no-reply@cds.local"`
-	} `toml:"smtp" comment:"#####################\n# CDS SMTP Settings \n####################"`
+		Disable  bool   `toml:"disable" default:"true" json:"disable"`
+		Host     string `toml:"host" json:"host"`
+		Port     string `toml:"port" json:"port"`
+		TLS      bool   `toml:"tls" json:"tls"`
+		User     string `toml:"user" json:"user"`
+		Password string `toml:"password" json:"-"`
+		From     string `toml:"from" default:"no-reply@cds.local" json:"from"`
+	} `toml:"smtp" comment:"#####################\n# CDS SMTP Settings \n####################" json:"smtp"`
 	Artifact struct {
-		Mode  string `toml:"mode" default:"local" comment:"swift or local"`
+		Mode  string `toml:"mode" default:"local" comment:"swift or local" json:"mode"`
 		Local struct {
-			BaseDirectory string `toml:"baseDirectory" default:"/tmp/cds/artifacts"`
+			BaseDirectory string `toml:"baseDirectory" default:"/tmp/cds/artifacts" json:"baseDirectory"`
 		} `toml:"local"`
 		Openstack struct {
-			URL             string `toml:"url" comment:"Authentication Endpoint, generally value of $OS_AUTH_URL"`
-			Username        string `toml:"username" comment:"Openstack Username, generally value of $OS_USERNAME"`
-			Password        string `toml:"password" comment:"Openstack Password, generally value of $OS_PASSWORD"`
-			Tenant          string `toml:"tenant" comment:"Openstack Tenant, generally value of $OS_TENANT_NAME, v2 auth only"`
-			Domain          string `toml:"domain" comment:"Openstack Domain, generally value of $OS_DOMAIN_NAME, v3 auth only"`
-			Region          string `toml:"region" comment:"Region, generally value of $OS_REGION_NAME"`
-			ContainerPrefix string `toml:"containerPrefix" comment:"Use if your want to prefix containers for CDS Artifacts"`
-			DisableTempURL  bool   `toml:"disableTempURL" default:"false" commented:"true" comment:"True if you want to disable Temporary URL in file upload"`
-		} `toml:"openstack"`
-	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported"`
+			URL             string `toml:"url" comment:"Authentication Endpoint, generally value of $OS_AUTH_URL" json:"url"`
+			Username        string `toml:"username" comment:"Openstack Username, generally value of $OS_USERNAME" json:"username"`
+			Password        string `toml:"password" comment:"Openstack Password, generally value of $OS_PASSWORD" json:"-"`
+			Tenant          string `toml:"tenant" comment:"Openstack Tenant, generally value of $OS_TENANT_NAME, v2 auth only" json:"tenant"`
+			Domain          string `toml:"domain" comment:"Openstack Domain, generally value of $OS_DOMAIN_NAME, v3 auth only" json:"domain"`
+			Region          string `toml:"region" comment:"Region, generally value of $OS_REGION_NAME" json:"region"`
+			ContainerPrefix string `toml:"containerPrefix" comment:"Use if your want to prefix containers for CDS Artifacts" json:"containerPrefix"`
+			DisableTempURL  bool   `toml:"disableTempURL" default:"false" commented:"true" comment:"True if you want to disable Temporary URL in file upload" json:"disableTempURL"`
+		} `toml:"openstack" json:"openstack"`
+	} `toml:"artifact" comment:"Either filesystem local storage or Openstack Swift Storage are supported" json:"artifact"`
 	Events struct {
 		Kafka struct {
-			Enabled         bool   `toml:"enabled"`
-			Broker          string `toml:"broker"`
-			Topic           string `toml:"topic"`
-			User            string `toml:"user"`
-			Password        string `toml:"password"`
-			MaxMessageBytes int    `toml:"maxmessagebytes" default:"10000000"`
-		} `toml:"kafka"`
-	} `toml:"events" comment:"#######################\n CDS Events Settings \n######################"`
+			Enabled         bool   `toml:"enabled" json:"enabled"`
+			Broker          string `toml:"broker" json:"broker"`
+			Topic           string `toml:"topic" json:"topic"`
+			User            string `toml:"user" json:"user"`
+			Password        string `toml:"password" json:"-"`
+			MaxMessageBytes int    `toml:"maxmessagebytes" default:"10000000" json:"maxmessagebytes"`
+		} `toml:"kafka" json:"kafka"`
+	} `toml:"events" comment:"#######################\n CDS Events Settings \n######################" json:"events"`
 	Features struct {
 		Izanami struct {
-			ApiURL       string `toml:"apiurl"`
-			ClientID     string `toml:"clientid"`
-			ClientSecret string `toml:"clientsecret"`
-			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami"`
-		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami"`
-	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################"`
+			APIURL       string `toml:"apiurl" json:"apiurl"`
+			ClientID     string `toml:"clientid" json:"-"`
+			ClientSecret string `toml:"clientsecret" json:"-"`
+			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
+		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami" json:"izanami"`
+	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################" json:"features"`
 	Schedulers struct {
-		Disabled bool `toml:"disabled" default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it"`
-	} `toml:"schedulers" comment:"###########################\n CDS Schedulers Settings \n##########################"`
+		Disabled bool `toml:"disabled" default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it" json:"disabled"`
+	} `toml:"schedulers" comment:"###########################\n CDS Schedulers Settings \n##########################" json:"schedulers"`
 	Vault struct {
-		ConfigurationKey string `toml:"configurationKey"`
-	} `toml:"vault"`
-	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################"`
-	Services  []ServiceConfiguration  `toml:"services" comment:"###########################\n CDS Services Settings \n##########################"`
+		ConfigurationKey string `toml:"configurationKey" json:"-"`
+	} `toml:"vault" json:"vault"`
+	Providers []ProviderConfiguration `toml:"providers" comment:"###########################\n CDS Providers Settings \n##########################" json:"providers"`
+	Services  []ServiceConfiguration  `toml:"services" comment:"###########################\n CDS Services Settings \n##########################" json:"services"`
 	Status    struct {
 		API struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of API is running, an alert will on Global/API be created on /mon/status"`
-		} `toml:"api"`
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of API is running, an alert will on Global/API be created on /mon/status" json:"minInstance"`
+		} `toml:"api" json:"api"`
 		DBMigrate struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of dbmigrate service is running, an alert on Global/dbmigrate will be created on /mon/status"`
-		} `toml:"dbmigrate"`
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of dbmigrate service is running, an alert on Global/dbmigrate will be created on /mon/status" json:"minInstance"`
+		} `toml:"dbmigrate" json:"dbmigrate"`
 		ElasticSearch struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of elasticsearch service is running, an alert on Global/elasticsearch will be created on /mon/status"`
-		} `toml:"elasticsearch"`
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of elasticsearch service is running, an alert on Global/elasticsearch will be created on /mon/status" json:"minIntance"`
+		} `toml:"elasticsearch" json:"elasticsearch"`
 		Hatchery struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hatchery service is running, an alert on Global/hatchery will be created on /mon/status"`
-		} `toml:"hatchery"`
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hatchery service is running, an alert on Global/hatchery will be created on /mon/status" json:"minInstance"`
+		} `toml:"hatchery" json:"hatchery"`
 		Hooks struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hooks service is running, an alert on Global/hooks will be created on /mon/status"`
-		} `toml:"hooks"`
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of hooks service is running, an alert on Global/hooks will be created on /mon/status" json:"minInstance"`
+		} `toml:"hooks" json:"hooks"`
 		Repositories struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of repositories service is running, an alert on Global/hooks will be created on /mon/status"`
-		} `toml:"repositories"`
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of repositories service is running, an alert on Global/hooks will be created on /mon/status" json:"minInstance"`
+		} `toml:"repositories" json:"repositories"`
 		VCS struct {
-			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of vcs service is running, an alert will on Global/vcs be created on /mon/status"`
-		} `toml:"vcs"`
-	} `toml:"status" comment:"###########################\n CDS Status Settings \n Documentation: https://ovh.github.io/cds/hosting/monitoring/ \n##########################"`
-	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)"`
-	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)"`
+			MinInstance int `toml:"minInstance" default:"1" comment:"if less than minInstance of vcs service is running, an alert will on Global/vcs be created on /mon/status" json:"minInstance"`
+		} `toml:"vcs" json:"vcs"`
+	} `toml:"status" comment:"###########################\n CDS Status Settings \n Documentation: https://ovh.github.io/cds/hosting/monitoring/ \n##########################" json:"status"`
+	DefaultOS   string `toml:"defaultOS" default:"linux" comment:"if no model and os/arch is specified in your job's requirements then spawn worker on this operating system (example: freebsd, linux, windows)" json:"defaultOS"`
+	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
+	Graylog     struct {
+		AccessToken string `toml:"accessToken" json:"-"`
+		URL         string `toml:"url" comment:"Example: http://localhost:9000" json:"url"`
+	} `toml:"graylog"  json:"graylog"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
 type ProviderConfiguration struct {
-	Name  string `toml:"name"`
-	Token string `toml:"token"`
+	Name  string `toml:"name" json:"name"`
+	Token string `toml:"token" json:"-"`
 }
 
 // ServiceConfiguration is the configuration of external service
 type ServiceConfiguration struct {
-	Name       string `toml:"name"`
-	URL        string `toml:"url"`
-	Port       string `toml:"port"`
-	Path       string `toml:"path"`
-	HealthURL  string `toml:"healthUrl"`
-	HealthPort string `toml:"healthPort"`
-	HealthPath string `toml:"healthPath"`
-	Type       string `toml:"type"`
+	Name       string `toml:"name" json:"name"`
+	URL        string `toml:"url" json:"url"`
+	Port       string `toml:"port" json:"port"`
+	Path       string `toml:"path" json:"path"`
+	HealthURL  string `toml:"healthUrl" json:"healthUrl"`
+	HealthPort string `toml:"healthPort" json:"healthPort"`
+	HealthPath string `toml:"healthPath" json:"healthPath"`
+	Type       string `toml:"type" json:"type"`
 }
 
 // DefaultValues is the struc for API Default configuration default values
@@ -227,8 +231,9 @@ type API struct {
 	warnChan            chan sdk.Event
 	Cache               cache.Store
 	Stats               struct {
-		WorkflowRuns *stats.Int64Measure
-		Sessions     *stats.Int64Measure
+		WorkflowRunFailed  *stats.Int64Measure
+		WorkflowRunStarted *stats.Int64Measure
+		Sessions           *stats.Int64Measure
 	}
 }
 
@@ -462,9 +467,9 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.Disable)
 
 	// Initialize feature packages
-	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.ApiURL)
-	if a.Config.Features.Izanami.ApiURL != "" {
-		if err := feature.Init(a.Config.Features.Izanami.ApiURL, a.Config.Features.Izanami.ClientID, a.Config.Features.Izanami.ClientSecret); err != nil {
+	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.APIURL)
+	if a.Config.Features.Izanami.APIURL != "" {
+		if err := feature.Init(a.Config.Features.Izanami.APIURL, a.Config.Features.Izanami.ClientID, a.Config.Features.Izanami.ClientSecret); err != nil {
 			return fmt.Errorf("Feature flipping not enabled with izanami: %s", err)
 		}
 	}
@@ -644,22 +649,48 @@ func (a *API) Serve(ctx context.Context) error {
 	event.Subscribe(a.warnChan)
 
 	log.Info("Initializing internal routines...")
-	sdk.GoRoutine("workflow.ComputeAudit", func() { workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("warning.Start", func() { warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan) })
-	sdk.GoRoutine("queue.Pipelines", func() { queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("pipeline.AWOLPipelineKiller", func() { pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
-	sdk.GoRoutine("auditCleanerRoutine(ctx", func() { auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("metrics.Initialize", func() { metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name) })
-	sdk.GoRoutine("repositoriesmanager.ReceiveEvents", func() { repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
-	sdk.GoRoutine("action.RequirementsCacheLoader", func() { action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache) })
-	sdk.GoRoutine("hookRecoverer(ctx", func() { hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache) })
-	sdk.GoRoutine("services.KillDeadServices", func() { services.KillDeadServices(ctx, a.mustDB) })
-	sdk.GoRoutine("poller.Initialize", func() { poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("migrate.CleanOldWorkflow", func() { migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API) })
-	sdk.GoRoutine("migrate.KeyMigration", func() { migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true}) })
-	sdk.GoRoutine("broadcast.Initialize", func() { broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap) })
-	//sdk.GoRoutine("workflow.RestartAwolJobs", func() { workflow.RestartAwolJobs(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
-	sdk.GoRoutine("a.serviceAPIHeartbeat(ctx", func() { a.serviceAPIHeartbeat(ctx) })
+	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
+		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	})
+	sdk.GoRoutine(ctx, "warning.Start", func(ctx context.Context) {
+		warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan)
+	})
+	sdk.GoRoutine(ctx, "queue.Pipelines", func(ctx context.Context) {
+		queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
+	})
+	sdk.GoRoutine(ctx, "pipeline.AWOLPipelineKiller", func(ctx context.Context) {
+		pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
+	})
+	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
+		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
+	})
+	sdk.GoRoutine(ctx, "metrics.Initialize", func(ctx context.Context) {
+		metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)
+	})
+	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
+		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
+	})
+	sdk.GoRoutine(ctx, "action.RequirementsCacheLoader", func(ctx context.Context) {
+		action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
+	})
+	sdk.GoRoutine(ctx, "hookRecoverer(ctx", func(ctx context.Context) {
+		hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
+	})
+	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
+		services.KillDeadServices(ctx, a.mustDB)
+	})
+	sdk.GoRoutine(ctx, "migrate.CleanOldWorkflow", func(ctx context.Context) {
+		migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
+	})
+	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
+		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	})
+	sdk.GoRoutine(ctx, "broadcast.Initialize", func(ctx context.Context) {
+		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap)
+	})
+	sdk.GoRoutine(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
+		a.serviceAPIHeartbeat(ctx)
+	})
 
 	//Temporary migration code
 	go migrate.WorkflowNodeRunArtifacts(a.Cache, a.DBConnectionFactory.GetDBMap)
@@ -679,6 +710,7 @@ func (a *API) Serve(ctx context.Context) error {
 				Name:    s.Name,
 				Type:    s.Type,
 				HTTPURL: fmt.Sprintf("%s:%s%s", s.URL, s.Port, s.Path),
+				GroupID: &group.SharedInfraGroup.ID,
 			},
 			HealthPort: s.HealthPort,
 			HealthPath: s.HealthPath,
@@ -692,7 +724,7 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := services.InitExternal(a.mustDB, a.Cache, externalServices); err != nil {
 		return fmt.Errorf("unable to init external service: %v", err)
 	}
-	sdk.GoRoutine("pings-external-services", func() { services.Pings(ctx, a.mustDB, externalServices) })
+	sdk.GoRoutine(ctx, "pings-external-services", func(ctx context.Context) { services.Pings(ctx, a.mustDB, externalServices) })
 
 	// TODO: to delete after migration
 	if os.Getenv("CDS_MIGRATE_GIT_CLONE") == "true" {
@@ -709,12 +741,12 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 
-	sdk.GoRoutine("workflow.Initialize", func() {
+	sdk.GoRoutine(ctx, "workflow.Initialize", func(ctx context.Context) {
 		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
 	})
-	sdk.GoRoutine("PushInElasticSearch", func() { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
+	sdk.GoRoutine(ctx, "PushInElasticSearch", func(ctx context.Context) { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
 	metrics.Init(ctx, a.DBConnectionFactory.GetDBMap)
-	sdk.GoRoutine("Purge", func() { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine(ctx, "Purge", func(ctx context.Context) { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),
@@ -753,16 +785,25 @@ func (a *API) Serve(ctx context.Context) error {
 }
 
 func (a *API) initStats() error {
-	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs", a.Name)
-	a.Stats.WorkflowRuns = stats.Int64(label, "number of workflow runs", stats.UnitDimensionless)
+	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", a.Name)
+	a.Stats.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
+
+	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", a.Name)
+	a.Stats.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
 
 	log.Info("api> Stats initialized")
 
 	return observability.RegisterView(
 		&view.View{
-			Name:        "workflow_runs",
-			Description: a.Stats.WorkflowRuns.Description(),
-			Measure:     a.Stats.WorkflowRuns,
+			Name:        "workflow_runs_started",
+			Description: a.Stats.WorkflowRunStarted.Description(),
+			Measure:     a.Stats.WorkflowRunStarted,
+			Aggregation: view.Count(),
+		},
+		&view.View{
+			Name:        "workflow_runs_failed",
+			Description: a.Stats.WorkflowRunFailed.Description(),
+			Measure:     a.Stats.WorkflowRunFailed,
 			Aggregation: view.Count(),
 		},
 	)

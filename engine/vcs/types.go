@@ -21,34 +21,34 @@ type Service struct {
 
 // Configuration is the vcs configuration structure
 type Configuration struct {
-	Name string `toml:"name" comment:"Name of this CDS VCS Service\n Enter a name to enable this service"`
+	Name string `toml:"name" comment:"Name of this CDS VCS Service\n Enter a name to enable this service" json:"name"`
 	HTTP struct {
-		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
-		Port int    `toml:"port" default:"8084"`
-	} `toml:"http" comment:"######################\n CDS VCS HTTP Configuration \n######################"`
-	URL string `default:"http://localhost:8084"`
+		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1" json:"addr"`
+		Port int    `toml:"port" default:"8084" json:"port"`
+	} `toml:"http" comment:"######################\n CDS VCS HTTP Configuration \n######################" json:"http"`
+	URL string `default:"http://localhost:8084" json:"url"`
 	UI  struct {
 		HTTP struct {
-			URL string `toml:"url" default:"http://localhost:2015"`
-		} `toml:"http"`
+			URL string `toml:"url" default:"http://localhost:2015" json:"url"`
+		} `toml:"http" json:"http"`
 	}
-	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################"`
+	API   service.APIServiceConfiguration `toml:"api" comment:"######################\n CDS API Settings \n######################" json:"api"`
 	Cache struct {
-		TTL   int `toml:"ttl" default:"60"`
+		TTL   int `toml:"ttl" default:"60" json:"ttl"`
 		Redis struct {
-			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
-			Password string `toml:"password"`
-		} `toml:"redis"`
-	} `toml:"cache" comment:"######################\n CDS VCS Cache Settings \n######################"`
-	Servers map[string]ServerConfiguration `toml:"servers" comment:"######################\n CDS VCS Server Settings \n######################"`
+			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379" json:"host"`
+			Password string `toml:"password" json:"-"`
+		} `toml:"redis" json:"redis"`
+	} `toml:"cache" comment:"######################\n CDS VCS Cache Settings \n######################" json:"cache"`
+	Servers map[string]ServerConfiguration `toml:"servers" comment:"######################\n CDS VCS Server Settings \n######################" json:"servers"`
 }
 
 // ServerConfiguration is the configuration for a VCS server
 type ServerConfiguration struct {
-	URL       string                        `toml:"url" comment:"URL of this VCS Server" json:"url"`
-	Github    *GithubServerConfiguration    `toml:"github" json:"github,omitempty"`
-	Gitlab    *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty"`
-	Bitbucket *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty"`
+	URL       string                        `toml:"url" comment:"URL of this VCS Server" json:"url" json:"url"`
+	Github    *GithubServerConfiguration    `toml:"github" json:"github,omitempty" json:"github"`
+	Gitlab    *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty" json:"gitlab"`
+	Bitbucket *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty" json:"bitbucket"`
 }
 
 // GithubServerConfiguration represents the github configuration

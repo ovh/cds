@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 
@@ -38,7 +39,7 @@ func (c *client) ApplicationExport(projectKey, name string, exportWithPermission
 	if exportWithPermissions {
 		path += "&withPermissions=true"
 	}
-	body, _, _, err := c.Request("GET", path, nil)
+	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -50,19 +51,16 @@ func (c *client) EnvironmentExport(projectKey, name string, exportWithPermission
 	if exportWithPermissions {
 		path += "&withPermissions=true"
 	}
-	body, _, _, err := c.Request("GET", path, nil)
+	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 	return body, nil
 }
 
-func (c *client) WorkflowExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error) {
-	path := fmt.Sprintf("/project/%s/export/workflows/%s?format=%s", projectKey, name, exportFormat)
-	if exportWithPermissions {
-		path += "&withPermissions=true"
-	}
-	bodyReader, _, _, err := c.Stream("GET", path, nil, true)
+func (c *client) WorkflowExport(projectKey, name string, mods ...RequestModifier) ([]byte, error) {
+	path := fmt.Sprintf("/project/%s/export/workflows/%s", projectKey, name)
+	bodyReader, _, _, err := c.Stream(context.Background(), "GET", path, nil, true, mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -75,12 +73,9 @@ func (c *client) WorkflowExport(projectKey, name string, exportWithPermissions b
 	return body, nil
 }
 
-func (c *client) WorkflowPull(projectKey, name string, exportWithPermissions bool) (*tar.Reader, error) {
+func (c *client) WorkflowPull(projectKey, name string, mods ...RequestModifier) (*tar.Reader, error) {
 	path := fmt.Sprintf("/project/%s/pull/workflows/%s", projectKey, name)
-	if exportWithPermissions {
-		path += "?withPermissions=true"
-	}
-	body, _, _, err := c.Request("GET", path, nil)
+	body, _, _, err := c.Request(context.Background(), "GET", path, nil, mods...)
 	if err != nil {
 		return nil, err
 	}

@@ -58,7 +58,6 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 			a.Actions[i].ID = ch.ID
 			a.Actions[i].AlwaysExecuted = ch.AlwaysExecuted || a.Actions[i].AlwaysExecuted
 			a.Actions[i].Optional = ch.Optional || a.Actions[i].Optional
-			a.Actions[i].Enabled = ch.Enabled
 			log.Debug("InsertAction> Get existing child Action %s with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
 		} else {
 			log.Debug("InsertAction> Child Action %s is knowned with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
@@ -387,8 +386,8 @@ func isRequirementsValid(requirements sdk.RequirementList) error {
 	nbModelReq, nbHostnameReq := 0, 0
 	for i := range requirements {
 		for j := range requirements {
-			if requirements[i].Name == requirements[j].Name && i != j {
-				return sdk.ErrInvalidJobRequirement
+			if requirements[i].Name == requirements[j].Name && requirements[i].Type == requirements[j].Type && i != j {
+				return sdk.WrapError(sdk.ErrInvalidJobRequirement, "For requirement name %s and type %s", requirements[i].Name, requirements[i].Type)
 			}
 		}
 		switch requirements[i].Type {

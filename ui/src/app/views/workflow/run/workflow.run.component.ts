@@ -113,16 +113,26 @@ export class WorkflowRunComponent implements OnInit {
     }
 
     handleNotification() {
+        if (this.workflowRun.num !== parseInt(this._activatedRoute.snapshot.params['number'], 10)) {
+            return;
+        }
+
         switch (this.workflowRun.status) {
             case PipelineStatus.SUCCESS:
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_success', {
                     workflowName: this.workflowName,
-                }), {icon: 'assets/images/checked.png'}).subscribe();
+                }), {
+                    icon: 'assets/images/checked.png',
+                    tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
+                }).subscribe();
                 break;
             case PipelineStatus.FAIL:
                 this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_failing', {
                     workflowName: this.workflowName
-                }), {icon: 'assets/images/close.png'}).subscribe();
+                }), {
+                    icon: 'assets/images/close.png',
+                    tag: `${this.workflowName}-${this.workflowRun.num}.${this.workflowRun.last_subnumber}`
+                }).subscribe();
                 break;
         }
     }

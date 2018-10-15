@@ -89,6 +89,14 @@ type EventRunWorkflowOutgoingHook struct {
 	WorkflowRunNumber *int64 `json:"workflow_run_number,omitempty"`
 }
 
+// EventRunWorkflowJob contains event data for a workflow job node run
+type EventRunWorkflowJob struct {
+	ID     int64  `json:"id,omitempty"`
+	Status string `json:"status,omitempty"`
+	Start  int64  `json:"start,omitempty"`
+	Done   int64  `json:"done,omitempty"`
+}
+
 // EventRunWorkflow contains event data for a workflow run
 type EventRunWorkflow struct {
 	ID            int64            `json:"id"`

@@ -5,7 +5,7 @@ GITHASH := $(if ${GIT_HASH},${GIT_HASH},`git log -1 --format="%H"`)
 BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 
 TARGET_DIR = dist
-TARGET_NAME = $(filter-out $@,$(MAKECMDGOALS))
+TARGET_NAME = $(filter-out $@ examples,$(MAKECMDGOALS))
 
 define PLUGIN_MANIFEST_BINARY
 os: %os%

@@ -346,8 +346,11 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 
 func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
+		observability.Current(ctx, observability.Tag(observability.TagWorkflowNodeJobRun, id))
+
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
+			next()
 			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
 		}
 		var s []sdk.SpawnInfo
@@ -416,19 +419,22 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
 		}
 
-		if len(report.WorkflowRuns()) > 0 {
+		workflowRuns := report.WorkflowRuns()
+		if len(workflowRuns) > 0 {
 			observability.Current(ctx,
-				observability.Tag(observability.TagWorkflow, report.WorkflowRuns()[0].Workflow.Name),
-			)
+				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
+
+			if workflowRuns[0].Status == sdk.StatusFail.String() {
+				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+			}
 		}
 
-		db := api.mustDB()
-
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, report)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
 		next()
 
-		go workflow.SendEvent(db, proj.Key, report)
+		go workflow.SendEvent(api.mustDB(), proj.Key, report)
+
 		return nil
 	}
 }

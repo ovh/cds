@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
@@ -24,8 +25,7 @@ func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 	form.Version = sdk.VERSION
 	form.OS = sdk.GOOS
 	form.Arch = sdk.GOARCH
-
-	worker, uptodate, err := w.client.WorkerRegister(form)
+	worker, uptodate, err := w.client.WorkerRegister(context.Background(), form)
 	if err != nil {
 		sdk.Exit("register> Got HTTP %d, exiting\n", err)
 		return err

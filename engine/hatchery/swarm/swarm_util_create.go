@@ -131,7 +131,7 @@ checkImage:
 	c, err := dockerClient.ContainerCreate(ctx, config, hostConfig, networkingConfig, name)
 	if err != nil {
 		next()
-		return sdk.WrapError(err, "createAndStartContainer> Unable to create container %s", name)
+		return sdk.WrapError(err, "createAndStartContainer> Unable to create container %s on %s", name, dockerClient.name)
 	}
 	next()
 

@@ -1,9 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/sdk"
 )
 
 // InitRouter initializes the router and all the routes
@@ -12,6 +14,15 @@ func (api *API) InitRouter() {
 	api.Router.SetHeaderFunc = DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
+
+	api.eventsBroker = &eventsBroker{
+		router:   api.Router,
+		cache:    api.Cache,
+		clients:  make(map[string]*eventsBrokerSubscribe),
+		dbFunc:   api.DBConnectionFactory.GetDBMap,
+		messages: make(chan sdk.Event),
+	}
+	api.eventsBroker.Init(context.Background())
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
@@ -28,7 +39,6 @@ func (api *API) InitRouter() {
 
 	// Admin
 	r.Handle("/admin/warning", r.DELETE(api.adminTruncateWarningsHandler, NeedAdmin(true)))
-	r.Handle("/admin/maintenance", r.POST(api.postAdminMaintenanceHandler, NeedAdmin(true)), r.GET(api.getAdminMaintenanceHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminMaintenanceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug", r.GET(api.getProfileIndexHandler, Auth(false)))
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)), r.GET(api.getCPUProfileHandler, NeedAdmin(true)))
@@ -43,11 +53,6 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
 	r.Handle("/admin/services", r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
 	r.Handle("/admin/services/call", r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
-
-	// Action plugin
-	r.Handle("/plugin", r.POST(api.addPluginHandler, NeedAdmin(true)), r.PUT(api.updatePluginHandler, NeedAdmin(true)))
-	r.Handle("/plugin/{name}", r.DELETE(api.deletePluginHandler, NeedAdmin(true)))
-	r.Handle("/plugin/download/{name}", r.GET(api.downloadPluginHandler))
 
 	// Download file
 	r.Handle("/download", r.GET(api.downloadsHandler))
@@ -88,6 +93,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 	r.Handle("/mon/stats", r.GET(observability.StatsHandler, Auth(false)))
+	r.Handle("/mon/errors/{uuid}", r.GET(api.getErrorHandler, NeedAdmin(true)))
 
 	r.Handle("/ui/navbar", r.GET(api.getNavbarHandler))
 	r.Handle("/ui/project/{key}/application/{permApplicationName}/overview", r.GET(api.getApplicationOverviewHandler))
@@ -300,10 +306,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/hook", r.POST(api.addHookHandler), r.GET(api.getHooksHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/hook/{id}", r.PUT(api.updateHookHandler), r.DELETE(api.deleteHookHandler))
 
-	// Pollers
-	r.Handle("/project/{key}/application/{permApplicationName}/polling", r.GET(api.getApplicationPollersHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/polling", r.POST(api.addPollerHandler), r.GET(api.getPollersHandler), r.PUT(api.updatePollerHandler), r.DELETE(api.deletePollerHandler))
-
 	// Build queue
 	r.Handle("/queue", r.GET(api.getQueueHandler))
 	r.Handle("/queue/{id}/take", r.POST(api.takePipelineBuildJobHandler))
@@ -320,9 +322,9 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing()), r.DELETE(api.deleteBookWorkflowJobHandler, NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/vulnerability", r.POSTEXECUTE(api.postVulnerabilityReportHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery()))
+	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1), NeedWorker()))
 	r.Handle("/queue/workflows/log/service", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), NeedHatchery()))
@@ -374,7 +376,8 @@ func (api *API) InitRouter() {
 
 	// Users
 	r.Handle("/user", r.GET(api.getUsersHandler))
-	r.Handle("/user/me", r.GET(api.getUserMeHandler))
+	r.Handle("/user/logged", r.GET(api.getUserLoggedHandler, Auth(false)))
+	r.Handle("/user/me", r.GET(api.getUserLoggedHandler, Auth(false), DEPRECATED))
 	r.Handle("/user/favorite", r.POST(api.postUserFavoriteHandler))
 	r.Handle("/user/timeline", r.GET(api.getTimelineHandler))
 	r.Handle("/user/timeline/filter", r.GET(api.getTimelineFilterHandler), r.POST(api.postTimelineFilterHandler))
@@ -423,5 +426,5 @@ func (api *API) InitRouter() {
 	r.Handle("/services/{type}", r.GET(api.getExternalServiceHandler, NeedWorker()))
 
 	//Not Found handler
-	r.Mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)
+	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 }

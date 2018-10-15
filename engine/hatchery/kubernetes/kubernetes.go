@@ -39,8 +39,8 @@ func New() *HatcheryKubernetes {
 
 // Init register local hatchery with its worker model
 func (h *HatcheryKubernetes) Init() error {
-	sdk.GoRoutine("hatchery kubernetes routines", func() {
-		h.routines(context.Background())
+	sdk.GoRoutine(context.Background(), "hatchery kubernetes routines", func(ctx context.Context) {
+		h.routines(ctx)
 	})
 	return nil
 }
@@ -471,13 +471,13 @@ func (h *HatcheryKubernetes) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			sdk.GoRoutine("getServicesLogs", func() {
+			sdk.GoRoutine(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(); err != nil {
 					log.Error("Hatchery> Kubernetes> Cannot get service logs : %v", err)
 				}
 			})
 
-			sdk.GoRoutine("killAwolWorker", func() {
+			sdk.GoRoutine(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorkers()
 			})
 		case <-ctx.Done():

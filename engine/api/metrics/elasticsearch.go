@@ -16,9 +16,10 @@ import (
 
 var metricsChan chan sdk.Metric
 
-func Init(c context.Context, DBFunc func() *gorp.DbMap) {
+// Init the metrics package which push to elasticSearch service
+func Init(ctx context.Context, DBFunc func() *gorp.DbMap) {
 	metricsChan = make(chan sdk.Metric, 50)
-	sdk.GoRoutine("metrics.PushInElasticSearch", func() { pushInElasticSearch(c, DBFunc) })
+	sdk.GoRoutine(ctx, "metrics.PushInElasticSearch", func(c context.Context) { pushInElasticSearch(c, DBFunc) })
 }
 
 func pushInElasticSearch(c context.Context, DBFunc func() *gorp.DbMap) {

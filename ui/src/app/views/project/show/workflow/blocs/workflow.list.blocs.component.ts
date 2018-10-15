@@ -2,6 +2,7 @@ import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {finalize} from 'rxjs/operators';
 import {IdName, Label, Project} from '../../../../../model/project.model';
 import {Warning} from '../../../../../model/warning.model';
+import {HelpersService} from '../../../../../service/helpers/helpers.service';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {LabelsEditComponent} from '../../../../../shared/labels/edit/labels.edit.component';
 
@@ -22,6 +23,7 @@ export class ProjectWorkflowListBlocsComponent {
         this.workflowLabelsMap[wf.name] = {};
         if (wf.labels) {
           this.workflowLabelsMap[wf.name] = wf.labels.reduce((obj, lbl) => {
+            lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);
             obj[lbl.name] = true;
             return obj;
           }, {});
@@ -68,7 +70,7 @@ export class ProjectWorkflowListBlocsComponent {
   filteredLabels: Array<Label> = [];
   loadingLabel = false;
 
-  constructor(private _workflowStore: WorkflowStore) { }
+  constructor(private _workflowStore: WorkflowStore, private _helpersService: HelpersService) { }
 
   linkLabelToWorkflow(wfName: string, label: Label) {
     this.loadingLabel = true;

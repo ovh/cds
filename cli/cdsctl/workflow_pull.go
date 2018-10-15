@@ -4,12 +4,14 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var workflowPullCmd = cli.Command{
@@ -57,7 +59,18 @@ func workflowPullRun(c cli.Values) error {
 		return fmt.Errorf("Unable to create directory %s: %v", c.GetString("output-dir"), err)
 	}
 
-	tr, err := client.WorkflowPull(c.GetString(_ProjectKey), c.GetString(_WorkflowName), c.GetBool("with-permissions"))
+	mods := []cdsclient.RequestModifier{}
+	if c.GetBool("with-permissions") {
+		mods = append(mods,
+			func(r *http.Request) {
+				q := r.URL.Query()
+				q.Set("withPermissions", "true")
+				r.URL.RawQuery = q.Encode()
+			},
+		)
+	}
+
+	tr, err := client.WorkflowPull(c.GetString(_ProjectKey), c.GetString(_WorkflowName), mods...)
 	if err != nil {
 		return err
 	}

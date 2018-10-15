@@ -152,6 +152,7 @@
   "btn_next": "Suivant",
   "btn_edit": "Éditer",
   "btn_add": "Ajouter",
+  "btn_back": "Retour",
 
   "commit_author": "Auteur",
   "commit_id": "ID",
@@ -308,6 +309,7 @@
   "environment_variable_list_title": "Liste des variables",
 
   "filter": "Filtrer",
+  "filter_list_click": "Cliquer pour filtrer la liste",
 
   "favorite_title": "Gestion des favoris",
   "favorite_add": "Ajouter un favori",
@@ -410,10 +412,11 @@
   "job_save": "Sauvegarder le job",
   "job_spawn_title": "Informations",
 
+  "monitoring": "Monitoring",
+
   "navbar_actions": "Actions",
   "navbar_project_create": "Créer un projet",
   "navbar_admin_broadcast": "Informations",
-  "navbar_admin_status": "Statut",
   "navbar_documentation": "Documentation",
   "navbar_downloads": "Télécharger",
   "navbar_groups": "Groupes",
@@ -610,6 +613,8 @@
   "provider_hook": "hook",
   "provider_deployment": "déploiement",
 
+  "queue_monitoring": "Queue Monitoring",
+
   "repo_name": "Nom du dépôt",
   "repoman_delete_msg_ok": "Le gestionnaire de dépôt n'est plus lié au projet",
   "repoman_name": "Gestionnaire de dépôt",
@@ -668,6 +673,17 @@
   "scheduler_workflow_label": "Scheduler : ",
 
   "settings_tips": "Conseils",
+
+  "services": "services",
+  "services_list": "CDS Services",
+  "services_see_all": "Voir tous",
+  "services_minimize": "Minimiser",
+  "service_view_details": "Voir les details",
+  "service_details": "Service",
+  "service_group": "Groupe",
+  "service_alert": "Status Alert - vérifier le status ci-dessous",
+  "service_warning": "Status Warning - vérifier le status ci-dessous",
+  "service_ok": "Status OK - tout est ok",
 
   "stage_add_label": "Ajouter un stage",
   "stage_added": "Stage ajouté",
@@ -995,6 +1011,7 @@
   "workflow_notification_list": "Liste des notifications",
   "workflow_notification_form": "Ajouter une notification",
   "workflow_notification_copy": "Copié",
+  "workflow_logs_all": "Afficher tous les logs",
 
   "workflow_wizard_select_repo_man": "Sélectionner un gestionnaire de dépôt",
   "workflow_wizard_select_repo": "Sélectionner un dépot",

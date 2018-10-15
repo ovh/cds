@@ -96,9 +96,9 @@ var (
 //easyjson:json
 type Requirement struct {
 	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Type  string `json:"type" yaml:"-"`
-	Value string `json:"value" yaml:"-"`
+	Name  string `json:"name" yaml:"name"`
+	Type  string `json:"type" yaml:"type"`
+	Value string `json:"value" yaml:"value"`
 }
 
 // AddRequirement append a requirement in a requirement array

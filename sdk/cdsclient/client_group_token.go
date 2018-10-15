@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
@@ -16,7 +17,7 @@ func (c *client) GroupGenerateToken(groupName, expiration, description string) (
 	}{Description: description, Expiration: expiration}
 
 	var token sdk.Token
-	if _, err := c.PostJSON(path, desc, &token); err != nil {
+	if _, err := c.PostJSON(context.Background(), path, desc, &token); err != nil {
 		return nil, err
 	}
 	return &token, nil
@@ -26,7 +27,7 @@ func (c *client) GroupGenerateToken(groupName, expiration, description string) (
 func (c *client) GroupDeleteToken(groupName string, tokenID int64) error {
 	path := fmt.Sprintf("/group/%s/token/%d", url.QueryEscape(groupName), tokenID)
 
-	if _, err := c.DeleteJSON(path, nil); err != nil {
+	if _, err := c.DeleteJSON(context.Background(), path, nil); err != nil {
 		return err
 	}
 	return nil
@@ -37,7 +38,7 @@ func (c *client) GroupListToken(groupName string) ([]sdk.Token, error) {
 	path := fmt.Sprintf("/group/%s/token", url.QueryEscape(groupName))
 
 	tokens := []sdk.Token{}
-	_, err := c.GetJSON(path, &tokens)
+	_, err := c.GetJSON(context.Background(), path, &tokens)
 
 	return tokens, err
 }

@@ -1,5 +1,6 @@
 import {Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs';
 import {environment} from '../../../../../../../environments/environment';
 import {Action} from '../../../../../../model/action.model';
@@ -71,10 +72,16 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     workerSubscription: Subscription;
     queryParamsSubscription: Subscription;
     loading = true;
+    loadingMore = false;
     startExec: Date;
     doneExec: Date;
     duration: string;
     selectedLine: number;
+    splittedLogs: {lineNumber: number, value: string}[] = [];
+    splittedLogsToDisplay: {lineNumber: number, value: string}[] = [];
+    limitFrom: number;
+    limitTo: number;
+    basicView = false;
 
     zone: NgZone;
     _showLog = false;
@@ -154,6 +161,16 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                     this.zone.run(() => {
                         if (build.step_logs) {
                             this.logs = build.step_logs;
+                            this.splittedLogs = this.getLogsSplitted().map((log, i) => ({lineNumber: i + 1, value: log}));
+                            this.splittedLogsToDisplay = cloneDeep(this.splittedLogs);
+
+                            if (this.splittedLogs.length > 1000 && !this._route.snapshot.fragment) {
+                                this.limitFrom = 30;
+                                this.limitTo = this.splittedLogs.length - 40;
+                                this.splittedLogsToDisplay.splice(this.limitFrom, this.limitTo - this.limitFrom);
+                            } else {
+                                this.splittedLogsToDisplay = this.splittedLogs;
+                            }
                         }
                         if (this.loading) {
                             this.loading = false;
@@ -206,15 +223,27 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this.showLog = !this.showLog;
     }
 
-    getLogs() {
+    getLogs(): string {
         if (this.logs && this.logs.val) {
             return ansi_up.ansi_to_html(this.logs.val);
         }
         return '';
     }
 
-    getLogsSplitted() {
+    getLogsSplitted(): string[] {
       return this.getLogs().split('\n');
+    }
+
+    showAllLogs() {
+        this.loadingMore = true;
+        setTimeout(() => {
+            this.limitFrom = null;
+            if (this.splittedLogs.length > 3500) {
+                this.basicView = true;
+            }
+            this.splittedLogsToDisplay = this.splittedLogs;
+            this.loadingMore = false;
+        }, 0);
     }
 
     generateLink(lineNumber: number) {

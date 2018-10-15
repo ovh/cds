@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -23,7 +24,7 @@ func (c *client) UserLogin(username, password string) (bool, string, error) {
 		Token    string   `json:"token,omitempty"`
 	}{}
 
-	if _, err := c.PostJSON("/login", r, &response); err != nil {
+	if _, err := c.PostJSON(context.Background(), "/login", r, &response); err != nil {
 		return false, "", err
 	}
 
@@ -35,7 +36,7 @@ func (c *client) UserLogin(username, password string) (bool, string, error) {
 
 func (c *client) UserList() ([]sdk.User, error) {
 	res := []sdk.User{}
-	if _, err := c.GetJSON("/user", &res); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/user", &res); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -51,7 +52,7 @@ func (c *client) UserSignup(username, fullname, email, callback string) error {
 		Callback: callback,
 	}
 
-	code, err := c.PostJSON("/user/signup", request, nil)
+	code, err := c.PostJSON(context.Background(), "/user/signup", request, nil)
 	if err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func (c *client) UserSignup(username, fullname, email, callback string) error {
 
 func (c *client) UserGet(username string) (*sdk.User, error) {
 	res := sdk.User{}
-	if _, err := c.GetJSON("/user/"+url.QueryEscape(username), &res); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/user/"+url.QueryEscape(username), &res); err != nil {
 		return nil, err
 	}
 	return &res, nil
@@ -71,7 +72,7 @@ func (c *client) UserGet(username string) (*sdk.User, error) {
 
 func (c *client) UserGetGroups(username string) (map[string][]sdk.Group, error) {
 	res := map[string][]sdk.Group{}
-	if _, err := c.GetJSON("/user/"+url.QueryEscape(username)+"/groups", &res); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/user/"+url.QueryEscape(username)+"/groups", &res); err != nil {
 		return nil, err
 	}
 	return res, nil
@@ -85,7 +86,7 @@ func (c *client) UserReset(username, email, callback string) error {
 		Callback: callback,
 	}
 
-	code, err := c.PostJSON("/user/"+url.QueryEscape(username)+"/reset", req, nil)
+	code, err := c.PostJSON(context.Background(), "/user/"+url.QueryEscape(username)+"/reset", req, nil)
 	if err != nil {
 		return err
 	}
@@ -97,7 +98,7 @@ func (c *client) UserReset(username, email, callback string) error {
 
 func (c *client) UserConfirm(username, token string) (bool, string, error) {
 	res := sdk.UserAPIResponse{}
-	if _, err := c.GetJSON("/user/"+url.QueryEscape(username)+"/confirm/"+url.QueryEscape(token), &res); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/user/"+url.QueryEscape(username)+"/confirm/"+url.QueryEscape(token), &res); err != nil {
 		return false, "", err
 	}
 	return true, res.Password, nil
@@ -106,7 +107,7 @@ func (c *client) UserConfirm(username, token string) (bool, string, error) {
 // ListAllTokens Get all tokens that an user can access
 func (c *client) ListAllTokens() ([]sdk.Token, error) {
 	tokens := []sdk.Token{}
-	if _, err := c.GetJSON("/user/token", &tokens); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/user/token", &tokens); err != nil {
 		return tokens, err
 	}
 	return tokens, nil
@@ -115,7 +116,7 @@ func (c *client) ListAllTokens() ([]sdk.Token, error) {
 // FindToken Get a specific token with his value to have description
 func (c *client) FindToken(tokenValue string) (sdk.Token, error) {
 	token := sdk.Token{}
-	if code, err := c.GetJSON("/user/token/"+url.QueryEscape(tokenValue), &token); err != nil {
+	if code, err := c.GetJSON(context.Background(), "/user/token/"+url.QueryEscape(tokenValue), &token); err != nil {
 		if code == http.StatusNotFound {
 			return token, sdk.ErrTokenNotFound
 		}
@@ -129,20 +130,20 @@ func (c *client) UpdateFavorite(params sdk.FavoriteParams) (interface{}, error) 
 	switch params.Type {
 	case "workflow":
 		var wf sdk.Workflow
-		if _, err := c.PostJSON("/user/favorite", params, &wf); err != nil {
+		if _, err := c.PostJSON(context.Background(), "/user/favorite", params, &wf); err != nil {
 			return wf, err
 		}
 		return wf, nil
 	case "project":
 		var proj sdk.Project
-		if _, err := c.PostJSON("/user/favorite", params, &proj); err != nil {
+		if _, err := c.PostJSON(context.Background(), "/user/favorite", params, &proj); err != nil {
 			return proj, err
 		}
 		return proj, nil
 	}
 
 	var res interface{}
-	if _, err := c.PostJSON("/user/favorite", params, &res); err != nil {
+	if _, err := c.PostJSON(context.Background(), "/user/favorite", params, &res); err != nil {
 		return res, err
 	}
 	return res, nil

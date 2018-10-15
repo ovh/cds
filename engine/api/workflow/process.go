@@ -547,7 +547,8 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 			runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		}
 		run.Payload = runPayload
-		run.PipelineParameters = n.Context.DefaultPipelineParameters
+		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
+
 	}
 
 	if sourceOutgoingHookRun != nil {
@@ -563,7 +564,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if h != nil {
 		runPayload = sdk.ParametersMapMerge(runPayload, h.Payload)
 		run.Payload = runPayload
-		run.PipelineParameters = n.Context.DefaultPipelineParameters
+		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
 	}
 
 	run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
@@ -586,7 +587,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 		runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		run.Payload = runPayload
-		run.PipelineParameters = m.PipelineParameters
+		run.PipelineParameters = sdk.ParametersMerge(n.Context.DefaultPipelineParameters, m.PipelineParameters)
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
 			Type:  sdk.StringParameter,
@@ -639,9 +640,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 
 	// Inherit parameter from parent job
 	if len(sourceNodeRuns) > 0 {
-		_, next := observability.Span(ctx, "workflow.getParentParameters")
 		parentsParams, errPP := getParentParameters(db, w, run, sourceNodeRuns, runPayload)
-		next()
 		if errPP != nil {
 			return report, false, sdk.WrapError(errPP, "processWorkflowNodeRun> getParentParameters failed")
 		}

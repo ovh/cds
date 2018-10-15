@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,25 +12,25 @@ import (
 
 func (c *client) PipelineGet(projectKey, name string) (*sdk.Pipeline, error) {
 	pipeline := sdk.Pipeline{}
-	if _, err := c.GetJSON("/project/"+projectKey+"/pipeline/"+name, &pipeline); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/project/"+projectKey+"/pipeline/"+name, &pipeline); err != nil {
 		return nil, err
 	}
 	return &pipeline, nil
 }
 
 func (c *client) PipelineCreate(projectKey string, pip *sdk.Pipeline) error {
-	_, err := c.PostJSON("/project/"+projectKey+"/pipeline", pip, nil)
+	_, err := c.PostJSON(context.Background(), "/project/"+projectKey+"/pipeline", pip, nil)
 	return err
 }
 
 func (c *client) PipelineDelete(projectKey, name string) error {
-	_, err := c.DeleteJSON("/project/"+projectKey+"/pipeline/"+url.QueryEscape(name), nil, nil)
+	_, err := c.DeleteJSON(context.Background(), "/project/"+projectKey+"/pipeline/"+url.QueryEscape(name), nil, nil)
 	return err
 }
 
 func (c *client) PipelineList(projectKey string) ([]sdk.Pipeline, error) {
 	pipelines := []sdk.Pipeline{}
-	if _, err := c.GetJSON("/project/"+projectKey+"/pipeline", &pipelines); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/project/"+projectKey+"/pipeline", &pipelines); err != nil {
 		return nil, err
 	}
 	return pipelines, nil
@@ -43,7 +44,7 @@ func (c *client) PipelineGroupsImport(projectKey, pipelineName string, content i
 		url += "&forceUpdate=true"
 	}
 
-	btes, _, _, errReq := c.Request("POST", url, content)
+	btes, _, _, errReq := c.Request(context.Background(), "POST", url, content)
 	if errReq != nil {
 		return pip, errReq
 	}

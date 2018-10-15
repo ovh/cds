@@ -1083,11 +1083,26 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		dryRun = opts.DryRun
 	}
 
+	// In workflow as code context, if we only have the repowebhook, we skip it
+	//  because it will be automatically recreated later with the proper configuration
+	if opts != nil && opts.FromRepository != "" {
+		if len(wrkflw.Workflow) == 0 {
+			if len(wrkflw.PipelineHooks) == 1 && wrkflw.PipelineHooks[0].Model == sdk.RepositoryWebHookModelName {
+				wrkflw.PipelineHooks = nil
+			}
+		} else {
+			for node, hooks := range wrkflw.Hooks {
+				if len(hooks) == 1 && hooks[0].Model == sdk.RepositoryWebHookModelName {
+					wrkflw.Hooks[node] = nil
+				}
+			}
+		}
+	}
+
 	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
 	if err != nil {
 		log.Error("Push> Unable to import workflow: %v", err)
-		err = sdk.SetError(err, "unable to import workflow %s", wrkflw.Name)
-		return nil, nil, sdk.WrapError(err, "Push> %v ", err)
+		return nil, nil, sdk.WrapError(err, "Push> unable to import workflow %s", wrkflw.Name)
 	}
 
 	// TODO workflow as code, manage derivation workflow

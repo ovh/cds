@@ -9,9 +9,9 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 
+	"github.com/ovh/cds/contrib/grpcplugins"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 /* Inside contrib/grpcplugins/action
@@ -88,7 +88,7 @@ func (actPlugin *npmAuditParserActionPlugin) Run(ctx context.Context, q *actionp
 	}
 	report.Type = "js"
 	report.Summary = summary
-	if err := plugin.SendVulnerabilityReport(actPlugin.HTTPPort, report); err != nil {
+	if err := grpcplugins.SendVulnerabilityReport(actPlugin.HTTPPort, report); err != nil {
 		return fail("Unable to send report: %s", err)
 	}
 
