@@ -40,6 +40,7 @@ Start CDS Engine Services:
 	 * Local machine
 	 * OpenStack
 	 * Docker Swarm
+     * Kubernetes
 	 * OpenStack
 	 * vSphere
  * Hooks:
