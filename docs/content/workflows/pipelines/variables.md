@@ -102,6 +102,14 @@ Here is the list of git variables:
 - `{{.git.message}}`
 - `{{.git.server}}`
 
+## Pipeline parameters
+
+On a pipeline, you can add some parameters, this will let your to use `{{.cds.pip.varname}}` in your pipeline. 
+Then, in the workflow, you can set the value for pipeline parameter in the `pipeline context`.
+
+Notice that you can't create a pipeline parameter of type `password`. If you can to use a variable of type password, you have to create it in your project / application or environment. Then, in your workflow, use this variable to set the value of pipeline parameter - the pipeline parameter can be of type `string`.
+
+
 ## Helpers
 
 Some helpers are available to transform the value of a CDS Variable.
