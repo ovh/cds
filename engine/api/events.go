@@ -55,7 +55,7 @@ func (b *eventsBroker) Init(ctx context.Context) {
 	})
 }
 
-func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
+func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
 	if cacheMsgChan == nil {
 		return
 	}
@@ -165,9 +165,9 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		}
 
 		user := getUser(ctx)
-		if err := loadUserPermissions(b.dbFunc(), b.cache,user); err != nil {
-		return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
-	}
+		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
+		}
 
 		uuid := sdk.UUID()
 		client := &eventsBrokerSubscribe{

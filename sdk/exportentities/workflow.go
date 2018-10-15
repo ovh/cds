@@ -226,12 +226,6 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 
 	exportedWorkflow.PurgeTags = w.PurgeTags
 	nodes := w.Nodes(false)
-	if withPermission {
-		exportedWorkflow.Permissions = make(map[string]int, len(w.Groups))
-		for _, p := range w.Groups {
-			exportedWorkflow.Permissions[p.Group.Name] = p.Permission
-		}
-	}
 
 	forksMap, _ := (&w).Forks()
 	hooks := w.GetHooks()

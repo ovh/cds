@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/hashstructure"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/interpolate"
@@ -158,7 +160,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 			callbackData.Log = err.Error()
 
 			// Post the callback
-			if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
+			if _, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
 				log.Error("unable to perform outgoing hook callback: %v", err)
 				return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
 			}
@@ -195,7 +197,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 	callbackData.WorkflowRunNumber = &targetRun.Number
 
 	// Post the callback
-	if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
+	if _, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
 		log.Error("unable to perform outgoing hook callback: %v", err)
 		return err
 	}
@@ -243,7 +245,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 			callbackData.Log = err.Error()
 
 			// Post the callback
-			if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
+			if _, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
 				log.Error("unable to perform outgoing hook callback: %v", err)
 				return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
 			}
@@ -258,7 +260,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 
 	// Get Secrets
 	detailsURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/details", pkey, workflow, run, hookRunID)
-	if _, err := s.Client.(cdsclient.Raw).GetJSON(detailsURL, hookRun); err != nil {
+	if _, err := s.Client.(cdsclient.Raw).GetJSON(context.Background(), detailsURL, hookRun); err != nil {
 		return handleError(sdk.WrapError(err, "unable to retrieve hook details"))
 	}
 
@@ -319,7 +321,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	callbackData.Status = sdk.StatusSuccess.String()
 
 	// Post the callback
-	if _, err := s.Client.(cdsclient.Raw).PostJSON(callbackURL, callbackData, nil); err != nil {
+	if _, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
 		log.Error("unable to perform outgoing hook callback: %v", err)
 		return err
 	}

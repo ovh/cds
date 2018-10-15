@@ -346,30 +346,30 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 
 func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
-		observability.Current(ctx, observability.Tag(observability.TagWorkflowNodeJobRun, id))
-
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
-			next()
-			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
+			return sdk.WrapError(errc, "invalid id")
 		}
+
+		observability.Current(ctx, observability.Tag(observability.TagWorkflowNodeJobRun, id))
+
 		var s []sdk.SpawnInfo
 		if err := service.UnmarshalBody(r, &s); err != nil {
-			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
+			return sdk.WrapError(err, "cannot unmarshal request")
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			return sdk.WrapError(errBegin, "postSpawnInfosWorkflowJobHandler> Cannot start transaction")
+			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
-			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
+			return sdk.WrapError(err, "Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot commit tx")
+			return sdk.WrapError(err, "Cannot commit tx")
 		}
 
 		return nil
@@ -380,13 +380,13 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
-			return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
+			return sdk.WrapError(errc, "invalid id")
 		}
 
 		// Unmarshal into results
 		var res sdk.Result
 		if err := service.UnmarshalBody(r, &res); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
+			return sdk.WrapError(err, "cannot unmarshal request")
 		}
 		customCtx, cancel := context.WithTimeout(ctx, 180*time.Second)
 		defer cancel()
@@ -402,12 +402,12 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 					// job result already send as job is no more in database
 					// this log is here to stats it and we returns nil for unlock the worker
 					// and avoid a "worker timeout"
-					log.Warning("postWorkflowJobResultHandler> NodeJobRun not found: %d err:%v", id, errLn)
+					log.Warning("NodeJobRun not found: %d err:%v", id, errLn)
 					return nil
 				}
-				return sdk.WrapError(errLn, "postWorkflowJobResultHandler> Cannot load NodeJobRun %d", id)
+				return sdk.WrapError(errLn, "Cannot load NodeJobRun %d", id)
 			}
-			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project from job %d", id)
+			return sdk.WrapError(errP, "Cannot load project from job %d", id)
 		}
 
 		observability.Current(ctx,
@@ -416,7 +416,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 
 		report, err := postJobResult(customCtx, api.mustDBWithCtx, api.Cache, proj, getWorker(ctx), &res)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
+			return sdk.WrapError(err, "unable to post job result")
 		}
 
 		workflowRuns := report.WorkflowRuns()

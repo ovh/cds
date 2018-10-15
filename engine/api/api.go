@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -564,13 +563,10 @@ func (a *API) Serve(ctx context.Context) error {
 	log.Info("Initializing Events broker")
 	// Initialize event broker
 	a.eventsBroker = &eventsBroker{
-		cache:             a.Cache,
-		clients:           make(map[string]eventsBrokerSubscribe),
-		dbFunc:            a.DBConnectionFactory.GetDBMap,
-		messages:          make(chan sdk.Event),
-		mutex:             &sync.Mutex{},
-		disconnectedMutex: &sync.Mutex{},
-		disconnected:      make(map[string]bool),
+		cache:    a.Cache,
+		clients:  make(map[string]*eventsBrokerSubscribe),
+		dbFunc:   a.DBConnectionFactory.GetDBMap,
+		messages: make(chan sdk.Event),
 	}
 	a.eventsBroker.Init(context.Background())
 
