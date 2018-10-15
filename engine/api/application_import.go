@@ -71,9 +71,9 @@ func (api *API) postApplicationImportHandler() service.Handler {
 			myError, ok := globalError.(sdk.Error)
 			if ok {
 				log.Warning("postApplicationImportHandler> Unable to import application %s : %v", eapp.Name, myError)
-				msgTranslated, _ := sdk.ProcessError(myError, r.Header.Get("Accept-Language"))
-				msgListString = append(msgListString, msgTranslated)
-				return service.WriteJSON(w, msgListString, myError.Status)
+				sdkErr := sdk.ExtractHTTPError(myError, r.Header.Get("Accept-Language"))
+				msgListString = append(msgListString, sdkErr.Message)
+				return service.WriteJSON(w, msgListString, sdkErr.Status)
 			}
 			return sdk.WrapError(globalError, "postApplicationImportHandler> Unable import application %s", eapp.Name)
 		}

@@ -42,7 +42,6 @@ func (api *API) Status() sdk.MonitoringStatus {
 	m.Lines = append(m.Lines, getStatusLine(objectstore.Status()))
 	m.Lines = append(m.Lines, getStatusLine(mail.Status()))
 	m.Lines = append(m.Lines, getStatusLine(api.DBConnectionFactory.Status()))
-	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "SSE Connected", Value: fmt.Sprintf("%d", api.eventsBroker.clientsLen), Status: sdk.MonitoringStatusOK}))
 	m.Lines = append(m.Lines, getStatusLine(worker.Status(api.mustDB())))
 
 	return m
@@ -61,7 +60,7 @@ func (api *API) statusHandler() service.Handler {
 
 		srvs, err := services.All(api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "statusHandler> error on q.All()")
+			return err
 		}
 
 		mStatus := api.computeGlobalStatus(srvs)
@@ -117,7 +116,7 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 					versionOk = false
 					linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
 						Status:    sdk.MonitoringStatusWarn,
-						Component: "Global/Version Diff",
+						Component: "Global/Version",
 						Value:     fmt.Sprintf("%s vs %s", version, l.Value),
 					})
 				}

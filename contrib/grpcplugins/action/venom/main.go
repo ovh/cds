@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
+	"github.com/ovh/venom/executors/kafka"
 	"github.com/ovh/venom/executors/ovhapi"
 	"github.com/ovh/venom/executors/readfile"
 	"github.com/ovh/venom/executors/redis"
@@ -80,6 +81,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	v.RegisterExecutor(imap.Name, imap.New())
 	v.RegisterExecutor(ovhapi.Name, ovhapi.New())
 	v.RegisterExecutor(readfile.Name, readfile.New())
+	v.RegisterExecutor(kafka.Name, kafka.New())
 	v.RegisterExecutor(redis.Name, redis.New())
 	v.RegisterExecutor(smtp.Name, smtp.New())
 	v.RegisterExecutor(ssh.Name, ssh.New())

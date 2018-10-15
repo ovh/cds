@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
@@ -212,7 +211,7 @@ func (api *API) getApplicationTreeStatusHandler() service.Handler {
 			return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
 		}
 
-		pbs, schedulers, pollers, hooks, errPB := workflowv0.GetWorkflowStatus(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, remote, version)
+		pbs, schedulers, hooks, errPB := workflowv0.GetWorkflowStatus(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, remote, version)
 		if errPB != nil {
 			return sdk.WrapError(errPB, "getApplicationHandler> Cannot load CD Tree status %s", app.Name)
 		}
@@ -220,12 +219,12 @@ func (api *API) getApplicationTreeStatusHandler() service.Handler {
 		response := struct {
 			Builds     []sdk.PipelineBuild     `json:"builds"`
 			Schedulers []sdk.PipelineScheduler `json:"schedulers"`
-			Pollers    []sdk.RepositoryPoller  `json:"pollers"`
+			Pollers    []struct{}              `json:"pollers"`
 			Hooks      []sdk.Hook              `json:"hooks"`
 		}{
 			pbs,
 			schedulers,
-			pollers,
+			nil,
 			hooks,
 		}
 
@@ -240,7 +239,6 @@ func (api *API) getApplicationHandler() service.Handler {
 		applicationName := vars["permApplicationName"]
 
 		applicationStatus := FormBool(r, "applicationStatus")
-		withPollers := FormBool(r, "withPollers")
 		withHooks := FormBool(r, "withHooks")
 		withNotifs := FormBool(r, "withNotifs")
 		withWorkflow := FormBool(r, "withWorkflow")
@@ -288,14 +286,6 @@ func (api *API) getApplicationHandler() service.Handler {
 
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "getApplicationHandler> Unable to load groups by application")
-		}
-
-		if withPollers {
-			var errPoller error
-			app.RepositoryPollers, errPoller = poller.LoadByApplication(api.mustDB(), app.ID)
-			if errPoller != nil {
-				return sdk.WrapError(errPoller, "getApplicationHandler> Cannot load pollers for application %s", applicationName)
-			}
 		}
 
 		if withSchedulers {

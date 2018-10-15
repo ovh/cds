@@ -163,7 +163,7 @@
 
 [[constraint]]
   name = "github.com/ovh/venom"
-  version = "0.21.3"
+  version = "0.22.0"
 
 [prune]
   non-go = true

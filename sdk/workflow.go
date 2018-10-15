@@ -1515,6 +1515,46 @@ type WorkflowNodeContextDefaultPayloadVCS struct {
 	GitMessage    string `json:"git.message" db:"-"`
 }
 
+// IsWorkflowNodeContextDefaultPayloadVCS checks with several way if the workflow node context has a default vcs payloas
+func IsWorkflowNodeContextDefaultPayloadVCS(i interface{}) bool {
+	_, ok := i.(WorkflowNodeContextDefaultPayloadVCS)
+	if ok {
+		return true
+	}
+
+	dumper := dump.NewDefaultEncoder(nil)
+	dumper.ExtraFields.DetailedMap = false
+	dumper.ExtraFields.DetailedStruct = false
+	dumper.ExtraFields.Len = false
+	dumper.ExtraFields.Type = false
+
+	mI, _ := dumper.ToMap(i)
+	mD, _ := dumper.ToMap(WorkflowNodeContextDefaultPayloadVCS{})
+
+	// compare interface keys with default payload keys
+	hasKey := func(s string) bool {
+		_, has := mI[s]
+		return has
+	}
+
+	if len(mI) == len(mD) {
+		for k := range mD {
+			if !hasKey(k) {
+				goto checkGitKey
+			}
+		}
+		return true
+	}
+
+checkGitKey:
+	return hasKey("git.branch") &&
+		hasKey("git.hash") &&
+		hasKey("git.author") &&
+		hasKey("git.hash.before") &&
+		hasKey("git.repository") &&
+		hasKey("git.message")
+}
+
 //WorkflowList return the list of the workflows for a project
 func WorkflowList(projectkey string) ([]Workflow, error) {
 	path := fmt.Sprintf("/project/%s/workflows", projectkey)

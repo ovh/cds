@@ -47,8 +47,10 @@ type Router struct {
 	nbPanic                int
 	lastPanic              *time.Time
 	Stats                  struct {
-		Errors *stats.Int64Measure
-		Hits   *stats.Int64Measure
+		Errors     *stats.Int64Measure
+		Hits       *stats.Int64Measure
+		SSEClients *stats.Int64Measure
+		SSEEvents  *stats.Int64Measure
 	}
 }
 
@@ -81,9 +83,10 @@ type HandlerConfigFunc func(service.Handler, ...HandlerConfigParam) *service.Han
 func (r *Router) pprofLabel(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		labels := pprof.Labels("http-path", r.URL.Path)
-		pprof.Do(r.Context(), labels, func(ctx context.Context) {
-			fn.ServeHTTP(w, r)
-		})
+		ctx := pprof.WithLabels(r.Context(), labels)
+		pprof.SetGoroutineLabels(ctx)
+		r = r.WithContext(ctx)
+		fn(w, r)
 	}
 }
 
@@ -230,6 +233,7 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 
 		if err := rc.Handler(ctx, w, req); err != nil {
 			observability.Record(ctx, r.Stats.Errors, 1)
+			observability.End(ctx, w, req)
 			service.WriteError(w, req, err)
 			return
 		}
@@ -488,7 +492,7 @@ func EnableTracing() HandlerConfigParam {
 	return f
 }
 
-func notFoundHandler(w http.ResponseWriter, req *http.Request) {
+func NotFoundHandler(w http.ResponseWriter, req *http.Request) {
 	start := time.Now()
 	defer func() {
 		end := time.Now()
@@ -515,6 +519,10 @@ func (r *Router) InitStats(service, name string) error {
 	r.Stats.Errors = stats.Int64(label, "number of errors", stats.UnitDimensionless)
 	label = fmt.Sprintf("cds/%s/%s/router_hits", service, name)
 	r.Stats.Hits = stats.Int64(label, "number of hits", stats.UnitDimensionless)
+	label = fmt.Sprintf("cds/%s/%s/sse_clients", service, name)
+	r.Stats.SSEClients = stats.Int64(label, "number of sse clients", stats.UnitDimensionless)
+	label = fmt.Sprintf("cds/%s/%s/sse_events", service, name)
+	r.Stats.SSEEvents = stats.Int64(label, "number of sse events", stats.UnitDimensionless)
 
 	log.Info("api> Stats initialized")
 
@@ -529,6 +537,18 @@ func (r *Router) InitStats(service, name string) error {
 			Name:        "router_hits",
 			Description: r.Stats.Hits.Description(),
 			Measure:     r.Stats.Hits,
+			Aggregation: view.Count(),
+		},
+		&view.View{
+			Name:        "sse_clients",
+			Description: r.Stats.SSEClients.Description(),
+			Measure:     r.Stats.SSEClients,
+			Aggregation: view.LastValue(),
+		},
+		&view.View{
+			Name:        "sse_events",
+			Description: r.Stats.SSEEvents.Description(),
+			Measure:     r.Stats.SSEEvents,
 			Aggregation: view.Count(),
 		},
 	)

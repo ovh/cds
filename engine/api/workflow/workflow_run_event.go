@@ -50,6 +50,22 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 
 		event.PublishWorkflowNodeRun(db, wnr, wr.Workflow, &previousNodeRun)
 	}
+
+	for _, jobrun := range report.jobs {
+		noderun, err := LoadNodeRunByID(db, jobrun.WorkflowNodeRunID, LoadRunOptions{})
+		if err != nil {
+			log.Warning("SendEvent.workflow> Cannot load workflow node run %d: %s", jobrun.WorkflowNodeRunID, err)
+			continue
+		}
+		wr, errWR := LoadRunByID(db, noderun.WorkflowRunID, LoadRunOptions{
+			WithLightTests: true,
+		})
+		if errWR != nil {
+			log.Warning("SendEvent.workflow> Cannot load workflow run %d: %s", noderun.WorkflowRunID, errWR)
+			continue
+		}
+		event.PublishWorkflowNodeJobRun(db, key, wr.Workflow.Name, jobrun)
+	}
 }
 
 // ResyncCommitStatus resync commit status for a workflow run

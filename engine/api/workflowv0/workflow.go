@@ -10,32 +10,30 @@ import (
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/sdk"
 )
 
-// GetWorkflowStatus Get workflow updated builds status + scheduler and poller executions
-func GetWorkflowStatus(db gorp.SqlExecutor, store cache.Store, projectkey, appName string, user *sdk.User, branchName, remote string, version int64) ([]sdk.PipelineBuild, []sdk.PipelineScheduler, []sdk.RepositoryPoller, []sdk.Hook, error) {
+// GetWorkflowStatus Get workflow updated builds status + scheduler  executions
+func GetWorkflowStatus(db gorp.SqlExecutor, store cache.Store, projectkey, appName string, user *sdk.User, branchName, remote string, version int64) ([]sdk.PipelineBuild, []sdk.PipelineScheduler, []sdk.Hook, error) {
 	cdPipelines, err := LoadCDTree(db, store, projectkey, appName, user, branchName, remote, version)
 	if err != nil {
-		return nil, nil, nil, nil, sdk.WrapError(err, "GetWorkflowStatus> Cannot load workflow")
+		return nil, nil, nil, sdk.WrapError(err, "GetWorkflowStatus> Cannot load workflow")
 	}
 
 	var pbs []sdk.PipelineBuild
 	var schedulers []sdk.PipelineScheduler
-	var pollers []sdk.RepositoryPoller
 	var hooks []sdk.Hook
 
 	for _, cdp := range cdPipelines {
-		getWorkflowStatus(&pbs, &schedulers, &pollers, &hooks, cdp)
+		getWorkflowStatus(&pbs, &schedulers, &hooks, cdp)
 	}
 
-	return pbs, schedulers, pollers, hooks, nil
+	return pbs, schedulers, hooks, nil
 }
 
-func getWorkflowStatus(pbs *[]sdk.PipelineBuild, schedulers *[]sdk.PipelineScheduler, pollers *[]sdk.RepositoryPoller, hooks *[]sdk.Hook, cdPip sdk.CDPipeline) {
+func getWorkflowStatus(pbs *[]sdk.PipelineBuild, schedulers *[]sdk.PipelineScheduler, hooks *[]sdk.Hook, cdPip sdk.CDPipeline) {
 	if len(cdPip.Application.PipelinesBuild) > 0 {
 		*pbs = append(*pbs, cdPip.Application.PipelinesBuild...)
 	} else if cdPip.Pipeline.LastPipelineBuild != nil {
@@ -45,14 +43,12 @@ func getWorkflowStatus(pbs *[]sdk.PipelineBuild, schedulers *[]sdk.PipelineSched
 	if cdPip.Schedulers != nil {
 		*schedulers = append(*schedulers, cdPip.Schedulers...)
 	}
-	if cdPip.Poller != nil {
-		*pollers = append(*pollers, *cdPip.Poller)
-	}
+
 	if cdPip.Hooks != nil {
 		*hooks = append(*hooks, cdPip.Hooks...)
 	}
 	for _, sub := range cdPip.SubPipelines {
-		getWorkflowStatus(pbs, schedulers, pollers, hooks, sub)
+		getWorkflowStatus(pbs, schedulers, hooks, sub)
 	}
 }
 
@@ -583,14 +579,6 @@ func fetchTriggers(db gorp.SqlExecutor, workflowItem *sdk.CDPipeline, hasSchedul
 		}
 		workflowItem.Hooks = hooks
 	}
-	if hasPoller {
-		poller, errP := poller.LoadByApplicationAndPipeline(db, workflowItem.Application.ID, workflowItem.Pipeline.ID)
-		if errP != nil {
-			return sdk.WrapError(errP, "fetchTriggers> Cannot load pollers for application %s [%d] and pipeline %s [%d]: %s", workflowItem.Application.Name, workflowItem.Application.ID, workflowItem.Pipeline.Name, workflowItem.Pipeline.ID, errP)
-		}
-		workflowItem.Poller = poller
-	}
-
 	if hasSchedulers {
 		schedulers, errS := scheduler.GetByApplicationPipeline(db, &workflowItem.Application, &workflowItem.Pipeline)
 		if errS != nil {

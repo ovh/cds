@@ -40,7 +40,6 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	r.HandleFunc("/download", w.downloadHandler)
 	r.HandleFunc("/exit", w.exitHandler)
 	r.HandleFunc("/key/{key}/install", w.keyInstallHandler)
-	r.HandleFunc("/log", w.logHandler)
 	r.HandleFunc("/services/{type}", w.serviceHandler)
 	r.HandleFunc("/tag", w.tagHandler)
 	r.HandleFunc("/tmpl", w.tmplHandler)
@@ -86,7 +85,6 @@ func writeJSON(w http.ResponseWriter, data interface{}, status int) {
 
 func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	al := r.Header.Get("Accept-Language")
-	msg, sdkError := sdk.ProcessError(err, al)
-	sdkErr := sdk.Error{Message: msg}
-	writeJSON(w, sdkErr, sdkError.Status)
+	sdkErr := sdk.ExtractHTTPError(err, al)
+	writeJSON(w, sdkErr, sdkErr.Status)
 }

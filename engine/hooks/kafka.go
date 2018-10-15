@@ -89,7 +89,6 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 	vConsumer := t.Config[sdk.KafkaHookModelConsumerGroup]
 	vConsumer.Value = consumerGroup
 	t.Config[sdk.KafkaHookModelConsumerGroup] = vConsumer
-	s.saveKafkaExecution(t, "", 0)
 
 	// Consume errors
 	go func() {

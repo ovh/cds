@@ -103,9 +103,9 @@ func Create(h Interface) error {
 	// hatchery is now fully Initialized
 	h.SetInitialized()
 
-	sdk.GoRoutine("queuePolling",
-		func() {
-			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
+	sdk.GoRoutine(ctx, "queuePolling",
+		func(ctx context.Context) {
+			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 20*time.Second, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 				cancel()
 			}
@@ -114,53 +114,53 @@ func Create(h Interface) error {
 	)
 
 	// run the starters pool
-	workersStartChan, workerStartResultChan := startWorkerStarters(h)
+	workersStartChan, workerStartResultChan := startWorkerStarters(ctx, h)
 
 	hostname, errh := os.Hostname()
 	if errh != nil {
 		return fmt.Errorf("Create> Cannot retrieve hostname: %s", errh)
 	}
 	// read the result channel in another goroutine to let the main goroutine start new workers
-	sdk.GoRoutine("checkStarterResult",
-		func() {
-			for startWorkerRes := range workerStartResultChan {
-				if startWorkerRes.err != nil {
-					errs <- startWorkerRes.err
+	sdk.GoRoutine(ctx, "checkStarterResult", func(ctx context.Context) {
+		for startWorkerRes := range workerStartResultChan {
+			if startWorkerRes.err != nil {
+				errs <- startWorkerRes.err
+			}
+			if startWorkerRes.temptToSpawn {
+				found := false
+				for _, hID := range startWorkerRes.request.spawnAttempts {
+					if hID == h.ID() {
+						found = true
+						break
+					}
 				}
-				if startWorkerRes.temptToSpawn {
-					found := false
-					for _, hID := range startWorkerRes.request.spawnAttempts {
-						if hID == h.ID() {
-							found = true
-							break
-						}
-					}
-					if !found {
-						if hCount, err := h.CDSClient().HatcheryCount(startWorkerRes.request.workflowNodeRunID); err == nil {
-							if int64(len(startWorkerRes.request.spawnAttempts)) < hCount {
-								if _, errQ := h.CDSClient().QueueJobIncAttempts(startWorkerRes.request.id); errQ != nil {
-									log.Warning("Hatchery> Create> cannot inc spawn attempts %v", errQ)
-								}
+				if !found {
+					ctxHatcheryCount, cancelHatcheryCount := context.WithTimeout(ctx, 10*time.Second)
+					if hCount, err := h.CDSClient().HatcheryCount(ctxHatcheryCount, startWorkerRes.request.workflowNodeRunID); err == nil {
+						if int64(len(startWorkerRes.request.spawnAttempts)) < hCount {
+							ctxtJobIncAttemps, cancelJobIncAttemps := context.WithTimeout(ctx, 10*time.Second)
+							if _, errQ := h.CDSClient().QueueJobIncAttempts(ctxtJobIncAttemps, startWorkerRes.request.id); errQ != nil {
+								log.Warning("Hatchery> Create> cannot inc spawn attempts %v", errQ)
 							}
-						} else {
-							log.Warning("Hatchery> Create> cannot get hatchery count: %v", err)
+							cancelJobIncAttemps()
 						}
+					} else {
+						log.Warning("Hatchery> Create> cannot get hatchery count: %v", err)
 					}
+					cancelHatcheryCount()
 				}
 			}
-		},
+		}
+	},
 		PanicDump(h),
 	)
 
 	// read the errs channel in another goroutine too
-	sdk.GoRoutine("checkErrs",
-		func() {
-			for err := range errs {
-				log.Error("%v", err)
-			}
-		},
-		PanicDump(h),
-	)
+	sdk.GoRoutine(ctx, "checkErrs", func(ctx context.Context) {
+		for err := range errs {
+			log.Error("%v", err)
+		}
+	}, PanicDump(h))
 
 	// the main goroutine
 	for {
@@ -257,6 +257,13 @@ func Create(h Interface) error {
 					observability.Tag(observability.TagProjectKey, p),
 					observability.Tag(observability.TagWorkflowNodeJobRun, j.ID),
 				)
+
+				if _, ok := j.Header["SSE"]; ok {
+					log.Debug("hatchery> received job from SSE")
+					observability.Current(currentCtx,
+						observability.Tag("from", "sse"),
+					)
+				}
 			}
 			endTrace := func(reason string) {
 				if reason != "" {
@@ -278,17 +285,14 @@ func Create(h Interface) error {
 
 			stats.Record(currentCtx, h.Stats().Jobs.M(1))
 
+			if _, ok := j.Header["SSE"]; ok {
+				stats.Record(currentCtx, h.Stats().JobsSSE.M(1))
+			}
+
 			//Check if the jobs is concerned by a pending worker creation
 			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
 				log.Debug("job %d already spawned in previous routine", j.ID)
 				endTrace("already spawned")
-				continue
-			}
-
-			//Check gracetime
-			if j.QueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
-				log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID, j.QueuedSeconds)
-				endTrace("too fresh")
 				continue
 			}
 

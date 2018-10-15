@@ -354,7 +354,7 @@ func (h *HatcheryLocal) WorkersStartedByModel(model *sdk.Model) int {
 // Init register local hatchery with its worker model
 func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]workerCmd)
-	sdk.GoRoutine("startKillAwolWorkerRoutine", h.startKillAwolWorkerRoutine)
+	sdk.GoRoutine(context.Background(), "startKillAwolWorkerRoutine", h.startKillAwolWorkerRoutine)
 	return nil
 }
 
@@ -375,7 +375,7 @@ func (h *HatcheryLocal) localWorkerIndexCleanup() {
 	}
 }
 
-func (h *HatcheryLocal) startKillAwolWorkerRoutine() {
+func (h *HatcheryLocal) startKillAwolWorkerRoutine(ctx context.Context) {
 	t := time.NewTicker(5 * time.Second)
 	for range t.C {
 		if err := h.killAwolWorkers(); err != nil {
@@ -390,7 +390,9 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 	h.Lock()
 	defer h.Unlock()
 
-	apiWorkers, err := h.CDSClient().WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	apiWorkers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		return err
 	}

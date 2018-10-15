@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var workflowExportCmd = cli.Command{
@@ -31,7 +33,24 @@ var workflowExportCmd = cli.Command{
 }
 
 func workflowExportRun(c cli.Values) error {
-	btes, err := client.WorkflowExport(c.GetString(_ProjectKey), c.GetString(_WorkflowName), c.GetBool("with-permissions"), c.GetString("format"))
+	mods := []cdsclient.RequestModifier{
+		func(r *http.Request) {
+			q := r.URL.Query()
+			q.Set("format", c.GetString("format"))
+			r.URL.RawQuery = q.Encode()
+		},
+	}
+	if c.GetBool("with-permissions") {
+		mods = append(mods,
+			func(r *http.Request) {
+				q := r.URL.Query()
+				q.Set("withPermissions", "true")
+				r.URL.RawQuery = q.Encode()
+			},
+		)
+	}
+
+	btes, err := client.WorkflowExport(c.GetString(_ProjectKey), c.GetString(_WorkflowName), mods...)
 	if err != nil {
 		return err
 	}

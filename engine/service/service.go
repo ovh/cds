@@ -11,16 +11,16 @@ import (
 // APIServiceConfiguration is an exposed type for CDS API
 type APIServiceConfiguration struct {
 	HTTP struct {
-		URL      string `toml:"url" default:"http://localhost:8081"`
-		Insecure bool   `toml:"insecure" commented:"true"`
-	} `toml:"http"`
+		URL      string `toml:"url" default:"http://localhost:8081" json:"url"`
+		Insecure bool   `toml:"insecure" commented:"true" json:"insecure"`
+	} `toml:"http" json:"http"`
 	GRPC struct {
-		URL      string `toml:"url" default:"http://localhost:8082"`
-		Insecure bool   `toml:"insecure" commented:"true"`
-	} `toml:"grpc"`
-	Token                string `toml:"token" default:"************"`
-	RequestTimeout       int    `toml:"requestTimeout" default:"10"`
-	MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10"`
+		URL      string `toml:"url" default:"http://localhost:8082" json:"url"`
+		Insecure bool   `toml:"insecure" commented:"true" json:"insecure"`
+	} `toml:"grpc" json:"grpc"`
+	Token                string `toml:"token" default:"************" json:"-"`
+	RequestTimeout       int    `toml:"requestTimeout" default:"10" json:"requestTimeout"`
+	MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" json:"maxHeartbeatFailures"`
 }
 
 // Common is the struct representing a CDS µService
@@ -42,8 +42,8 @@ type Service interface {
 	ApplyConfiguration(cfg interface{}) error
 	Serve(ctx context.Context) error
 	CheckConfiguration(cfg interface{}) error
-	Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus) error
-	Register(status func() sdk.MonitoringStatus) error
+	Heartbeat(ctx context.Context, status func() sdk.MonitoringStatus, cfg interface{}) error
+	Register(status func() sdk.MonitoringStatus, cfg interface{}) error
 	Status() sdk.MonitoringStatus
 }
 

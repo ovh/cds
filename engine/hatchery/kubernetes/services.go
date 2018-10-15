@@ -1,8 +1,10 @@
 package kubernetes
 
 import (
+	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,9 +65,12 @@ func (h *HatcheryKubernetes) getServicesLogs() error {
 
 	if len(servicesLogs) > 0 {
 		// Do call api
-		if err := h.Client.QueueServiceLogs(servicesLogs); err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+		if err := h.Client.QueueServiceLogs(ctx, servicesLogs); err != nil {
+			cancel()
 			return fmt.Errorf("Hatchery> Swarm> Cannot send service logs : %v", err)
 		}
+		cancel()
 	}
 
 	return nil

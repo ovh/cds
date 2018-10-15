@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -18,28 +19,6 @@ func (api *API) adminTruncateWarningsHandler() service.Handler {
 		if _, err := api.mustDB().Exec("delete from warning"); err != nil {
 			return sdk.WrapError(err, "adminTruncateWarningsHandler> Unable to truncate warning ")
 		}
-		return nil
-	}
-}
-
-func (api *API) postAdminMaintenanceHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		api.Cache.SetWithTTL("maintenance", true, -1)
-		return nil
-	}
-}
-
-func (api *API) getAdminMaintenanceHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var m bool
-		api.Cache.Get("maintenance", &m)
-		return service.WriteJSON(w, m, http.StatusOK)
-	}
-}
-
-func (api *API) deleteAdminMaintenanceHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		api.Cache.Delete("maintenance")
 		return nil
 	}
 }
@@ -57,6 +36,11 @@ func (api *API) getAdminServicesHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getAdminServicesHandler")
 		}
+		for i := range srvs {
+			srv := &srvs[i]
+			srv.Hash = ""
+			srv.Token = ""
+		}
 		return service.WriteJSON(w, srvs, http.StatusOK)
 	}
 }
@@ -68,6 +52,18 @@ func (api *API) getAdminServiceHandler() service.Handler {
 		srv, err := services.FindByName(api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "getAdminServiceHandler")
+		}
+		srv.Hash = ""
+		srv.Token = ""
+		if srv.GroupID != nil {
+			g, err := group.LoadGroupByID(api.mustDB(), *srv.GroupID)
+			if err != nil {
+				if err != sdk.ErrGroupNotFound {
+					return sdk.WrapError(err, "getAdminServiceHandler")
+				}
+			} else {
+				srv.Group = g
+			}
 		}
 		return service.WriteJSON(w, srv, http.StatusOK)
 	}

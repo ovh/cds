@@ -40,7 +40,7 @@ func Start(ctx context.Context, serviceName string, w http.ResponseWriter, req *
 	}
 
 	var span *trace.Span
-	rootSpanContext, hasSpanContext := DefaultFormat.SpanContextFromRequest(req)
+	rootSpanContext, hasSpanContext := tracingutils.DefaultFormat.SpanContextFromRequest(req)
 
 	var pkey string
 	var ok bool

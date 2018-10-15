@@ -20,6 +20,7 @@ import {DownloadService} from './download/download.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {EnvironmentService} from './environment/environment.service';
 import {GroupService} from './group/group.service';
+import {HelpersService} from './helpers/helpers.service';
 import {HookService} from './hook/hook.service';
 import {ImportAsCodeService} from './import-as-code/import.service';
 import {KeyService} from './keys/keys.service';
@@ -47,6 +48,7 @@ import {RepoManagerService} from './repomanager/project.repomanager.service';
 import {RequirementService} from './requirement/requirement.service';
 import {RequirementStore} from './requirement/requirement.store';
 import {RouterService} from './router/router.service';
+import {ServiceService} from './service/service.service';
 import {TimelineService} from './timeline/timeline.service';
 import {TimelineStore} from './timeline/timeline.store';
 import {UserService} from './user/user.service';
@@ -87,6 +89,7 @@ export class ServicesModule {
                 EnvironmentService,
                 GroupService,
                 HookService,
+                HelpersService,
                 ImportAsCodeService,
                 BroadcastService,
                 BroadcastStore,
@@ -112,6 +115,7 @@ export class ServicesModule {
                 RequirementStore,
                 RequirementService,
                 RouterService,
+                ServiceService,
                 TimelineService,
                 TimelineStore,
                 UserService,
@@ -160,6 +164,7 @@ export {
     EnvironmentAuditService,
     GroupService,
     HookService,
+    HelpersService,
     ImportAsCodeService,
     BroadcastStore,
     KeyService,
@@ -179,6 +184,7 @@ export {
     RepoManagerService,
     RequirementStore,
     RouterService,
+    ServiceService,
     TimelineStore,
     UserService,
     VariableService,

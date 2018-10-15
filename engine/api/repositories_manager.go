@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/user"
@@ -81,9 +80,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":                  url,
-			"request_token":        token,
-			"username":             getUser(ctx).Username,
+			"url":           url,
+			"request_token": token,
+			"username":      getUser(ctx).Username,
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
@@ -202,7 +201,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 
 		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
 		if errVCSServer != nil {
-			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
+			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot create VCS Server Consumer project:%s repoManager:%s", proj.Key, rmName)
 		}
 
 		tx, errT := api.mustDB().Begin()
@@ -213,7 +212,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 
 		token, secret, err := vcsServer.AuthorizeToken(ctx, token, verifier)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s project:%s", err, proj.Key)
 		}
 		log.Debug("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s", projectKey, token, secret)
 
@@ -516,11 +515,6 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 			if err := hook.DeleteHook(tx, h.ID); err != nil {
 				return sdk.WrapError(err, "detachRepositoriesManager> Cannot get hook")
 			}
-		}
-
-		// Remove reposmanager poller
-		if err := poller.DeleteAll(tx, app.ID); err != nil {
-			return sdk.WrapError(err, "detachRepositoriesManager> error on poller.DeleteAll")
 		}
 
 		if err := tx.Commit(); err != nil {

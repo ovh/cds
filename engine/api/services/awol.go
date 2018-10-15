@@ -23,7 +23,7 @@ func KillDeadServices(ctx context.Context, dbFunc func() *gorp.DbMap) {
 			}
 			for i := range services {
 				if err := Delete(db, &services[i]); err != nil {
-					log.Error("KillDeadServices> Unable to find dead services: %v", errdead)
+					log.Error("KillDeadServices> Unable to find dead services: %v", err)
 					continue
 				}
 			}

@@ -38,10 +38,9 @@ func writeError(w *http.Response, err error) (*http.Response, error) {
 	body := new(bytes.Buffer)
 	enc := json.NewEncoder(body)
 	w.Body = ioutil.NopCloser(body)
-	msg, errProcessed := sdk.ProcessError(err, "")
-	sdkErr := sdk.Error{Message: msg}
+	sdkErr := sdk.ExtractHTTPError(err, "")
 	enc.Encode(sdkErr)
-	w.StatusCode = errProcessed.Status
+	w.StatusCode = sdkErr.Status
 	return w, sdkErr
 }
 

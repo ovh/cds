@@ -83,9 +83,10 @@
   version = "v3.5.1"
 
 [[projects]]
-  name = "github.com/briandowns/spinner"
+  name = "github.com/bsm/sarama-cluster"
   packages = ["."]
-  revision = "cd65e8bd7da20cdcee450f7cbdd9cc04f78bc02f"
+  revision = "c618e605e15c0d7535f6c96ff8efbb0dba4fd66c"
+  version = "v2.1.15"
 
 [[projects]]
   name = "github.com/buger/goterm"
@@ -553,11 +554,6 @@
   revision = "757bef944d0f21880861c2dd9c871ca543023cba"
 
 [[projects]]
-  name = "github.com/gosuri/uilive"
-  packages = ["."]
-  revision = "efb88ccd059957c48f24f9d351d33a0eb00ede41"
-
-[[projects]]
   branch = "master"
   name = "github.com/gregjones/httpcache"
   packages = [
@@ -582,13 +578,6 @@
   name = "github.com/hashicorp/go-multierror"
   packages = ["."]
   revision = "b7773ae218740a7be65057fc60b366a49b538a44"
-
-[[projects]]
-  branch = "ye-cds"
-  name = "github.com/hashicorp/go-plugin"
-  packages = ["."]
-  revision = "bb20eeea62eb19fcb525c4b545b9e65e9f550bc1"
-  source = "https://github.com/yesnault/go-plugin.git"
 
 [[projects]]
   branch = "master"
@@ -620,11 +609,6 @@
     "helper/jsonutil"
   ]
   revision = "f1c8b772fdecdd20f483653d18619d41b25ef934"
-
-[[projects]]
-  name = "github.com/hashicorp/yamux"
-  packages = ["."]
-  revision = "d1caa6c97c9fc1cc9e83bbe34d0603f9ff0ce8bd"
 
 [[projects]]
   name = "github.com/howeyc/gopass"
@@ -894,6 +878,7 @@
     "executors/exec",
     "executors/http",
     "executors/imap",
+    "executors/kafka",
     "executors/ovhapi",
     "executors/readfile",
     "executors/redis",
@@ -901,8 +886,8 @@
     "executors/ssh",
     "executors/web"
   ]
-  revision = "9ec4044cda41dec8a1ccbd5db066f6c8d350c70f"
-  version = "0.21.3"
+  revision = "936246765cb756e8966e8733247c3121ad296682"
+  version = "0.22.0"
 
 [[projects]]
   branch = "master"
@@ -1134,6 +1119,12 @@
   name = "github.com/stretchr/testify"
   packages = ["assert"]
   revision = "d77da356e56a7428ad25149ca77381849a6a5232"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/tevino/abool"
+  packages = ["."]
+  revision = "9b9efcf221b50905aab9bbabd3daed56dc10f339"
 
 [[projects]]
   name = "github.com/ugorji/go"
@@ -1589,6 +1580,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f37dc9664c73099fc0c9f399ccb3398f94129c055df9c3f098f30931988436b6"
+  inputs-digest = "1b39f485cd213af7e225a44fb6ff3003beba3b97ad2e29f8d81bc905bc1f6a7f"
   solver-name = "gps-cdcl"
   solver-version = 1

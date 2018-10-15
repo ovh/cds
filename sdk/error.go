@@ -3,11 +3,13 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
+	"runtime"
+	"strings"
 
 	"github.com/pkg/errors"
-
 	"golang.org/x/text/language"
 )
 
@@ -203,7 +205,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrNoAttachedPipeline.ID:                     "pipeline not attached to the application",
 	ErrNoReposManager.ID:                         "repositories manager not found",
 	ErrNoReposManagerAuth.ID:                     "CDS authentication error, please contact CDS administrator",
-	ErrNoReposManagerClientAuth.ID:               "Repository manager authentication error, please check your credentials",
+	ErrNoReposManagerClientAuth.ID:               "Repository manager authentication error, please unlink and relink your CDS Project to the repository manager",
 	ErrRepoNotFound.ID:                           "repository not found",
 	ErrSecretStoreUnreachable.ID:                 "could not reach secret backend to fetch secret key",
 	ErrSecretKeyFetchFailed.ID:                   "error while fetching key from secret backend",
@@ -348,7 +350,7 @@ var errorsFrench = map[int]string{
 	ErrNoAttachedPipeline.ID:                     "le pipeline n'est pas lié à l'application",
 	ErrNoReposManager.ID:                         "le gestionnaire de dépôt n'existe pas",
 	ErrNoReposManagerAuth.ID:                     "connexion de CDS au gestionnaire de dépôt refusée, merci de contacter l'administrateur",
-	ErrNoReposManagerClientAuth.ID:               "connexion au gestionnaire de dépôts refusée, vérifier vos accréditations",
+	ErrNoReposManagerClientAuth.ID:               "connexion au gestionnaire de dépôts refusée, merci de détacher et ré-attacher le repository manager sur votre projet CDS",
 	ErrRepoNotFound.ID:                           "le dépôt n'existe pas",
 	ErrSecretStoreUnreachable.ID:                 "impossible de contacter vault",
 	ErrSecretKeyFetchFailed.ID:                   "erreur pendnat la récuperation de la clef de chiffrement",
@@ -454,77 +456,211 @@ var errorsLanguages = []map[int]string{
 	errorsFrench,
 }
 
-// NewError just set an error with a root cause
-func NewError(target Error, root error) Error {
-	target.Root = root
-	return target
+// Error type.
+type Error struct {
+	ID         int    `json:"id"`
+	Status     int    `json:"-"`
+	Message    string `json:"message"`
+	UUID       string `json:"uuid,omitempty"`
+	StackTrace string `json:"stack_trace,omitempty"`
 }
 
-// WrapError constructs a stack of errors, adding context to the preceding error.
-func WrapError(err error, format string, args ...interface{}) error {
-	return errors.Wrap(err, fmt.Sprintf(format, args...))
+type errorWithStack struct {
+	root      error  // root error should be wrapped with stack
+	stack     *stack // used to generate inline call stack
+	httpError Error
 }
 
-// SetError completes an error
-func SetError(err error, format string, args ...interface{}) error {
-	msg := fmt.Errorf("%s: %v", fmt.Sprintf(format, args...), err)
-	cdsErr, ok := err.(Error)
-	if !ok {
-		return NewError(cdsErr, msg)
-	}
-	return msg
+func (w errorWithStack) Error() string {
+	return fmt.Sprintf("%s: %s (caused by: %s)", w.stack.String(), w.httpError, w.root)
 }
+func (w errorWithStack) Cause() error { return w.root }
 
-// ProcessError tries to recognize given error and return error message in a language matching Accepted-Language
-func ProcessError(target error, al string) (string, Error) {
-	// will recursively retrieve the topmost error which does not implement causer, which is assumed to be the original cause
-	target = errors.Cause(target)
-	cdsErr, ok := target.(Error)
-	if !ok || cdsErr.ID == 0 {
-		if ok && cdsErr.Message != "" {
-			return cdsErr.Message, cdsErr
+func (w errorWithStack) Format(s fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if s.Flag('+') {
+			fmt.Fprintf(s, "%+v", w.Cause())
+			return
 		}
-		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
+		fallthrough
+	case 's':
+		_, _ = io.WriteString(s, w.Error())
 	}
+}
+
+// IsErrorWithStack returns true if given error is an errorWithStack.
+func IsErrorWithStack(err error) bool {
+	_, ok := err.(errorWithStack)
+	return ok
+}
+
+type stack []uintptr
+
+func (s *stack) String() string {
+	var names []string
+	for _, pc := range *s {
+		name := runtime.FuncForPC(pc).Name()
+		if strings.HasPrefix(name, "github.com/ovh/cds/vendor") {
+			continue
+		}
+		if strings.HasPrefix(name, "github.com/ovh/cds") {
+			sp := strings.Split(name, "/")
+			sp = strings.Split(sp[len(sp)-1], ".")
+			// check if it's a struct or package func
+			if strings.HasPrefix(sp[1], "(") {
+				names = append(names, sp[2])
+			} else {
+				names = append(names, sp[1])
+			}
+		}
+	}
+	reverse(names)
+	return strings.Join(names, ">")
+}
+
+func reverse(ss []string) {
+	last := len(ss) - 1
+	for i := 0; i < len(ss)/2; i++ {
+		ss[i], ss[last-i] = ss[last-i], ss[i]
+	}
+}
+
+func callers() *stack {
+	const depth = 32
+	var pcs [depth]uintptr
+	n := runtime.Callers(3, pcs[:])
+	var st stack = pcs[0:n]
+	return &st
+}
+
+// NewError just set an error with a root cause.
+func NewError(httpError Error, err error) error {
+	// if the given error is a error with stack, replace the http error
+	if err != nil {
+		if e, ok := err.(errorWithStack); ok {
+			e.httpError = httpError
+			return e
+		}
+	}
+
+	return errorWithStack{
+		root:      errors.WithStack(err),
+		stack:     callers(),
+		httpError: httpError,
+	}
+}
+
+// WrapError returns an error with stack and message.
+func WrapError(err error, format string, args ...interface{}) error {
+	// the wrap should ignore nil err like in pkg/errors lib
+	if err == nil {
+		return nil
+	}
+
+	m := fmt.Sprintf(format, args...)
+
+	// if it's already a CDS error then only wrap with message
+	if e, ok := err.(errorWithStack); ok {
+		e.root = errors.WithMessage(e.root, m)
+		return e
+	}
+
+	// if it's a Error wrap it in error with stack
+	if e, ok := err.(Error); ok {
+		return errorWithStack{
+			root:      errors.Wrap(err, m),
+			stack:     callers(),
+			httpError: e,
+		}
+	}
+
+	return errorWithStack{
+		root:      errors.Wrap(err, m),
+		stack:     callers(),
+		httpError: ErrUnknownError,
+	}
+}
+
+// WithStack returns an error with stack from given error.
+func WithStack(err error) error {
+	// the wrap should ignore nil err like in pkg/errors lib
+	if err == nil {
+		return nil
+	}
+
+	// if it's already a CDS error do not override the stack
+	if e, ok := err.(errorWithStack); ok {
+		return e
+	}
+
+	// if it's a Error wrap it in error with stack
+	if e, ok := err.(Error); ok {
+		return errorWithStack{
+			root:      errors.WithStack(err),
+			stack:     callers(),
+			httpError: e,
+		}
+	}
+
+	return errorWithStack{
+		root:      errors.WithStack(err),
+		stack:     callers(),
+		httpError: ErrUnknownError,
+	}
+}
+
+// ExtractHTTPError tries to recognize given error and return http error
+// with message in a language matching Accepted-Language.
+func ExtractHTTPError(source error, al string) Error {
+	httpError := ErrUnknownError
+
+	// try to recognize http error from source
+	if e, ok := source.(errorWithStack); ok {
+		httpError = e.httpError
+	}
+	if e, ok := source.(Error); ok {
+		httpError = e
+	}
+
+	// if it's a custom err with no status use unknown error status
+	if httpError.Status == 0 {
+		httpError.Status = ErrUnknownError.Status
+	}
+
+	// if error's message is not empty do not override (custom message)
+	if httpError.Message != "" {
+		return httpError
+	}
+
 	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
 	if err != nil {
-		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
+		httpError.Message = errorsAmericanEnglish[ErrUnknownError.ID]
+		return httpError
 	}
 
+	// try to get error message for accepted language and error ID, else use unknown error message
 	tag, _, _ := matcher.Match(acceptedLanguages...)
 	var msg string
-	if cdsErr.ID != 0 {
-		switch tag {
-		case language.French:
-			msg, ok = errorsFrench[cdsErr.ID]
-			break
-		case language.AmericanEnglish:
-			msg, ok = errorsAmericanEnglish[cdsErr.ID]
-			break
-		default:
-			msg, ok = errorsAmericanEnglish[cdsErr.ID]
-			break
-		}
-	} else {
-		ok = true
-		msg = cdsErr.Message
+	var ok bool
+	switch tag {
+	case language.French:
+		msg, ok = errorsFrench[httpError.ID]
+		break
+	case language.AmericanEnglish:
+		msg, ok = errorsAmericanEnglish[httpError.ID]
+		break
+	default:
+		msg, ok = errorsAmericanEnglish[httpError.ID]
+		break
 	}
-
 	if !ok {
-		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
+		httpError.Message = errorsAmericanEnglish[ErrUnknownError.ID]
+		return httpError
 	}
-	if cdsErr.Root != nil {
-		cdsErrRoot, ok := cdsErr.Root.(*Error)
-		var rootMsg string
-		if ok {
-			rootMsg, _ = ProcessError(cdsErrRoot, al)
-		} else {
-			rootMsg = fmt.Sprintf("%v", cdsErr.Root.Error())
-		}
 
-		msg = fmt.Sprintf("%s (caused by: %s)", msg, rootMsg)
-	}
-	return msg, cdsErr
+	httpError.Message = msg
+	return httpError
 }
 
 // Exit func display an error message on stderr and exit 1
@@ -534,14 +670,6 @@ func Exit(format string, args ...interface{}) {
 	}
 	fmt.Fprintf(os.Stderr, format, args...)
 	os.Exit(1)
-}
-
-// Error type
-type Error struct {
-	ID      int    `json:"-"`
-	Status  int    `json:"-"`
-	Message string `json:"message"`
-	Root    error  `json:"-"`
 }
 
 // DecodeError return an Error struct from json
@@ -560,44 +688,35 @@ func DecodeError(data []byte) error {
 }
 
 func (e Error) String() string {
-	var msg = e.Message
-	if e.Message == "" {
-		msg1, ok := errorsAmericanEnglish[e.ID]
-		if ok {
-			msg = msg1
-		}
+	if e.Message != "" {
+		return e.Message
 	}
 
-	if e.Root != nil {
-		cdsErrRoot, ok := e.Root.(*Error)
-		var rootMsg string
-		if ok {
-			rootMsg, _ = ProcessError(cdsErrRoot, "en-US")
-		} else {
-			rootMsg = fmt.Sprintf("%s [%T]", e.Root.Error(), e.Root)
-		}
-
-		msg = fmt.Sprintf("%s (caused by: %s)", msg, rootMsg)
+	if en, ok := errorsAmericanEnglish[e.ID]; ok {
+		return en
 	}
 
-	return msg
+	return errorsAmericanEnglish[ErrUnknownError.ID]
+
 }
 
-func (e Error) Error() string {
-	return e.String()
-}
+func (e Error) Error() string { return e.String() }
 
-// ErrorIs returns true if error is same as and sdk.Error Message
+// ErrorIs returns true if error is same as and sdk.HTTPError Message
 // this func checks msg in all languages
-func ErrorIs(err error, t Error) bool {
+func ErrorIs(err error, target Error) bool {
 	if err == nil {
 		return false
 	}
-	for _, l := range errorsLanguages {
-		if l[t.ID] == err.Error() || l[t.ID] == errors.Cause(err).Error() {
-			return true
-		}
+
+	if e, ok := err.(Error); ok {
+		return e.ID == target.ID
 	}
+
+	if e, ok := err.(errorWithStack); ok {
+		return e.httpError.ID == target.ID
+	}
+
 	return false
 }
 
@@ -623,11 +742,7 @@ func (e *MultiError) Join(j MultiError) {
 }
 
 // Append appends an error to a MultiError
-func (e *MultiError) Append(err error) {
-	*e = append(*e, err)
-}
+func (e *MultiError) Append(err error) { *e = append(*e, err) }
 
 // IsEmpty return true if MultiError is empty, false otherwise
-func (e *MultiError) IsEmpty() bool {
-	return len(*e) == 0
-}
+func (e *MultiError) IsEmpty() bool { return len(*e) == 0 }

@@ -8,6 +8,6 @@ CDS Plugin System lets users develop complex actions. See [How to write a plugin
 
 CDS Administrators have to import plugins on CDS to let user use them.
 
-Plugins from [CDS Contributions](https://github.com/ovh/cds/tree/master/contrib/plugins):
+Plugins from [CDS Contributions](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action):
 
 {{%children style=""%}}

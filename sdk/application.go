@@ -29,7 +29,6 @@ type Application struct {
 	LastModified         time.Time                 `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	VCSServer            string                    `json:"vcs_server,omitempty" db:"vcs_server"`
 	RepositoryFullname   string                    `json:"repository_fullname,omitempty" db:"repo_fullname" cli:"repository_fullname"`
-	RepositoryPollers    []RepositoryPoller        `json:"pollers,omitempty" db:"-"`
 	RepositoryStrategy   RepositoryStrategy        `json:"vcs_strategy,omitempty" db:"-"`
 	Hooks                []Hook                    `json:"hooks,omitempty" db:"-"`
 	Workflows            []CDPipeline              `json:"workflows,omitempty" db:"-"`

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -327,8 +328,20 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "stopWorkflowRun> Unable to stop workflow")
 		}
+		workflowRuns := report.WorkflowRuns()
 
 		go workflow.SendEvent(api.mustDB(), proj.Key, report)
+
+		if len(workflowRuns) > 0 {
+			observability.Current(ctx,
+				observability.Tag(observability.TagProjectKey, proj.Key),
+				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name),
+			)
+
+			if workflowRuns[0].Status == sdk.StatusFail.String() {
+				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+			}
+		}
 
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
@@ -635,7 +648,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
 
-		report, err := stopWorkflowNodeRun(ctx, api.mustDB, api.Cache, p, nodeRun, name, getUser(ctx))
+		report, err := api.stopWorkflowNodeRun(ctx, api.mustDB, api.Cache, p, nodeRun, name, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to stop workflow run")
 		}
@@ -646,7 +659,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 	}
 }
 
-func stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) (*workflow.ProcessorReport, error) {
+func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) (*workflow.ProcessorReport, error) {
 	tx, errTx := dbFunc().Begin()
 	if errTx != nil {
 		return nil, sdk.WrapError(errTx, "stopWorkflowNodeRunHandler> Unable to create transaction")
@@ -674,6 +687,14 @@ func stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	}
 
 	_, _ = report.Merge(r1, nil)
+
+	observability.Current(ctx,
+		observability.Tag(observability.TagProjectKey, p.Key),
+		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
+	)
+	if wr.Status == sdk.StatusFail.String() {
+		observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+	}
 
 	if errC := tx.Commit(); errC != nil {
 		return nil, sdk.WrapError(errC, "stopWorkflowNodeRunHandler> Unable to commit")
@@ -712,8 +733,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		u := getUser(ctx)
 
-		observability.Current(ctx, observability.Tag(observability.TagWorkflow, name))
-		observability.Record(ctx, api.Stats.WorkflowRuns, 1)
+		observability.Current(ctx,
+			observability.Tag(observability.TagProjectKey, key),
+			observability.Tag(observability.TagWorkflow, name),
+		)
+		observability.Record(ctx, api.Stats.WorkflowRunStarted, 1)
 
 		_, next := observability.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
@@ -787,7 +811,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				var errCreate error
 				asCodeInfosMsg, errCreate = workflow.CreateFromRepository(ctx, api.mustDB(), api.Cache, proj, wf, *opts, u, project.DecryptWithBuiltinKey)
 				if errCreate != nil {
-					return sdk.WrapError(errCreate, "postWorkflowRunHandler> Unable to get workflow from repository")
+					var msgListString string
+					if len(asCodeInfosMsg) > 0 {
+						msgListString = strings.Join(translate(r, asCodeInfosMsg), " ")
+					}
+					return sdk.WrapError(errCreate, "postWorkflowRunHandler> Unable to get workflow from repository.%s", msgListString)
 				}
 			} else {
 				var errl error
@@ -817,13 +845,11 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		go workflow.SendEvent(api.mustDB(), p.Key, report)
 
 		// Purge workflow run
-		sdk.GoRoutine(
-			"workflow.PurgeWorkflowRun",
-			func() {
-				if err := workflow.PurgeWorkflowRun(api.mustDB(), *wf); err != nil {
-					log.Error("workflow.PurgeWorkflowRun> error %v", err)
-				}
-			})
+		sdk.GoRoutine(ctx, "workflow.PurgeWorkflowRun", func(ctx context.Context) {
+			if err := workflow.PurgeWorkflowRun(api.mustDB(), *wf); err != nil {
+				log.Error("workflow.PurgeWorkflowRun> error %v", err)
+			}
+		})
 
 		var wr *sdk.WorkflowRun
 		if len(report.WorkflowRuns()) > 0 {

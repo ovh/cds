@@ -1,0 +1,22 @@
+{
+  "name": "sdk-grpcplugin-cds-nodejs",
+  "version": "1.0.0",
+  "description": "This is a sdk for GRPC plugin in CDS",
+  "main": "sdk.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "sdk",
+    "cds",
+    "grpc"
+  ],
+  "author": "Benjamin Coenen",
+  "license": "ISC",
+  "dependencies": {
+    "get-port": "^4.0.0",
+    "google-protobuf": "^3.6.1",
+    "grpc": "^1.15.1",
+    "yaml": "^1.0.0"
+  }
+}

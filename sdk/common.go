@@ -3,6 +3,7 @@ package sdk
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/md5"
 	"crypto/sha512"
 	"encoding/hex"
@@ -13,6 +14,7 @@ import (
 	"reflect"
 	"regexp"
 	"runtime"
+	"runtime/pprof"
 
 	"github.com/go-gorp/gorp"
 
@@ -108,9 +110,13 @@ func FileSHA512sum(filePath string) (string, error) {
 }
 
 // GoRoutine runs the function within a goroutine with a panic recovery
-func GoRoutine(name string, fn func(), writerFactories ...func(s string) (io.WriteCloser, error)) {
+func GoRoutine(c context.Context, name string, fn func(ctx context.Context), writerFactories ...func(s string) (io.WriteCloser, error)) {
 	hostname, _ := os.Hostname()
-	go func() {
+	go func(ctx context.Context) {
+		labels := pprof.Labels("goroutine-name", name, "goroutine-hostname", hostname)
+		goroutineCtx := pprof.WithLabels(ctx, labels)
+		pprof.SetGoroutineLabels(goroutineCtx)
+
 		defer func() {
 			if r := recover(); r != nil {
 				buf := make([]byte, 1<<16)
@@ -134,6 +140,7 @@ func GoRoutine(name string, fn func(), writerFactories ...func(s string) (io.Wri
 				}
 			}
 		}()
-		fn()
-	}()
+
+		fn(goroutineCtx)
+	}(c)
 }

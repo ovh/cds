@@ -56,8 +56,8 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		}
 
 		logCtx, stopLogs := context.WithCancel(ctx)
-		go enablePluginLogger(logCtx, sendLog, pluginSocket)
-		defer stopLogs()
+		done := make(chan struct{})
+		go enablePluginLogger(logCtx, done, sendLog, pluginSocket)
 
 		manifest, err := platformPluginClient.Manifest(ctx, &empty.Empty{})
 		if err != nil {
@@ -65,6 +65,8 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Reason: "Unable to retrieve plugin manifest... Aborting",
 				Status: sdk.StatusFail.String(),
 			}
+			stopLogs()
+			<-done
 			sendLog(err.Error())
 			return res
 		}
@@ -82,6 +84,8 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Status: sdk.StatusFail.String(),
 			}
 			sendLog(res.Reason)
+			stopLogs()
+			<-done
 			return res
 		}
 
@@ -89,11 +93,15 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		sendLog(fmt.Sprintf("# Status: %s", res.Status))
 
 		if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess.String()) {
+			stopLogs()
+			<-done
 			return sdk.Result{
 				Status: sdk.StatusSuccess.String(),
 			}
 		}
 
+		stopLogs()
+		<-done
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: res.Details,

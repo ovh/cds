@@ -1,9 +1,6 @@
 package observability
 
 import (
-	"go.opencensus.io/plugin/ochttp/propagation/b3"
-	"go.opencensus.io/trace/propagation"
-
 	"github.com/ovh/cds/sdk"
 )
 
@@ -17,20 +14,18 @@ const (
 	StatusCodeAttribute = "http.status_code"
 )
 
-var DefaultFormat propagation.HTTPFormat = &b3.HTTPFormat{}
-
 // Configuration is the global tracing configuration
 type Configuration struct {
-	Enable   bool
+	Enable   bool `json:"enable"`
 	Exporter struct {
 		Jaeger struct {
-			HTTPCollectorEndpoint string `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268"`
-		}
+			HTTPCollectorEndpoint string `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268" json:"httpCollectorEndpoint"`
+		} `json:"jaeger"`
 		Prometheus struct {
-			ReporteringPeriod int `toml:"ReporteringPeriod" default:"60"`
-		}
-	}
-	SamplingProbability float64
+			ReporteringPeriod int `toml:"ReporteringPeriod" default:"60" json:"reporteringPeriod"`
+		} `json:"prometheus"`
+	} `json:"exporter"`
+	SamplingProbability float64 `json:"samplingProbability"`
 }
 
 //Options is the options struct for a new tracing span

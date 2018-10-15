@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/ovh/cds/sdk/cdsclient"
 )
@@ -27,7 +29,9 @@ func main() {
 
 	// go on https://godoc.org/github.com/ovh/cds/sdk/cdsclient to
 	// see all available funcs
-	workers, err := client.WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	workers, err := client.WorkerList(ctx)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error while getting workers:%s", err)
 		os.Exit(1)

@@ -2,9 +2,11 @@ package swarm
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"html/template"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -46,7 +48,9 @@ func (h *HatcherySwarm) Init() error {
 			log.Error("hatchery> swarm> unable to connect to a docker client:%s", errc)
 			return errc
 		}
-		if _, errPing := d.Ping(context.Background()); errPing != nil {
+		ctxDocker, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, errPing := d.Ping(ctxDocker); errPing != nil {
 			log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
 			return errPing
 		}
@@ -61,6 +65,10 @@ func (h *HatcherySwarm) Init() error {
 		for hostName, cfg := range h.Config.DockerEngines {
 			log.Info("hatchery> swarm> connecting to %s: %s", hostName, cfg.Host)
 			httpClient := new(http.Client)
+			// max time for a docker pull, but for most of docker request, there is a request with
+			// a lower timeout, using context.WithTimeout
+			httpClient.Timeout = 10 * time.Minute
+			var tlsc *tls.Config
 			if cfg.CertPath != "" {
 				options := tlsconfig.Options{
 					CAFile:             filepath.Join(cfg.CertPath, "ca.pem"),
@@ -68,16 +76,12 @@ func (h *HatcherySwarm) Init() error {
 					KeyFile:            filepath.Join(cfg.CertPath, "key.pem"),
 					InsecureSkipVerify: cfg.InsecureSkipTLSVerify,
 				}
-				tlsc, err := tlsconfig.Client(options)
+				var err error
+				tlsc, err = tlsconfig.Client(options)
 				if err != nil {
 					log.Error("hatchery> swarm> docker client error (CertPath=%s): %v", cfg.CertPath, err)
 					continue
 				}
-
-				httpClient.Transport = &http.Transport{
-					TLSClientConfig: tlsc,
-				}
-
 			} else if cfg.TLSCAPEM != "" && cfg.TLSCERTPEM != "" && cfg.TLSKEYPEM != "" {
 				tempDir, err := ioutil.TempDir("", "cert-"+hostName)
 				if err != nil {
@@ -102,24 +106,50 @@ func (h *HatcherySwarm) Init() error {
 					KeyFile:            filepath.Join(tempDir, "key.pem"),
 					InsecureSkipVerify: cfg.InsecureSkipTLSVerify,
 				}
-				tlsc, err := tlsconfig.Client(options)
+				tlsc, err = tlsconfig.Client(options)
 				if err != nil {
 					log.Error("hatchery> swarm> docker client error: unable to set tlsconfig: %v", err)
 					continue
 				}
+			}
 
+			if tlsc != nil {
 				httpClient.Transport = &http.Transport{
-					TLSClientConfig: tlsc,
+					DialContext: (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 0 * time.Second,
+						DualStack: true,
+					}).DialContext,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       20 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+					ResponseHeaderTimeout: 30 * time.Second,
+					TLSClientConfig:       tlsc,
 				}
 			} else {
-				httpClient.Transport = &http.Transport{}
+				httpClient.Transport = &http.Transport{
+					DialContext: (&net.Dialer{
+						Timeout:   30 * time.Second,
+						KeepAlive: 0 * time.Second,
+						DualStack: true,
+					}).DialContext,
+					MaxIdleConns:          100,
+					IdleConnTimeout:       20 * time.Second,
+					TLSHandshakeTimeout:   10 * time.Second,
+					ExpectContinueTimeout: 1 * time.Second,
+					ResponseHeaderTimeout: 30 * time.Second,
+				}
 			}
+
 			d, errc := docker.NewClientWithOpts(docker.WithHost(cfg.Host), docker.WithVersion(cfg.APIVersion), docker.WithHTTPClient(httpClient))
 			if errc != nil {
 				log.Error("hatchery> swarm> unable to connect to a docker client:%s for host %s (%s)", hostName, cfg.Host, errc)
 				continue
 			}
-			if _, errPing := d.Ping(context.Background()); errPing != nil {
+			ctxDocker, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+			if _, errPing := d.Ping(ctxDocker); errPing != nil {
 				log.Error("hatchery> swarm> unable to ping docker host:%s", errPing)
 				continue
 			}
@@ -137,7 +167,7 @@ func (h *HatcherySwarm) Init() error {
 		}
 	}
 
-	sdk.GoRoutine("swarm", func() { h.routines(context.Background()) })
+	sdk.GoRoutine(context.Background(), "swarm", func(ctx context.Context) { h.routines(ctx) })
 
 	return nil
 }
@@ -226,7 +256,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					network = name + "-net"
 					networkAlias = "worker"
 					if err := h.createNetwork(ctx, dockerClient, network); err != nil {
-						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s for jobID %d : %v", network, spawnArgs.JobID, err)
+						log.Warning("hatchery> swarm> SpawnWorker> Unable to create network %s on %s for jobID %d : %v", network, dockerClient.name, spawnArgs.JobID, err)
 						next()
 						return "", err
 					}
@@ -252,7 +282,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 						m := strings.Replace(e, "CDS_SERVICE_MEMORY=", "", -1)
 						i, err := strconv.Atoi(m)
 						if err != nil {
-							log.Warning("hatchery> swarm> SpawnWorker> Unable to parse service option %s : %s", e, err)
+							log.Warning("hatchery> swarm> SpawnWorker> Unable to parse service option %s : %v", e, err)
 							continue
 						}
 						serviceMemory = int64(i)
@@ -287,7 +317,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 				}
 
 				if err := h.createAndStartContainer(ctx, dockerClient, args, spawnArgs); err != nil {
-					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container: %s", err)
+					log.Warning("hatchery> swarm> SpawnWorker> Unable to start required container on %s: %s", dockerClient.name, err)
 					return "", err
 				}
 				services = append(services, serviceName)
@@ -592,13 +622,13 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			sdk.GoRoutine("getServicesLogs", func() {
+			sdk.GoRoutine(ctx, "getServicesLogs", func(ctx context.Context) {
 				if err := h.getServicesLogs(); err != nil {
 					log.Error("Hatchery> swarm> Cannot get service logs : %v", err)
 				}
 			})
 
-			sdk.GoRoutine("killAwolWorker", func() {
+			sdk.GoRoutine(ctx, "killAwolWorker", func(ctx context.Context) {
 				_ = h.killAwolWorker()
 			})
 		case <-ctx.Done():
@@ -611,7 +641,9 @@ func (h *HatcherySwarm) routines(ctx context.Context) {
 }
 
 func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Container, error) {
-	apiworkers, err := h.CDSClient().WorkerList()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	apiworkers, err := h.CDSClient().WorkerList(ctx)
 	if err != nil {
 		return nil, sdk.WrapError(err, "hatchery> swarm> listAwolWorkers> Cannot get workers on %s", dockerClient.name)
 	}
@@ -642,7 +674,7 @@ func (h *HatcherySwarm) listAwolWorkers(dockerClient *dockerClient) ([]types.Con
 				found = true
 				// If worker is disabled, kill it
 				if n.Status == sdk.StatusDisabled {
-					log.Debug("lhatchery> swarm> listAwolWorkers> Worker %s is disabled. Kill it with fire!", c.Names[0])
+					log.Debug("hatchery> swarm> listAwolWorkers> Worker %s is disabled. Kill it with fire!", c.Names[0])
 					oldContainers = append(oldContainers, c)
 					break
 				}

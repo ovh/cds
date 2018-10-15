@@ -46,6 +46,11 @@ export class NotificationService {
                     options.onshow(e);
                 }
                 obs.next({notification: notif, event: e});
+                setTimeout(() => {
+                    if (notif && notif.close) {
+                        notif.close();
+                    }
+                }, 5000);
             };
 
             notif.onclick = (e: any) => {

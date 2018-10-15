@@ -117,6 +117,15 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return sdk.WrapError(errE, "Import> Cannot check if workflow exists")
 	}
 
+	//Manage default payload
+	var err error
+	if w.Root.Context == nil {
+		w.Root.Context = &sdk.WorkflowNodeContext{}
+	}
+	if w.Root.Context.DefaultPayload, err = DefaultPayload(ctx, db, store, proj, u, w); err != nil {
+		log.Warning("workflow.Import> Cannot set default payload : %v", err)
+	}
+
 	d := w.Migrate(false)
 	w.WorkflowData = &d
 

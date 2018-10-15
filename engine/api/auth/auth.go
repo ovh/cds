@@ -169,7 +169,7 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 
 	serviceHash := string(id)
 	if serviceHash == "" {
-		return ctx, fmt.Errorf("bad service id")
+		return ctx, fmt.Errorf("missing service Hash")
 	}
 
 	srv, err := GetService(db, store, serviceHash)

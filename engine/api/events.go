@@ -10,11 +10,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tevino/abool"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -22,65 +25,37 @@ import (
 
 // eventsBrokerSubscribe is the information needed to subscribe
 type eventsBrokerSubscribe struct {
-	UUID  string
-	User  *sdk.User
-	Queue chan sdk.Event
+	UUID    string
+	User    *sdk.User
+	isAlive *abool.AtomicBool
+	w       http.ResponseWriter
+	mutex   sync.Mutex
 }
 
 // lastUpdateBroker keeps connected client of the current route,
 type eventsBroker struct {
-	clients           map[string]eventsBrokerSubscribe
-	messages          chan sdk.Event
-	mutex             *sync.Mutex
-	disconnected      map[string]bool
-	disconnectedMutex *sync.Mutex
-	dbFunc            func() *gorp.DbMap
-	cache             cache.Store
-	clientsLen        int64
-}
-
-// AddClient add a client to the client map
-func (b *eventsBroker) addClient(client eventsBrokerSubscribe) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	b.clients[client.UUID] = client
-	b.clientsLen++
-}
-
-// CleanAll cleans all clients
-func (b *eventsBroker) cleanAll() {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	if b.clients != nil {
-		for c, v := range b.clients {
-			close(v.Queue)
-			delete(b.clients, c)
-		}
-	}
-	b.clientsLen = 0
-}
-
-func (b *eventsBroker) disconnectClient(uuid string) {
-	b.disconnectedMutex.Lock()
-	defer b.disconnectedMutex.Unlock()
-	b.disconnected[uuid] = true
+	clients          map[string]*eventsBrokerSubscribe
+	messages         chan sdk.Event
+	dbFunc           func() *gorp.DbMap
+	cache            cache.Store
+	router           *Router
+	chanAddClient    chan (*eventsBrokerSubscribe)
+	chanRemoveClient chan (string)
 }
 
 //Init the eventsBroker
-func (b *eventsBroker) Init(c context.Context) {
+func (b *eventsBroker) Init(ctx context.Context) {
 	// Start cache Subscription
-	subscribeFunc := func() {
-		cacheSubscribe(c, b.messages, b.cache)
-	}
-	sdk.GoRoutine("eventsBroker.Init.CacheSubscribe", subscribeFunc)
+	sdk.GoRoutine(ctx, "eventsBroker.Init.CacheSubscribe", func(ctx context.Context) {
+		b.cacheSubscribe(ctx, b.messages, b.cache)
+	})
 
-	startFunc := func() {
-		b.Start(c)
-	}
-	sdk.GoRoutine("eventsBroker.Init.Start", startFunc)
+	sdk.GoRoutine(ctx, "eventsBroker.Init.Start", func(ctx context.Context) {
+		b.Start(ctx)
+	})
 }
 
-func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
+func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
 	if cacheMsgChan == nil {
 		return
 	}
@@ -111,26 +86,72 @@ func cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cach
 			case "sdk.EventPipelineBuild", "sdk.EventJob":
 				continue
 			}
+			observability.Record(c, b.router.Stats.SSEEvents, 1)
 			cacheMsgChan <- e
 		}
 	}
 }
 
 // Start the broker
-func (b *eventsBroker) Start(c context.Context) {
-	if b.messages == nil {
-		return
-	}
+func (b *eventsBroker) Start(ctx context.Context) {
+	b.chanAddClient = make(chan (*eventsBrokerSubscribe))
+	b.chanRemoveClient = make(chan (string))
+
+	tickerMetrics := time.NewTicker(10 * time.Second)
+	defer tickerMetrics.Stop()
+
 	for {
 		select {
-		case <-c.Done():
-			b.cleanAll()
-			if c.Err() != nil {
-				log.Error("eventsBroker.Start> Exiting: %v", c.Err())
+		case <-tickerMetrics.C:
+			observability.Record(b.router.Background, b.router.Stats.SSEClients, int64(len(b.clients)))
+
+		case <-ctx.Done():
+			if b.clients != nil {
+				for uuid := range b.clients {
+					delete(b.clients, uuid)
+				}
+				observability.Record(b.router.Background, b.router.Stats.SSEClients, 0)
+
+			}
+			if ctx.Err() != nil {
+				log.Error("eventsBroker.Start> Exiting: %v", ctx.Err())
 				return
 			}
+
 		case receivedEvent := <-b.messages:
-			b.manageEvent(receivedEvent)
+			for i := range b.clients {
+				c := b.clients[i]
+				if c == nil {
+					delete(b.clients, i)
+					continue
+				}
+
+				// Send the event to the client sse within a goroutine
+				s := "sse-" + b.clients[i].UUID
+				sdk.GoRoutine(ctx, s,
+					func(ctx context.Context) {
+						if c.isAlive.IsSet() {
+							log.Debug("send data to %s", c.UUID)
+							if err := c.Send(receivedEvent); err != nil {
+								log.Error("eventsBroker> unable to send event to %s: %v", c.UUID, err)
+								b.chanRemoveClient <- c.UUID
+							}
+						}
+					},
+				)
+			}
+
+		case client := <-b.chanAddClient:
+			b.clients[client.UUID] = client
+
+		case uuid := <-b.chanRemoveClient:
+			client, has := b.clients[uuid]
+			if !has {
+				continue
+			}
+
+			client.isAlive.UnSet()
+			delete(b.clients, uuid)
 		}
 	}
 }
@@ -143,26 +164,21 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
-		uuidSK, errS := sessionstore.NewSessionKey()
-		if errS != nil {
-			return sdk.WrapError(errS, "eventsBroker.Serve> Cannot generate UUID")
-		}
-		uuid := string(uuidSK)
 		user := getUser(ctx)
-		if err := loadUserPermissions(b.dbFunc(),
-			b.cache,
-			user); err != nil {
+		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
 			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
 		}
 
-		client := eventsBrokerSubscribe{
-			UUID:  uuid,
-			User:  user,
-			Queue: make(chan sdk.Event, 10), // chan buffered, to avoid goroutine Start() wait on push in queue
+		uuid := sdk.UUID()
+		client := &eventsBrokerSubscribe{
+			UUID:    uuid,
+			User:    user,
+			isAlive: abool.NewBool(true),
+			w:       w,
 		}
 
 		// Add this client to the map of those that should receive updates
-		b.addClient(client)
+		b.chanAddClient <- client
 
 		// Set the headers related to event streaming.
 		w.Header().Set("Content-Type", "text/event-stream")
@@ -183,32 +199,12 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			select {
 			case <-ctx.Done():
 				log.Info("events.Http: context done")
-				b.disconnectClient(client.UUID)
+				b.chanRemoveClient <- client.UUID
 				break leave
 			case <-r.Context().Done():
 				log.Info("events.Http: client disconnected")
-				b.disconnectClient(client.UUID)
+				b.chanRemoveClient <- client.UUID
 				break leave
-			case event := <-client.Queue:
-				if ok := client.manageEvent(event); !ok {
-					continue
-				}
-
-				msg, errJ := json.Marshal(event)
-				if errJ != nil {
-					log.Warning("sendevent> Unavble to marshall event: %v", errJ)
-					continue
-				}
-
-				var buffer bytes.Buffer
-				buffer.WriteString("data: ")
-				buffer.Write(msg)
-				buffer.WriteString("\n\n")
-
-				if _, err := w.Write(buffer.Bytes()); err != nil {
-					return sdk.WrapError(err, "events.write> Unable to write to client")
-				}
-				f.Flush()
 			case <-tick.C:
 				if _, err := w.Write([]byte("")); err != nil {
 					return sdk.WrapError(err, "events.write> Unable to ping client")
@@ -221,65 +217,97 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 	}
 }
 
-func (b *eventsBroker) manageEvent(receivedEvent sdk.Event) {
-	b.mutex.Lock()
-	defer b.mutex.Unlock()
-	for _, i := range b.clients {
-		if b.canSend(i) {
-			i.Queue <- receivedEvent
+func (client *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
+	var isSharedInfra bool
+	for _, g := range client.User.Groups {
+		if g.ID == group.SharedInfraGroup.ID {
+			isSharedInfra = true
+			break
 		}
 	}
-}
 
-// canSend Test if client is connected. If not, close channel and remove client from map
-func (b *eventsBroker) canSend(client eventsBrokerSubscribe) bool {
-	b.disconnectedMutex.Lock()
-	defer b.disconnectedMutex.Unlock()
-	if _, ok := b.disconnected[client.UUID]; !ok {
-		return true
-	}
-	close(client.Queue)
-	delete(b.clients, client.UUID)
-	b.clientsLen--
-	return false
-}
-
-func (s *eventsBrokerSubscribe) manageEvent(event sdk.Event) bool {
 	if strings.HasPrefix(event.EventType, "sdk.EventProject") {
-		if s.User.Admin || permission.ProjectPermission(event.ProjectKey, s.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || permission.ProjectPermission(event.ProjectKey, client.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventWorkflow") || strings.HasPrefix(event.EventType, "sdk.EventRunWorkflow") {
-		if s.User.Admin || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, s.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || permission.WorkflowPermission(event.ProjectKey, event.WorkflowName, client.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventApplication") {
-		if s.User.Admin || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, s.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || permission.ApplicationPermission(event.ProjectKey, event.ApplicationName, client.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventPipeline") {
-		if s.User.Admin || permission.PipelinePermission(event.ProjectKey, event.PipelineName, s.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || permission.PipelinePermission(event.ProjectKey, event.PipelineName, client.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventEnvironment") {
-		if s.User.Admin || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, s.User) >= permission.PermissionRead {
+		if client.User.Admin || isSharedInfra || permission.EnvironmentPermission(event.ProjectKey, event.EnvironmentName, client.User) >= permission.PermissionRead {
 			return true
 		}
 		return false
 	}
 	if strings.HasPrefix(event.EventType, "sdk.EventBroadcast") {
-		if s.User.Admin || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, s.User, permission.PermissionRead) {
+		if client.User.Admin || isSharedInfra || event.ProjectKey == "" || permission.AccessToProject(event.ProjectKey, client.User, permission.PermissionRead) {
 			return true
 		}
 		return false
 	}
 	return false
+}
+
+// Send an event to a client
+func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
+	client.mutex.Lock()
+	defer client.mutex.Unlock()
+
+	if client == nil || client.w == nil {
+		return nil
+	}
+
+	// Make sure that the writer supports flushing.
+	f, ok := client.w.(http.Flusher)
+	if !ok {
+		return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
+	}
+
+	if ok := client.manageEvent(event); !ok {
+		return nil
+	}
+
+	msg, err := json.Marshal(event)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to marshall event")
+	}
+
+	var buffer bytes.Buffer
+	buffer.WriteString("data: ")
+	buffer.Write(msg)
+	buffer.WriteString("\n\n")
+
+	if !client.isAlive.IsSet() {
+		return nil
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%v", r)
+		}
+	}()
+
+	if _, err := client.w.Write(buffer.Bytes()); err != nil {
+		return sdk.WrapError(err, "unable to write to client")
+	}
+	f.Flush()
+
+	return nil
 }
