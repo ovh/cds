@@ -91,10 +91,64 @@ func TestDo(t *testing.T) {
 		{
 			name: "default value",
 			args: args{
-				input: `aa:{{.cds.app.foo | default "bar" }}end`,
+				input: `aa:{{.cds.app.foo | default "bar" }}:end`,
 				vars:  map[string]string{},
 			},
-			want: `aa:barend`,
+			want: `aa:bar:end`,
+		},
+		{
+			name: "default value with variables (easy)",
+			args: args{
+				input: `{{.cds.app.foo | default .val }}`,
+				vars: map[string]string{
+					"val": "biz",
+				},
+			},
+			want: `biz`,
+		},
+		{
+			name: "default value with variables (not so easy)",
+			args: args{
+				input: `{{.cds.app.foo | default .cds.app.bar }}`,
+				vars: map[string]string{
+					"cds.app.bar": "biz",
+				},
+			},
+			want: `biz`,
+		},
+		{
+			name: "default value with variables (so hard)",
+			args: args{
+				input: `{{.cds.app.foo | default .cds.app.bar .cds.app.biz }}`,
+				vars: map[string]string{
+					"cds.app.biz": "biz",
+				},
+			},
+			want: `biz`,
+		},
+		{
+			name: "default value with variables (with pipeline)",
+			args: args{
+				input: `{{.cds.app.foo | default .cds.app.bar | default .cds.app.biz | upper }}`,
+				vars: map[string]string{
+					"cds.app.biz": "biz",
+				},
+			},
+			want: `BIZ`,
+		},
+		{
+			name: "default value with pipeline",
+			args: args{
+				input: `{{.cds.app.foo | upper}}`,
+			},
+			want: `{{.CDS.APP.FOO}}`,
+		},
+		{
+			name: "default value with pipeline",
+			args: args{
+				input: `{{.cds.app.foo | upper | lower}}`,
+			},
+			want: `{{.cds.app.foo}}`,
 		},
 		{
 			name: "default value with knowned var",
@@ -307,13 +361,11 @@ workflow:
 			want: `name: "coucou-0.0.1-dirty"`,
 		},
 		{
-			name: "- inside function parameter but not used",
+			name: "- ",
 			args: args{
 				input: `name: "coucou-{{ .name | default "0.0.1-dirty" }}"`,
 				vars: map[string]string{
-					"git.branch": "master",
-					"git.author": "",
-					"name":       "toi",
+					"name": "toi",
 				},
 			},
 			want: `name: "coucou-toi"`,

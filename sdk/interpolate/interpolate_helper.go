@@ -84,8 +84,30 @@ func defaultCDS(d interface{}, given ...interface{}) interface{} {
 }
 
 // Switch order so that "$foo" | trimall "$"
-func dfault(input, valfault string) string {
-	return valfault
+func dfault(valfault ...interface{}) string {
+	var castToString = func(i interface{}) string {
+		s, _ := i.(string)
+		return s
+	}
+
+	if len(valfault) == 0 {
+		fmt.Println("dfault: ", valfault, "=>")
+		return ""
+	}
+	if len(valfault) == 1 {
+		s := castToString(valfault[0])
+		fmt.Println("dfault: ", valfault, "=>", s)
+		return s
+	}
+	for i := len(valfault) - 1; i >= 0; i-- {
+		if s := castToString(valfault[i]); s != "" {
+			fmt.Println("dfault: ", valfault, "=>", s)
+			return s
+		}
+	}
+	fmt.Println("dfault: ", valfault, "=>")
+
+	return ""
 }
 
 // empty returns true if the given value has the zero value for its type.

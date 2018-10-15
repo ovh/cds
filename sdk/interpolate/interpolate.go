@@ -94,13 +94,24 @@ func Do(input string, vars map[string]string) (string, error) {
 							helper = strings.TrimSpace(eb[helperPos+1:])
 							if strings.HasPrefix(helper, "default") {
 								// 7 = len("default") --> helper[7:]
-								input = strings.Replace(input, sm[i][1], "{{ defaultCDS "+helper[7:]+" "+eb+" }}", -1)
+								for a, b := range defaults {
+									a = strings.TrimPrefix(a, ".")
+									eb2 := strings.Replace(eb, b, a, -1)
+									smi := strings.Replace(sm[i][1], eb, eb2, 1)
+									input = strings.Replace(input, sm[i][1], smi, 1)
+								}
+
 							} else if _, ok := interpolateHelperFuncs[helper]; !ok {
 								eb = ""
 							}
 						}
-						if helper != "default" {
-							input = strings.Replace(input, sm[i][1], "{{ defaultCDS \"{{"+nameWithDot+"}}\" "+eb+" }}", -1)
+						if !strings.HasPrefix(helper, "default") {
+							var s = nameWithDot
+							if strings.Contains(s, "|") {
+								s = strings.TrimSpace(strings.Split(s, "|")[0])
+
+							}
+							input = strings.Replace(input, sm[i][1], "{{ defaultCDS \"{{"+s+"}}\" "+eb+" }}", -1)
 						}
 					} else if _, ok := empty[e]; !ok {
 						// replace {{.cds.foo.bar}} with {{ defaultCDS "" .cds.foo.bar}}
@@ -111,6 +122,7 @@ func Do(input string, vars map[string]string) (string, error) {
 						// with cds.foo.bar knowned from vars
 						input = strings.Replace(input, sm[i][1], "{{ defaultCDS \"{{"+defaults[e[1:]]+"}}\" "+e+" }}", -1)
 					}
+					fmt.Println(input)
 					alreadyReplaced[sm[i][1]] = sm[i][1]
 				}
 			}
