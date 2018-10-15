@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -165,11 +164,13 @@ func (api *API) getUserLoggedHandler() service.Handler {
 			return sdk.ErrUnauthorized
 		}
 
-		store := api.Router.AuthDriver.Store()
-		key := sessionstore.SessionKey(h)
-		if ok, _ := store.Exists(key); !ok {
-			return sdk.ErrUnauthorized
-		}
+		/*
+			store := api.Router.AuthDriver.Store()
+			key := sessionstore.SessionKey(h)
+			if ok, _ := store.Exists(key); !ok {
+				return sdk.ErrUnauthorized
+			}
+		*/
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -424,28 +425,31 @@ func (api *API) confirmUserHandler() service.Handler {
 			User: *u,
 		}
 
-		var logFromCLI bool
-		if r.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-			log.Info("LoginUser> login from CLI")
-			logFromCLI = true
-		}
+		// var logFromCLI bool
+		// if r.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
+		// 	log.Info("LoginUser> login from CLI")
+		// 	logFromCLI = true
+		// }
 
-		var sessionKey sessionstore.SessionKey
-		var errs error
-		if !logFromCLI {
-			sessionKey, errs = auth.NewSession(api.Router.AuthDriver, u)
-			if errs != nil {
-				log.Error("Auth> Error while creating new session: %s\n", errs)
+		// New Sessions
+		/*
+			var sessionKey sessionstore.SessionKey
+			var errs error
+			if !logFromCLI {
+				sessionKey, errs = auth.NewSession(api.Router.AuthDriver, u)
+				if errs != nil {
+					log.Error("Auth> Error while creating new session: %s\n", errs)
+				}
+			} else {
+				//CLI login, generate user key as persistent session
+				sessionKey, errs = auth.NewPersistentSession(api.mustDB(), api.Router.AuthDriver, u)
+				if errs != nil {
+					log.Error("Auth> Error while creating new session: %s\n", errs)
+				}
 			}
-		} else {
-			//CLI login, generate user key as persistent session
-			sessionKey, errs = auth.NewPersistentSession(api.mustDB(), api.Router.AuthDriver, u)
-			if errs != nil {
-				log.Error("Auth> Error while creating new session: %s\n", errs)
-			}
-		}
 
-		response.Token = string(sessionKey)
+			response.Token = string(sessionKey)
+		*/
 		response.Password = password
 
 		response.User.Auth = sdk.Auth{}

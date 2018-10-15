@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
@@ -202,10 +201,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	}
 
 	//Generate a hash
-	hash, errsession := sessionstore.NewSessionKey()
-	if errsession != nil {
-		t.Fatal(errsession)
-	}
+	hash := sdk.UUID()
 
 	name := "HATCHERY_TEST_" + namesgenerator.GetRandomNameCDS(0)
 	hatch := sdk.Service{

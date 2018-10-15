@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -84,7 +83,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			if errsession != nil {
 				return sdk.WrapError(errsession, "Unable to create session")
 			}
-			srv.Hash = string(hash)
+			srv.Hash = sdk.UUID()
 		} else {
 			return sdk.WithStack(errOldSrv)
 		}
@@ -113,12 +112,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 func (api *API) serviceAPIHeartbeat(c context.Context) {
 	tick := time.NewTicker(30 * time.Second).C
 
-	hash, errsession := sessionstore.NewSessionKey()
-	if errsession != nil {
-		log.Error("serviceAPIHeartbeat> Unable to create session:%v", errsession)
-		return
-	}
-
+	hash := sdk.UUID()
 	// first call
 	api.serviceAPIHeartbeatUpdate(c, api.mustDB(), hash)
 
@@ -135,7 +129,7 @@ func (api *API) serviceAPIHeartbeat(c context.Context) {
 	}
 }
 
-func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, hash sessionstore.SessionKey) {
+func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, hash string) {
 	tx, err := db.Begin()
 	if err != nil {
 		log.Error("serviceAPIHeartbeat> error on repo.Begin:%v", err)
@@ -146,7 +140,7 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 	srv := &sdk.Service{
 		Name:             event.GetCDSName(),
 		MonitoringStatus: api.Status(),
-		Hash:             string(hash),
+		Hash:             hash,
 		LastHeartbeat:    time.Now(),
 		Type:             services.TypeAPI,
 		Config:           api.Config,

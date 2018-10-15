@@ -32,6 +32,11 @@ func (api *API) InitRouter() {
 	api.eventsBroker.Init(context.Background(), api.PanicDump())
 
 	r.Handle("/request-token", r.POST(api.postRequestTokenHanler, Auth(false)))
+	api.eventsBroker.Init(context.Background())
+
+	r := api.Router
+	r.Handle("/login", r.GET(api.getLoginUserHandler, Auth(false)), r.POST(api.postLoginUserHandler, Auth(false)))
+	r.Handle("/login/{driver}", r.GET(api.redirectToIdentityProvider, Auth(false)))
 
 	// Action
 	r.Handle("/action", r.GET(api.getActionsHandler))

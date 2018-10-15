@@ -37,7 +37,6 @@ import (
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/version"
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
@@ -619,13 +618,8 @@ func (a *API) Serve(ctx context.Context) error {
 		authMode = "local"
 	}
 
-	storeOptions := sessionstore.Options{
-		TTL:   a.Config.HTTP.SessionTTL * 60, // Second to minutes
-		Cache: a.Cache,
-	}
-
 	var errdriver error
-	a.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions, a.DBConnectionFactory.GetDBMap)
+	a.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, a.DBConnectionFactory.GetDBMap)
 	if errdriver != nil {
 		return fmt.Errorf("error: %v", errdriver)
 	}

@@ -2,19 +2,16 @@ package auth
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"database/sql"
 	"errors"
 	"fmt"
 	"html/template"
-	"net/http"
 	"strings"
 
 	"github.com/go-gorp/gorp"
 	"gopkg.in/ldap.v2"
 
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -43,10 +40,8 @@ type LDAPDriver interface {
 
 //LDAPClient enbeddes the LDAP connecion
 type LDAPClient struct {
-	store  sessionstore.Store
 	conn   *ldap.Conn
 	conf   LDAPConfig
-	local  *LocalClient
 	dbFunc func() *gorp.DbMap
 }
 
@@ -54,18 +49,6 @@ type LDAPClient struct {
 type Entry struct {
 	DN         string
 	Attributes map[string]string
-}
-
-//Open open a true LDAP connection
-func (c *LDAPClient) Open(options interface{}, store sessionstore.Store) error {
-	log.Info("Auth> Connecting to session store")
-	c.store = store
-	//LDAP Client needs a local client to check local users
-	c.local = &LocalClient{
-		dbFunc: c.dbFunc,
-	}
-	c.local.Open(options, store)
-	return c.openLDAP(options)
 }
 
 func (c *LDAPClient) openLDAP(options interface{}) error {
@@ -138,63 +121,15 @@ func shoudRetry(err error) bool {
 	return false
 }
 
-//isCredentialError check if err is LDAPResultInvalidCredentials
-func isCredentialError(err error) bool {
-	ldapErr, b := err.(*ldap.Error)
-	if !b {
-		return false
-	}
-	if ldapErr.ResultCode == ldap.LDAPResultInvalidCredentials {
-		return true
-	}
-	return false
-}
-
 //Close the specified client
 func (c *LDAPClient) Close() {
 	c.conn.Close()
 }
 
-//Store returns store
-func (c *LDAPClient) Store() sessionstore.Store {
-	return c.store
-}
-
-func (c *LDAPClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error) {
-
-	//Check if its coming from CLI
-	if req.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-		var ok bool
-		ctx, ok = getUserPersistentSession(ctx, c.dbFunc(), c.Store(), req.Header)
-		if ok {
-			return ctx, nil
-		}
-	}
-
-	//Get the session token
-	sessionToken := req.Header.Get(sdk.SessionTokenHeader)
-	if sessionToken == "" {
-		return ctx, fmt.Errorf("no session header")
-	}
-	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
-	if err != nil {
-		return ctx, err
-	}
-	username, err := GetUsername(c.store, sessionToken)
-	if err != nil {
-		return ctx, err
-	}
-	//Find the suer
-	u, err := c.searchAndInsertOrUpdateUser(c.dbFunc(), username)
-	if err != nil {
-		return ctx, err
-	}
-	ctx = context.WithValue(ctx, ContextUser, u)
-
-	if !exists {
-		return ctx, fmt.Errorf("invalid session")
-	}
-	return ctx, nil
+//Open open a true LDAP connection
+func (c *LDAPClient) Init(options interface{}) error {
+	log.Info("Auth> Connecting to session store")
+	return c.openLDAP(options)
 }
 
 //Bind binds
@@ -361,12 +296,8 @@ func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 	//Bind user
 	if err := c.Bind(username, password); err != nil {
 		log.Warning("LDAP> Bind error %s %s", username, err)
+		return false, err
 
-		if !isCredentialError(err) {
-			return false, err
-		}
-		//Try local auth
-		return c.local.Authentify(username, password)
 	}
 
 	log.Debug("LDAP> Bind successful %s", username)

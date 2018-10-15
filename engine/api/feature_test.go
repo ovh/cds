@@ -5,23 +5,21 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
-
-	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 )
 
 func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router, context.CancelFunc) {
 	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
 	db, cache, end := test.SetupPG(t, bootstrapFunc...)
-	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{Cache: cache, TTL: 30}), mux.NewRouter(), "/"+test.GetTestName(t))
+	router := newRouter(auth.TestLocalAuth(t, db), mux.NewRouter(), "/"+test.GetTestName(t))
 	var cancel context.CancelFunc
 	router.Background, cancel = context.WithCancel(context.Background())
 	api := &API{

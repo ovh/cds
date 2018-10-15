@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -289,52 +288,4 @@ func InsertUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
 	}
 	query := `INSERT INTO "user" (username, admin, data, auth, created, origin) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`
 	return db.QueryRow(query, u.Username, u.Admin, su, sa, time.Now(), u.Origin).Scan(&u.ID)
-}
-
-// NewPersistentSession creates a new persistent session token in database
-func NewPersistentSession(db gorp.SqlExecutor, u *sdk.User) (sessionstore.SessionKey, error) {
-	t, errSession := sessionstore.NewSessionKey()
-	if errSession != nil {
-		return "", errSession
-	}
-	newToken := sdk.UserToken{
-		Token:              string(t),
-		Comment:            fmt.Sprintf("New persistent session for %s", u.Username),
-		CreationDate:       time.Now(),
-		LastConnectionDate: time.Now(),
-		UserID:             u.ID,
-	}
-
-	if err := InsertPersistentSessionToken(db, newToken); err != nil {
-		return "", err
-	}
-	return t, nil
-}
-
-// LoadPersistentSessionToken load a token from the database
-func LoadPersistentSessionToken(db gorp.SqlExecutor, k sessionstore.SessionKey) (*sdk.UserToken, error) {
-	tdb := persistentSessionToken{}
-	if err := db.SelectOne(&tdb, "select * from user_persistent_session where token = $1", string(k)); err != nil {
-		return nil, err
-	}
-	t := sdk.UserToken(tdb)
-	return &t, nil
-}
-
-// InsertPersistentSessionToken create a new persistent session
-func InsertPersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
-	tdb := persistentSessionToken(t)
-	if err := db.Insert(&tdb); err != nil {
-		return sdk.WrapError(err, "Unable to insert persistent session token for user %d", t.UserID)
-	}
-	return nil
-}
-
-// UpdatePersistentSessionToken updates a persistent session
-func UpdatePersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
-	tdb := persistentSessionToken(t)
-	if _, err := db.Update(&tdb); err != nil {
-		return sdk.WrapError(err, "Unable to update persistent session token for user %d", t.UserID)
-	}
-	return nil
 }

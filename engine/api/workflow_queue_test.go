@@ -31,7 +31,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
@@ -255,10 +254,7 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent, "", ""))
 
 	//Generate a hash
-	hash, errsession := sessionstore.NewSessionKey()
-	if errsession != nil {
-		t.Fatal(errsession)
-	}
+	hash := sdk.UUID()
 
 	ctx.hatchery = &sdk.Service{
 		Name:    sdk.RandomString(10),

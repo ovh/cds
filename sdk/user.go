@@ -53,6 +53,33 @@ type UserAPIRequest struct {
 	Callback string `json:"callback"`
 }
 
+type UserLoginDriverResponse struct {
+	Github struct {
+		Available bool
+		Icon      bool
+		URL       string
+	}
+	Bitbucket struct {
+		Available bool
+		Icon      bool
+		URL       string
+	}
+	SAMLIdentityProvider struct {
+		Name      string
+		Available bool
+		Icon      bool
+		URL       string
+	}
+	LDAP struct {
+		Name      string
+		Available bool
+		Icon      bool
+	}
+	Local struct {
+		Available bool
+	}
+}
+
 // UserLoginRequest login request
 type UserLoginRequest struct {
 	Username string `json:"username"`
