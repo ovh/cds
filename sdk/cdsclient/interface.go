@@ -14,6 +14,11 @@ type Filter struct {
 	Name, Value string
 }
 
+// TemplateClient exposes templates functions
+type TemplateClient interface {
+	TemplateExecute(projectKey string, templateID int64, req sdk.WorkflowTemplateRequest) ([]string, error)
+}
+
 // AdminService expose all function to CDS services
 type AdminService interface {
 	Services() ([]sdk.Service, error)
@@ -324,6 +329,7 @@ type Interface interface {
 	MonitoringClient
 	HookClient
 	Version() (*sdk.Version, error)
+	TemplateClient
 }
 
 // InterfaceDeprecated is the interface for using deprecated routes with cdsclient package

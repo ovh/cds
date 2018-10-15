@@ -66,6 +66,7 @@ func getRoot(isShell bool) *cobra.Command {
 			encrypt,
 			token,
 			admin(),
+			template,
 		}
 	}
 
