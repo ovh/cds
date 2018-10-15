@@ -40,11 +40,11 @@ In CDS, a hatchery is an agent which spawn workers: [read more](https://ovh.gith
 
 ### Contrib
 
-Actions, Plugins, uServices are under : [read more](contrib)
+Actions, Plugins, uServices are under: [read more](contrib)
 
 ### SDK
 
-A Go(lang) SDK is available at github.com/ovh/cds/sdk. It provides helper functions for all API handlers, with embedded authentification mechanism.
+A Go(lang) SDK is available at [github.com/ovh/cds/sdk](https://github.com/ovh/cds/tree/master/sdk). It provides helper functions for all API handlers, with embedded authentication mechanism.
 
 [![GoDoc](https://godoc.org/github.com/ovh/cds/sdk?status.svg)](https://godoc.org/github.com/ovh/cds/sdk)
 

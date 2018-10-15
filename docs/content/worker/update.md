@@ -6,7 +6,7 @@ weight = 2
 
 ### Manual Update
 
-If you run manually a worker, you problably want to update it when CDS Engine is updated with a new Release.
+If you run manually a worker, you probably want to update it when CDS Engine is updated with a new Release.
 
 Update your worker from CDS API:
 
@@ -14,7 +14,7 @@ Update your worker from CDS API:
 ./worker update --api https://your.cds.instance
 ```
 
-Update your worker from latest Release from Github:
+Update your worker from latest Release from GitHub:
 
 ```bash
 ./worker update --from-github

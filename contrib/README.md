@@ -13,11 +13,11 @@ See [CDS documentation](https://github.com/ovh/cds) for more details.
 
 ## Actions
 
-[See User Actions Documentation](https://ovh.github.io/cds/workflows/pipelines/pipelines.actions/)
+See [User Actions Documentation](https://ovh.github.io/cds/workflows/pipelines/pipelines.actions/)
 
 ## Plugins
 
-[See Plugins Documentation](https://ovh.github.io/cds/workflows/pipelines/pipelines.actions.user-actions/)
+See [Plugins Documentation](https://ovh.github.io/cds/workflows/pipelines/pipelines.actions.user-actions/)
 
 ## µServices
 

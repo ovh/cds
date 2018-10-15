@@ -41,7 +41,7 @@ Be sure to have a [Repository manager]({{< relref "/hosting/repositories-manager
 
 * Select 'Advanced' section
 * In the section 'Link to a repository manager', select 'github', then click on 'Connect'
-* A popup is displayed, Click on 'Click here' to finalize the link with github. By doing that, you allow CDS to create hook on github.
+* A popup is displayed, Click on 'Click here' to finalize the link with GitHub. By doing that, you allow CDS to create hook on GitHub.
 
 
 {{%expand "view screenshots..." %}}
@@ -52,10 +52,10 @@ Select 'Advanced' section
 In the section 'Link to a repository manager', select 'github', then click on 'Connect'
 ![3_admin_prj_add_repo](/images/getting_started_standard_wf_3_admin_prj_add_repo.png?height=400px&classes=shadow)
 
-A popup is displayed, Click on 'Click here' to finalize the link with github. By doing that, you allow CDS to create hook on github.
+A popup is displayed, Click on 'Click here' to finalize the link with GitHub. By doing that, you allow CDS to create hook on GitHub.
 ![4_admin_prj_add_repo_popup](/images/getting_started_standard_wf_4_admin_prj_add_repo_popup.png?height=400px&classes=shadow)
 
-Here, Github is well linked on your CDS project.
+Here, GitHub is well linked on your CDS project.
 
 ![5_admin_repo_linked](/images/getting_started_standard_wf_5_admin_repo_linked.png?height=400px&classes=shadow)
 
@@ -63,7 +63,7 @@ Here, Github is well linked on your CDS project.
 
 ### 3 - Create an application, link it to a Git Repository
 
-You've got a project, linked to Github. Let's create an application.
+You've got a project, linked to GitHub. Let's create an application.
 
 A CDS Application is useful to have a link to a Git Repository.
 
@@ -110,7 +110,7 @@ Then click on 'Save'
 
 Here we go, you will create your first workflow.
 
-* Go to Project -> Worflows tab
+* Go to Project -> Workflows tab
 * Enter the Workflow name, then click on Next
 * You have now to choose the first pipeline. As you don't have a pipeline yet, you will create a new one, named 'build-pipeline'. Click on Next
 * Now, you have to select an application. Choose your application 'my-java-app', then click on Next
@@ -118,7 +118,7 @@ Here we go, you will create your first workflow.
 
 {{%expand "view screenshots..." %}}
 
-Go to Project -> Worflows tab
+Go to Project -> Workflows tab
 ![12_wf_tab](/images/getting_started_standard_wf_12_wf_tab.png?height=400px&classes=shadow)
 
 Enter the Workflow name, then click on Next
@@ -181,18 +181,18 @@ on Requirements link then add binaries prerequisites.
 ### 7 - Add a Hook on your workflow
 
 In this example, we create a Workflow to build & deploy an application. This is a 
-standard Continous Integration & Continous Delivery Workflow.
+standard Continuous Integration & Continuous Delivery Workflow.
 
 So, we have to trigger this workflow on each commit, on every git branches. This will be 
 useful to compile code from all developers and deploy master branch if the build is Ok.
 
-The application is linked to a Github Git Repository, we have two choice to trigger automatically the workflow:
+The application is linked to a GitHub Git Repository, we have two choices to trigger automatically the workflow:
 
 * add a Git Repository Webhook
 * or add a Git Repository Poller.
 
 The difference between both is simple: a Git Repository Webhook does not work if your CDS Instance is not
-reacheabled from Github. So, we have to add a Git Repository Poller
+reachable from GitHub. So, we have to add a Git Repository Poller
 
 * Select the pipeline root, then click on 'Add a hook'
 * Choose a Git Repository Poller

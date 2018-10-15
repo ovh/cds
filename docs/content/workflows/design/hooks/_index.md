@@ -15,6 +15,6 @@ On the root pipeline only, you can add hooks:
 * [kafka hook] ({{< relref "workflows/design/hooks/kafka-hook.md" >}})
 * [RabbitMQ hook] ({{< relref "workflows/design/hooks/rabbitmq-hook.md" >}})
 
-There are two hooks on this pipeline, a repository webhook (Github here) and a webhook:
+There are two hooks on this pipeline, a repository webhook (GitHub here) and a webhook:
 
 ![Hooks](/images/workflows.design.hooks.png)

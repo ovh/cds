@@ -12,7 +12,7 @@ Following hooks are supported:
 Following will be supported:
 
 - Kafka Listener
-- Github, Gitlab, Bitbucket Poller
+- GitHub, GitLab, Bitbucket Poller
 
 ## Design
 
@@ -21,7 +21,7 @@ All **hooks** are considered as **task**. Tasks are synchronized on startup with
 When a hook is invocated or have to be invocated, we talk about **task execution**.
 
 **Task execution** are managed by an internal scheduler `Service.runScheduler(context.Context)`.
-The scheduler is design in three part:
+The scheduler is design in three parts:
 
 - the task execution processor `Service.dequeueTaskExecutions(context.Context)`: To feed it, we have to push a **task execution key** in the queue `hooks:scheduler:queue`.
 - the task execution retry `Service.retryTaskExecutionsRoutine(context.Context)`: Which checks all executions to push in the queue `hooks:scheduler:queue` the not processed task execution
@@ -29,7 +29,7 @@ The scheduler is design in three part:
 
 ## Storage
 
-Task list and definitions are stored in the *Cache* (redis or local). The key `hooks:tasks` is a Sorted Set containing tasks UUID sorted by timestamp creation.
+Task list and definitions are stored in the *Cache* (Redis or local). The key `hooks:tasks` is a Sorted Set containing tasks UUID sorted by timestamp creation.
 Each task is stored as JSON in a key `hooks:tasks:<UUID>`.
 
 When a **task** is or have to be invocated, the **task execution** of the **task** is listed in a Sorted Set (sorted by timestamp of **task execution**): `hooks:tasks:executions:<type>:<UUID>`; this set contains the list of all timestamp on **task execution**.
@@ -39,7 +39,7 @@ The detail of an **task execution** is stored as JSON in. The **task execution k
 
 Following routes are available:
 
-- `GET|POST|PUT|DELETE /webhook/{uuid}` : Routes available for the webhooks. No authentication.
+- `GET|POST|PUT|DELETE /webhook/{uuid}`: Routes available for the webhooks. No authentication.
 
 - `POST /task`: Create a new task from a CDS `sdk.WorkflowNodeHook`. Authentication: Header `X_AUTH_HEADER`: `<Service Hash>` in base64
 - `GET|PUT|DELETE /task/{uuid}`: Get, Update or Delete a task. Authentication: Header `X_AUTH_HEADER`: `<Service Hash>` in base64
@@ -49,7 +49,7 @@ Following routes are available:
 
 The µService is run with a `shared.infra` token and register on CDS API; on registration, CDS API gives in response a hash (**service hash**) which must be used to make every call to CDS API. Every 30 seconds, it heartbeats on CDS API.
 
-## How to implement a new type of hook ?
+## How to implement a new type of hook?
 
 All the specific code for each type of hook (task) is in the `tasks.go` file.
 

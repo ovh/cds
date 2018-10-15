@@ -8,7 +8,7 @@ chapter = true
 
 This action creates a release on the git repository linked to the application, if repository manager implements it.
 
-This is actually implemented for Github only.
+This is actually implemented for GitHub only.
 
 ## Parameters
 

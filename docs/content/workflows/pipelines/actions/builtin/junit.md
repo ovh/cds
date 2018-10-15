@@ -11,7 +11,7 @@ This action parses a given Junit formatted XML file to extract its test results.
 
 ## Parameters
 
-* path: Path to a junit xml file
+* path: Path to a JUnit XML file
 
 
 ### Example

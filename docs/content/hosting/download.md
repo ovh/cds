@@ -4,7 +4,7 @@ weight = 3
 
 +++
 
-You'll find the lastest release of CDS on [Github Releases](https://github.com/ovh/cds/releases/latest)
+You'll find the latest release of CDS on [GitHub Releases](https://github.com/ovh/cds/releases/latest)
 
 ### CDS Worker
 

@@ -5,10 +5,10 @@ weight = 1
 
 {{% notice note %}}
 
-In this tutorial, you will create a CDS Workflow with the Web UI that check javascript vulnerabilities
+In this tutorial, you will create a CDS Workflow with the Web UI that check JavaScript vulnerabilities
 
 * Create a workflow using one pipeline
-* You will discover the [Npm-audit-parser]({{< relref "plugin-npm-audit-parser.md" >}}) plugin action, which parse npm audit report
+* You will discover the [npm-audit-parser]({{< relref "plugin-npm-audit-parser.md" >}}) plugin action, which parse npm audit report
 
 {{% /notice %}}
 
@@ -33,7 +33,7 @@ Be sure to have a [Repository manager]({{< relref "/hosting/repositories-manager
 
 * Select 'Advanced' section
 * In the section 'Link to a repository manager', select 'github', then click on 'Connect'
-* A popup is displayed, Click on 'Click here' to finalize the link with github. By doing that, you allow CDS to create hook on github.
+* A popup is displayed, Click on 'Click here' to finalize the link with GitHub. By doing that, you allow CDS to create hook on GitHub.
 
 
 {{%expand "view screenshots..." %}}
@@ -44,10 +44,10 @@ Select 'Advanced' section
 In the section 'Link to a repository manager', select 'github', then click on 'Connect'
 ![admin_prj_add_repo](/images/tutorials/npm-audit-parser/admin_prj_add_repo.png?classes=shadow)
 
-A popup is displayed, Click on 'Click here' to finalize the link with github. By doing that, you allow CDS to create hook on github.
+A popup is displayed, Click on 'Click here' to finalize the link with GitHub. By doing that, you allow CDS to create hook on GitHub.
 ![admin_prj_add_repo_popup](/images/tutorials/npm-audit-parser/admin_prj_add_repo_popup.png?classes=shadow)
 
-Here, Github is well linked on your CDS project.
+Here, GitHub is well linked on your CDS project.
 
 ![admin_repo_linked](/images/tutorials/npm-audit-parser/admin_repo_linked.png?classes=shadow)
 
@@ -55,7 +55,7 @@ Here, Github is well linked on your CDS project.
 
 ### 3 - Create an application, link it to a Git Repository
 
-You've got a project, linked to Github. Let's create an application.
+You've got a project, linked to GitHub. Let's create an application.
 
 A CDS Application is useful to have a link to a Git Repository.
 
@@ -83,17 +83,17 @@ Expand configuration, select 'https'. If your repository is public, you can keep
 
 ### 4 - Create the workflow
 
-* Go to Project -> Worflows tab
+* Go to Project -> Workflows tab
 * Enter the Workflow name, then click on Next
-* You have now to choose the first pipeline. As you don't have a pipeline yet, you will create a new one, named 'check-node-vunerabilities'. Click on Next
+* You have now to choose the first pipeline. As you don't have a pipeline yet, you will create a new one, named 'check-node-vulnerabilities'. Click on Next
 * Now, you have to select an application. Choose your application 'my-node-app', then click on Next
-* We don't need an environment, neither plaform for the build pipeline, Click on 'Finish'
-* Edit the pipeline 'check-node-vunerabilities'
+* We don't need an environment, neither platform for the build pipeline, Click on 'Finish'
+* Edit the pipeline 'check-node-vulnerabilities'
 * Click on Edit as Code button, then paste that code:
 
 ```yml
 version: v1.0
-name: check-node-vunerabilities
+name: check-node-vulnerabilities
 jobs:
 - job: New Job
   steps:

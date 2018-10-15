@@ -7,7 +7,7 @@ weight = 3
 When you want to add a new worker model or a new worker model pattern you have to use some variables that CDS give you with interpolation. To use them for example for the `--api` flag, CDS provides a variable named API that you can use like this `--api={{.API}}`.
 
 
-Here is the list of available variables :
+Here is the list of available variables:
 
 + API `string` --> URI of the CDS API set in the hatchery configuration
 + Token `string` --> token set in the hatchery configuration

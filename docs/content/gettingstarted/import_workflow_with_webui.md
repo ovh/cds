@@ -29,8 +29,8 @@ jobs:
 - job: First job
   steps:
   - checkout: '{{.cds.workspace}}'
-  - script : mvn package
-  - artifactUpload : target/*.jar
+  - script: mvn package
+  - artifactUpload: target/*.jar
   requirements:
   - binary: git
 ```

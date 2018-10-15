@@ -1,16 +1,16 @@
 +++
-title = "Github"
+title = "GitHub"
 weight = 1
 
 +++
 
-## Authorize CDS on Github
-### Create a CDS application on Github
-Go to https://github.com/settings/developers and **Register a new application**: set an application name, the url and a description. `Authorization callback URL`: `http(s)://<your-cds-api>/repositories_manager/oauth2/callback`
+## Authorize CDS on GitHub
+### Create a CDS application on GitHub
+Go to https://github.com/settings/developers and **Register a new application**: set an application name, the URL and a description. `Authorization callback URL`: `http(s)://<your-cds-api>/repositories_manager/oauth2/callback`
 
 Example: for a local configuration with API default port (8081), callback URL will be `http://localhost:8081/repositories_manager/oauth2/callback`
 
-On the next page Github give you a **Client ID** and a **Client Secret**
+On the next page GitHub give you a **Client ID** and a **Client Secret**
 
 ### Complete CDS Configuration File
 
@@ -25,12 +25,12 @@ Set value to `clientId` and `clientSecret`
       [vcs.servers.Github.github]
 
         #######
-        # CDS <-> Github. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/
+        # CDS <-> GitHub. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/github/
         ########
-        # Github OAuth Application Client ID
+        # GitHub OAuth Application Client ID
         clientId = "xxxx"
 
-        # Github OAuth Application Client Secret
+        # GitHub OAuth Application Client Secret
         clientSecret = "xxxx"
 
         # Does polling is supported by VCS Server
@@ -39,13 +39,13 @@ Set value to `clientId` and `clientSecret`
         # Does webhooks are supported by VCS Server
         disableWebHooks = false
 
-        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = ""
 
-        # optional, Github Token associated to username, used to add comment on Pull Request
+        # optional, GitHub Token associated to username, used to add comment on Pull Request
         token = ""
 
-        # optional. Github username, used to add comment on Pull Request on failed build.
+        # optional. GitHub username, used to add comment on Pull Request on failed build.
         username = ""
 
         [vcs.servers.Github.github.Status]
