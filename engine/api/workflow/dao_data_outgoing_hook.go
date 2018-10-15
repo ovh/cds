@@ -10,6 +10,7 @@ func insertNodeOutGoingHookData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Nod
 	if n.OutGoingHookContext == nil {
 		return nil
 	}
+	n.OutGoingHookContext.ID = 0
 
 	n.OutGoingHookContext.NodeID = n.ID
 

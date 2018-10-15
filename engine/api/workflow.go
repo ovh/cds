@@ -82,9 +82,6 @@ func (api *API) getWorkflowHandler() service.Handler {
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
-		// TODO REMOVE
-		w1.Root = nil
-		w1.Joins = nil
 		return service.WriteJSON(w, w1, http.StatusOK)
 	}
 }

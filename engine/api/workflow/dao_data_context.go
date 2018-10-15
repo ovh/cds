@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"database/sql"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -24,8 +23,9 @@ type sqlNodeContextData struct {
 
 func insertNodeContextData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 	if n.Context == nil {
-		return nil
+		n.Context = &sdk.NodeContext{}
 	}
+	n.Context.ID = 0
 
 	tempContext := sqlNodeContextData{}
 	tempContext.NodeID = n.ID
@@ -89,5 +89,6 @@ func insertNodeContextData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) er
 		return sdk.WrapError(err, "insertNodeContextData> Unable to insert workflow node context")
 	}
 	n.Context.ID = dbContext.ID
+	n.Context.NodeID = n.ID
 	return nil
 }

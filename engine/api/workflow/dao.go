@@ -744,10 +744,6 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		return err
 	}
 
-	if err := RenameNode(db, w); err != nil {
-		return sdk.WrapError(err, "Update> cannot check pipeline name")
-	}
-
 	// Delete all OLD JOIN
 	for _, j := range oldWorkflow.Joins {
 		if err := deleteJoin(db, j); err != nil {

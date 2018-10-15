@@ -49,7 +49,7 @@ func deleteNodeData(db gorp.SqlExecutor, node sdk.Node) error {
 // InsertWorkflowData insert workflow data
 func InsertWorkflowData(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	if errIN := insertNodeData(db, w, &w.WorkflowData.Node, false); errIN != nil {
-		return sdk.WrapError(errIN, "InsertWorkflowData> Unable to insert workflow node")
+		return sdk.WrapError(errIN, "InsertWorkflowData> Unable to insert workflow node %s", w.WorkflowData.Node.Name)
 	}
 
 	for i := range w.WorkflowData.Joins {
@@ -73,16 +73,15 @@ func insertNodeData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node, skipDepen
 	if !nodeNamePattern.MatchString(n.Name) {
 		return sdk.WrapError(sdk.ErrInvalidNodeNamePattern, "insertNodeData> node has a wrong name %s", n.Name)
 	}
-
+	n.ID = 0
 	n.WorkflowID = w.ID
-	if n.ID == 0 {
-		//Insert new node
-		dbwn := dbNodeData(*n)
-		if err := db.Insert(&dbwn); err != nil {
-			return sdk.WrapError(err, "insertNodeData> Unable to insert workflow node %s-%s", n.Name, n.Ref)
-		}
-		n.ID = dbwn.ID
+
+	//Insert new node
+	dbwn := dbNodeData(*n)
+	if err := db.Insert(&dbwn); err != nil {
+		return sdk.WrapError(err, "insertNodeData> Unable to insert workflow node %s-%s", n.Name, n.Ref)
 	}
+	n.ID = dbwn.ID
 
 	if err := insertNodeJoinData(db, w, n); err != nil {
 
