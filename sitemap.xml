@@ -271,11 +271,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/</loc>
+    <loc>https://ovh.github.io/cds/worker/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/worker/</loc>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/</loc>
   </url>
   
   <url>

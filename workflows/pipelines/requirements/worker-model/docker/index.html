@@ -445,7 +445,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -476,7 +476,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -491,7 +491,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -577,7 +577,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -587,7 +587,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1900,7 +1900,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1910,7 +1910,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2093,7 +2093,7 @@
 
 <h2 id="register-a-worker-model-from-an-existing-docker-image">Register a worker Model from an existing Docker Image</h2>
 
-<p>Docker Image <em>golang:1.10</em>  have a &ldquo;curl&rdquo; in $PATH, so it can be used as it is.</p>
+<p>Docker Image <em>golang:1.10</em> have a &ldquo;curl&rdquo; in $PATH, so it can be used as it is.</p>
 
 <ul>
 <li>In the UI, click on the wheel on the hand right top corner and select *workers&rdquo; (or go the the route <em>#/worker</em>)</li>
@@ -2103,9 +2103,9 @@
 <li><strong>Name</strong> of your worker <em>go-official-1.10</em></li>
 <li><strong>type</strong> <em>docker</em></li>
 <li><strong>image</strong> <em>golang:1.10</em></li>
-<li><strong>pattern</strong> : if you aren&rsquo;t an administrator select a <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/patterns/">configuration pattern</a> that an administrator have already created for this type of worker model.</li>
-<li><strong>shell command</strong> : if you are an administrator you can directly edit the <code>main shell command</code> (main shell command is the command which accept a command to execute, for example <code>sh -c &quot;echo CDS&quot;</code>, here <code>sh -c</code> is the main shell command)</li>
-<li><strong>the command</strong> :  represent the command to launch the CDS worker cf: <a href="https://ovh.github.io/cds/cli/worker/">worker CLI</a></li>
+<li><strong>pattern</strong>: if you aren&rsquo;t an administrator select a <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/patterns/">configuration pattern</a> that an administrator have already created for this type of worker model.</li>
+<li><strong>shell command</strong>: if you are an administrator you can directly edit the <code>main shell command</code> (main shell command is the command which accept a command to execute, for example <code>sh -c &quot;echo CDS&quot;</code>, here <code>sh -c</code> is the main shell command)</li>
+<li><strong>the command</strong>: represent the command to launch the CDS worker cf: <a href="https://ovh.github.io/cds/cli/worker/">worker CLI</a></li>
 <li>in order to launch your worker CDS allow you to use <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">a specific list of variables</a> which is interpolate when your worker will be spawned by your hatchery.</li>
 </ul></li>
 <li>Click on <em>Add</em> button and that&rsquo;s it</li>
@@ -2123,7 +2123,7 @@
 
 <ul>
 <li>Port mapping: <code>--port=8080:8081/tcp --port=9080:9081/tcp</code></li>
-<li>Priviledge flag: <code>--privileged</code></li>
+<li>Privileged flag: <code>--privileged</code></li>
 <li>Add host flag: <code>--add-host=aaa:1.2.3.4 --add-host=bbb:5.6.7.8</code></li>
 <li>Use all: <code>--port=8080:8081/tcp --privileged --port=9080:9081/tcp --add-host=aaa:1.2.3.4 --add-host=bbb:5.6.7.8</code></li>
 </ul></li>

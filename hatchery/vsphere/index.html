@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Hatchery Vsphere :: CDS - Continuous Delivery Service</title>
+    <title>Hatchery vSphere :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -442,7 +442,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -471,7 +471,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -486,7 +486,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -573,7 +573,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -583,7 +583,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item active">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1896,7 +1896,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1906,7 +1906,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2031,7 +2031,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/hatchery/'>Hatchery</a> > Hatchery Vsphere
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/hatchery/'>Hatchery</a> > Hatchery vSphere
 
  
 
@@ -2047,7 +2047,7 @@
 <li>
 <ul>
 <li><a href="#pre-requisites">Pre-requisites</a></li>
-<li><a href="#start-vsphere-hatchery">Start Vsphere hatchery</a></li>
+<li><a href="#start-vsphere-hatchery">Start vSphere hatchery</a></li>
 <li><a href="#setup-a-worker-model">Setup a worker model</a></li>
 </ul></li>
 </ul>
@@ -2061,7 +2061,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Hatchery Vsphere</h1>
+                <h1>Hatchery vSphere</h1>
                 <p></p>
             </div>
           
@@ -2071,15 +2071,15 @@
 
 
 
-<p>CDS build using VMWare Vsphere infrastructure to spawn each CDS Workers inside dedicated VM.</p>
+<p>CDS build using VMware vSphere infrastructure to spawn each CDS Workers inside dedicated VM.</p>
 
 <h2 id="pre-requisites">Pre-requisites</h2>
 
-<p>This hatchery spawns VM which obtains IP from DHCP. So first you have to create a DHCP server on your host with NAT if you want to access to the internet. In order to create you have multiple possibilities like create your own VM with a DHCP server configured or if you are comfortable with the VMWare tools you can use the <a href="https://www.vmware.com/products/nsx.html">NSX system</a>. This system will create DHCP gateway for you.</p>
+<p>This hatchery spawns VM which obtains IP from DHCP. So first you have to create a DHCP server on your host with NAT if you want to access to the internet. In order to create you have multiple possibilities like create your own VM with a DHCP server configured or if you are comfortable with the VMware tools you can use the <a href="https://www.vmware.com/products/nsx.html">NSX system</a>. This system will create DHCP gateway for you.</p>
 
 <p>Also we recommend you to create a VM base that the hatchery will use to linked clone your new VM to execute your jobs. For example in our case we create different VM base with a minimal debian installed in different versions. In order to save your host resources we advice you to turn these VMs off.</p>
 
-<h2 id="start-vsphere-hatchery">Start Vsphere hatchery</h2>
+<h2 id="start-vsphere-hatchery">Start vSphere hatchery</h2>
 
 <p>Generate a token for group:</p>
 
@@ -2087,9 +2087,9 @@
 fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 </code></pre>
 
-<p>Edit the CDS <a href="https://ovh.github.io/cds/hosting/configuration/">configuration</a> or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the VSphere variables.</p>
+<p>Edit the CDS <a href="https://ovh.github.io/cds/hosting/configuration/">configuration</a> or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the vSphere variables.</p>
 
-<p>This hatchery will now start worker of model &lsquo;vsphere&rsquo; on Vsphere infrastructure.</p>
+<p>This hatchery will now start worker of model &lsquo;vsphere&rsquo; on vSphere infrastructure.</p>
 
 <h2 id="setup-a-worker-model">Setup a worker model</h2>
 

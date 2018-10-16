@@ -442,7 +442,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -471,7 +471,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -486,7 +486,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -573,7 +573,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -583,7 +583,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1894,21 +1894,6 @@
         <span>Repositories Manager</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
-        <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
-        </a>
-    </li>
-      <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
-        <a href="https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/">
-          <span>Bitbucket</span>
-        </a>
-    </li>
-      <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
-        <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
-        </a>
-    </li>
         </ul>
     </li>
       <li data-nav-id="/hosting/monitoring/" class="dd-item">
@@ -2048,7 +2033,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#example-with-a-creation-of-a-vsphere-hatchery">Example with a creation of a VSphere hatchery</a></li>
+<li><a href="#example-with-a-creation-of-a-vsphere-hatchery">Example with a creation of a vSphere hatchery</a></li>
 <li><a href="#test">Test</a></li>
 </ul></li>
 </ul></li>
@@ -2073,41 +2058,41 @@
 
 
 
-<h3 id="example-with-a-creation-of-a-vsphere-hatchery">Example with a creation of a VSphere hatchery</h3>
+<h3 id="example-with-a-creation-of-a-vsphere-hatchery">Example with a creation of a vSphere hatchery</h3>
 
 <ul>
-<li><p>First of all you need to create a new package like the other into the hatchery package. Let&rsquo;s call this package vsphere for our example.</p></li>
+<li><p>First of all you need to create a new package like the other into the hatchery package. Let&rsquo;s call this package vSphere for our example.</p></li>
 
 <li><p>You have to implement the Service interface (see <a href="https://github.com/ovh/cds/blob/master/engine/types.go">here</a>) in order to configure launch this new hatchery mode via CDS engine CLI.</p></li>
 
-<li><p>Your have to create a Configuration structure composed of the <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#CommonConfiguration">hatchery.CommonConfiguration</a> and the variables you need to access to Vsphere API. You finally have to update the <a href="https://github.com/ovh/cds/blob/master/engine/main.go">engine main.go file</a> to manage this new service and add and manage the configuration structure as part of the <a href="https://github.com/ovh/cds/blob/master/engine/types.go">global configuration</a>.</p></li>
+<li><p>Your have to create a Configuration structure composed of the <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#CommonConfiguration">hatchery.CommonConfiguration</a> and the variables you need to access to vSphere API. You finally have to update the <a href="https://github.com/ovh/cds/blob/master/engine/main.go">engine main.go file</a> to manage this new service and add and manage the configuration structure as part of the <a href="https://github.com/ovh/cds/blob/master/engine/types.go">global configuration</a>.</p></li>
 
 <li><p>You need to implement the hatchery interface (see <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#Interface">here</a>)</p></li>
 
-<li><p>The <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Init">Init</a> function is useful to create the struct and to set all of these parameters, for our example it&rsquo;s in this function that we&rsquo;re going to create all our VSphere informations fetched from the VSphere API. (cf <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Init">init.go</a>). In this case we create a new vsphere client to request vsphere API, a new finder to fetch all informations about our vsphere host. In fact, all informations that we need to spawn and kill the vms with our workers inside on the vsphere infrastructure. This function is also used to create and register the hatchery on the api via the function in the sdk called <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#Register">hatchery.Register</a>. This register will give you the id of your hatchery.</p></li>
+<li><p>The <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Init">Init</a> function is useful to create the struct and to set all of these parameters, for our example it&rsquo;s in this function that we&rsquo;re going to create all our vSphere informations fetched from the vSphere API. (cf <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Init">init.go</a>). In this case we create a new vSphere client to request vSphere API, a new finder to fetch all informations about our vSphere host. In fact, all informations that we need to spawn and kill the vms with our workers inside on the vSphere infrastructure. This function is also used to create and register the hatchery on the API via the function in the sdk called <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#Register">hatchery.Register</a>. This register will give you the id of your hatchery.</p></li>
 
 <li><p>The <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.ID">ID</a> function returns the id of the current hatchery that comes from the hatchery client registered with the sdk previously in the <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Init">Init</a> function.</p></li>
 
-<li><p>The <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.ModelType">ModelType</a> function returns the type of the hatchery, in this case it&rsquo;s vsphere type. We can create a constant VSphere inside our <a href="https://godoc.org/github.com/ovh/cds/sdk#pkg-constants">sdk package</a>.</p></li>
+<li><p>The <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.ModelType">ModelType</a> function returns the type of the hatchery, in this case it&rsquo;s vSphere type. We can create a constant VSphere inside our <a href="https://godoc.org/github.com/ovh/cds/sdk#pkg-constants">sdk package</a>.</p></li>
 
 <li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Hatchery">Hatchery</a> function returns the hatchery struct initialised previously in the <code>Init</code> function.</p></li>
 
 <li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Client">Client</a> function returns the sdk client initialised previously in the <code>Init</code> function too.</p></li>
 
-<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.NeedRegistration">NeedRegistration</a> is used to know if your worker model need registration. For example if a user update a worker model you have to rebuild the virtual machine model linked to this worker model. And this function returns true if the worker model was updated after the virtual machine model was created on vsphere. In order to know that for vsphere we have add some metadata on each vms in order to add more custom data as the last creation of this vm for example.</p></li>
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.NeedRegistration">NeedRegistration</a> is used to know if your worker model need registration. For example if a user update a worker model you have to rebuild the virtual machine model linked to this worker model. And this function returns true if the worker model was updated after the virtual machine model was created on vSphere. In order to know that for vSphere we have add some metadata on each vms in order to add more custom data as the last creation of this vm for example.</p></li>
 
-<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.WorkersStartedByModel">WorkersStartedByModel</a> returns all workers which are running with a worker model. In our vsphere example, in order to know that we register a string metadata called model which tell us the name of our worker model.</p></li>
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.WorkersStartedByModel">WorkersStartedByModel</a> returns all workers which are running with a worker model. In our vSphere example, in order to know that we register a string metadata called model which tell us the name of our worker model.</p></li>
 
-<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.WorkersStarted">WorkersStarted</a> returns all workers include those which are running to build a vm model or to register a worker model. For example in the vsphere case, in order to count them we all prefix our worker spawned with <code>worker-</code>.</p></li>
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.WorkersStarted">WorkersStarted</a> returns all workers include those which are running to build a vm model or to register a worker model. For example in the vSphere case, in order to count them we all prefix our worker spawned with <code>worker-</code>.</p></li>
 
-<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.CanSpawn">CanSpawn</a> is where the magic happens, it&rsquo;s in this function that you spawn your vms with the right configuration. In fact with vsphere we check if there is a vm model already created for the worker model passed in parameter. If it doesn&rsquo;t we create a vm model with the user data store in worker model infos. Then we spawn a vm with right environment variables created from informations passed in parameters (workerModel, registerOnly, &hellip;) and with a script inside the vm that download the worker binary, execute it and shutdown when all is done. In this function we also check if the worker should be launch to register or to execute steps. When we launch a worker for register it means that the worker is launched and then send all there binary capabilities to the api for this worker model but don&rsquo;t execute any jobs.</p></li>
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.CanSpawn">CanSpawn</a> is where the magic happens, it&rsquo;s in this function that you spawn your vms with the right configuration. In fact with vSphere we check if there is a vm model already created for the worker model passed in parameter. If it doesn&rsquo;t we create a vm model with the user data store in worker model infos. Then we spawn a vm with right environment variables created from informations passed in parameters (workerModel, registerOnly, &hellip;) and with a script inside the vm that download the worker binary, execute it and shutdown when all is done. In this function we also check if the worker should be launch to register or to execute steps. When we launch a worker for register it means that the worker is launched and then send all there binary capabilities to the API for this worker model but don&rsquo;t execute any jobs.</p></li>
 
-<li><p>In our vsphere implementation we also launch multiple goroutine to clean and kill workers which seem down or in error. It&rsquo;s a ticker that check all vms state in a periodic way.</p></li>
+<li><p>In our vSphere implementation we also launch multiple goroutine to clean and kill workers which seem down or in error. It&rsquo;s a ticker that check all vms state in a periodic way.</p></li>
 </ul>
 
 <h3 id="test">Test</h3>
 
-<p>If you want to test that you just have to launch it like that :</p>
+<p>If you want to test that you just have to launch it like that:</p>
 
 <pre><code class="language-bash">$ engine start hatchery:vsphere --config config.toml
 </code></pre>

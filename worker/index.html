@@ -442,7 +442,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -471,7 +471,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -486,7 +486,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -573,7 +573,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -583,7 +583,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1896,7 +1896,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1906,7 +1906,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2046,7 +2046,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</a></li>
+<li><a href="#why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker?</a></li>
 </ul></li>
 <li><a href="#about-worker-model">About worker model</a></li>
 </ul></li>
@@ -2076,7 +2076,7 @@
 
 <h2 id="what-is-a-worker">What is a worker</h2>
 
-<p>Basically, a worker is a binary. This binary can be launched inside a Docker Container, or on a Host (as an Openstack VM). A worker executes a <a href="https://ovh.github.io/cds/gettingstarted/concepts/job/">CDS Job</a>.</p>
+<p>Basically, a worker is a binary. This binary can be launched inside a Docker Container, or on a Host (as an OpenStack VM). A worker executes a <a href="https://ovh.github.io/cds/gettingstarted/concepts/job/">CDS Job</a>.</p>
 
 <p>If you want to auto-scale workers, have a look at the <a href="https://ovh.github.io/cds/hatchery/">CDS Hatchery</a></p>
 
@@ -2084,11 +2084,11 @@
 
 <p><img src="https://ovh.github.io/cds/images/concepts_worker_flow.png" alt="Pipeline" /></p>
 
-<p>If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be lauched must contain a sane installation of &ldquo;curl&rdquo;.</p>
+<p>If the worker is spawned by a Hatchery, the Docker Container or Host where the worker will be launched must contain a sane installation of &ldquo;curl&rdquo;.</p>
 
-<p>So, in the case of a worker model of type &ldquo;docker&rdquo;, the docker image must have <code>curl</code> available in the PATH.</p>
+<p>So, in the case of a worker model of type &ldquo;docker&rdquo;, the Docker image must have <code>curl</code> available in the PATH.</p>
 
-<h4 id="why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</h4>
+<h4 id="why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker?</h4>
 
 <p>There are several cases where one would need to setup his own worker:</p>
 
@@ -2102,7 +2102,7 @@
 
 <h3 id="about-worker-model">About worker model</h3>
 
-<p>Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing <code>npm</code> tools, importing <code>bower</code> packages (these are <code>nodeJs</code> tools), building webfonts with <code>fontforge</code>&hellip;</p>
+<p>Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJS application, you shall need a worker capable of installing <code>npm</code> tools, importing <code>bower</code> packages (these are <code>Node.js</code> tools), building webfonts with <code>fontforge</code>&hellip;</p>
 
 <p><a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">More about worker model</a></p>
 

@@ -444,7 +444,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -473,7 +473,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -488,7 +488,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -574,7 +574,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -584,7 +584,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1897,7 +1897,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1907,7 +1907,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2078,7 +2078,7 @@
 
 <p>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of <code>git.branch</code> is <code>master</code>.</p>
 
-<p>If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on <code>Edit run conditons</code> like this :</p>
+<p>If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on <code>Edit run conditions</code> like this:</p>
 
 <p><img src="https://ovh.github.io/cds/images/workflow_pipeline_run_conditions_link.png" alt="Pipeline run conditions link" /></p>
 
@@ -2094,17 +2094,17 @@
 
 <h2 id="advanced-run-conditions">Advanced run conditions</h2>
 
-<p>If you want some advanced run conditions like for example make some compute over specific variables and then compare their values you have the ability to use advanced run condtions. In fact, you are free to make any compute or comparison because advanced condition is a script that you write in <a href="http://www.lua.org/">Lua</a> and MUST return a boolean (<code>true</code> if you want to run the pipeline or <code>false</code> if you don&rsquo;t). In this case the variables syntax is in unix case (example: <code>cds_dest_application</code>) and prefixed with <code>cds_</code>, <code>git_</code> or <code>workflow_</code>. In general rules when you have a CDS variable containing <code>.</code> or <code>-</code> you must replace with <code>_</code>. For example if you have a variable named <code>cds.build.my-variable</code> then in lua you have to use it with <code>cds_build_my_variable</code>.</p>
+<p>If you want some advanced run conditions like for example make some compute over specific variables and then compare their values you have the ability to use advanced run conditions. In fact, you are free to make any compute or comparison because advanced condition is a script that you write in <a href="http://www.lua.org/">Lua</a> and MUST return a boolean (<code>true</code> if you want to run the pipeline or <code>false</code> if you don&rsquo;t). In this case the variables syntax is in Unix case (example: <code>cds_dest_application</code>) and prefixed with <code>cds_</code>, <code>git_</code> or <code>workflow_</code>. In general rules when you have a CDS variable containing <code>.</code> or <code>-</code> you must replace with <code>_</code>. For example if you have a variable named <code>cds.build.my-variable</code> then in lua you have to use it with <code>cds_build_my_variable</code>.</p>
 
 <p>Pay attention, <strong><em>all types of variables are string</em></strong>. Inside the Lua editor on CDS you have the autocompletion of your variables, you just have write <code>cds_</code>, <code>git_</code> or <code>workflow_</code> to see suggestions. Please be aware that you can&rsquo;t have at the same time basic conditions and advanced conditions. <strong><em>The behavior when you have both is that ONLY advanced run conditions will be effective</em></strong>.</p>
 
-<p>For example if you want to launch the pipeline if the value of <code>cds_status</code> is <code>Success</code> and <code>git_branch</code> is <code>master</code> OR if the value of <code>cds_manual</code> is <code>true</code> you have to write :</p>
+<p>For example if you want to launch the pipeline if the value of <code>cds_status</code> is <code>Success</code> and <code>git_branch</code> is <code>master</code> OR if the value of <code>cds_manual</code> is <code>true</code> you have to write:</p>
 
-<pre><code class="language-lua">-- Pay attention ! All variables value are string so you compare cds_manual with the string &quot;true&quot; and not true
+<pre><code class="language-lua">-- Pay attention! All variables value are string so you compare cds_manual with the string &quot;true&quot; and not true
 return cds_status == &quot;Success&quot; and (git_branch == &quot;master&quot; or cds_manual == &quot;true&quot;)
 </code></pre>
 
-<p>Another use case is to enable auto-prod only if you are in a work week day (not saterday and sunday):</p>
+<p>Another use case is to enable auto-prod only if you are in a work week day (not saturday and sunday):</p>
 
 <pre><code class="language-lua">return os.date(&quot;%w&quot;) &lt; &quot;5&quot;
 </code></pre>
@@ -2125,7 +2125,7 @@ local re = require(&quot;re&quot;)
 return re.match(cds_application, &quot;abc.*&quot;) == cds_application
 </code></pre>
 
-<p>Functions <code>re.find</code> , <code>re.gsub</code>, <code>re.match</code>, <code>re.gmatch</code> are available. These functions have the same API as Lua pattern match. Under the hood, it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.</p>
+<p>Functions <code>re.find</code>, <code>re.gsub</code>, <code>re.match</code>, <code>re.gmatch</code> are available. These functions have the same API as Lua pattern match. Under the hood, it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.</p>
 
 
 <footer class=" footline" >

@@ -442,7 +442,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -471,7 +471,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -486,7 +486,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -572,7 +572,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -582,7 +582,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1897,7 +1897,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1907,7 +1907,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2067,11 +2067,11 @@
 <li><a href="#get-worker-model-communication">GET <code>/worker/model/communication</code></a></li>
 <li><a href="#get-worker-model-enabled">GET <code>/worker/model/enabled</code></a></li>
 <li><a href="#put-worker-model-error-permmodelid">PUT <code>/worker/model/error/&lt;permModelID&gt;</code></a></li>
-<li><a href="#post-worker-model-pattern">POST <code>/worker/model/pattern</code></a></li>
 <li><a href="#get-worker-model-pattern">GET <code>/worker/model/pattern</code></a></li>
-<li><a href="#delete-worker-model-pattern-type-name">DELETE <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
-<li><a href="#put-worker-model-pattern-type-name">PUT <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
+<li><a href="#post-worker-model-pattern">POST <code>/worker/model/pattern</code></a></li>
 <li><a href="#get-worker-model-pattern-type-name">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
+<li><a href="#put-worker-model-pattern-type-name">PUT <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
+<li><a href="#delete-worker-model-pattern-type-name">DELETE <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></a></li>
 <li><a href="#get-worker-model-type">GET <code>/worker/model/type</code></a></li>
 <li><a href="#post-worker-refresh">POST <code>/worker/refresh</code></a></li>
 <li><a href="#post-worker-unregister">POST <code>/worker/unregister</code></a></li>
@@ -2463,34 +2463,6 @@
 </tbody>
 </table>
 
-<h3 id="post-worker-model-pattern">POST <code>/worker/model/pattern</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/worker/model/pattern</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAddWorkerModelPatternHandler%22">postAddWorkerModelPatternHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-worker-model-pattern">GET <code>/worker/model/pattern</code></h3>
 
 <table>
@@ -2519,7 +2491,35 @@
 </tbody>
 </table>
 
-<h3 id="delete-worker-model-pattern-type-name">DELETE <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h3>
+<h3 id="post-worker-model-pattern">POST <code>/worker/model/pattern</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/worker/model/pattern</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postAddWorkerModelPatternHandler%22">postAddWorkerModelPatternHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-worker-model-pattern-type-name">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h3>
 
 <table>
 <thead>
@@ -2532,17 +2532,17 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>GET</td>
 </tr>
 
 <tr>
 <td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
+<td>Auth: true</td>
 </tr>
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelPatternHandler%22">deleteWorkerModelPatternHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22">getWorkerModelPatternHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2575,7 +2575,7 @@
 </tbody>
 </table>
 
-<h3 id="get-worker-model-pattern-type-name">GET <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h3>
+<h3 id="delete-worker-model-pattern-type-name">DELETE <code>/worker/model/pattern/&lt;type&gt;/&lt;name&gt;</code></h3>
 
 <table>
 <thead>
@@ -2588,17 +2588,17 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>GET</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
 <td>Permissions</td>
-<td>Auth: true</td>
+<td>NeedAdmin: true -  Auth: true</td>
 </tr>
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkerModelPatternHandler%22">getWorkerModelPatternHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkerModelPatternHandler%22">deleteWorkerModelPatternHandler</a></td>
 </tr>
 </tbody>
 </table>

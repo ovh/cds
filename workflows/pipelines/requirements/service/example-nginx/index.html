@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Service Requirement Nginx :: CDS - Continuous Delivery Service</title>
+    <title>Service Requirement NGINX :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -446,7 +446,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item active">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -475,7 +475,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -490,7 +490,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -576,7 +576,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -586,7 +586,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1899,7 +1899,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1909,7 +1909,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2043,7 +2043,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/'>Job's Requirements</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/service/'>Service Link</a> > Service Requirement Nginx
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/workflows/'>Building CDS Workflows</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/'>Building Pipelines</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/'>Job's Requirements</a> > <a href='https://ovh.github.io/cds/workflows/pipelines/requirements/service/'>Service Link</a> > Service Requirement NGINX
 
  
 
@@ -2084,7 +2084,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Service Requirement Nginx</h1>
+                <h1>Service Requirement NGINX</h1>
                 <p></p>
             </div>
           
@@ -2099,14 +2099,14 @@
 <ul>
 <li>Name: <code>mypg</code>. This will be the service hostname</li>
 <li>Type: <code>service</code></li>
-<li>Docker Image: <code>nginx:1.11.1</code>. This is the name of docker image to link to current job</li>
+<li>Docker Image: <code>nginx:1.11.1</code>. This is the name of Docker image to link to current job</li>
 </ul>
 
 <p><img src="https://ovh.github.io/cds/images/tutorials_service_link_nginx_requirements.png" alt="Requirement" /></p>
 
 <h4 id="add-a-step-of-type-script">Add a step of type <code>script</code></h4>
 
-<p>docker image <code>nginx:1.11.1</code> start a nginx at startup. So, it&rsquo;s now available on <code>http://mynginx</code></p>
+<p>Docker image <code>nginx:1.11.1</code> start a nginx at startup. So, it&rsquo;s now available on <code>http://mynginx</code></p>
 
 <pre><code class="language-bash">curl -v -X GET http://mynginx
 </code></pre>

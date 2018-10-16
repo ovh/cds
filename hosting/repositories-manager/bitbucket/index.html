@@ -442,7 +442,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -471,7 +471,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -486,7 +486,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -572,7 +572,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -582,7 +582,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1897,7 +1897,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item active">
@@ -1907,7 +1907,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2055,7 +2055,7 @@
 <li><a href="#authorize-cds-on-your-bitbucket-instance">Authorize CDS on your Bitbucket instance</a>
 <ul>
 <li><a href="#generate-rsa-key-pair">Generate RSA Key Pair</a></li>
-<li><a href="#create-a-cds-application-in-bitbucket">Create a CDS application in BitBucket</a></li>
+<li><a href="#create-a-cds-application-in-bitbucket">Create a CDS application in Bitbucket</a></li>
 <li><a href="#complete-cds-configuration-file">Complete CDS Configuration File</a></li>
 </ul></li>
 </ul></li>
@@ -2082,7 +2082,7 @@
 
 <h2 id="authorize-cds-on-your-bitbucket-instance">Authorize CDS on your Bitbucket instance</h2>
 
-<p>You need to perform the following steps :</p>
+<p>You need to perform the following steps:</p>
 
 <ul>
 <li>Bitbucket admin privileges</li>
@@ -2105,27 +2105,27 @@
 
 <p>This will display the public key, you will have to copy-paste it inside <code>Public Key</code> field on Bitbucket.</p>
 
-<h3 id="create-a-cds-application-in-bitbucket">Create a CDS application in BitBucket</h3>
+<h3 id="create-a-cds-application-in-bitbucket">Create a CDS application in Bitbucket</h3>
 
-<p>In Bitbucket go to <em>Administration Settings</em> / <em>Application Links</em>. Create a new Application with :</p>
+<p>In Bitbucket go to <em>Administration Settings</em> / <em>Application Links</em>. Create a new Application with:</p>
 
 <ul>
-<li>Name : <strong>CDS</strong></li>
-<li>Type : <strong>Generic Application</strong></li>
-<li>Application URL : <em>Your CDS URL</em></li>
-<li>Display URL : <em>Your CDS URL</em></li>
+<li>Name: <strong>CDS</strong></li>
+<li>Type: <strong>Generic Application</strong></li>
+<li>Application URL: <em>Your CDS URL</em></li>
+<li>Display URL: <em>Your CDS URL</em></li>
 </ul>
 
-<p>On this application, you just have to set up <em>OAuth Incoming Authentication</em> :</p>
+<p>On this application, you just have to set up <em>OAuth Incoming Authentication</em>:</p>
 
 <ul>
-<li>Consumer Key : <strong>CDS</strong> (you can change it in your configuration file)</li>
-<li>Consumer Name : <strong>CDS</strong></li>
-<li>Public Key : <em>Your CDS RSA public key</em></li>
-<li>Consumer Callback URL : None</li>
-<li>Allow 2-Legged OAuth : false</li>
-<li>Execute as : None</li>
-<li>Allow user impersonation through 2-Legged OAuth : false</li>
+<li>Consumer Key: <strong>CDS</strong> (you can change it in your configuration file)</li>
+<li>Consumer Name: <strong>CDS</strong></li>
+<li>Public Key: <em>Your CDS RSA public key</em></li>
+<li>Consumer Callback URL: None</li>
+<li>Allow 2-Legged OAuth: false</li>
+<li>Execute as: None</li>
+<li>Allow user impersonation through 2-Legged OAuth: false</li>
 </ul>
 
 <h3 id="complete-cds-configuration-file">Complete CDS Configuration File</h3>
@@ -2154,7 +2154,7 @@
         disableWebHooks = false
         privateKey = &quot;-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----&quot;
 
-        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = &quot;&quot;
 
         # optional, Bitbucket Token associated to username, used to add comment on Pull Request
@@ -2192,7 +2192,7 @@
         disableWebHooksCreation = false
         privateKey = &quot;-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----&quot;
 
-        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = &quot;https://myproxy.com&quot;
 
         [vcs.servers.mybitbucket_instance1.bitbucket.Status]
@@ -2221,7 +2221,7 @@
         disableWebHooksCreation = false
         privateKey = &quot;-----BEGIN PRIVATE KEY-----\n....\n-----END PRIVATE KEY-----&quot;
 
-        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = &quot;https://myproxy.com&quot;
 
         [vcs.servers.mybitbucket_instance2.bitbucket.Status]
@@ -2256,8 +2256,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/hosting/repositories-manager/github/" title="Github"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/" title="Gitlab" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/hosting/repositories-manager/github/" title="GitHub"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/" title="GitLab" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

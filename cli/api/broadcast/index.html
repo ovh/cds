@@ -442,7 +442,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -471,7 +471,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -486,7 +486,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -572,7 +572,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -582,7 +582,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1897,7 +1897,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1907,7 +1907,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2054,11 +2054,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#post-broadcast">POST <code>/broadcast</code></a></li>
 <li><a href="#get-broadcast">GET <code>/broadcast</code></a></li>
+<li><a href="#post-broadcast">POST <code>/broadcast</code></a></li>
+<li><a href="#get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#delete-broadcast-id">DELETE <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></a></li>
-<li><a href="#get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#post-broadcast-id-mark">POST <code>/broadcast/&lt;id&gt;/mark</code></a></li>
 </ul></li>
 </ul></li>
@@ -2082,6 +2082,34 @@
 
 
 
+
+<h3 id="get-broadcast">GET <code>/broadcast</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/broadcast</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastsHandler%22">getBroadcastsHandler</a></td>
+</tr>
+</tbody>
+</table>
 
 <h3 id="post-broadcast">POST <code>/broadcast</code></h3>
 
@@ -2111,13 +2139,13 @@
 </tbody>
 </table>
 
-<h3 id="get-broadcast">GET <code>/broadcast</code></h3>
+<h3 id="get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/broadcast</code></strong></th>
+<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
 </tr>
 </thead>
 
@@ -2134,7 +2162,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastsHandler%22">getBroadcastsHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastHandler%22">getBroadcastHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2191,34 +2219,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateBroadcastHandler%22">updateBroadcastHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastHandler%22">getBroadcastHandler</a></td>
 </tr>
 </tbody>
 </table>

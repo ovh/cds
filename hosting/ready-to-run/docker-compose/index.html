@@ -442,7 +442,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -471,7 +471,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -486,7 +486,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -572,7 +572,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -582,7 +582,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1897,7 +1897,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1907,7 +1907,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2086,8 +2086,8 @@
 <p>The <a href="https://github.com/ovh/cds/blob/master/docker-compose.yml">docker-compose.yml</a> contains:</p>
 
 <ul>
-<li>cds-db service with a postgresql</li>
-<li>cds-cache service with a redis</li>
+<li>cds-db service with a PostgreSQL</li>
+<li>cds-cache service with a Redis</li>
 <li>cds-migrate service to prepare DB tables</li>
 <li>cds-api service</li>
 <li>cds-ui service</li>
@@ -2103,11 +2103,11 @@
 $ cd cds
 $ export HOSTNAME=$(hostname)
 
-# Create PG Database
+# Create PG database
 $ docker-compose up --no-recreate -d cds-db
 
-# check if db is UP
-# check if last log is &quot;LOG:  database system is ready to accept connections&quot;
+# check if DB is up
+# check if last log is &quot;LOG: database system is ready to accept connections&quot;
 $ docker-compose logs
 
 $ docker-compose up --no-recreate cds-migrate
@@ -2119,7 +2119,7 @@ $ docker-compose up cds-api cds-ui
 </code></pre>
 
 <p>Open a browser on <a href="http://localhost:2015">http://localhost:2015</a>, then register a new user <code>admin</code>,
-with a email <code>admin@localhost.local</code> for example.
+with an email <code>admin@localhost.local</code> for example.
 As there is no SMTP server configured in docker-compose.yml file,
 run <code>docker-compose logs</code> to get URL for validate the registration.</p>
 
@@ -2166,12 +2166,12 @@ to run a CDS Worker or a CDS Hatchery which aims to create workers.</p>
 
 <p>A <code>local hatchery</code> spawns workers on the same host as the hatchery. This is usually useful for specific cases, as
 running job on specific hardware.
-But this hatchery does not make it possible to respect the isolation of workpaces
+But this hatchery does not make it possible to respect the isolation of workspaces
 of workers as they share the same workspace.</p>
 
 <p>There is another hatchery configured in <a href="https://github.com/ovh/cds/blob/master/docker-compose.yml">docker-compose.yml</a> file: a &lsquo;swarm hatchery&rsquo;</p>
 
-<p>Please check that your docker installation allows docker API calls on <code>tcp://${HOSTNAME}:2375</code>
+<p>Please check that your Docker installation allows Docker API calls on <code>tcp://${HOSTNAME}:2375</code>
 Otherwise, please update environment variable <code>DOCKER_HOST: tcp://${HOSTNAME}:2375</code> in
 <a href="https://github.com/ovh/cds/blob/master/docker-compose.yml">docker-compose.yml</a></p>
 
@@ -2182,14 +2182,14 @@ $ docker-compose up cds-hatchery-swarm
 <p>A <code>swarm hatchery</code> spawns CDS Workers inside dedicated containers.
 This ensures isolation of the workspaces and resources.</p>
 
-<p>Now, you have to create worker model of type <code>docker</code>, please follow <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">how to create a worker model docker</a>.</p>
+<p>Now, you have to create worker model of type <code>docker</code>, please follow <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">how to create a worker model Docker</a>.</p>
 
 <h2 id="next-with-actions-plugins">Next with Actions, Plugins</h2>
 
 <ul>
 <li><p>You can download CDS CLI from <a href="https://github.com/ovh/cds/releases">https://github.com/ovh/cds/releases</a> or from <a href="http://localhost:2015/settings/downloads">http://localhost:2015/settings/downloads</a></p>
 
-<pre><code class="language-bash"># on a linux workstation:
+<pre><code class="language-bash"># on a Linux workstation:
 $ wget http://localhost:2015/cdsapi/download/engine/linux/amd64 -O cdsctl
 $ chmod +x cdsctl
 $ ./cdsctl login --api-url http://localhost:8081 -u admin
@@ -2228,8 +2228,8 @@ $ cdsctl action import cds-docker-package.yml
 <h1 id="go-further">Go further</h1>
 
 <ul>
-<li>How to use Openstack infrastructure to spawn CDS container <a href="https://ovh.github.io/cds/hatchery/openstack/">read more</a></li>
-<li>Link CDS to a repository manager, as Github, Bitbucket Server or Gitlab <a href="https://ovh.github.io/cds/hosting/repositories-manager/">read more</a></li>
+<li>How to use OpenStack infrastructure to spawn CDS container <a href="https://ovh.github.io/cds/hatchery/openstack/">read more</a></li>
+<li>Link CDS to a repository manager, as GitHub, Bitbucket Server or GitLab <a href="https://ovh.github.io/cds/hosting/repositories-manager/">read more</a></li>
 <li>Learn more about CDS variables <a href="https://ovh.github.io/cds/workflows/pipelines/variables/">read more</a></li>
 </ul>
 

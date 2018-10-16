@@ -444,7 +444,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -473,7 +473,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -488,7 +488,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -574,7 +574,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -584,7 +584,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1897,7 +1897,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1907,7 +1907,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2059,6 +2059,7 @@
 <li><a href="#export-a-variable-inside-a-step">Export a variable inside a step</a></li>
 <li><a href="#shell-environment-variable">Shell Environment Variable</a></li>
 <li><a href="#git-variables">Git variables</a></li>
+<li><a href="#pipeline-parameters">Pipeline parameters</a></li>
 <li><a href="#helpers">Helpers</a></li>
 </ul></li>
 </ul>
@@ -2155,12 +2156,12 @@
 <pre><code class="language-bash">$ worker export varname thevalue
 </code></pre>
 
-<p>You can use the build variable in :</p>
+<p>You can use the build variable in:</p>
 
 <ul>
 <li>the current job with <code>{{.cds.build.varname}}</code></li>
 <li>the next stages in same pipeline <code>{{.cds.build.varname}}</code></li>
-<li>the next pipelines <code>{{.workflow.pipelineName.build.varname}}</code> with <code>pipelineName</code> the name of the pipeline in your worklow</li>
+<li>the next pipelines <code>{{.workflow.pipelineName.build.varname}}</code> with <code>pipelineName</code> the name of the pipeline in your workflow</li>
 </ul>
 
 <p><a href="https://ovh.github.io/cds/cli/worker/export/">See worker export documentation</a></p>
@@ -2189,6 +2190,13 @@ echo $CDS_PARENT_APPLICATION
 <li><code>{{.git.message}}</code></li>
 <li><code>{{.git.server}}</code></li>
 </ul>
+
+<h2 id="pipeline-parameters">Pipeline parameters</h2>
+
+<p>On a pipeline, you can add some parameters, this will let you to use <code>{{.cds.pip.varname}}</code> in your pipeline.
+Then, in the workflow, you can set the value for pipeline parameter in the <code>pipeline context</code>.</p>
+
+<p>Notice that you can&rsquo;t create a pipeline parameter of type <code>password</code>. If you want to use a variable of type password, you have to create it in your project / application or environment. Then, in your workflow, use this variable to set the value of the pipeline parameter - the pipeline parameter can be of type <code>string</code>.</p>
 
 <h2 id="helpers">Helpers</h2>
 
@@ -2245,10 +2253,10 @@ echo $CDS_PARENT_APPLICATION
 <li>toPrettyJSON</li>
 <li>b64enc</li>
 <li>b64dec</li>
-<li>escape : replace &lsquo;_&lsquo;, &lsquo;/&rsquo;, &lsquo;.&rsquo; by &lsquo;-&rsquo;</li>
+<li>escape: replace &lsquo;_&lsquo;, &lsquo;/&rsquo;, &lsquo;.&rsquo; by &lsquo;-&rsquo;</li>
 </ul>
 
-<p>You&rsquo;re a go developper? See all helpers on <a href="https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23">https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23</a></p>
+<p>You&rsquo;re a Go developer? See all helpers on <a href="https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23">https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23</a></p>
 
 
 <footer class=" footline" >

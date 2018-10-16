@@ -445,7 +445,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -476,7 +476,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -491,7 +491,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -577,7 +577,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -587,7 +587,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1900,7 +1900,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1910,7 +1910,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2103,12 +2103,12 @@
 
 <h2 id="setup-docker-worker-model-with-your-own-image">Setup Docker Worker Model with your own image</h2>
 
-<p>In this example, we will build a Docker model able to build an AngularJs application with webfonts. To create webfonts, a <code>grunt</code> task (optionnally) requires <code>fontforge</code> and <code>ttfautohint</code>.</p>
+<p>In this example, we will build a Docker model able to build an AngularJS application with webfonts. To create webfonts, a <code>grunt</code> task (optionally) requires <code>fontforge</code> and <code>ttfautohint</code>.</p>
 
 <p>The following tools must be included in the model:</p>
 
 <ul>
-<li><code>NodeJs</code> and <code>npm</code></li>
+<li><code>Node.js</code> and <code>npm</code></li>
 <li><code>bower</code></li>
 <li><code>grunt-cli</code></li>
 <li><code>gulp-cli</code></li>
@@ -2131,7 +2131,7 @@
 
 <p>Copy this content in a file named <code>Dockerfile</code></p>
 
-<pre><code class="language-dockerfile"># User official nodejs docker image
+<pre><code class="language-dockerfile"># User official Node.js Docker image
 FROM node:6.10.1
 
 #Answer 'yes' to each question
@@ -2156,7 +2156,7 @@ RUN apt-get install -y libharfbuzz-dev libfreetype6-dev libqt4-dev\
     &amp;&amp; make install
 
 # Change user. If you do not specify this command, the user will be root, and in our case,
-# bower will shout as it cannot be launched by root
+# Bower will shout as it cannot be launched by root
 USER node
 
 # Specify a working directory on which the current user has write access
@@ -2171,7 +2171,7 @@ WORKDIR /home/node
 <pre><code>docker build --no-cache --pull -t registry.my.infra.net/my/beautiful/worker:latest .
 </code></pre>
 
-<p>If you want to test it, you can lauch your docker in bash mode :</p>
+<p>If you want to test it, you can launch your Docker in bash mode:</p>
 
 <pre><code>docker run -it registry.my.infra.net/my/beautiful/worker:latest /bin/bash
 pwd
@@ -2194,9 +2194,9 @@ exit
 <li><strong>Name</strong> of your worker <em>My Beautiful</em></li>
 <li><strong>type</strong> <em>docker</em></li>
 <li><strong>image</strong> <em>registry.my.infra.net/my/beautiful/worker:latest</em></li>
-<li><strong>pattern</strong> : if you aren&rsquo;t an administrator select a pattern for your configuration script (CDS provide default pattern for linux environment called basic_unix)</li>
-<li><strong>shell command</strong> : if you are an administrator in the main shell command you can indicate <code>sh -c</code> for an unix environment.</li>
-<li><strong>command</strong> : is the main worker command, typically on a unix system <code>curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 -C - &amp;&amp; chmod +x worker &amp;&amp; exec ./worker</code> to see all the available variables to interpolate for your worker parameters <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">click here</a></li>
+<li><strong>pattern</strong>: if you aren&rsquo;t an administrator select a pattern for your configuration script (CDS provide default pattern for Linux environment called basic_unix)</li>
+<li><strong>shell command</strong>: if you are an administrator in the main shell command you can indicate <code>sh -c</code> for a Unix environment.</li>
+<li><strong>command</strong>: is the main worker command, typically on a Unix system <code>curl {{.API}}/download/worker/linux/$(uname -m) -o worker --retry 10 --retry-max-time 120 -C - &amp;&amp; chmod +x worker &amp;&amp; exec ./worker</code> to see all the available variables to interpolate for your worker parameters <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/variables/">click here</a></li>
 </ul></li>
 <li>Click on <em>Add</em> button and that&rsquo;s it</li>
 </ul>
@@ -2222,7 +2222,7 @@ exit
 
     <div id="navigation">
         <a class="nav nav-prev" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/" title="Docker Worker Model"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/" title="Openstack Worker Model" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/" title="OpenStack Worker Model" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

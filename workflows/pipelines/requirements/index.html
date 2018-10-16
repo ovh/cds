@@ -445,7 +445,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -474,7 +474,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -489,7 +489,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -575,7 +575,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -585,7 +585,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1898,7 +1898,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1908,7 +1908,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2105,38 +2105,38 @@
 <li>Only one model can be set as requirement</li>
 <li>Only one hostname can be set as requirement</li>
 <li>Only one OS &amp; Architecture requirement can be set as at a time</li>
-<li>Memory and Services requirements are availabe only on Docker models</li>
+<li>Memory and Services requirements are available only on Docker models</li>
 </ul>
 
 <h2 id="note-on-service-requirement">Note on Service Requirement</h2>
 
-<p>A Service in CDS is a docker container which is linked with your base image. To summarize, if you add mysql as service requirement to your pipeline job, the required image will then be used to create a container that is linked to the build container.</p>
+<p>A Service in CDS is a Docker container which is linked with your base image. To summarize, if you add mysql as service requirement to your pipeline job, the required image will then be used to create a container that is linked to the build container.</p>
 
 <h3 id="how-to">How to</h3>
 
-<p>When editing a pipeline job, choose your model as usual, then add a new  <strong>service</strong> requirement, the name you set will be the service&rsquo;s hostname, set the docker image for the service as the value.</p>
+<p>When editing a pipeline job, choose your model as usual, then add a new <strong>service</strong> requirement, the name you set will be the service&rsquo;s hostname, set the Docker image for the service as the value.</p>
 
 <p>When the pipeline will be triggered, a worker defined by the model will be spawned with a <a href="https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/">docker link</a> to the service you defined as requirement.</p>
 
 <h4 id="environment-variables">Environment variables</h4>
 
-<p>You can defined environment variables of the service by setting requirement value as :</p>
+<p>You can defined environment variables of the service by setting requirement value as:</p>
 
 <pre><code class="language-bash">    registry.ovh.net/official/postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword
 </code></pre>
 
-<p>To define your job&rsquo;s requirements in the UI, you just have to go on the job&rsquo;s edition page and click on requirements :</p>
+<p>To define your job&rsquo;s requirements in the UI, you just have to go on the job&rsquo;s edition page and click on requirements:</p>
 
 <p><img src="https://ovh.github.io/cds/images/job_requirements_ui.png" alt="Job's requirement UI" /></p>
 
-<p>Then a modal will appear in order to select your requirements :</p>
+<p>Then a modal will appear in order to select your requirements:</p>
 
 <p><img src="https://ovh.github.io/cds/images/requirements_ui.png" alt="Job's requirement modal" /></p>
 
 <h3 id="tutorials">Tutorials</h3>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">Tutorial - Service Link Requirement Nginx</a></li>
+<li><a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">Tutorial - Service Link Requirement NGINX</a></li>
 <li><a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/">Tutorial - Service Link Requirement PostgreSQL</a></li>
 </ul>
 

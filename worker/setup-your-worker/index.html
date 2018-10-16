@@ -440,16 +440,6 @@
         <span>Service Link</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
-        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
-        </a>
-    </li>
-      <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
-        <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/">
-          <span>Service Requirement PostgreSQL</span>
-        </a>
-    </li>
         </ul>
     </li>
     <li data-nav-id="/workflows/pipelines/requirements/worker-model/" class="dd-item">
@@ -471,7 +461,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -486,7 +476,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -573,7 +563,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -583,7 +573,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1896,7 +1886,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1906,7 +1896,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2050,9 +2040,9 @@
 <ul>
 <li>
 <ul>
-<li><a href="#why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</a></li>
+<li><a href="#why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker?</a></li>
 </ul></li>
-<li><a href="#how-does-this-work">How does this work ?</a></li>
+<li><a href="#how-does-this-work">How does this work?</a></li>
 <li><a href="#linux-setup">Linux Setup</a>
 <ul>
 <li><a href="#download-the-binary">Download the binary</a></li>
@@ -2087,7 +2077,7 @@
 
 
 
-<h4 id="why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker ?</h4>
+<h4 id="why-would-you-need-to-setup-your-own-worker">Why would you need to setup your own worker?</h4>
 
 <p>There is several cases where one would need to setup his own worker:</p>
 
@@ -2097,7 +2087,7 @@
 <li>Perform integration tests in a specific network</li>
 </ul>
 
-<h3 id="how-does-this-work">How does this work ?</h3>
+<h3 id="how-does-this-work">How does this work?</h3>
 
 <p>Workers authenticate on CDS with a token and have the same permissions as the user who generated it.</p>
 
@@ -2144,7 +2134,7 @@ INFO[0000] Current binary: /home/cds/worker
 
 <h4 id="download-the-binary-1">Download the binary</h4>
 
-<p>Download the windows binary from <a href="https://github.com/ovh/cds/releases">https://github.com/ovh/cds/releases</a></p>
+<p>Download the Windows binary from <a href="https://github.com/ovh/cds/releases">https://github.com/ovh/cds/releases</a></p>
 
 <h4 id="prerequisites">Prerequisites</h4>
 
@@ -2153,18 +2143,18 @@ Every command CDS Worker will launch should be in the %PATH% variable.</p>
 
 <p>Do the following steps with the target User whom will run the CDS Worker.</p>
 
-<p>To be able to operate git clone commands, you have to follow next steps :</p>
+<p>To be able to operate git clone commands, you have to follow next steps:</p>
 
 <ul>
 <li>Install Git <code>https://git-scm.com/download/win</code></li>
 <li>Setup your system %PATH%, and add <code>C:\Program Files\Git\mingw32\bin;C:\Program Files\Git\usr\bin</code></li>
-<li>In a Powsershell Prompt, run <code>PS Set-ExecutionPolicy Unrestricted</code></li>
-<li>You may want to improve your Git Experience on your windows host : have a look to posh-git : <a href="https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell">https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell</a></li>
+<li>In a PowserShell Prompt, run <code>PS Set-ExecutionPolicy Unrestricted</code></li>
+<li>You may want to improve your Git Experience on your Windows host: have a look to posh-git: <a href="https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell">https://git-scm.com/book/en/v2/Git-in-Other-Environments-Git-in-Powershell</a></li>
 </ul>
 
 <h4 id="trigger-your-pipeline-on-your-host">Trigger your pipeline on your Host</h4>
 
-<p>If you want to force you pipeline execution on your host, add a &ldquo;hostname&rdquo; requirement on you pipeline and set it to the hostname of your windows host.</p>
+<p>If you want to force you pipeline execution on your host, add a &ldquo;hostname&rdquo; requirement on you pipeline and set it to the hostname of your Windows host.</p>
 
 
 <footer class=" footline" >

@@ -442,7 +442,7 @@
         <ul>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-nginx/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/">
-          <span>Service Requirement Nginx</span>
+          <span>Service Requirement NGINX</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/service/example-pg/" class="dd-item">
@@ -471,7 +471,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">
-          <span>Openstack Worker Model</span>
+          <span>OpenStack Worker Model</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/variables/" class="dd-item">
@@ -486,7 +486,7 @@
     </li>
       <li data-nav-id="/workflows/pipelines/requirements/worker-model/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/">
-          <span>VSphere Worker Model</span>
+          <span>vSphere Worker Model</span>
         </a>
     </li>
         </ul>
@@ -572,7 +572,7 @@
     </li>
       <li data-nav-id="/hatchery/openstack/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/openstack/">
-          <span>Hatchery Openstack</span>
+          <span>Hatchery OpenStack</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/swarm/" class="dd-item">
@@ -582,7 +582,7 @@
     </li>
       <li data-nav-id="/hatchery/vsphere/" class="dd-item">
         <a href="https://ovh.github.io/cds/hatchery/vsphere/">
-          <span>Hatchery Vsphere</span>
+          <span>Hatchery vSphere</span>
         </a>
     </li>
       <li data-nav-id="/hatchery/update/" class="dd-item">
@@ -1895,7 +1895,7 @@
         <ul>
       <li data-nav-id="/hosting/repositories-manager/github/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/github/">
-          <span>Github</span>
+          <span>GitHub</span>
         </a>
     </li>
       <li data-nav-id="/hosting/repositories-manager/bitbucket/" class="dd-item">
@@ -1905,7 +1905,7 @@
     </li>
       <li data-nav-id="/hosting/repositories-manager/gitlab/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/repositories-manager/gitlab/">
-          <span>Gitlab</span>
+          <span>GitLab</span>
         </a>
     </li>
         </ul>
@@ -2046,9 +2046,9 @@
 <ul>
 <li>
 <ul>
-<li><a href="#postgresql">Postgresql</a></li>
+<li><a href="#postgresql">PostgreSQL</a></li>
 <li><a href="#redis">Redis</a></li>
-<li><a href="#nodejs">NodeJS</a></li>
+<li><a href="#node-js">Node.js</a></li>
 <li><a href="#golang">Golang</a></li>
 <li><a href="#cds">CDS</a>
 <ul>
@@ -2080,16 +2080,16 @@
 development environment.</p>
 
 <ul>
-<li>Postgresql</li>
+<li>PostgreSQL</li>
 <li>Redis</li>
-<li>Node</li>
+<li>Node.js</li>
 <li>Golang</li>
 <li>CDS</li>
 </ul>
 
 <p>if you are familiar with these different tools, you probably will not need to read this page :-)</p>
 
-<h2 id="postgresql">Postgresql</h2>
+<h2 id="postgresql">PostgreSQL</h2>
 
 <p>Download PostgreSQL from <a href="https://www.postgresql.org/download/">https://www.postgresql.org/download/</a>, version &gt;= 9.4.</p>
 
@@ -2135,11 +2135,11 @@ $ src/redis-server
 
 <p>That&rsquo;s all for a local Redis installation.</p>
 
-<h2 id="nodejs">NodeJS</h2>
+<h2 id="node-js">Node.js</h2>
 
-<p>Download the latest stable Node from <a href="https://nodejs.org/en/download/current/">https://nodejs.org/en/download/current/</a>, version &gt;= 10.8.0</p>
+<p>Download the latest stable Node.js from <a href="https://nodejs.org/en/download/current/">https://nodejs.org/en/download/current/</a>, version &gt;= 10.8.0</p>
 
-<p>Example with version 10.8.0 on OSX:</p>
+<p>Example with version 10.8.0 on macOS:</p>
 
 <pre><code class="language-bash">$ curl -O https://nodejs.org/dist/v10.8.0/node-v10.8.0-darwin-x64.tar.gz
 $ tar xzf node-v10.8.0-darwin-x64.tar.gz
@@ -2151,7 +2151,7 @@ $ tar xzf node-v10.8.0-darwin-x64.tar.gz
 
 <p>Download the latest Golang version from <a href="https://golang.org/dl/">https://golang.org/dl/</a>, version &gt;= 1.10</p>
 
-<p>Example with version 1.10.3 on OSX:</p>
+<p>Example with version 1.10.3 on macOS:</p>
 
 <pre><code class="language-bash">$ export GOROOT=~/go
 $ export PATH=$PATH:$GOROOT/bin
@@ -2160,7 +2160,7 @@ $ curl -O https://dl.google.com/go/go1.10.3.darwin-amd64.tar.gz
 $ tar xzf go1.10.3.darwin-amd64.tar.gz
 </code></pre>
 
-<p>Check if go installation is ok</p>
+<p>Check if Go installation is ok</p>
 
 <pre><code class="language-bash">$ go version
 go version go1.10.3 darwin/amd64
@@ -2199,7 +2199,7 @@ $ engine config new &gt; ~/.cds/dev.toml
 
 # edit ~/.cds/dev.toml file 
 ## in section [api]
-### --&gt; set variable defaultOS to your OS, darwin if you are on osx for example
+### --&gt; set variable defaultOS to your OS, darwin if you are on macOS for example
 ## in section [hatchery.local.commonConfiguration]
 ### --&gt; set name to &quot;hatchery-local&quot;
 ## in section [hatchery.local.commonConfiguration.api.http]
@@ -2219,10 +2219,10 @@ you have to launch it each time you have to upgrade cds.</p>
 $ engine database upgrade --db-password cds --db-sslmode disable
 </code></pre>
 
-<p>If you don&rsquo;t have a local postgreSQL, you should run <code>engine database upgrade --help</code>
+<p>If you don&rsquo;t have a local PostgreSQL, you should run <code>engine database upgrade --help</code>
 and update <code>~/.cds/dev.toml</code> file.</p>
 
-<p>Launch CDS engine api &amp; local hatchery:</p>
+<p>Launch CDS engine API &amp; local hatchery:</p>
 
 <pre><code class="language-bash">$ engine --config ~/.cds/dev.toml start api hatchery:local
 </code></pre>
@@ -2245,14 +2245,14 @@ $ npm start
 
 <p>If you want to launch uService on different process:</p>
 
-<pre><code class="language-bash"># launch api only
+<pre><code class="language-bash"># launch API only
 $ engine --config ~/.cds/dev.toml start api
 
 # launch local hatchery only
 $ engine --config ~/.cds/dev.toml start hatchery:local
 </code></pre>
 
-<p>If you want to launch vcs &amp; hooks uServices, you have to :</p>
+<p>If you want to launch vcs &amp; hooks uServices, you have to:</p>
 
 <ul>
 <li>set name in sections <code>[vcs]</code> and <code>[hooks]</code></li>
