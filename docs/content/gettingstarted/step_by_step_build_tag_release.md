@@ -33,7 +33,7 @@ Be sure to have a [Repository manager]({{< relref "/hosting/repositories-manager
 
 * Select 'Advanced' section
 * In the section 'Link to a repository manager', select 'github', then click on 'Connect'
-* A popup is displayed, Click on 'Click here' to finalize the link with github. By doing that, you allow CDS to create hook on github.
+* A popup is displayed, Click on 'Click here' to finalize the link with GitHub. By doing that, you allow CDS to create hook on GitHub.
 
 
 {{%expand "view screenshots..." %}}
@@ -44,10 +44,10 @@ Select 'Advanced' section
 In the section 'Link to a repository manager', select 'github', then click on 'Connect'
 ![3_admin_prj_add_repo](/images/getting_started_standard_wf_3_admin_prj_add_repo.png?height=400px&classes=shadow)
 
-A popup is displayed, Click on 'Click here' to finalize the link with github. By doing that, you allow CDS to create hook on github.
+A popup is displayed, Click on 'Click here' to finalize the link with GitHub. By doing that, you allow CDS to create hook on GitHub.
 ![4_admin_prj_add_repo_popup](/images/getting_started_standard_wf_4_admin_prj_add_repo_popup.png?height=400px&classes=shadow)
 
-Here, Github is well linked on your CDS project.
+Here, GitHub is well linked on your CDS project.
 
 ![5_admin_repo_linked](/images/getting_started_standard_wf_5_admin_repo_linked.png?height=400px&classes=shadow)
 
@@ -55,7 +55,7 @@ Here, Github is well linked on your CDS project.
 
 ### 3 - Create an application, link it to a Git Repository
 
-You've got a project, linked to Github. Let's create an application.
+You've got a project, linked to GitHub. Let's create an application.
 
 A CDS Application is useful to have a link to a Git Repository.
 
@@ -81,7 +81,7 @@ Expand configuration, select 'https'. If your repository is public, you can keep
 {{% /expand%}}
 
 
-### 4 - Generate a Github Token
+### 4 - Generate a GitHub Token
 
 This token will be used to let CDS create a tag.
 
@@ -90,21 +90,21 @@ This token will be used to let CDS create a tag.
 
 {{%expand "view screenshots..." %}}
 
-Create a token on github.
+Create a token on GitHub.
 ![10_github](/images/getting_started_build_tag_wf_10_github.png?height=400px&classes=shadow)
 
-Github give you a token, put it in password field.
+GitHub give you a token, put it in password field.
 ![11_set_token](/images/getting_started_build_tag_wf_11_set_token.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
 ### 5 - Create the workflow
 
-* Go to Project -> Worflows tab
+* Go to Project -> Workflows tab
 * Enter the Workflow name, then click on Next
 * You have now to choose the first pipeline. As you don't have a pipeline yet, you will create a new one, named 'build-pipeline'. Click on Next
 * Now, you have to select an application. Choose your application 'my-java-app', then click on Next
-* We don't need an environment, neither plaform for the build pipeline, Click on 'Finish'
+* We don't need an environment, neither platform for the build pipeline, Click on 'Finish'
 
 Notice: the build pipeline does nothing here. You can add some job inside it, please read [this tutorial]({{< relref "step_by_step_build_deploy.md" >}})
 to create a 'build' pipeline.
@@ -128,15 +128,15 @@ Click on create to create the workflow.
 In this example, we create a Workflow to build, tag and release an application. 
 
 So, we have to trigger this workflow on each commit, on every git branches - and on each tag created. This will be 
-useful to compile code from all developper and somethimes create a tag from master branch if the build is Success.
+useful to compile code from all developer and sometimes create a tag from master branch if the build is Success.
 
-The application is linked to a Github Git Repository, we have two choices to trigger automatically the workflow:
+The application is linked to a GitHub Git Repository, we have two choices to trigger automatically the workflow:
 
 * add a Git Repository Webhook
 * or add a Git Repository Poller.
 
 The difference between both is simple: a Git Repository Webhook does not work if your CDS Instance is not
-reacheabled from Github. So, we have to add a Git Repository Poller
+reachable from GitHub. So, we have to add a Git Repository Poller
 
 * Select the pipeline root, then click on 'Add a hook'
 * Choose a Git Repository Poller
@@ -152,7 +152,7 @@ reacheabled from Github. So, we have to add a Git Repository Poller
 
 * Select the pipeline 'build-pipeline', then click on the sidebar 'Add a pipeline'
 * Create a new pipeline named 'create-tag', then select the application 'my-java-app'
-* We don't need an environment, neither plaform for create a tag, Click on 'Finish'
+* We don't need an environment, neither platform for create a tag, Click on 'Finish'
 * Edit the pipeline 'create-tag'
 * Click on Edit as Code button, then paste that code:
 
@@ -210,7 +210,7 @@ Edit Run Conditions.
 Launch the workflow.
 ![21_launch](/images/getting_started_build_tag_wf_21_launch.png?height=400px&classes=shadow)
 
-The workflow is stopped, because you set cds.manual to true in your run conditons.
+The workflow is stopped, because you set cds.manual to true in your run conditions.
 ![22_launch_view](/images/getting_started_build_tag_wf_22_launch_view.png?height=400px&classes=shadow)
 
 Select the pipeline, then click on the 'play' button.
@@ -222,14 +222,14 @@ You can choose the tag level.
 Tag is created, cf. step logs.
 ![25_launch_tag_created](/images/getting_started_build_tag_wf_25_launch_tag_created.png?height=400px&classes=shadow)
 
-Tag is created on Github.
+Tag is created on GitHub.
 ![26_tag_created_github](/images/getting_started_build_tag_wf_26_tag_created_github.png?height=400px&classes=shadow)
 
 {{% /expand%}}
 
 ### 9 - Release Action
 
-[Release action]({{< relref "release.md" >}}) action is implemented for Github only. 
+[Release action]({{< relref "release.md" >}}) action is implemented for GitHub only. 
 You can use it to create a release from a tag and push some artifacts on it.
 
 {{%expand "view screenshots..." %}}

@@ -16,7 +16,7 @@ pay attention to a few things:
 
 ## Submitting Modifications:
 
-The contributions should be github Pull Requests. The guidelines are the same
+The contributions should be GitHub Pull Requests. The guidelines are the same
 as the patch submission for the Linux kernel except for the DCO which
 is defined below. The guidelines are defined in the
 'SubmittingPatches' file, available in the directory 'Documentation'
@@ -49,7 +49,7 @@ on patches that are being contributed.
 
 The sign-off is a simple line at the end of the explanation for the
 patch, which certifies that you wrote it or otherwise have the right
-to pass it on as an open-source patch.  The rules are pretty simple:
+to pass it on as an open-source patch. The rules are pretty simple:
 if you can certify the below:
 
 By making a contribution to this project, I certify that:

@@ -5,11 +5,11 @@ weight = 4
 +++
 
 
-Usually in CDS a **build** pipeline is structured of the following stages :
+Usually in CDS a **build** pipeline is structured of the following stages:
 
-- **Compile stage** : Build the binaries
-- **Analysis & Unit Tests stage** : Run all unit tests and analyse code quality
-- **Packaging stage** : Build the final package, Virtual Machine Image or Docker Image.
+- **Compile stage**: Build the binaries
+- **Analysis & Unit Tests stage**: Run all unit tests and analyse code quality
+- **Packaging stage**: Build the final package, Virtual Machine Image or Docker Image.
 
 In CDS, stages are executed sequentially if the previous stage is successful.
 

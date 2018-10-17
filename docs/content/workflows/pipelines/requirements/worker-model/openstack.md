@@ -1,45 +1,45 @@
 +++
-title = "Openstack Worker Model"
+title = "OpenStack Worker Model"
 weight = 3
 
 +++
 
-CDS build using OVH.com Openstack infrastructure
+CDS build using OVH.com OpenStack infrastructure
 
-## Create Openstack user
+## Create OpenStack user
 
-In OVH manager, in [cloud section](https://www.ovh.com/manager/cloud), click on the menu on the *Servers>Openstack* item.
+In OVH manager, in [cloud section](https://www.ovh.com/manager/cloud), click on the menu on the *Servers>OpenStack* item.
 
-You will be able to create a worker model Openstack user, enter description (name and password will be generated).
+You will be able to create a worker model OpenStack user, enter description (name and password will be generated).
 
-## Add Openstack worker model
+## Add OpenStack worker model
 
-We need to define an Openstack worker model to have Openstack hatchery booting workers.
+We need to define an OpenStack worker model to have OpenStack hatchery booting workers.
 
 We will create a model called testopenstack:
 
  * With low hardware capacity (vps-ssd-1)
  * On Debian 8
- * With docker ready to use
+ * With Docker ready to use
  * Git installed
 
 You need to configure:
 
-  * **The image** is your image on which you want to spawn your openstack VM
-  * **The flavor** of your openstack VM
-  * **Pattern** : if you aren't an administrator you have to choose a configuration pattern in order to fill pre command, worker command and post command with a [pattern that an administrator have already fill for you]({{< relref "workflows/pipelines/requirements/worker-model/patterns.md" >}}).
-  * If you are an administrator :
-    * **pre worker command** : all scripts that need to be run before execute the worker binary (for example: set the right environment variables, install curl and other tools you need like docker, ...)
-    * **main worker command** : the command launched to run the worker with right flags thanks to the interpolate variables that CDS fill for you [(more informations click here)]({{< relref "workflows/pipelines/requirements/worker-model/variables.md" >}}).
-    * **post worker command** : the command launched after the execution of your worker. If you need to clean something and then shutdown the VM.
+  * **The image** is your image on which you want to spawn your OpenStack VM
+  * **The flavor** of your OpenStack VM
+  * **Pattern**: if you aren't an administrator you have to choose a configuration pattern in order to fill pre command, worker command and post command with a [pattern that an administrator have already fill for you]({{< relref "workflows/pipelines/requirements/worker-model/patterns.md" >}}).
+  * If you are an administrator:
+    * **pre worker command**: all scripts that need to be run before execute the worker binary (for example: set the right environment variables, install curl and other tools you need like Docker, ...)
+    * **main worker command**: the command launched to run the worker with right flags thanks to the interpolate variables that CDS fill for you [(more informations click here)]({{< relref "workflows/pipelines/requirements/worker-model/variables.md" >}}).
+    * **post worker command**: the command launched after the execution of your worker. If you need to clean something and then shutdown the VM.
 
 Via UI (inside settings section --> worker models):
 
 For example:
 
-![Worker Model UI Openstack](/images/worker_model_openstack.png)
+![Worker Model UI OpenStack](/images/worker_model_openstack.png)
 
-Or via cli with a yaml file:
+Or via CLI with a yaml file:
 
 ```bash
 $ cds worker model import my_worker_model.yml
@@ -65,7 +65,7 @@ pre_cmd: |
   if [[ "x{{.FromWorkerImage}}" = "xtrue" ]]; then
     echo "$(date) - CDS_FROM_WORKER_IMAGE == true - no install docker required "
   else
-    # Install docker
+    # Install Docker
     apt-get install -y --force-yes apt-transport-https ca-certificates >> /tmp/user_data 2>&1
     apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
     mkdir -p /etc/apt/sources.list.d

@@ -70,11 +70,11 @@ In a step of type `script`, you can export a variable as the following:
 $ worker export varname thevalue
 ```
 
-You can use the build variable in :
+You can use the build variable in:
 
 * the current job with `{{.cds.build.varname}}`
 * the next stages in same pipeline `{{.cds.build.varname}}`
-* the next pipelines `{{.workflow.pipelineName.build.varname}}` with `pipelineName` the name of the pipeline in your worklow
+* the next pipelines `{{.workflow.pipelineName.build.varname}}` with `pipelineName` the name of the pipeline in your workflow
 
 [See worker export documentation]({{< relref "/cli/worker/export.md" >}})
 
@@ -101,6 +101,14 @@ Here is the list of git variables:
 - `{{.git.author}}`
 - `{{.git.message}}`
 - `{{.git.server}}`
+
+## Pipeline parameters
+
+On a pipeline, you can add some parameters, this will let you to use `{{.cds.pip.varname}}` in your pipeline. 
+Then, in the workflow, you can set the value for pipeline parameter in the `pipeline context`.
+
+Notice that you can't create a pipeline parameter of type `password`. If you want to use a variable of type password, you have to create it in your project / application or environment. Then, in your workflow, use this variable to set the value of the pipeline parameter - the pipeline parameter can be of type `string`.
+
 
 ## Helpers
 
@@ -158,6 +166,6 @@ Helpers available and some examples:
 - toPrettyJSON
 - b64enc
 - b64dec
-- escape : replace '_', '/', '.' by '-'
+- escape: replace '_', '/', '.' by '-'
 
-You're a go developper? See all helpers on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23
+You're a Go developer? See all helpers on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23

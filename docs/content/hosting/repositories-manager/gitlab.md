@@ -1,21 +1,21 @@
 +++
-title = "Gitlab"
+title = "GitLab"
 weight = 2
 
 +++
 
-## Authorize CDS on your Gitlab instance
-What you need to perform the following steps :
+## Authorize CDS on your GitLab instance
+What you need to perform the following steps:
 
- - Gitlab admin privileges
+ - GitLab admin privileges
 
-### Create a CDS application on Gitlab
-In Gitlab go to *Settings* / *Application* section. Create a new application with :
+### Create a CDS application on GitLab
+In GitLab go to *Settings* / *Application* section. Create a new application with:
 
- - Name : **CDS**
- - Redirect URI : **https://your-cds-api/repositories_manager/oauth2/callback**
+ - Name: **CDS**
+ - Redirect URI: **https://your-cds-api/repositories_manager/oauth2/callback**
 
-Scopes :
+Scopes:
 
  - API
  - read_user
@@ -35,7 +35,7 @@ Set value to `appId` and `secret`
       [vcs.servers.Gitlab.gitlab]
 
         #######
-        # CDS <-> Gitlab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/
+        # CDS <-> GitLab. Documentation on https://ovh.github.io/cds/hosting/repositories-manager/gitlab/
         ########
         appId = "xxxx"
 
@@ -45,7 +45,7 @@ Set value to `appId` and `secret`
         # Does webhooks are supported by VCS Server
         disableWebHooks = false
 
-        # If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
+        # If you want to have a reverse proxy URL for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK
         # proxyWebhook = ""
         secret = "xxxx"
 

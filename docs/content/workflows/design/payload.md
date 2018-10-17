@@ -5,12 +5,12 @@ weight = 2
 +++
 
 
-A CDS Workflow can be launched :
+A CDS Workflow can be launched:
 
 * manually, user can enter a Payload
 * by webhooks / repository webhooks, payload contains the value sent by initiator of the hook
 * scheduler, the payload contains the value of the default payload. You can edit the default payload on the root pipeline
-* (on roadmap) listener, as a kafka listener. The payload will contain the content of the kafka message
+* (on roadmap) listener, as a Kafka listener. The payload will contain the content of the Kafka message
 
 A payload is a JSON value. You can use it inside your CDS Jobs.
 

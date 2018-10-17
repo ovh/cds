@@ -7,15 +7,15 @@ weight = 3
 Before contributing to CDS, you'll need to install your
 development environment. 
 
-* Postgresql
+* PostgreSQL
 * Redis
-* Node
+* Node.js
 * Golang
 * CDS
 
 if you are familiar with these different tools, you probably will not need to read this page :-)
 
-## Postgresql
+## PostgreSQL
 
 Download PostgreSQL from https://www.postgresql.org/download/, version >= 9.4.
 
@@ -66,11 +66,11 @@ $ src/redis-server
 That's all for a local Redis installation.
 
 
-## NodeJS
+## Node.js
 
-Download the latest stable Node from https://nodejs.org/en/download/current/, version >= 10.8.0
+Download the latest stable Node.js from https://nodejs.org/en/download/current/, version >= 10.8.0
 
-Example with version 10.8.0 on OSX:
+Example with version 10.8.0 on macOS:
 
 ```bash
 $ curl -O https://nodejs.org/dist/v10.8.0/node-v10.8.0-darwin-x64.tar.gz
@@ -83,7 +83,7 @@ $ tar xzf node-v10.8.0-darwin-x64.tar.gz
 
 Download the latest Golang version from https://golang.org/dl/, version >= 1.10
 
-Example with version 1.10.3 on OSX:
+Example with version 1.10.3 on macOS:
 
 ```bash
 $ export GOROOT=~/go
@@ -93,7 +93,7 @@ $ curl -O https://dl.google.com/go/go1.10.3.darwin-amd64.tar.gz
 $ tar xzf go1.10.3.darwin-amd64.tar.gz
 ```
 
-Check if go installation is ok
+Check if Go installation is ok
 
 ```bash
 $ go version
@@ -135,7 +135,7 @@ $ engine config new > ~/.cds/dev.toml
 
 # edit ~/.cds/dev.toml file 
 ## in section [api]
-### --> set variable defaultOS to your OS, darwin if you are on osx for example
+### --> set variable defaultOS to your OS, darwin if you are on macOS for example
 ## in section [hatchery.local.commonConfiguration]
 ### --> set name to "hatchery-local"
 ## in section [hatchery.local.commonConfiguration.api.http]
@@ -156,10 +156,10 @@ $ cd $(go env GOPATH)/src/github.com/ovh/cds
 $ engine database upgrade --db-password cds --db-sslmode disable
 ```
 
-If you don't have a local postgreSQL, you should run `engine database upgrade --help`
+If you don't have a local PostgreSQL, you should run `engine database upgrade --help`
 and update `~/.cds/dev.toml` file.
 
-Launch CDS engine api & local hatchery:
+Launch CDS engine API & local hatchery:
 
 ```bash
 $ engine --config ~/.cds/dev.toml start api hatchery:local
@@ -186,14 +186,14 @@ Open a browser, go on http://localhost:4200 - Have fun.
 If you want to launch uService on different process:
 
 ```bash
-# launch api only
+# launch API only
 $ engine --config ~/.cds/dev.toml start api
 
 # launch local hatchery only
 $ engine --config ~/.cds/dev.toml start hatchery:local
 ```
 
-If you want to launch vcs & hooks uServices, you have to :
+If you want to launch vcs & hooks uServices, you have to:
 
 - set name in sections `[vcs]` and `[hooks]`
 - uncomment API URL in sections `[vcs.api.http]` and `[hooks.api.http]`

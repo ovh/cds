@@ -9,15 +9,15 @@ weight = 1
 The goal of CDS is to start a worker when you need it, which should match all your requirements exactly.
 In order to scale automatically on demand, it is possible to register a worker model.
 
-The goal of a worker model is to describe the capabilities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries.
+The goal of a worker model is to describe the capabilities of a given Docker/ISO image in terms of architecture, pre-installed binaries or libraries.
 
 ### Types
 
 There are 4 types of worker models:
 
- * Docker images, see [how to create a worker model docker]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}})
- * Openstack images, see [how to create a worker model openstack]({{< relref "workflows/pipelines/requirements/worker-model/openstack.md" >}})
- * VSphere images, see [how to create a worker model VSphere]({{< relref "workflows/pipelines/requirements/worker-model/vsphere.md" >}})
+ * Docker images, see [how to create a worker model Docker]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}})
+ * OpenStack images, see [how to create a worker model OpenStack]({{< relref "workflows/pipelines/requirements/worker-model/openstack.md" >}})
+ * vSphere images, see [how to create a worker model vSphere]({{< relref "workflows/pipelines/requirements/worker-model/vsphere.md" >}})
  * Host worker models, which is a worker launched on the same host than the hatchery, we don't recommend to use this in production.
 
 ### Behavior
@@ -28,7 +28,7 @@ All registered CDS [hatcheries]({{< relref "hatchery/_index.md" >}}) start/kill 
 
 ![Add a worker model](/images/workflows.pipelines.requirements.docker.worker-model.add.png)
 
-A user can add a worker model by setting a owner group if user is administrator of group.
+A user can add a worker model by setting an owner group if user is administrator of group.
 
 A CDS administrator can add a worker model, a [worker model pattern]({{< relref "workflows/pipelines/requirements/worker-model/patterns.md" >}}), attach it to 'shared.infra' group and set provision as he want.
 
