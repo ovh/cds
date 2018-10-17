@@ -17,4 +17,4 @@ spec:
     port: 443
     targetPort: https
   selector:
-    app: {{ template "cds.fullname" . }}a
+    app: {{ template "cds.fullname" . }}-ui

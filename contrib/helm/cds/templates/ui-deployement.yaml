@@ -33,9 +33,9 @@ spec:
             value: "{{ .Values.ui.logLevel }}"
         ports:
         - name: http
-          containerPort: 8081
+          containerPort: 2015
         - name: https
-          containerPort: 8081
+          containerPort: 2015
         livenessProbe:
 {{ toYaml .Values.ui.livenessProbe | indent 10 }}
         readinessProbe:

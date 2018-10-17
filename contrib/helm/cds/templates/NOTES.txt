@@ -1,6 +1,6 @@
 
 ************************************************************************
-*** PLEASE BE PATIENT: CDS may take a few minutes to install         *** 
+*** PLEASE BE PATIENT: CDS may take a few minutes to install         ***
 ************************************************************************
 
 1. Get the CDS URL:
@@ -20,10 +20,10 @@
   echo http://$SERVICE_IP/
 {{- else if contains "ClusterIP"  .Values.ui.serviceType }}
 
-  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "cds.fullname" . }}-ui" -o jsonpath="{.items[0].metadata.name}")
-  kubectl port-forward $POD_NAME 2015:2015
-  echo http://127.0.0.1:2015/ 
-  
+  export CDS_UI_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "cds.fullname" . }}-ui" -o jsonpath="{.items[0].metadata.name}")
+  kubectl port-forward $CDS_UI_POD_NAME 2015:2015
+  echo http://127.0.0.1:2015/
+
 {{- end }}
 
 {{- if contains "NodePort" .Values.ui.serviceType }}
@@ -40,5 +40,5 @@
 
 And check in the log of your api server to get registration URL :
 
-  export API_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "cds.fullname" . }}-api" -o jsonpath="{.items[0].metadata.name}")
-  kubectl logs -f --namespace {{ .Release.Namespace }} $API_POD_NAME
+  export CDS_API_POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app={{ template "cds.fullname" . }}-api" -o jsonpath="{.items[0].metadata.name}")
+  kubectl logs -f --namespace {{ .Release.Namespace }} $CDS_API_POD_NAME

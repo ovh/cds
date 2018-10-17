@@ -1,5 +1,5 @@
-# Main cds values relates to api 
-# .ui values are used for ui related ressources 
+# Main cds values relates to api
+# .ui values are used for ui related ressources
 
 # Api
 image:
@@ -64,7 +64,7 @@ persistence:
   ## Default: nil.
   ##
   # hostPath
-  
+
 livenessProbe:
   httpGet:
     path: /mon/version
@@ -84,13 +84,13 @@ externalDatabase:
   # host:
 
   ## Database user
-  # user: 
+  # user:
 
   ## Database password
   # password:
 
   ## Database name
-  # database: 
+  # database:
 
 ##
 ## Postgresql chart configuration
@@ -108,7 +108,7 @@ serviceType: ClusterIP
 ingress:
   enabled: false
   # Used to create Ingress record (should used with ServiceType: ClusterIP).
-  # hostname: cds.local
+  #hostname: cds.MY_NODES_URL
 
   ## Ingress annotations
   ##
@@ -550,4 +550,3 @@ redis:
     #   enabled: true
     #   fsGroup: 1001
     #   runAsUser: 1001
-
