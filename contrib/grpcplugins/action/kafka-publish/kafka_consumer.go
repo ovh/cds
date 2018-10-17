@@ -106,7 +106,7 @@ func consumeFromKafka(kafka, topic, group, user, password, key string, gpgPrivat
 			if kafkapublisher.IsChunk(msg) {
 				c, err := kafkapublisher.ReadBytes(msg)
 				if err != nil {
-					fmt.Printf("Unable to read bytes : %s\n", err)
+					fmt.Printf("Unable to read bytes : %v\n", err)
 					continue
 				}
 				chunks = append(chunks, *c)
@@ -114,7 +114,7 @@ func consumeFromKafka(kafka, topic, group, user, password, key string, gpgPrivat
 				actionID := c.Ctx.GetUUID()
 				opts, errOpts := getShredderOpts(key, gpgPrivatekey, gpgPassphrase)
 				if errOpts != nil {
-					fmt.Printf("Error on getShredderOpts : %s\n", errOpts)
+					fmt.Printf("Error on getShredderOpts : %v\n", errOpts)
 					continue
 				}
 
@@ -131,18 +131,18 @@ func consumeFromKafka(kafka, topic, group, user, password, key string, gpgPrivat
 				if cs.Completed() {
 					content, err := shredder.Reassemble(cs, opts)
 					if err != nil {
-						fmt.Printf("Error: %s\n", err)
+						fmt.Printf("Error: %v\n", err)
 						continue
 					}
 
 					filename, data, err := content.File()
 					if err != nil {
-						fmt.Printf("Error: %s\n", err)
+						fmt.Printf("Error: %v\n", err)
 						continue
 					}
 
 					if err := fileHandler(ctx, filename, data); err != nil {
-						fmt.Printf("Error: %s\n", err)
+						fmt.Printf("Error: %v\n", err)
 						continue
 					}
 					//File has been processed, remove data from memory
@@ -178,7 +178,7 @@ func consumeFromKafka(kafka, topic, group, user, password, key string, gpgPrivat
 			fmt.Printf("% x\n", msg)
 
 		case err := <-errorsChan:
-			fmt.Printf("%s\n", err)
+			fmt.Printf("%v\n", err)
 			return err
 		case <-signals:
 			return nil

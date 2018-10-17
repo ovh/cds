@@ -12,6 +12,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 
 	"github.com/ovh/cds/contrib/grpcplugins/action/kafka-publish/kafkapublisher"
+	"github.com/ovh/cds/sdk"
 )
 
 //This shows the help
@@ -69,18 +70,21 @@ func listenAction(c *cli.Context) error {
 		pgpPassphrase = []byte(password)
 	}
 
-	//If provided, exec the script
 	execScript := c.String("exec")
-	if execScript != "" {
-		if _, err := os.Stat(execScript); os.IsNotExist(err) {
-			return cli.NewExitError(err.Error(), 14)
-		}
-		permissions, err := permbits.Stat(execScript)
-		if err != nil {
-			return cli.NewExitError(err.Error(), 15)
-		}
-		if !permissions.UserExecute() && !permissions.GroupExecute() && !permissions.OtherExecute() {
-			return cli.NewExitError("exec script is not executable", 16)
+
+	//If provided, exec the script
+	if sdk.GOOS != "windows" {
+		if execScript != "" {
+			if _, err := os.Stat(execScript); os.IsNotExist(err) {
+				return cli.NewExitError(err.Error(), 14)
+			}
+			permissions, err := permbits.Stat(execScript)
+			if err != nil {
+				return cli.NewExitError(err.Error(), 15)
+			}
+			if !permissions.UserExecute() && !permissions.GroupExecute() && !permissions.OtherExecute() {
+				return cli.NewExitError("exec script is not executable", 16)
+			}
 		}
 	}
 
