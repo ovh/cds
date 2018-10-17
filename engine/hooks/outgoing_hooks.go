@@ -26,7 +26,7 @@ func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHookRun) (sdk.Tas
 	}
 	configHash, err := hashstructure.Hash(h.Hook.Config, nil)
 	if err != nil {
-		return sdk.Task{}, sdk.WrapError(err, "outgoingHookToTask> unable to hash hook config")
+		return sdk.Task{}, sdk.WrapError(err, "unable to hash hook config")
 	}
 	identifier := fmt.Sprintf("%s/%d", h.Hook.WorkflowHookModel.Name, configHash)
 	uuid := base64.StdEncoding.EncodeToString([]byte(identifier))
@@ -135,7 +135,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 	runNumber, err := strconv.ParseInt(run, 10, 64)
 	if err != nil {
-		return sdk.WrapError(err, "hook> startOutgoingWorkflowTask")
+		return sdk.WrapError(err, "startOutgoingWorkflowTask")
 	}
 
 	callbackURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/callback", pkey, workflow, run, hookRunID)

@@ -67,7 +67,7 @@ func (api *API) getTimelineHandler() service.Handler {
 
 		events, err := event.GetEvents(api.mustDB(), api.Cache, request)
 		if err != nil {
-			return sdk.WrapError(err, "getTimelineHandler> Unable to load events")
+			return sdk.WrapError(err, "Unable to load events")
 		}
 		return service.WriteJSON(w, events, http.StatusOK)
 	}

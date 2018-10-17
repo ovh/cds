@@ -65,7 +65,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "postEnvironmentImportHandler> Unable to start tx")
+			return sdk.WrapError(err, "Unable to start tx")
 		}
 		defer tx.Rollback()
 
@@ -81,7 +81,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postEnvironmentImportHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
@@ -130,7 +130,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 			eg := &env.EnvironmentGroups[i]
 			g, err := group.LoadGroup(api.mustDB(), eg.Group.Name)
 			if err != nil {
-				return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import")
+				return sdk.WrapError(err, "Error on import")
 			}
 			eg.Group = *g
 		}
@@ -158,7 +158,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := environment.Import(api.mustDB(), proj, env, msgChan, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import")
+			return sdk.WrapError(err, "Error on import")
 		}
 
 		close(msgChan)
@@ -167,7 +167,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		msgListString := translate(r, allMsg)
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "importNewEnvironmentHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
@@ -195,7 +195,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := environment.Lock(tx, key, envName); err != nil {
-			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot lock env %s/%s", key, envName)
+			return sdk.WrapError(err, "Cannot lock env %s/%s", key, envName)
 		}
 
 		env, errEnv := environment.LoadEnvironmentByName(tx, key, envName)
@@ -234,7 +234,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 			eg := &newEnv.EnvironmentGroups[i]
 			g, err := group.LoadGroup(tx, eg.Group.Name)
 			if err != nil {
-				return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
+				return sdk.WrapError(err, "Error on import")
 			}
 			eg.Group = *g
 		}
@@ -254,7 +254,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		}()
 
 		if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
+			return sdk.WrapError(err, "Error on import")
 		}
 
 		close(msgChan)
@@ -263,7 +263,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		msgListString := translate(r, allMsg)
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)

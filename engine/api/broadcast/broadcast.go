@@ -37,7 +37,7 @@ func MarkAsRead(db gorp.SqlExecutor, broadcastID, userID int64) error {
 	}
 	err := db.Insert(&brr)
 
-	return sdk.WrapError(err, "MarkAsRead>")
+	return sdk.WithStack(err)
 }
 
 // LoadByID loads broadcast by id
@@ -67,7 +67,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User) (*sdk.Broadcast, error
 		if err == sql.ErrNoRows {
 			return nil, sdk.WrapError(sdk.ErrBroadcastNotFound, "LoadByID>")
 		}
-		return nil, sdk.WrapError(err, "LoadByID>")
+		return nil, sdk.WithStack(err)
 	}
 
 	if projectKey.Valid {
@@ -99,7 +99,7 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Broadcast, error) {
 
 	rows, err := db.Query(query, u.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "LoadAllBroadcasts> Cannot query")
+		return nil, sdk.WrapError(err, "Cannot query")
 	}
 
 	broadcasts := []sdk.Broadcast{}
@@ -110,7 +110,7 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User) ([]sdk.Broadcast, error) {
 			&broadcast.Created, &broadcast.Updated, &broadcast.Archived, &broadcast.ProjectID, &projectKey, &broadcast.Read)
 
 		if err != nil {
-			return nil, sdk.WrapError(err, "LoadAllBroadcasts> cannot scan row")
+			return nil, sdk.WrapError(err, "cannot scan row")
 		}
 		if projectKey.Valid {
 			broadcast.ProjectKey = projectKey.String

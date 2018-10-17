@@ -169,12 +169,12 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 				*errs = append(*errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
 				continue
 			}
-			return sdk.WrapError(err, "CheckJob> Unable to load public action %s", step.Name)
+			return sdk.WrapError(err, "Unable to load public action %s", step.Name)
 		}
 
 		a.Parameters, err = action.LoadActionParameters(db, a.ID)
 		if err != nil {
-			return sdk.WrapError(err, "CheckJob> Unable to load public action %s parameters", step.Name)
+			return sdk.WrapError(err, "Unable to load public action %s parameters", step.Name)
 		}
 
 		for x := range step.Parameters {
@@ -273,7 +273,7 @@ func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountI
 	`
 	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", element))
 	if err != nil {
-		return nil, sdk.WrapError(err, "pipeline.CountInPipelines> Unable to count usage")
+		return nil, sdk.WrapError(err, "Unable to count usage")
 	}
 	defer rows.Close()
 
@@ -282,7 +282,7 @@ func CountInPipelines(db gorp.SqlExecutor, key string, element string) ([]CountI
 		var d CountInPipelineData
 		var id, childID int64
 		if err := rows.Scan(&d.PipName, &d.StageName, &d.JobName, &id, &childID, &d.Count); err != nil {
-			return nil, sdk.WrapError(err, "pipeline.CountInPipelines> Unable to scan")
+			return nil, sdk.WrapError(err, "Unable to scan")
 		}
 		results = append(results, d)
 	}

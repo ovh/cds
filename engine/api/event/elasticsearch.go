@@ -54,12 +54,12 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 func GetEvents(db gorp.SqlExecutor, store cache.Store, filters sdk.EventFilter) ([]json.RawMessage, error) {
 	srvs, err := services.FindByType(db, services.TypeElasticsearch)
 	if err != nil {
-		return nil, sdk.WrapError(err, "GetEvent> Unable to get elasticsearch service")
+		return nil, sdk.WrapError(err, "Unable to get elasticsearch service")
 	}
 
 	var esEvents []elastic.SearchHit
 	if _, err := services.DoJSONRequest(context.Background(), srvs, "GET", "/events", filters, &esEvents); err != nil {
-		return nil, sdk.WrapError(err, "GetEvent> Unable to get events")
+		return nil, sdk.WrapError(err, "Unable to get events")
 	}
 
 	events := make([]json.RawMessage, 0, len(esEvents))

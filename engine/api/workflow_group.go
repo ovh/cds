@@ -24,7 +24,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "deleteWorkflowGroupHandler> unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		options := workflow.LoadOptions{
@@ -56,11 +56,11 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := workflow.DeleteGroup(tx, wf, oldGp.Group.ID, groupIndex); err != nil {
-			return sdk.WrapError(err, "deleteWorkflowGroupHandler> Cannot add group")
+			return sdk.WrapError(err, "Cannot add group")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteWorkflowGroupHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishWorkflowPermissionDelete(key, *wf, oldGp, getUser(ctx))
@@ -88,7 +88,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "putWorkflowGroupHandler> unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		options := workflow.LoadOptions{
@@ -118,11 +118,11 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := workflow.UpdateGroup(tx, wf, gp); err != nil {
-			return sdk.WrapError(err, "putWorkflowGroupHandler> Cannot add group")
+			return sdk.WrapError(err, "Cannot add group")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "putWorkflowGroupHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishWorkflowPermissionUpdate(key, *wf, gp, oldGp, getUser(ctx))
@@ -145,7 +145,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowGroupHandler> unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		options := workflow.LoadOptions{
@@ -177,11 +177,11 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := workflow.AddGroup(tx, wf, gp); err != nil {
-			return sdk.WrapError(err, "postWorkflowGroupHandler> Cannot add group")
+			return sdk.WrapError(err, "Cannot add group")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowGroupHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishWorkflowPermissionAdd(key, *wf, gp, getUser(ctx))

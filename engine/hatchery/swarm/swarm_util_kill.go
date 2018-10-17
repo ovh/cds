@@ -42,7 +42,7 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 	}
 
 	if err := h.killAndRemoveContainer(dockerClient, ID); err != nil {
-		return sdk.WrapError(err, "hatchery> swarm> killAndRemove> %s on %s", ID[:7], dockerClient.name)
+		return sdk.WrapError(err, "%s on %s", ID[:7], dockerClient.name)
 	}
 
 	//If there is no network settings, stop here
@@ -57,7 +57,7 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 		network, err := dockerClient.NetworkInspect(ctxList, cnetwork.NetworkID, types.NetworkInspectOptions{})
 		if err != nil {
 			if !strings.Contains(err.Error(), "No such network") {
-				return sdk.WrapError(err, "hatchery> swarm> killAndRemove> unable to get network for %s on %s", ID[:7], dockerClient.name)
+				return sdk.WrapError(err, "unable to get network for %s on %s", ID[:7], dockerClient.name)
 			}
 			continue
 		}
@@ -94,7 +94,7 @@ func (h *HatcherySwarm) killAndRemoveContainer(dockerClient *dockerClient, ID st
 	defer cancelList()
 	if err := dockerClient.ContainerKill(ctxDocker, ID, "SIGKILL"); err != nil {
 		if !strings.Contains(err.Error(), "is not running") && !strings.Contains(err.Error(), "No such container") {
-			return sdk.WrapError(err, "hatchery> swarm> killAndRemove> err on kill container %v from %s", err, dockerClient.name)
+			return sdk.WrapError(err, "err on kill container %v from %s", err, dockerClient.name)
 		}
 	}
 
@@ -103,7 +103,7 @@ func (h *HatcherySwarm) killAndRemoveContainer(dockerClient *dockerClient, ID st
 	if err := dockerClient.ContainerRemove(ctxDockerRemove, ID, types.ContainerRemoveOptions{Force: true}); err != nil {
 		// container could be already removed by a previous call to docker
 		if !strings.Contains(err.Error(), "No such container") {
-			return sdk.WrapError(err, "hatchery> swarm> killAndRemove> Unable to remove container %s form %s", ID, dockerClient.name)
+			return sdk.WrapError(err, "Unable to remove container %s form %s", ID, dockerClient.name)
 		}
 	}
 

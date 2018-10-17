@@ -17,7 +17,7 @@ import (
 func GetOpenPGPEntity(r io.Reader) (*openpgp.Entity, error) {
 	entityList, err := openpgp.ReadArmoredKeyRing(r)
 	if err != nil {
-		return nil, sdk.WrapError(err, "GetOpenPGPEntity> Unable to read armored key ring")
+		return nil, sdk.WrapError(err, "Unable to read armored key ring")
 	}
 
 	if len(entityList) != 1 {
@@ -53,7 +53,7 @@ func NewOpenPGPEntity(keyname string) (*openpgp.Entity, error) {
 			sha512,
 		}
 		if err := id.SelfSignature.SignUserId(id.UserId.Id, key.PrimaryKey, key.PrivateKey, nil); err != nil {
-			return nil, sdk.WrapError(err, "NewOpenPGPEntity> Cannot sign identity")
+			return nil, sdk.WrapError(err, "Cannot sign identity")
 		}
 	}
 
@@ -69,7 +69,7 @@ func generatePGPPrivateKey(key *openpgp.Entity) (io.Reader, error) {
 	}
 	defer w.Close()
 	if err := key.SerializePrivate(w, &packet.Config{}); err != nil {
-		return nil, sdk.WrapError(err, "generatePGPPrivateKey> Cannot serialize private key")
+		return nil, sdk.WrapError(err, "Cannot serialize private key")
 	}
 	return bufPrivate, nil
 }
@@ -83,7 +83,7 @@ func generatePGPPublicKey(key *openpgp.Entity) (io.Reader, error) {
 	}
 	defer w.Close()
 	if err := key.Serialize(w); err != nil {
-		return nil, sdk.WrapError(err, "generatePGPPublicKey> Cannot serialize public key")
+		return nil, sdk.WrapError(err, "Cannot serialize public key")
 	}
 	return bufPublic, nil
 }

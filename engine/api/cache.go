@@ -65,7 +65,7 @@ func (api *API) getPullCacheHandler() service.Handler {
 		if objectstore.Instance().TemporaryURLSupported {
 			fURL, err := objectstore.FetchTempURL(&cacheObject)
 			if err != nil {
-				return sdk.WrapError(err, "getPullCacheHandler> Cannot fetch cache object")
+				return sdk.WrapError(err, "Cannot fetch cache object")
 			}
 			w.Header().Add("Content-Type", "application/x-tar")
 			w.Header().Add("Content-Disposition", "attachment; filename=\"cache.tar\"")
@@ -79,11 +79,11 @@ func (api *API) getPullCacheHandler() service.Handler {
 		}
 		if _, err := io.Copy(w, ioread); err != nil {
 			_ = ioread.Close()
-			return sdk.WrapError(err, "getPullCacheHandler> Cannot stream artifact")
+			return sdk.WrapError(err, "Cannot stream artifact")
 		}
 
 		if err := ioread.Close(); err != nil {
-			return sdk.WrapError(err, "getPullCacheHandler> Cannot close artifact")
+			return sdk.WrapError(err, "Cannot close artifact")
 		}
 		return nil
 	}

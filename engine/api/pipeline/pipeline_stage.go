@@ -257,7 +257,7 @@ func updateStageOrder(db gorp.SqlExecutor, id int64, order int) error {
 	query := `UPDATE pipeline_stage SET build_order=$1 WHERE id=$2`
 	_, err := db.Exec(query, order, id)
 
-	return sdk.WrapError(err, "UpdateStageOrder>")
+	return sdk.WithStack(err)
 }
 
 // UpdateStage update Stage and all its prequisites

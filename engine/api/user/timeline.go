@@ -13,10 +13,10 @@ import (
 func InsertTimelineFilter(db gorp.SqlExecutor, tf sdk.TimelineFilter, u *sdk.User) error {
 	filterNullString, err := gorpmapping.JSONToNullString(tf)
 	if err != nil {
-		return sdk.WrapError(err, "InsertTimelineFilter> Unable to insert filter")
+		return sdk.WrapError(err, "Unable to insert filter")
 	}
 	if _, err := db.Exec("INSERT INTO user_timeline (user_id, filter) VALUES($1, $2)", u.ID, filterNullString); err != nil {
-		return sdk.WrapError(err, "InsertTimelineFilter> Unable to insert user timeline filter")
+		return sdk.WrapError(err, "Unable to insert user timeline filter")
 	}
 	return nil
 }
@@ -25,12 +25,12 @@ func InsertTimelineFilter(db gorp.SqlExecutor, tf sdk.TimelineFilter, u *sdk.Use
 func UpdateTimelineFilter(db gorp.SqlExecutor, timelineFilter sdk.TimelineFilter, u *sdk.User) error {
 	filterJSON, err := gorpmapping.JSONToNullString(timelineFilter)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateTimelineFilter> Unable to read json filter")
+		return sdk.WrapError(err, "Unable to read json filter")
 	}
 
 	query := "UPDATE user_timeline SET filter=$1 WHERE user_id=$2"
 	if _, err := db.Exec(query, filterJSON, u.ID); err != nil {
-		return sdk.WrapError(err, "UpdateTimelineFilter> Unable to update filter")
+		return sdk.WrapError(err, "Unable to update filter")
 	}
 	return nil
 }
@@ -47,14 +47,14 @@ func LoadTimelineFilter(db gorp.SqlExecutor, u *sdk.User) (sdk.TimelineFilter, e
 	query := "SELECT filter from user_timeline WHERE user_id = $1"
 	err := db.QueryRow(query, u.ID).Scan(&filterS)
 	if err != nil && err != sql.ErrNoRows {
-		return filter, sdk.WrapError(err, "user.timeline.load> Unable to load timeline filter")
+		return filter, sdk.WrapError(err, "Unable to load timeline filter")
 	}
 	if err != nil && err == sql.ErrNoRows {
 		filter = sdk.TimelineFilter{}
 	}
 	if err == nil {
 		if err := gorpmapping.JSONNullString(filterS, &filter); err != nil {
-			return filter, sdk.WrapError(err, "user.timeline.load> Unable to read filter")
+			return filter, sdk.WrapError(err, "Unable to read filter")
 		}
 	}
 	return filter, nil

@@ -15,7 +15,7 @@ import (
 func removeProjectWarning(db gorp.SqlExecutor, warningType string, element string, key string) error {
 	result, err := db.Exec("DELETE FROM warning where type = $1 and element = $2 and project_key = $3", warningType, element, key)
 	if err != nil {
-		return sdk.WrapError(err, "removeProjectWarning> Unable to remove warning %s/%s", warningType, element)
+		return sdk.WrapError(err, "Unable to remove warning %s/%s", warningType, element)
 	}
 	nb, errR := result.RowsAffected()
 	if errR != nil {
@@ -31,12 +31,12 @@ func removeProjectWarning(db gorp.SqlExecutor, warningType string, element strin
 func Insert(db gorp.SqlExecutor, w sdk.Warning) error {
 	h, err := hashstructure.Hash(w, nil)
 	if err != nil {
-		return sdk.WrapError(err, "warning.Insert> Unable to calculate hash")
+		return sdk.WrapError(err, "Unable to calculate hash")
 	}
 	w.Hash = fmt.Sprintf("%v", h)
 	warn := warning(w)
 	if err := db.Insert(&warn); err != nil {
-		return sdk.WrapError(err, "warning.Insert> Unable to insert warning")
+		return sdk.WrapError(err, "Unable to insert warning")
 	}
 	w = sdk.Warning(warn)
 	event.PublishAddWarning(w)
@@ -47,7 +47,7 @@ func Insert(db gorp.SqlExecutor, w sdk.Warning) error {
 func Update(db gorp.SqlExecutor, w sdk.Warning) error {
 	warn := warning(w)
 	if _, err := db.Update(&warn); err != nil {
-		return sdk.WrapError(err, "warning.Update> Unable to update a warning")
+		return sdk.WrapError(err, "Unable to update a warning")
 	}
 	return nil
 }
@@ -95,13 +95,13 @@ func GetByProject(db gorp.SqlExecutor, key string) ([]sdk.Warning, error) {
 	`
 	var ws []warning
 	if _, err := db.Select(&ws, query, key); err != nil {
-		return nil, sdk.WrapError(err, "warning.GetByProject> Unable to list warnings for project %s", key)
+		return nil, sdk.WrapError(err, "Unable to list warnings for project %s", key)
 	}
 
 	warnings := make([]sdk.Warning, len(ws))
 	for i, w := range ws {
 		if err := w.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "warning.GetByProject> Unable to post get warnings")
+			return nil, sdk.WrapError(err, "Unable to post get warnings")
 		}
 		warnings[i] = sdk.Warning(w)
 	}
@@ -114,7 +114,7 @@ func GetByProjectAndHash(db gorp.SqlExecutor, key string, hash string) (sdk.Warn
 	query := `SELECT * FROM warning WHERE project_key = $1 AND hash = $2`
 	var warn warning
 	if err := db.SelectOne(&warn, query, key, hash); err != nil {
-		return sdk.Warning{}, sdk.WrapError(err, "warning.GetByProjectAndHash> Unable to get warning")
+		return sdk.Warning{}, sdk.WrapError(err, "Unable to get warning")
 	}
 	return sdk.Warning(warn), nil
 }

@@ -84,7 +84,7 @@ func (c *Common) Register(status func() sdk.MonitoringStatus, cfg interface{}) e
 		Version:          sdk.VERSION,
 	})
 	if err != nil {
-		return sdk.WrapError(err, "Register>")
+		return sdk.WithStack(err)
 	}
 
 	c.Hash = hash

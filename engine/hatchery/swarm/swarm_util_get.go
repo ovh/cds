@@ -15,7 +15,7 @@ func (h *HatcherySwarm) getContainers(dockerClient *dockerClient, options types.
 	defer cancelList()
 	s, err := dockerClient.ContainerList(ctxList, options)
 	if err != nil {
-		return nil, sdk.WrapError(err, "hatchery> swarm> getContainers> unable to list containers on %s", dockerClient.name)
+		return nil, sdk.WrapError(err, "unable to list containers on %s", dockerClient.name)
 	}
 	return s, nil
 }
@@ -23,7 +23,7 @@ func (h *HatcherySwarm) getContainers(dockerClient *dockerClient, options types.
 func (h *HatcherySwarm) getContainer(dockerClient *dockerClient, name string, options types.ContainerListOptions) (*types.Container, error) {
 	containers, err := h.getContainers(dockerClient, options)
 	if err != nil {
-		return nil, sdk.WrapError(err, "hatchery> swarm> getContainer> cannot getContainers on %s", dockerClient.name)
+		return nil, sdk.WrapError(err, "cannot getContainers on %s", dockerClient.name)
 	}
 
 	for i := range containers {

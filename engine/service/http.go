@@ -125,7 +125,7 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 	}
 	if err := json.Unmarshal(data, i); err != nil {
 		err = sdk.NewError(sdk.ErrWrongRequest, err)
-		return sdk.WrapError(err, "UnmarshalBody> unable to unmarshal %s", string(data))
+		return sdk.WrapError(err, "unable to unmarshal %s", string(data))
 	}
 	return nil
 }

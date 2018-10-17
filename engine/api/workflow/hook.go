@@ -33,7 +33,7 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 		//Load service "hooks"
 		srvs, err := services.FindByType(db, services.TypeHooks)
 		if err != nil {
-			return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
+			return sdk.WrapError(err, "Unable to get services dao")
 		}
 
 		// Update in VCS
@@ -145,18 +145,18 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			v, ok := h.Config["webHookID"]
 			if h.WorkflowHookModel.Name == sdk.RepositoryWebHookModelName && h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
 				if err := createVCSConfiguration(ctx, db, store, p, &h); err != nil {
-					return sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
+					return sdk.WrapError(err, "Cannot update vcs configuration")
 				}
 			}
 			if err := UpdateHook(db, &h); err != nil {
-				return sdk.WrapError(err, "HookRegistration> Cannot update hook")
+				return sdk.WrapError(err, "Cannot update hook")
 			}
 		}
 	}
 
 	if len(hookToDelete) > 0 {
 		if err := DeleteHookConfiguration(ctx, db, store, p, hookToDelete); err != nil {
-			return sdk.WrapError(err, "HookRegistration> Cannot remove hook configuration")
+			return sdk.WrapError(err, "Cannot remove hook configuration")
 		}
 	}
 	return nil
@@ -195,7 +195,7 @@ func DeleteHookConfiguration(ctx context.Context, db gorp.SqlExecutor, store cac
 	//Load service "hooks"
 	srvs, err := services.FindByType(db, services.TypeHooks)
 	if err != nil {
-		return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
+		return sdk.WrapError(err, "Unable to get services dao")
 	}
 	code, errHooks := services.DoJSONRequest(ctx, srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
@@ -230,7 +230,7 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		Workflow: true,
 	}
 	if err := client.CreateHook(ctx, h.Config["repoFullName"].Value, &vcsHook); err != nil {
-		return sdk.WrapError(err, "createVCSConfiguration> Cannot create hook on repository: %+v", vcsHook)
+		return sdk.WrapError(err, "Cannot create hook on repository: %+v", vcsHook)
 	}
 	h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 		Value:        vcsHook.ID,

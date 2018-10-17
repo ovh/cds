@@ -53,13 +53,13 @@ func (api *API) getWorkflowHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowHandler> unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		opts := workflow.LoadOptions{WithFavorites: true, DeepPipeline: withDeepPipelines, WithIcon: true, WithLabels: withLabels}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), opts)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
+			return sdk.WrapError(err, "Cannot load workflow %s", name)
 		}
 
 		if withUsage {
@@ -147,7 +147,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 
 		var exportWf exportentities.Workflow
 		if err := yaml.Unmarshal([]byte(audit.DataBefore), &exportWf); err != nil {
-			return sdk.WrapError(err, "postWorkflowRollbackHandler> Cannot unmarshall data before")
+			return sdk.WrapError(err, "Cannot unmarshall data before")
 		}
 
 		tx, errTx := db.Begin()
@@ -164,7 +164,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowRollbackHandler> cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		event.PublishWorkflowUpdate(key, *wf, *newWf, getUser(ctx))
@@ -211,7 +211,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 				}
 				// If label doesn't exist create him
 				if err := project.InsertLabel(tx, &label); err != nil {
-					return sdk.WrapError(err, "postWorkflowLabelHandler> Cannot create new label")
+					return sdk.WrapError(err, "Cannot create new label")
 				}
 			} else {
 				label.ID = lbl.ID
@@ -224,14 +224,14 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 		}
 
 		if err := workflow.LabelWorkflow(tx, label.ID, wf.ID); err != nil {
-			return sdk.WrapError(err, "postWorkflowLabelHandler> cannot link label %d to workflow %s", label.ID, wf.Name)
+			return sdk.WrapError(err, "cannot link label %d to workflow %s", label.ID, wf.Name)
 		}
 		newWf := *wf
 		label.WorkflowID = wf.ID
 		newWf.Labels = append(newWf.Labels, label)
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowLabelHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, label, http.StatusOK)
@@ -263,7 +263,7 @@ func (api *API) deleteWorkflowLabelHandler() service.Handler {
 		}
 
 		if err := workflow.UnLabelWorkflow(db, labelID, wf.ID); err != nil {
-			return sdk.WrapError(err, "deleteWorkflowLabelHandler> cannot unlink label %d to workflow %s", labelID, wf.Name)
+			return sdk.WrapError(err, "cannot unlink label %d to workflow %s", labelID, wf.Name)
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)
@@ -374,7 +374,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 
 		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
+			return sdk.WrapError(err, "Cannot update workflow")
 		}
 
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
@@ -388,12 +388,12 @@ func (api *API) putWorkflowHandler() service.Handler {
 			}
 			wf.Metadata["default_tags"] = "git.branch,git.author"
 			if err := workflow.UpdateMetadata(tx, wf.ID, wf.Metadata); err != nil {
-				return sdk.WrapError(err, "putWorkflowHandler> cannot update metadata")
+				return sdk.WrapError(err, "cannot update metadata")
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, p, wf.ID, getUser(ctx), workflow.LoadOptions{})
@@ -500,7 +500,7 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 		path := fmt.Sprintf("/task/%s/execution", uuid)
 		task := sdk.Task{}
 		if _, err := services.DoJSONRequest(ctx, srvs, "GET", path, nil, &task); err != nil {
-			return sdk.WrapError(err, "getWorkflowHookHandler> Unable to get hook %s task and executions", uuid)
+			return sdk.WrapError(err, "Unable to get hook %s task and executions", uuid)
 		}
 
 		return service.WriteJSON(w, task, http.StatusOK)

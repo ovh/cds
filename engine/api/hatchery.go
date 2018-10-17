@@ -18,7 +18,7 @@ func (api *API) hatcheryCountHandler() service.Handler {
 
 		count, err := services.CountHatcheries(api.mustDB(), wfNodeRunID)
 		if err != nil {
-			return sdk.WrapError(err, "hatcheryCountHandler> cannot get hatcheries count")
+			return sdk.WrapError(err, "cannot get hatcheries count")
 		}
 
 		return service.WriteJSON(w, count, http.StatusOK)

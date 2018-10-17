@@ -18,7 +18,7 @@ import (
 func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) error {
 	permProj, err := project.LoadPermissions(db, groupID)
 	if err != nil {
-		return sdk.WrapError(err, "loadUserPermissions> Unable to load project permissions for %s", u.Username)
+		return sdk.WrapError(err, "Unable to load project permissions for %s", u.Username)
 	}
 	if u.Permissions.ProjectsPerm == nil {
 		u.Permissions.ProjectsPerm = make(map[string]int, len(permProj))
@@ -31,7 +31,7 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 
 	permPip, err := pipeline.LoadPipelineByGroup(db, groupID)
 	if err != nil {
-		return sdk.WrapError(err, "loadUserPermissions> Unable to load pipeline permissions for %s", u.Username)
+		return sdk.WrapError(err, "Unable to load pipeline permissions for %s", u.Username)
 	}
 	if u.Permissions.PipelinesPerm == nil {
 		u.Permissions.PipelinesPerm = make(map[string]int, len(permPip))
@@ -45,7 +45,7 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 
 	permApp, err := application.LoadPermissions(db, groupID)
 	if err != nil {
-		return sdk.WrapError(err, "loadUserPermissions> Unable to load application permissions for  %s", u.Username)
+		return sdk.WrapError(err, "Unable to load application permissions for  %s", u.Username)
 	}
 	if u.Permissions.ApplicationsPerm == nil {
 		u.Permissions.ApplicationsPerm = make(map[string]int, len(permApp))
@@ -59,7 +59,7 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 
 	permEnv, err := environment.LoadEnvironmentByGroup(db, groupID)
 	if err != nil {
-		return sdk.WrapError(err, "loadUserPermissions> Unable to load environment permissions for  %s", u.Username)
+		return sdk.WrapError(err, "Unable to load environment permissions for  %s", u.Username)
 	}
 	if u.Permissions.EnvironmentsPerm == nil {
 		u.Permissions.EnvironmentsPerm = make(map[string]int, len(permEnv))
@@ -73,7 +73,7 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 
 	permWorkflow, err := workflow.LoadWorkflowByGroup(db, groupID)
 	if err != nil {
-		return sdk.WrapError(err, "loadUserPermissions> Unable to load workflow permissions for  %s", u.Username)
+		return sdk.WrapError(err, "Unable to load workflow permissions for  %s", u.Username)
 	}
 	if u.Permissions.WorkflowsPerm == nil {
 		u.Permissions.WorkflowsPerm = make(map[string]int, len(permEnv))
@@ -103,7 +103,7 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 
 		rows, err := db.Query(query, u.ID)
 		if err != nil {
-			return sdk.WrapError(err, "loadUserPermissions> Unable to load user groups %s", u.Username)
+			return sdk.WrapError(err, "Unable to load user groups %s", u.Username)
 		}
 		defer rows.Close()
 
@@ -111,7 +111,7 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 			var group sdk.Group
 			var admin bool
 			if err := rows.Scan(&group.ID, &group.Name, &admin); err != nil {
-				return sdk.WrapError(err, "loadUserPermissions> Unable scan groups %s", u.Username)
+				return sdk.WrapError(err, "Unable scan groups %s", u.Username)
 			}
 			u.Permissions.Groups = append(u.Permissions.Groups, group.Name)
 			if admin {

@@ -29,7 +29,7 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 	pf, err := s.Client.ProjectPlatformGet(projectKey, platformName, true)
 	if err != nil {
 		_ = s.stopTask(t)
-		return sdk.WrapError(err, "startTask> Cannot get rabbitMQ configuration for %s/%s", projectKey, platformName)
+		return sdk.WrapError(err, "Cannot get rabbitMQ configuration for %s/%s", projectKey, platformName)
 	}
 
 	password := pf.Config["password"].Value
@@ -125,7 +125,7 @@ func (s *Service) doRabbitMQTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNo
 	e.ExtraFields.Type = false
 	m, err := e.ToStringMap(bodyJSON)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Hooks.doRabbitMQTaskExecution> Unable to dump body %s", t.WebHook.RequestBody)
+		return nil, sdk.WrapError(err, "Unable to dump body %s", t.WebHook.RequestBody)
 	}
 	h.Payload = m
 

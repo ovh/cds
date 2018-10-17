@@ -26,7 +26,7 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 	//Load pending executions
 	exs, err := LoadPendingExecutions(db)
 	if err != nil {
-		return nil, sdk.WrapError(err, "ExecuterRun> Unable to load pending execution")
+		return nil, sdk.WrapError(err, "Unable to load pending execution")
 	}
 
 	//Process all
@@ -98,25 +98,25 @@ func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlEx
 	//Load the scheduler
 	s, err := Load(db, e.PipelineSchedulerID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "executerProcess> Cannot load pipeline scheduler")
+		return nil, sdk.WrapError(err, "Cannot load pipeline scheduler")
 	}
 
 	//Load application
 	app, err := application.LoadByID(db, store, s.ApplicationID, nil, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
-		return nil, sdk.WrapError(err, "executerProcess> Cannot load application")
+		return nil, sdk.WrapError(err, "Cannot load application")
 	}
 
 	//Load pipeline
 	pip, err := pipeline.LoadPipelineByID(context.TODO(), db, s.PipelineID, true)
 	if err != nil {
-		return nil, sdk.WrapError(err, "executerProcess> Cannot load pipeline")
+		return nil, sdk.WrapError(err, "Cannot load pipeline")
 	}
 
 	//Load environnement
 	env, err := environment.LoadEnvironmentByID(db, s.EnvironmentID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "executerProcess> Cannot load environment")
+		return nil, sdk.WrapError(err, "Cannot load environment")
 	}
 
 	//Create a new pipeline build
@@ -126,7 +126,7 @@ func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlEx
 	}, nil)
 
 	if err != nil {
-		return nil, sdk.WrapError(err, "executerProcess> Cannot run pipeline")
+		return nil, sdk.WrapError(err, "Cannot run pipeline")
 	}
 
 	//References pipeline build version in execution
@@ -137,7 +137,7 @@ func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlEx
 
 	//Update execution in database
 	if err := UpdateExecution(db, e); err != nil {
-		return nil, sdk.WrapError(err, "executerProcess> Cannot update execution")
+		return nil, sdk.WrapError(err, "Cannot update execution")
 	}
 
 	return pb, nil

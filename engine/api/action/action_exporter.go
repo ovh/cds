@@ -13,7 +13,7 @@ import (
 func Export(db gorp.SqlExecutor, name string, f exportentities.Format, w io.Writer) (int, error) {
 	a, err := LoadPublicAction(db, name)
 	if err != nil {
-		return 0, sdk.WrapError(err, "Export> Cannot load action")
+		return 0, sdk.WrapError(err, "Cannot load action")
 	}
 
 	return ExportAction(*a, f, w)
@@ -24,7 +24,7 @@ func ExportAction(a sdk.Action, f exportentities.Format, w io.Writer) (int, erro
 	ea := exportentities.NewAction(a)
 	b, err := exportentities.Marshal(ea, f)
 	if err != nil {
-		return 0, sdk.WrapError(err, "application.Export>")
+		return 0, sdk.WithStack(err)
 	}
 
 	return w.Write(b)

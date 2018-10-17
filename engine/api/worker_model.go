@@ -22,7 +22,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 		// Unmarshal body
 		var model sdk.Model
 		if err := service.UnmarshalBody(r, &model); err != nil {
-			return sdk.WrapError(err, "addWorkerModel> cannot unmarshal body")
+			return sdk.WrapError(err, "Cannot unmarshal body")
 		}
 
 		if model.Type == "" {
@@ -121,7 +121,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 
 		// Insert model in db
 		if err := worker.InsertWorkerModel(api.mustDB(), &model); err != nil {
-			return sdk.WrapError(err, "addWorkerModel> cannot add worker model")
+			return sdk.WrapError(err, "cannot add worker model")
 		}
 
 		key := cache.Key("api:workermodels:*")
@@ -138,7 +138,7 @@ func (api *API) bookWorkerModelHandler() service.Handler {
 			return sdk.WrapError(errr, "bookWorkerModelHandler> Invalid permModelID")
 		}
 		if _, err := worker.BookForRegister(api.Cache, workerModelID, getHatchery(ctx)); err != nil {
-			return sdk.WrapError(err, "bookWorkerModelHandler>")
+			return sdk.WithStack(err)
 		}
 		return nil
 	}
@@ -148,7 +148,7 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		spawnErrorForm := &sdk.SpawnErrorForm{}
 		if err := service.UnmarshalBody(r, spawnErrorForm); err != nil {
-			return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Unable to parse spawn error form")
+			return sdk.WrapError(err, "Unable to parse spawn error form")
 		}
 
 		workerModelID, errr := requestVarInt(r, "permModelID")
@@ -168,11 +168,11 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 		}
 
 		if err := worker.UpdateSpawnErrorWorkerModel(tx, model.ID, spawnErrorForm.Error); err != nil {
-			return sdk.WrapError(err, "spawnErrorWorkerModelHandler> cannot update spawn error on worker model")
+			return sdk.WrapError(err, "cannot update spawn error on worker model")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Cannot commit tx")
+			return sdk.WrapError(err, "Cannot commit tx")
 		}
 
 		key := cache.Key("api:workermodels:*")
@@ -197,7 +197,7 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 		// Unmarshal body
 		var model sdk.Model
 		if err := service.UnmarshalBody(r, &model); err != nil {
-			return sdk.WrapError(err, "updateWorkerModel> cannot unmarshal body")
+			return sdk.WrapError(err, "Cannot unmarshal body")
 		}
 
 		//If the model name has not been set, keep the old name
@@ -340,7 +340,7 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 
 		// update model in db
 		if err := worker.UpdateWorkerModel(tx, &model); err != nil {
-			return sdk.WrapError(err, "updateWorkerModel> cannot update worker model")
+			return sdk.WrapError(err, "cannot update worker model")
 		}
 
 		// update requirements if needed
@@ -364,14 +364,14 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 				log.Debug("updateWorkerModel> Loading pipeline for action %d", a.ID)
 				id, err := pipeline.GetPipelineIDFromJoinedActionID(tx, a.ID)
 				if err != nil {
-					return sdk.WrapError(err, "updateWorkerModel> cannot get pipeline")
+					return sdk.WrapError(err, "cannot get pipeline")
 				}
 				log.Debug("updateWorkerModel> Updating pipeline %d", id)
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateWorkerModel> unable to commit transaction")
+			return sdk.WrapError(err, "unable to commit transaction")
 		}
 
 		key := cache.Key("api:workermodels:*")
@@ -390,7 +390,7 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "deleteWorkerModel> Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 
 		if err := worker.DeleteWorkerModel(tx, workerModelID); err != nil {
@@ -398,7 +398,7 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteWorkerModel> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		key := cache.Key("api:workermodels:*")
@@ -411,7 +411,7 @@ func (api *API) deleteWorkerModelHandler() service.Handler {
 func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name string) error {
 	m, err := worker.LoadWorkerModelByName(api.mustDB(), name)
 	if err != nil {
-		return sdk.WrapError(err, "getWorkerModel> cannot load worker model")
+		return sdk.WrapError(err, "cannot load worker model")
 	}
 	return service.WriteJSON(w, m, http.StatusOK)
 }
@@ -486,7 +486,7 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 		// Unmarshal body
 		var modelPattern sdk.ModelPattern
 		if err := service.UnmarshalBody(r, &modelPattern); err != nil {
-			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot unmarshal body")
+			return sdk.WrapError(err, "Cannot unmarshal body")
 		}
 
 		if !sdk.NamePatternRegex.MatchString(modelPattern.Name) {
@@ -523,7 +523,7 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 		modelPattern.ID = oldWmp.ID
 
 		if err := worker.UpdateWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
-			return sdk.WrapError(err, "putWorkerModelPatternHandler> cannot update worker model pattern")
+			return sdk.WrapError(err, "cannot update worker model pattern")
 		}
 
 		return service.WriteJSON(w, modelPattern, http.StatusOK)
@@ -541,11 +541,11 @@ func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 			if err == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrNotFound, "deleteWorkerModelPatternHandler> Cannot load worker model by name (%s/%s)", patternType, patternName)
 			}
-			return sdk.WrapError(err, "deleteWorkerModelPatternHandler> Cannot load worker model by name (%s/%s) : %v", patternType, patternName, err)
+			return sdk.WrapError(err, "Cannot load worker model by name (%s/%s) : %v", patternType, patternName, err)
 		}
 
 		if err := worker.DeleteWorkerModelPattern(api.mustDB(), wmp.ID); err != nil {
-			return sdk.WrapError(err, "deleteWorkerModelPatternHandler> Cannot delete worker model (%s/%s) : %v", patternType, patternName, err)
+			return sdk.WrapError(err, "Cannot delete worker model (%s/%s) : %v", patternType, patternName, err)
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)
@@ -567,7 +567,7 @@ func (api *API) getWorkerModelPatternHandler() service.Handler {
 
 		modelPattern, err := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkerModelPatternsHandler> cannot load worker model patterns")
+			return sdk.WrapError(err, "cannot load worker model patterns")
 		}
 
 		return service.WriteJSON(w, modelPattern, http.StatusOK)
@@ -579,7 +579,7 @@ func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 		// Unmarshal body
 		var modelPattern sdk.ModelPattern
 		if err := service.UnmarshalBody(r, &modelPattern); err != nil {
-			return sdk.WrapError(err, "postAddWorkerModelPatternHandler> cannot unmarshal body")
+			return sdk.WrapError(err, "Cannot unmarshal body")
 		}
 
 		if !sdk.NamePatternRegex.MatchString(modelPattern.Name) {
@@ -608,7 +608,7 @@ func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 
 		// Insert model pattern in db
 		if err := worker.InsertWorkerModelPattern(api.mustDB(), &modelPattern); err != nil {
-			return sdk.WrapError(err, "postAddWorkerModelPatternHandler> cannot add worker model pattern")
+			return sdk.WrapError(err, "cannot add worker model pattern")
 		}
 
 		return service.WriteJSON(w, modelPattern, http.StatusOK)
@@ -627,7 +627,7 @@ func (api *API) getWorkerModelPatternsHandler() service.Handler {
 
 		modelPatterns, err := worker.LoadWorkerModelPatterns(api.mustDB())
 		if err != nil {
-			return sdk.WrapError(err, "getWorkerModelPatternsHandler> cannot load worker model patterns")
+			return sdk.WrapError(err, "cannot load worker model patterns")
 		}
 
 		return service.WriteJSON(w, modelPatterns, http.StatusOK)

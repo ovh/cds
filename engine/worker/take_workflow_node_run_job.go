@@ -24,9 +24,9 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	info, err := w.client.QueueTakeJob(ctxQueueTakeJob, job, w.bookedWJobID == job.ID)
 	if err != nil {
 		if w.bookedWJobID == job.ID {
-			return false, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can't work on another job.")
+			return false, sdk.WrapError(err, "Unable to take workflow node run job. This worker can't work on another job.")
 		}
-		return true, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can work on another job.")
+		return true, sdk.WrapError(err, "Unable to take workflow node run job. This worker can work on another job.")
 	}
 	t := ""
 	if w.bookedWJobID == job.ID {

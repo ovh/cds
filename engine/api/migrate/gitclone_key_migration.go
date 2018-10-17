@@ -37,7 +37,7 @@ func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 
 		tx, err := db.Begin()
 		if err != nil {
-			return sdk.WrapError(err, "GitClonePrivateKey> Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		var id int64
 		// Lock the job (action)
@@ -55,7 +55,7 @@ func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "GitClonePrivateKey> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		log.Debug("GitClonePrivateKey> Migrate %s/%s DONE", p.ProjKey, p.PipName)

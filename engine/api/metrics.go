@@ -24,7 +24,7 @@ func (api *API) getMetricsHandler() service.Handler {
 		enc := expfmt.NewEncoder(writer, contentType)
 		for _, mf := range mfs {
 			if err := enc.Encode(mf); err != nil {
-				return sdk.WrapError(err, "metrics> An error has occurred during metrics encoding")
+				return sdk.WrapError(err, "An error has occurred during metrics encoding")
 			}
 		}
 		header := w.Header()

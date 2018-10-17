@@ -444,7 +444,7 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	} else if m, ok := bI.(map[interface{}]interface{}); ok {
 		argss := map[string]string{}
 		if err := mapstructure.Decode(m, &argss); err != nil {
-			return nil, true, sdk.WrapError(err, "AsArtifactUpload.decode>Malformatted Step")
+			return nil, true, sdk.WrapError(err, "Malformatted Step")
 		}
 		a = sdk.NewStepArtifactUpload(argss)
 	} else {
@@ -485,7 +485,7 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 
 	argss := map[string]string{}
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "AsArtifactDownload.decode> Malformatted Step")
+		return nil, true, sdk.WrapError(err, "Malformatted Step")
 	}
 	a := sdk.NewStepArtifactDownload(argss)
 
@@ -559,7 +559,7 @@ func (s Step) AsCoverageAction() (*sdk.Action, bool, error) {
 
 	argss := map[string]string{}
 	if err := mapstructure.Decode(bI, &argss); err != nil {
-		return nil, true, sdk.WrapError(err, "AsCoverageAction.decode> Malformatted Step")
+		return nil, true, sdk.WrapError(err, "Malformatted Step")
 	}
 	a := sdk.NewCoverage(argss)
 

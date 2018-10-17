@@ -15,18 +15,18 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 
 	// Delete variables
 	if err := DeleteAllVariable(db, applicationID); err != nil {
-		return sdk.WrapError(err, "DeleteApplication> Cannot delete application variable")
+		return sdk.WrapError(err, "Cannot delete application variable")
 	}
 
 	// Delete groups
 	query := `DELETE FROM application_group WHERE application_id = $1`
 	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "DeleteApplication> Cannot delete application group")
+		return sdk.WrapError(err, "Cannot delete application group")
 	}
 
 	// Delete application_pipeline
 	if err := DeleteAllApplicationPipeline(db, applicationID); err != nil {
-		return sdk.WrapError(err, "DeleteApplication> Cannot delete application pipeline")
+		return sdk.WrapError(err, "Cannot delete application pipeline")
 	}
 
 	// Delete pipeline builds
@@ -60,25 +60,25 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	// Delete application artifact left
 	query = `DELETE FROM artifact WHERE application_id = $1`
 	if _, err = db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "DeleteApplication> Cannot delete old artifacts")
+		return sdk.WrapError(err, "Cannot delete old artifacts")
 	}
 
 	// Delete hook
 	query = `DELETE FROM hook WHERE application_id = $1`
 	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "DeleteApplication> Cannot delete hook")
+		return sdk.WrapError(err, "Cannot delete hook")
 	}
 
 	// Delete poller execution
 	query = `DELETE FROM poller_execution WHERE application_id = $1`
 	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "DeleteApplication> Cannot delete poller execution")
+		return sdk.WrapError(err, "Cannot delete poller execution")
 	}
 
 	// Delete poller
 	query = `DELETE FROM poller WHERE application_id = $1`
 	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "DeleteApplication> Cannot delete poller")
+		return sdk.WrapError(err, "Cannot delete poller")
 	}
 
 	// Delete triggers
@@ -88,7 +88,7 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 
 	query = `DELETE FROM application WHERE id=$1`
 	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "DeleteApplication> Cannot delete application")
+		return sdk.WrapError(err, "Cannot delete application")
 	}
 
 	return nil
@@ -98,7 +98,7 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 func DeleteAllApplicationKeys(db gorp.SqlExecutor, applicationID int64) error {
 	query := `DELETE FROM application_key WHERE application_id = $1`
 	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "DeleteAllApplicationKey> Cannot delete application key")
+		return sdk.WrapError(err, "Cannot delete application key")
 	}
 	return nil
 }

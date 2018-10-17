@@ -38,7 +38,7 @@ func (h *HatcherySwarm) pullImage(dockerClient *dockerClient, img string, timeou
 		_, _ = buff.Write(p)
 	}
 	if err := res.Close(); err != nil {
-		return sdk.WrapError(err, "hatchery> swarm> pullImage> error closing the buffer")
+		return sdk.WrapError(err, "error closing the buffer")
 	}
 
 	log.Debug(buff.String())

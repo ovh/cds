@@ -60,7 +60,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 			if k.Name == keyName {
 				keyToDelete = k
 				if err := application.DeleteApplicationKey(tx, app.ID, keyName); err != nil {
-					return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot delete key %s", k.Name)
+					return sdk.WrapError(err, "Cannot delete key %s", k.Name)
 				}
 			}
 		}
@@ -70,7 +70,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 		event.PublishApplicationKeyDelete(key, *app, keyToDelete, u)
 
@@ -129,11 +129,11 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := application.InsertKey(tx, &newKey); err != nil {
-			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot insert application key")
+			return sdk.WrapError(err, "Cannot insert application key")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishApplicationKeyAdd(key, *app, newKey, getUser(ctx))

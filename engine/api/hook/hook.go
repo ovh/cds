@@ -241,7 +241,7 @@ func generateHash() (string, error) {
 func DeleteBranchBuilds(db gorp.SqlExecutor, store cache.Store, hooks []sdk.Hook, branch string) error {
 	for i := range hooks {
 		if err := pipeline.DeleteBranchBuilds(db, store, hooks[i].ApplicationID, branch); err != nil {
-			return sdk.WrapError(err, "DeleteBranchBuilds> Cannot delete branch builds for branch %s in %d", branch, hooks[i].ApplicationID)
+			return sdk.WrapError(err, "Cannot delete branch builds for branch %s in %d", branch, hooks[i].ApplicationID)
 		}
 	}
 	return nil
@@ -255,7 +255,7 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 	}
 	client, err := repositoriesmanager.AuthorizedClient(context.Background(), tx, store, server)
 	if err != nil {
-		return nil, sdk.WrapError(err, "CreateHook> Cannot get client, got  %s %s", proj.Key, rm)
+		return nil, sdk.WrapError(err, "Cannot get client, got  %s %s", proj.Key, rm)
 	}
 
 	//Check if the webhooks if disabled
@@ -284,10 +284,10 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 			Enabled:       true,
 		}
 		if err := InsertHook(tx, &h); err != nil {
-			return nil, sdk.WrapError(err, "CreateHook> Cannot insert hook")
+			return nil, sdk.WrapError(err, "Cannot insert hook")
 		}
 	} else if err != nil {
-		return nil, sdk.WrapError(err, "CreateHook> Cannot get hook")
+		return nil, sdk.WrapError(err, "Cannot get hook")
 	}
 
 	s := apiURL + HookLink
@@ -307,7 +307,7 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 			return nil, sdk.WrapError(sdk.ErrNotImplemented, "CreateHook> Cannot create hook on repository manager")
 		}
 		if err := DeleteHook(tx, h.ID); err != nil {
-			return nil, sdk.WrapError(err, "CreateHook> Cannot rollback hook creation")
+			return nil, sdk.WrapError(err, "Cannot rollback hook creation")
 		}
 	}
 	return &h, nil

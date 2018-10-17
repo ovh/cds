@@ -32,7 +32,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	}
 	b, err := json.Marshal(r)
 	if err != nil {
-		return sdk.WrapError(err, "github.CreateHook > Cannot marshal body %+v", r)
+		return sdk.WrapError(err, "Cannot marshal body %+v", r)
 	}
 	res, err := g.post(url, "application/json", bytes.NewBuffer(b), nil)
 	if err != nil {
@@ -41,7 +41,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return sdk.WrapError(err, "github.CreateHook> ReadAll")
+		return sdk.WrapError(err, "ReadAll")
 	}
 	if res.StatusCode != 201 {
 		if strings.Contains(string(body), "Hook already exists on this repository") {
@@ -52,7 +52,7 @@ func (g *githubClient) CreateHook(ctx context.Context, repo string, hook *sdk.VC
 	}
 
 	if err := json.Unmarshal(body, &r); err != nil {
-		return sdk.WrapError(err, "github.CreateHook> Cannot unmarshal response")
+		return sdk.WrapError(err, "Cannot unmarshal response")
 	}
 	hook.ID = fmt.Sprintf("%d", r.ID)
 	return nil

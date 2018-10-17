@@ -495,14 +495,14 @@ func scanPipelineBuild(pbResult pipelineBuildDbResult) (*sdk.PipelineBuild, erro
 	}
 
 	if err := json.Unmarshal([]byte(pbResult.Args), &pb.Parameters); err != nil {
-		return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal parameter %s", pbResult.Args)
+		return nil, sdk.WrapError(err, "Unable to Unmarshal parameter %s", pbResult.Args)
 	}
 	if err := json.Unmarshal([]byte(pbResult.Stages), &pb.Stages); err != nil {
-		return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal stages %s", pbResult.Stages)
+		return nil, sdk.WrapError(err, "Unable to Unmarshal stages %s", pbResult.Stages)
 	}
 	if pbResult.Commits != "" {
 		if err := json.Unmarshal([]byte(pbResult.Commits), &pb.Commits); err != nil {
-			return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal commits %s", pbResult.Commits)
+			return nil, sdk.WrapError(err, "Unable to Unmarshal commits %s", pbResult.Commits)
 		}
 	}
 
@@ -719,7 +719,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 		//If we are lucky, return a true diff
 		commits, err := client.Commits(context.Background(), repo, cur.Branch, prev.Hash, cur.Hash)
 		if err != nil {
-			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
+			return nil, sdk.WrapError(err, "Cannot get commits")
 		}
 		res = commits
 	} else if cur.Hash != "" {
@@ -727,14 +727,14 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 		log.Debug("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(context.Background(), repo, cur.Branch, "", cur.Hash)
 		if err != nil {
-			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
+			return nil, sdk.WrapError(err, "Cannot get commits")
 		}
 		res = c
 	} else {
 		//If we only have the current branch, search for the branch
 		br, err := client.Branch(context.Background(), repo, cur.Branch)
 		if err != nil {
-			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get branch %s", cur.Branch)
+			return nil, sdk.WrapError(err, "Cannot get branch %s", cur.Branch)
 		}
 		if br != nil {
 			if br.LatestCommit == "" {
@@ -752,7 +752,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 	}
 
 	if err := updatePipelineBuildCommits(db, pb.ID, res); err != nil {
-		return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Unable to update pipeline build commit")
+		return nil, sdk.WrapError(err, "Unable to update pipeline build commit")
 	}
 
 	return res, nil
@@ -778,7 +778,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 	// Load last finished build
 	buildNumber, err := GetLastBuildNumber(tx, p.ID, app.ID, env.ID)
 	if err != nil && err != sql.ErrNoRows {
-		return nil, sdk.WrapError(err, "InsertPipelineBuild> Cannot get last build number")
+		return nil, sdk.WrapError(err, "Cannot get last build number")
 	}
 
 	pb.BuildNumber = buildNumber + 1
@@ -981,7 +981,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 
 	stages, errJSON := json.Marshal(p.Stages)
 	if errJSON != nil {
-		return nil, sdk.WrapError(err, "InsertPipelineBuild> Unable to marshall stages")
+		return nil, sdk.WrapError(err, "Unable to marshall stages")
 	}
 
 	//Insert pipeline build
@@ -1026,7 +1026,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 			}
 			query := "UPDATE pipeline_build SET args=$1 where id=$2"
 			if _, err := tx.Exec(query, string(argsJSON), pb.ID); err != nil {
-				return nil, sdk.WrapError(err, "InsertPipelineBuild> Cannot update build parameters")
+				return nil, sdk.WrapError(err, "Cannot update build parameters")
 			}
 		}
 	}
@@ -1066,7 +1066,7 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 		pb.Trigger.VCSRemote, pb.Trigger.VCSRemoteURL, pb.Trigger.ScheduledTrigger, stages, commitsBtes)
 
 	if err := statement.Scan(&pb.ID); err != nil {
-		return sdk.WrapError(err, "insertPipelineBuild> Unable to insert pipeline_build : App:%d,Pip:%d,Env:%d", applicationID, pipelineID, envID)
+		return sdk.WrapError(err, "Unable to insert pipeline_build : App:%d,Pip:%d,Env:%d", applicationID, pipelineID, envID)
 	}
 
 	return nil

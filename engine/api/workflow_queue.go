@@ -34,12 +34,12 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
-			return sdk.WrapError(errc, "postTakeWorkflowJobHandler> invalid id")
+			return sdk.WrapError(errc, "Invalid id")
 		}
 
 		takeForm := &sdk.WorkerTakeForm{}
 		if err := service.UnmarshalBody(r, takeForm); err != nil {
-			return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot unmarshal request")
+			return sdk.WrapError(err, "Cannot unmarshal request")
 		}
 
 		user := getUser(ctx)
@@ -49,7 +49,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			if user != nil {
 				username = user.Username
 			}
-			return sdk.WrapError(errP, "postTakeWorkflowJobHandler> Cannot load project by nodeJobRunID:%d requester:%s", id, username)
+			return sdk.WrapError(errP, "Cannot load project by nodeJobRunID:%d requester:%s", id, username)
 		}
 
 		//Load worker model
@@ -64,7 +64,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 
 		pbj, errl := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
 		if errl != nil {
-			return sdk.WrapError(errl, "postTakeWorkflowJobHandler> Cannot load job nodeJobRunID:%d", id)
+			return sdk.WrapError(errl, "Cannot load job nodeJobRunID:%d", id)
 		}
 
 		observability.Current(ctx,
@@ -75,7 +75,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		// a worker can have only one group
 		groups := getUser(ctx).Groups
 		if len(groups) != 1 {
-			return sdk.WrapError(errl, "postTakeWorkflowJobHandler> too many groups detected on worker:%d", len(groups))
+			return sdk.WrapError(errl, "Too many groups detected on worker:%d", len(groups))
 		}
 
 		var isGroupOK bool
@@ -91,13 +91,13 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		if !isGroupOK {
-			return sdk.WrapError(sdk.ErrForbidden, "postTakeWorkflowJobHandler> this worker is not authorized to take this job:%d execGroups:%+v", id, pbj.ExecGroups)
+			return sdk.WrapError(sdk.ErrForbidden, "This worker is not authorized to take this job:%d execGroups:%+v", id, pbj.ExecGroups)
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
 		report, errT := takeJob(ctx, api.mustDB, api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
 		if errT != nil {
-			return sdk.WrapError(errT, "postTakeWorkflowJobHandler> Cannot takeJob nodeJobRunID:%d", id)
+			return sdk.WrapError(errT, "Cannot takeJob nodeJobRunID:%d", id)
 		}
 
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
@@ -111,7 +111,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	// Start a tx
 	tx, errBegin := dbFunc().Begin()
 	if errBegin != nil {
-		return nil, sdk.WrapError(errBegin, "takeJob> Cannot start transaction")
+		return nil, sdk.WrapError(errBegin, "Cannot start transaction")
 	}
 	defer tx.Rollback()
 
@@ -136,24 +136,24 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	//Take node job run
 	job, report, errTake := workflow.TakeNodeJobRun(ctx, dbFunc, tx, store, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos)
 	if errTake != nil {
-		return nil, sdk.WrapError(errTake, "takeJob> Cannot take job %d", id)
+		return nil, sdk.WrapError(errTake, "Cannot take job %d", id)
 	}
 
 	//Change worker status
 	if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
-		return nil, sdk.WrapError(err, "takeJob> Cannot update worker %s status", getWorker(ctx).Name)
+		return nil, sdk.WrapError(err, "Cannot update worker %s status", getWorker(ctx).Name)
 	}
 
 	//Load the node run
 	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
 	if errn != nil {
-		return nil, sdk.WrapError(errn, "takeJob> Cannot get node run")
+		return nil, sdk.WrapError(errn, "Cannot get node run")
 	}
 
 	if noderun.Status == sdk.StatusWaiting.String() {
 		noderun.Status = sdk.StatusBuilding.String()
 		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
-			return nil, sdk.WrapError(err, "takeJob> Cannot get node run")
+			return nil, sdk.WrapError(err, "Cannot get node run")
 		}
 		report.Add(*noderun)
 	}
@@ -161,18 +161,18 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	//Load workflow run
 	workflowRun, err := workflow.LoadRunByID(tx, noderun.WorkflowRunID, workflow.LoadRunOptions{})
 	if err != nil {
-		return nil, sdk.WrapError(err, "takeJob> Unable to load workflow run")
+		return nil, sdk.WrapError(err, "Unable to load workflow run")
 	}
 
 	//Load the secrets
 	pv, err := project.GetAllVariableInProject(tx, p.ID, project.WithClearPassword())
 	if err != nil {
-		return nil, sdk.WrapError(err, "takeJob> Cannot load project variable")
+		return nil, sdk.WrapError(err, "Cannot load project variable")
 	}
 
 	secrets, errSecret := workflow.LoadSecrets(tx, store, noderun, workflowRun, pv)
 	if errSecret != nil {
-		return nil, sdk.WrapError(errSecret, "takeJob> Cannot load secrets")
+		return nil, sdk.WrapError(errSecret, "Cannot load secrets")
 	}
 
 	//Feed the worker
@@ -183,13 +183,13 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 
 	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, store, job, noderun, workflowRun, p)
 	if errK != nil {
-		return nil, sdk.WrapError(errK, "takeJob> Cannot load keys")
+		return nil, sdk.WrapError(errK, "Cannot load keys")
 	}
 	wnjri.Secrets = append(wnjri.Secrets, secretsKeys...)
 	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "takeJob> Cannot commit transaction")
+		return nil, sdk.WrapError(err, "Cannot commit transaction")
 	}
 
 	return report, nil
@@ -199,11 +199,11 @@ func (api *API) postBookWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
-			return sdk.WrapError(errc, "postBookWorkflowJobHandler> invalid id")
+			return sdk.WrapError(errc, "Invalid id")
 		}
 
 		if _, err := workflow.BookNodeJobRun(api.Cache, id, getHatchery(ctx)); err != nil {
-			return sdk.WrapError(err, "postBookWorkflowJobHandler> job already booked")
+			return sdk.WrapError(err, "Job already booked")
 		}
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -213,11 +213,11 @@ func (api *API) deleteBookWorkflowJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
-			return sdk.WrapError(errc, "deleteBookWorkflowJobHandler> invalid id")
+			return sdk.WrapError(errc, "Invalid id")
 		}
 
 		if err := workflow.FreeNodeJobRun(api.Cache, id); err != nil {
-			return sdk.WrapError(err, "deleteBookWorkflowJobHandler> job not booked")
+			return sdk.WrapError(err, "job not booked")
 		}
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -227,7 +227,7 @@ func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
-			return sdk.WrapError(errc, "postIncWorkflowJobAttemptHandler> invalid id")
+			return sdk.WrapError(errc, "Invalid id")
 		}
 		h := getHatchery(ctx)
 		if h == nil {
@@ -235,12 +235,12 @@ func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
 		}
 		spawnAttempts, err := workflow.AddNodeJobAttempt(api.mustDB(), id, h.ID)
 		if err != nil {
-			return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> job already booked")
+			return sdk.WrapError(err, "Job already booked")
 		}
 
 		hCount, err := services.LoadHatcheriesCountByNodeJobRunID(api.mustDB(), id)
 		if err != nil {
-			return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> cannot get hatcheries count")
+			return sdk.WrapError(err, "Cannot get hatcheries count")
 		}
 
 		if int64(len(spawnAttempts)) >= hCount {
@@ -256,34 +256,34 @@ func (api *API) postIncWorkflowJobAttemptHandler() service.Handler {
 
 			tx, errBegin := api.mustDB().Begin()
 			if errBegin != nil {
-				return sdk.WrapError(errBegin, "postIncWorkflowJobAttemptHandler> Cannot start transaction")
+				return sdk.WrapError(errBegin, "Cannot start transaction")
 			}
 			defer tx.Rollback()
 
 			if err := workflow.AddSpawnInfosNodeJobRun(tx, id, infos); err != nil {
-				return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> Cannot save spawn info on node job run %d", id)
+				return sdk.WrapError(err, "Cannot save spawn info on node job run %d", id)
 			}
 
 			wfNodeJobRun, errLj := workflow.LoadNodeJobRun(tx, api.Cache, id)
 			if errLj != nil {
-				return sdk.WrapError(errLj, "postIncWorkflowJobAttemptHandler> Cannot load node job run")
+				return sdk.WrapError(errLj, "Cannot load node job run")
 			}
 
 			wfNodeRun, errLr := workflow.LoadAndLockNodeRunByID(ctx, tx, wfNodeJobRun.WorkflowNodeRunID, true)
 			if errLr != nil {
-				return sdk.WrapError(errLr, "postIncWorkflowJobAttemptHandler> Cannot load node run")
+				return sdk.WrapError(errLr, "Cannot load node run")
 			}
 
 			if found, err := workflow.SyncNodeRunRunJob(ctx, tx, wfNodeRun, *wfNodeJobRun); err != nil || !found {
-				return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> Cannot sync run job (found=%v)", found)
+				return sdk.WrapError(err, "Cannot sync run job (found=%v)", found)
 			}
 
 			if err := workflow.UpdateNodeRun(tx, wfNodeRun); err != nil {
-				return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> Cannot update node job run")
+				return sdk.WrapError(err, "Cannot update node job run")
 			}
 
 			if err := tx.Commit(); err != nil {
-				return sdk.WrapError(err, "postIncWorkflowJobAttemptHandler> Cannot commit tx")
+				return sdk.WrapError(err, "Cannot commit tx")
 			}
 		}
 
@@ -299,7 +299,7 @@ func (api *API) getWorkflowJobHandler() service.Handler {
 		}
 		j, err := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowJobHandler> job not found")
+			return sdk.WrapError(err, "job not found")
 		}
 		return service.WriteJSON(w, j, http.StatusOK)
 	}
@@ -309,36 +309,36 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
-			return sdk.WrapError(errc, "postVulnerabilityReportHandler> invalid id")
+			return sdk.WrapError(errc, "Invalid id")
 		}
 		nr, errNR := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{
 			DisableDetailledNodeRun: true,
 		})
 		if errNR != nil {
-			return sdk.WrapError(errNR, "postVulnerabilityReportHandler> Unable to save vulnerability report")
+			return sdk.WrapError(errNR, "Unable to save vulnerability report")
 		}
 		if nr.ApplicationID == 0 {
-			return sdk.WrapError(sdk.ErrApplicationNotFound, "postVulnerabilityReportHandler> There is no application linked")
+			return sdk.WrapError(sdk.ErrApplicationNotFound, "There is no application linked")
 		}
 
 		var report sdk.VulnerabilityWorkerReport
 		if err := service.UnmarshalBody(r, &report); err != nil {
-			return sdk.WrapError(err, "postVulnerabilityReportHandler> Unable to read body")
+			return sdk.WrapError(err, "Unable to read body")
 		}
 
 		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getUser(ctx))
 		if errP != nil {
-			return sdk.WrapError(errP, "postVulnerabilityReportHandler> Cannot load project by nodeJobRunID:%d", id)
+			return sdk.WrapError(errP, "Cannot load project by nodeJobRunID:%d", id)
 		}
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "postVulnerabilityReportHandler> Unable to start transaction")
+			return sdk.WrapError(errT, "Unable to start transaction")
 		}
 		defer tx.Rollback() // nolint
 
 		if err := workflow.HandleVulnerabilityReport(ctx, tx, api.Cache, p, nr, report); err != nil {
-			return sdk.WrapError(err, "postVulnerabilityReportHandler> Unable to handle report")
+			return sdk.WrapError(err, "Unable to handle report")
 		}
 		return tx.Commit()
 	}
@@ -355,7 +355,7 @@ func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 
 		var s []sdk.SpawnInfo
 		if err := service.UnmarshalBody(r, &s); err != nil {
-			return sdk.WrapError(err, "cannot unmarshal request")
+			return sdk.WrapError(err, "Cannot unmarshal request")
 		}
 
 		tx, errBegin := api.mustDB().Begin()
@@ -386,7 +386,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		// Unmarshal into results
 		var res sdk.Result
 		if err := service.UnmarshalBody(r, &res); err != nil {
-			return sdk.WrapError(err, "cannot unmarshal request")
+			return sdk.WrapError(err, "Cannot unmarshal request")
 		}
 		customCtx, cancel := context.WithTimeout(ctx, 180*time.Second)
 		defer cancel()
@@ -473,7 +473,7 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	}}
 
 	if err := workflow.AddSpawnInfosNodeJobRun(tx, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
-		return nil, sdk.WrapError(err, "postJobResult> Cannot save spawn info job %d", job.ID)
+		return nil, sdk.WrapError(err, "Cannot save spawn info job %d", job.ID)
 	}
 
 	// Update action status
@@ -483,17 +483,17 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 	}
 	report, err := workflow.UpdateNodeJobRunStatus(ctx, newDBFunc, tx, store, proj, job, sdk.Status(res.Status))
 	if err != nil {
-		return nil, sdk.WrapError(err, "postJobResult> Cannot update NodeJobRun %d status", job.ID)
+		return nil, sdk.WrapError(err, "Cannot update NodeJobRun %d status", job.ID)
 	}
 
 	//Update worker status
 	if err := worker.UpdateWorkerStatus(tx, wr.ID, sdk.StatusWaiting); err != nil {
-		return nil, sdk.WrapError(err, "postJobResult> Cannot update worker %s status", wr.ID)
+		return nil, sdk.WrapError(err, "Cannot update worker %s status", wr.ID)
 	}
 
 	//Commit the transaction
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "postJobResult> Cannot commit tx")
+		return nil, sdk.WrapError(err, "Cannot commit tx")
 	}
 
 	for i := range report.WorkflowRuns() {
@@ -510,21 +510,21 @@ func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
-			return sdk.WrapError(errr, "postWorkflowJobLogsHandler> Invalid id")
+			return sdk.WrapError(errr, "Invalid id")
 		}
 
 		pbJob, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
 		if errJob != nil {
-			return sdk.WrapError(errJob, "postWorkflowJobLogsHandler> Cannot get job run %d", id)
+			return sdk.WrapError(errJob, "Cannot get job run %d", id)
 		}
 
 		var logs sdk.Log
 		if err := service.UnmarshalBody(r, &logs); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobLogsHandler> Unable to parse body")
+			return sdk.WrapError(err, "Unable to parse body")
 		}
 
 		if err := workflow.AddLog(api.mustDB(), pbJob, &logs); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobLogsHandler")
+			return sdk.WithStack(err)
 		}
 
 		return nil
@@ -535,7 +535,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 	return func(ctx context.Context, r *http.Request) error {
 		var logs []sdk.ServiceLog
 		if err := service.UnmarshalBody(r, &logs); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobServiceLogsHandler> Unable to parse body")
+			return sdk.WrapError(err, "Unable to parse body")
 		}
 		db := api.mustDB()
 		u := getUser(ctx)
@@ -602,18 +602,18 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
-			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
+			return sdk.WrapError(errr, "Invalid id")
 		}
 		dbWithCtx := api.mustDBWithCtx(ctx)
 
 		nodeJobRun, errJob := workflow.LoadNodeJobRun(dbWithCtx, api.Cache, id)
 		if errJob != nil {
-			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
+			return sdk.WrapError(errJob, "Cannot get job run %d", id)
 		}
 
 		var step sdk.StepStatus
 		if err := service.UnmarshalBody(r, &step); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while unmarshal job")
+			return sdk.WrapError(err, "Error while unmarshal job")
 		}
 
 		found := false
@@ -635,12 +635,12 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 
 		tx, errB := dbWithCtx.Begin()
 		if errB != nil {
-			return sdk.WrapError(errB, "postWorkflowJobStepStatusHandler> Cannot start transaction")
+			return sdk.WrapError(errB, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if err := workflow.UpdateNodeJobRun(ctx, tx, nodeJobRun); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run. JobID on handler: %d", id)
+			return sdk.WrapError(err, "Error while update job run. JobID on handler: %d", id)
 		}
 
 		var nodeRun sdk.WorkflowNodeRun
@@ -662,7 +662,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		if nodeRun.ID == 0 {
@@ -725,7 +725,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 
 		count, err := workflow.CountNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		if err != nil {
-			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
+			return sdk.WrapError(err, "Unable to count queue")
 		}
 
 		return service.WriteJSON(w, count, http.StatusOK)
@@ -774,7 +774,7 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 		}
 		jobs, err := workflow.LoadNodeJobRunQueue(ctx, api.mustDB(), api.Cache, filter)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
+			return sdk.WrapError(err, "Unable to load queue")
 		}
 
 		return service.WriteJSON(w, jobs, http.StatusOK)
@@ -833,7 +833,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 
 		var report coverage.Report
 		if err := service.UnmarshalBody(r, &report); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> cannot unmarshal request")
+			return sdk.WrapError(err, "Cannot unmarshal request")
 		}
 
 		wnr, errL := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{})
@@ -852,18 +852,18 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 		}
 		if errLoad == sdk.ErrNotFound {
 			if err := workflow.ComputeNewReport(ctx, api.mustDB(), api.Cache, report, wnr, p); err != nil {
-				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Cannot compute new coverage report")
+				return sdk.WrapError(err, "Cannot compute new coverage report")
 			}
 
 		} else {
 			// update
 			existingReport.Report = report
 			if err := workflow.ComputeLatestDefaultBranchReport(ctx, api.mustDB(), api.Cache, p, wnr, &existingReport); err != nil {
-				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Cannot compute default branch coverage report")
+				return sdk.WrapError(err, "Cannot compute default branch coverage report")
 			}
 
 			if err := workflow.UpdateCoverage(api.mustDB(), existingReport); err != nil {
-				return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> Unable to update code coverage")
+				return sdk.WrapError(err, "Unable to update code coverage")
 			}
 		}
 
@@ -876,7 +876,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		// Unmarshal into results
 		var new venom.Tests
 		if err := service.UnmarshalBody(r, &new); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> cannot unmarshal request")
+			return sdk.WrapError(err, "Cannot unmarshal request")
 		}
 
 		// Load and lock Existing workflow Run Job
@@ -898,7 +898,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 
 		nr, err := workflow.LoadAndLockNodeRunByID(ctx, tx, nodeRunJob.WorkflowNodeRunID, false)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot load node job")
+			return sdk.WrapError(err, "Cannot load node job")
 		}
 
 		if nr.Tests == nil {
@@ -930,11 +930,11 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 		}
 
 		if err := workflow.UpdateNodeRun(tx, nr); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot update node run")
+			return sdk.WrapError(err, "Cannot update node run")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot update node run")
+			return sdk.WrapError(err, "Cannot update node run")
 		}
 
 		// If we are on default branch, push metrics
@@ -978,7 +978,7 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 
 		var tags = []sdk.WorkflowRunTag{}
 		if err := service.UnmarshalBody(r, &tags); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to unmarshal body")
+			return sdk.WrapError(err, "Unable to unmarshal body")
 		}
 
 		tx, errb := api.mustDB().Begin()
@@ -997,11 +997,11 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 		}
 
 		if err := workflow.UpdateWorkflowRunTags(tx, workflowRun); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to insert tags")
+			return sdk.WrapError(err, "Unable to insert tags")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to commit transaction")
+			return sdk.WrapError(err, "Unable to commit transaction")
 		}
 
 		return nil
@@ -1046,7 +1046,7 @@ func (api *API) postWorkflowJobVariableHandler() service.Handler {
 		}
 
 		if err := workflow.UpdateNodeJobRun(ctx, tx, job); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run %d", id)
+			return sdk.WrapError(err, "Unable to update node job run %d", id)
 		}
 
 		node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, workflow.LoadRunOptions{})
@@ -1068,11 +1068,11 @@ func (api *API) postWorkflowJobVariableHandler() service.Handler {
 		}
 
 		if err := workflow.UpdateNodeRunBuildParameters(tx, node.ID, node.BuildParameters); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run %d", node.ID)
+			return sdk.WrapError(err, "Unable to update node run %d", node.ID)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to commit tx")
+			return sdk.WrapError(err, "Unable to commit tx")
 		}
 
 		return nil

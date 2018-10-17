@@ -293,7 +293,7 @@ func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 	if err != nil && err == sql.ErrNoRows {
 		err = createBuiltinArtifactUploadAction(db)
 		if err != nil {
-			return sdk.WrapError(err, "CreateBuiltinArtifactActions> cannot create builtin artifact upload action")
+			return sdk.WrapError(err, "cannot create builtin artifact upload action")
 		}
 	}
 
@@ -302,7 +302,7 @@ func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 	if err != nil && err == sql.ErrNoRows {
 		err = createBuiltinArtifactDownloadAction(db)
 		if err != nil {
-			return sdk.WrapError(err, "CreateBuiltinArtifactActions> cannot create builtin artifact download action")
+			return sdk.WrapError(err, "cannot create builtin artifact download action")
 		}
 	}
 
@@ -335,7 +335,7 @@ func createBuiltinArtifactUploadAction(db *gorp.DbMap) error {
 
 	log.Info("createBuiltinArtifactUploadAction> create builtin action %s", upload.Name)
 	if err := InsertAction(tx, upload, true); err != nil {
-		return sdk.WrapError(err, "CreateBuiltinArtifactActions> createBuiltinArtifactUploadAction err")
+		return sdk.WrapError(err, "createBuiltinArtifactUploadAction err")
 	}
 
 	return tx.Commit()
@@ -379,7 +379,7 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 
 	log.Info("createBuiltinArtifactDownloadAction> create builtin action %s", dl.Name)
 	if err := InsertAction(tx, dl, true); err != nil {
-		return sdk.WrapError(err, "CreateBuiltinArtifactActions> createBuiltinArtifactDownloadAction err")
+		return sdk.WrapError(err, "createBuiltinArtifactDownloadAction err")
 	}
 
 	return tx.Commit()

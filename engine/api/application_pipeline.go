@@ -36,7 +36,7 @@ func (api *API) attachPipelineToApplicationHandler() service.Handler {
 		}
 
 		if _, err := application.AttachPipeline(api.mustDB(), app.ID, pipeline.ID); err != nil {
-			return sdk.WrapError(err, "addPipelineInApplicationHandler> Cannot attach pipeline %s to application %s", pipelineName, appName)
+			return sdk.WrapError(err, "Cannot attach pipeline %s to application %s", pipelineName, appName)
 		}
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -212,7 +212,7 @@ func (api *API) removePipelineFromApplicationHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot commit tx")
+			return sdk.WrapError(err, "Cannot commit tx")
 		}
 
 		var errW error
@@ -257,13 +257,13 @@ func (api *API) getUserNotificationApplicationPipelineHandler() service.Handler 
 		//Load application
 		application, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db", appName, key)
+			return sdk.WrapError(err, "Cannot load application %s for project %s from db", appName, key)
 		}
 
 		//Load pipeline
 		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
-			return sdk.WrapError(err, "getUserNotificationApplicationPipelineHandler> Cannot load pipeline %s", pipelineName)
+			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}
 
 		//Load environment
@@ -271,7 +271,7 @@ func (api *API) getUserNotificationApplicationPipelineHandler() service.Handler 
 		if envName != "" {
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if err != nil {
-				return sdk.WrapError(err, "getUserNotificationApplicationPipelineHandler> cannot load environment %s", envName)
+				return sdk.WrapError(err, "cannot load environment %s", envName)
 			}
 		}
 
@@ -282,7 +282,7 @@ func (api *API) getUserNotificationApplicationPipelineHandler() service.Handler 
 		//Load notifs
 		notifs, err := notification.LoadUserNotificationSettings(api.mustDB(), application.ID, pipeline.ID, env.ID)
 		if err != nil {
-			return sdk.WrapError(err, "getUserNotificationApplicationPipelineHandler> cannot load notification settings")
+			return sdk.WrapError(err, "cannot load notification settings")
 		}
 		if notifs == nil {
 			return nil
@@ -309,14 +309,14 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() service.Handl
 		///Load application
 		applicationData, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db", appName, key)
+			return sdk.WrapError(err, "Cannot load application %s for project %s from db", appName, key)
 
 		}
 
 		//Load pipeline
 		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
-			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> Cannot load pipeline %s", pipelineName)
+			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 
 		}
 
@@ -325,7 +325,7 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() service.Handl
 		if envName != "" && envName != sdk.DefaultEnv.Name {
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if err != nil {
-				return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> cannot load environment %s", envName)
+				return sdk.WrapError(err, "cannot load environment %s", envName)
 
 			}
 		}
@@ -336,17 +336,17 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() service.Handl
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> cannot start transaction")
+			return sdk.WrapError(err, "cannot start transaction")
 		}
 
 		err = notification.DeleteNotification(tx, applicationData.ID, pipeline.ID, env.ID)
 		if err != nil {
-			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> cannot delete user notification")
+			return sdk.WrapError(err, "cannot delete user notification")
 		}
 
 		err = tx.Commit()
 		if err != nil {
-			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 
 		}
 
@@ -402,7 +402,7 @@ func (api *API) addNotificationsHandler() service.Handler {
 
 			// Insert or update notification
 			if err := notification.InsertOrUpdateUserNotificationSettings(tx, app.ID, n.Pipeline.ID, n.Environment.ID, &n); err != nil {
-				return sdk.WrapError(err, "addNotificationsHandler> cannot update user notification")
+				return sdk.WrapError(err, "cannot update user notification")
 
 			}
 		}
@@ -431,13 +431,13 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() service.Handl
 		///Load application
 		applicationData, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "updateUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db", appName, key)
+			return sdk.WrapError(err, "Cannot load application %s for project %s from db", appName, key)
 		}
 
 		//Load pipeline
 		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
-			return sdk.WrapError(err, "updateUserNotificationApplicationPipelineHandler> Cannot load pipeline %s", pipelineName)
+			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 
 		}
 
@@ -458,20 +458,20 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() service.Handl
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "updateUserNotificationApplicationPipelineHandler> cannot start transaction")
+			return sdk.WrapError(err, "cannot start transaction")
 
 		}
 		defer tx.Rollback()
 
 		// Insert or update notification
 		if err := notification.InsertOrUpdateUserNotificationSettings(tx, applicationData.ID, pipeline.ID, notifs.Environment.ID, notifs); err != nil {
-			return sdk.WrapError(err, "updateUserNotificationApplicationPipelineHandler> cannot update user notification")
+			return sdk.WrapError(err, "cannot update user notification")
 
 		}
 
 		err = tx.Commit()
 		if err != nil {
-			return sdk.WrapError(err, "updateUserNotificationApplicationPipelineHandler> cannot commit transaction")
+			return sdk.WrapError(err, "cannot commit transaction")
 		}
 
 		var errNotif error

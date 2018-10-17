@@ -31,7 +31,7 @@ func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
-			return sdk.WrapError(err, "unusedProjectKeyWarning.compute> Unable to get payload from EventProjectKeyAdd")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyAdd")
 		}
 
 		apps, pips, pipJobs := keyIsUsed(db, e.ProjectKey, payload.Key.Name)
@@ -47,16 +47,16 @@ func (warn unusedProjectKeyWarning) compute(db gorp.SqlExecutor, e sdk.Event) er
 				},
 			}
 			if err := Insert(db, w); err != nil {
-				return sdk.WrapError(err, "unusedProjectKeyWarning> Unable to Insert warning")
+				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
 		payload, err := e.ToEventProjectKeyDelete()
 		if err != nil {
-			return sdk.WrapError(err, "unusedProjectKeyWarning.compute> Unable to get payload from EventProjectKeyDelete")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyDelete")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
-			return sdk.WrapError(err, "unusedProjectKeyWarning.compute> Unable to remove warning from EventProjectKeyDelete")
+			return sdk.WrapError(err, "Unable to remove warning from EventProjectKeyDelete")
 		}
 	}
 	return nil
@@ -82,19 +82,19 @@ func (warn missingProjectKeyPipelineParameterWarning) compute(db gorp.SqlExecuto
 	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to get payload from EventProjectKeyAdd")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyAdd")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
-			return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to remove warning from EventProjectKeyAdd")
+			return sdk.WrapError(err, "Unable to remove warning from EventProjectKeyAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
 		payload, err := e.ToEventProjectKeyDelete()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to get payload from EventProjectKeyDelete")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyDelete")
 		}
 		pips, err := pipeline.CountInParamValue(db, e.ProjectKey, payload.Key.Name)
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to list pipeline")
+			return sdk.WrapError(err, "Unable to list pipeline")
 		}
 		for _, p := range pips {
 			w := sdk.Warning{
@@ -110,7 +110,7 @@ func (warn missingProjectKeyPipelineParameterWarning) compute(db gorp.SqlExecuto
 				},
 			}
 			if err := Insert(db, w); err != nil {
-				return sdk.WrapError(err, "missingProjectKeyPipelineParameterWarning.compute> Unable to Insert warning")
+				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
 	}
@@ -137,19 +137,19 @@ func (warn missingProjectKeyPipelineJobWarning) compute(db gorp.SqlExecutor, e s
 	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectKeyPipelineJobWarning.compute> Unable to get payload from EventProjectKeyAdd")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyAdd")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
-			return sdk.WrapError(err, "missingProjectKeyPipelineJobWarning.compute> Unable to remove warning from EventProjectKeyAdd")
+			return sdk.WrapError(err, "Unable to remove warning from EventProjectKeyAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
 		payload, err := e.ToEventProjectKeyDelete()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectKeyPipelineJobWarning.compute> Unable to get payload from EventProjectKeyDelete")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyDelete")
 		}
 		pips, err := pipeline.CountInPipelines(db, e.ProjectKey, payload.Key.Name)
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectKeyPipelineJobWarning.compute> Unable to list pipeline")
+			return sdk.WrapError(err, "Unable to list pipeline")
 		}
 		for _, p := range pips {
 			w := sdk.Warning{
@@ -167,7 +167,7 @@ func (warn missingProjectKeyPipelineJobWarning) compute(db gorp.SqlExecutor, e s
 				},
 			}
 			if err := Insert(db, w); err != nil {
-				return sdk.WrapError(err, "missingProjectKeyPipelineJobWarning.compute> Unable to Insert warning")
+				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
 	}
@@ -194,19 +194,19 @@ func (warn missingProjectKeyApplicationWarning) compute(db gorp.SqlExecutor, e s
 	case fmt.Sprintf("%T", sdk.EventProjectKeyAdd{}):
 		payload, err := e.ToEventProjectKeyAdd()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectKeyApplicationWarning.compute> Unable to get payload from EventProjectKeyAdd")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyAdd")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Key.Name, e.ProjectKey); err != nil {
-			return sdk.WrapError(err, "missingProjectKeyApplicationWarning.compute> Unable to remove warning from EventProjectKeyAdd")
+			return sdk.WrapError(err, "Unable to remove warning from EventProjectKeyAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectKeyDelete{}):
 		payload, err := e.ToEventProjectKeyDelete()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectKeyApplicationWarning.compute> Unable to get payload from EventProjectKeyDelete")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectKeyDelete")
 		}
 		apps, err := application.CountApplicationByVcsConfigurationKeys(db, e.ProjectKey, payload.Key.Name)
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectKeyApplicationWarning.compute> Unable to list pipeline")
+			return sdk.WrapError(err, "Unable to list pipeline")
 		}
 		for _, a := range apps {
 			w := sdk.Warning{
@@ -222,7 +222,7 @@ func (warn missingProjectKeyApplicationWarning) compute(db gorp.SqlExecutor, e s
 				},
 			}
 			if err := Insert(db, w); err != nil {
-				return sdk.WrapError(err, "missingProjectKeyApplicationWarning.compute> Unable to Insert warning")
+				return sdk.WrapError(err, "Unable to Insert warning")
 			}
 		}
 	}

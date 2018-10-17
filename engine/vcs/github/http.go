@@ -290,7 +290,7 @@ func (c *githubClient) delete(path string) error {
 
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return sdk.WrapError(err, "githubClient.delete > Cannot do delete request")
+		return sdk.WrapError(err, "Cannot do delete request")
 	}
 
 	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")

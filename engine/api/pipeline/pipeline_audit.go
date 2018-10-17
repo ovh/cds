@@ -87,11 +87,11 @@ func (p *PipelineAudit) PostGet(s gorp.SqlExecutor) error {
 	query := "SELECT pipeline FROM pipeline_audit WHERE id = $1"
 	var pip []byte
 	if err := s.QueryRow(query, p.ID).Scan(&pip); err != nil {
-		return sdk.WrapError(err, "PostGet> error on queryRow")
+		return sdk.WrapError(err, "error on queryRow")
 	}
 
 	if err := json.Unmarshal(pip, &p.Pipeline); err != nil {
-		return sdk.WrapError(err, "PostGet> error on unmarshal job")
+		return sdk.WrapError(err, "error on unmarshal job")
 	}
 	return nil
 }
@@ -105,7 +105,7 @@ func (p *PipelineAudit) PostInsert(s gorp.SqlExecutor) error {
 
 	query := "update pipeline_audit set pipeline = $1 where id = $2"
 	if _, err := s.Exec(query, pipJSON, p.ID); err != nil {
-		return sdk.WrapError(err, "PostInsert> err on update sql")
+		return sdk.WrapError(err, "err on update sql")
 	}
 	return nil
 }

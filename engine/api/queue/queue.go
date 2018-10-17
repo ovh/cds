@@ -160,7 +160,7 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild
 	//Check stage prerequisites
 	prerequisitesOK, err := pipeline.CheckPrerequisites(*stage, pb)
 	if err != nil {
-		return sdk.WrapError(err, "addJobsToQueue> Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d)", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID)
+		return sdk.WrapError(err, "Cannot compute prerequisites on stage %s(%d) of pipeline %s(%d)", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID)
 	}
 	stage.Status = sdk.StatusBuilding
 
@@ -191,7 +191,7 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild
 			pbJob.Status = sdk.StatusSkipped.String()
 		}
 		if err := pipeline.InsertPipelineBuildJob(tx, &pbJob); err != nil {
-			return sdk.WrapError(err, "addJobToQueue> Cannot insert job in queue for pipeline build %d", pb.ID)
+			return sdk.WrapError(err, "Cannot insert job in queue for pipeline build %d", pb.ID)
 		}
 
 		event.PublishActionBuild(pb, &pbJob)
@@ -282,7 +282,7 @@ func pipelineBuildEnd(DBFunc func() *gorp.DbMap, store cache.Store, tx gorp.SqlE
 		if ok {
 			return sdk.WrapError(pqerr, "pipelineBuildEnd> Cannot load trigger: %s", pqerr.Code)
 		}
-		return sdk.WrapError(err, "pipelineBuildEnd> Cannot load trigger for %s-%s-%s[%s] (%d, %d, %d)", pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.Environment.Name, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
+		return sdk.WrapError(err, "Cannot load trigger for %s-%s-%s[%s] (%d, %d, %d)", pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.Environment.Name, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	}
 
 	if len(triggers) > 0 {
@@ -310,7 +310,7 @@ func pipelineBuildEnd(DBFunc func() *gorp.DbMap, store cache.Store, tx gorp.SqlE
 		// Start build
 		app, err := application.LoadByName(tx, store, t.DestProject.Key, t.DestApplication.Name, nil, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 		if err != nil {
-			return sdk.WrapError(err, "pipelineBuildEnd> Cannot load destination application")
+			return sdk.WrapError(err, "Cannot load destination application")
 		}
 
 		log.Debug("Prerequisites OK for trigger %s/%s/%s-%s -> %s/%s/%s-%s (version %d)", t.SrcProject.Key, t.SrcApplication.Name, t.SrcPipeline.Name, t.SrcEnvironment.Name, t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name, pb.Version)
@@ -329,7 +329,7 @@ func pipelineBuildEnd(DBFunc func() *gorp.DbMap, store cache.Store, tx gorp.SqlE
 
 		_, err = RunPipeline(DBFunc, store, tx, t.DestProject.Key, app, t.DestPipeline.Name, t.DestEnvironment.Name, parameters, pb.Version, trigger, &sdk.User{Admin: true})
 		if err != nil {
-			return sdk.WrapError(err, "pipelineScheduler> Cannot run pipeline on project %s, application %s, pipeline %s, env %s", t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name)
+			return sdk.WrapError(err, "Cannot run pipeline on project %s, application %s, pipeline %s, env %s", t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name)
 		}
 	}
 	return nil
@@ -373,22 +373,22 @@ func ParentBuildInfos(pb *sdk.PipelineBuild) []sdk.Parameter {
 func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb *sdk.PipelineBuild, stage *sdk.Stage) ([]sdk.Parameter, error) {
 	projectVariables, err := project.GetAllVariableInProject(db, pb.Pipeline.ProjectID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllVariableInProject on ID %d", pb.Pipeline.ProjectID)
+		return nil, sdk.WrapError(err, "err GetAllVariableInProject on ID %d", pb.Pipeline.ProjectID)
 	}
 	// Load application Variables
 	appVariables, err := application.GetAllVariableByID(db, pb.Application.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllVariableByID for app ID %d", pb.Application.ID)
+		return nil, sdk.WrapError(err, "err GetAllVariableByID for app ID %d", pb.Application.ID)
 	}
 	// Load environment Variables
 	envVariables, err := environment.GetAllVariableByID(db, pb.Environment.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllVariableByID for env ID %d", pb.Environment.ID)
+		return nil, sdk.WrapError(err, "err GetAllVariableByID for env ID %d", pb.Environment.ID)
 	}
 
 	pipelineParameters, err := pipeline.GetAllParametersInPipeline(context.TODO(), db, pb.Pipeline.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllParametersInPipeline for pip %d", pb.Pipeline.ID)
+		return nil, sdk.WrapError(err, "err GetAllParametersInPipeline for pip %d", pb.Pipeline.ID)
 	}
 
 	return action.ProcessActionBuildVariables(projectVariables, appVariables, envVariables, pipelineParameters, pb.Parameters, stage, j.Action), nil
@@ -413,7 +413,7 @@ func getPipelineBuildJobExecutablesGroups(db gorp.SqlExecutor, pb *sdk.PipelineB
 	var groups []sdk.Group
 	rows, err := db.Query(query, pb.ID, permission.PermissionReadExecute, sdk.DefaultEnv.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "getPipelineBuildJobExecutablesGroups> err query")
+		return nil, sdk.WrapError(err, "err query")
 	}
 	defer rows.Close()
 
@@ -424,7 +424,7 @@ func getPipelineBuildJobExecutablesGroups(db gorp.SqlExecutor, pb *sdk.PipelineB
 		var groupName sql.NullString
 
 		if err := rows.Scan(&groupID, &groupName); err != nil {
-			return nil, sdk.WrapError(err, "getPipelineBuildJobExecutablesGroups> err scan")
+			return nil, sdk.WrapError(err, "err scan")
 		}
 
 		if groupID.Valid {

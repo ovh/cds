@@ -63,7 +63,7 @@ func (api *API) migrationApplicationWorkflowCleanHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 		event.PublishUpdateProject(p, &oldProj, u)
 
@@ -133,7 +133,7 @@ func (api *API) migrationApplicationWorkflowHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 		event.PublishUpdateProject(p, &oldProj, u)
 

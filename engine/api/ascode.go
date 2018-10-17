@@ -70,7 +70,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 		}
 
 		if err := workflow.PostRepositoryOperation(ctx, api.mustDB(), api.Cache, *p, ope); err != nil {
-			return sdk.WrapError(err, "postImportAsCodeHandler> Cannot create repository operation")
+			return sdk.WrapError(err, "Cannot create repository operation")
 		}
 		ope.RepositoryStrategy.SSHKeyContent = ""
 
@@ -91,7 +91,7 @@ func (api *API) getImportAsCodeHandler() service.Handler {
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
 		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), api.Cache, ope); err != nil {
-			return sdk.WrapError(err, "getImportAsCodeHandler> Cannot get repository operation status")
+			return sdk.WrapError(err, "Cannot get repository operation status")
 		}
 		return service.WriteJSON(w, ope, http.StatusOK)
 	}
@@ -129,7 +129,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		ope.UUID = uuid
 
 		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), api.Cache, ope); err != nil {
-			return sdk.WrapError(err, "postPerformImportAsCodeHandler> Unable to get repository operation")
+			return sdk.WrapError(err, "Unable to get repository operation")
 		}
 
 		if ope.Status != sdk.OperationStatusDone {
@@ -138,7 +138,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 
 		tr, err := workflow.ReadCDSFiles(ope.LoadFiles.Results)
 		if err != nil {
-			return sdk.WrapError(err, "postPerformImportAsCodeHandler> Unable to read cds files")
+			return sdk.WrapError(err, "Unable to read cds files")
 		}
 
 		//TODO: Delete branch and default branch
@@ -155,7 +155,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 
 		allMsg, wrkflw, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
-			return sdk.WrapError(err, "postPerformImportAsCodeHandler.workflowPush> Unable to push workflow")
+			return sdk.WrapError(err, "Unable to push workflow")
 		}
 		msgListString := translate(r, allMsg)
 

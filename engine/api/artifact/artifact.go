@@ -373,16 +373,16 @@ func Delete(db gorp.SqlExecutor, id int64) error {
 
 	s := sdk.Artifact{}
 	if err := db.QueryRow(query, id).Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment); err != nil {
-		return sdk.WrapError(err, "Delete> Cannot select artifact")
+		return sdk.WrapError(err, "Cannot select artifact")
 	}
 
 	if err := objectstore.Delete(&s); err != nil && !strings.Contains(err.Error(), "404") {
-		return sdk.WrapError(err, "Delete> Cannot delete artifact in store")
+		return sdk.WrapError(err, "Cannot delete artifact in store")
 	}
 
 	query = `DELETE FROM artifact WHERE id = $1`
 	if _, err := db.Exec(query, id); err != nil {
-		return sdk.WrapError(err, "Delete> Cannot delete artifact in DB")
+		return sdk.WrapError(err, "Cannot delete artifact in DB")
 	}
 
 	return nil
@@ -415,7 +415,7 @@ func InsertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, enviro
 		art.SHA512sum,
 		art.ObjectPath,
 	); err != nil {
-		return sdk.WrapError(err, "insertArtifact> Unable to insert artifact")
+		return sdk.WrapError(err, "Unable to insert artifact")
 	}
 	return nil
 }
@@ -424,7 +424,7 @@ func InsertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, enviro
 func SaveWorkflowFile(art *sdk.WorkflowNodeRunArtifact, content io.ReadCloser) error {
 	objectPath, err := objectstore.Store(art, content)
 	if err != nil {
-		return sdk.WrapError(err, "SaveWorkflowFile> Cannot store artifact")
+		return sdk.WrapError(err, "Cannot store artifact")
 	}
 	log.Debug("objectpath=%s\n", objectPath)
 	art.ObjectPath = objectPath
@@ -446,7 +446,7 @@ func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artif
 	log.Debug("objectpath=%s\n", objectPath)
 	art.ObjectPath = objectPath
 	if err := InsertArtifact(tx, p.ID, a.ID, e.ID, art); err != nil {
-		return sdk.WrapError(err, "SaveFile> Cannot insert artifact in DB")
+		return sdk.WrapError(err, "Cannot insert artifact in DB")
 	}
 
 	return tx.Commit()

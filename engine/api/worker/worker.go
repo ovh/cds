@@ -33,7 +33,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "DeleteWorker> unable to commit tx")
+		return sdk.WrapError(err, "unable to commit tx")
 	}
 
 	return nil
@@ -149,12 +149,12 @@ func RefreshWorker(db gorp.SqlExecutor, w *sdk.Worker) error {
 	query := `UPDATE worker SET last_beat = now() WHERE id = $1`
 	res, err := db.Exec(query, w.ID)
 	if err != nil {
-		return sdk.WrapError(err, "RefreshWorker> Unable to update worker: %s", w.ID)
+		return sdk.WrapError(err, "Unable to update worker: %s", w.ID)
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		return sdk.WrapError(err, "RefreshWorker> Unable to refresh worker: %s", w.ID)
+		return sdk.WrapError(err, "Unable to refresh worker: %s", w.ID)
 	}
 
 	var mname string

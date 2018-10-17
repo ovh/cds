@@ -135,7 +135,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowImportHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		if wrkflw != nil {
@@ -209,7 +209,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowImportHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		oldW, errL := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, getUser(ctx), workflow.LoadOptions{WithoutNode: true})
@@ -269,7 +269,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 
 		allMsg, wrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowPushHandler> Cannot push workflow")
+			return sdk.WrapError(err, "Cannot push workflow")
 		}
 		msgListString := translate(r, allMsg)
 
