@@ -38,6 +38,7 @@ export class WorkflowRun {
     join_triggers_run: Map<number, TriggerRun>;
     commits: Array<Commit>;
     infos: Array<SpawnInfo>;
+    outgoing_hooks: { [key: number]: Array<WorkflowNodeOutgoingHookRun>; };
 
     // Useful for UI
     duration: string;
@@ -249,6 +250,11 @@ export class WorkflowNodeRunHookEvent {
     payload: {};
     pipeline_parameter: Array<Parameter>;
     workflow_node_hook_id: number;
+    parent_workflow: {
+        key: string;
+        name: string;
+        run: string;
+    };
 }
 
 // WorkflowNodeRunManual is an instanc of event received on a hook
@@ -274,4 +280,54 @@ export class WorkflowNodeRunVulnerability {
     summary: { [key: string]: number};
     default_branch_summary: { [key: string]: number};
     previous_run_summary: { [key: string]: number};
+}
+
+export class WorkflowNodeOutgoingHookRun {
+    workflow_run_id: number;
+    id: string;
+    workflow_node_run_id: number;
+    workflow_node_outgoing_hook_id: number;
+    status: string;
+    num: number;
+    subnumber: number;
+    callback: {
+        status: string;
+        start: Date;
+        done: Date;
+        log: string;
+        workflow_run_number: number;
+    };
+
+    static fromEventRunWorkflowOutgoingHook(e: Event): WorkflowNodeOutgoingHookRun {
+        let hr = new WorkflowNodeOutgoingHookRun();
+        hr.id = e.payload['ID'];
+        hr.workflow_run_id = e.payload['WorkflowRunID']
+        hr.num = e.workflow_run_num;
+        hr.status = e.status;
+        hr.subnumber = e.workflow_run_num_sub;
+        if (!hr.subnumber) {
+            hr.subnumber = 0;
+        }
+        hr.workflow_node_outgoing_hook_id = e.payload['HookID'];
+        hr.callback = {
+            status: e.status,
+            start: null,
+            done: null,
+            log: null,
+            workflow_run_number: null
+        };
+        if (e.payload['Start'] && e.payload['Start'] > 0) {
+            hr.callback.start = new Date(e.payload['Start'] * 1000);
+        }
+        if (e.payload['Done'] && e.payload['Done'] > 0) {
+            hr.callback.done = new Date(e.payload['Done'] * 1000);
+        }
+        if (e.payload['Log']) {
+            hr.callback.log = e.payload['Log'];
+        }
+        if (e.payload['WorkflowRunNumber']) {
+            hr.callback.workflow_run_number = e.payload['WorkflowRunNumber'];
+        }
+        return hr;
+    }
 }

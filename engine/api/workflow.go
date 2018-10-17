@@ -183,7 +183,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 		u := getUser(ctx)
 
 		var label sdk.Label
-		if err := UnmarshalBody(r, &label); err != nil {
+		if err := service.UnmarshalBody(r, &label); err != nil {
 			return sdk.WrapError(err, "Cannot read body")
 		}
 
@@ -281,7 +281,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 		var wf sdk.Workflow
-		if err := UnmarshalBody(r, &wf); err != nil {
+		if err := service.UnmarshalBody(r, &wf); err != nil {
 			return sdk.WrapError(err, "Cannot read body")
 		}
 		wf.ProjectID = p.ID
@@ -296,7 +296,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		if wf.Root != nil && wf.Root.Context != nil && (wf.Root.Context.Application != nil || wf.Root.Context.ApplicationID != 0) {
 			var err error
 			if wf.Root.Context.DefaultPayload, err = workflow.DefaultPayload(ctx, tx, api.Cache, p, getUser(ctx), &wf); err != nil {
-				log.Warning("putWorkflowHandler> Cannot set default payload : %v", err)
+				log.Warning("postWorkflowHandler> Cannot set default payload : %v", err)
 			}
 		}
 
@@ -351,7 +351,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 		}
 
 		var wf sdk.Workflow
-		if err := UnmarshalBody(r, &wf); err != nil {
+		if err := service.UnmarshalBody(r, &wf); err != nil {
 			return sdk.WrapError(err, "Cannot read body")
 		}
 		wf.ID = oldW.ID

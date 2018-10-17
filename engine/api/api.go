@@ -465,10 +465,6 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.SMTP.TLS,
 		a.Config.SMTP.Disable)
 
-	if err := warning.Init(); err != nil {
-		return fmt.Errorf("Unable to init warning package: %v", err)
-	}
-
 	// Initialize feature packages
 	log.Info("Initializing feature flipping with izanami %s", a.Config.Features.Izanami.APIURL)
 	if a.Config.Features.Izanami.APIURL != "" {
@@ -545,6 +541,10 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup builtin workflow hook models: %v", err)
 	}
 
+	if err := workflow.CreateBuiltinWorkflowOutgoingHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
+	}
+
 	if err := platform.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
 		return fmt.Errorf("cannot setup platforms: %v", err)
 	}
@@ -559,6 +559,16 @@ func (a *API) Serve(ctx context.Context) error {
 	if errCache != nil {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
+
+	log.Info("Initializing Events broker")
+	// Initialize event broker
+	a.eventsBroker = &eventsBroker{
+		cache:    a.Cache,
+		clients:  make(map[string]*eventsBrokerSubscribe),
+		dbFunc:   a.DBConnectionFactory.GetDBMap,
+		messages: make(chan sdk.Event),
+	}
+	a.eventsBroker.Init(context.Background())
 
 	log.Info("Initializing HTTP router")
 	a.Router = &Router{

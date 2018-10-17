@@ -29,6 +29,8 @@ type Join sdk.WorkflowNodeJoin
 // JoinTrigger  is a gorp wrapper around sdk.WorkflowNodeJoinTrigger
 type JoinTrigger sdk.WorkflowNodeJoinTrigger
 
+type outgoingHookTrigger sdk.WorkflowNodeOutgoingHookTrigger
+
 // Notification is a gorp wrapper around sdk.WorkflowNotification
 type Notification sdk.WorkflowNotification
 
@@ -199,8 +201,17 @@ type RunTag sdk.WorkflowRunTag
 // NodeHook is a gorp wrapper around sdk.WorkflowNodeHook
 type NodeHook sdk.WorkflowNodeHook
 
-// NodeHookModel is a gorp wrapper around sdk.WorkflowHookModel
-type NodeHookModel sdk.WorkflowHookModel
+type nodeOutgoingHook sdk.WorkflowNodeOutgoingHook
+
+type dbNodeFork sdk.WorkflowNodeFork
+
+type dbNodeForkTrigger sdk.WorkflowNodeForkTrigger
+
+// hookModel is a gorp wrapper around sdk.WorkflowHookModel
+type hookModel sdk.WorkflowHookModel
+
+// outgoingHookModel is a gorp wrapper around sdk.WorkflowHookModel
+type outgoingHookModel sdk.WorkflowHookModel
 
 type auditWorkflow sdk.AuditWorklflow
 
@@ -211,6 +222,8 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(NodeContext{}, "workflow_node_context", true, "id"))
 	gorpmapping.Register(gorpmapping.New(sqlContext{}, "workflow_node_context", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeHook{}, "workflow_node_hook", true, "id"))
+	gorpmapping.Register(gorpmapping.New(nodeOutgoingHook{}, "workflow_node_outgoing_hook", true, "id"))
+	gorpmapping.Register(gorpmapping.New(outgoingHookTrigger{}, "workflow_node_outgoing_hook_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Join{}, "workflow_node_join", true, "id"))
 	gorpmapping.Register(gorpmapping.New(JoinTrigger{}, "workflow_node_join_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Run{}, "workflow_run", true, "id"))
@@ -218,9 +231,12 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(JobRun{}, "workflow_node_run_job", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeRunArtifact{}, "workflow_node_run_artifacts", true, "id"))
 	gorpmapping.Register(gorpmapping.New(RunTag{}, "workflow_run_tag", false, "workflow_run_id", "tag"))
-	gorpmapping.Register(gorpmapping.New(NodeHookModel{}, "workflow_hook_model", true, "id"))
+	gorpmapping.Register(gorpmapping.New(hookModel{}, "workflow_hook_model", true, "id"))
+	gorpmapping.Register(gorpmapping.New(outgoingHookModel{}, "workflow_outgoing_hook_model", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Notification{}, "workflow_notification", true, "id"))
 	gorpmapping.Register(gorpmapping.New(auditWorkflow{}, "workflow_audit", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Coverage{}, "workflow_node_run_coverage", false, "workflow_id", "workflow_run_id", "workflow_node_run_id", "repository", "branch"))
 	gorpmapping.Register(gorpmapping.New(dbNodeRunVulenrabilitiesReport{}, "workflow_node_run_vulnerability", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeFork{}, "workflow_node_fork", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeForkTrigger{}, "workflow_node_fork_trigger", true, "id"))
 }

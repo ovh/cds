@@ -6,15 +6,73 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/action"
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
+func deleteAll(t *testing.T, api *API, key string) error {
+	// Delete all apps
+	t.Logf("start deleted : %s", key)
+	proj, errl := project.Load(api.mustDB(), api.Cache, key, &sdk.User{Admin: true})
+	if errl != nil {
+		return errl
+	}
+
+	apps, errloadall := application.LoadAll(api.mustDB(), api.Cache, key, &sdk.User{Admin: true})
+	if errloadall != nil {
+		t.Logf("Cannot list app: %s", errloadall)
+		return errloadall
+	}
+	for _, app := range apps {
+		tx, _ := api.mustDB().Begin()
+		if err := application.DeleteApplication(tx, app.ID); err != nil {
+			t.Logf("DeleteApplication: %s", err)
+			return err
+		}
+		_ = tx.Commit()
+	}
+
+	// Delete all pipelines
+	pips, errload := pipeline.LoadPipelines(api.mustDB(), proj.ID, false, &sdk.User{Admin: true})
+	if errload != nil {
+		t.Logf("ListPipelines: %s", errload)
+		return errload
+	}
+	for _, pip := range pips {
+		if err := pipeline.DeletePipeline(api.mustDB(), pip.ID, 1); err != nil {
+			t.Logf("DeletePipeline: %s", err)
+			return err
+		}
+	}
+
+	if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
+		return err
+	}
+
+	for _, g := range proj.ProjectGroups {
+		if err := group.DeleteGroupAndDependencies(api.mustDB(), &g.Group); err != nil {
+			return err
+		}
+	}
+
+	// Delete project
+	if err := project.Delete(api.mustDB(), api.Cache, key); err != nil {
+		t.Logf("RemoveProject: %s", err)
+		return err
+	}
+	t.Logf("All deleted")
+	return nil
+}
+
 func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
@@ -67,7 +125,8 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 }
 
 func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
@@ -138,7 +197,8 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 }
 
 func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2ActionsStageWithoutPrerequisite(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
@@ -244,7 +304,8 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 }
 
 func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequisites(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
@@ -381,7 +442,8 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 }
 
 func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 
@@ -439,7 +501,8 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 }
 
 func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
-	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	deleteAll(t, api, "TESTPIPELINESTAGES")
 

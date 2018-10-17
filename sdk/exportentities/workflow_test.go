@@ -560,6 +560,45 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "Root and a outgoink hook should not raise an error",
+			fields: fields{
+				Workflow: map[string]NodeEntry{
+					"A": NodeEntry{
+						PipelineName: "pipeline",
+					},
+					"B": NodeEntry{
+						OutgoingHookModelName: "webhook",
+						OutgoingHookConfig: map[string]string{
+							"url": "https://www.ovh.com",
+						},
+						DependsOn: []string{"A"},
+					},
+				},
+			},
+			wantErr: false,
+			want: sdk.Workflow{
+				Root: &sdk.WorkflowNode{
+					Name:         "A",
+					Ref:          "pipeline",
+					PipelineName: "pipeline",
+					Context:      &sdk.WorkflowNodeContext{},
+					OutgoingHooks: []sdk.WorkflowNodeOutgoingHook{
+						{
+							Name: "B",
+							Config: sdk.WorkflowNodeHookConfig{
+								"url": sdk.WorkflowNodeHookConfigValue{
+									Value: "https://www.ovh.com",
+								},
+							},
+							WorkflowHookModel: sdk.WorkflowHookModel{
+								Name: "webhook",
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tsts {
 		t.Run(tt.name, func(t *testing.T) {
@@ -604,7 +643,6 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					assert.True(t, ok, "%s not found", expectedKey)
 					assert.Equal(t, expectedValue, actualValue, "value %s doesn't match. Got %s but want %s", expectedKey, actualValue, expectedValue)
 				}
-
 			}
 
 			for actualKey := range actualValues {

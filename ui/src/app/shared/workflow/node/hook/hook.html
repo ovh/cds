@@ -1,3 +1,11 @@
 <div class="workflowHook pointing" (click)="openEditHookSidebar()" [class.active]="isSelected">
-    <i class="{{icon}} icon"></i>
+    <ng-container *ngIf="nodeRun && nodeRun.hook_event && nodeRun.hook_event.parent_workflow">
+            <i class="{{icon}} icon" 
+            suiPopup popupHeader="Workflow" 
+            popupText="{{nodeRun.hook_event.parent_workflow.key}}/{{nodeRun.hook_event.parent_workflow.name}} #{{nodeRun.hook_event.parent_workflow.run}}"
+            ></i>
+    </ng-container>
+    <ng-container *ngIf="!nodeRun || !nodeRun.hook_event || !nodeRun.hook_event.parent_workflow">
+            <i class="{{icon}} icon"></i>
+    </ng-container>
 </div>

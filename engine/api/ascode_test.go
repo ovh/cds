@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ovh/cds/sdk"
 	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
@@ -19,6 +18,8 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 )
 
 type mockHTTPClient struct {
@@ -44,7 +45,9 @@ func writeError(w *http.Response, err error) (*http.Response, error) {
 }
 
 func Test_postImportAsCodeHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -122,7 +125,9 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 }
 
 func Test_postImportAsCodeFeatureDisabledHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -159,7 +164,9 @@ func Test_postImportAsCodeFeatureDisabledHandler(t *testing.T) {
 }
 
 func Test_getImportAsCodeHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 
 	mockService := &sdk.Service{Name: "Test_getImportAsCodeHandler", Type: services.TypeRepositories}
@@ -216,7 +223,9 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 }
 
 func Test_postPerformImportAsCodeHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 
 	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
@@ -242,7 +251,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 			switch r.URL.Path {
 			case "/task/bulk":
 				hooks := map[string]sdk.WorkflowNodeHook{}
-				if err := UnmarshalBody(r, &hooks); err != nil {
+				if err := service.UnmarshalBody(r, &hooks); err != nil {
 					return nil, sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 				}
 
@@ -310,7 +319,9 @@ version: v1.0`),
 }
 
 func Test_postPerformImportAsCodeDisabledFeatureHandler(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 
 	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))

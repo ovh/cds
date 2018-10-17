@@ -38,7 +38,7 @@ func (api *API) updateStepStatusHandler() service.Handler {
 		}
 
 		var step sdk.StepStatus
-		if err := UnmarshalBody(r, &step); err != nil {
+		if err := service.UnmarshalBody(r, &step); err != nil {
 			return sdk.WrapError(err, "updateStepStatusHandler> Error while unmarshal job")
 		}
 
@@ -263,7 +263,7 @@ func (api *API) addQueueResultHandler() service.Handler {
 
 		// Unmarshal into results
 		var res sdk.Result
-		if err := UnmarshalBody(r, &res); err != nil {
+		if err := service.UnmarshalBody(r, &res); err != nil {
 			return sdk.WrapError(err, "addQueueResultHandler> cannot unmarshal request")
 		}
 
@@ -334,7 +334,7 @@ func (api *API) takePipelineBuildJobHandler() service.Handler {
 		}
 
 		takeForm := &sdk.WorkerTakeForm{}
-		if err := UnmarshalBody(r, takeForm); err != nil {
+		if err := service.UnmarshalBody(r, takeForm); err != nil {
 			return sdk.WrapError(err, "takePipelineBuildJobHandler> cannot unmarshal request")
 		}
 
@@ -424,7 +424,7 @@ func (api *API) addSpawnInfosPipelineBuildJobHandler() service.Handler {
 			return sdk.WrapError(errc, "addSpawnInfosPipelineBuildJobHandler> invalid id")
 		}
 		var s []sdk.SpawnInfo
-		if err := UnmarshalBody(r, &s); err != nil {
+		if err := service.UnmarshalBody(r, &s); err != nil {
 			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> cannot unmarshal request")
 		}
 
@@ -673,7 +673,7 @@ func (api *API) addBuildVariableHandler() service.Handler {
 
 		// Unmarshal into results
 		var v sdk.Variable
-		if err := UnmarshalBody(r, &v); err != nil {
+		if err := service.UnmarshalBody(r, &v); err != nil {
 			return sdk.WrapError(err, "addBuildVariableHandler> cannot unmarshal request")
 		}
 
@@ -743,7 +743,7 @@ func (api *API) addBuildTestResultsHandler() service.Handler {
 
 		// Unmarshal into results
 		var new venom.Tests
-		if err := UnmarshalBody(r, &new); err != nil {
+		if err := service.UnmarshalBody(r, &new); err != nil {
 			return sdk.WrapError(err, "addBuildVariableHandler> cannot unmarshal request")
 		}
 

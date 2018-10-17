@@ -222,6 +222,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/hooks/{uuid}", r.GET(api.getWorkflowHookHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/hook/model", r.GET(api.getWorkflowHookModelsHandler))
+	r.Handle("/project/{key}/workflow/{permWorkflowName}/node/{nodeID}/outgoinghook/model", r.GET(api.getWorkflowOutgoingHookModelsHandler))
 
 	// Preview workflows
 	r.Handle("/project/{permProjectKey}/preview/workflows", r.POST(api.postWorkflowPreviewHandler))
@@ -242,7 +243,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/num", r.GET(api.getWorkflowRunNumHandler), r.POST(api.postWorkflowRunNumHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler, AllowServices(true)))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", r.POSTEXECUTE(api.stopWorkflowRunHandler, EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/vcs/resync", r.POSTEXECUTE(api.postResyncVCSWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/resync", r.POST(api.resyncWorkflowRunHandler))
@@ -256,6 +257,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", r.POST(api.postWorkflowJobHookCallbackHandler, AllowServices(true)))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/details", r.GET(api.getWorkflowJobHookDetailsHandler, NeedService()))
 
 	// Triggers
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger", r.GET(api.getTriggersHandler), r.POST(api.addTriggerHandler))

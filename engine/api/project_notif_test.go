@@ -18,7 +18,8 @@ import (
 )
 
 func Test_getProjectNotificationsHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())

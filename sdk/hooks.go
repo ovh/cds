@@ -33,6 +33,7 @@ type WebHookExecution struct {
 	RequestURL    string              `json:"request_url"`
 	RequestBody   []byte              `json:"request_body"`
 	RequestHeader map[string][]string `json:"request_header"`
+	RequestMethod string              `json:"request_method"`
 }
 
 // KafkaTaskExecution contains specific data for a kafka hook

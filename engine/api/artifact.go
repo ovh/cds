@@ -353,7 +353,7 @@ func (api *API) postArtifactWithTempURLHandler() service.Handler {
 		}
 
 		art := new(sdk.Artifact)
-		if err := UnmarshalBody(r, art); err != nil {
+		if err := service.UnmarshalBody(r, art); err != nil {
 			return sdk.WrapError(err, "postArtifactWithTempURLHandler> Unable to unmarshal artifact")
 		}
 
@@ -393,7 +393,7 @@ func (api *API) postArtifactWithTempURLCallbackHandler() service.Handler {
 		envName := r.FormValue("envName")
 
 		art := new(sdk.Artifact)
-		if err := UnmarshalBody(r, art); err != nil {
+		if err := service.UnmarshalBody(r, art); err != nil {
 			return sdk.WrapError(err, "postArtifactWithTempURLCallbackHandler> Unable to read artifact")
 		}
 

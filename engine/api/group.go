@@ -125,7 +125,7 @@ func (api *API) updateGroupHandler() service.Handler {
 		oldName := vars["permGroupName"]
 
 		var updatedGroup sdk.Group
-		if err := UnmarshalBody(r, &updatedGroup); err != nil {
+		if err := service.UnmarshalBody(r, &updatedGroup); err != nil {
 			return sdk.WrapError(err, "updateGroupHandler> cannot unmarshal")
 		}
 
@@ -237,7 +237,7 @@ func (api *API) getPublicGroupsHandler() service.Handler {
 func (api *API) addGroupHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		g := &sdk.Group{}
-		if err := UnmarshalBody(r, g); err != nil {
+		if err := service.UnmarshalBody(r, g); err != nil {
 			return sdk.WrapError(err, "addGroupHandler> cannot unmarshal")
 		}
 
@@ -309,7 +309,7 @@ func (api *API) addUserInGroupHandler() service.Handler {
 		name := vars["permGroupName"]
 
 		var users []string
-		if err := UnmarshalBody(r, &users); err != nil {
+		if err := service.UnmarshalBody(r, &users); err != nil {
 			return sdk.WrapError(err, "addGroupHandler> cannot unmarshal")
 		}
 

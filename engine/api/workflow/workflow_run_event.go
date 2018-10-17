@@ -51,6 +51,17 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 		event.PublishWorkflowNodeRun(db, wnr, wr.Workflow, &previousNodeRun)
 	}
 
+	for _, hr := range report.outgoingHooks {
+		wr, errWR := LoadRunByID(db, hr.WorkflowRunID, LoadRunOptions{
+			WithLightTests: true,
+		})
+		if errWR != nil {
+			log.Warning("SendEvent.workflow> Cannot load workflow run %d: %s", hr.WorkflowRunID, errWR)
+			continue
+		}
+		event.PublishWorkflowNodeOutgoingHookRun(db, hr, wr.Workflow)
+	}
+
 	for _, jobrun := range report.jobs {
 		noderun, err := LoadNodeRunByID(db, jobrun.WorkflowNodeRunID, LoadRunOptions{})
 		if err != nil {

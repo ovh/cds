@@ -1,9 +1,10 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {PipelineStatus} from 'app/model/pipeline.model';
+import {Project} from 'app/model/project.model';
+import {HookStatus, TaskExecution, WorkflowHookTask} from 'app/model/workflow.hook.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeOutgoingHook} from 'app/model/workflow.model';
+import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
 import {finalize} from 'rxjs/operators';
-import {Project} from '../../../../../model/project.model';
-import {HookStatus, TaskExecution, WorkflowHookTask} from '../../../../../model/workflow.hook.model';
-import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
-import {WorkflowRun} from '../../../../../model/workflow.run.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowEventStore} from '../../../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
@@ -22,6 +23,9 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
 
     @ViewChild('workflowConfigHook')
     workflowConfigHook: WorkflowNodeHookFormComponent;
+    @ViewChild('workflowConfigOutgoingHook')
+    workflowConfigOutgoingHook: WorkflowNodeHookFormComponent;
+
     @ViewChild('workflowDetailsHook')
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
@@ -31,6 +35,10 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     hookDetails: WorkflowHookTask;
     hook: WorkflowNodeHook;
     wr: WorkflowRun;
+    nodeRun: WorkflowNodeRun;
+    outgoingHook: WorkflowNodeOutgoingHook;
+    outgoingHookRuns: Array<WorkflowNodeOutgoingHookRun>;
+    pipelineStatusEnum = PipelineStatus;
 
     constructor(private _hookService: HookService, private _workflowEventStore: WorkflowEventStore) {
     }
@@ -46,8 +54,54 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
             this.wr = r;
             if (this.wr && this.hook) {
                 this.loadHookDetails();
+            } else if (this.wr && this.outgoingHook) {
+                this.loadOutgoingHookDetails();
+            }
+            if (this.wr && this.wr.nodes && this.node && this.wr.nodes[this.node.id] && this.wr.nodes[this.node.id].length > 0) {
+                this.nodeRun = this.wr.nodes[this.node.id][0];
+            } else {
+                this.nodeRun = null;
             }
         });
+        this._workflowEventStore.selectedOutgoingHook().subscribe(oh => {
+            this.outgoingHook = oh;
+            if (this.wr && this.outgoingHook) {
+                this.loadOutgoingHookDetails();
+            }
+        });
+        this._workflowEventStore.outgoingHookEvents().subscribe(
+            hr => {
+                if (hr && this.outgoingHook && this.outgoingHook.id === hr.workflow_node_outgoing_hook_id) {
+                    if (this.wr && this.wr.id === hr.workflow_run_id && this.wr.num === hr.num) {
+                        if (!this.outgoingHookRuns) {
+                            this.outgoingHookRuns = new Array<WorkflowNodeOutgoingHookRun>();
+                        }
+                        let found = false;
+                        for (let i = 0; i < this.outgoingHookRuns.length; i++) {
+                            if (this.outgoingHookRuns[i].subnumber === hr.subnumber) {
+                                this.outgoingHookRuns[i] = hr;
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found) {
+                            this.outgoingHookRuns.unshift(hr);
+                        }
+                    }
+                }
+            }
+        );
+    }
+
+    loadOutgoingHookDetails() {
+        if (this.wr.outgoing_hooks &&  this.outgoingHook) {
+            if (this.wr.outgoing_hooks[this.outgoingHook.id]) {
+                this.outgoingHookRuns = this.wr.outgoing_hooks[this.outgoingHook.id];
+                this.node = Workflow.findNode(this.wr.workflow, (node) => {
+                    return node.outgoing_hooks.find(h => h.id === this.outgoingHook.id );
+                });
+            }
+        }
     }
 
     loadHookDetails() {
@@ -87,10 +141,15 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
             this.workflowConfigHook.show();
         }
     }
-
     openHookDetailsModal(taskExec: TaskExecution) {
         if (this.workflowDetailsHook && this.workflowDetailsHook.show) {
             this.workflowDetailsHook.show(taskExec);
+        }
+    }
+
+    openOutgoingHookDetailsModal(hr: WorkflowNodeOutgoingHookRun) {
+        if (this.workflowDetailsHook && this.workflowDetailsHook.show) {
+            this.workflowDetailsHook.showOutgoingHook(hr);
         }
     }
 }

@@ -113,7 +113,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		groupName := vars["group"]
 
 		var groupProject sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupProject); err != nil {
+		if err := service.UnmarshalBody(r, &groupProject); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnProjectHandler> unable to unmarshal")
 		}
 
@@ -188,7 +188,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 		key := vars["permProjectKey"]
 
 		var groupProject sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupProject); err != nil {
+		if err := service.UnmarshalBody(r, &groupProject); err != nil {
 			return sdk.WrapError(err, "addGroupInProject> unable to unmarshal")
 		}
 

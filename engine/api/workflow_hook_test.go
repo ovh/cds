@@ -19,7 +19,8 @@ import (
 )
 
 func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	db := api.mustDB()
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
@@ -72,11 +73,12 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	//Check result
 	models := []sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &models))
-	assert.Len(t, models, 3, "")
+	assert.Len(t, models, 4, "")
 }
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	db := api.mustDB()
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
@@ -137,11 +139,12 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	//Check result
 	models := []sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &models))
-	assert.Len(t, models, 3, "")
+	assert.Len(t, models, 4, "")
 }
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
 
@@ -168,7 +171,8 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
 
@@ -209,7 +213,8 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
 	u, pass := assets.InsertLambdaUser(api.mustDB())

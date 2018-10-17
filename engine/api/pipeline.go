@@ -60,7 +60,7 @@ func (api *API) runPipelineWithLastParentHandler() service.Handler {
 		}
 
 		var request sdk.RunRequest
-		if err := UnmarshalBody(r, &request); err != nil {
+		if err := service.UnmarshalBody(r, &request); err != nil {
 			return err
 		}
 
@@ -272,7 +272,7 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 func (api *API) runPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var request sdk.RunRequest
-		if err := UnmarshalBody(r, &request); err != nil {
+		if err := service.UnmarshalBody(r, &request); err != nil {
 			return err
 		}
 
@@ -288,7 +288,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		name := vars["permPipelineKey"]
 
 		var p sdk.Pipeline
-		if err := UnmarshalBody(r, &p); err != nil {
+		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot read body")
 		}
 
@@ -428,7 +428,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		}
 
 		var p sdk.Pipeline
-		if err := UnmarshalBody(r, &p); err != nil {
+		if err := service.UnmarshalBody(r, &p); err != nil {
 			return err
 		}
 

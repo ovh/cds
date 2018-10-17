@@ -129,7 +129,7 @@ func (api *API) updateUserHandler() service.Handler {
 		}
 
 		var userBody sdk.User
-		if err := UnmarshalBody(r, &userBody); err != nil {
+		if err := service.UnmarshalBody(r, &userBody); err != nil {
 			return err
 		}
 
@@ -191,7 +191,7 @@ func (api *API) postTimelineFilterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := getUser(ctx)
 		var timelineFilter sdk.TimelineFilter
-		if err := UnmarshalBody(r, &timelineFilter); err != nil {
+		if err := service.UnmarshalBody(r, &timelineFilter); err != nil {
 			return sdk.WrapError(err, "postTimelineFilterHandler> Unable to read body")
 		}
 
@@ -217,7 +217,7 @@ func (api *API) postTimelineFilterHandler() service.Handler {
 func (api *API) postUserFavoriteHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		params := sdk.FavoriteParams{}
-		if err := UnmarshalBody(r, &params); err != nil {
+		if err := service.UnmarshalBody(r, &params); err != nil {
 			return err
 		}
 
@@ -261,7 +261,7 @@ func (api *API) addUserHandler() service.Handler {
 		}
 
 		createUserRequest := sdk.UserAPIRequest{}
-		if err := UnmarshalBody(r, &createUserRequest); err != nil {
+		if err := service.UnmarshalBody(r, &createUserRequest); err != nil {
 			return err
 		}
 
@@ -341,7 +341,7 @@ func (api *API) resetUserHandler() service.Handler {
 		username := vars["username"]
 
 		resetUserRequest := sdk.UserAPIRequest{}
-		if err := UnmarshalBody(r, &resetUserRequest); err != nil {
+		if err := service.UnmarshalBody(r, &resetUserRequest); err != nil {
 			return err
 		}
 
@@ -458,7 +458,7 @@ func (api *API) confirmUserHandler() service.Handler {
 func (api *API) loginUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		loginUserRequest := sdk.UserLoginRequest{}
-		if err := UnmarshalBody(r, &loginUserRequest); err != nil {
+		if err := service.UnmarshalBody(r, &loginUserRequest); err != nil {
 			return err
 		}
 
@@ -524,7 +524,7 @@ func (api *API) loginUserHandler() service.Handler {
 func (api *API) importUsersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var users = []sdk.User{}
-		if err := UnmarshalBody(r, &users); err != nil {
+		if err := service.UnmarshalBody(r, &users); err != nil {
 			return err
 		}
 

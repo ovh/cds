@@ -21,7 +21,7 @@ func (api *API) addStageHandler() service.Handler {
 		pipelineKey := vars["permPipelineKey"]
 
 		var stageData = &sdk.Stage{}
-		if err := UnmarshalBody(r, stageData); err != nil {
+		if err := service.UnmarshalBody(r, stageData); err != nil {
 			return err
 		}
 
@@ -99,7 +99,7 @@ func (api *API) moveStageHandler() service.Handler {
 		pipelineKey := vars["permPipelineKey"]
 
 		var stageData = &sdk.Stage{}
-		if err := UnmarshalBody(r, stageData); err != nil {
+		if err := service.UnmarshalBody(r, stageData); err != nil {
 			return err
 		}
 
@@ -165,7 +165,7 @@ func (api *API) updateStageHandler() service.Handler {
 		stageIDString := vars["stageID"]
 
 		var stageData = &sdk.Stage{}
-		if err := UnmarshalBody(r, stageData); err != nil {
+		if err := service.UnmarshalBody(r, stageData); err != nil {
 			return err
 		}
 

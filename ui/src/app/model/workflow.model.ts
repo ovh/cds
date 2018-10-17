@@ -39,6 +39,81 @@ export class Workflow {
     forceRefresh: boolean;
     previewMode: boolean;
 
+    static removeFork(workflow: Workflow, id: number) {
+        // Remove from workflow
+        let found = WorkflowNode.removeFork(workflow.root, id);
+        if (!found && workflow.joins) {
+            join: for (let i = 0; i < workflow.joins.length; i++) {
+                if (workflow.joins[i].triggers) {
+                    for (let j = 0; j < workflow.joins[i].triggers.length; j++) {
+                        if (WorkflowNode.removeFork(workflow.joins[i].triggers[j].workflow_dest_node, id)) {
+                            break join;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Remove old ref
+        let nodes = Workflow.getAllNodes(workflow);
+        Workflow.cleanJoin(workflow, nodes);
+        Workflow.cleanNotifications(workflow, nodes);
+    }
+
+    static removeForkWithoutChild(workflow: Workflow, id: number) {
+        let found = WorkflowNode.removeForkWithoutChild(workflow.root, id);
+        if (!found && workflow.joins) {
+            join: for (let i = 0; i < workflow.joins.length; i++) {
+                if (workflow.joins[i].triggers) {
+                    for (let j = 0; j < workflow.joins[i].triggers.length; j++) {
+                        if (WorkflowNode.removeForkWithoutChild(workflow.joins[i].triggers[j].workflow_dest_node, id)) {
+                            break join;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    static cleanNotifications(workflow: Workflow, nodes: Array<WorkflowNode>) {
+        if (workflow.notifications && workflow.notifications.length > 0) {
+            for (let i = 0; i < workflow.notifications.length; i++) {
+                if (workflow.notifications[i].source_node_ref) {
+                    for (let j = 0; j < workflow.notifications[i].source_node_ref.length; j++) {
+                        if (-1 === nodes.findIndex(n => n.ref === workflow.notifications[i].source_node_ref[j])) {
+                            workflow.notifications[i].source_node_ref.splice(j, 1);
+                            j--;
+                        }
+                    }
+                    if (workflow.notifications[i].source_node_ref.length === 0) {
+                        workflow.notifications.splice(i, 1);
+                        i--;
+                    }
+                }
+            }
+        }
+
+    }
+
+    static cleanJoin(workflow: Workflow, nodes: Array<WorkflowNode>) {
+        if (workflow.joins) {
+            for (let i = 0; i < workflow.joins.length; i ++) {
+                if (workflow.joins[i].source_node_ref && workflow.joins[i].source_node_ref.length > 0) {
+                    for (let j = 0; j < workflow.joins[i].source_node_ref.length; j++) {
+                        if (-1 === nodes.findIndex(n => n.ref === workflow.joins[i].source_node_ref[j])) {
+                            workflow.joins[i].source_node_ref.splice(j, 1);
+                            j--;
+                        }
+                    }
+                }
+                if (workflow.joins[i].source_node_ref.length === 0) {
+                    workflow.joins.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+    }
+
     // Do not remove root node
     static removeNodeWithoutChild(workflow: Workflow, node: WorkflowNode): boolean {
         if (node.id === workflow.root.id) {
@@ -152,6 +227,67 @@ export class Workflow {
         return
     }
 
+    static updateOutgoingHook(workflow: Workflow, id: number, name: string, config: Map<string, WorkflowNodeHookConfigValue>) {
+        let oldH = WorkflowNode.findOutgoingHook(workflow.root, id);
+        if (!oldH) {
+            if (workflow.joins) {
+                quit: for (let i = 0; i < workflow.joins.length; i++) {
+                    let j = workflow.joins[i];
+                    if (j.triggers) {
+                        for (let k = 0; k < j.triggers.length; k++) {
+                            oldH = WorkflowNode.findOutgoingHook(j.triggers[k].workflow_dest_node, id);
+                            if (oldH) {
+                                break quit;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (oldH) {
+            oldH.config = config;
+            oldH.name = name;
+        }
+    };
+
+    static removeOutgoingHook(workflow: Workflow, id: number) {
+        let done = WorkflowNode.removeOutgoingHook(workflow.root, id);
+        if (!done) {
+            if (workflow.joins) {
+                for (let i = 0; i < workflow.joins.length; i++) {
+                    let j = workflow.joins[i];
+                    if (j.triggers) {
+                        for (let k = 0; k < j.triggers.length; k++) {
+                            done = WorkflowNode.removeOutgoingHook(j.triggers[k].workflow_dest_node, id);
+                            if (done) {
+                                return
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+
+    static getForkByName(name: string, w: Workflow): WorkflowNodeFork {
+        let fork = WorkflowNode.getForkByName(w.root, name);
+        if (!fork && w.joins) {
+            quit: for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        fork = WorkflowNode.getForkByName(w.joins[i].triggers[j].workflow_dest_node, name);
+                        if (fork) {
+                            break quit;
+                        }
+                    }
+                }
+            }
+        }
+        return fork;
+    }
+
     static getNodeByID(id: number, w: Workflow): WorkflowNode {
         let node = WorkflowNode.getNodeByID(w.root, id);
         if (!node && w.joins) {
@@ -201,6 +337,88 @@ export class Workflow {
             }
         }
         return hook;
+    }
+
+    static findOutgoingHook(w: Workflow, id: number): WorkflowNodeOutgoingHook {
+        let hook = WorkflowNode.findOutgoingHook(w.root, id);
+        if (hook) {
+            return hook;
+        }
+        if (w.joins) {
+            for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        hook = WorkflowNode.findOutgoingHook(w.joins[i].triggers[j].workflow_dest_node, id);
+                        if (hook) {
+                            return hook;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    static isChildOfOutgoingHook(w: Workflow, n: WorkflowNode, h: WorkflowNodeOutgoingHook, nodeID: number): boolean {
+        if (h) {
+            if (h.triggers) {
+                for (let i = 0; i < h.triggers.length; i++) {
+                    if (h.triggers[i]) {
+                        if (h.triggers[i].workflow_dest_node.id === nodeID) {
+                            return true;
+                        }
+                        if (Workflow.isChildOfOutgoingHook(w, h.triggers[i].workflow_dest_node, null, nodeID)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        if (n) {
+            if (n.outgoing_hooks) {
+                for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                    if (Workflow.isChildOfOutgoingHook(w, null, n.outgoing_hooks[i], nodeID)) {
+                        return true;
+                    }
+                }
+            }
+            if (n.triggers) {
+                for (let i = 0; i < n.triggers.length; i++) {
+                    if (Workflow.isChildOfOutgoingHook(w, n.triggers[i].workflow_dest_node, null, nodeID)) {
+                        return true;
+                    }
+                }
+            }
+            if (n.forks) {
+                for (let i = 0; i < n.forks.length; i++) {
+                    if (n.forks[i].triggers) {
+                        for (let j = 0; j < n.forks[i].triggers.length; j++) {
+                            if (Workflow.isChildOfOutgoingHook(w, n.forks[i].triggers[j].workflow_dest_node, null, nodeID)) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false
+        }
+
+        if (w.joins) {
+            for (let i = 0; i < w.joins.length; i++) {
+                if (w.joins[i].triggers) {
+                    for (let j = 0; j < w.joins[i].triggers.length; j++) {
+                        if (Workflow.isChildOfOutgoingHook(w, w.joins[i].triggers[j].workflow_dest_node, null, nodeID)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false
+        }
+
+        return Workflow.isChildOfOutgoingHook(w, w.root, null, nodeID);
     }
 
     static removeOldRef(w: Workflow) {
@@ -418,6 +636,34 @@ export class Workflow {
         return workflow;
     }
 
+    static getAllHooks(workflow: Workflow): Array<WorkflowNodeHook> {
+        let res = WorkflowNode.getAllHooks(workflow.root);
+        if (workflow.joins) {
+            workflow.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        res = res.concat(WorkflowNode.getAllHooks(t.workflow_dest_node));
+                    })
+                }
+            })
+        }
+        return res;
+    }
+
+    static getAllOutgoingHooks(workflow: Workflow): Array<WorkflowNodeOutgoingHook> {
+        let res = WorkflowNode.getAllOutgoingHooks(workflow.root);
+        if (workflow.joins) {
+            workflow.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        res = res.concat(WorkflowNode.getAllOutgoingHooks(t.workflow_dest_node));
+                    })
+                }
+            })
+        }
+        return res;
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
@@ -458,7 +704,97 @@ export class WorkflowNode {
     pipeline_name: string;
     context: WorkflowNodeContext;
     hooks: Array<WorkflowNodeHook>;
+    forks: Array<WorkflowNodeFork>;
+    outgoing_hooks: Array<WorkflowNodeOutgoingHook>;
     triggers: Array<WorkflowNodeTrigger>;
+
+    static removeForkWithoutChild(node: WorkflowNode, id: number): boolean {
+        if (node.forks && node.forks.length > 0) {
+            for (let i = 0; i < node.forks.length; i ++) {
+                if (node.forks[i].id === id) {
+                    // create node trigger for each nodefork trigger
+                    if (node.forks[i].triggers) {
+                        if (!node.triggers) {
+                            node.triggers = new Array<WorkflowNodeTrigger>();
+                        }
+                        node.forks[i].triggers.forEach(t => {
+                            let trig = new WorkflowNodeTrigger();
+                            trig.workflow_node_id = node.id;
+                            trig.workflow_dest_node_id = t.workflow_dest_node_id;
+                            trig.workflow_dest_node = t.workflow_dest_node;
+                            node.triggers.push(trig);
+                        });
+                    }
+                    node.forks.splice(i, 1);
+                    return true;
+                }
+
+                if (node.forks[i].triggers) {
+                    for (let j = 0; j < node.forks[i].triggers.length; j++) {
+                        if (WorkflowNode.removeForkWithoutChild(node.forks[i].triggers[j].workflow_dest_node, id)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        if (node.triggers) {
+            for (let j = 0; j < node.triggers.length; j++ ) {
+                if (WorkflowNode.removeForkWithoutChild(node.triggers[j].workflow_dest_node, id)) {
+                    return true;
+                }
+            }
+        }
+        if (node.outgoing_hooks) {
+            for (let i = 0; i < node.outgoing_hooks.length; i++) {
+                if (node.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < node.outgoing_hooks[i].triggers.length; j++ ) {
+                        if (WorkflowNode.removeForkWithoutChild(node.outgoing_hooks[i].triggers[j].workflow_dest_node, id)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    static removeFork(node: WorkflowNode, id: number): boolean {
+        if (node.forks && node.forks.length > 0) {
+            for (let i = 0; i < node.forks.length; i++ ) {
+                if (node.forks[i].id === id) {
+                    node.forks.splice(i, 1);
+                    return true;
+                }
+                if (node.forks[i].triggers) {
+                    for (let j = 0; j < node.forks[i].triggers.length; j++ ) {
+                        if (WorkflowNode.removeFork(node.forks[i].triggers[j].workflow_dest_node, id)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        if (node.triggers) {
+            for (let j = 0; j < node.triggers.length; j++ ) {
+                if (WorkflowNode.removeFork(node.triggers[j].workflow_dest_node, id)) {
+                    return true;
+                }
+            }
+        }
+        if (node.outgoing_hooks) {
+            for (let i = 0; i < node.outgoing_hooks.length; i++) {
+                if (node.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < node.outgoing_hooks[i].triggers.length; j++ ) {
+                        if (WorkflowNode.removeFork(node.outgoing_hooks[i].triggers[j].workflow_dest_node, id)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
 
     static removeNodeWithoutChild(parentNode: WorkflowNode, trigger: WorkflowNodeTrigger, id: number, triggerInd: number): WorkflowNode {
         if (trigger.workflow_dest_node.id === id) {
@@ -509,38 +845,103 @@ export class WorkflowNode {
         return null;
     }
 
+    static getForkByName(node: WorkflowNode, name: string): WorkflowNodeFork {
+        let fork: WorkflowNodeFork;
+        if (node.forks) {
+            for (let i = 0; i < node.forks.length; i++) {
+                if (node.forks[i].name === name) {
+                    return node.forks[i];
+                }
+                if (node.forks[i].triggers) {
+                    for (let j = 0; j < node.forks[i].triggers.length; j++) {
+                        fork = WorkflowNode.getForkByName(node.forks[i].triggers[j].workflow_dest_node, name);
+                        if (fork) {
+                            return fork;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (node.triggers) {
+            for (let i = 0; i < node.triggers.length; i++) {
+                fork = WorkflowNode.getForkByName(node.triggers[i].workflow_dest_node, name);
+                if (fork) {
+                    return fork;
+                }
+            }
+        }
+
+        if (node.outgoing_hooks) {
+            for (let i = 0; i < node.outgoing_hooks.length; i++) {
+                if (node.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < node.outgoing_hooks[i].triggers.length; j++) {
+                        fork = WorkflowNode.getForkByName(node.outgoing_hooks[i].triggers[j].workflow_dest_node, name);
+                        if (fork) {
+                            return fork;
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     static getNodeByID(node: WorkflowNode, id: number): WorkflowNode {
         if (node.id === id) {
             return node;
         }
-        let nodeToFind: WorkflowNode;
         if (node.triggers) {
             for (let i = 0; i < node.triggers.length; i++) {
                 let n = WorkflowNode.getNodeByID(node.triggers[i].workflow_dest_node, id);
                 if (n) {
-                    nodeToFind = n;
-                    break;
+                    return n;
                 }
             }
         }
-        return nodeToFind;
+
+        if (node.outgoing_hooks) {
+            for (let i = 0; i < node.outgoing_hooks.length; i++) {
+                if (node.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < node.outgoing_hooks[i].triggers.length; j++) {
+                        let n = WorkflowNode.getNodeByID(node.outgoing_hooks[i].triggers[j].workflow_dest_node, id);
+                        if (n) {
+                            return n;
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     static findNode(node: WorkflowNode, compareFunc): WorkflowNode {
         if (compareFunc(node)) {
             return node;
         }
-        let nodeToFind: WorkflowNode;
         if (node.triggers) {
             for (let i = 0; i < node.triggers.length; i++) {
                 let n = WorkflowNode.findNode(node.triggers[i].workflow_dest_node, compareFunc);
                 if (n) {
-                    nodeToFind = n;
-                    break;
+                    return n;
                 }
             }
         }
-        return nodeToFind;
+        if (node.outgoing_hooks) {
+            for (let i = 0; i < node.outgoing_hooks.length; i++) {
+                if (node.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < node.outgoing_hooks[i].triggers.length; j++) {
+                        let n = WorkflowNode.findNode(node.outgoing_hooks[i].triggers[j].workflow_dest_node, compareFunc);
+                        if (n) {
+                            return n;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     static getHookByID(node: WorkflowNode, id: number): WorkflowNodeHook {
@@ -550,17 +951,15 @@ export class WorkflowNode {
                 return hook;
             }
         }
-        let hookToFind: WorkflowNodeHook;
         if (node.triggers) {
             for (let i = 0; i < node.triggers.length; i++) {
                 let h = WorkflowNode.getHookByID(node.triggers[i].workflow_dest_node, id);
                 if (h) {
-                    hookToFind = h;
-                    break;
+                    return h;
                 }
             }
         }
-        return hookToFind;
+        return null;
     }
 
     static addRef(refs: string[], root: WorkflowNode) {
@@ -610,6 +1009,65 @@ export class WorkflowNode {
         return null;
     }
 
+    static removeOutgoingHook(n: WorkflowNode, id: number): boolean {
+        if (n.outgoing_hooks) {
+            let lengthBefore = n.outgoing_hooks.length;
+            n.outgoing_hooks = n.outgoing_hooks.filter(h => h.id !== id);
+            if (lengthBefore !== n.outgoing_hooks.length) {
+                return true;
+            }
+
+            for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                if (n.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
+                        let done = WorkflowNode.removeOutgoingHook(n.outgoing_hooks[i].triggers[j].workflow_dest_node, id);
+                        if (done) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (n.triggers) {
+            for (let i = 0; i < n.triggers.length; i++) {
+                let done = WorkflowNode.removeOutgoingHook(n.triggers[i].workflow_dest_node, id);
+                if (done) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    static findOutgoingHook(n: WorkflowNode, id: number): WorkflowNodeOutgoingHook {
+        if (n.outgoing_hooks) {
+            for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                if (n.outgoing_hooks[i].id === id) {
+                    return n.outgoing_hooks[i];
+                }
+                if (n.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
+                        let h = WorkflowNode.findOutgoingHook(n.outgoing_hooks[i].triggers[j].workflow_dest_node, id);
+                        if (h) {
+                            return h;
+                        }
+                    }
+                }
+            }
+        }
+        if (n.triggers) {
+            for (let i = 0; i < n.triggers.length; i++) {
+                let h = WorkflowNode.findOutgoingHook(n.triggers[i].workflow_dest_node, id);
+                if (h) {
+                    return h;
+                }
+            }
+        }
+        return null;
+    }
+
     static getNodeNameImpact(n: WorkflowNode, name: string, nodeWarn: WorkflowPipelineNameImpact): void {
         let varName = 'workflow.' + name;
         if (n.context.conditions && n.context.conditions.plain) {
@@ -638,6 +1096,16 @@ export class WorkflowNode {
             });
         }
 
+        if (n.outgoing_hooks) {
+            for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                if (n.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
+                        map = WorkflowNode.getMapNodes(map, n.outgoing_hooks[i].triggers[j].workflow_dest_node);
+                    }
+                }
+            }
+        }
+
         return map;
     }
 
@@ -647,6 +1115,7 @@ export class WorkflowNode {
         let smallNode = new WorkflowNode();
         smallNode.id = n.id;
         smallNode.name = n.name;
+        smallNode.ref = n.ref;
         nodes.push(smallNode);
 
         if (n.triggers) {
@@ -654,6 +1123,26 @@ export class WorkflowNode {
                 nodes.push(...WorkflowNode.getAllNodes(t.workflow_dest_node));
             });
         }
+
+        if (n.outgoing_hooks) {
+            for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                if (n.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
+                        nodes = nodes.concat(WorkflowNode.getAllNodes(n.outgoing_hooks[i].triggers[j].workflow_dest_node));
+                    }
+                }
+            }
+        }
+        if (n.forks) {
+            for (let i = 0; i < n.forks.length; i++) {
+                if (n.forks[i].triggers) {
+                    for (let j = 0; j < n.forks[i].triggers.length; j++) {
+                        nodes.push(...WorkflowNode.getAllNodes(n.forks[i].triggers[j].workflow_dest_node));
+                    }
+                }
+            }
+        }
+
         return nodes;
     }
 
@@ -672,10 +1161,61 @@ export class WorkflowNode {
                 WorkflowNode.prepareRequestForAPI(t.workflow_dest_node);
             });
         }
+        if (n.outgoing_hooks) {
+            for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                if (n.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
+                        WorkflowNode.prepareRequestForAPI(n.outgoing_hooks[i].triggers[j].workflow_dest_node);
+                    }
+                }
+            }
+        }
     }
 
     static isLinkedToRepo(node: WorkflowNode): boolean {
       return node.context.application_id !== 0 && node.context.application != null && !!node.context.application.repository_fullname;
+    }
+
+    static getAllHooks(n: WorkflowNode): Array<WorkflowNodeHook> {
+        let res = n.hooks;
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                res = res.concat(WorkflowNode.getAllHooks(t.workflow_dest_node));
+            });
+        }
+        if (n.outgoing_hooks) {
+            for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                if (n.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
+                        res = res.concat(WorkflowNode.getAllHooks(n.outgoing_hooks[i].triggers[j].workflow_dest_node));
+                    }
+                }
+            }
+        }
+        return res;
+    }
+
+
+    static getAllOutgoingHooks(n: WorkflowNode): Array<WorkflowNodeOutgoingHook> {
+        let res = new Array<WorkflowNodeOutgoingHook>();
+        if (n.outgoing_hooks) {
+            res = n.outgoing_hooks;
+        }
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                res = res.concat(WorkflowNode.getAllOutgoingHooks(t.workflow_dest_node));
+            });
+        }
+        if (n.outgoing_hooks) {
+            for (let i = 0; i < n.outgoing_hooks.length; i++) {
+                if (n.outgoing_hooks[i].triggers) {
+                    for (let j = 0; j < n.outgoing_hooks[i].triggers.length; j++) {
+                        res = res.concat(WorkflowNode.getAllOutgoingHooks(n.outgoing_hooks[i].triggers[j].workflow_dest_node));
+                    }
+                }
+            }
+        }
+        return res;
     }
 
     constructor() {
@@ -703,12 +1243,21 @@ export class WorkflowNodeContext {
     mutex: boolean;
 }
 
-// WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
+// WorkflowNodeHook represents a hook which can trigger the workflow from a given node
 export class WorkflowNodeHook {
     id: number;
     uuid: string;
     model: WorkflowHookModel;
     config: Map<string, WorkflowNodeHookConfigValue>;
+}
+
+export class WorkflowNodeOutgoingHook {
+    id: number;
+    name: string;
+    ref: string;
+    model: WorkflowHookModel;
+    config: Map<string, WorkflowNodeHookConfigValue>;
+    triggers: Array<WorkflowNodeTrigger>;
 }
 
 export class WorkflowNodeHookConfigValue {
@@ -727,6 +1276,20 @@ export class WorkflowNodeTrigger {
     constructor() {
         this.workflow_dest_node = new WorkflowNode();
     }
+}
+
+export class WorkflowNodeFork {
+    id: number;
+    name: string;
+    workflow_node_id: number;
+    triggers: Array<WorkflowNodeForkTrigger>;
+}
+
+export class WorkflowNodeForkTrigger {
+    id: number;
+    workflow_node_fork_id: number;
+    workflow_dest_node_id: number;
+    workflow_dest_node: WorkflowNode;
 }
 
 // WorkflowTriggerConditions is either a lua script to check conditions or a set of WorkflowTriggerCondition

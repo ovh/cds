@@ -33,7 +33,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 		}
 
 		var req sdk.WorkflowNodeRunRelease
-		if errU := UnmarshalBody(r, &req); errU != nil {
+		if errU := service.UnmarshalBody(r, &req); errU != nil {
 			return errU
 		}
 

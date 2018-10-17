@@ -38,7 +38,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		takeForm := &sdk.WorkerTakeForm{}
-		if err := UnmarshalBody(r, takeForm); err != nil {
+		if err := service.UnmarshalBody(r, takeForm); err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot unmarshal request")
 		}
 
@@ -170,7 +170,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 		return nil, sdk.WrapError(err, "takeJob> Cannot load project variable")
 	}
 
-	secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, store, job, noderun, workflowRun, pv)
+	secrets, errSecret := workflow.LoadSecrets(tx, store, noderun, workflowRun, pv)
 	if errSecret != nil {
 		return nil, sdk.WrapError(errSecret, "takeJob> Cannot load secrets")
 	}
@@ -322,7 +322,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 		}
 
 		var report sdk.VulnerabilityWorkerReport
-		if err := UnmarshalBody(r, &report); err != nil {
+		if err := service.UnmarshalBody(r, &report); err != nil {
 			return sdk.WrapError(err, "postVulnerabilityReportHandler> Unable to read body")
 		}
 
@@ -346,34 +346,30 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 
 func (api *API) postSpawnInfosWorkflowJobHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
-		_, next := observability.Span(ctx, "receiveSpawnInfosWorkflowJob")
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
-			next()
-			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
+			return sdk.WrapError(errc, "invalid id")
 		}
-		var s []sdk.SpawnInfo
-		if err := UnmarshalBody(r, &s); err != nil {
-			next()
-			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
-		}
+
 		observability.Current(ctx, observability.Tag(observability.TagWorkflowNodeJobRun, id))
-		next()
+
+		var s []sdk.SpawnInfo
+		if err := service.UnmarshalBody(r, &s); err != nil {
+			return sdk.WrapError(err, "cannot unmarshal request")
+		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			return sdk.WrapError(errBegin, "postSpawnInfosWorkflowJobHandler> Cannot start transaction")
+			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		_, next = observability.Span(ctx, "workflow.AddSpawnInfosNodeJobRun")
-		defer next()
 		if err := workflow.AddSpawnInfosNodeJobRun(tx, id, s); err != nil {
-			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
+			return sdk.WrapError(err, "Cannot save spawn info on node job run %d for %s name %s", id, getAgent(r), r.Header.Get(cdsclient.RequestedNameHeader))
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot commit tx")
+			return sdk.WrapError(err, "Cannot commit tx")
 		}
 
 		return nil
@@ -384,13 +380,13 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
-			return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
+			return sdk.WrapError(errc, "invalid id")
 		}
 
 		// Unmarshal into results
 		var res sdk.Result
-		if err := UnmarshalBody(r, &res); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
+		if err := service.UnmarshalBody(r, &res); err != nil {
+			return sdk.WrapError(err, "cannot unmarshal request")
 		}
 		customCtx, cancel := context.WithTimeout(ctx, 180*time.Second)
 		defer cancel()
@@ -406,12 +402,12 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 					// job result already send as job is no more in database
 					// this log is here to stats it and we returns nil for unlock the worker
 					// and avoid a "worker timeout"
-					log.Warning("postWorkflowJobResultHandler> NodeJobRun not found: %d err:%v", id, errLn)
+					log.Warning("NodeJobRun not found: %d err:%v", id, errLn)
 					return nil
 				}
-				return sdk.WrapError(errLn, "postWorkflowJobResultHandler> Cannot load NodeJobRun %d", id)
+				return sdk.WrapError(errLn, "Cannot load NodeJobRun %d", id)
 			}
-			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project from job %d", id)
+			return sdk.WrapError(errP, "Cannot load project from job %d", id)
 		}
 
 		observability.Current(ctx,
@@ -420,7 +416,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 
 		report, err := postJobResult(customCtx, api.mustDBWithCtx, api.Cache, proj, getWorker(ctx), &res)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowJobResultHandler> unable to post job result")
+			return sdk.WrapError(err, "unable to post job result")
 		}
 
 		workflowRuns := report.WorkflowRuns()
@@ -433,13 +429,11 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			}
 		}
 
-		db := api.mustDB()
-
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(ctx, db, api.Cache, proj, report)
+		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
 		next()
 
-		go workflow.SendEvent(db, proj.Key, report)
+		go workflow.SendEvent(api.mustDB(), proj.Key, report)
 
 		return nil
 	}
@@ -502,6 +496,13 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		return nil, sdk.WrapError(err, "postJobResult> Cannot commit tx")
 	}
 
+	for i := range report.WorkflowRuns() {
+		run := &report.WorkflowRuns()[i]
+		if err := updateParentWorkflowRun(ctx, newDBFunc, store, run); err != nil {
+			return nil, sdk.WrapError(err, "postJobResult")
+		}
+	}
+
 	return report, nil
 }
 
@@ -518,7 +519,7 @@ func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 		}
 
 		var logs sdk.Log
-		if err := UnmarshalBody(r, &logs); err != nil {
+		if err := service.UnmarshalBody(r, &logs); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobLogsHandler> Unable to parse body")
 		}
 
@@ -533,7 +534,7 @@ func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		var logs []sdk.ServiceLog
-		if err := UnmarshalBody(r, &logs); err != nil {
+		if err := service.UnmarshalBody(r, &logs); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobServiceLogsHandler> Unable to parse body")
 		}
 		db := api.mustDB()
@@ -611,7 +612,7 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 		}
 
 		var step sdk.StepStatus
-		if err := UnmarshalBody(r, &step); err != nil {
+		if err := service.UnmarshalBody(r, &step); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while unmarshal job")
 		}
 
@@ -673,6 +674,16 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 				return nil
 			}
 			nodeRun = *nodeRunP
+		}
+
+		run, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
+			DisableDetailledNodeRun: true,
+		})
+		if err != nil {
+			return err
+		}
+		if err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, run); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler")
 		}
 
 		work, errW := workflow.LoadWorkflowFromWorkflowRunID(api.mustDB(), nodeRun.WorkflowRunID)
@@ -821,7 +832,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 		}
 
 		var report coverage.Report
-		if err := UnmarshalBody(r, &report); err != nil {
+		if err := service.UnmarshalBody(r, &report); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobCoverageResultsHandler> cannot unmarshal request")
 		}
 
@@ -864,7 +875,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal into results
 		var new venom.Tests
-		if err := UnmarshalBody(r, &new); err != nil {
+		if err := service.UnmarshalBody(r, &new); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> cannot unmarshal request")
 		}
 
@@ -966,7 +977,7 @@ func (api *API) postWorkflowJobTagsHandler() service.Handler {
 		}
 
 		var tags = []sdk.WorkflowRunTag{}
-		if err := UnmarshalBody(r, &tags); err != nil {
+		if err := service.UnmarshalBody(r, &tags); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to unmarshal body")
 		}
 
@@ -1006,7 +1017,7 @@ func (api *API) postWorkflowJobVariableHandler() service.Handler {
 
 		// Unmarshal into variable
 		var v sdk.Variable
-		if err := UnmarshalBody(r, &v); err != nil {
+		if err := service.UnmarshalBody(r, &v); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler")
 		}
 

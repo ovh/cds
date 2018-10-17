@@ -15,7 +15,7 @@ import (
 func (api *API) addBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var bc sdk.Broadcast
-		if err := UnmarshalBody(r, &bc); err != nil {
+		if err := service.UnmarshalBody(r, &bc); err != nil {
 			return sdk.WrapError(err, "addBroadcast> cannot unmarshal body")
 		}
 
@@ -58,7 +58,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 
 		// Unmarshal body
 		var bc sdk.Broadcast
-		if err := UnmarshalBody(r, &bc); err != nil {
+		if err := service.UnmarshalBody(r, &bc); err != nil {
 			return sdk.WrapError(err, "updateBroadcast> cannot unmarshal body")
 		}
 

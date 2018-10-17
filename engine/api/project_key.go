@@ -127,7 +127,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 		key := vars["permProjectKey"]
 
 		var newKey sdk.ProjectKey
-		if err := UnmarshalBody(r, &newKey); err != nil {
+		if err := service.UnmarshalBody(r, &newKey); err != nil {
 			return err
 		}
 

@@ -17,7 +17,8 @@ import (
 )
 
 func TestAddVariableInEnvironmentHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -79,7 +80,8 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 }
 
 func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -149,7 +151,8 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 }
 
 func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -212,7 +215,8 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 }
 
 func TestGetVariablesInEnvironmentHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -267,7 +271,8 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 }
 
 func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())

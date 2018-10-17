@@ -17,6 +17,10 @@ import (
 var store cache.Store
 
 func publishEvent(e sdk.Event) {
+	if store == nil {
+		return
+	}
+
 	store.Enqueue("events", e)
 
 	// send to cache for cds repositories manager

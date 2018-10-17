@@ -24,7 +24,7 @@ func (api *API) addTriggerHandler() service.Handler {
 
 		// Unmarshal args
 		var t sdk.PipelineTrigger
-		if err := UnmarshalBody(r, &t); err != nil {
+		if err := service.UnmarshalBody(r, &t); err != nil {
 			return err
 		}
 
@@ -240,7 +240,7 @@ func (api *API) updateTriggerHandler() service.Handler {
 		}
 
 		var t sdk.PipelineTrigger
-		if err := UnmarshalBody(r, &t); err != nil {
+		if err := service.UnmarshalBody(r, &t); err != nil {
 			return err
 		}
 

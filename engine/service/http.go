@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -114,4 +115,17 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 
 	// safely ignore error returned by WriteJSON
 	_ = WriteJSON(w, httpErr, httpErr.Status)
+}
+
+// UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.
+func UnmarshalBody(r *http.Request, i interface{}) error {
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		return sdk.ErrWrongRequest
+	}
+	if err := json.Unmarshal(data, i); err != nil {
+		err = sdk.NewError(sdk.ErrWrongRequest, err)
+		return sdk.WrapError(err, "UnmarshalBody> unable to unmarshal %s", string(data))
+	}
+	return nil
 }

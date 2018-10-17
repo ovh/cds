@@ -11,12 +11,12 @@ import (
 )
 
 //PostInsert is a db hook
-func (r *NodeHookModel) PostInsert(db gorp.SqlExecutor) error {
+func (r *hookModel) PostInsert(db gorp.SqlExecutor) error {
 	return r.PostUpdate(db)
 }
 
 //PostUpdate is a db hook
-func (r *NodeHookModel) PostUpdate(db gorp.SqlExecutor) error {
+func (r *hookModel) PostUpdate(db gorp.SqlExecutor) error {
 	if r.DefaultConfig == nil {
 		r.DefaultConfig = sdk.WorkflowNodeHookConfig{}
 	}
@@ -32,7 +32,7 @@ func (r *NodeHookModel) PostUpdate(db gorp.SqlExecutor) error {
 }
 
 //PostGet is a db hook
-func (r *NodeHookModel) PostGet(db gorp.SqlExecutor) error {
+func (r *hookModel) PostGet(db gorp.SqlExecutor) error {
 	confStr, err := db.SelectStr("select default_config from workflow_hook_model where id = $1", r.ID)
 	if err != nil {
 		return err
@@ -92,7 +92,7 @@ func checkBuiltinWorkflowHookModelExist(db gorp.SqlExecutor, h *sdk.WorkflowHook
 
 // LoadHookModels returns all hook models available
 func LoadHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
-	dbModels := []NodeHookModel{}
+	dbModels := []hookModel{}
 	if _, err := db.Select(&dbModels, "select id, name, type, command, author, description, identifier, icon from workflow_hook_model"); err != nil {
 		return nil, sdk.WrapError(err, "LoadHookModels> Unable to load WorkflowHookModel")
 	}
@@ -110,7 +110,7 @@ func LoadHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
 
 // LoadHookModelByID returns a hook model by it's id, if not found, it returns an error
 func LoadHookModelByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowHookModel, error) {
-	m := NodeHookModel{}
+	m := hookModel{}
 	query := "select id, name, type, command, default_config, author, description, identifier, icon from workflow_hook_model where id = $1"
 	if err := db.SelectOne(&m, query, id); err != nil {
 		if err == sql.ErrNoRows {
@@ -124,7 +124,7 @@ func LoadHookModelByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowHookModel, e
 
 // LoadHookModelByName returns a hook model by it's name, if not found, it returns an error
 func LoadHookModelByName(db gorp.SqlExecutor, name string) (*sdk.WorkflowHookModel, error) {
-	m := NodeHookModel{}
+	m := hookModel{}
 	query := "select id, name, type, command, default_config, author, description, identifier, icon from workflow_hook_model where name = $1"
 	if err := db.SelectOne(&m, query, name); err != nil {
 		if err == sql.ErrNoRows {
@@ -138,7 +138,7 @@ func LoadHookModelByName(db gorp.SqlExecutor, name string) (*sdk.WorkflowHookMod
 
 // UpdateHookModel updates a hook model in database
 func UpdateHookModel(db gorp.SqlExecutor, m *sdk.WorkflowHookModel) error {
-	dbm := NodeHookModel(*m)
+	dbm := hookModel(*m)
 	if n, err := db.Update(&dbm); err != nil {
 		return sdk.WrapError(err, "UpdateHookModel> Unable to update hook model %s", m.Name)
 	} else if n == 0 {
@@ -149,7 +149,7 @@ func UpdateHookModel(db gorp.SqlExecutor, m *sdk.WorkflowHookModel) error {
 
 // InsertHookModel inserts a hook model in database
 func InsertHookModel(db gorp.SqlExecutor, m *sdk.WorkflowHookModel) error {
-	dbm := NodeHookModel(*m)
+	dbm := hookModel(*m)
 	if err := db.Insert(&dbm); err != nil {
 		return sdk.WrapError(err, "InsertHookModel> Unable to insert hook model %s", m.Name)
 	}

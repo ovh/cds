@@ -85,7 +85,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 		appName := vars["permApplicationName"]
 
 		var newKey sdk.ApplicationKey
-		if err := UnmarshalBody(r, &newKey); err != nil {
+		if err := service.UnmarshalBody(r, &newKey); err != nil {
 			return err
 		}
 

@@ -21,7 +21,8 @@ import (
 )
 
 func TestGetApplicationWithTriggersHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 

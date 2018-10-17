@@ -73,7 +73,8 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func TestInsertWorkerModel(t *testing.T) {
-	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -124,7 +125,8 @@ func TestInsertWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModel(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -146,7 +148,8 @@ func TestLoadWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModels(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -171,7 +174,8 @@ func TestLoadWorkerModels(t *testing.T) {
 }
 
 func TestLoadWorkerModelsWithFilter(t *testing.T) {
-	db, store := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, store, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -191,7 +195,8 @@ func TestLoadWorkerModelsWithFilter(t *testing.T) {
 }
 
 func TestLoadWorkerModelsByUserAndBinary(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 	s := sdk.RandomString(10)
 	_, hash, _ := user.GeneratePassword()
@@ -230,7 +235,8 @@ func TestLoadWorkerModelsByUserAndBinary(t *testing.T) {
 }
 
 func TestLoadWorkerModelCapabilities(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -247,7 +253,8 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 }
 
 func TestUpdateWorkerModel(t *testing.T) {
-	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)

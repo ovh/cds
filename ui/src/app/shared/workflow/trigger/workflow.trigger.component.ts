@@ -5,7 +5,7 @@ import {finalize} from 'rxjs/operators';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {
-    Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext, WorkflowNodeTrigger
+    Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext
 } from '../../../model/workflow.model';
 import {WorkflowNodeAddWizardComponent} from '../../../shared/workflow/node/wizard/node.wizard.component';
 
@@ -23,17 +23,16 @@ export class WorkflowTriggerComponent {
     @ViewChild('nodeWizard')
     nodeWizard: WorkflowNodeAddWizardComponent;
 
-    @Output() triggerChange = new EventEmitter<WorkflowNodeTrigger>();
-    @Input() triggerSrcNode: WorkflowNode;
+    @Output() triggerChange = new EventEmitter<WorkflowNode>();
+    @Input() source: string;
     @Input() workflow: Workflow;
     @Input() project: Project;
-    @Input() trigger: WorkflowNodeTrigger;
+    @Input() trigger: WorkflowNode;
     @Input() loading: boolean;
 
     currentSection = 'pipeline';
 
-    constructor(private _modalService: SuiModalService) {
-    }
+    constructor(private _modalService: SuiModalService) {}
 
     show(): void {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.triggerModal);
@@ -45,7 +44,7 @@ export class WorkflowTriggerComponent {
     }
 
     destNodeChange(node: WorkflowNode): void {
-        this.trigger.workflow_dest_node = node;
+        this.trigger = node;
     }
 
     pipelineSectionChanged(pipSection: string) {
@@ -57,17 +56,17 @@ export class WorkflowTriggerComponent {
         this.nodeWizard.goToNextSection()
           .pipe(finalize(() => this.loading = false))
           .subscribe(() => {
-            if (!this.trigger.workflow_dest_node.id) {
-                if (!this.trigger.workflow_dest_node.context) {
-                    this.trigger.workflow_dest_node.context = new WorkflowNodeContext();
+            if (!this.trigger.id) {
+                if (!this.trigger.context) {
+                    this.trigger.context = new WorkflowNodeContext();
                 }
-                this.trigger.workflow_dest_node.context.conditions = new WorkflowNodeConditions();
-                this.trigger.workflow_dest_node.context.conditions.plain = new Array<WorkflowNodeCondition>();
+                this.trigger.context.conditions = new WorkflowNodeConditions();
+                this.trigger.context.conditions.plain = new Array<WorkflowNodeCondition>();
                 let c = new  WorkflowNodeCondition();
                 c.variable = 'cds.status';
                 c.value = PipelineStatus.SUCCESS;
                 c.operator = 'eq';
-                this.trigger.workflow_dest_node.context.conditions.plain.push(c);
+                this.trigger.context.conditions.plain.push(c);
             }
             this.triggerChange.emit(this.trigger);
           });

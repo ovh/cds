@@ -147,7 +147,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() service.Handler {
 
 		// Unmarshal args
 		s := &sdk.PipelineScheduler{}
-		if err := UnmarshalBody(r, s); err != nil {
+		if err := service.UnmarshalBody(r, s); err != nil {
 			return err
 		}
 
@@ -223,7 +223,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() service.Handler {
 
 		// Unmarshal args
 		s := &sdk.PipelineScheduler{}
-		if err := UnmarshalBody(r, s); err != nil {
+		if err := service.UnmarshalBody(r, s); err != nil {
 			return err
 		}
 

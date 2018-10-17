@@ -20,7 +20,8 @@ import (
 
 // TestVerifyUserToken test token verification when OK
 func TestVerifyUserToken(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -62,7 +63,8 @@ func TestVerifyUserToken(t *testing.T) {
 
 // TestWrongTokenUser  test token verification when token is wrong
 func TestWrongTokenUser(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -98,7 +100,8 @@ func TestWrongTokenUser(t *testing.T) {
 
 // TestVerifyResetExpired test validating reset token when time expired
 func TestVerifyResetExpired(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -139,7 +142,8 @@ func TestVerifyResetExpired(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestVerifyAlreadyDone(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -180,7 +184,8 @@ func TestVerifyAlreadyDone(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestLoadUserWithGroup(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -267,7 +272,8 @@ func TestLoadUserWithGroup(t *testing.T) {
 
 // Test_getUserHandlerOK checks call on /user/{username}
 func Test_getUserHandlerOK(t *testing.T) {
-	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
@@ -292,7 +298,8 @@ func Test_getUserHandlerOK(t *testing.T) {
 
 // Test_getUserHandlerOK checks call on /user/{username} with an admin user
 func Test_getUserHandlerAdmin(t *testing.T) {
-	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
@@ -321,7 +328,8 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 
 // Test_getUserHandlerOK checks call on /user/{username} with a not allowed user
 func Test_getUserHandlerForbidden(t *testing.T) {
-	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
@@ -356,7 +364,8 @@ func Test_getUserHandlerForbidden(t *testing.T) {
 }
 
 func Test_getUserGroupsHandler(t *testing.T) {
-	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	g1 := &sdk.Group{
 		Name: sdk.RandomString(10),
@@ -394,7 +403,8 @@ func Test_getUserGroupsHandler(t *testing.T) {
 
 // Test_getUserTokenListHandlerOK checks call on /user/tokens
 func Test_getUserTokenListHandlerOK(t *testing.T) {
-	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 
 	u1, pass1 := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u1)
@@ -459,7 +469,8 @@ func Test_getUserTokenListHandlerOK(t *testing.T) {
 
 // Test_postUserFavoriteHandler
 func Test_postUserFavoriteHandler(t *testing.T) {
-	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	db := api.mustDB()
 	u1, pass1 := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u1)
@@ -558,7 +569,8 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 
 // TestVerifyResetExpired test validating reset token when time expired
 func TestTimelineFilter(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u, passUser := assets.InsertAdminUser(api.mustDB())
 	t.Logf("%s", passUser)
 

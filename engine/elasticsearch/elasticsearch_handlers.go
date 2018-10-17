@@ -8,7 +8,6 @@ import (
 
 	"gopkg.in/olivere/elastic.v5"
 
-	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -20,7 +19,7 @@ func (s *Service) getEventsHandler() service.Handler {
 		}
 
 		var filters sdk.EventFilter
-		if err := api.UnmarshalBody(r, &filters); err != nil {
+		if err := service.UnmarshalBody(r, &filters); err != nil {
 			return sdk.WrapError(err, "getEventsHandler> Unable to read body")
 		}
 
@@ -47,7 +46,7 @@ func (s *Service) postEventHandler() service.Handler {
 		}
 
 		var e sdk.Event
-		if err := api.UnmarshalBody(r, &e); err != nil {
+		if err := service.UnmarshalBody(r, &e); err != nil {
 			return sdk.WrapError(err, "postEventHandler> Unable to read body")
 		}
 
@@ -66,7 +65,7 @@ func (s *Service) getMetricsHandler() service.Handler {
 		}
 
 		var request sdk.MetricRequest
-		if err := api.UnmarshalBody(r, &request); err != nil {
+		if err := service.UnmarshalBody(r, &request); err != nil {
 			return sdk.WrapError(err, "getMetricsHandler> unable to read request")
 		}
 
@@ -99,7 +98,7 @@ func (s *Service) postMetricsHandler() service.Handler {
 		}
 
 		var metric sdk.Metric
-		if err := api.UnmarshalBody(r, &metric); err != nil {
+		if err := service.UnmarshalBody(r, &metric); err != nil {
 			return sdk.WrapError(err, "postEventHandler> Unable to read body")
 		}
 

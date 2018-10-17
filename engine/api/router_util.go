@@ -2,9 +2,7 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -46,19 +44,6 @@ func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, re
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNoContent)
 	return ctx, nil
-}
-
-// UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.
-func UnmarshalBody(r *http.Request, i interface{}) error {
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
-	}
-	if err := json.Unmarshal(data, i); err != nil {
-		err = sdk.NewError(sdk.ErrWrongRequest, err)
-		return sdk.WrapError(err, "UnmarshalBody> unable to unmarshal %s", string(data))
-	}
-	return nil
 }
 
 // GetRoute returns the routes given a handler

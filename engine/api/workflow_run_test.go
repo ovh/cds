@@ -26,7 +26,8 @@ import (
 )
 
 func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -137,7 +138,8 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunsHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -278,7 +280,8 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -379,7 +382,8 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 }
 
 func Test_getLatestWorkflowRunHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -500,7 +504,8 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -603,7 +608,8 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNodeRunHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -742,7 +748,8 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 }
 
 func Test_resyncWorkflowRunHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -852,7 +859,8 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -949,7 +957,8 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, _ := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -1063,7 +1072,8 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 }
 
 func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -1124,7 +1134,8 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 }
 
 func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -1193,7 +1204,8 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 }
 
 func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)

@@ -24,7 +24,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 		db := api.mustDB()
 		u := getUser(ctx)
 
-		if err := UnmarshalBody(r, &p); err != nil {
+		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WrapError(err, "postPGRPCluginHandler>")
 		}
 		p.Binaries = nil
@@ -94,7 +94,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		db := api.mustDB()
 		var p sdk.GRPCPlugin
-		if err := UnmarshalBody(r, &p); err != nil {
+		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WrapError(err, "putGRPCluginHandler>")
 		}
 
@@ -150,7 +150,7 @@ func (api *API) deleteGRPCluginHandler() service.Handler {
 func (api *API) postGRPCluginBinaryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var b sdk.GRPCPluginBinary
-		if err := UnmarshalBody(r, &b); err != nil {
+		if err := service.UnmarshalBody(r, &b); err != nil {
 			return sdk.WrapError(err, "postGRPCluginBinaryHandler")
 		}
 

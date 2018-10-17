@@ -78,6 +78,17 @@ type EventRunWorkflowNode struct {
 	StagesSummary         []StageSummary            `json:"stages_summary"`
 }
 
+type EventRunWorkflowOutgoingHook struct {
+	HookID            int64  `json:"hook_id"`
+	ID                string `json:"id"`
+	Status            string `json:"status,omitempty"`
+	Start             int64  `json:"start,omitempty"`
+	Done              int64  `json:"done,omitempty"`
+	Log               string `json:"log,omitempty"`
+	WorkflowRunID     int64  `json:"workflow_run_id"`
+	WorkflowRunNumber *int64 `json:"workflow_run_number,omitempty"`
+}
+
 // EventRunWorkflowJob contains event data for a workflow job node run
 type EventRunWorkflowJob struct {
 	ID     int64  `json:"id,omitempty"`

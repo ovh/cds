@@ -21,7 +21,8 @@ import (
 )
 
 func Test_getWorkflowExportHandler(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
@@ -70,6 +71,19 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 					},
 				},
 			},
+			Forks: []sdk.WorkflowNodeFork{
+				{
+					Name: "fork",
+					Triggers: []sdk.WorkflowNodeForkTrigger{
+						{
+							WorkflowDestNode: sdk.WorkflowNode{
+								PipelineID:   pip.ID,
+								PipelineName: pip.Name,
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 
@@ -99,18 +113,26 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 	assert.Equal(t, `name: test_1
 version: v1.0
 workflow:
+  fork:
+    depends_on:
+    - pip1
   pip1:
     pipeline: pip1
   pip1_2:
     depends_on:
     - pip1
     pipeline: pip1
+  pip1_3:
+    depends_on:
+    - fork
+    pipeline: pip1
 `, rec.Body.String())
 
 }
 
 func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
@@ -215,7 +237,8 @@ history_length: 25
 }
 
 func Test_getWorkflowPullHandler(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)

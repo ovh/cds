@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -102,8 +103,8 @@ func (s *Service) startTaskHandler() service.Handler {
 		}
 
 		//Start the task
-		if err := s.startTask(ctx, t); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hooks> startTaskHandler> start task")
+		if _, err := s.startTask(ctx, t); err != nil {
+			return sdk.WrapError(err, "Hooks> startTaskHandler> start task")
 		}
 		return nil
 	}
@@ -136,13 +137,29 @@ func (s *Service) postTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeHook from the body
 		hook := &sdk.WorkflowNodeHook{}
-		if err := api.UnmarshalBody(r, hook); err != nil {
+		if err := service.UnmarshalBody(r, hook); err != nil {
 			return sdk.WrapError(err, "Hooks> postTaskHandler")
 		}
 		if err := s.addTask(ctx, hook); err != nil {
 			return sdk.WrapError(err, "Hooks> postTaskHandler")
 		}
 		return nil
+	}
+}
+
+func (s *Service) postAndExecuteTaskHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//This handler read a sdk.WorkflowNodeOutgoingHook from the body
+		var hook sdk.WorkflowNodeOutgoingHookRun
+		if err := service.UnmarshalBody(r, &hook); err != nil {
+			return sdk.WrapError(err, "Hooks> postAndExecuteTaskHandler")
+		}
+		t, e, err := s.addAndExecuteTask(ctx, hook)
+		if err != nil {
+			return sdk.WrapError(err, "Hooks> postAndExecuteTaskHandler> unable to add Task")
+		}
+		t.Executions = []sdk.TaskExecution{e}
+		return service.WriteJSON(w, t, http.StatusOK)
 	}
 }
 
@@ -230,7 +247,7 @@ func (s *Service) putTaskHandler() service.Handler {
 		s.Dao.SaveTask(t)
 
 		//Start the task
-		if err := s.startTask(ctx, t); err != nil {
+		if _, err := s.startTask(ctx, t); err != nil {
 			return sdk.WrapError(err, "Hooks> putTaskHandler> Unable start task %+v", t)
 		}
 
@@ -339,7 +356,7 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 		}
 
 		//Start the task
-		if err := s.startTask(ctx, t); err != nil {
+		if _, err := s.startTask(ctx, t); err != nil {
 			return sdk.WrapError(err, "Hooks> deleteAllTaskExecutionsHandler> Unable start task %+v", t)
 		}
 
@@ -350,7 +367,7 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 func (s *Service) deleteTaskBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		hooks := map[string]sdk.WorkflowNodeHook{}
-		if err := api.UnmarshalBody(r, &hooks); err != nil {
+		if err := service.UnmarshalBody(r, &hooks); err != nil {
 			return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 		}
 
@@ -377,7 +394,7 @@ func (s *Service) postTaskBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeHook from the body
 		hooks := map[string]sdk.WorkflowNodeHook{}
-		if err := api.UnmarshalBody(r, &hooks); err != nil {
+		if err := service.UnmarshalBody(r, &hooks); err != nil {
 			return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 		}
 
@@ -406,10 +423,28 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 	s.Dao.SaveTask(t)
 
 	//Start the task
-	if err := s.startTask(ctx, t); err != nil {
+	if _, err := s.startTask(ctx, t); err != nil {
 		return sdk.WrapError(err, "Hooks> addTask> Unable start task %+v", t)
 	}
 	return nil
+}
+
+func (s *Service) addAndExecuteTask(ctx context.Context, h sdk.WorkflowNodeOutgoingHookRun) (sdk.Task, sdk.TaskExecution, error) {
+	// Parse the hook as a task
+	t, err := s.outgoingHookToTask(h)
+	if err != nil {
+		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Hooks> addAndExecuteTask> Unable to parse hook (%+v)", h)
+	}
+	// Save the task
+	s.Dao.SaveTask(&t)
+
+	// Start the task
+	e, err := s.startTask(ctx, &t)
+	if err != nil {
+		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Hooks> addAndExecuteTask> Unable start task %+v", t)
+	}
+
+	return t, *e, nil
 }
 
 func (s *Service) deleteTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
@@ -419,7 +454,7 @@ func (s *Service) deleteTask(ctx context.Context, h *sdk.WorkflowNodeHook) error
 		return sdk.WrapError(err, "Hooks> deleteTask> Unable to parse hook")
 	}
 
-	//Save the task
+	//Delete the task
 	s.Dao.DeleteTask(t)
 
 	return nil
@@ -495,5 +530,69 @@ func (s *Service) statusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var status = http.StatusOK
 		return service.WriteJSON(w, s.Status(), status)
+	}
+}
+
+func (s *Service) getTaskExecutionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		timestamp := vars["timestamp"]
+
+		//Load the task
+		t := s.Dao.FindTask(uuid)
+		if t == nil {
+			return service.WriteJSON(w, t, http.StatusOK)
+		}
+
+		//Load the executions
+		execs, err := s.Dao.FindAllTaskExecutions(t)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
+		}
+
+		for _, e := range execs {
+			if strconv.FormatInt(e.Timestamp, 10) == timestamp {
+				return service.WriteJSON(w, e, http.StatusOK)
+			}
+		}
+
+		return sdk.ErrNotFound
+	}
+}
+
+func (s *Service) postStopTaskExecutionHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Get the UUID of the task from the URL
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+		timestamp := vars["timestamp"]
+
+		//Load the task
+		t := s.Dao.FindTask(uuid)
+		if t == nil {
+			return service.WriteJSON(w, t, http.StatusOK)
+		}
+
+		//Load the executions
+		execs, err := s.Dao.FindAllTaskExecutions(t)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
+		}
+
+		for i := range execs {
+			e := &execs[i]
+			if strconv.FormatInt(e.Timestamp, 10) == timestamp && e.Status == TaskExecutionDoing || e.Status == TaskExecutionScheduled {
+				e.Status = TaskExecutionDone
+				e.LastError = TaskExecutionDone
+				e.NbErrors = s.Cfg.RetryError + 1
+				s.Dao.SaveTaskExecution(e)
+				log.Info("Hooks> postStopTaskExecutionHandler> task executions %s:%d has been stoppped", uuid, timestamp)
+				return nil
+			}
+		}
+
+		return nil
 	}
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string, u *sdk.User) {
+func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string) {
 	event := sdk.Event{
 		Timestamp:         time.Now(),
 		Hostname:          hostname,
@@ -27,10 +27,6 @@ func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName
 		WorkflowRunNumSub: sub,
 		Status:            status,
 	}
-	if u != nil {
-		event.Username = u.Username
-		event.UserMail = u.Email
-	}
 	publishEvent(event)
 }
 
@@ -45,7 +41,7 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 		LastModified:  wr.LastModified.Unix(),
 		Tags:          wr.Tags,
 	}
-	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, nil)
+	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status)
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
@@ -97,7 +93,26 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()
 	}
-	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status, nil)
+	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status)
+}
+
+// PublishWorkflowNodeOutgoingHookRun publish a EventRunWorkflowOutgoingHook
+func PublishWorkflowNodeOutgoingHookRun(db gorp.SqlExecutor, hr sdk.WorkflowNodeOutgoingHookRun, w sdk.Workflow) {
+	evt := sdk.EventRunWorkflowOutgoingHook{
+		ID:            hr.HookRunID,
+		HookID:        hr.Hook.ID,
+		Status:        hr.Status,
+		WorkflowRunID: hr.WorkflowRunID,
+	}
+
+	if hr.Callback != nil {
+		evt.Start = hr.Callback.Start.Unix()
+		evt.Done = hr.Callback.Done.Unix()
+		evt.Log = hr.Callback.Log
+		evt.WorkflowRunNumber = hr.Callback.WorkflowRunNumber
+	}
+
+	publishRunWorkflow(evt, w.ProjectKey, w.Name, "", "", "", hr.Number, hr.SubNumber, hr.Status)
 }
 
 // PublishWorkflowNodeJobRun publish a WorkflowNodeJobRun
@@ -111,5 +126,5 @@ func PublishWorkflowNodeJobRun(db gorp.SqlExecutor, pkey, wname string, jr sdk.W
 	if sdk.StatusIsTerminated(jr.Status) {
 		e.Done = jr.Done.Unix()
 	}
-	publishRunWorkflow(e, pkey, wname, "", "", "", 0, 0, jr.Status, nil)
+	publishRunWorkflow(e, pkey, wname, "", "", "", 0, 0, jr.Status)
 }

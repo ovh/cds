@@ -27,7 +27,7 @@ TEST_REDIS_HOST = $(if ${CDS_API_CACHE_REDIS_HOST},${CDS_API_CACHE_REDIS_HOST},l
 TEST_REDIS_PASSWORD = $(if ${CDS_API_CACHE_REDIS_PASSWORD},${CDS_API_CACHE_REDIS_PASSWORD},)
 TEST_DB_START = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_DB_PASSWORD) -e POSTGRES_USER=$(TEST_DB_USER) -e POSTGRES_DB=$(TEST_DB_NAME) --name postgres-cds postgres
 TEST_DB_INIT = $(GO_BUILD) && ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASSWORD) --db-name $(TEST_DB_NAME) --db-sslmode disable --migrate-dir ./sql && rm -rf ./engine
-TEST_CMD = go test -v -timeout 180s -coverprofile=profile.coverprofile
+TEST_CMD = go test -v -timeout 600s -coverprofile=profile.coverprofile
 
 $(TARGET_DIR):
 	$(info create $(TARGET_DIR) directory)
@@ -115,6 +115,10 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 				if [ $$NO_TESTS -gt 0 ]; then \
 					echo "No tests found \t\t\t($$TST)"; \
 				else \
+					if [ ! -z "${CDS_VERSION}" ]; then \
+						echo "Sending $$TST to CDS"; \
+						worker upload --tag `echo $$TST | sed 's|../||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
+					fi; \
 					echo "Generating xUnit report \t$$TST.xml"; \
 					$(GO_GO2XUNIT) -input $$TST -output $$TST.xml; \
 				fi; \

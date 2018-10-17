@@ -50,6 +50,26 @@ func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
 	return res
 }
 
+// WorkflowNodeOutgoingHook represents a outgoing hook
+type WorkflowNodeOutgoingHook struct {
+	ID                  int64                             `json:"id" db:"id"`
+	Name                string                            `json:"name" db:"name"`
+	Ref                 string                            `json:"ref" db:"-"`
+	WorkflowNodeID      int64                             `json:"workflow_node_id" db:"workflow_node_id"`
+	WorkflowHookModelID int64                             `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
+	WorkflowHookModel   WorkflowHookModel                 `json:"model" db:"-"`
+	Config              WorkflowNodeHookConfig            `json:"config" db:"-"`
+	Triggers            []WorkflowNodeOutgoingHookTrigger `json:"triggers,omitempty" db:"-"`
+}
+
+//WorkflowNodeFork represents a hook which cann trigger the workflow from a given node
+type WorkflowNodeFork struct {
+	ID             int64                     `json:"id" db:"id"`
+	Name           string                    `json:"name" db:"name"`
+	WorkflowNodeID int64                     `json:"workflow_node_id" db:"workflow_node_id"`
+	Triggers       []WorkflowNodeForkTrigger `json:"triggers,omitempty" db:"-"`
+}
+
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
 type WorkflowNodeHook struct {
 	ID                  int64                  `json:"id" db:"id"`
@@ -107,6 +127,15 @@ func (cfg WorkflowNodeHookConfig) Values() map[string]string {
 	return r
 }
 
+// Clone returns a copied dinstance of cfg
+func (cfg WorkflowNodeHookConfig) Clone() WorkflowNodeHookConfig {
+	m := WorkflowNodeHookConfig(make(map[string]WorkflowNodeHookConfigValue, len(cfg)))
+	for k, v := range cfg {
+		m[k] = v
+	}
+	return m
+}
+
 // WorkflowNodeHookConfigValue represents the value of a node hook config
 type WorkflowNodeHookConfigValue struct {
 	Value        string `json:"value"`
@@ -119,6 +148,12 @@ const (
 	HookConfigTypeString = "string"
 	// HookConfigTypePlatform type platform
 	HookConfigTypePlatform = "platform"
+	// HookConfigTypeProject type project
+	HookConfigTypeProject = "project"
+	// HookConfigTypeWorkflow type workflow
+	HookConfigTypeWorkflow = "workflow"
+	// HookConfigTypeHook type hook
+	HookConfigTypeHook = "hook"
 )
 
 //WorkflowHookModel represents a hook which can be used in workflows.

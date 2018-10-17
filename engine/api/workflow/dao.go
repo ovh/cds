@@ -514,7 +514,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.ErrWorkflowInvalidRoot
 	}
 
-	if err := renameNode(db, w); err != nil {
+	if err := renameNodeFork(db, w); err != nil {
 		return sdk.WrapError(err, "Insert> Cannot rename node")
 	}
 
@@ -567,21 +567,27 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	return nil
 }
 
-func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
+func renameNodeFork(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	nameByPipeline := map[int64][]*sdk.WorkflowNode{}
+	unamedFork := make([]*sdk.WorkflowNodeFork, 0)
+	maxNumberFork := 0
 	maxNumberByPipeline := map[int64]int64{}
 
 	// browse node
-	if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, w.Root, w); err != nil {
-		return err
+	var errS error
+	unamedFork, errS = saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &maxNumberFork, unamedFork, w.Root, w)
+	if errS != nil {
+		return errS
 	}
 
 	// browse join
 	for i := range w.Joins {
 		join := &w.Joins[i]
 		for j := range join.Triggers {
-			if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &join.Triggers[j].WorkflowDestNode, w); err != nil {
-				return err
+			var errJ error
+			unamedFork, errJ = saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &maxNumberFork, unamedFork, &join.Triggers[j].WorkflowDestNode, w)
+			if errJ != nil {
+				return errJ
 			}
 		}
 	}
@@ -601,16 +607,22 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 		}
 	}
 
+	// Generate fork name
+	for _, f := range unamedFork {
+		maxNumberFork++
+		f.Name = fmt.Sprintf("fork_%d", maxNumberFork)
+	}
+
 	return nil
 }
 
-func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, n *sdk.WorkflowNode, w *sdk.Workflow) error {
+func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, maxForkNumber *int, unamedFork []*sdk.WorkflowNodeFork, n *sdk.WorkflowNode, w *sdk.Workflow) ([]*sdk.WorkflowNodeFork, error) {
 	// Load pipeline to have name
 	pip, has := w.Pipelines[n.PipelineID]
 	if !has {
 		pip2, errorP := pipeline.LoadPipelineByID(context.TODO(), db, n.PipelineID, true)
 		if errorP != nil {
-			return sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", n.PipelineID)
+			return unamedFork, sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", n.PipelineID)
 		}
 		if w.Pipelines == nil {
 			w.Pipelines = map[int64]sdk.Pipeline{}
@@ -643,11 +655,42 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 	}
 
 	for k := range n.Triggers {
-		if err := saveNodeByPipeline(db, dict, mapMaxNumber, &n.Triggers[k].WorkflowDestNode, w); err != nil {
-			return err
+		var errT error
+		unamedFork, errT = saveNodeByPipeline(db, dict, mapMaxNumber, maxForkNumber, unamedFork, &n.Triggers[k].WorkflowDestNode, w)
+		if errT != nil {
+			return unamedFork, errT
 		}
 	}
-	return nil
+
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			var errO error
+			unamedFork, errO = saveNodeByPipeline(db, dict, mapMaxNumber, maxForkNumber, unamedFork, &n.OutgoingHooks[i].Triggers[j].WorkflowDestNode, w)
+			if errO != nil {
+				return unamedFork, errO
+			}
+		}
+	}
+
+	for i := range n.Forks {
+		if n.Forks[i].Name == "" {
+			unamedFork = append(unamedFork, &n.Forks[i])
+		} else if strings.HasPrefix(n.Forks[i].Name, "fork_") {
+			forkNumber, errI := strconv.Atoi(strings.Replace(n.Forks[i].Name, "fork_", "", 1))
+			if errI == nil && forkNumber > *maxForkNumber {
+				*maxForkNumber = forkNumber
+			}
+		}
+		for j := range n.Forks[i].Triggers {
+			var errF error
+			unamedFork, errF = saveNodeByPipeline(db, dict, mapMaxNumber, maxForkNumber, unamedFork, &n.Forks[i].Triggers[j].WorkflowDestNode, w)
+			if errF != nil {
+				return unamedFork, errF
+			}
+		}
+	}
+
+	return unamedFork, nil
 }
 
 // Update updates a workflow
@@ -656,7 +699,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		return err
 	}
 
-	if err := renameNode(db, w); err != nil {
+	if err := renameNodeFork(db, w); err != nil {
 		return sdk.WrapError(err, "Update> cannot check pipeline name")
 	}
 

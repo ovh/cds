@@ -31,16 +31,20 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 		sentinelsStr := strings.Split(host, "@")[1]
 		sentinels := strings.Split(sentinelsStr, ",")
 		opts := &redis.FailoverOptions{
-			MasterName:    masterName,
-			SentinelAddrs: sentinels,
-			Password:      password,
+			MasterName:         masterName,
+			SentinelAddrs:      sentinels,
+			Password:           password,
+			IdleCheckFrequency: 10 * time.Second,
+			IdleTimeout:        10 * time.Second,
+			PoolSize:           25,
 		}
 		client = redis.NewFailoverClient(opts)
 	} else {
 		client = redis.NewClient(&redis.Options{
-			Addr:     host,
-			Password: password, // no password set
-			DB:       0,        // use default DB
+			Addr:               host,
+			Password:           password, // no password set
+			DB:                 0,        // use default DB
+			IdleCheckFrequency: 30 * time.Second,
 		})
 	}
 	pong, err := client.Ping().Result()
@@ -228,7 +232,7 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 	for elem == "" {
 		select {
 		case <-ticker:
-			res, err := s.Client.BRPop(200*time.Millisecond, queueName).Result()
+			res, err := s.Client.BRPop(time.Second, queueName).Result()
 			if err == redis.Nil {
 				continue
 			}
@@ -254,6 +258,11 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 
 // Publish a msg in a channel
 func (s *RedisStore) Publish(channel string, value interface{}) {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return
+	}
+
 	msg, err := json.Marshal(value)
 	if err != nil {
 		log.Warning("redis.Publish> Marshall error, cannot push in channel %s: %v, %s", channel, value, err)
@@ -279,17 +288,26 @@ func (s *RedisStore) Publish(channel string, value interface{}) {
 
 // Subscribe to a channel
 func (s *RedisStore) Subscribe(channel string) PubSub {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return nil
+	}
 	return s.Client.Subscribe(channel)
 }
 
 // GetMessageFromSubscription from a redis PubSub
 func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return "", nil
+	}
+
 	rps, ok := pb.(*redis.PubSub)
 	if !ok {
 		return "", fmt.Errorf("redis.GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
 	}
 
-	msg, _ := rps.ReceiveTimeout(200 * time.Millisecond)
+	msg, _ := rps.ReceiveTimeout(time.Second)
 	redisMsg, ok := msg.(*redis.Message)
 	if msg != nil {
 		if ok {
@@ -301,7 +319,7 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 	for redisMsg == nil {
 		select {
 		case <-ticker:
-			msg, _ := rps.ReceiveTimeout(200 * time.Millisecond)
+			msg, _ := rps.ReceiveTimeout(time.Second)
 			if msg == nil {
 				continue
 			}

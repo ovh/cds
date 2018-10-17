@@ -77,7 +77,7 @@ func (api *API) addKeyInEnvironmentHandler() service.Handler {
 		envName := vars["permEnvironmentName"]
 
 		var newKey sdk.EnvironmentKey
-		if err := UnmarshalBody(r, &newKey); err != nil {
+		if err := service.UnmarshalBody(r, &newKey); err != nil {
 			return err
 		}
 

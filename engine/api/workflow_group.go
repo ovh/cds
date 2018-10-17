@@ -78,7 +78,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		groupName := vars["groupName"]
 
 		var gp sdk.GroupPermission
-		if err := UnmarshalBody(r, &gp); err != nil {
+		if err := service.UnmarshalBody(r, &gp); err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler")
 		}
 
@@ -139,7 +139,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		name := vars["permWorkflowName"]
 
 		var gp sdk.GroupPermission
-		if err := UnmarshalBody(r, &gp); err != nil {
+		if err := service.UnmarshalBody(r, &gp); err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}
 

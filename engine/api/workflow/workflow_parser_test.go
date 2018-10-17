@@ -3,6 +3,7 @@ package workflow_test
 import (
 	"context"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -17,7 +18,8 @@ import (
 )
 
 func TestParseAndImport(t *testing.T) {
-	db, cache := test.SetupPG(t)
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -54,7 +56,7 @@ func TestParseAndImport(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Insert workflow with 2 children",
+			name: "Insert workflow with 2 children + 1 fork with 1 child",
 			input: &exportentities.Workflow{
 				Name: "test-1",
 				Workflow: map[string]exportentities.NodeEntry{
@@ -69,6 +71,13 @@ func TestParseAndImport(t *testing.T) {
 						PipelineName: "pipeline",
 						DependsOn:    []string{"first"},
 					},
+					"fork": exportentities.NodeEntry{
+						DependsOn: []string{"root"},
+					},
+					"third": exportentities.NodeEntry{
+						PipelineName: "pipeline",
+						DependsOn:    []string{"fork"},
+					},
 				},
 			},
 		},
@@ -82,11 +91,18 @@ func TestParseAndImport(t *testing.T) {
 			}
 
 			if err == nil {
-				w, _ := workflow.Load(context.TODO(), db, cache, proj, tt.input.Name, u, workflow.LoadOptions{})
-				if w != nil {
-					b, _ := json.Marshal(w)
-					t.Logf("Workflow = \n%s", string(b))
+				w, errW := workflow.Load(context.TODO(), db, cache, proj, tt.input.Name, u, workflow.LoadOptions{})
+				assert.NoError(t, errW)
+				b, _ := json.Marshal(w)
+				t.Logf("Workflow = \n%s", string(b))
+
+				if tt.name == "test-1" {
+					assert.Len(t, w.Root.Forks, 1)
+					assert.Equal(t, w.Root.Forks[0].Name, "fork")
+					assert.Len(t, w.Root.Forks[0].Triggers, 1)
+					assert.Equal(t, w.Root.Forks[0].Triggers[0].WorkflowDestNode.Name, "third")
 				}
+
 			}
 
 		})

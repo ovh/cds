@@ -7,7 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -21,7 +20,7 @@ func (s *Service) postOperationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		uuid := sdk.UUID()
 		op := new(sdk.Operation)
-		if err := api.UnmarshalBody(r, op); err != nil {
+		if err := service.UnmarshalBody(r, op); err != nil {
 			return err
 		}
 		op.UUID = uuid

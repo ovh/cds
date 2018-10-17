@@ -568,13 +568,13 @@ ngui-auto-complete .no-match-found {
   fill: transparent;
 }
 
-.node circle, .node ellipse  {
+.node circle, .node ellipse {
   stroke: #333;
   fill: white;
   stroke-width: 1.5px;
 }
 
-.cluster rect {
+.cluster rect, polygon {
   stroke: #333;
   fill: transparent;
   fill-opacity: 0.1;

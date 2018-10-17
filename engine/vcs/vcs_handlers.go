@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/sdk"
@@ -128,7 +127,7 @@ func (s *Service) postAuhorizeHandler() service.Handler {
 		}
 
 		body := map[string]string{}
-		if err := api.UnmarshalBody(r, &body); err != nil {
+		if err := service.UnmarshalBody(r, &body); err != nil {
 			return err
 		}
 
@@ -461,7 +460,7 @@ func (s *Service) postPullRequestCommentHandler() service.Handler {
 		}
 
 		var body string
-		if err := api.UnmarshalBody(r, &body); err != nil {
+		if err := service.UnmarshalBody(r, &body); err != nil {
 			return sdk.WrapError(err, "VCS> postPullRequestCommentHandler")
 		}
 
@@ -541,7 +540,7 @@ func (s *Service) postFilterEventsHandler() service.Handler {
 		repo := muxVar(r, "repo")
 
 		evts := []interface{}{}
-		if err := api.UnmarshalBody(r, &evts); err != nil {
+		if err := service.UnmarshalBody(r, &evts); err != nil {
 			return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to read body")
 		}
 
@@ -598,7 +597,7 @@ func (s *Service) postStatusHandler() service.Handler {
 		name := muxVar(r, "name")
 
 		evt := sdk.Event{}
-		if err := api.UnmarshalBody(r, &evt); err != nil {
+		if err := service.UnmarshalBody(r, &evt); err != nil {
 			return sdk.WrapError(err, "VCS> postStatusHandler> unable to read body")
 		}
 
@@ -652,7 +651,7 @@ func (s *Service) postReleaseHandler() service.Handler {
 			Descrition string `json:"description"`
 		}{}
 
-		if err := api.UnmarshalBody(r, &body); err != nil {
+		if err := service.UnmarshalBody(r, &body); err != nil {
 			return sdk.WrapError(err, "VCS> postReleaseHandler> Unable to read body")
 		}
 
@@ -762,7 +761,7 @@ func (s *Service) postHookHandler() service.Handler {
 		}
 
 		body := sdk.VCSHook{}
-		if err := api.UnmarshalBody(r, &body); err != nil {
+		if err := service.UnmarshalBody(r, &body); err != nil {
 			return sdk.WrapError(err, "VCS> postHookHandler> Unable to read body %s %s/%s", name, owner, repo)
 		}
 

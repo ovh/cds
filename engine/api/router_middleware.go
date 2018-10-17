@@ -139,6 +139,14 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		return ctx, nil
 	}
 
+	if rc.Options["needService"] == "true" {
+		if getService(ctx) != nil {
+			return ctx, nil
+		} else {
+			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Need worker")
+		}
+	}
+
 	if rc.Options["needWorker"] == "true" {
 		permissionOk := api.checkWorkerPermission(ctx, api.mustDB(), rc, mux.Vars(req))
 		if !permissionOk {

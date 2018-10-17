@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { Project } from '../../model/project.model';
 import { WorkflowHookModel, WorkflowHookTask } from '../../model/workflow.hook.model';
 import { Workflow, WorkflowNode } from '../../model/workflow.model';
@@ -13,10 +12,14 @@ export class HookService {
     }
 
     getHookModel(p: Project, w: Workflow, n: WorkflowNode): Observable<Array<WorkflowHookModel>> {
-        return this._http.get<Array<WorkflowHookModel>>('/project/' + p.key + '/workflow/' + w.name +
-            '/node/' + n.id + '/hook/model').pipe(map(ms => {
-                return ms;
-            }));
+        return this._http.get<Array<WorkflowHookModel>>(
+            '/project/' + p.key + '/workflow/' + w.name + '/node/' + n.id + '/hook/model');
+    }
+
+    getOutgoingHookModel(p: Project, w: Workflow, n: WorkflowNode): Observable<Array<WorkflowHookModel>> {
+        return this._http.get<Array<WorkflowHookModel>>(
+            '/project/' + p.key + '/workflow/' + w.name + '/node/' + n.id + '/outgoinghook/model'
+        );
     }
 
     getHookLogs(projectKey: string, workflowName: string, uuid: string): Observable<WorkflowHookTask> {

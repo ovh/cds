@@ -29,7 +29,7 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() service.Handler {
 		groupName := vars["group"]
 
 		var groupEnvironment sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupEnvironment); err != nil {
+		if err := service.UnmarshalBody(r, &groupEnvironment); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler> Cannot read body")
 		}
 
@@ -101,7 +101,7 @@ func (api *API) addGroupsInEnvironmentHandler() service.Handler {
 		envName := vars["permEnvironmentName"]
 
 		var groupPermission []sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupPermission); err != nil {
+		if err := service.UnmarshalBody(r, &groupPermission); err != nil {
 			return sdk.WrapError(err, "addGroupsInEnvironmentHandler> Cannot read body")
 		}
 
@@ -172,7 +172,7 @@ func (api *API) addGroupInEnvironmentHandler() service.Handler {
 		envName := vars["permEnvironmentName"]
 
 		var groupPermission sdk.GroupPermission
-		if err := UnmarshalBody(r, &groupPermission); err != nil {
+		if err := service.UnmarshalBody(r, &groupPermission); err != nil {
 			return err
 		}
 

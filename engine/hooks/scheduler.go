@@ -227,10 +227,11 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			t.NbErrors++
 			saveTaskExecution = true
 		} else {
-			restartTask = true
 			saveTaskExecution = true
 			log.Debug("Hooks> dequeueTaskExecutions> call doTask on taskKey: %s", taskKey)
-			if err := s.doTask(c, task, &t); err != nil {
+			var err error
+			restartTask, err = s.doTask(c, task, &t)
+			if err != nil {
 				if strings.Contains(err.Error(), "Unsupported task type") {
 					// delete this task execution, as it will never work
 					log.Info("Hooks> dequeueTaskExecutions> Deleting task execution %s as err:%v", t.UUID, err)

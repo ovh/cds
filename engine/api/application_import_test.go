@@ -19,7 +19,9 @@ import (
 )
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithoutSecret(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -97,7 +99,9 @@ variables:
 }
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -209,7 +213,9 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 }
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImport(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -372,7 +378,9 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 }
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImportWithRegen(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -466,7 +474,9 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 }
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithEmptyKey(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -528,7 +538,9 @@ keys:
 }
 
 func Test_postApplicationImportHandler_ExistingAppFromYAMLWithoutForce(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -561,7 +573,9 @@ name: myNewApp`
 }
 
 func Test_postApplicationImportHandler_ExistingAppFromYAMLInheritPermissions(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -594,7 +608,9 @@ name: myNewApp`
 }
 
 func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)

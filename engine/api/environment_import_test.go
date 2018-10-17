@@ -15,7 +15,9 @@ import (
 )
 
 func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithoutSecret(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -93,7 +95,9 @@ variables:
 }
 
 func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -216,7 +220,9 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 }
 
 func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImport(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -398,7 +404,9 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 }
 
 func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithEmptyKey(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -463,7 +471,9 @@ keys:
 }
 
 func Test_postEnvironmentImportHandler_ExistingAppFromYAMLWithoutForce(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -497,7 +507,9 @@ name: myNewEnv`
 }
 
 func Test_postEnvironmentImportHandler_ExistingAppFromYAMLInheritPermissions(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
+
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)

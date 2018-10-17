@@ -21,9 +21,11 @@ import {WorkflowNotificationFormComponent} from './show/notification/form/workfl
 import {WorkflowNotificationListComponent} from './show/notification/list/workflow.notification.list.component';
 import {WorkflowShowComponent} from './show/workflow.component';
 import {WorkflowSidebarCodeComponent} from './sidebar/code/sidebar.code.component';
+import {WorkflowSidebarForkComponent} from './sidebar/edit/fork/workflow.sidebar.fork.component';
 import {WorkflowSidebarHookComponent} from './sidebar/edit/hook/workflow.sidebar.hook.component';
 import {WorkflowSidebarEditJoinComponent} from './sidebar/edit/join/workflow.sidebar.edit.join.component';
 import {WorkflowSidebarEditNodeComponent} from './sidebar/edit/node/workflow.sidebar.edit.node.component';
+import { WorkflowSidebarOutgoingHookComponent } from './sidebar/edit/outgoinghook/workflow.sidebar.outgoinghook.component';
 import {WorkflowSidebarEditComponent} from './sidebar/edit/workflow.sidebar.edit.component';
 import {WorkflowSidebarRunHookComponent} from './sidebar/run/hook/workflow.sidebar.run.hook.component';
 import {WorkflowSidebarRunListComponent} from './sidebar/run/list/workflow.sidebar.run.component';
@@ -54,11 +56,13 @@ import {workflowRouting} from './workflow.routing';
         WorkflowSidebarEditNodeComponent,
         WorkflowSidebarEditJoinComponent,
         WorkflowSidebarHookComponent,
+        WorkflowSidebarOutgoingHookComponent,
         WorkflowSidebarRunHookComponent,
         WorkflowNodeRunHistoryComponent,
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
         WorkflowSidebarCodeComponent,
+        WorkflowSidebarForkComponent,
         StageStepSummaryComponent,
         JobStepSummaryComponent,
         ActionStepSummaryComponent,

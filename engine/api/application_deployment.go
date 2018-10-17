@@ -38,7 +38,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		pfName := vars["platform"]
 
 		var pfConfig sdk.PlatformConfig
-		if err := UnmarshalBody(r, &pfConfig); err != nil {
+		if err := service.UnmarshalBody(r, &pfConfig); err != nil {
 			return err
 		}
 

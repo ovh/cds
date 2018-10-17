@@ -28,7 +28,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		}
 
 		var job sdk.Job
-		if err := UnmarshalBody(r, &job); err != nil {
+		if err := service.UnmarshalBody(r, &job); err != nil {
 			return err
 		}
 
@@ -113,7 +113,7 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 
 		var job sdk.Job
-		if err := UnmarshalBody(r, &job); err != nil {
+		if err := service.UnmarshalBody(r, &job); err != nil {
 			return err
 		}
 

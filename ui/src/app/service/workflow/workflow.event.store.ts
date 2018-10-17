@@ -2,8 +2,8 @@ import {Injectable} from '@angular/core';
 import {Map} from 'immutable';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Observable} from 'rxjs/Observable';
-import {WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin} from '../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
+import {WorkflowNode, WorkflowNodeFork, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeOutgoingHook} from '../../model/workflow.model';
+import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
 import {WorkflowRunService} from './run/workflow.run.service';
 import {WorkflowSidebarMode, WorkflowSidebarStore} from './workflow.sidebar.store';
 
@@ -14,13 +14,15 @@ export class WorkflowEventStore {
     private _currentWorkflowRun: BehaviorSubject<WorkflowRun> = new BehaviorSubject(null);
     private _currentWorkflowNodeRun: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
     private _nodeRunEvents: BehaviorSubject<WorkflowNodeRun> = new BehaviorSubject(null);
+    private _outgoingHookEvents: BehaviorSubject<WorkflowNodeOutgoingHookRun> = new BehaviorSubject(null);
 
     private _selectedNode: BehaviorSubject<WorkflowNode> = new BehaviorSubject<WorkflowNode>(null);
     private _selectedJoin: BehaviorSubject<WorkflowNodeJoin> = new BehaviorSubject<WorkflowNodeJoin>(null);
     private _selectedHook: BehaviorSubject<WorkflowNodeHook> = new BehaviorSubject<WorkflowNodeHook>(null);
+    private _selectedOutgoingHook: BehaviorSubject<WorkflowNodeOutgoingHook> = new BehaviorSubject<WorkflowNodeOutgoingHook>(null);
+    private _selectedFork: BehaviorSubject<WorkflowNodeFork> = new BehaviorSubject<WorkflowNodeFork>(null);
 
     private _isListingRuns: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(true);
-
 
     constructor(private _sidebarStore: WorkflowSidebarStore, private _workflowRunService: WorkflowRunService) {
     }
@@ -77,6 +79,8 @@ export class WorkflowEventStore {
         this._selectedNode.next(n);
         this._selectedJoin.next(null);
         this._selectedHook.next(null);
+        this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(null);
     }
 
     selectedNode(): Observable<WorkflowNode> {
@@ -90,6 +94,8 @@ export class WorkflowEventStore {
         this._selectedNode.next(null);
         this._selectedJoin.next(n);
         this._selectedHook.next(null);
+        this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(null);
     }
 
     selectedJoin(): Observable<WorkflowNodeJoin> {
@@ -106,6 +112,8 @@ export class WorkflowEventStore {
         }
         this._selectedNode.next(null);
         this._selectedJoin.next(null);
+        this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(null);
         this._selectedHook.next(h);
     }
 
@@ -113,11 +121,51 @@ export class WorkflowEventStore {
         return new Observable<WorkflowNodeHook>(fn => this._selectedHook.subscribe(fn));
     }
 
+    selectedFork(): Observable<WorkflowNodeFork> {
+        return new Observable<WorkflowNodeFork>(fn => this._selectedFork.subscribe(fn));
+    }
+
+    setSelectedFork(f: WorkflowNodeFork) {
+        if (f) {
+            if (!this.isRunSelected()) {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_FORK);
+            } else {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_FORK);
+            }
+        }
+        this._selectedNode.next(null);
+        this._selectedJoin.next(null);
+        this._selectedHook.next(null);
+        this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(f);
+    }
+
+    selectedOutgoingHook(): Observable<WorkflowNodeOutgoingHook> {
+        return new Observable<WorkflowNodeOutgoingHook>(fn => this._selectedOutgoingHook.subscribe(fn));
+    }
+
+    setSelectedOutgoingHook(h: WorkflowNodeOutgoingHook) {
+        if (h) {
+            if (!this.isRunSelected()) {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.EDIT_OUTGOING_HOOK);
+            } else {
+                this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_HOOK);
+            }
+        }
+        this._selectedNode.next(null);
+        this._selectedJoin.next(null);
+        this._selectedHook.next(null);
+        this._selectedFork.next(null);
+        this._selectedOutgoingHook.next(h);
+    }
+
     unselectAll(): void {
         this._selectedNode.next(null);
         this._currentWorkflowRun.next(null);
         this._selectedHook.next(null);
         this._selectedJoin.next(null);
+        this._selectedOutgoingHook.next(null);
+        this._selectedFork.next(null);
         this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
     }
 
@@ -160,5 +208,13 @@ export class WorkflowEventStore {
 
     nodeRunEvents(): Observable<WorkflowNodeRun> {
         return new Observable<WorkflowNodeRun>(fn => this._nodeRunEvents.subscribe(fn));
+    }
+
+   broadcastOutgoingHookEvents(hr: WorkflowNodeOutgoingHookRun) {
+        this._outgoingHookEvents.next(hr);
+    }
+
+    outgoingHookEvents(): Observable<WorkflowNodeOutgoingHookRun> {
+        return new Observable<WorkflowNodeOutgoingHookRun>(fn => this._outgoingHookEvents.subscribe(fn));
     }
 }

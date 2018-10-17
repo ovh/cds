@@ -38,22 +38,23 @@ func (h *WorkflowRunHeaders) Get(k string) (string, bool) {
 
 //WorkflowRun is an execution instance of a run
 type WorkflowRun struct {
-	ID               int64                            `json:"id" db:"id"`
-	Number           int64                            `json:"num" db:"num" cli:"num"`
-	ProjectID        int64                            `json:"project_id,omitempty" db:"project_id"`
-	WorkflowID       int64                            `json:"workflow_id" db:"workflow_id"`
-	Status           string                           `json:"status" db:"status" cli:"status"`
-	Workflow         Workflow                         `json:"workflow" db:"-"`
-	Start            time.Time                        `json:"start" db:"start" cli:"start"`
-	LastModified     time.Time                        `json:"last_modified" db:"last_modified"`
-	WorkflowNodeRuns map[int64][]WorkflowNodeRun      `json:"nodes,omitempty" db:"-"`
-	Infos            []WorkflowRunInfo                `json:"infos,omitempty" db:"-"`
-	Tags             []WorkflowRunTag                 `json:"tags,omitempty" db:"-" cli:"tags"`
-	LastSubNumber    int64                            `json:"last_subnumber" db:"last_sub_num"`
-	LastExecution    time.Time                        `json:"last_execution" db:"last_execution" cli:"last_execution"`
-	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
-	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
-	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
+	ID                           int64                                   `json:"id" db:"id"`
+	Number                       int64                                   `json:"num" db:"num" cli:"num"`
+	ProjectID                    int64                                   `json:"project_id,omitempty" db:"project_id"`
+	WorkflowID                   int64                                   `json:"workflow_id" db:"workflow_id"`
+	Status                       string                                  `json:"status" db:"status" cli:"status"`
+	Workflow                     Workflow                                `json:"workflow" db:"-"`
+	Start                        time.Time                               `json:"start" db:"start" cli:"start"`
+	LastModified                 time.Time                               `json:"last_modified" db:"last_modified"`
+	WorkflowNodeRuns             map[int64][]WorkflowNodeRun             `json:"nodes,omitempty" db:"-"`
+	WorkflowNodeOutgoingHookRuns map[int64][]WorkflowNodeOutgoingHookRun `json:"outgoing_hooks,omitempty" db:"-"`
+	Infos                        []WorkflowRunInfo                       `json:"infos,omitempty" db:"-"`
+	Tags                         []WorkflowRunTag                        `json:"tags,omitempty" db:"-" cli:"tags"`
+	LastSubNumber                int64                                   `json:"last_subnumber" db:"last_sub_num"`
+	LastExecution                time.Time                               `json:"last_execution" db:"last_execution" cli:"last_execution"`
+	ToDelete                     bool                                    `json:"to_delete" db:"to_delete" cli:"-"`
+	JoinTriggersRun              map[int64]WorkflowNodeTriggerRun        `json:"join_triggers_run,omitempty" db:"-"`
+	Header                       WorkflowRunHeaders                      `json:"header,omitempty" db:"-"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
@@ -125,6 +126,45 @@ func (r *WorkflowRun) TagExists(tag string) bool {
 	return false
 }
 
+func (r *WorkflowRun) RootRun() *WorkflowNodeRun {
+	rootNodeRuns, has := r.WorkflowNodeRuns[r.Workflow.Root.ID]
+	if !has || len(rootNodeRuns) < 1 {
+		return nil
+	}
+
+	rootRun := rootNodeRuns[0]
+	return &rootRun
+}
+
+func (r *WorkflowRun) HasParentWorkflow() bool {
+	rr := r.RootRun()
+	if rr == nil {
+		return false
+	}
+
+	if rr.HookEvent == nil {
+		return false
+	}
+
+	return rr.HookEvent.ParentWorkflow.Key != "" &&
+		rr.HookEvent.ParentWorkflow.Name != "" &&
+		rr.HookEvent.ParentWorkflow.Run != 0 &&
+		rr.HookEvent.ParentWorkflow.HookRunID != ""
+}
+
+func (r *WorkflowRun) GetOutgoingHookRun(id string) *WorkflowNodeOutgoingHookRun {
+	for i := range r.WorkflowNodeOutgoingHookRuns {
+		hookRuns := r.WorkflowNodeOutgoingHookRuns[i]
+		for j := range hookRuns {
+			hr := &hookRuns[j]
+			if hr.HookRunID == id {
+				return hr
+			}
+		}
+	}
+	return nil
+}
+
 //WorkflowRunInfo is an info on workflow run
 type WorkflowRunInfo struct {
 	APITime time.Time `json:"api_time,omitempty" db:"-"`
@@ -176,6 +216,31 @@ type WorkflowNodeRun struct {
 	VCSServer             string                             `json:"vcs_server"`
 	CanBeRun              bool                               `json:"can_be_run"`
 	Header                WorkflowRunHeaders                 `json:"header,omitempty"`
+}
+
+//WorkflowNodeOutgoingHookRun is an execution instance of a WorkflowNodeOutgoingHook
+type WorkflowNodeOutgoingHookRun struct {
+	WorkflowRunID              int64                                `json:"workflow_run_id"`
+	HookRunID                  string                               `json:"id"`
+	WorkflowNodeOutgoingHookID int64                                `json:"workflow_node_outgoing_hook_id"`
+	Status                     string                               `json:"status"`
+	TriggersRun                map[int64]WorkflowNodeTriggerRun     `json:"triggers_run,omitempty"`
+	Number                     int64                                `json:"num"`
+	SubNumber                  int64                                `json:"subnumber"`
+	Hook                       WorkflowNodeOutgoingHook             `json:"hook"`
+	Callback                   *WorkflowNodeOutgoingHookRunCallback `json:"callback"`
+	Params                     map[string]string                    `json:"params"`
+	TaskExecution              *TaskExecution                       `json:"task_execution"`
+}
+
+// WorkflowNodeOutgoingHookRunCallback is the callback coming from hooks uservice avec an outgoing hook execution
+type WorkflowNodeOutgoingHookRunCallback struct {
+	WorkflowNodeOutgoingHookID int64     `json:"workflow_node_outgoing_hook_id"`
+	Start                      time.Time `json:"start"`
+	Done                       time.Time `json:"done"`
+	Status                     string    `json:"status"`
+	Log                        string    `json:"log"`
+	WorkflowRunNumber          *int64    `json:"workflow_run_number"`
 }
 
 // WorkflowNodeRunVulnerabilityReport represents vulnerabilities report for the current node run
@@ -345,6 +410,12 @@ func (wnjr *WorkflowNodeJobRun) Translate(lang string) {
 type WorkflowNodeRunHookEvent struct {
 	Payload              map[string]string `json:"payload" db:"-"`
 	WorkflowNodeHookUUID string            `json:"uuid" db:"-"`
+	ParentWorkflow       struct {
+		Key       string `json:"key" db:"-"`
+		Name      string `json:"name" db:"-"`
+		Run       int64  `json:"run" db:"-"`
+		HookRunID string `hook_run_id:"uuid" db:"-"`
+	} `json:"parent_workflow" db:"-"`
 }
 
 //WorkflowNodeRunManual is an instanc of event received on a hook

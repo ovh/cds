@@ -56,6 +56,10 @@ func (b *eventsBroker) Init(ctx context.Context) {
 }
 
 func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
+	if cacheMsgChan == nil {
+		return
+	}
+
 	pubSub := store.Subscribe("events_pubsub")
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
@@ -154,17 +158,21 @@ func (b *eventsBroker) Start(ctx context.Context) {
 
 func (b *eventsBroker) ServeHTTP() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
 			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
+		user := getUser(ctx)
+		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
+			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
+		}
+
 		uuid := sdk.UUID()
 		client := &eventsBrokerSubscribe{
 			UUID:    uuid,
-			User:    getUser(ctx),
+			User:    user,
 			isAlive: abool.NewBool(true),
 			w:       w,
 		}

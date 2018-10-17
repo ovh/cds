@@ -23,7 +23,7 @@ func (api *API) postEncryptVariableHandler() service.Handler {
 		}
 
 		variable := new(sdk.Variable)
-		if err := UnmarshalBody(r, variable); err != nil {
+		if err := service.UnmarshalBody(r, variable); err != nil {
 			return sdk.WrapError(err, "postEncryptVariableHandler> unable to read body")
 		}
 
@@ -111,7 +111,7 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 		varName := vars["name"]
 
 		var newVar sdk.Variable
-		if err := UnmarshalBody(r, &newVar); err != nil {
+		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}
 		if newVar.Name != varName || newVar.Type == sdk.KeyVariable {
@@ -155,7 +155,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 		varName := vars["name"]
 
 		var newVar sdk.Variable
-		if err := UnmarshalBody(r, &newVar); err != nil {
+		if err := service.UnmarshalBody(r, &newVar); err != nil {
 			return err
 		}
 		if newVar.Name != varName {

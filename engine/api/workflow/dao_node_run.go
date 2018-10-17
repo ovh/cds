@@ -275,18 +275,19 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Payload", r.ID)
 	}
 
+	if rr.HookEvent.Valid {
+		r.HookEvent = new(sdk.WorkflowNodeRunHookEvent)
+		if err := gorpmapping.JSONNullString(rr.HookEvent, r.HookEvent); err != nil {
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: HookEvent", r.ID)
+		}
+	}
+
 	if !opts.DisableDetailledNodeRun {
 		if err := gorpmapping.JSONNullString(rr.SourceNodeRuns, &r.SourceNodeRuns); err != nil {
 			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d : SourceNodeRuns", r.ID)
 		}
 		if err := gorpmapping.JSONNullString(rr.Commits, &r.Commits); err != nil {
 			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Commits", r.ID)
-		}
-		if rr.HookEvent.Valid {
-			r.HookEvent = new(sdk.WorkflowNodeRunHookEvent)
-			if err := gorpmapping.JSONNullString(rr.HookEvent, r.HookEvent); err != nil {
-				return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: HookEvent", r.ID)
-			}
 		}
 		if rr.Manual.Valid {
 			r.Manual = new(sdk.WorkflowNodeRunManual)

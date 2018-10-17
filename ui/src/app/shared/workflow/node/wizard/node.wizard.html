@@ -32,7 +32,7 @@
                 </div>
               </div>
               <div class="step pointing"
-                [class.disabled]="node == null || !node.pipeline_id || !node.context.application_id"
+                [class.disabled]="node == null || !node.pipeline_id || !node.context.application_id || (!loadingPlatforms && (!platforms || !platforms.length))"
                 [class.active]="pipelineSection === 'platform'"
                 (click)="pipelineSection = 'platform'">
                 <i class="plug icon"></i>
@@ -217,8 +217,8 @@
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
                             [disabled]="!node.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment">
-                            <span *ngIf="node.context.application_id">{{ 'btn_next' | translate }}</span>
-                            <span *ngIf="!node.context.application_id">{{ 'btn_finish' | translate }}</span>
+                            <span *ngIf="node.context.application_id && (loadingPlatforms || (platforms && platforms.length))">{{ 'btn_next' | translate }}</span>
+                            <span *ngIf="!node.context.application_id || (!loadingPlatforms && (!platforms || !platforms.length))">{{ 'btn_finish' | translate }}</span>
                     </button>
                   </div>
                 </div>

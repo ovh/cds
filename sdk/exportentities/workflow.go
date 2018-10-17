@@ -38,17 +38,19 @@ type Workflow struct {
 
 // NodeEntry represents a node as code
 type NodeEntry struct {
-	ID                  int64                       `json:"-" yaml:"-"`
-	DependsOn           []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
-	Conditions          *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	When                []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
-	PipelineName        string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	ApplicationName     string                      `json:"application,omitempty" yaml:"application,omitempty"`
-	EnvironmentName     string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
-	ProjectPlatformName string                      `json:"platform,omitempty" yaml:"platform,omitempty"`
-	OneAtATime          *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
-	Payload             map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
-	Parameters          map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	ID                    int64                       `json:"-" yaml:"-"`
+	DependsOn             []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
+	Conditions            *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	When                  []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
+	PipelineName          string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
+	ApplicationName       string                      `json:"application,omitempty" yaml:"application,omitempty"`
+	EnvironmentName       string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
+	ProjectPlatformName   string                      `json:"platform,omitempty" yaml:"platform,omitempty"`
+	OneAtATime            *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
+	Payload               map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Parameters            map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	OutgoingHookModelName string                      `json:"trigger,omitempty" yaml:"trigger,omitempty"`
+	OutgoingHookConfig    map[string]string           `json:"config,omitempty" yaml:"config,omitempty"`
 }
 
 // HookEntry represents a hook as code
@@ -65,6 +67,108 @@ type WorkflowVersion string
 const (
 	WorkflowVersion1 = "v1.0"
 )
+
+func craftNodeEntry(w sdk.Workflow, n sdk.WorkflowNode) (NodeEntry, error) {
+	entry := NodeEntry{}
+	_, forksTriggerMap := w.Forks()
+	if n.TriggerSrcForkID != 0 {
+		entry.DependsOn = []string{forksTriggerMap[n.TriggerSrcForkID]}
+	} else {
+		ancestorIDs := n.Ancestors(&w, false)
+		ancestors := make([]string, 0, len(ancestorIDs))
+		for _, aID := range ancestorIDs {
+			a := w.GetNode(aID)
+			if a == nil {
+				return entry, sdk.ErrWorkflowNodeNotFound
+			}
+			ancestors = append(ancestors, a.Name)
+		}
+
+		//we have to find if the node is also triggered by an outgoingHook
+		ohs := w.OutgoingHooks()
+		for _, oh := range ohs {
+			for _, t := range oh.Triggers {
+				if t.WorkflowDestNodeID == n.ID {
+					ancestors = append(ancestors, oh.Name)
+				}
+			}
+		}
+
+		sort.Strings(ancestors)
+		entry.DependsOn = ancestors
+	}
+	entry.PipelineName = n.PipelineName
+
+	conditions := []sdk.WorkflowNodeCondition{}
+	for _, c := range n.Context.Conditions.PlainConditions {
+		if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
+			c.Value == sdk.StatusSuccess.String() &&
+			c.Variable == "cds.status" {
+			entry.When = append(entry.When, "success")
+		} else if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
+			c.Value == "true" &&
+			c.Variable == "cds.manual" {
+			entry.When = append(entry.When, "manual")
+		} else {
+			conditions = append(conditions, c)
+		}
+	}
+
+	if len(conditions) > 0 || n.Context.Conditions.LuaScript != "" {
+		entry.Conditions = &sdk.WorkflowNodeConditions{
+			PlainConditions: conditions,
+			LuaScript:       n.Context.Conditions.LuaScript,
+		}
+	}
+
+	if n.Context.Application != nil {
+		entry.ApplicationName = n.Context.Application.Name
+	}
+	if n.Context.Environment != nil {
+		entry.EnvironmentName = n.Context.Environment.Name
+	}
+	if n.Context.ProjectPlatform != nil {
+		entry.ProjectPlatformName = n.Context.ProjectPlatform.Name
+	}
+
+	if n.Context.Mutex {
+		entry.OneAtATime = &n.Context.Mutex
+	}
+
+	if n.Context.HasDefaultPayload() {
+		enc := dump.NewDefaultEncoder(nil)
+		enc.ExtraFields.DetailedMap = false
+		enc.ExtraFields.DetailedStruct = false
+		enc.ExtraFields.Len = false
+		enc.ExtraFields.Type = false
+		enc.Formatters = nil
+		m, err := enc.ToMap(n.Context.DefaultPayload)
+		if err != nil {
+			return entry, err
+		}
+		entry.Payload = m
+	}
+
+	if len(n.Context.DefaultPipelineParameters) > 0 {
+		entry.Parameters = sdk.ParametersToMap(n.Context.DefaultPipelineParameters)
+	}
+
+	return entry, nil
+}
+
+func craftNodeEntryFromOutgoingWekHook(w sdk.Workflow, n sdk.WorkflowNodeOutgoingHook) (NodeEntry, error) {
+	entry := NodeEntry{}
+
+	ancestor := w.GetNode(n.WorkflowNodeID)
+	if ancestor == nil {
+		return entry, fmt.Errorf("workflow node %d", n.WorkflowNodeID)
+	}
+	entry.DependsOn = []string{ancestor.Name}
+	entry.OutgoingHookModelName = n.WorkflowHookModel.Name
+	entry.OutgoingHookConfig = n.Config.Values()
+
+	return entry, nil
+}
 
 // WorkflowOptions is the type for several workflow-as-code options
 type WorkflowOptions func(sdk.Workflow, *Workflow) error
@@ -123,92 +227,26 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	exportedWorkflow.PurgeTags = w.PurgeTags
 	nodes := w.Nodes(false)
 
-	var craftNodeEntry = func(n *sdk.WorkflowNode) (NodeEntry, error) {
-		entry := NodeEntry{}
-
-		ancestorIDs := n.Ancestors(&w, false)
-		ancestors := make([]string, 0, len(ancestorIDs))
-		for _, aID := range ancestorIDs {
-			a := w.GetNode(aID)
-			if a == nil {
-				return entry, sdk.ErrWorkflowNodeNotFound
-			}
-			ancestors = append(ancestors, a.Name)
-		}
-
-		sort.Strings(ancestors)
-		entry.DependsOn = ancestors
-		entry.PipelineName = n.PipelineName
-		conditions := []sdk.WorkflowNodeCondition{}
-		for _, c := range n.Context.Conditions.PlainConditions {
-			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
-				c.Value == "Success" &&
-				c.Variable == "cds.status" {
-				entry.When = append(entry.When, "success")
-			} else if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
-				c.Value == "true" &&
-				c.Variable == "cds.manual" {
-				entry.When = append(entry.When, "manual")
-			} else {
-				conditions = append(conditions, c)
-			}
-		}
-
-		if len(conditions) > 0 || n.Context.Conditions.LuaScript != "" {
-			entry.Conditions = &sdk.WorkflowNodeConditions{
-				PlainConditions: conditions,
-				LuaScript:       n.Context.Conditions.LuaScript,
-			}
-		}
-
-		if n.Context.Application != nil {
-			entry.ApplicationName = n.Context.Application.Name
-		}
-		if n.Context.Environment != nil {
-			entry.EnvironmentName = n.Context.Environment.Name
-		}
-		if n.Context.ProjectPlatform != nil {
-			entry.ProjectPlatformName = n.Context.ProjectPlatform.Name
-		}
-
-		if n.Context.Mutex {
-			entry.OneAtATime = &n.Context.Mutex
-		}
-
-		var skipPayload bool
-		if n.Context.HasDefaultPayload() && n.Context.Application != nil && n.Context.Application.RepositoryFullname != "" {
-			skipPayload = sdk.IsWorkflowNodeContextDefaultPayloadVCS(n.Context.DefaultPayload)
-		}
-
-		if !skipPayload {
-			enc := dump.NewDefaultEncoder(nil)
-			enc.ExtraFields.DetailedMap = false
-			enc.ExtraFields.DetailedStruct = false
-			enc.ExtraFields.Len = false
-			enc.ExtraFields.Type = false
-			enc.Formatters = nil
-			m, err := enc.ToMap(n.Context.DefaultPayload)
-			if err != nil {
-				return entry, err
-			}
-			entry.Payload = m
-		}
-
-		if len(n.Context.DefaultPipelineParameters) > 0 {
-			entry.Parameters = sdk.ParametersToMap(n.Context.DefaultPipelineParameters)
-		}
-
-		return entry, nil
-	}
-
+	forksMap, _ := (&w).Forks()
 	hooks := w.GetHooks()
 
-	if len(nodes) == 0 {
-		n := w.Root
-		if n == nil {
-			return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
+	for _, v := range forksMap {
+		entry := NodeEntry{}
+		if w.RootID == v.WorkflowNodeID {
+			entry.DependsOn = []string{w.Root.Name}
+		} else {
+			for _, n := range nodes {
+				if n.ID == v.WorkflowNodeID {
+					entry.DependsOn = []string{n.Name}
+				}
+			}
 		}
-		entry, err := craftNodeEntry(n)
+		exportedWorkflow.Workflow[v.Name] = entry
+	}
+
+	if len(nodes) == 0 && w.Root != nil && len(w.Root.OutgoingHooks) == 0 {
+		n := w.Root
+		entry, err := craftNodeEntry(w, *n)
 		if err != nil {
 			return exportedWorkflow, err
 		}
@@ -235,16 +273,20 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 		exportedWorkflow.Parameters = entry.Parameters
 	} else {
 		nodes = append(nodes, *w.Root)
-		for i := range nodes {
-			n := &nodes[i]
-			if n == nil {
-				return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
-			}
-			entry, err := craftNodeEntry(n)
+		for _, n := range nodes {
+			entry, err := craftNodeEntry(w, n)
 			if err != nil {
 				return exportedWorkflow, err
 			}
 			exportedWorkflow.Workflow[n.Name] = entry
+
+			for _, oh := range n.OutgoingHooks {
+				entry, err := craftNodeEntryFromOutgoingWekHook(w, oh)
+				if err != nil {
+					return exportedWorkflow, err
+				}
+				exportedWorkflow.Workflow[oh.Name] = entry
+			}
 		}
 
 		for _, h := range hooks {
@@ -494,7 +536,7 @@ func (e *NodeEntry) getNode(name string) (*sdk.WorkflowNode, error) {
 		case "success":
 			node.Context.Conditions.PlainConditions = append(node.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{
 				Operator: sdk.WorkflowConditionsOperatorEquals,
-				Value:    "Success",
+				Value:    sdk.StatusSuccess.String(),
 				Variable: "cds.status",
 			})
 		case "manual":
@@ -561,11 +603,91 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 	addHooks(w.Hooks[n.Name])
 }
 
+func (e *NodeEntry) processFork(name string, w *sdk.Workflow) (bool, error) {
+	var ancestor *sdk.WorkflowNode
+
+	if len(e.DependsOn) == 1 {
+		a := e.DependsOn[0]
+		ancestor = w.GetNodeByName(a)
+	}
+	if ancestor == nil {
+		return false, nil
+	}
+
+	fork := sdk.WorkflowNodeFork{
+		Name: name,
+	}
+	w.AddNodeFork(ancestor.Name, fork)
+	return true, nil
+}
+
 func (e *NodeEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
 	if err := e.checkValidity(*w); err != nil {
 		return false, err
 	}
 
+	switch {
+	case e.PipelineName == "" && e.OutgoingHookModelName == "":
+		return e.processFork(name, w)
+
+	case e.PipelineName == "" && e.OutgoingHookModelName != "":
+		return e.processOutgoingHook(name, w)
+	}
+
+	// Find WorkflowNodeAncestors
+	exist, err := e.processNodeAncestors(name, w)
+	if err != nil {
+		return false, err
+	}
+
+	if exist {
+		return true, nil
+	}
+
+	if len(e.DependsOn) != 1 {
+		return false, nil
+	}
+	return e.processForkAncestor(name, w)
+}
+
+func (e *NodeEntry) processOutgoingHook(name string, w *sdk.Workflow) (bool, error) {
+	var ancestor *sdk.WorkflowNode
+
+	if len(e.DependsOn) == 1 {
+		a := e.DependsOn[0]
+		ancestor = w.GetNodeByName(a)
+	}
+
+	if ancestor == nil {
+		fmt.Println("cannot find ancestor")
+		return false, nil
+	}
+
+	config := sdk.WorkflowNodeHookConfig{}
+	for k, v := range e.OutgoingHookConfig {
+		config[k] = sdk.WorkflowNodeHookConfigValue{
+			Value: v,
+		}
+	}
+
+	oh := sdk.WorkflowNodeOutgoingHook{
+		Name:              name,
+		Ref:               name,
+		Config:            config,
+		WorkflowHookModel: sdk.WorkflowHookModel{Name: e.OutgoingHookModelName},
+	}
+
+	if ancestor.OutgoingHooks == nil {
+		ancestor.OutgoingHooks = []sdk.WorkflowNodeOutgoingHook{}
+	}
+
+	ancestor.OutgoingHooks = append(ancestor.OutgoingHooks, oh)
+
+	return true, nil
+
+}
+
+func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, error) {
 	var ancestorsExist = true
 	var ancestors []*sdk.WorkflowNode
 
@@ -650,5 +772,23 @@ func (e *NodeEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
 		w.Joins = append(w.Joins, *join)
 	}
 	return true, nil
+}
 
+func (e *NodeEntry) processForkAncestor(name string, w *sdk.Workflow) (bool, error) {
+	a := e.DependsOn[0]
+	ancestor := w.GetForkByName(a)
+	if ancestor == nil {
+		return false, nil
+	}
+
+	n, err := e.getNode(name)
+	if err != nil {
+		return false, err
+	}
+
+	ancestor.Triggers = append(ancestor.Triggers, sdk.WorkflowNodeForkTrigger{
+		WorkflowDestNode: *n,
+		WorkflowForkID:   ancestor.ID,
+	})
+	return true, nil
 }

@@ -45,7 +45,7 @@ func (api *API) getPlatformModelHandler() service.Handler {
 func (api *API) postPlatformModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := new(sdk.PlatformModel)
-		if err := UnmarshalBody(r, m); err != nil {
+		if err := service.UnmarshalBody(r, m); err != nil {
 			return sdk.WrapError(err, "postPlatformModelHandler")
 		}
 
@@ -96,7 +96,7 @@ func (api *API) putPlatformModelHandler() service.Handler {
 		}
 
 		m := new(sdk.PlatformModel)
-		if err := UnmarshalBody(r, m); err != nil {
+		if err := service.UnmarshalBody(r, m); err != nil {
 			return sdk.WrapError(err, "putPlatformModelHandler")
 		}
 

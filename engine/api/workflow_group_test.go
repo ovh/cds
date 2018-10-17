@@ -19,7 +19,8 @@ import (
 )
 
 func Test_postWorkflowGroupHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -76,7 +77,8 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 }
 
 func Test_putWorkflowGroupHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -149,7 +151,8 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 }
 
 func Test_deleteWorkflowGroupHandler(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)

@@ -8,14 +8,18 @@ const (
 	GitPollerModelName            = "Git Repository Poller"
 	KafkaHookModelName            = "Kafka hook"
 	RabbitMQHookModelName         = "RabbitMQ hook"
+	WorkflowModelName             = "Workflow"
 	HookConfigProject             = "project"
 	HookConfigWorkflow            = "workflow"
+	HookConfigTargetProject       = "target_project"
+	HookConfigTargetWorkflow      = "target_workflow"
+	HookConfigTargetHook          = "target_hook"
 	HookConfigWorkflowID          = "workflow_id"
 	WebHookModelConfigMethod      = "method"
 	RepositoryWebHookModelMethod  = "method"
 	SchedulerModelCron            = "cron"
 	SchedulerModelTimezone        = "timezone"
-	SchedulerModelPayload         = "payload"
+	Payload                       = "payload"
 	HookModelPlatform             = "platform"
 	KafkaHookModelConsumerGroup   = "consumer group"
 	KafkaHookModelTopic           = "topic"
@@ -26,8 +30,23 @@ const (
 	RabbitMQHookModelConsumerTag  = "consumer_tag"
 )
 
-// KafkaHookModel is the builtin hooks
+// Here are the default hooks
 var (
+	BuiltinHookModels = []*WorkflowHookModel{
+		&WebHookModel,
+		&RepositoryWebHookModel,
+		&GitPollerModel,
+		&SchedulerModel,
+		&KafkaHookModel,
+		&RabbitMQHookModel,
+		&WorkflowModel,
+	}
+
+	BuiltinOutgoingHookModels = []*WorkflowHookModel{
+		&OutgoingWebHookModel,
+		&OutgoingWorkflowModel,
+	}
+
 	KafkaHookModel = WorkflowHookModel{
 		Author:     "CDS",
 		Type:       WorkflowHookModelBuiltin,
@@ -155,10 +174,64 @@ var (
 				Configurable: true,
 				Type:         HookConfigTypeString,
 			},
-			SchedulerModelPayload: {
+			Payload: {
 				Value:        "{}",
 				Configurable: true,
 				Type:         HookConfigTypeString,
+			},
+		},
+	}
+
+	WorkflowModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/workflowhook",
+		Name:       WorkflowModelName,
+		Icon:       "sitemap",
+	}
+
+	OutgoingWebHookModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/webhook",
+		Name:       WebHookModelName,
+		Icon:       "Linkify",
+		DefaultConfig: WorkflowNodeHookConfig{
+			WebHookModelConfigMethod: {
+				Value:        "POST",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+			"URL": {
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+			Payload: {
+				Value:        "{}",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
+		},
+	}
+
+	OutgoingWorkflowModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/workflowhook",
+		Name:       WorkflowModelName,
+		Icon:       "sitemap",
+		DefaultConfig: WorkflowNodeHookConfig{
+			HookConfigTargetProject: {
+				Configurable: true,
+				Type:         HookConfigTypeProject,
+			},
+			HookConfigTargetWorkflow: {
+				Configurable: true,
+				Type:         HookConfigTypeWorkflow,
+			},
+			HookConfigTargetHook: {
+				Configurable: true,
+				Type:         HookConfigTypeHook,
 			},
 		},
 	}
@@ -189,6 +262,8 @@ func GetDefaultHookModel(modelName string) WorkflowHookModel {
 		return WebHookModel
 	case GitPollerModelName:
 		return GitPollerModel
+	case WorkflowModelName:
+		return WorkflowModel
 	}
 
 	return WebHookModel
