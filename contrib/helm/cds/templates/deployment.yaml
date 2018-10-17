@@ -1,0 +1,99 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "cds.fullname" . }}-api
+  labels:
+    app: {{ template "cds.fullname" . }}-api
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "cds.fullname" . }}-api
+    spec:
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.image.pullSecrets }}
+        - name: {{ . }}
+      {{- end}}
+      {{- end }}
+      containers:
+      - name: {{ template "cds.fullname" . }}-api
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        env:
+        - name: CDS_API_DATABASE_HOST
+        {{- if .Values.postgresql.enabled }}
+          value: {{ template "cds.postgresql.fullname" . }}
+        {{- else }}
+          value: {{ default "" .Values.externalDatabase.host | quote }}
+        {{- end }}
+        - name: CDS_API_DATABASE_PASSWORD
+        {{- if .Values.postgresql.enabled }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.postgresql.fullname" . }}
+              key: postgres-password #reference postgresql chart secret
+        {{- else }}
+          value: {{ default "" .Values.externalDatabase.password | quote }}
+        {{- end }}
+        - name: CDS_API_AUTH_DEFAULTGROUP
+          value: cdsdemo
+        - name: CDS_LOG_LEVEL
+          value: {{ default "" .Values.logLevel | quote }} 
+        - name: CDS_API_CACHE_MODE
+          value: redis #No alternative in this chart
+        - name: CDS_API_CACHE_REDIS_HOST
+          value: {{ template "cds.redis.fullname" . }}-master:{{ default "" .Values.redis.master.port }} 
+        - name: CDS_API_CACHE_REDIS_PASSWORD
+        {{- if .Values.redis.enabled }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.redis.fullname" . }}
+              key: redis-password #reference postgresql chart secret
+        {{- else }}
+          value: {{ default "" .Values.redis.password | quote }}
+        {{- end }}
+        - name: CDS_API_DIRECTORIES_DOWNLOAD
+          value: /app
+        - name: CDS_API_DIRECTORIES_KEYS
+          value: /app/keys
+        - name: CDS_API_ARTIFACT_LOCAL_BASEDIRECTORY
+          value: /app/artifacts
+        - name: CDS_API_AUTH_SHAREDINFRATOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}-api
+              key: cds-api_auth_sharedinfratoken
+        - name: CDS_API_SECRETS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}-api
+              key: cds-api_secrets_key
+        command: ["/bin/sh"]
+        args: ["-c", "/app/cds-engine-linux-amd64 start api"]
+        ports:
+        - name: http
+          containerPort: 8081
+        - name: grpc
+          containerPort: 8082
+        livenessProbe:
+{{ toYaml .Values.livenessProbe | indent 10 }}
+        readinessProbe:
+{{ toYaml .Values.readinessProbe | indent 10 }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+        volumeMounts:
+        - name: cds-data
+          mountPath: {{ .Values.persistence.mountPath }}
+      volumes:
+      - name: cds-data
+      {{- if .Values.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ .Values.persistence.existingClaim | default (printf "%s-api" (include "cds.fullname" .)) }}
+      {{- else }}
+        emptyDir: {}
+      {{- end }}
