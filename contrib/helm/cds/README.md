@@ -6,15 +6,15 @@ Documentation is available at https://ovh.github.io/cds/
 ## TL;DR;
 
 ```console
-$ cd contrib/helm/cds; 
-helm dependency update; 
+$ cd contrib/helm/cds;
+helm dependency update;
 helm install .
 ```
 
 
-## FUTURE 
+## FUTURE
 
-When CDS helm chart will be released you'll be able to install with 
+When CDS helm chart will be released you'll be able to install with
 ```console
 $ helm install stable/cds
 ```
@@ -52,7 +52,7 @@ $ helm delete my-release
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
-## Configuration (TODO)
+## Configuration
 
 Please refer to default values.yaml and source code
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
@@ -68,6 +68,12 @@ $ helm install --name my-release -f values.yaml .
 ```
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
+
++ If you use a Kubernetes provider without LoadBalancer ability you just have to set your `ui.serviceType` to `ClusterIP` and set `ingress.enabled` to `true` with the right `ingress.hostname` (for example: `helm install --kubeconfig kubeconfig.yml --name my-release -f values.yaml --set ui.serviceType=ClusterIP --set ingress.enabled=true --set ingress.hostname=cds.MY_NODES_URL .` cds.[YOUR-NODES-URL]).
+
++ If you use a minikube you have to set `ui.serviceType` to `ClusterIP`.
+
++ If you use a Kubernetes as GKE, EKS or if your cloud provider provide you an available LoadBalancer you just have to set `ui.serviceType` to `LoadBalancer`.
 
 ## Image
 
