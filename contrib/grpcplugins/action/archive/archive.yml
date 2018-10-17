@@ -1,0 +1,15 @@
+name: plugin-archive
+type: action
+author: mdouchement <https://github.com/mdouchement>
+description: This is a plugin to compress or uncompress an archive.
+parameters:
+  source:
+    type: string
+    description: The source path
+  destination:
+    type: string
+    description: The destination path
+  action:
+    type: list
+    default: uncompress;compress
+    description: '"compress" or "uncompress" an archive'

@@ -1,0 +1,5 @@
+archiver
+archiver.exe
+dist/
+self.tar.gz
+self/
