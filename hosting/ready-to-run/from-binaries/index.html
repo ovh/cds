@@ -1873,6 +1873,11 @@
           <span>Docker Compose</span>
         </a>
     </li>
+      <li data-nav-id="/hosting/ready-to-run/helm/" class="dd-item">
+        <a href="https://ovh.github.io/cds/hosting/ready-to-run/helm/">
+          <span>Helm</span>
+        </a>
+    </li>
       <li data-nav-id="/hosting/ready-to-run/from-binaries/" class="dd-item active">
         <a href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/">
           <span>Run with binaries</span>
@@ -2166,11 +2171,11 @@ BASE_URL=&quot;/&quot;
 sed -i &quot;s#base href=\&quot;/\&quot;#base href=\&quot;${BASE_URL}\&quot;#g&quot; index.html
 
 # Get Caddy
-wget https://github.com/ovh/cds/releases/download/0.8.0/caddy-linux-amd64 
-chmod +x caddy-linux-amd64 
+wget https://github.com/ovh/cds/releases/download/0.8.0/caddy-linux-amd64
+chmod +x caddy-linux-amd64
 
 # RUN CDS UI
-./caddy-linux-amd64 
+./caddy-linux-amd64
 </code></pre>
 
 <p>Then, open a browser on <a href="http://localhost:2015/">http://localhost:2015/</a> . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use <code>cdsctl signup</code>. If you don&rsquo;t have email service configured you just have to check your CDS API logs to have the confirmation link.</p>
@@ -2233,7 +2238,7 @@ chmod +x caddy-linux-amd64
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/" title="Docker Compose"> <i class="fa fa-chevron-left"></i></a>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/hosting/ready-to-run/helm/" title="Helm"> <i class="fa fa-chevron-left"></i></a>
             <a class="nav nav-next" href="https://ovh.github.io/cds/hosting/configuration/" title="Configuration" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>

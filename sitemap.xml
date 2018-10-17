@@ -119,6 +119,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/hosting/ready-to-run/helm/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/gettingstarted/import_workflow_with_webui/</loc>
   </url>
   
@@ -136,10 +140,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/hosting/requirements/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</loc>
   </url>
   
   <url>
@@ -228,6 +228,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/design/hooks/rabbitmq-hook/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/</loc>
   </url>
   
   <url>

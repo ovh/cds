@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>Requirements :: CDS - Continuous Delivery Service</title>
+    <title>Helm :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/hosting/requirements/">
+  <body class="" data-url="/hosting/ready-to-run/helm/">
     <nav id="sidebar" class="">
 
 
@@ -1852,7 +1852,7 @@
             <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/hosting/requirements/" class="dd-item active">
+      <li data-nav-id="/hosting/requirements/" class="dd-item">
         <a href="https://ovh.github.io/cds/hosting/requirements/">
           <span>Requirements</span>
         </a>
@@ -1862,9 +1862,10 @@
           <span>Download</span>
         </a>
     </li>
-    <li data-nav-id="/hosting/ready-to-run/" class="dd-item">
+    <li data-nav-id="/hosting/ready-to-run/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/hosting/ready-to-run/">
-        <span>Ready to RUN</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Ready to RUN</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/hosting/ready-to-run/docker-compose/" class="dd-item">
@@ -1872,7 +1873,7 @@
           <span>Docker Compose</span>
         </a>
     </li>
-      <li data-nav-id="/hosting/ready-to-run/helm/" class="dd-item">
+      <li data-nav-id="/hosting/ready-to-run/helm/" class="dd-item active">
         <a href="https://ovh.github.io/cds/hosting/ready-to-run/helm/">
           <span>Helm</span>
         </a>
@@ -2016,7 +2017,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/hosting/requirements.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/hosting/ready-to-run/helm.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -2036,7 +2037,12 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/hosting/'>Hosting your own instance</a> > Requirements
+
+
+
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/hosting/'>Hosting your own instance</a> > <a href='https://ovh.github.io/cds/hosting/ready-to-run/'>Ready to RUN</a> > Helm
+
+ 
 
  
 
@@ -2051,8 +2057,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cds-api-third-parties">CDS API Third-parties</a></li>
-<li><a href="#supported-platforms">Supported Platforms</a></li>
+<li><a href="#run-with-helm-on-kubernetes">Run with Helm on Kubernetes</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -2065,7 +2070,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>Requirements</h1>
+                <h1>Helm</h1>
                 <p></p>
             </div>
           
@@ -2075,44 +2080,11 @@
 
 
 
-<p>CDS API is the core component of CDS.
-To start CDS API, the <strong>only mandatory dependency is a PostgreSQL database</strong> and a path to the directory containing other CDS binaries.</p>
+<h2 id="run-with-helm-on-kubernetes">Run with Helm on Kubernetes</h2>
 
-<p>There is are two ways to set up CDS:</p>
+<p><a href="https://helm.sh/">Helm</a> is the package manager for <a href="https://kubernetes.io/">Kubernetes</a>.</p>
 
-<ul>
-<li>as <a href="https://github.com/toml-lang/toml">toml</a> configuration</li>
-<li>over environment variables.</li>
-</ul>
-
-<h2 id="cds-api-third-parties">CDS API Third-parties</h2>
-
-<p>At the minimum, CDS needs a PostgreSQL database &gt;= 9.4 and Redis &gt;= 3.2. But for serious usage your may need:</p>
-
-<ul>
-<li>A <a href="https://redis.io">Redis</a> server or sentinels based cluster used as a cache and session store</li>
-<li>A LDAP Server for authentication</li>
-<li>A SMTP Server for mails</li>
-<li>A <a href="https://kafka.apache.org/">Kafka</a> Broker to manage CDS events</li>
-<li>A <a href="https://docs.openstack.org/developer/swift/">OpenStack Swift</a> Tenant to store builds artifacts</li>
-<li>A <a href="https://www.vaultproject.io/">Vault</a> server for CDS configuration</li>
-<li>A <a href="https://www.consul.io/">Consul</a> to manage CDS Configuration</li>
-</ul>
-
-<p>See Configuration template for more details</p>
-
-<h2 id="supported-platforms">Supported Platforms</h2>
-
-<ul>
-<li>FreeBSD i386/amd64/arm</li>
-<li>Linux i386/amd64/arm(Raspberry Pi)</li>
-<li>Windows/amd64</li>
-<li>Darwin i386/amd64</li>
-<li>OpenBSD amd64</li>
-<li>Solaris amd64</li>
-</ul>
-
-<p>You&rsquo;ll find binaries for Linux amd64/arm, Windows amd64, Darwin amd64 and FreeBSD amd64 on <a href="https://github.com/ovh/cds/releases/latest">CDS Releases</a></p>
+<p>You can find all informations to know how to run a CDS with Helm <a href="https://github.com/ovh/cds/blob/master/contrib/helm/cds/README.md">just here</a>.</p>
 
 
 <footer class=" footline" >
@@ -2132,8 +2104,8 @@ To start CDS API, the <strong>only mandatory dependency is a PostgreSQL database
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/hosting/" title="Hosting your own instance"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/hosting/download/" title="Download" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/" title="Docker Compose"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/hosting/ready-to-run/from-binaries/" title="Run with binaries" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
