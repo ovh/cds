@@ -79,6 +79,7 @@ func TestDo(t *testing.T) {
 		args    args
 		want    string
 		wantErr bool
+		enable  bool
 	}{
 		{
 			name: "default value with empty default",
@@ -86,7 +87,8 @@ func TestDo(t *testing.T) {
 				input: `aa:{{.cds.app.foo | default ""}}end`,
 				vars:  map[string]string{},
 			},
-			want: `aa:end`,
+			want:   `aa:end`,
+			enable: true,
 		},
 		{
 			name: "default value",
@@ -94,7 +96,8 @@ func TestDo(t *testing.T) {
 				input: `aa:{{.cds.app.foo | default "bar" }}:end`,
 				vars:  map[string]string{},
 			},
-			want: `aa:bar:end`,
+			want:   `aa:bar:end`,
+			enable: true,
 		},
 		{
 			name: "default value with variables (easy)",
@@ -104,7 +107,8 @@ func TestDo(t *testing.T) {
 					"val": "biz",
 				},
 			},
-			want: `biz`,
+			want:   `biz`,
+			enable: true,
 		},
 		{
 			name: "default value with variables (not so easy)",
@@ -114,7 +118,8 @@ func TestDo(t *testing.T) {
 					"cds.app.bar": "biz",
 				},
 			},
-			want: `biz`,
+			want:   `biz`,
+			enable: true,
 		},
 		{
 			name: "default value with variables (so hard)",
@@ -124,7 +129,8 @@ func TestDo(t *testing.T) {
 					"cds.app.biz": "biz",
 				},
 			},
-			want: `biz`,
+			want:   `biz`,
+			enable: true,
 		},
 		{
 			name: "default value with variables (with pipeline)",
@@ -134,21 +140,24 @@ func TestDo(t *testing.T) {
 					"cds.app.biz": "biz",
 				},
 			},
-			want: `BIZ`,
+			want:   `BIZ`,
+			enable: true,
 		},
 		{
 			name: "default value with pipeline",
 			args: args{
 				input: `{{.cds.app.foo | upper}}`,
 			},
-			want: `{{.CDS.APP.FOO}}`,
+			want:   `{{.cds.app.foo | upper}}`,
+			enable: true,
 		},
 		{
 			name: "default value with pipeline",
 			args: args{
 				input: `{{.cds.app.foo | upper | lower}}`,
 			},
-			want: `{{.cds.app.foo}}`,
+			want:   `{{.cds.app.foo | upper | lower}}`,
+			enable: true,
 		},
 		{
 			name: "default value with knowned var",
@@ -156,7 +165,8 @@ func TestDo(t *testing.T) {
 				input: `aa:{{.cds.app.foo | default "bar"}}end`,
 				vars:  map[string]string{"cds.app.foo": "value"},
 			},
-			want: `aa:valueend`,
+			want:   `aa:valueend`,
+			enable: true,
 		},
 		{
 			name: "default empty value with knowned var",
@@ -164,7 +174,8 @@ func TestDo(t *testing.T) {
 				input: `aa:{{.cds.app.foo | default ""}}end`,
 				vars:  map[string]string{"cds.app.foo": "value"},
 			},
-			want: `aa:valueend`,
+			want:   `aa:valueend`,
+			enable: true,
 		},
 		{
 			name: "unknown function",
@@ -172,7 +183,8 @@ func TestDo(t *testing.T) {
 				input: `echo '{{"conf"|uvault}}'`,
 				vars:  map[string]string{},
 			},
-			want: `echo '{{"conf"|uvault}}'`,
+			want:   `echo '{{"conf"|uvault}}'`,
+			enable: true,
 		},
 		{
 			name: "simple",
@@ -180,7 +192,8 @@ func TestDo(t *testing.T) {
 				input: "a {{.cds.app.value}}",
 				vars:  map[string]string{"cds.app.value": "value"},
 			},
-			want: "a value",
+			want:   "a value",
+			enable: true,
 		},
 		{
 			name: "only unknown",
@@ -188,7 +201,8 @@ func TestDo(t *testing.T) {
 				input: "a value unknown {{.cds.app.foo}}",
 				vars:  map[string]string{"cds.app.value": "value"},
 			},
-			want: "a value unknown {{.cds.app.foo}}",
+			want:   "a value unknown {{.cds.app.foo}}",
+			enable: true,
 		},
 		{
 			name: "simple with unknown",
@@ -196,7 +210,8 @@ func TestDo(t *testing.T) {
 				input: "a {{.cds.app.value}} and another value unknown {{.cds.app.foo}}",
 				vars:  map[string]string{"cds.app.value": "value"},
 			},
-			want: "a value and another value unknown {{.cds.app.foo}}",
+			want:   "a value and another value unknown {{.cds.app.foo}}",
+			enable: true,
 		},
 		{
 			name: "upper",
@@ -204,7 +219,8 @@ func TestDo(t *testing.T) {
 				input: "a {{.cds.app.value | upper}} and another value unknown {{.cds.app.foo}}",
 				vars:  map[string]string{"cds.app.value": "value"},
 			},
-			want: "a VALUE and another value unknown {{.cds.app.foo}}",
+			want:   "a VALUE and another value unknown {{.cds.app.foo}}",
+			enable: true,
 		},
 		{
 			name: "title and filter on unknow",
@@ -212,7 +228,8 @@ func TestDo(t *testing.T) {
 				input: "a {{.cds.app.value | title }} and another value unknown {{.cds.app.foo | lower}}",
 				vars:  map[string]string{"cds.app.value": "value"},
 			},
-			want: "a Value and another value unknown {{.cds.app.foo | lower}}",
+			want:   "a Value and another value unknown {{.cds.app.foo | lower}}",
+			enable: true,
 		},
 		{
 			name: "many",
@@ -220,7 +237,8 @@ func TestDo(t *testing.T) {
 				input: "{{.cds.app.bar}} a {{.cds.app.valuea | upper }}, a {{.cds.app.valueb | title}}.{{.cds.app.valuec}}-{{.cds.app.foo}}",
 				vars:  map[string]string{"cds.app.valuea": "valuea", "cds.app.valueb": "valueb", "cds.app.valuec": "valuec"},
 			},
-			want: "{{.cds.app.bar}} a VALUEA, a Valueb.valuec-{{.cds.app.foo}}",
+			want:   "{{.cds.app.bar}} a VALUEA, a Valueb.valuec-{{.cds.app.foo}}",
+			enable: true,
 		},
 		{
 			name: "two same unknown",
@@ -228,7 +246,8 @@ func TestDo(t *testing.T) {
 				input: `A:{{.cds.env.myenvpassword}} B:{{.cds.env.myenvpassword}}`,
 				vars:  map[string]string{},
 			},
-			want: `A:{{.cds.env.myenvpassword}} B:{{.cds.env.myenvpassword}}`,
+			want:   `A:{{.cds.env.myenvpassword}} B:{{.cds.env.myenvpassword}}`,
+			enable: true,
 		},
 		{
 			name: "empty string",
@@ -372,6 +391,10 @@ workflow:
 		},
 	}
 	for _, tt := range tests {
+		if !tt.enable {
+			continue
+		}
+
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := Do(tt.args.input, tt.args.vars)
 			if (err != nil) != tt.wantErr {

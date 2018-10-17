@@ -49,24 +49,99 @@ func Do(input string, vars map[string]string) (string, error) {
 			empty[k] = k
 		}
 		//The key should be used as a variable to be replaced
-		kAsVar := "{{." + k
-		kbAsVar := "{{." + kb
-		input = strings.Replace(input, kAsVar, kbAsVar, -1)
-		kAsVar = "{{. " + k
-		kbAsVar = "{{. " + kb
-		input = strings.Replace(input, kAsVar, kbAsVar, -1)
+		//kAsVar := "{{." + k
+		//kbAsVar := "{{." + kb
+		//input = strings.Replace(input, kAsVar, kbAsVar, -1)
+		//kAsVar = "{{. " + k
+		//kbAsVar = "{{. " + kb
+		//input = strings.Replace(input, kAsVar, kbAsVar, -1)
+
+		input = strings.Replace(input, "."+k, "."+kb, -1)
+
 	}
 
-	var helper string
+	//var helper string
 	// in input, replace {{.cds.foo.bar}} with {{ defaultCDS "{{.cds.foo.bar}}" .cds.foo.bar}}
 	// t.Execute will call "default" function, documented on http://masterminds.github.io/sprig/defaults.html
 	sm := interpolateRegex.FindAllStringSubmatch(input, -1)
 	if len(sm) > 0 {
-		alreadyReplaced := map[string]string{}
+		//		alreadyReplaced := map[string]string{}
 		for i := 0; i < len(sm); i++ {
-			helper = ""
+			//			helper = ""
 			if len(sm[i]) > 0 {
-				e := sm[i][1][2 : len(sm[i][1])-2]
+				fmt.Println("----", sm[i][1], "----", data)
+
+				var expression = strings.TrimSpace(sm[i][1])
+				var usedVariables = map[string]struct{}{}
+				var usedHelpers = map[string]struct{}{}
+				var quotedStuff = []string{}
+				var trimmedExpression = strings.TrimPrefix(expression, "{{")
+				trimmedExpression = strings.TrimSuffix(trimmedExpression, "}}")
+				splittedExpression := strings.Split(trimmedExpression, " ")
+
+				// case: {{"conf"|uvault}}
+				if len(splittedExpression) == 1 {
+					splittedExpression = strings.Split(trimmedExpression, "|")
+				}
+
+				for i, s := range splittedExpression {
+					splittedExpression[i] = strings.TrimSpace(s)
+					if splittedExpression[i] == "" {
+						continue
+					}
+
+					switch splittedExpression[i][0] {
+					case '.':
+						usedVariables[splittedExpression[i][1:]] = struct{}{}
+						//usedVariables[strings.Replace(splittedExpression[i][1:], "__", ".", -1)] = struct{}{}
+					case '"':
+						q := strings.TrimPrefix(splittedExpression[i], "\"")
+						q = strings.TrimSuffix(q, "\"")
+						quotedStuff = append(quotedStuff, q)
+					case '|':
+					default:
+						usedHelpers[splittedExpression[i][0:]] = struct{}{}
+					}
+				}
+
+				unknownVariables := []string{}
+				for v := range usedVariables {
+					if _, is := data[v]; !is {
+						unknownVariables = append(unknownVariables, v)
+					}
+				}
+
+				unknownHelpers := []string{}
+				for h := range usedHelpers {
+					if _, is := interpolateHelperFuncs[h]; !is {
+						unknownHelpers = append(unknownHelpers, h)
+					}
+				}
+
+				fmt.Println("expression", expression)
+				fmt.Println("splittedExpression:", splittedExpression)
+				fmt.Println("usedVariables:", usedVariables)
+				fmt.Println("usedHelpers:", usedHelpers)
+				fmt.Println("unknownVariables:", unknownVariables)
+				fmt.Println("unknownHelpers:", unknownHelpers)
+				fmt.Println("quotedStuff:", quotedStuff)
+
+				var defaultIsUsed bool
+				if _, ok := usedHelpers["default"]; ok {
+					defaultIsUsed = true
+				}
+
+				if !defaultIsUsed && (len(unknownVariables) > 0 || len(unknownHelpers) > 0) {
+					for _, s := range quotedStuff {
+						q := strings.Replace(sm[i][1], `"`+s+`"`, `\"`+s+`\"`, -1)
+						input = strings.Replace(input, sm[i][1], q, 1)
+						sm[i][1] = q
+					}
+
+					input = strings.Replace(input, sm[i][1], "{{\""+sm[i][1]+"\"}}", -1)
+				}
+
+				/*e := sm[i][1][2 : len(sm[i][1])-2]
 				// alreadyReplaced: check if var is already replaced.
 				// see test "two same unknown" on DoTest
 				if _, ok := alreadyReplaced[sm[i][1]]; !ok {
@@ -102,15 +177,29 @@ func Do(input string, vars map[string]string) (string, error) {
 								}
 
 							} else if _, ok := interpolateHelperFuncs[helper]; !ok {
+								// if the helper is not found we must rewrite the whole thing
 								eb = ""
 							}
 						}
+
 						if !strings.HasPrefix(helper, "default") {
 							var s = nameWithDot
-							if strings.Contains(s, "|") {
-								s = strings.TrimSpace(strings.Split(s, "|")[0])
 
+							if strings.Contains(helper, "|") {
+								helper = strings.TrimSpace(strings.Split(helper, "|")[0])
 							}
+
+							var v = strings.TrimSpace(strings.TrimPrefix(strings.Split(s, "|")[0], "."))
+							var varExist bool
+							_, varExist = vars[v]
+
+							fmt.Println("v exist ?", v, varExist)
+
+							if _, ok := interpolateHelperFuncs[helper]; ok && strings.Contains(s, "|") && varExist {
+								s = "." + v
+							}
+
+							fmt.Println("eb:", eb)
 							input = strings.Replace(input, sm[i][1], "{{ defaultCDS \"{{"+s+"}}\" "+eb+" }}", -1)
 						}
 					} else if _, ok := empty[e]; !ok {
@@ -122,12 +211,14 @@ func Do(input string, vars map[string]string) (string, error) {
 						// with cds.foo.bar knowned from vars
 						input = strings.Replace(input, sm[i][1], "{{ defaultCDS \"{{"+defaults[e[1:]]+"}}\" "+e+" }}", -1)
 					}
-					fmt.Println(input)
+					fmt.Println("input:", sm[i][1])
 					alreadyReplaced[sm[i][1]] = sm[i][1]
-				}
+				}*/
 			}
 		}
 	}
+
+	fmt.Println("input:", input)
 
 	t, err := template.New("input").Funcs(interpolateHelperFuncs).Parse(input)
 	if err != nil {
