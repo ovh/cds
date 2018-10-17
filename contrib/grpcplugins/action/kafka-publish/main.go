@@ -93,7 +93,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 		} else {
 			filesPath, err := filepath.Glob(artifactsList)
 			if err != nil {
-				return fail("Unable to parse files %s: %s", artifactsList, err)
+				return fail("Unable to parse files %s: %v", artifactsList, err)
 			}
 			artifacts = filesPath
 		}
@@ -106,16 +106,16 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 
 	producer, err := initKafkaProducer(kafka, user, password)
 	if err != nil {
-		return fail("Unable to connect to kafka : %s", err)
+		return fail("Unable to connect to kafka: %v", err)
 	}
 
 	btes, err := json.Marshal(ctx)
 	if err != nil {
-		return fail("Error : %s", err)
+		return fail("Error: %v", err)
 	}
 
 	if _, _, err := sendDataOnKafka(producer, topic, [][]byte{btes}); err != nil {
-		return fail("Unable to send on kafka : %s", err)
+		return fail("Unable to send on kafka: %v", err)
 	}
 
 	pubKey := q.GetOptions()["publicKey"]
@@ -124,7 +124,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 	for _, f := range files {
 		aes, err := getAESEncryptionOptions(key)
 		if err != nil {
-			return fail("Unable to shred file %s : %s", f, err)
+			return fail("Unable to shred file %s: %s", f, err)
 		}
 		var opts = &shredder.Opts{
 			ChunkSize:     512 * 1024,
@@ -146,10 +146,10 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 
 		datas, err := kafkapublisher.KafkaMessages(chunks)
 		if err != nil {
-			return fail("Unable to compute chunks for file %s : %s", f, err)
+			return fail("Unable to compute chunks for file %s: %v", f, err)
 		}
 		if _, _, err := sendDataOnKafka(producer, topic, datas); err != nil {
-			return fail("Unable to send chunks through kafka : %s", err)
+			return fail("Unable to send chunks through kafka: %v", err)
 		}
 	}
 
@@ -185,7 +185,7 @@ func (actPlugin *kafkaPublishActionPlugin) Run(ctxBack context.Context, q *actio
 	//Wait for ack
 	ack, err := ackFromKafka(kafka, ackTopic, group, user, password, key, time.Duration(timeout)*time.Second, q.GetJobID())
 	if err != nil {
-		return fail("Failed to get ack on topic %s: %s", ackTopic, err)
+		return fail("Failed to get ack on topic %s: %v", ackTopic, err)
 	}
 
 	//Check the ack
@@ -254,18 +254,18 @@ func tmplMessage(q *actionplugin.ActionQuery, buff []byte) (string, error) {
 
 	t, err := template.New("file").Funcs(funcMap).Parse(fileContent)
 	if err != nil {
-		Logf("Invalid template format: %s\n", err.Error())
+		Logf("Invalid template format: %v\n", err.Error())
 		return "", err
 	}
 
 	out, err := os.Create("message")
 	if err != nil {
-		Logf("Error writing temporary file : %s\n", err.Error())
+		Logf("Error writing temporary file : %v\n", err.Error())
 		return "", err
 	}
 	outPath := out.Name()
 	if err := t.Execute(out, data); err != nil {
-		Logf("Failed to execute template: %s\n", err.Error())
+		Logf("Failed to execute template: %v\n", err.Error())
 		return "", err
 	}
 
