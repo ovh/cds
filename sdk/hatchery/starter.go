@@ -191,6 +191,16 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		},
 	})
 
+	if j.model.IsDeprecated {
+		infos = append(infos, sdk.SpawnInfo{
+			RemoteTime: time.Now(),
+			Message: sdk.SpawnMsg{
+				ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
+				Args: []interface{}{j.model.Name},
+			},
+		})
+	}
+
 	ctxtJobSendSpawnInfo, cancelJobSendSpawnInfo := context.WithTimeout(ctx, 10*time.Second)
 	_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "spawnOK"))
 	if err := h.CDSClient().QueueJobSendSpawnInfo(ctxtJobSendSpawnInfo, j.isWorkflowJob, j.id, infos); err != nil {
