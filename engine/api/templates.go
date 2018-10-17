@@ -219,72 +219,82 @@ func (api *API) executeTemplateHandler() service.Handler {
 			return err
 		}
 
-		// execute template with request
-		res, err := workflowtemplate.Execute(t, req)
+		// execute the template
+		msgs, err := api.executeTemplate(ctx, proj, t, req)
 		if err != nil {
 			return err
 		}
 
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
-		}
-		defer func() { _ = tx.Rollback() }()
-
-		// import generated pipelines
-		var msgListString []string
-
-		for _, p := range res.Pipelines {
-			var pip exportentities.PipelineV1
-			if err := yaml.Unmarshal([]byte(p), &pip); err != nil {
-				return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated pipeline template"))
-			}
-
-			_, msgs, err := pipeline.ParseAndImport(tx, api.Cache, proj, pip, getUser(ctx),
-				pipeline.ImportOptions{Force: true})
-			msgsT := translate(r, msgs)
-			if err != nil {
-				return sdk.WrapError(err, "Unable import generated pipeline")
-			}
-
-			msgListString = append(msgListString, msgsT...)
-		}
-
-		// import generated workflow
-		var wor exportentities.Workflow
-		if err := yaml.Unmarshal([]byte(res.Workflow), &wor); err != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated workflow template"))
-		}
-
-		workflow, msgs, err := workflow.ParseAndImport(ctx, tx, api.Cache, proj, &wor, getUser(ctx),
-			workflow.ImportOptions{DryRun: false, Force: true})
-		if err != nil {
-			return sdk.WrapError(err, "Unable import generated workflow")
-		}
-
-		msgListString = append(msgListString, translate(r, msgs)...)
-
-		// remove existing relations between workflow and template
-		if err := workflowtemplate.DeleteRelationsForWorkflowID(tx, workflow.ID); err != nil {
-			return err
-		}
-
-		// create new relation between workflow and template
-		if err := workflowtemplate.InsertRelation(tx, &sdk.WorkflowTemplateInstance{
-			WorkflowTemplateID:      t.ID,
-			WorkflowID:              workflow.ID,
-			WorkflowTemplateVersion: t.Version,
-			Request:                 req,
-		}); err != nil {
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
-		}
-
-		return service.WriteJSON(w, msgListString, http.StatusOK)
+		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)
 	}
+}
+
+func (api *API) executeTemplate(ctx context.Context, proj *sdk.Project, t *sdk.WorkflowTemplate,
+	req sdk.WorkflowTemplateRequest) ([]sdk.Message, error) {
+	// execute template with request
+	res, err := workflowtemplate.Execute(t, req)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := api.mustDB().Begin()
+	if err != nil {
+		return nil, sdk.WrapError(err, "Cannot start transaction")
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// import generated pipelines
+	var msgs []sdk.Message
+
+	for _, p := range res.Pipelines {
+		var pip exportentities.PipelineV1
+		if err := yaml.Unmarshal([]byte(p), &pip); err != nil {
+			return nil, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated pipeline template"))
+		}
+
+		_, pipelineMsgs, err := pipeline.ParseAndImport(tx, api.Cache, proj, pip, getUser(ctx),
+			pipeline.ImportOptions{Force: true})
+		if err != nil {
+			return nil, sdk.WrapError(err, "Unable import generated pipeline")
+		}
+
+		msgs = append(msgs, pipelineMsgs...)
+	}
+
+	// import generated workflow
+	var wor exportentities.Workflow
+	if err := yaml.Unmarshal([]byte(res.Workflow), &wor); err != nil {
+		return nil, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated workflow template"))
+	}
+
+	workflow, workflowMsgs, err := workflow.ParseAndImport(ctx, tx, api.Cache, proj, &wor, getUser(ctx),
+		workflow.ImportOptions{DryRun: false, Force: true})
+	if err != nil {
+		return nil, sdk.WrapError(err, "Unable import generated workflow")
+	}
+
+	msgs = append(msgs, workflowMsgs...)
+
+	// remove existing relations between workflow and template
+	if err := workflowtemplate.DeleteRelationsForWorkflowID(tx, workflow.ID); err != nil {
+		return nil, err
+	}
+
+	// create new relation between workflow and template
+	if err := workflowtemplate.InsertRelation(tx, &sdk.WorkflowTemplateInstance{
+		WorkflowTemplateID:      t.ID,
+		WorkflowID:              workflow.ID,
+		WorkflowTemplateVersion: t.Version,
+		Request:                 req,
+	}); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WrapError(err, "Cannot commit transaction")
+	}
+
+	return msgs, nil
 }
 
 func (api *API) getTemplateInstancesHandler() service.Handler {
@@ -339,8 +349,22 @@ func (api *API) updateWorkflowHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrAlreadyLatestTemplate)
 		}
 
-		// get new params
+		// get new params but override name
+		var req sdk.WorkflowTemplateRequest
+		if err := service.UnmarshalBody(r, &req); err != nil {
+			return err
+		}
+		req.Name = wti.Request.Name
+		if err := wt.CheckParams(req); err != nil {
+			return err
+		}
 
-		return service.WriteJSON(w, nil, http.StatusOK)
+		// execute the template
+		msgs, err := api.executeTemplate(ctx, proj, wt, req)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)
 	}
 }
