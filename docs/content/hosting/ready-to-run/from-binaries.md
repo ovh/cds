@@ -1,6 +1,6 @@
 +++
 title = "Run with binaries"
-weight = 2
+weight = 3
 
 +++
 
@@ -39,7 +39,7 @@ chmod +x *-$OS-$ARCH
 
 ### Prepare Database
 
-For this example, we consider that the database is installed on `localhost`, 
+For this example, we consider that the database is installed on `localhost`,
 port `5432`, with an existing empty database and user named `cds` and a password 'cds'.
 
 ```bash
@@ -88,11 +88,11 @@ BASE_URL="/"
 sed -i "s#base href=\"/\"#base href=\"${BASE_URL}\"#g" index.html
 
 # Get Caddy
-wget https://github.com/ovh/cds/releases/download/0.8.0/caddy-linux-amd64 
-chmod +x caddy-linux-amd64 
+wget https://github.com/ovh/cds/releases/download/0.8.0/caddy-linux-amd64
+chmod +x caddy-linux-amd64
 
 # RUN CDS UI
-./caddy-linux-amd64 
+./caddy-linux-amd64
 ```
 
 Then, open a browser on http://localhost:2015/ . You have to signup your first CDS user. It will be an administrator on CDS. In order to do that, just go on UI and click on signup or use `cdsctl signup`. If you don't have email service configured you just have to check your CDS API logs to have the confirmation link.
