@@ -44,7 +44,7 @@
             <ng-container *ngIf="_hook.model && isOutgoing">
                 <h3>{{ 'workflow_node_hook_form_name' | translate }}</h3>
                 <div class="inline fields">
-                    <div class="four wide field"><label>Name</label></div>
+                    <div class="four wide field"><label>{{ 'parameter_name' | translate}}</label></div>
                     <div class="twelve wide field">
                         <input type="text" [(ngModel)]="outgoingHook.name"/>
                     </div>
