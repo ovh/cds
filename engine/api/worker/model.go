@@ -112,7 +112,7 @@ func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
 	wms := []dbResultWMS{}
 	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, modelColumns)
 	if _, err := db.Select(&wms, query); err != nil {
-		return nil, sdk.WrapError(err, "")
+		return nil, sdk.WithStack(err)
 	}
 	return scanWorkerModels(db, wms)
 }
@@ -402,12 +402,12 @@ func updateAllToCheckRegistration(db gorp.SqlExecutor) error {
 	query := `UPDATE worker_model SET check_registration = $1`
 	res, err := db.Exec(query, true)
 	if err != nil {
-		return sdk.WrapError(err, "updateAllToCheckRegistration>")
+		return sdk.WithStack(err)
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return sdk.WrapError(err, "updateAllToCheckRegistration>")
+		return sdk.WithStack(err)
 	}
 	log.Debug("updateAllToCheckRegistration> %d worker model(s) check registration", rows)
 	return nil
@@ -418,12 +418,12 @@ func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, info string
 	query := `UPDATE worker_model SET nb_spawn_err=nb_spawn_err+1, last_spawn_err=$1, date_last_spawn_err=$2 WHERE id = $3`
 	res, err := db.Exec(query, info, time.Now(), modelID)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateSpawnErrorWorkerModel>")
+		return sdk.WithStack(err)
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return sdk.WrapError(err, "UpdateSpawnErrorWorkerModel>")
+		return sdk.WithStack(err)
 	}
 	log.Debug("UpdateSpawnErrorWorkerModel> %d worker model updated", rows)
 	return nil
@@ -434,12 +434,12 @@ func updateRegistration(db gorp.SqlExecutor, modelID int64) error {
 	query := `UPDATE worker_model SET need_registration=$1, check_registration=$1, last_registration = $2, nb_spawn_err=$3, last_spawn_err=$4 WHERE id = $5`
 	res, err := db.Exec(query, false, time.Now(), 0, "", modelID)
 	if err != nil {
-		return sdk.WrapError(err, "updateRegistration>")
+		return sdk.WithStack(err)
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return sdk.WrapError(err, "updateRegistration>")
+		return sdk.WithStack(err)
 	}
 	log.Debug("updateRegistration> %d worker model updated", rows)
 	return nil
@@ -450,12 +450,12 @@ func updateOSAndArch(db gorp.SqlExecutor, modelID int64, OS, arch string) error 
 	query := `UPDATE worker_model SET registered_os=$1, registered_arch = $2 WHERE id = $3`
 	res, err := db.Exec(query, OS, arch, modelID)
 	if err != nil {
-		return sdk.WrapError(err, "updateOSAndArch>")
+		return sdk.WithStack(err)
 	}
 
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return sdk.WrapError(err, "updateOSAndArch>")
+		return sdk.WithStack(err)
 	}
 	log.Debug("updateOSAndArch> %d worker model updated", rows)
 	return nil

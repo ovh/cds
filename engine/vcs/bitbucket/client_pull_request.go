@@ -13,7 +13,7 @@ import (
 func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.VCSPullRequest, error) {
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return nil, sdk.WrapError(err, "PullRequests>")
+		return nil, sdk.WithStack(err)
 	}
 
 	bbPR := []PullRequest{}
@@ -91,7 +91,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, prID int, text string) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return sdk.WrapError(err, "PullRequestComment>")
+		return sdk.WithStack(err)
 	}
 	payload := map[string]string{
 		"text": text,

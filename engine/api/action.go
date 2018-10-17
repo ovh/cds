@@ -220,7 +220,7 @@ func (api *API) getActionExportHandler() service.Handler {
 		}
 
 		if _, err := action.Export(api.mustDB(), name, f, w); err != nil {
-			return sdk.WrapError(err, "getActionExportHandler>")
+			return sdk.WithStack(err)
 		}
 		w.Header().Add("Content-Type", exportentities.GetContentType(f))
 		return nil

@@ -131,7 +131,7 @@ func (api *API) putPlatformModelHandler() service.Handler {
 		}
 
 		if err := platform.UpdateModel(tx, m); err != nil {
-			return sdk.WrapError(err, "")
+			return sdk.WithStack(err)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -231,7 +231,7 @@ func (api *API) deletePlatformModelHandler() service.Handler {
 		}
 
 		if err := platform.DeleteModel(tx, old.ID); err != nil {
-			return sdk.WrapError(err, "deletePlatformModelHandler>")
+			return sdk.WithStack(err)
 		}
 
 		if err := tx.Commit(); err != nil {

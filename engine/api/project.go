@@ -269,7 +269,7 @@ func (api *API) putProjectLabelsHandler() service.Handler {
 
 		var labels []sdk.Label
 		if err := service.UnmarshalBody(r, &labels); err != nil {
-			return sdk.WrapError(err, "putProjectLabelsHandler> Unmarshall error")
+			return sdk.WrapError(err, "Unmarshall error")
 		}
 
 		// Check is project exist
@@ -349,7 +349,7 @@ func (api *API) addProjectHandler() service.Handler {
 		//Unmarshal data
 		p := &sdk.Project{}
 		if err := service.UnmarshalBody(r, p); err != nil {
-			return sdk.WrapError(err, "addProjectHandler> Unable to unmarshal body")
+			return sdk.WrapError(err, "Unable to unmarshal body")
 		}
 
 		// check projectKey pattern

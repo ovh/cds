@@ -42,7 +42,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, proj, name, f, getUser(ctx), w, opts...); err != nil {
-			return sdk.WrapError(err, "getWorkflowExportHandler>")
+			return sdk.WithStack(err)
 		}
 
 		w.Header().Add("Content-Type", exportentities.GetContentType(f))

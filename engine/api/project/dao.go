@@ -451,7 +451,7 @@ func DeleteLabel(db gorp.SqlExecutor, labelID int64) error {
 // InsertLabel insert a label
 func InsertLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 	if err := label.Validate(); err != nil {
-		return sdk.WrapError(err, "InsertLabel>")
+		return sdk.WithStack(err)
 	}
 
 	lbl := dbLabel(*label)
@@ -466,7 +466,7 @@ func InsertLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 // UpdateLabel update a label
 func UpdateLabel(db gorp.SqlExecutor, label *sdk.Label) error {
 	if err := label.Validate(); err != nil {
-		return sdk.WrapError(err, "UpdateLabel>")
+		return sdk.WithStack(err)
 	}
 
 	lbl := dbLabel(*label)
@@ -488,5 +488,5 @@ func UpdateFavorite(db gorp.SqlExecutor, projectID int64, u *sdk.User, add bool)
 	}
 
 	_, err := db.Exec(query, u.ID, projectID)
-	return sdk.WrapError(err, "UpdateFavorite>")
+	return sdk.WithStack(err)
 }

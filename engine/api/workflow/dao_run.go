@@ -782,7 +782,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return sdk.WrapError(err, "stopRunsBlocked>")
+		return sdk.WithStack(err)
 	}
 
 	if len(ids) == 0 {

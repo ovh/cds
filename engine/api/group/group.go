@@ -97,7 +97,7 @@ func LoadGroupByID(db gorp.SqlExecutor, id int64) (*sdk.Group, error) {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrGroupNotFound
 		}
-		return nil, sdk.WrapError(err, "LoadGroupByID>")
+		return nil, sdk.WithStack(err)
 	}
 	return &sdk.Group{
 		ID:   id,

@@ -25,7 +25,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 		u := getUser(ctx)
 
 		if err := service.UnmarshalBody(r, &p); err != nil {
-			return sdk.WrapError(err, "postPGRPCluginHandler>")
+			return sdk.WithStack(err)
 		}
 		p.Binaries = nil
 
@@ -95,7 +95,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		db := api.mustDB()
 		var p sdk.GRPCPlugin
 		if err := service.UnmarshalBody(r, &p); err != nil {
-			return sdk.WrapError(err, "putGRPCluginHandler>")
+			return sdk.WithStack(err)
 		}
 
 		var name = mux.Vars(r)["name"]
@@ -248,7 +248,7 @@ func (api *API) getGRPCluginBinaryInfosHandler() service.Handler {
 
 		p, err := plugin.LoadByName(api.mustDB(), name)
 		if err != nil {
-			return sdk.WrapError(err, "getGRPCluginBinaryInfosHandler>")
+			return sdk.WithStack(err)
 		}
 
 		b := p.GetBinary(os, arch)

@@ -135,7 +135,7 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id i
 	log.Debug("%v", string(body))
 
 	if res.StatusCode != 201 {
-		return sdk.WrapError(err, " Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
+		return sdk.WrapError(err, "Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
 	}
 
 	return nil

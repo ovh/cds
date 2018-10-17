@@ -42,7 +42,7 @@ func updateWorkflowTriggerHookSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 	//Update node
 	query := "UPDATE workflow_node SET workflow_outgoing_hook_trigger_id = $1 WHERE id = $2"
 	if _, err := db.Exec(query, n.TriggerHookSrcID, n.ID); err != nil {
-		return sdk.WrapError(err, "updateWorkflowTriggerHookSrc> Unable to set  workflow_outgoing_hook_trigger_id ON node %d", n.ID)
+		return sdk.WrapError(err, "Unable to set  workflow_outgoing_hook_trigger_id ON node %d", n.ID)
 	}
 	return nil
 }
@@ -213,7 +213,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		log.Debug("inserting outgoing hook %+v", h)
 		//Insert the hook
 		if err := insertOutgoingHook(db, store, w, n, h, u); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node hook")
+			return sdk.WrapError(err, "Unable to insert workflow node hook")
 		}
 	}
 
@@ -222,7 +222,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		f := &n.Forks[i]
 		//Insert the hook
 		if err := insertFork(db, store, w, n, f, u); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node fork")
+			return sdk.WrapError(err, "Unable to insert workflow node fork")
 		}
 	}
 

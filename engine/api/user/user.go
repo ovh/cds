@@ -256,7 +256,7 @@ func DeleteUserWithDependenciesByName(db gorp.SqlExecutor, s string) error {
 // DeleteUserWithDependencies Delete user and all his dependencies
 func DeleteUserWithDependencies(db gorp.SqlExecutor, u *sdk.User) error {
 	if err := deleteUserFromUserGroup(db, u); err != nil {
-		return sdk.WrapError(err, "DeleteUserWithDependencies>User cannot be removed from group_user table")
+		return sdk.WrapError(err, "User cannot be removed from group_user table")
 	}
 
 	if err := deleteUser(db, u); err != nil {

@@ -103,7 +103,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 	// Marshal to the desired format
 	b, err := exportentities.Marshal(eapp, f)
 	if err != nil {
-		return 0, sdk.WrapError(err, "application.Export>")
+		return 0, sdk.WithStack(err)
 	}
 
 	return w.Write(b)

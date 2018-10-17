@@ -16,7 +16,7 @@ func (b *bitbucketClient) getHooksConfig(ctx context.Context, repo string) (Hook
 
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return oldHookConfig, sdk.WrapError(err, "getHooksConfig>")
+		return oldHookConfig, sdk.WithStack(err)
 	}
 
 	getPath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
@@ -122,12 +122,12 @@ func (b *bitbucketClient) CreateHook(ctx context.Context, repo string, hook *sdk
 func (b *bitbucketClient) UpdateHook(ctx context.Context, repo, url string, hook sdk.VCSHook) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateHook>")
+		return sdk.WithStack(err)
 	}
 
 	hcfg, err := b.getHooksConfig(ctx, repo)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateHook>")
+		return sdk.WithStack(err)
 	}
 
 	for i := range hcfg.Details {
@@ -156,13 +156,13 @@ func (b *bitbucketClient) UpdateHook(ctx context.Context, repo, url string, hook
 func (b *bitbucketClient) DeleteHook(ctx context.Context, repo string, hook sdk.VCSHook) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return sdk.WrapError(err, "DeleteHook>")
+		return sdk.WithStack(err)
 	}
 
 	if !hook.Workflow {
 		hcfg, err := b.getHooksConfig(ctx, repo)
 		if err != nil {
-			return sdk.WrapError(err, "DeleteHook>")
+			return sdk.WithStack(err)
 		}
 
 		for i, h := range hcfg.Details {

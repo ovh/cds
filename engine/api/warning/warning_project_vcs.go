@@ -130,7 +130,7 @@ func (warn missingProjectVCSWarning) compute(db gorp.SqlExecutor, e sdk.Event) e
 		}
 		apps, err := application.GetNameByVCSServer(db, payload.VCSServerName, e.ProjectKey)
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectVCSWarning.compute>")
+			return sdk.WithStack(err)
 		}
 
 		for _, app := range apps {

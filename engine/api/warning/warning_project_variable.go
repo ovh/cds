@@ -51,7 +51,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 		}
 		varName := fmt.Sprintf("cds.proj.%s", payload.Variable.Name)
 		if err := checkUnusedProjectVariable(db, e.ProjectKey, varName, warn.name()); err != nil {
-			return sdk.WrapError(err, "unusedProjectVariableWarning.checkProjectVariable>EventProjectVariableAdd")
+			return sdk.WrapError(err, "EventProjectVariableAdd")
 		}
 
 	case fmt.Sprintf("%T", sdk.EventProjectVariableUpdate{}):
@@ -65,7 +65,7 @@ func (warn unusedProjectVariableWarning) compute(db gorp.SqlExecutor, e sdk.Even
 		}
 		varName := fmt.Sprintf("cds.proj.%s", payload.NewVariable.Name)
 		if err := checkUnusedProjectVariable(db, e.ProjectKey, varName, warn.name()); err != nil {
-			return sdk.WrapError(err, "unusedProjectVariableWarning.checkProjectVariable>EventProjectVariableUpdate")
+			return sdk.WrapError(err, "EventProjectVariableUpdate")
 		}
 
 	case fmt.Sprintf("%T", sdk.EventProjectVariableDelete{}):

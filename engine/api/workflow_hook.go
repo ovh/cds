@@ -205,7 +205,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 
 		var callback sdk.WorkflowNodeOutgoingHookRunCallback
 		if err := service.UnmarshalBody(r, &callback); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to unmarshal body")
+			return sdk.WrapError(err, "Unable to unmarshal body")
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -236,7 +236,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 
 		pv, err := project.GetAllVariableInProject(tx, wr.Workflow.ProjectID, project.WithClearPassword())
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> Cannot load project variable")
+			return sdk.WrapError(err, "Cannot load project variable")
 		}
 
 		secrets, errSecret := workflow.LoadSecrets(tx, api.Cache, nil, wr, pv)
@@ -251,7 +251,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 
 		report, err := workflow.UpdateOutgoingHookRunStatus(ctx, tx, api.Cache, proj, wr, hookRunID, callback)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowJobHookCallbackHandler> unable to update outgoing hook run status")
+			return sdk.WrapError(err, "Unable to update outgoing hook run status")
 		}
 
 		workflow.ResyncNodeRunsWithCommits(ctx, tx, api.Cache, proj, report)
@@ -297,7 +297,7 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 
 		pv, err := project.GetAllVariableInProject(db, wr.Workflow.ProjectID, project.WithClearPassword())
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowJobHookDetailsHandler> Cannot load project variable")
+			return sdk.WrapError(err, "Cannot load project variable")
 		}
 
 		secrets, errSecret := workflow.LoadSecrets(db, api.Cache, nil, wr, pv)

@@ -49,7 +49,7 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 
 		n, err := migratePipeline(db, store, proj, oldW, currentApplicationID, u)
 		if err != nil {
-			return nil, sdk.WrapError(err, "MigrateToWorkflow migratePipeline>")
+			return nil, sdk.WithStack(err)
 		}
 		newW.Root = n
 

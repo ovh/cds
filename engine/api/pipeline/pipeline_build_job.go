@@ -214,7 +214,7 @@ func TakePipelineBuildJob(db gorp.SqlExecutor, store cache.Store, pbJobID int64,
 	}
 
 	if err := UpdatePipelineBuildJob(db, pbJob); err != nil {
-		return nil, sdk.WrapError(err, "TakePipelineBuildJob>Cannot update model on pipeline build job")
+		return nil, sdk.WrapError(err, "Cannot update model on pipeline build job")
 	}
 	return pbJob, nil
 }

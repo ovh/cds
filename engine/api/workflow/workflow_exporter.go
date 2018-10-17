@@ -51,7 +51,7 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, w io.Writer, opts 
 	// Marshal to the desired format
 	b, err := exportentities.Marshal(e, f)
 	if err != nil {
-		return 0, sdk.WrapError(err, "workflow.Export>")
+		return 0, sdk.WithStack(err)
 	}
 
 	return w.Write(b)

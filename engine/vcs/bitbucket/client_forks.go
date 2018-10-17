@@ -12,7 +12,7 @@ func (b *bitbucketClient) ListForks(ctx context.Context, repo string) ([]sdk.VCS
 	bbRepos := []Repo{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return nil, sdk.WrapError(err, "ListForks>")
+		return nil, sdk.WithStack(err)
 	}
 	path := fmt.Sprintf("/projects/%s/repos/%s/forks", project, slug)
 	params := url.Values{}

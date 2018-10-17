@@ -147,7 +147,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 					var err error
 					report, err = report.Merge(processWorkflowNodeOutgoingHook(ctx, db, store, proj, w, nodeRun, &h))
 					if err != nil {
-						return nil, false, sdk.WrapError(err, "process> Cannot update node run")
+						return nil, false, sdk.WrapError(err, "Cannot update node run")
 					}
 				}
 			}
@@ -258,7 +258,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	w.Status = getRunStatus(counterStatus)
 	if err := UpdateWorkflowRun(ctx, db, w); err != nil {
-		return report, false, sdk.WrapError(err, "processWorkflowRun>")
+		return report, false, sdk.WithStack(err)
 	}
 
 	return report, true, nil
@@ -410,7 +410,7 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 
 	srvs, err := services.FindByType(db, services.TypeHooks)
 	if err != nil {
-		return nil, sdk.WrapError(err, "process> Cannot get hooks service")
+		return nil, sdk.WrapError(err, "Cannot get hooks service")
 	}
 
 	var hookRun = sdk.WorkflowNodeOutgoingHookRun{

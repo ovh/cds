@@ -38,7 +38,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pip); err != nil {
-			return sdk.WrapError(err, "addJobToStageHandler>Cannot load stages")
+			return sdk.WrapError(err, "Cannot load stages")
 		}
 
 		// check if stage is in the current pipeline
@@ -127,7 +127,7 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
-			return sdk.WrapError(err, "updateJobHandler>Cannot load stages")
+			return sdk.WrapError(err, "Cannot load stages")
 		}
 
 		// check if job is in the current pipeline
@@ -204,7 +204,7 @@ func (api *API) deleteJobHandler() service.Handler {
 		}
 
 		if err := pipeline.LoadPipelineStage(ctx, api.mustDB(), pipelineData); err != nil {
-			return sdk.WrapError(err, "deleteJobHandler>Cannot load stages")
+			return sdk.WrapError(err, "Cannot load stages")
 		}
 
 		// check if job is in the current pipeline

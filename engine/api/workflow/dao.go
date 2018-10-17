@@ -57,7 +57,7 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 		and workflow.name = $2`
 	count, err := db.SelectInt(query, key, name)
 	if err != nil {
-		return false, sdk.WrapError(err, "Exists>")
+		return false, sdk.WithStack(err)
 	}
 	return count > 0, nil
 }
@@ -485,7 +485,7 @@ func loadWorkflowRoot(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error) {
 	count, err := db.SelectInt("SELECT COUNT(1) FROM workflow_favorite WHERE user_id = $1 AND workflow_id = $2", u.ID, w.ID)
 	if err != nil {
-		return false, sdk.WrapError(err, "workflow.loadFavorite>")
+		return false, sdk.WithStack(err)
 	}
 	return count > 0, nil
 }
@@ -943,7 +943,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		if err != nil {
 			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, nil, sdk.WrapError(err, "Push>")
+			return nil, nil, sdk.WithStack(err)
 		}
 
 		log.Debug("Push> Reading %s", hdr.Name)
@@ -951,7 +951,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		buff := new(bytes.Buffer)
 		if _, err := io.Copy(buff, tr); err != nil {
 			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, nil, sdk.WrapError(err, "Push>")
+			return nil, nil, sdk.WithStack(err)
 		}
 
 		b := buff.Bytes()
@@ -1175,7 +1175,7 @@ func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u *sdk.User, add bool
 	}
 
 	_, err := db.Exec(query, u.ID, workflowID)
-	return sdk.WrapError(err, "UpdateFavorite>")
+	return sdk.WithStack(err)
 }
 
 // IsDeploymentPlatformUsed checks if a deployment platform is used on any workflow

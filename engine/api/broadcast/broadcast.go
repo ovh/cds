@@ -37,7 +37,7 @@ func MarkAsRead(db gorp.SqlExecutor, broadcastID, userID int64) error {
 	}
 	err := db.Insert(&brr)
 
-	return sdk.WrapError(err, "MarkAsRead>")
+	return sdk.WithStack(err)
 }
 
 // LoadByID loads broadcast by id
@@ -67,7 +67,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User) (*sdk.Broadcast, error
 		if err == sql.ErrNoRows {
 			return nil, sdk.WrapError(sdk.ErrBroadcastNotFound, "LoadByID>")
 		}
-		return nil, sdk.WrapError(err, "LoadByID>")
+		return nil, sdk.WithStack(err)
 	}
 
 	if projectKey.Valid {

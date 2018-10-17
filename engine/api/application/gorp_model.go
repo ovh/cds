@@ -33,7 +33,7 @@ type sqlApplicationJSON struct {
 func (a *dbApplication) PostGet(db gorp.SqlExecutor) error {
 	var appContext = sqlApplicationJSON{}
 	if err := db.SelectOne(&appContext, "select metadata, vcs_strategy from application where id = $1", a.ID); err != nil {
-		return sdk.WrapError(err, "dbApplication>PostGet Cannot load metadata and vcs strategy")
+		return sdk.WrapError(err, "Cannot load metadata and vcs strategy")
 	}
 
 	if appContext.Metadata.Valid {

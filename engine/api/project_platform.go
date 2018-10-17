@@ -37,7 +37,7 @@ func (api *API) putProjectPlatformHandler() service.Handler {
 
 		var ppBody sdk.ProjectPlatform
 		if err := service.UnmarshalBody(r, &ppBody); err != nil {
-			return sdk.WrapError(err, "putProjectPlatformHandler> Cannot read body")
+			return sdk.WrapError(err, "Cannot read body")
 		}
 
 		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))

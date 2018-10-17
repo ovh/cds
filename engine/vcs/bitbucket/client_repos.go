@@ -116,7 +116,7 @@ func (b *bitbucketClient) GrantReadPermission(ctx context.Context, repo string) 
 
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return sdk.WrapError(err, "GrantReadPermission>")
+		return sdk.WithStack(err)
 	}
 	path := fmt.Sprintf("/projects/%s/repos/%s/permissions/users", project, slug)
 	params := url.Values{}

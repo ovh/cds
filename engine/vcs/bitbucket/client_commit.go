@@ -15,7 +15,7 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 	commits := []sdk.VCSCommit{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return nil, sdk.WrapError(err, "commits>")
+		return nil, sdk.WithStack(err)
 	}
 
 	stashCommits := []Commit{}
@@ -103,7 +103,7 @@ func (b *bitbucketClient) Commit(ctx context.Context, repo, hash string) (sdk.VC
 	commit := sdk.VCSCommit{}
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return commit, sdk.WrapError(err, "commit>")
+		return commit, sdk.WithStack(err)
 	}
 	var stashURL, _ = url.Parse(b.consumer.URL)
 
@@ -152,7 +152,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 	var commits []sdk.VCSCommit
 	project, slug, err := getRepo(repo)
 	if err != nil {
-		return nil, sdk.WrapError(err, "CommitsBetweenRefs>")
+		return nil, sdk.WithStack(err)
 	}
 
 	var stashCommits []Commit

@@ -441,12 +441,12 @@ func (api *API) getHookPollingVCSEvents() service.Handler {
 		}
 		pushEvents, err := client.PushEvents(ctx, h.Config["repoFullName"].Value, events)
 		if err != nil {
-			return sdk.WrapError(err, "")
+			return sdk.WithStack(err)
 		}
 
 		pullRequestEvents, err := client.PullRequestEvents(ctx, h.Config["repoFullName"].Value, events)
 		if err != nil {
-			return sdk.WrapError(err, "")
+			return sdk.WithStack(err)
 		}
 
 		repoEvents := sdk.RepositoryEvents{}

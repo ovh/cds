@@ -444,7 +444,7 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	} else if m, ok := bI.(map[interface{}]interface{}); ok {
 		argss := map[string]string{}
 		if err := mapstructure.Decode(m, &argss); err != nil {
-			return nil, true, sdk.WrapError(err, "AsArtifactUpload.decode>Malformatted Step")
+			return nil, true, sdk.WrapError(err, "Malformatted Step")
 		}
 		a = sdk.NewStepArtifactUpload(argss)
 	} else {

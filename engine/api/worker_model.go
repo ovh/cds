@@ -138,7 +138,7 @@ func (api *API) bookWorkerModelHandler() service.Handler {
 			return sdk.WrapError(errr, "bookWorkerModelHandler> Invalid permModelID")
 		}
 		if _, err := worker.BookForRegister(api.Cache, workerModelID, getHatchery(ctx)); err != nil {
-			return sdk.WrapError(err, "bookWorkerModelHandler>")
+			return sdk.WithStack(err)
 		}
 		return nil
 	}

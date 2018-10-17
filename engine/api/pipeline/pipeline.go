@@ -454,7 +454,7 @@ func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p
 
 	for i := range p.Parameter {
 		if err := InsertParameterInPipeline(db, p.ID, &p.Parameter[i]); err != nil {
-			return sdk.WrapError(err, "InsertPipeline>")
+			return sdk.WithStack(err)
 		}
 	}
 

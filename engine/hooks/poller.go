@@ -53,7 +53,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 	}
 	events, interval, err := s.Client.PollVCSEvents(taskExec.UUID, workflowID, taskExec.Config["vcsServer"].Value, maxTs)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Hooks> doPollerTaskExecution> Cannot poll vcs events for workflow %s with vcsserver %s", taskExec.Config[sdk.HookConfigWorkflow].Value, taskExec.Config["vcsServer"].Value)
+		return nil, sdk.WrapError(err, "Cannot poll vcs events for workflow %s with vcsserver %s", taskExec.Config[sdk.HookConfigWorkflow].Value, taskExec.Config["vcsServer"].Value)
 	}
 
 	//Prepare the payload

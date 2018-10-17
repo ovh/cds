@@ -27,7 +27,7 @@ func ExportPipeline(p sdk.Pipeline, f exportentities.Format, withPermissions boo
 	// Marshal to the desired format
 	b, err := exportentities.Marshal(e, f)
 	if err != nil {
-		return 0, sdk.WrapError(err, "workflow.Export>")
+		return 0, sdk.WithStack(err)
 	}
 
 	return w.Write(b)

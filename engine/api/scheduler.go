@@ -240,7 +240,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() service.Handler {
 			var err error
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if err != nil {
-				return sdk.WrapError(err, "")
+				return sdk.WithStack(err)
 			}
 
 			if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadExecute) {
@@ -257,8 +257,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() service.Handler {
 		//Load the scheduler
 		sOld, err := scheduler.Load(api.mustDB(), s.ID)
 		if err != nil {
-			return sdk.WrapError(err, "")
-
+			return sdk.WithStack(err)
 		}
 
 		//Update it

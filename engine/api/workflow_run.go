@@ -190,7 +190,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 		}{}
 
 		if err := service.UnmarshalBody(r, &m); err != nil {
-			return sdk.WrapError(err, "postWorkflowRunNumHandler>")
+			return sdk.WithStack(err)
 		}
 
 		num, err := workflow.LoadCurrentRunNum(api.mustDB(), key, name)
@@ -466,7 +466,7 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 	)
 	if err != nil {
-		return sdk.WrapError(err, "updateParentWorkflowRun> Cannot load project")
+		return sdk.WrapError(err, "Cannot load project")
 	}
 	parentWR, err := workflow.LoadRun(
 		tx,

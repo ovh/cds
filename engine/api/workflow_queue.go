@@ -535,7 +535,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 	return func(ctx context.Context, r *http.Request) error {
 		var logs []sdk.ServiceLog
 		if err := service.UnmarshalBody(r, &logs); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobServiceLogsHandler> Unable to parse body")
+			return sdk.WrapError(err, "Unable to parse body")
 		}
 		db := api.mustDB()
 		u := getUser(ctx)

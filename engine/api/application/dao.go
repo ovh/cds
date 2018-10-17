@@ -434,5 +434,5 @@ func loadapplications(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts 
 func LoadIcon(db gorp.SqlExecutor, appID int64) (string, error) {
 	icon, err := db.SelectStr("SELECT icon FROM application WHERE id = $1", appID)
 
-	return icon, sdk.WrapError(err, "application.loadIcon>")
+	return icon, sdk.WithStack(err)
 }

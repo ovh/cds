@@ -160,7 +160,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 
 		art := sdk.WorkflowNodeRunArtifact{}
 		if err := service.UnmarshalBody(r, &art); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobArtifacWithTempURLHandler>")
+			return sdk.WithStack(err)
 		}
 
 		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
