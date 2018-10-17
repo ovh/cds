@@ -22,6 +22,7 @@ func (c Criteria) GroupIDs(ids ...int64) Criteria {
 
 func (c Criteria) where() string {
 	var reqs []string
+
 	if c.ids != nil {
 		reqs = append(reqs, "id = ANY(string_to_array(:ids, ',')::int[])")
 	}
@@ -47,6 +48,7 @@ func NewCriteriaInstance() CriteriaInstance { return CriteriaInstance{} }
 
 type CriteriaInstance struct {
 	workflowTemplateIDs []int64
+	workflowIDs         []int64
 }
 
 func (c CriteriaInstance) WorkflowTemplateIDs(ids ...int64) CriteriaInstance {
@@ -54,10 +56,20 @@ func (c CriteriaInstance) WorkflowTemplateIDs(ids ...int64) CriteriaInstance {
 	return c
 }
 
+func (c CriteriaInstance) WorkflowIDs(ids ...int64) CriteriaInstance {
+	c.workflowIDs = ids
+	return c
+}
+
 func (c CriteriaInstance) where() string {
 	var reqs []string
+
 	if c.workflowTemplateIDs != nil {
 		reqs = append(reqs, "workflow_template_id = ANY(string_to_array(:workflowTemplateIDs, ',')::int[])")
+	}
+
+	if c.workflowIDs != nil {
+		reqs = append(reqs, "workflow_id = ANY(string_to_array(:workflowIDs, ',')::int[])")
 	}
 
 	if len(reqs) == 0 {
@@ -70,5 +82,6 @@ func (c CriteriaInstance) where() string {
 func (c CriteriaInstance) args() interface{} {
 	return map[string]interface{}{
 		"workflowTemplateIDs": database.IDsToQueryString(c.workflowTemplateIDs),
+		"workflowIDs":         database.IDsToQueryString(c.workflowIDs),
 	}
 }

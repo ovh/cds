@@ -72,3 +72,17 @@ func GetInstances(db *gorp.DbMap, c CriteriaInstance) ([]*sdk.WorkflowTemplateIn
 
 	return wtis, nil
 }
+
+// GetInstance returns a workflow template instance for given criteria.
+func GetInstance(db *gorp.DbMap, c CriteriaInstance) (*sdk.WorkflowTemplateInstance, error) {
+	wti := sdk.WorkflowTemplateInstance{}
+
+	if err := db.SelectOne(&wti, fmt.Sprintf("SELECT * FROM workflow_template_workflow WHERE %s", c.where()), c.args()); err != nil {
+		if err == sql.ErrNoRows {
+			err = sdk.NewError(sdk.ErrNotFound, err)
+		}
+		return nil, sdk.WrapError(err, "Cannot get workflow template instance")
+	}
+
+	return &wti, nil
+}

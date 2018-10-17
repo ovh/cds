@@ -434,6 +434,7 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{id}", r.GET(api.getTemplateHandler), r.PUT(api.putTemplateHandler))
 	r.Handle("/template/{id}/instance", r.GET(api.getTemplateInstancesHandler))
 	r.Handle("/project/{permProjectKey}/template/{id}/execute", r.POST(api.executeTemplateHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/update", r.POST(api.updateWorkflowHandler))
 
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)

@@ -227,7 +227,7 @@ func (api *API) executeTemplateHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "importPipelineHandler: Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer func() { _ = tx.Rollback() }()
 
@@ -301,5 +301,46 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, is, http.StatusOK)
+	}
+}
+
+func (api *API) updateWorkflowHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to load projet")
+		}
+
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getUser(ctx), workflow.LoadOptions{})
+		if err != nil {
+			return sdk.WrapError(err, "Cannot load workflow %s", workflowName)
+		}
+
+		// check if workflow is a generated one
+		wti, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().WorkflowIDs(wf.ID))
+		if err != nil {
+			return err
+		}
+		if wti == nil {
+			return sdk.WithStack(sdk.ErrWorkflowNotGenerated)
+		}
+
+		// check if the workflow need an update
+		wt, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().IDs(wti.WorkflowTemplateID))
+		if err != nil {
+			return err
+		}
+		if wt.Version == wti.WorkflowTemplateVersion {
+			return sdk.WithStack(sdk.ErrAlreadyLatestTemplate)
+		}
+
+		// get new params
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
