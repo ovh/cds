@@ -63,7 +63,7 @@ github.com/coreos/pkg/timeutil
 github.com/cpuguy83/go-md2man/md2man
 # github.com/danieljoos/wincred v1.0.1
 github.com/danieljoos/wincred
-# github.com/davecgh/go-spew v1.1.0
+# github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
 # github.com/docker/distribution v2.7.0-rc.0+incompatible
 github.com/docker/distribution
@@ -176,7 +176,7 @@ github.com/fsamin/go-repo
 # github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 github.com/fsamin/go-shredder
 github.com/fsamin/go-shredder/pgp
-# github.com/fsnotify/fsnotify v0.0.0-20161013012219-bd2828f9f176
+# github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 github.com/gambol99/go-marathon
@@ -209,7 +209,7 @@ github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 github.com/golang/glog
-# github.com/golang/protobuf v1.1.0
+# github.com/golang/protobuf v1.2.0
 github.com/golang/protobuf/ptypes/empty
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/timestamp
@@ -217,7 +217,7 @@ github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/protoc-gen-go/descriptor
-# github.com/golang/snappy v0.0.0-20170119014723-7db9049039a0
+# github.com/golang/snappy v0.0.0-20170215233205-553a64147049
 github.com/golang/snappy
 # github.com/google/btree v0.0.0-20180124185431-e89373fe6b4a
 github.com/google/btree
@@ -446,7 +446,7 @@ github.com/sguiheux/go-coverage
 # github.com/shirou/gopsutil v0.0.0-20170406131756-e49a95f3d5f8
 github.com/shirou/gopsutil/mem
 github.com/shirou/gopsutil/internal/common
-# github.com/sirupsen/logrus v1.0.5
+# github.com/sirupsen/logrus v1.0.6
 github.com/sirupsen/logrus
 # github.com/skratchdot/open-golang v0.0.0-20160302144031-75fb7ed4208c
 github.com/skratchdot/open-golang/open
@@ -472,7 +472,7 @@ github.com/spf13/viper
 github.com/spf13/viper/remote
 # github.com/streadway/amqp v0.0.0-20180528204448-e5adc2ada8b8
 github.com/streadway/amqp
-# github.com/stretchr/testify v0.0.0-20160615092844-d77da356e56a
+# github.com/stretchr/testify v1.2.2
 github.com/stretchr/testify/assert
 # github.com/tevino/abool v0.0.0-20170917061928-9b9efcf221b5
 github.com/tevino/abool
@@ -543,7 +543,7 @@ go.opencensus.io/exporter/jaeger/internal/gen-go/jaeger
 go.opencensus.io/internal
 go.opencensus.io/trace/internal
 go.opencensus.io
-# golang.org/x/crypto v0.0.0-20180119165957-a66000089151
+# golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ssh
 golang.org/x/crypto/openpgp
@@ -558,23 +558,25 @@ golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/cast5
 golang.org/x/crypto/openpgp/elgamal
 golang.org/x/crypto/ed25519/internal/edwards25519
-# golang.org/x/net v0.0.0-20180112015858-5ccada7d0a7b
+golang.org/x/crypto/internal/subtle
+# golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
 golang.org/x/net/http2
 golang.org/x/net/trace
 golang.org/x/net/proxy
+golang.org/x/net/http/httpguts
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-golang.org/x/net/lex/httplex
 golang.org/x/net/internal/timeseries
+golang.org/x/net/internal/socks
 # golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20171109001538-4b45465282a4
+# golang.org/x/sys v0.0.0-20180909124046-d0be0721c37e
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/text v0.0.0-20170901153044-bd91bbf73e9a
+# golang.org/x/text v0.3.0
 golang.org/x/text/language
 golang.org/x/text/internal/tag
 golang.org/x/text/transform
@@ -625,7 +627,7 @@ gopkg.in/bsm/sarama-cluster.v2
 gopkg.in/go-playground/validator.v8
 # gopkg.in/gorp.v1 v1.7.1
 gopkg.in/gorp.v1
-# gopkg.in/inf.v0 v0.9.0
+# gopkg.in/inf.v0 v0.9.1
 gopkg.in/inf.v0
 # gopkg.in/ini.v1 v1.28.0
 gopkg.in/ini.v1
