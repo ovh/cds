@@ -250,12 +250,22 @@ func TestDo(t *testing.T) {
 			enable: true,
 		},
 		{
+			name: "two same unknown, but one with a filter",
+			args: args{
+				input: `A:{{.cds.env.myenvpassword}} B:{{.cds.env.myenvpassword | upper}}`,
+				vars:  map[string]string{},
+			},
+			want:   `A:{{.cds.env.myenvpassword}} B:{{.cds.env.myenvpassword | upper}}`,
+			enable: true,
+		},
+		{
 			name: "empty string",
 			args: args{
 				input: "a {{.cds.app.myKey}} and another key with empty value *{{.cds.app.myKeyAnother}}*",
 				vars:  map[string]string{"cds.app.myKey": "valueKey", "cds.app.myKeyAnother": ""},
 			},
-			want: "a valueKey and another key with empty value **",
+			want:   "a valueKey and another key with empty value **",
+			enable: true,
 		},
 		{
 			name: "two keys with same first characters",
@@ -263,7 +273,8 @@ func TestDo(t *testing.T) {
 				input: "a {{.cds.app.myKey}} and another key value {{.cds.app.myKeyAnother}}",
 				vars:  map[string]string{"cds.app.myKey": "valueKey", "cds.app.myKeyAnother": "valueKeyAnother"},
 			},
-			want: "a valueKey and another key value valueKeyAnother",
+			want:   "a valueKey and another key value valueKeyAnother",
+			enable: true,
 		},
 		{
 			name: "key with - and a unknown key",
@@ -271,7 +282,8 @@ func TestDo(t *testing.T) {
 				input: "a {{.cds.app.my-key}}.{{.cds.app.foo-key}} and another key value {{.cds.app.my-key}}",
 				vars:  map[string]string{"cds.app.my-key": "value-key"},
 			},
-			want: "a value-key.{{.cds.app.foo-key}} and another key value value-key",
+			want:   "a value-key.{{.cds.app.foo-key}} and another key value value-key",
+			enable: true,
 		},
 		{
 			name: "key with - and a empty key",
@@ -279,7 +291,8 @@ func TestDo(t *testing.T) {
 				input: "a {{.cds.app.my-key}}.{{.cds.app.foo-key}}.and another key value {{.cds.app.my-key}}",
 				vars:  map[string]string{"cds.app.my-key": "value-key", "cds.app.foo-key": ""},
 			},
-			want: "a value-key..and another key value value-key",
+			want:   "a value-key..and another key value value-key",
+			enable: true,
 		},
 		{
 			name: "tiret",
@@ -287,7 +300,8 @@ func TestDo(t *testing.T) {
 				input: `"METRICS_WRITE_TOKEN": "{{.cds.env.metrics-exposer.write.token}}"`,
 				vars:  map[string]string{"cds.env.metrics-exposer.write.token": "valueKey"},
 			},
-			want: `"METRICS_WRITE_TOKEN": "valueKey"`,
+			want:   `"METRICS_WRITE_TOKEN": "valueKey"`,
+			enable: true,
 		},
 		{
 			name: "espace func",
@@ -301,7 +315,8 @@ func TestDo(t *testing.T) {
 					"cds.escape": "a/b.c_d",
 				},
 			},
-			want: `a valbar here, Mytitle-Bis, TOUPPER, tolower, a-b-c-d`,
+			want:   `a valbar here, Mytitle-Bis, TOUPPER, tolower, a-b-c-d`,
+			enable: true,
 		},
 		{
 			name: "config",
@@ -332,6 +347,7 @@ func TestDo(t *testing.T) {
 		"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
 		}
 		}`,
+			enable: true,
 		},
 		{
 			name: "same prefix",
@@ -339,7 +355,8 @@ func TestDo(t *testing.T) {
 				input: `{"HOST": "customer{{.cds.env.lb.prefix}}.{{.cds.env.lb}}"}`,
 				vars:  map[string]string{"cds.env.lb": "lb", "cds.env.lb.prefix": "myprefix"},
 			},
-			want: `{"HOST": "customermyprefix.lb"}`,
+			want:   `{"HOST": "customermyprefix.lb"}`,
+			enable: true,
 		},
 		{
 			name: "git.branch in payload should not be interpolated",
@@ -367,6 +384,7 @@ workflow:
     payload:
       git.author: ""
       git.branch: master`,
+			enable: true,
 		},
 		{
 			name: "- inside function parameter",
@@ -377,7 +395,8 @@ workflow:
 					"git.author": "",
 				},
 			},
-			want: `name: "coucou-0.0.1-dirty"`,
+			want:   `name: "coucou-0.0.1-dirty"`,
+			enable: true,
 		},
 		{
 			name: "- ",
@@ -387,7 +406,8 @@ workflow:
 					"name": "toi",
 				},
 			},
-			want: `name: "coucou-toi"`,
+			want:   `name: "coucou-toi"`,
+			enable: true,
 		},
 	}
 	for _, tt := range tests {
