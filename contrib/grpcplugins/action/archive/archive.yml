@@ -1,7 +1,7 @@
 name: plugin-archive
 type: action
 author: mdouchement <https://github.com/mdouchement>
-description: This is a plugin to compress or uncompress an archive.
+description: This is a plugin to compress or uncompress an archive. Supported formats: .zip, .tar, .tar.gz, .tar.bz2, .tar.xz, .tar.lz4, .tar.sz, and .rar (extract-only)
 parameters:
   source:
     type: string
