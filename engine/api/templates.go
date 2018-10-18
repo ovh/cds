@@ -216,7 +216,7 @@ func (api *API) executeTemplateHandler() service.Handler {
 			return err
 		}
 		if err := t.CheckParams(req); err != nil {
-			return err
+			return sdk.NewError(sdk.ErrInvalidData, err)
 		}
 
 		// execute the template
@@ -356,7 +356,7 @@ func (api *API) updateWorkflowHandler() service.Handler {
 		}
 		req.Name = wti.Request.Name
 		if err := wt.CheckParams(req); err != nil {
-			return err
+			return sdk.NewError(sdk.ErrInvalidData, err)
 		}
 
 		// execute the template

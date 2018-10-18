@@ -3,6 +3,7 @@ package sdk
 import (
 	"database/sql/driver"
 	json "encoding/json"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -72,20 +73,20 @@ func (w *WorkflowTemplate) ValidateStruct() error {
 // CheckParams returns template parameters validity.
 func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 	if r.Name == "" {
-		return WrapError(ErrInvalidData, "Name is required")
+		return fmt.Errorf("Name is required")
 	}
 
 	for _, p := range w.Parameters {
 		v, ok := r.Parameters[p.Key]
 		if !ok && p.Required {
-			return WrapError(ErrInvalidData, "Param %s is required", p.Key)
+			return fmt.Errorf("Param %s is required", p.Key)
 		}
 		if ok {
 			if p.Required && v == "" {
-				return WrapError(ErrInvalidData, "Param %s is required", p.Key)
+				return fmt.Errorf("Param %s is required", p.Key)
 			}
 			if p.Type == ParameterTypeBoolean && v != "" && !(v == "true" || v == "false") {
-				return WrapError(ErrInvalidData, "Given value it's not a boolean for %s", p.Key)
+				return fmt.Errorf("Given value it's not a boolean for %s", p.Key)
 			}
 		}
 	}
