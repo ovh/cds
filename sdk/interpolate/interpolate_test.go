@@ -399,7 +399,7 @@ workflow:
 			enable: true,
 		},
 		{
-			name: "- ",
+			name: "- inside function parameter but not used",
 			args: args{
 				input: `name: "coucou-{{ .name | default "0.0.1-dirty" }}"`,
 				vars: map[string]string{
