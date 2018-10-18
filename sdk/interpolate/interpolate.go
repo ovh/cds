@@ -42,6 +42,8 @@ func Do(input string, vars map[string]string) (string, error) {
 		return strings.Count(keys[i], ".") > strings.Count(keys[j], ".")
 	})
 
+	replacements := make([]string, 0, 1000)
+
 	for _, k := range keys {
 		// handle "-" in var name
 		kb := strings.Replace(k, "-", "µµµ", -1)
@@ -72,12 +74,12 @@ func Do(input string, vars map[string]string) (string, error) {
 		flatData[kb] = vars[k]
 
 		// handle "-" in var name
-		replacer := strings.NewReplacer(k+" ", kb+" ", k+"}", kb+"}", k+"|", kb+"|")
-		input = replacer.Replace(input)
+		replacements = append(replacements, k+" ", kb+" ", k+"}", kb+"}", k+"|", kb+"|")
 	}
 
-	// btes, _ := json.MarshalIndent(data, "", "\t")
-	//fmt.Println("data: ", vars, "\n", string(btes))
+	// handle "-" in var name
+	replacer := strings.NewReplacer(replacements...)
+	input = replacer.Replace(input)
 
 	var processedExpression = map[string]void{}
 	sm := interpolateRegex.FindAllStringSubmatch(input, -1)
@@ -92,8 +94,8 @@ func Do(input string, vars map[string]string) (string, error) {
 				}
 				processedExpression[expression] = void{}
 
-				var usedVariables = map[string]void{}
-				var usedHelpers = map[string]void{}
+				var usedVariables = make(map[string]void, len(vars))
+				var usedHelpers = make(map[string]void, len(interpolateHelperFuncs))
 				var quotedStuff = []string{}
 				var trimmedExpression = strings.TrimPrefix(expression, "{{")
 				trimmedExpression = strings.TrimSuffix(trimmedExpression, "}}")
@@ -123,27 +125,19 @@ func Do(input string, vars map[string]string) (string, error) {
 					}
 				}
 
-				unknownVariables := []string{}
+				unknownVariables := make([]string, 0, 1000)
 				for v := range usedVariables {
 					if _, is := flatData[v]; !is {
 						unknownVariables = append(unknownVariables, v)
 					}
 				}
 
-				unknownHelpers := []string{}
+				unknownHelpers := make([]string, 0, 1000)
 				for h := range usedHelpers {
 					if _, is := interpolateHelperFuncs[h]; !is {
 						unknownHelpers = append(unknownHelpers, h)
 					}
 				}
-
-				//fmt.Println("expression", expression)
-				//fmt.Println("splittedExpression:", splittedExpression)
-				//fmt.Println("usedVariables:", usedVariables)
-				//fmt.Println("usedHelpers:", usedHelpers)
-				//fmt.Println("unknownVariables:", unknownVariables)
-				//fmt.Println("unknownHelpers:", unknownHelpers)
-				//fmt.Println("quotedStuff:", quotedStuff)
 
 				var defaultIsUsed bool
 				if _, ok := usedHelpers["default"]; ok {
