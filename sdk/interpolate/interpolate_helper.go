@@ -54,7 +54,6 @@ func init() {
 		"replace":      replace,
 		"plural":       plural,
 		"toString":     strval,
-		"defaultCDS":   defaultCDS,
 		"default":      dfault,
 		"empty":        empty,
 		"coalesce":     coalesce,
@@ -66,23 +65,6 @@ func init() {
 	}
 }
 
-// defaultCDS checks whether `given` is set, and returns default if not set.
-//
-// This returns `d` if `given` appears not to be set, and `given` otherwise.
-//
-// For numeric types 0 is unset.
-// For strings, maps, arrays, and slices, len() = 0 is considered unset.
-// For bool, false is unset.
-// Structs are never considered unset.
-//
-// For everything else, including pointers, a nil value is unset.
-func defaultCDS(d interface{}, given ...interface{}) interface{} {
-	if empty(given) || empty(given[0]) {
-		return d
-	}
-	return given[0]
-}
-
 // Switch order so that "$foo" | trimall "$"
 func dfault(valfault ...interface{}) string {
 	var castToString = func(i interface{}) string {
@@ -91,21 +73,17 @@ func dfault(valfault ...interface{}) string {
 	}
 
 	if len(valfault) == 0 {
-		fmt.Println("dfault: ", valfault, "=>")
 		return ""
 	}
 	if len(valfault) == 1 {
 		s := castToString(valfault[0])
-		fmt.Println("dfault: ", valfault, "=>", s)
 		return s
 	}
 	for i := len(valfault) - 1; i >= 0; i-- {
 		if s := castToString(valfault[i]); s != "" {
-			fmt.Println("dfault: ", valfault, "=>", s)
 			return s
 		}
 	}
-	fmt.Println("dfault: ", valfault, "=>")
 
 	return ""
 }
