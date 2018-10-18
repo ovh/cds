@@ -219,7 +219,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	}
 
 	if wr.Status != sdk.StatusBuilding.String() {
-		log.Debug("Hooks> workflow %s/%s #%d status: %s", pkey, workflow, run, wr.Status)
+		log.Debug("Hooks> workflow %s/%s #%s status: %s", pkey, workflow, run, wr.Status)
 		return fmt.Errorf("workflow %s/%s #%s is not at status Building", pkey, workflow, run)
 	}
 
