@@ -21,8 +21,3 @@ This is a plugin to compress or uncompress an archive.
 * **source**: The source path
 * **destination**: The destination path
 * **action**: `compress` or `uncompress` an archive
-
-
-## More
-
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/archive/README.md)
