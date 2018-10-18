@@ -10,5 +10,10 @@ endif
 	$(TARGET_WORKER) doc $(GEN_PATH)
 	$(TARGET_ENGINE) doc $(GEN_PATH) ./
 
+mod:
+	@echo "running go mod vendor..." && go mod vendor
+	@echo "running go mod tidy..." && go mod tidy
+	@echo "doing some clean in vendor directory..." && find vendor -type f ! \( -name '*.rst' -o -name '*.go' -o -name '*.h' -o -name '*.c' -o -name '*.proto' -o -name '*.tmpl' -o -name '*.s' -o -name '*.pl' \) -exec rm {} \;
+
 install:
 	@GO111MODULE=on go install -mod=vendor -v $$(go list ./... | grep -v vendor)
