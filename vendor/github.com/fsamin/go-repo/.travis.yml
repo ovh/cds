@@ -1,0 +1,21 @@
+language: go
+go:
+- 1.8.x
+- 1.9.x
+- 1.10.x
+- tip
+- master
+branches:
+  except:
+  - TestBranch
+before_install:
+- openssl aes-256-cbc -K $encrypted_3973f9013d3c_key -iv $encrypted_3973f9013d3c_iv
+  -in travis_id_rsa.enc -out travis_id_rsa -d
+- sudo apt-get install --only-upgrade -y git
+script:
+- go get
+- go build
+- go test
+env:
+  global:
+    secure: s0+yeznR3tOocBpk+ztIO4R8at9KIHA+cvjx51pWl4ZEMff1HTCrfpGGfDzgT07rAkUQG1ACmX7M6CeLQtcne+uMBAn5zCF38PllmiyvEJWVKPU6CtlXWW5d8RzTfe2ufpVuTUZhYfSUg5gGy9vlTR2bOahJVNVA9O3nqlwSHBwT5u02u8E6qPVk9WLXJ6d1gRJe2T6RnalH98D3q80KNg6Xy+nTg8aRPFqeX7TMhQBYQWH5kpLe9zPBSVccy9Yd9hjFFhHWhkfAShx6wz/C7oenjhAC7FUnI5Vl90fhtjg3a/h8822Sb7//lUJ4lf8yRX9D9Xruc5/08PoABDcTWXwENP5Ji4126Fq2do4cJ/ZFswY/QPouJW0A/UZzMN3vkfyeljFZFRX7z5jTP6RdKbhxAU/nJCCDXMSZcNJfETLf/m/kUZ5Q/GXsLdO73hEIeEndlsbE5SQgFDDUPomS9fmrJhvZjozt+TsUDYXw1cRcIC5BmONMYUg8jircBuqrVLusMhIwUa2jryHPgOj6ptgOIAOGAY5EKJDLKf8OffcH1NyJieodGlGkY4qv/ivIoG31M7Snw9qAvS1N5GEIcCRHCGgbjSTu129vkUP7oc8RMs2StpnO41EksX9gSKogGRBUxsDNf0mMGigUVDkl/pu8PCe9E/+5OjN0uxAUxVM=

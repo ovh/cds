@@ -1,13 +1,13 @@
 // +build linux freebsd
 
-package fileutils // import "github.com/docker/docker/pkg/fileutils"
+package fileutils
 
 import (
 	"fmt"
 	"io/ioutil"
 	"os"
 
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 // GetTotalUsedFds Returns the number of used File Descriptors by

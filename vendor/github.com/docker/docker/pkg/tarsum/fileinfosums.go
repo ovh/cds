@@ -1,10 +1,6 @@
-package tarsum // import "github.com/docker/docker/pkg/tarsum"
+package tarsum
 
-import (
-	"runtime"
-	"sort"
-	"strings"
-)
+import "sort"
 
 // FileInfoSumInterface provides an interface for accessing file checksum
 // information within a tar file. This info is accessed through interface
@@ -39,11 +35,8 @@ type FileInfoSums []FileInfoSumInterface
 
 // GetFile returns the first FileInfoSumInterface with a matching name.
 func (fis FileInfoSums) GetFile(name string) FileInfoSumInterface {
-	// We do case insensitive matching on Windows as c:\APP and c:\app are
-	// the same. See issue #33107.
 	for i := range fis {
-		if (runtime.GOOS == "windows" && strings.EqualFold(fis[i].Name(), name)) ||
-			(runtime.GOOS != "windows" && fis[i].Name() == name) {
+		if fis[i].Name() == name {
 			return fis[i]
 		}
 	}

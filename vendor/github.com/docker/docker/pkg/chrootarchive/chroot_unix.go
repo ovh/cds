@@ -1,12 +1,12 @@
 // +build !windows,!linux
 
-package chrootarchive // import "github.com/docker/docker/pkg/chrootarchive"
+package chrootarchive
 
-import "golang.org/x/sys/unix"
+import "syscall"
 
 func chroot(path string) error {
-	if err := unix.Chroot(path); err != nil {
+	if err := syscall.Chroot(path); err != nil {
 		return err
 	}
-	return unix.Chdir("/")
+	return syscall.Chdir("/")
 }

@@ -1,4 +1,4 @@
-package mount // import "github.com/docker/docker/pkg/mount"
+package mount
 
 /*
 #include <errno.h>
@@ -13,9 +13,8 @@ import "C"
 import (
 	"fmt"
 	"strings"
+	"syscall"
 	"unsafe"
-
-	"golang.org/x/sys/unix"
 )
 
 func allocateIOVecs(options []string) []C.struct_iovec {
@@ -56,5 +55,5 @@ func mount(device, target, mType string, flag uintptr, data string) error {
 }
 
 func unmount(target string, flag int) error {
-	return unix.Unmount(target, flag)
+	return syscall.Unmount(target, flag)
 }

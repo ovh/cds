@@ -1,6 +1,6 @@
-// +build linux freebsd darwin openbsd
+// +build linux freebsd darwin openbsd solaris
 
-package layer // import "github.com/docker/docker/layer"
+package layer
 
 import "github.com/docker/docker/pkg/stringid"
 

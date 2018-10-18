@@ -1,13 +1,13 @@
-// +build linux freebsd openbsd
+// +build linux freebsd solaris
 
 // Package kernel provides helper function to get, parse and compare kernel
 // versions for different platforms.
-package kernel // import "github.com/docker/docker/pkg/parsers/kernel"
+package kernel
 
 import (
 	"bytes"
 
-	"github.com/sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 )
 
 // GetKernelVersion gets the current kernel version.
@@ -17,8 +17,18 @@ func GetKernelVersion() (*VersionInfo, error) {
 		return nil, err
 	}
 
+	release := make([]byte, len(uts.Release))
+
+	i := 0
+	for _, c := range uts.Release {
+		release[i] = byte(c)
+		i++
+	}
+
 	// Remove the \x00 from the release for Atoi to parse correctly
-	return ParseRelease(string(uts.Release[:bytes.IndexByte(uts.Release[:], 0)]))
+	release = release[:bytes.IndexByte(release, 0)]
+
+	return ParseRelease(string(release))
 }
 
 // CheckKernelVersion checks if current kernel is newer than (or equal to)

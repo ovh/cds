@@ -1,8 +1,10 @@
-package graphdriver // import "github.com/docker/docker/daemon/graphdriver"
+package graphdriver
 
 var (
-	// List of drivers that should be used in order
-	priority = "windowsfilter"
+	// Slice of drivers that should be used in order
+	priority = []string{
+		"windowsfilter",
+	}
 )
 
 // GetFSMagic returns the filesystem id given the path.

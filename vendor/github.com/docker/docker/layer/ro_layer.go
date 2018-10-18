@@ -1,11 +1,11 @@
-package layer // import "github.com/docker/docker/layer"
+package layer
 
 import (
 	"fmt"
 	"io"
 
 	"github.com/docker/distribution"
-	"github.com/opencontainers/go-digest"
+	"github.com/docker/distribution/digest"
 )
 
 type roLayer struct {
@@ -21,22 +21,31 @@ type roLayer struct {
 	references     map[Layer]struct{}
 }
 
-// TarStream for roLayer guarantees that the data that is produced is the exact
+// TarStream for roLayer guarentees that the data that is produced is the exact
 // data that the layer was registered with.
 func (rl *roLayer) TarStream() (io.ReadCloser, error) {
-	rc, err := rl.layerStore.getTarStream(rl)
+	r, err := rl.layerStore.store.TarSplitReader(rl.chainID)
 	if err != nil {
 		return nil, err
 	}
 
-	vrc, err := newVerifiedReadCloser(rc, digest.Digest(rl.diffID))
+	pr, pw := io.Pipe()
+	go func() {
+		err := rl.layerStore.assembleTarTo(rl.cacheID, r, nil, pw)
+		if err != nil {
+			pw.CloseWithError(err)
+		} else {
+			pw.Close()
+		}
+	}()
+	rc, err := newVerifiedReadCloser(pr, digest.Digest(rl.diffID))
 	if err != nil {
 		return nil, err
 	}
-	return vrc, nil
+	return rc, nil
 }
 
-// TarStreamFrom does not make any guarantees to the correctness of the produced
+// TarStreamFrom does not make any guarentees to the correctness of the produced
 // data. As such it should not be used when the layer content must be verified
 // to be an exact match to the registered layer.
 func (rl *roLayer) TarStreamFrom(parent ChainID) (io.ReadCloser, error) {
@@ -52,10 +61,6 @@ func (rl *roLayer) TarStreamFrom(parent ChainID) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("layer ID '%s' is not a parent of the specified layer: cannot provide diff to non-parent", parent)
 	}
 	return rl.layerStore.driver.Diff(rl.cacheID, parentCacheID)
-}
-
-func (rl *roLayer) CacheID() string {
-	return rl.cacheID
 }
 
 func (rl *roLayer) ChainID() ChainID {
@@ -125,7 +130,7 @@ func (rl *roLayer) depth() int {
 	return rl.parent.depth() + 1
 }
 
-func storeLayer(tx *fileMetadataTransaction, layer *roLayer) error {
+func storeLayer(tx MetadataTransaction, layer *roLayer) error {
 	if err := tx.SetDiffID(layer.diffID); err != nil {
 		return err
 	}
@@ -146,14 +151,19 @@ func storeLayer(tx *fileMetadataTransaction, layer *roLayer) error {
 			return err
 		}
 	}
-	return tx.setOS(layer.layerStore.os)
+
+	return nil
 }
 
 func newVerifiedReadCloser(rc io.ReadCloser, dgst digest.Digest) (io.ReadCloser, error) {
+	verifier, err := digest.NewDigestVerifier(dgst)
+	if err != nil {
+		return nil, err
+	}
 	return &verifiedReadCloser{
 		rc:       rc,
 		dgst:     dgst,
-		verifier: dgst.Verifier(),
+		verifier: verifier,
 	}, nil
 }
 

@@ -1,16 +1,14 @@
-package dockerversion // import "github.com/docker/docker/dockerversion"
+package dockerversion
 
 import (
-	"context"
 	"fmt"
 	"runtime"
 
+	"github.com/docker/docker/api/server/httputils"
 	"github.com/docker/docker/pkg/parsers/kernel"
 	"github.com/docker/docker/pkg/useragent"
+	"golang.org/x/net/context"
 )
-
-// UAStringKey is used as key type for user-agent string in net/context struct
-const UAStringKey = "upstream-user-agent"
 
 // DockerUserAgent is the User-Agent the Docker client uses to identify itself.
 // In accordance with RFC 7231 (5.5.3) is of the form:
@@ -39,9 +37,9 @@ func DockerUserAgent(ctx context.Context) string {
 func getUserAgentFromContext(ctx context.Context) string {
 	var upstreamUA string
 	if ctx != nil {
-		var ki interface{} = ctx.Value(UAStringKey)
+		var ki interface{} = ctx.Value(httputils.UAStringKey)
 		if ki != nil {
-			upstreamUA = ctx.Value(UAStringKey).(string)
+			upstreamUA = ctx.Value(httputils.UAStringKey).(string)
 		}
 	}
 	return upstreamUA
@@ -52,8 +50,8 @@ func escapeStr(s string, charsToEscape string) string {
 	var ret string
 	for _, currRune := range s {
 		appended := false
-		for _, escapableRune := range charsToEscape {
-			if currRune == escapableRune {
+		for _, escapeableRune := range charsToEscape {
+			if currRune == escapeableRune {
 				ret += `\` + string(currRune)
 				appended = true
 				break

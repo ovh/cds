@@ -1,6 +1,6 @@
 //+build !windows
 
-package chrootarchive // import "github.com/docker/docker/pkg/chrootarchive"
+package chrootarchive
 
 import (
 	"bytes"
@@ -29,7 +29,7 @@ type applyLayerResponse struct {
 func applyLayer() {
 
 	var (
-		tmpDir  string
+		tmpDir  = ""
 		err     error
 		options *archive.TarOptions
 	)

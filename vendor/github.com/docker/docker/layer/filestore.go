@@ -1,8 +1,9 @@
-package layer // import "github.com/docker/docker/layer"
+package layer
 
 import (
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -12,11 +13,10 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution"
+	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/pkg/ioutils"
-	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -37,10 +37,10 @@ type fileMetadataTransaction struct {
 	ws    *ioutils.AtomicWriteSet
 }
 
-// newFSMetadataStore returns an instance of a metadata store
+// NewFSMetadataStore returns an instance of a metadata store
 // which is backed by files on disk using the provided root
 // as the root of metadata files.
-func newFSMetadataStore(root string) (*fileMetadataStore, error) {
+func NewFSMetadataStore(root string) (MetadataStore, error) {
 	if err := os.MkdirAll(root, 0700); err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (fms *fileMetadataStore) getMountFilename(mount, filename string) string {
 	return filepath.Join(fms.getMountDirectory(mount), filename)
 }
 
-func (fms *fileMetadataStore) StartTransaction() (*fileMetadataTransaction, error) {
+func (fms *fileMetadataStore) StartTransaction() (MetadataTransaction, error) {
 	tmpDir := filepath.Join(fms.root, "tmp")
 	if err := os.MkdirAll(tmpDir, 0755); err != nil {
 		return nil, err
@@ -165,7 +165,7 @@ func (fms *fileMetadataStore) GetParent(layer ChainID) (ChainID, error) {
 		return "", err
 	}
 
-	dgst, err := digest.Parse(strings.TrimSpace(string(content)))
+	dgst, err := digest.ParseDigest(strings.TrimSpace(string(content)))
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +179,7 @@ func (fms *fileMetadataStore) GetDiffID(layer ChainID) (DiffID, error) {
 		return "", err
 	}
 
-	dgst, err := digest.Parse(strings.TrimSpace(string(content)))
+	dgst, err := digest.ParseDigest(strings.TrimSpace(string(content)))
 	if err != nil {
 		return "", err
 	}
@@ -194,8 +194,8 @@ func (fms *fileMetadataStore) GetCacheID(layer ChainID) (string, error) {
 	}
 	content := strings.TrimSpace(string(contentBytes))
 
-	if content == "" {
-		return "", errors.Errorf("invalid cache id value")
+	if !stringIDRegexp.MatchString(content) {
+		return "", errors.New("invalid cache id value")
 	}
 
 	return content, nil
@@ -226,7 +226,6 @@ func (fms *fileMetadataStore) TarSplitReader(layer ChainID) (io.ReadCloser, erro
 	}
 	f, err := gzip.NewReader(fz)
 	if err != nil {
-		fz.Close()
 		return nil, err
 	}
 
@@ -297,7 +296,7 @@ func (fms *fileMetadataStore) GetMountParent(mount string) (ChainID, error) {
 		return "", err
 	}
 
-	dgst, err := digest.Parse(strings.TrimSpace(string(content)))
+	dgst, err := digest.ParseDigest(strings.TrimSpace(string(content)))
 	if err != nil {
 		return "", err
 	}

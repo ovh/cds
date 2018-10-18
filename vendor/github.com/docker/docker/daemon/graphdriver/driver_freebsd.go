@@ -1,19 +1,17 @@
-package graphdriver // import "github.com/docker/docker/daemon/graphdriver"
+package graphdriver
 
-import (
-	"syscall"
-
-	"golang.org/x/sys/unix"
-)
+import "syscall"
 
 var (
-	// List of drivers that should be used in an order
-	priority = "zfs"
+	// Slice of drivers that should be used in an order
+	priority = []string{
+		"zfs",
+	}
 )
 
 // Mounted checks if the given path is mounted as the fs type
 func Mounted(fsType FsMagic, mountPath string) (bool, error) {
-	var buf unix.Statfs_t
+	var buf syscall.Statfs_t
 	if err := syscall.Statfs(mountPath, &buf); err != nil {
 		return false, err
 	}

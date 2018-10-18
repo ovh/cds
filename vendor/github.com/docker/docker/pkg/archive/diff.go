@@ -1,4 +1,4 @@
-package archive // import "github.com/docker/docker/pkg/archive"
+package archive
 
 import (
 	"archive/tar"
@@ -10,10 +10,10 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/docker/docker/pkg/pools"
 	"github.com/docker/docker/pkg/system"
-	"github.com/sirupsen/logrus"
 )
 
 // UnpackLayer unpack `layer` to a `dest`. The stream `layer` can be
@@ -33,11 +33,17 @@ func UnpackLayer(dest string, layer io.Reader, options *TarOptions) (size int64,
 	if options.ExcludePatterns == nil {
 		options.ExcludePatterns = []string{}
 	}
-	idMappings := idtools.NewIDMappingsFromMaps(options.UIDMaps, options.GIDMaps)
+	remappedRootUID, remappedRootGID, err := idtools.GetRootUIDGID(options.UIDMaps, options.GIDMaps)
+	if err != nil {
+		return 0, err
+	}
 
 	aufsTempdir := ""
 	aufsHardlinks := make(map[string]*tar.Header)
 
+	if options == nil {
+		options = &TarOptions{}
+	}
 	// Iterate through the files in the archive.
 	for {
 		hdr, err := tr.Next()
@@ -84,7 +90,7 @@ func UnpackLayer(dest string, layer io.Reader, options *TarOptions) (size int64,
 			parentPath := filepath.Join(dest, parent)
 
 			if _, err := os.Lstat(parentPath); err != nil && os.IsNotExist(err) {
-				err = system.MkdirAll(parentPath, 0600, "")
+				err = system.MkdirAll(parentPath, 0600)
 				if err != nil {
 					return 0, err
 				}
@@ -192,10 +198,27 @@ func UnpackLayer(dest string, layer io.Reader, options *TarOptions) (size int64,
 				srcData = tmpFile
 			}
 
-			if err := remapIDs(idMappings, srcHdr); err != nil {
-				return 0, err
+			// if the options contain a uid & gid maps, convert header uid/gid
+			// entries using the maps such that lchown sets the proper mapped
+			// uid/gid after writing the file. We only perform this mapping if
+			// the file isn't already owned by the remapped root UID or GID, as
+			// that specific uid/gid has no mapping from container -> host, and
+			// those files already have the proper ownership for inside the
+			// container.
+			if srcHdr.Uid != remappedRootUID {
+				xUID, err := idtools.ToHost(srcHdr.Uid, options.UIDMaps)
+				if err != nil {
+					return 0, err
+				}
+				srcHdr.Uid = xUID
 			}
-
+			if srcHdr.Gid != remappedRootGID {
+				xGID, err := idtools.ToHost(srcHdr.Gid, options.GIDMaps)
+				if err != nil {
+					return 0, err
+				}
+				srcHdr.Gid = xGID
+			}
 			if err := createTarFile(path, dest, srcHdr, srcData, true, nil, options.InUserNS); err != nil {
 				return 0, err
 			}
@@ -247,12 +270,10 @@ func applyLayerHandler(dest string, layer io.Reader, options *TarOptions, decomp
 	defer system.Umask(oldmask) // ignore err, ErrNotSupportedPlatform
 
 	if decompress {
-		decompLayer, err := DecompressStream(layer)
+		layer, err = DecompressStream(layer)
 		if err != nil {
 			return 0, err
 		}
-		defer decompLayer.Close()
-		layer = decompLayer
 	}
 	return UnpackLayer(dest, layer, options)
 }

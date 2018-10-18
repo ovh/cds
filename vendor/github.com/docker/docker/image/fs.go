@@ -1,4 +1,4 @@
-package image // import "github.com/docker/docker/image"
+package image
 
 import (
 	"fmt"
@@ -7,10 +7,9 @@ import (
 	"path/filepath"
 	"sync"
 
+	"github.com/Sirupsen/logrus"
+	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/pkg/ioutils"
-	"github.com/opencontainers/go-digest"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // DigestWalkFunc is function called by StoreBackend.Walk
@@ -48,10 +47,10 @@ func newFSStore(root string) (*fs, error) {
 		root: root,
 	}
 	if err := os.MkdirAll(filepath.Join(root, contentDirName, string(digest.Canonical)), 0700); err != nil {
-		return nil, errors.Wrap(err, "failed to create storage backend")
+		return nil, err
 	}
 	if err := os.MkdirAll(filepath.Join(root, metadataDirName, string(digest.Canonical)), 0700); err != nil {
-		return nil, errors.Wrap(err, "failed to create storage backend")
+		return nil, err
 	}
 	return s, nil
 }
@@ -76,7 +75,7 @@ func (s *fs) Walk(f DigestWalkFunc) error {
 	for _, v := range dir {
 		dgst := digest.NewDigestFromHex(string(digest.Canonical), v.Name())
 		if err := dgst.Validate(); err != nil {
-			logrus.Debugf("skipping invalid digest %s: %s", dgst, err)
+			logrus.Debugf("Skipping invalid digest %s: %s", dgst, err)
 			continue
 		}
 		if err := f(dgst); err != nil {
@@ -97,7 +96,7 @@ func (s *fs) Get(dgst digest.Digest) ([]byte, error) {
 func (s *fs) get(dgst digest.Digest) ([]byte, error) {
 	content, err := ioutil.ReadFile(s.contentFile(dgst))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get digest %s", dgst)
+		return nil, err
 	}
 
 	// todo: maybe optional
@@ -114,12 +113,12 @@ func (s *fs) Set(data []byte) (digest.Digest, error) {
 	defer s.Unlock()
 
 	if len(data) == 0 {
-		return "", fmt.Errorf("invalid empty data")
+		return "", fmt.Errorf("Invalid empty data")
 	}
 
 	dgst := digest.FromBytes(data)
 	if err := ioutils.AtomicWriteFile(s.contentFile(dgst), data, 0600); err != nil {
-		return "", errors.Wrap(err, "failed to write digest data")
+		return "", err
 	}
 
 	return dgst, nil
@@ -133,7 +132,10 @@ func (s *fs) Delete(dgst digest.Digest) error {
 	if err := os.RemoveAll(s.metadataDir(dgst)); err != nil {
 		return err
 	}
-	return os.Remove(s.contentFile(dgst))
+	if err := os.Remove(s.contentFile(dgst)); err != nil {
+		return err
+	}
+	return nil
 }
 
 // SetMetadata sets metadata for a given ID. It fails if there's no base file.
@@ -159,11 +161,7 @@ func (s *fs) GetMetadata(dgst digest.Digest, key string) ([]byte, error) {
 	if _, err := s.get(dgst); err != nil {
 		return nil, err
 	}
-	bytes, err := ioutil.ReadFile(filepath.Join(s.metadataDir(dgst), key))
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read metadata")
-	}
-	return bytes, nil
+	return ioutil.ReadFile(filepath.Join(s.metadataDir(dgst), key))
 }
 
 // DeleteMetadata removes the metadata associated with a digest.
