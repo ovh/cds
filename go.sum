@@ -330,6 +330,8 @@ github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908 h1:D1Gc3nOtLEadaHI
 github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908/go.mod h1:aEV29XrmTYFr3CiRxZeGHpkvbwq+prZduBqMaascyCU=
 go.opencensus.io v0.9.0 h1:WFB9PoxEpc8urcJr3CNJ/HMFHv48R0Ijj4++395eH8w=
 go.opencensus.io v0.9.0/go.mod h1:UffZAU+4sDEINUGP/B7UfBBkq4fqLu9zXAX7ke6CHW0=
+go.opencensus.io v0.15.0 h1:r1SzcjSm4ybA0qZs3B4QYX072f8gK61Kh0qtwyFpfdk=
+go.opencensus.io v0.15.0/go.mod h1:UffZAU+4sDEINUGP/B7UfBBkq4fqLu9zXAX7ke6CHW0=
 golang.org/x/crypto v0.0.0-20180119165957-a66000089151 h1:du7dTgoJooIwkyksVuOCfUbQDgZE9oIUdVk/v/tqou4=
 golang.org/x/crypto v0.0.0-20180119165957-a66000089151/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/net v0.0.0-20180112015858-5ccada7d0a7b h1:Xu6Gf1IrU0c8CSJqWR43Bh8vb+Ft3jVIUahRiqL1oaI=

@@ -166,7 +166,7 @@ require (
 	github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277
 	github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed
 	github.com/yuin/gopher-lua v0.0.0-20170901023928-8c2befcd3908
-	go.opencensus.io v0.9.0
+	go.opencensus.io v0.15.0
 	golang.org/x/crypto v0.0.0-20180119165957-a66000089151
 	golang.org/x/net v0.0.0-20180112015858-5ccada7d0a7b
 	golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f // indirect

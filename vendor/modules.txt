@@ -523,7 +523,7 @@ github.com/yuin/gopher-lua
 github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
 github.com/yuin/gopher-lua/pm
-# go.opencensus.io v0.9.0
+# go.opencensus.io v0.15.0
 go.opencensus.io/stats
 go.opencensus.io/stats/view
 go.opencensus.io/exporter/jaeger
@@ -537,6 +537,7 @@ go.opencensus.io/internal/tagencoding
 go.opencensus.io/exporter/jaeger/internal/gen-go/jaeger
 go.opencensus.io/internal
 go.opencensus.io/trace/internal
+go.opencensus.io
 # golang.org/x/crypto v0.0.0-20180119165957-a66000089151
 golang.org/x/crypto/ssh/terminal
 golang.org/x/crypto/ssh
