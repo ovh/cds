@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ovh/cds/engine/api/workflowtemplate"
+
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
@@ -50,6 +52,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		withAudits := FormBool(r, "withAudits")
 		withLabels := FormBool(r, "withLabels")
 		withDeepPipelines := FormBool(r, "withDeepPipelines")
+		withTemplate := FormBool(r, "WithTemplate")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
@@ -70,7 +73,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		if withUsage {
 			usage, errU := loadWorkflowUsage(api.mustDB(), w1.ID)
 			if errU != nil {
-				return sdk.WrapError(errU, "getWorkflowHandler> Cannot load usage for workflow %s", name)
+				return sdk.WrapError(errU, "Cannot load usage for workflow %s", name)
 			}
 			w1.Usage = &usage
 		}
@@ -78,9 +81,17 @@ func (api *API) getWorkflowHandler() service.Handler {
 		if withAudits {
 			audits, errA := workflow.LoadAudits(api.mustDB(), w1.ID)
 			if errA != nil {
-				return sdk.WrapError(errA, "getWorkflowHandler> Cannot load audits for workflow %s", name)
+				return sdk.WrapError(errA, "Cannot load audits for workflow %s", name)
 			}
 			w1.Audits = audits
+		}
+
+		if withTemplate {
+			t, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().WorkflowIDs(w1.ID))
+			if err != nil {
+				return err
+			}
+			w1.TemplateInstance = t
 		}
 
 		w1.Permission = permission.WorkflowPermission(key, w1.Name, getUser(ctx))

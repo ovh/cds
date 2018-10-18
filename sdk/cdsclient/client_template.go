@@ -28,3 +28,14 @@ func (c *client) TemplateExecute(projectKey string, id int64, req sdk.WorkflowTe
 
 	return messages, nil
 }
+
+func (c *client) TemplateUpdate(projectKey, workflowName string, req sdk.WorkflowTemplateRequest) ([]string, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/update", projectKey, workflowName)
+
+	messages := []string{}
+	if _, err := c.PostJSON(context.Background(), url, req, &messages); err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}

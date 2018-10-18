@@ -18,6 +18,7 @@ type Filter struct {
 type TemplateClient interface {
 	TemplateGet(templateID int64) (*sdk.WorkflowTemplate, error)
 	TemplateExecute(projectKey string, templateID int64, req sdk.WorkflowTemplateRequest) ([]string, error)
+	TemplateUpdate(projectKey, workflowName string, req sdk.WorkflowTemplateRequest) ([]string, error)
 }
 
 // AdminService expose all function to CDS services
@@ -281,6 +282,7 @@ type WorkflowClient interface {
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 	WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error
 	WorkflowCachePull(projectKey, ref string) (io.Reader, error)
+	WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error)
 }
 
 // MonitoringClient exposes monitoring functions

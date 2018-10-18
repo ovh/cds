@@ -54,6 +54,8 @@ type Workflow struct {
 	ToDelete                bool                        `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
+	// aggregates
+	TemplateInstance *WorkflowTemplateInstance `json:"template_instance,omitempty" db:"-"`
 }
 
 // GetApplication retrieve application from workflow
