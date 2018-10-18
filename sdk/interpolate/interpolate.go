@@ -86,8 +86,6 @@ func Do(input string, vars map[string]string) (string, error) {
 	if len(sm) > 0 {
 		for i := 0; i < len(sm); i++ {
 			if len(sm[i]) > 0 {
-				//fmt.Println("----", sm[i][1], "----")
-
 				var expression = strings.TrimSpace(sm[i][1])
 				if _, ok := processedExpression[expression]; ok {
 					continue
@@ -156,8 +154,6 @@ func Do(input string, vars map[string]string) (string, error) {
 			}
 		}
 	}
-
-	//fmt.Println("input:", input)
 
 	t, err := template.New("input").Funcs(interpolateHelperFuncs).Parse(input)
 	if err != nil {
