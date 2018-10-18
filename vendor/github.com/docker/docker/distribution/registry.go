@@ -1,6 +1,7 @@
-package distribution
+package distribution // import "github.com/docker/docker/distribution"
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -8,7 +9,7 @@ import (
 
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema2"
-	distreference "github.com/docker/distribution/reference"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/distribution/registry/client/auth"
 	"github.com/docker/distribution/registry/client/transport"
@@ -16,12 +17,13 @@ import (
 	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/registry"
 	"github.com/docker/go-connections/sockets"
-	"golang.org/x/net/context"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // ImageTypes represents the schema2 config types for images
 var ImageTypes = []string{
 	schema2.MediaTypeImageConfig,
+	ocispec.MediaTypeImageConfig,
 	// Handle unexpected values from https://github.com/docker/distribution/issues/1621
 	// (see also https://github.com/docker/docker/issues/22378,
 	// https://github.com/docker/docker/issues/30083)
@@ -55,10 +57,10 @@ func init() {
 // providing timeout settings and authentication support, and also verifies the
 // remote API version.
 func NewV2Repository(ctx context.Context, repoInfo *registry.RepositoryInfo, endpoint registry.APIEndpoint, metaHeaders http.Header, authConfig *types.AuthConfig, actions ...string) (repo distribution.Repository, foundVersion bool, err error) {
-	repoName := repoInfo.FullName()
+	repoName := repoInfo.Name.Name()
 	// If endpoint does not support CanonicalName, use the RemoteName instead
 	if endpoint.TrimHostname {
-		repoName = repoInfo.RemoteName()
+		repoName = reference.Path(repoInfo.Name)
 	}
 
 	direct := &net.Dialer{
@@ -82,7 +84,7 @@ func NewV2Repository(ctx context.Context, repoInfo *registry.RepositoryInfo, end
 		base.Dial = proxyDialer.Dial
 	}
 
-	modifiers := registry.DockerHeaders(dockerversion.DockerUserAgent(ctx), metaHeaders)
+	modifiers := registry.Headers(dockerversion.DockerUserAgent(ctx), metaHeaders)
 	authTransport := transport.NewTransport(base, modifiers...)
 
 	challengeManager, foundVersion, err := registry.PingV2Registry(endpoint.URL, authTransport)
@@ -122,7 +124,7 @@ func NewV2Repository(ctx context.Context, repoInfo *registry.RepositoryInfo, end
 	}
 	tr := transport.NewTransport(base, modifiers...)
 
-	repoNameRef, err := distreference.ParseNamed(repoName)
+	repoNameRef, err := reference.WithName(repoName)
 	if err != nil {
 		return nil, foundVersion, fallbackError{
 			err:         err,
@@ -131,7 +133,7 @@ func NewV2Repository(ctx context.Context, repoInfo *registry.RepositoryInfo, end
 		}
 	}
 
-	repo, err = client.NewRepository(ctx, repoNameRef, endpoint.URL.String(), tr)
+	repo, err = client.NewRepository(repoNameRef, endpoint.URL.String(), tr)
 	if err != nil {
 		err = fallbackError{
 			err:         err,

@@ -26,8 +26,8 @@ require (
 	github.com/cpuguy83/go-md2man v0.0.0-20171223160537-8d868be6e9bf // indirect
 	github.com/danieljoos/wincred v1.0.1 // indirect
 	github.com/davecgh/go-spew v1.1.0 // indirect
-	github.com/docker/cli v0.0.0-20180712011953-7178075fdad6
-	github.com/docker/distribution v2.6.2+incompatible
+	github.com/docker/cli v0.0.0-20180712011953-7178075fdad6 // indirect
+	github.com/docker/distribution v2.7.0-rc.0+incompatible
 	github.com/docker/docker v1.13.1
 	github.com/docker/docker-credential-helpers v0.6.1
 	github.com/docker/go-connections v0.3.0
@@ -196,3 +196,5 @@ require (
 replace github.com/go-gorp/gorp => github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f
 
 replace github.com/docker/docker-credential-helpers => github.com/yesnault/docker-credential-helpers v0.0.0-20180831150006-4dd7c3df8875
+
+replace github.com/docker/docker => github.com/docker/engine v0.0.0-20180816081446-320063a2ad06
