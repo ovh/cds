@@ -15,10 +15,9 @@ import (
 )
 
 func Test_getActionExportHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	u, pass := newAdminUser(t, api)
 	defer end()
-
-	u, pass := assets.InsertAdminUser(db)
 
 	//Prepare request
 	vars := map[string]string{
@@ -38,10 +37,10 @@ func Test_getActionExportHandler(t *testing.T) {
 }
 
 func Test_postActionImportHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 
 	uri := api.Router.GetRoute("POST", api.importActionHandler, nil)
 	test.NotEmpty(t, uri)

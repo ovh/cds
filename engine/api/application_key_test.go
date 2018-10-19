@@ -21,7 +21,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -80,7 +80,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -135,7 +135,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

@@ -48,7 +48,7 @@ func Test_postImportAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
@@ -128,7 +128,7 @@ func Test_postImportAsCodeFeatureDisabledHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 
 	p := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	assert.NoError(t, repositoriesmanager.InsertForProject(db, p, &sdk.ProjectVCSServer{
@@ -167,7 +167,7 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 
 	mockService := &sdk.Service{Name: "Test_getImportAsCodeHandler", Type: services.TypeRepositories}
 	_ = services.Delete(db, mockService)
@@ -228,7 +228,7 @@ func Test_postPerformImportAsCodeHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 
 	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
@@ -324,7 +324,7 @@ func Test_postPerformImportAsCodeDisabledFeatureHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 
 	assert.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 

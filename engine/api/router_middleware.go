@@ -70,7 +70,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		jwt := strings.TrimPrefix(headers.Get("Authorization"), "Bearer ")
 		claims, err := api.parseToken(jwt)
 		if err != nil {
-			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> JWT Parse error: %v", err)
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> JWT (%s) Parse error: %v", jwt, err)
 		}
 		w := claimsWorker(claims)
 		u := claimsUser(claims)

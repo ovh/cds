@@ -17,10 +17,10 @@ import (
 )
 
 func Test_addBroadcastHandler(t *testing.T) {
-	api, db, _, end := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 
 	br := sdk.Broadcast{
 		Title:   "maintenance swarm",
@@ -49,8 +49,8 @@ func Test_postMarkAsReadBroadcastHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
 
-	u, pass := assets.InsertAdminUser(db)
-	uLambda, passLambda := assets.InsertLambdaUser(db)
+	u, pass := newAdminUser(t, api)
+	uLambda, passLambda := newLambdaUser(t, api)
 
 	br := sdk.Broadcast{
 		Title:   "maintenance swarm",

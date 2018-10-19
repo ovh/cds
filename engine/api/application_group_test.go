@@ -19,7 +19,7 @@ func Test_deleteGroupFromApplicationHandlerWithError(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	gr := sdk.Group{
 		Name:   "group-" + sdk.RandomString(5),
@@ -72,7 +72,7 @@ func Test_deleteGroupFromApplicationHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	gr := sdk.Group{
 		Name:   "group-" + sdk.RandomString(5),

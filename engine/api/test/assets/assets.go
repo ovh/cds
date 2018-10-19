@@ -248,10 +248,7 @@ func NewAuthentifiedRequestFromHatchery(t *testing.T, h *sdk.Service, method, ur
 
 // AuthentifyRequest  have to be used only for tests
 func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, token string) {
-	req.Header.Add(sdk.RequestedWithHeader, sdk.RequestedWithValue)
-	req.Header.Add(sdk.SessionTokenHeader, token)
-	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(u.Username+":"+token))
-	req.Header.Add("Authorization", auth)
+	AuthentifyRequestWithJWT(t, req, token)
 }
 
 func AuthentifyRequestWithJWT(t *testing.T, req *http.Request, token string) {
