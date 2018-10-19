@@ -1,5 +1,11 @@
 package sdk
 
+import (
+	"sort"
+
+	"github.com/fsamin/go-dump"
+)
+
 const (
 	NodeTypePipeline     = "pipeline"
 	NodeTypeJoin         = "join"
@@ -44,6 +50,53 @@ type NodeContext struct {
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions" db:"-"`
 	Mutex                     bool                   `json:"mutex" db:"mutex"`
+}
+
+//AddTrigger adds a trigger to the destination node from the node found by its name
+func (n *Node) AddTrigger(name string, dest Node) {
+	if n.Name == name {
+		n.Triggers = append(n.Triggers, NodeTrigger{
+			ChildNode: dest,
+		})
+		return
+	}
+	for i := range n.Triggers {
+		destNode := &n.Triggers[i].ChildNode
+		destNode.AddTrigger(name, dest)
+	}
+}
+
+//Sort sorts the workflow node
+func (n *Node) Sort() {
+	sort.Slice(n.Triggers, func(i, j int) bool {
+		return n.Triggers[i].ChildNode.Name < n.Triggers[j].ChildNode.Name
+	})
+}
+
+//VisitNode all the workflow and apply the visitor func on the current node and the children
+func (n *Node) VisitNode(w *Workflow, visitor func(node *Node, w *Workflow)) {
+	visitor(n, w)
+	for i := range n.Triggers {
+		d := &n.Triggers[i].ChildNode
+		d.VisitNode(w, visitor)
+	}
+}
+
+func (c *NodeContext) HasDefaultPayload() bool {
+	if c == nil {
+		return false
+	}
+	if c.DefaultPayload == nil {
+		return false
+	}
+	dumper := dump.NewDefaultEncoder(nil)
+	dumper.ExtraFields.DetailedMap = false
+	dumper.ExtraFields.DetailedStruct = false
+	dumper.ExtraFields.Len = false
+	dumper.ExtraFields.Type = false
+	m, _ := dumper.ToStringMap(c.DefaultPayload)
+	return len(m) > 0
+
 }
 
 // NodeTrigger represents the link between 2 nodes

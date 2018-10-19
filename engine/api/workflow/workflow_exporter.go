@@ -40,7 +40,7 @@ func Export(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *s
 func exportWorkflow(wf sdk.Workflow, f exportentities.Format, w io.Writer, opts ...exportentities.WorkflowOptions) (int, error) {
 	e, err := exportentities.NewWorkflow(wf, opts...)
 	if err != nil {
-		return 0, err
+		return 0, sdk.WrapError(err, "exportWorkflow")
 	}
 
 	// Useful to not display history_length in yaml or json if it's his default value

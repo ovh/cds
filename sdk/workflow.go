@@ -250,15 +250,15 @@ func (w *Workflow) AddNodeFork(name string, dest WorkflowNodeFork) {
 }
 
 //AddTrigger adds a trigger to the destination node from the node found by its name
-func (w *Workflow) AddTrigger(name string, dest WorkflowNode) {
-	if w.Root == nil {
+func (w *Workflow) AddTrigger(name string, dest Node) {
+	if w.WorkflowData == nil || w.WorkflowData.Node.Name == "" {
 		return
 	}
 
-	w.Root.AddTrigger(name, dest)
-	for i := range w.Joins {
-		for j := range w.Joins[i].Triggers {
-			w.Joins[i].Triggers[j].WorkflowDestNode.AddTrigger(name, dest)
+	(&w.WorkflowData.Node).AddTrigger(name, dest)
+	for i := range w.WorkflowData.Joins {
+		for j := range w.WorkflowData.Joins[i].Triggers {
+			(&w.WorkflowData.Joins[i].Triggers[j].ChildNode).AddTrigger(name, dest)
 		}
 	}
 }
@@ -272,20 +272,6 @@ func (n *WorkflowNode) AddNodeFork(name string, dest WorkflowNodeFork) {
 	for i := range n.Triggers {
 		destNode := &n.Triggers[i].WorkflowDestNode
 		destNode.AddNodeFork(name, dest)
-	}
-}
-
-//AddTrigger adds a trigger to the destination node from the node found by its name
-func (n *WorkflowNode) AddTrigger(name string, dest WorkflowNode) {
-	if n.Name == name {
-		n.Triggers = append(n.Triggers, WorkflowNodeTrigger{
-			WorkflowDestNode: dest,
-		})
-		return
-	}
-	for i := range n.Triggers {
-		destNode := &n.Triggers[i].WorkflowDestNode
-		destNode.AddTrigger(name, dest)
 	}
 }
 
@@ -559,6 +545,29 @@ func (w *Workflow) Visit(visitor func(*WorkflowNode)) {
 	}
 }
 
+//Visit all the workflow and apply the visitor func on all nodes
+func (w *Workflow) VisitNode(visitor func(*Node, *Workflow)) {
+	w.WorkflowData.Node.VisitNode(w, visitor)
+	for i := range w.WorkflowData.Joins {
+		for j := range w.WorkflowData.Joins[i].Triggers {
+			n := &w.WorkflowData.Joins[i].Triggers[j].ChildNode
+			n.VisitNode(w, visitor)
+		}
+	}
+}
+
+//Sort sorts the workflow
+func (w *Workflow) SortNode() {
+	w.VisitNode(func(n *Node, w *Workflow) {
+		n.Sort()
+	})
+	for _, join := range w.WorkflowData.Joins {
+		sort.Slice(join.Triggers, func(i, j int) bool {
+			return join.Triggers[i].ChildNode.Name < join.Triggers[j].ChildNode.Name
+		})
+	}
+}
+
 //Sort sorts the workflow
 func (w *Workflow) Sort() {
 	w.Visit(func(n *WorkflowNode) {
@@ -706,7 +715,6 @@ func (n Node) retroMigrate() WorkflowNode {
 			newNode.Triggers = append(newNode.Triggers, trig)
 		case NodeTypeFork:
 			newNode.Forks = append(newNode.Forks, t.ChildNode.retroMigrateFork())
-			break
 		case NodeTypeOutGoingHook:
 			newNode.OutgoingHooks = append(newNode.OutgoingHooks, t.ChildNode.retroMigrateOutGoingHook())
 		}

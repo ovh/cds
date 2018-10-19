@@ -66,7 +66,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
 
-		wf, globalError := workflow.Parse(proj, ew)
+		wf, globalError := workflow.Parse(api.mustDB(), proj, ew)
 		if globalError != nil {
 			return sdk.WrapError(globalError, "postWorkflowPreviewHandler> Unable import workflow %s", ew.Name)
 		}

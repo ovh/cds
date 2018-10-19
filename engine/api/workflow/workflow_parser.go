@@ -21,7 +21,7 @@ type ImportOptions struct {
 }
 
 // Parse parse an exportentities.workflow and return the parsed workflow
-func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error) {
+func Parse(db gorp.SqlExecutor, proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error) {
 	log.Info("Parse>> Parse workflow %s in project %s", ew.Name, proj.Key)
 	log.Debug("Parse>> Workflow: %+v", ew)
 
@@ -40,12 +40,28 @@ func Parse(proj *sdk.Project, ew *exportentities.Workflow) (*sdk.Workflow, error
 	}
 
 	//Parse workflow
-	w, errW := ew.GetWorkflow()
+	// Get hook models
+	hookModels, err := LoadHookModels(db)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Unable to load hook models")
+	}
+	// Get outgoing hook model
+	outgoingModels, err := LoadOutgoingHookModels(db)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Unable to load outgoing hook models")
+	}
+
+	w, errW := ew.GetWorkflow(db, proj, hookModels, outgoingModels)
 	if errW != nil {
 		return nil, sdk.NewError(sdk.ErrWrongRequest, errW)
 	}
 	w.ProjectID = proj.ID
 	w.ProjectKey = proj.Key
+
+	if err := RenameNode(db, w); err != nil {
+		return nil, sdk.WrapError(err, "Unable to rename node")
+	}
+	w.RetroMigrate()
 
 	return w, nil
 }
@@ -58,13 +74,13 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, opts.Force)
 	log.Debug("ParseAndImport>> Workflow: %+v", ew)
 	//Parse workflow
-	w, errW := Parse(proj, ew)
+	w, errW := Parse(db, proj, ew)
 	if errW != nil {
 		return nil, nil, errW
 	}
 
 	if opts.WorkflowName != "" && w.Name != opts.WorkflowName {
-		return nil, nil, sdk.ErrWorkflowNameImport
+		return nil, nil, sdk.WrapError(sdk.ErrWorkflowNameImport, "Wrong workflow name")
 	}
 
 	//Import
