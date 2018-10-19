@@ -38,11 +38,19 @@ export class WorkflowTemplateService {
     }
 
     /**
-     * Update a workflow template by id
+     * Update a workflow template
      * @returns {Observable<WorkflowTemplate>}
      */
     updateWorkflowTemplate(wt: WorkflowTemplate): Observable<WorkflowTemplate> {
         return this._http.put<WorkflowTemplate>('/template/' + wt.id, wt);
+    }
+
+    /**
+     * Delete a workflow template
+     * @returns {Observable<any>}
+     */
+    deleteWorkflowTemplate(wt: WorkflowTemplate): Observable<any> {
+        return this._http.delete<any>('/template/' + wt.id);
     }
 
 }

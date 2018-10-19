@@ -35,3 +35,10 @@ func PublishWorkflowTemplateUpdate(new, old sdk.WorkflowTemplate, u *sdk.User) {
 		OldWorkflowTemplate: old,
 	}, u)
 }
+
+// PublishWorkflowTemplateDelete publishes an event for the deletion of the given workflow template.
+func PublishWorkflowTemplateDelete(wt sdk.WorkflowTemplate, u *sdk.User) {
+	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateDelete{
+		WorkflowTemplate: wt,
+	}, u)
+}

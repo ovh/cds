@@ -45,6 +45,11 @@ func Update(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate) error {
 	return sdk.WrapError(database.Update(db, wt), "Unable to update workflow template %s", wt.Name)
 }
 
+// Delete template in database.
+func Delete(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate) error {
+	return sdk.WrapError(database.Delete(db, wt), "Unable to delete workflow template %s", wt.Name)
+}
+
 // InsertRelation between workflow template and workflow in database.
 func InsertRelation(db gorp.SqlExecutor, wtw *sdk.WorkflowTemplateInstance) error {
 	return sdk.WrapError(database.Insert(db, wtw), "Unable to insert workflow template relation %d with workflow %d",
@@ -55,6 +60,12 @@ func InsertRelation(db gorp.SqlExecutor, wtw *sdk.WorkflowTemplateInstance) erro
 func DeleteRelationsForWorkflowID(db gorp.SqlExecutor, workflowID int64) error {
 	_, err := db.Exec("DELETE FROM workflow_template_workflow WHERE workflow_id = $1", workflowID)
 	return sdk.WrapError(err, "Unable to remove all relations for workflow %d", workflowID)
+}
+
+// DeleteRelationsForWorkflowTemplateID removes all relation for workflow template by id in database.
+func DeleteRelationsForWorkflowTemplateID(db gorp.SqlExecutor, workflowTemplateID int64) error {
+	_, err := db.Exec("DELETE FROM workflow_template_workflow WHERE workflow_template_id = $1", workflowTemplateID)
+	return sdk.WrapError(err, "Unable to remove all relations for workflow template %d", workflowTemplateID)
 }
 
 // InsertAudit for workflow template in database.

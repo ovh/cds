@@ -1032,5 +1032,6 @@
   "workflow_template_edit_title": "Edit workflow template",
   "workflow_template_created": "Workflow template created",
   "workflow_template_saved": "Workflow template saved",
+  "workflow_template_deleted": "Modèle de workflow deleted",
   "workflow_templates": "Workflow templates"
 }

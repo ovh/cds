@@ -192,6 +192,39 @@ func (api *API) putTemplateHandler() service.Handler {
 	}
 }
 
+func (api *API) deleteTemplateHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(true)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+
+		wt := getWorkflowTemplate(ctx)
+
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "Cannot start transaction")
+		}
+		defer func() { _ = tx.Rollback() }()
+
+		if err := workflowtemplate.DeleteRelationsForWorkflowTemplateID(tx, wt.ID); err != nil {
+			return err
+		}
+
+		if err := workflowtemplate.Delete(tx, wt); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "Cannot commit transaction")
+		}
+
+		event.PublishWorkflowTemplateDelete(*wt, getUser(ctx))
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 func (api *API) executeTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
