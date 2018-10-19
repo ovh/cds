@@ -51,19 +51,19 @@ export class WorkflowTemplateEditComponent {
             });
     }
 
-    saveWorkflowTemplate() {
+    saveWorkflowTemplate(wt: WorkflowTemplate) {
         this.loading = true;
-        this._workflowTemplateService.updateWorkflowTemplate(this.workflowTemplate)
+        this._workflowTemplateService.updateWorkflowTemplate(wt)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(wt => {
-                this.workflowTemplate = wt;
+            .subscribe(res => {
+                this.workflowTemplate = res;
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
             });
     }
 
-    deleteWorkflowTemplate() {
+    deleteWorkflowTemplate(wt: WorkflowTemplate) {
         this.loading = true;
-        this._workflowTemplateService.deleteWorkflowTemplate(this.workflowTemplate)
+        this._workflowTemplateService.deleteWorkflowTemplate(wt)
             .pipe(finalize(() => this.loading = false))
             .subscribe(_ => {
                 this._toast.success('', this._translate.instant('workflow_template_deleted'));
