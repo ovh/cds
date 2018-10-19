@@ -62,10 +62,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	}
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
+	u, pass := newAdminUser(t, api)
 	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
@@ -239,9 +236,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newAdminUser(t, api)
 
 	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
@@ -383,9 +378,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newLambdaUser(t, api, g)
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -430,9 +423,8 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newLambdaUser(t, api, g)
+
 	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
 
 	model := sdk.Model{
@@ -478,9 +470,8 @@ func Test_addWorkerModelAsAGroupAdminWithRestrict(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newLambdaUser(t, api, g)
+
 	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
 
 	model := sdk.Model{
@@ -531,9 +522,8 @@ func Test_addWorkerModelAsAGroupAdminWithoutRestrictWithPattern(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newLambdaUser(t, api, g)
+
 	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
 
 	pattern := sdk.ModelPattern{
@@ -596,9 +586,8 @@ func Test_addWorkerModelAsAGroupAdminWithProvision(t *testing.T) {
 	g := &sdk.Group{Name: sdk.RandomString(10)}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newLambdaUser(t, api, g)
+
 	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
 
 	model := sdk.Model{
@@ -685,9 +674,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newLambdaUser(t, api, g)
 
 	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
@@ -736,9 +723,7 @@ func Test_updateWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newLambdaUser(t, api, g)
 
 	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
@@ -831,10 +816,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
-
+	u, pass := newLambdaUser(t, api, g)
 	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
@@ -899,9 +881,7 @@ func Test_getWorkerModel(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newAdminUser(t, api)
 
 	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
@@ -962,9 +942,7 @@ func Test_getWorkerModels(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	assert.NotZero(t, u)
-	assert.NotZero(t, pass)
+	u, pass := newAdminUser(t, api)
 
 	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
@@ -1024,24 +1002,4 @@ func Test_getWorkerModels(t *testing.T) {
 	assert.Equal(t, "Test1", results[0].Name)
 	assert.Equal(t, 1, len(results[0].RegisteredCapabilities))
 	assert.Equal(t, u.Fullname, results[0].CreatedBy.Fullname)
-}
-
-func Test_addWorkerModelCapa(t *testing.T) {
-
-}
-
-func Test_getWorkerModelTypes(t *testing.T) {
-
-}
-
-func Test_getWorkerModelCapaTypes(t *testing.T) {
-
-}
-
-func Test_updateWorkerModelCapa(t *testing.T) {
-
-}
-
-func Test_deleteWorkerModelCapa(t *testing.T) {
-
 }

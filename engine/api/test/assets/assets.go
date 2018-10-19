@@ -254,8 +254,13 @@ func AuthentifyRequest(t *testing.T, req *http.Request, u *sdk.User, token strin
 	req.Header.Add("Authorization", auth)
 }
 
+func AuthentifyRequestWithJWT(t *testing.T, req *http.Request, token string) {
+	auth := "Bearer " + token
+	req.Header.Add("Authorization", auth)
+}
+
 //NewAuthentifiedRequest prepare a request
-func NewAuthentifiedRequest(t *testing.T, u *sdk.User, pass, method, uri string, i interface{}) *http.Request {
+func NewAuthentifiedRequest(t *testing.T, u *sdk.User, token, method, uri string, i interface{}) *http.Request {
 	var btes []byte
 	var err error
 	if i != nil {
@@ -271,7 +276,7 @@ func NewAuthentifiedRequest(t *testing.T, u *sdk.User, pass, method, uri string,
 		t.Error(err)
 		t.FailNow()
 	}
-	AuthentifyRequest(t, req, u, pass)
+	AuthentifyRequestWithJWT(t, req, token)
 
 	return req
 }

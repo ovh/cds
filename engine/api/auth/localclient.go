@@ -64,6 +64,7 @@ func (c *LocalClient) Init(options interface{}) error {
 
 //Authentify check username and password
 func (c *LocalClient) Authentify(username, password string) (bool, error) {
+	log.Debug("Auth.LocalClient> Authentify %s", username)
 	// Load user
 	u, err := user.LoadUserAndAuth(c.dbFunc(), username)
 	if err != nil {

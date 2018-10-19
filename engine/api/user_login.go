@@ -16,6 +16,9 @@ import (
 func (api *API) getLoginUserHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		res := sdk.UserLoginDriverResponse{}
+		if api.Config.Auth.Local.Enable {
+			res.Local.Available = true
+		}
 		return service.WriteJSON(w, res, http.StatusOK)
 	}
 }
@@ -56,7 +59,7 @@ func (api *API) postLoginUserHandler() service.Handler {
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrWrongRequest, "Auth> Login error %s: %s", loginUserRequest.Username, errl)
 		}
-
+		// Check default group, if any
 		if err := group.CheckUserInDefaultGroup(api.mustDB(), u.ID); err != nil {
 			log.Warning("Auth> Error while check user in default group:%s\n", err)
 		}
@@ -71,6 +74,7 @@ func (api *API) postLoginUserHandler() service.Handler {
 
 		// Prepare response
 		response := sdk.UserAPIResponse{
+			User:  *u,
 			Token: token,
 		}
 

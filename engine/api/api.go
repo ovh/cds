@@ -92,6 +92,7 @@ type Configuration struct {
 			BindPwd  string `toml:"bindPwd" default:"" comment:"Define it if ldapsearch need to be authenticated" json:"-"`
 		} `toml:"ldap" json:"ldap"`
 		Local struct {
+			Enable               bool   `toml:"enable" default:"false" json:"enable"`
 			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true" json:"signupAllowedDomains"`
 		} `toml:"local" json:"local"`
 		AuthenticationConfig AuthenticationConfig `toml:"tokens" json:"tokens"`

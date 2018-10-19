@@ -273,15 +273,12 @@ func TestLoadUserWithGroup(t *testing.T) {
 // Test_getUserHandlerOK checks call on /user/{username}
 func Test_getUserHandlerOK(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	u1, token := newLambdaUser(t, api)
 	defer end()
-
-	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
-	assert.NotZero(t, u1)
-	assert.NotZero(t, pass1)
 
 	uri := api.Router.GetRoute("GET", api.getUserHandler, map[string]string{"username": u1.Username})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
+	req := assets.NewAuthentifiedRequest(t, u1, token, "GET", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
@@ -301,11 +298,11 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
+	u1, pass1 := newLambdaUser(t, api)
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
-	uAdmin, passAdmin := assets.InsertAdminUser(api.mustDB())
+	uAdmin, passAdmin := newAdminUser(t, api)
 	assert.NotZero(t, uAdmin)
 	assert.NotZero(t, passAdmin)
 
@@ -326,23 +323,18 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 	}
 }
 
-// Test_getUserHandlerOK checks call on /user/{username} with a not allowed user
+// Test_getUserHandlerForbidden checks call on /user/{username} with a not allowed user
 func Test_getUserHandlerForbidden(t *testing.T) {
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
-	assert.NotZero(t, u1)
-	assert.NotZero(t, pass1)
+	u1, pass1 := newLambdaUser(t, api)
 
 	uri := router.GetRoute("GET", api.getUserHandler, map[string]string{"username": u1.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
 
-	u2, pass2 := assets.InsertLambdaUser(api.mustDB())
-	assert.NotZero(t, u1)
-	assert.NotZero(t, pass2)
-
+	u2, pass2 := newLambdaUser(t, api)
 	req2 := assets.NewAuthentifiedRequest(t, u2, pass2, "GET", uri, nil)
 
 	//Do the request
@@ -375,7 +367,7 @@ func Test_getUserGroupsHandler(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g1, g2)
+	u, pass := newLambdaUser(t, api, g1, g2)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -406,7 +398,7 @@ func Test_getUserTokenListHandlerOK(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 
-	u1, pass1 := assets.InsertAdminUser(api.mustDB())
+	u1, pass1 := newAdminUser(t, api)
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
@@ -472,9 +464,7 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 	api, _, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 	db := api.mustDB()
-	u1, pass1 := assets.InsertAdminUser(api.mustDB())
-	assert.NotZero(t, u1)
-	assert.NotZero(t, pass1)
+	u1, pass1 := newAdminUser(t, api)
 
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u1)
@@ -578,8 +568,7 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 func TestTimelineFilter(t *testing.T) {
 	api, _, _, end := newTestAPI(t)
 	defer end()
-	u, passUser := assets.InsertAdminUser(api.mustDB())
-	t.Logf("%s", passUser)
+	u, passUser := newAdminUser(t, api)
 
 	//Prepare request
 	vars := map[string]string{}
