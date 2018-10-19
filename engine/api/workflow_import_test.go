@@ -25,8 +25,7 @@ import (
 func Test_postWorkflowImportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
-
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 	pip := sdk.Pipeline{
@@ -89,8 +88,7 @@ metadata:
 func Test_putWorkflowImportHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t)
 	defer end()
-
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
@@ -154,7 +152,7 @@ workflow:
 func Test_getWorkflowPushHandler(t *testing.T) {
 	api, _, _, end := newTestAPI(t)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
 	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)

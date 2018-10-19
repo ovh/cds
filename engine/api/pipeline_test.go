@@ -27,7 +27,7 @@ func Test_runPipelineHandler(t *testing.T) {
 	defer end()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -102,7 +102,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	defer end()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -276,7 +276,7 @@ func Test_deletePipelineHandler(t *testing.T) {
 	defer end()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -321,7 +321,7 @@ func Test_postPipelineRollbackHandler(t *testing.T) {
 	defer end()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -395,7 +395,7 @@ func Test_deletePipelineHandlerShouldReturnError(t *testing.T) {
 	defer end()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)

@@ -52,7 +52,7 @@ type testRunWorkflowCtx struct {
 }
 
 func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) testRunWorkflowCtx {
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
@@ -819,7 +819,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	defer end()
 
 	// Create user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	// Create project
 	key := sdk.RandomString(10)
@@ -953,7 +953,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	defer end()
 
 	// Create user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	// Create project
 	key := sdk.RandomString(10)

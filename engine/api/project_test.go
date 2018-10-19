@@ -78,7 +78,7 @@ func Test_getProjectsHandler(t *testing.T) {
 		Name:               "app",
 		RepositoryFullname: repofullname,
 	}
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	test.NoError(t, application.Insert(db, api.Cache, proj, app, u))
 
 	vars := map[string]string{}
@@ -101,7 +101,7 @@ func Test_getProjectsHandler(t *testing.T) {
 func Test_addProjectHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 
 	proj := sdk.Project{
 		Key:  strings.ToUpper(sdk.RandomString(10)),
@@ -133,7 +133,7 @@ func Test_addProjectHandler(t *testing.T) {
 func Test_addProjectHandlerWithGroup(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 	g := sdk.Group{Name: sdk.RandomString(10)}
 	test.NoError(t, group.InsertGroup(db, &g))
 
@@ -281,7 +281,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 func Test_putProjectLabelsHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := newAdminUser(t, api)
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)

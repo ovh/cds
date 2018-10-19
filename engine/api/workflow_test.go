@@ -29,7 +29,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -53,7 +53,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -134,7 +134,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -195,7 +195,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -220,7 +220,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -285,7 +285,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -440,7 +440,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -594,7 +594,7 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	defer end()
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -696,7 +696,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
 	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -752,16 +752,13 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 }
 
 func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
-	t.SkipNow()
-	// Init database
-	db, cache, end := test.SetupPG(t)
+	api, _, _, end := newTestAPI(t)
 	defer end()
-
 	// Init user
-	u, _ := assets.InsertAdminUser(db)
+	u, _ := newAdminUser(t, api)
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, key, key, u)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -769,15 +766,15 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 		Type:      sdk.BuildPipeline,
 	}
 
-	assert.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, nil))
+	assert.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
 	app := sdk.Application{
 		Name: sdk.RandomString(10),
 	}
 
-	assert.NoError(t, application.Insert(db, cache, proj, &app, u))
+	assert.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, &app, u))
 
-	prj, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithWorkflows)
+	prj, err := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithWorkflows)
 	assert.NoError(t, err)
 
 	for i := 0; i < 300; i++ {
@@ -796,13 +793,13 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 			},
 		}
 
-		assert.NoError(t, workflow.Insert(db, cache, &wf, prj, u))
+		assert.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &wf, prj, u))
 	}
 
 	res := testing.Benchmark(func(b *testing.B) {
 		b.ResetTimer()
 		for n := 0; n < b.N; n++ {
-			if _, err := workflow.LoadAll(db, prj.Key); err != nil {
+			if _, err := workflow.LoadAll(api.mustDB(), prj.Key); err != nil {
 				b.Logf("Cannot load workflows : %v", err)
 				b.Fail()
 				return
@@ -812,7 +809,7 @@ func TestBenchmarkGetWorkflowsWithoutAPIAsAdmin(t *testing.T) {
 	})
 
 	t.Logf("N : %d", res.N)
-	t.Logf("ns/op : %d", res.NsPerOp())
+	t.Logf("µs/op : %d", res.NsPerOp()/1000)
 	assert.False(t, res.NsPerOp() >= 500000000, "Workflows load is too long: GOT %d and EXPECTED lower than 500000000 (500ms)", res.NsPerOp())
 }
 
@@ -897,6 +894,6 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	})
 
 	t.Logf("N : %d", res.N)
-	t.Logf("ns/op : %d", res.NsPerOp())
+	t.Logf("µs/op : %d", res.NsPerOp()/1000)
 	assert.False(t, res.NsPerOp() >= 500000000, "Workflows load is too long: GOT %d and EXPECTED lower than 500000000 (500ms)", res.NsPerOp())
 }

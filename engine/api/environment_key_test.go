@@ -20,7 +20,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -83,7 +83,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -139,7 +139,7 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 	defer end()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

@@ -16,7 +16,8 @@ import (
 func Test_getPlatformModelsHandler(t *testing.T) {
 	api, _, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+
+	u, pass := newAdminUser(t, api)
 
 	vars := map[string]string{}
 
@@ -32,7 +33,8 @@ func Test_getPlatformModelsHandler(t *testing.T) {
 func Test_postPlatformModelHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+
+	u, pass := newAdminUser(t, api)
 
 	vars := map[string]string{}
 	model := sdk.PlatformModel{
@@ -54,7 +56,8 @@ func Test_postPlatformModelHandler(t *testing.T) {
 func Test_putPlatformModelHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+
+	u, pass := newAdminUser(t, api)
 
 	model := sdk.PlatformModel{
 		Name: "my-model",
@@ -80,7 +83,8 @@ func Test_putPlatformModelHandler(t *testing.T) {
 func Test_deletePlatformModelHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertAdminUser(api.mustDB())
+
+	u, pass := newAdminUser(t, api)
 
 	model := sdk.PlatformModel{
 		Name: "my-model",

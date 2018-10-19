@@ -24,7 +24,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -185,7 +185,7 @@ func Test_postApplicationMetadataHandler_AsProvider(t *testing.T) {
 		Token: "my-token",
 	})
 
-	u, _ := assets.InsertAdminUser(api.mustDB())
+	u, _ := newAdminUser(t, api)
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)

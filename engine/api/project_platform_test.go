@@ -20,7 +20,7 @@ func TestAddUpdateAndDeleteProjectPlatform(t *testing.T) {
 	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
-	u, pass := assets.InsertAdminUser(api.mustDB())
+	u, pass := newAdminUser(t, api)
 
 	models, _ := platform.LoadModels(db)
 	if len(models) == 0 {
