@@ -1028,6 +1028,9 @@
   "workflow_wizard_select_repo_man_add" : "Or add a repository manager",
   "wizard_repo_files" : "Files found: ",
 
+  "workflow_template_add_title": "Create workflow template",
   "workflow_template_edit_title": "Edit workflow template",
+  "workflow_template_created": "Workflow template created",
+  "workflow_template_saved": "Workflow template saved",
   "workflow_templates": "Workflow templates"
 }

@@ -15,7 +15,9 @@ import { UserListComponent } from './user/list/user.list.component';
 import { WorkerModelAddComponent } from './worker-model/add/worker-model.add.component';
 import { WorkerModelEditComponent } from './worker-model/edit/worker-model.edit.component';
 import { WorkerModelListComponent } from './worker-model/list/worker-model.list.component';
+import { WorkflowTemplateAddComponent } from './workflow-template/add/workflow-template.add.component';
 import { WorkflowTemplateEditComponent } from './workflow-template/edit/workflow-template.edit.component';
+import { WorkflowTemplateFormComponent } from './workflow-template/form/workflow-template.form.component';
 import { WorkflowTemplateListComponent } from './workflow-template/list/workflow-template.list.component';
 
 @NgModule({
@@ -32,6 +34,8 @@ import { WorkflowTemplateListComponent } from './workflow-template/list/workflow
         WorkerModelAddComponent,
         WorkerModelEditComponent,
         WorkerModelListComponent,
+        WorkflowTemplateFormComponent,
+        WorkflowTemplateAddComponent,
         WorkflowTemplateEditComponent,
         WorkflowTemplateListComponent,
         QueueComponent

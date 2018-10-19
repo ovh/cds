@@ -1,3 +1,4 @@
 <h2>{{ 'workflow_templates' | translate }}</h2>
 
+<a class="ui right floated green button" [routerLink]="['add']">{{ 'btn_add' | translate }}</a>
 <app-data-table [withPagination]="25" [columns]="columns" [data]="workflowTemplates" [loading]="loading"></app-data-table>

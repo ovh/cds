@@ -51,7 +51,7 @@ type WorkflowTemplate struct {
 
 // ValidateStruct returns workflow template validity.
 func (w *WorkflowTemplate) ValidateStruct() error {
-	if w.Name == "" || len(w.Value) == 0 {
+	if w.Name == "" {
 		return WithStack(ErrInvalidData)
 	}
 

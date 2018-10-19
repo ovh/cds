@@ -30,6 +30,14 @@ export class WorkflowTemplateService {
     }
 
     /**
+     * Add a workflow template
+     * @returns {Observable<WorkflowTemplate>}
+     */
+    addWorkflowTemplate(wt: WorkflowTemplate): Observable<WorkflowTemplate> {
+        return this._http.post<WorkflowTemplate>('/template', wt);
+    }
+
+    /**
      * Update a workflow template by id
      * @returns {Observable<WorkflowTemplate>}
      */

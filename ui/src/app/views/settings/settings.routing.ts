@@ -14,6 +14,7 @@ import { UserListComponent } from './user/list/user.list.component';
 import { WorkerModelAddComponent } from './worker-model/add/worker-model.add.component';
 import { WorkerModelEditComponent } from './worker-model/edit/worker-model.edit.component';
 import { WorkerModelListComponent } from './worker-model/list/worker-model.list.component';
+import { WorkflowTemplateAddComponent } from './workflow-template/add/workflow-template.add.component';
 import { WorkflowTemplateEditComponent } from './workflow-template/edit/workflow-template.edit.component';
 import { WorkflowTemplateListComponent } from './workflow-template/list/workflow-template.list.component';
 
@@ -42,6 +43,7 @@ const routes: Routes = [
             { path: 'queue', component: QueueComponent, data: { title: 'Queue' } },
             { path: 'downloads', component: DownloadComponent, data: { title: 'Downloads' } },
             { path: 'workflow-template', component: WorkflowTemplateListComponent, data: { title: 'Workflow template' } },
+            { path: 'workflow-template/add', component: WorkflowTemplateAddComponent, data: { title: 'Add • Workflow template' } },
             {
                 path: 'workflow-template/:id',
                 component: WorkflowTemplateEditComponent,

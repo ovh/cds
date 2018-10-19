@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { finalize } from 'rxjs/internal/operators/finalize';
 import { Group } from '../../../../model/group.model';
@@ -9,11 +9,11 @@ import { WorkflowTemplateService } from '../../../../service/workflow-template/w
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
-    selector: 'app-workflow-template-edit',
-    templateUrl: './workflow-template.edit.html',
-    styleUrls: ['./workflow-template.edit.scss']
+    selector: 'app-workflow-template-add',
+    templateUrl: './workflow-template.add.html',
+    styleUrls: ['./workflow-template.add.scss']
 })
-export class WorkflowTemplateEditComponent {
+export class WorkflowTemplateAddComponent {
     workflowTemplate: WorkflowTemplate;
     groups: Array<Group>;
     loading: boolean;
@@ -21,14 +21,10 @@ export class WorkflowTemplateEditComponent {
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
         private _groupService: GroupService,
-        private _route: ActivatedRoute,
+        private _router: Router,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
-        this._route.params.subscribe(params => {
-            const id = params['id'];
-            this.getTemplate(id);
-        });
         this.getGroups();
     }
 
@@ -41,22 +37,14 @@ export class WorkflowTemplateEditComponent {
             });
     }
 
-    getTemplate(id: number) {
+    saveWorkflowTemplate(wt: WorkflowTemplate) {
         this.loading = true;
-        this._workflowTemplateService.getWorkflowTemplate(id)
+        this._workflowTemplateService.addWorkflowTemplate(wt)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(wt => {
-                this.workflowTemplate = wt;
-            });
-    }
-
-    saveWorkflowTemplate() {
-        this.loading = true;
-        this._workflowTemplateService.updateWorkflowTemplate(this.workflowTemplate)
-            .pipe(finalize(() => this.loading = false))
-            .subscribe(wt => {
-                this.workflowTemplate = wt;
-                this._toast.success('', this._translate.instant('workflow_template_saved'));
+            .subscribe(res => {
+                this.workflowTemplate = res;
+                this._toast.success('', this._translate.instant('workflow_template_created'));
+                this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.id]);
             });
     }
 }
