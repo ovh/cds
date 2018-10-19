@@ -86,6 +86,9 @@ func (api *API) getTemplatesHandler() service.Handler {
 		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), ts...); err != nil {
 			return err
 		}
+		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), ts...); err != nil {
+			return err
+		}
 
 		return service.WriteJSON(w, ts, http.StatusOK)
 	}
@@ -129,6 +132,9 @@ func (api *API) postTemplateHandler() service.Handler {
 		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &t); err != nil {
 			return err
 		}
+		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &t); err != nil {
+			return err
+		}
 
 		return service.WriteJSON(w, t, http.StatusOK)
 	}
@@ -144,6 +150,9 @@ func (api *API) getTemplateHandler() service.Handler {
 		t := getWorkflowTemplate(ctx)
 
 		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), t); err != nil {
+			return err
+		}
+		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), t); err != nil {
 			return err
 		}
 
@@ -168,9 +177,30 @@ func (api *API) putTemplateHandler() service.Handler {
 		}
 
 		old := getWorkflowTemplate(ctx)
+		u := getUser(ctx)
+
+		// if group id has changed check that user is admin for new group id
+		if old.GroupID != data.GroupID {
+			var isAdminForGroup bool
+			for _, g := range u.Groups {
+				if g.ID == data.GroupID {
+					for _, a := range g.Admins {
+						if a.ID == u.ID {
+							isAdminForGroup = true
+							break
+						}
+					}
+					break
+				}
+			}
+			if !isAdminForGroup {
+				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
+		}
 
 		// update fields from request data
 		new := sdk.WorkflowTemplate(*old)
+		new.GroupID = data.GroupID
 		new.Description = data.Description
 		new.Value = data.Value
 		new.Parameters = data.Parameters
@@ -181,10 +211,12 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		u := getUser(ctx)
 		event.PublishWorkflowTemplateUpdate(*old, new, u)
 
 		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &new); err != nil {
+			return err
+		}
+		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &new); err != nil {
 			return err
 		}
 

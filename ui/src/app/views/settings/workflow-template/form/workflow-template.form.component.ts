@@ -64,8 +64,7 @@ export class WorkflowTemplateFormComponent {
     ) {
         this.templateParameterTypes = ['boolean', 'string'];
 
-        this.initPipelineValue();
-        this.initParameterValue();
+        this.resetParameterValue();
 
         this.codeMirrorConfig = this.codeMirrorConfig = {
             matchBrackets: true,
@@ -77,11 +76,7 @@ export class WorkflowTemplateFormComponent {
         };
     }
 
-    initPipelineValue() {
-        this.pipelineValueAdd = '\n\n';
-    }
-
-    initParameterValue() {
+    resetParameterValue() {
         this.parameterValueAdd = {};
     }
 
@@ -95,7 +90,7 @@ export class WorkflowTemplateFormComponent {
 
     clickSave() {
         this._workflowTemplate.pipelines = Object.keys(this.pipelineValues).map(k => {
-            return { value: btoa(this.pipelineValues[k]) };
+            return { value: this.pipelineValues[k] ? btoa(this.pipelineValues[k]) : '' };
         });
         this._workflowTemplate.parameters = Object.keys(this.parameterValues).map(k => {
             return this.parameterValues[k];
@@ -121,7 +116,6 @@ export class WorkflowTemplateFormComponent {
         let k = this.pipelineKeys[this.pipelineKeys.length - 1] + 1;
         this.pipelineKeys.push(k)
         this.pipelineValues[k] = this.pipelineValueAdd;
-        this.initPipelineValue();
     }
 
     clickRemovePipeline(key: number) {
@@ -133,7 +127,7 @@ export class WorkflowTemplateFormComponent {
         let k = this.parameterValueAdd.key;
         this.parameterKeys.push(k)
         this.parameterValues[k] = this.parameterValueAdd;
-        this.initParameterValue();
+        this.resetParameterValue();
     }
 
     clickRemoveParameter(key: string) {

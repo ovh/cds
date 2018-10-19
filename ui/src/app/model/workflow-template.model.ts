@@ -1,3 +1,4 @@
+import { AuditWorkflowTemplate } from './audit.model';
 import { Group } from './group.model';
 
 export class WorkflowTemplate {
@@ -10,6 +11,8 @@ export class WorkflowTemplate {
     pipelines: Array<PipelineTemplate>;
     version: number;
     group: Group;
+    first_audit: AuditWorkflowTemplate;
+    last_audit: AuditWorkflowTemplate;
 }
 
 export class WorkflowTemplateParameter {

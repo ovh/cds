@@ -73,6 +73,17 @@ func InsertAudit(db gorp.SqlExecutor, awt *sdk.AuditWorkflowTemplate) error {
 	return sdk.WrapError(database.Insert(db, awt), "Unable to insert audit for workflow template %d", awt.WorkflowTemplateID)
 }
 
+// GetAudits returns all workflow template audits for given criteria.
+func GetAudits(db *gorp.DbMap, c CriteriaAudit) ([]*sdk.AuditWorkflowTemplate, error) {
+	awts := []*sdk.AuditWorkflowTemplate{}
+
+	if _, err := db.Select(&awts, fmt.Sprintf("SELECT * FROM workflow_template_audit WHERE %s ORDER BY created ASC", c.where()), c.args()); err != nil {
+		return nil, sdk.WrapError(err, "Cannot get workflow template audits")
+	}
+
+	return awts, nil
+}
+
 // GetInstances returns all workflow template instances for given criteria.
 func GetInstances(db *gorp.DbMap, c CriteriaInstance) ([]*sdk.WorkflowTemplateInstance, error) {
 	wtis := []*sdk.WorkflowTemplateInstance{}

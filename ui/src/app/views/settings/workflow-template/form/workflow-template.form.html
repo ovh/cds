@@ -1,103 +1,117 @@
 <div *ngIf="_workflowTemplate;then showWorkflowTemplate;else loadWorkflowTemplate"></div>
 <ng-template #showWorkflowTemplate>
-    <div>
-        <form class="ui form">
-            <div class="ui grid">
-                <div class="sixteen wide column">
-                    <div class="four fields">
-                        <div class="field">
-                            <label>{{'common_name' | translate}} *</label>
-                            <input class="ui input" type="text" name="name" [(ngModel)]="_workflowTemplate.name"
-                                [disabled]="mode === 'edit'">
+    <div class="ui grid">
+        <div [ngClass]="{sixteen: mode ==='add', thirteen: mode==='edit', wide: true, column: true}">
+            <form class="ui form">
+                <div class="ui grid">
+                    <div class="sixteen wide column">
+                        <div class="four fields">
+                            <div class="field">
+                                <label>{{'common_name' | translate}} *</label>
+                                <input class="ui input" type="text" name="name" [(ngModel)]="_workflowTemplate.name"
+                                    [disabled]="mode === 'edit'">
+                            </div>
+                            <div class="field">
+                                <label>{{'common_group' | translate}} *</label>
+                                <sm-select class="fluid search" name="group" *ngIf="groups" [disabled]="loading"
+                                    [(model)]="_workflowTemplate.group_id" [options]="{'fullTextSearch': true}">
+                                    <option *ngFor="let group of groups" [value]="group.id">{{group.name}}</option>
+                                </sm-select>
+                            </div>
                         </div>
                         <div class="field">
-                            <label>{{'common_group' | translate}} *</label>
-                            <sm-select class="fluid search" name="group" *ngIf="groups" [disabled]="loading" [(model)]="_workflowTemplate.group_id"
-                                [options]="{'fullTextSearch': true}">
-                                <option *ngFor="let group of groups" [value]="group.id">{{group.name}}</option>
-                            </sm-select>
+                            <label>{{'common_description' | translate}}</label>
+                            <textarea name="description" [(ngModel)]="_workflowTemplate.description" (ngModelChange)="descriptionChange()"
+                                [rows]="descriptionRows"></textarea>
                         </div>
-                    </div>
-                    <div class="field">
-                        <label>{{'common_description' | translate}}</label>
-                        <textarea name="description" [(ngModel)]="_workflowTemplate.description" (ngModelChange)="descriptionChange()"
-                            [rows]="descriptionRows"></textarea>
-                    </div>
-                    <div class="wide field">
-                        <label>{{ 'common_parameters' | translate }}</label>
-                    </div>
-                    <div class="sixteen wide fields" *ngFor="let k of parameterKeys; let index = index">
-                        <div class="eleven wide field">
-                            <input type="text" name="parameter-key-{{index}}" [placeholder]="'common_name' | translate"
-                                [(ngModel)]="parameterValues[k].key">
+                        <div class="wide field">
+                            <label>{{ 'common_parameters' | translate }}</label>
                         </div>
-                        <div class="three wide field">
-                            <sui-select class="selection" name="parameter-type-{{index}}" placeholder="{{'common_select' | translate}}"
-                                [options]="templateParameterTypes" isSearchable="true" [(ngModel)]="parameterValues[k].type"
-                                #selectType>
-                                <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
-                                </sui-select-option>
-                            </sui-select>
-                        </div>
-                        <div class="two wide field">
-                            <label>{{'common_required' | translate}}</label>
-                            <input type="checkbox" name="parameter-required-{{index}}" [(ngModel)]="parameterValues[k].required">
-                        </div>
-                        <button class="ui icon red button" (click)="clickRemoveParameter(k)">
-                            <i class="trash icon"></i>
-                        </button>
-                    </div>
-                    <div class="sixteen wide fields">
-                        <div class="eleven wide field">
-                            <input type="text" name="parameter-key-add" [placeholder]="'common_name' | translate"
-                                [(ngModel)]="parameterValueAdd.key">
-                        </div>
-                        <div class="three wide field">
-                            <sui-select class="selection" name="parameter-type-add" placeholder="{{'common_select' | translate}}"
-                                [options]="templateParameterTypes" isSearchable="true" [(ngModel)]="parameterValueAdd.type"
-                                #selectType>
-                                <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
-                                </sui-select-option>
-                            </sui-select>
-                        </div>
-                        <div class="two wide field">
-                            <label>{{'common_required' | translate}}</label>
-                            <input type="checkbox" name="parameter-required-add" [(ngModel)]="parameterValueAdd.required">
-                        </div>
-                        <button class="ui icon green button" (click)="clickAddParameter()">
-                            <i class="plus icon"></i>
-                        </button>
-                    </div>
-                    <div class="wide field">
-                        <label>{{ 'common_workflow' | translate }}</label>
-                        <codemirror name="workflow-value" [(ngModel)]="workflowValue" [config]="codeMirrorConfig"></codemirror>
-                    </div>
-                    <div class="wide field">
-                        <label>{{ 'common_pipelines' | translate }}</label>
-                        <div class="codeContainer field" *ngFor="let k of pipelineKeys">
-                            <codemirror class="code" name="pipeline-value-{{k}}" [(ngModel)]="pipelineValues[k]"
-                                [config]="codeMirrorConfig">
-                            </codemirror>
-                            <button class="codeButton ui icon red button" (click)="clickRemovePipeline(k)">
+                        <div class="sixteen wide fields" *ngFor="let k of parameterKeys; let index = index">
+                            <div class="eleven wide field">
+                                <input type="text" name="parameter-key-{{index}}" [placeholder]="'common_name' | translate"
+                                    [(ngModel)]="parameterValues[k].key">
+                            </div>
+                            <div class="three wide field">
+                                <sui-select class="selection" name="parameter-type-{{index}}" placeholder="{{'common_select' | translate}}"
+                                    [options]="templateParameterTypes" isSearchable="true" [(ngModel)]="parameterValues[k].type"
+                                    #selectType>
+                                    <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
+                                    </sui-select-option>
+                                </sui-select>
+                            </div>
+                            <div class="two wide field">
+                                <label>{{'common_required' | translate}}</label>
+                                <input type="checkbox" name="parameter-required-{{index}}" [(ngModel)]="parameterValues[k].required">
+                            </div>
+                            <button class="ui icon red button" (click)="clickRemoveParameter(k)">
                                 <i class="trash icon"></i>
                             </button>
                         </div>
-                    </div>
-                    <div class="wide field codeContainer">
-                        <codemirror class="code" name="pipeline-value-add" [(ngModel)]="pipelineValueAdd" [config]="codeMirrorConfig"></codemirror>
-                        <button class="codeButton ui icon green button" (click)="clickAddPipeline()">
-                            <i class="plus icon"></i>
-                        </button>
-                    </div>
-                    <div class="wide field">
-                        <app-delete-button *ngIf="mode === 'edit'" class="left floated" (event)="clickDelete()" [loading]="loading"></app-delete-button>
-                        <button class="ui green right floated button" [class.loading]="loading" (click)="clickSave()">
-                            <i class="save icon"></i>{{ 'btn_save' | translate }}
-                        </button>
+                        <div class="sixteen wide fields">
+                            <div class="eleven wide field">
+                                <input type="text" name="parameter-key-add" [placeholder]="'common_name' | translate"
+                                    [(ngModel)]="parameterValueAdd.key">
+                            </div>
+                            <div class="three wide field">
+                                <sui-select class="selection" name="parameter-type-add" placeholder="{{'common_select' | translate}}"
+                                    [options]="templateParameterTypes" isSearchable="true" [(ngModel)]="parameterValueAdd.type"
+                                    #selectType>
+                                    <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
+                                    </sui-select-option>
+                                </sui-select>
+                            </div>
+                            <div class="two wide field">
+                                <label>{{'common_required' | translate}}</label>
+                                <input type="checkbox" name="parameter-required-add" [(ngModel)]="parameterValueAdd.required">
+                            </div>
+                            <button class="ui icon green button" (click)="clickAddParameter()">
+                                <i class="plus icon"></i>
+                            </button>
+                        </div>
+                        <div class="wide field">
+                            <label>{{ 'common_workflow' | translate }}</label>
+                            <codemirror name="workflow-value" [(ngModel)]="workflowValue" [config]="codeMirrorConfig"></codemirror>
+                        </div>
+                        <div class="wide field">
+                            <label>{{ 'common_pipelines' | translate }}</label>
+                            <div class="codeContainer field" *ngFor="let k of pipelineKeys">
+                                <codemirror class="code" name="pipeline-value-{{k}}" [(ngModel)]="pipelineValues[k]"
+                                    [config]="codeMirrorConfig">
+                                </codemirror>
+                                <button class="codeButton ui icon red button" (click)="clickRemovePipeline(k)">
+                                    <i class="trash icon"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="wide field codeContainer">
+                            <codemirror class="code" name="pipeline-value-add" [(ngModel)]="pipelineValueAdd" [config]="codeMirrorConfig"></codemirror>
+                            <button class="codeButton ui icon green button" (click)="clickAddPipeline()">
+                                <i class="plus icon"></i>
+                            </button>
+                        </div>
+                        <div class="wide field">
+                            <app-delete-button *ngIf="mode === 'edit'" class="left floated" (event)="clickDelete()"
+                                [loading]="loading"></app-delete-button>
+                            <button class="ui green right floated button" [class.loading]="loading" (click)="clickSave()">
+                                <i class="save icon"></i>{{ 'btn_save' | translate }}
+                            </button>
+                        </div>
                     </div>
                 </div>
+            </form>
+        </div>
+        <div class="three wide column" *ngIf="mode === 'edit'">
+            <div class="field" *ngIf="_workflowTemplate.first_audit">
+                <h3>{{'common_created_by' | translate}}</h3>
+                {{_workflowTemplate.first_audit.triggered_by}}
             </div>
-        </form>
+            <br/>
+            <div class="field" *ngIf="_workflowTemplate.last_audit">
+                <h3>{{'common_last_modified' | translate}}</h3>
+                {{_workflowTemplate.last_audit.created}}
+            </div>
+        </div>
     </div>
 </ng-template>
 <ng-template #loadWorkflowTemplate>

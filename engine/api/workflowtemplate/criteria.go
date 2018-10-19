@@ -1,6 +1,8 @@
 package workflowtemplate
 
 import (
+	"strings"
+
 	"github.com/ovh/cds/engine/api/database"
 )
 
@@ -83,5 +85,47 @@ func (c CriteriaInstance) args() interface{} {
 	return map[string]interface{}{
 		"workflowTemplateIDs": database.IDsToQueryString(c.workflowTemplateIDs),
 		"workflowIDs":         database.IDsToQueryString(c.workflowIDs),
+	}
+}
+
+func NewCriteriaAudit() CriteriaAudit { return CriteriaAudit{} }
+
+type CriteriaAudit struct {
+	workflowTemplateIDs []int64
+	eventTypes          []string
+}
+
+func (c CriteriaAudit) EventTypes(ets ...string) CriteriaAudit {
+	c.eventTypes = ets
+	return c
+}
+
+func (c CriteriaAudit) WorkflowTemplateIDs(ids ...int64) CriteriaAudit {
+	c.workflowTemplateIDs = ids
+	return c
+}
+
+func (c CriteriaAudit) where() string {
+	var reqs []string
+
+	if c.eventTypes != nil {
+		reqs = append(reqs, "event_type = ANY(string_to_array(:eventTypes, ',')::text[])")
+	}
+
+	if c.workflowTemplateIDs != nil {
+		reqs = append(reqs, "workflow_template_id = ANY(string_to_array(:workflowTemplateIDs, ',')::int[])")
+	}
+
+	if len(reqs) == 0 {
+		return "false"
+	}
+
+	return database.And(reqs...)
+}
+
+func (c CriteriaAudit) args() interface{} {
+	return map[string]interface{}{
+		"eventTypes":          strings.Join(c.eventTypes, ","),
+		"workflowTemplateIDs": database.IDsToQueryString(c.workflowTemplateIDs),
 	}
 }

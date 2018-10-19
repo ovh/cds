@@ -295,7 +295,7 @@
 
         <div class="six wide column" *ngIf="workerModel.id">
           <div class="field" *ngIf="workerModel.created_by?.username !== ''">
-            <h3>{{'worker_model_created_by' | translate}}</h3>
+            <h3>{{'common_created_by' | translate}}</h3>
             <div>
               <i class="fa fa-user"></i> {{workerModel.created_by?.fullname}} ({{workerModel.created_by?.username}})
               <span *ngIf="workerModel.created_by?.admin"><b>Admin</b></span>
@@ -305,7 +305,7 @@
             </div>
           </div>
           <div class="field" *ngIf="workerModel.user_last_modified !== ''">
-            <h3>{{'worker_model_last_modified' | translate}}</h3>
+            <h3>{{'common_last_modified' | translate}}</h3>
               {{workerModel.user_last_modified}}
           </div>
           <div class="field" *ngIf="workerModel.last_registration !== ''">
