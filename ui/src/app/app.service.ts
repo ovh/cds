@@ -9,7 +9,7 @@ import {Event, EventType} from './model/event.model';
 import {PipelineStatus} from './model/pipeline.model';
 import {LoadOpts} from './model/project.model';
 import {TimelineFilter} from './model/timeline.model';
-import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
 import {ApplicationStore} from './service/application/application.store';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {BroadcastStore} from './service/broadcast/broadcast.store';
