@@ -217,7 +217,7 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return sdk.WrapError(err, "InsertVariable> Cannot encrypt secret")
+		return sdk.WrapError(err, "Cannot encrypt secret")
 	}
 
 	query := `INSERT INTO application_variable(application_id, var_name, var_value, cipher_value, var_type)
@@ -226,7 +226,7 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 		return sdk.ErrVariableExists
 	}
 	if err != nil {
-		return sdk.WrapError(err, "InsertVariable> Cannot insert variable %s", variable.Name)
+		return sdk.WrapError(err, "Cannot insert variable %s", variable.Name)
 	}
 
 	ava := &sdk.ApplicationVariableAudit{
@@ -239,7 +239,7 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	}
 
 	if err := inserAudit(db, ava); err != nil {
-		return sdk.WrapError(err, "InsertVariable> Cannot insert audit for variable %d", variable.ID)
+		return sdk.WrapError(err, "Cannot insert audit for variable %d", variable.ID)
 	}
 	event.PublishAddVariableApplication(app.ProjectKey, *app, variable, u)
 
@@ -259,7 +259,7 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	}
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret %s", variable.Name)
+		return sdk.WrapError(err, "Cannot encrypt secret %s", variable.Name)
 	}
 
 	query := `UPDATE application_variable SET var_name= $1, var_value=$2, cipher_value=$3, var_type = $5 WHERE id = $4`
@@ -286,7 +286,7 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	}
 
 	if err := inserAudit(db, ava); err != nil {
-		return sdk.WrapError(err, "UpdateVariable> Cannot insert audit for variable %s", variable.Name)
+		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
 	event.PublishUpdateVariableApplication(app.ProjectKey, *app, *variable, *variableBefore, u)
 
@@ -299,7 +299,7 @@ func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 		  WHERE application_variable.application_id = $1 AND application_variable.var_name = $2`
 	result, err := db.Exec(query, app.ID, variable.Name)
 	if err != nil {
-		return sdk.WrapError(err, "DeleteVariable> Cannot delete variable %s", variable.Name)
+		return sdk.WrapError(err, "Cannot delete variable %s", variable.Name)
 	}
 
 	rowAffected, err := result.RowsAffected()
@@ -320,7 +320,7 @@ func DeleteVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	}
 
 	if err := inserAudit(db, ava); err != nil {
-		return sdk.WrapError(err, "DeleteVariable> Cannot insert audit for variable %s", variable.Name)
+		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
 	event.PublishDeleteVariableApplication(app.ProjectKey, *app, *variable, u)
 
@@ -411,7 +411,7 @@ func CountInVarValue(db gorp.SqlExecutor, key string, value string) ([]string, e
 	`
 	var appsName []string
 	if _, err := db.Select(&appsName, query, key, fmt.Sprintf("%%%s%%", value)); err != nil {
-		return nil, sdk.WrapError(err, "application.CountInVarValue> Unable to count usage")
+		return nil, sdk.WrapError(err, "Unable to count usage")
 	}
 	return appsName, nil
 }

@@ -29,7 +29,7 @@ func (api *API) getApplicationExportHandler() service.Handler {
 		// Export
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationExportHandler> Format invalid")
+			return sdk.WrapError(err, "Format invalid")
 		}
 		if _, err := application.Export(api.mustDB(), api.Cache, key, appName, f, withPermissions, getUser(ctx), project.EncryptWithBuiltinKey, w); err != nil {
 			return sdk.WrapError(err, "getApplicationExportHandler")

@@ -93,7 +93,7 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 
 	hookrun := parentWR.GetOutgoingHookRun(wr.RootRun().HookEvent.ParentWorkflow.HookRunID)
 	if hookrun == nil {
-		return sdk.WrapError(errors.New("unable to find hookrun"), "UpdateParentWorkflowRun")
+		return errors.New("unable to find hookrun")
 	}
 
 	if hookrun.Callback == nil {

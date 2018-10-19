@@ -363,8 +363,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         return componentRef;
     }
 
-    private getWorkflowMaxNodeByLevel(node: WNode, levelMap: Map<number, number>, level: number,
-                                      levelNode: Map<string, number>): void {
+    private getWorkflowMaxNodeByLevel(node: WNode, levelMap: Map<number, number>, level: number, levelNode: Map<string, number>): void {
         levelNode.set(node.ref, level - 1);
         if (node.triggers) {
             node.triggers.forEach(t => {

@@ -52,7 +52,7 @@ func Workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return sdk.WrapError(err, "purge.Workflows> Unable to load workflows")
+		return sdk.WrapError(err, "Unable to load workflows")
 	}
 
 	var wrkflws = make([]sdk.Workflow, len(res))
@@ -72,7 +72,7 @@ func Workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 
 		w, err := workflow.LoadByID(db, store, &proj, r.ID, nil, workflow.LoadOptions{})
 		if err != nil {
-			return sdk.WrapError(err, "purge.Workflows> unable to load workflow %d", r.ID)
+			return sdk.WrapError(err, "unable to load workflow %d", r.ID)
 		}
 		wrkflws[i] = *w
 	}
@@ -85,7 +85,7 @@ func Workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 
 		tx, err := db.Begin()
 		if err != nil {
-			return sdk.WrapError(err, "purge.Workflows> unable to start tx")
+			return sdk.WrapError(err, "unable to start tx")
 		}
 
 		if err := workflow.Delete(ctx, tx, store, &proj, &w); err != nil {

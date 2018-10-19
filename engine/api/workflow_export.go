@@ -34,15 +34,15 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowExportHandler> Format invalid")
+			return sdk.WrapError(err, "Format invalid")
 		}
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowExportHandler> unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 		if _, err := workflow.Export(ctx, api.mustDB(), api.Cache, proj, name, f, getUser(ctx), w, opts...); err != nil {
-			return sdk.WrapError(err, "getWorkflowExportHandler>")
+			return sdk.WithStack(err)
 		}
 
 		w.Header().Add("Content-Type", exportentities.GetContentType(f))
@@ -65,7 +65,7 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowPullHandler> unable to load projet")
+			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		buf := new(bytes.Buffer)

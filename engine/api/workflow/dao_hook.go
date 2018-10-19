@@ -18,10 +18,10 @@ import (
 func UpdateHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
 	dbhook := NodeHook(*h)
 	if _, err := db.Update(&dbhook); err != nil {
-		return sdk.WrapError(err, "updateHook> Cannot update hook")
+		return sdk.WrapError(err, "Cannot update hook")
 	}
 	if err := dbhook.PostInsert(db); err != nil {
-		return sdk.WrapError(err, "updateHook> Cannot post update hook")
+		return sdk.WrapError(err, "Cannot post update hook")
 	}
 	return nil
 }
@@ -30,7 +30,7 @@ func UpdateHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
 func DeleteHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
 	dbhook := NodeHook(*h)
 	if _, err := db.Delete(&dbhook); err != nil {
-		return sdk.WrapError(err, "updateHook> Cannot update hook")
+		return sdk.WrapError(err, "Cannot update hook")
 	}
 	return nil
 }
@@ -85,7 +85,7 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 
 	dbhook := NodeHook(*hook)
 	if err := db.Insert(&dbhook); err != nil {
-		return sdk.WrapError(err, "insertHook> Unable to insert hook")
+		return sdk.WrapError(err, "Unable to insert hook")
 	}
 	*hook = sdk.WorkflowNodeHook(dbhook)
 	return nil
@@ -195,9 +195,9 @@ func loadOutgoingHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 		var triggerIDs []int64
 		if _, err := db.Select(&triggerIDs, "select id from workflow_node_outgoing_hook_trigger where  workflow_node_outgoing_hook_id = $1", hooks[i].ID); err != nil {
 			if err == sql.ErrNoRows {
-				return nil, sdk.WrapError(err, "nodeOutgoingHook.PostGet> Unable to load hook triggers id for hook %d", hooks[i].ID)
+				return nil, sdk.WrapError(err, "Unable to load hook triggers id for hook %d", hooks[i].ID)
 			}
-			return nil, sdk.WrapError(err, "nodeOutgoingHook.PostGet> Unable to load hook triggers id for hook %d", hooks[i].ID)
+			return nil, sdk.WrapError(err, "Unable to load hook triggers id for hook %d", hooks[i].ID)
 		}
 
 		//Load triggers
@@ -208,7 +208,7 @@ func loadOutgoingHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 					log.Info("nodeOutgoingHook.PostGet> trigger %d not found", t)
 					continue
 				}
-				return nil, sdk.WrapError(err, "nodeOutgoingHook.PostGet> Unable to load hook trigger %d", t)
+				return nil, sdk.WrapError(err, "Unable to load hook trigger %d", t)
 			}
 
 			hooks[i].Triggers = append(hooks[i].Triggers, jt)
@@ -230,11 +230,11 @@ func LoadHookByUUID(db gorp.SqlExecutor, uuid string) (*sdk.WorkflowNodeHook, er
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "LoadHookByUUID>")
+		return nil, sdk.WithStack(err)
 	}
 
 	if err := res.PostGet(db); err != nil {
-		return nil, sdk.WrapError(err, "LoadHookByUUID> cannot load postget")
+		return nil, sdk.WrapError(err, "cannot load postget")
 	}
 	wNodeHook := sdk.WorkflowNodeHook(res)
 
@@ -253,13 +253,13 @@ func LoadHooksByNodeID(db gorp.SqlExecutor, nodeID int64) ([]sdk.WorkflowNodeHoo
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "LoadHookByNodeID>")
+		return nil, sdk.WithStack(err)
 	}
 
 	nodeHooks := make([]sdk.WorkflowNodeHook, len(res))
 	for i, nh := range res {
 		if err := nh.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadHookByNodeID> cannot load postget")
+			return nil, sdk.WrapError(err, "cannot load postget")
 		}
 		nodeHooks[i] = sdk.WorkflowNodeHook(nh)
 	}
@@ -301,7 +301,7 @@ func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 
 	dbhook := nodeOutgoingHook(*hook)
 	if err := db.Insert(&dbhook); err != nil {
-		return sdk.WrapError(err, "insertOutgoingHook> Unable to insert hook")
+		return sdk.WrapError(err, "Unable to insert hook")
 	}
 	*hook = sdk.WorkflowNodeOutgoingHook(dbhook)
 
@@ -368,25 +368,16 @@ func insertOutgoingTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workfl
 	//Insert trigger
 	dbt := outgoingHookTrigger(*trigger)
 	if err := db.Insert(&dbt); err != nil {
-		return sdk.WrapError(err, "insertOutgoingTrigger> Unable to insert trigger")
+		return sdk.WrapError(err, "Unable to insert trigger")
 	}
 	trigger.ID = dbt.ID
 	trigger.WorkflowDestNode.TriggerHookSrcID = trigger.ID
 
 	// Update node trigger ID
 	if err := updateWorkflowTriggerHookSrc(db, &trigger.WorkflowDestNode); err != nil { //FIX
-		return sdk.WrapError(err, "insertOutgoingTrigger> Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
+		return sdk.WrapError(err, "Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 
-	return nil
-}
-
-// DeleteOutgoingHook deletes cascade a hook
-func DeleteOutgoingHook(db gorp.SqlExecutor, h sdk.WorkflowNodeOutgoingHook) error {
-	dbh := nodeOutgoingHook(h)
-	if _, err := db.Delete(&dbh); err != nil {
-		return sdk.WrapError(err, "DeleteOutgoingHook> unable to delete outgoing hook %d", h.ID)
-	}
 	return nil
 }
 
@@ -399,7 +390,7 @@ func loadHookTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		if err == sql.ErrNoRows {
 			return t, nil
 		}
-		return t, sdk.WrapError(err, "loadHookTrigger> Unable to load trigger %d", id)
+		return t, sdk.WrapError(err, "Unable to load trigger %d", id)
 	}
 
 	t = sdk.WorkflowNodeOutgoingHookTrigger(dbtrigger)
@@ -407,7 +398,7 @@ func loadHookTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 	if t.WorkflowDestNodeID != 0 {
 		dest, err := loadNode(ctx, db, store, proj, w, t.WorkflowDestNodeID, u, opts)
 		if err != nil {
-			return t, sdk.WrapError(err, "loadHookTrigger> Unable to load destination node %d", t.WorkflowDestNodeID)
+			return t, sdk.WrapError(err, "Unable to load destination node %d", t.WorkflowDestNodeID)
 		}
 		t.WorkflowDestNode = *dest
 	}

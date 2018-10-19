@@ -1,0 +1,28 @@
+name: cds
+version: 0.1.0
+appVersion: 0.35.1
+description: Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform.
+keywords:
+- cds
+- devops
+- scale
+- stateless
+- high-availability
+home: https://github.com/ovh/cds
+icon: https://raw.githubusercontent.com/ovh/cds/master/logo-background.png
+sources:
+- https://github.com/ovh/cds
+maintainers:
+- name: Benjamin Coenen
+  email: benjamin.coenen@corp.ovh.com
+- name: François Samin
+  email: francois.samin@corp.ovh.com
+- name: Joel Seguillon
+  email: joel.sxxxxxon@gmail.com
+- name: Richard Le-terrier
+  email: richard.le-terrier@corp.ovh.com
+- name: Steven Guiheux
+  email: steven.guiheux@corp.ovh.com
+- name: Yvonnick Esnault
+  email: yvonnick.esnault@corp.ovh.com
+engine: gotpl

@@ -37,7 +37,7 @@ An application is composed of one or multiple pipelines, that can be triggered:
 
 ### Packaging
 
-  * Declaration of worker models (specific hosts, docker image, OpenStack recipe)
+  * Declaration of worker models (specific hosts, Docker image, OpenStack recipe)
   * Conditional build path depending on build parameters (ie: git branch)
 
 ### Deployment

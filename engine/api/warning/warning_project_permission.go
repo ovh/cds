@@ -32,20 +32,20 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 	case fmt.Sprintf("%T", sdk.EventProjectPermissionAdd{}):
 		payload, err := e.ToEventProjectPermissionAdd()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to get payload from EventProjectPermissionAdd")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectPermissionAdd")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
+			return sdk.WrapError(err, "Unable to remove warning from EventProjectPermissionAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}):
 		payload, err := e.ToEventProjectPermissionDelete()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to get payload from ToEventProjectPermissionDelete")
+			return sdk.WrapError(err, "Unable to get payload from ToEventProjectPermissionDelete")
 		}
 		// Check in ENV
 		envs, err := group.EnvironmentsByGroupID(db, e.ProjectKey, payload.Permission.Group.ID)
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to list environments")
+			return sdk.WrapError(err, "Unable to list environments")
 		}
 		for _, env := range envs {
 			w := sdk.Warning{
@@ -61,16 +61,16 @@ func (warn missingProjectPermissionEnvWarning) compute(db gorp.SqlExecutor, e sd
 				},
 			}
 			if err := Insert(db, w); err != nil {
-				return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute> Unable to Insert environment warning %s", warn.name())
+				return sdk.WrapError(err, "Unable to Insert environment warning %s", warn.name())
 			}
 		}
 	case fmt.Sprintf("%T", sdk.EventEnvironmentPermissionDelete{}):
 		payload, err := e.ToEventEnvironmentPermissionDelete()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute.EventEnvironmentPermissionDelete> Unable to get payload")
+			return sdk.WrapError(err, "Unable to get payload")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionEnvWarning.compute.EventEnvironmentPermissionDelete> Unable to remove warning")
+			return sdk.WrapError(err, "Unable to remove warning")
 		}
 	}
 
@@ -98,19 +98,19 @@ func (warn missingProjectPermissionWorkflowWarning) compute(db gorp.SqlExecutor,
 	case fmt.Sprintf("%T", sdk.EventProjectPermissionAdd{}):
 		payload, err := e.ToEventProjectPermissionAdd()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to get payload from EventProjectPermissionAdd")
+			return sdk.WrapError(err, "Unable to get payload from EventProjectPermissionAdd")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to remove warning from EventProjectPermissionAdd")
+			return sdk.WrapError(err, "Unable to remove warning from EventProjectPermissionAdd")
 		}
 	case fmt.Sprintf("%T", sdk.EventProjectPermissionDelete{}):
 		payload, err := e.ToEventProjectPermissionDelete()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to get payload from ToEventProjectPermissionDelete")
+			return sdk.WrapError(err, "Unable to get payload from ToEventProjectPermissionDelete")
 		}
 		workflows, err := workflow.ByGroupID(db, e.ProjectKey, payload.Permission.Group.ID)
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to list worklflows")
+			return sdk.WrapError(err, "Unable to list worklflows")
 		}
 		for _, w := range workflows {
 			w := sdk.Warning{
@@ -126,16 +126,16 @@ func (warn missingProjectPermissionWorkflowWarning) compute(db gorp.SqlExecutor,
 				},
 			}
 			if err := Insert(db, w); err != nil {
-				return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute> Unable to Insert warning %s", warn.name())
+				return sdk.WrapError(err, "Unable to Insert warning %s", warn.name())
 			}
 		}
 	case fmt.Sprintf("%T", sdk.EventWorkflowPermissionDelete{}):
 		payload, err := e.ToEventWorkflowPermissionDelete()
 		if err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute.EventWorkflowPermissionDelete> Unable to get payload")
+			return sdk.WrapError(err, "Unable to get payload")
 		}
 		if err := removeProjectWarning(db, warn.name(), payload.Permission.Group.Name, e.ProjectKey); err != nil {
-			return sdk.WrapError(err, "missingProjectPermissionWorkflowWarning.compute.EventWorkflowPermissionDelete> Unable to remove warning")
+			return sdk.WrapError(err, "Unable to remove warning")
 		}
 	}
 	return nil

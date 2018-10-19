@@ -138,7 +138,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 	runNumber, err := strconv.ParseInt(run, 10, 64)
 	if err != nil {
-		return sdk.WrapError(err, "hook> startOutgoingWorkflowTask")
+		return sdk.WrapError(err, "startOutgoingWorkflowTask")
 	}
 
 	callbackURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/callback", pkey, workflow, run, hookRunID)

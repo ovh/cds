@@ -6,7 +6,7 @@ weight = 6
 
 ### Manual Update
 
-If you run manually a Hatchery, you problably want to update it when CDS Engine is updated with a new release.
+If you run manually a Hatchery, you probably want to update it when CDS Engine is updated with a new release.
 
 Update your hatchery from CDS API:
 
@@ -14,7 +14,7 @@ Update your hatchery from CDS API:
 ./engine update --api https://your.cds.instance
 ```
 
-Update your hatchery from latest Release from Github:
+Update your hatchery from latest Release from GitHub:
 
 ```bash
 ./engine update --from-github

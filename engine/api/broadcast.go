@@ -16,11 +16,11 @@ func (api *API) addBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var bc sdk.Broadcast
 		if err := service.UnmarshalBody(r, &bc); err != nil {
-			return sdk.WrapError(err, "addBroadcast> cannot unmarshal body")
+			return sdk.WrapError(err, "Cannot unmarshal body")
 		}
 
 		if bc.Title == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "updateBroadcast> wrong title")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Wrong title")
 		}
 		now := time.Now()
 		bc.Created = now
@@ -29,13 +29,13 @@ func (api *API) addBroadcastHandler() service.Handler {
 		if bc.ProjectKey != "" {
 			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, getUser(ctx))
 			if errProj != nil {
-				return sdk.WrapError(sdk.ErrNoProject, "addBroadcast> Cannot load %s", bc.ProjectKey)
+				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
 			bc.ProjectID = &proj.ID
 		}
 
 		if err := broadcast.Insert(api.mustDB(), &bc); err != nil {
-			return sdk.WrapError(err, "addBroadcast> cannot add broadcast")
+			return sdk.WrapError(err, "Cannot add broadcast")
 		}
 
 		event.PublishBroadcastAdd(bc, getUser(ctx))
@@ -47,47 +47,47 @@ func (api *API) updateBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		broadcastID, errr := requestVarInt(r, "id")
 		if errr != nil {
-			return sdk.WrapError(errr, "updateBroadcast> Invalid id")
+			return sdk.WrapError(errr, "Invalid id")
 		}
 
 		u := getUser(ctx)
 		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, u)
 		if err != nil {
-			return sdk.WrapError(err, "updateBroadcast> cannot load broadcast by id")
+			return sdk.WrapError(err, "Cannot load broadcast by id")
 		}
 
 		// Unmarshal body
 		var bc sdk.Broadcast
 		if err := service.UnmarshalBody(r, &bc); err != nil {
-			return sdk.WrapError(err, "updateBroadcast> cannot unmarshal body")
+			return sdk.WrapError(err, "Cannot unmarshal body")
 		}
 
 		if bc.ProjectKey != "" {
 			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, u)
 			if errProj != nil {
-				return sdk.WrapError(sdk.ErrNoProject, "updateBroadcast> Cannot load %s", bc.ProjectKey)
+				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
 			bc.ProjectID = &proj.ID
 		}
 
 		tx, errtx := api.mustDB().Begin()
 		if errtx != nil {
-			return sdk.WrapError(errtx, "updateBroadcast> unable to start transaction")
+			return sdk.WrapError(errtx, "Unable to start transaction")
 		}
 
 		defer tx.Rollback()
 
 		if bc.ID <= 0 || broadcastID != bc.ID {
-			return sdk.WrapError(sdk.ErrWrongRequest, "requestVarInt> %d is not valid. id in path:%d", bc.ID, broadcastID)
+			return sdk.WrapError(sdk.ErrWrongRequest, "%d is not valid. id in path:%d", bc.ID, broadcastID)
 		}
 
 		// update broadcast in db
 		if err := broadcast.Update(tx, &bc); err != nil {
-			return sdk.WrapError(err, "updateBroadcast> cannot update broadcast")
+			return sdk.WrapError(err, "Cannot update broadcast")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateBroadcast> unable to commit transaction")
+			return sdk.WrapError(err, "Unable to commit transaction")
 		}
 
 		event.PublishBroadcastUpdate(*oldBC, bc, getUser(ctx))
@@ -99,18 +99,18 @@ func (api *API) postMarkAsReadBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		broadcastID, errr := requestVarInt(r, "id")
 		if errr != nil {
-			return sdk.WrapError(errr, "updateBroadcast> Invalid id")
+			return sdk.WrapError(errr, "Invalid id")
 		}
 
 		u := getUser(ctx)
 		br, errL := broadcast.LoadByID(api.mustDB(), broadcastID, u)
 		if errL != nil {
-			return sdk.WrapError(errL, "postMarkAsReadBroadcastHandler> cannot load broadcast by id")
+			return sdk.WrapError(errL, "Cannot load broadcast by id")
 		}
 
 		if !br.Read {
 			if err := broadcast.MarkAsRead(api.mustDB(), broadcastID, u.ID); err != nil {
-				return sdk.WrapError(err, "postMarkAsReadBroadcastHandler> cannot mark as read broadcast id %d and user id %d", broadcastID, u.ID)
+				return sdk.WrapError(err, "Cannot mark as read broadcast id %d and user id %d", broadcastID, u.ID)
 			}
 		}
 
@@ -122,20 +122,20 @@ func (api *API) deleteBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		broadcastID, errr := requestVarInt(r, "id")
 		if errr != nil {
-			return sdk.WrapError(errr, "deleteBroadcast> Invalid id")
+			return sdk.WrapError(errr, "Invalid id")
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "deleteBroadcast> Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 
 		if err := broadcast.Delete(tx, broadcastID); err != nil {
-			return sdk.WrapError(err, "deleteBroadcast: cannot delete broadcast")
+			return sdk.WrapError(err, "Cannot delete broadcast")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteBroadcast> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishBroadcastDelete(broadcastID, getUser(ctx))
@@ -147,12 +147,12 @@ func (api *API) getBroadcastHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "id")
 		if errr != nil {
-			return sdk.WrapError(errr, "getBroadcast> Invalid id")
+			return sdk.WrapError(errr, "Invalid id")
 		}
 
 		broadcast, err := broadcast.LoadByID(api.mustDB(), id, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getBroadcast> cannot load broadcasts")
+			return sdk.WrapError(err, "Cannot load broadcasts")
 		}
 
 		return service.WriteJSON(w, broadcast, http.StatusOK)
@@ -163,7 +163,7 @@ func (api *API) getBroadcastsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		broadcasts, err := broadcast.LoadAll(api.mustDB(), getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getBroadcasts> cannot load broadcasts")
+			return sdk.WrapError(err, "Cannot load broadcasts")
 		}
 
 		return service.WriteJSON(w, broadcasts, http.StatusOK)

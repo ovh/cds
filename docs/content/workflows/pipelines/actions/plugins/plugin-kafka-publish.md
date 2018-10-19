@@ -28,6 +28,6 @@ This action is a CDS Plugin packaged as a single binary file you can download an
 
 ## More
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish/README.md)
+More documentation on [GitHub](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish/README.md)
 
 

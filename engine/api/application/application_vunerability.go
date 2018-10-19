@@ -27,7 +27,7 @@ func LoadVulnerabilitiesSummary(db gorp.SqlExecutor, appID int64) (map[string]in
 	}
 
 	if err := gorpmapping.JSONNullString(result, &summary); err != nil {
-		return nil, sdk.WrapError(err, "LoadVulnerabilitiesSummary> Unable to unmarshal summary")
+		return nil, sdk.WrapError(err, "Unable to unmarshal summary")
 	}
 	return summary, nil
 }
@@ -35,14 +35,14 @@ func LoadVulnerabilitiesSummary(db gorp.SqlExecutor, appID int64) (map[string]in
 // InsertVulnerabilities Insert vulnerabilities
 func InsertVulnerabilities(db gorp.SqlExecutor, vs []sdk.Vulnerability, appID int64, t string) error {
 	if _, err := db.Exec("DELETE FROM application_vulnerability WHERE application_id = $1 AND type = $2", appID, t); err != nil {
-		return sdk.WrapError(err, "InsertVulnerability> Unable to remove old vulnerabilities")
+		return sdk.WrapError(err, "Unable to remove old vulnerabilities")
 	}
 	for _, v := range vs {
 		v.ApplicationID = appID
 		v.Type = t
 		dbVuln := dbApplicationVulnerability(v)
 		if err := db.Insert(&dbVuln); err != nil {
-			return sdk.WrapError(err, "InsertVulnerability> Unable to insert vulnerabilities")
+			return sdk.WrapError(err, "Unable to insert vulnerabilities")
 		}
 	}
 	return nil
@@ -56,7 +56,7 @@ func LoadVulnerabilities(db gorp.SqlExecutor, appID int64) ([]sdk.Vulnerability,
             WHERE application_id = $1`
 	if _, err := db.Select(&results, query, appID); err != nil {
 		if err != sql.ErrNoRows {
-			return nil, sdk.WrapError(err, "LoadVulnerabilities> unable to load latest vulnerabilities for application %d", appID)
+			return nil, sdk.WrapError(err, "unable to load latest vulnerabilities for application %d", appID)
 		}
 		return nil, sdk.ErrNotFound
 	}
@@ -75,7 +75,7 @@ func LoadVulnerability(db gorp.SqlExecutor, appID int64, vulnID int64) (sdk.Vuln
             WHERE application_id = $1 AND id = $2`
 	if err := db.SelectOne(&dbVuln, query, appID, vulnID); err != nil {
 		if err != sql.ErrNoRows {
-			return sdk.Vulnerability{}, sdk.WrapError(err, "LoadVulnerability> unable to load vulnerability %d for application %d", vulnID, appID)
+			return sdk.Vulnerability{}, sdk.WrapError(err, "unable to load vulnerability %d for application %d", vulnID, appID)
 		}
 		return sdk.Vulnerability{}, sdk.ErrNotFound
 	}
@@ -86,7 +86,7 @@ func LoadVulnerability(db gorp.SqlExecutor, appID int64, vulnID int64) (sdk.Vuln
 func UpdateVulnerability(db gorp.SqlExecutor, v sdk.Vulnerability) error {
 	dbVuln := dbApplicationVulnerability(v)
 	if _, err := db.Update(&dbVuln); err != nil {
-		return sdk.WrapError(err, "UpdateVulnerability> Unable to update vulnerability")
+		return sdk.WrapError(err, "Unable to update vulnerability")
 	}
 	return nil
 }

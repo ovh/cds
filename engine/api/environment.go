@@ -49,7 +49,7 @@ func (api *API) getEnvironmentsHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "getEnvironmentsHandler> Cannot commit transaction from db")
+			return sdk.WrapError(err, "Cannot commit transaction from db")
 		}
 
 		return service.WriteJSON(w, environments, http.StatusOK)
@@ -102,7 +102,7 @@ func (api *API) getEnvironmentUsageHandler() service.Handler {
 		environmentName := vars["permEnvironmentName"]
 		usage, err := loadEnvironmentUsage(api.mustDB(), projectKey, environmentName)
 		if err != nil {
-			return sdk.WrapError(err, "getEnvironmentHandler> Cannot load usage for environment %s in project %s", environmentName, projectKey)
+			return sdk.WrapError(err, "Cannot load usage for environment %s in project %s", environmentName, projectKey)
 		}
 
 		return service.WriteJSON(w, usage, http.StatusOK)
@@ -158,19 +158,19 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := environment.InsertEnvironment(tx, &env); err != nil {
-			return sdk.WrapError(err, "addEnvironmentHandler> Cannot insert environment")
+			return sdk.WrapError(err, "Cannot insert environment")
 		}
 		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			return sdk.WrapError(err, "addEnvironmentHandler> Cannot load group from project")
+			return sdk.WrapError(err, "Cannot load group from project")
 		}
 		for _, g := range proj.ProjectGroups {
 			if err := group.InsertGroupInEnvironment(tx, env.ID, g.Group.ID, g.Permission); err != nil {
-				return sdk.WrapError(err, "addEnvironmentHandler> Cannot add group on environment")
+				return sdk.WrapError(err, "Cannot add group on environment")
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addEnvironmentHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		var errEnvs error
@@ -216,7 +216,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteEnvironmentHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishEnvironmentDelete(p.Key, *env, getUser(ctx))
@@ -262,11 +262,11 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := environment.UpdateEnvironment(tx, env); err != nil {
-			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update environment %s", environmentName)
+			return sdk.WrapError(err, "Cannot update environment %s", environmentName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, getUser(ctx))
@@ -322,27 +322,27 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to start a transaction")
+			return sdk.WrapError(err, "Unable to start a transaction")
 		}
 
 		defer tx.Rollback()
 
 		//Insert environment
 		if err := environment.InsertEnvironment(tx, &envPost); err != nil {
-			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert environment %s", envPost.Name)
+			return sdk.WrapError(err, "Unable to insert environment %s", envPost.Name)
 		}
 
 		//Insert variables
 		for _, v := range envPost.Variable {
 			if environment.InsertVariable(tx, envPost.ID, &v, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert variable")
+				return sdk.WrapError(err, "Unable to insert variable")
 			}
 		}
 
 		//Insert environment
 		for _, e := range envPost.EnvironmentGroups {
 			if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
-				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert group in environment")
+				return sdk.WrapError(err, "Unable to insert group in environment")
 			}
 		}
 

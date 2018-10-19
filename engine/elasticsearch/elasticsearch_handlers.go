@@ -15,12 +15,12 @@ import (
 func (s *Service) getEventsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if s.Cfg.ElasticSearch.IndexEvents == "" {
-			return sdk.WrapError(sdk.ErrNotFound, "getEventsHandler> No events index found")
+			return sdk.WrapError(sdk.ErrNotFound, "No events index found")
 		}
 
 		var filters sdk.EventFilter
 		if err := service.UnmarshalBody(r, &filters); err != nil {
-			return sdk.WrapError(err, "getEventsHandler> Unable to read body")
+			return sdk.WrapError(err, "Unable to read body")
 		}
 
 		boolQuery := elastic.NewBoolQuery()
@@ -33,7 +33,7 @@ func (s *Service) getEventsHandler() service.Handler {
 
 		result, errR := esClient.Search().Index(s.Cfg.ElasticSearch.IndexEvents).Type("sdk.EventRunWorkflow").Query(boolQuery).Sort("timestamp", false).From(filters.CurrentItem).Size(15).Do(context.Background())
 		if errR != nil {
-			return sdk.WrapError(errR, "getEventsHandler> Cannot get result on index: %s", s.Cfg.ElasticSearch.IndexEvents)
+			return sdk.WrapError(errR, "Cannot get result on index: %s", s.Cfg.ElasticSearch.IndexEvents)
 		}
 		return service.WriteJSON(w, result.Hits.Hits, http.StatusOK)
 	}
@@ -42,17 +42,17 @@ func (s *Service) getEventsHandler() service.Handler {
 func (s *Service) postEventHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if s.Cfg.ElasticSearch.IndexEvents == "" {
-			return sdk.WrapError(sdk.ErrNotFound, "postEventHandler> No events index found")
+			return sdk.WrapError(sdk.ErrNotFound, "No events index found")
 		}
 
 		var e sdk.Event
 		if err := service.UnmarshalBody(r, &e); err != nil {
-			return sdk.WrapError(err, "postEventHandler> Unable to read body")
+			return sdk.WrapError(err, "Unable to read body")
 		}
 
 		_, errI := esClient.Index().Index(s.Cfg.ElasticSearch.IndexEvents).Type(e.EventType).BodyJson(e).Do(context.Background())
 		if errI != nil {
-			return sdk.WrapError(errI, "postEventHandler> Unable to insert event")
+			return sdk.WrapError(errI, "Unable to insert event")
 		}
 		return nil
 	}
@@ -66,7 +66,7 @@ func (s *Service) getMetricsHandler() service.Handler {
 
 		var request sdk.MetricRequest
 		if err := service.UnmarshalBody(r, &request); err != nil {
-			return sdk.WrapError(err, "getMetricsHandler> unable to read request")
+			return sdk.WrapError(err, "Unable to read request")
 		}
 
 		stringQuery := fmt.Sprintf("key:%s AND project_key:%s", request.Key, request.ProjectKey)
@@ -85,7 +85,7 @@ func (s *Service) getMetricsHandler() service.Handler {
 			Size(10).
 			Do(context.Background())
 		if errR != nil {
-			return sdk.WrapError(errR, "getMetricsHandler> Unable to get result")
+			return sdk.WrapError(errR, "Unable to get result")
 		}
 		return service.WriteJSON(w, results.Hits.Hits, http.StatusOK)
 	}
@@ -99,14 +99,14 @@ func (s *Service) postMetricsHandler() service.Handler {
 
 		var metric sdk.Metric
 		if err := service.UnmarshalBody(r, &metric); err != nil {
-			return sdk.WrapError(err, "postEventHandler> Unable to read body")
+			return sdk.WrapError(err, "Unable to read body")
 		}
 
 		id := fmt.Sprintf("%s-%d-%d-%d-%s", metric.ProjectKey, metric.WorkflowID, metric.ApplicationID, metric.Num, metric.Key)
 
 		_, errI := esClient.Index().Index(s.Cfg.ElasticSearch.IndexMetrics).Id(id).Type(fmt.Sprintf("%T", sdk.Metric{})).Timestamp(strconv.Itoa(int(metric.Date.Unix()))).BodyJson(metric).Do(context.Background())
 		if errI != nil {
-			return sdk.WrapError(errI, "postEventHandler> Unable to insert event")
+			return sdk.WrapError(errI, "Unable to insert event")
 		}
 		return nil
 	}

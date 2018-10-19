@@ -16,7 +16,7 @@ func LabelWorkflow(db gorp.SqlExecutor, labelID, workflowID int64) error {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
 			return sdk.WrapError(sdk.ErrConflict, "LabelWorkflow> this label %d is already linked to workflow %d", labelID, workflowID)
 		}
-		return sdk.WrapError(err, "LabelWorkflow> Cannot link label %d to workflow %d", labelID, workflowID)
+		return sdk.WrapError(err, "Cannot link label %d to workflow %d", labelID, workflowID)
 	}
 
 	return nil
@@ -25,7 +25,7 @@ func LabelWorkflow(db gorp.SqlExecutor, labelID, workflowID int64) error {
 // UnLabelWorkflow unlink a label on a workflow given his workflow id
 func UnLabelWorkflow(db gorp.SqlExecutor, labelID, workflowID int64) error {
 	if _, err := db.Exec("DELETE FROM project_label_workflow WHERE label_id = $1 AND workflow_id = $2", labelID, workflowID); err != nil {
-		return sdk.WrapError(err, "UnLabelWorkflow> Cannot unlink label %d to workflow %d", labelID, workflowID)
+		return sdk.WrapError(err, "Cannot unlink label %d to workflow %d", labelID, workflowID)
 	}
 
 	return nil
@@ -44,7 +44,7 @@ func Labels(db gorp.SqlExecutor, workflowID int64) ([]sdk.Label, error) {
 		if err == sql.ErrNoRows {
 			return labels, nil
 		}
-		return labels, sdk.WrapError(err, "Labels> Cannot load labels")
+		return labels, sdk.WrapError(err, "Cannot load labels")
 	}
 	for i := range labels {
 		labels[i].WorkflowID = workflowID
@@ -66,7 +66,7 @@ func LabelsByProjectID(db gorp.SqlExecutor, projectID int64) ([]sdk.Label, error
 		if err == sql.ErrNoRows {
 			return labels, nil
 		}
-		return labels, sdk.WrapError(err, "LabelsByProjectID> Cannot load labels")
+		return labels, sdk.WrapError(err, "Cannot load labels")
 	}
 
 	return labels, nil

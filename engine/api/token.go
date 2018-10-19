@@ -27,7 +27,7 @@ func (api *API) generateTokenHandler() service.Handler {
 			Description string `json:"description"`
 		}{}
 		if err := service.UnmarshalBody(r, &tokenPostInfos); err != nil {
-			return sdk.WrapError(err, "generateTokenHandler> cannot unmarshal")
+			return sdk.WrapError(err, "Cannot unmarshal")
 		}
 
 		if expiration == "" {
@@ -36,12 +36,12 @@ func (api *API) generateTokenHandler() service.Handler {
 
 		exp, err := sdk.ExpirationFromString(expiration)
 		if err != nil {
-			return sdk.WrapError(err, "generateTokenHandler> '%s'", expiration)
+			return sdk.WrapError(err, "'%s'", expiration)
 		}
 
 		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
-			return sdk.WrapError(err, "generateTokenHandler> cannot load group '%s'", groupName)
+			return sdk.WrapError(err, "cannot load group '%s'", groupName)
 		}
 
 		tk, err := token.GenerateToken()
@@ -50,7 +50,7 @@ func (api *API) generateTokenHandler() service.Handler {
 		}
 		now := time.Now()
 		if err := token.InsertToken(api.mustDB(), g.ID, tk, exp, tokenPostInfos.Description, getUser(ctx).Fullname); err != nil {
-			return sdk.WrapError(err, "generateTokenHandler> cannot insert new key")
+			return sdk.WrapError(err, "cannot insert new key")
 		}
 		token := sdk.Token{
 			GroupID:     g.ID,
@@ -81,7 +81,7 @@ func (api *API) getGroupTokenListHandler() service.Handler {
 
 		tokens, err := group.LoadTokens(api.mustDB(), groupName)
 		if err != nil {
-			return sdk.WrapError(err, "getGroupTokenListHandler> cannot load group '%s'", groupName)
+			return sdk.WrapError(err, "cannot load group '%s'", groupName)
 		}
 
 		return service.WriteJSON(w, tokens, http.StatusOK)
@@ -107,7 +107,7 @@ func (api *API) deleteTokenHandler() service.Handler {
 		}
 
 		if err := token.Delete(api.mustDB(), tokenID); err != nil {
-			return sdk.WrapError(err, "deleteTokenHandler> cannot load delete token id %d", tokenID)
+			return sdk.WrapError(err, "cannot load delete token id %d", tokenID)
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)

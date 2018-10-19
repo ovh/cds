@@ -50,10 +50,10 @@ func (api *API) getApplicationsHandler() service.Handler {
 				if err == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
 				}
-				return sdk.WrapError(err, "getApplicationsHandler> unable to load user '%s'", requestedUserName)
+				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
 			}
 			if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
-				return sdk.WrapError(err, "getApplicationsHandler> unable to load user '%s' permissions", requestedUserName)
+				return sdk.WrapError(err, "unable to load user '%s' permissions", requestedUserName)
 			}
 		}
 		loadOpts := []application.LoadOptionFunc{}
@@ -62,7 +62,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 		}
 		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, u, loadOpts...)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationsHandler> Cannot load applications from db")
+			return sdk.WrapError(err, "Cannot load applications from db")
 		}
 
 		if strings.ToUpper(withPermissions) == "W" {
@@ -97,7 +97,7 @@ func (api *API) getApplicationTreeHandler() service.Handler {
 
 		tree, err := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", "", 0)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationTreeHandler> Cannot load CD Tree for applications %s", applicationName)
+			return sdk.WrapError(err, "Cannot load CD Tree for applications %s", applicationName)
 		}
 
 		return service.WriteJSON(w, tree, http.StatusOK)
@@ -285,7 +285,7 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
-			return sdk.WrapError(err, "getApplicationHandler> Unable to load groups by application")
+			return sdk.WrapError(err, "Unable to load groups by application")
 		}
 
 		if withSchedulers {
@@ -379,12 +379,12 @@ func (api *API) getApplicationBranchHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load project %s from db", projectKey)
+			return sdk.WrapError(err, "Cannot load project %s from db", projectKey)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load application %s for project %s from db", applicationName, projectKey)
+			return sdk.WrapError(err, "Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
 
 		var branches []sdk.VCSBranch
@@ -432,12 +432,12 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationVCSInfosHandler> Cannot load project %s from db", projectKey)
+			return sdk.WrapError(err, "Cannot load project %s from db", projectKey)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationVCSInfosHandler> Cannot load application %s for project %s from db", applicationName, projectKey)
+			return sdk.WrapError(err, "Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
 
 		resp := struct {
@@ -490,7 +490,7 @@ func (api *API) getApplicationRemoteHandler() service.Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationRemoteHandler> Cannot load project %s", projectKey)
+			return sdk.WrapError(err, "Cannot load project %s", projectKey)
 		}
 
 		app, errL := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
@@ -566,25 +566,25 @@ func (api *API) addApplicationHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "addApplicationHandler> Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 
 		defer tx.Rollback()
 
 		if err := application.Insert(tx, api.Cache, proj, &app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addApplicationHandler> Cannot insert pipeline")
+			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
 		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			return sdk.WrapError(err, "addApplicationHandler> Cannot load group from project")
+			return sdk.WrapError(err, "Cannot load group from project")
 		}
 
 		if err := application.AddGroup(tx, api.Cache, proj, &app, getUser(ctx), proj.ProjectGroups...); err != nil {
-			return sdk.WrapError(err, "addApplicationHandler> Cannot add groups on application")
+			return sdk.WrapError(err, "Cannot add groups on application")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addApplicationHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, app, http.StatusOK)
@@ -622,17 +622,17 @@ func (api *API) deleteApplicationHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "deleteApplicationHandler> Cannot begin transaction")
+			return sdk.WrapError(err, "Cannot begin transaction")
 		}
 		defer tx.Rollback()
 
 		err = application.DeleteApplication(tx, app.ID)
 		if err != nil {
-			return sdk.WrapError(err, "deleteApplicationHandler> Cannot delete application")
+			return sdk.WrapError(err, "Cannot delete application")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteApplicationHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishDeleteApplication(proj.Key, *app, getUser(ctx))
@@ -677,11 +677,11 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := cloneApplication(tx, api.Cache, proj, &newApp, appToClone, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "cloneApplicationHandler> Cannot insert new application %s", newApp.Name)
+			return sdk.WrapError(err, "Cannot insert new application %s", newApp.Name)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cloneApplicationHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, newApp, http.StatusOK)
@@ -782,15 +782,15 @@ func (api *API) updateApplicationHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "updateApplicationHandler> Cannot start transaction")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 		if err := application.Update(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateApplicationHandler> Cannot delete application %s", applicationName)
+			return sdk.WrapError(err, "Cannot delete application %s", applicationName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateApplicationHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishUpdateApplication(p.Key, *app, old, getUser(ctx))
@@ -823,16 +823,16 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 		app.Metadata[m] = string(v)
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "postApplicationMetadataHandler> unable to start tx")
+			return sdk.WrapError(err, "unable to start tx")
 		}
 		defer tx.Rollback() // nolint
 
 		if err := application.Update(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "postApplicationMetadataHandler> unable to update application")
+			return sdk.WrapError(err, "unable to update application")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postApplicationMetadataHandler> unable to commit tx")
+			return sdk.WrapError(err, "unable to commit tx")
 		}
 
 		event.PublishUpdateApplication(projectKey, *app, oldApp, getUser(ctx))

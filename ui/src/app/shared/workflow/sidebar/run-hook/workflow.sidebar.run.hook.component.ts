@@ -57,6 +57,11 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
             } else {
                 this.nodeRun = null;
             }
+            if (this.wr && this.wr.nodes && this.node && this.wr.nodes[this.node.id] && this.wr.nodes[this.node.id].length > 0) {
+                this.nodeRun = this.wr.nodes[this.node.id][0];
+            } else {
+                this.nodeRun = null;
+            }
         });
     }
 

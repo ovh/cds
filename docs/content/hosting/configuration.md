@@ -46,7 +46,7 @@ Upload your `toml` configuration to consul
 ```bash
 $ consul kv put cds/config.api.toml -
 <PASTE YOUR CONFIGURATION>
-<ENDS WITH CRTL-D>
+<ENDS WITH CTRL-D>
 Success! Data written to: cds/config.api.toml
 ```
 
@@ -62,7 +62,7 @@ Reading configuration from localhost:8500
 ### Start CDS with Vault
 
 You have to put your configuration in a TOML format like above with good values into a secret named `/secret/cds/conf` in your vault.
-For example if you use the vault CLI :
+For example if you use the vault CLI:
 
 ```bash
 $ myConfig=`cat conf.toml`

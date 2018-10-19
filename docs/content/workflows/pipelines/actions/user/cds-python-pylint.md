@@ -4,7 +4,7 @@ title = "cds-python-pylint"
 +++
 
 Run pylint.
-By default, each pylint recommendation will be displayed as a Junit test.
+By default, each pylint recommendation will be displayed as a JUnit test.
 The short errors are fully contained inside the test title,
 an arrow (->) will be present if a part of the recommendation is displayed in
 the test body.
@@ -18,9 +18,9 @@ by a ;
 If empty, will launch pylint inside the working directory
 * **pylintrc**: Path of the pylintrc file, or its content.
  +If your pylintrc file is not used, try to use an absolute path using the variable {{.cds.workspace}} that points to the container default working directory
-* **raw_output**: Skip the xunit + Junit step and output a raw pylint result file.
+* **raw_output**: Skip the XUnit + JUnit step and output a raw pylint result file.
 * **raw_output_file**: File to output the raw result if raw output is checked. If empty, will only log the results.
-* **xml_output_file**: File to output the result xunit xml, it should not be empty.
+* **xml_output_file**: File to output the result XUnit XML, it should not be empty.
 
 
 ## Requirements
@@ -29,6 +29,6 @@ If empty, will launch pylint inside the working directory
 * **virtualenv**: type: binary Value: virtualenv
 
 
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-python-pylint.yml)
+More documentation on [GitHub](https://github.com/ovh/cds/tree/master/contrib/actions/cds-python-pylint.yml)
 
 

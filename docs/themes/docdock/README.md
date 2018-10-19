@@ -8,7 +8,7 @@ Visit the [theme documentation](http://docdock.netlify.com/) to see what is goin
 
 - Search
 - **Unlimited menu levels**
-- RevealJS presentation from markdown (embededed or fullscreen page)
+- RevealJS presentation from Markdown (embedded or fullscreen page)
 - Attachments files
 - List child pages
 - Include segment of content from one page in another (Excerpt)
@@ -107,7 +107,7 @@ Comment out following line, so default `themes/` will be used:
 ```
 
 #### (Bonus)
-Create empty file `.gitkeep` inside `public/` and add following to `.gitignore`.  This way it will keep repo smaller and won't bring build result files and errors to remote checkout places:
+Create empty file `.gitkeep` inside `public/` and add following to `.gitignore`. This way it will keep repo smaller and won't bring build result files and errors to remote checkout places:
 ```
 /public/*
 !/public/.gitkeep

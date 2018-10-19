@@ -35,7 +35,7 @@ func (api *API) uploadArtifactHandler() service.Handler {
 
 		//parse the multipart form in the request
 		if err := r.ParseMultipartForm(100000); err != nil {
-			return sdk.WrapError(err, "uploadArtifactHandler>  Error parsing multipart form")
+			return sdk.WrapError(err, "Error parsing multipart form")
 		}
 
 		//get a ref to the parsed multipart form
@@ -57,17 +57,17 @@ func (api *API) uploadArtifactHandler() service.Handler {
 		}
 
 		if fileName == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "uploadArtifactHandler> %s header is not set", sdk.ArtifactFileName)
+			return sdk.WrapError(sdk.ErrWrongRequest, "%s header is not set", sdk.ArtifactFileName)
 		}
 
 		p, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if errP != nil {
-			return sdk.WrapError(errP, "uploadArtifactHandler> cannot load pipeline %s-%s", key, pipelineName)
+			return sdk.WrapError(errP, "Cannot load pipeline %s-%s", key, pipelineName)
 		}
 
 		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
-			return sdk.WrapError(errA, "uploadArtifactHandler> cannot load application %s-%s", key, appName)
+			return sdk.WrapError(errA, "Cannot load application %s-%s", key, appName)
 		}
 
 		var env *sdk.Environment
@@ -77,22 +77,22 @@ func (api *API) uploadArtifactHandler() service.Handler {
 			var errE error
 			env, errE = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if errE != nil {
-				return sdk.WrapError(errE, "uploadArtifactHandler> Cannot load environment %s", envName)
+				return sdk.WrapError(errE, "Cannot load environment %s", envName)
 			}
 		}
 
 		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "uploadArtifactHandler> No enought right on this environment %s", env.Name)
+			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", env.Name)
 		}
 
 		buildNumber, errI := strconv.Atoi(buildNumberString)
 		if errI != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "uploadArtifactHandler> BuildNumber must be an integer: %s", errI)
+			return sdk.WrapError(sdk.ErrWrongRequest, "BuildNumber must be an integer: %s", errI)
 		}
 
 		hash, errG := generateHash()
 		if errG != nil {
-			return sdk.WrapError(errG, "uploadArtifactHandler> Could not generate hash")
+			return sdk.WrapError(errG, "Could not generate hash")
 		}
 
 		var size int64
@@ -125,12 +125,12 @@ func (api *API) uploadArtifactHandler() service.Handler {
 		for i := range files {
 			file, err := files[i].Open()
 			if err != nil {
-				return sdk.WrapError(err, "uploadArtifactHandler> cannot open file")
+				return sdk.WrapError(err, "Cannot open file")
 			}
 
 			if err := artifact.SaveFile(api.mustDB(), p, a, art, file, env); err != nil {
 				file.Close()
-				return sdk.WrapError(err, "uploadArtifactHandler> cannot save file")
+				return sdk.WrapError(err, "Cannot save file")
 			}
 			file.Close()
 		}
@@ -142,27 +142,27 @@ func (api *API) downloadArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		artifactID, errAtoi := requestVarInt(r, "id")
 		if errAtoi != nil {
-			return sdk.WrapError(errAtoi, "DownloadArtifactHandler> Cannot get artifact ID")
+			return sdk.WrapError(errAtoi, "Cannot get artifact ID")
 		}
 
 		// Load artifact
 		art, err := artifact.LoadArtifact(api.mustDB(), int64(artifactID))
 		if err != nil {
-			return sdk.WrapError(err, "downloadArtifactHandler> Cannot load artifact")
+			return sdk.WrapError(err, "Cannot load artifact")
 		}
 
 		f, err := objectstore.Fetch(art)
 		if err != nil {
-			return sdk.WrapError(err, "downloadArtifactHandler> Cannot fetch artifact")
+			return sdk.WrapError(err, "Cannot fetch artifact")
 		}
 
 		if _, err := io.Copy(w, f); err != nil {
 			_ = f.Close()
-			return sdk.WrapError(err, "downloadArtifactHandler> Cannot stream artifact")
+			return sdk.WrapError(err, "Cannot stream artifact")
 		}
 
 		if err := f.Close(); err != nil {
-			return sdk.WrapError(err, "downloadArtifactHandler> Cannot close artifact")
+			return sdk.WrapError(err, "Cannot close artifact")
 		}
 
 		w.Header().Add("Content-Type", "application/octet-stream")
@@ -183,13 +183,13 @@ func (api *API) listArtifactsBuildHandler() service.Handler {
 		// Load pipeline
 		p, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if errP != nil {
-			return sdk.WrapError(errP, "listArtifactsBuildHandler> Cannot load pipeline %s", pipelineName)
+			return sdk.WrapError(errP, "Cannot load pipeline %s", pipelineName)
 		}
 
 		// Load application
 		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
-			return sdk.WrapError(errA, "listArtifactsBuildHandler> Cannot load application %s", appName)
+			return sdk.WrapError(errA, "Cannot load application %s", appName)
 		}
 
 		var env *sdk.Environment
@@ -199,22 +199,22 @@ func (api *API) listArtifactsBuildHandler() service.Handler {
 			var errE error
 			env, errE = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if errE != nil {
-				return sdk.WrapError(errE, "listArtifactsBuildHandler> Cannot load environment %s", envName)
+				return sdk.WrapError(errE, "Cannot load environment %s", envName)
 			}
 		}
 
 		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "listArtifactsBuildHandler> No enought right on this environment %s", envName)
+			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", envName)
 		}
 
 		buildNumber, errI := strconv.ParseInt(buildNumberString, 10, 64)
 		if errI != nil {
-			return sdk.WrapError(errI, "listArtifactsBuildHandler> BuildNumber must be an integer")
+			return sdk.WrapError(errI, "BuildNumber must be an integer")
 		}
 
 		art, errArt := artifact.LoadArtifactsByBuildNumber(api.mustDB(), p.ID, a.ID, buildNumber, env.ID)
 		if errArt != nil {
-			return sdk.WrapError(errArt, "listArtifactsBuildHandler> Cannot load artifacts")
+			return sdk.WrapError(errArt, "Cannot load artifacts")
 		}
 
 		return service.WriteJSON(w, art, http.StatusOK)
@@ -233,13 +233,13 @@ func (api *API) listArtifactsHandler() service.Handler {
 		// Load pipeline
 		p, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if errP != nil {
-			return sdk.WrapError(errP, "listArtifactsHandler> Cannot load pipeline %s", pipelineName)
+			return sdk.WrapError(errP, "Cannot load pipeline %s", pipelineName)
 		}
 
 		// Load application
 		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
-			return sdk.WrapError(errA, "listArtifactsHandler> Cannot load application %s", appName)
+			return sdk.WrapError(errA, "Cannot load application %s", appName)
 		}
 
 		var env *sdk.Environment
@@ -249,21 +249,21 @@ func (api *API) listArtifactsHandler() service.Handler {
 			var errE error
 			env, errE = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if errE != nil {
-				return sdk.WrapError(errE, "listArtifactsHandler> Cannot load environment %s", envName)
+				return sdk.WrapError(errE, "Cannot load environment %s", envName)
 			}
 		}
 
 		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "listArtifactsHandler> No enought right on this environment %s", envName)
+			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", envName)
 		}
 
 		art, errArt := artifact.LoadArtifacts(api.mustDB(), p.ID, a.ID, env.ID, tag)
 		if errArt != nil {
-			return sdk.WrapError(errArt, "listArtifactsHandler> Cannot load artifacts")
+			return sdk.WrapError(errArt, "Cannot load artifacts")
 		}
 
 		if len(art) == 0 {
-			return sdk.WrapError(sdk.ErrNotFound, "listArtifactHandler> %s-%s-%s-%s/%s: not found", key, appName, env.Name, pipelineName, tag)
+			return sdk.WrapError(sdk.ErrNotFound, "%s-%s-%s-%s/%s: not found", key, appName, env.Name, pipelineName, tag)
 		}
 
 		return service.WriteJSON(w, art, http.StatusOK)
@@ -283,7 +283,7 @@ func (api *API) downloadArtifactDirectHandler() service.Handler {
 
 		art, err := artifact.LoadArtifactByHash(api.mustDB(), hash)
 		if err != nil {
-			return sdk.WrapError(err, "downloadArtifactDirectHandler> Could not load artifact with hash %s", hash)
+			return sdk.WrapError(err, "Could not load artifact with hash %s", hash)
 		}
 
 		w.Header().Add("Content-Type", "application/octet-stream")
@@ -292,16 +292,16 @@ func (api *API) downloadArtifactDirectHandler() service.Handler {
 		log.Debug("downloadArtifactDirectHandler: Serving %s/%s", art.GetPath(), art.GetName())
 		f, err := objectstore.Fetch(art)
 		if err != nil {
-			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot fetch artifact")
+			return sdk.WrapError(err, "Cannot fetch artifact")
 		}
 
 		if _, err := io.Copy(w, f); err != nil {
 			_ = f.Close()
-			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot stream artifact")
+			return sdk.WrapError(err, "Cannot stream artifact")
 		}
 
 		if err := f.Close(); err != nil {
-			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot close artifact")
+			return sdk.WrapError(err, "Cannot close artifact")
 		}
 
 		return nil
@@ -311,12 +311,12 @@ func (api *API) downloadArtifactDirectHandler() service.Handler {
 func (api *API) postArtifactWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !objectstore.Instance().TemporaryURLSupported {
-			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler")
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
 		if !ok {
-			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler > cast error")
+			return sdk.WrapError(sdk.ErrForbidden, "Cast error")
 		}
 
 		vars := mux.Vars(r)
@@ -334,27 +334,27 @@ func (api *API) postArtifactWithTempURLHandler() service.Handler {
 			var errE error
 			env, errE = environment.LoadEnvironmentByName(api.mustDB(), proj, envName)
 			if errE != nil {
-				return sdk.WrapError(errE, "postArtifactWithTempURLHandler> Cannot load environment %s", envName)
+				return sdk.WrapError(errE, "Cannot load environment %s", envName)
 			}
 		}
 
 		if !permission.AccessToEnvironment(proj, env.Name, getUser(ctx), permission.PermissionReadExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler> No enought right on this environment %s", env.Name)
+			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", env.Name)
 		}
 
 		buildNumber, errI := strconv.Atoi(buildNumberString)
 		if errI != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postArtifactWithTempURLHandler> BuildNumber must be an integer: %v", errI)
+			return sdk.WrapError(sdk.ErrWrongRequest, "BuildNumber must be an integer: %v", errI)
 		}
 
 		hash, errG := generateHash()
 		if errG != nil {
-			return sdk.WrapError(errG, "postArtifactWithTempURLHandler> Could not generate hash")
+			return sdk.WrapError(errG, "Could not generate hash")
 		}
 
 		art := new(sdk.Artifact)
 		if err := service.UnmarshalBody(r, art); err != nil {
-			return sdk.WrapError(err, "postArtifactWithTempURLHandler> Unable to unmarshal artifact")
+			return sdk.WrapError(err, "Unable to unmarshal artifact")
 		}
 
 		art.DownloadHash = hash
@@ -367,7 +367,7 @@ func (api *API) postArtifactWithTempURLHandler() service.Handler {
 
 		url, key, err := store.StoreURL(art)
 		if err != nil {
-			return sdk.WrapError(err, "postArtifactWithTempURLHandler> Could not generate hash")
+			return sdk.WrapError(err, "Could not generate hash")
 		}
 
 		art.TempURL = url
@@ -383,7 +383,7 @@ func (api *API) postArtifactWithTempURLHandler() service.Handler {
 func (api *API) postArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !objectstore.Instance().TemporaryURLSupported {
-			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler")
+			return sdk.WithStack(sdk.ErrForbidden)
 		}
 
 		vars := mux.Vars(r)
@@ -394,17 +394,17 @@ func (api *API) postArtifactWithTempURLCallbackHandler() service.Handler {
 
 		art := new(sdk.Artifact)
 		if err := service.UnmarshalBody(r, art); err != nil {
-			return sdk.WrapError(err, "postArtifactWithTempURLCallbackHandler> Unable to read artifact")
+			return sdk.WrapError(err, "Unable to read artifact")
 		}
 
 		cacheKey := cache.Key("artifacts", art.GetPath(), art.GetName())
 		cachedArt := new(sdk.Artifact)
 		if !api.Cache.Get(cacheKey, cachedArt) {
-			return sdk.WrapError(sdk.ErrNotFound, "postArtifactWithTempURLCallbackHandler> Unable to find artifact")
+			return sdk.WrapError(sdk.ErrNotFound, "Unable to find artifact")
 		}
 
 		if art.DownloadHash != cachedArt.DownloadHash {
-			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler> Submitted artifact doesn't match")
+			return sdk.WrapError(sdk.ErrForbidden, "Submitted artifact doesn't match")
 		}
 
 		var env *sdk.Environment
@@ -414,26 +414,26 @@ func (api *API) postArtifactWithTempURLCallbackHandler() service.Handler {
 			var errE error
 			env, errE = environment.LoadEnvironmentByName(api.mustDB(), projKey, envName)
 			if errE != nil {
-				return sdk.WrapError(errE, "postArtifactWithTempURLCallbackHandler> Cannot load environment %s", envName)
+				return sdk.WrapError(errE, "Cannot load environment %s", envName)
 			}
 		}
 
 		if !permission.AccessToEnvironment(projKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler> No enought right on this environment %s", env.Name)
+			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", env.Name)
 		}
 
 		pip, errpip := pipeline.LoadPipeline(api.mustDB(), projKey, pipName, false)
 		if errpip != nil {
-			return sdk.WrapError(errpip, "postArtifactWithTempURLCallbackHandler> Unable to load pipeline %s/%s", projKey, pipName)
+			return sdk.WrapError(errpip, "Unable to load pipeline %s/%s", projKey, pipName)
 		}
 
 		app, errapp := application.LoadByName(api.mustDB(), api.Cache, projKey, appName, getUser(ctx))
 		if errapp != nil {
-			return sdk.WrapError(errapp, "postArtifactWithTempURLCallbackHandler> Unable to load application %s/%s", projKey, appName)
+			return sdk.WrapError(errapp, "Unable to load application %s/%s", projKey, appName)
 		}
 
 		if err := artifact.InsertArtifact(api.mustDB(), pip.ID, app.ID, env.ID, *art); err != nil {
-			return sdk.WrapError(err, "postArtifactWithTempURLCallbackHandler> Unable to save artifact")
+			return sdk.WrapError(err, "Unable to save artifact")
 		}
 
 		return nil
@@ -444,7 +444,7 @@ func generateHash() (string, error) {
 	size := 128
 	bs := make([]byte, size)
 	if _, err := rand.Read(bs); err != nil {
-		return "", sdk.WrapError(err, "generateHash> rand.Read failed")
+		return "", sdk.WrapError(err, "rand.Read failed")
 	}
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]

@@ -33,31 +33,31 @@ type dbEncryptedData struct {
 func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content string) (string, error) {
 	existingToken, err := db.SelectStr("select token from encrypted_data where project_id = $1 and content_name = $2", projectID, name)
 	if err != nil && err != sql.ErrNoRows {
-		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to request encrypted_data")
+		return "", sdk.WrapError(err, "Unable to request encrypted_data")
 	}
 
 	k, err := loadBuildinKey(db, projectID)
 	if err != nil {
-		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to load builtin key")
+		return "", sdk.WrapError(err, "Unable to load builtin key")
 	}
 
 	encryptedReader, err := shredder.GPGEncrypt([]byte(k.Key.Public), strings.NewReader(content))
 	if err != nil {
-		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to encrypt content")
+		return "", sdk.WrapError(err, "Unable to encrypt content")
 	}
 
 	encryptedContent, err := ioutil.ReadAll(encryptedReader)
 	if err != nil {
-		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to ungzip content")
+		return "", sdk.WrapError(err, "Unable to ungzip content")
 	}
 
 	compressedContent := new(bytes.Buffer)
 	gzipWriter := gzip.NewWriter(compressedContent)
 	if _, err := gzipWriter.Write(encryptedContent); err != nil {
-		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to write gzip content")
+		return "", sdk.WrapError(err, "Unable to write gzip content")
 	}
 	if err := gzipWriter.Close(); err != nil {
-		return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to gzip content")
+		return "", sdk.WrapError(err, "Unable to gzip content")
 	}
 
 	s := base64.StdEncoding.EncodeToString(compressedContent.Bytes())
@@ -82,11 +82,11 @@ func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content s
 	if existingToken != "" {
 		bded.Token = existingToken
 		if _, err := db.Update(&bded); err != nil {
-			return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to update encrypted_data")
+			return "", sdk.WrapError(err, "Unable to update encrypted_data")
 		}
 	} else {
 		if err := db.Insert(&bded); err != nil {
-			return "", sdk.WrapError(err, "EncryptWithBuiltinKey> Unable to save encrypted_data")
+			return "", sdk.WrapError(err, "Unable to save encrypted_data")
 		}
 	}
 
@@ -102,31 +102,31 @@ func DecryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, token string) (
 
 	k, err := loadBuildinKey(db, projectID)
 	if err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to load builtin key")
+		return "", sdk.WrapError(err, "Unable to load builtin key")
 	}
 
 	b, err := base64.StdEncoding.DecodeString(string(dbed.EncyptedContent))
 	if err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to decode content")
+		return "", sdk.WrapError(err, "Unable to decode content")
 	}
 
 	gzipReader, err := gzip.NewReader(bytes.NewReader(b))
 	if err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to ungzip content buffer")
+		return "", sdk.WrapError(err, "Unable to ungzip content buffer")
 	}
 
 	uncompressedContent := new(bytes.Buffer)
 	if _, err := io.Copy(uncompressedContent, gzipReader); err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to write ungzip content")
+		return "", sdk.WrapError(err, "Unable to write ungzip content")
 	}
 
 	if err := gzipReader.Close(); err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to ungzip content")
+		return "", sdk.WrapError(err, "Unable to ungzip content")
 	}
 
 	decryptedReader, err := shredder.GPGDecrypt([]byte(k.Key.Private), []byte{}, uncompressedContent)
 	if err != nil {
-		return "", sdk.WrapError(err, "DecryptWithBuiltinKey> Unable to decrypt content")
+		return "", sdk.WrapError(err, "Unable to decrypt content")
 	}
 
 	decryptedContent, err := ioutil.ReadAll(decryptedReader)

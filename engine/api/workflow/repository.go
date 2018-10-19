@@ -42,7 +42,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 
 	ope, err := createOperationRequest(*w, opts)
 	if err != nil {
-		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to create operation request")
+		return nil, sdk.WrapError(err, "Unable to create operation request")
 	}
 
 	// update user permission if  we come from hook
@@ -54,11 +54,11 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 	}
 
 	if err := PostRepositoryOperation(ctx, db, store, *p, &ope); err != nil {
-		return nil, sdk.WrapError(err, "CreateFromRepository> Unable to post repository operation")
+		return nil, sdk.WrapError(err, "Unable to post repository operation")
 	}
 
 	if err := pollRepositoryOperation(ctx, db, store, &ope); err != nil {
-		return nil, sdk.WrapError(err, "CreateFromRepository> Cannot analyse repository")
+		return nil, sdk.WrapError(err, "Cannot analyse repository")
 	}
 
 	var uuid string
@@ -75,7 +75,7 @@ func extractWorkflow(ctx context.Context, db *gorp.DbMap, store cache.Store, p *
 	// Read files
 	tr, err := ReadCDSFiles(ope.LoadFiles.Results)
 	if err != nil {
-		return nil, sdk.WrapError(err, "extractWorkflow> Unable to read cds files")
+		return nil, sdk.WrapError(err, "Unable to read cds files")
 	}
 	ope.RepositoryStrategy.SSHKeyContent = ""
 	opt := &PushOption{
@@ -112,10 +112,10 @@ func ReadCDSFiles(files map[string][]byte) (*tar.Reader, error) {
 			Size: int64(len(fcontent)),
 		}
 		if err := tw.WriteHeader(hdr); err != nil {
-			return nil, sdk.WrapError(err, "ReadCDSFiles> Cannot write header")
+			return nil, sdk.WrapError(err, "Cannot write header")
 		}
 		if n, err := tw.Write(fcontent); err != nil {
-			return nil, sdk.WrapError(err, "ReadCDSFiles> Cannot write content")
+			return nil, sdk.WrapError(err, "Cannot write content")
 		} else if n == 0 {
 			return nil, fmt.Errorf("nothing to write")
 		}
@@ -142,7 +142,7 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 			return sdk.WrapError(sdk.ErrRepoOperationTimeout, "pollRepositoryOperation> Timeout analyzing repository")
 		case <-tickPoll.C:
 			if err := GetRepositoryOperation(c, db, store, ope); err != nil {
-				return sdk.WrapError(err, "pollRepositoryOperation> Cannot get repository operation status")
+				return sdk.WrapError(err, "Cannot get repository operation status")
 			}
 			switch ope.Status {
 			case sdk.OperationStatusError:
@@ -210,7 +210,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, prj sdk.Project, ope *sdk.Operation) error {
 	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
-		return sdk.WrapError(err, "PostRepositoryOperation> Unable to found repositories service")
+		return sdk.WrapError(err, "Unable to found repositories service")
 	}
 
 	if ope.RepositoryStrategy.ConnectionType == "ssh" {
@@ -222,7 +222,7 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, cache cac
 		}
 	}
 	if _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
-		return sdk.WrapError(err, "PostRepositoryOperation> Unable to perform operation")
+		return sdk.WrapError(err, "Unable to perform operation")
 	}
 	return nil
 }
@@ -231,11 +231,11 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, cache cac
 func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
 	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
-		return sdk.WrapError(err, "GetRepositoryOperation> Unable to found repositories service")
+		return sdk.WrapError(err, "Unable to found repositories service")
 	}
 
 	if _, err := services.DoJSONRequest(ctx, srvs, http.MethodGet, "/operations/"+ope.UUID, nil, ope); err != nil {
-		return sdk.WrapError(err, "GetRepositoryOperation> Unable to get operation")
+		return sdk.WrapError(err, "Unable to get operation")
 	}
 	return nil
 }

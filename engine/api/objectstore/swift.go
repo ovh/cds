@@ -31,7 +31,7 @@ func NewSwiftStore(authURL, user, password, region, tenant, domain, containerpre
 		}, containerprefix}
 
 	if err := s.Authenticate(); err != nil {
-		return nil, sdk.WrapError(err, "Swift> Unable to authenticate")
+		return nil, sdk.WrapError(err, "Unable to authenticate")
 	}
 	return &s, nil
 }
@@ -58,7 +58,7 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 
 	log.Debug("SwiftStore> creating container %s", container)
 	if err := s.ContainerCreate(container, nil); err != nil {
-		return "", sdk.WrapError(err, "SwiftStore> Unable to create container %s", container)
+		return "", sdk.WrapError(err, "Unable to create container %s", container)
 	}
 
 	log.Debug("SwiftStore> creating object %s/%s", container, object)
@@ -72,15 +72,15 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 	if _, err := io.Copy(file, data); err != nil {
 		_ = file.Close()
 		_ = data.Close()
-		return "", sdk.WrapError(err, "SwiftStore> Unable to copy object buffer %s", object)
+		return "", sdk.WrapError(err, "Unable to copy object buffer %s", object)
 	}
 
 	if err := file.Close(); err != nil {
-		return "", sdk.WrapError(err, "SwiftStore> Unable to close object buffer %s", object)
+		return "", sdk.WrapError(err, "Unable to close object buffer %s", object)
 	}
 
 	if err := data.Close(); err != nil {
-		return "", sdk.WrapError(err, "SwiftStore> Unable to close data buffer")
+		return "", sdk.WrapError(err, "Unable to close data buffer")
 	}
 
 	return container + "/" + object, nil
@@ -119,7 +119,7 @@ func (s *SwiftStore) Delete(o Object) error {
 			log.Info("Delete.SwiftStore: %s/%s: %s", container, object, err)
 			return nil
 		}
-		return sdk.WrapError(err, "SwiftStore> Unable to delete object")
+		return sdk.WrapError(err, "Unable to delete object")
 	}
 	return nil
 }
@@ -131,12 +131,12 @@ func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
 	escape(container, object)
 
 	if err := s.ContainerCreate(container, nil); err != nil {
-		return "", "", sdk.WrapError(err, "SwiftStore> Unable to create container %s", container)
+		return "", "", sdk.WrapError(err, "Unable to create container %s", container)
 	}
 
 	key, err := s.containerKey(container)
 	if err != nil {
-		return "", "", sdk.WrapError(err, "SwiftStore> Unable to get container key %s", container)
+		return "", "", sdk.WrapError(err, "Unable to get container key %s", container)
 	}
 
 	url := s.ObjectTempUrl(container, object, string(key), "PUT", time.Now().Add(time.Hour))
@@ -146,7 +146,7 @@ func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
 func (s *SwiftStore) containerKey(container string) (string, error) {
 	_, headers, err := s.Container(container)
 	if err != nil {
-		return "", sdk.WrapError(err, "SwiftStore> Unable to get container %s", container)
+		return "", sdk.WrapError(err, "Unable to get container %s", container)
 	}
 
 	key := headers["X-Container-Meta-Temp-Url-Key"]
@@ -157,7 +157,7 @@ func (s *SwiftStore) containerKey(container string) (string, error) {
 
 		log.Debug("SwiftStore> Update container %s metadata", container)
 		if err := s.ContainerUpdate(container, swift.Headers{"X-Container-Meta-Temp-Url-Key": key}); err != nil {
-			return "", sdk.WrapError(err, "SwiftStore> Unable to update container metadata %s", container)
+			return "", sdk.WrapError(err, "Unable to update container metadata %s", container)
 		}
 	}
 
@@ -172,7 +172,7 @@ func (s *SwiftStore) FetchURL(o Object) (string, string, error) {
 
 	key, err := s.containerKey(container)
 	if err != nil {
-		return "", "", sdk.WrapError(err, "SwiftStore> Unable to get container key %s", container)
+		return "", "", sdk.WrapError(err, "Unable to get container key %s", container)
 	}
 
 	url := s.ObjectTempUrl(container, object, string(key), "GET", time.Now().Add(time.Hour))

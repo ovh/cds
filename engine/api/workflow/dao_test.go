@@ -3,10 +3,11 @@ package workflow_test
 import (
 	"context"
 	"fmt"
-	"github.com/fsamin/go-dump"
-	"github.com/stretchr/testify/assert"
 	"sort"
 	"testing"
+
+	"github.com/fsamin/go-dump"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"

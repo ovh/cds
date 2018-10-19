@@ -18,21 +18,21 @@ func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node
 
 	//Setup destination node
 	if err := insertNode(db, store, w, &trigger.WorkflowDestNode, u, false); err != nil {
-		return sdk.WrapError(err, "insertTrigger> Unable to setup destination node %d on trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
+		return sdk.WrapError(err, "Unable to setup destination node %d on trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 	trigger.WorkflowDestNodeID = trigger.WorkflowDestNode.ID
 
 	//Insert trigger
 	dbt := NodeTrigger(*trigger)
 	if err := db.Insert(&dbt); err != nil {
-		return sdk.WrapError(err, "insertTrigger> Unable to insert trigger")
+		return sdk.WrapError(err, "Unable to insert trigger")
 	}
 	trigger.ID = dbt.ID
 	trigger.WorkflowDestNode.TriggerSrcID = trigger.ID
 
 	// Update node trigger ID
 	if err := updateWorkflowTriggerSrc(db, &trigger.WorkflowDestNode); err != nil {
-		return sdk.WrapError(err, "insertTrigger> Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
+		return sdk.WrapError(err, "Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 
 	return nil
@@ -45,7 +45,7 @@ func loadTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "LoadTriggers> Unable to load triggers")
+		return nil, sdk.WrapError(err, "Unable to load triggers")
 	}
 
 	if len(dbtriggers) == 0 {
@@ -59,7 +59,7 @@ func loadTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p
 			//Load destination node
 			dest, err := loadNode(ctx, db, store, proj, w, t.WorkflowDestNodeID, u, opts)
 			if err != nil {
-				return nil, sdk.WrapError(err, "LoadTriggers> Unable to load destination node %d", t.WorkflowDestNodeID)
+				return nil, sdk.WrapError(err, "Unable to load destination node %d", t.WorkflowDestNodeID)
 			}
 			t.WorkflowDestNode = *dest
 		}

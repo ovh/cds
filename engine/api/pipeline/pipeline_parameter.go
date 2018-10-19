@@ -79,7 +79,7 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 	err := db.QueryRow(query, pipelineID, param.Name, param.Value, string(param.Type), param.Description).Scan(&param.ID)
 	if err != nil {
-		return sdk.WrapError(err, "InsertParameterInPipeline> cannot insert in pipeline_parameter (pID:%d)", pipelineID)
+		return sdk.WrapError(err, "cannot insert in pipeline_parameter (pID:%d)", pipelineID)
 	}
 
 	query = `SELECT id FROM pipeline_trigger WHERE dest_pipeline_id = $1`
@@ -93,13 +93,13 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 	for rows.Next() {
 		err = rows.Scan(&id)
 		if err != nil {
-			return sdk.WrapError(err, "InsertParameterInPipeline> cannot scan pipeline_trigger (pID:%d)", pipelineID)
+			return sdk.WrapError(err, "cannot scan pipeline_trigger (pID:%d)", pipelineID)
 		}
 		ids = append(ids, id)
 	}
 	for _, id := range ids {
 		if err := trigger.InsertTriggerParameter(db, id, *param); err != nil {
-			return sdk.WrapError(err, "InsertParameterInPipeline> InsertTriggerParameter (tID:%d)", id)
+			return sdk.WrapError(err, "InsertTriggerParameter (tID:%d)", id)
 		}
 	}
 
@@ -165,7 +165,7 @@ func DeleteParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64, paramNam
 func DeleteAllParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64) error {
 	query := `DELETE FROM pipeline_parameter WHERE pipeline_id=$1`
 	_, err := db.Exec(query, pipelineID)
-	return sdk.WrapError(err, "DeleteAllParameterFromPipeline> Unable to delete all parameters")
+	return sdk.WrapError(err, "Unable to delete all parameters")
 }
 
 // CountInParamValue counts how many time a pattern is in parameter value for the given project
@@ -179,7 +179,7 @@ func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]string,
 	`
 	rows, err := db.Query(query, key, fmt.Sprintf("%%%s%%", value))
 	if err != nil {
-		return nil, sdk.WrapError(err, "pipeline.CountInParamValue> Unable to count usage")
+		return nil, sdk.WrapError(err, "Unable to count usage")
 	}
 	defer rows.Close()
 
@@ -187,7 +187,7 @@ func CountInParamValue(db gorp.SqlExecutor, key string, value string) ([]string,
 	for rows.Next() {
 		var pipName string
 		if err := rows.Scan(&pipName); err != nil {
-			return nil, sdk.WrapError(err, "pipeline.CountInParamValue> Unable to scan")
+			return nil, sdk.WrapError(err, "Unable to scan")
 		}
 		results = append(results, pipName)
 	}

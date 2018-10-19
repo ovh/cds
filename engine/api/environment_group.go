@@ -30,21 +30,21 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() service.Handler {
 
 		var groupEnvironment sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupEnvironment); err != nil {
-			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler> Cannot read body")
+			return sdk.WrapError(err, "Cannot read body")
 		}
 
 		g, errG := group.LoadGroup(api.mustDB(), groupName)
 		if errG != nil {
-			return sdk.WrapError(errG, "updateGroupRoleOnEnvironmentHandler> Cannot load group %s", groupName)
+			return sdk.WrapError(errG, "Cannot load group %s", groupName)
 		}
 
 		if group.IsDefaultGroupID(g.ID) && groupEnvironment.Permission > permission.PermissionRead {
-			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "updateGroupRoleOnEnvironmentHandler: only read permission is allowed to default group")
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "Only read permission is allowed to default group")
 		}
 
 		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errE != nil {
-			return sdk.WrapError(errE, "updateGroupRoleOnEnvironmentHandler> Cannot load environment %s", envName)
+			return sdk.WrapError(errE, "Cannot load environment %s", envName)
 		}
 
 		var writeGroupID int64
@@ -61,27 +61,27 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() service.Handler {
 		if groupEnvironment.Permission != permission.PermissionReadWriteExecute {
 			if writeGroupID == 0 {
 				log.Warning("updateGroupRoleOnEnvironmentHandler: Cannot remove write permission on group %s for environment %s", groupName, envName)
-				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupRoleOnEnvironmentHandler> Cannot remove write permission on group %s for environment %s", groupName, envName)
+				return sdk.WrapError(sdk.ErrGroupNeedWrite, "Cannot remove write permission on group %s for environment %s", groupName, envName)
 			}
 		}
 
 		tx, errB := api.mustDB().Begin()
 		if errB != nil {
-			return sdk.WrapError(errB, "updateGroupRoleOnEnvironmentHandler> Cannot start transaction")
+			return sdk.WrapError(errB, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if err := group.UpdateGroupRoleInEnvironment(tx, env.ID, g.ID, groupEnvironment.Permission); err != nil {
-			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler: Cannot update permission for group %s in environment %s", groupName, envName)
+			return sdk.WrapError(err, "Cannot update permission for group %s in environment %s", groupName, envName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		envUpdated, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errE != nil {
-			return sdk.WrapError(errE, "updateGroupRoleOnEnvironmentHandler> Cannot load updated environment")
+			return sdk.WrapError(errE, "Cannot load updated environment")
 		}
 		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
 		envUpdated.ProjectKey = key
@@ -102,56 +102,56 @@ func (api *API) addGroupsInEnvironmentHandler() service.Handler {
 
 		var groupPermission []sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupPermission); err != nil {
-			return sdk.WrapError(err, "addGroupsInEnvironmentHandler> Cannot read body")
+			return sdk.WrapError(err, "Cannot read body")
 		}
 
 		env, err := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if err != nil {
-			return sdk.WrapError(err, "addGroupsInEnvironmentHandler> Cannot load environment %s", envName)
+			return sdk.WrapError(err, "Cannot load environment %s", envName)
 		}
 
 		tx, errB := api.mustDB().Begin()
 		if errB != nil {
-			return sdk.WrapError(errB, "addGroupsInEnvironmentHandler> Cannot start transaction")
+			return sdk.WrapError(errB, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		for _, gp := range groupPermission {
 			g, errL := group.LoadGroup(tx, gp.Group.Name)
 			if errL != nil {
-				return sdk.WrapError(errL, "addGroupsInEnvironmentHandler: Cannot find group %s", gp.Group.Name)
+				return sdk.WrapError(errL, "Cannot find group %s", gp.Group.Name)
 			}
 
 			if group.IsDefaultGroupID(g.ID) && gp.Permission > permission.PermissionRead {
-				return sdk.WrapError(sdk.ErrDefaultGroupPermission, "addGroupsInEnvironmentHandler: only read permission is allowed to default group")
+				return sdk.WrapError(sdk.ErrDefaultGroupPermission, "Only read permission is allowed to default group")
 			}
 
 			alreadyAdded, errA := group.IsInEnvironment(tx, env.ID, g.ID)
 			if errA != nil {
-				return sdk.WrapError(errA, "addGroupsInEnvironmentHandler> Cannot check if group is in env")
+				return sdk.WrapError(errA, "Cannot check if group is in env")
 			}
 
 			if alreadyAdded {
-				return sdk.WrapError(sdk.ErrGroupPresent, "addGroupsInEnvironmentHandler> Group %s already in environment %s", g.Name, env.Name)
+				return sdk.WrapError(sdk.ErrGroupPresent, "Group %s already in environment %s", g.Name, env.Name)
 			}
 
 			if err := group.InsertGroupInEnvironment(tx, env.ID, g.ID, gp.Permission); err != nil {
-				return sdk.WrapError(err, "addGroupsInEnvironmentHandler: Cannot add group %s in environment %s", g.Name, env.Name)
+				return sdk.WrapError(err, "Cannot add group %s in environment %s", g.Name, env.Name)
 			}
 		}
 
 		// Update last modified on environment
 		if err := environment.UpdateEnvironment(tx, env); err != nil {
-			return sdk.WrapError(err, "addGroupsInEnvironmentHandler: Cannot update environment %s", env.Name)
+			return sdk.WrapError(err, "Cannot update environment %s", env.Name)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addGroupsInEnvironmentHandler: Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		envUpdated, errL := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errL != nil {
-			return sdk.WrapError(errL, "addGroupsInEnvironmentHandler: Cannot load updated environment")
+			return sdk.WrapError(errL, "Cannot load updated environment")
 		}
 		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
 		envUpdated.ProjectKey = key
@@ -178,29 +178,29 @@ func (api *API) addGroupInEnvironmentHandler() service.Handler {
 
 		env, err := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if err != nil {
-			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot load %s", envName)
+			return sdk.WrapError(err, "Cannot load %s", envName)
 		}
 
 		g, err := group.LoadGroup(api.mustDB(), groupPermission.Group.Name)
 		if err != nil {
-			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot find %s", groupPermission.Group.Name)
+			return sdk.WrapError(err, "Cannot find %s", groupPermission.Group.Name)
 		}
 
 		if group.IsDefaultGroupID(g.ID) && groupPermission.Permission > permission.PermissionRead {
-			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "addGroupInEnvironmentHandler: only read permission is allowed to default group")
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "Only read permission is allowed to default group")
 		}
 
 		alreadyAdded, err := group.IsInEnvironment(api.mustDB(), env.ID, g.ID)
 		if err != nil {
-			return sdk.WrapError(err, "addGroupInEnvironmentHandler> Cannot check if group is in env")
+			return sdk.WrapError(err, "Cannot check if group is in env")
 		}
 
 		if alreadyAdded {
-			return sdk.WrapError(sdk.ErrGroupPresent, "addGroupInEnvironmentHandler> Group %s is already present in env %s", g.Name, env.Name)
+			return sdk.WrapError(sdk.ErrGroupPresent, "Group %s is already present in env %s", g.Name, env.Name)
 		}
 
 		if err := group.InsertGroupInEnvironment(api.mustDB(), env.ID, g.ID, groupPermission.Permission); err != nil {
-			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot add group %s in environment %s", g.Name, env.Name)
+			return sdk.WrapError(err, "Cannot add group %s in environment %s", g.Name, env.Name)
 		}
 
 		groupPermission.Group = *g
@@ -220,17 +220,17 @@ func (api *API) deleteGroupFromEnvironmentHandler() service.Handler {
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
-			return sdk.WrapError(errP, "deleteGroupFromEnvironmentHandler> Cannot load project")
+			return sdk.WrapError(errP, "Cannot load project")
 		}
 
 		env, errE := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, envName)
 		if errE != nil {
-			return sdk.WrapError(errE, "deleteGroupFromEnvironmentHandler: Cannot load environment")
+			return sdk.WrapError(errE, "Cannot load environment")
 		}
 
 		g, errG := group.LoadGroup(api.mustDB(), groupName)
 		if errG != nil {
-			return sdk.WrapError(errG, "deleteGroupFromEnvironmentHandler: Cannot load group")
+			return sdk.WrapError(errG, "Cannot load group")
 		}
 
 		var gp sdk.GroupPermission
@@ -243,16 +243,16 @@ func (api *API) deleteGroupFromEnvironmentHandler() service.Handler {
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "deleteGroupFromEnvironmentHandler: Cannot start transaction")
+			return sdk.WrapError(errT, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if err := group.DeleteGroupFromEnvironment(tx, env.ID, g.ID); err != nil {
-			return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot delete group %s from pipeline %s", groupName, envName)
+			return sdk.WrapError(err, "Cannot delete group %s from pipeline %s", groupName, envName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(errT, "deleteGroupFromEnvironmentHandler: Cannot commit transaction")
+			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
 
 		event.PublishEnvironmentPermissionDelete(key, *env, gp, getUser(ctx))
@@ -272,30 +272,30 @@ func (api *API) importGroupsInEnvironmentHandler() service.Handler {
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			return sdk.WrapError(errBegin, "importGroupsInEnvironmentHandler> Cannot start transaction")
+			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		proj, errProj := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
-			return sdk.WrapError(errProj, "importGroupsInEnvironmentHandler> Cannot load project %s", key)
+			return sdk.WrapError(errProj, "Cannot load project %s", key)
 		}
 
 		env, errE := environment.LoadEnvironmentByName(tx, key, envName)
 		if errE != nil {
-			return sdk.WrapError(errE, "importGroupsInEnvironmentHandler> Cannot load environment %s", envName)
+			return sdk.WrapError(errE, "Cannot load environment %s", envName)
 		}
 
 		groupsToAdd := []sdk.GroupPermission{}
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInEnvironmentHandler> Unable to read body")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Unable to read body")
 		}
 
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInEnvironmentHandler> Unable to get format")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Unable to get format")
 		}
 
 		var errorParse error
@@ -307,7 +307,7 @@ func (api *API) importGroupsInEnvironmentHandler() service.Handler {
 		}
 
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInEnvironmentHandler> Cannot parsing")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Cannot parsing")
 		}
 
 		groupsToAddInProj := []sdk.GroupPermission{}
@@ -319,7 +319,7 @@ func (api *API) importGroupsInEnvironmentHandler() service.Handler {
 				}
 			}
 			if !exist && !forceUpdate {
-				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInEnvironmentHandler> Group %v doesn't exist in this project", gr.Group.Name)
+				return sdk.WrapError(sdk.ErrGroupNotFound, "Group %v doesn't exist in this project", gr.Group.Name)
 			} else if !exist && forceUpdate {
 				groupsToAddInProj = append(groupsToAddInProj, sdk.GroupPermission{
 					Group:      gr.Group,
@@ -332,49 +332,49 @@ func (api *API) importGroupsInEnvironmentHandler() service.Handler {
 			for _, gr := range groupsToAddInProj {
 				gro, errG := group.LoadGroup(tx, gr.Group.Name)
 				if errG != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInEnvironmentHandler> Group %v doesn't exist", gr.Group.Name)
+					return sdk.WrapError(sdk.ErrGroupNotFound, "Group %v doesn't exist", gr.Group.Name)
 				}
 				if err := group.InsertGroupInProject(tx, proj.ID, gro.ID, gr.Permission); err != nil {
-					return sdk.WrapError(err, "importGroupsInEnvironmentHandler> Cannot add group %v in project %s", gr.Group.Name, proj.Name)
+					return sdk.WrapError(err, "Cannot add group %v in project %s", gr.Group.Name, proj.Name)
 				}
 				gr.Group = *gro
 				proj.ProjectGroups = append(proj.ProjectGroups, gr)
 			}
 
 			if err := group.DeleteAllGroupFromEnvironment(tx, env.ID); err != nil {
-				return sdk.WrapError(err, "importGroupsInEnvironmentHandler> Cannot delete all groups for this environment %s", env.Name)
+				return sdk.WrapError(err, "Cannot delete all groups for this environment %s", env.Name)
 			}
 
 			env.EnvironmentGroups = []sdk.GroupPermission{}
 			for _, gr := range groupsToAdd {
 				gro, errG := group.LoadGroup(tx, gr.Group.Name)
 				if errG != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInEnvironmentHandler> Cannot load group %s : %s", gr.Group.Name, errG)
+					return sdk.WrapError(sdk.ErrGroupNotFound, "Cannot load group %s : %s", gr.Group.Name, errG)
 				}
 				if err := group.InsertGroupInEnvironment(tx, env.ID, gro.ID, gr.Permission); err != nil {
-					return sdk.WrapError(err, "importGroupsInEnvironmentHandler> Cannot insert group %s in this environment %s", gr.Group.Name, env.Name)
+					return sdk.WrapError(err, "Cannot insert group %s in this environment %s", gr.Group.Name, env.Name)
 				}
 				env.EnvironmentGroups = append(env.EnvironmentGroups, sdk.GroupPermission{Group: sdk.Group{Name: gr.Group.Name}, Permission: gr.Permission})
 			}
 		} else { // add new group
 			for _, gr := range groupsToAdd {
 				if _, errGr := group.GetIDByNameInList(env.EnvironmentGroups, gr.Group.Name); errGr == nil {
-					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInEnvironmentHandler> Group %s in environment %s", gr.Group.Name, env.Name)
+					return sdk.WrapError(sdk.ErrGroupExists, "Group %s in environment %s", gr.Group.Name, env.Name)
 				}
 
 				grID, errG := group.GetIDByNameInList(proj.ProjectGroups, gr.Group.Name)
 				if errG != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInEnvironmentHandler> Cannot find group %s in this project %s : %s", gr.Group.Name, proj.Name, errG)
+					return sdk.WrapError(sdk.ErrGroupNotFound, "Cannot find group %s in this project %s : %s", gr.Group.Name, proj.Name, errG)
 				}
 				if errA := group.InsertGroupInEnvironment(tx, env.ID, grID, gr.Permission); errA != nil {
-					return sdk.WrapError(errA, "importGroupsInEnvironmentHandler> Cannot insert group %s in this environment %s", gr.Group.Name, env.Name)
+					return sdk.WrapError(errA, "Cannot insert group %s in this environment %s", gr.Group.Name, env.Name)
 				}
 				env.EnvironmentGroups = append(env.EnvironmentGroups, sdk.GroupPermission{Group: sdk.Group{Name: gr.Group.Name}, Permission: gr.Permission})
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "importGroupsInEnvironmentHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, env, http.StatusOK)

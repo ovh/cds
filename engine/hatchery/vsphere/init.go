@@ -46,7 +46,7 @@ func (h *HatcheryVSphere) newClient(ctx context.Context) (*govmomi.Client, error
 	// Parse URL from string
 	u, err := soap.ParseURL("https://" + h.user + ":" + h.password + "@" + h.endpoint)
 	if err != nil {
-		return nil, sdk.WrapError(err, "newClient> cannot parse url")
+		return nil, sdk.WrapError(err, "cannot parse url")
 	}
 
 	// Connect and log in to ESX or vCenter

@@ -144,7 +144,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)
@@ -165,7 +165,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		}
 
 		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
-			return sdk.WrapError(err, "putImportPipelineHandler> Unable to load project permissions %s", key)
+			return sdk.WrapError(err, "Unable to load project permissions %s", key)
 		}
 
 		// Get body
@@ -242,7 +242,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "putImportPipelineHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, msgListString, http.StatusOK)

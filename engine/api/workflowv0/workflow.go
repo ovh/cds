@@ -19,7 +19,7 @@ import (
 func GetWorkflowStatus(db gorp.SqlExecutor, store cache.Store, projectkey, appName string, user *sdk.User, branchName, remote string, version int64) ([]sdk.PipelineBuild, []sdk.PipelineScheduler, []sdk.Hook, error) {
 	cdPipelines, err := LoadCDTree(db, store, projectkey, appName, user, branchName, remote, version)
 	if err != nil {
-		return nil, nil, nil, sdk.WrapError(err, "GetWorkflowStatus> Cannot load workflow")
+		return nil, nil, nil, sdk.WrapError(err, "Cannot load workflow")
 	}
 
 	var pbs []sdk.PipelineBuild
@@ -235,7 +235,7 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 
 	rows, err := db.Query(query, projectkey, appName)
 	if err != nil {
-		return nil, sdk.WrapError(err, "LoadCDTree> Cannot load root elements")
+		return nil, sdk.WrapError(err, "Cannot load root elements")
 	}
 	defer rows.Close()
 
@@ -249,7 +249,7 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 			&root.Pipeline.ID, &root.Pipeline.Name, &typePipeline,
 			&root.Environment.ID, &root.Environment.Name,
 			&hasHook, &hasScheduler, &hasPoller, &hasChild); err != nil {
-			return nil, sdk.WrapError(err, "LoadCDTree> Cannot scan load root result")
+			return nil, sdk.WrapError(err, "Cannot scan load root result")
 		}
 		root.Pipeline.Type = typePipeline
 		if root.Environment.ID == 0 {
@@ -267,7 +267,7 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 			if permission.AccessToPipeline(projectkey, root.Environment.Name, root.Pipeline.Name, user, permission.PermissionRead) {
 				if hasChild {
 					if err := getChild(db, &root, user, branchName, remote, version); err != nil {
-						return nil, sdk.WrapError(err, "LoadCDTree> Cannot get child")
+						return nil, sdk.WrapError(err, "Cannot get child")
 					}
 				}
 				root.Project.Key = projectkey
@@ -279,7 +279,7 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 
 				pipParams, errP := pipeline.GetAllParametersInPipeline(context.TODO(), db, root.Pipeline.ID)
 				if errP != nil {
-					return nil, sdk.WrapError(err, "LoadCDTree> Cannot get pipeline parameters")
+					return nil, sdk.WrapError(err, "Cannot get pipeline parameters")
 				}
 				root.Pipeline.Parameter = pipParams
 
@@ -362,7 +362,7 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 
 		if lastTree != nil {
 			if err := fetchTriggers(db, lastTree, hasScheduler, hasPoller, hasHook); err != nil {
-				return nil, sdk.WrapError(err, "LoadCDTree> Cannot fetch triggers")
+				return nil, sdk.WrapError(err, "Cannot fetch triggers")
 			}
 		}
 	}
@@ -471,7 +471,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 			&child.Trigger.DestProject.ID, &child.Trigger.DestProject.Key, &child.Trigger.DestProject.Name,
 			&params, &prerequisites,
 			&hasSchedulers, &hasHooks, &hasPoller); err != nil {
-			return sdk.WrapError(err, "getChild> Cannot scan child for root: %d-%d-%d", parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
+			return sdk.WrapError(err, "Cannot scan child for root: %d-%d-%d", parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
 		}
 
 		child.Project.Key = child.Trigger.SrcProject.Key
@@ -523,15 +523,15 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 			child.Environment.Permission = permission.EnvironmentPermission(child.Project.Key, child.Pipeline.Name, user)
 
 			if err := json.Unmarshal([]byte(params), &child.Trigger.Parameters); err != nil {
-				return sdk.WrapError(err, "getChild> Cannot unmarshal trigger params")
+				return sdk.WrapError(err, "Cannot unmarshal trigger params")
 			}
 
 			if err := json.Unmarshal([]byte(prerequisites), &child.Trigger.Prerequisites); err != nil {
-				return sdk.WrapError(err, "getChild> Cannot unmarshal trigger prerequisite")
+				return sdk.WrapError(err, "Cannot unmarshal trigger prerequisite")
 			}
 
 			if err := fetchTriggers(db, &child, hasSchedulers, hasPoller, hasHooks); err != nil {
-				return sdk.WrapError(err, "getChild> Cannot fetch trigger")
+				return sdk.WrapError(err, "Cannot fetch trigger")
 			}
 
 			listTrigger = append(listTrigger, child)

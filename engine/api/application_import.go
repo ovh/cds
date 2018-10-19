@@ -60,7 +60,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "postApplicationImportHandler> Unable to start tx")
+			return sdk.WrapError(err, "Unable to start tx")
 		}
 		defer tx.Rollback()
 
@@ -79,7 +79,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postApplicationImportHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 		event.PublishAddApplication(proj.Key, *newApp, getUser(ctx))
 

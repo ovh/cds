@@ -203,11 +203,11 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return sdk.WrapError(err, "InsertVariable> Cannot encryp secret %s", variable.Name)
+		return sdk.WrapError(err, "Cannot encryp secret %s", variable.Name)
 	}
 
 	if err := db.QueryRow(query, proj.ID, variable.Name, clear, cipher, string(variable.Type)).Scan(&variable.ID); err != nil {
-		return sdk.WrapError(err, "InsertVariable> Cannot insert variable %s in DB", variable.Name)
+		return sdk.WrapError(err, "Cannot insert variable %s in DB", variable.Name)
 	}
 
 	pva := &sdk.ProjectVariableAudit{
@@ -220,7 +220,7 @@ func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 	}
 
 	if err := insertAudit(db, pva); err != nil {
-		return sdk.WrapError(err, "InsertVariable> Cannot insert audit for variable %s", variable.Name)
+		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
 	return nil
 }
@@ -243,14 +243,14 @@ func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 
 	clear, cipher, err := secret.EncryptS(variable.Type, varValue)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret %s", variable.Name)
+		return sdk.WrapError(err, "Cannot encrypt secret %s", variable.Name)
 	}
 
 	query := `UPDATE project_variable SET var_name=$1, var_value=$2, cipher_value=$3, var_type=$4
 		   WHERE id=$5`
 	_, err = db.Exec(query, variable.Name, clear, cipher, string(variable.Type), variable.ID)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateVariable> Cannot update variable %s", variable.Name)
+		return sdk.WrapError(err, "Cannot update variable %s", variable.Name)
 	}
 
 	pva := &sdk.ProjectVariableAudit{
@@ -264,7 +264,7 @@ func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 	}
 
 	if err := insertAudit(db, pva); err != nil {
-		return sdk.WrapError(err, "UpdateVariable> Cannot insert audit for variable %s", variable.Name)
+		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
 
 	return nil
@@ -275,7 +275,7 @@ func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 	query := `DELETE FROM project_variable WHERE project_id=$1 AND id=$2`
 	_, err := db.Exec(query, proj.ID, variable.ID)
 	if err != nil {
-		return sdk.WrapError(err, "DeleteVariable> Cannot delete variable %s", variable.Name)
+		return sdk.WrapError(err, "Cannot delete variable %s", variable.Name)
 	}
 
 	pva := &sdk.ProjectVariableAudit{
@@ -288,7 +288,7 @@ func DeleteVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 	}
 
 	if err := insertAudit(db, pva); err != nil {
-		return sdk.WrapError(err, "DeleteVariable> Cannot insert audit for variable %s", variable.Name)
+		return sdk.WrapError(err, "Cannot insert audit for variable %s", variable.Name)
 	}
 
 	return err

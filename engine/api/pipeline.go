@@ -88,7 +88,7 @@ func (api *API) runPipelineWithLastParentHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrPipelineNotAttached, "runPipelineWithLastParentHandler> Pipeline %s is not attached to app %s", pipelineName, appName)
 		}
 		if err != nil {
-			return sdk.WrapError(err, "runPipelineWithLastParentHandler> Cannot check if pipeline %s is attached to %s", pipelineName, appName)
+			return sdk.WrapError(err, "Cannot check if pipeline %s is attached to %s", pipelineName, appName)
 		}
 
 		//Load environment
@@ -220,12 +220,12 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 
 	envDest, err := loadDestEnvFromRunRequest(ctx, api.mustDB(), request, projectKey)
 	if err != nil {
-		return sdk.WrapError(err, "runPipelineHandler> Unable to load dest environment")
+		return sdk.WrapError(err, "Unable to load dest environment")
 	}
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
-		return sdk.WrapError(err, "runPipelineHandler> Cannot start tx")
+		return sdk.WrapError(err, "Cannot start tx")
 	}
 	defer tx.Rollback()
 
@@ -253,11 +253,11 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 
 	pb, err := queue.RunPipeline(api.mustDB, api.Cache, tx, projectKey, app, pipelineName, envDest.Name, request.Params, version, trigger, getUser(ctx))
 	if err != nil {
-		return sdk.WrapError(err, "runPipelineHandler> Cannot run pipeline")
+		return sdk.WrapError(err, "Cannot run pipeline")
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "runPipelineHandler> Cannot commit tx")
+		return sdk.WrapError(err, "Cannot commit tx")
 	}
 
 	go func() {
@@ -289,7 +289,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 
 		var p sdk.Pipeline
 		if err := service.UnmarshalBody(r, &p); err != nil {
-			return sdk.WrapError(err, "updatePipelineHandler> Cannot read body")
+			return sdk.WrapError(err, "Cannot read body")
 		}
 
 		// check pipeline name pattern
@@ -300,7 +300,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 
 		pipelineDB, err := pipeline.LoadPipeline(api.mustDB(), key, name, true)
 		if err != nil {
-			return sdk.WrapError(err, "updatePipelineHandler> cannot load pipeline %s", name)
+			return sdk.WrapError(err, "cannot load pipeline %s", name)
 		}
 
 		tx, errB := api.mustDB().Begin()
@@ -310,7 +310,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updatePipelineHandler> Cannot create audit")
+			return sdk.WrapError(err, "Cannot create audit")
 		}
 
 		oldName := pipelineDB.Name
@@ -319,11 +319,11 @@ func (api *API) updatePipelineHandler() service.Handler {
 		pipelineDB.Type = p.Type
 
 		if err := pipeline.UpdatePipeline(tx, pipelineDB); err != nil {
-			return sdk.WrapError(err, "updatePipelineHandler> cannot update pipeline %s", name)
+			return sdk.WrapError(err, "cannot update pipeline %s", name)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "updatePipelineHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishPipelineUpdate(key, p.Name, oldName, getUser(ctx))
@@ -357,7 +357,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		}
 
 		if err := pipeline.LoadGroupByPipeline(ctx, db, audit.Pipeline); err != nil {
-			return sdk.WrapError(err, "postPipelineRollbackHandler> cannot load group by pipeline")
+			return sdk.WrapError(err, "cannot load group by pipeline")
 		}
 
 		tx, errTx := db.Begin()
@@ -380,14 +380,14 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		}(&msgList)
 
 		if err := pipeline.ImportUpdate(tx, proj, audit.Pipeline, msgChan, u); err != nil {
-			return sdk.WrapError(err, "postPipelineRollbackHandler> cannot import pipeline")
+			return sdk.WrapError(err, "cannot import pipeline")
 		}
 
 		close(msgChan)
 		done.Wait()
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postPipelineRollbackHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishPipelineUpdate(key, audit.Pipeline.Name, name, u)
@@ -405,11 +405,11 @@ func (api *API) getApplicationUsingPipelineHandler() service.Handler {
 
 		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), key, name, false)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationUsingPipelineHandler> Cannot load pipeline %s", name)
+			return sdk.WrapError(err, "Cannot load pipeline %s", name)
 		}
 		applications, err := application.LoadByPipeline(api.mustDB(), api.Cache, pipelineData.ID, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s", name)
+			return sdk.WrapError(err, "Cannot load applications using pipeline %s", name)
 		}
 
 		return service.WriteJSON(w, applications, http.StatusOK)
@@ -497,7 +497,7 @@ func (api *API) getPipelineAuditHandler() service.Handler {
 
 		audits, err := pipeline.LoadAudit(api.mustDB(), projectKey, pipelineName)
 		if err != nil {
-			return sdk.WrapError(err, "getPipelineAuditHandler> Cannot load pipeline audit")
+			return sdk.WrapError(err, "Cannot load pipeline audit")
 		}
 		return service.WriteJSON(w, audits, http.StatusOK)
 	}
@@ -515,7 +515,7 @@ func (api *API) getPipelineHandler() service.Handler {
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
-			return sdk.WrapError(err, "getPipelineHandler> Cannot load pipeline %s", pipelineName)
+			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}
 
 		p.Permission = permission.PipelinePermission(projectKey, p.Name, getUser(ctx))
@@ -593,7 +593,7 @@ func (api *API) getPipelineHistoryHandler() service.Handler {
 		appName := vars["permApplicationName"]
 
 		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(err, "getPipelineHistoryHandler> Cannot parse form")
+			return sdk.WrapError(err, "Cannot parse form")
 		}
 		envName := r.Form.Get("envName")
 		limitString := r.Form.Get("limit")
@@ -637,12 +637,12 @@ func (api *API) getPipelineHistoryHandler() service.Handler {
 			var errle error
 			env, errle = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
 			if errle != nil {
-				return sdk.WrapError(errle, "getPipelineHistoryHandler> Cannot load environment %s", envName)
+				return sdk.WrapError(errle, "Cannot load environment %s", envName)
 			}
 		}
 
 		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enought right on this environment %s", envName)
+			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", envName)
 		}
 
 		opts := []pipeline.ExecOptionFunc{
@@ -665,7 +665,7 @@ func (api *API) getPipelineHistoryHandler() service.Handler {
 		pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), a.ID, p.ID, env.ID, limit, opts...)
 
 		if errl != nil {
-			return sdk.WrapError(errl, "getPipelineHistoryHandler> cannot load pipeline %s history", p.Name)
+			return sdk.WrapError(errl, "Cannot load pipeline %s history", p.Name)
 		}
 
 		return service.WriteJSON(w, pbs, http.StatusOK)
@@ -681,48 +681,48 @@ func (api *API) deletePipelineHandler() service.Handler {
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
-			return sdk.WrapError(errP, "deletePipeline> Cannot load project")
+			return sdk.WrapError(errP, "Cannot load project")
 		}
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pipelineName, false)
 		if err != nil {
-			return sdk.WrapError(err, "deletePipeline> Cannot load pipeline %s", pipelineName)
+			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}
 
 		used, err := application.CountPipeline(api.mustDB(), p.ID)
 		if err != nil {
-			return sdk.WrapError(err, "deletePipeline> Cannot check if pipeline is used by an application")
+			return sdk.WrapError(err, "Cannot check if pipeline is used by an application")
 		}
 
 		if used {
-			return sdk.WrapError(sdk.ErrPipelineHasApplication, "deletePipeline> Cannot delete a pipeline used by at least 1 application")
+			return sdk.WrapError(sdk.ErrPipelineHasApplication, "Cannot delete a pipeline used by at least 1 application")
 		}
 
 		usedW, err := workflow.CountPipeline(api.mustDB(), p.ID)
 		if err != nil {
-			return sdk.WrapError(err, "deletePipeline> Cannot check if pipeline is used by a workflow")
+			return sdk.WrapError(err, "Cannot check if pipeline is used by a workflow")
 		}
 
 		if usedW {
-			return sdk.WrapError(sdk.ErrPipelineUsedByWorkflow, "deletePipeline> Cannot delete a pipeline used by at least 1 workflow")
+			return sdk.WrapError(sdk.ErrPipelineUsedByWorkflow, "Cannot delete a pipeline used by at least 1 workflow")
 		}
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "deletePipeline> Cannot begin transaction")
+			return sdk.WrapError(errT, "Cannot begin transaction")
 		}
 		defer tx.Rollback()
 
 		if err := pipeline.DeleteAudit(tx, p.ID); err != nil {
-			return sdk.WrapError(err, "deletePipeline> Cannot delete pipeline audit")
+			return sdk.WrapError(err, "Cannot delete pipeline audit")
 		}
 
 		if err := pipeline.DeletePipeline(tx, p.ID, getUser(ctx).ID); err != nil {
-			return sdk.WrapError(err, "deletePipeline> Cannot delete pipeline %s", pipelineName)
+			return sdk.WrapError(err, "Cannot delete pipeline %s", pipelineName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deletePipeline> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishPipelineDelete(key, *p, getUser(ctx))
@@ -741,7 +741,7 @@ func (api *API) getBuildingPipelinesHandler() service.Handler {
 			recent, err = pipeline.LoadUserRecentPipelineBuild(api.mustDB(), getUser(ctx).ID)
 		}
 		if err != nil {
-			return sdk.WrapError(err, "getBuildingPipelines> cannot load recent pipelines")
+			return sdk.WrapError(err, "cannot load recent pipelines")
 
 		}
 		pbs = append(pbs, recent...)
@@ -778,17 +778,17 @@ func (api *API) stopPipelineBuildHandler() service.Handler {
 
 		buildNumber, err := requestVarInt(r, "build")
 		if err != nil {
-			return sdk.WrapError(err, "stopPipelineBuildHandler> invalid build number")
+			return sdk.WrapError(err, "invalid build number")
 		}
 
 		pip, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipName, false)
 		if err != nil {
-			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot load pipeline")
+			return sdk.WrapError(err, "Cannot load pipeline")
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot load application")
+			return sdk.WrapError(err, "Cannot load application")
 		}
 
 		if pip.Type != sdk.BuildPipeline && (envName == "" || envName == sdk.DefaultEnv.Name) {
@@ -799,7 +799,7 @@ func (api *API) stopPipelineBuildHandler() service.Handler {
 		if pip.Type != sdk.BuildPipeline {
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
 			if err != nil {
-				return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot load environment %s", envName)
+				return sdk.WrapError(err, "Cannot load environment %s", envName)
 			}
 		}
 
@@ -817,7 +817,7 @@ func (api *API) stopPipelineBuildHandler() service.Handler {
 		}
 
 		if err := pipeline.StopPipelineBuild(api.mustDB(), api.Cache, pb); err != nil {
-			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot stop pipeline build")
+			return sdk.WrapError(err, "Cannot stop pipeline build")
 		}
 
 		return nil
@@ -848,14 +848,14 @@ func (api *API) restartPipelineBuildHandler() service.Handler {
 		// Load pipeline
 		pip, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipName, false)
 		if err != nil {
-			return sdk.WrapError(err, "restartPipelineBuildHandler> Cannot load pipeline")
+			return sdk.WrapError(err, "Cannot load pipeline")
 
 		}
 
 		// Load application
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "restartPipelineBuildHandler> Cannot load application")
+			return sdk.WrapError(err, "Cannot load application")
 
 		}
 
@@ -869,12 +869,12 @@ func (api *API) restartPipelineBuildHandler() service.Handler {
 		if pip.Type != sdk.BuildPipeline {
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
 			if err != nil {
-				return sdk.WrapError(err, "restartPipelineBuildHandler> Cannot load environment %s", envName)
+				return sdk.WrapError(err, "Cannot load environment %s", envName)
 
 			}
 
 			if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
-				return sdk.WrapError(sdk.ErrForbidden, "restartPipelineBuildHandler> No enought right on this environment %s: ", envName)
+				return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s: ", envName)
 
 			}
 		}
@@ -899,7 +899,7 @@ func (api *API) restartPipelineBuildHandler() service.Handler {
 		defer tx.Rollback()
 
 		if err := pipeline.RestartPipelineBuild(tx, pb); err != nil {
-			return sdk.WrapError(err, "restartPipelineBuildHandler> cannot restart pb")
+			return sdk.WrapError(err, "cannot restart pb")
 
 		}
 
@@ -946,12 +946,12 @@ func (api *API) getPipelineCommitsHandler() service.Handler {
 			var err error
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
 			if err != nil {
-				return sdk.WrapError(err, "getPipelineCommitsHandler> Cannot load environment %s", envName)
+				return sdk.WrapError(err, "Cannot load environment %s", envName)
 			}
 		}
 
 		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getPipelineCommitsHandler> No enought right on this environment %s (user=%s)", envName, getUser(ctx).Username)
+			return sdk.WrapError(sdk.ErrForbidden, "getPipelineCommitsHandler> No enough right on this environment %s (user=%s)", envName, getUser(ctx).Username)
 		}
 
 		//Load the application
@@ -1031,7 +1031,7 @@ func (api *API) getPipelineBuildCommitsHandler() service.Handler {
 		// Load pipeline
 		pip, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipName, false)
 		if err != nil {
-			return sdk.WrapError(err, "getPipelineBuildCommitsHandler> Cannot load pipeline")
+			return sdk.WrapError(err, "Cannot load pipeline")
 
 		}
 
@@ -1050,7 +1050,7 @@ func (api *API) getPipelineBuildCommitsHandler() service.Handler {
 		}
 
 		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enought right on this environment %s: ", envName)
+			return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enough right on this environment %s: ", envName)
 		}
 
 		//Load the application
@@ -1072,7 +1072,7 @@ func (api *API) getPipelineBuildCommitsHandler() service.Handler {
 
 		cm, err := pipeline.UpdatePipelineBuildCommits(api.mustDB(), api.Cache, proj, pip, app, env, pb)
 		if err != nil {
-			return sdk.WrapError(err, "getPipelineBuildCommitsHandler> UpdatePipelineBuildCommits failed")
+			return sdk.WrapError(err, "UpdatePipelineBuildCommits failed")
 		}
 		return service.WriteJSON(w, cm, http.StatusOK)
 	}

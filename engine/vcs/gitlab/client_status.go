@@ -67,7 +67,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if err != nil {
-		return sdk.WrapError(err, "gitlabClient.SetStatus> Cannot process event %v", event)
+		return sdk.WrapError(err, "Cannot process event %v", event)
 	}
 
 	if c.disableStatusDetail {
@@ -85,7 +85,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	}
 
 	if _, _, err := c.client.Commits.SetCommitStatus(data.repoFullName, data.hash, opt); err != nil {
-		return sdk.WrapError(err, "gitlabClient.SetStatus> Cannot process event %v - repo:%s hash:%s", event, data.repoFullName, data.hash)
+		return sdk.WrapError(err, "Cannot process event %v - repo:%s hash:%s", event, data.repoFullName, data.hash)
 	}
 
 	return nil
@@ -94,7 +94,7 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 func (c *gitlabClient) ListStatuses(ctx context.Context, repo string, ref string) ([]sdk.VCSCommitStatus, error) {
 	ss, _, err := c.client.Commits.GetCommitStatuses(repo, ref, nil)
 	if err != nil {
-		return nil, sdk.WrapError(err, "gitlabClient.ListStatuses> Unable to get comit statuses %s", ref)
+		return nil, sdk.WrapError(err, "Unable to get comit statuses %s", ref)
 	}
 
 	vcsStatuses := []sdk.VCSCommitStatus{}
@@ -130,7 +130,7 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 	data := statusData{}
 	var eventNR sdk.EventRunWorkflowNode
 	if err := mapstructure.Decode(event.Payload, &eventNR); err != nil {
-		return data, sdk.WrapError(err, "gitlabClient.processPipelineBuildEvent> cannot read payload")
+		return data, sdk.WrapError(err, "cannot read payload")
 	}
 
 	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
@@ -152,7 +152,7 @@ func processPipelineBuildEvent(event sdk.Event, uiURL string) (statusData, error
 	data := statusData{}
 	var eventpb sdk.EventPipelineBuild
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		return data, sdk.WrapError(err, "gitlabClient.processPipelineBuildEvent> cannot read payload")
+		return data, sdk.WrapError(err, "cannot read payload")
 	}
 
 	cdsProject := eventpb.ProjectKey

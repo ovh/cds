@@ -28,7 +28,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		}
 		//Delete all Variables
 		if err := DeleteAllVariable(db, oldApp.ID); err != nil {
-			return sdk.WrapError(err, "application.Import> Cannot delete application variable")
+			return sdk.WrapError(err, "Cannot delete application variable")
 		}
 
 		///Delete all Keys
@@ -38,7 +38,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 
 		//Delete groups
 		if err := group.DeleteAllGroupFromApplication(db, oldApp.ID); err != nil {
-			return sdk.WrapError(err, "application.Import> Unable to delete group")
+			return sdk.WrapError(err, "Unable to delete group")
 		}
 
 		app.ProjectID = oldApp.ProjectID
@@ -46,7 +46,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 
 		//Save app in database
 		if err := Update(db, store, app, u); err != nil {
-			return sdk.WrapError(err, "application.Import> Unable to update application")
+			return sdk.WrapError(err, "Unable to update application")
 		}
 
 		if msgChan != nil {
@@ -118,7 +118,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 	for _, k := range app.Keys {
 		k.ApplicationID = app.ID
 		if err := InsertKey(db, &k); err != nil {
-			return sdk.WrapError(err, "application.Import> Unable to insert key %s", k.Name)
+			return sdk.WrapError(err, "Unable to insert key %s", k.Name)
 		}
 		if msgChan != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgAppKeyCreated, strings.ToUpper(k.Type), k.Name, app.Name)
@@ -127,7 +127,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 
 	//Set deployment strategies
 	if err := DeleteAllDeploymentStrategies(db, app.ID); err != nil {
-		return sdk.WrapError(err, "application.Import> Unable to delete deployment strategies")
+		return sdk.WrapError(err, "Unable to delete deployment strategies")
 	}
 
 	for pfName, pfConfig := range app.DeploymentStrategies {
@@ -136,7 +136,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 			return sdk.WrapError(sdk.NewError(sdk.ErrNotFound, fmt.Errorf("platform %s not found", pfName)), "application.Import")
 		}
 		if err := SetDeploymentStrategy(db, proj.ID, app.ID, pf.PlatformModelID, pfName, pfConfig); err != nil {
-			return sdk.WrapError(err, "application.Import> unable to set deployment strategy %s", pfName)
+			return sdk.WrapError(err, "unable to set deployment strategy %s", pfName)
 		}
 	}
 

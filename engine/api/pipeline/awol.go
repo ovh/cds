@@ -69,7 +69,7 @@ func killAWOLPipelineBuildJob(db *gorp.DbMap, store cache.Store, pbJobData awolP
 
 	query := `UPDATE worker SET status = $1, action_build_id = NULL WHERE action_build_id = $2`
 	if _, err := tx.Exec(query, string(sdk.StatusDisabled), pbJobData.pipelineBuildJobID); err != nil {
-		return sdk.WrapError(err, "killAWOLPipelineBuildJob> error while execute query. pbJobData.pipelineBuildJobID:%d", pbJobData.pipelineBuildJobID)
+		return sdk.WrapError(err, "error while execute query. pbJobData.pipelineBuildJobID:%d", pbJobData.pipelineBuildJobID)
 	}
 
 	return tx.Commit()

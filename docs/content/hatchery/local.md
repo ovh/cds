@@ -13,10 +13,10 @@ can launch CDS Worker on your host.
 
 Two prerequisites: 
 
-* your host must reach your CDS API on HTTP port or GPRC Port defined on your [CDS Configuration]({{< relref "hosting/configuration.md">}})
+* your host must reach your CDS API on HTTP port or GRPC Port defined on your [CDS Configuration]({{< relref "hosting/configuration.md">}})
 * you need the CDS Worker binary on your host. 
 
-You can download it from [latest release on Github](https://github.com/ovh/cds/releases) or from download page on your CDS Instance (Navbar -> Settings -> Download)
+You can download it from [latest release on GitHub](https://github.com/ovh/cds/releases) or from download page on your CDS Instance (Navbar -> Settings -> Download)
 
 ## Start Local hatchery
 

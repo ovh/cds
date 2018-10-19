@@ -118,7 +118,7 @@ var (
 	loadPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		pf, err := platform.LoadPlatformsByProjectID(db, proj.ID, false)
 		if err != nil {
-			return sdk.WrapError(err, "loadPlatforms> Cannot load platforms")
+			return sdk.WrapError(err, "Cannot load platforms")
 		}
 		proj.Platforms = pf
 		return nil
@@ -131,7 +131,7 @@ var (
 	loadClearPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		pf, err := platform.LoadPlatformsByProjectID(db, proj.ID, true)
 		if err != nil {
-			return sdk.WrapError(err, "loadClearPlatforms> Cannot load platforms")
+			return sdk.WrapError(err, "Cannot load platforms")
 		}
 		proj.Platforms = pf
 		return nil
@@ -238,7 +238,7 @@ var (
 	loadLabels = func(db gorp.SqlExecutor, _ cache.Store, proj *sdk.Project, _ *sdk.User) error {
 		labels, err := Labels(db, proj.ID)
 		if err != nil {
-			return sdk.WrapError(err, "project.loadLabels>")
+			return sdk.WithStack(err)
 		}
 		proj.Labels = labels
 		return nil
@@ -247,7 +247,7 @@ var (
 	loadFavorites = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		count, err := db.SelectInt("SELECT COUNT(1) FROM project_favorite WHERE project_id = $1 AND user_id = $2", proj.ID, u.ID)
 		if err != nil {
-			return sdk.WrapError(err, "project.loadFavorites>")
+			return sdk.WithStack(err)
 		}
 		proj.Favorite = count > 0
 

@@ -47,13 +47,13 @@ func EnvironmentsByGroupID(db gorp.SqlExecutor, key string, groupID int64) ([]st
 	envsName := make([]string, 0)
 	rows, err := db.Query(query, key, groupID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "group.EnvironmentsByGroupID> Unable to list environment")
+		return nil, sdk.WrapError(err, "Unable to list environment")
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var env string
 		if err := rows.Scan(&env); err != nil {
-			return nil, sdk.WrapError(err, "group.EnvironmentsByGroupID> Unable to scan")
+			return nil, sdk.WrapError(err, "Unable to scan")
 		}
 		envsName = append(envsName, env)
 	}
@@ -107,7 +107,7 @@ func InsertGroupInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64,
 func InsertGroupsInEnvironment(db gorp.SqlExecutor, groupPermission []sdk.GroupPermission, envID int64) error {
 	for _, g := range groupPermission {
 		if err := InsertGroupInEnvironment(db, envID, g.Group.ID, g.Permission); err != nil {
-			return sdk.WrapError(err, "InsertGroupsInEnvironment> unable to insert group %d %s on env %d ", g.Group.ID, g.Group.Name, envID)
+			return sdk.WrapError(err, "unable to insert group %d %s on env %d ", g.Group.ID, g.Group.Name, envID)
 		}
 	}
 	return nil

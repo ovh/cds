@@ -13,7 +13,7 @@ import (
 func EncryptVCSStrategyPassword(app *sdk.Application) error {
 	encryptedPwd, err := secret.Encrypt([]byte(app.RepositoryStrategy.Password))
 	if err != nil {
-		return sdk.WrapError(err, "EncryptVCSStrategyPassword> Unable to encrypt password")
+		return sdk.WrapError(err, "Unable to encrypt password")
 	}
 
 	app.RepositoryStrategy.Password = base64.StdEncoding.EncodeToString(encryptedPwd)
@@ -32,7 +32,7 @@ func DecryptVCSStrategyPassword(app *sdk.Application) error {
 
 	clearPWD, err := secret.Decrypt([]byte(encryptedPassword))
 	if err != nil {
-		return sdk.WrapError(err, "EncryptVCSStrategyPassword> Unable to decrypt password")
+		return sdk.WrapError(err, "Unable to decrypt password")
 	}
 
 	app.RepositoryStrategy.Password = string(clearPWD)
@@ -51,7 +51,7 @@ func CountApplicationByVcsConfigurationKeys(db gorp.SqlExecutor, projectKey stri
 		WHERE sshkey = $2 OR pgpkey = $2`
 	var appsName []string
 	if _, err := db.Select(&appsName, query, projectKey, vcsName); err != nil {
-		return nil, sdk.WrapError(err, "CountKeysInVcsConfigurationt> Cannot count keyName in vcs configuration")
+		return nil, sdk.WrapError(err, "Cannot count keyName in vcs configuration")
 	}
 	return appsName, nil
 }
@@ -66,7 +66,7 @@ func GetNameByVCSServer(db gorp.SqlExecutor, vcsName string, projectKey string) 
 		WHERE project.projectkey = $1 AND application.vcs_server = $2
 	`
 	if _, err := db.Select(&appsName, query, projectKey, vcsName); err != nil {
-		return nil, sdk.WrapError(err, "GetNameByVCSServer> Unable to list application name")
+		return nil, sdk.WrapError(err, "Unable to list application name")
 	}
 	return appsName, nil
 }

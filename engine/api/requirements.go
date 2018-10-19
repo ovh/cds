@@ -27,14 +27,14 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 		case sdk.BinaryRequirement:
 			req, err := action.LoadAllBinaryRequirements(api.mustDB())
 			if err != nil {
-				return sdk.WrapError(err, "getRequirementTypeValuesHandler> Cannot load binary requirements")
+				return sdk.WrapError(err, "Cannot load binary requirements")
 			}
 			return service.WriteJSON(w, req.Values(), http.StatusOK)
 
 		case sdk.ModelRequirement:
 			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getUser(ctx), nil)
 			if err != nil {
-				return sdk.WrapError(err, "getRequirementTypeValuesHandler> Cannot load worker models")
+				return sdk.WrapError(err, "Cannot load worker models")
 			}
 			modelsAsRequirements := make(sdk.RequirementList, len(models))
 			for i, m := range models {

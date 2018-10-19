@@ -45,7 +45,7 @@ type LoadRunOptions struct {
 func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	runDB := Run(*wr)
 	if err := db.Insert(&runDB); err != nil {
-		return sdk.WrapError(err, "insertWorkflowRun> Unable to insert run")
+		return sdk.WrapError(err, "Unable to insert run")
 	}
 	wr.ID = runDB.ID
 	return nil
@@ -70,7 +70,7 @@ func UpdateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, wr *sdk.Workflo
 
 	runDB := Run(*wr)
 	if _, err := db.Update(&runDB); err != nil {
-		return sdk.WrapError(err, "updateWorkflowRun> Unable to update workflow run")
+		return sdk.WrapError(err, "Unable to update workflow run")
 	}
 	wr.ID = runDB.ID
 	return nil
@@ -85,7 +85,7 @@ func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	//Update workflow run status
 	query := "UPDATE workflow_run SET status = $1, last_modified = $2, last_execution = $3 WHERE id = $4"
 	if _, err := db.Exec(query, wr.Status, wr.LastModified, wr.LastExecution, wr.ID); err != nil {
-		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", wr.ID, wr.Status)
+		return sdk.WrapError(err, "Unable to set  workflow_run id %d with status %s", wr.ID, wr.Status)
 	}
 	return nil
 }
@@ -95,10 +95,10 @@ func LoadWorkflowFromWorkflowRunID(db gorp.SqlExecutor, wrID int64) (sdk.Workflo
 	var workflow sdk.Workflow
 	wNS, err := db.SelectNullStr("SELECT workflow FROM workflow_run WHERE id = $1", wrID)
 	if err != nil {
-		return workflow, sdk.WrapError(err, "LoadWorkflowFromWorkflowRunID> Unable to load workflow for workflow run %d", wrID)
+		return workflow, sdk.WrapError(err, "Unable to load workflow for workflow run %d", wrID)
 	}
 	if err := gorpmapping.JSONNullString(wNS, &workflow); err != nil {
-		return workflow, sdk.WrapError(err, "LoadWorkflowFromWorkflowRunID> Unable to write into workflow struct")
+		return workflow, sdk.WrapError(err, "Unable to write into workflow struct")
 	}
 	return workflow, nil
 }
@@ -107,30 +107,30 @@ func LoadWorkflowFromWorkflowRunID(db gorp.SqlExecutor, wrID int64) (sdk.Workflo
 func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 	w, errw := json.Marshal(r.Workflow)
 	if errw != nil {
-		return sdk.WrapError(errw, "Run.PostInsert> Unable to marshal workflow")
+		return sdk.WrapError(errw, "Unable to marshal workflow")
 	}
 
 	jtr, erri := json.Marshal(r.JoinTriggersRun)
 	if erri != nil {
-		return sdk.WrapError(erri, "Run.PostInsert> Unable to marshal JoinTriggersRun")
+		return sdk.WrapError(erri, "Unable to marshal JoinTriggersRun")
 	}
 
 	i, erri := json.Marshal(r.Infos)
 	if erri != nil {
-		return sdk.WrapError(erri, "Run.PostInsert> Unable to marshal infos")
+		return sdk.WrapError(erri, "Unable to marshal infos")
 	}
 
 	h, errh := json.Marshal(r.Header)
 	if errh != nil {
-		return sdk.WrapError(erri, "Run.PostInsert> Unable to marshal header")
+		return sdk.WrapError(erri, "Unable to marshal header")
 	}
 
 	if _, err := db.Exec("update workflow_run set workflow = $3, infos = $2, join_triggers_run = $4, header = $5 where id = $1", r.ID, i, w, jtr, h); err != nil {
-		return sdk.WrapError(err, "Run.PostInsert> Unable to store marshalled infos")
+		return sdk.WrapError(err, "Unable to store marshalled infos")
 	}
 
 	if err := updateTags(db, r); err != nil {
-		return sdk.WrapError(err, "Run.PostInsert> Unable to store tags")
+		return sdk.WrapError(err, "Unable to store tags")
 	}
 
 	return nil
@@ -153,12 +153,12 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	}{}
 
 	if err := db.SelectOne(&res, "select workflow, infos, join_triggers_run, header, outgoing_hook_runs from workflow_run where id = $1", r.ID); err != nil {
-		return sdk.WrapError(err, "Run.PostGet> Unable to load marshalled workflow")
+		return sdk.WrapError(err, "Unable to load marshalled workflow")
 	}
 
 	w := sdk.Workflow{}
 	if err := gorpmapping.JSONNullString(res.W, &w); err != nil {
-		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal workflow")
+		return sdk.WrapError(err, "Unable to unmarshal workflow")
 	}
 	// TODO: to delete when old runs will be purged
 	for i := range w.Joins {
@@ -177,19 +177,19 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 
 	i := []sdk.WorkflowRunInfo{}
 	if err := gorpmapping.JSONNullString(res.I, &i); err != nil {
-		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal infos")
+		return sdk.WrapError(err, "Unable to unmarshal infos")
 	}
 	r.Infos = i
 
 	j := map[int64]sdk.WorkflowNodeTriggerRun{}
 	if err := gorpmapping.JSONNullString(res.J, &j); err != nil {
-		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal join_triggers_run")
+		return sdk.WrapError(err, "Unable to unmarshal join_triggers_run")
 	}
 	r.JoinTriggersRun = j
 
 	h := sdk.WorkflowRunHeaders{}
 	if err := gorpmapping.JSONNullString(res.H, &h); err != nil {
-		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal header")
+		return sdk.WrapError(err, "Unable to unmarshal header")
 	}
 	r.Header = h
 
@@ -216,7 +216,7 @@ func InsertWorkflowRunTags(db gorp.SqlExecutor, runID int64, runTags []sdk.Workf
 
 	if len(tags) > 0 {
 		if err := db.Insert(tags...); err != nil {
-			return sdk.WrapError(err, "Run.insertTags> Unable to store tags")
+			return sdk.WrapError(err, "Unable to store tags")
 		}
 	}
 	return nil
@@ -230,7 +230,7 @@ func UpdateWorkflowRunTags(db gorp.SqlExecutor, r *sdk.WorkflowRun) error {
 
 func updateTags(db gorp.SqlExecutor, r *Run) error {
 	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
-		return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
+		return sdk.WrapError(err, "Unable to store tags")
 	}
 
 	return InsertWorkflowRunTags(db, r.ID, r.Tags)
@@ -310,7 +310,7 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 
 	count, errc := db.SelectInt(queryCount, args...)
 	if errc != nil {
-		return nil, 0, 0, 0, sdk.WrapError(errc, "LoadRuns> unable to load runs")
+		return nil, 0, 0, 0, sdk.WrapError(errc, "Unable to load runs")
 	}
 	if count == 0 {
 		return nil, 0, 0, 0, nil
@@ -370,13 +370,13 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 
 	runs := []Run{}
 	if _, err := db.Select(&runs, query, args...); err != nil {
-		return nil, 0, 0, 0, sdk.WrapError(errc, "LoadRuns> unable to load runs")
+		return nil, 0, 0, 0, sdk.WrapError(errc, "Unable to load runs")
 	}
 	wruns := make([]sdk.WorkflowRun, len(runs))
 	for i := range runs {
 		wr := sdk.WorkflowRun(runs[i])
 		if err := loadRunTags(db, &wr); err != nil {
-			return nil, 0, 0, 0, sdk.WrapError(err, "LoadRuns> unable to load tags")
+			return nil, 0, 0, 0, sdk.WrapError(err, "Unable to load tags")
 		}
 
 		wruns[i] = wr
@@ -388,7 +388,7 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 	dbRunTags := []RunTag{}
 	if _, err := db.Select(&dbRunTags, "SELECT * from workflow_run_tag WHERE workflow_run_id=$1", run.ID); err != nil {
-		return sdk.WrapError(err, "loadRunTags")
+		return sdk.WithStack(err)
 	}
 
 	run.Tags = make([]sdk.WorkflowRunTag, len(dbRunTags))
@@ -404,12 +404,12 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
 		}
-		return nil, sdk.WrapError(err, "loadRun> Unable to load workflow run. query:%s args:%v", query, args)
+		return nil, sdk.WrapError(err, "Unable to load workflow run. query:%s args:%v", query, args)
 	}
 	wr := sdk.WorkflowRun(*runDB)
 
 	if err := syncNodeRuns(db, &wr, loadOpts); err != nil {
-		return nil, sdk.WrapError(err, "loadRun> Unable to load workflow node run")
+		return nil, sdk.WrapError(err, "Unable to load workflow node run")
 	}
 
 	tags, errT := loadTagsByRunID(db, wr.ID)
@@ -455,7 +455,7 @@ func loadTagsByRunID(db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunTag, er
 	tags := []sdk.WorkflowRunTag{}
 	dbTags := []sdk.WorkflowRunTag{}
 	if _, err := db.Select(&dbTags, "select * from workflow_run_tag where workflow_run_id = $1", runID); err != nil {
-		return nil, sdk.WrapError(err, "loadTagsByRunID> Unable to load tags for run %d", runID)
+		return nil, sdk.WrapError(err, "Unable to load tags for run %d", runID)
 	}
 	for i := range dbTags {
 		tags = append(tags, sdk.WorkflowRunTag(dbTags[i]))
@@ -487,7 +487,7 @@ ORDER BY tags.tag;
 	}{}
 
 	if _, err := db.Select(&res, query, key, name); err != nil {
-		return nil, sdk.WrapError(err, "GetTagsAndValue> Unable to load tags and values")
+		return nil, sdk.WrapError(err, "Unable to load tags and values")
 	}
 
 	rmap := map[string][]string{}
@@ -508,7 +508,7 @@ func LoadCurrentRunNum(db gorp.SqlExecutor, projectkey, workflowname string) (in
     `
 	i, err := db.SelectInt(query, projectkey, workflowname)
 	if err != nil {
-		return 0, sdk.WrapError(err, "LoadCurrentRunNum> Cannot load workflow run current num")
+		return 0, sdk.WrapError(err, "Cannot load workflow run current num")
 	}
 	return int64(i), nil
 }
@@ -519,7 +519,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 		INSERT INTO workflow_sequences (workflow_id, current_val) VALUES ($1, $2)
 	`
 	if _, err := db.Exec(query, w.ID, num); err != nil {
-		return sdk.WrapError(err, "InsertRunNum> Cannot insert run number")
+		return sdk.WrapError(err, "Cannot insert run number")
 	}
 	return nil
 }
@@ -528,7 +528,7 @@ func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 	if num == 1 {
 		if _, err := nextRunNumber(db, w); err != nil {
-			return sdk.WrapError(err, "UpdateRunNum> Cannot create run number")
+			return sdk.WrapError(err, "Cannot create run number")
 		}
 		return nil
 	}
@@ -537,7 +537,7 @@ func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
 		UPDATE workflow_sequences set current_val = $1 WHERE workflow_id = $2
 	`
 	if _, err := db.Exec(query, num, w.ID); err != nil {
-		return sdk.WrapError(err, "UpdateRunNum> Cannot update run number")
+		return sdk.WrapError(err, "Cannot update run number")
 	}
 	return nil
 }
@@ -718,7 +718,7 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 	dbNodeRuns := []NodeRun{}
 	if _, err := db.Select(&dbNodeRuns, q, wr.ID); err != nil {
 		if err != sql.ErrNoRows {
-			return sdk.WrapError(err, "syncNodeRuns> Unable to load workflow nodes run")
+			return sdk.WrapError(err, "Unable to load workflow nodes run")
 		}
 	}
 
@@ -772,7 +772,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return sdk.WrapError(err, "stopRunsBlocked>")
+		return sdk.WithStack(err)
 	}
 
 	if len(ids) == 0 {
@@ -805,19 +805,19 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 	)`
 	argsNodeJobRun := append(args, sdk.StatusFail.String(), sdk.StatusSuccess.String())
 	if _, err := tx.Exec(queryUpdateNodeJobRun, argsNodeJobRun...); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node job run history")
+		return sdk.WrapError(err, "Unable to stop workflow node job run history")
 	}
 
 	queryUpdateNodeRun := `UPDATE workflow_node_run SET status = $1, done = now()
 	WHERE workflow_run_id = ANY(string_to_array($2, ',')::bigint[])
 	AND (status = $3 OR status = $4 OR status = $5)`
 	if _, err := tx.Exec(queryUpdateNodeRun, args...); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow node run history")
+		return sdk.WrapError(err, "Unable to stop workflow node run history")
 	}
 
 	queryUpdateWf := `UPDATE workflow_run SET status = $1 WHERE id = ANY(string_to_array($2, ',')::bigint[])`
 	if _, err := tx.Exec(queryUpdateWf, sdk.StatusStopped.String(), wfIdsJoined); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to stop workflow run history")
+		return sdk.WrapError(err, "Unable to stop workflow run history")
 	}
 
 	resp := []struct {
@@ -832,7 +832,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		WHERE workflow_node_run.workflow_run_id = ANY(string_to_array($1, ',')::bigint[])
 	`
 	if _, err := tx.Select(&resp, querySelectNodeRuns, wfIdsJoined); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> cannot get workflow node run infos")
+		return sdk.WrapError(err, "cannot get workflow node run infos")
 	}
 
 	now := time.Now()
@@ -842,7 +842,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 			Status: resp[i].Status,
 		}
 		if err := json.Unmarshal([]byte(resp[i].Stages), &nr.Stages); err != nil {
-			return sdk.WrapError(err, "stopRunsBlocked> cannot unmarshal stages")
+			return sdk.WrapError(err, "cannot unmarshal stages")
 		}
 
 		stopWorkflowNodeRunStages(&nr)
@@ -852,12 +852,12 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 		}
 
 		if err := updateNodeRunStatusAndStage(tx, &nr); err != nil {
-			return sdk.WrapError(err, "stopRunsBlocked> cannot update node runs stages")
+			return sdk.WrapError(err, "cannot update node runs stages")
 		}
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "stopRunsBlocked> Unable to commit transaction")
+		return sdk.WrapError(err, "Unable to commit transaction")
 	}
 	return nil
 }

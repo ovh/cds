@@ -19,7 +19,7 @@ func loadJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "loadJoins> Unable to load join IDs on workflow %d", w.ID)
+		return nil, sdk.WrapError(err, "Unable to load join IDs on workflow %d", w.ID)
 	}
 
 	joins := []sdk.WorkflowNodeJoin{}
@@ -38,13 +38,13 @@ func loadJoin(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj 
 	dbjoin := Join{}
 	//Load the join
 	if err := db.SelectOne(&dbjoin, "select * from workflow_node_join where id = $1 and workflow_id = $2", id, w.ID); err != nil {
-		return nil, sdk.WrapError(err, "loadJoin> Unable to load join %d", id)
+		return nil, sdk.WrapError(err, "Unable to load join %d", id)
 	}
 	dbjoin.WorkflowID = w.ID
 
 	//Load sources
 	if _, err := db.Select(&dbjoin.SourceNodeIDs, "select workflow_node_id from workflow_node_join_source where workflow_node_join_id = $1", id); err != nil {
-		return nil, sdk.WrapError(err, "loadJoin> Unable to load join %d sources", id)
+		return nil, sdk.WrapError(err, "Unable to load join %d sources", id)
 	}
 	j := sdk.WorkflowNodeJoin(dbjoin)
 
@@ -56,16 +56,16 @@ func loadJoin(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj 
 	var triggerIDs []int64
 	if _, err := db.Select(&triggerIDs, "select id from workflow_node_join_trigger where  workflow_node_join_id = $1", id); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WrapError(err, "loadJoin> Unable to load join triggers id for join %d", id)
+			return nil, sdk.WrapError(err, "Unable to load join triggers id for join %d", id)
 		}
-		return nil, sdk.WrapError(err, "loadJoin> Unable to load join triggers id for join %d", id)
+		return nil, sdk.WrapError(err, "Unable to load join triggers id for join %d", id)
 	}
 
 	//Load trigegrs
 	for _, t := range triggerIDs {
 		jt, err := loadJoinTrigger(ctx, db, store, proj, w, &j, t, u, opts)
 		if err != nil {
-			return nil, sdk.WrapError(err, "loadJoin> Unable to load join trigger %d", t)
+			return nil, sdk.WrapError(err, "Unable to load join trigger %d", t)
 		}
 		//If the trigger has not been found, skip it
 		if jt == nil {
@@ -86,7 +86,7 @@ func loadJoinTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "loadJoinTrigger> Unable to load trigger %d", id)
+		return nil, sdk.WrapError(err, "Unable to load trigger %d", id)
 	}
 
 	t := sdk.WorkflowNodeJoinTrigger(dbtrigger)
@@ -94,7 +94,7 @@ func loadJoinTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 	if t.WorkflowDestNodeID != 0 {
 		dest, err := loadNode(ctx, db, store, proj, w, t.WorkflowDestNodeID, u, opts)
 		if err != nil {
-			return nil, sdk.WrapError(err, "loadJoinTrigger> Unable to load destination node %d", t.WorkflowDestNodeID)
+			return nil, sdk.WrapError(err, "Unable to load destination node %d", t.WorkflowDestNodeID)
 		}
 		t.WorkflowDestNode = *dest
 	}
@@ -141,7 +141,7 @@ func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 
 	//Insert the join
 	if err := db.Insert(&dbJoin); err != nil {
-		return sdk.WrapError(err, "insertOrUpdateJoin> Unable to insert workflow node join")
+		return sdk.WrapError(err, "Unable to insert workflow node join")
 	}
 	n.ID = dbJoin.ID
 
@@ -157,7 +157,7 @@ func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	query := "insert into workflow_node_join_source(workflow_node_id, workflow_node_join_id) values ($1, $2)"
 	for _, source := range n.SourceNodeIDs {
 		if _, err := db.Exec(query, source, n.ID); err != nil {
-			return sdk.WrapError(err, "insertOrUpdateJoin> Unable to insert associations between node %d and join %d", source, n.ID)
+			return sdk.WrapError(err, "Unable to insert associations between node %d and join %d", source, n.ID)
 		}
 	}
 
@@ -177,14 +177,14 @@ func insertJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, 
 	//Insert trigger
 	dbt := JoinTrigger(*trigger)
 	if err := db.Insert(&dbt); err != nil {
-		return sdk.WrapError(err, "insertOrUpdateJoinTrigger> Unable to insert trigger")
+		return sdk.WrapError(err, "Unable to insert trigger")
 	}
 	trigger.ID = dbt.ID
 	trigger.WorkflowDestNode.TriggerJoinSrcID = trigger.ID
 
 	// Update node trigger ID
 	if err := updateWorkflowTriggerJoinSrc(db, &trigger.WorkflowDestNode); err != nil {
-		return sdk.WrapError(err, "insertTrigger> Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
+		return sdk.WrapError(err, "Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 
 	return nil
@@ -193,7 +193,7 @@ func insertJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, 
 func deleteJoin(db gorp.SqlExecutor, n sdk.WorkflowNodeJoin) error {
 	j := Join(n)
 	if _, err := db.Delete(&j); err != nil {
-		return sdk.WrapError(err, "deleteJoin> Unable to delete join %d", j.ID)
+		return sdk.WrapError(err, "Unable to delete join %d", j.ID)
 	}
 	return nil
 }

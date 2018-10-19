@@ -78,7 +78,6 @@ export class WorkflowEventStore {
             } else {
                 this._sidebarStore.changeMode(WorkflowSidebarMode.RUNS);
             }
-
         }
         this._selectedNode.next(n);
         this._selectedHook.next(null);

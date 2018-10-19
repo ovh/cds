@@ -28,7 +28,7 @@ func (b *bitbucketClient) Tags(ctx context.Context, fullname string) ([]sdk.VCST
 
 		var response TagResponse
 		if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
-			return nil, sdk.WrapError(err, "vcs> bitbucket> tags> Unable to get tags %s", path)
+			return nil, sdk.WrapError(err, "Unable to get tags %s", path)
 		}
 
 		bitbucketTags = append(bitbucketTags, response.Values...)

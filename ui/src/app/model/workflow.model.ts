@@ -264,26 +264,6 @@ export class Workflow {
             return workflow.applications[node.context.application_id];
         }
     }
-    static getEnvironment(workflow: Workflow, node: WNode): Environment {
-        if (node.context && node.context.environment_id) {
-            return workflow.environments[node.context.environment_id];
-        }
-    }
-    static getPlatform(workflow: Workflow, node: WNode): ProjectPlatform {
-        if (node.context && node.context.project_platform_id) {
-            return workflow.project_platforms[node.context.project_platform_id];
-        }
-    }
-    static getHookModel(workflow: Workflow, hook: WNodeHook): WorkflowHookModel {
-        if (hook && hook.hook_model_id) {
-            return workflow.hook_models[hook.hook_model_id];
-        }
-    }
-    static getOutGoingHookModel(workflow: Workflow, hook: WNodeOutgoingHook): WorkflowHookModel {
-        if (hook.hook_model_id) {
-            return workflow.outgoing_hook_models[hook.hook_model_id];
-        }
-    }
 
     static getNodeNameImpact(workflow: Workflow, name: string): WorkflowPipelineNameImpact {
         let warnings = new WorkflowPipelineNameImpact();
@@ -674,6 +654,7 @@ export class WNodeContext {
     conditions: WorkflowNodeConditions;
     mutex: boolean;
 }
+
 export class WNodeOutgoingHook {
     id: number;
     node_id: number;

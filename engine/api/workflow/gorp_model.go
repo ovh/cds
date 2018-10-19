@@ -251,7 +251,6 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbNodeRunVulenrabilitiesReport{}, "workflow_node_run_vulnerability", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeFork{}, "workflow_node_fork", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeForkTrigger{}, "workflow_node_fork_trigger", true, "id"))
-
 	gorpmapping.Register(gorpmapping.New(dbNodeData{}, "w_node", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeHookData{}, "w_node_hook", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeContextData{}, "w_node_context", true, "id"))

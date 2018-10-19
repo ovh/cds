@@ -52,26 +52,6 @@
                 </ng-container>
                 <div class="ui info message" *ngIf="!task.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
             </ng-container>
-
-            <!--ng-container *ngIf="outgoingHookRun && outgoingHookRun.callback">
-                <h3>{{'workflow_hook_log_title' | translate}}</h3>
-                <div class="inline fields">
-                    <div class="four wide field"><label>{{'worker_model_status' | translate}}</label></div>
-                    <div class="twelve wide field">{{ outgoingHookRun.callback.status }}</div>
-                </div>
-                <div class="inline fields" *ngIf="outgoingHookRun.callback.start">
-                    <div class="four wide field"><label>{{'common_begin' | translate}}</label></div>
-                    <div class="twelve wide field">{{outgoingHookRun.callback.start | amCalendar }}</div>
-                </div>
-                <div class="inline fields" *ngIf="outgoingHookRun.callback.done">
-                    <div class="four wide field"><label>{{'common_end' | translate}}</label></div>
-                    <div class="twelve wide field">{{outgoingHookRun.callback.done | amCalendar }}</div>
-                </div>
-                <div class="inline fields">
-                    <div class="four wide field"><label>{{'workflow_hook_log_title' | translate}}</label></div>
-                    <div class="twelve wide field"><textarea readonly>{{outgoingHookRun.callback.log}}</textarea></div>
-                </div>
-            </ng-container-->
         </div>
     </div>
     <div class="actions">

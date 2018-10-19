@@ -8,8 +8,8 @@ weight = 1
 
 The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) contains:
 
-- cds-db service with a postgresql
-- cds-cache service with a redis
+- cds-db service with a PostgreSQL
+- cds-cache service with a Redis
 - cds-migrate service to prepare DB tables
 - cds-api service
 - cds-ui service
@@ -25,11 +25,11 @@ $ git clone https://github.com/ovh/cds.git
 $ cd cds
 $ export HOSTNAME=$(hostname)
 
-# Create PG Database
+# Create PG database
 $ docker-compose up --no-recreate -d cds-db
 
-# check if db is UP
-# check if last log is "LOG:  database system is ready to accept connections"
+# check if DB is up
+# check if last log is "LOG: database system is ready to accept connections"
 $ docker-compose logs
 
 $ docker-compose up --no-recreate cds-migrate
@@ -41,7 +41,7 @@ $ docker-compose up cds-api cds-ui
 ```
 
 Open a browser on http://localhost:2015, then register a new user `admin`,
-with a email `admin@localhost.local` for example.
+with an email `admin@localhost.local` for example.
 As there is no SMTP server configured in docker-compose.yml file,
 run `docker-compose logs` to get URL for validate the registration.
 
@@ -88,12 +88,12 @@ The [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.y
 
 A `local hatchery` spawns workers on the same host as the hatchery. This is usually useful for specific cases, as
 running job on specific hardware.
-But this hatchery does not make it possible to respect the isolation of workpaces
+But this hatchery does not make it possible to respect the isolation of workspaces
 of workers as they share the same workspace.
 
 There is another hatchery configured in [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml) file: a 'swarm hatchery'
 
-Please check that your docker installation allows docker API calls on `tcp://${HOSTNAME}:2375`
+Please check that your Docker installation allows Docker API calls on `tcp://${HOSTNAME}:2375`
 Otherwise, please update environment variable `DOCKER_HOST: tcp://${HOSTNAME}:2375` in
 [docker-compose.yml](https://github.com/ovh/cds/blob/master/docker-compose.yml)
 
@@ -105,13 +105,13 @@ $ docker-compose up cds-hatchery-swarm
 A `swarm hatchery` spawns CDS Workers inside dedicated containers.
 This ensures isolation of the workspaces and resources.
 
-Now, you have to create worker model of type `docker`, please follow [how to create a worker model docker]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}}).
+Now, you have to create worker model of type `docker`, please follow [how to create a worker model Docker]({{< relref "workflows/pipelines/requirements/worker-model/docker/_index.md" >}}).
 
 ## Next with Actions, Plugins
 
 - You can download CDS CLI from https://github.com/ovh/cds/releases or from http://localhost:2015/settings/downloads
 ```bash
-# on a linux workstation:
+# on a Linux workstation:
 $ wget http://localhost:2015/cdsapi/download/engine/linux/amd64 -O cdsctl
 $ chmod +x cdsctl
 $ ./cdsctl login --api-url http://localhost:8081 -u admin
@@ -146,6 +146,6 @@ $ cdsctl action import cds-docker-package.yml
 
 # Go further
 
-- How to use Openstack infrastructure to spawn CDS container [read more]({{< relref "hatchery/openstack.md" >}})
-- Link CDS to a repository manager, as Github, Bitbucket Server or Gitlab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
+- How to use OpenStack infrastructure to spawn CDS container [read more]({{< relref "hatchery/openstack.md" >}})
+- Link CDS to a repository manager, as GitHub, Bitbucket Server or GitLab [read more]({{< relref "/hosting/repositories-manager/_index.md" >}})
 - Learn more about CDS variables [read more]({{< relref "workflows/pipelines/variables.md" >}})

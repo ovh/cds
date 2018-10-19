@@ -117,11 +117,11 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	switch m.Type {
 	case sdk.Docker:
 		if err := gorpmapping.JSONNullString(model, &m.ModelDocker); err != nil {
-			return sdk.WrapError(err, "PostSelect> cannot unmarshall for docker model")
+			return sdk.WrapError(err, "cannot unmarshall for docker model")
 		}
 	default:
 		if err := gorpmapping.JSONNullString(model, &m.ModelVirtualMachine); err != nil {
-			return sdk.WrapError(err, "PostSelect> cannot unmarshall for vm model")
+			return sdk.WrapError(err, "cannot unmarshall for vm model")
 		}
 	}
 
@@ -144,11 +144,11 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 func (wmp *workerModelPattern) PostGet(s gorp.SqlExecutor) error {
 	modelStr, err := s.SelectNullStr("SELECT model FROM worker_model_pattern WHERE id = $1", wmp.ID)
 	if err != nil {
-		return sdk.WrapError(err, "PostSelect> Cannot load model for pattern %d", wmp.ID)
+		return sdk.WrapError(err, "Cannot load model for pattern %d", wmp.ID)
 	}
 
 	if err := gorpmapping.JSONNullString(modelStr, &wmp.Model); err != nil {
-		return sdk.WrapError(err, "PostSelect> Cannot unmarshal json from model pattern")
+		return sdk.WrapError(err, "Cannot unmarshal json from model pattern")
 	}
 
 	return nil
@@ -158,12 +158,12 @@ func (wmp *workerModelPattern) PostGet(s gorp.SqlExecutor) error {
 func (wmp *workerModelPattern) PostInsert(s gorp.SqlExecutor) error {
 	modelBtes, err := json.Marshal(wmp.Model)
 	if err != nil {
-		return sdk.WrapError(err, "PostInsert> Cannot marshal model")
+		return sdk.WrapError(err, "Cannot marshal model")
 	}
 
 	query := "update worker_model_pattern set model = $1 where id = $2"
 	if _, err := s.Exec(query, modelBtes, wmp.ID); err != nil {
-		return sdk.WrapError(err, "PostInsert> Cannot update model")
+		return sdk.WrapError(err, "Cannot update model")
 	}
 
 	return nil

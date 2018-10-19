@@ -132,7 +132,7 @@ func (c *bitbucketClient) do(ctx context.Context, method, api, path string, para
 	// make the request using the default http client
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return sdk.WrapError(err, "VCS> Bitbucket> HTTP Error")
+		return sdk.WrapError(err, "HTTP Error")
 	}
 
 	// Read the bytes from the body (make sure we defer close the body)

@@ -221,34 +221,6 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	return res
 }
 
-func (w *Workflow) OutgoingHooks() []WorkflowNodeOutgoingHook {
-	if w.Root == nil {
-		return nil
-	}
-
-	res := []WorkflowNodeOutgoingHook{}
-	res = append(res, w.Root.OutgoingHooks...)
-	for _, j := range w.Joins {
-		for _, t := range j.Triggers {
-			res = append(res, t.WorkflowDestNode.OutgoingHooks...)
-		}
-	}
-
-	return res
-}
-
-func (w *Workflow) AddNodeFork(name string, dest WorkflowNodeFork) {
-	if w.Root == nil {
-		return
-	}
-	w.Root.AddNodeFork(name, dest)
-	for i := range w.Joins {
-		for j := range w.Joins[i].Triggers {
-			w.Joins[i].Triggers[j].WorkflowDestNode.AddNodeFork(name, dest)
-		}
-	}
-}
-
 //AddTrigger adds a trigger to the destination node from the node found by its name
 func (w *Workflow) AddTrigger(name string, dest Node) {
 	if w.WorkflowData == nil || w.WorkflowData.Node.Name == "" {
@@ -260,18 +232,6 @@ func (w *Workflow) AddTrigger(name string, dest Node) {
 		for j := range w.WorkflowData.Joins[i].Triggers {
 			(&w.WorkflowData.Joins[i].Triggers[j].ChildNode).AddTrigger(name, dest)
 		}
-	}
-}
-
-//AddNodeFork adds a fork to from the node found by its name
-func (n *WorkflowNode) AddNodeFork(name string, dest WorkflowNodeFork) {
-	if n.Name == name {
-		n.Forks = append(n.Forks, dest)
-		return
-	}
-	for i := range n.Triggers {
-		destNode := &n.Triggers[i].WorkflowDestNode
-		destNode.AddNodeFork(name, dest)
 	}
 }
 

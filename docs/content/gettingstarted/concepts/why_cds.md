@@ -31,13 +31,13 @@ These requirements later became the ***CDS Building Design Principles*** listed 
 
 In massively distributed architectures, development teams work independently to improve and deploy applications and services.
 
-Growth in the number of teams and projects create some interesting dynamics where a handful of projects are launched every week. Some of them die at the proof-of concept stage while some others do survive and bring value. Of course, such a turnover rate comes with an ever-growing whishlist of build, test and deployment environments.
+Growth in the number of teams and projects create some interesting dynamics where a handful of projects are launched every week. Some of them die at the proof-of concept stage while some others do survive and bring value. Of course, such a turnover rate comes with an ever-growing wishlist of build, test and deployment environments.
 
 Centralizing the creation and the configuration of these deployments on a single team is considered harmful. At best, it would create an organizational bottleneck where the Continuous Delivery is overwhelmed with requests and delays their execution. At worst, this multi-layered/multi-team process would look too heavy from the outside and push the developers to censor themselves putting a soft break to the innovation dynamics.
 
 CDS is built around a strong culture of self-service: Whenever it is possible, the control is delegated to the development teams and to the ops teams. Creation, configuration and deletion of CDS projects is completely decentralized. Moreover, project creators can re-delegate parts of their permissions to their teams through powerful built-in group ACLs.
 
-Users are also free to add their own workers to the system if the workers provided by the Continuous Delivery team do not suit their needs. This covers the specific cases where specific hardware or software is required to build or test a software. To do so, users just need to start the CDS worker binary from their own machines and give it the IP address and the credentials of the CDS API. A worker CDS is a simple binary, you do not need libraries or particular JVMs on your machine to run it. CDS workers are compatible with Linux, Darwin, OSX, FreeBSD as well as Windows, in architectures 386, amd64 or arm.
+Users are also free to add their own workers to the system if the workers provided by the Continuous Delivery team do not suit their needs. This covers the specific cases where specific hardware or software is required to build or test a software. To do so, users just need to start the CDS worker binary from their own machines and give it the IP address and the credentials of the CDS API. A worker CDS is a simple binary, you do not need libraries or particular JVMs on your machine to run it. CDS workers are compatible with Linux, macOS, FreeBSD as well as Windows, in architectures 386, amd64 or arm.
 
 To implement this strong *self-service culture* the team files an issue everytime a user needs the help of a CDS administrator to achieve a simple day-to-day task.
 
@@ -53,7 +53,7 @@ CDS's API servers are completely stateless. They do not store anything on the fi
 When working with a continuous delivery tool on a daily basis using an actively maintained tool like CDS, updates are frequent.
 For example, it is frequent that OVH's main CDS instance gets updated and redeployed several times a day.
 
-This fast delivery and reactivity couldn't have been possible without CDS's High Availability architecture. The **statelessnes** property, described above, is again the preperty that allows to update API servers idependently without interrupting any of the running jobs.
+This fast delivery and reactivity couldn't have been possible without CDS's High Availability architecture. The **statelessnes** property, described above, is again the property that allows to update API servers independently without interrupting any of the running jobs.
 
 « The loss of a CDS API server is a non-event ».
 

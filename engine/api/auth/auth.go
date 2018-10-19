@@ -62,7 +62,7 @@ func GetDriver(c context.Context, mode string, options interface{}, storeOptions
 		return nil, errors.New("GetDriver> Unable to get AuthDriver (nil)")
 	}
 	if err := d.Open(options, store); err != nil {
-		return nil, sdk.WrapError(err, "GetDriver> Unable to get AuthDriver")
+		return nil, sdk.WrapError(err, "Unable to get AuthDriver")
 	}
 	return d, nil
 }

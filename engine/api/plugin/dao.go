@@ -40,11 +40,11 @@ func (p *grpcPlugin) PostUpdate(db gorp.SqlExecutor) error {
 	}
 	s, err := gorpmapping.JSONToNullString(p.Binaries)
 	if err != nil {
-		return sdk.WrapError(err, "plugin.PostUpdate> unable to marshal data")
+		return sdk.WrapError(err, "unable to marshal data")
 	}
 
 	if _, err := db.Exec("UPDATE grpc_plugin SET binaries = $2 WHERE id = $1", p.ID, s); err != nil {
-		return sdk.WrapError(err, "plugin.PostUpdate> unable to update data")
+		return sdk.WrapError(err, "unable to update data")
 	}
 
 	return nil
@@ -97,7 +97,7 @@ func LoadAll(db gorp.SqlExecutor) ([]sdk.GRPCPlugin, error) {
 func (p *grpcPlugin) PostGet(db gorp.SqlExecutor) error {
 	s, err := db.SelectNullStr("SELECT binaries FROM grpc_plugin WHERE ID = $1", p.ID)
 	if err != nil {
-		return sdk.WrapError(err, "plugin.PostGet> unable to get binaries for ID=%d", p.ID)
+		return sdk.WrapError(err, "unable to get binaries for ID=%d", p.ID)
 	}
 	if err := gorpmapping.JSONNullString(s, &p.Binaries); err != nil {
 		return sdk.WrapError(err, "plugin.PostGet")

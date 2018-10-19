@@ -24,25 +24,25 @@ func (s *Service) webhookHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		if uuid == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> webhookHandler> invalid uuid or name")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Invalid uuid or name")
 		}
 
 		//Load the task
 		webHook := s.Dao.FindTask(uuid)
 		if webHook == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hooks> webhookHandler> unknown uuid")
+			return sdk.WrapError(sdk.ErrNotFound, "Unknown uuid")
 		}
 
 		//Check method
 		confValue := webHook.Config[sdk.WebHookModelConfigMethod]
 		if r.Method != confValue.Value {
-			return sdk.WrapError(sdk.ErrMethodNotAllowed, "Hooks> webhookHandler> Unsupported method %s : %v", r.Method, webHook.Config)
+			return sdk.WrapError(sdk.ErrMethodNotAllowed, "Unsupported method %s : %v", r.Method, webHook.Config)
 		}
 
 		//Read the body
 		req, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			return sdk.WrapError(err, "Hooks> webhookHandler> unable to read request")
+			return sdk.WrapError(err, "Unable to read request")
 		}
 
 		//Prepare a web hook execution
@@ -72,7 +72,7 @@ func (s *Service) webhookHandler() service.Handler {
 func (s *Service) startTasksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := s.startTasks(ctx); err != nil {
-			return sdk.WrapError(err, "Hooks> startTasksHandler")
+			return sdk.WithStack(err)
 		}
 		return nil
 	}
@@ -81,7 +81,7 @@ func (s *Service) startTasksHandler() service.Handler {
 func (s *Service) stopTasksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := s.stopTasks(); err != nil {
-			return sdk.WrapError(err, "Hooks> stopTasksHandler")
+			return sdk.WithStack(err)
 		}
 		return nil
 	}
@@ -93,18 +93,18 @@ func (s *Service) startTaskHandler() service.Handler {
 		vars := mux.Vars(r)
 		uuid := vars["uuid"]
 		if uuid == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> startTaskHandler> invalid uuid")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Invalid uuid")
 		}
 
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hooks> startTaskHandler> unknown uuid")
+			return sdk.WrapError(sdk.ErrNotFound, "Unknown uuid")
 		}
 
 		//Start the task
 		if _, err := s.startTask(ctx, t); err != nil {
-			return sdk.WrapError(err, "Hooks> startTaskHandler> start task")
+			return sdk.WrapError(err, "Start task")
 		}
 		return nil
 	}
@@ -116,18 +116,18 @@ func (s *Service) stopTaskHandler() service.Handler {
 		vars := mux.Vars(r)
 		uuid := vars["uuid"]
 		if uuid == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "Hooks> stopTaskHandler> invalid uuid")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Invalid uuid")
 		}
 
 		//Load the task
 		t := s.Dao.FindTask(uuid)
 		if t == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hooks> stopTaskHandler> unknown uuid")
+			return sdk.WrapError(sdk.ErrNotFound, "Unknown uuid")
 		}
 
 		//Stop the task
 		if err := s.stopTask(t); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "Hooks> stopTaskHandler> stop task")
+			return sdk.WrapError(sdk.ErrNotFound, "Stop task")
 		}
 		return nil
 	}
@@ -138,10 +138,10 @@ func (s *Service) postTaskHandler() service.Handler {
 		//This handler read a sdk.WorkflowNodeHook from the body
 		hook := &sdk.WorkflowNodeHook{}
 		if err := service.UnmarshalBody(r, hook); err != nil {
-			return sdk.WrapError(err, "Hooks> postTaskHandler")
+			return sdk.WithStack(err)
 		}
 		if err := s.addTask(ctx, hook); err != nil {
-			return sdk.WrapError(err, "Hooks> postTaskHandler")
+			return sdk.WithStack(err)
 		}
 		return nil
 	}
@@ -182,12 +182,12 @@ func (s *Service) getTasksHandler() service.Handler {
 
 		tasks, err := s.Dao.FindAllTasks()
 		if err != nil {
-			return sdk.WrapError(err, "Hooks> getTasksHandler")
+			return sdk.WithStack(err)
 		}
 
 		execs, err := s.Dao.FindAllTaskExecutionsForTasks(tasks...)
 		if err != nil {
-			return sdk.WrapError(err, "Hooks> getTasksHandler")
+			return sdk.WithStack(err)
 		}
 
 		m := make(map[string][]sdk.TaskExecution, len(tasks))
@@ -248,7 +248,7 @@ func (s *Service) putTaskHandler() service.Handler {
 
 		//Start the task
 		if _, err := s.startTask(ctx, t); err != nil {
-			return sdk.WrapError(err, "Hooks> putTaskHandler> Unable start task %+v", t)
+			return sdk.WrapError(err, "Unable start task %+v", t)
 		}
 
 		return nil
@@ -269,7 +269,7 @@ func (s *Service) getTaskHandler() service.Handler {
 
 		execs, err := s.Dao.FindAllTaskExecutions(t)
 		if err != nil {
-			return sdk.WrapError(err, "Hooks> getTaskHandler> Unable to load executions")
+			return sdk.WrapError(err, "Unable to load executions")
 		}
 
 		t.Executions = execs
@@ -349,7 +349,7 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 		//Load the executions
 		execs, err := s.Dao.FindAllTaskExecutions(t)
 		if err != nil {
-			return sdk.WrapError(err, "Hooks> deleteAllTaskExecutionsHandler> Unable to find task executions for %s", uuid)
+			return sdk.WrapError(err, "Unable to find task executions for %s", uuid)
 		}
 		for i := range execs {
 			s.Dao.DeleteTaskExecution(&execs[i])
@@ -357,7 +357,7 @@ func (s *Service) deleteAllTaskExecutionsHandler() service.Handler {
 
 		//Start the task
 		if _, err := s.startTask(ctx, t); err != nil {
-			return sdk.WrapError(err, "Hooks> deleteAllTaskExecutionsHandler> Unable start task %+v", t)
+			return sdk.WrapError(err, "Unable start task %+v", t)
 		}
 
 		return service.WriteJSON(w, t, http.StatusOK)
@@ -368,7 +368,7 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		hooks := map[string]sdk.WorkflowNodeHook{}
 		if err := service.UnmarshalBody(r, &hooks); err != nil {
-			return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
+			return sdk.WithStack(err)
 		}
 
 		for uuid := range hooks {
@@ -380,7 +380,7 @@ func (s *Service) deleteTaskBulkHandler() service.Handler {
 
 			//Stop the task
 			if err := s.stopTask(t); err != nil {
-				return sdk.WrapError(sdk.ErrNotFound, "Hooks> putTaskHandler> stop task %s", err)
+				return sdk.WrapError(sdk.ErrNotFound, "Stop task %s", err)
 			}
 			//Delete the task
 			s.Dao.DeleteTask(t)
@@ -395,7 +395,7 @@ func (s *Service) postTaskBulkHandler() service.Handler {
 		//This handler read a sdk.WorkflowNodeHook from the body
 		hooks := map[string]sdk.WorkflowNodeHook{}
 		if err := service.UnmarshalBody(r, &hooks); err != nil {
-			return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
+			return sdk.WithStack(err)
 		}
 
 		for _, hook := range hooks {
@@ -405,7 +405,7 @@ func (s *Service) postTaskBulkHandler() service.Handler {
 				}
 			}
 			if err := s.addTask(ctx, &hook); err != nil {
-				return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
+				return sdk.WithStack(err)
 			}
 		}
 		return service.WriteJSON(w, hooks, http.StatusOK)
@@ -416,7 +416,7 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 	//Parse the hook as a task
 	t, err := s.hookToTask(h)
 	if err != nil {
-		return sdk.WrapError(err, "Hooks> addTask> Unable to parse hook")
+		return sdk.WrapError(err, "Unable to parse hook")
 	}
 
 	//Save the task
@@ -424,7 +424,7 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 
 	//Start the task
 	if _, err := s.startTask(ctx, t); err != nil {
-		return sdk.WrapError(err, "Hooks> addTask> Unable start task %+v", t)
+		return sdk.WrapError(err, "Unable start task %+v", t)
 	}
 	return nil
 }
@@ -441,7 +441,7 @@ func (s *Service) addAndExecuteTask(ctx context.Context, nr sdk.WorkflowNodeRun)
 	// Start the task
 	e, err := s.startTask(ctx, &t)
 	if err != nil {
-		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Hooks> addAndExecuteTask> Unable start task %+v", t)
+		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Unable start task %+v", t)
 	}
 
 	return t, *e, nil
@@ -451,7 +451,7 @@ func (s *Service) deleteTask(ctx context.Context, h *sdk.WorkflowNodeHook) error
 	//Parse the hook as a task
 	t, err := s.hookToTask(h)
 	if err != nil {
-		return sdk.WrapError(err, "Hooks> deleteTask> Unable to parse hook")
+		return sdk.WrapError(err, "Unable to parse hook")
 	}
 
 	//Delete the task

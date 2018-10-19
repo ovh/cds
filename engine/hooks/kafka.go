@@ -44,7 +44,7 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 	pf, err := s.Client.ProjectPlatformGet(projectKey, kafkaPlatform, true)
 	if err != nil {
 		s.stopTask(t)
-		return sdk.WrapError(err, "startTask> Cannot get kafka configuration for %s/%s", projectKey, kafkaPlatform)
+		return sdk.WrapError(err, "Cannot get kafka configuration for %s/%s", projectKey, kafkaPlatform)
 	}
 
 	var password, broker string
@@ -151,7 +151,7 @@ func (s *Service) doKafkaTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeR
 	e.ExtraFields.Type = false
 	m, err := e.ToStringMap(bodyJSON)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Hooks.doKafkaTaskExecution> Unable to dump body %s", t.WebHook.RequestBody)
+		return nil, sdk.WrapError(err, "Unable to dump body %s", t.WebHook.RequestBody)
 	}
 	h.Payload = m
 

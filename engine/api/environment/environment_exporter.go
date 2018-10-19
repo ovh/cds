@@ -35,7 +35,7 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, envName string, 
 	if withPermissions {
 		perms, err := group.LoadGroupsByEnvironment(db, env.ID)
 		if err != nil {
-			return 0, sdk.WrapError(err, "environment.Export> Cannot load %s permissions", envName)
+			return 0, sdk.WrapError(err, "Cannot load %s permissions", envName)
 		}
 		env.EnvironmentGroups = perms
 	}
@@ -54,7 +54,7 @@ func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, f exportentitie
 		case sdk.SecretVariable:
 			content, err := encryptFunc(db, env.ProjectID, fmt.Sprintf("envID:%d:%s", env.ID, v.Name), v.Value)
 			if err != nil {
-				return 0, sdk.WrapError(err, "environment.Export> Unknown key type")
+				return 0, sdk.WrapError(err, "Unknown key type")
 			}
 			v.Value = content
 			envvars = append(envvars, v)
@@ -71,7 +71,7 @@ func ExportEnvironment(db gorp.SqlExecutor, env sdk.Environment, f exportentitie
 	for _, k := range env.Keys {
 		content, err := encryptFunc(db, env.ProjectID, fmt.Sprintf("envID:%d:%s", env.ID, k.Name), k.Private)
 		if err != nil {
-			return 0, sdk.WrapError(err, "environment.Export> Unable to encrypt key")
+			return 0, sdk.WrapError(err, "Unable to encrypt key")
 		}
 		ek := exportentities.EncryptedKey{
 			Type:    k.Type,

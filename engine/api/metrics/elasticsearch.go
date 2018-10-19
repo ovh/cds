@@ -61,12 +61,12 @@ func GetMetrics(db gorp.SqlExecutor, key string, appID int64, metricName string)
 
 	srvs, err := services.FindByType(db, services.TypeElasticsearch)
 	if err != nil {
-		return nil, sdk.WrapError(err, "GetMetrics> Unable to get elasticsearch service")
+		return nil, sdk.WrapError(err, "Unable to get elasticsearch service")
 	}
 
 	var esMetrics []elastic.SearchHit
 	if _, err := services.DoJSONRequest(context.Background(), srvs, "GET", "/metrics", metricsRequest, &esMetrics); err != nil {
-		return nil, sdk.WrapError(err, "GetMetrics> Unable to get metrics")
+		return nil, sdk.WrapError(err, "Unable to get metrics")
 	}
 
 	events := make([]json.RawMessage, 0, len(esMetrics))

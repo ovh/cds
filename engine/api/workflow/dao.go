@@ -57,7 +57,7 @@ func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 		and workflow.name = $2`
 	count, err := db.SelectInt(query, key, name)
 	if err != nil {
-		return false, sdk.WrapError(err, "Exists>")
+		return false, sdk.WithStack(err)
 	}
 	return count > 0, nil
 }
@@ -79,7 +79,7 @@ func CountVariableInWorkflow(db gorp.SqlExecutor, projectKey string, varName str
 	`
 	var datas []CountVarInWorkflowData
 	if _, err := db.Select(&datas, query, projectKey, fmt.Sprintf("%%%s%%", varName)); err != nil {
-		return nil, sdk.WrapError(err, "CountVariableInWorkflow> Unable to count var in workflow")
+		return nil, sdk.WrapError(err, "Unable to count var in workflow")
 	}
 	return datas, nil
 }
@@ -147,7 +147,7 @@ func (w *Workflow) PreUpdate(db gorp.SqlExecutor) error {
 	if w.FromRepository != "" && strings.HasPrefix(w.FromRepository, "http") {
 		fromRepoURL, err := url.Parse(w.FromRepository)
 		if err != nil {
-			return sdk.WrapError(err, "WorkflowData.PreUpdate> Cannot parse url %s", w.FromRepository)
+			return sdk.WrapError(err, "Cannot parse url %s", w.FromRepository)
 		}
 		fromRepoURL.User = nil
 		w.FromRepository = fromRepoURL.String()
@@ -195,13 +195,13 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
 		}
-		return nil, sdk.WrapError(err, "LoadAll> Unable to load workflows project %s", projectKey)
+		return nil, sdk.WrapError(err, "Unable to load workflows project %s", projectKey)
 	}
 
 	for _, w := range dbRes {
 		w.ProjectKey = projectKey
 		if err := w.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadAll> Unable to execute post get")
+			return nil, sdk.WrapError(err, "Unable to execute post get")
 		}
 		res = append(res, sdk.Workflow(w))
 	}
@@ -223,13 +223,13 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 		if err == sql.ErrNoRows {
 			return res, nil
 		}
-		return nil, sdk.WrapError(err, "LoadAllNames> Unable to load workflows with project %d", projID)
+		return nil, sdk.WrapError(err, "Unable to load workflows with project %d", projID)
 	}
 	for i := range res {
 		var err error
 		res[i].Labels, err = Labels(db, res[i].ID)
 		if err != nil {
-			return res, sdk.WrapError(err, "LoadAllNames> cannot load labels for workflow %s", res[i].Name)
+			return res, sdk.WrapError(err, "cannot load labels for workflow %s", res[i].Name)
 		}
 	}
 
@@ -274,7 +274,7 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		and workflow.name = $2`, icon)
 	res, err := load(ctx, db, store, proj, opts, u, query, proj.Key, name)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Load> Unable to load workflow %s in project %s", name, proj.Key)
+		return nil, sdk.WrapError(err, "Unable to load workflow %s in project %s", name, proj.Key)
 	}
 	res.ProjectKey = proj.Key
 	return res, nil
@@ -288,7 +288,7 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, id int6
 		where id = $1`
 	res, err := load(context.TODO(), db, store, proj, opts, u, query, id)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Load> Unable to load workflow %d", id)
+		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
 	}
 	return res, nil
 }
@@ -310,7 +310,7 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) 
 		if err == sql.ErrNoRows {
 			return []sdk.Workflow{}, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByPipelineName> Unable to load workflows for project %s and pipeline %s", projectKey, pipName)
+		return nil, sdk.WrapError(err, "Unable to load workflows for project %s and pipeline %s", projectKey, pipName)
 	}
 
 	res := make([]sdk.Workflow, len(dbRes))
@@ -340,7 +340,7 @@ func LoadByApplicationName(db gorp.SqlExecutor, projectKey string, appName strin
 		if err == sql.ErrNoRows {
 			return []sdk.Workflow{}, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByApplicationName> Unable to load workflows for project %s and application %s", projectKey, appName)
+		return nil, sdk.WrapError(err, "Unable to load workflows for project %s and application %s", projectKey, appName)
 	}
 
 	res := make([]sdk.Workflow, len(dbRes))
@@ -370,7 +370,7 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 		if err == sql.ErrNoRows {
 			return []sdk.Workflow{}, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByEnvName> Unable to load workflows for project %s and environment %s", projectKey, envName)
+		return nil, sdk.WrapError(err, "Unable to load workflows for project %s and environment %s", projectKey, envName)
 	}
 
 	res := make([]sdk.Workflow, len(dbRes))
@@ -391,7 +391,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
 		}
-		return nil, sdk.WrapError(err, "Load> Unable to load workflow")
+		return nil, sdk.WrapError(err, "Unable to load workflow")
 	}
 	next()
 
@@ -410,7 +410,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	_, next = observability.Span(ctx, "workflow.load.loadWorkflowGroups")
 	gps, err := loadWorkflowGroups(db, res)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Load> Unable to load workflow groups")
+		return nil, sdk.WrapError(err, "Unable to load workflow groups")
 	}
 	res.Groups = gps
 	next()
@@ -427,7 +427,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		next()
 
 		if err != nil {
-			return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
+			return nil, sdk.WrapError(err, "Unable to load workflow root")
 		}
 
 		// Load joins
@@ -496,7 +496,7 @@ func loadWorkflowRoot(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 			log.Debug("Load> Unable to load root %d for workflow %d", w.RootID, w.ID)
 			return nil
 		}
-		return sdk.WrapError(err, "Load> Unable to load workflow root %d", w.RootID)
+		return sdk.WrapError(err, "Unable to load workflow root %d", w.RootID)
 	}
 	return nil
 }
@@ -504,7 +504,7 @@ func loadWorkflowRoot(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error) {
 	count, err := db.SelectInt("SELECT COUNT(1) FROM workflow_favorite WHERE user_id = $1 AND workflow_id = $2", u.ID, w.ID)
 	if err != nil {
-		return false, sdk.WrapError(err, "workflow.loadFavorite>")
+		return false, sdk.WithStack(err)
 	}
 	return count > 0, nil
 }
@@ -521,12 +521,12 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 
 	w.LastModified = time.Now()
 	if err := db.QueryRow("INSERT INTO workflow (name, description, icon, project_id, history_length, from_repository) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository).Scan(&w.ID); err != nil {
-		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
+		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
 	dbw := Workflow(*w)
 	if err := dbw.PostInsert(db); err != nil {
-		return sdk.WrapError(err, "Insert> Cannot post insert hook")
+		return sdk.WrapError(err, "Cannot post insert hook")
 	}
 
 	if w.Root == nil {
@@ -534,7 +534,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 
 	if errIN := insertNode(db, store, w, w.Root, u, false); errIN != nil {
-		return sdk.WrapError(errIN, "Insert> Unable to insert workflow root node")
+		return sdk.WrapError(errIN, "Unable to insert workflow root node")
 	}
 	w.RootID = w.Root.ID
 
@@ -554,18 +554,18 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 
 		if err := UpdateMetadata(db, w.ID, w.Metadata); err != nil {
-			return sdk.WrapError(err, "Insert> Unable to insert workflow metadata (%#v, %d)", w.Root, w.ID)
+			return sdk.WrapError(err, "Unable to insert workflow metadata (%#v, %d)", w.Root, w.ID)
 		}
 	}
 
 	if _, err := db.Exec("UPDATE workflow SET root_node_id = $2 WHERE id = $1", w.ID, w.Root.ID); err != nil {
-		return sdk.WrapError(err, "Insert> Unable to insert workflow (%#v, %d)", w.Root, w.ID)
+		return sdk.WrapError(err, "Unable to insert workflow (%#v, %d)", w.Root, w.ID)
 	}
 
 	for i := range w.Joins {
 		j := &w.Joins[i]
 		if err := insertJoin(db, store, w, j, u); err != nil {
-			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
+			return sdk.WrapError(err, "Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
 
@@ -573,7 +573,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
 		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
-			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) notification (%#v)", w.ID, n)
+			return sdk.WrapError(err, "Unable to insert update workflow(%d) notification (%#v)", w.ID, n)
 		}
 	}
 
@@ -735,6 +735,7 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			nodesToNamed[i].Ref = nodesToNamed[i].Name
 		}
 	}
+
 	return nil
 }
 
@@ -747,22 +748,22 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	// Delete all OLD JOIN
 	for _, j := range oldWorkflow.Joins {
 		if err := deleteJoin(db, j); err != nil {
-			return sdk.WrapError(err, "Update> unable to delete all joins on workflow(%d)", w.ID)
+			return sdk.WrapError(err, "unable to delete all joins on workflow(%d)", w.ID)
 		}
 	}
 
 	if err := deleteNotifications(db, oldWorkflow.ID); err != nil {
-		return sdk.WrapError(err, "Update> unable to delete all notifications on workflow(%d)", w.ID)
+		return sdk.WrapError(err, "unable to delete all notifications on workflow(%d)", w.ID)
 	}
 
 	// Delete old Root Node
 	if oldWorkflow.Root != nil {
 		if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
-			return sdk.WrapError(err, "Delete> Unable to detach workflow root")
+			return sdk.WrapError(err, "Unable to detach workflow root")
 		}
 
 		if err := deleteNode(db, oldWorkflow, oldWorkflow.Root); err != nil {
-			return sdk.WrapError(err, "Update> unable to delete root node on workflow(%d)", w.ID)
+			return sdk.WrapError(err, "unable to delete root node on workflow(%d)", w.ID)
 		}
 	}
 
@@ -775,7 +776,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	w.ResetIDs()
 
 	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
-		return sdk.WrapError(err, "Update> unable to update root node on workflow(%d)", w.ID)
+		return sdk.WrapError(err, "unable to update root node on workflow(%d)", w.ID)
 	}
 	w.RootID = w.Root.ID
 
@@ -783,7 +784,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	for i := range w.Joins {
 		j := &w.Joins[i]
 		if err := insertJoin(db, store, w, j, u); err != nil {
-			return sdk.WrapError(err, "Update> Unable to update workflow(%d) join (%#v)", w.ID, j)
+			return sdk.WrapError(err, "Unable to update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
 
@@ -791,7 +792,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
 		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
-			return sdk.WrapError(err, "Update> Unable to update workflow(%d) notification (%#v)", w.ID, n)
+			return sdk.WrapError(err, "Unable to update workflow(%d) notification (%#v)", w.ID, n)
 		}
 	}
 
@@ -826,7 +827,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	w.LastModified = time.Now()
 	dbw := Workflow(*w)
 	if _, err := db.Update(&dbw); err != nil {
-		return sdk.WrapError(err, "Update> Unable to update workflow")
+		return sdk.WrapError(err, "Unable to update workflow")
 	}
 	event.PublishWorkflowUpdate(p.Key, *w, *oldWorkflow, u)
 
@@ -836,7 +837,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 // MarkAsDelete marks a workflow to be deleted
 func MarkAsDelete(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	if _, err := db.Exec("update workflow set to_delete = true where id = $1", w.ID); err != nil {
-		return sdk.WrapError(err, "MarkAsDelete> Unable to mark as delete workflow id %d", w.ID)
+		return sdk.WrapError(err, "Unable to mark as delete workflow id %d", w.ID)
 	}
 	return nil
 }
@@ -847,25 +848,25 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 
 	//Detach root from workflow
 	if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
-		return sdk.WrapError(err, "Delete> Unable to detach workflow root")
+		return sdk.WrapError(err, "Unable to detach workflow root")
 	}
 
 	hooks := w.GetHooks()
 	// Delete all hooks
 	if err := DeleteHookConfiguration(ctx, db, store, p, hooks); err != nil {
-		return sdk.WrapError(err, "Delete> Unable to delete hooks from workflow")
+		return sdk.WrapError(err, "Unable to delete hooks from workflow")
 	}
 
 	// Delete all JOINs
 	for _, j := range w.Joins {
 		if err := deleteJoin(db, j); err != nil {
-			return sdk.WrapError(err, "Delete> unable to delete all join on workflow(%d)", w.ID)
+			return sdk.WrapError(err, "unable to delete all join on workflow(%d)", w.ID)
 		}
 	}
 
 	//Delete root
 	if err := deleteNode(db, w, w.Root); err != nil {
-		return sdk.WrapError(err, "Delete> Unable to delete workflow root")
+		return sdk.WrapError(err, "Unable to delete workflow root")
 	}
 
 	if err := DeleteWorkflowData(db, *w); err != nil {
@@ -875,7 +876,7 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 	//Delete workflow
 	dbw := Workflow(*w)
 	if _, err := db.Delete(&dbw); err != nil {
-		return sdk.WrapError(err, "Delete> Unable to delete workflow")
+		return sdk.WrapError(err, "Unable to delete workflow")
 	}
 
 	return nil
@@ -1045,7 +1046,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 		if err != nil {
 			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, nil, sdk.WrapError(err, "Push>")
+			return nil, nil, sdk.WithStack(err)
 		}
 
 		log.Debug("Push> Reading %s", hdr.Name)
@@ -1053,7 +1054,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		buff := new(bytes.Buffer)
 		if _, err := io.Copy(buff, tr); err != nil {
 			err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-			return nil, nil, sdk.WrapError(err, "Push>")
+			return nil, nil, sdk.WithStack(err)
 		}
 
 		b := buff.Bytes()
@@ -1100,7 +1101,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 
 	tx, err := db.Begin()
 	if err != nil {
-		return nil, nil, sdk.WrapError(err, "Push> Unable to start tx")
+		return nil, nil, sdk.WrapError(err, "Unable to start tx")
 	}
 	defer tx.Rollback()
 
@@ -1204,7 +1205,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
 	if err != nil {
 		log.Error("Push> Unable to import workflow: %v", err)
-		return nil, nil, sdk.WrapError(err, "Push> unable to import workflow %s", wrkflw.Name)
+		return nil, nil, sdk.WrapError(err, "unable to import workflow %s", wrkflw.Name)
 	}
 
 	// TODO workflow as code, manage derivation workflow
@@ -1227,19 +1228,19 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 					UUID:              opts.HookUUID,
 				})
 				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, u, wf); err != nil {
-					return nil, nil, sdk.WrapError(err, "Push> Unable to get default payload")
+					return nil, nil, sdk.WrapError(err, "Unable to get default payload")
 				}
 			}
 
 			if wf.Root.Context.Application != nil {
 				if err := application.Update(tx, store, wf.Root.Context.Application, u); err != nil {
-					return nil, nil, sdk.WrapError(err, "Push> Unable to update application vcs datas")
+					return nil, nil, sdk.WrapError(err, "Unable to update application vcs datas")
 				}
 			}
 		}
 
 		if err := Update(tx, store, wf, wf, proj, u); err != nil {
-			return nil, nil, sdk.WrapError(err, "Push> Unable to update workflow")
+			return nil, nil, sdk.WrapError(err, "Unable to update workflow")
 		}
 
 		if !opts.DryRun {
@@ -1260,7 +1261,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		_ = tx.Rollback()
 	} else {
 		if err := tx.Commit(); err != nil {
-			return nil, nil, sdk.WrapError(err, "Push> Cannot commit transaction")
+			return nil, nil, sdk.WrapError(err, "Cannot commit transaction")
 		}
 	}
 
@@ -1277,7 +1278,7 @@ func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u *sdk.User, add bool
 	}
 
 	_, err := db.Exec(query, u.ID, workflowID)
-	return sdk.WrapError(err, "UpdateFavorite>")
+	return sdk.WithStack(err)
 }
 
 // IsDeploymentPlatformUsed checks if a deployment platform is used on any workflow

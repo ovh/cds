@@ -83,7 +83,7 @@ func upsertAllGroups(db gorp.SqlExecutor, w *sdk.Workflow, gps []sdk.GroupPermis
 	for _, gp := range gps {
 		query := `INSERT INTO workflow_group (group_id, workflow_id, role) VALUES ($1, $2, $3)`
 		if _, err := db.Exec(query, gp.Group.ID, w.ID, gp.Permission); err != nil {
-			return sdk.WrapError(err, "upsertAllGroups> unable to insert group_id=%d workflow_id=%d role=%d", gp.Group.ID, w.ID, gp.Permission)
+			return sdk.WrapError(err, "unable to insert group_id=%d workflow_id=%d role=%d", gp.Group.ID, w.ID, gp.Permission)
 		}
 	}
 
@@ -164,13 +164,13 @@ func ByGroupID(db gorp.SqlExecutor, key string, groupID int64) ([]string, error)
 	wsName := make([]string, 0)
 	rows, err := db.Query(query, key, groupID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "group.WorkflowByGroupID> Unable to list environment")
+		return nil, sdk.WrapError(err, "Unable to list environment")
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var env string
 		if err := rows.Scan(&env); err != nil {
-			return nil, sdk.WrapError(err, "group.WorkflowByGroupID> Unable to scan")
+			return nil, sdk.WrapError(err, "Unable to scan")
 		}
 		wsName = append(wsName, env)
 	}

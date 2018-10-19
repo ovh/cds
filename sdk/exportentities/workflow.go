@@ -91,7 +91,7 @@ func craftNodeEntry(w sdk.Workflow, nodes map[int64]*sdk.Node, n sdk.Node) (Node
 	conditions := []sdk.WorkflowNodeCondition{}
 	for _, c := range n.Context.Conditions.PlainConditions {
 		if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
-			c.Value == "Success" &&
+			c.Value == sdk.StatusSuccess.String() &&
 			c.Variable == "cds.status" {
 			entry.When = append(entry.When, "success")
 		} else if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
@@ -518,7 +518,7 @@ func (e *NodeEntry) getNode(name string, proj *sdk.Project, w *sdk.Workflow) (*s
 		case "success":
 			node.Context.Conditions.PlainConditions = append(node.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{
 				Operator: sdk.WorkflowConditionsOperatorEquals,
-				Value:    "Success",
+				Value:    sdk.StatusSuccess.String(),
 				Variable: "cds.status",
 			})
 		case "manual":
@@ -627,7 +627,6 @@ func (e *NodeEntry) processNode(name string, w *sdk.Workflow, proj *sdk.Project)
 }
 
 func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow, proj *sdk.Project) (bool, error) {
-
 	var ancestorsExist = true
 	var ancestors []*sdk.Node
 

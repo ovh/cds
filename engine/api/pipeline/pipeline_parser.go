@@ -75,7 +75,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	if globalError == nil {
 		if err := CreateAudit(db, pip, AuditUpdatePipeline, u); err != nil {
-			log.Error("%v", sdk.WrapError(err, "ParseAndImport> Cannot create audit"))
+			log.Error("%v", sdk.WrapError(err, "Cannot create audit"))
 		}
 	}
 

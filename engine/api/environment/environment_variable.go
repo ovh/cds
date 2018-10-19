@@ -71,7 +71,7 @@ func GetVariableByID(db gorp.SqlExecutor, envID int64, varID int64, args ...GetA
 	          WHERE environment_id = $1 AND id = $2
 	          ORDER BY name`
 	if err := db.QueryRow(query, envID, varID).Scan(&v.ID, &v.Name, &clearVal, &cipherVal, &v.Type); err != nil {
-		return v, sdk.WrapError(err, "GetVariableByID> Cannot get variable %d", varID)
+		return v, sdk.WrapError(err, "Cannot get variable %d", varID)
 	}
 
 	if c.encryptsecret && sdk.NeedPlaceholder(v.Type) {
@@ -216,7 +216,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 
 	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
-		return sdk.WrapError(err, "InsertVariable> Cannot encrypt secret %s", variable.Name)
+		return sdk.WrapError(err, "Cannot encrypt secret %s", variable.Name)
 	}
 
 	err = db.QueryRow(query, environmentID, variable.Name, clear, cipher, string(variable.Type)).Scan(&variable.ID)
@@ -224,7 +224,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
 			err = sdk.ErrVariableExists
 		}
-		return sdk.WrapError(err, "InsertVariable> Cannot insert variable %s in db", variable.Name)
+		return sdk.WrapError(err, "Cannot insert variable %s in db", variable.Name)
 	}
 
 	eva := &sdk.EnvironmentVariableAudit{
@@ -236,7 +236,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 		Versionned:    time.Now(),
 	}
 	if err := insertAudit(db, eva); err != nil {
-		return sdk.WrapError(err, "InsertVariable> Cannot add audit")
+		return sdk.WrapError(err, "Cannot add audit")
 	}
 	return nil
 }
@@ -257,7 +257,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, va
 
 	clear, cipher, err := secret.EncryptS(variable.Type, varValue)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret")
+		return sdk.WrapError(err, "Cannot encrypt secret")
 	}
 
 	query := `UPDATE environment_variable
@@ -288,7 +288,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, va
 		Versionned:     time.Now(),
 	}
 	if err := insertAudit(db, eva); err != nil {
-		return sdk.WrapError(err, "UpdateVariable> Cannot add audit")
+		return sdk.WrapError(err, "Cannot add audit")
 	}
 	return nil
 }
@@ -315,7 +315,7 @@ func DeleteVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 		Versionned:     time.Now(),
 	}
 	if err := insertAudit(db, eva); err != nil {
-		return sdk.WrapError(err, "DeleteVariable> Cannot add audit")
+		return sdk.WrapError(err, "Cannot add audit")
 	}
 	return nil
 }

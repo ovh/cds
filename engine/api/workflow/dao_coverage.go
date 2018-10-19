@@ -25,7 +25,7 @@ func loadPreviousCoverageReport(db gorp.SqlExecutor, workflowID int64, runNumber
 		if err == sql.ErrNoRows {
 			return sdk.WorkflowNodeRunCoverage{}, sdk.ErrNotFound
 		}
-		return sdk.WorkflowNodeRunCoverage{}, sdk.WrapError(err, "LoadPreviousCoverageReport> Unable to load previous coverage")
+		return sdk.WorkflowNodeRunCoverage{}, sdk.WrapError(err, "Unable to load previous coverage")
 	}
 
 	return sdk.WorkflowNodeRunCoverage(cov), nil
@@ -43,7 +43,7 @@ func loadLatestCoverageReport(db gorp.SqlExecutor, workflowID int64, repository 
 		if err == sql.ErrNoRows {
 			return sdk.WorkflowNodeRunCoverage{}, sdk.ErrNotFound
 		}
-		return sdk.WorkflowNodeRunCoverage{}, sdk.WrapError(err, "LoadLatestCoverageReport> Unable to load latest coverage")
+		return sdk.WorkflowNodeRunCoverage{}, sdk.WrapError(err, "Unable to load latest coverage")
 	}
 
 	return sdk.WorkflowNodeRunCoverage(cov), nil
@@ -60,7 +60,7 @@ func LoadCoverageReport(db gorp.SqlExecutor, workflowNodeRunID int64) (sdk.Workf
 		if err == sql.ErrNoRows {
 			return sdk.WorkflowNodeRunCoverage{}, sdk.ErrNotFound
 		}
-		return sdk.WorkflowNodeRunCoverage{}, sdk.WrapError(err, "LoadCoverageReport> Unable to load coverage")
+		return sdk.WorkflowNodeRunCoverage{}, sdk.WrapError(err, "Unable to load coverage")
 	}
 
 	return sdk.WorkflowNodeRunCoverage(cov), nil
@@ -70,7 +70,7 @@ func LoadCoverageReport(db gorp.SqlExecutor, workflowNodeRunID int64) (sdk.Workf
 func InsertCoverage(db gorp.SqlExecutor, cov sdk.WorkflowNodeRunCoverage) error {
 	c := Coverage(cov)
 	if err := db.Insert(&c); err != nil {
-		return sdk.WrapError(err, "InsertCoverage> Unable to insert code coverage report")
+		return sdk.WrapError(err, "Unable to insert code coverage report")
 	}
 	return nil
 }
@@ -79,7 +79,7 @@ func InsertCoverage(db gorp.SqlExecutor, cov sdk.WorkflowNodeRunCoverage) error 
 func UpdateCoverage(db gorp.SqlExecutor, cov sdk.WorkflowNodeRunCoverage) error {
 	c := Coverage(cov)
 	if _, err := db.Update(&c); err != nil {
-		return sdk.WrapError(err, "UpdateCoverage> Unable to update code coverage report")
+		return sdk.WrapError(err, "Unable to update code coverage report")
 	}
 	return nil
 }
@@ -89,15 +89,15 @@ func (c *Coverage) PostGet(s gorp.SqlExecutor) error {
 	var report, trend sql.NullString
 	query := "SELECT report, trend FROM workflow_node_run_coverage WHERE workflow_node_run_id=$1"
 	if err := s.QueryRow(query, c.WorkflowNodeRunID).Scan(&report, &trend); err != nil {
-		return sdk.WrapError(err, "workflow.coverage.postget> Unable to get report and trend")
+		return sdk.WrapError(err, "Unable to get report and trend")
 	}
 
 	if err := gorpmapping.JSONNullString(report, &c.Report); err != nil {
-		return sdk.WrapError(err, "workflow.coverage.postget> Unable to unmarshal report")
+		return sdk.WrapError(err, "Unable to unmarshal report")
 	}
 
 	if err := gorpmapping.JSONNullString(trend, &c.Trend); err != nil {
-		return sdk.WrapError(err, "workflow.coverage.postget> Unable to unmarshal trend")
+		return sdk.WrapError(err, "Unable to unmarshal trend")
 	}
 	return nil
 }
@@ -123,7 +123,7 @@ func (c *Coverage) PostUpdate(s gorp.SqlExecutor) error {
     SET report=$1, trend=$2
     WHERE workflow_node_run_id=$3`
 	if _, err := s.Exec(query, reportS, trendS, c.WorkflowNodeRunID); err != nil {
-		return sdk.WrapError(err, "workflow.coverage.postupdate> Unable to update report and trend")
+		return sdk.WrapError(err, "Unable to update report and trend")
 	}
 
 	return nil
@@ -160,7 +160,7 @@ func ComputeNewReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Stor
 	}
 
 	if err := InsertCoverage(db, covReport); err != nil {
-		return sdk.WrapError(err, "computeNewReport> Unable to insert coverage report")
+		return sdk.WrapError(err, "Unable to insert coverage report")
 	}
 
 	return nil

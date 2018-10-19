@@ -51,19 +51,19 @@ func doJSONRequest(ctx context.Context, srv *sdk.Service, method, path string, i
 	if in != nil {
 		b, err = json.Marshal(in)
 		if err != nil {
-			return 0, sdk.WrapError(err, "services.doJSONRequest> Unable to marshal input")
+			return 0, sdk.WrapError(err, "Unable to marshal input")
 		}
 	}
 
 	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
 	res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, b, mods...)
 	if err != nil {
-		return code, sdk.WrapError(err, "services.doJSONRequest> Unable to perform request on service %s (%s)", srv.Name, srv.Type)
+		return code, sdk.WrapError(err, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
 	}
 
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
-			return code, sdk.WrapError(err, "services.doJSONRequest> Unable to marshal output")
+			return code, sdk.WrapError(err, "Unable to marshal output")
 		}
 	}
 

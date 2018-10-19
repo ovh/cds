@@ -67,7 +67,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		case sdk.SecretVariable:
 			secret, err := decryptFunc(db, proj.ID, v.Value)
 			if err != nil {
-				return env, nil, sdk.WrapError(err, "ParseAndImport>> Unable to decrypt secret variable")
+				return env, nil, sdk.WrapError(err, "Unable to decrypt secret variable")
 			}
 			v.Value = secret
 		}
@@ -102,7 +102,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 		kk, err := keys.Parse(db, proj.ID, kname, kval, decryptFunc)
 		if err != nil {
-			return env, nil, sdk.WrapError(err, "ParseAndImport>> Unable to parse key")
+			return env, nil, sdk.WrapError(err, "Unable to parse key")
 		}
 
 		k := sdk.EnvironmentKey{

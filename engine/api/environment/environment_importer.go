@@ -37,7 +37,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 	env.ProjectID = proj.ID
 	env.ProjectKey = proj.Key
 	if err := InsertEnvironment(db, env); err != nil {
-		return sdk.WrapError(err, "environment.Exists> Unable to create env %s on project %s(%d) ", env.Name, env.ProjectKey, env.ProjectID)
+		return sdk.WrapError(err, "Unable to create env %s on project %s(%d) ", env.Name, env.ProjectKey, env.ProjectID)
 	}
 
 	//If no GroupPermission provided, inherit from project
@@ -45,7 +45,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 		env.EnvironmentGroups = proj.ProjectGroups
 	}
 	if err := group.InsertGroupsInEnvironment(db, env.EnvironmentGroups, env.ID); err != nil {
-		return sdk.WrapError(err, "environment.Import> unable to import groups in environment %s ", env.Name)
+		return sdk.WrapError(err, "unable to import groups in environment %s ", env.Name)
 	}
 
 	//Insert all variables
@@ -59,7 +59,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 	for _, k := range env.Keys {
 		k.EnvironmentID = env.ID
 		if err := InsertKey(db, &k); err != nil {
-			return sdk.WrapError(err, "environment.Import> Unable to insert key %s", k.Name)
+			return sdk.WrapError(err, "Unable to insert key %s", k.Name)
 		}
 		if msgChan != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentKeyCreated, strings.ToUpper(k.Type), k.Name, env.Name)

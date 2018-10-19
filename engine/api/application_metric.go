@@ -26,7 +26,7 @@ func (api *API) getApplicationMetricHandler() service.Handler {
 
 		result, err := metrics.GetMetrics(api.mustDB(), key, app.ID, metricName)
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationMetricHandler> Cannot get metrics")
+			return sdk.WrapError(err, "Cannot get metrics")
 
 		}
 		return service.WriteJSON(w, result, http.StatusOK)

@@ -192,7 +192,7 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Environment,
 		if err == sql.ErrNoRows {
 			return envs, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load environments linked to workflow id %d", workflowID)
+		return nil, sdk.WrapError(err, "Unable to load environments linked to workflow id %d", workflowID)
 	}
 
 	return envs, nil
@@ -236,7 +236,7 @@ func CheckDefaultEnv(db gorp.SqlExecutor) error {
 func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
 	variables, err := GetAllVariableByID(db, env.ID)
 	if err != nil {
-		return sdk.WrapError(err, "loadDependencies> Cannot load environment variables")
+		return sdk.WrapError(err, "Cannot load environment variables")
 	}
 	env.Variable = variables
 
@@ -289,13 +289,13 @@ func UpdateEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error 
 func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 	// Delete variables
 	if err := DeleteAllVariable(db, environmentID); err != nil {
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment variable")
+		return sdk.WrapError(err, "Cannot delete environment variable")
 	}
 
 	// Delete groups
 	query := `DELETE FROM environment_group WHERE environment_id = $1`
 	if _, err := db.Exec(query, environmentID); err != nil {
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment gorup")
+		return sdk.WrapError(err, "Cannot delete environment gorup")
 	}
 
 	// Delete builds
@@ -304,25 +304,25 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 		)`
 
 	if _, err := db.Exec(query, environmentID); err != nil {
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment related builds")
+		return sdk.WrapError(err, "Cannot delete environment related builds")
 	}
 
 	query = `DELETE FROM pipeline_build_job WHERE pipeline_build_id
 			IN (SELECT id FROM pipeline_build WHERE environment_id = $1)`
 
 	if _, err := db.Exec(query, environmentID); err != nil {
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment related builds")
+		return sdk.WrapError(err, "Cannot delete environment related builds")
 	}
 
 	query = `DELETE FROM pipeline_build where environment_id = $1`
 	if _, err := db.Exec(query, environmentID); err != nil {
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment related builds")
+		return sdk.WrapError(err, "Cannot delete environment related builds")
 	}
 
 	//Delete application_pipeline_notif to this environments
 	query = `DELETE FROM application_pipeline_notif WHERE environment_id = $1`
 	if _, err := db.Exec(query, environmentID); err != nil {
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment application_pipeline_notif")
+		return sdk.WrapError(err, "Cannot delete environment application_pipeline_notif")
 	}
 
 	// FINALLY delete environment
@@ -333,7 +333,7 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 				return sdk.WrapError(sdk.ErrEnvironmentCannotBeDeleted, "DeleteEnvironment> Cannot delete environment %d", environmentID)
 			}
 		}
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment %d", environmentID)
+		return sdk.WrapError(err, "Cannot delete environment %d", environmentID)
 	}
 
 	// Delete artifacts related to this environments
@@ -365,24 +365,24 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 func DeleteAllEnvironment(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM environment_variable WHERE environment_id IN (SELECT id FROM environment WHERE project_id = $1)`
 	if _, err := db.Exec(query, projectID); err != nil {
-		return sdk.WrapError(err, "DeleteAllEnvironment> Cannot delete environment variable")
+		return sdk.WrapError(err, "Cannot delete environment variable")
 	}
 
 	// Delete groups
 	query = `DELETE FROM environment_group WHERE environment_id IN (SELECT id FROM environment WHERE project_id = $1)`
 	if _, err := db.Exec(query, projectID); err != nil {
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment group")
+		return sdk.WrapError(err, "Cannot delete environment group")
 	}
 
 	//Delete application_pipeline_notif to this environments
 	query = `DELETE FROM application_pipeline_notif WHERE environment_id  IN (SELECT id FROM environment WHERE project_id = $1)`
 	if _, err := db.Exec(query, projectID); err != nil {
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment application_pipeline_notif")
+		return sdk.WrapError(err, "Cannot delete environment application_pipeline_notif")
 	}
 
 	query = `DELETE FROM environment WHERE project_id=$1`
 	if _, err := db.Exec(query, projectID); err != nil {
-		return sdk.WrapError(err, "DeleteEnvironment> Cannot delete environment")
+		return sdk.WrapError(err, "Cannot delete environment")
 	}
 	return nil
 }
@@ -471,7 +471,7 @@ func CountEnvironmentByVarValue(db gorp.SqlExecutor, projectKey string, value st
 
 	var envsName []string
 	if _, err := db.Select(&envsName, query, projectKey, fmt.Sprintf("%%%s%%", value)); err != nil {
-		return nil, sdk.WrapError(err, "environment.CountEnvironmentByVarValue> Unable to count usage")
+		return nil, sdk.WrapError(err, "Unable to count usage")
 	}
 	return envsName, nil
 }

@@ -18,7 +18,7 @@ See [worker tab documentation]({{< relref "cli/worker/tag.md" >}})
 
 Tags are useful to add informations and context for a run.
 
-If you want to filter all runs in sidebar, you can select the tags displayed: Go to Workflow → Advanced → "Tags to display in the sidebar".
+If you want to filter all runs in sidebar, you can select the tags displayed: go to Workflow → Advanced → "Tags to display in the sidebar".
 
 ![Webhook](/images/workflows.design.sidebar.png)
 

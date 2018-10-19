@@ -55,7 +55,7 @@ func FindByType(db gorp.SqlExecutor, t string) ([]sdk.Service, error) {
 		if err == sdk.ErrNotFound {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "FindByType> Unable to find dead services")
+		return nil, sdk.WrapError(err, "Unable to find dead services")
 	}
 
 	return services, nil
@@ -80,7 +80,7 @@ func findOne(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Servi
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNotFound
 		}
-		return nil, sdk.WrapError(err, "findOne> service not found")
+		return nil, sdk.WrapError(err, "service not found")
 	}
 	s := sdk.Service(sdb)
 	if s.Name == "" {
@@ -112,7 +112,7 @@ func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Serv
 func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service(*s)
 	if err := db.Insert(&sdb); err != nil {
-		return sdk.WrapError(err, "Insert> unable to insert service %s", s.Name)
+		return sdk.WrapError(err, "unable to insert service %s", s.Name)
 	}
 	*s = sdk.Service(sdb)
 
@@ -127,7 +127,7 @@ func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
 func Update(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service(*s)
 	if _, err := db.Update(&sdb); err != nil {
-		return sdk.WrapError(err, "Update> unable to update service %s", s.Name)
+		return sdk.WrapError(err, "unable to update service %s", s.Name)
 	}
 	*s = sdk.Service(sdb)
 	sEvent <- serviceEvent{
@@ -141,7 +141,7 @@ func Update(db gorp.SqlExecutor, s *sdk.Service) error {
 func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service(*s)
 	if _, err := db.Delete(&sdb); err != nil {
-		return sdk.WrapError(err, "Delete> unable to delete service %s", s.Name)
+		return sdk.WrapError(err, "unable to delete service %s", s.Name)
 	}
 	sEvent <- serviceEvent{
 		Service: *s,
@@ -155,13 +155,13 @@ func (s *service) PostGet(db gorp.SqlExecutor) error {
 	query := "SELECT monitoring_status, config FROM services WHERE name = $1"
 	var monitoringStatus, config []byte
 	if err := db.QueryRow(query, s.Name).Scan(&monitoringStatus, &config); err != nil {
-		return sdk.WrapError(err, "PostGet> error on queryRow where name:%s id:%d type:%s", s.Name, s.ID, s.Type)
+		return sdk.WrapError(err, "error on queryRow where name:%s id:%d type:%s", s.Name, s.ID, s.Type)
 	}
 
 	if len(monitoringStatus) > 0 {
 		m := sdk.MonitoringStatus{}
 		if err := json.Unmarshal(monitoringStatus, &m); err != nil {
-			return sdk.WrapError(err, "PostGet> error on unmarshal monitoringStatus service")
+			return sdk.WrapError(err, "error on unmarshal monitoringStatus service")
 		}
 		for i := range m.Lines {
 			m.Lines[i].Component = fmt.Sprintf("%s/%s", s.Name, m.Lines[i].Component)
@@ -171,7 +171,7 @@ func (s *service) PostGet(db gorp.SqlExecutor) error {
 	}
 	if len(config) > 0 {
 		if err := json.Unmarshal(config, &s.Config); err != nil {
-			return sdk.WrapError(err, "PostGet> error on unmarshal config service")
+			return sdk.WrapError(err, "error on unmarshal config service")
 		}
 	}
 	return nil
@@ -195,7 +195,7 @@ func (s *service) PostUpdate(db gorp.SqlExecutor) error {
 
 	query := "update services set monitoring_status = $1, config = $2 where name = $3"
 	if _, err := db.Exec(query, content, config, s.Name); err != nil {
-		return sdk.WrapError(err, "PostUpdate> err on update sql service")
+		return sdk.WrapError(err, "err on update sql service")
 	}
 	return nil
 }
@@ -208,7 +208,7 @@ func FindDeadServices(db gorp.SqlExecutor, t time.Duration) ([]sdk.Service, erro
 		if err == sdk.ErrNotFound {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "FindDeadServices> Unable to find dead services")
+		return nil, sdk.WrapError(err, "Unable to find dead services")
 	}
 	return services, nil
 }

@@ -135,7 +135,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	ctxTo, cancel := context.WithTimeout(ctx, 4*time.Minute)
 	defer cancel()
 	if err := vm.WaitForPowerState(ctxTo, types.VirtualMachinePowerStatePoweredOff); err != nil {
-		return nil, sdk.WrapError(err, "createVMModel > cannot wait for power state result")
+		return nil, sdk.WrapError(err, "cannot wait for power state result")
 	}
 	log.Info("createVMModel> model %s is build", model.Name)
 
@@ -156,7 +156,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 	ctxTo, cancel = context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
-		return vm, sdk.WrapError(err, "createVMModel> error on waiting result for vm renaming %s", model.Name)
+		return vm, sdk.WrapError(err, "error on waiting result for vm renaming %s", model.Name)
 	}
 
 	return vm, nil

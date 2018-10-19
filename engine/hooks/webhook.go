@@ -45,7 +45,7 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 	case GithubHeader:
 		var pushEvent GithubPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
-			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read github request: %s", string(t.WebHook.RequestBody))
+			return nil, sdk.WrapError(err, "unable ro read github request: %s", string(t.WebHook.RequestBody))
 		}
 		if pushEvent.Deleted {
 			return nil, nil
@@ -71,7 +71,7 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 	case GitlabHeader:
 		var pushEvent GitlabPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
-			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
+			return nil, sdk.WrapError(err, "unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
 		}
 		// Branch deletion ( gitlab return 0000000000000000000000000000000000000000 as git hash)
 		if pushEvent.After == "0000000000000000000000000000000000000000" {
@@ -98,7 +98,7 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 	case BitbucketHeader:
 		var pushEvent BitbucketPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
-			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
+			return nil, sdk.WrapError(err, "unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
 		}
 		payload["git.author"] = pushEvent.Actor.Name
 		payload["git.author.email"] = pushEvent.Actor.EmailAddress
@@ -149,7 +149,7 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 	// For all requests, parse the raw query from the URL
 	values, err := url.ParseQuery(t.WebHook.RequestURL)
 	if err != nil {
-		return nil, sdk.WrapError(err, "Hooks> Unable to parse query url %s", t.WebHook.RequestURL)
+		return nil, sdk.WrapError(err, "Unable to parse query url %s", t.WebHook.RequestURL)
 	}
 
 	// For POST, PUT, and PATCH requests, it also parses the request body as a form
@@ -169,7 +169,7 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 		case ct == "application/x-www-form-urlencoded":
 			formValues, err := url.ParseQuery(string(t.WebHook.RequestBody))
 			if err == nil {
-				return nil, sdk.WrapError(err, "Hooks> Unable webhookto parse body %s", t.WebHook.RequestBody)
+				return nil, sdk.WrapError(err, "Unable webhookto parse body %s", t.WebHook.RequestBody)
 			}
 			copyValues(values, formValues)
 		case ct == "application/json":
@@ -197,7 +197,7 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 			e.ExtraFields.Type = false
 			m, err := e.ToStringMap(bodyJSON)
 			if err != nil {
-				return nil, sdk.WrapError(err, "Hooks> Unable to dump body %s", t.WebHook.RequestBody)
+				return nil, sdk.WrapError(err, "Unable to dump body %s", t.WebHook.RequestBody)
 			}
 
 			//Add the map content to values

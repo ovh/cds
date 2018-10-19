@@ -29,7 +29,7 @@ func (api *API) getEnvironmentExportHandler() service.Handler {
 		// Export
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
-			return sdk.WrapError(err, "getEnvironmentExportHandler> Format invalid")
+			return sdk.WrapError(err, "Format invalid")
 		}
 		if _, err := environment.Export(api.mustDB(), api.Cache, key, envName, f, withPermissions, getUser(ctx), project.EncryptWithBuiltinKey, w); err != nil {
 			return sdk.WrapError(err, "getEnvironmentExportHandler")

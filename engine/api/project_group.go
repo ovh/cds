@@ -114,7 +114,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 
 		var groupProject sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupProject); err != nil {
-			return sdk.WrapError(err, "updateGroupRoleOnProjectHandler> unable to unmarshal")
+			return sdk.WrapError(err, "Unable to unmarshal")
 		}
 
 		if groupName != groupProject.Group.Name {
@@ -189,7 +189,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 
 		var groupProject sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupProject); err != nil {
-			return sdk.WrapError(err, "addGroupInProject> unable to unmarshal")
+			return sdk.WrapError(err, "Unable to unmarshal")
 		}
 
 		p, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
@@ -349,7 +349,7 @@ func (api *API) importGroupsInProjectHandler() service.Handler {
 
 		if forceUpdate {
 			if err := group.DeleteAllGroupFromProject(tx, proj.ID); err != nil {
-				return sdk.WrapError(err, "importGroupsInProjectHandler> Cannot delete all groups for this project %s", proj.Name)
+				return sdk.WrapError(err, "Cannot delete all groups for this project %s", proj.Name)
 			}
 			proj.ProjectGroups = []sdk.GroupPermission{}
 		} else {
@@ -372,14 +372,14 @@ func (api *API) importGroupsInProjectHandler() service.Handler {
 				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInProjectHandler> Group %v doesn't exist", gr.Group.Name)
 			}
 			if err := group.InsertGroupInProject(tx, proj.ID, gro.ID, gr.Permission); err != nil {
-				return sdk.WrapError(err, "importGroupsInProjectHandler> Cannot add group %v in project %s", gr.Group.Name, proj.Name)
+				return sdk.WrapError(err, "Cannot add group %v in project %s", gr.Group.Name, proj.Name)
 			}
 			gr.Group = *gro
 			proj.ProjectGroups = append(proj.ProjectGroups, gr)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "importGroupsInProjectHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, proj, http.StatusOK)

@@ -7,7 +7,7 @@ weight = 9
 
 ### Upgrade Binary
 
-Update your CDS Engine binary from latest Release from Github:
+Update your CDS Engine binary from latest Release from GitHub:
 
 ```bash
 ./engine update --from-github

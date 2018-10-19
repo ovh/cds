@@ -12,12 +12,12 @@ An hatchery is started with permissions to build all pipelines accessible from a
 
 There are 6 modes for hatcheries:
 
- * [Local]({{< relref "local.md" >}}) : Hatchery starts workers directly as local process.
- * [Marathon]({{< relref "marathon.md" >}}) : Hatchery starts workers inside containers on a mesos cluster using Marathon API.
- * [Swarm]({{< relref "swarm.md" >}}) : The hatchery connects to a Docker Swarm cluster and starts workers inside containers.
- * [Kubernetes]({{< relref "kubernetes.md" >}}) : The hatchery connects to a Kubernetes cluster and starts workers inside containers.
- * [Openstack]({{< relref "openstack.md" >}}) : Hatchery starts workers on Openstack virtual machines using Openstack Nova.
- * [VSphere]({{< relref "vsphere.md" >}}) : Hatchery starts workers on VSphere datacenter using VMWare VSphere.
+ * [Local]({{< relref "local.md" >}}): Hatchery starts workers directly as local process.
+ * [Marathon]({{< relref "marathon.md" >}}): Hatchery starts workers inside containers on a Mesos cluster using Marathon API.
+ * [Swarm]({{< relref "swarm.md" >}}): The hatchery connects to a Docker Swarm cluster and starts workers inside containers.
+ * [Kubernetes]({{< relref "kubernetes.md" >}}): The hatchery connects to a Kubernetes cluster and starts workers inside containers.
+ * [OpenStack]({{< relref "openstack.md" >}}): Hatchery starts workers on OpenStack virtual machines using OpenStack Nova.
+ * [vSphere]({{< relref "vsphere.md" >}}): Hatchery starts workers on vSphere datacenter using VMware vSphere.
 
 
 ## Admin hatchery
