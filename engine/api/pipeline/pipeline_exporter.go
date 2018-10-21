@@ -12,9 +12,9 @@ import (
 
 // Export a pipeline
 func Export(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
-	p, errload := LoadPipeline(db, key, name, true)
-	if errload != nil {
-		return 0, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
+	p, err := LoadPipeline(db, key, name, true)
+	if err != nil {
+		return 0, sdk.WrapError(err, "Cannot load workflow %s", name)
 	}
 
 	return ExportPipeline(*p, f, withPermissions, w)
@@ -27,7 +27,7 @@ func ExportPipeline(p sdk.Pipeline, f exportentities.Format, withPermissions boo
 	// Marshal to the desired format
 	b, err := exportentities.Marshal(e, f)
 	if err != nil {
-		return 0, sdk.WithStack(err)
+		return 0, err
 	}
 
 	return w.Write(b)

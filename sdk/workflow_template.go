@@ -31,20 +31,22 @@ func (w *WorkflowTemplateRequest) Scan(src interface{}) error {
 
 // WorkflowTemplateResult struct.
 type WorkflowTemplateResult struct {
-	Workflow  string   `json:"workflow"`
-	Pipelines []string `json:"pipelines"`
+	Workflow     string   `json:"workflow"`
+	Pipelines    []string `json:"pipelines"`
+	Applications []string `json:"applications"`
 }
 
 // WorkflowTemplate struct.
 type WorkflowTemplate struct {
-	ID          int64                      `json:"id" db:"id" `
-	GroupID     int64                      `json:"group_id" db:"group_id"`
-	Name        string                     `json:"name" db:"name"`
-	Description string                     `json:"description" db:"description"`
-	Parameters  WorkflowTemplateParameters `json:"parameters" db:"parameters"`
-	Value       string                     `json:"value" db:"value"`
-	Pipelines   PipelineTemplates          `json:"pipelines" db:"pipelines"`
-	Version     int64                      `json:"version" db:"version"`
+	ID           int64                      `json:"id" db:"id" `
+	GroupID      int64                      `json:"group_id" db:"group_id"`
+	Name         string                     `json:"name" db:"name"`
+	Description  string                     `json:"description" db:"description"`
+	Parameters   WorkflowTemplateParameters `json:"parameters" db:"parameters"`
+	Value        string                     `json:"value" db:"value"`
+	Pipelines    PipelineTemplates          `json:"pipelines" db:"pipelines"`
+	Applications ApplicationTemplates       `json:"applications" db:"applications"`
+	Version      int64                      `json:"version" db:"version"`
 	// aggregates
 	Group      *Group                 `json:"group,omitempty" db:"-"`
 	FirstAudit *AuditWorkflowTemplate `json:"first_audit,omitempty" db:"-"`
@@ -57,14 +59,20 @@ func (w *WorkflowTemplate) ValidateStruct() error {
 		return WithStack(ErrInvalidData)
 	}
 
+	for _, p := range w.Parameters {
+		if err := p.ValidateStruct(); err != nil {
+			return err
+		}
+	}
+
 	for _, p := range w.Pipelines {
 		if err := p.ValidateStruct(); err != nil {
 			return err
 		}
 	}
 
-	for _, p := range w.Parameters {
-		if err := p.ValidateStruct(); err != nil {
+	for _, a := range w.Applications {
+		if err := a.ValidateStruct(); err != nil {
 			return err
 		}
 	}
@@ -127,6 +135,19 @@ func (p *PipelineTemplate) ValidateStruct() error {
 	return nil
 }
 
+// ApplicationTemplate struct.
+type ApplicationTemplate struct {
+	Value string `json:"value"`
+}
+
+// ValidateStruct returns application template validity.
+func (a *ApplicationTemplate) ValidateStruct() error {
+	if len(a.Value) == 0 {
+		return WithStack(ErrInvalidData)
+	}
+	return nil
+}
+
 // TemplateParameterType used for template parameter.
 type TemplateParameterType string
 
@@ -173,19 +194,37 @@ func (w *WorkflowTemplateParameters) Scan(src interface{}) error {
 // PipelineTemplates struct.
 type PipelineTemplates []PipelineTemplate
 
-// Value returns driver.Value from workflow template parameters.
+// Value returns driver.Value from workflow template pipelines.
 func (p PipelineTemplates) Value() (driver.Value, error) {
 	j, err := json.Marshal(p)
 	return j, WrapError(err, "cannot marshal PipelineTemplates")
 }
 
-// Scan workflow template parameters.
+// Scan pipeline templates.
 func (p *PipelineTemplates) Scan(src interface{}) error {
 	source, ok := src.([]byte)
 	if !ok {
 		return WithStack(errors.New("type assertion .([]byte) failed"))
 	}
 	return WrapError(json.Unmarshal(source, p), "cannot unmarshal PipelineTemplates")
+}
+
+// ApplicationTemplates struct.
+type ApplicationTemplates []ApplicationTemplate
+
+// Value returns driver.Value from workflow template applications.
+func (a ApplicationTemplates) Value() (driver.Value, error) {
+	j, err := json.Marshal(a)
+	return j, WrapError(err, "cannot marshal ApplicationTemplates")
+}
+
+// Scan application templates.
+func (a *ApplicationTemplates) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, a), "cannot unmarshal ApplicationTemplates")
 }
 
 // ValidateStruct returns pipeline template validity.

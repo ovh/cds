@@ -1,14 +1,16 @@
 package workflowtemplate
 
 import (
+	"archive/tar"
 	"bytes"
 	"encoding/base64"
 	"fmt"
 	"html/template"
-	"regexp"
-	"strings"
+	"io"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) interface{} {
@@ -28,7 +30,7 @@ func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) inte
 }
 
 func executeTemplate(t string, data map[string]interface{}) (string, error) {
-	tmpl, err := template.New(fmt.Sprintf("template")).Parse(escapeVars(t))
+	tmpl, err := template.New(fmt.Sprintf("template")).Delims("[[", "]]").Parse(t)
 	if err != nil {
 		return "", sdk.WrapError(err, "cannot parse workflow template")
 	}
@@ -38,12 +40,13 @@ func executeTemplate(t string, data map[string]interface{}) (string, error) {
 		return "", sdk.WrapError(err, "cannot execute workflow template")
 	}
 
-	return unescapeVars(buffer.String()), nil
+	return buffer.String(), nil
 }
 
 // Execute returns yaml file from template.
 func Execute(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) (sdk.WorkflowTemplateResult, error) {
 	data := map[string]interface{}{
+		"id":     wt.ID,
 		"name":   r.Name,
 		"params": prepareParams(wt, r),
 	}
@@ -59,14 +62,15 @@ func Execute(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) (sdk.Workf
 	}
 
 	res := sdk.WorkflowTemplateResult{
-		Workflow:  out,
-		Pipelines: make([]string, len(wt.Pipelines)),
+		Workflow:     out,
+		Pipelines:    make([]string, len(wt.Pipelines)),
+		Applications: make([]string, len(wt.Applications)),
 	}
 
 	for i, p := range wt.Pipelines {
 		v, err := base64.StdEncoding.DecodeString(p.Value)
 		if err != nil {
-			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse workflow template")
+			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse pipeline template")
 		}
 
 		out, err := executeTemplate(string(v), data)
@@ -76,34 +80,98 @@ func Execute(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) (sdk.Workf
 		res.Pipelines[i] = out
 	}
 
+	for i, p := range wt.Applications {
+		v, err := base64.StdEncoding.DecodeString(p.Value)
+		if err != nil {
+			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse application template")
+		}
+
+		out, err := executeTemplate(string(v), data)
+		if err != nil {
+			return sdk.WorkflowTemplateResult{}, err
+		}
+		res.Applications[i] = out
+	}
+
 	return res, nil
 }
 
-var cdsVarsRegex = regexp.MustCompile("({{[\\.\"a-zA-Z0-9._\\-µ|\\s]+[\\.\"a-zA-Z0-9._\\-µ|\\s]+}})")
-var cdsEscapedVarsRegex = regexp.MustCompile("([[[\\.\"a-zA-Z0-9._\\-µ|\\s]+]])")
+// Tar returns in buffer the a tar file that contains all generated stuff in template result.
+func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
+	tw := tar.NewWriter(w)
 
-func escapeVars(input string) string {
-	var oldNew []string
-	for _, match := range cdsVarsRegex.FindAllStringSubmatch(input, -1) {
-		if len(match) > 0 {
-			if strings.HasPrefix(strings.TrimSpace(strings.TrimPrefix(match[0], "{{")), ".cds") {
-				oldNew = append(oldNew, match[0], strings.Replace(
-					strings.Replace(match[0], "{{", "[[", -1),
-					"}}", "]]", -1))
-			}
+	// add generated workflow to writer
+	var wor exportentities.Workflow
+	if err := yaml.Unmarshal([]byte(res.Workflow), &wor); err != nil {
+		return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated workflow"))
+	}
+
+	bs, err := exportentities.Marshal(wor, exportentities.FormatYAML)
+	if err != nil {
+		return err
+	}
+	if err := tw.WriteHeader(&tar.Header{
+		Name: fmt.Sprintf("%s.yml", wor.Name),
+		Mode: 0644,
+		Size: int64(len(bs)),
+	}); err != nil {
+		tw.Close()
+		return sdk.WrapError(err, "Unable to write header for workflow %s", wor.Name)
+	}
+	if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
+		tw.Close()
+		return sdk.WrapError(err, "Unable to copy workflow buffer")
+	}
+
+	// add generated pipelines to writer
+	for _, p := range res.Pipelines {
+		var pip exportentities.PipelineV1
+		if err := yaml.Unmarshal([]byte(p), &pip); err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated pipeline"))
+		}
+
+		bs, err := exportentities.Marshal(pip, exportentities.FormatYAML)
+		if err != nil {
+			return err
+		}
+		if err := tw.WriteHeader(&tar.Header{
+			Name: fmt.Sprintf("%s.pip.yml", pip.Name),
+			Mode: 0644,
+			Size: int64(len(bs)),
+		}); err != nil {
+			tw.Close()
+			return sdk.WrapError(err, "Unable to write header for pipeline %s", pip.Name)
+		}
+		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
+			tw.Close()
+			return sdk.WrapError(err, "Unable to copy pipeline buffer")
 		}
 	}
-	return strings.NewReplacer(oldNew...).Replace(input)
-}
 
-func unescapeVars(input string) string {
-	var oldNew []string
-	for _, match := range cdsEscapedVarsRegex.FindAllStringSubmatch(input, -1) {
-		if len(match) > 0 {
-			oldNew = append(oldNew, match[0], strings.Replace(
-				strings.Replace(match[0], "[[", "{{", -1),
-				"]]", "}}", -1))
+	// add generated applications to writer
+	for _, a := range res.Applications {
+		var app exportentities.Application
+		if err := yaml.Unmarshal([]byte(a), &app); err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated application"))
+		}
+
+		bs, err := exportentities.Marshal(app, exportentities.FormatYAML)
+		if err != nil {
+			return err
+		}
+		if err := tw.WriteHeader(&tar.Header{
+			Name: fmt.Sprintf("%s.app.yml", app.Name),
+			Mode: 0644,
+			Size: int64(len(bs)),
+		}); err != nil {
+			tw.Close()
+			return sdk.WrapError(err, "Unable to write header for application %s", app.Name)
+		}
+		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
+			tw.Close()
+			return sdk.WrapError(err, "Unable to copy application buffer")
 		}
 	}
-	return strings.NewReplacer(oldNew...).Replace(input)
+
+	return nil
 }

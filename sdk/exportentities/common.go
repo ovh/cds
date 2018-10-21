@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/sdk"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
@@ -53,7 +54,7 @@ func Unmarshal(btes []byte, f Format, i interface{}) error {
 	default:
 		errMarshal = ErrUnsupportedFormat
 	}
-	return errMarshal
+	return sdk.WithStack(errMarshal)
 }
 
 //Marshal supports JSON, YAML
@@ -66,7 +67,7 @@ func Marshal(i interface{}, f Format) ([]byte, error) {
 	case FormatYAML:
 		btes, errMarshal = yaml.Marshal(i)
 	}
-	return btes, errMarshal
+	return btes, sdk.WithStack(errMarshal)
 }
 
 // ReadFile reads the file and return the content, the format and eventually an error

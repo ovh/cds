@@ -15,6 +15,9 @@ export class WorkflowTemplateFormComponent {
     pipelineValues: any;
     pipelineKeys: Array<number>;
     pipelineValueAdd: string;
+    applicationValues: any;
+    applicationKeys: Array<number>;
+    applicationValueAdd: string;
     descriptionRows: number;
     parameterKeys: Array<string>;
     parameterValues: any;
@@ -55,6 +58,15 @@ export class WorkflowTemplateFormComponent {
             });
         }
 
+        this.applicationValues = {};
+        this.applicationKeys = [];
+        if (wt.applications) {
+            wt.applications.map(a => atob(a.value)).forEach((a, i) => {
+                this.applicationValues[i] = a;
+                this.applicationKeys.push(i);
+            });
+        }
+
         this.descriptionChange();
     }
     get workflowTemplate() { return this._workflowTemplate; }
@@ -92,6 +104,9 @@ export class WorkflowTemplateFormComponent {
         this._workflowTemplate.pipelines = Object.keys(this.pipelineValues).map(k => {
             return { value: this.pipelineValues[k] ? btoa(this.pipelineValues[k]) : '' };
         });
+        this._workflowTemplate.applications = Object.keys(this.applicationValues).map(k => {
+            return { value: this.applicationValues[k] ? btoa(this.applicationValues[k]) : '' };
+        });
         this._workflowTemplate.parameters = Object.keys(this.parameterValues).map(k => {
             return this.parameterValues[k];
         })
@@ -100,7 +115,7 @@ export class WorkflowTemplateFormComponent {
             return;
         }
 
-        if (this._workflowTemplate.value) {
+        if (this.workflowValue) {
             this._workflowTemplate.value = btoa(this.workflowValue);
         }
         this.workflowTemplate.group_id = Number(this.workflowTemplate.group_id);
@@ -116,11 +131,24 @@ export class WorkflowTemplateFormComponent {
         let k = this.pipelineKeys[this.pipelineKeys.length - 1] + 1;
         this.pipelineKeys.push(k)
         this.pipelineValues[k] = this.pipelineValueAdd;
+        this.pipelineValueAdd = '';
     }
 
     clickRemovePipeline(key: number) {
         this.pipelineKeys = this.pipelineKeys.filter(k => k !== key);
         delete (this.pipelineValues[key]);
+    }
+
+    clickAddApplication() {
+        let k = this.applicationKeys[this.applicationKeys.length - 1] + 1;
+        this.applicationKeys.push(k)
+        this.applicationValues[k] = this.applicationValueAdd;
+        this.applicationValueAdd = '';
+    }
+
+    clickRemoveApplication(key: number) {
+        this.applicationKeys = this.applicationKeys.filter(k => k !== key);
+        delete (this.applicationValues[key]);
     }
 
     clickAddParameter() {

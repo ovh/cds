@@ -9,6 +9,7 @@ export class WorkflowTemplate {
     parameters: Array<WorkflowTemplateParameter>;
     value: string;
     pipelines: Array<PipelineTemplate>;
+    applications: Array<ApplicationTemplate>;
     version: number;
     group: Group;
     first_audit: AuditWorkflowTemplate;
@@ -22,5 +23,9 @@ export class WorkflowTemplateParameter {
 }
 
 export class PipelineTemplate {
+    value: string;
+}
+
+export class ApplicationTemplate {
     value: string;
 }

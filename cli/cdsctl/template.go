@@ -51,6 +51,25 @@ var templateExecuteCmd = cli.Command{
 			ShortHand: "i",
 			Usage:     "Set to not ask interactively for params",
 		},
+		{
+			Kind:      reflect.String,
+			Name:      "output-dir",
+			ShortHand: "d",
+			Usage:     "Output directory",
+			Default:   ".cds",
+		},
+		{
+			Kind:    reflect.Bool,
+			Name:    "force",
+			Usage:   "Force, may override files",
+			Default: "false",
+		},
+		{
+			Kind:    reflect.Bool,
+			Name:    "quiet",
+			Usage:   "If true, do not output filename created",
+			Default: "false",
+		},
 	},
 }
 
@@ -72,11 +91,13 @@ func templateExecuteRun(v cli.Values) error {
 	paramPairs := v.GetStringSlice("params")
 	params := map[string]string{}
 	for _, p := range paramPairs {
-		ps := strings.Split(p, "=")
-		if len(ps) < 2 {
-			return fmt.Errorf("Invalid given param %s", ps[0])
+		if p != "" { // FIXME when no params given GetStringSlice returns one empty string
+			ps := strings.Split(p, "=")
+			if len(ps) < 2 {
+				return fmt.Errorf("Invalid given param %s", ps[0])
+			}
+			params[ps[0]] = strings.Join(ps[1:], "=")
 		}
-		params[ps[0]] = strings.Join(ps[1:], "=")
 	}
 
 	// for parameters not given with flags, ask interactively if not disabled
@@ -90,6 +111,14 @@ func templateExecuteRun(v cli.Values) error {
 		}
 	}
 
+	dir := strings.TrimSpace(v.GetString("output-dir"))
+	if dir == "" {
+		dir = "."
+	}
+	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
+		return fmt.Errorf("Unable to create directory %s: %v", v.GetString("output-dir"), err)
+	}
+
 	// check request before submit
 	req := sdk.WorkflowTemplateRequest{
 		Name:       v.GetString("name"),
@@ -99,16 +128,12 @@ func templateExecuteRun(v cli.Values) error {
 		return err
 	}
 
-	res, err := client.TemplateExecute(projectKey, templateID, req)
+	tr, err := client.TemplateExecute(projectKey, templateID, req)
 	if err != nil {
 		return err
 	}
 
-	for _, r := range res {
-		fmt.Println(r)
-	}
-
-	return nil
+	return workflowTarReaderToFiles(dir, tr, v.GetBool("force"), v.GetBool("quiet"))
 }
 
 var templateUpdateCmd = cli.Command{

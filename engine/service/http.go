@@ -75,7 +75,7 @@ func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
 	if e != nil {
 		return sdk.WrapError(e, "WriteJSON> unable to marshal : %v", e)
 	}
-	return Write(w, b, status, "application/json")
+	return sdk.WithStack(Write(w, b, status, "application/json"))
 }
 
 // WriteProcessTime writes the duration of the call in the responsewriter

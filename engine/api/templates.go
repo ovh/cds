@@ -1,21 +1,19 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/exportentities"
 )
 
 type contextKey int
@@ -205,6 +203,7 @@ func (api *API) putTemplateHandler() service.Handler {
 		new.Value = data.Value
 		new.Parameters = data.Parameters
 		new.Pipelines = data.Pipelines
+		new.Applications = data.Applications
 		new.Version = old.Version + 1
 
 		if err := workflowtemplate.Update(api.mustDB(), &new); err != nil {
@@ -285,81 +284,50 @@ func (api *API) executeTemplateHandler() service.Handler {
 		}
 
 		// execute the template
-		msgs, err := api.executeTemplate(ctx, proj, t, req)
-		if err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)
+		return api.executeTemplate(ctx, w, proj, t, req)
 	}
 }
 
-func (api *API) executeTemplate(ctx context.Context, proj *sdk.Project, t *sdk.WorkflowTemplate,
-	req sdk.WorkflowTemplateRequest) ([]sdk.Message, error) {
+func (api *API) executeTemplate(ctx context.Context, w http.ResponseWriter, proj *sdk.Project, t *sdk.WorkflowTemplate,
+	req sdk.WorkflowTemplateRequest) error {
 	// execute template with request
 	res, err := workflowtemplate.Execute(t, req)
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	if err := workflowtemplate.Tar(res, buf); err != nil {
+		return err
 	}
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
-		return nil, sdk.WrapError(err, "Cannot start transaction")
+		return sdk.WrapError(err, "Cannot start transaction")
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// import generated pipelines
-	var msgs []sdk.Message
-
-	for _, p := range res.Pipelines {
-		var pip exportentities.PipelineV1
-		if err := yaml.Unmarshal([]byte(p), &pip); err != nil {
-			return nil, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated pipeline template"))
-		}
-
-		_, pipelineMsgs, err := pipeline.ParseAndImport(tx, api.Cache, proj, pip, getUser(ctx),
-			pipeline.ImportOptions{Force: true})
-		if err != nil {
-			return nil, sdk.WrapError(err, "Unable import generated pipeline")
-		}
-
-		msgs = append(msgs, pipelineMsgs...)
-	}
-
-	// import generated workflow
-	var wor exportentities.Workflow
-	if err := yaml.Unmarshal([]byte(res.Workflow), &wor); err != nil {
-		return nil, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated workflow template"))
-	}
-
-	workflow, workflowMsgs, err := workflow.ParseAndImport(ctx, tx, api.Cache, proj, &wor, getUser(ctx),
-		workflow.ImportOptions{DryRun: false, Force: true})
-	if err != nil {
-		return nil, sdk.WrapError(err, "Unable import generated workflow")
-	}
-
-	msgs = append(msgs, workflowMsgs...)
-
+	// TODO do this in workflow push
 	// remove existing relations between workflow and template
-	if err := workflowtemplate.DeleteRelationsForWorkflowID(tx, workflow.ID); err != nil {
+	/*if err := workflowtemplate.DeleteRelationsForWorkflowID(tx, workflow.ID); err != nil {
 		return nil, err
-	}
+	}*/
 
 	// create new relation between workflow and template
 	if err := workflowtemplate.InsertRelation(tx, &sdk.WorkflowTemplateInstance{
-		WorkflowTemplateID:      t.ID,
-		WorkflowID:              workflow.ID,
+		WorkflowTemplateID: t.ID,
+		//WorkflowID:              workflow.ID,
 		WorkflowTemplateVersion: t.Version,
 		Request:                 req,
 	}); err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "Cannot commit transaction")
+		return sdk.WrapError(err, "Cannot commit transaction")
 	}
 
-	return msgs, nil
+	return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 }
 
 func (api *API) getTemplateInstancesHandler() service.Handler {
@@ -381,7 +349,8 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 
 func (api *API) updateWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
+		// TODO repair update
+		/*vars := mux.Vars(r)
 
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
@@ -430,7 +399,8 @@ func (api *API) updateWorkflowHandler() service.Handler {
 			return err
 		}
 
-		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)
+		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)*/
+		return nil
 	}
 }
 
