@@ -258,17 +258,7 @@ func (api *API) deleteTemplateHandler() service.Handler {
 
 func (api *API) executeTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
-
-		// load project for given key
-		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx),
-			project.LoadOptions.Default, project.LoadOptions.WithGroups)
-		if err != nil {
-			return sdk.WrapError(err, "Unable to load project %s", projectKey)
-		}
-
-		ctx, err = api.middlewareTemplate(false)(ctx, w, r)
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
 		if err != nil {
 			return err
 		}
@@ -283,46 +273,40 @@ func (api *API) executeTemplateHandler() service.Handler {
 			return sdk.NewError(sdk.ErrInvalidData, err)
 		}
 
-		// execute the template
-		return api.executeTemplate(ctx, w, proj, t, req)
-	}
-}
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "Cannot start transaction")
+		}
+		defer func() { _ = tx.Rollback() }()
 
-func (api *API) executeTemplate(ctx context.Context, w http.ResponseWriter, proj *sdk.Project, t *sdk.WorkflowTemplate,
-	req sdk.WorkflowTemplateRequest) error {
-	tx, err := api.mustDB().Begin()
-	if err != nil {
-		return sdk.WrapError(err, "Cannot start transaction")
-	}
-	defer func() { _ = tx.Rollback() }()
+		i := &sdk.WorkflowTemplateInstance{
+			WorkflowTemplateID:      t.ID,
+			WorkflowTemplateVersion: t.Version,
+			Request:                 req,
+		}
 
-	i := &sdk.WorkflowTemplateInstance{
-		WorkflowTemplateID:      t.ID,
-		WorkflowTemplateVersion: t.Version,
-		Request:                 req,
-	}
+		// create new instance for template
+		if err := workflowtemplate.InsertInstance(tx, i); err != nil {
+			return err
+		}
 
-	// create new instance for template
-	if err := workflowtemplate.InsertInstance(tx, i); err != nil {
-		return err
-	}
+		// execute template with request
+		res, err := workflowtemplate.Execute(t, i)
+		if err != nil {
+			return err
+		}
 
-	// execute template with request
-	res, err := workflowtemplate.Execute(t, i)
-	if err != nil {
-		return err
-	}
+		buf := new(bytes.Buffer)
+		if err := workflowtemplate.Tar(res, buf); err != nil {
+			return err
+		}
 
-	buf := new(bytes.Buffer)
-	if err := workflowtemplate.Tar(res, buf); err != nil {
-		return err
-	}
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "Cannot commit transaction")
+		}
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "Cannot commit transaction")
+		return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 	}
-
-	return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 }
 
 func (api *API) getTemplateInstancesHandler() service.Handler {
@@ -342,10 +326,9 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 	}
 }
 
-func (api *API) updateWorkflowHandler() service.Handler {
+func (api *API) updateWorkflowTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO repair update
-		/*vars := mux.Vars(r)
+		vars := mux.Vars(r)
 
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
@@ -374,9 +357,6 @@ func (api *API) updateWorkflowHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		if wt.Version == wti.WorkflowTemplateVersion {
-			return sdk.WithStack(sdk.ErrAlreadyLatestTemplate)
-		}
 
 		// get new params but override name
 		var req sdk.WorkflowTemplateRequest
@@ -388,14 +368,36 @@ func (api *API) updateWorkflowHandler() service.Handler {
 			return sdk.NewError(sdk.ErrInvalidData, err)
 		}
 
-		// execute the template
-		msgs, err := api.executeTemplate(ctx, proj, wt, req)
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "Cannot start transaction")
+		}
+		defer func() { _ = tx.Rollback() }()
+
+		wti.WorkflowTemplateVersion = wt.Version
+		wti.Request = req
+
+		// create new instance for template
+		if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
+			return err
+		}
+
+		// execute template with request
+		res, err := workflowtemplate.Execute(wt, wti)
 		if err != nil {
 			return err
 		}
 
-		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)*/
-		return nil
+		buf := new(bytes.Buffer)
+		if err := workflowtemplate.Tar(res, buf); err != nil {
+			return err
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "Cannot commit transaction")
+		}
+
+		return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 	}
 }
 

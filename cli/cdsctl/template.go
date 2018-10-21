@@ -30,9 +30,6 @@ var (
 var templateExecuteCmd = cli.Command{
 	Name:  "execute",
 	Short: "Execute CDS workflow template",
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-	},
 	Args: []cli.Arg{
 		{Name: "template-id"},
 		{Name: "name"},
@@ -74,8 +71,6 @@ var templateExecuteCmd = cli.Command{
 }
 
 func templateExecuteRun(v cli.Values) error {
-	projectKey := v.GetString(_ProjectKey)
-
 	// try to get the template from cds
 	templateIDString := v.GetString("template-id")
 	templateID, err := strconv.ParseInt(templateIDString, 10, 64)
@@ -128,7 +123,7 @@ func templateExecuteRun(v cli.Values) error {
 		return err
 	}
 
-	tr, err := client.TemplateExecute(projectKey, templateID, req)
+	tr, err := client.TemplateExecute(templateID, req)
 	if err != nil {
 		return err
 	}
@@ -156,6 +151,25 @@ var templateUpdateCmd = cli.Command{
 			Name:      "ignore-prompt",
 			ShortHand: "i",
 			Usage:     "Set to not ask interactively for params",
+		},
+		{
+			Kind:      reflect.String,
+			Name:      "output-dir",
+			ShortHand: "d",
+			Usage:     "Output directory",
+			Default:   ".cds",
+		},
+		{
+			Kind:    reflect.Bool,
+			Name:    "force",
+			Usage:   "Force, may override files",
+			Default: "false",
+		},
+		{
+			Kind:    reflect.Bool,
+			Name:    "quiet",
+			Usage:   "If true, do not output filename created",
+			Default: "false",
 		},
 	},
 }
@@ -191,11 +205,13 @@ func templateUpdateRun(v cli.Values) error {
 	paramPairs := v.GetStringSlice("params")
 	params := map[string]string{}
 	for _, p := range paramPairs {
-		ps := strings.Split(p, "=")
-		if len(ps) < 2 {
-			return fmt.Errorf("Invalid given param %s", ps[0])
+		if p != "" { // FIXME when no params given GetStringSlice returns one empty string
+			ps := strings.Split(p, "=")
+			if len(ps) < 2 {
+				return fmt.Errorf("Invalid given param %s", ps[0])
+			}
+			params[ps[0]] = strings.Join(ps[1:], "=")
 		}
-		params[ps[0]] = strings.Join(ps[1:], "=")
 	}
 
 	// for parameters not given with flags, ask interactively if not disabled
@@ -213,6 +229,14 @@ func templateUpdateRun(v cli.Values) error {
 		}
 	}
 
+	dir := strings.TrimSpace(v.GetString("output-dir"))
+	if dir == "" {
+		dir = "."
+	}
+	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
+		return fmt.Errorf("Unable to create directory %s: %v", v.GetString("output-dir"), err)
+	}
+
 	// check request before submit
 	req := sdk.WorkflowTemplateRequest{
 		Name:       wti.Request.Name,
@@ -222,14 +246,10 @@ func templateUpdateRun(v cli.Values) error {
 		return err
 	}
 
-	res, err := client.TemplateUpdate(projectKey, workflowName, req)
+	tr, err := client.TemplateUpdate(projectKey, workflowName, req)
 	if err != nil {
 		return err
 	}
 
-	for _, r := range res {
-		fmt.Println(r)
-	}
-
-	return nil
+	return workflowTarReaderToFiles(dir, tr, v.GetBool("force"), v.GetBool("quiet"))
 }

@@ -67,9 +67,14 @@ func GetAudits(db *gorp.DbMap, c CriteriaAudit) ([]*sdk.AuditWorkflowTemplate, e
 }
 
 // InsertInstance for workflow template in database.
-func InsertInstance(db gorp.SqlExecutor, wtw *sdk.WorkflowTemplateInstance) error {
-	return sdk.WrapError(database.Insert(db, wtw), "Unable to insert workflow template relation %d with workflow %d",
-		wtw.WorkflowTemplateID, wtw.WorkflowID)
+func InsertInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) error {
+	return sdk.WrapError(database.Insert(db, wti), "Unable to insert workflow template relation %d with workflow %d",
+		wti.WorkflowTemplateID, wti.WorkflowID)
+}
+
+// UpdateInstance for workflow template in database.
+func UpdateInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) error {
+	return sdk.WrapError(database.Update(db, wti), "Unable to update workflow template instance %d", wti.ID)
 }
 
 // DeleteInstanceNotIDAndWorkflowID removes all instances of a template where not id and workflow id equal in database.

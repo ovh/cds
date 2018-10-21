@@ -17,8 +17,8 @@ type Filter struct {
 // TemplateClient exposes templates functions
 type TemplateClient interface {
 	TemplateGet(templateID int64) (*sdk.WorkflowTemplate, error)
-	TemplateExecute(projectKey string, templateID int64, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
-	TemplateUpdate(projectKey, workflowName string, req sdk.WorkflowTemplateRequest) ([]string, error)
+	TemplateExecute(templateID int64, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
+	TemplateUpdate(projectKey, workflowName string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
 }
 
 // AdminService expose all function to CDS services
