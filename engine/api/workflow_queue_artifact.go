@@ -144,7 +144,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler > cast error")
 		}
 
-		// Load  Existing workflow Run Job
+		// Load existing workflow Run Job
 		id, errI := requestVarInt(r, "permID")
 		if errI != nil {
 			return sdk.WrapError(errI, "postWorkflowJobArtifacWithTempURLHandler> Invalid node job run ID")
@@ -184,9 +184,23 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 		art.Tag = string(tag)
 		art.Ref = ref
 
-		url, key, err := store.StoreURL(&art)
-		if err != nil {
-			return sdk.WrapError(err, "Could not generate hash")
+		var retryURL = 10
+		var url, key string
+		var errorStoreURL error
+
+		for i := 0; i < retryURL; i++ {
+			url, key, errorStoreURL = store.StoreURL(&art)
+			if errorStoreURL != nil {
+				log.Warning("Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
+			} else {
+				// no error
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+
+		if url == "" || key == "" {
+			return sdk.WrapError(errorStoreURL, "Could not generate hash after %d attempts", retryURL)
 		}
 
 		art.TempURL = url
