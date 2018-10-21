@@ -954,6 +954,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			return nil, nil, sdk.WithStack(err)
 		}
 
+		var workflowFileName string
 		b := buff.Bytes()
 		switch {
 		case strings.Contains(hdr.Name, ".app."):
@@ -981,11 +982,18 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			}
 			envs[hdr.Name] = env
 		default:
+			// if a workflow was already found, it's a mistake
+			if workflowFileName != "" {
+				log.Error("two workflows files found: %s and %s", workflowFileName, hdr.Name)
+				mError.Append(fmt.Errorf("two workflows files found: %s and %s", workflowFileName, hdr.Name))
+				break
+			}
 			if err := yaml.Unmarshal(b, &wrkflw); err != nil {
 				log.Error("Push> Unable to unmarshal workflow %s: %v", hdr.Name, err)
 				mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
 				continue
 			}
+			workflowFileName = hdr.Name
 		}
 	}
 
