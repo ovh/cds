@@ -31,9 +31,10 @@ func (w *WorkflowTemplateRequest) Scan(src interface{}) error {
 
 // WorkflowTemplateResult struct.
 type WorkflowTemplateResult struct {
-	Workflow     string   `json:"workflow"`
-	Pipelines    []string `json:"pipelines"`
-	Applications []string `json:"applications"`
+	InstanceID   int64
+	Workflow     string
+	Pipelines    []string
+	Applications []string
 }
 
 // WorkflowTemplate struct.

@@ -56,15 +56,17 @@ repo: [[.params.repo]]`)),
 		}},
 	}
 
-	req := sdk.WorkflowTemplateRequest{
-		Name: "my-workflow",
-		Parameters: map[string]string{
-			"withDeploy": "true",
-			"deployWhen": "failure",
+	instance := &sdk.WorkflowTemplateInstance{
+		Request: sdk.WorkflowTemplateRequest{
+			Name: "my-workflow",
+			Parameters: map[string]string{
+				"withDeploy": "true",
+				"deployWhen": "failure",
+			},
 		},
 	}
 
-	res, err := workflowtemplate.Execute(tmpl, req)
+	res, err := workflowtemplate.Execute(tmpl, instance)
 	assert.Nil(t, err)
 
 	t.Log(res.Workflow)

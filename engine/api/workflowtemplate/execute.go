@@ -44,11 +44,11 @@ func executeTemplate(t string, data map[string]interface{}) (string, error) {
 }
 
 // Execute returns yaml file from template.
-func Execute(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) (sdk.WorkflowTemplateResult, error) {
+func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.WorkflowTemplateResult, error) {
 	data := map[string]interface{}{
-		"id":     wt.ID,
-		"name":   r.Name,
-		"params": prepareParams(wt, r),
+		"id":     i.ID,
+		"name":   i.Request.Name,
+		"params": prepareParams(wt, i.Request),
 	}
 
 	v, err := base64.StdEncoding.DecodeString(wt.Value)
@@ -62,6 +62,7 @@ func Execute(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) (sdk.Workf
 	}
 
 	res := sdk.WorkflowTemplateResult{
+		InstanceID:   i.ID,
 		Workflow:     out,
 		Pipelines:    make([]string, len(wt.Pipelines)),
 		Applications: make([]string, len(wt.Applications)),
@@ -105,6 +106,9 @@ func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 	if err := yaml.Unmarshal([]byte(res.Workflow), &wor); err != nil {
 		return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated workflow"))
 	}
+
+	// set the workflow template instance id on export
+	wor.TemplateInstanceID = &res.InstanceID
 
 	bs, err := exportentities.Marshal(wor, exportentities.FormatYAML)
 	if err != nil {

@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
@@ -68,6 +69,14 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	wf, errload := Load(ctx, db, cache, proj, name, u, options)
 	if errload != nil {
 		return sdk.WrapError(errload, "workflow.Pull> Cannot load workflow %s", name)
+	}
+
+	i, err := workflowtemplate.GetInstance(db, workflowtemplate.NewCriteriaInstance().WorkflowIDs(wf.ID))
+	if err != nil {
+		return err
+	}
+	if i != nil {
+		wf.TemplateInstance = i
 	}
 
 	apps := wf.GetApplications()

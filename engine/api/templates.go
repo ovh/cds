@@ -238,7 +238,7 @@ func (api *API) deleteTemplateHandler() service.Handler {
 		}
 		defer func() { _ = tx.Rollback() }()
 
-		if err := workflowtemplate.DeleteRelationsForWorkflowTemplateID(tx, wt.ID); err != nil {
+		if err := workflowtemplate.DeleteInstancesForWorkflowTemplateID(tx, wt.ID); err != nil {
 			return err
 		}
 
@@ -290,36 +290,31 @@ func (api *API) executeTemplateHandler() service.Handler {
 
 func (api *API) executeTemplate(ctx context.Context, w http.ResponseWriter, proj *sdk.Project, t *sdk.WorkflowTemplate,
 	req sdk.WorkflowTemplateRequest) error {
-	// execute template with request
-	res, err := workflowtemplate.Execute(t, req)
-	if err != nil {
-		return err
-	}
-
-	buf := new(bytes.Buffer)
-	if err := workflowtemplate.Tar(res, buf); err != nil {
-		return err
-	}
-
 	tx, err := api.mustDB().Begin()
 	if err != nil {
 		return sdk.WrapError(err, "Cannot start transaction")
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// TODO do this in workflow push
-	// remove existing relations between workflow and template
-	/*if err := workflowtemplate.DeleteRelationsForWorkflowID(tx, workflow.ID); err != nil {
-		return nil, err
-	}*/
-
-	// create new relation between workflow and template
-	if err := workflowtemplate.InsertRelation(tx, &sdk.WorkflowTemplateInstance{
-		WorkflowTemplateID: t.ID,
-		//WorkflowID:              workflow.ID,
+	i := &sdk.WorkflowTemplateInstance{
+		WorkflowTemplateID:      t.ID,
 		WorkflowTemplateVersion: t.Version,
 		Request:                 req,
-	}); err != nil {
+	}
+
+	// create new instance for template
+	if err := workflowtemplate.InsertInstance(tx, i); err != nil {
+		return err
+	}
+
+	// execute template with request
+	res, err := workflowtemplate.Execute(t, i)
+	if err != nil {
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	if err := workflowtemplate.Tar(res, buf); err != nil {
 		return err
 	}
 
