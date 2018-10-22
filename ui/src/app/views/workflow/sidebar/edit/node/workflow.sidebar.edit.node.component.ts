@@ -472,8 +472,8 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         oh.name = he.name;
 
         this.node.outgoing_hooks.push(oh);
-        Workflow.findNode(this.workflow, (n) => this.node.name === n.name).outgoing_hooks = this.node.outgoing_hooks;
         let workflowToUpdate = cloneDeep(this.workflow);
+        Workflow.findNode(workflowToUpdate, (n) => this.node.name === n.name).outgoing_hooks = this.node.outgoing_hooks;
         this.updateWorkflow(workflowToUpdate, this.worklflowAddOutgoingHook.modal);
     }
 
