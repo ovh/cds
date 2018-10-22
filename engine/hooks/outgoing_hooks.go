@@ -28,7 +28,7 @@ func (s *Service) outgoingHookToTask(h sdk.WorkflowNodeOutgoingHookRun) (sdk.Tas
 	if err != nil {
 		return sdk.Task{}, sdk.WrapError(err, "unable to hash hook config")
 	}
-	identifier := fmt.Sprintf("%s/%d", h.Hook.WorkflowHookModel.Name, configHash)
+	identifier := fmt.Sprintf("%s/%s/%d", h.Hook.Name, h.Hook.WorkflowHookModel.Name, configHash)
 	uuid := base64.StdEncoding.EncodeToString([]byte(identifier))
 
 	config := h.Hook.Config.Clone()
