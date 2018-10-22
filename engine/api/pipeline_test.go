@@ -414,12 +414,19 @@ func Test_deletePipelineHandlerShouldReturnError(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineName: pip.Name,
-			PipelineID:   pip.ID,
-			Name:         "root",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Ref:  "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
+
+	(&wf).RetroMigrate()
 
 	proj.Pipelines = append(proj.Pipelines, *pip)
 
