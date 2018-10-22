@@ -29,6 +29,7 @@ It also starts a PostgreSQL server and a Redis server using the helm built-in de
 
 - Kubernetes 1.4+ with Beta APIs enabled
 - PV provisioner support in the underlying infrastructure
+- Kubernetes config file (`kubeconfig.yaml`) located at this path. (For minikube it's often located `~/.kube/config`)
 
 ## Installing the Chart
 
@@ -74,6 +75,8 @@ $ helm install --name my-release -f values.yaml .
 + If you use a minikube you have to set `ui.serviceType` to `ClusterIP`.
 
 + If you use a Kubernetes as GKE, EKS or if your cloud provider provide you an available LoadBalancer you just have to set `ui.serviceType` to `LoadBalancer`.
+
++ If your `kubeconfig.yaml` is not located in this directory you can set path in `values.yaml` or launch with `--set kubernetesConfigFile=myPathTo/kubeconfig.yaml`.
 
 ## Image
 

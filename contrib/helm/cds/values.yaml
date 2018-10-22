@@ -76,6 +76,9 @@ readinessProbe:
     port: 8081
   initialDelaySeconds: 30
 
+
+kubernetesConfigFile: kubeconfig.yaml
+
 ##
 ## External database configuration
 ##

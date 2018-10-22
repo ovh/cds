@@ -1,0 +1,56 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "cds.fullname" . }}-hatchery-k8s
+  labels:
+    app: {{ template "cds.fullname" . }}-hatchery-k8s
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "cds.fullname" . }}-hatchery-k8s
+    spec:
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.image.pullSecrets }}
+        - name: {{ . }}
+      {{- end}}
+      {{- end }}
+      containers:
+      - name: {{ template "cds.fullname" . }}-hatchery-k8s
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        env:
+        - name: CDS_K8S_FILECONTENT
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}
+              key: cds-k8s_config_file
+        - name: CDS_HATCHERY_KUBERNETES_KUBERNETESMASTERURL
+          value: https://x9ia8v.c1.gra.k8s.ovh.net
+        - name: CDS_HATCHERY_KUBERNETES_KUBERNETESNAMESPACE
+          value: cds
+        - name: CDS_HATCHERY_KUBERNETES_KUBERNETESCONFIGFILE
+          value: kubeconfig.yml
+        - name: CDS_HATCHERY_KUBERNETES_COMMONCONFIGURATION_NAME
+          value: hatchery-k8s
+        - name: CDS_HATCHERY_KUBERNETES_COMMONCONFIGURATION_API_HTTP_URL
+          value: 'http://{{ template "cds.fullname" . }}-api'
+        - name: CDS_HATCHERY_KUBERNETES_COMMONCONFIGURATION_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}
+              key: cds-api_auth_sharedinfratoken
+        - name: CDS_LOG_LEVEL
+          value: {{ default "" .Values.logLevel | quote }}
+        - name: CDS_URL
+          value: 'http://{{ template "cds.fullname" . }}-hatchery-k8s'
+        command: ["/bin/sh"]
+        args: ["-c", "echo $CDS_K8S_FILECONTENT | base64 --decode > kubeconfig.yml && /app/cds-engine-linux-amd64 start hatchery:kubernetes"]
+        ports:
+        - name: http
+          containerPort: 8086
