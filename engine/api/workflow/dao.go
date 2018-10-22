@@ -940,19 +940,31 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project) error {
 
 	//Checks pipelines are in the current project
 	pips := w.InvolvedPipelines()
-	w.Pipelines = make(map[int64]sdk.Pipeline)
+	if w.Pipelines == nil {
+		w.Pipelines = make(map[int64]sdk.Pipeline)
+	}
 	for _, pipID := range pips {
-		var found bool
-		for _, p := range proj.Pipelines {
-			if pipID == p.ID {
-				w.Pipelines[p.ID] = p
-				found = true
-				break
+		if _, has := w.Pipelines[pipID]; !has {
+			found := false
+			// Check if pipeline is in project
+			for _, p := range proj.Pipelines {
+				if pipID == p.ID {
+					w.Pipelines[p.ID] = p
+					found = true
+					break
+				}
 			}
+			if !found {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
+			}
+
+			pip, err := pipeline.LoadPipelineByID(context.TODO(), db, pipID, true)
+			if err != nil {
+				return sdk.WrapError(sdk.ErrNotFound, "Unable to load pipeline %d", pipID)
+			}
+			w.Pipelines[pipID] = *pip
 		}
-		if !found {
-			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
-		}
+
 	}
 
 	//Checks environments are in the current project

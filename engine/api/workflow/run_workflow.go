@@ -168,6 +168,10 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, number))
 	defer end()
 
+	if err := IsValid(db, w, p); err != nil {
+		return nil, report, sdk.WrapError(err, "Unable to valid workflow")
+	}
+
 	wr := &sdk.WorkflowRun{
 		Number:        number,
 		Workflow:      *w,
