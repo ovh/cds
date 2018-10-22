@@ -51,7 +51,7 @@ func Parse(db gorp.SqlExecutor, proj *sdk.Project, ew *exportentities.Workflow) 
 		return nil, sdk.WrapError(err, "Unable to load outgoing hook models")
 	}
 
-	w, errW := ew.GetWorkflow(db, proj, hookModels, outgoingModels)
+	w, errW := ew.GetWorkflow(proj, hookModels, outgoingModels)
 	if errW != nil {
 		return nil, sdk.NewError(sdk.ErrWrongRequest, errW)
 	}

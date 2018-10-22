@@ -201,6 +201,47 @@ func TestWorkflow_checkValidity(t *testing.T) {
 }
 
 func TestWorkflow_GetWorkflow(t *testing.T) {
+	proj := sdk.Project{
+		Pipelines: []sdk.Pipeline{
+			{
+				ID:   1,
+				Name: "pipeline",
+			},
+			{
+				ID:   2,
+				Name: "pipeline-root",
+			},
+			{
+				ID:   3,
+				Name: "pipeline-child",
+			},
+		},
+		Platforms: []sdk.ProjectPlatform{
+			{
+				ID:   1,
+				Name: "platform",
+			},
+		},
+	}
+	hooksModels := []sdk.WorkflowHookModel{
+		{
+			ID:            1,
+			Name:          "Scheduler",
+			Type:          sdk.WorkflowHookModelBuiltin,
+			Identifier:    sdk.SchedulerModel.Identifier,
+			Author:        "CDS",
+			Icon:          "fa-clock-o",
+			DefaultConfig: sdk.SchedulerModel.DefaultConfig,
+		},
+	}
+
+	outgoingModels := []sdk.WorkflowHookModel{
+		{
+			ID:   1,
+			Name: "webhook",
+		},
+	}
+
 	type fields struct {
 		Name                string
 		Description         string
@@ -243,31 +284,27 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			wantErr: false,
 			want: sdk.Workflow{
 				Description: "this is my description",
-				Root: &sdk.WorkflowNode{
-					Name:         "pipeline",
-					Ref:          "pipeline",
-					PipelineName: "pipeline",
-					Context:      &sdk.WorkflowNodeContext{},
-					Hooks: []sdk.WorkflowNodeHook{
-						{
-							WorkflowHookModel: sdk.WorkflowHookModel{
-								Name:          "Scheduler",
-								Type:          sdk.WorkflowHookModelBuiltin,
-								Identifier:    sdk.SchedulerModel.Identifier,
-								Author:        "CDS",
-								Icon:          "fa-clock-o",
-								DefaultConfig: sdk.SchedulerModel.DefaultConfig,
-							},
-							Config: sdk.WorkflowNodeHookConfig{
-								"crontab": sdk.WorkflowNodeHookConfigValue{
-									Value:        "* * * * *",
-									Configurable: true,
-									Type:         sdk.HookConfigTypeString,
-								},
-								"payload": sdk.WorkflowNodeHookConfigValue{
-									Value:        "{}",
-									Configurable: true,
-									Type:         sdk.HookConfigTypeString,
+				WorkflowData: &sdk.WorkflowData{
+					Node: sdk.Node{
+						Name: "pipeline",
+						Type: "pipeline",
+						Context: &sdk.NodeContext{
+							PipelineID: 1,
+						},
+						Hooks: []sdk.NodeHook{
+							{
+								HookModelID: 1,
+								Config: sdk.WorkflowNodeHookConfig{
+									"crontab": sdk.WorkflowNodeHookConfigValue{
+										Value:        "* * * * *",
+										Configurable: true,
+										Type:         sdk.HookConfigTypeString,
+									},
+									"payload": sdk.WorkflowNodeHookConfigValue{
+										Value:        "{}",
+										Configurable: true,
+										Type:         sdk.HookConfigTypeString,
+									},
 								},
 							},
 						},
@@ -292,19 +329,23 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Root: &sdk.WorkflowNode{
-					Name:         "root",
-					Ref:          "root",
-					PipelineName: "pipeline-root",
-					Context:      &sdk.WorkflowNodeContext{},
-					Triggers: []sdk.WorkflowNodeTrigger{
-						{
-							WorkflowDestNode: sdk.WorkflowNode{
-								Name:         "child",
-								Ref:          "child",
-								PipelineName: "pipeline-child",
-								Context: &sdk.WorkflowNodeContext{
-									Mutex: true,
+				WorkflowData: &sdk.WorkflowData{
+					Node: sdk.Node{
+						Name: "root",
+						Type: "pipeline",
+						Context: &sdk.NodeContext{
+							PipelineID: 2,
+						},
+						Triggers: []sdk.NodeTrigger{
+							{
+								ChildNode: sdk.Node{
+									Name: "child",
+									Ref:  "child",
+									Type: "pipeline",
+									Context: &sdk.NodeContext{
+										PipelineID: 3,
+										Mutex:      true,
+									},
 								},
 							},
 						},
@@ -329,18 +370,24 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Root: &sdk.WorkflowNode{
-					Name:         "root",
-					Ref:          "root",
-					PipelineName: "pipeline-root",
-					Context:      &sdk.WorkflowNodeContext{},
-					Triggers: []sdk.WorkflowNodeTrigger{
-						{
-							WorkflowDestNode: sdk.WorkflowNode{
-								Name:         "child",
-								Ref:          "child",
-								PipelineName: "pipeline-child",
-								Context:      &sdk.WorkflowNodeContext{},
+				WorkflowData: &sdk.WorkflowData{
+					Node: sdk.Node{
+						Name: "root",
+						Ref:  "root",
+						Type: "pipeline",
+						Context: &sdk.NodeContext{
+							PipelineID: 2,
+						},
+						Triggers: []sdk.NodeTrigger{
+							{
+								ChildNode: sdk.Node{
+									Name: "child",
+									Ref:  "child",
+									Type: "pipeline",
+									Context: &sdk.NodeContext{
+										PipelineID: 3,
+									},
+								},
 							},
 						},
 					},
@@ -368,26 +415,34 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Root: &sdk.WorkflowNode{
-					Name:         "root",
-					Ref:          "root",
-					PipelineName: "pipeline-root",
-					Context:      &sdk.WorkflowNodeContext{},
-					Triggers: []sdk.WorkflowNodeTrigger{
-						{
-							WorkflowDestNode: sdk.WorkflowNode{
-								Name:         "first",
-								Ref:          "first",
-								PipelineName: "pipeline-child",
-								Context:      &sdk.WorkflowNodeContext{},
+				WorkflowData: &sdk.WorkflowData{
+					Node: sdk.Node{
+						Name: "root",
+						Ref:  "root",
+						Type: "pipeline",
+						Context: &sdk.NodeContext{
+							PipelineID: 2,
+						},
+						Triggers: []sdk.NodeTrigger{
+							{
+								ChildNode: sdk.Node{
+									Name: "first",
+									Ref:  "first",
+									Type: "pipeline",
+									Context: &sdk.NodeContext{
+										PipelineID: 3,
+									},
 
-								Triggers: []sdk.WorkflowNodeTrigger{
-									{
-										WorkflowDestNode: sdk.WorkflowNode{
-											Name:         "second",
-											Ref:          "second",
-											PipelineName: "pipeline-child",
-											Context:      &sdk.WorkflowNodeContext{},
+									Triggers: []sdk.NodeTrigger{
+										{
+											ChildNode: sdk.Node{
+												Name: "second",
+												Ref:  "second",
+												Type: "pipeline",
+												Context: &sdk.NodeContext{
+													PipelineID: 3,
+												},
+											},
 										},
 									},
 								},
@@ -446,93 +501,118 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Root: &sdk.WorkflowNode{
-					Name:         "A",
-					Ref:          "A",
-					PipelineName: "pipeline",
-					Context:      &sdk.WorkflowNodeContext{},
-					Triggers: []sdk.WorkflowNodeTrigger{
-						{
-							WorkflowDestNode: sdk.WorkflowNode{
-								Name:         "B",
-								Ref:          "B",
-								PipelineName: "pipeline",
-								Context:      &sdk.WorkflowNodeContext{},
-							},
+				WorkflowData: &sdk.WorkflowData{
+					Node: sdk.Node{
+						Name: "A",
+						Ref:  "A",
+						Type: "pipeline",
+						Context: &sdk.NodeContext{
+							PipelineID: 1,
 						},
-						{
-							WorkflowDestNode: sdk.WorkflowNode{
-								Name:         "C",
-								Ref:          "C",
-								PipelineName: "pipeline",
-								Context:      &sdk.WorkflowNodeContext{},
-							},
-						},
-					},
-					Hooks: []sdk.WorkflowNodeHook{
-						{
-							WorkflowHookModel: sdk.WorkflowHookModel{
-								Name:          sdk.SchedulerModelName,
-								Type:          sdk.WorkflowHookModelBuiltin,
-								Identifier:    sdk.SchedulerModel.Identifier,
-								Author:        "CDS",
-								Icon:          "fa-clock-o",
-								DefaultConfig: sdk.SchedulerModel.DefaultConfig,
-							},
-							Config: sdk.WorkflowNodeHookConfig{
-								"crontab": sdk.WorkflowNodeHookConfigValue{
-									Value:        "* * * * *",
-									Configurable: true,
-									Type:         sdk.HookConfigTypeString,
-								},
-								"payload": sdk.WorkflowNodeHookConfigValue{
-									Value:        "{}",
-									Configurable: true,
-									Type:         sdk.HookConfigTypeString,
-								},
-							},
-						},
-					},
-				},
-				Joins: []sdk.WorkflowNodeJoin{
-					{
-						SourceNodeRefs: []string{"B", "C"},
-						Triggers: []sdk.WorkflowNodeJoinTrigger{
+						Triggers: []sdk.NodeTrigger{
 							{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "D",
-									Ref:          "D",
-									PipelineName: "pipeline",
-									Context:      &sdk.WorkflowNodeContext{},
+								ChildNode: sdk.Node{
+									Name: "B",
+									Ref:  "B",
+									Type: "pipeline",
+									Context: &sdk.NodeContext{
+										PipelineID: 1,
+									},
 								},
 							},
 							{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "E",
-									Ref:          "E",
-									PipelineName: "pipeline",
-									Context:      &sdk.WorkflowNodeContext{},
+								ChildNode: sdk.Node{
+									Name: "C",
+									Ref:  "C",
+									Type: "pipeline",
+									Context: &sdk.NodeContext{
+										PipelineID: 1,
+									},
 								},
 							},
+						},
+						Hooks: []sdk.NodeHook{
 							{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "F",
-									Ref:          "F",
-									PipelineName: "pipeline",
-									Context:      &sdk.WorkflowNodeContext{},
+								HookModelID: 1,
+								Config: sdk.WorkflowNodeHookConfig{
+									"crontab": sdk.WorkflowNodeHookConfigValue{
+										Value:        "* * * * *",
+										Configurable: true,
+										Type:         sdk.HookConfigTypeString,
+									},
+									"payload": sdk.WorkflowNodeHookConfigValue{
+										Value:        "{}",
+										Configurable: true,
+										Type:         sdk.HookConfigTypeString,
+									},
 								},
 							},
 						},
 					},
-					{
-						SourceNodeRefs: []string{"D", "E"},
-						Triggers: []sdk.WorkflowNodeJoinTrigger{
-							{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "G",
-									Ref:          "G",
-									PipelineName: "pipeline",
-									Context:      &sdk.WorkflowNodeContext{},
+					Joins: []sdk.Node{
+						{
+							Type: "join",
+							JoinContext: []sdk.NodeJoin{
+								{
+									ParentName: "B",
+								},
+								{
+									ParentName: "C",
+								},
+							},
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Name: "D",
+										Ref:  "D",
+										Type: "pipeline",
+										Context: &sdk.NodeContext{
+											PipelineID: 1,
+										},
+									},
+								},
+								{
+									ChildNode: sdk.Node{
+										Name: "E",
+										Ref:  "E",
+										Type: "pipeline",
+										Context: &sdk.NodeContext{
+											PipelineID: 1,
+										},
+									},
+								},
+								{
+									ChildNode: sdk.Node{
+										Name: "F",
+										Ref:  "F",
+										Type: "pipeline",
+										Context: &sdk.NodeContext{
+											PipelineID: 1,
+										},
+									},
+								},
+							},
+						},
+						{
+							Type: "join",
+							JoinContext: []sdk.NodeJoin{
+								{
+									ParentName: "D",
+								},
+								{
+									ParentName: "E",
+								},
+							},
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Name: "G",
+										Ref:  "G",
+										Type: "pipeline",
+										Context: &sdk.NodeContext{
+											PipelineID: 1,
+										},
+									},
 								},
 							},
 						},
@@ -548,20 +628,21 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Root: &sdk.WorkflowNode{
-					Name:         "pipeline",
-					Ref:          "pipeline",
-					PipelineName: "pipeline",
-					Context: &sdk.WorkflowNodeContext{
-						ProjectPlatform: &sdk.ProjectPlatform{
-							Name: "platform",
+				WorkflowData: &sdk.WorkflowData{
+					Node: sdk.Node{
+						Name: "pipeline",
+						Ref:  "pipeline",
+						Type: "pipeline",
+						Context: &sdk.NodeContext{
+							PipelineID:        1,
+							ProjectPlatformID: 1,
 						},
 					},
 				},
 			},
 		},
 		{
-			name: "Root and a outgoink hook should not raise an error",
+			name: "Root and a outgoing hook should not raise an error",
 			fields: fields{
 				Workflow: map[string]NodeEntry{
 					"A": NodeEntry{
@@ -578,21 +659,29 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Root: &sdk.WorkflowNode{
-					Name:         "A",
-					Ref:          "pipeline",
-					PipelineName: "pipeline",
-					Context:      &sdk.WorkflowNodeContext{},
-					OutgoingHooks: []sdk.WorkflowNodeOutgoingHook{
-						{
-							Name: "B",
-							Config: sdk.WorkflowNodeHookConfig{
-								"url": sdk.WorkflowNodeHookConfigValue{
-									Value: "https://www.ovh.com",
+				WorkflowData: &sdk.WorkflowData{
+					Node: sdk.Node{
+						Name: "A",
+						Ref:  "pipeline",
+						Type: "pipeline",
+						Context: &sdk.NodeContext{
+							PipelineID: 1,
+						},
+						Triggers: []sdk.NodeTrigger{
+							{
+								ChildNode: sdk.Node{
+									Name:    "B",
+									Type:    sdk.NodeTypeOutGoingHook,
+									Context: &sdk.NodeContext{},
+									OutGoingHookContext: &sdk.NodeOutGoingHook{
+										HookModelID: 1,
+										Config: sdk.WorkflowNodeHookConfig{
+											"url": sdk.WorkflowNodeHookConfigValue{
+												Value: "https://www.ovh.com",
+											},
+										},
+									},
 								},
-							},
-							WorkflowHookModel: sdk.WorkflowHookModel{
-								Name: "webhook",
 							},
 						},
 					},
@@ -600,6 +689,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tsts {
 		t.Run(tt.name, func(t *testing.T) {
 			w := Workflow{
@@ -619,11 +709,18 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				Permissions:         tt.fields.Permissions,
 				HistoryLength:       tt.fields.HistoryLength,
 			}
-			got, err := w.GetWorkflow()
+			got, err := w.GetWorkflow(&proj, hooksModels, outgoingModels)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.GetWorkflow() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
+			got.HookModels = nil
+			got.OutGoingHookModels = nil
+			got.Applications = nil
+			got.Pipelines = nil
+			got.Environments = nil
+			got.ProjectPlatforms = nil
 
 			expextedValues, _ := dump.ToStringMap(tt.want)
 			actualValues, _ := dump.ToStringMap(got)

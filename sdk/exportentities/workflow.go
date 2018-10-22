@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/fsamin/go-dump"
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/sdk"
 )
 
@@ -376,7 +374,7 @@ nextDep:
 }
 
 //GetWorkflow returns a fresh sdk.Workflow
-func (w Workflow) GetWorkflow(db gorp.SqlExecutor, proj *sdk.Project, hookModels []sdk.WorkflowHookModel, outgoingHookModel []sdk.WorkflowHookModel) (*sdk.Workflow, error) {
+func (w Workflow) GetWorkflow(proj *sdk.Project, hookModels []sdk.WorkflowHookModel, outgoingHookModel []sdk.WorkflowHookModel) (*sdk.Workflow, error) {
 	var wf = new(sdk.Workflow)
 	wf.Name = w.Name
 	wf.Description = w.Description

@@ -512,7 +512,7 @@ func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, erro
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
 	if err := IsValid(db, w, p); err != nil {
-		return err
+		return sdk.WrapError(err, "Unable to valid workflow")
 	}
 
 	if w.HistoryLength == 0 {
@@ -530,7 +530,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 
 	if w.Root == nil {
-		return sdk.ErrWorkflowInvalidRoot
+		return sdk.WrapError(sdk.ErrWorkflowInvalidRoot, "Root node is not here")
 	}
 
 	if errIN := insertNode(db, store, w, w.Root, u, false); errIN != nil {
