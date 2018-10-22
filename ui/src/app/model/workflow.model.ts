@@ -545,7 +545,7 @@ export class WNode {
                 // Check if the node is link to a join
                 if (w.workflow_data.joins) {
                     w.workflow_data.joins.forEach(j => {
-                       for (var i = 0; i <j.parents.length; i++) {
+                       for (let i = 0; i < j.parents.length; i++) {
                            let already = j.parents.findIndex( p => p.parent_id === parentNode.id);
                            if (j.parents[i].parent_id === node.id && already === -1) {
                                j.parents[i].parent_id = parentNode.id;

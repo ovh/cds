@@ -96,17 +96,25 @@ func TestPull(t *testing.T) {
 		ProjectKey: proj.Key,
 		Metadata:   sdk.Metadata{"triggered_by": "bla"},
 		PurgeTags:  []string{"aa", "bb"},
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip2.ID,
-						PipelineName: pip2.Name,
-						Context: &sdk.WorkflowNodeContext{
-							ApplicationID: app.ID,
-							EnvironmentID: env.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID:    pip2.ID,
+								ApplicationID: app.ID,
+								EnvironmentID: env.ID,
+							},
 						},
 					},
 				},

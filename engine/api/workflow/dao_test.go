@@ -321,6 +321,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		},
 	}
 
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -560,37 +561,46 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
-				Environment: &env,
-				DefaultPipelineParameters: []sdk.Parameter{
-					{
-						Name:  "param1",
-						Type:  sdk.StringParameter,
-						Value: "param1_value",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+					EnvironmentID: env.ID,
+					DefaultPipelineParameters: []sdk.Parameter{
+						{
+							Name:  "param1",
+							Type:  sdk.StringParameter,
+							Value: "param1_value",
+						},
+					},
+					DefaultPayload: []sdk.Parameter{
+						{
+							Name:  "git.branch",
+							Type:  sdk.StringParameter,
+							Value: "master",
+						},
 					},
 				},
-				DefaultPayload: []sdk.Parameter{
+				Triggers: []sdk.NodeTrigger{
 					{
-						Name:  "git.branch",
-						Type:  sdk.StringParameter,
-						Value: "master",
-					},
-				},
-			},
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip3.ID,
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Context: &sdk.NodeContext{
+								PipelineID: pip3.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})

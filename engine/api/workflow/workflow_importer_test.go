@@ -27,7 +27,8 @@ func (h *mockHTTPClient) Do(*http.Request) (*http.Response, error) {
 }
 
 func TestImport(t *testing.T) {
-	db, cache, end := test.SetupPG(t); defer end()
+	db, cache, end := test.SetupPG(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
@@ -75,6 +76,10 @@ func TestImport(t *testing.T) {
 	//Reload project
 	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	hookModels, err := workflow.LoadHookModels(db)
+	test.NoError(t, err)
+
 	type args struct {
 		w     *sdk.Workflow
 		force bool
@@ -91,10 +96,15 @@ func TestImport(t *testing.T) {
 					Name:      "test-1",
 					Metadata:  sdk.Metadata{"triggered_by": "bla"},
 					PurgeTags: []string{"aa", "bb"},
-					Root: &sdk.WorkflowNode{
-						Name:         "pipeline",
-						Ref:          "pipeline",
-						PipelineName: "pipeline",
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "pipeline",
+							Ref:  "pipeline",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 				force: false,
@@ -106,10 +116,15 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-1",
-					Root: &sdk.WorkflowNode{
-						Name:         "pipeline",
-						Ref:          "pipeline",
-						PipelineName: "pipeline",
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "pipeline",
+							Ref:  "pipeline",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 				force: false,
@@ -121,10 +136,15 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-1",
-					Root: &sdk.WorkflowNode{
-						Name:         "pipeline",
-						Ref:          "pipeline",
-						PipelineName: "pipeline",
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "pipeline",
+							Ref:  "pipeline",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 				force: true,
@@ -136,16 +156,15 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-2",
-					Root: &sdk.WorkflowNode{
-						Name:         "pipeline",
-						Ref:          "pipeline",
-						PipelineName: "pipeline",
-						Context: &sdk.WorkflowNodeContext{
-							Application: &sdk.Application{
-								Name: app.Name,
-							},
-							Environment: &sdk.Environment{
-								Name: env.Name,
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "pipeline",
+							Ref:  "pipeline",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID:    pip.ID,
+								ApplicationID: app.ID,
+								EnvironmentID: env.ID,
 							},
 						},
 					},
@@ -159,16 +178,24 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-3",
-					Root: &sdk.WorkflowNode{
-						Name:         "pipeline",
-						Ref:          "pipeline",
-						PipelineName: "pipeline",
-						Triggers: []sdk.WorkflowNodeTrigger{
-							{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "child",
-									Ref:          "child",
-									PipelineName: "pipeline",
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "pipeline",
+							Ref:  "pipeline",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Name: "child",
+										Ref:  "child",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip.ID,
+										},
+									},
 								},
 							},
 						},
@@ -183,29 +210,34 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-3",
-					Root: &sdk.WorkflowNode{
-						Name:         "pipeline",
-						Ref:          "pipeline",
-						PipelineName: "pipeline",
-						Triggers: []sdk.WorkflowNodeTrigger{
-							{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "child",
-									Ref:          "child",
-									PipelineName: "pipeline",
-								},
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "pipeline",
+							Ref:  "pipeline",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
 							},
-							{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "second-child",
-									Ref:          "second-child",
-									PipelineName: "pipeline",
-									Context: &sdk.WorkflowNodeContext{
-										Application: &sdk.Application{
-											Name: app.Name,
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Name: "child",
+										Ref:  "child",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip.ID,
 										},
-										Environment: &sdk.Environment{
-											Name: env.Name,
+									},
+								},
+								{
+									ChildNode: sdk.Node{
+										Name: "second-child",
+										Ref:  "second-child",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID:    pip.ID,
+											ApplicationID: app.ID,
+											EnvironmentID: env.ID,
 										},
 									},
 								},
@@ -221,79 +253,120 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-4",
-					Root: &sdk.WorkflowNode{
-						Name:         "A",
-						Ref:          "A",
-						PipelineName: "pipeline",
-						Triggers: []sdk.WorkflowNodeTrigger{
-							{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "B",
-									Ref:          "B",
-									PipelineName: "pipeline",
-								},
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "A",
+							Ref:  "A",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
 							},
-							{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "C",
-									Ref:          "C",
-									PipelineName: "pipeline",
-								},
-							},
-						},
-						Hooks: []sdk.WorkflowNodeHook{
-							{
-								WorkflowHookModel: sdk.WorkflowHookModel{
-									Name: "Scheduler",
-								},
-								Config: sdk.WorkflowNodeHookConfig{
-									sdk.SchedulerModelCron: sdk.WorkflowNodeHookConfigValue{
-										Value:        "* * * * *",
-										Configurable: true,
-									},
-									sdk.SchedulerModelTimezone: sdk.WorkflowNodeHookConfigValue{
-										Value:        "UTC",
-										Configurable: true,
-									},
-								},
-							},
-						},
-					},
-					Joins: []sdk.WorkflowNodeJoin{
-						{
-							SourceNodeRefs: []string{"B", "C"},
-							Triggers: []sdk.WorkflowNodeJoinTrigger{
+							Triggers: []sdk.NodeTrigger{
 								{
-									WorkflowDestNode: sdk.WorkflowNode{
-										Name:         "D",
-										Ref:          "D",
-										PipelineName: "pipeline",
+									ChildNode: sdk.Node{
+										Name: "B",
+										Ref:  "B",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip.ID,
+										},
 									},
 								},
 								{
-									WorkflowDestNode: sdk.WorkflowNode{
-										Name:         "E",
-										Ref:          "E",
-										PipelineName: "pipeline",
+									ChildNode: sdk.Node{
+										Name: "C",
+										Ref:  "C",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip.ID,
+										},
 									},
 								},
+							},
+							Hooks: []sdk.NodeHook{
 								{
-									WorkflowDestNode: sdk.WorkflowNode{
-										Name:         "F",
-										Ref:          "F",
-										PipelineName: "pipeline",
+									HookModelID: hookModels[0].ID,
+									Config: sdk.WorkflowNodeHookConfig{
+										sdk.SchedulerModelCron: sdk.WorkflowNodeHookConfigValue{
+											Value:        "* * * * *",
+											Configurable: true,
+										},
+										sdk.SchedulerModelTimezone: sdk.WorkflowNodeHookConfigValue{
+											Value:        "UTC",
+											Configurable: true,
+										},
 									},
 								},
 							},
 						},
-						{
-							SourceNodeRefs: []string{"D", "E"},
-							Triggers: []sdk.WorkflowNodeJoinTrigger{
-								{
-									WorkflowDestNode: sdk.WorkflowNode{
-										Name:         "G",
-										Ref:          "G",
-										PipelineName: "pipeline",
+						Joins: []sdk.Node{
+							{
+								Name: "join1",
+								Ref:  "join1",
+								Type: sdk.NodeTypeJoin,
+								JoinContext: []sdk.NodeJoin{
+									{
+										ParentName: "B",
+									},
+									{
+										ParentName: "C",
+									},
+								},
+								Triggers: []sdk.NodeTrigger{
+									{
+										ChildNode: sdk.Node{
+											Name: "D",
+											Ref:  "D",
+											Type: sdk.NodeTypePipeline,
+											Context: &sdk.NodeContext{
+												PipelineID: pip.ID,
+											},
+										},
+									},
+									{
+										ChildNode: sdk.Node{
+											Name: "E",
+											Ref:  "E",
+											Type: sdk.NodeTypePipeline,
+											Context: &sdk.NodeContext{
+												PipelineID: pip.ID,
+											},
+										},
+									},
+									{
+										ChildNode: sdk.Node{
+											Name: "F",
+											Ref:  "F",
+											Type: sdk.NodeTypePipeline,
+											Context: &sdk.NodeContext{
+												PipelineID: pip.ID,
+											},
+										},
+									},
+								},
+							},
+							{
+								Name: "join2",
+								Ref:  "join2",
+								Type: sdk.NodeTypeJoin,
+								JoinContext: []sdk.NodeJoin{
+									{
+										ParentName: "D",
+									},
+									{
+										ParentName: "E",
+									},
+								},
+								Triggers: []sdk.NodeTrigger{
+									{
+										ChildNode: sdk.Node{
+											Name: "G",
+											Ref:  "G",
+											Type: sdk.NodeTypePipeline,
+											Context: &sdk.NodeContext{
+												PipelineID: pip.ID,
+											},
+										},
 									},
 								},
 							},
@@ -308,16 +381,15 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-5",
-					Root: &sdk.WorkflowNode{
-						Name:         "pipeline",
-						Ref:          "pipeline",
-						PipelineName: "pipeline-error",
-						Context: &sdk.WorkflowNodeContext{
-							Application: &sdk.Application{
-								Name: "app-error",
-							},
-							Environment: &sdk.Environment{
-								Name: "env-error",
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "pipeline",
+							Ref:  "pipeline",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID:    99,
+								ApplicationID: 99,
+								EnvironmentID: 99,
 							},
 						},
 					},
@@ -331,15 +403,18 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-6",
-					Root: &sdk.WorkflowNode{
-						Name:         "pipeline",
-						Ref:          "pipeline",
-						PipelineName: "pipeline-with-param",
-						Context: &sdk.WorkflowNodeContext{
-							DefaultPipelineParameters: []sdk.Parameter{
-								{
-									Name:  "name",
-									Value: "value",
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "pipeline",
+							Ref:  "pipeline",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pipparam.ID,
+								DefaultPipelineParameters: []sdk.Parameter{
+									{
+										Name:  "name",
+										Value: "value",
+									},
 								},
 							},
 						},
@@ -354,15 +429,18 @@ func TestImport(t *testing.T) {
 			args: args{
 				w: &sdk.Workflow{
 					Name: "test-1",
-					Root: &sdk.WorkflowNode{
-						Name:         "pipeline",
-						Ref:          "pipeline",
-						PipelineName: "pipeline",
-						Context: &sdk.WorkflowNodeContext{
-							DefaultPipelineParameters: []sdk.Parameter{
-								{
-									Name:  "name",
-									Value: "value",
+					WorkflowData: &sdk.WorkflowData{
+						Node: sdk.Node{
+							Name: "pipeline",
+							Ref:  "pipeline",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+								DefaultPipelineParameters: []sdk.Parameter{
+									{
+										Name:  "name",
+										Value: "value",
+									},
 								},
 							},
 						},
@@ -375,6 +453,7 @@ func TestImport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			(tt.args.w).RetroMigrate()
 			if err := workflow.Import(context.TODO(), db, cache, proj, tt.args.w, u, tt.args.force, nil, false); err != nil {
 				if !tt.wantErr {
 					t.Errorf("Import() error = %v, wantErr %v", err, tt.wantErr)
