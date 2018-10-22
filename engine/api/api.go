@@ -172,8 +172,9 @@ type Configuration struct {
 	DefaultArch string `toml:"defaultArch" default:"amd64" comment:"if no model and no os/arch is specified in your job's requirements then spawn worker on this architecture (example: amd64, arm, 386)" json:"defaultArch"`
 	Graylog     struct {
 		AccessToken string `toml:"accessToken" json:"-"`
+		Stream      string `toml:"stream" json:"-"`
 		URL         string `toml:"url" comment:"Example: http://localhost:9000" json:"url"`
-	} `toml:"graylog"  json:"graylog"`
+	} `toml:"graylog"  json:"graylog" comment:"###########################\n Graylog Search. \n When CDS API generates errors, you can fetch them with cdsctl. \n Examples: \n $ cdsctl admin errors get <error-id> \n $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007 \n##########################"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
