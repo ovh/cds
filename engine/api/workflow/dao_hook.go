@@ -275,13 +275,13 @@ func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 	var icon string
 	if hook.WorkflowHookModelID != 0 {
 		icon = hook.WorkflowHookModel.Icon
-		model, errm := LoadHookModelByID(db, hook.WorkflowHookModelID)
+		model, errm := LoadOutgoingHookModelByID(db, hook.WorkflowHookModelID)
 		if errm != nil {
 			return sdk.WrapError(errm, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
 		}
 		hook.WorkflowHookModel = *model
 	} else {
-		model, errm := LoadHookModelByName(db, hook.WorkflowHookModel.Name)
+		model, errm := LoadOutgoingHookModelByName(db, hook.WorkflowHookModel.Name)
 		if errm != nil {
 			return sdk.WrapError(errm, "insertHook> Unable to load model %s", hook.WorkflowHookModel.Name)
 		}
@@ -296,6 +296,15 @@ func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 	}
 	hook.Config[sdk.HookConfigProject] = sdk.WorkflowNodeHookConfigValue{Value: w.ProjectKey}
 	hook.Config[sdk.HookConfigWorkflow] = sdk.WorkflowNodeHookConfigValue{Value: w.Name}
+
+	//Checks minimal configuration upon its model
+	for k := range hook.WorkflowHookModel.DefaultConfig {
+		if configuredValue, has := hook.Config[k]; !has {
+			return sdk.NewError(sdk.ErrInvalidHookConfiguration, fmt.Errorf("hook %s invalid configuration. %s is missing", hook.Name, k))
+		} else if configuredValue.Value == "" {
+			return sdk.NewError(sdk.ErrInvalidHookConfiguration, fmt.Errorf("hook %s invalid configuration. %s is missing", hook.Name, k))
+		}
+	}
 
 	dbhook := nodeOutgoingHook(*hook)
 	if err := db.Insert(&dbhook); err != nil {
