@@ -114,7 +114,7 @@ func LoadOutgoingHookModelByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowHook
 	query := "select id, name, type, command, default_config, author, description, identifier, icon from workflow_outgoing_hook_model where id = $1"
 	if err := db.SelectOne(&m, query, id); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WrapError(sdk.ErrNotFound, "LoadOutgoingHookModelByID> Unable to load WorkflowHookModel")
+			return nil, sdk.WrapError(sdk.ErrNotFound, "workflow_outgoing_hook_model with id %d not found", id)
 		}
 		return nil, sdk.WrapError(err, "Unable to load WorkflowHookModel")
 	}
