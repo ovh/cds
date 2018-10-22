@@ -62,6 +62,18 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 			return sdk.WrapError(errHr, "Cannot register hook")
 		}
 
+		// set the workflow id on template instance if exist
+		if wTemplateInstance != nil {
+			// remove existing relations between workflow and template
+			if err := workflowtemplate.DeleteInstanceNotIDAndWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
+				return err
+			}
+			// set the workflow id on target instance
+			if err := workflowtemplate.UpdateInstanceWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
+				return err
+			}
+		}
+
 		return importWorkflowGroups(db, w)
 	}
 
