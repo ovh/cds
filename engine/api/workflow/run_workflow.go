@@ -44,6 +44,10 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 	var number int64
 	if h.WorkflowNodeID == w.Root.ID {
 
+		if err := IsValid(db, w, p); err != nil {
+			return nil, report, sdk.WrapError(err, "Unable to valid workflow")
+		}
+
 		//Get the next number from our sequence
 		var errnum error
 		number, errnum = nextRunNumber(db, w)
