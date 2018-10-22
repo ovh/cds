@@ -60,6 +60,7 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             this._hook.config = cloneDeep(this.outgoingHook.config);
             this._hook.model = cloneDeep(this.outgoingHook.model);
             this.displayConfig = Object.keys(this._hook.config).length !== 0;
+            this.loading = false;
         }
     }
     get outgoingHook() {
@@ -146,7 +147,8 @@ export class WorkflowNodeHookFormComponent implements OnInit {
 
     updateWorkflow(): void {
         this.loadingHooks = true;
-        this._workflowStore.getWorkflows(this.hook.config['target_project'].value, this.hook.config['target_workflow'].value)
+        if (this.hook && this.hook.config && this.hook.config['target_project'] &&  this.hook.config['target_workflow']) {
+            this._workflowStore.getWorkflows(this.hook.config['target_project'].value, this.hook.config['target_workflow'].value)
             .pipe(
                 finalize(() => this.loadingHooks = false)
             ).subscribe(
@@ -158,6 +160,9 @@ export class WorkflowNodeHookFormComponent implements OnInit {
                     }
                 }
             );
+        } else {
+            this.availableHooks = null;
+        }
     }
 
     show(): void {
@@ -225,6 +230,8 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         if (this.hook && this.hook.config && this.hook.config['platform']) {
             this.selectedPlatform = this.project.platforms.find(pf => pf.name === this.hook.config['platform'].value);
         }
+        this.availableWorkflows = this.project.workflow_names.filter(idName => idName.name !== this.workflow.name);
+        this.updateWorkflow();
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,

@@ -85,7 +85,7 @@
                         </div>
                     </div>
                 </ng-container>
-                <ng-container *ngIf="isOutgoing && _hook.config && _hook.model && _hook.model.name === 'Workflow'">
+                <ng-container *ngIf="!loading && isOutgoing && _hook.config && _hook.model && _hook.model.name === 'Workflow'">
                     <div class="inline fields">
                         <div class="four wide field"><label>project</label></div>
                         <div class="twelve wide field">
