@@ -1256,6 +1256,14 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 							Value:        "password",
 							Configurable: false,
 						},
+						"payload": sdk.WorkflowNodeHookConfigValue{
+							Value:        "{}",
+							Configurable: true,
+						},
+						"URL": sdk.WorkflowNodeHookConfigValue{
+							Value:        "https://www.github.com",
+							Configurable: true,
+						},
 					},
 				},
 				{
@@ -1275,6 +1283,14 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 							Value:        "password",
 							Configurable: false,
 						},
+						"payload": sdk.WorkflowNodeHookConfigValue{
+							Value:        "{}",
+							Configurable: true,
+						},
+						"URL": sdk.WorkflowNodeHookConfigValue{
+							Value:        "https://www.github.com",
+							Configurable: true,
+						},
 					},
 					Triggers: []sdk.WorkflowNodeOutgoingHookTrigger{
 						{
@@ -1289,7 +1305,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u), "unable to insert workflow")
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)

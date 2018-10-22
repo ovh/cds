@@ -13,6 +13,7 @@ import (
 func NoError(t *testing.T, err error, msg ...interface{}) {
 	assert.NoError(t, err)
 	if err != nil {
+		t.Error(err)
 		t.Fatal(msg...)
 	}
 }
