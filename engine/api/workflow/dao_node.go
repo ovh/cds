@@ -84,6 +84,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 					paramFound = true
 				}
 			}
+
 			if paramFound {
 				defaultPipParams = append(defaultPipParams, *param)
 			}

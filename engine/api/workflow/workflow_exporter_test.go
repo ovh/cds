@@ -122,6 +122,7 @@ func TestPull(t *testing.T) {
 		},
 	}
 
+	(&w).RetroMigrate()
 	proj, _ = project.Load(db, cache, proj.Key, u, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPipelines)
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
