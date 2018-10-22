@@ -25,6 +25,10 @@ spec:
             backend:
               serviceName: {{ template "cds.fullname" . }}-api
               servicePort: 80
+          - path: /webhooks
+            backend:
+              serviceName: {{ template "cds.fullname" . }}-hooks
+              servicePort: 80
 {{- if .Values.ingress.tls }}
   tls:
 {{ toYaml .Values.ingress.tls | indent 4 }}

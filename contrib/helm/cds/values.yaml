@@ -111,12 +111,13 @@ serviceType: ClusterIP
 ingress:
   enabled: false
   # Used to create Ingress record (should used with ServiceType: ClusterIP).
-  #hostname: cds.MY_NODES_URL
+  # hostname: cds.MY_NODES_URL
+  # port: 32080
 
   ## Ingress annotations
   ##
-  # annotations:
-  #   kubernetes.io/ingress.class: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
 
   ## Ingress TLS configuration
   ## Secrets must be manually created in the namespace

@@ -31,9 +31,7 @@ spec:
               name: {{ template "cds.fullname" . }}
               key: cds-k8s_config_file
         - name: CDS_HATCHERY_KUBERNETES_KUBERNETESMASTERURL
-          value: https://x9ia8v.c1.gra.k8s.ovh.net
-        - name: CDS_HATCHERY_KUBERNETES_KUBERNETESNAMESPACE
-          value: cds
+          value: https://donotuse
         - name: CDS_HATCHERY_KUBERNETES_KUBERNETESCONFIGFILE
           value: kubeconfig.yml
         - name: CDS_HATCHERY_KUBERNETES_COMMONCONFIGURATION_NAME
