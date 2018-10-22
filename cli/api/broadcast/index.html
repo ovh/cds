@@ -349,6 +349,11 @@
           <span>cds-python-pylint</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/pipelines/actions/user/cds-sonar-scanner/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-sonar-scanner/">
+          <span>cds-sonar-scanner</span>
+        </a>
+    </li>
       <li data-nav-id="/workflows/pipelines/actions/user/cds-split-download/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-split-download/">
           <span>cds-split-download</span>
@@ -369,6 +374,11 @@
       <li data-nav-id="/workflows/pipelines/actions/plugins/write-plugin/" class="dd-item">
         <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/">
           <span>Write a Plugin</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-archive/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-archive/">
+          <span>plugin-archive</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/actions/plugins/plugin-clair/" class="dd-item">
@@ -2059,11 +2069,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#get-broadcast">GET <code>/broadcast</code></a></li>
 <li><a href="#post-broadcast">POST <code>/broadcast</code></a></li>
+<li><a href="#get-broadcast">GET <code>/broadcast</code></a></li>
+<li><a href="#get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#delete-broadcast-id">DELETE <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></a></li>
-<li><a href="#get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#post-broadcast-id-mark">POST <code>/broadcast/&lt;id&gt;/mark</code></a></li>
 </ul></li>
 </ul></li>
@@ -2087,6 +2097,34 @@
 
 
 
+
+<h3 id="post-broadcast">POST <code>/broadcast</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/broadcast</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addBroadcastHandler%22">addBroadcastHandler</a></td>
+</tr>
+</tbody>
+</table>
 
 <h3 id="get-broadcast">GET <code>/broadcast</code></h3>
 
@@ -2116,30 +2154,30 @@
 </tbody>
 </table>
 
-<h3 id="post-broadcast">POST <code>/broadcast</code></h3>
+<h3 id="get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/broadcast</code></strong></th>
+<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>GET</td>
 </tr>
 
 <tr>
 <td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
+<td>Auth: true</td>
 </tr>
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addBroadcastHandler%22">addBroadcastHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastHandler%22">getBroadcastHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2196,34 +2234,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateBroadcastHandler%22">updateBroadcastHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBroadcastHandler%22">getBroadcastHandler</a></td>
 </tr>
 </tbody>
 </table>

@@ -550,6 +550,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-sonar-scanner/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-split-download/</loc>
   </url>
   
@@ -1079,6 +1083,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-archive/</loc>
   </url>
   
   <url>
