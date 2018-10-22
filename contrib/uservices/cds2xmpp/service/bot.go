@@ -20,6 +20,7 @@ var (
 )
 
 const resource = "cds"
+const waitTimeOnError = 5 * time.Second
 
 type botClient struct {
 	creation               time.Time
@@ -162,6 +163,18 @@ func (bot *botClient) receive() {
 		if err != nil {
 			if !strings.Contains(err.Error(), "EOF") {
 				log.Errorf("receive >> err: %s", err)
+
+				log.Warn("We will try to get a new XMPP client now to fix this error")
+				newXMPPClient, errGetNewXMPPClient := getNewXMPPClient()
+				if errGetNewXMPPClient != nil {
+					log.Errorf("XMPP Client renewal >> error with getNewXMPPClient errGetNewXMPPClient:%s", errGetNewXMPPClient)
+				} else {
+					log.Info("Reconnection successful, replace the old client with the new one")
+					bot.XMPPClient = newXMPPClient
+				}
+
+				// In any case, wait 10 seconds between each retry to avoid spamming logs and connection retries
+				time.Sleep(waitTimeOnError)
 			}
 		}
 		isError := false
