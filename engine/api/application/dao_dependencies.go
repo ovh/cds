@@ -44,7 +44,7 @@ var (
 
 	loadPipelines = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		pipelines, err := GetAllPipelinesByID(db, app.ID)
-		if err != nil && err != sdk.ErrNoAttachedPipeline {
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNoAttachedPipeline) {
 			return sdk.WrapError(err, "Unable to load pipelines for application %d", app.ID)
 		}
 		app.Pipelines = pipelines

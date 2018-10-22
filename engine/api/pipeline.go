@@ -53,7 +53,7 @@ func (api *API) runPipelineWithLastParentHandler() service.Handler {
 
 		app, errl := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 		if errl != nil {
-			if errl != sdk.ErrApplicationNotFound {
+			if !sdk.ErrorIs(errl, sdk.ErrApplicationNotFound) {
 				log.Warning("runPipelineWithLastParentHandler> Cannot load application %s: %s\n", appName, errl)
 			}
 			return errl
@@ -76,7 +76,7 @@ func (api *API) runPipelineWithLastParentHandler() service.Handler {
 		// Load pipeline
 		pip, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
 		if err != nil {
-			if err != sdk.ErrPipelineNotFound {
+			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 				log.Warning("runPipelineWithLastParentHandler> Cannot load pipeline %s; %s\n", pipelineName, err)
 			}
 			return err
@@ -164,7 +164,7 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 
 	app, errln := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 	if errln != nil {
-		if errln != sdk.ErrApplicationNotFound {
+		if !sdk.ErrorIs(errln, sdk.ErrApplicationNotFound) {
 			log.Warning("runPipelineHandler> Cannot load application %s: %s\n", appName, errln)
 		}
 		return errln
@@ -566,7 +566,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 
 		project, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
-			if err != sdk.ErrNoProject {
+			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
 				log.Warning("getPipelinesHandler: Cannot load %s: %s\n", key, err)
 			}
 			return err
@@ -574,7 +574,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 
 		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true, getUser(ctx))
 		if err != nil {
-			if err != sdk.ErrPipelineNotFound {
+			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 				log.Warning("getPipelinesHandler>Cannot load pipelines: %s\n", err)
 			}
 			return err
@@ -1042,7 +1042,7 @@ func (api *API) getPipelineBuildCommitsHandler() service.Handler {
 		} else {
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
 			if err != nil {
-				if err != sdk.ErrNoEnvironment {
+				if !sdk.ErrorIs(err, sdk.ErrNoEnvironment) {
 					log.Warning("getPipelineBuildCommitsHandler> Cannot load environment %s: %s\n", envName, err)
 				}
 				return err

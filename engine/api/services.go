@@ -157,7 +157,7 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 
 	//Try to find the service, and keep; else generate a new one
 	oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
-	if errOldSrv != nil && errOldSrv != sdk.ErrNotFound {
+	if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
 		log.Error("serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
 		return
 	}

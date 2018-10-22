@@ -95,20 +95,20 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 	db := dbFunc()
 	for _, s := range ss {
 		oldSrv, errOldSrv := FindByName(db, s.Name)
-		if errOldSrv != nil && errOldSrv != sdk.ErrNotFound {
-			return fmt.Errorf("InitExternal> unable to find service %s", s.Name)
+		if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
+			return sdk.WithStack(fmt.Errorf("Unable to find service %s", s.Name))
 		}
 
 		if oldSrv == nil {
 			s.Service.LastHeartbeat = time.Now()
 			s.Service.Config = s
 			if err := Insert(db, &s.Service); err != nil {
-				return fmt.Errorf("InitExternal> unable to insert external service: %v", err)
+				return sdk.WrapError(err, "Unable to insert external service")
 			}
 		} else {
 			tx, err := db.Begin()
 			if err != nil {
-				return fmt.Errorf("InitExternal> unable to start transaction: %v", err)
+				return sdk.WrapError(err, "Unable to start transaction")
 			}
 			var serv service
 			query := `select * from services where name = $1 for update nowait`
@@ -122,7 +122,7 @@ func InitExternal(dbFunc func() *gorp.DbMap, store cache.Store, ss []sdk.Externa
 			s.Service.Config = s
 			if err := Update(tx, &s.Service); err != nil {
 				_ = tx.Rollback()
-				return fmt.Errorf("InitExternal> unable to update external service: %v", err)
+				return sdk.WrapError(err, "Unable to update external service")
 			}
 			if err := tx.Commit(); err != nil {
 				_ = tx.Rollback()

@@ -502,7 +502,7 @@ func (api *API) deleteProjectHandler() service.Handler {
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 		if errProj != nil {
-			if errProj != sdk.ErrNoProject {
+			if !sdk.ErrorIs(errProj, sdk.ErrNoProject) {
 				return sdk.WrapError(errProj, "deleteProject> load project '%s' from db", key)
 			}
 			return sdk.WrapError(errProj, "deleteProject> cannot load project %s", key)

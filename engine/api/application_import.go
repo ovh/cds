@@ -66,16 +66,14 @@ func (api *API) postApplicationImportHandler() service.Handler {
 
 		newApp, msgList, globalError := application.ParseAndImport(tx, api.Cache, proj, eapp, force, project.DecryptWithBuiltinKey, getUser(ctx))
 		msgListString := translate(r, msgList)
-
 		if globalError != nil {
-			myError, ok := globalError.(sdk.Error)
-			if ok {
-				log.Warning("postApplicationImportHandler> Unable to import application %s : %v", eapp.Name, myError)
-				sdkErr := sdk.ExtractHTTPError(myError, r.Header.Get("Accept-Language"))
-				msgListString = append(msgListString, sdkErr.Message)
-				return service.WriteJSON(w, msgListString, sdkErr.Status)
+			globalError = sdk.WrapError(globalError, "Unable to import application %s", eapp.Name)
+			if sdk.ErrorIs(globalError, sdk.ErrUnknownError) {
+				return globalError
 			}
-			return sdk.WrapError(globalError, "postApplicationImportHandler> Unable import application %s", eapp.Name)
+			log.Warning("%v", globalError)
+			sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+			return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
 		}
 
 		if err := tx.Commit(); err != nil {

@@ -842,7 +842,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 		}
 
 		existingReport, errLoad := workflow.LoadCoverageReport(api.mustDB(), wnr.ID)
-		if errLoad != nil && errLoad != sdk.ErrNotFound {
+		if errLoad != nil && !sdk.ErrorIs(errLoad, sdk.ErrNotFound) {
 			return sdk.WrapError(errLoad, "postWorkflowJobCoverageResultsHandler> Unable to load coverage report")
 		}
 

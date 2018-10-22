@@ -605,7 +605,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
 		if err != nil {
-			if err != sdk.ErrApplicationNotFound {
+			if !sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 				log.Warning("deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
 			}
 			return err

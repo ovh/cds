@@ -26,21 +26,23 @@ func (api *API) adminTruncateWarningsHandler() service.Handler {
 func (api *API) getAdminServicesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		srvs := []sdk.Service{}
+
 		var err error
 		if r.FormValue("type") != "" {
 			srvs, err = services.FindByType(api.mustDB(), r.FormValue("type"))
 		} else {
 			srvs, err = services.All(api.mustDB())
 		}
-
 		if err != nil {
-			return sdk.WrapError(err, "getAdminServicesHandler")
+			return err
 		}
+
 		for i := range srvs {
 			srv := &srvs[i]
 			srv.Hash = ""
 			srv.Token = ""
 		}
+
 		return service.WriteJSON(w, srvs, http.StatusOK)
 	}
 }
@@ -51,15 +53,15 @@ func (api *API) getAdminServiceHandler() service.Handler {
 		name := vars["name"]
 		srv, err := services.FindByName(api.mustDB(), name)
 		if err != nil {
-			return sdk.WrapError(err, "getAdminServiceHandler")
+			return err
 		}
 		srv.Hash = ""
 		srv.Token = ""
 		if srv.GroupID != nil {
 			g, err := group.LoadGroupByID(api.mustDB(), *srv.GroupID)
 			if err != nil {
-				if err != sdk.ErrGroupNotFound {
-					return sdk.WrapError(err, "getAdminServiceHandler")
+				if !sdk.ErrorIs(err, sdk.ErrGroupNotFound) {
+					return sdk.WithStack(err)
 				}
 			} else {
 				srv.Group = g
@@ -89,17 +91,19 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		srvs, err := services.FindByType(api.mustDB(), r.FormValue("type"))
 		if err != nil {
-			return sdk.WrapError(err, "selectDeleteAdminServiceCallHandler")
+			return err
+		}
+		if len(srvs) == 0 {
+			return sdk.WrapError(sdk.ErrNotFound, "No hooks service found")
 		}
 
 		query := r.FormValue("query")
 		btes, code, err := services.DoRequest(ctx, srvs, method, query, nil)
 		if err != nil {
-			sdkErr := sdk.Error{
+			return sdk.NewError(sdk.Error{
 				Status:  code,
 				Message: err.Error(),
-			}
-			return sdkErr
+			}, err)
 		}
 
 		log.Debug("selectDeleteAdminServiceCallHandler> %s : %s", query, string(btes))
@@ -113,7 +117,7 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		srvs, err := services.FindByType(api.mustDB(), r.FormValue("type"))
 		if err != nil {
-			return sdk.WrapError(err, "putPostAdminServiceCallHandler")
+			return err
 		}
 
 		query := r.FormValue("query")
@@ -125,11 +129,10 @@ func putPostAdminServiceCallHandler(api *API, method string) service.Handler {
 
 		btes, code, err := services.DoRequest(ctx, srvs, method, query, body)
 		if err != nil {
-			sdkErr := sdk.Error{
+			return sdk.NewError(sdk.Error{
 				Status:  code,
 				Message: err.Error(),
-			}
-			return sdkErr
+			}, err)
 		}
 
 		return service.Write(w, btes, code, "application/json")

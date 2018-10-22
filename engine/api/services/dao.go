@@ -78,13 +78,13 @@ func findOne(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Servi
 	sdb := service{}
 	if err := db.SelectOne(&sdb, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNotFound
+			return nil, sdk.WithStack(sdk.ErrNotFound)
 		}
 		return nil, sdk.WrapError(err, "service not found")
 	}
 	s := sdk.Service(sdb)
 	if s.Name == "" {
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &s, nil
 }

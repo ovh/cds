@@ -66,7 +66,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 				//TODO: to delete
 				//Get the key
 				key, errK = vcs.GetSSHKeyDEPRECATED(*params, keysDirectory, privateKey)
-				if errK != nil && errK != sdk.ErrKeyNotFound {
+				if errK != nil && !sdk.ErrorIs(errK, sdk.ErrKeyNotFound) {
 					res := sdk.Result{
 						Status: sdk.StatusFail.String(),
 						Reason: fmt.Sprintf("Unable to get ssh key. %s", errK),
@@ -77,7 +77,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			} else {
 				//Get the key
 				key, errK = vcs.GetSSHKey(secrets, keysDirectory, privateKeyVar)
-				if errK != nil && errK != sdk.ErrKeyNotFound {
+				if errK != nil && !sdk.ErrorIs(errK, sdk.ErrKeyNotFound) {
 					res := sdk.Result{
 						Status: sdk.StatusFail.String(),
 						Reason: fmt.Sprintf("Unable to get ssh key. %s", errK),
