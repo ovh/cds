@@ -56,35 +56,34 @@ describe('CDS: Workflow Model', () => {
         nJ2Children.id = 5;
 
         // Create Join with 1 parent and 1 child
-        let j1Child = new WNode();
-        j1Child.parents = new Array<WNodeJoin>();
+        let join1 = new WNode();
+        join1.parents = new Array<WNodeJoin>();
 
-        let c = new WNodeJoin()
-        c.parent_id = nToDelete.id
-        j1Child.parents.push(c);
+        let c = new WNodeJoin();
+        c.parent_id = nToDelete.id;
+        join1.parents.push(c);
 
-        j1Child.triggers = new Array<WNodeTrigger>();
-        let jt1 = new WNodeTrigger();
-        jt1.child_node = nJ1Chlid;
-        jt1.id = 1;
-        j1Child.triggers.push(jt1);
-        workflow.workflow_data.joins.push(j1Child);
+        join1.triggers = new Array<WNodeTrigger>();
+        let j1ChildT = new WNodeTrigger();
+        j1ChildT.child_node = nJ1Chlid;
+        join1.triggers.push(j1ChildT);
+        workflow.workflow_data.joins.push(join1);
 
         // Create Join with 2 parent and 1 child
-        let j2Child = new WNode();
-        j2Child.parents = new Array<WNodeJoin>();
+        let join2 = new WNode();
+        join2.parents = new Array<WNodeJoin>();
 
-        let j2Child1 = new WNodeJoin();
-        j2Child1.parent_id = nToDelete.id;
-        let j2Child2 = new WNodeJoin();
-        j2Child2.parent_id = nRoot.id;
-        j2Child.parents.push(j2Child1, j2Child2);
-        j2Child.triggers = new Array<WNodeTrigger>();
+        let j2parent1 = new WNodeJoin();
+        j2parent1.parent_id = nToDelete.id;
+        let j2parent2 = new WNodeJoin();
+        j2parent2.parent_id = nRoot.id;
+        join2.parents.push(j2parent1, j2parent2);
+        join2.triggers = new Array<WNodeTrigger>();
         let jt2 = new WNodeTrigger();
         jt2.child_node = nJ2Children;
-        jt2.id = 2;
-        j2Child.triggers.push(jt2);
-        workflow.workflow_data.joins.push(j2Child);
+        jt2.id = 22;
+        join2.triggers.push(jt2);
+        workflow.workflow_data.joins.push(join2);
 
         let ok = Workflow.removeNodeOnly(workflow, nToDelete.id);
 
@@ -92,9 +91,8 @@ describe('CDS: Workflow Model', () => {
 
         // Assert join are attached to the root node
         expect(workflow.workflow_data.joins.length).toBe(2, 'root node must have 2 joins');
-        expect(workflow.workflow_data.joins[0].parents.length).toBe(1);
-        expect(workflow.workflow_data.joins[1].parents.length).toBe(1, 'source node id for joins 1: ' +
-            workflow.workflow_data.joins[1].parents);
+        expect(workflow.workflow_data.joins[0].parents.length).toBe(1, 'join 0 must have 1 parent');
+        expect(workflow.workflow_data.joins[1].parents.length).toBe(1, 'join 1 must have 1 parent');
         expect(workflow.workflow_data.joins[0].parents[0].parent_id).toBe(1);
         expect(workflow.workflow_data.joins[1].parents[0].parent_id).toBe(1);
 
@@ -131,208 +129,17 @@ describe('CDS: Workflow Model', () => {
         child1.triggers = new Array<WNodeTrigger>();
         let childTrigger = new WNodeTrigger();
         childTrigger.child_node = child2;
+        child1.triggers.push(childTrigger);
 
 
         let ok = Workflow.removeNodeOnly(workflow, nRoot.id);
 
         expect(ok).toBeTruthy();
-        expect(workflow.workflow_data.node.id).toBe(2);
-    }));
-
-    /**
-     *     X --> o
-     *     |
-     *     v
-     *     o
-     */
-    it('should not delete the root node because it has 2 triggers', fakeAsync(() => {
-        let workflow = new Workflow();
-        workflow.workflow_data.joins = new Array<WNode>();
-
-        // Add root node
-        let nRoot = new WNode();
-        nRoot.id = 1;
-        workflow.workflow_data.node = nRoot;
-        workflow.workflow_data.node.triggers = new Array<WNodeTrigger>();
-
-        // Add root child
-        let child1 = new WNode();
-        child1.id = 2;
-        let rootTrigger1 = new WNodeTrigger();
-        rootTrigger1.id = 1;
-        rootTrigger1.child_node = child1;
-        workflow.workflow_data.node.triggers.push(rootTrigger1);
-
-        let child2 = new WNode();
-        child2.id = 2;
-        let rootTrigger2 = new WNodeTrigger();
-        rootTrigger2.id = 1;
-        rootTrigger2.child_node = child2;
-        workflow.workflow_data.node.triggers.push(rootTrigger2);
-
-
-        let ok = Workflow.removeNodeOnly(workflow, nRoot.id);
-
-        expect(ok).toBeFalsy();
-    }));
-
-    /**
-     *     X --> J --> O
-     */
-    it('should delete the root node. O become the new root', fakeAsync(() => {
-        let workflow = new Workflow();
-        workflow.workflow_data.joins = new Array<WNode>();
-
-        // Add root node
-        let nRoot = new WNode();
-        nRoot.id = 1;
-        workflow.workflow_data.node = nRoot;
-        workflow.workflow_data.joins = new Array<WNode>();
-
-
-        let j1 = new WNode();
-        j1.parents = new Array<WNodeJoin>();
-
-        let j11 = new WNodeJoin();
-        j11.parent_id = 1;
-        j1.parents.push(j11);
-        j1.triggers = new Array<WNodeTrigger>();
-
-        let t1 = new WNodeTrigger();
-        let child = new WNode();
-        child.id = 2;
-        t1.child_node = child;
-        j1.triggers.push(t1);
-        workflow.workflow_data.joins.push(j1);
-
-        let ok = Workflow.removeNodeOnly(workflow, nRoot.id);
-
-        expect(ok).toBeTruthy();
-        expect(workflow.workflow_data.node.id).toBe(2);
-    }));
-
-    /**
-     *     X --> -J --> n2
-     *     |   ^  |
-     *     T   |  n1
-     *     |   |
-     *     c --
-     */
-    it('should delete root node, c because the new root', fakeAsync(() => {
-        let workflow = new Workflow();
-        workflow.workflow_data.joins = new Array<WNode>();
-
-        // Add root node
-        let nRoot = new WNode();
-        nRoot.id = 1;
-        workflow.workflow_data.node = nRoot;
-        nRoot.triggers = new Array<WNodeTrigger>();
-
-        // Add trigger T
-        let c = new WNode();
-        c.id = 2;
-        let nRootTrigger = new WNodeTrigger();
-        nRootTrigger.child_node = c;
-        nRoot.triggers.push(nRootTrigger);
-
-
-        let j1 = new WNode();
-        j1.parents = new Array<WNodeJoin>();
-
-        let j11 = new WNodeJoin();
-        j11.parent_id = 1;
-        let j12 = new WNodeJoin();
-        j12.parent_id = 2;
-
-        j1.parents.push(j11, j12);
-        j1.triggers = new Array<WNodeTrigger>();
-
-        let jt1 = new WNodeTrigger();
-        let childjt1 = new WNode();
-        childjt1.id = 3;
-        jt1.child_node = childjt1;
-        j1.triggers.push(jt1);
-        workflow.workflow_data.joins.push(j1);
-
-        let jt2 = new WNodeTrigger();
-        let childjt2 = new WNode();
-        childjt2.id = 4;
-        jt2.child_node = childjt2;
-        j1.triggers.push(jt2);
-
-        let ok = Workflow.removeNodeOnly(workflow, nRoot.id);
-
-        expect(ok).toBeTruthy();
-        expect(workflow.workflow_data.node.id).toBe(2);
-        expect(workflow.workflow_data.joins.length).toBe(1);
-        expect(workflow.workflow_data.joins[0].parents.length).toBe(1);
-        expect(workflow.workflow_data.joins[0].parents[0].parent_id).toBe(2);
-        expect(workflow.workflow_data.joins[0].triggers.length).toBe(2);
-    }));
-
-    /**
-     *     X -----> - J --> n2
-     *     |   |   ^  |
-     *     T   J   |  n1
-     *     |       |
-     *     c ------
-     */
-    it('should not delete the root node because it has 2 Joins', fakeAsync(() => {
-        let workflow = new Workflow();
-        workflow.workflow_data.joins = new Array<WNode>();
-
-        // Add root node
-        let nRoot = new WNode();
-        nRoot.id = 1;
-        workflow.workflow_data.node = nRoot;
-        nRoot.triggers = new Array<WNodeTrigger>();
-
-        // Add trigger T
-        let c = new WNode();
-        c.id = 2;
-        let nRootTrigger = new WNodeTrigger();
-        nRootTrigger.child_node = c;
-        nRoot.triggers.push(nRootTrigger);
-
-
-        let j1 = new WNode();
-        j1.parents = new Array<WNodeJoin>();
-
-        let j11 = new WNodeJoin();
-        j11.parent_id = 1;
-        let j12 = new WNodeJoin();
-        j12.parent_id = 2;
-
-        j1.parents.push(j11, j12);
-        j1.triggers = new Array<WNodeTrigger>();
-
-        let jt1 = new WNodeTrigger();
-        let childjt1 = new WNode();
-        childjt1.id = 3;
-        jt1.child_node = childjt1;
-        j1.triggers.push(jt1);
-        workflow.workflow_data.joins.push(j1);
-
-        let jt2 = new WNodeTrigger();
-        let childjt2 = new WNode();
-        childjt2.id = 4;
-        jt2.child_node = childjt2;
-        j1.triggers.push(jt2);
-
-        let j2 = new WNode();
-        j2.parents = new Array<WNodeJoin>();
-
-        let j21 = new WNodeJoin();
-        j21.parent_id = 1;
-        let j22 = new WNodeJoin();
-        j22.parent_id = 2;
-
-        j2.parents.push(j21, j22);
-        workflow.workflow_data.joins.push(j2);
-
-        let ok = Workflow.removeNodeOnly(workflow, nRoot.id);
-
-        expect(ok).toBeFalsy();
+        expect(workflow.workflow_data.node.type).toBe('fork');
+        expect(workflow.workflow_data.node.triggers.length).toBe(1);
+        expect(workflow.workflow_data.node.triggers[0].child_node.id).toBe(2);
+        expect(workflow.workflow_data.node.triggers[0].child_node.triggers.length).toBe(1);
+        expect(workflow.workflow_data.node.triggers[0].child_node.triggers[0].child_node.id).toBe(3);
     }));
 
 
@@ -391,7 +198,7 @@ describe('CDS: Workflow Model', () => {
      *     v     v
      *     X--->J
      */
-    it('should delete the node after join', fakeAsync(() => {
+    it('should delete the parent node join', fakeAsync(() => {
         let workflow = new Workflow();
         workflow.workflow_data.joins = new Array<WNode>();
 
@@ -425,7 +232,7 @@ describe('CDS: Workflow Model', () => {
 
         expect(ok).toBeTruthy();
         expect(workflow.workflow_data.joins[0].parents.length).toBe(2);
-        expect(workflow.workflow_data.joins[0].parents[0].id + workflow.workflow_data.joins[0].parents[1].parent_id).toBe(3)
+        expect(workflow.workflow_data.joins[0].parents[0].parent_id + workflow.workflow_data.joins[0].parents[1].parent_id).toBe(3, "Parent must be id 1 and 2, got "+ JSON.stringify(workflow.workflow_data.joins[0].parents));
     }));
 
     /**

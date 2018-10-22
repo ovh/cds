@@ -57,11 +57,19 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
+
+	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -161,16 +169,22 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
-				Environment: &env,
-				Mutex:       true,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+					EnvironmentID: env.ID,
+					Mutex:         true,
+				},
 			},
 		},
 	}
+
+	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -234,40 +248,47 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			Name:         "Root",
-			PipelineID:   pip1.ID,
-			PipelineName: pip1.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						Name:         "First",
-						PipelineID:   pip2.ID,
-						PipelineName: pip2.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "eq",
-										Value:    "master",
-										Variable: ".git.branch",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "Root",
+				Ref:  "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip1.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "First",
+							Ref:  "first",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip2.ID,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										{
+											Operator: "eq",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
 									},
 								},
 							},
-						},
-						Triggers: []sdk.WorkflowNodeTrigger{
-							sdk.WorkflowNodeTrigger{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "Second",
-									PipelineID:   pip3.ID,
-									PipelineName: pip3.Name,
-									Context: &sdk.WorkflowNodeContext{
-										Conditions: sdk.WorkflowNodeConditions{
-											PlainConditions: []sdk.WorkflowNodeCondition{
-												sdk.WorkflowNodeCondition{
-													Operator: "eq",
-													Value:    "master",
-													Variable: ".git.branch",
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Name: "Second",
+										Ref:  "second",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip3.ID,
+											Conditions: sdk.WorkflowNodeConditions{
+												PlainConditions: []sdk.WorkflowNodeCondition{
+													{
+														Operator: "eq",
+														Value:    "master",
+														Variable: ".git.branch",
+													},
 												},
 											},
 										},
@@ -276,19 +297,20 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 							},
 						},
 					},
-				},
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						Name:         "Last",
-						PipelineID:   pip4.ID,
-						PipelineName: pip4.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "eq",
-										Value:    "master",
-										Variable: ".git.branch",
+					{
+						ChildNode: sdk.Node{
+							Name: "Last",
+							Ref:  "last",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip4.ID,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										sdk.WorkflowNodeCondition{
+											Operator: "eq",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
 									},
 								},
 							},

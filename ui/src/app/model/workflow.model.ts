@@ -195,7 +195,7 @@ export class Workflow {
             for (let i = 0; i < workflow.workflow_data.joins.length; i ++) {
                 if (workflow.workflow_data.joins[i].parents && workflow.workflow_data.joins[i].parents.length > 0) {
                     for (let j = 0; j < workflow.workflow_data.joins[i].parents.length; j++) {
-                        if (-1 === nodes.findIndex(n => n.ref === workflow.workflow_data.joins[i].parents[j].parent_name)) {
+                        if (-1 === nodes.findIndex(n => n.id === workflow.workflow_data.joins[i].parents[j].parent_id)) {
                             workflow.workflow_data.joins[i].parents.splice(j, 1);
                             j--;
                         }
@@ -541,6 +541,21 @@ export class WNode {
                     parentNode.triggers.push(...node.triggers);
                 }
                 parentNode.triggers.splice(index, 1);
+
+                // Check if the node is link to a join
+                if (w.workflow_data.joins) {
+                    w.workflow_data.joins.forEach(j => {
+                       for (var i = 0; i <j.parents.length; i++) {
+                           let already = j.parents.findIndex( p => p.parent_id === parentNode.id);
+                           if (j.parents[i].parent_id === node.id && already === -1) {
+                               j.parents[i].parent_id = parentNode.id;
+                               j.parents[i].parent_name = parentNode.ref;
+                               break;
+                           }
+                       }
+                    });
+                }
+
             } else {
                 // JOin
                 w.workflow_data.joins.splice(index, 1);

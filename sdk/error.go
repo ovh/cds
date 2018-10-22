@@ -484,7 +484,7 @@ func (w errorWithStack) Format(s fmt.State, verb rune) {
 			return
 		}
 		fallthrough
-	case 's':
+	default:
 		_, _ = io.WriteString(s, w.Error())
 	}
 }

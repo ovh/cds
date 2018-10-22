@@ -339,20 +339,26 @@ func TestMissingProjectVariableWorkflow(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				DefaultPipelineParameters: []sdk.Parameter{
-					{
-						Name:  pipParam.Name,
-						Type:  "string",
-						Value: fmt.Sprintf("foo{{.cds.proj.%s}}", v.Name),
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "ref1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+					DefaultPipelineParameters: []sdk.Parameter{
+						{
+							Name:  pipParam.Name,
+							Type:  "string",
+							Value: fmt.Sprintf("foo{{.cds.proj.%s}}", v.Name),
+						},
 					},
 				},
 			},
 		},
 	}
+
+	(&w).RetroMigrate()
 
 	projUpdate, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines)
 	assert.NoError(t, err)

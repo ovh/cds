@@ -769,6 +769,15 @@ func (n WorkflowNode) migrate(withID bool) Node {
 			Mutex: n.Context.Mutex,
 		},
 	}
+	if n.Context.ApplicationID == 0 && n.Context.Application != nil {
+		newNode.Context.ApplicationID = n.Context.Application.ID
+	}
+	if n.Context.EnvironmentID == 0 && n.Context.Environment != nil {
+		newNode.Context.EnvironmentID = n.Context.Environment.ID
+	}
+	if n.Context.ProjectPlatformID == 0 && n.Context.ProjectPlatform != nil {
+		newNode.Context.ProjectPlatformID = n.Context.ProjectPlatform.ID
+	}
 	if withID {
 		newNode.ID = n.ID
 	}

@@ -137,11 +137,19 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "ref1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
+
+	(&w).RetroMigrate()
 
 	projUpdate, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines)
 	assert.NoError(t, err)
