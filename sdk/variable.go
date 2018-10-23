@@ -18,6 +18,14 @@ type VariableAudit struct {
 	Author     string     `json:"author"`
 }
 
+const (
+	// SecretMinLength is the minimal size of a secret
+	// variable to be considered as a secret
+	// a secret variable displayed, with less then 6, will
+	// displayed, instead of appears as **cds.app.my-password**
+	SecretMinLength = 6
+)
+
 // Different type of Variable
 const (
 	SecretVariable     = "password"

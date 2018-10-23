@@ -135,7 +135,7 @@ func (wk *currentWorker) checkSecretHandler(w http.ResponseWriter, r *http.Reque
 
 	var varFound string
 	for _, p := range wk.currentJob.params {
-		if (p.Type == sdk.SecretVariable || p.Type == sdk.KeyVariable) && len(p.Value) >= 6 && strings.Contains(sbtes, p.Value) {
+		if (p.Type == sdk.SecretVariable || p.Type == sdk.KeyVariable) && len(p.Value) >= sdk.SecretMinLength && strings.Contains(sbtes, p.Value) {
 			varFound = p.Name
 			break
 		}

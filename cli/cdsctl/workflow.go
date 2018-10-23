@@ -31,6 +31,7 @@ var (
 			cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
 			cli.NewCommand(workflowFavoriteCmd, workflowFavoriteRun, nil, withAllCommandModifiers()...),
 			workflowArtifact,
+			workflowLog,
 			workflowAdvanced,
 		})
 )
