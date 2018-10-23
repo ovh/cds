@@ -12,18 +12,18 @@ This action is a CDS Plugin packaged as a single binary file you can download an
 
 ## Parameters
 
-* **key**: Key used by AES Encryption. It have to be the same value as --key on plugin binary
-* **message**: Kafka Message
-* **kafkaUser**: Kafka user
-* **kafkaPassword**: Kafka password
-* **kafkaAddresses**: Kafka Addresses
-* **publicKey**: GPG Public Key (ASCII armored format)
-* **waitForAckTimeout**: Ack timeout (seconds). Used only if "waitForAck" is true.
-* **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
 * **topic**: Kafka Topic
 * **artifacts**: Artifacts list (comma separated)"
+* **publicKey**: GPG Public Key (ASCII armored format)
+* **key**: Key used by AES Encryption. It have to be the same value as --key on plugin binary
 * **waitForAck**: Wait for ACK
+* **waitForAckTimeout**: Ack timeout (seconds). Used only if "waitForAck" is true.
+* **kafkaAddresses**: Kafka Addresses
+* **kafkaUser**: Kafka user
+* **kafkaPassword**: Kafka password
+* **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
 * **waitForAckTopic**: Wait for ACK topic
+* **message**: Kafka Message
 
 
 ## More
