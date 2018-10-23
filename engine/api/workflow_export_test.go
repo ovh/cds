@@ -21,7 +21,7 @@ import (
 )
 
 func Test_getWorkflowExportHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
@@ -60,25 +60,33 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip.ID,
-						PipelineName: pip.Name,
-					},
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
 				},
-			},
-			Forks: []sdk.WorkflowNodeFork{
-				{
-					Name: "fork",
-					Triggers: []sdk.WorkflowNodeForkTrigger{
-						{
-							WorkflowDestNode: sdk.WorkflowNode{
-								PipelineID:   pip.ID,
-								PipelineName: pip.Name,
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
+					},
+					{
+						ChildNode: sdk.Node{
+							Type: sdk.NodeTypeFork,
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip.ID,
+										},
+									},
+								},
 							},
 						},
 					},
@@ -87,6 +95,8 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 		},
 	}
 
+	test.NoError(t, workflow.RenameNode(db, &w))
+	(&w).RetroMigrate()
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
@@ -113,25 +123,25 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 	assert.Equal(t, `name: test_1
 version: v1.0
 workflow:
-  fork:
+  fork_1:
     depends_on:
-    - pip1
-  pip1:
+    - pip1_1
+  pip1_1:
     pipeline: pip1
   pip1_2:
     depends_on:
-    - pip1
+    - pip1_1
     pipeline: pip1
   pip1_3:
     depends_on:
-    - fork
+    - fork_1
     pipeline: pip1
 `, rec.Body.String())
 
 }
 
 func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
@@ -177,19 +187,28 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		ProjectID:     proj.ID,
 		ProjectKey:    proj.Key,
 		HistoryLength: 25,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip.ID,
-						PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
+
+	test.NoError(t, workflow.RenameNode(db, &w))
+	(&w).RetroMigrate()
 
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 
@@ -223,11 +242,11 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	assert.Equal(t, `name: test_1
 version: v1.0
 workflow:
-  pip1:
+  pip1_1:
     pipeline: pip1
   pip1_2:
     depends_on:
-    - pip1
+    - pip1_1
     pipeline: pip1
 permissions:
   Test_getWorkflowExportHandlerWithPermissions-Group2: 7
@@ -237,7 +256,7 @@ history_length: 25
 }
 
 func Test_getWorkflowPullHandler(t *testing.T) {
-	api, _, _, end := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
@@ -276,19 +295,28 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip.ID,
-						PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
+
+	test.NoError(t, workflow.RenameNode(db, &w))
+	(&w).RetroMigrate()
 
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 

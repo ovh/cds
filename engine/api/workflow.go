@@ -139,7 +139,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			return sdk.WrapError(errW, "postWorkflowRollbackHandler> cannot load workflow %s/%s", key, workflowName)
 		}
 
-		audit, errA := workflow.LoadAudit(db, auditID)
+		audit, errA := workflow.LoadAudit(db, auditID, wf.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "postWorkflowRollbackHandler> cannot load workflow audit %s/%s", key, workflowName)
 		}
@@ -282,6 +282,10 @@ func (api *API) postWorkflowHandler() service.Handler {
 		var wf sdk.Workflow
 		if err := service.UnmarshalBody(r, &wf); err != nil {
 			return sdk.WrapError(err, "Cannot read body")
+		}
+
+		if wf.WorkflowData == nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "No node found")
 		}
 
 		if err := workflow.RenameNode(api.mustDB(), &wf); err != nil {

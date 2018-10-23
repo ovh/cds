@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/fsamin/go-dump"
@@ -96,6 +97,22 @@ func (c *NodeContext) HasDefaultPayload() bool {
 	dumper.ExtraFields.Type = false
 	m, _ := dumper.ToStringMap(c.DefaultPayload)
 	return len(m) > 0
+
+}
+func (c *NodeContext) DefaultPayloadToMap() (map[string]string, error) {
+	// DefaultPayloadToMap returns default payload to map
+	if c == nil {
+		return nil, fmt.Errorf("Workflow node context is nil")
+	}
+	if c.DefaultPayload == nil {
+		return map[string]string{}, nil
+	}
+	dumper := dump.NewDefaultEncoder(nil)
+	dumper.ExtraFields.DetailedMap = false
+	dumper.ExtraFields.DetailedStruct = false
+	dumper.ExtraFields.Len = false
+	dumper.ExtraFields.Type = false
+	return dumper.ToStringMap(c.DefaultPayload)
 
 }
 

@@ -47,19 +47,25 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
 
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	//Prepare request
 	vars := map[string]string{}
 	vars["key"] = proj.Key
 	vars["permWorkflowName"] = w.Name
-	vars["nodeID"] = fmt.Sprintf("%d", w.Root.ID)
+	vars["nodeID"] = fmt.Sprintf("%d", w.WorkflowData.Node.ID)
 
 	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelsHandler, vars)
 	test.NotEmpty(t, uri)
@@ -110,22 +116,26 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					ApplicationID: app.ID,
+					PipelineID:    pip.ID,
+				},
 			},
 		},
 	}
 
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, admin))
 
 	//Prepare request
 	vars := map[string]string{}
 	vars["key"] = proj.Key
 	vars["permWorkflowName"] = w.Name
-	vars["nodeID"] = fmt.Sprintf("%d", w.Root.ID)
+	vars["nodeID"] = fmt.Sprintf("%d", w.WorkflowData.Node.ID)
 
 	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelsHandler, vars)
 	test.NotEmpty(t, uri)

@@ -94,13 +94,20 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
 
+	(&w).RetroMigrate()
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
 
@@ -168,12 +175,21 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
+
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
+
+	(&w).RetroMigrate()
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)

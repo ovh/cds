@@ -102,11 +102,16 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
+	(&wf).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &wf, proj, u))
 
@@ -156,12 +161,17 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		Name:       "workflow1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
 
+	(&wf).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u))
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?withUsage=true", nil)
@@ -240,11 +250,13 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Context: &sdk.WorkflowNodeContext{
-				ApplicationID: app.ID,
-				Application:   &app,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					ApplicationID: app.ID,
+					PipelineID:    pip.ID,
+				},
 			},
 		},
 	}
@@ -258,10 +270,10 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow))
 	assert.NotEqual(t, 0, workflow.ID)
 
-	assert.NotNil(t, workflow.Root.Context.Application)
-	assert.NotNil(t, workflow.Root.Context.DefaultPayload)
+	assert.NotEqual(t, 0, workflow.WorkflowData.Node.Context.ApplicationID)
+	assert.NotNil(t, workflow.WorkflowData.Node.Context.DefaultPayload)
 
-	payload, err := workflow.Root.Context.DefaultPayloadToMap()
+	payload, err := workflow.WorkflowData.Node.Context.DefaultPayloadToMap()
 	test.NoError(t, err)
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
@@ -296,8 +308,13 @@ func Test_putWorkflowHandler(t *testing.T) {
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
 
@@ -328,11 +345,13 @@ func Test_putWorkflowHandler(t *testing.T) {
 	var workflow1 = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description 2",
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Context: &sdk.WorkflowNodeContext{
-				ApplicationID: app.ID,
-				Application:   &app,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
 			},
 		},
 	}
@@ -349,10 +368,10 @@ func Test_putWorkflowHandler(t *testing.T) {
 	assert.NotEqual(t, 0, workflow1.ID)
 	assert.Equal(t, "Description 2", workflow1.Description)
 
-	assert.NotNil(t, workflow1.Root.Context.Application)
-	assert.NotNil(t, workflow1.Root.Context.DefaultPayload)
+	assert.NotEqual(t, 0, workflow1.WorkflowData.Node.Context.ApplicationID)
+	assert.NotNil(t, workflow1.WorkflowData.Node.Context.DefaultPayload)
 
-	payload, err := workflow1.Root.Context.DefaultPayloadToMap()
+	payload, err := workflow1.WorkflowData.Node.Context.DefaultPayloadToMap()
 	test.NoError(t, err)
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
@@ -377,6 +396,8 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	}
 	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
+	// Create WORKFLOW NAME
+
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -387,8 +408,13 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	var wf = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
 
@@ -399,6 +425,8 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 201, w.Code)
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	// UPDATE WORKFLOW : add APPLICATION ON ROOT NODE
 
 	//Prepare request
 	vars = map[string]string{
@@ -420,11 +448,13 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		ID:          wf.ID,
 		Name:        "Name",
 		Description: "Description 2",
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Context: &sdk.WorkflowNodeContext{
-				ApplicationID: app.ID,
-				Application:   &app,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					ApplicationID: app.ID,
+					PipelineID:    pip.ID,
+				},
 			},
 		},
 	}
@@ -440,10 +470,10 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	assert.NotEqual(t, 0, workflow1.ID)
 	assert.Equal(t, "Description 2", workflow1.Description)
 
-	assert.NotNil(t, workflow1.Root.Context.Application)
-	assert.NotNil(t, workflow1.Root.Context.DefaultPayload)
+	assert.NotEqual(t, 0, workflow1.WorkflowData.Node.Context.ApplicationID)
+	assert.NotNil(t, workflow1.WorkflowData.Node.Context.DefaultPayload)
 
-	payload, err := workflow1.Root.Context.DefaultPayloadToMap()
+	payload, err := workflow1.WorkflowData.Node.Context.DefaultPayloadToMap()
 	test.NoError(t, err)
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
@@ -457,6 +487,8 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	wfUpdatedBts, err := yaml.Marshal(eWfUpdate)
 	test.NoError(t, err)
 
+	// INSERT AUDIT
+
 	wfAudit := sdk.AuditWorklflow{
 		Created:     time.Now(),
 		DataBefore:  string(wfBts),
@@ -467,13 +499,15 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 		WorkflowID:  wf.ID,
 		TriggeredBy: u.Username,
 	}
-	test.NoError(t, workflow.InsertAudit(api.mustDB(), wfAudit))
+	test.NoError(t, workflow.InsertAudit(api.mustDB(), &wfAudit))
+
+	// ROLLBACK TO PREVIOUS WORKFLOW
 
 	//Prepare request
 	vars = map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": "Name",
-		"auditID":          "1",
+		"auditID":          fmt.Sprintf("%d", wfAudit.ID),
 	}
 	uri = router.GetRoute("POST", api.postWorkflowRollbackHandler, vars)
 	test.NotEmpty(t, uri)
@@ -487,11 +521,11 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 	var wfRollback sdk.Workflow
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wfRollback))
 
-	if wf.Root == nil {
+	if wfRollback.WorkflowData == nil {
 		t.Fatal(fmt.Errorf("workflow not found"))
 	}
 
-	test.Equal(t, nil, wfRollback.Root.Context.Application)
+	test.Equal(t, int64(0), wfRollback.WorkflowData.Node.Context.ApplicationID)
 }
 
 func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
