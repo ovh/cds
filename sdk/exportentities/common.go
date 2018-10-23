@@ -9,8 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk"
 	"gopkg.in/yaml.v2"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //GetFormat return a format
