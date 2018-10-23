@@ -25,6 +25,7 @@ export class WorkflowTemplateAddComponent {
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
+        this.workflowTemplate = new WorkflowTemplate();
         this.getGroups();
     }
 
@@ -37,14 +38,14 @@ export class WorkflowTemplateAddComponent {
             });
     }
 
-    saveWorkflowTemplate(wt: WorkflowTemplate) {
+    saveWorkflowTemplate() {
         this.loading = true;
-        this._workflowTemplateService.addWorkflowTemplate(wt)
+        this._workflowTemplateService.addWorkflowTemplate(this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(res => {
-                this.workflowTemplate = res;
+            .subscribe(wt => {
+                this.workflowTemplate = wt;
                 this._toast.success('', this._translate.instant('workflow_template_created'));
-                this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.id]);
+                this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);
             });
     }
 }

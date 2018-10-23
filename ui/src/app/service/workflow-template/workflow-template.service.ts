@@ -25,8 +25,8 @@ export class WorkflowTemplateService {
      * Get a workflow template by id
      * @returns {Observable<WorkflowTemplate>}
      */
-    getWorkflowTemplate(id: number): Observable<WorkflowTemplate> {
-        return this._http.get<WorkflowTemplate>('/template/' + id);
+    getWorkflowTemplate(groupName: string, templateSlug: string): Observable<WorkflowTemplate> {
+        return this._http.get<WorkflowTemplate>('/template/' + groupName + '/' + templateSlug);
     }
 
     /**
@@ -41,8 +41,8 @@ export class WorkflowTemplateService {
      * Update a workflow template
      * @returns {Observable<WorkflowTemplate>}
      */
-    updateWorkflowTemplate(wt: WorkflowTemplate): Observable<WorkflowTemplate> {
-        return this._http.put<WorkflowTemplate>('/template/' + wt.id, wt);
+    updateWorkflowTemplate(old: WorkflowTemplate, wt: WorkflowTemplate): Observable<WorkflowTemplate> {
+        return this._http.put<WorkflowTemplate>('/template/' + old.group.name + '/' + old.slug, wt);
     }
 
     /**
@@ -50,7 +50,7 @@ export class WorkflowTemplateService {
      * @returns {Observable<any>}
      */
     deleteWorkflowTemplate(wt: WorkflowTemplate): Observable<any> {
-        return this._http.delete<any>('/template/' + wt.id);
+        return this._http.delete<any>('/template/' + wt.group.name + '/' + wt.slug);
     }
 
 }

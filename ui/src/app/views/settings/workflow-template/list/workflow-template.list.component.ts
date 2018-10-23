@@ -25,7 +25,7 @@ export class WorkflowTemplateListComponent {
                 name: this._translate.instant('common_name'),
                 selector: wt => {
                     return {
-                        link: '/settings/workflow-template/' + wt.id,
+                        link: '/settings/workflow-template/' + wt.group.name + '/' + wt.slug,
                         value: wt.name
                     };
                 }

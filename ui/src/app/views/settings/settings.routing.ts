@@ -45,7 +45,7 @@ const routes: Routes = [
             { path: 'workflow-template', component: WorkflowTemplateListComponent, data: { title: 'Workflow template' } },
             { path: 'workflow-template/add', component: WorkflowTemplateAddComponent, data: { title: 'Add • Workflow template' } },
             {
-                path: 'workflow-template/:id',
+                path: 'workflow-template/:groupName/:templateSlug',
                 component: WorkflowTemplateEditComponent,
                 data: { title: 'Edit • Workflow template' }
             },

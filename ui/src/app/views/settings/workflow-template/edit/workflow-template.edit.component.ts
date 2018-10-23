@@ -14,6 +14,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     styleUrls: ['./workflow-template.edit.scss']
 })
 export class WorkflowTemplateEditComponent {
+    oldWorkflowTemplate: WorkflowTemplate;
     workflowTemplate: WorkflowTemplate;
     groups: Array<Group>;
     loading: boolean;
@@ -27,8 +28,9 @@ export class WorkflowTemplateEditComponent {
         private _router: Router
     ) {
         this._route.params.subscribe(params => {
-            const id = params['id'];
-            this.getTemplate(id);
+            const groupName = params['groupName'];
+            const templateSlug = params['templateSlug'];
+            this.getTemplate(groupName, templateSlug);
         });
         this.getGroups();
     }
@@ -42,28 +44,31 @@ export class WorkflowTemplateEditComponent {
             });
     }
 
-    getTemplate(id: number) {
+    getTemplate(groupName: string, templateSlug: string) {
         this.loading = true;
-        this._workflowTemplateService.getWorkflowTemplate(id)
+        this._workflowTemplateService.getWorkflowTemplate(groupName, templateSlug)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wt => {
+                this.oldWorkflowTemplate = { ...wt };
                 this.workflowTemplate = wt;
             });
     }
 
-    saveWorkflowTemplate(wt: WorkflowTemplate) {
+    saveWorkflowTemplate() {
         this.loading = true;
-        this._workflowTemplateService.updateWorkflowTemplate(wt)
+        this._workflowTemplateService.updateWorkflowTemplate(this.oldWorkflowTemplate, this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(res => {
-                this.workflowTemplate = res;
+            .subscribe(wt => {
+                this.oldWorkflowTemplate = { ...wt };
+                this.workflowTemplate = wt;
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
+                this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);
             });
     }
 
-    deleteWorkflowTemplate(wt: WorkflowTemplate) {
+    deleteWorkflowTemplate() {
         this.loading = true;
-        this._workflowTemplateService.deleteWorkflowTemplate(wt)
+        this._workflowTemplateService.deleteWorkflowTemplate(this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
             .subscribe(_ => {
                 this._toast.success('', this._translate.instant('workflow_template_deleted'));

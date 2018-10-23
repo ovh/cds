@@ -5,6 +5,7 @@ export class WorkflowTemplate {
     id: number;
     group_id: number;
     name: string;
+    slug: string;
     description: string;
     parameters: Array<WorkflowTemplateParameter>;
     value: string;

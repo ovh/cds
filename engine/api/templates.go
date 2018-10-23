@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/slug"
 )
 
 type contextKey int
@@ -25,29 +26,44 @@ const (
 // TODO create real middleware
 func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
-		// try to get template for given id that match user's groups with admin grants
-		id, err := requestVarInt(r, "id")
-		if err != nil {
-			return nil, sdk.WithStack(sdk.ErrNotFound)
+		// try to get template for given path that match user's groups with admin grants
+		vars := mux.Vars(r)
+
+		groupName := vars["groupName"]
+		templateSlug := vars["templateSlug"]
+
+		if groupName == "" || templateSlug == "" || !slug.Valid(templateSlug) {
+			return nil, sdk.WrapError(sdk.ErrWrongRequest, "Invalid given group or template slug")
 		}
 
 		u := getUser(ctx)
-		var userGroups []sdk.Group
+
+		var group *sdk.Group
+		for _, g := range u.Groups {
+			if g.Name == groupName {
+				group = &g
+				break
+			}
+		}
+		if group == nil {
+			return nil, sdk.WrapError(sdk.ErrNotFound, "Invalid given group name")
+		}
+
 		if needAdmin {
-			for _, g := range u.Groups {
-				for _, a := range g.Admins {
-					if a.ID == u.ID {
-						userGroups = append(userGroups, g)
-						break
-					}
+			var isAdmin bool
+			for _, a := range group.Admins {
+				if a.ID == u.ID {
+					isAdmin = true
+					break
 				}
 			}
-		} else {
-			userGroups = u.Groups
+			if !isAdmin {
+				return nil, sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			}
 		}
 
 		wt, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().
-			IDs(id).GroupIDs(sdk.GroupsToIDs(userGroups)...))
+			Slugs(templateSlug).GroupIDs(group.ID))
 		if err != nil {
 			return nil, err
 		}
@@ -120,6 +136,8 @@ func (api *API) postTemplateHandler() service.Handler {
 		if !isAdminForGroup {
 			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 		}
+
+		t.Slug = slug.Convert(t.Name)
 
 		if err := workflowtemplate.Insert(api.mustDB(), &t); err != nil {
 			return err
@@ -198,6 +216,8 @@ func (api *API) putTemplateHandler() service.Handler {
 
 		// update fields from request data
 		new := sdk.WorkflowTemplate(*old)
+		new.Name = data.Name
+		new.Slug = slug.Convert(data.Name)
 		new.GroupID = data.GroupID
 		new.Description = data.Description
 		new.Value = data.Value
@@ -256,7 +276,7 @@ func (api *API) deleteTemplateHandler() service.Handler {
 	}
 }
 
-func (api *API) executeTemplateHandler() service.Handler {
+func (api *API) applyTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
 		if err != nil {
@@ -273,6 +293,17 @@ func (api *API) executeTemplateHandler() service.Handler {
 			return sdk.NewError(sdk.ErrInvalidData, err)
 		}
 
+		// check right on project
+		if !checkProjectReadPermission(ctx, req.ProjectKey) {
+			return sdk.WithStack(sdk.ErrNoProject)
+		}
+
+		// load project with key
+		p, err := project.Load(api.mustDB(), api.Cache, req.ProjectKey, getUser(ctx))
+		if err != nil {
+			return sdk.NewError(sdk.ErrNoProject, err)
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
@@ -280,6 +311,7 @@ func (api *API) executeTemplateHandler() service.Handler {
 		defer func() { _ = tx.Rollback() }()
 
 		i := &sdk.WorkflowTemplateInstance{
+			ProjectID:               p.ID,
 			WorkflowTemplateID:      t.ID,
 			WorkflowTemplateVersion: t.Version,
 			Request:                 req,
@@ -326,7 +358,8 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 	}
 }
 
-func (api *API) updateWorkflowTemplateHandler() service.Handler {
+// TODO refact merge with apply
+/*func (api *API) updateWorkflowTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 
@@ -399,10 +432,16 @@ func (api *API) updateWorkflowTemplateHandler() service.Handler {
 
 		return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
 	}
-}
+}*/
 
-func (api *API) getWorkflowTemplateInstanceHandler() service.Handler {
+func (api *API) getTemplateInstanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+		t := getWorkflowTemplate(ctx)
+
 		vars := mux.Vars(r)
 
 		key := vars["key"]
@@ -419,7 +458,8 @@ func (api *API) getWorkflowTemplateInstanceHandler() service.Handler {
 		}
 
 		// return the template instance if workflow is a generated one
-		wti, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().WorkflowIDs(wf.ID))
+		wti, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().
+			WorkflowIDs(wf.ID).WorkflowTemplateIDs(t.ID))
 		if err != nil {
 			return err
 		}

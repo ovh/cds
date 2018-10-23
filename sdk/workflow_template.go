@@ -10,8 +10,9 @@ import (
 
 // WorkflowTemplateRequest struct use for execution request.
 type WorkflowTemplateRequest struct {
-	Name       string            `json:"name"`
-	Parameters map[string]string `json:"parameters"`
+	ProjectKey   string            `json:"project_key"`
+	WorkflowName string            `json:"workflow_name"`
+	Parameters   map[string]string `json:"parameters"`
 }
 
 // Value returns driver.Value from workflow template request.
@@ -42,6 +43,7 @@ type WorkflowTemplate struct {
 	ID           int64                      `json:"id" db:"id" `
 	GroupID      int64                      `json:"group_id" db:"group_id"`
 	Name         string                     `json:"name" db:"name"`
+	Slug         string                     `json:"slug" db:"slug"`
 	Description  string                     `json:"description" db:"description"`
 	Parameters   WorkflowTemplateParameters `json:"parameters" db:"parameters"`
 	Value        string                     `json:"value" db:"value"`
@@ -83,8 +85,11 @@ func (w *WorkflowTemplate) ValidateStruct() error {
 
 // CheckParams returns template parameters validity.
 func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
-	if r.Name == "" {
-		return fmt.Errorf("Name is required")
+	if r.ProjectKey == "" {
+		return fmt.Errorf("Project key is required")
+	}
+	if r.WorkflowName == "" {
+		return fmt.Errorf("Workflow name is required")
 	}
 
 	for _, p := range w.Parameters {
@@ -240,6 +245,7 @@ func (w *WorkflowTemplateParameter) ValidateStruct() error {
 type WorkflowTemplateInstance struct {
 	ID                      int64                   `json:"id" db:"id" `
 	WorkflowTemplateID      int64                   `json:"workflow_template_id" db:"workflow_template_id"`
+	ProjectID               int64                   `json:"project_id" db:"project_id"`
 	WorkflowID              int64                   `json:"workflow_id" db:"workflow_id"`
 	WorkflowTemplateVersion int64                   `json:"workflow_template_version" db:"workflow_template_version"`
 	Request                 WorkflowTemplateRequest `json:"request" db:"request"`

@@ -26,8 +26,8 @@ export class WorkflowTemplateFormComponent {
     @Input() mode: string;
     @Input() groups: Array<Group>;
     @Input() loading: boolean;
-    @Output() save = new EventEmitter<WorkflowTemplate>();
-    @Output() delete = new EventEmitter<WorkflowTemplate>();
+    @Output() save = new EventEmitter();
+    @Output() delete = new EventEmitter();
 
     @Input() set workflowTemplate(wt: WorkflowTemplate) {
         if (!wt) {
@@ -120,11 +120,11 @@ export class WorkflowTemplateFormComponent {
         }
         this.workflowTemplate.group_id = Number(this.workflowTemplate.group_id);
 
-        this.save.emit(this._workflowTemplate);
+        this.save.emit();
     }
 
     clickDelete() {
-        this.delete.emit(this._workflowTemplate);
+        this.delete.emit();
     }
 
     clickAddPipeline() {

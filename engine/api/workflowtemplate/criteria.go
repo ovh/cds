@@ -10,6 +10,7 @@ func NewCriteria() Criteria { return Criteria{} }
 
 type Criteria struct {
 	ids, groupIDs []int64
+	slugs         []string
 }
 
 func (c Criteria) IDs(ids ...int64) Criteria {
@@ -22,14 +23,24 @@ func (c Criteria) GroupIDs(ids ...int64) Criteria {
 	return c
 }
 
+func (c Criteria) Slugs(ss ...string) Criteria {
+	c.slugs = ss
+	return c
+}
+
 func (c Criteria) where() string {
 	var reqs []string
 
 	if c.ids != nil {
 		reqs = append(reqs, "id = ANY(string_to_array(:ids, ',')::int[])")
 	}
+
 	if c.groupIDs != nil {
 		reqs = append(reqs, "group_id = ANY(string_to_array(:groupIDs, ',')::int[])")
+	}
+
+	if c.slugs != nil {
+		reqs = append(reqs, "slug = ANY(string_to_array(:slugs, ',')::text[])")
 	}
 
 	if len(reqs) == 0 {
@@ -43,6 +54,7 @@ func (c Criteria) args() interface{} {
 	return map[string]interface{}{
 		"ids":      database.IDsToQueryString(c.ids),
 		"groupIDs": database.IDsToQueryString(c.groupIDs),
+		"slugs":    strings.Join(c.slugs, ","),
 	}
 }
 
