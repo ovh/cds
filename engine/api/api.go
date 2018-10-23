@@ -660,7 +660,16 @@ func (a *API) Serve(ctx context.Context) error {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	})
 	sdk.GoRoutine(ctx, "metrics.Initialize", func(ctx context.Context) {
-		metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)
+		minInstances := metrics.MinInstances{
+			TypeAPI:           a.Config.Status.API.MinInstance,
+			TypeRepositories:  a.Config.Status.Repositories.MinInstance,
+			TypeVCS:           a.Config.Status.VCS.MinInstance,
+			TypeHooks:         a.Config.Status.Hooks.MinInstance,
+			TypeHatchery:      a.Config.Status.Hatchery.MinInstance,
+			TypeDBMigrate:     a.Config.Status.DBMigrate.MinInstance,
+			TypeElasticsearch: a.Config.Status.ElasticSearch.MinInstance,
+		}
+		metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name, minInstances)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)

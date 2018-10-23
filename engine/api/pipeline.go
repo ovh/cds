@@ -730,40 +730,6 @@ func (api *API) deletePipelineHandler() service.Handler {
 	}
 }
 
-func (api *API) getBuildingPipelinesHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var err error
-		var pbs, recent []sdk.PipelineBuild
-
-		if getUser(ctx).Admin {
-			recent, err = pipeline.LoadRecentPipelineBuild(api.mustDB())
-		} else {
-			recent, err = pipeline.LoadUserRecentPipelineBuild(api.mustDB(), getUser(ctx).ID)
-		}
-		if err != nil {
-			return sdk.WrapError(err, "cannot load recent pipelines")
-
-		}
-		pbs = append(pbs, recent...)
-		return service.WriteJSON(w, pbs, http.StatusOK)
-	}
-}
-
-func (api *API) getPipelineBuildingCommitHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		hash := vars["hash"]
-
-		pbs, err := pipeline.LoadPipelineBuildByHash(api.mustDB(), hash)
-		if err != nil {
-			return err
-
-		}
-
-		return service.WriteJSON(w, pbs, http.StatusOK)
-	}
-}
-
 func (api *API) stopPipelineBuildHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

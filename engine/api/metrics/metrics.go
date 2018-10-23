@@ -3,10 +3,14 @@ package metrics
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -16,7 +20,9 @@ var (
 )
 
 // Initialize initializes metrics
-func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
+func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string, instances MinInstances) {
+	minInstances = instances
+
 	labels := prometheus.Labels{"instance": instance}
 
 	nbUsers := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_users", Help: "metrics nb_users", ConstLabels: labels})
@@ -31,6 +37,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	nbWorkflowNodeRuns := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
 	nbMaxWorkersBuilding := prometheus.NewGauge(prometheus.GaugeOpts{Name: "nb_max_workers_building", Help: "metrics nb_max_workers_building", ConstLabels: labels})
 	queue := prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "queue", Help: "metrics queue", ConstLabels: prometheus.Labels{"instance": instance}}, []string{"status", "range"})
+	status := prometheus.NewGaugeVec(prometheus.GaugeOpts{Name: "status", Help: "metrics status", ConstLabels: prometheus.Labels{"instance": instance}}, []string{"status", "component"})
 
 	registry.MustRegister(nbUsers)
 	registry.MustRegister(nbApplications)
@@ -44,6 +51,7 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	registry.MustRegister(nbWorkflowNodeRuns)
 	registry.MustRegister(nbMaxWorkersBuilding)
 	registry.MustRegister(queue)
+	registry.MustRegister(status)
 
 	tick := time.NewTicker(9 * time.Second).C
 
@@ -88,9 +96,39 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 				countGauge(DBFunc(), *queue, "waiting", "50_more_2min_less_5min", query, now5min, now2min)
 				countGauge(DBFunc(), *queue, "waiting", "60_more_5min_less_10min", query, now10min, now5min)
 				countGauge(DBFunc(), *queue, "waiting", "70_more_10min", queryOld, now10min)
+
+				processStatusMetrics(c, DBFunc, *status)
 			}
 		}
 	}(c, DBFunc)
+}
+
+func processStatusMetrics(c context.Context, DBFunc func() *gorp.DbMap, v prometheus.GaugeVec) {
+	srvs, err := services.All(DBFunc())
+	if err != nil {
+		log.Error("Error while getting services list: %v", err)
+		return
+	}
+	mStatus := ComputeGlobalStatus(srvs)
+	apis := make(map[string]int)
+	for _, line := range mStatus.Lines {
+		number, err := strconv.ParseInt(line.Value, 10, 64)
+		if err != nil {
+			number = 1
+		}
+		name := line.Component
+
+		// rename api_foobar to api_0, api_1, etc...
+		// this will avoid creating series with custom name
+		if line.Type == services.TypeAPI {
+			idx := strings.Index(line.Component, "/")
+			if _, ok := apis[line.Component[0:idx]]; !ok {
+				apis[line.Component[0:idx]] = len(apis)
+			}
+			name = fmt.Sprintf("%s_%d%s", services.TypeAPI, apis[line.Component[0:idx]], line.Component[idx:])
+		}
+		v.WithLabelValues(line.Status, name).Set(float64(number))
+	}
 }
 
 func count(db *gorp.DbMap, v prometheus.Gauge, query string) {
