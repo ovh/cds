@@ -119,6 +119,7 @@ func (wk *currentWorker) checkSecretHandler(w http.ResponseWriter, r *http.Reque
 
 	var a filePath
 	if err := json.Unmarshal(data, &a); err != nil {
+		sendLog(fmt.Sprintf("failed to unmarshal %s", data))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -141,7 +142,7 @@ func (wk *currentWorker) checkSecretHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if varFound != "" {
-		writeByteArray(w, []byte(fmt.Sprintf("variable %s is used in file %s", varFound, a.Path)), http.StatusExpectationFailed)
+		writeByteArray(w, []byte(fmt.Sprintf("secret variable %s is used in file %s", varFound, a.Path)), http.StatusExpectationFailed)
 		return
 	}
 	sendLog(fmt.Sprintf("no secret found in file %s", a.Path))
