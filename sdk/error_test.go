@@ -65,7 +65,7 @@ func TestNewError(t *testing.T) {
 	// print the http error
 	fmt.Println(httpErr)
 
-	assert.Equal(t, "la requête est incorrecte", httpErr.Error())
+	assert.Equal(t, "la requête est incorrecte (caused by: this is an error generated from vendor)", httpErr.Error())
 }
 
 func TestWrapError(t *testing.T) {

@@ -39,7 +39,7 @@ func (b *bitbucketClient) Commits(ctx context.Context, repo, branch, since, unti
 			}
 
 			if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
-				if err == sdk.ErrNotFound {
+				if sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return nil, nil
 				}
 				return nil, sdk.WrapError(err, "Unable to get commits %s", path)
@@ -176,7 +176,7 @@ func (b *bitbucketClient) CommitsBetweenRefs(ctx context.Context, repo, base, he
 			}
 
 			if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
-				if err == sdk.ErrNotFound {
+				if sdk.ErrorIs(err, sdk.ErrNotFound) {
 					return nil, nil
 				}
 				return nil, sdk.WrapError(err, "Unable to get commits %s", path)

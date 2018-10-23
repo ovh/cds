@@ -365,11 +365,11 @@ func (api *API) addProjectHandler() service.Handler {
 		// Check that project does not already exists
 		exist, errExist := project.Exist(api.mustDB(), p.Key)
 		if errExist != nil {
-			return sdk.WrapError(errExist, "addProjectHandler>  Cannot check if project %s exist", p.Key)
+			return sdk.WrapError(errExist, "Cannot check if project %s exist", p.Key)
 		}
 
 		if exist {
-			return sdk.WrapError(sdk.ErrConflict, "addProjectHandler> Project %s already exists", p.Key)
+			return sdk.WrapError(sdk.ErrConflict, "Project %s already exists", p.Key)
 		}
 
 		var groupAttached bool
@@ -391,7 +391,7 @@ func (api *API) addProjectHandler() service.Handler {
 		if !groupAttached {
 			// check if new auto group does not already exists
 			if _, errl := group.LoadGroup(api.mustDB(), p.Name); errl != nil {
-				if errl == sdk.ErrGroupNotFound {
+				if sdk.ErrorIs(errl, sdk.ErrGroupNotFound) {
 					// group name does not exists, add it on project
 					permG := sdk.GroupPermission{
 						Group:      sdk.Group{Name: strings.Replace(p.Name, " ", "", -1)},
@@ -399,10 +399,10 @@ func (api *API) addProjectHandler() service.Handler {
 					}
 					p.ProjectGroups = append(p.ProjectGroups, permG)
 				} else {
-					return sdk.WrapError(errl, "addProjectHandler> Cannot check if group already exists")
+					return sdk.WrapError(errl, "Cannot check if group already exists")
 				}
 			} else {
-				return sdk.WrapError(sdk.ErrGroupPresent, "addProjectHandler> Group %s already exists", p.Name)
+				return sdk.WrapError(sdk.ErrGroupPresent, "Group %s already exists", p.Name)
 			}
 		}
 
@@ -410,7 +410,7 @@ func (api *API) addProjectHandler() service.Handler {
 		tx, errBegin := api.mustDB().Begin()
 		defer tx.Rollback()
 		if errBegin != nil {
-			return sdk.WrapError(errBegin, "addProjectHandler> Cannot start tx")
+			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
 
 		if err := project.Insert(tx, api.Cache, p, getUser(ctx)); err != nil {

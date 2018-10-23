@@ -804,16 +804,16 @@ func (api *API) stopPipelineBuildHandler() service.Handler {
 		}
 
 		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "stopPipelineBuildHandler> You do not have Execution Right on this environment %s", env.Name)
+			return sdk.WrapError(sdk.ErrForbidden, "You do not have Execution Right on this environment %s", env.Name)
 		}
 
 		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.mustDB(), app.ID, pip.ID, env.ID, buildNumber)
 		if err != nil {
 			errFinal := err
-			if err == sdk.ErrNoPipelineBuild {
+			if sdk.ErrorIs(err, sdk.ErrNoPipelineBuild) {
 				errFinal = sdk.ErrBuildArchived
 			}
-			return sdk.WrapError(errFinal, "stopPipelineBuildHandler> Cannot load pipeline Build")
+			return sdk.WrapError(errFinal, "Cannot load pipeline Build")
 		}
 
 		if err := pipeline.StopPipelineBuild(api.mustDB(), api.Cache, pb); err != nil {
@@ -882,19 +882,19 @@ func (api *API) restartPipelineBuildHandler() service.Handler {
 		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.mustDB(), app.ID, pip.ID, env.ID, buildNumber)
 		if err != nil {
 			errFinal := err
-			if err == sdk.ErrNoPipelineBuild {
+			if sdk.ErrorIs(err, sdk.ErrNoPipelineBuild) {
 				errFinal = sdk.ErrBuildArchived
 			}
-			return sdk.WrapError(errFinal, "restartPipelineBuildHandler> Cannot load pipeline Build")
+			return sdk.WrapError(errFinal, "Cannot load pipeline Build")
 		}
 
 		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
-			return sdk.WrapError(sdk.ErrNoEnvExecution, "restartPipelineBuildHandler> You do not have Execution Right on this environment %s", env.Name)
+			return sdk.WrapError(sdk.ErrNoEnvExecution, "You do not have Execution Right on this environment %s", env.Name)
 		}
 
 		tx, errbegin := api.mustDB().Begin()
 		if errbegin != nil {
-			return sdk.WrapError(sdk.ErrNoEnvExecution, "restartPipelineBuildHandler> Cannot start transaction")
+			return sdk.WrapError(sdk.ErrNoEnvExecution, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 

@@ -139,7 +139,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 
 		//If url is not http(s), a key must be found
 		if !strings.HasPrefix(gitURL, "http") {
-			if errK == sdk.ErrKeyNotFound || key == nil {
+			if sdk.ErrorIs(errK, sdk.ErrKeyNotFound) || key == nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
 					Reason: fmt.Sprintf("SSH Key not found. Unable to perform git clone"),

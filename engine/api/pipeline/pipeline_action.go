@@ -165,7 +165,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 		log.Debug("CheckJob> Checking step %s", step.Name)
 		a, err := action.LoadPublicAction(db, step.Name)
 		if err != nil {
-			if err == sdk.ErrNoAction {
+			if sdk.ErrorIs(err, sdk.ErrNoAction) {
 				*errs = append(*errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
 				continue
 			}
