@@ -385,7 +385,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		img := tuple[0]
 
 		servContainer := apiv1.Container{
-			Name:  fmt.Sprintf("service-%d-%s", serv.ID, serv.Name),
+			Name:  fmt.Sprintf("service-%d-%s", serv.ID, strings.ToLower(serv.Name)),
 			Image: img,
 		}
 
