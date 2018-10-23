@@ -45,7 +45,7 @@ func cmdKeyInstall(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "install",
 		Aliases: []string{"i", "add"},
-		Short:   "worker key install [--env-git] <key-name>",
+		Short:   "worker key install [--env-git] [--env] <key-name>",
 		Long: `
 Inside a step script you can install a SSH/PGP key generated in CDS in your ssh environment and return the PKEY variable (only for SSH)
 
