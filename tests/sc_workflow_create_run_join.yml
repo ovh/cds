@@ -36,6 +36,7 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #2 has been launched"
+  - script: "sleep 2"
   - script: "{{.cds.build.cdsctl}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
     assertions:
     - result.code ShouldEqual 0
