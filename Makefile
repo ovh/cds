@@ -9,6 +9,7 @@ endif
 	$(TARGET_CDSCTL) doc $(GEN_PATH)
 	$(TARGET_WORKER) doc $(GEN_PATH)
 	$(TARGET_ENGINE) doc $(GEN_PATH) ./
+	cd docs && ./build.sh
 
 install:
 	@go install $$(go list ./... | grep -v vendor)
