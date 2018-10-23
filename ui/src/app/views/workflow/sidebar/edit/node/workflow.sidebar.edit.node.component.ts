@@ -368,6 +368,12 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
     updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
         this.loading = true;
         this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
+            this.node = Workflow.findNode(w, (n) => {
+                if (this.node) {
+                    return n.name === this.node.name;
+                }
+                return false
+            });
             this.loading = false;
             this._toast.success('', this._translate.instant('workflow_updated'));
             this._workflowEventStore.unselectAll();
@@ -458,13 +464,17 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
         if (!this.node.outgoing_hooks) {
             this.node.outgoing_hooks = new Array<WorkflowNodeOutgoingHook>();
         }
+
         let oh = new WorkflowNodeOutgoingHook();
         oh.config = he.hook.config
         oh.id = he.hook.id
         oh.model = he.hook.model
         oh.name = he.name;
+
         this.node.outgoing_hooks.push(oh);
-        this.updateWorkflow(this.workflow, this.worklflowAddOutgoingHook.modal);
+        let workflowToUpdate = cloneDeep(this.workflow);
+        Workflow.findNode(workflowToUpdate, (n) => this.node.name === n.name).outgoing_hooks = this.node.outgoing_hooks;
+        this.updateWorkflow(workflowToUpdate, this.worklflowAddOutgoingHook.modal);
     }
 
     rename(): void {
