@@ -159,6 +159,7 @@ var (
 	ErrIconBadSize                            = Error{ID: 142, Status: http.StatusBadRequest}
 	ErrWorkflowConditionBadOperator           = Error{ID: 143, Status: http.StatusBadRequest}
 	ErrColorBadFormat                         = Error{ID: 144, Status: http.StatusBadRequest}
+	ErrInvalidHookConfiguration               = Error{ID: 145, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -304,6 +305,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrIconBadSize.ID:                            "Bad icon size. Must be lower than 100Ko",
 	ErrWorkflowConditionBadOperator.ID:           "Your run conditions have bad operator",
 	ErrColorBadFormat.ID:                         "The format of color isn't correct. You must use hexadecimal format (example: #FFFF)",
+	ErrInvalidHookConfiguration.ID:               "Invalid hook configuration",
 }
 
 var errorsFrench = map[int]string{
@@ -449,6 +451,7 @@ var errorsFrench = map[int]string{
 	ErrIconBadSize.ID:                            "Taille de l'icône trop importante. (max 100Ko)",
 	ErrWorkflowConditionBadOperator.ID:           "Opérateur de condition de lancement incorrect",
 	ErrColorBadFormat.ID:                         "Format de la couleur incorrect. Vous devez utiliser le format hexadécimal (exemple: #FFFF)",
+	ErrInvalidHookConfiguration.ID:               "Configuration de hook invalide",
 }
 
 var errorsLanguages = []map[int]string{

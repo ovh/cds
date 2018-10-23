@@ -10,8 +10,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 )
 
 type graylogResponse struct {
@@ -40,6 +40,7 @@ func (api *API) getErrorHandler() service.Handler {
 		q.Add("from", "1970-01-01 00:00:00.000")
 		q.Add("to", time.Now().Format("2006-01-02 15:04:05"))
 		q.Add("limit", "1")
+		q.Add("filter", fmt.Sprintf("streams:%s", api.Config.Graylog.Stream))
 		req.URL.RawQuery = q.Encode()
 
 		req.SetBasicAuth(api.Config.Graylog.AccessToken, "token")

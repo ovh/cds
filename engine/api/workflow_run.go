@@ -818,6 +818,9 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 				}
 			}
 		}
+		if name != wf.Name {
+			return sdk.WrapError(sdk.ErrWorkflowInvalid, "workflow %s asked, but workflow %s found", name, wf.Name)
+		}
 
 		var errS error
 		var report *workflow.ProcessorReport

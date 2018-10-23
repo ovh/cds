@@ -946,6 +946,7 @@
   "workflow_node_hook_condition_list": "Conditions de lancement",
   "workflow_node_hook_condition_no": "Aucune condition",
   "workflow_node_hook_form_title": "Type de hook",
+  "workflow_node_hook_form_name": "Nom du hook",
   "workflow_node_hook_form_config": "Configuration du hook",
   "workflow_node_hook_no_configuration": "Aucune configuration n'est nécessaire",
   "workflow_node_join_add": "Ajouter une jointure",

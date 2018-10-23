@@ -94,29 +94,37 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
     }
 
     updateWorkflow(): void {
-        this.loadingHooks = true;
-        this.wSub = this._workflowStore.getWorkflows(this.hook.outgoing_hook.config['target_project'].value,
-            this.hook.outgoing_hook.config['target_workflow'].value)
-            .subscribe(
-            data => {
-                let key = this.project.key + '-' + this.hook.outgoing_hook.config['target_workflow'].value;
-                let wf = data.get(key);
-                if (wf) {
-                    let allHooks = Workflow.getAllHooks(wf);
-                    if (allHooks) {
-                        this.availableHooks = allHooks.filter(h => wf.hook_models[h.hook_model_id].name === 'Workflow');
-                    } else {
-                        this.availableHooks = [];
-                    }
-                    if (this.hook || this.hook.outgoing_hook.config['target_hook']) {
-                        if (this.availableHooks.findIndex( h => h.uuid === this.hook.outgoing_hook.config['target_hook'].value) === -1) {
-                            this._outgoingHook.outgoing_hook.config['target_hook'].value = undefined;
+        if (this.hook && this.hook.outgoing_hook.config && this.hook.outgoing_hook.config['target_project'] &&  this.hook.outgoing_hook.config['target_workflow']) {
+            this.loadingHooks = true;
+            this.wSub = this._workflowStore.getWorkflows(this.hook.outgoing_hook.config['target_project'].value,
+                this.hook.outgoing_hook.config['target_workflow'].value)
+                .subscribe(
+                    data => {
+                        let key = this.project.key + '-' + this.hook.outgoing_hook.config['target_workflow'].value;
+                        let wf = data.get(key);
+                        if (wf) {
+                            let allHooks = Workflow.getAllHooks(wf);
+                            if (allHooks) {
+                                this.availableHooks = allHooks.filter(h => wf.hook_models[h.hook_model_id].name === 'Workflow');
+                            } else {
+                                this.availableHooks = [];
+                            }
+                            if (this.hook || this.hook.outgoing_hook.config['target_hook']) {
+                                if (this.availableHooks.findIndex( h => h.uuid === this.hook.outgoing_hook.config['target_hook'].value) === -1) {
+                                    this._outgoingHook.outgoing_hook.config['target_hook'].value = undefined;
+                                }
+                            }
+                            this.loadingHooks = false;
                         }
-                    }
-                    this.loadingHooks = false;
-                }
-            }, () => {this.loadingHooks = false}
-        );
+                    }, () => {this.loadingHooks = false}
+                );
+        } else {
+            this.availableHooks = null;
+            if (this.wSub) {
+                this.wSub.unsubscribe();
+            }
+        }
+
     }
 
     changeCodeMirror(code: string) {
