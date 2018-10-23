@@ -23,7 +23,13 @@ $ helm install stable/cds
 
 This chart bootstraps a [CDS](https://github.com/ovh/cds) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
-It also starts a PostgreSQL server and a Redis server using the helm built-in dependency system.
+It starts a PostgreSQL server, a Redis server and an Elasticsearch server using the helm built-in dependency system. It also starts all µServices that CDS needed to use all CDS features :
+
++ Hatchery over Kubernetes
++ VCS service
++ Hooks service
++ Elasticsearch service
++ Repositories service
 
 ## Prerequisites
 
