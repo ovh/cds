@@ -563,8 +563,13 @@ func Test_postAndDeleteWorkflowLabelHandler(t *testing.T) {
 	var wf = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
 
@@ -653,8 +658,13 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	var workflow = &sdk.Workflow{
 		Name:        "Name",
 		Description: "Description",
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
 

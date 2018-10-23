@@ -749,7 +749,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+	_, _, err = workflow.ManualRun(context.TODO(), api.mustDB(), api.Cache, proj2, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	}, nil)
 	test.NoError(t, err)
