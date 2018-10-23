@@ -59,7 +59,7 @@ echo $PKEY # variable $PKEY will contains the path of the SSH private key
 ` + "```" + `
 
 
-For most advanced usage with git and ssh, you can run ` + "`eval $(worker key install --env-git proj-mykey)`" + `.
+For most advanced usage with git and SSH, you can run ` + "`eval $(worker key install --env-git proj-mykey)`" + `.
 
 The ` + "`--env-git`" + ` flag will display:
 
