@@ -1280,6 +1280,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	}
 
 	outHookModels, err := workflow.LoadOutgoingHookModels(db)
+	test.NoError(t, err)
 	var outWebHookID int64
 	for _, h := range outHookModels {
 		if h.Name == sdk.OutgoingWebHookModel.Name {

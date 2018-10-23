@@ -80,6 +80,13 @@ func TestImport(t *testing.T) {
 	hookModels, err := workflow.LoadHookModels(db)
 	test.NoError(t, err)
 
+	var schedulModelID int64
+	for _, m := range hookModels {
+		if m.Name == sdk.SchedulerModel.Name {
+			schedulModelID = m.ID
+		}
+	}
+
 	type args struct {
 		w     *sdk.Workflow
 		force bool
@@ -285,7 +292,7 @@ func TestImport(t *testing.T) {
 							},
 							Hooks: []sdk.NodeHook{
 								{
-									HookModelID: hookModels[0].ID,
+									HookModelID: schedulModelID,
 									Config: sdk.WorkflowNodeHookConfig{
 										sdk.SchedulerModelCron: sdk.WorkflowNodeHookConfigValue{
 											Value:        "* * * * *",
@@ -293,6 +300,10 @@ func TestImport(t *testing.T) {
 										},
 										sdk.SchedulerModelTimezone: sdk.WorkflowNodeHookConfigValue{
 											Value:        "UTC",
+											Configurable: true,
+										},
+										sdk.Payload: sdk.WorkflowNodeHookConfigValue{
+											Value:        "{}",
 											Configurable: true,
 										},
 									},

@@ -389,7 +389,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 				if !has {
 					m, errM := workflow.LoadOutgoingHookModelByID(dbFunc(), wnr.OutgoingHook.HookModelID)
 					if errM != nil {
-						sdk.WrapError(errM, "stopWorkflowRun> Unable to load outgoing hook model")
+						log.Error("stopWorkflowRun> Unable to load outgoing hook model: %v", errM)
 						continue
 					}
 					model = *m
@@ -862,7 +862,7 @@ func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	if errb != nil {
 		return nil, sdk.WrapError(errb, "startWorkflowRunV2> Cannot start transaction")
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // nolint
 
 	//Default manual run
 	if opts.Manual == nil {

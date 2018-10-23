@@ -58,12 +58,14 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
         };
 
         this.loadingModels = true;
-        this._hookService.getOutgoingHookModel().pipe(finalize(() => this.loadingModels = false)).subscribe(ms => {
+        this._hookService.getOutgoingHookModel().pipe(finalize(() => this.loadingModels = false))
+            .subscribe(ms => {
             this.outgoingHookModels = ms;
             if (this.hook) {
                 // select model
                 if (this.hook.outgoing_hook.hook_model_id) {
-                    this.selectedOutgoingHookModel = this.outgoingHookModels.find(m => m.id === this.hook.outgoing_hook.hook_model_id);
+                    this.selectedOutgoingHookModel = this.outgoingHookModels
+                        .find(m => m.id === this.hook.outgoing_hook.hook_model_id);
                 }
                 this.displayConfig = Object.keys(this._outgoingHook.outgoing_hook.config).length !== 0;
                 if (this.selectedOutgoingHookModel.name === 'Workflow') {
@@ -94,7 +96,8 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
     }
 
     updateWorkflow(): void {
-        if (this.hook && this.hook.outgoing_hook.config && this.hook.outgoing_hook.config['target_project'] &&  this.hook.outgoing_hook.config['target_workflow']) {
+        if (this.hook && this.hook.outgoing_hook.config && this.hook.outgoing_hook.config['target_project']
+            &&  this.hook.outgoing_hook.config['target_workflow']) {
             this.loadingHooks = true;
             this.wSub = this._workflowStore.getWorkflows(this.hook.outgoing_hook.config['target_project'].value,
                 this.hook.outgoing_hook.config['target_workflow'].value)
@@ -110,7 +113,9 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
                                 this.availableHooks = [];
                             }
                             if (this.hook || this.hook.outgoing_hook.config['target_hook']) {
-                                if (this.availableHooks.findIndex( h => h.uuid === this.hook.outgoing_hook.config['target_hook'].value) === -1) {
+                                if (this.availableHooks
+                                    .findIndex( h =>
+                                        h.uuid === this.hook.outgoing_hook.config['target_hook'].value) === -1) {
                                     this._outgoingHook.outgoing_hook.config['target_hook'].value = undefined;
                                 }
                             }
