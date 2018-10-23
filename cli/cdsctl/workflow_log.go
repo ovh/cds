@@ -22,7 +22,7 @@ var (
 	# list all logs files
 	$ cdsctl workflow logs list KEY WF 1
 	
-	# list all logs files
+	# download all logs files
 	$ cdsctl workflow logs download KEY WF 1
 	
 	# download only one file:
@@ -133,7 +133,7 @@ var workflowLogDownloadCmd = cli.Command{
 	Short: "Download logs from a workflow run.",
 	Long: `Download logs from a workflow run. You can download all logs files or just one log if you want.
 
-	# list all logs files
+	# download all logs files
 	$ cdsctl workflow logs download KEY WF 1
 
 	# download only one file:
