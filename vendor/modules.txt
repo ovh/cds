@@ -154,6 +154,13 @@ github.com/docker/go-units
 github.com/docker/libtrust
 # github.com/donovanhide/eventsource v0.0.0-20170630084216-b8f31a59085e
 github.com/donovanhide/eventsource
+# github.com/dsnet/compress v0.0.0-20171208185109-cc9eb1d7ad76
+github.com/dsnet/compress/bzip2
+github.com/dsnet/compress/bzip2/internal/sais
+github.com/dsnet/compress/internal
+github.com/dsnet/compress/internal/errors
+github.com/dsnet/compress/internal/prefix
+github.com/dsnet/compress
 # github.com/eapache/go-resiliency v0.0.0-20160104191539-b86b1ec0dd42
 github.com/eapache/go-resiliency/retrier
 github.com/eapache/go-resiliency/breaker
@@ -342,6 +349,8 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/mcuadros/go-defaults
 # github.com/mgutz/ansi v0.0.0-20150914162238-c286dcecd19f
 github.com/mgutz/ansi
+# github.com/mholt/archiver v2.1.0+incompatible
+github.com/mholt/archiver
 # github.com/mitchellh/go-homedir v0.0.0-20161203194507-b8bc1bf76747
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/go-wordwrap v0.0.0-20150314170334-ad45545899c7
@@ -356,6 +365,8 @@ github.com/mndrix/tap-go
 github.com/ncw/swift
 # github.com/nsf/termbox-go v0.0.0-20160913191650-b6acae516ace
 github.com/nsf/termbox-go
+# github.com/nwaples/rardecode v1.0.0
+github.com/nwaples/rardecode
 # github.com/olekukonko/tablewriter v0.0.0-20160621093029-daf2955e742c
 github.com/olekukonko/tablewriter
 # github.com/opencontainers/go-digest v1.0.0-rc1
@@ -478,6 +489,11 @@ github.com/stretchr/testify/assert
 github.com/tevino/abool
 # github.com/ugorji/go v0.0.0-20160928015244-faddd6128c66
 github.com/ugorji/go/codec
+# github.com/ulikunitz/xz v0.5.4
+github.com/ulikunitz/xz
+github.com/ulikunitz/xz/internal/xlog
+github.com/ulikunitz/xz/lzma
+github.com/ulikunitz/xz/internal/hash
 # github.com/urfave/cli v1.20.0
 github.com/urfave/cli
 # github.com/vbatts/tar-split v0.10.2
