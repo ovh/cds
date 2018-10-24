@@ -380,9 +380,9 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.Us
 
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoProject
+			return nil, sdk.WithStack(sdk.ErrNoProject)
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	return unwrap(db, store, dbProj, u, opts)

@@ -5,13 +5,14 @@ import (
 	json "encoding/json"
 	"fmt"
 
+	"github.com/ovh/cds/sdk/slug"
 	"github.com/pkg/errors"
 )
 
 // WorkflowTemplateRequest struct use for execution request.
 type WorkflowTemplateRequest struct {
 	ProjectKey   string            `json:"project_key"`
-	WorkflowName string            `json:"workflow_name"`
+	WorkflowSlug string            `json:"workflow_slug"`
 	Parameters   map[string]string `json:"parameters"`
 }
 
@@ -84,12 +85,13 @@ func (w *WorkflowTemplate) ValidateStruct() error {
 }
 
 // CheckParams returns template parameters validity.
+// TODO replace fmt.Error
 func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 	if r.ProjectKey == "" {
 		return fmt.Errorf("Project key is required")
 	}
-	if r.WorkflowName == "" {
-		return fmt.Errorf("Workflow name is required")
+	if !slug.Valid(r.WorkflowSlug) {
+		return fmt.Errorf("Invalid given workflow slug is required")
 	}
 
 	for _, p := range w.Parameters {

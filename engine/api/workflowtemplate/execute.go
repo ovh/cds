@@ -47,7 +47,7 @@ func executeTemplate(t string, data map[string]interface{}) (string, error) {
 func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.WorkflowTemplateResult, error) {
 	data := map[string]interface{}{
 		"id":     i.ID,
-		"name":   i.Request.WorkflowName,
+		"name":   i.Request.WorkflowSlug,
 		"params": prepareParams(wt, i.Request),
 	}
 

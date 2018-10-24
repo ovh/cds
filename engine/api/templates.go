@@ -282,14 +282,14 @@ func (api *API) applyTemplateHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		t := getWorkflowTemplate(ctx)
+		wt := getWorkflowTemplate(ctx)
 
 		// parse and check request
 		var req sdk.WorkflowTemplateRequest
 		if err := service.UnmarshalBody(r, &req); err != nil {
 			return err
 		}
-		if err := t.CheckParams(req); err != nil {
+		if err := wt.CheckParams(req); err != nil {
 			return sdk.NewError(sdk.ErrInvalidData, err)
 		}
 
@@ -298,10 +298,18 @@ func (api *API) applyTemplateHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNoProject)
 		}
 
+		u := getUser(ctx)
+
 		// load project with key
-		p, err := project.Load(api.mustDB(), api.Cache, req.ProjectKey, getUser(ctx))
+		p, err := project.Load(api.mustDB(), api.Cache, req.ProjectKey, u)
 		if err != nil {
-			return sdk.NewError(sdk.ErrNoProject, err)
+			return err
+		}
+
+		// check if a workflow exists with given slug
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, req.WorkflowSlug, u, workflow.LoadOptions{})
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
+			return err
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -310,20 +318,38 @@ func (api *API) applyTemplateHandler() service.Handler {
 		}
 		defer func() { _ = tx.Rollback() }()
 
-		i := &sdk.WorkflowTemplateInstance{
-			ProjectID:               p.ID,
-			WorkflowTemplateID:      t.ID,
-			WorkflowTemplateVersion: t.Version,
-			Request:                 req,
+		var wti *sdk.WorkflowTemplateInstance
+		if wf != nil {
+			// check if workflow is a generated one for the current template
+			wti, err = workflowtemplate.GetInstance(tx, workflowtemplate.NewCriteriaInstance().
+				WorkflowIDs(wf.ID).WorkflowTemplateIDs(wt.ID))
+			if err != nil {
+				return err
+			}
 		}
 
-		// create new instance for template
-		if err := workflowtemplate.InsertInstance(tx, i); err != nil {
-			return err
+		// if a previous instance exist for the same workflow update it, else create a new one
+		if wti != nil {
+			req.WorkflowSlug = wti.Request.WorkflowSlug
+			wti.WorkflowTemplateVersion = wt.Version
+			wti.Request = req
+			if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
+				return err
+			}
+		} else {
+			wti = &sdk.WorkflowTemplateInstance{
+				ProjectID:               p.ID,
+				WorkflowTemplateID:      wt.ID,
+				WorkflowTemplateVersion: wt.Version,
+				Request:                 req,
+			}
+			if err := workflowtemplate.InsertInstance(tx, wti); err != nil {
+				return err
+			}
 		}
 
 		// execute template with request
-		res, err := workflowtemplate.Execute(t, i)
+		res, err := workflowtemplate.Execute(wt, wti)
 		if err != nil {
 			return err
 		}
@@ -357,82 +383,6 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		return service.WriteJSON(w, is, http.StatusOK)
 	}
 }
-
-// TODO refact merge with apply
-/*func (api *API) updateWorkflowTemplateHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-
-		key := vars["key"]
-		workflowName := vars["permWorkflowName"]
-
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
-		if err != nil {
-			return sdk.WrapError(err, "Unable to load projet")
-		}
-
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getUser(ctx), workflow.LoadOptions{})
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load workflow %s", workflowName)
-		}
-
-		// check if workflow is a generated one
-		wti, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().WorkflowIDs(wf.ID))
-		if err != nil {
-			return err
-		}
-		if wti == nil {
-			return sdk.WithStack(sdk.ErrWorkflowNotGenerated)
-		}
-
-		// check if the workflow need an update
-		wt, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().IDs(wti.WorkflowTemplateID))
-		if err != nil {
-			return err
-		}
-
-		// get new params but override name
-		var req sdk.WorkflowTemplateRequest
-		if err := service.UnmarshalBody(r, &req); err != nil {
-			return err
-		}
-		req.Name = wti.Request.Name
-		if err := wt.CheckParams(req); err != nil {
-			return sdk.NewError(sdk.ErrInvalidData, err)
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
-		}
-		defer func() { _ = tx.Rollback() }()
-
-		wti.WorkflowTemplateVersion = wt.Version
-		wti.Request = req
-
-		// create new instance for template
-		if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
-			return err
-		}
-
-		// execute template with request
-		res, err := workflowtemplate.Execute(wt, wti)
-		if err != nil {
-			return err
-		}
-
-		buf := new(bytes.Buffer)
-		if err := workflowtemplate.Tar(res, buf); err != nil {
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
-		}
-
-		return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")
-	}
-}*/
 
 func (api *API) getTemplateInstanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -468,5 +418,35 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, wti, http.StatusOK)
+	}
+}
+
+func (api *API) updateWorkflowHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to load projet")
+		}
+
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getUser(ctx), workflow.LoadOptions{})
+		if err != nil {
+			return sdk.WrapError(err, "Cannot load workflow %s", workflowName)
+		}
+
+		// check if workflow is a generated one
+		wt, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().WorkflowIDs(wf.ID))
+		if err != nil {
+			return err
+		}
+		if wt == nil {
+			return sdk.WithStack(sdk.ErrInvalidData)
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
