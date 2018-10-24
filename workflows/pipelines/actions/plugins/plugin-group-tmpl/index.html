@@ -2080,7 +2080,6 @@
 <li>
 <ul>
 <li><a href="#parameters">Parameters</a></li>
-<li><a href="#more">More</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -2103,21 +2102,17 @@
 
 
 
-<p>This actions helps you generate a Marathon group application file.
+<p>This actions helps you generate a marathon group application file.
 It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files.
 Check documentation on text/template for more information <a href="https://golang.org/pkg/text/template">https://golang.org/pkg/text/template</a>.</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><strong>applications</strong>: Applications file variables</li>
 <li><strong>config</strong>: Template file to use</li>
 <li><strong>output</strong>: Output path for generated file (default to <file>.out or just trimming .tpl extension)</li>
-<li><strong>applications</strong>: Applications file variables</li>
 </ul>
-
-<h2 id="more">More</h2>
-
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/group-tmpl/README.md">GitHub</a></p>
 
 
 <footer class=" footline" >

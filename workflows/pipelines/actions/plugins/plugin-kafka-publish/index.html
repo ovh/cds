@@ -2080,7 +2080,6 @@
 <li>
 <ul>
 <li><a href="#parameters">Parameters</a></li>
-<li><a href="#more">More</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -2112,23 +2111,19 @@
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
-<li><strong>artifacts</strong>: Artifacts list (comma separated)&rdquo;</li>
+<li><strong>kafkaUser</strong>: Kafka user</li>
 <li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
 <li><strong>waitForAck</strong>: Wait for ACK</li>
+<li><strong>artifacts</strong>: Artifacts list (comma separated)&rdquo;</li>
+<li><strong>key</strong>: Key used by AES Encryption. It have to be the same value as &ndash;key on plugin binary</li>
 <li><strong>waitForAckTopic</strong>: Wait for ACK topic</li>
-<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
 <li><strong>message</strong>: Kafka Message</li>
 <li><strong>kafkaPassword</strong>: Kafka password</li>
 <li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
+<li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
 <li><strong>topic</strong>: Kafka Topic</li>
-<li><strong>key</strong>: Key used by AES Encryption. It have to be the same value as &ndash;key on plugin binary</li>
-<li><strong>kafkaUser</strong>: Kafka user</li>
+<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
 </ul>
-
-<h2 id="more">More</h2>
-
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish/README.md">GitHub</a></p>
 
 
 <footer class=" footline" >

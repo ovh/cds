@@ -2075,7 +2075,11 @@
 <li><a href="#shell-environment-variable">Shell Environment Variable</a></li>
 <li><a href="#git-variables">Git variables</a></li>
 <li><a href="#pipeline-parameters">Pipeline parameters</a></li>
-<li><a href="#helpers">Helpers</a></li>
+<li><a href="#helpers">Helpers</a>
+<ul>
+<li><a href="#advanced-usage">Advanced usage</a></li>
+<li><a href="#deep-in-code">Deep in code</a></li>
+</ul></li>
 </ul></li>
 </ul>
 </nav>
@@ -2261,7 +2265,7 @@ Then, in the workflow, you can set the value for pipeline parameter in the <code
 <li>replace</li>
 <li>plural</li>
 <li>toString</li>
-<li>default: <code>{{.cds.application | default &quot;&quot;}}</code>, <code>{{.cds.application | default &quot;defaultValue&quot;}}</code></li>
+<li>default: <code>{{.cds.application | default &quot;&quot;}}</code>, <code>{{.cds.application | default &quot;defaultValue&quot;}}</code>, <code>{{.cds.app.foo | default .cds.app.bar .cds.app.biz }}</code></li>
 <li>empty</li>
 <li>coalesce</li>
 <li>toJSON</li>
@@ -2271,7 +2275,23 @@ Then, in the workflow, you can set the value for pipeline parameter in the <code
 <li>escape: replace &lsquo;_&lsquo;, &lsquo;/&rsquo;, &lsquo;.&rsquo; by &lsquo;-&rsquo;</li>
 </ul>
 
-<p>You&rsquo;re a Go developer? See all helpers on <a href="https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23">https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23</a></p>
+<h3 id="advanced-usage">Advanced usage</h3>
+
+<p>You can use CDS Variables with default helpers:</p>
+
+<pre><code>{{.cds.app.foo | default .cds.app.bar }}
+</code></pre>
+
+<p>You can use many helpers:</p>
+
+<pre><code>{{.cds.app.foo | upper | lower}}
+{{.cds.app.foo | default .cds.app.bar | default .cds.app.biz | upper }}
+</code></pre>
+
+<h3 id="deep-in-code">Deep in code</h3>
+
+<p>You&rsquo;re a Go developer? See all helpers on <a href="https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23">https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23</a>
+and some unit tests on <a href="https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_test.go#L72">https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_test.go#L72</a></p>
 
 
 <footer class=" footline" >

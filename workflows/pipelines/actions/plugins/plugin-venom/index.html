@@ -2080,7 +2080,6 @@
 <li>
 <ul>
 <li><a href="#parameters">Parameters</a></li>
-<li><a href="#more">More</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -2105,23 +2104,19 @@
 
 <p>This plugin helps you to run venom. Venom: <a href="https://github.com/ovh/venom">https://github.com/ovh/venom</a>.</p>
 
-<p>Add an extra step of type JUnit on your job to view tests results on CDS UI.</p>
+<p>Add an extra step of type junit on your job to view tests results on CDS UI.</p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><strong>parallel</strong>: Launch Test Suites in parallel. Enter here number of routines</li>
 <li><strong>loglevel</strong>: Log Level: debug, info, warn or error</li>
 <li><strong>vars</strong>: Empty: all {{.cds&hellip;}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty</li>
 <li><strong>vars-from-file</strong>: filename.yaml or filename.json. See <a href="https://github.com/ovh/venom#run-venom-with-file-var">https://github.com/ovh/venom#run-venom-with-file-var</a></li>
 <li><strong>path</strong>: Path containers yml venom files. Format: adirectory/, ./<em>aTest.yml, ./foo/b</em>/*<em>/z</em>.yml</li>
 <li><strong>exclude</strong>: Exclude some files, one file per line</li>
-<li><strong>output</strong>: Directory where output XUnit result file</li>
-<li><strong>parallel</strong>: Launch Test Suites in parallel. Enter here number of routines</li>
+<li><strong>output</strong>: Directory where output xunit result file</li>
 </ul>
-
-<h2 id="more">More</h2>
-
-<p>More documentation on <a href="https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/venom/README.md">GitHub</a></p>
 
 
 <footer class=" footline" >
