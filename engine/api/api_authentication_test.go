@@ -9,7 +9,8 @@ import (
 )
 
 func TestNewTokenThenParse(t *testing.T) {
-	api, db, _ := newTestAPI(t)
+	api, db, _, end := newTestAPI(t)
+	defer end()
 	u, _ := assets.InsertAdminUser(db)
 	token, err := api.newToken(api.claimsForUser(u))
 	assert.NoError(t, err)

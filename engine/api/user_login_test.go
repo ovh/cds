@@ -108,7 +108,8 @@ func newLambdaUser(t *testing.T, api *API, groups ...*sdk.Group) (*sdk.User, str
 }
 
 func Test_loginAdminUserHandler(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	_, token := newAdminUser(t, api)
 
 	// === Call an authentified method
@@ -126,7 +127,8 @@ func Test_loginAdminUserHandler(t *testing.T) {
 }
 
 func Test_loginLambdaUserHandler(t *testing.T) {
-	api, _, _ := newTestAPI(t)
+	api, _, _, end := newTestAPI(t)
+	defer end()
 	u, token := newLambdaUser(t, api)
 
 	t.Logf("u=%+v", u)
