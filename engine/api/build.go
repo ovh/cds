@@ -317,7 +317,7 @@ func (api *API) getPipelineBuildJobHandler() service.Handler {
 
 		j, err := pipeline.GetPipelineBuildJob(api.mustDB(), api.Cache, id)
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if sdk.Cause(err) == sql.ErrNoRows {
 				err = sdk.ErrPipelineBuildNotFound
 			}
 			return sdk.WrapError(err, "Unable to load pipeline build job id")

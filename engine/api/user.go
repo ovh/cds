@@ -478,7 +478,7 @@ func (api *API) loginUserHandler() service.Handler {
 		}
 		// Load user
 		u, errl := user.LoadUserWithoutAuth(api.mustDB(), loginUserRequest.Username)
-		if errl != nil && errl == sql.ErrNoRows {
+		if errl != nil && sdk.Cause(errl) == sql.ErrNoRows {
 			return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login error %s: %s", loginUserRequest.Username, errl)
 		}
 		if errl != nil {

@@ -62,11 +62,12 @@ func runPipeline(DBFunc func() *gorp.DbMap, store cache.Store, pbID int64) {
 	// Reload pipeline build with a FOR UPDATE NOT WAIT
 	// So only one instance of the API can update it and/or end it
 	if err := pipeline.SelectBuildForUpdate(tx, pbID); err != nil {
+		cause := sdk.Cause(err)
 		// if ErrNoRows, pipelines is already done
-		if err == sql.ErrNoRows {
+		if cause == sql.ErrNoRows {
 			return
 		}
-		pqerr, ok := err.(*pq.Error)
+		pqerr, ok := cause.(*pq.Error)
 		// Cannot get lock (FOR UPDATE NOWAIT), someone else is on it
 		if ok && pqerr.Code == "55P03" {
 			return

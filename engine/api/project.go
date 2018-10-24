@@ -41,7 +41,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			//Load the specific user
 			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
 			if err != nil {
-				if err == sql.ErrNoRows {
+				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
 				}
 				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)

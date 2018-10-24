@@ -735,6 +735,14 @@ func ErrorIs(err error, target Error) bool {
 	return target.ID == ErrUnknownError.ID
 }
 
+// Cause returns recursively the root error from given error.
+func Cause(err error) error {
+	if e, ok := err.(errorWithStack); ok {
+		return errors.Cause(e.root)
+	}
+	return errors.Cause(err)
+}
+
 // ErrorIsUnknown returns true the error is unknown (sdk.ErrUnknownError or lib error).
 func ErrorIsUnknown(err error) bool {
 	return ErrorIs(err, ErrUnknownError)
