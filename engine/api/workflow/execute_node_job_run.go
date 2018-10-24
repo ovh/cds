@@ -264,7 +264,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	// reload and recheck status
 	job, errl := LoadAndLockNodeJobRunNoWait(ctx, db, store, jobID)
 	if errl != nil {
-		if errPG, ok := errl.(*pq.Error); ok && errPG.Code == "55P03" {
+		if errPG, ok := sdk.Cause(errl).(*pq.Error); ok && errPG.Code == "55P03" {
 			errl = sdk.ErrJobAlreadyBooked
 		}
 		return nil, nil, sdk.WrapError(errl, "Cannot load node job run (WAIT) %d", jobID)

@@ -275,7 +275,7 @@ func pipelineBuildEnd(DBFunc func() *gorp.DbMap, store cache.Store, tx gorp.SqlE
 	// run trigger
 	triggers, err := trigger.LoadAutomaticTriggersAsSource(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if err != nil {
-		pqerr, ok := err.(*pq.Error)
+		pqerr, ok := sdk.Cause(err).(*pq.Error)
 		// Cannot get lock (FOR UPDATE NOWAIT), someone else is on it
 		if ok && pqerr.Code == "55P03" {
 			return pqerr
