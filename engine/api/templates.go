@@ -326,6 +326,20 @@ func (api *API) applyTemplateHandler() service.Handler {
 			if err != nil {
 				return err
 			}
+		} else {
+			// try to get a instance not assign to a workflow but with the same slug
+			wtis, err := workflowtemplate.GetInstances(tx, workflowtemplate.NewCriteriaInstance().
+				WorkflowIDs(0).WorkflowTemplateIDs(wt.ID))
+			if err != nil {
+				return err
+			}
+
+			for _, res := range wtis {
+				if res.Request.WorkflowSlug == req.WorkflowSlug {
+					wti = res
+					break
+				}
+			}
 		}
 
 		// if a previous instance exist for the same workflow update it, else create a new one

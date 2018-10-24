@@ -96,7 +96,7 @@ func UpdateInstanceWorkflowID(db gorp.SqlExecutor, id, workflowID int64) error {
 }
 
 // GetInstances returns all workflow template instances for given criteria.
-func GetInstances(db *gorp.DbMap, c CriteriaInstance) ([]*sdk.WorkflowTemplateInstance, error) {
+func GetInstances(db gorp.SqlExecutor, c CriteriaInstance) ([]*sdk.WorkflowTemplateInstance, error) {
 	wtis := []*sdk.WorkflowTemplateInstance{}
 
 	if _, err := db.Select(&wtis, fmt.Sprintf("SELECT * FROM workflow_template_instance WHERE %s", c.where()), c.args()); err != nil {

@@ -28,7 +28,7 @@ func Parse(proj *sdk.Project, ew *exportentities.Workflow, u *sdk.User) (*sdk.Wo
 	//Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(ew.Name) {
-		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Parse>> Workflow name %s do not respect pattern %s", ew.Name, sdk.NamePattern)
+		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Workflow name %s do not respect pattern %s", ew.Name, sdk.NamePattern)
 	}
 
 	//Inherit permissions from project

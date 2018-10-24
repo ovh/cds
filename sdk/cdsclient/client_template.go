@@ -10,8 +10,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) TemplateGet(id int64) (*sdk.WorkflowTemplate, error) {
-	url := fmt.Sprintf("/template/%d", id)
+func (c *client) TemplateGet(groupName, templateSlug string) (*sdk.WorkflowTemplate, error) {
+	url := fmt.Sprintf("/template/%s/%s", groupName, templateSlug)
 
 	var wt sdk.WorkflowTemplate
 	if _, err := c.GetJSON(context.Background(), url, &wt); err != nil {
@@ -21,8 +21,8 @@ func (c *client) TemplateGet(id int64) (*sdk.WorkflowTemplate, error) {
 	return &wt, nil
 }
 
-func (c *client) TemplateExecute(id int64, req sdk.WorkflowTemplateRequest) (*tar.Reader, error) {
-	url := fmt.Sprintf("/template/%d/execute", id)
+func (c *client) TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error) {
+	url := fmt.Sprintf("/template/%s/%s/apply", groupName, templateSlug)
 
 	bs, err := json.Marshal(req)
 	if err != nil {
