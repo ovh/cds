@@ -586,3 +586,16 @@ redis:
     #   enabled: true
     #   fsGroup: 1001
     #   runAsUser: 1001
+
+elasticsearch:
+  data:
+    replicas: 1
+  client:
+    replicas: 1
+  master:
+    replicas: 1
+  cluster:
+    env:
+      MINIMUM_MASTER_NODES: 1
+      EXPECTED_MASTER_NODES: 1
+      RECOVER_AFTER_MASTER_NODES: 1

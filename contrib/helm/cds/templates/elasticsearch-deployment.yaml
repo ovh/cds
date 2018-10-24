@@ -1,0 +1,71 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: {{ template "cds.fullname" . }}-elasticsearch
+  labels:
+    app: {{ template "cds.fullname" . }}-elasticsearch
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: {{ template "cds.fullname" . }}-elasticsearch
+    spec:
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.image.pullSecrets }}
+        - name: {{ . }}
+      {{- end}}
+      {{- end }}
+      containers:
+      - name: {{ template "cds.fullname" . }}-elasticsearch
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | quote }}
+        env:
+        - name: CDS_CONFIG_FILE
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}
+              key: cds_config_file
+        - name: CDS_ELASTICSEARCH_NAME
+          value: '{{ template "cds.fullname" . }}-elasticsearch'
+        - name: CDS_ELASTICSEARCH_URL
+          value: 'http://{{ template "cds.fullname" . }}-elasticsearch'
+        - name: CDS_ELASTICSEARCH_UI_HTTP_URL
+          value: 'http://{{ template "cds.fullname" . }}-ui'
+        - name: CDS_ELASTICSEARCH_API_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "cds.fullname" . }}
+              key: cds-api_auth_sharedinfratoken
+        - name: CDS_ELASTICSEARCH_API_GRPC_URL
+          value: 'http://{{ template "cds.fullname" . }}-api:8082'
+        - name: CDS_ELASTICSEARCH_API_HTTP_URL
+          value: 'http://{{ template "cds.fullname" . }}-api'
+        - name: CDS_ELASTICSEARCH_ELASTICSEARCH_URL
+          value: http://{{ template "cds.elasticsearch.fullname" . }}-client:9200
+        - name: CDS_ELASTICSEARCH_ELASTICSEARCH_INDEX
+          value: cds-events
+        - name: CDS_ELASTICSEARCH_ELASTICSEARCH_INDEXEVENTS
+          value: cds-events
+        - name: CDS_ELASTICSEARCH_ELASTICSEARCH_INDEXMETRICS
+          value: cds-metrics
+        - name: CDS_ELASTICSEARCH_HTTP_PORT
+          value: '8084'
+        - name: CDS_LOG_LEVEL
+          value: {{ default "" .Values.logLevel | quote }}
+        command: ["/bin/sh"]
+        args: ["-c", "echo $CDS_CONFIG_FILE | base64 --decode > config.toml && /app/cds-engine-linux-amd64 start elasticsearch --config config.toml"]
+        ports:
+        - name: http
+          containerPort: 8084
+          volumeMounts:
+          - name: cds-repos-data
+      mountPath: {{ .Values.repositories.persistence.mountPath }}
+  volumes:
+  - name: cds-repos-data
+    persistentVolumeClaim:
+      claimName: {{ (printf "%s-elasticsearch" (include "cds.fullname" .)) }}
