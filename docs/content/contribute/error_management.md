@@ -65,3 +65,10 @@ err := json.Unmarshal(...)
 sdk.ErrorIs(err, sdk.ErrUnknownError) => true
 sdk.ErrorIsUnknown(err) => true
 ```
+
+To check if an error root cause is equal to a known library error you could use the **sdk.Cause** func.
+```go
+err := sdk.WrapError(sdk.WrapError(sql.ErrNoRows, "The error is now wrapped"), "Add more info on the error") 
+err == sql.ErrNoRows => false
+sdk.Cause(err) == sql.ErrNoRows => true
+```
