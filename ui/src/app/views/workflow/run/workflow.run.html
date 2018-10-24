@@ -25,7 +25,7 @@
 <div class="ui text active loader" *ngIf="!workflowRun">{{ 'workflow_loading' | translate }}</div>
 <app-workflow-node-run-param
   *ngIf="workflowRun"
-  #workflowNodeRunParam
+  #workflowRunParam
   [project]="project"
   [workflow]="workflowRun.workflow"
   [workflowRun]="workflowRun"

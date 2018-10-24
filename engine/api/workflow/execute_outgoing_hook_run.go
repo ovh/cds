@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -25,8 +24,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 	pendingOutgoingHooks := wr.PendingOutgoingHook()
 	nodeRun, ok := pendingOutgoingHooks[hookRunID]
 	if !ok {
-		log.Warning("nodeRun not found: %v", nodeRun)
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WrapError(sdk.ErrNotFound, "Unable to find node run")
 	}
 
 	nodeRun.Status = callback.Status
@@ -46,7 +44,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 		report1, _, err := processWorkflowRun(ctx, db, store, proj, wr, nil, nil, nil)
 		report.Merge(report1, err) //nolint
 		if err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "Unable to process workflow run")
 		}
 	} else {
 		mapNodes := wr.Workflow.WorkflowData.Maps()
@@ -55,7 +53,7 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 		report1, err := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, nil, node, int(nodeRun.SubNumber))
 		report.Merge(report1, err) //nolint
 		if err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "Unable to processNodeOutGoingHook")
 		}
 	}
 
@@ -86,14 +84,14 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 
 	tx, err := dbFunc().Begin()
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "Unable to start transaction")
 	}
 
 	defer tx.Rollback() //nolint
 
 	hookrun := parentWR.GetOutgoingHookRun(wr.RootRun().HookEvent.ParentWorkflow.HookRunID)
 	if hookrun == nil {
-		return errors.New("unable to find hookrun")
+		return sdk.WrapError(sdk.ErrNotFound, "unable to find hookrun")
 	}
 
 	if hookrun.Callback == nil {
@@ -113,11 +111,11 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 			parentWR.Workflow.Name,
 			wr.RootRun().HookEvent.ParentWorkflow.Run,
 			err)
-		return err
+		return sdk.WrapError(err, "Unable to update outgoing hook run status")
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
+		return sdk.WrapError(err, "Unable to commit transaction")
 	}
 
 	go SendEvent(dbFunc(), parentProj.Key, report)

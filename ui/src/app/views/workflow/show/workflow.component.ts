@@ -33,7 +33,7 @@ export class WorkflowShowComponent implements OnInit {
 
     @ViewChild('workflowGraph')
     workflowGraph: WorkflowGraphComponent;
-    @ViewChild('workflowNodeRunParam')
+    @ViewChild('workflowStartParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
     @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;

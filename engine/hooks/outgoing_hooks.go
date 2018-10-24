@@ -163,17 +163,20 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 			callbackData.Log = err.Error()
 
 			// Post the callback
-			if _, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
-				log.Error("unable to perform outgoing hook callback: %v", err)
-				return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
+			if code, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
+				log.Error("doOutgoingWorkflowExecution.HandleError: unable to perform outgoing hook callback: %v", err)
+				if code >= 500 {
+					return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
+				}
+				return nil
 			}
 		}
-		return err
+		return nil
 	}
 
 	wr, err := s.Client.WorkflowRunGet(pkey, workflow, runNumber)
 	if err != nil {
-		return handleError(err)
+		return nil
 	}
 
 	hookRun := wr.GetOutgoingHookRun(hookRunID)
@@ -192,7 +195,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 	targetRun, err := s.Client.WorkflowRunFromHook(targetProject, targetWorkflow, evt)
 	if err != nil {
-		return handleError(err)
+		return sdk.WrapError(handleError(err), "Unable to run workflow from hook")
 	}
 
 	callbackData.Log = fmt.Sprintf("Workflow %s/%s #%d.%d has been started", targetProject, targetWorkflow, targetRun.Number, targetRun.LastSubNumber)
@@ -200,9 +203,11 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 	callbackData.WorkflowRunNumber = &targetRun.Number
 
 	// Post the callback
-	if _, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
-		log.Error("unable to perform outgoing hook callback: %v", err)
-		return err
+	if code, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
+		log.Error("doOutgoingWorkflowExecution> unable to perform outgoing hook callback: %v", err)
+		if code >= 500 {
+			return err
+		}
 	}
 	return nil
 }
@@ -222,8 +227,8 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	}
 
 	if wr.Status != sdk.StatusBuilding.String() {
-		log.Debug("Hooks> workflow %s/%s #%d status: %s", pkey, workflow, run, wr.Status)
-		return fmt.Errorf("workflow %s/%s #%s is not at status Building", pkey, workflow, run)
+		log.Error("Hooks> workflow %s/%s #%d status: %s", pkey, workflow, run, wr.Status)
+		return nil
 	}
 
 	callbackURL := fmt.Sprintf("/project/%s/workflows/%s/runs/%s/hooks/%s/callback", pkey, workflow, run, hookRunID)
@@ -248,9 +253,12 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 			callbackData.Log = err.Error()
 
 			// Post the callback
-			if _, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
-				log.Error("unable to perform outgoing hook callback: %v", err)
-				return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
+			if code, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
+				log.Error("unable to perform outgoing hook callback : %v", err)
+				if code >= 500 {
+					return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
+				}
+				return nil
 			}
 		}
 		return nil
@@ -272,29 +280,29 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	// Interpolate
 	method, err := interpolate.Do(t.WebHook.RequestMethod, mapParams)
 	if err != nil {
-		return handleError(err)
+		return sdk.WrapError(handleError(err), "Unable to interpolate method")
 	}
 
 	urls, err := interpolate.Do(t.WebHook.RequestURL, mapParams)
 	if err != nil {
-		return handleError(err)
+		return sdk.WrapError(handleError(err), "Unable to interpolate url")
 	}
 
 	body, err := interpolate.Do(string(t.WebHook.RequestBody), mapParams)
 	if err != nil {
-		return handleError(err)
+		return sdk.WrapError(handleError(err), "Unable to interpolate body")
 	}
 
 	req, err := http.NewRequest(method, urls, bytes.NewBuffer([]byte(body)))
 	if err != nil {
-		return handleError(err)
+		return sdk.WrapError(handleError(err), "Unable to create request")
 	}
 
 	for k, v := range t.WebHook.RequestHeader {
 		for _, val := range v {
 			val, err = interpolate.Do(val, mapParams)
 			if err != nil {
-				return handleError(err)
+				return sdk.WrapError(handleError(err), "Unable to interpolate request header")
 			}
 			req.Header.Add(k, val)
 		}
@@ -308,7 +316,7 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	http.DefaultClient.Timeout = 60 * time.Second
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return handleError(err)
+		return sdk.WrapError(handleError(err), "Unable to send request")
 	}
 
 	// Prepare the callback
@@ -326,9 +334,8 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 	callbackData.Status = sdk.StatusSuccess.String()
 
 	// Post the callback
-	if _, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
-		log.Error("unable to perform outgoing hook callback: %v", err)
-		return err
+	if code, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
+		log.Error("[%d] unable to perform outgoing hook callback: %v", code, err)
 	}
 
 	return nil

@@ -503,13 +503,6 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		}
 	}
 
-	for i := range report.WorkflowRuns() {
-		run := &report.WorkflowRuns()[i]
-		if err := updateParentWorkflowRun(ctx, newDBFunc, store, run); err != nil {
-			return nil, sdk.WrapError(err, "postJobResult")
-		}
-	}
-
 	return report, nil
 }
 
@@ -681,16 +674,6 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 				return nil
 			}
 			nodeRun = *nodeRunP
-		}
-
-		run, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: true,
-		})
-		if err != nil {
-			return err
-		}
-		if err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, run); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler")
 		}
 
 		work, errW := workflow.LoadWorkflowFromWorkflowRunID(api.mustDB(), nodeRun.WorkflowRunID)

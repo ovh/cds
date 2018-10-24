@@ -22,7 +22,7 @@ import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/n
 })
 @AutoUnsubscribe()
 export class WorkflowRunComponent implements OnInit {
-    @ViewChild('workflowNodeRunParam')
+    @ViewChild('workflowRunParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
 
     project: Project;

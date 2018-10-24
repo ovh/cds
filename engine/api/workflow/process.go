@@ -596,6 +596,15 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
 	}
 
+	if sourceOutgoingHookRun != nil {
+		hr := w.GetOutgoingHookRun(*sourceOutgoingHookRun)
+		if hr != nil {
+			if hr.Status == sdk.StatusFail.String() || hr.Status == sdk.StatusStopped.String() {
+				parentStatus = hr.Status
+			}
+		}
+	}
+
 	run.HookEvent = h
 	if h != nil {
 		runPayload = sdk.ParametersMapMerge(runPayload, h.Payload)

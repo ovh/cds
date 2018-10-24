@@ -35,7 +35,14 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     codemirror: CodemirrorComponent;
 
     @Input() workflowRun: WorkflowRun;
-    @Input() nodeRun: WorkflowNodeRun;
+    _nodeRun: WorkflowNodeRun;
+    @Input('nodeRun')
+    set nodeRun(data: WorkflowNodeRun) {
+        this._nodeRun = data;
+    }
+    get nodeRun() {
+        return this._nodeRun;
+    }
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() num: number;
@@ -44,6 +51,9 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     set nodeToRun(data: WNode) {
         if (data) {
             this._nodeToRun = cloneDeep(data);
+            if (this.nodeRun && this.nodeRun.workflow_node_id !== this._nodeToRun.id) {
+                delete this.nodeRun;
+            }
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
                 if ((!this.nodeRun || !this.nodeRun.payload ) &&
@@ -107,7 +117,9 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         } else if (this.workflowRun && this.workflowRun.nodes) {
             let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
             num = rootNodeRun.num;
-            nodeRunID = rootNodeRun.id;
+            if (this._nodeToRun.id === rootNodeRun.workflow_node_id) {
+                nodeRunID = rootNodeRun.id;
+            }
         }
 
         // if the pipeline was already launched, we refresh data from API
@@ -133,22 +145,23 @@ export class WorkflowNodeRunParamComponent implements OnInit {
                     this.prepareDisplay(null);
             });
         } else {
-            let isPipelineRoot = false;
-            if (!this.workflowRun) {
-                isPipelineRoot = true;
-            } else if (this.workflowRun && this.workflowRun.workflow.workflow_data.node.id === this.nodeToRun.id) {
-                isPipelineRoot = true;
-            }
-            // run a workflow or a child pipeline, first run
-            let payload = null;
-            this.readOnly = false;
-            // if it's not the pipeline root, we take the payload on the pipelineRoot
-            if (!isPipelineRoot) {
-                this.readOnly = true;
-                let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
-                payload = rootNodeRun.payload;
-            }
-            this.prepareDisplay(payload);
+                let isPipelineRoot = false;
+                if (!this.workflowRun) {
+                    isPipelineRoot = true;
+                } else if (this.workflowRun && this.workflowRun.workflow.workflow_data.node.id === this.nodeToRun.id) {
+                    isPipelineRoot = true;
+                }
+                // run a workflow or a child pipeline, first run
+                let payload = null;
+                this.readOnly = false;
+                // if it's not the pipeline root, we take the payload on the pipelineRoot
+                if (!isPipelineRoot) {
+                    this.readOnly = true;
+                    let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.workflow_data.node.id][0];
+                    payload = rootNodeRun.payload;
+                }
+                this.prepareDisplay(payload);
+
         }
     }
 
@@ -161,15 +174,16 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         let currentPayload = payload;
         if (!currentPayload) {
             currentPayload = this.getCurrentPayload();
+            this.payloadString = JSON.stringify(currentPayload, undefined, 4);
         }
 
-        this.payloadString = JSON.stringify(currentPayload, undefined, 4);
+
 
         this.modal = this._modalService.open(config);
 
         this.codeMirrorConfig = Object.assign({}, this.codeMirrorConfig, {readOnly: this.readOnly});
 
-        if (!this.nodeToRun.context.application_id) {
+        if (!this.nodeToRun.context || !this.nodeToRun.context.application_id) {
             return;
         }
 
@@ -318,11 +332,16 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         request.manual.payload = this.payloadString ? JSON.parse(this.payloadString) : null;
         request.manual.pipeline_parameter = Parameter.formatForAPI(this.parameters);
 
+        // TODO SIMPLIFY AFTER MIGRATION
         if (this.nodeRun) {
-            request.from_nodes = [this.nodeRun.workflow_node_id];
             request.number = this.nodeRun.num;
+            request.from_nodes = [this.nodeRun.workflow_node_id];
         } else if (this.nodeToRun && this.num != null) {
-            request.from_nodes = [this.nodeToRun.id];
+            if (this.nodeToRun.type !== 'join' || (this.workflowRun && this.workflowRun.version === 2)) {
+                request.from_nodes = [this.nodeToRun.id];
+            } else if (this.nodeToRun.type === 'join') {
+                request.from_nodes = this.nodeToRun.triggers.map(t => t.child_node.id);
+            }
             request.number = this.num;
         }
 

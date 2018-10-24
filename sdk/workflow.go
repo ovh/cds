@@ -591,8 +591,9 @@ func (j WorkflowNodeJoin) migrate(withID bool) Node {
 	if withID {
 		newNode.ID = j.ID
 	}
-	for i := range j.SourceNodeRefs {
+	for i := range j.SourceNodeIDs {
 		newNode.JoinContext = append(newNode.JoinContext, NodeJoin{
+			ParentID:   j.SourceNodeIDs[i],
 			ParentName: j.SourceNodeRefs[i],
 		})
 	}

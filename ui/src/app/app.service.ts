@@ -251,7 +251,6 @@ export class AppService {
         if (this.routeParams['key'] !== event.project_key || this.routeParams['workflowName'] !== event.workflow_name) {
             return;
         }
-        console.log(event.type_event, event.workflow_name, event.status);
         switch (event.type_event) {
             case EventType.RUN_WORKFLOW_PREFIX:
                 let wr = WorkflowRun.fromEventRunWorkflow(event);

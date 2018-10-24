@@ -7,7 +7,7 @@ import {PermissionValue} from '../../../../model/permission.model';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {
-    WNode,
+    WNode, WNodeType,
     Workflow
 } from '../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
@@ -126,6 +126,11 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     refreshData(): void {
         this.displayEditOption = this.node != null;
         this.canBeRun = this.getCanBeRun();
+        // TODO REMOVE
+        if ( (this.node.type === WNodeType.FORK || this.node.type === WNodeType.OUTGOINGHOOK)
+            && ((this.currentWorkflowRun && this.currentWorkflowRun.version < 2) || !this.currentWorkflowRun)) {
+            this.canBeRun = false;
+        }
     }
 
     displayLogs() {

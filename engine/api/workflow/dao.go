@@ -1027,7 +1027,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project) error {
 		for _, h := range n.OutgoingHooks {
 			if h.WorkflowHookModelID != 0 {
 				if _, has := w.OutGoingHookModels[h.WorkflowHookModelID]; !has {
-					m, err := LoadHookModelByID(db, h.WorkflowHookModelID)
+					m, err := LoadOutgoingHookModelByID(db, h.WorkflowHookModelID)
 					if err != nil {
 						return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown outgoing hook model %d", h.WorkflowHookModelID))
 					}

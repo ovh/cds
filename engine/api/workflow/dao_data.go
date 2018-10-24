@@ -84,7 +84,7 @@ func insertNodeData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node, skipDepen
 	n.ID = dbwn.ID
 
 	if err := insertNodeJoinData(db, w, n); err != nil {
-
+		return sdk.WrapError(err, "insertNodeData> Unable to insert workflow node join data")
 	}
 
 	if skipDependencies {
