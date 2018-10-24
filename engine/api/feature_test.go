@@ -29,6 +29,8 @@ func newTestAPIWithIzanamiToken(t *testing.T, token string, bootstrapFunc ...tes
 		Config:              Configuration{},
 		Cache:               cache,
 	}
+	api.Config.Auth.AuthenticationConfig.SigningKey = []byte("this is key")
+	api.Config.Auth.Local.Enable = true
 	api.Config.Features.Izanami.Token = token
 	api.InitRouter()
 	f := func() {

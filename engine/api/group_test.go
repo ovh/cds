@@ -22,7 +22,7 @@ func Test_getPublicGroupsHandler(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
+	u, pass := newLambdaUser(t, api, g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 

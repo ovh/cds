@@ -39,16 +39,16 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			return ctx, nil
 		}
 	}
-	/*
-		// Check Token
-		if h, ok := rc.Options["token"]; ok {
-			headerSplitted := strings.Split(h, ":")
-			receivedValue := req.Header.Get(headerSplitted[0])
-			if receivedValue != headerSplitted[1] {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied token on %s %s for %s", req.Method, req.URL, req.RemoteAddr)
-			}
+
+	// Check Token: example: "X-Izanami-Token"
+	if h, ok := rc.Options["token"]; ok {
+		headerSplitted := strings.Split(h, ":")
+		receivedValue := req.Header.Get(headerSplitted[0])
+		if receivedValue != headerSplitted[1] {
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied token on %s %s for %s", req.Method, req.URL, req.RemoteAddr)
 		}
-	*/
+	}
+
 	//Check Authentication
 	if rc.Options["auth"] == "true" && getProvider(ctx) == nil {
 		/*switch headers.Get("User-Agent") {
