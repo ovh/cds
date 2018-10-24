@@ -9,6 +9,7 @@ endif
 	$(TARGET_CDSCTL) doc $(GEN_PATH)
 	$(TARGET_WORKER) doc $(GEN_PATH)
 	$(TARGET_ENGINE) doc $(GEN_PATH) ./
+	cd docs && ./build.sh
 
 mod:
 	@echo "running go mod vendor..." && GO111MODULE=on go mod vendor

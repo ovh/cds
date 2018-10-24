@@ -12,22 +12,22 @@ This action is a CDS Plugin packaged as a single binary file you can download an
 
 ## Parameters
 
-* **kafkaAddresses**: Kafka Addresses
+* **topic**: Kafka Topic
 * **artifacts**: Artifacts list (comma separated)"
 * **publicKey**: GPG Public Key (ASCII armored format)
+* **key**: Key used by AES Encryption. It have to be the same value as --key on plugin binary
 * **waitForAck**: Wait for ACK
-* **waitForAckTopic**: Wait for ACK topic
 * **waitForAckTimeout**: Ack timeout (seconds). Used only if "waitForAck" is true.
-* **message**: Kafka Message
+* **kafkaAddresses**: Kafka Addresses
+* **kafkaUser**: Kafka user
 * **kafkaPassword**: Kafka password
 * **kafkaGroup**: Kafka Consumer Group (used for acknowledgment)
-* **topic**: Kafka Topic
-* **key**: Key used by AES Encryption. It have to be the same value as --key on plugin binary
-* **kafkaUser**: Kafka user
+* **waitForAckTopic**: Wait for ACK topic
+* **message**: Kafka Message
 
 
 ## More
 
-More documentation on [GitHub](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish/README.md)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish/README.md)
 
 
