@@ -68,7 +68,7 @@ func (api *API) postApplicationImportHandler() service.Handler {
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import application %s", eapp.Name)
-			if sdk.ErrorIs(globalError, sdk.ErrUnknownError) {
+			if sdk.ErrorIsUnknown(globalError) {
 				return globalError
 			}
 			log.Warning("%v", globalError)

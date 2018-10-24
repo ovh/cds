@@ -53,10 +53,15 @@ if err := json.Unmarshal(...); err != nil {
 ```
 
 To compare if an error match a existing sdk.Err use the **sdk.ErrorIs** func, using equality operator will not work if the error was wrapped.
+A not wrapped lib error will match sdk.ErrUnknownError (to check if error is unknown you can use sdk.ErrorIsunknown).
 ```go
 if err := one(); err != nil {
     if sdk.ErrorIs(err, sdk.ErrNotFound) {
         // do something specific for not found error
     }
 }
+
+err := json.Unmarshal(...)
+sdk.ErrorIs(err, sdk.ErrUnknownError) => true
+sdk.ErrorIsUnknown(err) => true
 ```

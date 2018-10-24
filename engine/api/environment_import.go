@@ -71,7 +71,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import environment %s", eenv.Name)
-			if sdk.ErrorIs(globalError, sdk.ErrUnknownError) {
+			if sdk.ErrorIsUnknown(globalError) {
 				return globalError
 			}
 			log.Warning("%v", globalError)

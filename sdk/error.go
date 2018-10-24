@@ -717,8 +717,7 @@ func DecodeError(data []byte) error {
 	return e
 }
 
-// ErrorIs returns true if error is same as and sdk.HTTPError Message
-// this func checks msg in all languages
+// ErrorIs returns true if error match the target error.
 func ErrorIs(err error, target Error) bool {
 	if err == nil {
 		return false
@@ -732,7 +731,13 @@ func ErrorIs(err error, target Error) bool {
 		return e.httpError.ID == target.ID
 	}
 
-	return false
+	// if err is not of type Error or errorWithStack, it's a unknown error
+	return target.ID == ErrUnknownError.ID
+}
+
+// ErrorIsUnknown returns true the error is unknown (sdk.ErrUnknownError or lib error).
+func ErrorIsUnknown(err error) bool {
+	return ErrorIs(err, ErrUnknownError)
 }
 
 // MultiError is just an array of error

@@ -134,7 +134,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import pipeline")
-			if sdk.ErrorIs(globalError, sdk.ErrUnknownError) {
+			if sdk.ErrorIsUnknown(globalError) {
 				return globalError
 			}
 			log.Warning("%v", globalError)
