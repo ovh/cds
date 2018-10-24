@@ -90,6 +90,7 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		}
 		context.WithValue(ctx, auth.ContextUserSession, jwt)
 	}
+
 	//Get the permission for either the hatchery, the worker or the user
 	switch {
 	case getProvider(ctx) != nil:
