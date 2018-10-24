@@ -126,9 +126,8 @@ func (c *LDAPClient) Close() {
 	c.conn.Close()
 }
 
-//Open open a true LDAP connection
+// Open open a true LDAP connection
 func (c *LDAPClient) Init(options interface{}) error {
-	log.Info("Auth> Connecting to session store")
 	return c.openLDAP(options)
 }
 
