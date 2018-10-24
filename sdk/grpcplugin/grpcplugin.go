@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"syscall"
 	"time"
 
@@ -99,14 +98,9 @@ func InfoMarkdown(pl sdk.GRPCPlugin) string {
 
 %s
 
-## More
-
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/%s/README.md)
-
 `,
 		pl.Description,
-		sp,
-		strings.Replace(pl.Name, "plugin-", "", 1))
+		sp)
 
 	return info
 }

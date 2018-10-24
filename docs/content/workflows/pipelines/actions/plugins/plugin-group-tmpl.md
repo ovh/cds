@@ -3,7 +3,7 @@ title = "plugin-group-tmpl"
 
 +++
 
-This actions helps you generate a Marathon group application file.
+This actions helps you generate a marathon group application file.
 It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files.
 Check documentation on text/template for more information https://golang.org/pkg/text/template.
 
@@ -17,6 +17,6 @@ Check documentation on text/template for more information https://golang.org/pkg
 
 ## More
 
-More documentation on [GitHub](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/group-tmpl/README.md)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/group-tmpl/README.md)
 
 

@@ -77,7 +77,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		if projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer); projectVCSServer != nil {
 			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectVCSServer)
 			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationOverviewHandler> Cannot get repo client %s : %v", app.VCSServer)
+				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationOverviewHandler> Cannot get repo client %s: %v", app.VCSServer, erra)
 			}
 			vcsRepo, errRepo := client.RepoByFullname(ctx, app.RepositoryFullname)
 			if errRepo != nil {

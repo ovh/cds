@@ -20,6 +20,6 @@ Split and Upload Artifact with size greater than 500 MB.
 * **split**: type: binary Value: split
 
 
-More documentation on [GitHub](https://github.com/ovh/cds/tree/master/contrib/actions/cds-split-upload.yml)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-split-upload.yml)
 
 

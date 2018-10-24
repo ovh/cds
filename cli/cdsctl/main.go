@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -76,7 +77,7 @@ func getRoot(isShell bool) *cobra.Command {
 	root.PersistentFlags().BoolVarP(&insecureSkipVerifyTLS, "insecure", "k", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		//Do not load config on login
-		if cmd == login || cmd == signup || cmd == doc || (cmd.Run == nil && cmd.RunE == nil) {
+		if cmd == login || cmd == signup || cmd == doc || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
 			return
 		}
 

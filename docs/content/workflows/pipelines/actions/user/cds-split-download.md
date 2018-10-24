@@ -18,6 +18,6 @@ Download Artifacts which were uploaded using CDS_SplitUploadArtifact action.
 * **bash**: type: binary Value: bash
 
 
-More documentation on [GitHub](https://github.com/ovh/cds/tree/master/contrib/actions/cds-split-download.yml)
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-split-download.yml)
 
 

@@ -159,7 +159,7 @@ Helpers available and some examples:
 - replace
 - plural
 - toString
-- default: `{{.cds.application | default ""}}`, `{{.cds.application | default "defaultValue"}}`
+- default: `{{.cds.application | default ""}}`, `{{.cds.application | default "defaultValue"}}`, `{{.cds.app.foo | default .cds.app.bar .cds.app.biz }}`
 - empty
 - coalesce
 - toJSON
@@ -168,4 +168,22 @@ Helpers available and some examples:
 - b64dec
 - escape: replace '_', '/', '.' by '-'
 
+### Advanced usage
+
+You can use CDS Variables with default helpers:
+
+```
+{{.cds.app.foo | default .cds.app.bar }}
+```
+
+You can use many helpers:
+
+```
+{{.cds.app.foo | upper | lower}}
+{{.cds.app.foo | default .cds.app.bar | default .cds.app.biz | upper }}
+```
+
+### Deep in code
+
 You're a Go developer? See all helpers on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_helper.go#L23
+and some unit tests on https://github.com/ovh/cds/blob/master/sdk/interpolate/interpolate_test.go#L72 
