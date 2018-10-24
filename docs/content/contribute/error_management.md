@@ -4,7 +4,9 @@ weight = 1
 
 +++
 
-This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code and an error unique id that can be used to retrieve the error stack trace with the ctl.
+This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.
+
+Errors can be forwarded to a Graylog instance then retrieved directly from the ctl (see api.graylog and log.graylog sections in cds configuration file to setup).
 ```bash
 cdsctl admin errors get <error_uuid>
 ```
@@ -24,7 +26,7 @@ func one() error { return sdk.WithStack(json.Unmarshal(...)) }
 
 func two() error { return sdk.WrapError(one(), "Error calling one") }
 
-func three() error { return sdk.WrapError(one(), "Error calling two") }
+func three() error { return sdk.WrapError(two(), "Error calling two") }
 ```
 
 If the error was already wrapped an not more info is needed you should run it directly.
