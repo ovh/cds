@@ -48,7 +48,6 @@ import (
 
 	"strings"
 
-	"github.com/docker/cli/cli/config"
 	distlib "github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
@@ -57,7 +56,6 @@ import (
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/distribution"
-	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/registry"
 	"github.com/opencontainers/go-digest"
 	"github.com/spf13/viper"
@@ -91,21 +89,6 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	}
 
 	ctx := context.Background()
-	authConfig, err := GetAuthCredentials(image.String())
-	if err != nil {
-		fmt.Printf("GetAuthCredentials error: %v\n", err)
-		return nil, err
-	}
-
-	if (types.AuthConfig{}) != authConfig {
-
-		userAgent := dockerversion.DockerUserAgent(ctx)
-		_, _, err = service.Auth(ctx, &authConfig, userAgent)
-		if err != nil {
-			fmt.Printf("Auth: err: %v\n", err)
-			return nil, err
-		}
-	}
 
 	repoInfo, err := service.ResolveRepository(image)
 	if err != nil {
@@ -132,7 +115,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		if isInsecureRegistry(endpoint.URL.Host) {
 			endpoint.URL.Scheme = "http"
 		}
-		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
+		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &types.AuthConfig{}, scopes...)
 		if err != nil {
 			fmt.Printf("cannot instanciate new v2 repository on %v\n", endpoint.URL)
 			return nil, err
@@ -205,24 +188,6 @@ func getDigest(ctx context.Context, repo distlib.Repository, image reference.Nam
 	}
 
 	return descriptor.Digest, nil
-}
-
-// GetAuthCredentials returns the auth credentials (if any found) for the given repository, as found
-// in the user's docker config.
-func GetAuthCredentials(image string) (types.AuthConfig, error) {
-	// Lookup the index information for the name.
-	indexInfo, err := registry.ParseSearchIndexInfo(image)
-	if err != nil {
-		return types.AuthConfig{}, err
-	}
-	// Retrieve the user's Docker configuration file (if any).
-	configFile, err := config.Load(config.Dir())
-	if err != nil {
-		return types.AuthConfig{}, err
-	}
-
-	// Resolve the authentication information for the registry specified, via the config file.
-	return registry.ResolveAuthConfig(configFile.AuthConfigs, indexInfo), nil
 }
 
 // DownloadManifest the manifest for the given image, using the given credentials.

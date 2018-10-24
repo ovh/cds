@@ -394,7 +394,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 
 			r1, errS := workflow.StopWorkflowNodeOutgoingHookRun(ctx, tx, store, p, run, hr)
 			if errS != nil {
-				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop outgoing hook run %d", hr.HookRunID)
+				return nil, sdk.WrapError(errS, "stopWorkflowRun> Unable to stop outgoing hook run %s", hr.HookRunID)
 			}
 			_, _ = report.Merge(r1, nil)
 			hr.Status = sdk.StatusStopped.String()
@@ -412,13 +412,13 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 
 				targetProj, errP := project.Load(dbFunc(), store, targetProject, u)
 				if errP != nil {
-					log.Error("stopWorkflowRunHandler> Unable to load project", errP)
+					log.Error("stopWorkflowRunHandler> Unable to load project %v", errP)
 					continue
 				}
 
 				r2, err := stopWorkflowRun(ctx, dbFunc, store, targetProj, targetRun, u)
 				if err != nil {
-					log.Error("stopWorkflowRun> Unable to stop workflow", err)
+					log.Error("stopWorkflowRun> Unable to stop workflow %v", err)
 					continue
 				}
 				report.Merge(r2, nil) // nolint
