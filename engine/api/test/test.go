@@ -89,7 +89,6 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	}
 
 	cancel := func() {
-		log.Debug("Closing redis client")
 		store.Client.Close()
 		store.Client = nil
 	}

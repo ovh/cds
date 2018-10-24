@@ -11,7 +11,7 @@ import (
 )
 
 // InitRouter initializes the router and all the routes
-func (api *API) InitRouter() {
+func (api *API) InitRouter(ctx context.Context) {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware, api.maintenanceMiddleware)

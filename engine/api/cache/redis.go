@@ -318,13 +318,12 @@ func (s *RedisStore) Subscribe(channel string) PubSub {
 // GetMessageFromSubscription from a redis PubSub
 func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
 	if s.Client == nil {
-		log.Error("redis> cannot get redis client")
-		return "", nil
+		return "", fmt.Errorf("cannot get redis client")
 	}
 
 	rps, ok := pb.(*redis.PubSub)
 	if !ok {
-		return "", fmt.Errorf("redis.GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
+		return "", fmt.Errorf("PubSub is not a redis.PubSub. Got %T", pb)
 	}
 
 	msg, _ := rps.ReceiveTimeout(time.Second)

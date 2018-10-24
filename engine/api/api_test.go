@@ -32,7 +32,7 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 	_ = event.Initialize(event.KafkaConfig{}, api.Cache)
 	api.Config.Auth.AuthenticationConfig.SigningKey = []byte("this is key")
 	api.Config.Auth.Local.Enable = true
-	api.InitRouter()
+	api.InitRouter(router.Background)
 	f := func() {
 		cancel()
 		end()
@@ -56,7 +56,7 @@ func newTestServer(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, string
 	api.Config.Auth.AuthenticationConfig.SigningKey = []byte("this is key")
 	api.Config.Auth.Local.Enable = true
 	_ = event.Initialize(event.KafkaConfig{}, api.Cache)
-	api.InitRouter()
+	api.InitRouter(router.Background)
 	ts := httptest.NewServer(router.Mux)
 	url, _ := url.Parse(ts.URL)
 	f := func() {
