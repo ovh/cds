@@ -47,7 +47,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 
 	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 
-	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
+	u, _ := newLambdaUser(t, api, &proj.ProjectGroups[0].Group)
 
 	test.NoError(t, application.AddGroup(db, cache, proj, &app, u, proj.ProjectGroups...))
 
@@ -90,7 +90,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 
 	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 
-	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
+	u, _ := newLambdaUser(t, api, &proj.ProjectGroups[0].Group)
 
 	test.NoError(t, application.AddGroup(db, cache, proj, &app, u, proj.ProjectGroups...))
 
@@ -151,7 +151,7 @@ func TestLoadAllAsUser(t *testing.T) {
 	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 	test.NoError(t, application.Insert(db, cache, proj, &app2, nil))
 
-	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
+	u, _ := newLambdaUser(t, api, &proj.ProjectGroups[0].Group)
 
 	test.NoError(t, application.AddGroup(db, cache, proj, &app, u, proj.ProjectGroups...))
 

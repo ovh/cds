@@ -24,7 +24,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	db := api.mustDB()
 	cache := api.Cache
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
-	u, passUser := assets.InsertLambdaUser(api.mustDB())
+	u, passUser := newLambdaUser(t, api)
 
 	proj := assets.InsertTestProject(t, db, cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
@@ -227,7 +227,7 @@ func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 	defer end()
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
-	u, pass := assets.InsertLambdaUser(api.mustDB())
+	u, pass := newLambdaUser(t, api)
 
 	//Prepare request
 	vars := map[string]string{

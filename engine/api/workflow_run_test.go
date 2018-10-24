@@ -1092,7 +1092,7 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 	_, _, errG := group.AddGroup(api.mustDB(), &gr)
 	test.NoError(t, errG)
 
-	uLambda, pass := assets.InsertLambdaUser(api.mustDB(), &gr)
+	uLambda, pass := newLambdaUser(t, api, &gr)
 
 	grs := []sdk.GroupPermission{
 		{Group: gr, Permission: permission.PermissionRead},

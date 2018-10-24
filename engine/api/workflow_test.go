@@ -81,7 +81,7 @@ func Test_getWorkflowHandler_AsProvider(t *testing.T) {
 		Token: "my-token",
 	})
 
-	u, _ := assets.InsertLambdaUser(api.mustDB())
+	u, _ := newLambdaUser(t, api)
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
@@ -823,7 +823,7 @@ func TestBenchmarkGetWorkflowsWithAPI(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, nil)
 
 	// Init user
-	u, pass := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
+	u, pass := newLambdaUser(t, api, &proj.ProjectGroups[0].Group)
 
 	// Init pipeline
 	pip := sdk.Pipeline{

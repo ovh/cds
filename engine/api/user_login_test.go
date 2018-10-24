@@ -61,8 +61,7 @@ func newAdminUser(t *testing.T, api *API) (*sdk.User, string) {
 
 // Create an lambda user and return the jwt token
 func newLambdaUser(t *testing.T, api *API, groups ...*sdk.Group) (*sdk.User, string) {
-	db := api.mustDB()
-	u, p := assets.InsertLambdaUser(db, groups...)
+	u, p := newLambdaUser(t, api, groups...)
 
 	// === Ask for the authentication method
 	uri := api.Router.GetRoute("GET", api.getLoginUserHandler, nil)

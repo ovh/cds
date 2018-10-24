@@ -172,7 +172,7 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T)
 	defer end()
 	assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 
-	u, pass := assets.InsertLambdaUser(api.mustDB())
+	u, pass := newLambdaUser(t, api)
 
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getProjectsHandler, vars)
@@ -194,7 +194,7 @@ func Test_getProjectsHandler_WithWPermissionShouldReturnNoProjects(t *testing.T)
 func Test_getProjectsHandler_WithWPermissionShouldReturnOneProject(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()
-	u, pass := assets.InsertLambdaUser(api.mustDB())
+	u, pass := newLambdaUser(t, api)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
 
@@ -224,7 +224,7 @@ func Test_getprojectsHandler_AsProvider(t *testing.T) {
 		Token: "my-token",
 	})
 
-	u, _ := assets.InsertLambdaUser(api.mustDB())
+	u, _ := newLambdaUser(t, api)
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
@@ -251,7 +251,7 @@ func Test_getprojectsHandler_AsProviderWithRequestedUsername(t *testing.T) {
 		Token: "my-token",
 	})
 
-	u, _ := assets.InsertLambdaUser(api.mustDB())
+	u, _ := newLambdaUser(t, api)
 
 	pkey := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, api.mustDB(), api.Cache, pkey, pkey, u)
