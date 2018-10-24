@@ -57,11 +57,15 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 		}
 	}
 
+	oldStatus := wr.Status
 	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 	if err != nil {
 		return report, sdk.WrapError(err, "processNodeOutGoingHook> Unable to compute workflow run status")
 	}
 	report.Merge(r1, nil) // nolint
+	if wr.Status != oldStatus {
+		report.Add(wr)
+	}
 	return report, nil
 
 }

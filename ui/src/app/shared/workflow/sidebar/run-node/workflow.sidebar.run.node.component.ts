@@ -127,7 +127,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
         this.displayEditOption = this.node != null;
         this.canBeRun = this.getCanBeRun();
         // TODO REMOVE
-        if ( (this.node.type === WNodeType.FORK || this.node.type === WNodeType.OUTGOINGHOOK)
+        if (this.node &&  (this.node.type === WNodeType.FORK || this.node.type === WNodeType.OUTGOINGHOOK)
             && ((this.currentWorkflowRun && this.currentWorkflowRun.version < 2) || !this.currentWorkflowRun)) {
             this.canBeRun = false;
         }

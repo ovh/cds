@@ -133,6 +133,5 @@ func computeAndUpdateWorkflowRunStatus(ctx context.Context, db gorp.SqlExecutor,
 	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
 		return report, sdk.WrapError(err, "computeAndUpdateWorkflowRunStatus>")
 	}
-	report.Add(wr)
 	return report, nil
 }
