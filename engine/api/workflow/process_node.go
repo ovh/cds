@@ -270,6 +270,9 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 	run.BuildParameters = append(run.BuildParameters, jobParams...)
 
+	log.Debug("processNode> %+v", jobParams)
+	log.Debug("processNode> %+v", run.BuildParameters)
+
 	// Inherit parameter from parent job
 	if len(parentsIDs) > 0 {
 		_, next := observability.Span(ctx, "workflow.getParentParameters")
@@ -342,7 +345,10 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	// only if it's the root pipeline, we put the git... in the build parameters
 	// this allow user to write some run conditions with .git.var on the root pipeline
 	if isRoot {
+		log.Debug("before setValuesGitInBuildParameters> %+v", run.BuildParameters)
+		log.Debug("before setValuesGitInBuildParameters> %+v", vcsInfos)
 		setValuesGitInBuildParameters(run, vcsInfos)
+		log.Debug("setValuesGitInBuildParameters> %+v", run.BuildParameters)
 	}
 
 	// Check Run Conditions
