@@ -34,7 +34,7 @@ services:
       CDS_API_URL_API: ${HOSTNAME}:8081
       CDS_API_URL_UI: ${HOSTNAME}:8080
       CDS_API_AUTH_DEFAULTGROUP: cdsdemo
-      CDS_LOG_LEVEL: info
+      CDS_LOG_LEVEL: debug
       CDS_API_CACHE_MODE: redis
       CDS_API_CACHE_REDIS_HOST: cds-cache:6379
       CDS_API_CACHE_REDIS_PASSWORD: cds
@@ -43,6 +43,11 @@ services:
       CDS_API_ARTIFACT_LOCAL_BASEDIRECTORY: /app/artifacts
       CDS_API_AUTH_SHAREDINFRATOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       CDS_API_SECRETS_KEY: changeitchangeitchangeitchangeit
+      CDS_LOG_GRAYLOG_EXTRAKEY:
+      CDS_LOG_GRAYLOG_EXTRAVALUE:
+      CDS_LOG_GRAYLOG_HOST:
+      CDS_LOG_GRAYLOG_PORT:
+
     ports:
       - "8081:8081"
       - "8082:8082"

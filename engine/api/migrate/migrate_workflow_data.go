@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -72,6 +73,10 @@ func migrateWorkflowData(db *gorp.DbMap, store cache.Store, ID int64) error {
 
 	data := w.Migrate(false)
 	w.WorkflowData = &data
+
+	if err := workflow.RenameNode(tx, w); err != nil {
+		return sdk.WrapError(err, "Unable to rename node")
+	}
 
 	if err := workflow.InsertWorkflowData(tx, w); err != nil {
 		return sdk.WrapError(err, "migrateWorkflowData> Unable to insert Workflow Data")

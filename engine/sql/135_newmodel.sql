@@ -85,12 +85,14 @@ ALTER TABLE workflow_node_run ADD COLUMN callback JSONB;
 
 -- +migrate Down
 ALTER TABLE workflow DROP COLUMN workflow_data;
-DROP TABLE w_node CASCADE;
-DROP TABLE w_node_hook CASCADE;
-DROP TABLE w_node_context CASCADE;
-DROP TABLE w_node_trigger CASCADE;
-DROP TABLE w_node_outgoing_hook CASCADE;
+ALTER TABLE workflow_run DROP COLUMN version;
+
 DROP TABLE w_node_join CASCADE;
+DROP TABLE w_node_outgoing_hook CASCADE;
+DROP TABLE w_node_context CASCADE;
+DROP TABLE w_node_hook CASCADE;
+DROP TABLE w_node_trigger CASCADE;
+DROP TABLE w_node CASCADE;
 
 ALTER TABLE workflow_node_run DROP COLUMN uuid;
 ALTER TABLE workflow_node_run DROP COLUMN outgoinghook;
