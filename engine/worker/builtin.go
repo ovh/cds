@@ -108,17 +108,20 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			envs: envs,
 		})
 		if err != nil {
+			close(done)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to start grpc plugin... Aborting (%v)", err))
 			return
 		}
 
 		c, err := actionplugin.Client(ctx, pluginSocket.Socket)
 		if err != nil {
+			close(done)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to call grpc plugin... Aborting (%v)", err))
 			return
 		}
 		qPort := actionplugin.WorkerHTTPPortQuery{Port: w.exportPort}
 		if _, err := c.WorkerHTTPPort(ctx, &qPort); err != nil {
+			close(done)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to set worker http port for grpc plugin... Aborting (%v)", err))
 			return
 		}
@@ -127,6 +130,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		pluginClient := pluginSocket.Client
 		actionPluginClient, ok := pluginClient.(actionplugin.ActionPluginClient)
 		if !ok {
+			close(done)
 			pluginFail(chanRes, sendLog, "Unable to retrieve plugin client... Aborting")
 			return
 		}

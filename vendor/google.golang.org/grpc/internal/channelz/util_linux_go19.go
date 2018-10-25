@@ -1,8 +1,8 @@
-// +build go1.8
+// +build linux,go1.9,!appengine
 
 /*
  *
- * Copyright 2017 gRPC authors.
+ * Copyright 2018 gRPC authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,22 @@
  *
  */
 
-package dns
+package channelz
 
-import "net"
-
-var (
-	lookupHost = net.DefaultResolver.LookupHost
-	lookupSRV  = net.DefaultResolver.LookupSRV
-	lookupTXT  = net.DefaultResolver.LookupTXT
+import (
+	"syscall"
 )
+
+// GetSocketOption gets the socket option info of the conn.
+func GetSocketOption(socket interface{}) *SocketOptionData {
+	c, ok := socket.(syscall.Conn)
+	if !ok {
+		return nil
+	}
+	data := &SocketOptionData{}
+	if rawConn, err := c.SyscallConn(); err == nil {
+		rawConn.Control(data.Getsockopt)
+		return data
+	}
+	return nil
+}

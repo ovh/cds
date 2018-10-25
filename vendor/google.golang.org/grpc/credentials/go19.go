@@ -1,8 +1,8 @@
-// +build go1.6, !go1.8
+// +build go1.9,!appengine
 
 /*
  *
- * Copyright 2017 gRPC authors.
+ * Copyright 2018 gRPC authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,18 +18,18 @@
  *
  */
 
-package dns
+package credentials
 
 import (
-	"net"
-
-	"golang.org/x/net/context"
+	"errors"
+	"syscall"
 )
 
-var (
-	lookupHost = func(ctx context.Context, host string) ([]string, error) { return net.LookupHost(host) }
-	lookupSRV  = func(ctx context.Context, service, proto, name string) (string, []*net.SRV, error) {
-		return net.LookupSRV(service, proto, name)
+// implements the syscall.Conn interface
+func (c tlsConn) SyscallConn() (syscall.RawConn, error) {
+	conn, ok := c.rawConn.(syscall.Conn)
+	if !ok {
+		return nil, errors.New("RawConn does not implement syscall.Conn")
 	}
-	lookupTXT = func(ctx context.Context, name string) ([]string, error) { return net.LookupTXT(name) }
-)
+	return conn.SyscallConn()
+}

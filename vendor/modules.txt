@@ -578,13 +578,13 @@ golang.org/x/crypto/internal/subtle
 # golang.org/x/net v0.0.0-20180906233101-161cd47e91fd
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
-golang.org/x/net/http2
 golang.org/x/net/trace
+golang.org/x/net/http2
 golang.org/x/net/proxy
-golang.org/x/net/http/httpguts
-golang.org/x/net/http2/hpack
-golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
+golang.org/x/net/http2/hpack
+golang.org/x/net/http/httpguts
+golang.org/x/net/idna
 golang.org/x/net/internal/socks
 # golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f
 golang.org/x/sync/semaphore
@@ -603,11 +603,11 @@ golang.org/x/text/unicode/bidi
 golang.org/x/time/rate
 # google.golang.org/api v0.0.0-20180517000435-aedc137bffca
 google.golang.org/api/support/bundler
-# google.golang.org/appengine v1.0.0
+# google.golang.org/appengine v1.1.0
 google.golang.org/appengine/cloudsql
-# google.golang.org/genproto v0.0.0-20180718234121-fedd2861243f
+# google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
 google.golang.org/genproto/googleapis/rpc/status
-# google.golang.org/grpc v1.13.0
+# google.golang.org/grpc v1.16.0
 google.golang.org/grpc
 google.golang.org/grpc/credentials
 google.golang.org/grpc/metadata
@@ -622,6 +622,9 @@ google.golang.org/grpc/grpclog
 google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/channelz
+google.golang.org/grpc/internal/envconfig
+google.golang.org/grpc/internal/grpcrand
+google.golang.org/grpc/internal/transport
 google.golang.org/grpc/keepalive
 google.golang.org/grpc/naming
 google.golang.org/grpc/peer
@@ -631,10 +634,8 @@ google.golang.org/grpc/resolver/passthrough
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-google.golang.org/grpc/transport
 google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/balancer/base
-google.golang.org/grpc/internal/grpcrand
 # gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175
 gopkg.in/asn1-ber.v1
 # gopkg.in/bsm/sarama-cluster.v2 v2.1.4
