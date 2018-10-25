@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -21,6 +22,12 @@ func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) inte
 			switch p.Type {
 			case sdk.ParameterTypeBoolean:
 				m[p.Key] = v == "true"
+			case sdk.ParameterTypeRepository:
+				sp := strings.Split(v, "/")
+				m[p.Key] = map[string]string{
+					"vcs":        sp[0],
+					"repository": strings.Join(sp[1:], "/"),
+				}
 			default:
 				m[p.Key] = v
 			}

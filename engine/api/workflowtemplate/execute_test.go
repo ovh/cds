@@ -58,7 +58,7 @@ repo: [[.params.repo]]`)),
 
 	instance := &sdk.WorkflowTemplateInstance{
 		Request: sdk.WorkflowTemplateRequest{
-			Name: "my-workflow",
+			WorkflowSlug: "my-workflow",
 			Parameters: map[string]string{
 				"withDeploy": "true",
 				"deployWhen": "failure",

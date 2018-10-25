@@ -74,7 +74,7 @@ export class WorkflowTemplateFormComponent {
     constructor(
         private _sharedService: SharedService,
     ) {
-        this.templateParameterTypes = ['boolean', 'string'];
+        this.templateParameterTypes = ['boolean', 'string', 'repository'];
 
         this.resetParameterValue();
 

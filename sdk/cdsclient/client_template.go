@@ -39,22 +39,3 @@ func (c *client) TemplateApply(groupName, templateSlug string, req sdk.WorkflowT
 	tr := tar.NewReader(r)
 	return tr, nil
 }
-
-func (c *client) TemplateUpdate(projectKey, workflowName string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error) {
-	url := fmt.Sprintf("/project/%s/workflows/%s/templateUpdate", projectKey, workflowName)
-
-	bs, err := json.Marshal(req)
-	if err != nil {
-		return nil, err
-	}
-
-	body, _, _, err := c.Request(context.Background(), "POST", url, bytes.NewReader(bs))
-	if err != nil {
-		return nil, err
-	}
-
-	// Open the tar archive for reading.
-	r := bytes.NewReader(body)
-	tr := tar.NewReader(r)
-	return tr, nil
-}

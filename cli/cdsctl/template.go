@@ -2,7 +2,6 @@ package main
 
 import (
 	"archive/tar"
-	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -133,15 +132,58 @@ func templateApplyRun(v cli.Values) error {
 
 	// for parameters not given with flags, ask interactively if not disabled
 	if !v.GetBool("ignore-prompt") {
+		// if there is parameters of type vcs or repository get suggestions from project
+		listVCS := make([]string, len(p.VCSServers))
+		suggestVCS := make(map[string][]string, len(p.VCSServers))
+		for i, vcs := range p.VCSServers {
+			listVCS[i] = vcs.Name
+			suggestVCS[vcs.Name] = nil
+		}
+		var withRepository bool
+		for _, parameter := range wt.Parameters {
+			if parameter.Type == sdk.ParameterTypeRepository {
+				withRepository = true
+				break
+			}
+		}
+		if withRepository {
+			for name := range suggestVCS {
+				res, err := client.RepositoriesList(p.Key, name)
+				if err != nil {
+					return err
+				}
+				suggestVCS[name] = make([]string, len(res))
+				for i := 0; i < len(res); i++ {
+					suggestVCS[name][i] = res[i].Slug
+				}
+			}
+		}
+
 		for _, p := range wt.Parameters {
 			if _, ok := params[p.Key]; !ok {
 				var oldValue string
 				if o, ok := old[p.Key]; ok {
 					oldValue = fmt.Sprintf(", old: %s", o)
 				}
-				fmt.Printf("Value for param %s (type: %s, required: %t%s): ", p.Key, p.Type, p.Required, oldValue)
-				v, _ := bufio.NewReader(os.Stdin).ReadString('\n')
-				params[p.Key] = strings.TrimSuffix(v, "\n")
+				label := fmt.Sprintf("Value for param %s (type: %s, required: %t%s): ", p.Key, p.Type, p.Required, oldValue)
+
+				var choice string
+				switch p.Type {
+				case sdk.ParameterTypeRepository:
+					var selectedVCS string
+					if len(listVCS) > 0 {
+						selectedVCS = cli.MultiChoice(fmt.Sprintf("Select a VCS needed to fill %s param", p.Key), listVCS...)
+					}
+					if selectedVCS != "" && len(suggestVCS[selectedVCS]) > 0 {
+						repo := cli.MultiChoice(label, suggestVCS[selectedVCS]...)
+						choice = fmt.Sprintf("%s/%s", selectedVCS, repo)
+					}
+				}
+				if choice == "" {
+					choice = cli.AskValueChoice(label)
+				}
+
+				params[p.Key] = choice
 			}
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	json "encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ovh/cds/sdk/slug"
 	"github.com/pkg/errors"
@@ -103,8 +104,16 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 			if p.Required && v == "" {
 				return fmt.Errorf("Param %s is required", p.Key)
 			}
-			if p.Type == ParameterTypeBoolean && v != "" && !(v == "true" || v == "false") {
-				return fmt.Errorf("Given value it's not a boolean for %s", p.Key)
+			switch p.Type {
+			case ParameterTypeBoolean:
+				if v != "" && !(v == "true" || v == "false") {
+					return fmt.Errorf("Given value it's not a boolean for %s", p.Key)
+				}
+			case ParameterTypeRepository:
+				sp := strings.Split(v, "/")
+				if len(sp) != 3 {
+					return fmt.Errorf("Given value don't match vcs/repository pattern for %s", p.Key)
+				}
 			}
 		}
 	}
@@ -161,14 +170,15 @@ type TemplateParameterType string
 
 // Parameter types.
 const (
-	ParameterTypeString  TemplateParameterType = "string"
-	ParameterTypeBoolean TemplateParameterType = "boolean"
+	ParameterTypeString     TemplateParameterType = "string"
+	ParameterTypeBoolean    TemplateParameterType = "boolean"
+	ParameterTypeRepository TemplateParameterType = "repository"
 )
 
 // IsValid returns paramter type validity.
 func (t TemplateParameterType) IsValid() bool {
 	switch t {
-	case ParameterTypeString, ParameterTypeBoolean:
+	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository:
 		return true
 	}
 	return false

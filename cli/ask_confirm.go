@@ -58,3 +58,17 @@ func MultiChoice(s string, opts ...string) string {
 		fmt.Println("wrong choice")
 	}
 }
+
+// AskValueChoice ask for a string and returns it.
+func AskValueChoice(s string) string {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Printf("%s", s)
+
+	response, err := reader.ReadString('\n')
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return strings.TrimSpace(response)
+}
