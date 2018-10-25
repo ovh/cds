@@ -285,7 +285,7 @@ export class WorkflowNodeJobRun {
 export class WorkflowNodeRunHookEvent {
     payload: {};
     pipeline_parameter: Array<Parameter>;
-    workflow_node_hook_id: number;
+    uuid: string;
     parent_workflow: {
         key: string;
         name: string;

@@ -2,8 +2,7 @@ import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {PipelineStatus} from 'app/model/pipeline.model';
 import {Project} from 'app/model/project.model';
 import {HookStatus, TaskExecution, WorkflowHookTask} from 'app/model/workflow.hook.model';
-import {WNode} from 'app/model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from 'app/model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowNodeRunHookEvent, WorkflowRun} from 'app/model/workflow.run.model';
 import {finalize} from 'rxjs/operators';
 import {WNodeHook} from '../../../../model/workflow.model';
 import {HookService} from '../../../../service/hook/hook.service';
@@ -29,10 +28,10 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     workflowDetailsHook: WorkflowNodeHookDetailsComponent;
 
     loading = false;
-    node: WNode;
     hookStatus = HookStatus;
     hookDetails: WorkflowHookTask;
     hook: WNodeHook;
+    hookEvent: WorkflowNodeRunHookEvent;
     wr: WorkflowRun;
     nodeRun: WorkflowNodeRun;
     pipelineStatusEnum = PipelineStatus;
@@ -51,16 +50,6 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
             this.wr = r;
             if (this.wr && this.hook) {
                 this.loadHookDetails();
-            }
-            if (this.wr && this.wr.nodes && this.node && this.wr.nodes[this.node.id] && this.wr.nodes[this.node.id].length > 0) {
-                this.nodeRun = this.wr.nodes[this.node.id][0];
-            } else {
-                this.nodeRun = null;
-            }
-            if (this.wr && this.wr.nodes && this.node && this.wr.nodes[this.node.id] && this.wr.nodes[this.node.id].length > 0) {
-                this.nodeRun = this.wr.nodes[this.node.id][0];
-            } else {
-                this.nodeRun = null;
             }
         });
     }
@@ -88,15 +77,16 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
                 }
                 this.hookDetails = hook;
             });
+        if (this.wr.nodes) {
+            Object.keys(this.wr.nodes).forEach(k => {
+                let nr = this.wr.nodes[k][0];
+                if (nr.hook_event && nr.hook_event.uuid === this.hook.uuid) {
+                    this.hookEvent = nr.hook_event;
+                }
+            });
+        }
     }
 
-    openHookConfigModal() {
-        /*
-        if (this.workflowConfigHook && this.workflowConfigHook.show) {
-            this.workflowConfigHook.show();
-        }
-        */
-    }
     openHookDetailsModal(taskExec: TaskExecution) {
         if (this.workflowDetailsHook && this.workflowDetailsHook.show) {
             this.workflowDetailsHook.show(taskExec);

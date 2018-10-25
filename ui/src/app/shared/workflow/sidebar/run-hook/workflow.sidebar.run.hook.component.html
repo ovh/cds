@@ -8,18 +8,11 @@
             </div>
         </div>
     </h3>
-    <ng-container *ngIf="hook && !wr">
+    <ng-container *ngIf="!loading && hookEvent && hookEvent.parent_workflow">
         <div class="ui fluid vertical menu noborder">
-            <a class="item noborder" (click)="openHookConfigModal()">
-            Configuration <i class="angle right icon"></i>
-        </a>
-        </div>
-    </ng-container>
-    <ng-container *ngIf="!loading && wr && nodeRun && nodeRun.hook_event && nodeRun.hook_event.parent_workflow">
-        <div class="ui fluid vertical menu noborder">
-            <a class="item" [routerLink]="['/project', nodeRun.hook_event.parent_workflow.key, 'workflow', nodeRun.hook_event.parent_workflow.name, 'run', nodeRun.hook_event.parent_workflow.run]"
+            <a class="item" [routerLink]="['/project', hookEvent.parent_workflow.key, 'workflow', hookEvent.parent_workflow.name, 'run', hookEvent.parent_workflow.run]"
                 target="_blank">
-                    {{ nodeRun.hook_event.parent_workflow.key }}/{{ nodeRun.hook_event.parent_workflow.name }} #{{nodeRun.hook_event.parent_workflow.run}}
+                    {{ hookEvent.parent_workflow.key }}/{{ hookEvent.parent_workflow.name }} #{{hookEvent.parent_workflow.run}}
             </a>
         </div>
     </ng-container>
@@ -56,15 +49,4 @@
     </ng-container>
     <div class="ui active centered inline loader" *ngIf="loading"></div>
 </div>
-<ng-container *ngIf="hook && node">
-    <app-workflow-node-hook-form
-      [project]="project"
-      [workflow]="wr.workflow"
-      [node]="node"
-      (hookEvent)="updateHook($event)"
-      [loading]="loading"
-      [readonly]="true"
-      [hook]="hook" #workflowConfigHook>
-    </app-workflow-node-hook-form>
-</ng-container>
 <app-workflow-node-hook-details #workflowDetailsHook></app-workflow-node-hook-details>
