@@ -26,6 +26,7 @@ import (
 // It contains all the logic for triggers and joins processing.
 func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
 	if w.Version == 2 {
+		log.Debug("Manual run: %+v", manual)
 		return processWorkflowDataRun(ctx, db, store, proj, w, hookEvent, manual, startingFromNode)
 	}
 

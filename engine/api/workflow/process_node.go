@@ -367,7 +367,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	} else {
 		if !checkNodeRunCondition(wr, n.Context.Conditions, run.BuildParameters) {
-			log.Debug("processNode> Condition failed %d/%d", wr.ID, n.ID)
+			log.Debug("processNode> Condition failed %d/%d %+v", wr.ID, n.ID, run.BuildParameters)
 			return report, false, nil
 		}
 	}

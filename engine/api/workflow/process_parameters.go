@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/interpolate"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, *sdk.MultiError) {
@@ -210,6 +211,8 @@ func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, w *sdk.Wo
 	errm := &sdk.MultiError{}
 	//override default parameters value
 	tmp := sdk.ParametersToMap(params)
+	log.Debug("getNodeRunBuildParameters> %+v", run.Payload)
+	log.Debug("getNodeRunBuildParameters> %+v", params)
 	tmp["cds.version"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
