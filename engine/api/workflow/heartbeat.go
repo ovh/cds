@@ -42,7 +42,7 @@ func checkHeartbeat(ctx context.Context, db *gorp.DbMap, store cache.Store) erro
 
 			if err := RestartWorkflowNodeJob(ctx, db, *wNodeJob); err != nil {
 				log.Warning("WorkerHeartBeat> Cannot restart node job run %d: %v", w[i].ActionBuildID, err)
-				tx.Rollback()
+				_ = tx.Rollback()
 				continue
 			}
 
