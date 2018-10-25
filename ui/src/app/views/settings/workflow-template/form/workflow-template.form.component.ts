@@ -9,20 +9,6 @@ import { SharedService } from '../../../../shared/shared.service';
     styleUrls: ['./workflow-template.form.scss']
 })
 export class WorkflowTemplateFormComponent {
-    codeMirrorConfig: any;
-    _workflowTemplate: WorkflowTemplate;
-    workflowValue: string;
-    pipelineValues: any;
-    pipelineKeys: Array<number>;
-    pipelineValueAdd: string;
-    applicationValues: any;
-    applicationKeys: Array<number>;
-    applicationValueAdd: string;
-    descriptionRows: number;
-    parameterKeys: Array<string>;
-    parameterValues: any;
-    parameterValueAdd: any;
-    templateParameterTypes: Array<string>;
     @Input() mode: string;
     @Input() groups: Array<Group>;
     @Input() loading: boolean;
@@ -67,9 +53,42 @@ export class WorkflowTemplateFormComponent {
             });
         }
 
+        this.environmentValues = {};
+        this.environmentKeys = [];
+        if (wt.environments) {
+            wt.environments.map(e => atob(e.value)).forEach((e, i) => {
+                this.environmentValues[i] = e;
+                this.environmentKeys.push(i);
+            });
+        }
+
         this.descriptionChange();
     }
     get workflowTemplate() { return this._workflowTemplate; }
+
+    codeMirrorConfig: any;
+
+    _workflowTemplate: WorkflowTemplate;
+    descriptionRows: number;
+
+    templateParameterTypes: Array<string>;
+    parameterKeys: Array<string>;
+    parameterValues: any;
+    parameterValueAdd: any;
+
+    workflowValue: string;
+
+    pipelineValues: any;
+    pipelineKeys: Array<number>;
+    pipelineValueAdd: string;
+
+    applicationValues: any;
+    applicationKeys: Array<number>;
+    applicationValueAdd: string;
+
+    environmentValues: any;
+    environmentKeys: Array<number>;
+    environmentValueAdd: string;
 
     constructor(
         private _sharedService: SharedService,
@@ -107,6 +126,9 @@ export class WorkflowTemplateFormComponent {
         this._workflowTemplate.applications = Object.keys(this.applicationValues).map(k => {
             return { value: this.applicationValues[k] ? btoa(this.applicationValues[k]) : '' };
         });
+        this._workflowTemplate.environments = Object.keys(this.environmentValues).map(k => {
+            return { value: this.environmentValues[k] ? btoa(this.environmentValues[k]) : '' };
+        });
         this._workflowTemplate.parameters = Object.keys(this.parameterValues).map(k => {
             return this.parameterValues[k];
         })
@@ -128,7 +150,7 @@ export class WorkflowTemplateFormComponent {
     }
 
     clickAddPipeline() {
-        let k = this.pipelineKeys[this.pipelineKeys.length - 1] + 1;
+        let k = this.pipelineKeys.length;
         this.pipelineKeys.push(k)
         this.pipelineValues[k] = this.pipelineValueAdd;
         this.pipelineValueAdd = '';
@@ -140,7 +162,7 @@ export class WorkflowTemplateFormComponent {
     }
 
     clickAddApplication() {
-        let k = this.applicationKeys[this.applicationKeys.length - 1] + 1;
+        let k = this.applicationKeys.length;
         this.applicationKeys.push(k)
         this.applicationValues[k] = this.applicationValueAdd;
         this.applicationValueAdd = '';
@@ -149,6 +171,19 @@ export class WorkflowTemplateFormComponent {
     clickRemoveApplication(key: number) {
         this.applicationKeys = this.applicationKeys.filter(k => k !== key);
         delete (this.applicationValues[key]);
+    }
+
+    clickAddEnvironment() {
+        let k = this.environmentKeys.length;
+        this.environmentKeys.push(k)
+        this.environmentValues[k] = this.environmentValueAdd;
+        this.environmentValueAdd = '';
+        console.log(k)
+    }
+
+    clickRemoveEnvironment(key: number) {
+        this.environmentKeys = this.environmentKeys.filter(k => k !== key);
+        delete (this.environmentValues[key]);
     }
 
     clickAddParameter() {

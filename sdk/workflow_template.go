@@ -51,6 +51,7 @@ type WorkflowTemplate struct {
 	Value        string                     `json:"value" db:"value"`
 	Pipelines    PipelineTemplates          `json:"pipelines" db:"pipelines"`
 	Applications ApplicationTemplates       `json:"applications" db:"applications"`
+	Environments EnvironmentTemplates       `json:"environments" db:"environments"`
 	Version      int64                      `json:"version" db:"version"`
 	// aggregates
 	Group      *Group                 `json:"group,omitempty" db:"-"`
@@ -60,8 +61,9 @@ type WorkflowTemplate struct {
 
 // ValidateStruct returns workflow template validity.
 func (w *WorkflowTemplate) ValidateStruct() error {
-	if w.Name == "" {
-		return WithStack(ErrInvalidData)
+	w.Slug = slug.Convert(w.Name)
+	if !slug.Valid(w.Slug) {
+		return WrapError(ErrWrongRequest, "Invalid given name")
 	}
 
 	for _, p := range w.Parameters {
@@ -78,6 +80,12 @@ func (w *WorkflowTemplate) ValidateStruct() error {
 
 	for _, a := range w.Applications {
 		if err := a.ValidateStruct(); err != nil {
+			return err
+		}
+	}
+
+	for _, e := range w.Environments {
+		if err := e.ValidateStruct(); err != nil {
 			return err
 		}
 	}
@@ -147,7 +155,7 @@ type PipelineTemplate struct {
 // ValidateStruct returns pipeline template validity.
 func (p *PipelineTemplate) ValidateStruct() error {
 	if len(p.Value) == 0 {
-		return WithStack(ErrInvalidData)
+		return WrapError(ErrInvalidData, "Invalid given pipeline value")
 	}
 	return nil
 }
@@ -160,7 +168,20 @@ type ApplicationTemplate struct {
 // ValidateStruct returns application template validity.
 func (a *ApplicationTemplate) ValidateStruct() error {
 	if len(a.Value) == 0 {
-		return WithStack(ErrInvalidData)
+		return WrapError(ErrInvalidData, "Invalid given application value")
+	}
+	return nil
+}
+
+// EnvironmentTemplate struct.
+type EnvironmentTemplate struct {
+	Value string `json:"value"`
+}
+
+// ValidateStruct returns environment template validity.
+func (e *EnvironmentTemplate) ValidateStruct() error {
+	if len(e.Value) == 0 {
+		return WrapError(ErrInvalidData, "Invalid given environment value")
 	}
 	return nil
 }
@@ -245,10 +266,28 @@ func (a *ApplicationTemplates) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, a), "cannot unmarshal ApplicationTemplates")
 }
 
+// EnvironmentTemplates struct.
+type EnvironmentTemplates []EnvironmentTemplate
+
+// Value returns driver.Value from workflow template applications.
+func (e EnvironmentTemplates) Value() (driver.Value, error) {
+	j, err := json.Marshal(e)
+	return j, WrapError(err, "cannot marshal EnvironmentTemplates")
+}
+
+// Scan environment templates.
+func (e *EnvironmentTemplates) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, e), "cannot unmarshal EnvironmentTemplates")
+}
+
 // ValidateStruct returns pipeline template validity.
 func (w *WorkflowTemplateParameter) ValidateStruct() error {
 	if w.Key == "" || !w.Type.IsValid() {
-		return WithStack(ErrInvalidData)
+		return WrapError(ErrInvalidData, "Invalid given key or type for parameter")
 	}
 	return nil
 }

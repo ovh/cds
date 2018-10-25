@@ -25,13 +25,13 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name:   "Only special caracters",
-			value:  "    &+=:/.;?,\"'(§!)    ",
+			value:  "    &+=:/.;?,\"'(§!)$☀☠   ",
 			result: "",
 		},
 		{
 			name:   "Convert accent",
-			value:  "éàçÎEEÉèⓩ",
-			result: "eacieeeez",
+			value:  "éàçÎEEÉèⓩĘ©®@℗",
+			result: "eacieeeezecrap",
 		},
 	}
 

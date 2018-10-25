@@ -7,7 +7,7 @@ import (
 )
 
 // Valid returns if given string is a valid slug.
-func Valid(s string) bool { return Convert(s) == s }
+func Valid(s string) bool { return Convert(s) == s && s != "" }
 
 // Convert returns a slug for the given string.
 func Convert(source string) string {
@@ -57,7 +57,7 @@ func Convert(source string) string {
 		"X":  {"\u0058", "\u24CD", "\uFF38", "\u1E8A", "\u1E8C"},
 		"Y":  {"\u0059", "\u24CE", "\uFF39", "\u1EF2", "\u00DD", "\u0176", "\u1EF8", "\u0232", "\u1E8E", "\u0178", "\u1EF6", "\u1EF4", "\u01B3", "\u024E", "\u1EFE"},
 		"Z":  {"\u005A", "\u24CF", "\uFF3A", "\u0179", "\u1E90", "\u017B", "\u017D", "\u1E92", "\u1E94", "\u01B5", "\u0224", "\u2C7F", "\u2C6B", "\uA762"},
-		"a":  {"\u0061", "\u24D0", "\uFF41", "\u1E9A", "\u00E0", "\u00E1", "\u00E2", "\u1EA7", "\u1EA5", "\u1EAB", "\u1EA9", "\u00E3", "\u0101", "\u0103", "\u1EB1", "\u1EAF", "\u1EB5", "\u1EB3", "\u0227", "\u01E1", "\u00E4", "\u01DF", "\u1EA3", "\u00E5", "\u01FB", "\u01CE", "\u0201", "\u0203", "\u1EA1", "\u1EAD", "\u1EB7", "\u1E01", "\u0105", "\u2C65", "\u0250"},
+		"a":  {"\u0061", "\u24D0", "\uFF41", "\u1E9A", "\u00E0", "\u00E1", "\u00E2", "\u1EA7", "\u1EA5", "\u1EAB", "\u1EA9", "\u00E3", "\u0101", "\u0103", "\u1EB1", "\u1EAF", "\u1EB5", "\u1EB3", "\u0227", "\u01E1", "\u00E4", "\u01DF", "\u1EA3", "\u00E5", "\u01FB", "\u01CE", "\u0201", "\u0203", "\u1EA1", "\u1EAD", "\u1EB7", "\u1E01", "\u0105", "\u2C65", "\u0250", "\u00A0", "@"},
 		"aa": {"\uA733"},
 		"ae": {"\u00E6", "\u01FD", "\u01E3"},
 		"ao": {"\uA735"},
@@ -65,7 +65,7 @@ func Convert(source string) string {
 		"av": {"\uA739", "\uA73B"},
 		"ay": {"\uA73D"},
 		"b":  {"\u0062", "\u24D1", "\uFF42", "\u1E03", "\u1E05", "\u1E07", "\u0180", "\u0183", "\u0253"},
-		"c":  {"\u0063", "\u24D2", "\uFF43", "\u0107", "\u0109", "\u010B", "\u010D", "\u00E7", "\u1E09", "\u0188", "\u023C", "\uA73F", "\u2184"},
+		"c":  {"\u0063", "\u24D2", "\uFF43", "\u0107", "\u0109", "\u010B", "\u010D", "\u00E7", "\u1E09", "\u0188", "\u023C", "\uA73F", "\u2184", "\u00A9"},
 		"d":  {"\u0064", "\u24D3", "\uFF44", "\u1E0B", "\u010F", "\u1E0D", "\u1E11", "\u1E13", "\u1E0F", "\u0111", "\u018C", "\u0256", "\u0257", "\uA77A"},
 		"dz": {"\u01F3", "\u01C6"},
 		"e":  {"\u0065", "\u24D4", "\uFF45", "\u00E8", "\u00E9", "\u00EA", "\u1EC1", "\u1EBF", "\u1EC5", "\u1EC3", "\u1EBD", "\u0113", "\u1E15", "\u1E17", "\u0115", "\u0117", "\u00EB", "\u1EBB", "\u011B", "\u0205", "\u0207", "\u1EB9", "\u1EC7", "\u0229", "\u1E1D", "\u0119", "\u1E19", "\u1E1B", "\u0247", "\u025B", "\u01DD"},
@@ -85,9 +85,9 @@ func Convert(source string) string {
 		"oi": {"\u01A3"},
 		"ou": {"\u0223"},
 		"oo": {"\uA74F"},
-		"p":  {"\u0070", "\u24DF", "\uFF50", "\u1E55", "\u1E57", "\u01A5", "\u1D7D", "\uA751", "\uA753", "\uA755"},
+		"p":  {"\u0070", "\u24DF", "\uFF50", "\u1E55", "\u1E57", "\u01A5", "\u1D7D", "\uA751", "\uA753", "\uA755", "\u2117"},
 		"q":  {"\u0071", "\u24E0", "\uFF51", "\u024B", "\uA757", "\uA759"},
-		"r":  {"\u0072", "\u24E1", "\uFF52", "\u0155", "\u1E59", "\u0159", "\u0211", "\u0213", "\u1E5B", "\u1E5D", "\u0157", "\u1E5F", "\u024D", "\u027D", "\uA75B", "\uA7A7", "\uA783"},
+		"r":  {"\u0072", "\u24E1", "\uFF52", "\u0155", "\u1E59", "\u0159", "\u0211", "\u0213", "\u1E5B", "\u1E5D", "\u0157", "\u1E5F", "\u024D", "\u027D", "\uA75B", "\uA7A7", "\uA783", "\u00AE"},
 		"s":  {"\u0073", "\u24E2", "\uFF53", "\u00DF", "\u015B", "\u1E65", "\u015D", "\u1E61", "\u0161", "\u1E67", "\u1E63", "\u1E69", "\u0219", "\u015F", "\u023F", "\uA7A9", "\uA785", "\u1E9B"},
 		"t":  {"\u0074", "\u24E3", "\uFF54", "\u1E6B", "\u1E97", "\u0165", "\u1E6D", "\u021B", "\u0163", "\u1E71", "\u1E6F", "\u0167", "\u01AD", "\u0288", "\u2C66", "\uA787"},
 		"tz": {"\uA729"},
@@ -104,7 +104,7 @@ func Convert(source string) string {
 
 	for base, letters := range defaultDiacriticsRemovalMap {
 		for i := 0; i < len(letters); i++ {
-			runeValue, _ := utf8.DecodeRuneInString(string(letters[i]))
+			runeValue, _ := utf8.DecodeRuneInString(letters[i])
 			diacriticsMap[runeValue] = base
 		}
 	}

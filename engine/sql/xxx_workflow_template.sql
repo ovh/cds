@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS "workflow_template" (
   value TEXT,
   pipelines JSONB,
   applications JSONB,
+  environments JSONB,
   parameters JSONB
 );
 

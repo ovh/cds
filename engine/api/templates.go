@@ -137,8 +137,6 @@ func (api *API) postTemplateHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 		}
 
-		t.Slug = slug.Convert(t.Name)
-
 		if err := workflowtemplate.Insert(api.mustDB(), &t); err != nil {
 			return err
 		}
@@ -217,13 +215,14 @@ func (api *API) putTemplateHandler() service.Handler {
 		// update fields from request data
 		new := sdk.WorkflowTemplate(*old)
 		new.Name = data.Name
-		new.Slug = slug.Convert(data.Name)
+		new.Slug = data.Slug
 		new.GroupID = data.GroupID
 		new.Description = data.Description
 		new.Value = data.Value
 		new.Parameters = data.Parameters
 		new.Pipelines = data.Pipelines
 		new.Applications = data.Applications
+		new.Environments = data.Environments
 		new.Version = old.Version + 1
 
 		if err := workflowtemplate.Update(api.mustDB(), &new); err != nil {
