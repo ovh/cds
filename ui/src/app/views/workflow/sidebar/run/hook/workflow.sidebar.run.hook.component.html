@@ -15,7 +15,7 @@
         </a>
         </div>
     </ng-container>
-    <ng-container *ngIf="!loading && wr && nodeRun && nodeRun.hook_event && nodeRun.hook_event.parent_workflow">
+    <ng-container *ngIf="!loading && wr && nodeRun && nodeRun.hook_event && nodeRun.hook_event.parent_workflow && nodeRun.hook_event.parent_workflow.name">
         <div class="ui fluid vertical menu noborder">
             <a class="item" [routerLink]="['/project', nodeRun.hook_event.parent_workflow.key, 'workflow', nodeRun.hook_event.parent_workflow.name, 'run', nodeRun.hook_event.parent_workflow.run]"
                 target="_blank">
