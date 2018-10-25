@@ -739,7 +739,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	sdk.GoRoutine(ctx, "workflow.Initialize", func(ctx context.Context) {
-		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
 	})
 	sdk.GoRoutine(ctx, "PushInElasticSearch", func(ctx context.Context) { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
 	metrics.Init(ctx, a.DBConnectionFactory.GetDBMap)
