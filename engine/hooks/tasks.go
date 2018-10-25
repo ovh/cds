@@ -331,7 +331,7 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	case e.Type == TypeOutgoingWorkflow:
 		err = s.doOutgoingWorkflowExecution(e)
 		doRestart = false
-	case e.WebHook != nil && e.Type == TypeWebHook:
+	case e.WebHook != nil && (e.Type == TypeWebHook || e.Type == TypeRepoManagerWebHook):
 		h, err = s.doWebHookExecution(e)
 	case e.ScheduledTask != nil && e.Type == TypeScheduler:
 		h, err = s.doScheduledTaskExecution(e)

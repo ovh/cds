@@ -14,13 +14,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (s *Service) doWebHookExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing webhook %s %s", t.UUID, t.Type)
+func (s *Service) doWebHookExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
+	log.Debug("Hooks> Processing webhook %s %s", e.UUID, e.Type)
 
-	if t.Type == TypeRepoManagerWebHook {
-		return executeRepositoryWebHook(t)
+	if e.Type == TypeRepoManagerWebHook {
+		return executeRepositoryWebHook(e)
 	}
-	return executeWebHook(t)
+	return executeWebHook(e)
 }
 
 func getRepositoryHeader(whe *sdk.WebHookExecution) string {
