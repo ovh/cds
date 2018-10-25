@@ -38,6 +38,7 @@ type WorkflowTemplateResult struct {
 	Workflow     string
 	Pipelines    []string
 	Applications []string
+	Environments []string
 }
 
 // WorkflowTemplate struct.

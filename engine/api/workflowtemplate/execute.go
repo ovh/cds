@@ -73,6 +73,7 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 		Workflow:     out,
 		Pipelines:    make([]string, len(wt.Pipelines)),
 		Applications: make([]string, len(wt.Applications)),
+		Environments: make([]string, len(wt.Environments)),
 	}
 
 	for i, p := range wt.Pipelines {
@@ -88,8 +89,8 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 		res.Pipelines[i] = out
 	}
 
-	for i, p := range wt.Applications {
-		v, err := base64.StdEncoding.DecodeString(p.Value)
+	for i, a := range wt.Applications {
+		v, err := base64.StdEncoding.DecodeString(a.Value)
 		if err != nil {
 			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse application template")
 		}
@@ -99,6 +100,19 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 			return sdk.WorkflowTemplateResult{}, err
 		}
 		res.Applications[i] = out
+	}
+
+	for i, e := range wt.Environments {
+		v, err := base64.StdEncoding.DecodeString(e.Value)
+		if err != nil {
+			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse environment template")
+		}
+
+		out, err := executeTemplate(string(v), data)
+		if err != nil {
+			return sdk.WorkflowTemplateResult{}, err
+		}
+		res.Environments[i] = out
 	}
 
 	return res, nil
@@ -181,6 +195,31 @@ func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
 			tw.Close()
 			return sdk.WrapError(err, "Unable to copy application buffer")
+		}
+	}
+
+	// add generated environments to writer
+	for _, e := range res.Environments {
+		var env exportentities.Environment
+		if err := yaml.Unmarshal([]byte(e), &env); err != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated environment"))
+		}
+
+		bs, err := exportentities.Marshal(env, exportentities.FormatYAML)
+		if err != nil {
+			return err
+		}
+		if err := tw.WriteHeader(&tar.Header{
+			Name: fmt.Sprintf("%s.env.yml", env.Name),
+			Mode: 0644,
+			Size: int64(len(bs)),
+		}); err != nil {
+			tw.Close()
+			return sdk.WrapError(err, "Unable to write header for environment %s", env.Environment)
+		}
+		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
+			tw.Close()
+			return sdk.WrapError(err, "Unable to copy environment buffer")
 		}
 	}
 
