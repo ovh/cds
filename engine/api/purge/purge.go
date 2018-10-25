@@ -33,15 +33,15 @@ func Initialize(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap)
 			}
 
 			log.Debug("purge> Deleting all workflow marked to delete....")
-			if err := Workflows(c, DBFunc(), store); err != nil {
+			if err := workflows(c, DBFunc(), store); err != nil {
 				log.Warning("purge> Error on workflows : %v", err)
 			}
 		}
 	}
 }
 
-// Workflows purges all marked workflows
-func Workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
+// workflows purges all marked workflows
+func workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 	query := "SELECT id, project_id FROM workflow WHERE to_delete = true ORDER BY id ASC"
 	res := []struct {
 		ID        int64 `db:"id"`
@@ -72,7 +72,18 @@ func Workflows(ctx context.Context, db *gorp.DbMap, store cache.Store) error {
 
 		w, err := workflow.LoadByID(db, store, &proj, r.ID, nil, workflow.LoadOptions{})
 		if err != nil {
-			return sdk.WrapError(err, "unable to load workflow %d", r.ID)
+			log.Warning("unable to load workflow %d due to error %v, we try to delete it", r.ID, err)
+			if _, err := db.Exec("delete from workflow_node where workflow_id = $1", r.ID); err != nil {
+				log.Error("Unable to delete from workflow_node with workflow_id %d: %v", r.ID, err)
+			} else {
+				log.Warning("workflow_node with workflow_id %d are deleted", r.ID)
+			}
+			if _, err := db.Exec("delete from workflow where id = $1", r.ID); err != nil {
+				log.Error("Unable to delete from workflow with id %d: %v", r.ID, err)
+			} else {
+				log.Warning("workflow with id %d is deleted", r.ID)
+			}
+			continue
 		}
 		wrkflws[i] = *w
 	}
