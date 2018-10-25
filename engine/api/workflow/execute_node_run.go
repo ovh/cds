@@ -630,7 +630,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 	return res, nil
 }
 
-func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
+func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) (*ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.stopWorkflowNodePipeline")
 	defer end()
@@ -642,7 +642,7 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	// Load node job run ID
 	ids, errIDS := LoadNodeJobRunIDByNodeRunID(dbFunc(), nodeRun.ID)
 	if errIDS != nil {
-		return report, sdk.WrapError(errIDS, "StopWorkflowNodeRun> Cannot load node jobs run ids ")
+		return report, sdk.WrapError(errIDS, "stopWorkflowNodePipeline> Cannot load node jobs run ids ")
 	}
 
 	chanNjrID := make(chan int64, stopWorkflowNodeRunNBWorker)
@@ -651,7 +651,7 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
 		go func() {
 			//since report is mutable and is a pointer and in this case we can't have any error, we can skip returned values
-			_, _ = report.Merge(stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, &nodeRun, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg), nil)
+			_, _ = report.Merge(stopWorkflowNodeJobRun(ctx, dbFunc, store, proj, nodeRun, stopInfos, chanNjrID, chanErr, chanNodeJobRunDone, &wg), nil)
 		}()
 	}
 
@@ -671,17 +671,17 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	wg.Wait()
 
 	// Update stages from node run
-	stopWorkflowNodeRunStages(&nodeRun)
+	stopWorkflowNodeRunStages(nodeRun)
 
 	nodeRun.Status = sdk.StatusStopped.String()
 	nodeRun.Done = time.Now()
-	if errU := UpdateNodeRun(dbFunc(), &nodeRun); errU != nil {
-		return report, sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
+	if errU := UpdateNodeRun(dbFunc(), nodeRun); errU != nil {
+		return report, sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
 	}
 	return report, nil
 }
 
-func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap, nodeRun sdk.WorkflowNodeRun) error {
+func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap, nodeRun *sdk.WorkflowNodeRun) error {
 	db := dbFunc()
 	if nodeRun.Callback == nil {
 		nodeRun.Callback = new(sdk.WorkflowNodeOutgoingHookRunCallback)
@@ -703,6 +703,11 @@ func stopWorkflowNodeOutGoingHook(ctx context.Context, dbFunc func() *gorp.DbMap
 		}
 	}
 
+	nodeRun.Status = sdk.StatusStopped.String()
+	nodeRun.Done = time.Now()
+	if errU := UpdateNodeRun(dbFunc(), nodeRun); errU != nil {
+		return sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
+	}
 	return nil
 }
 
@@ -717,10 +722,10 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 	var r1 *ProcessorReport
 	var errS error
 	if nodeRun.Stages != nil && len(nodeRun.Stages) > 0 {
-		r1, errS = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, nodeRun, stopInfos)
+		r1, errS = stopWorkflowNodePipeline(ctx, dbFunc, store, proj, &nodeRun, stopInfos)
 	}
 	if nodeRun.OutgoingHook != nil {
-		errS = stopWorkflowNodeOutGoingHook(ctx, dbFunc, nodeRun)
+		errS = stopWorkflowNodeOutGoingHook(ctx, dbFunc, &nodeRun)
 	}
 
 	if errS != nil {

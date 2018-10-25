@@ -324,7 +324,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(errP, "stopWorkflowRunHandler> Unable to load project")
 		}
 
-		report, err := stopWorkflowRun(ctx, api.mustDB, api.Cache, proj, run, getUser(ctx))
+		report, err := stopWorkflowRun(ctx, api.mustDB, api.Cache, proj, run, getUser(ctx), 0)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to stop workflow")
 		}
@@ -347,7 +347,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 	}
 }
 
-func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, run *sdk.WorkflowRun, u *sdk.User) (*workflow.ProcessorReport, error) {
+func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, run *sdk.WorkflowRun, u *sdk.User, parentWorkflowRunID int64) (*workflow.ProcessorReport, error) {
 	report := new(workflow.ProcessorReport)
 
 	tx, errTx := dbFunc().Begin()
@@ -381,6 +381,7 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 			report.Merge(r1, nil) // nolint
 			wnr.Status = sdk.StatusStopped.String()
 
+			// If it's a outgoing hook, we stop the child
 			if wnr.OutgoingHook != nil {
 				if run.Workflow.OutGoingHookModels == nil {
 					run.Workflow.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
@@ -402,17 +403,17 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 
 					targetRun, errL := workflow.LoadRun(dbFunc(), targetProject, targetWorkflow, *wnr.Callback.WorkflowRunNumber, workflow.LoadRunOptions{})
 					if errL != nil {
-						log.Error("stopWorkflowRunHandler> Unable to load last workflow run: %v", errL)
+						log.Error("stopWorkflowRun> Unable to load last workflow run: %v", errL)
 						continue
 					}
 
 					targetProj, errP := project.Load(dbFunc(), store, targetProject, u)
 					if errP != nil {
-						log.Error("stopWorkflowRunHandler> Unable to load project %v", errP)
+						log.Error("stopWorkflowRun> Unable to load project %v", errP)
 						continue
 					}
 
-					r2, err := stopWorkflowRun(ctx, dbFunc, store, targetProj, targetRun, u)
+					r2, err := stopWorkflowRun(ctx, dbFunc, store, targetProj, targetRun, u, run.ID)
 					if err != nil {
 						log.Error("stopWorkflowRun> Unable to stop workflow %v", err)
 						continue
@@ -434,8 +435,10 @@ func stopWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, store cache
 		return nil, sdk.WrapError(err, "Cannot commit transaction")
 	}
 
-	if err := updateParentWorkflowRun(ctx, dbFunc, store, run); err != nil {
-		return nil, sdk.WithStack(err)
+	if parentWorkflowRunID == 0 {
+		if err := updateParentWorkflowRun(ctx, dbFunc, store, run); err != nil {
+			return nil, sdk.WithStack(err)
+		}
 	}
 
 	return report, nil

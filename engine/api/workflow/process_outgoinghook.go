@@ -47,6 +47,8 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 				report.Merge(r1, nil) // nolint
 			}
 			return report, nil
+		} else if exitingNodeRun != nil && exitingNodeRun.Status == sdk.StatusStopped.String() {
+			return report, nil
 		}
 	}
 
