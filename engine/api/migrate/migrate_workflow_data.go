@@ -91,6 +91,9 @@ func migrateWorkflowData(db *gorp.DbMap, store cache.Store, ID int64) error {
 	}
 
 	data := w.Migrate(false)
+	if data.Node.ID == 0 {
+		return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "migrateWorkflowData> Unable to migrate %s/%s, root node is null", p.Key, w.Name)
+	}
 	w.WorkflowData = &data
 
 	if err := workflow.RenameNode(tx, w); err != nil {
