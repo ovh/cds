@@ -91,6 +91,7 @@ export class WorkflowSidebarEditNodeComponent implements OnInit {
                     this.isChildOfOutgoingHook = Workflow.isChildOfOutgoingHook(this.workflow, null, null, n.id);
                 }
             }
+            console.log(this.workflow);
             this.node = n;
         });
     }

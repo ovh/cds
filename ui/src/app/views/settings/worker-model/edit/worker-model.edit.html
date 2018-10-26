@@ -170,14 +170,14 @@
                       <input type="text" name="name-{{envName}}" [placeholder]="'common_name' | translate" [value]="envName" disabled>
                     </div>
                     <div class="field">
-                      <input type="text" name="value-{{envName}}" [placeholder]="'common_value' | translate" [(ngModel)]="workerModel.model_docker.envs[envName]">
+                      <input type="text" name="value-{{envName}}" [placeholder]="'common_value' | translate" [(ngModel)]="workerModel.model_docker.envs[envName]" [disabled]="!canEdit">
                     </div>
-                    <button class="ui icon red button" (click)="deleteEnv(envName, index)">
+                    <button class="ui icon red button" (click)="deleteEnv(envName, index)" *ngIf="canEdit">
                       <i class="trash icon"></i>
                     </button>
                   </div>
                 </ng-container>
-                <div class="two fields">
+                <div class="two fields" *ngIf="canEdit">
                   <div class="field">
                     <input type="text" name="newEnvName" [placeholder]="'common_name' | translate" [(ngModel)]="newEnvName">
                   </div>
