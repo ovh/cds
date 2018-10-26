@@ -1,0 +1,13 @@
+{{- if and .Values.repositories.persistence.enabled .Values.repositories.persistence.hostPath (not .Values.repositories.persistence.existingClaim) -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ template "cds.fullname" . }}-repositories
+spec:
+  accessModes:
+    - {{ .Values.repositories.persistence.accessMode | quote }}
+  capacity:
+    storage: {{ .Values.repositories.persistence.size | quote }}
+  hostPath:
+    path: {{ .Values.repositories.persistence.hostPath | quote }}
+{{- end -}}

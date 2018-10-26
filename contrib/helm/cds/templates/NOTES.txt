@@ -8,8 +8,11 @@
 {{- if .Values.ingress.hostname }}
 
   You should be able to access your new CDS installation through
-
+  {{- if .Values.ingress.port }}
+  http://{{- .Values.ingress.hostname }}:{{.Values.ingress.port}}/
+  {{- else }}
   http://{{- .Values.ingress.hostname }}/
+  {{- end}}
 
 {{- else if contains "LoadBalancer" .Values.ui.serviceType }}
 
