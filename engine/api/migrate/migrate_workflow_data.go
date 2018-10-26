@@ -37,11 +37,30 @@ func MigrateToWorkflowData(DBFunc func() *gorp.DbMap, store cache.Store) {
 			return
 		}
 
-		for _, ID := range IDs {
-			if err := migrateWorkflowData(db, store, ID); err != nil {
-				log.Error("MigrateToWorkflowData> Unable to migrate workflow data %d: %v", ID, err)
-			}
+		jobs := make(chan int64, 100)
+		results := make(chan int64, 100)
+
+		// 5 workers
+		for w := 1; w <= 5; w++ {
+			go migrationWorker(db, store, jobs, results)
 		}
+
+		for _, ID := range IDs {
+			jobs <- ID
+		}
+		close(jobs)
+		for a := 0; a < len(IDs); a++ {
+			<-results
+		}
+	}
+}
+
+func migrationWorker(db *gorp.DbMap, store cache.Store, jobs <-chan int64, results chan<- int64) {
+	for ID := range jobs {
+		if err := migrateWorkflowData(db, store, ID); err != nil {
+			log.Error("MigrateToWorkflowData> Unable to migrate workflow data %d: %v", ID, err)
+		}
+		results <- ID
 	}
 }
 
