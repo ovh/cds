@@ -183,7 +183,7 @@ func discoverConf() error {
 	}
 
 	if cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL)) {
-		projs, err := client.ProjectList(true, true, cdsclient.Filter{
+		projects, err := client.ProjectList(true, true, cdsclient.Filter{
 			Name:  "repo",
 			Value: name,
 		})
@@ -191,87 +191,70 @@ func discoverConf() error {
 			return err
 		}
 
-		var chosenProj *sdk.Project
-
-		filteredProjs := []sdk.Project{}
-		for i, p := range projs {
-			if len(p.Applications) > 0 || len(p.Workflows) > 0 {
-				filteredProjs = append(filteredProjs, projs[i])
-			}
-		}
-		projs = nil
-
-		//Set cds.project
-		if len(filteredProjs) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS project %s - %s. Is it correct?", filteredProjs[0].Key, filteredProjs[0].Name)) {
-				chosenProj = &filteredProjs[0]
+		// set cds.project key in git config and context
+		var project *sdk.Project
+		if len(projects) == 1 {
+			if cli.AskForConfirmation(fmt.Sprintf("Found CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
+				project = &projects[0]
 			}
 		} else {
-			opts := make([]string, len(filteredProjs))
-			for i := range filteredProjs {
-				opts[i] = fmt.Sprintf("%s - %s", filteredProjs[i].Key, filteredProjs[i].Name)
+			opts := make([]string, len(projects))
+			for i := range projects {
+				opts[i] = fmt.Sprintf("%s - %s", projects[i].Key, projects[i].Name)
 			}
-			choice := cli.MultiChoice("Choose the CDS project", opts...)
-
-			for i := range filteredProjs {
-				if choice == fmt.Sprintf("%s - %s", filteredProjs[i].Key, filteredProjs[i].Name) {
-					chosenProj = &filteredProjs[i]
-				}
-			}
-
-			if err := r.LocalConfigSet("cds", "project", chosenProj.Key); err != nil {
-				return err
-			}
+			selected := cli.MultiChoice("Choose the CDS project", opts...)
+			project = &projects[selected]
 		}
-
-		if chosenProj == nil {
+		if project == nil {
 			return nil
 		}
+		if err := r.LocalConfigSet("cds", "project", project.Key); err != nil {
+			return err
+		}
+		autoDiscoveredProj = project.Name
 
-		//Set cds.application
-		if len(chosenProj.Applications) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS application %s. Is it correct?", chosenProj.Applications[0].Name)) {
-				if err := r.LocalConfigSet("cds", "application", chosenProj.Applications[0].Name); err != nil {
-					return err
-				}
+		// set cds.application name in git config and context
+		var application *sdk.Application
+		if len(project.Applications) == 1 {
+			if cli.AskForConfirmation(fmt.Sprintf("Found CDS application %s. Is it correct?", project.Applications[0].Name)) {
+				application = &project.Applications[0]
 			}
 		} else {
-			opts := make([]string, len(chosenProj.Applications))
-			for i := range chosenProj.Applications {
-				opts[i] = chosenProj.Applications[i].Name
+			opts := make([]string, len(project.Applications))
+			for i := 0; i < len(project.Applications); i++ {
+				opts[i] = project.Applications[i].Name
 			}
-			choice := cli.MultiChoice("Choose the CDS application", opts...)
-
-			for i := range chosenProj.Applications {
-				if choice == chosenProj.Applications[i].Name {
-					if err := r.LocalConfigSet("cds", "application", chosenProj.Applications[i].Name); err != nil {
-						return err
-					}
-					break
-				}
+			selected := cli.MultiChoice("Choose the CDS application", opts...)
+			application = &project.Applications[selected]
+		}
+		if application != nil {
+			if err := r.LocalConfigSet("cds", "application", application.Name); err != nil {
+				return err
 			}
+			autoDiscoveredApp = application.Name
 		}
 
-		//Set cds.workflow
-		if len(chosenProj.Workflows) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS workflow %s. Is it correct?", chosenProj.Workflows[0].Name)) {
-				if err := r.LocalConfigSet("cds", "workflow", chosenProj.Workflows[0].Name); err != nil {
-					return err
-				}
+		// set cds.workflow name in git config and context
+		var workflow *sdk.Workflow
+		if len(project.Workflows) == 1 {
+			if cli.AskForConfirmation(fmt.Sprintf("Found CDS workflow %s. Is it correct?", project.Workflows[0].Name)) {
+				workflow = &project.Workflows[0]
 			}
 		} else {
-			opts := make([]string, len(chosenProj.Workflows))
-			for i := range chosenProj.Workflows {
-				opts[i] = chosenProj.Workflows[i].Name
+			opts := make([]string, len(project.Workflows))
+			for i := 0; i < len(project.Workflows); i++ {
+				opts[i] = project.Workflows[i].Name
 			}
-			choice := cli.MultiChoice("Choose the CDS workflow", opts...)
-
-			for i := range chosenProj.Workflows {
-				if choice == chosenProj.Workflows[i].Name {
-					return r.LocalConfigSet("cds", "workflow", chosenProj.Workflows[i].Name)
-				}
+			selected := cli.MultiChoice("Choose the CDS workflow", opts...)
+			workflow = &project.Workflows[selected]
+		}
+		if workflow != nil {
+			if err := r.LocalConfigSet("cds", "workflow", workflow.Name); err != nil {
+				return err
 			}
+			autoDiscoveredWorkflow = workflow.Name
 		}
 	}
+
 	return nil
 }

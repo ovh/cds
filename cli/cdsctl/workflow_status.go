@@ -48,7 +48,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	var runNumber int64
 	var currentDisplay = new(cli.Display)
 
-	//Try to get the latest commit
+	// try to get the latest commit
 	r, err := repo.New(".")
 	if err != nil {
 		return nil, fmt.Errorf("unable to get latest commit: %v", err)
@@ -63,6 +63,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 
 	for runNumber == 0 {
 		runNumber, _ = workflowNodeForCurrentRepo(v[_ProjectKey], v.GetString(_WorkflowName))
+		time.Sleep(500 * time.Millisecond)
 	}
 
 	run, err := client.WorkflowRunGet(v[_ProjectKey], v.GetString(_WorkflowName), runNumber)
@@ -86,7 +87,7 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 	return nil, nil
 }
 
-//w-cds #10.0 ✓root -> ✓build -> ✓test -> ✗deploy
+// w-cds #10.0 ✓root -> ✓build -> ✓test -> ✗deploy
 func workflowRunFormatDisplay(run *sdk.WorkflowRun, commit repo.Commit, currentDisplay *cli.Display) {
 	var output = "%s [%s | %s] " + cli.Cyan("#%d.%d", run.Number, run.LastSubNumber)
 	nodeIDs := []int64{}
@@ -128,7 +129,7 @@ func workflowRunFormatDisplay(run *sdk.WorkflowRun, commit repo.Commit, currentD
 func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 	var runNumber int64
 	var errRunNumber error
-	// If no run number, get the latest
+	// if no run number, get the latest
 	runNumberStr := v.GetString("run-number")
 	if runNumberStr != "" {
 		runNumber, errRunNumber = strconv.ParseInt(runNumberStr, 10, 64)

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"reflect"
 	"strings"
 
@@ -30,10 +29,13 @@ var (
 var templateApplyCmd = cli.Command{
 	Name:    "apply",
 	Short:   "Apply CDS workflow template",
-	Example: "cdsctl template apply my-group/my-template PROJ/my-workflow",
-	Args: []cli.Arg{
-		{Name: "templatePath"},
-		{Name: "workflowPath"},
+	Example: "cdsctl template apply group-name/template-slug PROJKEY workflow-name",
+	OptionalArgs: []cli.Arg{
+		{Name: "template-path"},
+	},
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName},
 	},
 	Flags: []cli.Flag{
 		{
@@ -77,20 +79,70 @@ var templateApplyCmd = cli.Command{
 	},
 }
 
-func templateApplyRun(v cli.Values) error {
-	templatePath := strings.Split(v.GetString("templatePath"), "/")
-	if len(templatePath) != 2 {
-		return fmt.Errorf("Invalid given template path")
-	}
-	groupName, templateSlug := templatePath[0], templatePath[1]
+func getTemplateFromCLI(v cli.Values) (*sdk.WorkflowTemplate, error) {
+	var template *sdk.WorkflowTemplate
 
-	// try to get the template from cds
-	wt, err := client.TemplateGet(groupName, templateSlug)
-	if err != nil {
+	// search template path from params or suggest one
+	templatePath := v.GetString("template-path")
+	if templatePath != "" {
+		templatePathSplitted := strings.Split(templatePath, "/")
+		if len(templatePathSplitted) != 2 {
+			return nil, fmt.Errorf("Invalid given template path")
+		}
+
+		groupName, templateSlug := templatePathSplitted[0], templatePathSplitted[1]
+
+		// try to get the template from cds
+		var err error
+		template, err = client.TemplateGet(groupName, templateSlug)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// if no template given, suggest one
+	if template == nil {
+		templates, err := client.TemplateGetAll()
+		if err != nil {
+			return nil, err
+		}
+
+		opts := make([]string, len(templates))
+		for i := 0; i < len(templates); i++ {
+			opts[i] = fmt.Sprintf("%s (%s/%s) - %s", templates[i].Name, templates[i].Group.Name, templates[i].Slug, templates[i].Description)
+		}
+		selected := cli.MultiChoice("Choose the CDS template to apply", opts...)
+		template = templates[selected]
+
+		// TODO maybe store the selected template to git config for next runs
+	}
+
+	return template, nil
+}
+
+func getProjectFromCli(v cli.Values) (*sdk.Project, error) {
+	projectKey := v.GetString(_ProjectKey)
+
+	// search project from params or suggest one
+	if projectKey != "" {
+
+	}
+
+	return nil, nil
+}
+
+func templateApplyRun(v cli.Values) error {
+	if _, err := getTemplateFromCLI(v); err != nil {
 		return err
 	}
 
-	workflowPath := strings.Split(v.GetString("workflowPath"), "/")
+	if _, err := getProjectFromCli(v); err != nil {
+		return err
+	}
+
+	return nil
+
+	/*workflowPath := strings.Split(v.GetString("workflowPath"), "/")
 	if len(workflowPath) != 2 {
 		return fmt.Errorf("Invalid given workflow path")
 	}
@@ -172,10 +224,10 @@ func templateApplyRun(v cli.Values) error {
 				case sdk.ParameterTypeRepository:
 					var selectedVCS string
 					if len(listVCS) > 0 {
-						selectedVCS = cli.MultiChoice(fmt.Sprintf("Select a VCS needed to fill %s param", p.Key), listVCS...)
+						selected = cli.MultiChoice(fmt.Sprintf("Select a VCS needed to fill %s param", p.Key), listVCS...)
 					}
 					if selectedVCS != "" && len(suggestVCS[selectedVCS]) > 0 {
-						repo := cli.MultiChoice(label, suggestVCS[selectedVCS]...)
+						selected := cli.MultiChoice(label, suggestVCS[selectedVCS]...)
 						choice = fmt.Sprintf("%s/%s", selectedVCS, repo)
 					}
 				}
@@ -232,9 +284,7 @@ func templateApplyRun(v cli.Values) error {
 
 	if err := workflowTarReaderToFiles(dir, tr, v.GetBool("force"), v.GetBool("quiet")); err != nil {
 		return err
-	}
-
-	return nil
+	}*/
 }
 
 func teeTarReader(r *tar.Reader, buf io.Writer) (*tar.Reader, error) {

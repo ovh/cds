@@ -32,12 +32,12 @@ func AskForConfirmation(s string) bool {
 }
 
 // MultiChoice for multiple choices question. It returns the selected option
-func MultiChoice(s string, opts ...string) string {
+func MultiChoice(s string, opts ...string) int {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println(s)
 	for i, o := range opts {
-		fmt.Printf("\t%s [%d]\n", o, (i + 1))
+		fmt.Printf("\t[%d] %s\n", (i + 1), o)
 	}
 
 	for {
@@ -48,13 +48,11 @@ func MultiChoice(s string, opts ...string) string {
 			log.Fatal(err)
 		}
 
-		for i, o := range opts {
-			trimmedResponse := strings.TrimSpace(response)
-			n, _ := strconv.Atoi(trimmedResponse)
-			if n == i+1 {
-				return o
-			}
+		n, _ := strconv.Atoi(strings.TrimSpace(response))
+		if 0 < n && n <= len(opts) {
+			return n - 1
 		}
+
 		fmt.Println("wrong choice")
 	}
 }

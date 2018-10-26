@@ -25,13 +25,13 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo str
 	// Admin can gets all project
 	// Users can gets only their projects
 	if u == nil || u.Admin {
-		query = `SELECT project.*
+		query = `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
 		WHERE application.repo_fullname = $1
 		ORDER by project.name, project.projectkey ASC`
 	} else {
-		query = `SELECT project.*
+		query = `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
 		WHERE application.repo_fullname = $3
