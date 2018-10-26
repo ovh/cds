@@ -313,39 +313,36 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	var vcsInfos vcsInfos
-
+	var app sdk.Application
 	if n.Context.ApplicationID != 0 {
-		app := wr.Workflow.Applications[n.Context.ApplicationID]
+		app = wr.Workflow.Applications[n.Context.ApplicationID]
+	}
 
-		if app.VCSServer != "" {
-			var errVcs error
-			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-			vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, gitValues, app.Name, app.VCSServer, app.RepositoryFullname, !isRoot, previousGitValues[tagGitRepository])
-			if errVcs != nil {
-				if strings.Contains(errVcs.Error(), "branch has been deleted") {
-					AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-						ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
-						Args: []interface{}{vcsInfos.Branch},
-					})
-				} else {
-					AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-						ID:   sdk.MsgWorkflowError.ID,
-						Args: []interface{}{errVcs.Error()},
-					})
-				}
-				if isRoot {
-					return report, false, sdk.WrapError(errVcs, "processNode> Cannot get VCSInfos")
-				}
-
-				return nil, true, nil
-			}
-
-			// only if it's the root pipeline, we put the git... in the build parameters
-			// this allow user to write some run conditions with .git.var on the root pipeline
-			if isRoot {
-				setValuesGitInBuildParameters(run, vcsInfos)
-			}
+	var errVcs error
+	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+	vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, gitValues, app.Name, app.VCSServer, app.RepositoryFullname, !isRoot, previousGitValues[tagGitRepository])
+	if errVcs != nil {
+		if strings.Contains(errVcs.Error(), "branch has been deleted") {
+			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
+				Args: []interface{}{vcsInfos.Branch},
+			})
+		} else {
+			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{errVcs.Error()},
+			})
 		}
+		if isRoot {
+			return report, false, sdk.WrapError(errVcs, "processNode> Cannot get VCSInfos")
+		}
+		return nil, true, nil
+	}
+
+	// only if it's the root pipeline, we put the git... in the build parameters
+	// this allow user to write some run conditions with .git.var on the root pipeline
+	if isRoot {
+		setValuesGitInBuildParameters(run, vcsInfos)
 	}
 
 	// Check Run Conditions
