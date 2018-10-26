@@ -1,6 +1,9 @@
 -- +migrate Up
 ALTER TABLE workflow ADD COLUMN workflow_data JSONB;
-ALTER TABLE workflow_run ADD COLUMN version INT DEFAULT 1;
+ALTER TABLE workflow_run ADD COLUMN version INT;
+UPDATE workflow_run SET version = 1;
+ALTER TABLE workflow_run ALTER COLUMN version SET DEFAULT 1;
+UPDATE workflow_run SET version = 1;
 
 CREATE TABLE w_node (
   id BIGSERIAL PRIMARY KEY,
