@@ -270,9 +270,6 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 	run.BuildParameters = append(run.BuildParameters, jobParams...)
 
-	log.Debug("processNode> %+v", jobParams)
-	log.Debug("processNode> %+v", run.BuildParameters)
-
 	// Inherit parameter from parent job
 	if len(parentsIDs) > 0 {
 		_, next := observability.Span(ctx, "workflow.getParentParameters")
@@ -319,36 +316,36 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	if n.Context.ApplicationID != 0 {
 		app := wr.Workflow.Applications[n.Context.ApplicationID]
-		var errVcs error
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-		vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, gitValues, app.Name, app.VCSServer, app.RepositoryFullname, !isRoot, previousGitValues[tagGitRepository])
-		if errVcs != nil {
-			if strings.Contains(errVcs.Error(), "branch has been deleted") {
-				AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-					ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
-					Args: []interface{}{vcsInfos.Branch},
-				})
-			} else {
-				AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
-					ID:   sdk.MsgWorkflowError.ID,
-					Args: []interface{}{errVcs.Error()},
-				})
+
+		if app.VCSServer != "" {
+			var errVcs error
+			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+			vcsInfos, errVcs = getVCSInfos(ctx, db, store, vcsServer, gitValues, app.Name, app.VCSServer, app.RepositoryFullname, !isRoot, previousGitValues[tagGitRepository])
+			if errVcs != nil {
+				if strings.Contains(errVcs.Error(), "branch has been deleted") {
+					AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+						ID:   sdk.MsgWorkflowRunBranchDeleted.ID,
+						Args: []interface{}{vcsInfos.Branch},
+					})
+				} else {
+					AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
+						ID:   sdk.MsgWorkflowError.ID,
+						Args: []interface{}{errVcs.Error()},
+					})
+				}
+				if isRoot {
+					return report, false, sdk.WrapError(errVcs, "processNode> Cannot get VCSInfos")
+				}
+
+				return nil, true, nil
 			}
+
+			// only if it's the root pipeline, we put the git... in the build parameters
+			// this allow user to write some run conditions with .git.var on the root pipeline
 			if isRoot {
-				return report, false, sdk.WrapError(errVcs, "processNode> Cannot get VCSInfos")
+				setValuesGitInBuildParameters(run, vcsInfos)
 			}
-
-			return nil, true, nil
 		}
-	}
-
-	// only if it's the root pipeline, we put the git... in the build parameters
-	// this allow user to write some run conditions with .git.var on the root pipeline
-	if isRoot {
-		log.Debug("before setValuesGitInBuildParameters> %+v", run.BuildParameters)
-		log.Debug("before setValuesGitInBuildParameters> %+v", vcsInfos)
-		setValuesGitInBuildParameters(run, vcsInfos)
-		log.Debug("setValuesGitInBuildParameters> %+v", run.BuildParameters)
 	}
 
 	// Check Run Conditions
