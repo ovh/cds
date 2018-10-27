@@ -36,13 +36,19 @@ func MultiChoice(s string, opts ...string) int {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Println(s)
+	if len(opts) == 0 {
+		log.Fatal(fmt.Errorf("no choice available"))
+	}
 	for i, o := range opts {
 		fmt.Printf("\t[%d] %s\n", (i + 1), o)
 	}
 
 	for {
-		fmt.Printf("Your choice [1-%d]: ", len(opts))
-
+		if len(opts) > 1 {
+			fmt.Printf("Your choice [1-%d]: ", len(opts))
+		} else {
+			fmt.Printf("Your choice [1]: ")
+		}
 		response, err := reader.ReadString('\n')
 		if err != nil {
 			log.Fatal(err)

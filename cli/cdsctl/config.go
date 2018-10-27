@@ -123,26 +123,9 @@ func withAutoConf() cli.CommandModifier {
 				return nil
 			}
 
-			if _, err := repo.New("."); err != nil {
-				//Ignore error
-				return nil
-			}
-
-			if err := discoverConf(); err != nil {
+			preargs, err := discoverConf(c.Ctx)
+			if err != nil {
 				return err
-			}
-
-			preargs := []string{}
-			for _, arg := range c.Ctx {
-				if arg.Name == _ProjectKey {
-					preargs = []string{autoDiscoveredProj}
-				}
-				if arg.Name == _ApplicationName {
-					preargs = append(preargs, autoDiscoveredApp)
-				}
-				if arg.Name == _WorkflowName {
-					preargs = append(preargs, autoDiscoveredWorkflow)
-				}
 			}
 
 			*args = append(preargs, *args...)
@@ -152,109 +135,182 @@ func withAutoConf() cli.CommandModifier {
 	)
 }
 
-var (
-	autoDiscoveredProj     string
-	autoDiscoveredApp      string
-	autoDiscoveredWorkflow string
-)
+func discoverConf(args []cli.Arg) ([]string, error) {
+	var needProject, needApplication, needWorkflow bool
+	for _, arg := range args {
+		switch arg.Name {
+		case _ProjectKey:
+			needProject = true
+		case _ApplicationName:
+			needApplication = true
+		case _WorkflowName:
+			needWorkflow = true
+		}
+	}
 
-func discoverConf() error {
+	if !(needProject || needApplication || needWorkflow) {
+		return nil, nil
+	}
+
+	var projectKey, applicationName, workflowName string
+
+	// try to find existing .git repository
+	var repoExists bool
 	r, err := repo.New(".")
-	if err != nil {
-		return err
+	if err == nil {
+		repoExists = true
 	}
 
-	if proj, _ := r.LocalConfigGet("cds", "project"); proj != "" {
-		//It's already configured
-		autoDiscoveredProj = proj
-		autoDiscoveredApp, _ = r.LocalConfigGet("cds", "application")
-		autoDiscoveredWorkflow, _ = r.LocalConfigGet("cds", "workflow")
-		return nil
+	// if repo exists ask for usage
+	if repoExists {
+		gitProjectKey, _ := r.LocalConfigGet("cds", "project")
+		gitApplicationName, _ := r.LocalConfigGet("cds", "application")
+		gitWorkflowName, _ := r.LocalConfigGet("cds", "workflow")
+
+		// if all needs were found in git do not ask for confirmation and use the config
+		needConfirmation := !(needProject != (gitProjectKey != "") || needApplication != (gitApplicationName != "") || needWorkflow == (gitWorkflowName != ""))
+
+		if needConfirmation {
+			fetchURL, err := r.FetchURL()
+			if err != nil {
+				return nil, err
+			}
+			name, err := r.Name()
+			if err != nil {
+				return nil, err
+			}
+			repoExists = cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL))
+		}
 	}
 
-	fetchURL, err := r.FetchURL()
-	if err != nil {
-		return err
+	// if repo exists and is correct get existing config from it's config
+	if repoExists {
+		projectKey, _ = r.LocalConfigGet("cds", "project")
+		applicationName, _ = r.LocalConfigGet("cds", "application")
+		workflowName, _ = r.LocalConfigGet("cds", "workflow")
 	}
 
-	name, err := r.Name()
-	if err != nil {
-		return err
-	}
+	// updates needs from values found in git config
+	needProject = needProject && projectKey == ""
+	needApplication = needApplication && applicationName == ""
+	needWorkflow = needWorkflow && workflowName == ""
 
-	if cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL)) {
-		projects, err := client.ProjectList(true, true, cdsclient.Filter{
-			Name:  "repo",
-			Value: name,
-		})
+	// populate project, application and workflow if required
+	if needProject || needApplication || needWorkflow {
+		var projects []sdk.Project
+		if repoExists {
+			name, err := r.Name()
+			if err != nil {
+				return nil, err
+			}
+			projects, err = client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
+		} else {
+			projects, err = client.ProjectList(true, true)
+		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		// set cds.project key in git config and context
 		var project *sdk.Project
-		if len(projects) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
-				project = &projects[0]
+
+		// try to use the given project key
+		if projectKey != "" {
+			for _, p := range projects {
+				if p.Key == projectKey {
+					project = &p
+				}
 			}
-		} else {
-			opts := make([]string, len(projects))
-			for i := range projects {
-				opts[i] = fmt.Sprintf("%s - %s", projects[i].Key, projects[i].Name)
-			}
-			selected := cli.MultiChoice("Choose the CDS project", opts...)
-			project = &projects[selected]
 		}
+
+		// if given project key not valid ask for a project
 		if project == nil {
-			return nil
+			if len(projects) == 1 {
+				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
+					return nil, fmt.Errorf("Can't find a project to use")
+				}
+				project = &projects[0]
+			} else {
+				opts := make([]string, len(projects))
+				for i := range projects {
+					opts[i] = fmt.Sprintf("%s - %s", projects[i].Key, projects[i].Name)
+				}
+				selected := cli.MultiChoice("Choose the CDS project:", opts...)
+				project = &projects[selected]
+			}
 		}
-		if err := r.LocalConfigSet("cds", "project", project.Key); err != nil {
-			return err
-		}
-		autoDiscoveredProj = project.Name
 
-		// set cds.application name in git config and context
-		var application *sdk.Application
-		if len(project.Applications) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS application %s. Is it correct?", project.Applications[0].Name)) {
+		// set project key and override repository config if exists
+		projectKey = project.Key
+		if repoExists {
+			if err := r.LocalConfigSet("cds", "project", projectKey); err != nil {
+				return nil, err
+			}
+		}
+
+		if needApplication {
+			var application *sdk.Application
+			if len(project.Applications) == 1 {
+				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", project.Applications[0].Name)) {
+					return nil, fmt.Errorf("Can't find an application to use")
+				}
 				application = &project.Applications[0]
+			} else {
+				opts := make([]string, len(project.Applications))
+				for i := 0; i < len(project.Applications); i++ {
+					opts[i] = project.Applications[i].Name
+				}
+				selected := cli.MultiChoice("Choose the CDS application:", opts...)
+				application = &project.Applications[selected]
 			}
-		} else {
-			opts := make([]string, len(project.Applications))
-			for i := 0; i < len(project.Applications); i++ {
-				opts[i] = project.Applications[i].Name
+
+			// set application name and override repository config if exists
+			applicationName = application.Name
+			if repoExists {
+				if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
+					return nil, err
+				}
 			}
-			selected := cli.MultiChoice("Choose the CDS application", opts...)
-			application = &project.Applications[selected]
-		}
-		if application != nil {
-			if err := r.LocalConfigSet("cds", "application", application.Name); err != nil {
-				return err
-			}
-			autoDiscoveredApp = application.Name
 		}
 
-		// set cds.workflow name in git config and context
-		var workflow *sdk.Workflow
-		if len(project.Workflows) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS workflow %s. Is it correct?", project.Workflows[0].Name)) {
+		if needWorkflow {
+			var workflow *sdk.Workflow
+			if len(project.Workflows) == 1 {
+				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", project.Workflows[0].Name)) {
+					return nil, fmt.Errorf("Can't find a workflow to use")
+				}
 				workflow = &project.Workflows[0]
+			} else {
+				opts := make([]string, len(project.Workflows))
+				for i := 0; i < len(project.Workflows); i++ {
+					opts[i] = project.Workflows[i].Name
+				}
+				selected := cli.MultiChoice("Choose the CDS workflow:", opts...)
+				workflow = &project.Workflows[selected]
 			}
-		} else {
-			opts := make([]string, len(project.Workflows))
-			for i := 0; i < len(project.Workflows); i++ {
-				opts[i] = project.Workflows[i].Name
+
+			// set workflow name and override repository config if exists
+			workflowName = workflow.Name
+			if repoExists {
+				if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
+					return nil, err
+				}
 			}
-			selected := cli.MultiChoice("Choose the CDS workflow", opts...)
-			workflow = &project.Workflows[selected]
-		}
-		if workflow != nil {
-			if err := r.LocalConfigSet("cds", "workflow", workflow.Name); err != nil {
-				return err
-			}
-			autoDiscoveredWorkflow = workflow.Name
 		}
 	}
 
-	return nil
+	var values []string
+
+	// set then returns values in right order
+	for _, arg := range args {
+		switch arg.Name {
+		case _ProjectKey:
+			values = append(values, projectKey)
+		case _ApplicationName:
+			values = append(values, applicationName)
+		case _WorkflowName:
+			values = append(values, workflowName)
+		}
+	}
+
+	return values, nil
 }

@@ -111,7 +111,7 @@ func getTemplateFromCLI(v cli.Values) (*sdk.WorkflowTemplate, error) {
 		for i := 0; i < len(templates); i++ {
 			opts[i] = fmt.Sprintf("%s (%s/%s) - %s", templates[i].Name, templates[i].Group.Name, templates[i].Slug, templates[i].Description)
 		}
-		selected := cli.MultiChoice("Choose the CDS template to apply", opts...)
+		selected := cli.MultiChoice("Choose the CDS template to apply:", opts...)
 		template = templates[selected]
 
 		// TODO maybe store the selected template to git config for next runs
@@ -120,23 +120,8 @@ func getTemplateFromCLI(v cli.Values) (*sdk.WorkflowTemplate, error) {
 	return template, nil
 }
 
-func getProjectFromCli(v cli.Values) (*sdk.Project, error) {
-	projectKey := v.GetString(_ProjectKey)
-
-	// search project from params or suggest one
-	if projectKey != "" {
-
-	}
-
-	return nil, nil
-}
-
 func templateApplyRun(v cli.Values) error {
 	if _, err := getTemplateFromCLI(v); err != nil {
-		return err
-	}
-
-	if _, err := getProjectFromCli(v); err != nil {
 		return err
 	}
 

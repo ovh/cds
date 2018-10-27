@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
-	repo "github.com/fsamin/go-repo"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 
@@ -84,8 +83,9 @@ func shellRun(v cli.Values) error {
 
 	current = &shellCurrent{rline: l}
 
+	// FIXME repair this and fix other bugs
 	// auto-discover current project with .git
-	if err := discoverConf(); err == nil {
+	/*if err := discoverConf(); err == nil {
 		if r, err := repo.New("."); err == nil {
 			if proj, _ := r.LocalConfigGet("cds", "project"); proj != "" {
 				current.path = "/project/" + proj
@@ -96,7 +96,7 @@ func shellRun(v cli.Values) error {
 				}
 			}
 		}
-	}
+	}*/
 
 	for {
 		l.SetPrompt(fmt.Sprintf("%s \033[31m»\033[0m ", current.pwd()))
@@ -504,32 +504,11 @@ func (current *shellCurrent) openBrowser() {
 
 func shellASCII() {
 	fmt.Printf(`
-
-               .';:looddddolc;'.               .,::::::::::::::::;;;,'..           .............................
-            'cdOKKXXXXXXXXXXXXKOd:.            'OXXXXXXXXXXXXXXXXXXXKK0Oxo:...',;;::ccccccccccccccccccccccccccc;.
-         .:x0XXXX0OxollllodxOKXXXXOl.          'OXXXX0OOOOOOOOOO0000KXXXXX0dccccccccccccccccccccccccccccccccccc;.
-       .;kKXXX0d:..         .,lOKXXXOc.        'OXXX0c..............';cdOKKkdddl;,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,.
-      .oKXXX0l.                .l0XXXKo.       'OXXX0;                  .cOKKKKO:.
-     .dKXXXk,                    :0XXXKl.      'OXXX0;                    .dKXXX0:
-    .lKXXXO,                      :xdoc,       'OXXX0;                     ,kOOOOx:,,,,,,,''..
-    ;OXXXKc                                    'OXXX0;                    .cxxxxxxxxxxxxxxxxdoc.
-   .lKXXXk'                                    'OXXX0;                     'oxxxxxxxxxxxxxxxxxx:
-   .xXXXXo.                                    'OXXX0;                      .:kOOOko:;;;;;;;;;;.
-   'kXXXKl                                     'OXXX0;                       ,OXXXK:
-   'kXXXKl                                     'OXXX0;                       ,OXXXK:
-   .xXXXXo.                                    'OXXX0;                       ;0XXX0;       .;;;;;;;;;;;;;;;;,'.
-    lKXXXx.                                    'OXXX0;                       lKXXXk'      .cxxxxxxxxxxxxxxxxxdl'
-    ,OXXX0:                        ;c:,..      'OXXX0;                      .xXXXKo.       'cdxxxxxxxxxxxxxxxxxc.
-    .lKXXXx.                      ,OXXX0c      'OXXX0;                     .lKXXXO,          ..',,,;;;;;;;,;;;,.
-     .xXXXKd.                    'kXXXXx.      'OXXX0;                    .l0XXX0c
-      'xKXXKk;.                .:OXXXKx'       'OXXX0;                   ,dKXXX0c
-       .o0XXXKxc'.           .:xKXXXKd.        'OXXX0:             ...,cx0K0OOOxc:;;;;;;;;;;;;;;;;;;;;;;;;;;;;;'
-         ;xKXXXX0kdl:;;;;:cox0KXXXKx;.         'OXXXKOdddddddddddxxkO0KXXXKOxxkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkxkxc.
-           ,lk0XXXXXXXXXXXXXXXXKko,.           'OXXXXXXXXXXXXXXXXXXXXXKKOxddkkxkkkkkkkkkkkkkkkkkkkkkkkxxxxdol:,.
-             .';codkkOOOOOkxdl:'.              .cooooooooooooooooollc:;'.  .;;;;;;;;;;;;;;;;;;;;;;;,,,,'....
-                    .......
-
-
+   ___ ___  ___ 
+  / __|   \/ __|
+ | (__| |) \__ \
+  \___|___/|___/
+                
 connecting to cds api %s...
   > `, client.APIURL())
 }
