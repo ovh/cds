@@ -5,8 +5,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"strings"
+
+	"github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/sdk"
 
@@ -30,12 +33,12 @@ var templateApplyCmd = cli.Command{
 	Name:    "apply",
 	Short:   "Apply CDS workflow template",
 	Example: "cdsctl template apply group-name/template-slug PROJKEY workflow-name",
-	OptionalArgs: []cli.Arg{
-		{Name: "template-path"},
-	},
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
-		{Name: _WorkflowName},
+		{Name: _WorkflowName, AllowEmpty: true},
+	},
+	OptionalArgs: []cli.Arg{
+		{Name: "template-path"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -72,7 +75,7 @@ var templateApplyCmd = cli.Command{
 		},
 		{
 			Kind:    reflect.Bool,
-			Name:    "push",
+			Name:    "import-push",
 			Usage:   "If true, will push the generated workflow on given project",
 			Default: "false",
 		},
@@ -100,63 +103,63 @@ func getTemplateFromCLI(v cli.Values) (*sdk.WorkflowTemplate, error) {
 		}
 	}
 
-	// if no template given, suggest one
-	if template == nil {
-		templates, err := client.TemplateGetAll()
-		if err != nil {
-			return nil, err
-		}
-
-		opts := make([]string, len(templates))
-		for i := 0; i < len(templates); i++ {
-			opts[i] = fmt.Sprintf("%s (%s/%s) - %s", templates[i].Name, templates[i].Group.Name, templates[i].Slug, templates[i].Description)
-		}
-		selected := cli.MultiChoice("Choose the CDS template to apply:", opts...)
-		template = templates[selected]
-
-		// TODO maybe store the selected template to git config for next runs
-	}
-
 	return template, nil
 }
 
 func templateApplyRun(v cli.Values) error {
-	if _, err := getTemplateFromCLI(v); err != nil {
-		return err
+	projectKey := v.GetString(_ProjectKey)
+	workflowName := v.GetString(_WorkflowName)
+
+	var wti *sdk.WorkflowTemplateInstance
+	var err error
+	if workflowName != "" {
+		// try to get an existing template instance for current workflow
+		wti, err = client.WorkflowTemplateInstanceGet(projectKey, workflowName)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
 	}
 
-	return nil
-
-	/*workflowPath := strings.Split(v.GetString("workflowPath"), "/")
-	if len(workflowPath) != 2 {
-		return fmt.Errorf("Invalid given workflow path")
-	}
-	projectKey, workflowSlug := workflowPath[0], workflowPath[1]
-
-	// try to get the project from cds
-	p, err := client.ProjectGet(projectKey)
+	wt, err := getTemplateFromCLI(v)
 	if err != nil {
 		return err
 	}
 
-	// try to get an existing workflow instance from cds
-	wti, err := client.WorkflowTemplateInstanceGet(p.Key, workflowSlug)
-	if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
-		return err
+	// if no template given from args, and exiting instance try to get it's template
+	if wt == nil && wti != nil {
+		wt, err = client.TemplateGetByID(wti.WorkflowTemplateID)
+		if err != nil && !sdk.ErrorIs(err, sdk.ErrNotFound) {
+			return err
+		}
 	}
-	old := map[string]string{}
+
+	// if no template found for workflow or no instance, suggest one
+	if wt == nil {
+		wts, err := client.TemplateGetAll()
+		if err != nil {
+			return err
+		}
+
+		opts := make([]string, len(wts))
+		for i := 0; i < len(wts); i++ {
+			opts[i] = fmt.Sprintf("%s (%s/%s) - %s", wts[i].Name, wts[i].Group.Name, wts[i].Slug, wts[i].Description)
+		}
+		selected := cli.MultiChoice("Choose the CDS template to apply:", opts...)
+		wt = wts[selected]
+	}
+
+	// init params map from previous template instance if exists
+	params := map[string]string{}
 	if wti != nil {
-		// init old params from previous request
 		for _, p := range wt.Parameters {
 			if v, ok := wti.Request.Parameters[p.Key]; ok {
-				old[p.Key] = v
+				params[p.Key] = v
 			}
 		}
 	}
 
-	// init params from cli flags
+	// set params from cli flags
 	paramPairs := v.GetStringSlice("params")
-	params := map[string]string{}
 	for _, p := range paramPairs {
 		if p != "" { // when no params given GetStringSlice returns one empty string
 			ps := strings.Split(p, "=")
@@ -167,54 +170,75 @@ func templateApplyRun(v cli.Values) error {
 		}
 	}
 
-	// for parameters not given with flags, ask interactively if not disabled
+	importPush := v.GetBool("import-push")
+
+	// ask interactively for params if prompt not disabled
 	if !v.GetBool("ignore-prompt") {
-		// if there is parameters of type vcs or repository get suggestions from project
-		listVCS := make([]string, len(p.VCSServers))
-		suggestVCS := make(map[string][]string, len(p.VCSServers))
-		for i, vcs := range p.VCSServers {
-			listVCS[i] = vcs.Name
-			suggestVCS[vcs.Name] = nil
+		if workflowName == "" {
+			workflowName = cli.AskValueChoice("Give a valid name for the new generated workflow: ")
 		}
+
+		// try to find existing .git repository
+		var localRepoURL string
+		if r, err := repo.New("."); err == nil {
+			localRepoURL, err = r.FetchURL()
+			if err != nil {
+				return err
+			}
+		}
+
+		var listRepositories []string
+		var localRepoPath string
+
+		// if there are params of type repository in list of params to fill prepare
+		// the list of repositories for project
 		var withRepository bool
-		for _, parameter := range wt.Parameters {
-			if parameter.Type == sdk.ParameterTypeRepository {
-				withRepository = true
-				break
+		for _, p := range wt.Parameters {
+			if _, ok := params[p.Key]; !ok {
+				if p.Type == sdk.ParameterTypeRepository {
+					withRepository = true
+					break
+				}
 			}
 		}
 		if withRepository {
-			for name := range suggestVCS {
-				res, err := client.RepositoriesList(p.Key, name)
+			// try to get the project from cds
+			p, err := client.ProjectGet(projectKey)
+			if err != nil {
+				return err
+			}
+
+			for _, vcs := range p.VCSServers {
+				rs, err := client.RepositoriesList(p.Key, vcs.Name)
 				if err != nil {
 					return err
 				}
-				suggestVCS[name] = make([]string, len(res))
-				for i := 0; i < len(res); i++ {
-					suggestVCS[name][i] = res[i].Slug
+				for _, r := range rs {
+					path := fmt.Sprintf("%s/%s", vcs.Name, r.Slug)
+					if localRepoURL != "" && (localRepoURL == r.HTTPCloneURL || localRepoURL == r.SSHCloneURL) {
+						localRepoPath = path
+					}
+					listRepositories = append(listRepositories, path)
 				}
 			}
 		}
 
+		// for each param not already fill ask for the value
 		for _, p := range wt.Parameters {
 			if _, ok := params[p.Key]; !ok {
-				var oldValue string
-				if o, ok := old[p.Key]; ok {
-					oldValue = fmt.Sprintf(", old: %s", o)
-				}
-				label := fmt.Sprintf("Value for param %s (type: %s, required: %t%s): ", p.Key, p.Type, p.Required, oldValue)
+				label := fmt.Sprintf("Value for param '%s' (type: %s, required: %t): ", p.Key, p.Type, p.Required)
 
 				var choice string
 				switch p.Type {
 				case sdk.ParameterTypeRepository:
-					var selectedVCS string
-					if len(listVCS) > 0 {
-						selected = cli.MultiChoice(fmt.Sprintf("Select a VCS needed to fill %s param", p.Key), listVCS...)
+					if localRepoPath != "" && cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s. Use it for param '%s'?", localRepoPath, p.Key)) {
+						choice = localRepoPath
+					} else if len(listRepositories) > 0 {
+						selected := cli.MultiChoice(label, listRepositories...)
+						choice = listRepositories[selected]
 					}
-					if selectedVCS != "" && len(suggestVCS[selectedVCS]) > 0 {
-						selected := cli.MultiChoice(label, suggestVCS[selectedVCS]...)
-						choice = fmt.Sprintf("%s/%s", selectedVCS, repo)
-					}
+				case sdk.ParameterTypeBoolean:
+					choice = fmt.Sprintf("%t", cli.AskForConfirmation(fmt.Sprintf("Set value to true for param '%s'?", p.Key)))
 				}
 				if choice == "" {
 					choice = cli.AskValueChoice(label)
@@ -222,6 +246,10 @@ func templateApplyRun(v cli.Values) error {
 
 				params[p.Key] = choice
 			}
+		}
+
+		if !importPush {
+			importPush = cli.AskForConfirmation(fmt.Sprintf("Push the generated workflow to the %s project?", projectKey))
 		}
 	}
 
@@ -235,28 +263,28 @@ func templateApplyRun(v cli.Values) error {
 
 	// check request before submit
 	req := sdk.WorkflowTemplateRequest{
-		ProjectKey:   p.Key,
-		WorkflowSlug: workflowSlug,
+		ProjectKey:   projectKey,
+		WorkflowSlug: workflowName,
 		Parameters:   params,
 	}
 	if err := wt.CheckParams(req); err != nil {
 		return err
 	}
 
-	tr, err := client.TemplateApply(groupName, templateSlug, req)
+	tr, err := client.TemplateApply(wt.Group.Name, wt.Slug, req)
 	if err != nil {
 		return err
 	}
 
 	// push the generated workflow if option set
-	if v.GetBool("push") {
+	if importPush {
 		var buf bytes.Buffer
 		tr, err = teeTarReader(tr, &buf)
 		if err != nil {
 			return err
 		}
 
-		msgList, _, err := client.WorkflowPush(p.Key, bytes.NewBuffer(buf.Bytes()))
+		msgList, _, err := client.WorkflowPush(projectKey, bytes.NewBuffer(buf.Bytes()))
 		for _, msg := range msgList {
 			fmt.Println(msg)
 		}
@@ -267,9 +295,7 @@ func templateApplyRun(v cli.Values) error {
 		fmt.Println("Workflow successfully pushed !")
 	}
 
-	if err := workflowTarReaderToFiles(dir, tr, v.GetBool("force"), v.GetBool("quiet")); err != nil {
-		return err
-	}*/
+	return workflowTarReaderToFiles(dir, tr, v.GetBool("force"), v.GetBool("quiet"))
 }
 
 func teeTarReader(r *tar.Reader, buf io.Writer) (*tar.Reader, error) {

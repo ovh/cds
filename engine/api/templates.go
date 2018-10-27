@@ -26,44 +26,52 @@ const (
 // TODO create real middleware
 func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
-		// try to get template for given path that match user's groups with admin grants
+		// try to get template for given id or path that match user's groups with/without admin grants
 		vars := mux.Vars(r)
 
+		id, _ := requestVarInt(r, "id") // ignore error, will check if not 0
 		groupName := vars["groupName"]
 		templateSlug := vars["templateSlug"]
 
-		if groupName == "" || templateSlug == "" || !slug.Valid(templateSlug) {
-			return nil, sdk.WrapError(sdk.ErrWrongRequest, "Invalid given group or template slug")
+		if id == 0 && (groupName == "" || templateSlug == "" || !slug.Valid(templateSlug)) {
+			return nil, sdk.WrapError(sdk.ErrWrongRequest, "Invalid given id or group and template slug")
 		}
 
 		u := getUser(ctx)
 
-		var group *sdk.Group
-		for _, g := range u.Groups {
-			if g.Name == groupName {
-				group = &g
-				break
+		var gs []sdk.Group
+		if needAdmin {
+			for _, g := range u.Groups {
+				for _, a := range g.Admins {
+					if a.ID == u.ID {
+						gs = append(gs, g)
+					}
+				}
 			}
-		}
-		if group == nil {
-			return nil, sdk.WrapError(sdk.ErrNotFound, "Invalid given group name")
+		} else {
+			gs = u.Groups
 		}
 
-		if needAdmin {
-			var isAdmin bool
-			for _, a := range group.Admins {
-				if a.ID == u.ID {
-					isAdmin = true
+		if groupName != "" {
+			for i := 0; i < len(gs); i++ {
+				if gs[i].Name == groupName {
+					gs = []sdk.Group{gs[i]}
 					break
 				}
 			}
-			if !isAdmin {
-				return nil, sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+			if len(gs) == 0 {
+				return nil, sdk.WrapError(sdk.ErrNotFound, "Invalid given group name")
 			}
 		}
 
-		wt, err := workflowtemplate.Get(api.mustDB(), workflowtemplate.NewCriteria().
-			Slugs(templateSlug).GroupIDs(group.ID))
+		cr := workflowtemplate.NewCriteria()
+		if id != 0 {
+			cr = cr.IDs(id)
+		} else {
+			cr = cr.Slugs(templateSlug)
+		}
+
+		wt, err := workflowtemplate.Get(api.mustDB(), cr.GroupIDs(sdk.GroupsToIDs(gs)...))
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +164,7 @@ func (api *API) postTemplateHandler() service.Handler {
 
 func (api *API) getTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(true)(ctx, w, r)
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
 		if err != nil {
 			return err
 		}
@@ -400,12 +408,6 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 
 func (api *API) getTemplateInstanceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
-		if err != nil {
-			return err
-		}
-		t := getWorkflowTemplate(ctx)
-
 		vars := mux.Vars(r)
 
 		key := vars["key"]
@@ -423,7 +425,7 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 
 		// return the template instance if workflow is a generated one
 		wti, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().
-			WorkflowIDs(wf.ID).WorkflowTemplateIDs(t.ID))
+			WorkflowIDs(wf.ID))
 		if err != nil {
 			return err
 		}

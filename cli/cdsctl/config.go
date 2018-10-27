@@ -135,7 +135,9 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 	var projectKey, applicationName, workflowName string
 
 	// populates needs an init values from args and ctx
+	mctx := make(map[string]cli.Arg, len(ctx))
 	for i, arg := range ctx {
+		mctx[arg.Name] = arg
 		switch arg.Name {
 		case _ProjectKey:
 			needProject = true
@@ -242,10 +244,19 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 		if project == nil {
 			if len(projects) == 1 {
 				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
-					return fmt.Errorf("Can't find a project to use")
+					// try to suggest project list without repo filter
+					if !repoExists {
+						return fmt.Errorf("Can't find a project to use")
+					}
+					projects, err = client.ProjectList(true, true)
+					if err != nil {
+						return err
+					}
+				} else {
+					project = &projects[0]
 				}
-				project = &projects[0]
-			} else {
+			}
+			if project == nil {
 				opts := make([]string, len(projects))
 				for i := range projects {
 					opts[i] = fmt.Sprintf("%s - %s", projects[i].Key, projects[i].Name)
@@ -266,11 +277,10 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 		if needApplication {
 			var application *sdk.Application
 			if len(project.Applications) == 1 {
-				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", project.Applications[0].Name)) {
-					return fmt.Errorf("Can't find an application to use")
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", project.Applications[0].Name)) {
+					application = &project.Applications[0]
 				}
-				application = &project.Applications[0]
-			} else {
+			} else if len(project.Applications) > 1 {
 				opts := make([]string, len(project.Applications))
 				for i := 0; i < len(project.Applications); i++ {
 					opts[i] = project.Applications[i].Name
@@ -278,12 +288,17 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 				selected := cli.MultiChoice("Choose the CDS application:", opts...)
 				application = &project.Applications[selected]
 			}
+			if application == nil && !mctx[_ApplicationName].AllowEmpty {
+				return fmt.Errorf("Can't find an application to use")
+			}
 
 			// set application name and override repository config if exists
 			applicationName = application.Name
-			if repoExists {
-				if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
-					return err
+			if application != nil {
+				if repoExists {
+					if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -291,11 +306,10 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 		if needWorkflow {
 			var workflow *sdk.Workflow
 			if len(project.Workflows) == 1 {
-				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", project.Workflows[0].Name)) {
-					return fmt.Errorf("Can't find a workflow to use")
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", project.Workflows[0].Name)) {
+					workflow = &project.Workflows[0]
 				}
-				workflow = &project.Workflows[0]
-			} else {
+			} else if len(project.Workflows) > 1 {
 				opts := make([]string, len(project.Workflows))
 				for i := 0; i < len(project.Workflows); i++ {
 					opts[i] = project.Workflows[i].Name
@@ -303,12 +317,17 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 				selected := cli.MultiChoice("Choose the CDS workflow:", opts...)
 				workflow = &project.Workflows[selected]
 			}
+			if workflow == nil && !mctx[_WorkflowName].AllowEmpty {
+				return fmt.Errorf("Can't find a workflow to use")
+			}
 
 			// set workflow name and override repository config if exists
-			workflowName = workflow.Name
-			if repoExists {
-				if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
-					return err
+			if workflow != nil {
+				workflowName = workflow.Name
+				if repoExists {
+					if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
+						return err
+					}
 				}
 			}
 		}
