@@ -119,40 +119,50 @@ func withAllCommandModifiers() []cli.CommandModifier {
 func withAutoConf() cli.CommandModifier {
 	return cli.CommandWithPreRun(
 		func(c *cli.Command, args *[]string) error {
-			if len(*args) >= len(c.Ctx)+len(c.Args) {
+			// if args length equals or over context args length means that all
+			// context args were given so ignore discover conf
+			if len(*args) >= len(c.Ctx) {
 				return nil
 			}
 
-			preargs, err := discoverConf(c.Ctx)
-			if err != nil {
-				return err
-			}
-
-			*args = append(preargs, *args...)
-
-			return nil
+			return discoverConf(c.Ctx, args)
 		},
 	)
 }
 
-func discoverConf(args []cli.Arg) ([]string, error) {
+func discoverConf(ctx []cli.Arg, args *[]string) error {
 	var needProject, needApplication, needWorkflow bool
-	for _, arg := range args {
+	var projectKey, applicationName, workflowName string
+
+	// populates needs an init values from args and ctx
+	for i, arg := range ctx {
 		switch arg.Name {
 		case _ProjectKey:
 			needProject = true
+			if i < len(*args) {
+				projectKey = (*args)[i]
+			}
 		case _ApplicationName:
 			needApplication = true
+			if i < len(*args) {
+				applicationName = (*args)[i]
+			}
 		case _WorkflowName:
 			needWorkflow = true
+			if i < len(*args) {
+				workflowName = (*args)[i]
+			}
 		}
 	}
 
-	if !(needProject || needApplication || needWorkflow) {
-		return nil, nil
-	}
+	// updates needs from values found in args
+	needProject = needProject && projectKey == ""
+	needApplication = needApplication && applicationName == ""
+	needWorkflow = needWorkflow && workflowName == ""
 
-	var projectKey, applicationName, workflowName string
+	if !(needProject || needApplication || needWorkflow) {
+		return nil
+	}
 
 	// try to find existing .git repository
 	var repoExists bool
@@ -168,16 +178,16 @@ func discoverConf(args []cli.Arg) ([]string, error) {
 		gitWorkflowName, _ := r.LocalConfigGet("cds", "workflow")
 
 		// if all needs were found in git do not ask for confirmation and use the config
-		needConfirmation := !(needProject != (gitProjectKey != "") || needApplication != (gitApplicationName != "") || needWorkflow == (gitWorkflowName != ""))
+		needConfirmation := (needProject && gitProjectKey == "") || (needApplication && gitApplicationName == "") || (needWorkflow && gitWorkflowName == "")
 
 		if needConfirmation {
 			fetchURL, err := r.FetchURL()
 			if err != nil {
-				return nil, err
+				return err
 			}
 			name, err := r.Name()
 			if err != nil {
-				return nil, err
+				return err
 			}
 			repoExists = cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL))
 		}
@@ -185,9 +195,15 @@ func discoverConf(args []cli.Arg) ([]string, error) {
 
 	// if repo exists and is correct get existing config from it's config
 	if repoExists {
-		projectKey, _ = r.LocalConfigGet("cds", "project")
-		applicationName, _ = r.LocalConfigGet("cds", "application")
-		workflowName, _ = r.LocalConfigGet("cds", "workflow")
+		if needProject {
+			projectKey, _ = r.LocalConfigGet("cds", "project")
+		}
+		if needApplication {
+			applicationName, _ = r.LocalConfigGet("cds", "application")
+		}
+		if needWorkflow {
+			workflowName, _ = r.LocalConfigGet("cds", "workflow")
+		}
 	}
 
 	// updates needs from values found in git config
@@ -201,14 +217,14 @@ func discoverConf(args []cli.Arg) ([]string, error) {
 		if repoExists {
 			name, err := r.Name()
 			if err != nil {
-				return nil, err
+				return err
 			}
 			projects, err = client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
 		} else {
 			projects, err = client.ProjectList(true, true)
 		}
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		var project *sdk.Project
@@ -226,7 +242,7 @@ func discoverConf(args []cli.Arg) ([]string, error) {
 		if project == nil {
 			if len(projects) == 1 {
 				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
-					return nil, fmt.Errorf("Can't find a project to use")
+					return fmt.Errorf("Can't find a project to use")
 				}
 				project = &projects[0]
 			} else {
@@ -243,7 +259,7 @@ func discoverConf(args []cli.Arg) ([]string, error) {
 		projectKey = project.Key
 		if repoExists {
 			if err := r.LocalConfigSet("cds", "project", projectKey); err != nil {
-				return nil, err
+				return err
 			}
 		}
 
@@ -251,7 +267,7 @@ func discoverConf(args []cli.Arg) ([]string, error) {
 			var application *sdk.Application
 			if len(project.Applications) == 1 {
 				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", project.Applications[0].Name)) {
-					return nil, fmt.Errorf("Can't find an application to use")
+					return fmt.Errorf("Can't find an application to use")
 				}
 				application = &project.Applications[0]
 			} else {
@@ -267,7 +283,7 @@ func discoverConf(args []cli.Arg) ([]string, error) {
 			applicationName = application.Name
 			if repoExists {
 				if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
-					return nil, err
+					return err
 				}
 			}
 		}
@@ -276,7 +292,7 @@ func discoverConf(args []cli.Arg) ([]string, error) {
 			var workflow *sdk.Workflow
 			if len(project.Workflows) == 1 {
 				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", project.Workflows[0].Name)) {
-					return nil, fmt.Errorf("Can't find a workflow to use")
+					return fmt.Errorf("Can't find a workflow to use")
 				}
 				workflow = &project.Workflows[0]
 			} else {
@@ -292,25 +308,26 @@ func discoverConf(args []cli.Arg) ([]string, error) {
 			workflowName = workflow.Name
 			if repoExists {
 				if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
-					return nil, err
+					return err
 				}
 			}
 		}
 	}
 
-	var values []string
-
-	// set then returns values in right order
-	for _, arg := range args {
+	// for all required context args override or add the value in cli args
+	for i, arg := range ctx {
+		if i >= len(*args) {
+			(*args) = append((*args), "")
+		}
 		switch arg.Name {
 		case _ProjectKey:
-			values = append(values, projectKey)
+			(*args)[i] = projectKey
 		case _ApplicationName:
-			values = append(values, applicationName)
+			(*args)[i] = applicationName
 		case _WorkflowName:
-			values = append(values, workflowName)
+			(*args)[i] = workflowName
 		}
 	}
 
-	return values, nil
+	return nil
 }
