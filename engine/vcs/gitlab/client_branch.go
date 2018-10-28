@@ -8,6 +8,11 @@ import (
 
 //Branches retrieves the branches
 func (c *gitlabClient) Branches(ctx context.Context, fullname string) ([]sdk.VCSBranch, error) {
+	p, _, err := c.client.Projects.GetProject(fullname, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	branches, _, err := c.client.Branches.ListBranches(fullname, nil)
 	if err != nil {
 		return nil, err
@@ -19,7 +24,7 @@ func (c *gitlabClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 			ID:           b.Name,
 			DisplayID:    b.Name,
 			LatestCommit: b.Commit.ID,
-			Default:      false,
+			Default:      b.Name == p.DefaultBranch,
 			Parents:      nil,
 		}
 	}
