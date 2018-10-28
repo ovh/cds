@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"reflect"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var (
@@ -70,6 +72,12 @@ var templateApplyCmd = cli.Command{
 			Kind:    reflect.Bool,
 			Name:    "quiet",
 			Usage:   "If true, do not output filename created",
+			Default: "false",
+		},
+		{
+			Kind:    reflect.Bool,
+			Name:    "import-as-code",
+			Usage:   "If true, will import the generated workflow as code on given project",
 			Default: "false",
 		},
 		{
@@ -170,20 +178,32 @@ func templateApplyRun(v cli.Values) error {
 	}
 
 	importPush := v.GetBool("import-push")
+	importAsCode := v.GetBool("import-as-code")
+	var localRepoURL string
 
 	// ask interactively for params if prompt not disabled
 	if !v.GetBool("ignore-prompt") {
-		if workflowName == "" {
-			workflowName = cli.AskValueChoice("Give a valid name for the new generated workflow: ")
-		}
-
 		// try to find existing .git repository
-		var localRepoURL string
+		var localRepoName string
 		if r, err := repo.New("."); err == nil {
 			localRepoURL, err = r.FetchURL()
 			if err != nil {
 				return err
 			}
+			localRepoName, err = r.Name()
+			if err != nil {
+				return err
+			}
+		}
+
+		if workflowName == "" && localRepoName != "" {
+			ss := strings.Split(localRepoName, "/")
+			if len(ss) == 2 && cli.AskForConfirmation(fmt.Sprintf("Use the current repository name '%s' as workflow name?", ss[1])) {
+				workflowName = ss[1]
+			}
+		}
+		if workflowName == "" {
+			workflowName = cli.AskValueChoice("Give a valid name for the new generated workflow: ")
 		}
 
 		var listRepositories []string
@@ -247,9 +267,16 @@ func templateApplyRun(v cli.Values) error {
 			}
 		}
 
-		if !importPush {
+		if !importAsCode && localRepoURL != "" {
+			importAsCode = cli.AskForConfirmation(fmt.Sprintf("Import the generated workflow as code to the %s project?", projectKey))
+		}
+		if !importAsCode && !importPush {
 			importPush = cli.AskForConfirmation(fmt.Sprintf("Push the generated workflow to the %s project?", projectKey))
 		}
+	}
+
+	if importAsCode && localRepoURL == "" {
+		return fmt.Errorf("Can't import current workflow because no local repository was found")
 	}
 
 	dir := strings.TrimSpace(v.GetString("output-dir"))
@@ -275,15 +302,22 @@ func templateApplyRun(v cli.Values) error {
 		return err
 	}
 
-	// push the generated workflow if option set
-	if importPush {
+	// import or push the generated workflow if one option is set
+	if importAsCode || importPush {
 		var buf bytes.Buffer
 		tr, err = teeTarReader(tr, &buf)
 		if err != nil {
 			return err
 		}
 
-		msgList, _, err := client.WorkflowPush(projectKey, bytes.NewBuffer(buf.Bytes()))
+		var msgList []string
+		if importAsCode {
+			msgList, _, err = client.WorkflowPush(projectKey, bytes.NewBuffer(buf.Bytes()), []cdsclient.RequestModifier{
+				func(r *http.Request) { r.Header.Set(sdk.WorkflowAsCodeHeader, localRepoURL) },
+			}...)
+		} else {
+			msgList, _, err = client.WorkflowPush(projectKey, bytes.NewBuffer(buf.Bytes()))
+		}
 		for _, msg := range msgList {
 			fmt.Println(msg)
 		}

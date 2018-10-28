@@ -1474,7 +1474,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if !opts.IsDefaultBranch {
 			wf.DerivationBranch = opts.Branch
 		}
-		if wf.Root.Context.Application != nil {
+		// do not override application data if no opts were given
+		if wf.Root.Context.Application != nil && opts.VCSServer != "" {
 			wf.Root.Context.Application.VCSServer = opts.VCSServer
 			wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
 			wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy

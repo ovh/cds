@@ -189,11 +189,7 @@ func adminPluginsAddBinaryFunc(v cli.Values) error {
 		return fmt.Errorf("unable to compute sha512sum for file %s: %v", v.GetString("filename"), err)
 	}
 
-	if err := client.PluginAddBinary(p, &desc); err != nil {
-		return err
-	}
-
-	return nil
+	return client.PluginAddBinary(p, &desc)
 }
 
 var adminPluginsDocCmd = cli.Command{

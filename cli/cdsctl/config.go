@@ -216,17 +216,30 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 	// populate project, application and workflow if required
 	if needProject || needApplication || needWorkflow {
 		var projects []sdk.Project
+
 		if repoExists {
 			name, err := r.Name()
 			if err != nil {
 				return err
 			}
-			projects, err = client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
-		} else {
-			projects, err = client.ProjectList(true, true)
+			ps, err := client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
+			if err != nil {
+				return err
+			}
+
+			// if there is multiple projects with current repo or zero, ask with the entire list of projects
+			// else suggest the repo found
+			if len(projects) == 1 {
+				projects = ps
+			}
 		}
-		if err != nil {
-			return err
+
+		if projects == nil {
+			ps, err := client.ProjectList(true, true)
+			if err != nil {
+				return err
+			}
+			projects = ps
 		}
 
 		var project *sdk.Project
@@ -244,19 +257,24 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 		if project == nil {
 			if len(projects) == 1 {
 				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
-					// try to suggest project list without repo filter
+					// there is no filter on repo so there was only one choice possible
 					if !repoExists {
 						return fmt.Errorf("Can't find a project to use")
-					}
-					projects, err = client.ProjectList(true, true)
-					if err != nil {
-						return err
 					}
 				} else {
 					project = &projects[0]
 				}
 			}
 			if project == nil {
+				// if the project found for current repo was not selected load all projects list
+				if repoExists && len(projects) == 1 {
+					ps, err := client.ProjectList(true, true)
+					if err != nil {
+						return err
+					}
+					projects = ps
+				}
+
 				opts := make([]string, len(projects))
 				for i := range projects {
 					opts[i] = fmt.Sprintf("%s - %s", projects[i].Key, projects[i].Name)
