@@ -215,7 +215,7 @@ func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 			Mode: 0644,
 			Size: int64(len(bs)),
 		}); err != nil {
-			return sdk.WrapError(err, "Unable to write header for environment %s", env.Environment)
+			return sdk.WrapError(err, "Unable to write header for environment %s", env.Name)
 		}
 		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
 			return sdk.WrapError(err, "Unable to copy environment buffer")
