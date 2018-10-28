@@ -9,9 +9,11 @@ import (
 	"io"
 	"strings"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	yaml "gopkg.in/yaml.v2"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) interface{} {
@@ -121,6 +123,11 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 // Tar returns in buffer the a tar file that contains all generated stuff in template result.
 func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 	tw := tar.NewWriter(w)
+	defer func() {
+		if err := tw.Close(); err != nil {
+			log.Error("%v", sdk.WrapError(err, "Unable to close tar writer"))
+		}
+	}()
 
 	// add generated workflow to writer
 	var wor exportentities.Workflow
@@ -140,11 +147,9 @@ func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 		Mode: 0644,
 		Size: int64(len(bs)),
 	}); err != nil {
-		tw.Close()
 		return sdk.WrapError(err, "Unable to write header for workflow %s", wor.Name)
 	}
 	if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
-		tw.Close()
 		return sdk.WrapError(err, "Unable to copy workflow buffer")
 	}
 
@@ -164,11 +169,9 @@ func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 			Mode: 0644,
 			Size: int64(len(bs)),
 		}); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to write header for pipeline %s", pip.Name)
 		}
 		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to copy pipeline buffer")
 		}
 	}
@@ -189,11 +192,9 @@ func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 			Mode: 0644,
 			Size: int64(len(bs)),
 		}); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to write header for application %s", app.Name)
 		}
 		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to copy application buffer")
 		}
 	}
@@ -214,11 +215,9 @@ func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 			Mode: 0644,
 			Size: int64(len(bs)),
 		}); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to write header for environment %s", env.Environment)
 		}
 		if _, err := io.Copy(tw, bytes.NewBuffer(bs)); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to copy environment buffer")
 		}
 	}

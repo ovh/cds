@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/fatih/structs"
+
 	"github.com/ovh/cds/sdk"
 )
 

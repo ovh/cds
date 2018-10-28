@@ -10,11 +10,10 @@ import (
 	"strings"
 
 	"github.com/fsamin/go-repo"
-
-	"github.com/ovh/cds/sdk"
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
-	"github.com/spf13/cobra"
+	"github.com/ovh/cds/sdk"
 )
 
 var (
