@@ -588,6 +588,15 @@ func NewError(httpError Error, err error) error {
 		if e, ok := err.(errorWithStack); ok {
 			e.httpError = httpError
 			return e
+		} else {
+			return errorWithStack{
+				root:  err,
+				stack: callers(),
+				httpError: Error{
+					Status:  httpError.Status,
+					Message: err.Error(),
+				},
+			}
 		}
 	}
 
