@@ -1019,7 +1019,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 			sdk.WorkflowNotification{
 				Type:           "jabber",
 				SourceNodeRefs: []string{"pip6", "pip5"},
-				Settings: &sdk.JabberEmailUserNotificationSettings{
+				Settings: sdk.UserNotificationSettings{
 					OnFailure:    sdk.UserNotificationAlways,
 					OnStart:      true,
 					OnSuccess:    sdk.UserNotificationAlways,
