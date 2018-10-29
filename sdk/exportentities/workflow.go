@@ -12,10 +12,10 @@ import (
 
 // Workflow is the "as code" representation of a sdk.Workflow
 type Workflow struct {
-	Name               string `json:"name" yaml:"name"`
-	Description        string `json:"description,omitempty" yaml:"description,omitempty"`
-	Version            string `json:"version,omitempty" yaml:"version,omitempty"`
-	TemplateInstanceID *int64 `json:"template_instance_id,omitempty" yaml:"template_instance_id,omitempty"`
+	Name        string  `json:"name" yaml:"name"`
+	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
+	Version     string  `json:"version,omitempty" yaml:"version,omitempty"`
+	Template    *string `json:"template,omitempty" yaml:"template,omitempty"`
 	// This will be filled for complex workflows
 	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty"`
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty"`
@@ -308,8 +308,8 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 		}
 	}
 
-	if w.TemplateInstance != nil {
-		exportedWorkflow.TemplateInstanceID = &w.TemplateInstance.ID
+	if w.Template != nil {
+		exportedWorkflow.Template = &w.Template.Slug
 	}
 
 	return exportedWorkflow, nil
@@ -487,9 +487,9 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	}
 
 	// if there is a template instance id on the workflow export, add it
-	if w.TemplateInstanceID != nil {
-		wf.TemplateInstance = &sdk.WorkflowTemplateInstance{
-			ID: *w.TemplateInstanceID,
+	if w.Template != nil {
+		wf.Template = &sdk.WorkflowTemplate{
+			Slug: *w.Template,
 		}
 	}
 

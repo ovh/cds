@@ -71,7 +71,7 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 	}
 
 	res := sdk.WorkflowTemplateResult{
-		InstanceID:   i.ID,
+		TemplateSlug: wt.Slug,
 		Workflow:     out,
 		Pipelines:    make([]string, len(wt.Pipelines)),
 		Applications: make([]string, len(wt.Applications)),
@@ -136,7 +136,7 @@ func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 	}
 
 	// set the workflow template instance id on export
-	wor.TemplateInstanceID = &res.InstanceID
+	wor.Template = &res.TemplateSlug
 
 	bs, err := exportentities.Marshal(wor, exportentities.FormatYAML)
 	if err != nil {

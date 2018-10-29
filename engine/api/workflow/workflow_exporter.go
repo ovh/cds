@@ -69,7 +69,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	}
 	wf, errload := Load(ctx, db, cache, proj, name, u, options)
 	if errload != nil {
-		return sdk.WrapError(errload, "workflow.Pull> Cannot load workflow %s", name)
+		return sdk.WrapError(errload, "Cannot load workflow %s", name)
 	}
 
 	i, err := workflowtemplate.GetInstance(db, workflowtemplate.NewCriteriaInstance().WorkflowIDs(wf.ID))
@@ -77,7 +77,10 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		return err
 	}
 	if i != nil {
-		wf.TemplateInstance = i
+		wf.Template, err = workflowtemplate.Get(db, workflowtemplate.NewCriteria().IDs(i.WorkflowTemplateID))
+		if err != nil {
+			return err
+		}
 	}
 
 	apps := wf.GetApplications()
@@ -89,12 +92,12 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		app := &apps[i]
 		vars, errv := application.GetAllVariable(db, proj.Key, app.Name, application.WithClearPassword())
 		if errv != nil {
-			return sdk.WrapError(errv, "workflow.Pull> Cannot load application variables %s", app.Name)
+			return sdk.WrapError(errv, "Cannot load application variables %s", app.Name)
 		}
 		app.Variable = vars
 
 		if errk := application.LoadAllDecryptedKeys(db, app); errk != nil {
-			return sdk.WrapError(errk, "workflow.Pull> Cannot load application keys %s", app.Name)
+			return sdk.WrapError(errk, "Cannot load application keys %s", app.Name)
 		}
 	}
 
@@ -103,12 +106,12 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		env := &envs[i]
 		vars, errv := environment.GetAllVariable(db, proj.Key, env.Name, environment.WithClearPassword())
 		if errv != nil {
-			return sdk.WrapError(errv, "workflow.Pull> Cannot load environment variables %s", env.Name)
+			return sdk.WrapError(errv, "Cannot load environment variables %s", env.Name)
 		}
 		env.Variable = vars
 
 		if errk := environment.LoadAllDecryptedKeys(db, env); errk != nil {
-			return sdk.WrapError(errk, "workflow.Pull> Cannot load environment keys %s", env.Name)
+			return sdk.WrapError(errk, "Cannot load environment keys %s", env.Name)
 		}
 	}
 
@@ -122,7 +125,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	buffw := new(bytes.Buffer)
 	size, errw := exportWorkflow(*wf, f, buffw, opts...)
 	if errw != nil {
-		return sdk.WrapError(errw, "workflow.Pull> Unable to export workflow")
+		return sdk.WrapError(errw, "Unable to export workflow")
 	}
 
 	hdr := &tar.Header{

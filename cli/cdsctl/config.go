@@ -249,6 +249,7 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 			for _, p := range projects {
 				if p.Key == projectKey {
 					project = &p
+					break
 				}
 			}
 		}

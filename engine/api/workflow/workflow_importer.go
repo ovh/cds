@@ -22,7 +22,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	w.ProjectKey = proj.Key
 	w.ProjectID = proj.ID
 
-	wTemplateInstance := w.TemplateInstance
+	wTemplate := w.Template
 
 	// Default value of history length is 20
 	if w.HistoryLength == 0 {
@@ -63,15 +63,8 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		}
 
 		// set the workflow id on template instance if exist
-		if wTemplateInstance != nil {
-			// remove existing relations between workflow and template
-			if err := workflowtemplate.DeleteInstanceNotIDAndWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
-				return err
-			}
-			// set the workflow id on target instance
-			if err := workflowtemplate.UpdateInstanceWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
-				return err
-			}
+		if err := setTemplateData(db, proj, w, wTemplate); err != nil {
+			return err
 		}
 
 		return importWorkflowGroups(db, w)
@@ -103,21 +96,52 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	// set the workflow id on template instance if exist
-	if wTemplateInstance != nil {
-		// remove existing relations between workflow and template
-		if err := workflowtemplate.DeleteInstanceNotIDAndWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
-			return err
-		}
-		// set the workflow id on target instance
-		if err := workflowtemplate.UpdateInstanceWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
-			return err
-		}
+	if err := setTemplateData(db, proj, w, wTemplate); err != nil {
+		return err
 	}
 
 	if msgChan != nil {
 		msgChan <- sdk.NewMessage(sdk.MsgWorkflowImportedUpdated, w.Name)
 	}
 	return nil
+}
+
+func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, wt *sdk.WorkflowTemplate) error {
+	// set the workflow id on template instance if exist
+	if wt == nil {
+		return nil
+	}
+
+	wt, err := workflowtemplate.Get(db, workflowtemplate.NewCriteria().Slugs(wt.Slug))
+	if err != nil {
+		return err
+	}
+	if wt == nil {
+		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given workflow template")
+	}
+
+	wtis, err := workflowtemplate.GetInstances(db, workflowtemplate.NewCriteriaInstance().
+		WorkflowTemplateIDs(wt.ID).ProjectIDs(p.ID))
+	if err != nil {
+		return err
+	}
+	var wTemplateInstance *sdk.WorkflowTemplateInstance
+	for _, wti := range wtis {
+		if wti.Request.WorkflowSlug == w.Name {
+			wTemplateInstance = wti
+			break
+		}
+	}
+	if wTemplateInstance == nil {
+		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given a template instance for workflow")
+	}
+
+	// remove existing relations between workflow and template
+	if err := workflowtemplate.DeleteInstanceNotIDAndWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
+		return err
+	}
+	// set the workflow id on target instance
+	return workflowtemplate.UpdateInstanceWorkflowID(db, wTemplateInstance.ID, w.ID)
 }
 
 func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {

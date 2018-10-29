@@ -55,7 +55,7 @@ type Workflow struct {
 	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
 	// aggregates
-	TemplateInstance *WorkflowTemplateInstance `json:"template_instance,omitempty" db:"-"`
+	Template *WorkflowTemplate `json:"template,omitempty" db:"-"`
 }
 
 // GetApplication retrieve application from workflow

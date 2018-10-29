@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/ovh/cds/engine/api/workflowtemplate"
-
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
@@ -52,7 +50,6 @@ func (api *API) getWorkflowHandler() service.Handler {
 		withAudits := FormBool(r, "withAudits")
 		withLabels := FormBool(r, "withLabels")
 		withDeepPipelines := FormBool(r, "withDeepPipelines")
-		withTemplate := FormBool(r, "WithTemplate")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
@@ -86,14 +83,6 @@ func (api *API) getWorkflowHandler() service.Handler {
 			w1.Audits = audits
 		}
 
-		if withTemplate {
-			t, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().WorkflowIDs(w1.ID))
-			if err != nil {
-				return err
-			}
-			w1.TemplateInstance = t
-		}
-
 		w1.Permission = permission.WorkflowPermission(key, w1.Name, getUser(ctx))
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
@@ -106,19 +95,19 @@ func loadWorkflowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error)
 	usage := sdk.Usage{}
 	pips, errP := pipeline.LoadByWorkflowID(db, workflowID)
 	if errP != nil {
-		return usage, sdk.WrapError(errP, "loadWorkflowUsage> Cannot load pipelines linked to a workflow id %d", workflowID)
+		return usage, sdk.WrapError(errP, "Cannot load pipelines linked to a workflow id %d", workflowID)
 	}
 	usage.Pipelines = pips
 
 	envs, errE := environment.LoadByWorkflowID(db, workflowID)
 	if errE != nil {
-		return usage, sdk.WrapError(errE, "loadWorkflowUsage> Cannot load environments linked to a workflow id %d", workflowID)
+		return usage, sdk.WrapError(errE, "Cannot load environments linked to a workflow id %d", workflowID)
 	}
 	usage.Environments = envs
 
 	apps, errA := application.LoadByWorkflowID(db, workflowID)
 	if errA != nil {
-		return usage, sdk.WrapError(errA, "loadWorkflowUsage> Cannot load applications linked to a workflow id %d", workflowID)
+		return usage, sdk.WrapError(errA, "Cannot load applications linked to a workflow id %d", workflowID)
 	}
 	usage.Applications = apps
 

@@ -337,7 +337,7 @@ func (api *API) applyTemplateHandler() service.Handler {
 		if wti == nil {
 			// try to get a instance not assign to a workflow but with the same slug
 			wtis, err := workflowtemplate.GetInstances(tx, workflowtemplate.NewCriteriaInstance().
-				WorkflowIDs(0).WorkflowTemplateIDs(wt.ID))
+				WorkflowIDs(0).WorkflowTemplateIDs(wt.ID).ProjectIDs(p.ID))
 			if err != nil {
 				return err
 			}

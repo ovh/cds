@@ -179,24 +179,24 @@ func templateApplyRun(v cli.Values) error {
 
 	importPush := v.GetBool("import-push")
 	importAsCode := v.GetBool("import-as-code")
+
+	// try to find existing .git repository
 	var localRepoURL string
+	var localRepoName string
+	r, err := repo.New(".")
+	if err == nil {
+		localRepoURL, err = r.FetchURL()
+		if err != nil {
+			return err
+		}
+		localRepoName, err = r.Name()
+		if err != nil {
+			return err
+		}
+	}
 
 	// ask interactively for params if prompt not disabled
 	if !v.GetBool("ignore-prompt") {
-		// try to find existing .git repository
-		var localRepoName string
-		r, err := repo.New(".")
-		if err == nil {
-			localRepoURL, err = r.FetchURL()
-			if err != nil {
-				return err
-			}
-			localRepoName, err = r.Name()
-			if err != nil {
-				return err
-			}
-		}
-
 		if workflowName == "" {
 			if localRepoName != "" {
 				ss := strings.Split(localRepoName, "/")
@@ -207,12 +207,6 @@ func templateApplyRun(v cli.Values) error {
 			// if no repo or current repo name not used
 			if workflowName == "" {
 				workflowName = cli.AskValueChoice("Give a valid name for the new generated workflow: ")
-			}
-			// store the choosen workflow name to git config
-			if localRepoName != "" {
-				if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
-					return err
-				}
 			}
 		}
 
@@ -333,6 +327,13 @@ func templateApplyRun(v cli.Values) error {
 		}
 		if err != nil {
 			return err
+		}
+
+		// store the choosen workflow name to git config
+		if localRepoName != "" {
+			if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
+				return err
+			}
 		}
 
 		fmt.Println("Workflow successfully pushed !")

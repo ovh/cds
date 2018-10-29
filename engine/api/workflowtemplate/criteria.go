@@ -63,6 +63,7 @@ func NewCriteriaInstance() CriteriaInstance { return CriteriaInstance{} }
 type CriteriaInstance struct {
 	workflowTemplateIDs []int64
 	workflowIDs         []int64
+	projectIDs          []int64
 }
 
 func (c CriteriaInstance) WorkflowTemplateIDs(ids ...int64) CriteriaInstance {
@@ -72,6 +73,11 @@ func (c CriteriaInstance) WorkflowTemplateIDs(ids ...int64) CriteriaInstance {
 
 func (c CriteriaInstance) WorkflowIDs(ids ...int64) CriteriaInstance {
 	c.workflowIDs = ids
+	return c
+}
+
+func (c CriteriaInstance) ProjectIDs(ids ...int64) CriteriaInstance {
+	c.projectIDs = ids
 	return c
 }
 
@@ -86,6 +92,10 @@ func (c CriteriaInstance) where() string {
 		reqs = append(reqs, "workflow_id = ANY(string_to_array(:workflowIDs, ',')::int[])")
 	}
 
+	if c.projectIDs != nil {
+		reqs = append(reqs, "project_id = ANY(string_to_array(:projectIDs, ',')::int[])")
+	}
+
 	if len(reqs) == 0 {
 		return "false"
 	}
@@ -97,6 +107,7 @@ func (c CriteriaInstance) args() interface{} {
 	return map[string]interface{}{
 		"workflowTemplateIDs": database.IDsToQueryString(c.workflowTemplateIDs),
 		"workflowIDs":         database.IDsToQueryString(c.workflowIDs),
+		"projectIDs":          database.IDsToQueryString(c.projectIDs),
 	}
 }
 

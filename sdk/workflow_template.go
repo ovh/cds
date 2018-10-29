@@ -34,7 +34,7 @@ func (w *WorkflowTemplateRequest) Scan(src interface{}) error {
 
 // WorkflowTemplateResult struct.
 type WorkflowTemplateResult struct {
-	InstanceID   int64
+	TemplateSlug string
 	Workflow     string
 	Pipelines    []string
 	Applications []string
@@ -301,4 +301,6 @@ type WorkflowTemplateInstance struct {
 	WorkflowID              int64                   `json:"workflow_id" db:"workflow_id"`
 	WorkflowTemplateVersion int64                   `json:"workflow_template_version" db:"workflow_template_version"`
 	Request                 WorkflowTemplateRequest `json:"request" db:"request"`
+	// aggregates
+	Template *WorkflowTemplate `json:"template,omitempty" db:"-"`
 }
