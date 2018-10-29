@@ -303,8 +303,13 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 				for i := 0; i < len(project.Applications); i++ {
 					opts[i] = project.Applications[i].Name
 				}
+				if mctx[_ApplicationName].AllowEmpty {
+					opts = append(opts, "Use a new application")
+				}
 				selected := cli.MultiChoice("Choose the CDS application:", opts...)
-				application = &project.Applications[selected]
+				if selected < len(project.Applications) {
+					application = &project.Applications[selected]
+				}
 			}
 			if application == nil && !mctx[_ApplicationName].AllowEmpty {
 				return fmt.Errorf("Can't find an application to use")
@@ -332,8 +337,13 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 				for i := 0; i < len(project.Workflows); i++ {
 					opts[i] = project.Workflows[i].Name
 				}
+				if mctx[_WorkflowName].AllowEmpty {
+					opts = append(opts, "Use a new workflow")
+				}
 				selected := cli.MultiChoice("Choose the CDS workflow:", opts...)
-				workflow = &project.Workflows[selected]
+				if selected < len(project.Workflows) {
+					workflow = &project.Workflows[selected]
+				}
 			}
 			if workflow == nil && !mctx[_WorkflowName].AllowEmpty {
 				return fmt.Errorf("Can't find a workflow to use")
