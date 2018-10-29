@@ -54,19 +54,19 @@ func TestErrorIs(t *testing.T) {
 
 func TestNewError(t *testing.T) {
 	err := NewError(ErrWrongRequest, fmt.Errorf("this is an error generated from vendor"))
-	assert.Equal(t, "TestNewError: wrong request (caused by: this is an error generated from vendor)", err.Error())
+	assert.Equal(t, "TestNewError: this is an error generated from vendor (caused by: wrong request)", err.Error())
 
 	// print the error call stack
-	fmt.Println(err)
+	t.Log(err)
 	// print the error stack trace
-	fmt.Printf("%+v\n", err)
+	t.Logf("%+v\n", err)
 
 	httpErr := ExtractHTTPError(err, "fr")
 
 	// print the http error
-	fmt.Println(httpErr)
+	t.Log(httpErr)
 
-	assert.Equal(t, "la requête est incorrecte (caused by: this is an error generated from vendor)", httpErr.Error())
+	assert.Equal(t, "this is an error generated from vendor", httpErr.Error())
 }
 
 func TestWrapError(t *testing.T) {
@@ -74,9 +74,9 @@ func TestWrapError(t *testing.T) {
 	assert.Equal(t, "TestWrapError>oneForStackTest>twoForStackTest>threeForStackTest>fourForStackTest>fiveForStackTest: internal server error (caused by: one: two: three: four: five: this is an error generated from vendor)", err.Error())
 
 	// print the error call stack
-	fmt.Println(err)
+	t.Log(err)
 	// print the error stack trace
-	fmt.Printf("%+v\n", err)
+	t.Logf("%+v\n", err)
 }
 
 func oneForStackTest() error   { return WrapError(twoForStackTest(), "one") }

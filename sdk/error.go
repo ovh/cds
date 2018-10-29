@@ -590,7 +590,7 @@ func NewError(httpError Error, err error) error {
 			return e
 		} else {
 			return errorWithStack{
-				root:  err,
+				root:  httpError,
 				stack: callers(),
 				httpError: Error{
 					Status:  httpError.Status,
