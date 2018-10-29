@@ -185,7 +185,8 @@ func templateApplyRun(v cli.Values) error {
 	if !v.GetBool("ignore-prompt") {
 		// try to find existing .git repository
 		var localRepoName string
-		if r, err := repo.New("."); err == nil {
+		r, err := repo.New(".")
+		if err == nil {
 			localRepoURL, err = r.FetchURL()
 			if err != nil {
 				return err
@@ -196,14 +197,23 @@ func templateApplyRun(v cli.Values) error {
 			}
 		}
 
-		if workflowName == "" && localRepoName != "" {
-			ss := strings.Split(localRepoName, "/")
-			if len(ss) == 2 && cli.AskForConfirmation(fmt.Sprintf("Use the current repository name '%s' as workflow name?", ss[1])) {
-				workflowName = ss[1]
-			}
-		}
 		if workflowName == "" {
-			workflowName = cli.AskValueChoice("Give a valid name for the new generated workflow: ")
+			if localRepoName != "" {
+				ss := strings.Split(localRepoName, "/")
+				if len(ss) == 2 && cli.AskForConfirmation(fmt.Sprintf("Use the current repository name '%s' as workflow name?", ss[1])) {
+					workflowName = ss[1]
+				}
+			}
+			// if no repo or current repo name not used
+			if workflowName == "" {
+				workflowName = cli.AskValueChoice("Give a valid name for the new generated workflow: ")
+			}
+			// store the choosen workflow name to git config
+			if localRepoName != "" {
+				if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
+					return err
+				}
+			}
 		}
 
 		var listRepositories []string
