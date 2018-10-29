@@ -71,14 +71,15 @@ func (w *Workflow) RetroMigrate() {
 func (w *Workflow) Migrate(withID bool) WorkflowData {
 	work := WorkflowData{}
 
-	// Add root node
-	work.Node = (*w.Root).migrate(withID)
+	if w != nil && w.Root != nil {
+		// Add root node
+		work.Node = (*w.Root).migrate(withID)
 
-	// Add Join
-	for _, j := range w.Joins {
-		work.Joins = append(work.Joins, j.migrate(withID))
+		// Add Join
+		for _, j := range w.Joins {
+			work.Joins = append(work.Joins, j.migrate(withID))
+		}
 	}
-
 	return work
 }
 
@@ -767,7 +768,7 @@ func (n WorkflowNode) migrate(withID bool) Node {
 			Conditions:                n.Context.Conditions,
 			DefaultPayload:            n.Context.DefaultPayload,
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
-			Mutex: n.Context.Mutex,
+			Mutex:                     n.Context.Mutex,
 		},
 	}
 	if n.Context.ApplicationID == 0 && n.Context.Application != nil {

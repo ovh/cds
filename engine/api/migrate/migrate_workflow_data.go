@@ -20,7 +20,7 @@ func MigrateToWorkflowData(DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
 		db := DBFunc()
 		var IDs []int64
-		query := "SELECT id FROM workflow WHERE workflow_data IS NULL LIMIT 100"
+		query := "SELECT id FROM workflow WHERE workflow_data IS NULL AND to_delete = false LIMIT 100"
 		rows, err := db.Query(query)
 		if err != nil {
 			log.Error("MigrateToWorkflowData> Unable to select workflows id: %v", err)
