@@ -206,7 +206,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 
 			lbl, errL := project.LabelByName(db, proj.ID, label.Name)
 			if errL != nil {
-				if errL != sql.ErrNoRows {
+				if sdk.Cause(errL) != sql.ErrNoRows {
 					return sdk.WrapError(errL, "postWorkflowLabelHandler> cannot load label by name")
 				}
 				// If label doesn't exist create him

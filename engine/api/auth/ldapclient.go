@@ -314,7 +314,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 
 	//User
 	var newUser = false
-	if err == sql.ErrNoRows {
+	if sdk.Cause(err) == sql.ErrNoRows {
 		newUser = true
 		u = &sdk.User{
 			Admin:    false,

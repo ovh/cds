@@ -80,7 +80,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 		wor, err := worker.LoadWorker(api.mustDB(), id)
 		if err != nil {
-			if err != sql.ErrNoRows {
+			if sdk.Cause(err) != sql.ErrNoRows {
 				return sdk.WrapError(err, "Cannot load worker %s", id)
 			}
 			return sdk.WrapError(sdk.ErrNotFound, "disabledWorkerHandler> Cannot load worker %s", id)
@@ -91,7 +91,8 @@ func (api *API) disableWorkerHandler() service.Handler {
 		}
 
 		if err := DisableWorker(api.mustDB(), id); err != nil {
-			if err == worker.ErrNoWorker || err == sql.ErrNoRows {
+			cause := sdk.Cause(err)
+			if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrWrongRequest, "disableWorkerHandler> worker %s does not exists", id)
 			}
 			return sdk.WrapError(err, "cannot update worker status")
@@ -107,7 +108,7 @@ func (api *API) disableWorkerHandler() service.Handler {
 
 func (api *API) refreshWorkerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
+		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (sdk.Cause(err) != sql.ErrNoRows || sdk.Cause(err) != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "cannot refresh last beat of %s", getWorker(ctx).ID)
 		}
 		return nil
@@ -215,7 +216,8 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 	}
 
 	if err := worker.SetStatus(tx, id, sdk.StatusDisabled); err != nil {
-		if err == worker.ErrNoWorker || err == sql.ErrNoRows {
+		cause := sdk.Cause(err)
+		if cause == worker.ErrNoWorker || cause == sql.ErrNoRows {
 			return sdk.WrapError(sdk.ErrWrongRequest, "DisableWorker> worker %s does not exists", id)
 		}
 		return sdk.WrapError(err, "cannot update worker status")

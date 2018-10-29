@@ -273,7 +273,7 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 	var h sdk.Hook
 
 	h, err = FindHook(tx, application.ID, pipeline.ID, rm, rm, t[0], t[1])
-	if err == sql.ErrNoRows {
+	if sdk.Cause(err) == sql.ErrNoRows {
 		h = sdk.Hook{
 			Pipeline:      *pipeline,
 			ApplicationID: application.ID,

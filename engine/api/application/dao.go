@@ -281,7 +281,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOpti
 	}
 
 	for _, f := range opts {
-		if err := (*f)(db, store, &app, u); err != nil && err != sql.ErrNoRows {
+		if err := (*f)(db, store, &app, u); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return nil, sdk.WrapError(err, "application.unwrap")
 		}
 	}

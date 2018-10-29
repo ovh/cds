@@ -220,7 +220,7 @@ func (api *API) getHooksHandler() service.Handler {
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectName, pipelineName, false)
 		if err != nil {
-			if err != sdk.ErrPipelineNotFound {
+			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 				log.Warning("getHooks> cannot load pipeline %s/%s: %s\n", projectName, pipelineName, err)
 			}
 			return err

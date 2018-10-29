@@ -749,7 +749,7 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 
 		if loadOpts.WithCoverage {
 			cov, errCov := LoadCoverageReport(db, wnr.ID)
-			if errCov != nil && errCov != sdk.ErrNotFound {
+			if errCov != nil && !sdk.ErrorIs(errCov, sdk.ErrNotFound) {
 				return sdk.WrapError(errCov, "syncNodeRuns> Error loading code coverage report for node run %d", wnr.ID)
 			}
 			wnr.Coverage = cov

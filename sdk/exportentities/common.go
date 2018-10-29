@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //GetFormat return a format
@@ -24,7 +26,7 @@ func GetFormat(f string) (Format, error) {
 	case "toml", "tml", ".toml", ".tml":
 		return FormatTOML, nil
 	default:
-		return UnknownFormat, ErrUnsupportedFormat
+		return UnknownFormat, sdk.WithStack(ErrUnsupportedFormat)
 	}
 }
 

@@ -515,7 +515,7 @@ func (api *API) putWorkerModelPatternHandler() service.Handler {
 
 		oldWmp, errOld := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
 		if errOld != nil {
-			if errOld == sql.ErrNoRows {
+			if sdk.Cause(errOld) == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrNotFound, "putWorkerModelPatternHandler> cannot load worker model pattern (%s/%s) : %v", patternType, patternName, errOld)
 			}
 			return sdk.WrapError(errOld, "putWorkerModelPatternHandler> cannot load worker model pattern")
@@ -538,7 +538,7 @@ func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 
 		wmp, err := worker.LoadWorkerModelPatternByName(api.mustDB(), patternType, patternName)
 		if err != nil {
-			if err == sql.ErrNoRows {
+			if sdk.Cause(err) == sql.ErrNoRows {
 				return sdk.WrapError(sdk.ErrNotFound, "deleteWorkerModelPatternHandler> Cannot load worker model by name (%s/%s)", patternType, patternName)
 			}
 			return sdk.WrapError(err, "Cannot load worker model by name (%s/%s) : %v", patternType, patternName, err)

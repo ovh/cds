@@ -267,7 +267,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 				return report, nil
 			}
 			waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, LoadRunOptions{})
-			if errRun != nil && errRun != sql.ErrNoRows {
+			if errRun != nil && sdk.Cause(errRun) != sql.ErrNoRows {
 				log.Error("workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errRun)
 				return report, nil
 			}

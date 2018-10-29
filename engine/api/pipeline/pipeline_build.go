@@ -404,7 +404,7 @@ func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicatio
 
 	pbID, errLoad := LoadPipelineBuildID(db, applicationID, pipelineID, environmentID, buildNumber)
 	if errLoad != nil {
-		if errLoad == sql.ErrNoRows {
+		if sdk.Cause(errLoad) == sql.ErrNoRows {
 			return pbs, nil
 		}
 		return nil, errLoad
@@ -777,7 +777,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 
 	// Load last finished build
 	buildNumber, err := GetLastBuildNumber(tx, p.ID, app.ID, env.ID)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && sdk.Cause(err) != sql.ErrNoRows {
 		return nil, sdk.WrapError(err, "Cannot get last build number")
 	}
 

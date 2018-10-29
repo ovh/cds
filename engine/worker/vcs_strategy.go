@@ -38,7 +38,7 @@ func extractVCSInformations(params []sdk.Parameter, secrets []sdk.Variable) (str
 			return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", err)
 		}
 		key, errK := vcs.GetSSHKey(secrets, keysDirectory, &privateKeyVar)
-		if errK != nil && errK != sdk.ErrKeyNotFound {
+		if errK != nil && !sdk.ErrorIs(errK, sdk.ErrKeyNotFound) {
 			return gitURL, nil, fmt.Errorf("unable to setup ssh key. %s", errK)
 		}
 		if key != nil {

@@ -400,7 +400,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, p *dbProject, u *sdk.User, o
 	proj := sdk.Project(*p)
 
 	for _, f := range opts {
-		if err := (*f)(db, store, &proj, u); err != nil && err != sql.ErrNoRows {
+		if err := (*f)(db, store, &proj, u); err != nil && sdk.Cause(err) != sql.ErrNoRows {
 			return nil, err
 		}
 	}

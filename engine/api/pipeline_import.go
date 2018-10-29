@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) postPipelinePreviewHandler() service.Handler {
@@ -24,13 +25,13 @@ func (api *API) postPipelinePreviewHandler() service.Handler {
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to read body : %v", errRead)
+			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
 		}
 
 		// Compute format
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Unable to get format : %v", errF)
+			return sdk.NewError(sdk.ErrWrongRequest, errF)
 		}
 
 		var payload exportentities.PipelineV1
@@ -41,14 +42,13 @@ func (api *API) postPipelinePreviewHandler() service.Handler {
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, &payload)
 		}
-
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelinePreviewHandler> Cannot parsing: %v", errorParse)
+			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
 		}
 
 		pip, errP := payload.Pipeline()
 		if errP != nil {
-			return sdk.WrapError(errP, "postPipelinePreviewHandler> Unable to parse pipeline")
+			return sdk.WrapError(errP, "Unable to parse pipeline")
 		}
 
 		return service.WriteJSON(w, pip, http.StatusOK)
@@ -65,19 +65,19 @@ func (api *API) importPipelineHandler() service.Handler {
 		// Load project
 		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups)
 		if errp != nil {
-			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project %s", key)
+			return sdk.WrapError(errp, "Unable to load project %s", key)
 		}
 
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Unable to read body")
+			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
 		}
 
 		// Compute format
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Unable to get format : %s", errF)
+			return sdk.NewError(sdk.ErrWrongRequest, errF)
 		}
 
 		rawPayload := map[string]interface{}{}
@@ -88,7 +88,6 @@ func (api *API) importPipelineHandler() service.Handler {
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, &rawPayload)
 		}
-
 		if errorParse != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
 		}
@@ -120,27 +119,27 @@ func (api *API) importPipelineHandler() service.Handler {
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, payload)
 		}
-
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Cannot parsing: %s", errorParse)
+			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			return sdk.WrapError(errBegin, "importPipelineHandler: Cannot start transaction")
+			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
 
 		defer tx.Rollback()
 
 		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx), pipeline.ImportOptions{Force: forceUpdate})
 		msgListString := translate(r, allMsg)
-
 		if globalError != nil {
-			myError, ok := globalError.(sdk.Error)
-			if ok {
-				return service.WriteJSON(w, msgListString, myError.Status)
+			globalError = sdk.WrapError(globalError, "Unable to import pipeline")
+			if sdk.ErrorIsUnknown(globalError) {
+				return globalError
 			}
-			return sdk.WrapError(globalError, "importPipelineHandler> Unable import pipeline")
+			log.Warning("%v", globalError)
+			sdkErr := sdk.ExtractHTTPError(globalError, r.Header.Get("Accept-Language"))
+			return service.WriteJSON(w, append(msgListString, sdkErr.Message), sdkErr.Status)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -161,7 +160,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		// Load project
 		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errp != nil {
-			return sdk.WrapError(errp, "putImportPipelineHandler> Unable to load project %s", key)
+			return sdk.WrapError(errp, "Unable to load project %s", key)
 		}
 
 		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
@@ -171,13 +170,13 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "putImportPipelineHandler> Unable to read body")
+			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
 		}
 
 		// Compute format
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "putImportPipelineHandler> Unable to get format : %s", errF)
+			return sdk.NewError(sdk.ErrWrongRequest, errF)
 		}
 
 		rawPayload := map[string]interface{}{}
@@ -188,7 +187,6 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, &rawPayload)
 		}
-
 		if errorParse != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
 		}
@@ -220,14 +218,13 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, payload)
 		}
-
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "putImportPipelineHandler> Cannot parsing: %s", errorParse)
+			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			return sdk.WrapError(errBegin, "putImportPipelineHandler: Cannot start transaction")
+			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
 
 		defer func() {
@@ -236,9 +233,8 @@ func (api *API) putImportPipelineHandler() service.Handler {
 
 		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(r, allMsg)
-
 		if globalError != nil {
-			return sdk.WrapError(globalError, "putImportPipelineHandler> Unable import pipeline")
+			return sdk.WrapError(globalError, "Unable to import pipeline")
 		}
 
 		if err := tx.Commit(); err != nil {

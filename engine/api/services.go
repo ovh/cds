@@ -36,19 +36,19 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		srv := &sdk.Service{}
 		if err := service.UnmarshalBody(r, srv); err != nil {
-			return sdk.WrapError(err, "postServiceRegisterHandler")
+			return sdk.WithStack(err)
 		}
 
 		// Load token
 		t, errL := token.LoadToken(api.mustDB(), srv.Token)
 		if errL != nil {
-			return sdk.WrapError(sdk.ErrUnauthorized, "postServiceRegisterHandler> Cannot register service: %v", errL)
+			return sdk.NewError(sdk.ErrUnauthorized, sdk.WrapError(errL, "Cannot register service"))
 		}
 
 		//Service must be with a sharedinfra group token
 		// except for hatchery: users can start hatchery with their group
 		if t.GroupID != group.SharedInfraGroup.ID && srv.Type != services.TypeHatchery {
-			return sdk.WrapError(sdk.ErrUnauthorized, "postServiceRegisterHandler> Cannot register service for group %d with service %s", t.GroupID, srv.Type)
+			return sdk.WrapError(sdk.ErrUnauthorized, "Cannot register service for group %d with service %s", t.GroupID, srv.Type)
 		}
 
 		srv.GroupID = &t.GroupID
@@ -69,7 +69,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		//Insert or update the service
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "postServiceRegisterHandler")
+			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() // nolint
 
@@ -78,15 +78,15 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		if oldSrv != nil {
 			srv.Hash = oldSrv.Hash
 			srv.ID = oldSrv.ID
-		} else if errOldSrv == sdk.ErrNotFound {
+		} else if sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
 			//Generate a hash
 			hash, errsession := sessionstore.NewSessionKey()
 			if errsession != nil {
-				return sdk.WrapError(errsession, "postServiceRegisterHandler> Unable to create session")
+				return sdk.WrapError(errsession, "Unable to create session")
 			}
 			srv.Hash = string(hash)
 		} else {
-			return sdk.WrapError(errOldSrv, "postServiceRegisterHandler")
+			return sdk.WithStack(errOldSrv)
 		}
 
 		srv.LastHeartbeat = time.Now()
@@ -103,7 +103,7 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postServiceRegisterHandler")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, srv, http.StatusOK)
@@ -157,7 +157,7 @@ func (api *API) serviceAPIHeartbeatUpdate(c context.Context, db *gorp.DbMap, has
 
 	//Try to find the service, and keep; else generate a new one
 	oldSrv, errOldSrv := services.FindByName(tx, srv.Name)
-	if errOldSrv != nil && errOldSrv != sdk.ErrNotFound {
+	if errOldSrv != nil && !sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
 		log.Error("serviceAPIHeartbeat> Unable to find by name:%v", errOldSrv)
 		return
 	}
