@@ -56,7 +56,12 @@ func (api *API) getWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		opts := workflow.LoadOptions{WithFavorites: true, DeepPipeline: withDeepPipelines, WithIcon: true, WithLabels: withLabels}
+		opts := workflow.LoadOptions{
+			WithFavorites: true,
+			DeepPipeline:  withDeepPipelines,
+			WithIcon:      true,
+			WithLabels:    withLabels,
+		}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), opts)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load workflow %s", name)

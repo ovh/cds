@@ -76,7 +76,7 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 		return sdk.WrapError(err, "Unable to load workflow permissions for  %s", u.Username)
 	}
 	if u.Permissions.WorkflowsPerm == nil {
-		u.Permissions.WorkflowsPerm = make(map[string]int, len(permEnv))
+		u.Permissions.WorkflowsPerm = make(map[string]int, len(permWorkflow))
 	}
 	for _, p := range permWorkflow {
 		k := sdk.UserPermissionKey(p.Workflow.ProjectKey, p.Workflow.Name)
@@ -96,7 +96,7 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 	okg := store.Get(kg, &u.Groups)
 	if !okp || !okg {
 		query := `
-			SELECT "group".id, "group".name, "group_user".group_admin 
+			SELECT "group".id, "group".name, "group_user".group_admin
 			FROM "group"
 	 		JOIN group_user ON group_user.group_id = "group".id
 	 		WHERE group_user.user_id = $1 ORDER BY "group".name ASC`
