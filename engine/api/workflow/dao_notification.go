@@ -2,12 +2,12 @@ package workflow
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -101,7 +101,7 @@ func insertNotification(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 
 // PostInsert is a db hook
 func (no *Notification) PostInsert(db gorp.SqlExecutor) error {
-	b, err := json.Marshal(no.Settings)
+	b, err := gorpmapping.JSONToNullString(no.Settings)
 	if err != nil {
 		return err
 	}
@@ -113,15 +113,13 @@ func (no *Notification) PostInsert(db gorp.SqlExecutor) error {
 
 // PostGet is a db hook
 func (no *Notification) PostGet(db gorp.SqlExecutor) error {
-	var res = struct {
-		Notification string `db:"settings"`
-	}{}
-
-	if err := db.SelectOne(&res, "SELECT settings FROM workflow_notification WHERE id = $1", no.ID); err != nil {
+	res, err := db.SelectNullStr("SELECT settings FROM workflow_notification WHERE id = $1", no.ID)
+	if err != nil {
 		return sdk.WrapError(err, "Unable to load marshalled workflow notification")
 	}
 
-	var errN error
-	no.Settings, errN = sdk.ParseWorkflowUserNotificationSettings(no.Type, []byte(res.Notification))
-	return sdk.WrapError(errN, "Notification.PostGet > Cannot parse user notification")
+	if err := gorpmapping.JSONNullString(res, &no.Settings); err != nil {
+		return sdk.WrapError(err, "cannot parse user notification")
+	}
+	return nil
 }

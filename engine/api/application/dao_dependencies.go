@@ -7,7 +7,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hook"
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -103,15 +102,6 @@ var (
 			return sdk.WrapError(err, "Unable to load hooks for application %d", app.ID)
 		}
 		app.Hooks = h
-		return nil
-	}
-
-	loadNotifs = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
-		var err error
-		app.Notifications, err = notification.LoadAllUserNotificationSettings(db, app.ID)
-		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
-			return sdk.WrapError(err, "Unable to load notifications for application %d", app.ID)
-		}
 		return nil
 	}
 
