@@ -82,4 +82,4 @@ steps:
   - EOF
   - ""
   - sonar-scanner -Dsonar.host.url={{.sonarURL}} -Dsonar.login={{.sonarUsername}}
-    -Dsonar.password={{.sonarPassword}} -Dsonar.branch={{.gitBranch}} -Dsonar.scm.disabled=true
+    -Dsonar.password={{.sonarPassword}} -Dsonar.branch={{.sonarBranch}} -Dsonar.scm.disabled=true
