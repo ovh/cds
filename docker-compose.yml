@@ -5,6 +5,13 @@
 version: '3'
 
 services:
+  cds-feature:
+    image: maif/izanami
+    ports:
+      - "8080:8080"
+    environment:
+      INITIAL_APIKEY_CLIENT_ID: changeitchangeitchangeitchangeit
+      INITIAL_APIKEY_CLIENT_SECRET: changeitchangeitchangeitchangeit
   cds-db:
     image: postgres:9.6.2
     environment:
