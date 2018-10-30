@@ -9,7 +9,7 @@ testcases:
   - script: '[ -f ./tests/fixtures/ITNEWMODEL/root.pip.yml ]'
   - script: '[ -f ./tests/fixtures/ITNEWMODEL/tests.pip.yml ]'
 
-- name: Create workflow ITSCWRKFLW3 and run it
+- name: Create workflow ITNEWMODEL and run it
   steps:
   - script: "{{.cds.build.cdsctl}} project remove --force ITNEWMODEL"
   - script: "{{.cds.build.cdsctl}} group remove --force ITNEWMODEL"
