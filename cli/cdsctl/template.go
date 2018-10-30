@@ -271,11 +271,13 @@ func templateApplyRun(v cli.Values) error {
 			}
 		}
 
-		if !importAsCode && localRepoURL != "" {
-			importAsCode = cli.AskForConfirmation(fmt.Sprintf("Import the generated workflow as code to the %s project?", projectKey))
-		}
 		if !importAsCode && !importPush {
-			importPush = cli.AskForConfirmation(fmt.Sprintf("Push the generated workflow to the %s project?", projectKey))
+			if localRepoURL != "" {
+				importAsCode = cli.AskForConfirmation(fmt.Sprintf("Import the generated workflow as code to the %s project?", projectKey))
+			}
+			if !importAsCode {
+				importPush = cli.AskForConfirmation(fmt.Sprintf("Push the generated workflow to the %s project?", projectKey))
+			}
 		}
 	}
 
