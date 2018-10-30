@@ -54,7 +54,7 @@ type WorkflowRun struct {
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
-	Version          int                              `json:"version" db:"version"`
+	Version          int                              `json:"version" db:"version" cli:"version"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow

@@ -21,7 +21,6 @@ testcases:
   - script: "{{.cds.build.cdsctl}} workflow run ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW"
     assertions:
     - result.code ShouldEqual 0
-    - result.systemoutjson.version ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #1 has been launched"
   - script: "sleep 1"
   - script: "{{.cds.build.cdsctl}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 1 --format json"
@@ -33,10 +32,10 @@ testcases:
     - result.systemoutjson.num ShouldEqual 1
     - result.systemoutjson.status ShouldEqual 'Never Built'
     - result.systemoutjson.tags ShouldContainSubstring triggered_by
+    - result.systemoutjson.version ShouldEqual 0
   - script:  "{{.cds.build.cdsctl}} workflow run ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW -d '{\"git.branch\": \"master\"}'"
     assertions:
     - result.code ShouldEqual 0
-    - result.systemoutjson.version ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #2 has been launched"
   - script: "{{.cds.build.cdsctl}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
     assertions:
@@ -44,3 +43,4 @@ testcases:
     - result.systemoutjson.status ShouldEqual Building
     - result.systemoutjson.tags ShouldContainSubstring master
     - result.systemoutjson.num ShouldContainSubstring 2
+    - result.systemoutjson.version ShouldEqual 0
