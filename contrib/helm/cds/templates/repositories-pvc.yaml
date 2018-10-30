@@ -1,0 +1,27 @@
+{{- if and .Values.repositories.persistence.enabled (not .Values.repositories.persistence.existingClaim) -}}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ template "cds.fullname" . }}-repositories
+  labels:
+    app: {{ template "cds.fullname" . }}-repositories
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  {{- if .Values.repositories.persistence.hostPath }}
+  storageClassName: ""
+  {{- end }}
+  accessModes:
+    - {{ .Values.repositories.persistence.accessMode | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.repositories.persistence.size | quote }}
+{{- if and .Values.repositories.persistence.storageClass (not .Values.repositories.persistence.hostPath) -}}
+{{- if (eq "-" .Values.repositories.persistence.storageClass) }}
+  storageClassName: ""
+{{- else }}
+  storageClassName: "{{ .Values.repositories.persistence.storageClass }}"
+{{- end }}
+{{- end }}
+{{- end -}}

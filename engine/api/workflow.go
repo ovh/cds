@@ -56,7 +56,12 @@ func (api *API) getWorkflowHandler() service.Handler {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
-		opts := workflow.LoadOptions{WithFavorites: true, DeepPipeline: withDeepPipelines, WithIcon: true, WithLabels: withLabels}
+		opts := workflow.LoadOptions{
+			WithFavorites: true,
+			DeepPipeline:  withDeepPipelines,
+			WithIcon:      true,
+			WithLabels:    withLabels,
+		}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), opts)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load workflow %s", name)
@@ -205,7 +210,7 @@ func (api *API) postWorkflowLabelHandler() service.Handler {
 
 			lbl, errL := project.LabelByName(db, proj.ID, label.Name)
 			if errL != nil {
-				if errL != sql.ErrNoRows {
+				if sdk.Cause(errL) != sql.ErrNoRows {
 					return sdk.WrapError(errL, "postWorkflowLabelHandler> cannot load label by name")
 				}
 				// If label doesn't exist create him

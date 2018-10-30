@@ -77,7 +77,7 @@ func getUserPersistentSession(ctx context.Context, db gorp.SqlExecutor, store se
 	token, err := user.LoadPersistentSessionToken(db, key)
 	if err != nil {
 		log.Warning("getUserPersistentSession> Unable to load user by token %s: %v", key, err)
-		if err == sql.ErrNoRows {
+		if sdk.Cause(err) == sql.ErrNoRows {
 			if err := store.Delete(key); err != nil {
 				log.Error("getUserPersistentSession> Unable to delete session %v", key)
 			}

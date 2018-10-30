@@ -63,7 +63,7 @@ func (api *API) deleteActionHandler() service.Handler {
 
 		a, errLoad := action.LoadPublicAction(api.mustDB(), name)
 		if errLoad != nil {
-			if errLoad != sdk.ErrNoAction {
+			if !sdk.ErrorIs(errLoad, sdk.ErrNoAction) {
 				log.Warning("deleteAction> Cannot load action %s: %T %s", name, errLoad, errLoad)
 			}
 			return errLoad

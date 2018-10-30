@@ -19,9 +19,9 @@
             </div>
         </div>
         <div class="four wide column centered">
-          <a class="ui blue button" [routerLink]="['./workflow']">{{ 'workflow_create_btn' | translate }}</a>
+          <a class="ui blue button" [routerLink]="['./workflow']" [class.disabled]="project.permission < 7">{{ 'workflow_create_btn' | translate }}</a>
         </div>
-        <div class="right aligned six wide column" *ngIf="project.permission === 7">
+        <div class="right aligned six wide column">
           <div class="ui icon input">
               <input type="text" placeholder="{{'navbar_search' | translate}}" [(ngModel)]="filter">
               <i class="search icon"></i>

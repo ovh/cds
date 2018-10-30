@@ -818,7 +818,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 		// Load and lock Existing workflow Run Job
 		id, errI := requestVarInt(r, "permID")
 		if errI != nil {
-			return sdk.WrapError(errI, "postWorkflowJobCoverageResultsHandler> Invalid node job run ID")
+			return sdk.WrapError(errI, "Invalid node job run ID")
 		}
 
 		var report coverage.Report
@@ -828,19 +828,19 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 
 		wnr, errL := workflow.LoadNodeRunByNodeJobID(api.mustDB(), id, workflow.LoadRunOptions{})
 		if errL != nil {
-			return sdk.WrapError(errL, "postWorkflowJobCoverageResultsHandler> Unable to load node run")
+			return sdk.WrapError(errL, "Unable to load node run")
 		}
 
 		existingReport, errLoad := workflow.LoadCoverageReport(api.mustDB(), wnr.ID)
-		if errLoad != nil && errLoad != sdk.ErrNotFound {
-			return sdk.WrapError(errLoad, "postWorkflowJobCoverageResultsHandler> Unable to load coverage report")
+		if errLoad != nil && !sdk.ErrorIs(errLoad, sdk.ErrNotFound) {
+			return sdk.WrapError(errLoad, "Unable to load coverage report")
 		}
 
 		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getUser(ctx))
 		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowJobCoverageResultsHandler> Cannot load project by nodeJobRunID:%d", id)
+			return sdk.WrapError(errP, "Cannot load project by nodeJobRunID:%d", id)
 		}
-		if errLoad == sdk.ErrNotFound {
+		if sdk.ErrorIs(errLoad, sdk.ErrNotFound) {
 			if err := workflow.ComputeNewReport(ctx, api.mustDB(), api.Cache, report, wnr, p); err != nil {
 				return sdk.WrapError(err, "Cannot compute new coverage report")
 			}

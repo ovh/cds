@@ -47,7 +47,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 			//Load the specific user
 			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
 			if err != nil {
-				if err == sql.ErrNoRows {
+				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
 				}
 				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
@@ -605,7 +605,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
 		if err != nil {
-			if err != sdk.ErrApplicationNotFound {
+			if !sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 				log.Warning("deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
 			}
 			return err

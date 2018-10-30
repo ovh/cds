@@ -204,7 +204,7 @@ func loadOutgoingHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 		for _, t := range triggerIDs {
 			jt, err := loadHookTrigger(ctx, db, store, proj, w, &hooks[i], t, u, opts)
 			if err != nil {
-				if err == sql.ErrNoRows {
+				if sdk.Cause(err) == sql.ErrNoRows {
 					log.Info("nodeOutgoingHook.PostGet> trigger %d not found", t)
 					continue
 				}

@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"database/sql"
 	"fmt"
 	"testing"
 
@@ -65,7 +66,7 @@ func TestNewError(t *testing.T) {
 	// print the http error
 	fmt.Println(httpErr)
 
-	assert.Equal(t, "la requête est incorrecte", httpErr.Error())
+	assert.Equal(t, "la requête est incorrecte (caused by: this is an error generated from vendor)", httpErr.Error())
 }
 
 func TestWrapError(t *testing.T) {
@@ -84,4 +85,19 @@ func threeForStackTest() error { return WrapError(fourForStackTest(), "three") }
 func fourForStackTest() error  { return WrapError(fiveForStackTest(), "four") }
 func fiveForStackTest() error {
 	return WrapError(fmt.Errorf("this is an error generated from vendor"), "five")
+}
+
+func TestCause(t *testing.T) {
+	err := oneForStackTest()
+	cause := Cause(err)
+	assert.Equal(t, "this is an error generated from vendor", cause.Error())
+
+	err = NewError(ErrActionLoop, WrapError(WithStack(sql.ErrNoRows), "more info"))
+	cause = Cause(err)
+	assert.Equal(t, sql.ErrNoRows, cause)
+	assert.NotEqual(t, sql.ErrNoRows, err)
+
+	err = sql.ErrConnDone
+	cause = Cause(err)
+	assert.Equal(t, sql.ErrConnDone, cause)
 }

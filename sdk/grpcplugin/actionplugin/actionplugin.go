@@ -37,7 +37,6 @@ func Client(ctx context.Context, socket string) (ActionPluginClient, error) {
 	conn, err := grpc.DialContext(ctx,
 		socket,
 		grpc.WithInsecure(),
-		grpc.WithBackoffMaxDelay(500*time.Millisecond),
 		grpc.WithDialer(func(address string, timeout time.Duration) (net.Conn, error) {
 			if strings.Contains(socket, ".sock") {
 				return net.DialTimeout("unix", socket, timeout)

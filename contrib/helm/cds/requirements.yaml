@@ -6,3 +6,6 @@ dependencies:
 - name: redis
   version: 3.3.5 #tag: 4.0.9
   repository: https://kubernetes-charts.storage.googleapis.com/
+- name: elasticsearch
+  version: 1.11.1 #tag: 4.0.9
+  repository: https://kubernetes-charts.storage.googleapis.com/

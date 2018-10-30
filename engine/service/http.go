@@ -66,7 +66,7 @@ func Write(w http.ResponseWriter, btes []byte, status int, contentType string) e
 	WriteProcessTime(w)
 	w.WriteHeader(status)
 	_, err := w.Write(btes)
-	return err
+	return sdk.WithStack(err)
 }
 
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best

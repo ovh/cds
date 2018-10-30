@@ -123,7 +123,7 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 				pipeline.LoadPipelineBuildOpts.WithStatus(sdk.StatusSuccess.String()),
 			}
 			pbs, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, oldW.Application.ID, oldW.Pipeline.ID, oldW.Environment.ID, 1, opts...)
-			if errPB != nil && errPB != sql.ErrNoRows {
+			if errPB != nil && sdk.Cause(errPB) != sql.ErrNoRows {
 				return nil, sdk.WrapError(err, "Cannot load pipeline")
 			}
 			if len(pbs) == 1 {

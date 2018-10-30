@@ -145,11 +145,11 @@ func ComputeNewReport(ctx context.Context, db gorp.SqlExecutor, cache cache.Stor
 
 	// Get previous report
 	previousReport, errP := loadPreviousCoverageReport(db, wnr.WorkflowID, wnr.Number, wnr.VCSRepository, wnr.VCSBranch, covReport.ApplicationID)
-	if errP != nil && errP != sdk.ErrNotFound {
+	if errP != nil && !sdk.ErrorIs(errP, sdk.ErrNotFound) {
 		return sdk.WrapError(errP, "computeNewReport> Unable to load previous report")
 	}
 
-	if errP != sdk.ErrNotFound {
+	if !sdk.ErrorIs(errP, sdk.ErrNotFound) {
 		// remove data we don't need
 		previousReport.Report.Files = nil
 		covReport.Trend.CurrentBranch = previousReport.Report
@@ -189,7 +189,7 @@ func ComputeLatestDefaultBranchReport(ctx context.Context, db gorp.SqlExecutor, 
 
 	if defaultBranch != wnr.VCSBranch {
 		defaultCoverage, errD := loadLatestCoverageReport(db, wnr.WorkflowID, wnr.VCSRepository, defaultBranch, covReport.ApplicationID)
-		if errD != nil && errD != sdk.ErrNotFound {
+		if errD != nil && !sdk.ErrorIs(errD, sdk.ErrNotFound) {
 			return sdk.WrapError(errD, "ComputeLatestDefaultBranchReport> Cannot get latest report on default branch")
 		}
 		defaultCoverage.Report.Files = nil

@@ -308,7 +308,7 @@ func TakeNodeJobRun(ctx context.Context, dbFunc func() *gorp.DbMap, db gorp.SqlE
 	// reload and recheck status
 	job, errl := LoadAndLockNodeJobRunNoWait(ctx, db, store, jobID)
 	if errl != nil {
-		if errPG, ok := errl.(*pq.Error); ok && errPG.Code == "55P03" {
+		if errPG, ok := sdk.Cause(errl).(*pq.Error); ok && errPG.Code == "55P03" {
 			errl = sdk.ErrJobAlreadyBooked
 		}
 		return nil, nil, sdk.WrapError(errl, "Cannot load node job run (WAIT) %d", jobID)
@@ -658,7 +658,7 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 	}
 
 	existingLogs, errLog := LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
-	if errLog != nil && errLog != sql.ErrNoRows {
+	if errLog != nil && sdk.Cause(errLog) != sql.ErrNoRows {
 		return sdk.WrapError(errLog, "AddLog> Cannot load existing logs")
 	}
 
@@ -687,7 +687,7 @@ func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.S
 	}
 
 	existingLogs, errLog := LoadServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
-	if errLog != nil && errLog != sql.ErrNoRows {
+	if errLog != nil && sdk.Cause(errLog) != sql.ErrNoRows {
 		return sdk.WrapError(errLog, "AddServiceLog> Cannot load existing logs")
 	}
 

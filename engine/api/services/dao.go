@@ -52,7 +52,7 @@ func FindByType(db gorp.SqlExecutor, t string) ([]sdk.Service, error) {
 	query := `SELECT * FROM services WHERE type = $1`
 	services, err := findAll(db, query, t)
 	if err != nil {
-		if err == sdk.ErrNotFound {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, nil
 		}
 		return nil, sdk.WrapError(err, "Unable to find dead services")
@@ -66,7 +66,7 @@ func All(db gorp.SqlExecutor) ([]sdk.Service, error) {
 	query := `SELECT * FROM services`
 	services, err := findAll(db, query)
 	if err != nil {
-		if err == sdk.ErrNotFound {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, nil
 		}
 		return nil, sdk.WrapError(err, "Unable to find all services")
@@ -78,13 +78,13 @@ func findOne(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Servi
 	sdb := service{}
 	if err := db.SelectOne(&sdb, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNotFound
+			return nil, sdk.WithStack(sdk.ErrNotFound)
 		}
 		return nil, sdk.WrapError(err, "service not found")
 	}
 	s := sdk.Service(sdb)
 	if s.Name == "" {
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	return &s, nil
 }
@@ -205,7 +205,7 @@ func FindDeadServices(db gorp.SqlExecutor, t time.Duration) ([]sdk.Service, erro
 	query := `SELECT * FROM services WHERE last_heartbeat < $1`
 	services, err := findAll(db, query, time.Now().Add(-1*t))
 	if err != nil {
-		if err == sdk.ErrNotFound {
+		if sdk.ErrorIs(err, sdk.ErrNotFound) {
 			return nil, nil
 		}
 		return nil, sdk.WrapError(err, "Unable to find dead services")

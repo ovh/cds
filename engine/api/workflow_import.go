@@ -92,7 +92,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			project.LoadOptions.WithPlatforms,
 		)
 		if errp != nil {
-			return sdk.WrapError(errp, "postWorkflowImportHandler>> Unable load project")
+			return sdk.WrapError(errp, "Unable load project")
 		}
 
 		body, errr := ioutil.ReadAll(r.Body)
@@ -114,7 +114,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		case "application/x-yaml", "text/x-yaml":
 			errw = yaml.Unmarshal(body, ew)
 		default:
-			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unsupported content-type: %s", contentType))
+			return sdk.WrapError(sdk.ErrWrongRequest, "Unsupported content-type: %s", contentType)
 		}
 
 		if errw != nil {
@@ -123,15 +123,15 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 
 		tx, errtx := api.mustDB().Begin()
 		if errtx != nil {
-			return sdk.WrapError(errtx, "postWorkflowImportHandler> Unable to start tx")
+			return sdk.WrapError(errtx, "Unable to start transaction")
 		}
 		defer tx.Rollback()
 
 		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: force})
 		msgListString := translate(r, msgList)
-
 		if globalError != nil {
-			return sdk.WrapError(globalError, "postWorkflowImportHandler> Unable import workflow %s", ew.Name)
+
+			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.Name)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -164,7 +164,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			project.LoadOptions.WithPlatforms,
 		)
 		if errp != nil {
-			return sdk.WrapError(errp, "postWorkflowImportHandler>> Unable load project")
+			return sdk.WrapError(errp, "Unable load project")
 		}
 
 		body, errr := ioutil.ReadAll(r.Body)
@@ -186,7 +186,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		case "application/x-yaml", "text/x-yaml":
 			errw = yaml.Unmarshal(body, ew)
 		default:
-			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("unsupported content-type: %s", contentType))
+			return sdk.WrapError(sdk.ErrWrongRequest, "Unsupported content-type: %s", contentType)
 		}
 
 		if errw != nil {
@@ -195,7 +195,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 
 		tx, errtx := api.mustDB().Begin()
 		if errtx != nil {
-			return sdk.WrapError(errtx, "postWorkflowImportHandler> Unable to start tx")
+			return sdk.WrapError(errtx, "Unable to start transaction")
 		}
 		defer func() {
 			_ = tx.Rollback()
@@ -203,9 +203,9 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 
 		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)
-
 		if globalError != nil {
-			return sdk.WrapError(globalError, "postWorkflowImportHandler> Unable import workflow %s", ew.Name)
+
+			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.Name)
 		}
 
 		if err := tx.Commit(); err != nil {

@@ -94,7 +94,7 @@ func loadForks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 		for _, t := range triggerIDs {
 			jt, err := loadForkTrigger(ctx, db, store, proj, w, t, u, opts)
 			if err != nil {
-				if err == sql.ErrNoRows {
+				if sdk.Cause(err) == sql.ErrNoRows {
 					log.Warning("loadForks> trigger %d not found", t)
 					continue
 				}
