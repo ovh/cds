@@ -54,6 +54,9 @@ services:
       CDS_LOG_GRAYLOG_EXTRAVALUE:
       CDS_LOG_GRAYLOG_HOST:
       CDS_LOG_GRAYLOG_PORT:
+      CDS_API_FEATURES_IZANAMI_APIURL: "http://cds-feature:8080/api"
+      CDS_API_FEATURES_IZANAMI_CLIENTID: "changeitchangeitchangeitchangeit"
+      CDS_API_FEATURES_IZANAMI_CLIENTSECRET: "changeitchangeitchangeitchangeit"
 
     ports:
       - "8081:8081"
@@ -61,6 +64,7 @@ services:
     links:
        - cds-db
        - cds-cache
+       - cds-feature
 
   cds-ui:
     image: ovhcom/cds-ui:latest
