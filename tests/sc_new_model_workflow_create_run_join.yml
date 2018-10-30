@@ -1,0 +1,46 @@
+name: Create a simple workflow (ITNEWMODEL) and run it
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/ITNEWMODEL/ITNEWMODEL.yml ]'
+  - script: '[ -f ./tests/fixtures/ITNEWMODEL/build_api.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITNEWMODEL/build_front.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITNEWMODEL/deploy.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITNEWMODEL/root.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITNEWMODEL/tests.pip.yml ]'
+
+- name: Create workflow ITSCWRKFLW3 and run it
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITNEWMODEL"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITNEWMODEL"
+  - script: "{{.cds.build.cdsctl}} project add ITNEWMODEL ITNEWMODEL"
+  - script: "{{.cds.build.cdsctl}} environment add ITNEWMODEL ITNEWMODEL-ENV-PREPROD"
+  - script: "{{.cds.build.cdsctl}} environment add ITNEWMODEL ITNEWMODEL-ENV-PROD"
+  - script: "{{.cds.build.cdsctl}} application add ITNEWMODEL ITNEWMODEL-APP"
+  - script: "{{.cds.build.cdsctl}} workflow push ITNEWMODEL ./tests/fixtures/ITNEWMODEL/*.yml --skip-update-files"
+  - script: "{{.cds.build.cdsctl}} workflow run ITNEWMODEL ITNEWMODEL-WORKFLOW"
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.version ShouldEqual 2
+    - "result.systemout ShouldContainSubstring Workflow ITNEWMODEL-WORKFLOW #1 has been launched"
+  - script: "sleep 1"
+  - script: "{{.cds.build.cdsctl}} workflow status ITNEWMODEL ITNEWMODEL-WORKFLOW 1 --format json"
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldBeEmpty
+    - result.systemoutjson.num ShouldEqual 1
+    - result.systemoutjson.status ShouldEqual 'Never Built'
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by
+  - script:  "{{.cds.build.cdsctl}} workflow run ITNEWMODEL ITNEWMODEL-WORKFLOW -d '{\"git.branch\": \"master\"}'"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITNEWMODEL-WORKFLOW #2 has been launched"
+    - result.systemoutjson.version ShouldEqual 2
+  - script: "{{.cds.build.cdsctl}} workflow status ITNEWMODEL ITNEWMODEL-WORKFLOW 2 --format json"
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Building
+    - result.systemoutjson.tags ShouldContainSubstring master
+    - result.systemoutjson.num ShouldContainSubstring 2

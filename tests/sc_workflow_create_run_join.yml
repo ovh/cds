@@ -21,6 +21,7 @@ testcases:
   - script: "{{.cds.build.cdsctl}} workflow run ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW"
     assertions:
     - result.code ShouldEqual 0
+    - result.systemoutjson.version ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #1 has been launched"
   - script: "sleep 1"
   - script: "{{.cds.build.cdsctl}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 1 --format json"
@@ -35,6 +36,7 @@ testcases:
   - script:  "{{.cds.build.cdsctl}} workflow run ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW -d '{\"git.branch\": \"master\"}'"
     assertions:
     - result.code ShouldEqual 0
+    - result.systemoutjson.version ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW3-WORKFLOW #2 has been launched"
   - script: "{{.cds.build.cdsctl}} workflow status ITSCWRKFLW3 ITSCWRKFLW3-WORKFLOW 2 --format json"
     assertions:

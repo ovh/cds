@@ -1,0 +1,4 @@
+version: v1.0
+name: root
+stages:
+- Stage 0
