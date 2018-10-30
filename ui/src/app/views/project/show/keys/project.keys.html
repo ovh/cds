@@ -1,12 +1,17 @@
 <div id="Projectkey" *ngIf="ready">
+    <h3>{{ 'keys_list_title' | translate}}</h3>
     <ng-container *ngIf="project.keys && project.keys.length > 0">
-        <h3>{{ 'keys_list_title' | translate}}</h3>
         <app-keys-list [keys]="keys" [warnings]="unusedWarning" [edit]="project.permission" (deleteEvent)="manageKeyEvent($event)"></app-keys-list>
     </ng-container>
-    <h3>
+    <div class="ui info message" *ngIf="!loading && (!project.keys || project.keys.length === 0)">
+        {{ 'keys_no' | translate }}
+    </div>
+    <h3 *ngIf="project.permission === 7">
         <app-warning-mark-list [warnings]="missingWarnings"></app-warning-mark-list>
         {{ 'keys_add_title' | translate }}
     </h3>
-    <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="proj-"></app-keys-form>
+    <ng-container *ngIf="project.permission === 7">
+        <app-keys-form [loading]="loading" (keyEvent)="manageKeyEvent($event)" prefix="proj-"></app-keys-form>
+    </ng-container>
 </div>
 <div class="ui text active loader" *ngIf="!ready">{{ 'keys_loading' | translate}}</div>

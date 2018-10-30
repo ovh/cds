@@ -12,9 +12,9 @@ import (
 func LoadWorkflowByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.WorkflowGroup, error) {
 	res := []sdk.WorkflowGroup{}
 	query := `SELECT project.projectKey,
-			 		 workflow.id,
-	                 workflow.name,
-	                 workflow_group.role
+			 		 		workflow.id,
+             	workflow.name,
+             	workflow_group.role
 	          FROM workflow
 	          JOIN workflow_group ON workflow_group.workflow_id = workflow.id
 	 	  JOIN project ON workflow.project_id = project.id

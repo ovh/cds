@@ -284,6 +284,7 @@
   "keys_public": "Public key",
   "keys_removed": "Key has been removed",
   "keys_type": "Key type",
+  "keys_no": "There is no keys",
 
   "usage_application_list": "Applications used",
   "usage_workflow_list": "Workflows used",
