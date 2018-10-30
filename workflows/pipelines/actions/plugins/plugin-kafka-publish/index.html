@@ -1962,6 +1962,11 @@
         <span>Opensource / Contribute</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/contribute/error_management/" class="dd-item">
+        <a href="https://ovh.github.io/cds/contribute/error_management/">
+          <span>Error management</span>
+        </a>
+    </li>
       <li data-nav-id="/contribute/documentation/" class="dd-item">
         <a href="https://ovh.github.io/cds/contribute/documentation/">
           <span>Write documentation</span>
@@ -2111,18 +2116,18 @@
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>kafkaPassword</strong>: Kafka password</li>
-<li><strong>key</strong>: Key used by AES Encryption. It have to be the same value as &ndash;key on plugin binary</li>
-<li><strong>waitForAck</strong>: Wait for ACK</li>
-<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
-<li><strong>waitForAckTopic</strong>: Wait for ACK topic</li>
 <li><strong>message</strong>: Kafka Message</li>
 <li><strong>kafkaUser</strong>: Kafka user</li>
 <li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
+<li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
+<li><strong>key</strong>: Key used by AES Encryption. It have to be the same value as &ndash;key on plugin binary</li>
+<li><strong>waitForAck</strong>: Wait for ACK</li>
+<li><strong>kafkaPassword</strong>: Kafka password</li>
 <li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
 <li><strong>topic</strong>: Kafka Topic</li>
 <li><strong>artifacts</strong>: Artifacts list (comma separated)&rdquo;</li>
-<li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
+<li><strong>waitForAckTopic</strong>: Wait for ACK topic</li>
+<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
 </ul>
 
 

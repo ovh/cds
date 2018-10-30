@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>admin :: CDS - Continuous Delivery Service</title>
+    <title>Error management :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/admin/">
+  <body class="" data-url="/contribute/error_management/">
     <nav id="sidebar" class="">
 
 
@@ -609,10 +609,9 @@
     </li>
           
           
-    <li data-nav-id="/cli/" class="dd-item parent">
+    <li data-nav-id="/cli/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/">
-        <span>Command Line - REST API - SDK</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>Command Line - REST API - SDK</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/api/" class="dd-item">
@@ -791,10 +790,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/">
-        <span>cdsctl</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>cdsctl</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/action/" class="dd-item">
@@ -834,10 +832,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item parent active">
+    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/">
-        <span>admin</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>admin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/admin/broadcasts/" class="dd-item">
@@ -1956,12 +1953,13 @@
     </li>
           
           
-    <li data-nav-id="/contribute/" class="dd-item">
+    <li data-nav-id="/contribute/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/contribute/">
-        <span>Opensource / Contribute</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>Opensource / Contribute</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/contribute/error_management/" class="dd-item">
+      <li data-nav-id="/contribute/error_management/" class="dd-item active">
         <a href="https://ovh.github.io/cds/contribute/error_management/">
           <span>Error management</span>
         </a>
@@ -2033,7 +2031,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/admin/_index.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/contribute/error_management.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -2053,12 +2051,7 @@
 
 
 
-
-
-
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > admin
-
- 
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/contribute/'>Opensource / Contribute</a> > Error management
 
  
 
@@ -2073,13 +2066,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-admin">cdsctl admin</a>
-<ul>
-<li><a href="#synopsis">Synopsis</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
-<li><a href="#see-also">SEE ALSO</a></li>
-</ul></li>
+<li><a href="#usage-in-code">Usage in code</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -2092,7 +2079,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>admin</h1>
+                <h1>Error management</h1>
                 <p></p>
             </div>
           
@@ -2102,45 +2089,81 @@
 
 
 
-<h2 id="cdsctl-admin">cdsctl admin</h2>
+<p>This page explains how to deal with errors in CDS code. Error returned from CDS contains a message, an HTTP status code, a stack trace and a unique id.</p>
 
-<p><code>Manage CDS (admin only)</code></p>
+<p>Errors can be forwarded to a Graylog instance then retrieved directly from the ctl (see api.graylog and log.graylog sections in cds configuration file to setup).</p>
 
-<h3 id="synopsis">Synopsis</h3>
-
-<p><code>Manage CDS (admin only)</code></p>
-
-<h3 id="options">Options</h3>
-
-<pre><code>  -h, --help   help for admin
+<pre><code class="language-bash">cdsctl admin errors get &lt;error_uuid&gt;
 </code></pre>
 
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
+<h2 id="usage-in-code">Usage in code</h2>
 
-<pre><code>  -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
+<p>All errors from lib should be wrapped like <strong>sdk.WithStack(err)</strong> or <strong>sdk.WrapError(err, format, values&hellip;)</strong> directly when created.</p>
+
+<pre><code class="language-go">if err := json.Unmarshal(...); err != nil {
+    return sdk.WithStack(err) // or return sdk.WrapError(err, &quot;Cannot unmarshal given data&quot;)
+}
 </code></pre>
 
-<h3 id="see-also">SEE ALSO</h3>
+<p><strong>WrapError</strong> can be used to add more details about an error when returned.</p>
 
-<ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/cdsctl/">cdsctl</a>  - CDS Command line utility</li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/">cdsctl admin broadcasts</a>   - <code>Manage CDS broadcasts</code></li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/errors/">cdsctl admin errors</a>   - <code>Manage CDS errors</code></li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/hooks/">cdsctl admin hooks</a>     - <code>Manage CDS Hooks tasks</code></li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/">cdsctl admin platform-model</a>   - <code>Manage CDS Platform models</code></li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/">cdsctl admin plugins</a>     - <code>Manage CDS Plugins</code></li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/">cdsctl admin services</a>   - <code>Manage CDS services</code></li>
-</ul>
+<pre><code class="language-go">func one() error { return sdk.WithStack(json.Unmarshal(...)) }
+
+func two() error { return sdk.WrapError(one(), &quot;Error calling one&quot;) }
+
+func three() error { return sdk.WrapError(two(), &quot;Error calling two&quot;) }
+</code></pre>
+
+<p>If the error was already wrapped an not more info is needed you should run it directly.</p>
+
+<pre><code class="language-go">func four() error {
+    if err := three(); err != nil {
+        return err
+    }
+    ...
+}
+</code></pre>
+
+<p>To create an error that will generate a specific HTTP status code you should use the <strong>sdk.NewError</strong> func or returned an existing sdk.Error.</p>
+
+<pre><code class="language-go">if err := json.Unmarshal(...); err != nil {
+    return sdk.NewError(sdk.ErrWrongRequest, err) // returns a 400 http code with translated message and cause. 
+}
+
+if err := json.Unmarshal(...); err != nil {
+    return sdk.WrapError(sdk.ErrWrongRequest, &quot;Cannot unmarshal given data&quot;) // returns a 400 http code with translated message and cause. 
+}
+
+if err := json.Unmarshal(...); err != nil {
+    return sdk.WithStack(sdk.ErrWrongRequest) // returns a 400 http code with translated message but no info about the source error. 
+}
+</code></pre>
+
+<p>To compare if an error match a existing sdk.Err use the <strong>sdk.ErrorIs</strong> func, using equality operator will not work if the error was wrapped.
+A not wrapped lib error will match sdk.ErrUnknownError (to check if error is unknown you can use sdk.ErrorIsunknown).</p>
+
+<pre><code class="language-go">if err := one(); err != nil {
+    if sdk.ErrorIs(err, sdk.ErrNotFound) {
+        // do something specific for not found error
+    }
+}
+
+err := json.Unmarshal(...)
+sdk.ErrorIs(err, sdk.ErrUnknownError) =&gt; true
+sdk.ErrorIsUnknown(err) =&gt; true
+</code></pre>
+
+<p>To check if an error root cause is equal to a known library error you could use the <strong>sdk.Cause</strong> func.</p>
+
+<pre><code class="language-go">err := sdk.WrapError(sdk.WrapError(sql.ErrNoRows, &quot;The error is now wrapped&quot;), &quot;Add more info on the error&quot;) 
+err == sql.ErrNoRows =&gt; false
+sdk.Cause(err) == sql.ErrNoRows =&gt; true
+</code></pre>
 
 
 <footer class=" footline" >
 	
 </footer>
-
-
 
 
 
@@ -2155,8 +2178,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/action/show/" title="show"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/admin/broadcasts/" title="broadcasts" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/contribute/" title="Opensource / Contribute"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/contribute/documentation/" title="Write documentation" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
@@ -2176,3 +2199,4 @@
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
   </body>
 </html>
+
