@@ -48,8 +48,7 @@
         <!-- Pipeline ONLY -->
         <ng-container *ngIf="node.type === 'pipeline'">
             <a class="item noborder" (click)="openEditContextModal()" *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
-                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_context_edit' | translate }}</span><span	            {{ 'workflow_node_context_edit' | translate }}
-                *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_context_show' | translate }}</span>	            <i class="angle right icon"></i>
+                {{ 'workflow_node_context_edit' | translate }}
             </a>
             <a class="item noborder" (click)="openEditContextModal()" *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">
                 {{ 'workflow_node_context_show' | translate }}
