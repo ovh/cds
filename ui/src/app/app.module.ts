@@ -21,10 +21,10 @@ import {NavbarModule} from './views/navbar/navbar.module';
         BrowserAnimationsModule,
         HttpClientModule,
         NavbarModule,
+        ToasterModule.forRoot(),
         SharedModule,
         ServicesModule.forRoot(),
         routing,
-        ToasterModule,
         TranslateModule.forRoot({
             loader: {
                 provide: TranslateLoader,
