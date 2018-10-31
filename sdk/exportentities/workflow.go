@@ -214,7 +214,10 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	if len(w.Metadata) > 0 {
 		exportedWorkflow.Metadata = make(map[string]string, len(w.Metadata))
 		for k, v := range w.Metadata {
-			exportedWorkflow.Metadata[k] = v
+			// don't export empty metadata
+			if v != "" {
+				exportedWorkflow.Metadata[k] = v
+			}
 		}
 	}
 
