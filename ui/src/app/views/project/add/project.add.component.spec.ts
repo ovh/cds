@@ -16,7 +16,7 @@ import {VariableService} from '../../../service/variable/variable.service';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectModule} from '../project.module';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Observable';
+import {of} from 'rxjs';
 import {ProjectAddComponent} from './project.add.component';
 import {GroupService} from '../../../service/group/group.service';
 import {GroupPermission, Group} from '../../../model/group.model';
@@ -76,7 +76,7 @@ describe('CDS: Project Show Component', () => {
         let router: Router = injector.get(Router);
 
         spyOn(projectStore, 'createProject').and.callFake(() => {
-            return Observable.of(true);
+            return of(true);
         });
 
         spyOn(router, 'navigate').and.callFake(() => {

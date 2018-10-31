@@ -17,9 +17,8 @@ import {ToastService} from '../../../../../shared/toast/ToastService';
 import {EnvironmentService} from '../../../../../service/environment/environment.service';
 import {VariableService} from '../../../../../service/variable/variable.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Observable} from 'rxjs/Observable';
+import {of} from 'rxjs';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
-import 'rxjs/add/observable/of';
 import {NavbarService} from '../../../../../service/navbar/navbar.service';
 
 describe('CDS: Environment List Component', () => {
@@ -87,7 +86,7 @@ class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
 
-        this.queryParams = Observable.of({envName: 'prod'});
+        this.queryParams = of({envName: 'prod'});
     }
 }
 

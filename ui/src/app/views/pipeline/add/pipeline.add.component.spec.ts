@@ -6,7 +6,7 @@ import {XHRBackend} from '@angular/http';
 import {Router, ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Observable';
+import {of} from 'rxjs';
 import {Injector} from '@angular/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectStore} from '../../../service/project/project.store';
@@ -101,7 +101,7 @@ describe('CDS: Pipeline Add Component', () => {
         fixture.componentInstance.newPipeline.type = 'build';
 
         spyOn(pipStore, 'createPipeline').and.callFake( () => {
-            return Observable.of(fixture.componentInstance.newPipeline);
+            return of(fixture.componentInstance.newPipeline);
         });
 
         fixture.componentInstance.createPipeline();
@@ -124,8 +124,8 @@ class MockRouter {
 class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
-        this.params = Observable.of({key: 'key1', appName: 'app1'});
-        this.queryParams = Observable.of({key: 'key1', appName: 'app1'});
+        this.params = of({key: 'key1', appName: 'app1'});
+        this.queryParams = of({key: 'key1', appName: 'app1'});
 
         this.snapshot = new ActivatedRouteSnapshot();
 
@@ -135,6 +135,6 @@ class MockActivatedRoutes extends ActivatedRoute {
             project: project
         };
 
-        this.data = Observable.of({ project: project });
+        this.data = of({ project: project });
     }
 }
