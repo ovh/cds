@@ -20,7 +20,10 @@
     "precommit": "lint-staged"
   },
   "lint-staged": {
-    "*.ts": "ng lint ui-ng2"
+    "linter": {
+      "*.ts": "ng lint ui-ng2 --files"
+    },
+    "ignore": ["**/*.spec.ts"]
   },
   "private": true,
   "dependencies": {

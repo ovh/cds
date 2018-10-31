@@ -2,7 +2,7 @@
 import {TestBed, fakeAsync} from '@angular/core/testing';
 import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
-import {Observable} from 'rxjs/Observable';
+import {of} from 'rxjs';
 import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
 import {ProjectService} from '../../../service/project/project.service';
 import {ProjectStore} from '../../../service/project/project.store';
@@ -104,7 +104,7 @@ describe('CDS: Pipeline Show', () => {
 
         let pipStore: PipelineStore = TestBed.get(PipelineStore);
         spyOn(pipStore, 'addPermission').and.callFake(() => {
-            return Observable.of(new Pipeline());
+            return of(new Pipeline());
         });
 
         // ADD
@@ -117,7 +117,7 @@ describe('CDS: Pipeline Show', () => {
 
         groupEvent.type = 'update';
         spyOn(pipStore, 'updatePermission').and.callFake(() => {
-            return Observable.of(new Pipeline());
+            return of(new Pipeline());
         });
         fixture.componentInstance.groupEvent(groupEvent, true);
         expect(pipStore.updatePermission).toHaveBeenCalledWith('key1', 'pip1', gp);
@@ -125,7 +125,7 @@ describe('CDS: Pipeline Show', () => {
         // Delete
         groupEvent.type = 'delete';
         spyOn(pipStore, 'removePermission').and.callFake(() => {
-            return Observable.of(new Pipeline());
+            return of(new Pipeline());
         });
         fixture.componentInstance.groupEvent(groupEvent, true);
         expect(pipStore.removePermission).toHaveBeenCalledWith('key1', 'pip1', gp);
@@ -156,7 +156,7 @@ describe('CDS: Pipeline Show', () => {
         let event: ParameterEvent = new ParameterEvent('add', param);
         let pipStore: PipelineStore = TestBed.get(PipelineStore);
         spyOn(pipStore, 'addParameter').and.callFake(() => {
-            return Observable.of(new Pipeline());
+            return of(new Pipeline());
         });
         fixture.componentInstance.parameterEvent(event, true);
         expect(pipStore.addParameter).toHaveBeenCalledWith('key1', 'pip1', param);
@@ -165,7 +165,7 @@ describe('CDS: Pipeline Show', () => {
 
         event.type = 'update';
         spyOn(pipStore, 'updateParameter').and.callFake(() => {
-            return Observable.of(new Pipeline());
+            return of(new Pipeline());
         });
         fixture.componentInstance.parameterEvent(event, true);
         expect(pipStore.updateParameter).toHaveBeenCalledWith('key1', 'pip1', param);
@@ -173,7 +173,7 @@ describe('CDS: Pipeline Show', () => {
         // Delete
         event.type = 'delete';
         spyOn(pipStore, 'removeParameter').and.callFake(() => {
-            return Observable.of(new Pipeline());
+            return of(new Pipeline());
         });
         fixture.componentInstance.parameterEvent(event, true);
         expect(pipStore.removeParameter).toHaveBeenCalledWith('key1', 'pip1', param);
@@ -189,8 +189,8 @@ class MockToast {
 class MockActivatedRoutes extends ActivatedRoute {
     constructor() {
         super();
-        this.params = Observable.of({key: 'key1', pipName: 'pip1'});
-        this.queryParams = Observable.of({key: 'key1', appName: 'pip1', tab: 'workflow'});
+        this.params = of({key: 'key1', pipName: 'pip1'});
+        this.queryParams = of({key: 'key1', appName: 'pip1', tab: 'workflow'});
         this.snapshot = new ActivatedRouteSnapshot();
         this.snapshot.queryParams = {};
 

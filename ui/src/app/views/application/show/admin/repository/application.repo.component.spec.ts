@@ -16,7 +16,7 @@ import {SharedModule} from '../../../../../shared/shared.module';
 import {Application} from '../../../../../model/application.model';
 import {Project} from '../../../../../model/project.model';
 import {RepositoriesManager} from '../../../../../model/repositories.model';
-import {Observable} from 'rxjs/Observable';
+import {of} from 'rxjs';
 import {ApplicationModule} from '../../../application.module';
 import {TranslateParser} from '@ngx-translate/core';
 import {ProjectModule} from '../../../../project/project.module';
@@ -158,10 +158,10 @@ class MockStore {
     }
 
     connectRepository(key: string, currentName: string, repoManName: string, repoFullname: string) {
-        return  Observable.of({ name: 'app'});
+        return  of({ name: 'app'});
     }
     removeRepository(key: string, currentName: string, repoManName: string, repoFullname: string) {
-        return  Observable.of({ name: 'app'});
+        return  of({ name: 'app'});
     }
 }
 
