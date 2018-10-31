@@ -23,7 +23,9 @@
     "linters": {
       "*.ts": "ng lint ui-ng2 --files"
     },
-    "ignore": ["**/*.spec.ts"]
+    "ignore": [
+      "**/*.spec.ts"
+    ]
   },
   "private": true,
   "dependencies": {
