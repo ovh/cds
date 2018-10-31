@@ -66,7 +66,7 @@ func TestNewError(t *testing.T) {
 	// print the http error
 	t.Log(httpErr)
 
-	assert.Equal(t, "this is an error generated from vendor", httpErr.Error())
+	assert.Equal(t, "this is an error generated from vendor (caused by: wrong request)", httpErr.Error())
 }
 
 func TestWrapError(t *testing.T) {
