@@ -24,7 +24,7 @@ testcases:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW5 #1 has been launched"
 
-- name: the workflow should be successfull
+- name: the workflow should be successful
   steps:
   - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW5 ITSCWRKFLW5 1 --format json
     assertions:

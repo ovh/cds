@@ -81,7 +81,7 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 		// replace secrets in the content of the xml files analyzed
 		dataS := string(data)
 		for i := range logsecrets {
-			if len(logsecrets[i].Value) >= 6 {
+			if len(logsecrets[i].Value) >= sdk.SecretMinLength {
 				dataS = strings.Replace(dataS, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
 			}
 		}

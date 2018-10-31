@@ -19,7 +19,7 @@ var logsecrets []sdk.Variable
 
 func (wk *currentWorker) sendLog(buildID int64, value string, stepOrder int, final bool) error {
 	for i := range logsecrets {
-		if len(logsecrets[i].Value) >= 6 {
+		if len(logsecrets[i].Value) >= sdk.SecretMinLength {
 			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
 		}
 	}

@@ -67,6 +67,7 @@ func main() {
 	cmd.AddCommand(cmdArtifacts(w))
 	cmd.AddCommand(cmdDownload(w))
 	cmd.AddCommand(cmdTmpl(w))
+	cmd.AddCommand(cmdCheckSecret(w))
 	cmd.AddCommand(cmdTag(w))
 	cmd.AddCommand(cmdRun(w))
 	cmd.AddCommand(cmdUpdate(w))
