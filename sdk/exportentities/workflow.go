@@ -434,7 +434,7 @@ func (w Workflow) GetWorkflow(proj *sdk.Project, hookModels []sdk.WorkflowHookMo
 		attempt++
 	}
 	if len(entries) > 0 {
-		return nil, sdk.WrapError(fmt.Errorf("Unable to process %+v", entries), "")
+		return nil, sdk.WithStack(fmt.Errorf("Unable to process %+v", entries))
 	}
 
 	//Process hooks
@@ -586,6 +586,7 @@ func (w *Workflow) processHooks(n *sdk.Node, wf *sdk.Workflow) {
 			for _, hook := range wf.HookModels {
 				if h.Model == hook.Name {
 					modelID = hook.ID
+					break
 				}
 			}
 

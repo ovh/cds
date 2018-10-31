@@ -71,6 +71,7 @@ func (h WorkflowNodeOutgoingHook) migrate(withID bool) Node {
 			Config:      h.Config,
 			HookModelID: h.WorkflowHookModelID,
 		},
+		Triggers: make([]NodeTrigger, 0, len(h.Triggers)),
 	}
 	if withID {
 		newNode.ID = h.ID
@@ -98,9 +99,10 @@ type WorkflowNodeFork struct {
 
 func (f WorkflowNodeFork) migrate(withID bool) Node {
 	newNode := Node{
-		Name: f.Name,
-		Ref:  f.Name,
-		Type: NodeTypeFork,
+		Name:     f.Name,
+		Ref:      f.Name,
+		Type:     NodeTypeFork,
+		Triggers: make([]NodeTrigger, 0, len(f.Triggers)),
 	}
 	if withID {
 		newNode.ID = f.ID

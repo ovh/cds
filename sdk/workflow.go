@@ -76,6 +76,7 @@ func (w *Workflow) Migrate(withID bool) WorkflowData {
 		work.Node = (*w.Root).migrate(withID)
 
 		// Add Join
+		work.Joins = make([]Node, 0, len(w.Joins))
 		for _, j := range w.Joins {
 			work.Joins = append(work.Joins, j.migrate(withID))
 		}
@@ -584,7 +585,8 @@ func (j WorkflowNodeJoin) migrate(withID bool) Node {
 		Name:        j.Ref,
 		Ref:         j.Ref,
 		Type:        NodeTypeJoin,
-		JoinContext: make([]NodeJoin, 0, len(j.SourceNodeRefs)),
+		JoinContext: make([]NodeJoin, 0, len(j.SourceNodeIDs)),
+		Triggers:    make([]NodeTrigger, 0, len(j.Triggers)),
 	}
 	if newNode.Ref == "" {
 		newNode.Ref = RandomString(5)
@@ -653,7 +655,7 @@ func (n Node) retroMigrate() WorkflowNode {
 		},
 		PipelineID:    n.Context.PipelineID,
 		OutgoingHooks: nil,
-		Hooks:         nil,
+		Hooks:         make([]WorkflowNodeHook, 0, len(n.Hooks)),
 		Triggers:      nil,
 		Forks:         nil,
 	}
@@ -770,6 +772,8 @@ func (n WorkflowNode) migrate(withID bool) Node {
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
 			Mutex:                     n.Context.Mutex,
 		},
+		Hooks:    make([]NodeHook, 0, len(n.Hooks)),
+		Triggers: make([]NodeTrigger, 0, len(n.Triggers)+len(n.Forks)+len(n.OutgoingHooks)),
 	}
 	if n.Context.ApplicationID == 0 && n.Context.Application != nil {
 		newNode.Context.ApplicationID = n.Context.Application.ID

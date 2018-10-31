@@ -266,7 +266,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 			Args: []interface{}{errParam.Error()},
 		})
 		// if there an error -> display it in workflowRunInfo and not stop the launch
-		log.Error("processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%s", proj.Name, wr.Number, subNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
+		log.Error("processNode> getNodeRunBuildParameters failed. Project:%s [#%d.%d]%s.%d with payload %v err:%v", proj.Name, wr.Number, subNumber, wr.Workflow.Name, n.ID, run.Payload, errParam)
 	}
 	run.BuildParameters = append(run.BuildParameters, jobParams...)
 
@@ -302,10 +302,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	}
 
-	var isRoot bool
-	if n.ID == wr.Workflow.Root.ID {
-		isRoot = true
-	}
+	isRoot := n.ID == wr.Workflow.Root.ID
 
 	gitValues := currentGitValues
 	if previousGitValues[tagGitURL] == currentGitValues[tagGitURL] || previousGitValues[tagGitHTTPURL] == currentGitValues[tagGitHTTPURL] {

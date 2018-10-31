@@ -440,7 +440,7 @@ func getPlatformPluginBinaries(db gorp.SqlExecutor, runContext nodeRunContext) (
 	if runContext.ProjectPlatform.Model.PluginName != "" {
 		p, err := plugin.LoadByName(db, runContext.ProjectPlatform.Model.PluginName)
 		if err != nil {
-			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin %s", runContext.ProjectPlatform.Model.PluginName)
+			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin %s, %v", runContext.ProjectPlatform.Model.PluginName, err)
 		}
 		return p.Binaries, nil
 	}

@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"github.com/ovh/cds/sdk/log"
 	"time"
 
 	"github.com/fatih/structs"
@@ -86,6 +87,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 		// check on workflow data
 		wnode := w.WorkflowData.NodeByID(nr.WorkflowNodeID)
 		if wnode == nil {
+			log.Warning("PublishWorkflowNodeRun> Unable to publish event on node %d", nr.WorkflowNodeID)
 			return
 		}
 		nodeName = wnode.Name

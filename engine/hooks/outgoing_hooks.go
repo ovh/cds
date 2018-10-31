@@ -176,6 +176,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 	wr, err := s.Client.WorkflowRunGet(pkey, workflow, runNumber)
 	if err != nil {
+		log.Error("doOutgoingWorkflowExecution> Unable to get workflow run: %v", err)
 		return nil
 	}
 

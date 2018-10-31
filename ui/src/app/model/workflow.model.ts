@@ -42,9 +42,7 @@ export class Workflow {
     previewMode: boolean;
 
     static getAllNodes(data: Workflow): Array<WNode> {
-        let nodes = new Array<WNode>();
-
-        nodes.push(...WNode.getAllNodes(data.workflow_data.node));
+        let nodes = WNode.getAllNodes(data.workflow_data.node);
 
         if (data.workflow_data.joins) {
             data.workflow_data.joins.forEach(j => {
@@ -108,8 +106,8 @@ export class Workflow {
         if (nodeID === w.workflow_data.node.id) {
             return false;
         }
-        let b = WNode.removeNodeWithChild(null, w.workflow_data.node, nodeID, 0);
-        if (!b) {
+        let nodeDeleted = WNode.removeNodeWithChild(null, w.workflow_data.node, nodeID, 0);
+        if (!nodeDeleted) {
             if (w.workflow_data.joins) {
                 for (let i = 0; i < w.workflow_data.joins.length; i++) {
                     if (w.workflow_data.joins[i].id === nodeID) {
@@ -148,14 +146,14 @@ export class Workflow {
             result = true;
         }
         if (!result) {
-            let b = WNode.removeNodeOnly(w, null, w.workflow_data.node, nodeID, -1);
-            if (b) {
+            let nodeDeleted = WNode.removeNodeOnly(w, null, w.workflow_data.node, nodeID, -1);
+            if (nodeDeleted) {
                 result = true;
             }
             if (!result && w.workflow_data.joins) {
                 for (let i = 0; i < w.workflow_data.joins.length; i++) {
-                    let bb = WNode.removeNodeOnly(w, null, w.workflow_data.joins[i], nodeID, i)
-                    if (bb) {
+                    let joinDeleted = WNode.removeNodeOnly(w, null, w.workflow_data.joins[i], nodeID, i);
+                    if (joinDeleted) {
                         result = true;
                         break;
                     }
@@ -518,8 +516,8 @@ export class WNode {
         }
         if (node.triggers) {
             for (let i = 0; i < node.triggers.length; i++) {
-                let b = WNode.removeNodeWithChild(node, node.triggers[i].child_node, nodeID, i);
-                if (b) {
+                let nodeDeleted = WNode.removeNodeWithChild(node, node.triggers[i].child_node, nodeID, i);
+                if (nodeDeleted) {
                     return true;
                 }
             }

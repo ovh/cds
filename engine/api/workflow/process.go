@@ -430,7 +430,7 @@ func processWorkflowNodeOutgoingHook(ctx context.Context, db gorp.SqlExecutor, s
 	if !has {
 		m, errM := LoadOutgoingHookModelByID(db, hook.WorkflowHookModelID)
 		if errM != nil {
-			return nil, sdk.WrapError(err, "process> Cannot load outgoing hook model")
+			return nil, sdk.WrapError(errM, "process> Cannot load outgoing hook model")
 		}
 		model = *m
 		w.Workflow.OutGoingHookModels[hook.WorkflowHookModelID] = *m

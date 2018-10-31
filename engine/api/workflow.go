@@ -345,7 +345,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 
-		// TODO REMOVE
+		// TODO REMOVE WHEN WE WILL DELETE OLD NODE STRUCT
 		wf1.Root = nil
 		wf1.Joins = nil
 		return service.WriteJSON(w, wf1, http.StatusCreated)

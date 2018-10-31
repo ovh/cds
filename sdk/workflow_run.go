@@ -14,8 +14,8 @@ import (
 )
 
 var (
-	WorkflowRunHeader = "X-WorkflowData-Run"
-	WorkflowHeader    = "X-WorkflowData"
+	WorkflowRunHeader = "X-Workflow-Run"
+	WorkflowHeader    = "X-Workflow"
 	ProjectKeyHeader  = "X-Project-Key"
 )
 

@@ -133,7 +133,7 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 
 	data := &sdk.WorkflowData{}
 	if err := gorpmapping.JSONNullString(res.WorkflowData, data); err != nil {
-		return sdk.WrapError(err, "Unable to unamrshall workflow data")
+		return sdk.WrapError(err, "Unable to unmarshall workflow data")
 	}
 	if data.Node.ID != 0 {
 		w.WorkflowData = data
@@ -616,9 +616,6 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 				if errPip != nil {
 					return sdk.WrapError(errPip, "renameNode> Unable to load pipeline %d", nodes[i].Context.PipelineID)
 				}
-				if w.Pipelines == nil {
-					w.Pipelines = make(map[int64]sdk.Pipeline)
-				}
 				w.Pipelines[nodes[i].Context.PipelineID] = *p
 			}
 		case sdk.NodeTypeOutGoingHook:
@@ -640,7 +637,7 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			pip := w.Pipelines[nodes[i].Context.PipelineID]
 			// Check if node is named pipName_12
 			if nodes[i].Name == pip.Name || strings.HasPrefix(nodes[i].Name, pip.Name+"_") {
-				var pipNumber = 0
+				var pipNumber int
 				if nodes[i].Name == pip.Name {
 					pipNumber = 1
 				} else {
@@ -657,7 +654,7 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			}
 		case sdk.NodeTypeJoin:
 			if nodes[i].Name == sdk.NodeTypeJoin || strings.HasPrefix(nodes[i].Name, sdk.NodeTypeJoin+"_") {
-				var joinNumber = 0
+				var joinNumber int
 				if nodes[i].Name == sdk.NodeTypeJoin {
 					joinNumber = 1
 				} else {
@@ -673,7 +670,7 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			}
 		case sdk.NodeTypeFork:
 			if nodes[i].Name == sdk.NodeTypeFork || strings.HasPrefix(nodes[i].Name, sdk.NodeTypeFork+"_") {
-				var forkNumber = 0
+				var forkNumber int
 				if nodes[i].Name == sdk.NodeTypeFork {
 					forkNumber = 1
 				} else {
@@ -691,7 +688,7 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			model := w.OutGoingHookModels[nodes[i].OutGoingHookContext.HookModelID]
 			// Check if node is named pipName_12
 			if nodes[i].Name == model.Type || strings.HasPrefix(nodes[i].Name, model.Type+"_") {
-				var hookNumber = 0
+				var hookNumber int
 				if nodes[i].Name == model.Type {
 					hookNumber = 1
 				} else {
@@ -960,7 +957,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project) error {
 
 			pip, err := pipeline.LoadPipelineByID(context.TODO(), db, pipID, true)
 			if err != nil {
-				return sdk.WrapError(sdk.ErrNotFound, "Unable to load pipeline %d", pipID)
+				return sdk.WrapError(sdk.ErrNotFound, "Unable to load pipeline %d, %v", pipID, err)
 			}
 			w.Pipelines[pipID] = *pip
 		}
@@ -1029,7 +1026,7 @@ func IsValid(db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project) error {
 				if _, has := w.OutGoingHookModels[h.WorkflowHookModelID]; !has {
 					m, err := LoadOutgoingHookModelByID(db, h.WorkflowHookModelID)
 					if err != nil {
-						return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown outgoing hook model %d", h.WorkflowHookModelID))
+						return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown outgoing hook model %d,  %v", h.WorkflowHookModelID, err))
 					}
 					w.OutGoingHookModels[h.WorkflowHookModelID] = *m
 				}

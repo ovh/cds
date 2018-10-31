@@ -143,7 +143,7 @@ type NodeJoin struct {
 
 //GetHooks returns all hooks for the node and its children
 func (n *Node) GetHooks() map[string]NodeHook {
-	res := map[string]NodeHook{}
+	res := make(map[string]NodeHook, len(n.Hooks))
 
 	for _, h := range n.Hooks {
 		res[h.UUID] = h
@@ -209,9 +209,9 @@ func (n *Node) Ancestors(w *WorkflowData, mapNodes map[int64]*Node, deep bool) [
 
 	if !ok {
 		for _, j := range w.Joins {
-			resAncestor, ok := (&j).ancestor(j.ID, deep)
+			resAncestor, found := (&j).ancestor(j.ID, deep)
 
-			if ok {
+			if found {
 				if len(resAncestor) == 1 || deep {
 					for id := range resAncestor {
 						res[id] = true

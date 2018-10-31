@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -67,6 +68,7 @@ func insertNodeContextData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) er
 					if pipParam.Name == param.Name {
 						param.Type = pipParam.Type
 						paramFound = true
+						break
 					}
 				}
 				if paramFound {
