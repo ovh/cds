@@ -1675,6 +1675,23 @@
           <span>list</span>
         </a>
     </li>
+    <li data-nav-id="/cli/cdsctl/workflow/logs/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/">
+        <span>logs</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/workflow/logs/download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/download/">
+          <span>download</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/logs/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/cdsctl/workflow/pull/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/pull/">
           <span>pull</span>
@@ -1801,6 +1818,11 @@
         </a>
     </li>
         </ul>
+    </li>
+      <li data-nav-id="/cli/worker/check-secret/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/check-secret/">
+          <span>check-secret</span>
+        </a>
     </li>
       <li data-nav-id="/cli/worker/download/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/download/">
@@ -2114,6 +2136,10 @@
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><strong>user</strong>: Marathon User (please use project, application or environment variables)</li>
+<li><strong>password</strong>: Marathon Password (please use project, application or environment variables)</li>
+<li><strong>configuration</strong>: Marathon application configuration file (json format)</li>
+
 <li><p><strong>waitForDeployment</strong>: Wait for instances deployment.
 If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result.
 If not set, CDS will consider a successful result if marathon accepts the provided configuration.</p></li>
@@ -2123,12 +2149,6 @@ If not set, CDS will consider a successful result if marathon accepts the provid
 <li><p><strong>timeout</strong>: Marathon deployment timeout (seconds). Used only if &ldquo;waitForDeployment&rdquo; is true.</p></li>
 
 <li><p><strong>url</strong>: Marathon URL <a href="http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083">http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083</a></p></li>
-
-<li><p><strong>user</strong>: Marathon User (please use project, application or environment variables)</p></li>
-
-<li><p><strong>password</strong>: Marathon Password (please use project, application or environment variables)</p></li>
-
-<li><p><strong>configuration</strong>: Marathon application configuration file (json format)</p></li>
 </ul>
 
 

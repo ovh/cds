@@ -1675,6 +1675,23 @@
           <span>list</span>
         </a>
     </li>
+    <li data-nav-id="/cli/cdsctl/workflow/logs/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/">
+        <span>logs</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/workflow/logs/download/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/download/">
+          <span>download</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/logs/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
       <li data-nav-id="/cli/cdsctl/workflow/pull/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/pull/">
           <span>pull</span>
@@ -1801,6 +1818,11 @@
         </a>
     </li>
         </ul>
+    </li>
+      <li data-nav-id="/cli/worker/check-secret/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/worker/check-secret/">
+          <span>check-secret</span>
+        </a>
     </li>
       <li data-nav-id="/cli/worker/download/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/worker/download/">
@@ -2114,13 +2136,13 @@
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li><strong>vars</strong>: Empty: all {{.cds&hellip;}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty</li>
 <li><strong>vars-from-file</strong>: filename.yaml or filename.json. See <a href="https://github.com/ovh/venom#run-venom-with-file-var">https://github.com/ovh/venom#run-venom-with-file-var</a></li>
 <li><strong>path</strong>: Path containers yml venom files. Format: adirectory/, ./<em>aTest.yml, ./foo/b</em>/*<em>/z</em>.yml</li>
 <li><strong>exclude</strong>: Exclude some files, one file per line</li>
 <li><strong>output</strong>: Directory where output xunit result file</li>
 <li><strong>parallel</strong>: Launch Test Suites in parallel. Enter here number of routines</li>
 <li><strong>loglevel</strong>: Log Level: debug, info, warn or error</li>
+<li><strong>vars</strong>: Empty: all {{.cds&hellip;}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty</li>
 </ul>
 
 

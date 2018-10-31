@@ -574,6 +574,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/worker/check-secret/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/config/</loc>
   </url>
   
@@ -715,6 +719,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/download/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/logs/download/</loc>
   </url>
   
   <url>
@@ -1030,11 +1038,19 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/logs/list/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/login/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/login/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/logs/</loc>
   </url>
   
   <url>
