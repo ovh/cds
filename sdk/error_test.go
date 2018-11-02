@@ -106,7 +106,7 @@ func TestCause(t *testing.T) {
 }
 
 func TestNewAdvancedError(t *testing.T) {
-	err := NewError(ErrWrongRequest, fmt.Errorf("this is an error generated from vendor"))
+	err := NewErrorFrom(ErrWrongRequest, "this is an error generated from vendor")
 	httpErr := ExtractHTTPError(err, "fr")
 	assert.Equal(t, "la requête est incorrecte (from: this is an error generated from vendor)", httpErr.Error())
 

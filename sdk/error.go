@@ -582,25 +582,32 @@ func callers() *stack {
 	return &st
 }
 
-// NewError just set an error with a root cause.
+// NewError returns a merge of given err with new http error.
 func NewError(httpError Error, err error) error {
-	// if the given error is a error with stack, replace the http error
+	// if the given error is nil do nothing
 	if err == nil {
 		return nil
 	}
 
+	// if it's already an error with stack, override the http error and set from value with err cause
 	if e, ok := err.(errorWithStack); ok {
 		httpError.from = Cause(e).Error()
 		e.httpError = httpError
 		return e
 	}
 
+	// if it's a library error create a new error with stack
 	httpError.from = err.Error()
 	return errorWithStack{
 		root:      errors.WithStack(err),
 		stack:     callers(),
 		httpError: httpError,
 	}
+}
+
+// NewErrorFrom returns the given http error with from details.
+func NewErrorFrom(httpError Error, from string, args ...interface{}) error {
+	return NewError(httpError, fmt.Errorf(from, args...))
 }
 
 // WrapError returns an error with stack and message.
