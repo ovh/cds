@@ -2096,21 +2096,21 @@
 <ul>
 <li>
 <ul>
-<li><a href="#get-project">GET <code>/project</code></a></li>
 <li><a href="#post-project">POST <code>/project</code></a></li>
+<li><a href="#get-project">GET <code>/project</code></a></li>
+<li><a href="#delete-project-project-key">DELETE <code>/project/&lt;project-key&gt;</code></a></li>
 <li><a href="#put-project-project-key">PUT <code>/project/&lt;project-key&gt;</code></a></li>
 <li><a href="#get-project-project-key">GET <code>/project/&lt;project-key&gt;</code></a></li>
-<li><a href="#delete-project-project-key">DELETE <code>/project/&lt;project-key&gt;</code></a></li>
 <li><a href="#get-project-project-key-all-keys">GET <code>/project/&lt;project-key&gt;/all/keys</code></a></li>
-<li><a href="#get-project-project-key-application-application-name">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;</code></a></li>
 <li><a href="#put-project-project-key-application-application-name">PUT <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;</code></a></li>
+<li><a href="#get-project-project-key-application-application-name">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;</code></a></li>
 <li><a href="#delete-project-project-key-application-application-name">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-branches">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/branches</code></a></li>
 <li><a href="#post-project-project-key-application-application-name-clone">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/clone</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-deployment-config">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config</code></a></li>
+<li><a href="#post-project-project-key-application-application-name-deployment-config-platform">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config/&lt;platform&gt;</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-deployment-config-platform">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config/&lt;platform&gt;</code></a></li>
 <li><a href="#delete-project-project-key-application-application-name-deployment-config-platform">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config/&lt;platform&gt;</code></a></li>
-<li><a href="#post-project-project-key-application-application-name-deployment-config-platform">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config/&lt;platform&gt;</code></a></li>
 <li><a href="#post-project-project-key-application-application-name-group">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/group</code></a></li>
 <li><a href="#put-project-project-key-application-application-name-group-group">PUT <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/group/&lt;group&gt;</code></a></li>
 <li><a href="#delete-project-project-key-application-application-name-group-group">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/group/&lt;group&gt;</code></a></li>
@@ -2135,38 +2135,38 @@
 <li><a href="#postexecute-project-project-key-application-application-name-pipeline-pipeline-name-buildnumber-artifact-tag-url-callback">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/&lt;buildNumber&gt;/artifact/&lt;tag&gt;/url/callback</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-artifact-tag">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/artifact/&lt;tag&gt;</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-artifact-download-id">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/artifact/download/&lt;id&gt;</code></a></li>
-<li><a href="#delete-project-project-key-application-application-name-pipeline-pipeline-name-build-build">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-build-build">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;</code></a></li>
+<li><a href="#delete-project-project-key-application-application-name-pipeline-pipeline-name-build-build">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-build-build-action-actionid-log">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/action/&lt;actionID&gt;/log</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-build-build-action-actionid-step-steporder-log">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/action/&lt;actionID&gt;/step/&lt;stepOrder&gt;/log</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-build-build-commits">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/commits</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-build-build-log">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/log</code></a></li>
 <li><a href="#postexecute-project-project-key-application-application-name-pipeline-pipeline-name-build-build-restart">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/restart</code></a></li>
 <li><a href="#postexecute-project-project-key-application-application-name-pipeline-pipeline-name-build-build-stop">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/stop</code></a></li>
-<li><a href="#postexecute-project-project-key-application-application-name-pipeline-pipeline-name-build-build-test">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/test</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-build-build-test">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/test</code></a></li>
+<li><a href="#postexecute-project-project-key-application-application-name-pipeline-pipeline-name-build-build-test">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/test</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-build-build-triggered">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/triggered</code></a></li>
 <li><a href="#postexecute-project-project-key-application-application-name-pipeline-pipeline-name-build-build-variable">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/variable</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-commits">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/commits</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-history">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/history</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-hook">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook</code></a></li>
 <li><a href="#post-project-project-key-application-application-name-pipeline-pipeline-name-hook">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook</code></a></li>
-<li><a href="#delete-project-project-key-application-application-name-pipeline-pipeline-name-hook-id">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook/&lt;id&gt;</code></a></li>
 <li><a href="#put-project-project-key-application-application-name-pipeline-pipeline-name-hook-id">PUT <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook/&lt;id&gt;</code></a></li>
+<li><a href="#delete-project-project-key-application-application-name-pipeline-pipeline-name-hook-id">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook/&lt;id&gt;</code></a></li>
 <li><a href="#deprecated-3">Deprecated</a></li>
 <li><a href="#deprecated-4">Deprecated</a></li>
 <li><a href="#deprecated-5">Deprecated</a></li>
 <li><a href="#postexecute-project-project-key-application-application-name-pipeline-pipeline-name-run">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/run</code></a></li>
 <li><a href="#postexecute-project-project-key-application-application-name-pipeline-pipeline-name-runwithlastparent">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/runwithlastparent</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-scheduler">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler</code></a></li>
-<li><a href="#post-project-project-key-application-application-name-pipeline-pipeline-name-scheduler">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler</code></a></li>
 <li><a href="#put-project-project-key-application-application-name-pipeline-pipeline-name-scheduler">PUT <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler</code></a></li>
+<li><a href="#post-project-project-key-application-application-name-pipeline-pipeline-name-scheduler">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler</code></a></li>
 <li><a href="#delete-project-project-key-application-application-name-pipeline-pipeline-name-scheduler-id">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler/&lt;id&gt;</code></a></li>
-<li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-trigger">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger</code></a></li>
 <li><a href="#post-project-project-key-application-application-name-pipeline-pipeline-name-trigger">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger</code></a></li>
+<li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-trigger">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger</code></a></li>
+<li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-trigger-id">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger/&lt;id&gt;</code></a></li>
 <li><a href="#put-project-project-key-application-application-name-pipeline-pipeline-name-trigger-id">PUT <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger/&lt;id&gt;</code></a></li>
 <li><a href="#delete-project-project-key-application-application-name-pipeline-pipeline-name-trigger-id">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger/&lt;id&gt;</code></a></li>
-<li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-trigger-id">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger/&lt;id&gt;</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-pipeline-pipeline-name-trigger-source">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger/source</code></a></li>
 <li><a href="#deprecated-6">Deprecated</a></li>
 <li><a href="#get-project-project-key-application-application-name-remotes">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/remotes</code></a></li>
@@ -2175,9 +2175,9 @@
 <li><a href="#get-project-project-key-application-application-name-tree">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/tree</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-tree-status">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/tree/status</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-variable">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable</code></a></li>
+<li><a href="#get-project-project-key-application-application-name-variable-name">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#post-project-project-key-application-application-name-variable-name">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#delete-project-project-key-application-application-name-variable-name">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></a></li>
-<li><a href="#get-project-project-key-application-application-name-variable-name">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#put-project-project-key-application-application-name-variable-name">PUT <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-variable-name-audit">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;/audit</code></a></li>
 <li><a href="#get-project-project-key-application-application-name-variable-audit">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/audit</code></a></li>
@@ -2190,8 +2190,8 @@
 <li><a href="#post-project-project-key-applications">POST <code>/project/&lt;project-key&gt;/applications</code></a></li>
 <li><a href="#postexecute-project-project-key-cache-tag">POSTEXECUTE <code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;</code></a></li>
 <li><a href="#get-project-project-key-cache-tag">GET <code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;</code></a></li>
-<li><a href="#postexecute-project-project-key-cache-tag-url">POSTEXECUTE <code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;/url</code></a></li>
 <li><a href="#get-project-project-key-cache-tag-url">GET <code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;/url</code></a></li>
+<li><a href="#postexecute-project-project-key-cache-tag-url">POSTEXECUTE <code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;/url</code></a></li>
 <li><a href="#post-project-project-key-encrypt">POST <code>/project/&lt;project-key&gt;/encrypt</code></a></li>
 <li><a href="#post-project-project-key-environment">POST <code>/project/&lt;project-key&gt;/environment</code></a></li>
 <li><a href="#get-project-project-key-environment">GET <code>/project/&lt;project-key&gt;/environment</code></a></li>
@@ -2204,15 +2204,15 @@
 <li><a href="#delete-project-project-key-environment-environment-name-group-group">DELETE <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/group/&lt;group&gt;</code></a></li>
 <li><a href="#post-project-project-key-environment-environment-name-group-import">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/group/import</code></a></li>
 <li><a href="#post-project-project-key-environment-environment-name-groups">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/groups</code></a></li>
-<li><a href="#post-project-project-key-environment-environment-name-keys">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/keys</code></a></li>
 <li><a href="#get-project-project-key-environment-environment-name-keys">GET <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/keys</code></a></li>
+<li><a href="#post-project-project-key-environment-environment-name-keys">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/keys</code></a></li>
 <li><a href="#delete-project-project-key-environment-environment-name-keys-name">DELETE <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/keys/&lt;name&gt;</code></a></li>
 <li><a href="#get-project-project-key-environment-environment-name-usage">GET <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/usage</code></a></li>
 <li><a href="#get-project-project-key-environment-environment-name-variable">GET <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable</code></a></li>
-<li><a href="#post-project-project-key-environment-environment-name-variable-name">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></a></li>
+<li><a href="#put-project-project-key-environment-environment-name-variable-name">PUT <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#delete-project-project-key-environment-environment-name-variable-name">DELETE <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#get-project-project-key-environment-environment-name-variable-name">GET <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></a></li>
-<li><a href="#put-project-project-key-environment-environment-name-variable-name">PUT <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></a></li>
+<li><a href="#post-project-project-key-environment-environment-name-variable-name">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#get-project-project-key-environment-environment-name-variable-name-audit">GET <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;/audit</code></a></li>
 <li><a href="#post-project-project-key-environment-import">POST <code>/project/&lt;project-key&gt;/environment/import</code></a></li>
 <li><a href="#post-project-project-key-environment-import-environment-name">POST <code>/project/&lt;project-key&gt;/environment/import/&lt;environment-name&gt;</code></a></li>
@@ -2233,39 +2233,39 @@
 <li><a href="#put-project-project-key-import-pipeline-pipeline-name">PUT <code>/project/&lt;project-key&gt;/import/pipeline/&lt;pipeline-name&gt;</code></a></li>
 <li><a href="#post-project-project-key-import-workflows">POST <code>/project/&lt;project-key&gt;/import/workflows</code></a></li>
 <li><a href="#put-project-project-key-import-workflows-workflow-name">PUT <code>/project/&lt;project-key&gt;/import/workflows/&lt;workflow-name&gt;</code></a></li>
-<li><a href="#get-project-project-key-keys">GET <code>/project/&lt;project-key&gt;/keys</code></a></li>
 <li><a href="#post-project-project-key-keys">POST <code>/project/&lt;project-key&gt;/keys</code></a></li>
+<li><a href="#get-project-project-key-keys">GET <code>/project/&lt;project-key&gt;/keys</code></a></li>
 <li><a href="#delete-project-project-key-keys-name">DELETE <code>/project/&lt;project-key&gt;/keys/&lt;name&gt;</code></a></li>
 <li><a href="#put-project-project-key-labels">PUT <code>/project/&lt;project-key&gt;/labels</code></a></li>
 <li><a href="#deprecated-7">DEPRECATED</a></li>
-<li><a href="#get-project-project-key-pipeline">GET <code>/project/&lt;project-key&gt;/pipeline</code></a></li>
 <li><a href="#post-project-project-key-pipeline">POST <code>/project/&lt;project-key&gt;/pipeline</code></a></li>
-<li><a href="#put-project-project-key-pipeline-pipeline-name">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;</code></a></li>
+<li><a href="#get-project-project-key-pipeline">GET <code>/project/&lt;project-key&gt;/pipeline</code></a></li>
 <li><a href="#delete-project-project-key-pipeline-pipeline-name">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;</code></a></li>
+<li><a href="#put-project-project-key-pipeline-pipeline-name">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;</code></a></li>
 <li><a href="#get-project-project-key-pipeline-pipeline-name">GET <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;</code></a></li>
 <li><a href="#get-project-project-key-pipeline-pipeline-name-application">GET <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/application</code></a></li>
 <li><a href="#get-project-project-key-pipeline-pipeline-name-audits">GET <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/audits</code></a></li>
 <li><a href="#post-project-project-key-pipeline-pipeline-name-group">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group</code></a></li>
-<li><a href="#put-project-project-key-pipeline-pipeline-name-group-group">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group/&lt;group&gt;</code></a></li>
 <li><a href="#delete-project-project-key-pipeline-pipeline-name-group-group">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group/&lt;group&gt;</code></a></li>
+<li><a href="#put-project-project-key-pipeline-pipeline-name-group-group">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group/&lt;group&gt;</code></a></li>
 <li><a href="#post-project-project-key-pipeline-pipeline-name-group-import">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group/import</code></a></li>
 <li><a href="#get-project-project-key-pipeline-pipeline-name-parameter">GET <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter</code></a></li>
+<li><a href="#post-project-project-key-pipeline-pipeline-name-parameter-name">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter/&lt;name&gt;</code></a></li>
 <li><a href="#put-project-project-key-pipeline-pipeline-name-parameter-name">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter/&lt;name&gt;</code></a></li>
 <li><a href="#delete-project-project-key-pipeline-pipeline-name-parameter-name">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter/&lt;name&gt;</code></a></li>
-<li><a href="#post-project-project-key-pipeline-pipeline-name-parameter-name">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter/&lt;name&gt;</code></a></li>
 <li><a href="#post-project-project-key-pipeline-pipeline-name-rollback-auditid">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/rollback/&lt;auditID&gt;</code></a></li>
 <li><a href="#post-project-project-key-pipeline-pipeline-name-stage">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage</code></a></li>
+<li><a href="#put-project-project-key-pipeline-pipeline-name-stage-stageid">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;</code></a></li>
 <li><a href="#delete-project-project-key-pipeline-pipeline-name-stage-stageid">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;</code></a></li>
 <li><a href="#get-project-project-key-pipeline-pipeline-name-stage-stageid">GET <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;</code></a></li>
-<li><a href="#put-project-project-key-pipeline-pipeline-name-stage-stageid">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;</code></a></li>
 <li><a href="#post-project-project-key-pipeline-pipeline-name-stage-stageid-job">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job</code></a></li>
-<li><a href="#delete-project-project-key-pipeline-pipeline-name-stage-stageid-job-jobid">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job/&lt;jobID&gt;</code></a></li>
 <li><a href="#put-project-project-key-pipeline-pipeline-name-stage-stageid-job-jobid">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job/&lt;jobID&gt;</code></a></li>
+<li><a href="#delete-project-project-key-pipeline-pipeline-name-stage-stageid-job-jobid">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job/&lt;jobID&gt;</code></a></li>
 <li><a href="#post-project-project-key-pipeline-pipeline-name-stage-move">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/move</code></a></li>
 <li><a href="#get-project-project-key-platforms">GET <code>/project/&lt;project-key&gt;/platforms</code></a></li>
 <li><a href="#post-project-project-key-platforms">POST <code>/project/&lt;project-key&gt;/platforms</code></a></li>
-<li><a href="#put-project-project-key-platforms-platformname">PUT <code>/project/&lt;project-key&gt;/platforms/&lt;platformName&gt;</code></a></li>
 <li><a href="#delete-project-project-key-platforms-platformname">DELETE <code>/project/&lt;project-key&gt;/platforms/&lt;platformName&gt;</code></a></li>
+<li><a href="#put-project-project-key-platforms-platformname">PUT <code>/project/&lt;project-key&gt;/platforms/&lt;platformName&gt;</code></a></li>
 <li><a href="#get-project-project-key-platforms-platformname">GET <code>/project/&lt;project-key&gt;/platforms/&lt;platformName&gt;</code></a></li>
 <li><a href="#post-project-project-key-preview-pipeline">POST <code>/project/&lt;project-key&gt;/preview/pipeline</code></a></li>
 <li><a href="#post-project-project-key-preview-workflows">POST <code>/project/&lt;project-key&gt;/preview/workflows</code></a></li>
@@ -2281,10 +2281,10 @@
 <li><a href="#get-project-project-key-repositories-manager-name-repos">GET <code>/project/&lt;project-key&gt;/repositories_manager/&lt;name&gt;/repos</code></a></li>
 <li><a href="#get-project-project-key-runs">GET <code>/project/&lt;project-key&gt;/runs</code></a></li>
 <li><a href="#get-project-project-key-variable">GET <code>/project/&lt;project-key&gt;/variable</code></a></li>
+<li><a href="#get-project-project-key-variable-name">GET <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></a></li>
+<li><a href="#post-project-project-key-variable-name">POST <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#put-project-project-key-variable-name">PUT <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#delete-project-project-key-variable-name">DELETE <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></a></li>
-<li><a href="#post-project-project-key-variable-name">POST <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></a></li>
-<li><a href="#get-project-project-key-variable-name">GET <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></a></li>
 <li><a href="#get-project-project-key-variable-name-audit">GET <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;/audit</code></a></li>
 <li><a href="#get-project-project-key-variable-audit">GET <code>/project/&lt;project-key&gt;/variable/audit</code></a></li>
 <li><a href="#get-project-project-key-workflow-workflow-name-node-nodeid-hook-model">GET <code>/project/&lt;project-key&gt;/workflow/&lt;workflow-name&gt;/node/&lt;nodeID&gt;/hook/model</code></a></li>
@@ -2292,8 +2292,8 @@
 <li><a href="#postworkflow-creates-a-new-workflow">postWorkflow creates a new workflow</a></li>
 <li><a href="#getworkflows-returns-id-and-name-of-workflows-for-a-given-project-user">getWorkflows returns ID and name of workflows for a given project/user</a></li>
 <li><a href="#putworkflow-updates-a-workflow">putWorkflow updates a workflow</a></li>
-<li><a href="#getworkflow-returns-a-full-workflow">getWorkflow returns a full workflow</a></li>
 <li><a href="#putworkflow-deletes-a-workflow">putWorkflow deletes a workflow</a></li>
+<li><a href="#getworkflow-returns-a-full-workflow">getWorkflow returns a full workflow</a></li>
 <li><a href="#get-project-project-key-workflows-workflow-name-artifact-artifactid">GET <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/artifact/&lt;artifactId&gt;</code></a></li>
 <li><a href="#postworkflowgroup-add-permission-for-a-group-on-the-workflow">postWorkflowGroup add permission for a group on the workflow</a></li>
 <li><a href="#putworkflowgroup-update-permission-for-a-group-on-the-workflow">putWorkflowGroup update permission for a group on the workflow</a></li>
@@ -2303,8 +2303,8 @@
 <li><a href="#deleteworkflowlabel-handler-to-unlink-a-label-to-a-workflow">deleteWorkflowLabel handler to unlink a label to a workflow</a></li>
 <li><a href="#get-project-project-key-workflows-workflow-name-node-nodeid-triggers-condition">GET <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/node/&lt;nodeID&gt;/triggers/condition</code></a></li>
 <li><a href="#postworkflowrollback-rollback-to-a-specific-audit-id">postWorkflowRollback rollback to a specific audit id</a></li>
-<li><a href="#postexecute-project-project-key-workflows-workflow-name-runs">POSTEXECUTE <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs</code></a></li>
 <li><a href="#get-project-project-key-workflows-workflow-name-runs">GET <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs</code></a></li>
+<li><a href="#postexecute-project-project-key-workflows-workflow-name-runs">POSTEXECUTE <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs</code></a></li>
 <li><a href="#get-project-project-key-workflows-workflow-name-runs-number">GET <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs/&lt;number&gt;</code></a></li>
 <li><a href="#get-project-project-key-workflows-workflow-name-runs-number-nodename-commits">GET <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs/&lt;number&gt;/&lt;nodeName&gt;/commits</code></a></li>
 <li><a href="#get-project-project-key-workflows-workflow-name-runs-number-artifacts">GET <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs/&lt;number&gt;/artifacts</code></a></li>
@@ -2346,6 +2346,34 @@
 
 
 
+<h3 id="post-project">POST <code>/project</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addProjectHandler%22">addProjectHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="get-project">GET <code>/project</code></h3>
 
 <table>
@@ -2374,20 +2402,20 @@
 </tbody>
 </table>
 
-<h3 id="post-project">POST <code>/project</code></h3>
+<h3 id="delete-project-project-key">DELETE <code>/project/&lt;project-key&gt;</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/project</code></strong></th>
+<th><strong><code>/project/&lt;project-key&gt;</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -2397,7 +2425,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addProjectHandler%22">addProjectHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteProjectHandler%22">deleteProjectHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2458,34 +2486,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-project-project-key">DELETE <code>/project/&lt;project-key&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteProjectHandler%22">deleteProjectHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-project-project-key-all-keys">GET <code>/project/&lt;project-key&gt;/all/keys</code></h3>
 
 <table>
@@ -2514,34 +2514,6 @@
 </tbody>
 </table>
 
-<h3 id="get-project-project-key-application-application-name">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getApplicationHandler%22">getApplicationHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-project-project-key-application-application-name">PUT <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;</code></h3>
 
 <table>
@@ -2566,6 +2538,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateApplicationHandler%22">updateApplicationHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-project-project-key-application-application-name">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getApplicationHandler%22">getApplicationHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2682,6 +2682,34 @@
 </tbody>
 </table>
 
+<h3 id="post-project-project-key-application-application-name-deployment-config-platform">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config/&lt;platform&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config/&lt;platform&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postApplicationDeploymentStrategyConfigHandler%22">postApplicationDeploymentStrategyConfigHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="get-project-project-key-application-application-name-deployment-config-platform">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config/&lt;platform&gt;</code></h3>
 
 <table>
@@ -2734,34 +2762,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteApplicationDeploymentStrategyConfigHandler%22">deleteApplicationDeploymentStrategyConfigHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="post-project-project-key-application-application-name-deployment-config-platform">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config/&lt;platform&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/deployment/config/&lt;platform&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postApplicationDeploymentStrategyConfigHandler%22">postApplicationDeploymentStrategyConfigHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -3438,34 +3438,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-project-project-key-application-application-name-pipeline-pipeline-name-build-build">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBuildHandler%22">deleteBuildHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-project-project-key-application-application-name-pipeline-pipeline-name-build-build">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;</code></h3>
 
 <table>
@@ -3490,6 +3462,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBuildStateHandler%22">getBuildStateHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-project-project-key-application-application-name-pipeline-pipeline-name-build-build">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBuildHandler%22">deleteBuildHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -3662,34 +3662,6 @@
 </tbody>
 </table>
 
-<h3 id="postexecute-project-project-key-application-application-name-pipeline-pipeline-name-build-build-test">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/test</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/test</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POSTEXECUTE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addBuildTestResultsHandler%22">addBuildTestResultsHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-project-project-key-application-application-name-pipeline-pipeline-name-build-build-test">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/test</code></h3>
 
 <table>
@@ -3714,6 +3686,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getBuildTestResultsHandler%22">getBuildTestResultsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="postexecute-project-project-key-application-application-name-pipeline-pipeline-name-build-build-test">POSTEXECUTE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/test</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/build/&lt;build&gt;/test</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POSTEXECUTE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addBuildTestResultsHandler%22">addBuildTestResultsHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -3886,34 +3886,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-project-project-key-application-application-name-pipeline-pipeline-name-hook-id">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook/&lt;id&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook/&lt;id&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteHookHandler%22">deleteHookHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-project-project-key-application-application-name-pipeline-pipeline-name-hook-id">PUT <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook/&lt;id&gt;</code></h3>
 
 <table>
@@ -3942,7 +3914,63 @@
 </tbody>
 </table>
 
+<h3 id="delete-project-project-key-application-application-name-pipeline-pipeline-name-hook-id">DELETE <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook/&lt;id&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/hook/&lt;id&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteHookHandler%22">deleteHookHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="deprecated-3">Deprecated</h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/notification</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateUserNotificationApplicationPipelineHandler%22">updateUserNotificationApplicationPipelineHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="deprecated-4">Deprecated</h3>
 
 <table>
 <thead>
@@ -3970,7 +3998,7 @@
 </tbody>
 </table>
 
-<h3 id="deprecated-4">Deprecated</h3>
+<h3 id="deprecated-5">Deprecated</h3>
 
 <table>
 <thead>
@@ -3994,34 +4022,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getUserNotificationApplicationPipelineHandler%22">getUserNotificationApplicationPipelineHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="deprecated-5">Deprecated</h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/notification</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateUserNotificationApplicationPipelineHandler%22">updateUserNotificationApplicationPipelineHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -4110,34 +4110,6 @@
 </tbody>
 </table>
 
-<h3 id="post-project-project-key-application-application-name-pipeline-pipeline-name-scheduler">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addSchedulerApplicationPipelineHandler%22">addSchedulerApplicationPipelineHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-project-project-key-application-application-name-pipeline-pipeline-name-scheduler">PUT <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler</code></h3>
 
 <table>
@@ -4162,6 +4134,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateSchedulerApplicationPipelineHandler%22">updateSchedulerApplicationPipelineHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-project-project-key-application-application-name-pipeline-pipeline-name-scheduler">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/scheduler</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addSchedulerApplicationPipelineHandler%22">addSchedulerApplicationPipelineHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -4194,6 +4194,34 @@
 </tbody>
 </table>
 
+<h3 id="post-project-project-key-application-application-name-pipeline-pipeline-name-trigger">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addTriggerHandler%22">addTriggerHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="get-project-project-key-application-application-name-pipeline-pipeline-name-trigger">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger</code></h3>
 
 <table>
@@ -4222,20 +4250,20 @@
 </tbody>
 </table>
 
-<h3 id="post-project-project-key-application-application-name-pipeline-pipeline-name-trigger">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger</code></h3>
+<h3 id="get-project-project-key-application-application-name-pipeline-pipeline-name-trigger-id">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger/&lt;id&gt;</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger</code></strong></th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger/&lt;id&gt;</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>GET</td>
 </tr>
 
 <tr>
@@ -4245,7 +4273,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addTriggerHandler%22">addTriggerHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTriggerHandler%22">getTriggerHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -4302,34 +4330,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTriggerHandler%22">deleteTriggerHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-project-project-key-application-application-name-pipeline-pipeline-name-trigger-id">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger/&lt;id&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/pipeline/&lt;pipeline-name&gt;/trigger/&lt;id&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTriggerHandler%22">getTriggerHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -4558,6 +4558,34 @@
 </tbody>
 </table>
 
+<h3 id="get-project-project-key-application-application-name-variable-name">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getVariableInApplicationHandler%22">getVariableInApplicationHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="post-project-project-key-application-application-name-variable-name">POST <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></h3>
 
 <table>
@@ -4610,34 +4638,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteVariableFromApplicationHandler%22">deleteVariableFromApplicationHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-project-project-key-application-application-name-variable-name">GET <code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/application/&lt;application-name&gt;/variable/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getVariableInApplicationHandler%22">getVariableInApplicationHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -4978,34 +4978,6 @@
 </tbody>
 </table>
 
-<h3 id="postexecute-project-project-key-cache-tag-url">POSTEXECUTE <code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;/url</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;/url</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POSTEXECUTE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedWorker:  -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPushCacheWithTempURLHandler%22">postPushCacheWithTempURLHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-project-project-key-cache-tag-url">GET <code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;/url</code></h3>
 
 <table>
@@ -5030,6 +5002,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPullCacheWithTempURLHandler%22">getPullCacheWithTempURLHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="postexecute-project-project-key-cache-tag-url">POSTEXECUTE <code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;/url</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/cache/&lt;tag&gt;/url</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POSTEXECUTE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedWorker:  -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postPushCacheWithTempURLHandler%22">postPushCacheWithTempURLHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -5370,34 +5370,6 @@
 </tbody>
 </table>
 
-<h3 id="post-project-project-key-environment-environment-name-keys">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/keys</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/keys</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addKeyInEnvironmentHandler%22">addKeyInEnvironmentHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-project-project-key-environment-environment-name-keys">GET <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/keys</code></h3>
 
 <table>
@@ -5422,6 +5394,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getKeysInEnvironmentHandler%22">getKeysInEnvironmentHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-project-project-key-environment-environment-name-keys">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/keys</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/keys</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addKeyInEnvironmentHandler%22">addKeyInEnvironmentHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -5510,7 +5510,7 @@
 </tbody>
 </table>
 
-<h3 id="post-project-project-key-environment-environment-name-variable-name">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></h3>
+<h3 id="put-project-project-key-environment-environment-name-variable-name">PUT <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></h3>
 
 <table>
 <thead>
@@ -5523,7 +5523,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>POST</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -5533,7 +5533,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addVariableInEnvironmentHandler%22">addVariableInEnvironmentHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateVariableInEnvironmentHandler%22">updateVariableInEnvironmentHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -5594,7 +5594,7 @@
 </tbody>
 </table>
 
-<h3 id="put-project-project-key-environment-environment-name-variable-name">PUT <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></h3>
+<h3 id="post-project-project-key-environment-environment-name-variable-name">POST <code>/project/&lt;project-key&gt;/environment/&lt;environment-name&gt;/variable/&lt;name&gt;</code></h3>
 
 <table>
 <thead>
@@ -5607,7 +5607,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>POST</td>
 </tr>
 
 <tr>
@@ -5617,7 +5617,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateVariableInEnvironmentHandler%22">updateVariableInEnvironmentHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addVariableInEnvironmentHandler%22">addVariableInEnvironmentHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -6107,34 +6107,6 @@
 </tbody>
 </table>
 
-<h3 id="get-project-project-key-keys">GET <code>/project/&lt;project-key&gt;/keys</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/keys</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getKeysInProjectHandler%22">getKeysInProjectHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-project-project-key-keys">POST <code>/project/&lt;project-key&gt;/keys</code></h3>
 
 <table>
@@ -6159,6 +6131,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addKeyInProjectHandler%22">addKeyInProjectHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-project-project-key-keys">GET <code>/project/&lt;project-key&gt;/keys</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/keys</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getKeysInProjectHandler%22">getKeysInProjectHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -6247,34 +6247,6 @@
 </tbody>
 </table>
 
-<h3 id="get-project-project-key-pipeline">GET <code>/project/&lt;project-key&gt;/pipeline</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/pipeline</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPipelinesHandler%22">getPipelinesHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-project-project-key-pipeline">POST <code>/project/&lt;project-key&gt;/pipeline</code></h3>
 
 <table>
@@ -6303,20 +6275,20 @@
 </tbody>
 </table>
 
-<h3 id="put-project-project-key-pipeline-pipeline-name">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;</code></h3>
+<h3 id="get-project-project-key-pipeline">GET <code>/project/&lt;project-key&gt;/pipeline</code></h3>
 
 <table>
 <thead>
 <tr>
 <th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;</code></strong></th>
+<th><strong><code>/project/&lt;project-key&gt;/pipeline</code></strong></th>
 </tr>
 </thead>
 
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>GET</td>
 </tr>
 
 <tr>
@@ -6326,7 +6298,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updatePipelineHandler%22">updatePipelineHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPipelinesHandler%22">getPipelinesHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -6355,6 +6327,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deletePipelineHandler%22">deletePipelineHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-project-project-key-pipeline-pipeline-name">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updatePipelineHandler%22">updatePipelineHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -6471,34 +6471,6 @@
 </tbody>
 </table>
 
-<h3 id="put-project-project-key-pipeline-pipeline-name-group-group">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group/&lt;group&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group/&lt;group&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupRoleOnPipelineHandler%22">updateGroupRoleOnPipelineHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="delete-project-project-key-pipeline-pipeline-name-group-group">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group/&lt;group&gt;</code></h3>
 
 <table>
@@ -6523,6 +6495,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteGroupFromPipelineHandler%22">deleteGroupFromPipelineHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-project-project-key-pipeline-pipeline-name-group-group">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group/&lt;group&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/group/&lt;group&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateGroupRoleOnPipelineHandler%22">updateGroupRoleOnPipelineHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -6583,6 +6583,34 @@
 </tbody>
 </table>
 
+<h3 id="post-project-project-key-pipeline-pipeline-name-parameter-name">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addParameterInPipelineHandler%22">addParameterInPipelineHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="put-project-project-key-pipeline-pipeline-name-parameter-name">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter/&lt;name&gt;</code></h3>
 
 <table>
@@ -6635,34 +6663,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteParameterFromPipelineHandler%22">deleteParameterFromPipelineHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="post-project-project-key-pipeline-pipeline-name-parameter-name">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter/&lt;name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/parameter/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addParameterInPipelineHandler%22">addParameterInPipelineHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -6723,6 +6723,34 @@
 </tbody>
 </table>
 
+<h3 id="put-project-project-key-pipeline-pipeline-name-stage-stageid">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateStageHandler%22">updateStageHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="delete-project-project-key-pipeline-pipeline-name-stage-stageid">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;</code></h3>
 
 <table>
@@ -6779,34 +6807,6 @@
 </tbody>
 </table>
 
-<h3 id="put-project-project-key-pipeline-pipeline-name-stage-stageid">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateStageHandler%22">updateStageHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="post-project-project-key-pipeline-pipeline-name-stage-stageid-job">POST <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job</code></h3>
 
 <table>
@@ -6835,34 +6835,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-project-project-key-pipeline-pipeline-name-stage-stageid-job-jobid">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job/&lt;jobID&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job/&lt;jobID&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteJobHandler%22">deleteJobHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-project-project-key-pipeline-pipeline-name-stage-stageid-job-jobid">PUT <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job/&lt;jobID&gt;</code></h3>
 
 <table>
@@ -6887,6 +6859,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateJobHandler%22">updateJobHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-project-project-key-pipeline-pipeline-name-stage-stageid-job-jobid">DELETE <code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job/&lt;jobID&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/pipeline/&lt;pipeline-name&gt;/stage/&lt;stageID&gt;/job/&lt;jobID&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteJobHandler%22">deleteJobHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -6975,34 +6975,6 @@
 </tbody>
 </table>
 
-<h3 id="put-project-project-key-platforms-platformname">PUT <code>/project/&lt;project-key&gt;/platforms/&lt;platformName&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/platforms/&lt;platformName&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>PUT</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putProjectPlatformHandler%22">putProjectPlatformHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="delete-project-project-key-platforms-platformname">DELETE <code>/project/&lt;project-key&gt;/platforms/&lt;platformName&gt;</code></h3>
 
 <table>
@@ -7027,6 +6999,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteProjectPlatformHandler%22">deleteProjectPlatformHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="put-project-project-key-platforms-platformname">PUT <code>/project/&lt;project-key&gt;/platforms/&lt;platformName&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/platforms/&lt;platformName&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putProjectPlatformHandler%22">putProjectPlatformHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -7451,6 +7451,62 @@
 </tbody>
 </table>
 
+<h3 id="get-project-project-key-variable-name">GET <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getVariableInProjectHandler%22">getVariableInProjectHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-project-project-key-variable-name">POST <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addVariableInProjectHandler%22">addVariableInProjectHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="put-project-project-key-variable-name">PUT <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></h3>
 
 <table>
@@ -7503,62 +7559,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteVariableFromProjectHandler%22">deleteVariableFromProjectHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="post-project-project-key-variable-name">POST <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+addVariableInProjectHandler%22">addVariableInProjectHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-project-project-key-variable-name">GET <code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/variable/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getVariableInProjectHandler%22">getVariableInProjectHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -7759,34 +7759,6 @@
 </tbody>
 </table>
 
-<h3 id="getworkflow-returns-a-full-workflow">getWorkflow returns a full workflow</h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowHandler%22">getWorkflowHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="putworkflow-deletes-a-workflow">putWorkflow deletes a workflow</h3>
 
 <table>
@@ -7811,6 +7783,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteWorkflowHandler%22">deleteWorkflowHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="getworkflow-returns-a-full-workflow">getWorkflow returns a full workflow</h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowHandler%22">getWorkflowHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -8067,34 +8067,6 @@
 </tbody>
 </table>
 
-<h3 id="postexecute-project-project-key-workflows-workflow-name-runs">POSTEXECUTE <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POSTEXECUTE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>AllowServices: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowRunHandler%22">postWorkflowRunHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="get-project-project-key-workflows-workflow-name-runs">GET <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs</code></h3>
 
 <table>
@@ -8119,6 +8091,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getWorkflowRunsHandler%22">getWorkflowRunsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="postexecute-project-project-key-workflows-workflow-name-runs">POSTEXECUTE <code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/project/&lt;project-key&gt;/workflows/&lt;workflow-name&gt;/runs</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POSTEXECUTE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>AllowServices: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowRunHandler%22">postWorkflowRunHandler</a></td>
 </tr>
 </tbody>
 </table>
