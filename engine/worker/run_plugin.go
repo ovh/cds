@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -28,12 +29,8 @@ type pluginClientSocket struct {
 }
 
 func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerFunc, c *pluginClientSocket) {
-	var accumulator string
 	var shouldExit bool
 	defer func() {
-		if accumulator != "" {
-			sendLog(accumulator)
-		}
 		close(done)
 	}()
 
@@ -41,28 +38,14 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerF
 		if ctx.Err() != nil {
 			shouldExit = true
 		}
-
-		b, err := c.BuffOut.ReadByte()
+		content, err := c.BuffOut.ReadString('\n')
 		if err == io.EOF {
 			if shouldExit {
 				return
 			}
 			continue
 		}
-
-		content := string(b)
-		switch content {
-		case "":
-			continue
-		case "\n":
-			accumulator += content
-			sendLog(accumulator)
-			accumulator = ""
-			continue
-		default:
-			accumulator += content
-			continue
-		}
+		sendLog(content)
 	}
 }
 
@@ -129,8 +112,8 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 		}
 	}
 	args := append(binary.Entrypoints, binary.Args...)
-
-	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, &c.BuffOut); err != nil {
+	mout := bufio.NewWriter(&c.BuffOut)
+	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, mout); err != nil {
 		return nil, sdk.WrapError(err, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}
 	log.Info("GRPC Plugin %s started", binary.Name)
