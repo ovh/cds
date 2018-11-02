@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -48,10 +49,45 @@ func (c *Common) Start(ctx context.Context) error {
 	return err
 }
 
+func userCacheDir() string {
+	var dir string
+
+	switch runtime.GOOS {
+	case "windows":
+		dir = os.Getenv("LocalAppData")
+
+	case "darwin":
+		dir = os.Getenv("HOME_CDS_PLUGINS")
+		if dir == "" {
+			return ""
+		}
+		dir += "/Library/Caches"
+
+	case "plan9":
+		dir = os.Getenv("HOME_CDS_PLUGINS")
+		if dir == "" {
+			return ""
+		}
+		dir += "/lib/cache"
+
+	default: // Unix
+		dir = os.Getenv("XDG_CACHE_HOME")
+		if dir == "" {
+			dir = os.Getenv("HOME_CDS_PLUGINS")
+			if dir == "" {
+				return ""
+			}
+			dir += "/.cache"
+		}
+	}
+
+	return dir
+}
+
 func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interface{}) (Plugin, error) {
 	//Start the grpc server on unix socket
 	uuid := sdk.UUID()
-	c.Socket = filepath.Join(".", fmt.Sprintf("grpcplugin-socket-%s.sock", uuid))
+	c.Socket = filepath.Join(userCacheDir(), fmt.Sprintf("grpcplugin-socket-%s.sock", uuid))
 	syscall.Unlink(c.Socket)
 	l, err := net.Listen("unix", c.Socket)
 	if err != nil {

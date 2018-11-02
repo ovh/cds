@@ -324,6 +324,9 @@ func setupBuildDirectory(wd string) error {
 		return err
 	}
 
+	if err := os.Setenv("HOME_CDS_PLUGINS", os.Getenv("HOME")); err != nil {
+		log.Error("Error while setting home_plugin %v", err)
+	}
 	return os.Setenv("HOME", wd)
 }
 
