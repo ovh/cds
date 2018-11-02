@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -87,8 +88,8 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 
 	c := pluginClientSocket{}
 
-	mOut := io.MultiWriter(opts.out, &c.BuffOut)
-	mErr := io.MultiWriter(opts.err, &c.BuffOut)
+	mOut := bufio.NewWriter(&c.BuffOut)
+	mErr := bufio.NewWriter(&c.BuffOut)
 	dir := w.currentJob.workingDirectory
 	if dir == "" {
 		dir = w.basedir
