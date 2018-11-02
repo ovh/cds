@@ -190,19 +190,22 @@ func getShellCommands() map[string]shellCommandFunc {
 				return
 			}
 
-			if args[0] == ".." {
-				idx := strings.LastIndex(current.path, "/")
-				current.path = current.path[:idx]
-				return
+			split := strings.Split(args[0], "/")
+			for i, s := range split {
+				if s == "" {
+					// check for absolute path
+					if i == 0 {
+						current.path = "/"
+					}
+				} else if s == ".." {
+					idx := strings.LastIndex(current.path, "/")
+					if idx >= 0 {
+						current.path = current.path[:idx]
+					}
+				} else {
+					current.path += "/" + s
+				}
 			}
-
-			// path must start with / and end without /
-			if strings.HasPrefix(args[0], "/") { // absolute cd /...
-				current.path = args[0]
-			} else { // relative cd foo...
-				current.path += "/" + args[0]
-			}
-			current.path = strings.TrimSuffix(current.path, "/")
 		},
 		"find": func(current *shellCurrent, args []string) {
 			if len(args) == 0 {
