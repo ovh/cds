@@ -284,10 +284,7 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 	}
 
 	//Last but not least: start the plugin
-	socket, err := startGRPCPlugin(context.Background(), binary.PluginName, w, binary, startGRPCPluginOptions{
-		out: os.Stdout,
-		err: os.Stderr,
-	})
+	socket, err := startGRPCPlugin(context.Background(), binary.PluginName, w, binary, startGRPCPluginOptions{})
 	if err != nil {
 		return false, err
 	}

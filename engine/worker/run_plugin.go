@@ -18,8 +18,6 @@ import (
 )
 
 type startGRPCPluginOptions struct {
-	out  io.Writer
-	err  io.Writer
 	envs []string
 }
 
@@ -87,8 +85,6 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 
 	c := pluginClientSocket{}
 
-	mOut := io.MultiWriter(opts.out, &c.BuffOut)
-	mErr := io.MultiWriter(opts.err, &c.BuffOut)
 	dir := w.currentJob.workingDirectory
 	if dir == "" {
 		dir = w.basedir
@@ -134,7 +130,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	}
 	args := append(binary.Entrypoints, binary.Args...)
 
-	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, mOut, mErr); err != nil {
+	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, &c.BuffOut); err != nil {
 		return nil, sdk.WrapError(err, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}
 	log.Info("GRPC Plugin %s started", binary.Name)

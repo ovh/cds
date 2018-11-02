@@ -104,8 +104,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		}
 
 		pluginSocket, err := startGRPCPlugin(context.Background(), pluginName, w, nil, startGRPCPluginOptions{
-			out:  os.Stdout,
-			err:  os.Stderr,
 			envs: envs,
 		})
 		if err != nil {
