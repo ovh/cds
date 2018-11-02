@@ -37,8 +37,7 @@ var workflowStatusCmd = cli.Command{
 }
 
 func workflowStatusRun(v cli.Values) (interface{}, error) {
-	var track = v.GetBool("track")
-	if !track {
+	if !v.GetBool("track") {
 		return workflowStatusRunWithoutTrack(v)
 	}
 	return workflowStatusRunWithTrack(v)

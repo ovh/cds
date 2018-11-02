@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/chzyer/readline"
+	repo "github.com/fsamin/go-repo"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 
@@ -83,9 +84,12 @@ func shellRun(v cli.Values) error {
 
 	current = &shellCurrent{rline: l}
 
-	// FIXME repair this and fix other bugs
 	// auto-discover current project with .git
-	/*if err := discoverConf(); err == nil {
+	if _, err := discoverConf([]cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _ApplicationName, AllowEmpty: true},
+		{Name: _WorkflowName, AllowEmpty: true},
+	}); err == nil {
 		if r, err := repo.New("."); err == nil {
 			if proj, _ := r.LocalConfigGet("cds", "project"); proj != "" {
 				current.path = "/project/" + proj
@@ -96,7 +100,7 @@ func shellRun(v cli.Values) error {
 				}
 			}
 		}
-	}*/
+	}
 
 	for {
 		l.SetPrompt(fmt.Sprintf("%s \033[31m»\033[0m ", current.pwd()))
@@ -504,11 +508,8 @@ func (current *shellCurrent) openBrowser() {
 
 func shellASCII() {
 	fmt.Printf(`
-   ___ ___  ___ 
+   ___ ___  ___
   / __|   \/ __|
- | (__| |) \__ \
-  \___|___/|___/
-                
-connecting to cds api %s...
-  > `, client.APIURL())
+ | (__| |) \__ \   connecting to cds api %s...
+  \___|___/|___/     > `, client.APIURL())
 }

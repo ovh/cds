@@ -121,50 +121,44 @@ func withAutoConf() cli.CommandModifier {
 		func(c *cli.Command, args *[]string) error {
 			// if args length equals or over context args length means that all
 			// context args were given so ignore discover conf
-			if len(*args) >= len(c.Ctx) {
+			if len(*args) >= len(c.Ctx)+len(c.Args) {
 				return nil
 			}
 
-			return discoverConf(c.Ctx, args)
+			preargs, err := discoverConf(c.Ctx)
+			if err != nil {
+				return err
+			}
+
+			(*args) = append(preargs, *args...)
+
+			return nil
 		},
 	)
 }
 
-func discoverConf(ctx []cli.Arg, args *[]string) error {
+func discoverConf(ctx []cli.Arg) ([]string, error) {
 	var needProject, needApplication, needWorkflow bool
-	var projectKey, applicationName, workflowName string
 
-	// populates needs an init values from args and ctx
+	// populates needs from ctx
 	mctx := make(map[string]cli.Arg, len(ctx))
-	for i, arg := range ctx {
+	for _, arg := range ctx {
 		mctx[arg.Name] = arg
 		switch arg.Name {
 		case _ProjectKey:
 			needProject = true
-			if i < len(*args) {
-				projectKey = (*args)[i]
-			}
 		case _ApplicationName:
 			needApplication = true
-			if i < len(*args) {
-				applicationName = (*args)[i]
-			}
 		case _WorkflowName:
 			needWorkflow = true
-			if i < len(*args) {
-				workflowName = (*args)[i]
-			}
 		}
 	}
 
-	// updates needs from values found in args
-	needProject = needProject && projectKey == ""
-	needApplication = needApplication && applicationName == ""
-	needWorkflow = needWorkflow && workflowName == ""
-
 	if !(needProject || needApplication || needWorkflow) {
-		return nil
+		return nil, nil
 	}
+
+	var projectKey, applicationName, workflowName string
 
 	// try to find existing .git repository
 	var repoExists bool
@@ -185,11 +179,11 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 		if needConfirmation {
 			fetchURL, err := r.FetchURL()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			name, err := r.Name()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			repoExists = cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL))
 		}
@@ -220,11 +214,11 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 		if repoExists {
 			name, err := r.Name()
 			if err != nil {
-				return err
+				return nil, err
 			}
 			ps, err := client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			// if there is multiple projects with current repo or zero, ask with the entire list of projects
@@ -237,7 +231,7 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 		if projects == nil {
 			ps, err := client.ProjectList(true, true)
 			if err != nil {
-				return err
+				return nil, err
 			}
 			projects = ps
 		}
@@ -260,7 +254,7 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
 					// there is no filter on repo so there was only one choice possible
 					if !repoExists {
-						return fmt.Errorf("Can't find a project to use")
+						return nil, fmt.Errorf("Can't find a project to use")
 					}
 				} else {
 					project = &projects[0]
@@ -271,7 +265,7 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 				if repoExists && len(projects) == 1 {
 					ps, err := client.ProjectList(true, true)
 					if err != nil {
-						return err
+						return nil, err
 					}
 					projects = ps
 				}
@@ -289,7 +283,7 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 		projectKey = project.Key
 		if repoExists {
 			if err := r.LocalConfigSet("cds", "project", projectKey); err != nil {
-				return err
+				return nil, err
 			}
 		}
 
@@ -313,7 +307,7 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 				}
 			}
 			if application == nil && !mctx[_ApplicationName].AllowEmpty {
-				return fmt.Errorf("Can't find an application to use")
+				return nil, fmt.Errorf("Can't find an application to use")
 			}
 
 			// set application name and override repository config if exists
@@ -321,7 +315,7 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 			if application != nil {
 				if repoExists {
 					if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
-						return err
+						return nil, err
 					}
 				}
 			}
@@ -347,7 +341,7 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 				}
 			}
 			if workflow == nil && !mctx[_WorkflowName].AllowEmpty {
-				return fmt.Errorf("Can't find a workflow to use")
+				return nil, fmt.Errorf("Can't find a workflow to use")
 			}
 
 			// set workflow name and override repository config if exists
@@ -355,7 +349,7 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 				workflowName = workflow.Name
 				if repoExists {
 					if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
-						return err
+						return nil, err
 					}
 				}
 			}
@@ -363,19 +357,17 @@ func discoverConf(ctx []cli.Arg, args *[]string) error {
 	}
 
 	// for all required context args override or add the value in cli args
+	preargs := make([]string, len(ctx))
 	for i, arg := range ctx {
-		if i >= len(*args) {
-			(*args) = append((*args), "")
-		}
 		switch arg.Name {
 		case _ProjectKey:
-			(*args)[i] = projectKey
+			preargs[i] = projectKey
 		case _ApplicationName:
-			(*args)[i] = applicationName
+			preargs[i] = applicationName
 		case _WorkflowName:
-			(*args)[i] = workflowName
+			preargs[i] = workflowName
 		}
 	}
 
-	return nil
+	return preargs, nil
 }
