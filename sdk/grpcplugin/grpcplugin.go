@@ -50,38 +50,26 @@ func (c *Common) Start(ctx context.Context) error {
 }
 
 func userCacheDir() string {
-	var dir string
+	cdir := os.Getenv("HOME_CDS_PLUGINS")
+	if cdir == "" {
+		cdir = os.TempDir()
+	}
 
 	switch runtime.GOOS {
 	case "windows":
-		dir = os.Getenv("LocalAppData")
-
+		cdir = os.Getenv("LocalAppData")
 	case "darwin":
-		dir = os.Getenv("HOME_CDS_PLUGINS")
-		if dir == "" {
-			return ""
-		}
-		dir += "/Library/Caches"
-
+		cdir += "/Library/Caches"
 	case "plan9":
-		dir = os.Getenv("HOME_CDS_PLUGINS")
-		if dir == "" {
-			return ""
-		}
-		dir += "/lib/cache"
-
+		cdir += "/lib/cache"
 	default: // Unix
-		dir = os.Getenv("XDG_CACHE_HOME")
-		if dir == "" {
-			dir = os.Getenv("HOME_CDS_PLUGINS")
-			if dir == "" {
-				return ""
-			}
-			dir += "/.cache"
+		dir := os.Getenv("XDG_CACHE_HOME")
+		if dir != "" {
+			cdir = dir
 		}
 	}
 
-	return dir
+	return cdir
 }
 
 func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interface{}) (Plugin, error) {
