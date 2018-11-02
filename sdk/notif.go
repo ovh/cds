@@ -24,13 +24,13 @@ type UserNotification struct {
 
 // UserNotificationSettings are jabber or email settings
 type UserNotificationSettings struct {
-	OnSuccess    string                   `json:"on_success,omitempty" yaml:"on_success,omitempty"`
-	OnFailure    string                   `json:"on_failure,omitempty" yaml:"on_failure,omitempty"`
-	OnStart      bool                     `json:"on_start,omitempty" yaml:"on_start,omitempty"`
-	SendToGroups bool                     `json:"send_to_groups,omitempty" yaml:"send_to_groups,omitempty"`
-	SendToAuthor bool                     `json:"send_to_author,omitempty" yaml:"send_to_author,omitempty"`
-	Recipients   []string                 `json:"recipients,omitempty" yaml:"recipients,omitempty"`
-	Template     UserNotificationTemplate `json:"template,omitempty" yaml:"template,omitempty"`
+	OnSuccess    string                    `json:"on_success,omitempty" yaml:"on_success,omitempty"`         // default is "onChange", empty means onChange
+	OnFailure    string                    `json:"on_failure,omitempty" yaml:"on_failure,omitempty"`         // default is "always", empty means always
+	OnStart      *bool                     `json:"on_start,omitempty" yaml:"on_start,omitempty"`             // default is false, nil is false
+	SendToGroups *bool                     `json:"send_to_groups,omitempty" yaml:"send_to_groups,omitempty"` // default is false, nil is false
+	SendToAuthor *bool                     `json:"send_to_author,omitempty" yaml:"send_to_author,omitempty"` // default is true, nil is true
+	Recipients   []string                  `json:"recipients,omitempty" yaml:"recipients,omitempty"`
+	Template     *UserNotificationTemplate `json:"template,omitempty" yaml:"template,omitempty"`
 }
 
 // UserNotificationTemplate is the notification content
@@ -46,3 +46,27 @@ type userNotificationInput struct {
 	Environment           Environment            `json:"environment"`
 	Pipeline              Pipeline               `json:"pipeline"`
 }
+
+//Default template values
+var (
+	UserNotificationTemplateEmail = UserNotificationTemplate{
+		Subject: "{{.cds.project}}/{{.cds.workflow}}#{{.cds.version}} {{.cds.status}}",
+		Body: `Project : {{.cds.project}}
+Workflow : {{.cds.workflow}}#{{.cds.version}}
+Pipeline : {{.cds.node}}
+Status : {{.cds.status}}
+Details : {{.cds.buildURL}}
+Triggered by : {{.cds.triggered_by.username}}
+Branch : {{.git.branch | default "n/a"}}`,
+	}
+
+	UserNotificationTemplateJabber = UserNotificationTemplate{
+		Subject: "{{.cds.project}}/{{.cds.workflow}}#{{.cds.version}} {{.cds.status}}",
+		Body:    `{{.cds.buildURL}}`,
+	}
+
+	UserNotificationTemplateMap = map[string]UserNotificationTemplate{
+		EmailUserNotification:  UserNotificationTemplateEmail,
+		JabberUserNotification: UserNotificationTemplateJabber,
+	}
+)

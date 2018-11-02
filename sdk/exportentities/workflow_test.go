@@ -11,8 +11,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var True = true
-
 func TestWorkflow_checkDependencies(t *testing.T) {
 	type fields struct {
 		Name                string

@@ -20,20 +20,22 @@ type Workflow struct {
 	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty"`
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty"`
 	// This will be filled for simple workflows
-	DependsOn           []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
-	Conditions          *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	When                []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
-	PipelineName        string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	Payload             map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
-	Parameters          map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
-	ApplicationName     string                      `json:"application,omitempty" yaml:"application,omitempty"`
-	EnvironmentName     string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
-	ProjectPlatformName string                      `json:"platform,omitempty" yaml:"platform,omitempty"`
-	PipelineHooks       []HookEntry                 `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
-	Permissions         map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty"`
-	Metadata            map[string]string           `json:"metadata,omitempty" yaml:"metadata,omitempty" db:"-"`
-	PurgeTags           []string                    `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty" db:"-"`
-	HistoryLength       int64                       `json:"history_length,omitempty" yaml:"history_length,omitempty" db:"-"`
+	DependsOn           []string                       `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
+	Conditions          *sdk.WorkflowNodeConditions    `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	When                []string                       `json:"when,omitempty" yaml:"when,omitempty"` //This is used only for manual and success condition
+	PipelineName        string                         `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
+	Payload             map[string]interface{}         `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Parameters          map[string]string              `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	ApplicationName     string                         `json:"application,omitempty" yaml:"application,omitempty"`
+	EnvironmentName     string                         `json:"environment,omitempty" yaml:"environment,omitempty"`
+	ProjectPlatformName string                         `json:"platform,omitempty" yaml:"platform,omitempty"`
+	PipelineHooks       []HookEntry                    `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
+	Permissions         map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+	Metadata            map[string]string              `json:"metadata,omitempty" yaml:"metadata,omitempty"`
+	PurgeTags           []string                       `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
+	HistoryLength       int64                          `json:"history_length,omitempty" yaml:"history_length,omitempty"`
+	Notifications       []NotificationEntry            `json:"notify,omitempty" yaml:"notify,omitempty"`               // This is used when the workflow have only one pipeline
+	MapNotifications    map[string][]NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have more than one pipeline
 }
 
 // NodeEntry represents a node as code
@@ -41,7 +43,7 @@ type NodeEntry struct {
 	ID                    int64                       `json:"-" yaml:"-"`
 	DependsOn             []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
 	Conditions            *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	When                  []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
+	When                  []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is used only for manual and success condition
 	PipelineName          string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
 	ApplicationName       string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName       string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
@@ -304,6 +306,11 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 		}
 	}
 
+	//Notifications
+	if err := craftNotifications(w, &exportedWorkflow); err != nil {
+		return exportedWorkflow, err
+	}
+
 	for _, f := range opts {
 		if err := f(w, &exportedWorkflow); err != nil {
 			return exportedWorkflow, err
@@ -378,6 +385,9 @@ func (w Workflow) checkValidity() error {
 			mError.Append(fmt.Errorf("Error: wrong usage: invalid hook on %s", name))
 		}
 	}
+
+	//Checks map notifications validity
+	mError.Append(checkWorkflowNotificationsValidity(w))
 
 	if mError.IsEmpty() {
 		return nil
@@ -469,6 +479,11 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	for g, p := range w.Permissions {
 		perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
 		wf.Groups = append(wf.Groups, perm)
+	}
+
+	//Compute notifications
+	if err := w.processNotifications(wf); err != nil {
+		return nil, err
 	}
 
 	wf.Sort()

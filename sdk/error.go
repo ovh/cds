@@ -770,7 +770,18 @@ func (e *MultiError) Join(j MultiError) {
 }
 
 // Append appends an error to a MultiError
-func (e *MultiError) Append(err error) { *e = append(*e, err) }
+func (e *MultiError) Append(err error) {
+	if err == nil {
+		return
+	}
+	if mError, ok := err.(*MultiError); ok {
+		for i := range *mError {
+			e.Append((*mError)[i])
+		}
+	} else {
+		*e = append(*e, err)
+	}
+}
 
 // IsEmpty return true if MultiError is empty, false otherwise
 func (e *MultiError) IsEmpty() bool { return len(*e) == 0 }
