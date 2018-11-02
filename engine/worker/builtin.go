@@ -114,6 +114,14 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			return
 		}
 
+		defer func() {
+			if strings.Contains(pluginSocket.Socket, ".sock") {
+				if err := os.RemoveAll(socketPath); err != nil {
+					log.Warning("Could not remove socket path %v", pluginSocket.Socket)
+				}
+			}
+		}()
+
 		c, err := actionplugin.Client(ctx, pluginSocket.Socket)
 		if err != nil {
 			close(done)
@@ -129,7 +137,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 
 		pluginSocket.Client = c
 		pluginClient := pluginSocket.Client
-		socketPath = pluginSocket.Socket
 		actionPluginClient, ok := pluginClient.(actionplugin.ActionPluginClient)
 		if !ok {
 			close(done)
@@ -180,11 +187,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 	case res := <-chanRes:
 		// Useful to wait all logs are send before sending final status and log
 		<-done
-		if strings.Contains(socketPath, ".sock") {
-			if err := os.RemoveAll(socketPath); err != nil {
-				log.Warning("Could not remove socket path %v", socketPath)
-			}
-		}
 		return res
 	}
 }
