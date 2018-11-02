@@ -19,8 +19,6 @@ import (
 )
 
 type startGRPCPluginOptions struct {
-	out  io.Writer
-	err  io.Writer
 	envs []string
 }
 
