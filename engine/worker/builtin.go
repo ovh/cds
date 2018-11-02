@@ -154,6 +154,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 
 		result, err := actionPluginClient.Run(ctx, &query)
 		if err != nil {
+			log.Error("plugin failure %s v%s err: %v", manifest.Name, manifest.Version, err)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Error running action: %v", err))
 			return
 		}
