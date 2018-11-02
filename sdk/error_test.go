@@ -35,6 +35,14 @@ func TestErrorIs(t *testing.T) {
 			true,
 		},
 		{
+			"Check for NewErrorFrom is true",
+			args{
+				err: NewErrorFrom(ErrNoProject, "My from value"),
+				t:   ErrNoProject,
+			},
+			true,
+		},
+		{
 			"Check for other error is false",
 			args{
 				err: fmt.Errorf("project does not exist"),

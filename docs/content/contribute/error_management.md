@@ -42,15 +42,15 @@ func four() error {
 To create an error that will generate a specific HTTP status code you should use the **sdk.NewError** func or returned an existing sdk.Error.
 ```go
 if err := json.Unmarshal(...); err != nil {
-    return sdk.NewError(sdk.ErrWrongRequest, err) // returns a 400 http code with translated message and cause. 
+    return sdk.NewError(sdk.ErrWrongRequest, err) // returns a 400 http code with default translated message and from value that contains err cause. 
 }
 
 if err := json.Unmarshal(...); err != nil {
-    return sdk.WrapError(sdk.ErrWrongRequest, "Cannot unmarshal given data") // returns a 400 http code with translated message and cause. 
+    return sdk.NewErrorFrom(sdk.ErrWrongRequest, "A text that will be in from message") // returns a 400 http code with default translated message and test as from. 
 }
 
 if err := json.Unmarshal(...); err != nil {
-    return sdk.WithStack(sdk.ErrWrongRequest) // returns a 400 http code with translated message but no info about the source error. 
+    return sdk.WrapError(sdk.ErrWrongRequest, "Cannot unmarshal given data") // or return sdk.WithStack(sdk.ErrWrongRequest) returns a 400 http code with default translated message.
 }
 ```
 
