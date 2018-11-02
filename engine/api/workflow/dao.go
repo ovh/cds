@@ -1510,7 +1510,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 				return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
 			}
 		}
-
 	}
 
 	allMsg = append(allMsg, msgList...)

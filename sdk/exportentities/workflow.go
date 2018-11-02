@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -309,7 +310,8 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	}
 
 	if w.Template != nil {
-		exportedWorkflow.Template = &w.Template.Slug
+		path := fmt.Sprintf("%s/%s", w.Template.Group.Name, w.Template.Slug)
+		exportedWorkflow.Template = &path
 	}
 
 	return exportedWorkflow, nil
@@ -488,8 +490,13 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 
 	// if there is a template instance id on the workflow export, add it
 	if w.Template != nil {
+		templatePath := strings.Split(*w.Template, "/")
+		if len(templatePath) != 2 {
+			return nil, sdk.WithStack(fmt.Errorf("Invalid template path"))
+		}
 		wf.Template = &sdk.WorkflowTemplate{
-			Slug: *w.Template,
+			Group: &sdk.Group{Name: templatePath[0]},
+			Slug:  templatePath[1],
 		}
 	}
 

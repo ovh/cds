@@ -290,6 +290,9 @@ func (api *API) applyTemplateHandler() service.Handler {
 			return err
 		}
 		wt := getWorkflowTemplate(ctx)
+		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+			return err
+		}
 
 		// parse and check request
 		var req sdk.WorkflowTemplateRequest
@@ -377,7 +380,7 @@ func (api *API) applyTemplateHandler() service.Handler {
 		}
 
 		buf := new(bytes.Buffer)
-		if err := workflowtemplate.Tar(res, buf); err != nil {
+		if err := workflowtemplate.Tar(wt, res, buf); err != nil {
 			return err
 		}
 

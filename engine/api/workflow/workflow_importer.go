@@ -63,7 +63,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		}
 
 		// set the workflow id on template instance if exist
-		if err := setTemplateData(db, proj, w, wTemplate); err != nil {
+		if err := setTemplateData(db, proj, w, u, wTemplate); err != nil {
 			return err
 		}
 
@@ -96,7 +96,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	// set the workflow id on template instance if exist
-	if err := setTemplateData(db, proj, w, wTemplate); err != nil {
+	if err := setTemplateData(db, proj, w, u, wTemplate); err != nil {
 		return err
 	}
 
@@ -106,13 +106,25 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	return nil
 }
 
-func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, wt *sdk.WorkflowTemplate) error {
+func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sdk.User, wt *sdk.WorkflowTemplate) error {
 	// set the workflow id on template instance if exist
 	if wt == nil {
 		return nil
 	}
 
-	wt, err := workflowtemplate.Get(db, workflowtemplate.NewCriteria().Slugs(wt.Slug))
+	var group *sdk.Group
+	for _, g := range u.Groups {
+		if g.Name == wt.Group.Name {
+			group = &g
+			break
+		}
+	}
+	if group == nil {
+		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given workflow template")
+	}
+
+	wt, err := workflowtemplate.Get(db, workflowtemplate.NewCriteria().
+		Slugs(wt.Slug).GroupIDs(group.ID))
 	if err != nil {
 		return err
 	}

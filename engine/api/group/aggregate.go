@@ -7,7 +7,7 @@ import (
 )
 
 // AggregateOnWorkflowTemplate set group for each workflow template.
-func AggregateOnWorkflowTemplate(db *gorp.DbMap, wts ...*sdk.WorkflowTemplate) error {
+func AggregateOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.WorkflowTemplate) error {
 	gs, err := GetAll(db, NewCriteria().IDs(sdk.WorkflowTemplatesToGroupIDs(wts)...))
 	if err != nil {
 		return err

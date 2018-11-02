@@ -71,7 +71,6 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 	}
 
 	res := sdk.WorkflowTemplateResult{
-		TemplateSlug: wt.Slug,
 		Workflow:     out,
 		Pipelines:    make([]string, len(wt.Pipelines)),
 		Applications: make([]string, len(wt.Applications)),
@@ -121,7 +120,7 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 }
 
 // Tar returns in buffer the a tar file that contains all generated stuff in template result.
-func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
+func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) error {
 	tw := tar.NewWriter(w)
 	defer func() {
 		if err := tw.Close(); err != nil {
@@ -135,8 +134,9 @@ func Tar(res sdk.WorkflowTemplateResult, w io.Writer) error {
 		return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated workflow"))
 	}
 
-	// set the workflow template instance id on export
-	wor.Template = &res.TemplateSlug
+	// set the workflow template instance path on export
+	templatePath := fmt.Sprintf("%s/%s", wt.Group.Name, wt.Slug)
+	wor.Template = &templatePath
 
 	bs, err := exportentities.Marshal(wor, exportentities.FormatYAML)
 	if err != nil {

@@ -34,7 +34,6 @@ func (w *WorkflowTemplateRequest) Scan(src interface{}) error {
 
 // WorkflowTemplateResult struct.
 type WorkflowTemplateResult struct {
-	TemplateSlug string
 	Workflow     string
 	Pipelines    []string
 	Applications []string
