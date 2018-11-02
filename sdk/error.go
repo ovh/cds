@@ -466,6 +466,7 @@ type Error struct {
 	Message    string `json:"message"`
 	UUID       string `json:"uuid,omitempty"`
 	StackTrace string `json:"stack_trace,omitempty"`
+	from       string
 }
 
 func (e Error) Error() string {
@@ -584,22 +585,17 @@ func callers() *stack {
 // NewError just set an error with a root cause.
 func NewError(httpError Error, err error) error {
 	// if the given error is a error with stack, replace the http error
-	if err != nil {
-		if e, ok := err.(errorWithStack); ok {
-			e.httpError = httpError
-			return e
-		} else {
-			return errorWithStack{
-				root:  httpError,
-				stack: callers(),
-				httpError: Error{
-					Status:  httpError.Status,
-					Message: err.Error(),
-				},
-			}
-		}
+	if err == nil {
+		return nil
 	}
 
+	if e, ok := err.(errorWithStack); ok {
+		httpError.from = Cause(e).Error()
+		e.httpError = httpError
+		return e
+	}
+
+	httpError.from = err.Error()
 	return errorWithStack{
 		root:      errors.WithStack(err),
 		stack:     callers(),
@@ -670,18 +666,15 @@ func WithStack(err error) error {
 // with message in a language matching Accepted-Language.
 func ExtractHTTPError(source error, al string) Error {
 	var httpError Error
-	var cause string
 
 	// try to recognize http error from source
 	switch e := source.(type) {
 	case errorWithStack:
 		httpError = e.httpError
-		cause = e.root.Error()
 	case Error:
 		httpError = e
 	default:
 		httpError = ErrUnknownError
-		cause = source.Error()
 	}
 
 	// if it's a custom err with no status use unknown error status
@@ -695,8 +688,8 @@ func ExtractHTTPError(source error, al string) Error {
 		httpError.Message = httpError.Translate(al)
 	}
 
-	if cause != "" {
-		httpError.Message = fmt.Sprintf("%s (caused by: %s)", httpError.Message, cause)
+	if httpError.from != "" {
+		httpError.Message = fmt.Sprintf("%s (from: %s)", httpError.Message, httpError.from)
 	}
 
 	return httpError
