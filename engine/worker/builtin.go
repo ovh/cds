@@ -153,14 +153,16 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		}
 
 		result, err := actionPluginClient.Run(ctx, &query)
+		pluginDetails := fmt.Sprintf("plugin %s v%s", manifest.Name, manifest.Version)
 		if err != nil {
-			log.Error("plugin failure %s v%s err: %v", manifest.Name, manifest.Version, err)
+			t := fmt.Sprintf("failure %s err: %v", pluginDetails, err)
+			syncStd(t)
+			log.Error(t)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Error running action: %v", err))
 			return
 		}
 
-		_ = os.Stdout.Sync()
-		_ = os.Stderr.Sync()
+		syncStd(pluginDetails)
 
 		chanRes <- sdk.Result{
 			Status: result.GetStatus(),
@@ -179,6 +181,15 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		// Useful to wait all logs are send before sending final status and log
 		<-done
 		return res
+	}
+}
+
+func syncStd(p string) {
+	if err := os.Stdout.Sync(); err != nil {
+		log.Error("os.Stdout.Sync %s err:%v", p, err)
+	}
+	if err := os.Stderr.Sync(); err != nil {
+		log.Error("os.Stderr.Sync %s err:%v", p, err)
 	}
 }
 
