@@ -91,11 +91,22 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 
 func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string) sdk.Result {
 	// Process action build arguments
+	var project, workflow, node, job string
 	for _, abp := range *params {
 		// Process build variable for root action
 		for j := range a.Parameters {
 			if abp.Name == a.Parameters[j].Name {
 				a.Parameters[j].Value = abp.Value
+			}
+			switch abp.Name {
+			case "cds.project":
+				project = abp.Value
+			case "cds.worklow":
+				workflow = abp.Value
+			case "cds.node":
+				node = abp.Value
+			case "cds.job":
+				job = abp.Value
 			}
 		}
 	}
@@ -113,6 +124,7 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 		}
 	}
 
+	log.Info("startAction> project:%s workflow:%s node:%s job:%s", project, workflow, node, job)
 	return w.runJob(ctx, a, buildID, params, secrets, stepOrder, stepName)
 }
 
