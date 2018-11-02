@@ -52,70 +52,22 @@ type Workflow struct {
 
 // WorkflowNotification represents notifications on a workflow
 type WorkflowNotification struct {
-	ID             int64                        `json:"id,omitempty" db:"id"`
-	WorkflowID     int64                        `json:"workflow_id,omitempty" db:"workflow_id"`
-	SourceNodeRefs []string                     `json:"source_node_ref,omitempty" db:"-"`
-	SourceNodeIDs  []int64                      `json:"source_node_id,omitempty" db:"-"`
-	Type           UserNotificationSettingsType `json:"type"  db:"type"`
-	Settings       UserNotificationSettings     `json:"settings"  db:"-"`
-}
-
-//UnmarshalJSON parses the JSON-encoded data and stores the result in n
-func (n *WorkflowNotification) UnmarshalJSON(b []byte) error {
-	notif, err := parseWorkflowNotification(b)
-	if err != nil {
-		return err
-	}
-	*n = *notif
-	return nil
+	ID             int64                    `json:"id,omitempty" db:"id"`
+	WorkflowID     int64                    `json:"workflow_id,omitempty" db:"workflow_id"`
+	SourceNodeRefs []string                 `json:"source_node_ref,omitempty" db:"-"`
+	SourceNodeIDs  []int64                  `json:"source_node_id,omitempty" db:"-"`
+	Type           string                   `json:"type" db:"type"`
+	Settings       UserNotificationSettings `json:"settings" db:"-"`
 }
 
 //workflowNotificationInput is a way to parse notification
 type workflowNotificationInput struct {
-	Notification   interface{}                  `json:"settings"`
-	ID             int64                        `json:"id,omitempty"`
-	WorkflowID     int64                        `json:"workflow_id,omitempty"`
-	SourceNodeRefs []string                     `json:"source_node_ref,omitempty"`
-	SourceNodeIDs  []int64                      `json:"source_node_id,omitempty"`
-	Type           UserNotificationSettingsType `json:"type"`
-}
-
-//parseWorkflowNotification transform jsons to UserNotificationSettings map
-func parseWorkflowNotification(body []byte) (*WorkflowNotification, error) {
-	var input = &workflowNotificationInput{}
-	if err := json.Unmarshal(body, &input); err != nil {
-		return nil, err
-	}
-	settingsBody, err := json.Marshal(input.Notification)
-	if err != nil {
-		return nil, err
-	}
-
-	var notif1 = &WorkflowNotification{
-		ID:             input.ID,
-		SourceNodeIDs:  input.SourceNodeIDs,
-		SourceNodeRefs: input.SourceNodeRefs,
-		WorkflowID:     input.WorkflowID,
-		Type:           UserNotificationSettingsType(input.Type),
-	}
-
-	var errParse error
-	notif1.Settings, errParse = ParseWorkflowUserNotificationSettings(notif1.Type, settingsBody)
-	return notif1, errParse
-}
-
-//ParseWorkflowUserNotificationSettings transforms json to UserNotificationSettings map
-func ParseWorkflowUserNotificationSettings(t UserNotificationSettingsType, userNotif []byte) (UserNotificationSettings, error) {
-	switch t {
-	case EmailUserNotification, JabberUserNotification:
-		var x JabberEmailUserNotificationSettings
-		if err := json.Unmarshal(userNotif, &x); err != nil {
-			return nil, ErrParseUserNotification
-		}
-		return &x, nil
-	default:
-		return nil, ErrNotSupportedUserNotification
-	}
+	Notification   UserNotificationSettings `json:"settings"`
+	ID             int64                    `json:"id,omitempty"`
+	WorkflowID     int64                    `json:"workflow_id,omitempty"`
+	SourceNodeRefs []string                 `json:"source_node_ref,omitempty"`
+	SourceNodeIDs  []int64                  `json:"source_node_id,omitempty"`
+	Type           string                   `json:"type"`
 }
 
 func (w *Workflow) Forks() (map[int64]WorkflowNodeFork, map[int64]string) {

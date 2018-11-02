@@ -240,7 +240,6 @@ func (api *API) getApplicationHandler() service.Handler {
 
 		applicationStatus := FormBool(r, "applicationStatus")
 		withHooks := FormBool(r, "withHooks")
-		withNotifs := FormBool(r, "withNotifs")
 		withWorkflow := FormBool(r, "withWorkflow")
 		withTriggers := FormBool(r, "withTriggers")
 		withSchedulers := FormBool(r, "withSchedulers")
@@ -262,9 +261,6 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 		if withTriggers {
 			loadOptions = append(loadOptions, application.LoadOptions.WithTriggers)
-		}
-		if withNotifs {
-			loadOptions = append(loadOptions, application.LoadOptions.WithNotifs)
 		}
 		if withKeys {
 			loadOptions = append(loadOptions, application.LoadOptions.WithKeys)
