@@ -24,12 +24,12 @@ type Plugin interface {
 	Instance() *Common
 }
 
-func StartPlugin(ctx context.Context, workdir, cmd string, args []string, env []string, stdout, stderr io.Writer) error {
+func StartPlugin(ctx context.Context, workdir, cmd string, args []string, env []string, writer io.Writer) error {
 	c := exec.CommandContext(ctx, cmd, args...)
 	c.Dir = workdir
 	c.Env = env
-	c.Stdout = stdout
-	c.Stderr = stderr
+	c.Stdout = writer
+	c.Stderr = writer
 	return c.Start()
 }
 

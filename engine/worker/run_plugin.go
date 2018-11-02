@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -86,8 +85,6 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 
 	c := pluginClientSocket{}
 
-	mOut := bufio.NewWriter(&c.BuffOut)
-	mErr := bufio.NewWriter(&c.BuffOut)
 	dir := w.currentJob.workingDirectory
 	if dir == "" {
 		dir = w.basedir
@@ -133,7 +130,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	}
 	args := append(binary.Entrypoints, binary.Args...)
 
-	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, mOut, mErr); err != nil {
+	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, &c.BuffOut); err != nil {
 		return nil, sdk.WrapError(err, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}
 	log.Info("GRPC Plugin %s started", binary.Name)
