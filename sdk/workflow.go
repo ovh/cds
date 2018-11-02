@@ -70,16 +70,14 @@ type workflowNotificationInput struct {
 	Type           string                   `json:"type"`
 }
 
-func (w *Workflow) Forks() (map[int64]WorkflowNodeFork, map[int64]string) {
-	forkMap := make(map[int64]WorkflowNodeFork, 0)
-	forkTriggerMap := make(map[int64]string, 0)
-	w.Root.ForksMap(&forkMap, &forkTriggerMap)
+func (w *Workflow) Forks() []WorkflowNodeFork {
+	res := w.Root.GetForks()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
-			(&t.WorkflowDestNode).ForksMap(&forkMap, &forkTriggerMap)
+			res = append(res, t.WorkflowDestNode.GetForks()...)
 		}
 	}
-	return forkMap, forkTriggerMap
+	return res
 }
 
 //JoinsID returns joins ID
@@ -141,16 +139,34 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	return res
 }
 
+func (w *Workflow) GetOutgoingHookByName(name string) *WorkflowNodeOutgoingHook {
+	if w.Root == nil {
+		return nil
+	}
+
+	if res := w.Root.GetOutgoingHookByName(name); res != nil {
+		return res
+	}
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			if res := t.WorkflowDestNode.GetOutgoingHookByName(name); res != nil {
+				return res
+			}
+		}
+	}
+
+	return nil
+}
+
 func (w *Workflow) OutgoingHooks() []WorkflowNodeOutgoingHook {
 	if w.Root == nil {
 		return nil
 	}
 
-	res := []WorkflowNodeOutgoingHook{}
-	res = append(res, w.Root.OutgoingHooks...)
+	res := w.Root.GetOutgoingHooks()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
-			res = append(res, t.WorkflowDestNode.OutgoingHooks...)
+			res = append(res, t.WorkflowDestNode.GetOutgoingHooks()...)
 		}
 	}
 
@@ -193,11 +209,18 @@ func (n *WorkflowNode) AddNodeFork(name string, dest WorkflowNodeFork) {
 		destNode := &n.Triggers[i].WorkflowDestNode
 		destNode.AddNodeFork(name, dest)
 	}
+	for i := range n.OutgoingHooks {
+		for j := range n.OutgoingHooks[i].Triggers {
+			destNode := &n.OutgoingHooks[i].Triggers[j].WorkflowDestNode
+			destNode.AddNodeFork(name, dest)
+		}
+	}
 }
 
 //AddTrigger adds a trigger to the destination node from the node found by its name
 func (n *WorkflowNode) AddTrigger(name string, dest WorkflowNode) {
 	if n.Name == name {
+		fmt.Printf("add %s to %s\n", dest.Name, name)
 		n.Triggers = append(n.Triggers, WorkflowNodeTrigger{
 			WorkflowDestNode: dest,
 		})
@@ -206,6 +229,28 @@ func (n *WorkflowNode) AddTrigger(name string, dest WorkflowNode) {
 	for i := range n.Triggers {
 		destNode := &n.Triggers[i].WorkflowDestNode
 		destNode.AddTrigger(name, dest)
+	}
+	for i := range n.OutgoingHooks {
+		if n.OutgoingHooks[i].Name == name {
+			n.OutgoingHooks[i].Triggers = append(n.OutgoingHooks[i].Triggers, WorkflowNodeOutgoingHookTrigger{
+				WorkflowDestNode: dest,
+			})
+		}
+		for j := range n.OutgoingHooks[i].Triggers {
+			destNode := &n.OutgoingHooks[i].Triggers[j].WorkflowDestNode
+			destNode.AddTrigger(name, dest)
+		}
+	}
+	for i := range n.Forks {
+		if n.Forks[i].Name == name {
+			n.Forks[i].Triggers = append(n.Forks[i].Triggers, WorkflowNodeForkTrigger{
+				WorkflowDestNode: dest,
+			})
+		}
+		for j := range n.Forks[i].Triggers {
+			destNode := &n.Forks[i].Triggers[j].WorkflowDestNode
+			destNode.AddTrigger(name, dest)
+		}
 	}
 }
 
@@ -242,6 +287,19 @@ func (w *Workflow) GetForkByName(name string) *WorkflowNodeFork {
 		}
 	}
 	return nil
+}
+
+func (w *Workflow) Has(name string) (interface{}, bool) {
+	if res := w.GetNodeByName(name); res != nil {
+		return res, true
+	}
+	if res := w.GetForkByName(name); res != nil {
+		return res, true
+	}
+	if res := w.GetOutgoingHookByName(name); res != nil {
+		return res, true
+	}
+	return nil, false
 }
 
 //GetNodeByName returns the node given its name
@@ -557,22 +615,22 @@ type WorkflowNode struct {
 	OutgoingHooks      []WorkflowNodeOutgoingHook `json:"outgoing_hooks,omitempty" db:"-"`
 }
 
-func (n *WorkflowNode) ForksMap(forkMap *map[int64]WorkflowNodeFork, triggerMap *map[int64]string) {
+func (n *WorkflowNode) GetForks() []WorkflowNodeFork {
+	res := n.Forks
 	for _, f := range n.Forks {
-		(*forkMap)[f.ID] = f
 		for _, t := range f.Triggers {
-			(*triggerMap)[t.ID] = f.Name
-			(&t.WorkflowDestNode).ForksMap(forkMap, triggerMap)
+			res = append(res, t.WorkflowDestNode.GetForks()...)
 		}
 	}
 	for _, t := range n.Triggers {
-		(&t.WorkflowDestNode).ForksMap(forkMap, triggerMap)
+		res = append(res, t.WorkflowDestNode.GetForks()...)
 	}
 	for _, o := range n.OutgoingHooks {
 		for _, t := range o.Triggers {
-			(&t.WorkflowDestNode).ForksMap(forkMap, triggerMap)
+			res = append(res, t.WorkflowDestNode.GetForks()...)
 		}
 	}
+	return res
 }
 
 // IsLinkedToRepo returns boolean to know if the node is linked to an application which is also linked to a repository
@@ -1090,6 +1148,62 @@ func (n *WorkflowNode) InvolvedPlatforms() []int64 {
 			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.InvolvedPlatforms()...)
 		}
 	}
+	return res
+}
+
+func (n *WorkflowNode) GetOutgoingHookByName(name string) *WorkflowNodeOutgoingHook {
+	if n == nil {
+		return nil
+	}
+	for i := range n.OutgoingHooks {
+		h := &n.OutgoingHooks[i]
+		if h.Name == name {
+			return h
+		}
+	}
+	for i := range n.Triggers {
+		t := &n.Triggers[i]
+		if res := t.WorkflowDestNode.GetOutgoingHookByName(name); res != nil {
+			return res
+		}
+	}
+	for i := range n.Forks {
+		f := &n.Forks[i]
+		for j := range f.Triggers {
+			t := &f.Triggers[j]
+			if res := t.WorkflowDestNode.GetOutgoingHookByName(name); res != nil {
+				return res
+			}
+		}
+	}
+
+	return nil
+}
+
+func (n *WorkflowNode) GetOutgoingHooks() []WorkflowNodeOutgoingHook {
+	if n == nil {
+		return nil
+	}
+	res := n.OutgoingHooks
+	for i := range n.OutgoingHooks {
+		h := &n.OutgoingHooks[i]
+		for j := range h.Triggers {
+			t := &h.Triggers[j]
+			res = append(res, t.WorkflowDestNode.GetOutgoingHooks()...)
+		}
+	}
+	for i := range n.Triggers {
+		t := &n.Triggers[i]
+		res = append(res, t.WorkflowDestNode.GetOutgoingHooks()...)
+	}
+	for i := range n.Forks {
+		f := &n.Forks[i]
+		for j := range f.Triggers {
+			t := &f.Triggers[j]
+			res = append(res, t.WorkflowDestNode.GetOutgoingHooks()...)
+		}
+	}
+
 	return res
 }
 

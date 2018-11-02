@@ -70,33 +70,58 @@ const (
 
 func craftNodeEntry(w sdk.Workflow, n sdk.WorkflowNode) (NodeEntry, error) {
 	entry := NodeEntry{}
-	_, forksTriggerMap := w.Forks()
-	if n.TriggerSrcForkID != 0 {
-		entry.DependsOn = []string{forksTriggerMap[n.TriggerSrcForkID]}
-	} else {
-		ancestorIDs := n.Ancestors(&w, false)
-		ancestors := make([]string, 0, len(ancestorIDs))
-		for _, aID := range ancestorIDs {
-			a := w.GetNode(aID)
-			if a == nil {
-				return entry, sdk.ErrWorkflowNodeNotFound
-			}
-			ancestors = append(ancestors, a.Name)
-		}
+	ancestors := []string{}
 
-		//we have to find if the node is also triggered by an outgoingHook
-		ohs := w.OutgoingHooks()
-		for _, oh := range ohs {
-			for _, t := range oh.Triggers {
-				if t.WorkflowDestNodeID == n.ID {
-					ancestors = append(ancestors, oh.Name)
-				}
+	//we have to find the ancestors
+	nodes := w.Nodes(true)
+	nodeNames := []string{}
+	for _, node := range nodes {
+		if n.Name == node.Name {
+			continue
+		}
+		nodeNames = append(nodeNames, node.Name)
+		for _, t := range node.Triggers {
+			if t.WorkflowDestNode.Name == n.Name {
+				ancestors = append(ancestors, node.Name)
 			}
 		}
-
-		sort.Strings(ancestors)
-		entry.DependsOn = ancestors
 	}
+
+	//we have to find if the node is also triggered from a join
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			if t.WorkflowDestNode.Name == n.Name {
+				sourceNodeNames := make([]string, len(j.SourceNodeRefs))
+				for i, ref := range j.SourceNodeRefs {
+					sourceNodeNames[i] = w.GetNodeByRef(ref).Name
+				}
+				ancestors = append(ancestors, sourceNodeNames...)
+			}
+		}
+	}
+
+	//we have to find if the node is also triggered by an outgoingHook
+	ohs := w.OutgoingHooks()
+	for _, oh := range ohs {
+		for _, t := range oh.Triggers {
+			if t.WorkflowDestNode.Name == n.Name {
+				ancestors = append(ancestors, oh.Name)
+			}
+		}
+	}
+
+	//we have to find if the node is also triggered by an fork
+	fos := w.Forks()
+	for _, fo := range fos {
+		for _, t := range fo.Triggers {
+			if t.WorkflowDestNode.Name == n.Name {
+				ancestors = append(ancestors, fo.Name)
+			}
+		}
+	}
+
+	sort.Strings(ancestors)
+	entry.DependsOn = ancestors
 	entry.PipelineName = n.PipelineName
 
 	conditions := []sdk.WorkflowNodeCondition{}
@@ -156,17 +181,17 @@ func craftNodeEntry(w sdk.Workflow, n sdk.WorkflowNode) (NodeEntry, error) {
 	return entry, nil
 }
 
-func craftNodeEntryFromOutgoingWekHook(w sdk.Workflow, n sdk.WorkflowNodeOutgoingHook) (NodeEntry, error) {
+func craftNodeEntryFromFork(w sdk.Workflow, ancestor string, n sdk.WorkflowNodeFork) (NodeEntry, error) {
 	entry := NodeEntry{}
+	entry.DependsOn = []string{ancestor}
+	return entry, nil
+}
 
-	ancestor := w.GetNode(n.WorkflowNodeID)
-	if ancestor == nil {
-		return entry, fmt.Errorf("workflow node %d", n.WorkflowNodeID)
-	}
-	entry.DependsOn = []string{ancestor.Name}
+func craftNodeEntryFromOutgoingWekHook(w sdk.Workflow, ancestor string, n sdk.WorkflowNodeOutgoingHook) (NodeEntry, error) {
+	entry := NodeEntry{}
+	entry.DependsOn = []string{ancestor}
 	entry.OutgoingHookModelName = n.WorkflowHookModel.Name
-	entry.OutgoingHookConfig = n.Config.Values()
-
+	entry.OutgoingHookConfig = n.Config.Values(n.WorkflowHookModel.DefaultConfig)
 	return entry, nil
 }
 
@@ -224,28 +249,12 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	if w.HistoryLength > 0 {
 		exportedWorkflow.HistoryLength = w.HistoryLength
 	} else {
-		exportedWorkflow.HistoryLength = 20
+		exportedWorkflow.HistoryLength = 20 // FIX: default value should not be exported
 	}
 
 	exportedWorkflow.PurgeTags = w.PurgeTags
 	nodes := w.Nodes(false)
-
-	forksMap, _ := (&w).Forks()
 	hooks := w.GetHooks()
-
-	for _, v := range forksMap {
-		entry := NodeEntry{}
-		if w.RootID == v.WorkflowNodeID {
-			entry.DependsOn = []string{w.Root.Name}
-		} else {
-			for _, n := range nodes {
-				if n.ID == v.WorkflowNodeID {
-					entry.DependsOn = []string{n.Name}
-				}
-			}
-		}
-		exportedWorkflow.Workflow[v.Name] = entry
-	}
 
 	if len(nodes) == 0 && w.Root != nil && len(w.Root.OutgoingHooks) == 0 {
 		n := w.Root
@@ -269,7 +278,7 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 			exportedWorkflow.PipelineHooks = append(exportedWorkflow.PipelineHooks, HookEntry{
 				Model:  h.WorkflowHookModel.Name,
 				Ref:    h.Ref,
-				Config: h.Config.Values(),
+				Config: h.Config.Values(h.WorkflowHookModel.DefaultConfig),
 			})
 		}
 		exportedWorkflow.Payload = entry.Payload
@@ -284,11 +293,19 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 			exportedWorkflow.Workflow[n.Name] = entry
 
 			for _, oh := range n.OutgoingHooks {
-				entry, err := craftNodeEntryFromOutgoingWekHook(w, oh)
+				entry, err := craftNodeEntryFromOutgoingWekHook(w, n.Name, oh)
 				if err != nil {
 					return exportedWorkflow, err
 				}
 				exportedWorkflow.Workflow[oh.Name] = entry
+			}
+
+			for _, fo := range n.Forks {
+				entry, err := craftNodeEntryFromFork(w, n.Name, fo)
+				if err != nil {
+					return exportedWorkflow, err
+				}
+				exportedWorkflow.Workflow[fo.Name] = entry
 			}
 		}
 
@@ -299,7 +316,7 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 			exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name] = append(exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name], HookEntry{
 				Model:  h.WorkflowHookModel.Name,
 				Ref:    h.Ref,
-				Config: h.Config.Values(),
+				Config: h.Config.Values(h.WorkflowHookModel.DefaultConfig),
 			})
 		}
 	}
@@ -458,7 +475,11 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 		attempt++
 	}
 	if len(entries) > 0 {
-		return nil, fmt.Errorf("Unable to process %+v", entries)
+		leftEntries := []string{}
+		for k := range entries {
+			leftEntries = append(leftEntries, k)
+		}
+		return nil, fmt.Errorf("unable to parse %v", leftEntries)
 	}
 
 	//Process hooks
@@ -607,20 +628,21 @@ func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
 }
 
 func (e *NodeEntry) processFork(name string, w *sdk.Workflow) (bool, error) {
-	var ancestor *sdk.WorkflowNode
+	var ancestorFound bool
+	var ancestorName string
 
 	if len(e.DependsOn) == 1 {
-		a := e.DependsOn[0]
-		ancestor = w.GetNodeByName(a)
+		ancestorName = e.DependsOn[0]
+		_, ancestorFound = w.Has(ancestorName)
 	}
-	if ancestor == nil {
+	if !ancestorFound {
 		return false, nil
 	}
 
 	fork := sdk.WorkflowNodeFork{
 		Name: name,
 	}
-	w.AddNodeFork(ancestor.Name, fork)
+	w.AddNodeFork(ancestorName, fork)
 	return true, nil
 }
 
@@ -650,26 +672,33 @@ func (e *NodeEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
 	if len(e.DependsOn) != 1 {
 		return false, nil
 	}
-	return e.processForkAncestor(name, w)
+	if exist, err := e.processForkAncestor(name, w); err != nil {
+		return false, err
+	} else if exist {
+		return true, nil
+	}
+
+	return e.processOutgoingHookAncestor(name, w)
 }
 
 func (e *NodeEntry) processOutgoingHook(name string, w *sdk.Workflow) (bool, error) {
-	var ancestor *sdk.WorkflowNode
+	var ancertor interface{}
+	var ancestorFound bool
+	var ancestorName string
 
 	if len(e.DependsOn) == 1 {
-		a := e.DependsOn[0]
-		ancestor = w.GetNodeByName(a)
+		ancestorName = e.DependsOn[0]
+		ancertor, ancestorFound = w.Has(ancestorName)
 	}
-
-	if ancestor == nil {
-		fmt.Println("cannot find ancestor")
+	if !ancestorFound {
 		return false, nil
 	}
 
 	config := sdk.WorkflowNodeHookConfig{}
 	for k, v := range e.OutgoingHookConfig {
 		config[k] = sdk.WorkflowNodeHookConfigValue{
-			Value: v,
+			Value:        v,
+			Configurable: true, //By default if, it's the yaml, it is because it is configurable
 		}
 	}
 
@@ -680,41 +709,32 @@ func (e *NodeEntry) processOutgoingHook(name string, w *sdk.Workflow) (bool, err
 		WorkflowHookModel: sdk.WorkflowHookModel{Name: e.OutgoingHookModelName},
 	}
 
-	if ancestor.OutgoingHooks == nil {
-		ancestor.OutgoingHooks = []sdk.WorkflowNodeOutgoingHook{}
+	nodeAncestor, ok := ancertor.(*sdk.WorkflowNode)
+	if ok {
+		if nodeAncestor.OutgoingHooks == nil {
+			nodeAncestor.OutgoingHooks = []sdk.WorkflowNodeOutgoingHook{}
+		}
+		nodeAncestor.OutgoingHooks = append(nodeAncestor.OutgoingHooks, oh)
 	}
-
-	ancestor.OutgoingHooks = append(ancestor.OutgoingHooks, oh)
 
 	return true, nil
 
 }
 
 func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, error) {
-	var ancestorsExist = true
-	var ancestors []*sdk.WorkflowNode
+	var ancestorExist bool
+	var ancestor interface{}
+	var ancestorIsJoin = len(e.DependsOn) > 1
 
-	if len(e.DependsOn) == 1 {
-		a := e.DependsOn[0]
+	for _, a := range e.DependsOn {
 		//Looking for the ancestor
-		ancestor := w.GetNodeByName(a)
-		if ancestor == nil {
-			ancestorsExist = false
-		}
-		ancestors = append(ancestors, ancestor)
-	} else {
-		for _, a := range e.DependsOn {
-			//Looking for the ancestor
-			ancestor := w.GetNodeByName(a)
-			if ancestor == nil {
-				ancestorsExist = false
-				break
-			}
-			ancestors = append(ancestors, ancestor)
+		ancestor, ancestorExist = w.Has(a)
+		if ancestorExist {
+			break
 		}
 	}
 
-	if !ancestorsExist {
+	if !ancestorExist && len(e.DependsOn) > 0 {
 		return false, nil
 	}
 
@@ -723,13 +743,23 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 		return false, err
 	}
 
-	switch len(ancestors) {
-	case 0:
+	if ancestor == nil {
 		w.Root = n
 		return true, nil
-	case 1:
-		w.AddTrigger(ancestors[0].Name, *n)
-		return true, nil
+	}
+
+	if !ancestorIsJoin {
+		switch t := ancestor.(type) {
+		case *sdk.WorkflowNode:
+			w.AddTrigger(t.Name, *n)
+			return true, nil
+		case *sdk.WorkflowNodeFork:
+			w.AddTrigger(t.Name, *n)
+			return true, nil
+		case *sdk.WorkflowNodeOutgoingHook:
+			w.AddTrigger(t.Name, *n)
+			return true, nil
+		}
 	}
 
 	//Try to find an existing join with the same references
@@ -774,6 +804,33 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 	if appendJoin {
 		w.Joins = append(w.Joins, *join)
 	}
+	return true, nil
+}
+
+func (e *NodeEntry) processOutgoingHookAncestor(name string, w *sdk.Workflow) (bool, error) {
+	a := e.DependsOn[0]
+	ancestors := w.OutgoingHooks()
+	var ancestor *sdk.WorkflowNodeOutgoingHook
+
+	for i := range ancestors {
+		if ancestors[i].Name == a {
+			ancestor = &ancestors[i]
+		}
+	}
+
+	if ancestor == nil {
+		return false, nil
+	}
+
+	n, err := e.getNode(name)
+	if err != nil {
+		return false, err
+	}
+
+	ancestor.Triggers = append(ancestor.Triggers, sdk.WorkflowNodeOutgoingHookTrigger{
+		WorkflowDestNode:           *n,
+		WorkflowNodeOutgoingHookID: ancestor.ID,
+	})
 	return true, nil
 }
 

@@ -117,10 +117,10 @@ const WorkflowHookModelBuiltin = "builtin"
 type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
 
 //Values return values of the WorkflowNodeHookConfig
-func (cfg WorkflowNodeHookConfig) Values() map[string]string {
+func (cfg WorkflowNodeHookConfig) Values(model WorkflowNodeHookConfig) map[string]string {
 	r := make(map[string]string)
 	for k, v := range cfg {
-		if v.Configurable {
+		if model[k].Configurable {
 			r[k] = v.Value
 		}
 	}

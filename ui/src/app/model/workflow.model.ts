@@ -941,6 +941,18 @@ export class WorkflowNode {
                 }
             }
         }
+        if (node.forks) {
+            for (let i = 0; i < node.forks.length; i++) {
+                if (node.forks[i].triggers) {
+                    for (let j = 0; j < node.forks[i].triggers.length; j++) {
+                        let n = WorkflowNode.findNode(node.forks[i].triggers[j].workflow_dest_node, compareFunc);
+                        if (n) {
+                            return n;
+                        }
+                    }
+                }
+            }
+        }
         return null;
     }
 
