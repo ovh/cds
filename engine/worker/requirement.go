@@ -108,7 +108,7 @@ func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		//It's downloaded. Close the file
 		_ = fi.Close()
 	} else {
-		log.Debug("plugin binary is in cache")
+		log.Debug("plugin binary is in cache %s", pluginBinary)
 	}
 
 	return true, nil

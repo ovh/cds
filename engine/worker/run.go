@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"os/user"
 	"path"
 	"strings"
 	"time"
@@ -336,6 +337,15 @@ func setupBuildDirectory(wd string) error {
 		return err
 	}
 
+	var err error
+	u, err := user.Current()
+	if err != nil {
+		log.Error("Error while getting current user %v", err)
+	} else if u != nil && u.HomeDir != "" {
+		if err := os.Setenv("HOME_CDS_PLUGINS", u.HomeDir); err != nil {
+			log.Error("Error while setting home_plugin %v", err)
+		}
+	}
 	return os.Setenv("HOME", wd)
 }
 

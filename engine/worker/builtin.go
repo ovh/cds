@@ -73,6 +73,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		log.Debug("runGRPCPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
 	}()
 
+	var socketPath string
 	chanRes := make(chan sdk.Result, 1)
 	done := make(chan struct{})
 	sdk.GoRoutine(ctx, "runGRPCPlugin", func(ctx context.Context) {
@@ -112,6 +113,14 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to start grpc plugin... Aborting (%v)", err))
 			return
 		}
+
+		defer func() {
+			if strings.Contains(pluginSocket.Socket, ".sock") {
+				if err := os.RemoveAll(socketPath); err != nil {
+					log.Warning("Could not remove socket path %v", pluginSocket.Socket)
+				}
+			}
+		}()
 
 		c, err := actionplugin.Client(ctx, pluginSocket.Socket)
 		if err != nil {
