@@ -24,13 +24,19 @@ type Plugin interface {
 	Instance() *Common
 }
 
-func StartPlugin(ctx context.Context, workdir, cmd string, args []string, env []string, writer io.Writer) error {
+func StartPlugin(ctx context.Context, workdir, cmd string, args []string, env []string) (io.ReadCloser, io.ReadCloser, error) {
 	c := exec.CommandContext(ctx, cmd, args...)
 	c.Dir = workdir
 	c.Env = env
-	c.Stdout = writer
-	c.Stderr = writer
-	return c.Start()
+	stdoutPipe, err := c.StdoutPipe()
+	if err != nil {
+		return nil, nil, err
+	}
+	stderrPipe, err := c.StderrPipe()
+	if err != nil {
+		return nil, nil, err
+	}
+	return stdoutPipe, stderrPipe, c.Start()
 }
 
 type Common struct {

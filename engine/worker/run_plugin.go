@@ -23,30 +23,52 @@ type startGRPCPluginOptions struct {
 }
 
 type pluginClientSocket struct {
-	Socket  string
-	BuffOut bytes.Buffer
-	Client  interface{}
+	Socket     string
+	StdoutPipe io.ReadCloser
+	StderrPipe io.ReadCloser
+	Client     interface{}
 }
 
 func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerFunc, c *pluginClientSocket) {
 	var shouldExit bool
+	stdoutreader := bufio.NewReader(c.StdoutPipe)
+	stderrreader := bufio.NewReader(c.StderrPipe)
+
 	defer func() {
 		close(done)
 	}()
 
-	for {
-		if ctx.Err() != nil {
-			shouldExit = true
-		}
-		content, err := c.BuffOut.ReadString('\n')
-		if err == io.EOF {
-			if shouldExit {
-				return
+	go func() {
+		for {
+			if ctx.Err() != nil {
+				shouldExit = true
 			}
-			continue
+			line, errs := stdoutreader.ReadString('\n')
+			if errs != nil || shouldExit {
+				c.StdoutPipe.Close()
+				return
+			} else if errs == io.EOF {
+				continue
+			}
+			sendLog(line)
 		}
-		sendLog(content)
-	}
+	}()
+
+	go func() {
+		for {
+			if ctx.Err() != nil {
+				shouldExit = true
+			}
+			line, errs := stderrreader.ReadString('\n')
+			if errs != nil || shouldExit {
+				c.StderrPipe.Close()
+				return
+			} else if errs == io.EOF {
+				continue
+			}
+			sendLog(line)
+		}
+	}()
 }
 
 func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p *sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
@@ -62,7 +84,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 		var errBi error
 		binary, errBi = w.client.PluginGetBinaryInfos(pluginName, currentOS, currentARCH)
 		if errBi != nil || binary == nil {
-			return nil, sdk.WrapError(errBi, "plugin:%s Unable to get plugin binary infos... Aborting", pluginName)
+			return nil, fmt.Errorf("plugin:%s Unable to get plugin binary infos... Aborting (%v)", pluginName, errBi)
 		}
 	}
 
@@ -85,17 +107,17 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	log.Info("Starting GRPC Plugin %s in dir %s", binary.Name, dir)
 	fileContent, err := ioutil.ReadFile(path.Join(w.basedir, binary.GetName()))
 	if err != nil {
-		return nil, sdk.WrapError(err, "plugin:%s unable to get plugin binary file... Aborting", pluginName)
+		return nil, fmt.Errorf("plugin:%s unable to get plugin binary file... Aborting (%v)", pluginName, err)
 	}
 
 	switch {
 	case sdk.IsTar(fileContent):
 		if err := sdk.Untar(w.basedir, bytes.NewReader(fileContent)); err != nil {
-			return nil, sdk.WrapError(err, "plugin:%s unable to untar binary file", pluginName)
+			return nil, fmt.Errorf("plugin:%s unable to untar binary file (%v)", pluginName, err)
 		}
 	case sdk.IsGz(fileContent):
 		if err := sdk.UntarGz(w.basedir, bytes.NewReader(fileContent)); err != nil {
-			return nil, sdk.WrapError(err, "plugin:%s unable to untarGz binary file", pluginName)
+			return nil, fmt.Errorf("plugin:%s unable to untarGz binary file (%v)", pluginName, err)
 		}
 	}
 
@@ -106,15 +128,14 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	cmd := binary.Cmd
 	if _, err := exec.LookPath(cmd); err != nil {
 		cmd = path.Join(w.basedir, cmd)
-		_, err = exec.LookPath(cmd)
-		if err != nil {
-			return nil, sdk.WrapError(err, "plugin:%s unable to start GRPC plugin, binary command not found.", pluginName)
+		if _, err := exec.LookPath(cmd); err != nil {
+			return nil, fmt.Errorf("plugin:%s unable to start GRPC plugin, binary command not found (%v)", pluginName, err)
 		}
 	}
 	args := append(binary.Entrypoints, binary.Args...)
-	mout := bufio.NewWriter(&c.BuffOut)
-	if err := grpcplugin.StartPlugin(ctx, dir, cmd, args, envs, mout); err != nil {
-		return nil, sdk.WrapError(err, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
+	var errstart error
+	if c.StdoutPipe, c.StderrPipe, errstart = grpcplugin.StartPlugin(ctx, dir, cmd, args, envs); errstart != nil {
+		return nil, fmt.Errorf("plugin:%s unable to start GRPC plugin... Aborting. err:%v", pluginName, errstart)
 	}
 	log.Info("GRPC Plugin %s started", binary.Name)
 
@@ -122,31 +143,30 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	time.Sleep(500 * time.Millisecond)
 	tsStart := time.Now()
 
-	buff := new(strings.Builder)
+	stdoutreader := bufio.NewReader(c.StdoutPipe)
+
 	for {
-		b, err := c.BuffOut.ReadByte()
-		if err != nil && len(buff.String()) > 0 {
-			buff.Reset()
+		line, errs := stdoutreader.ReadString('\n')
+		if errs == io.EOF {
+			continue
+		}
+		if errs != nil {
 			if time.Now().Before(tsStart.Add(5 * time.Second)) {
-				log.Warning("plugin:%s error on ReadByte, retry in 500ms...", pluginName)
+				log.Warning("plugin:%s error on ReadString, retry in 500ms...", pluginName)
 				time.Sleep(500 * time.Millisecond)
 				continue
 			}
-			log.Error("plugin:%s error on ReadByte(len buff %d, content: %s): %v", pluginName, len(buff.String()), buff.String(), err)
-			return nil, fmt.Errorf("unable to get socket address from started binary")
+			log.Error("plugin:%s error on ReadString(len buff %d, content: %s): %v", pluginName, len(line), line, err)
+			continue
 		}
-		if err := buff.WriteByte(b); err != nil {
-			log.Error("plugin:%s error on write byte: %v", pluginName, err)
-			break
-		}
-		if strings.HasSuffix(buff.String(), "is ready to accept new connection\n") {
+		if strings.HasSuffix(line, "is ready to accept new connection\n") {
+			socket := strings.TrimSpace(strings.Replace(line, " is ready to accept new connection\n", "", 1))
+			log.Info("socket %s ready", socket)
+			c.Socket = socket
 			break
 		}
 	}
-	socket := strings.TrimSpace(strings.Replace(buff.String(), " is ready to accept new connection\n", "", 1))
-	log.Info("socket %s ready", socket)
 
-	c.Socket = socket
 	registerPluginClient(w, pluginName, &c)
 
 	return &c, nil
