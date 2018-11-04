@@ -28,44 +28,30 @@ type pluginClientSocket struct {
 	Client     interface{}
 }
 
-func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerFunc, c *pluginClientSocket) {
+func readFromPlugin(ctx context.Context, readCloser io.ReadCloser, sendLog LoggerFunc) {
 	var shouldExit bool
-	stdoutreader := bufio.NewReader(c.StdoutPipe)
-	stderrreader := bufio.NewReader(c.StderrPipe)
+	stdreader := bufio.NewReader(readCloser)
+	go func() {
+		for {
+			if ctx.Err() != nil {
+				shouldExit = true
+			}
+			line, errs := stdreader.ReadString('\n')
+			if errs != nil || shouldExit {
+				readCloser.Close()
+				return
+			} else if errs == io.EOF {
+				continue
+			}
+			sendLog(line)
+		}
+	}()
+}
 
+func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerFunc, c *pluginClientSocket) {
 	defer close(done)
-
-	go func() {
-		for {
-			if ctx.Err() != nil {
-				shouldExit = true
-			}
-			line, errs := stdoutreader.ReadString('\n')
-			if errs != nil || shouldExit {
-				c.StdoutPipe.Close()
-				return
-			} else if errs == io.EOF {
-				continue
-			}
-			sendLog(line)
-		}
-	}()
-
-	go func() {
-		for {
-			if ctx.Err() != nil {
-				shouldExit = true
-			}
-			line, errs := stderrreader.ReadString('\n')
-			if errs != nil || shouldExit {
-				c.StderrPipe.Close()
-				return
-			} else if errs == io.EOF {
-				continue
-			}
-			sendLog(line)
-		}
-	}()
+	readFromPlugin(ctx, c.StdoutPipe, sendLog)
+	readFromPlugin(ctx, c.StderrPipe, sendLog)
 }
 
 func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p *sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
