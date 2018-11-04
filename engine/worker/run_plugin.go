@@ -22,23 +22,26 @@ type startGRPCPluginOptions struct {
 }
 
 type pluginClientSocket struct {
-	Socket     string
-	StdoutPipe io.ReadCloser
-	StderrPipe io.ReadCloser
-	Client     interface{}
+	Socket string
+	Reader io.Reader
+	Client interface{}
 }
 
 func readFromPlugin(ctx context.Context, readCloser io.ReadCloser, sendLog LoggerFunc) {
+
+}
+
+func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerFunc, c *pluginClientSocket) {
+	defer close(done)
 	var shouldExit bool
-	stdreader := bufio.NewReader(readCloser)
+	reader := bufio.NewReader(c.Reader)
 	go func() {
 		for {
 			if ctx.Err() != nil {
 				shouldExit = true
 			}
-			line, errs := stdreader.ReadString('\n')
+			line, errs := reader.ReadString('\n')
 			if errs != nil || shouldExit {
-				readCloser.Close()
 				return
 			} else if errs == io.EOF {
 				continue
@@ -46,12 +49,6 @@ func readFromPlugin(ctx context.Context, readCloser io.ReadCloser, sendLog Logge
 			sendLog(line)
 		}
 	}()
-}
-
-func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerFunc, c *pluginClientSocket) {
-	defer close(done)
-	readFromPlugin(ctx, c.StdoutPipe, sendLog)
-	readFromPlugin(ctx, c.StderrPipe, sendLog)
 }
 
 func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p *sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
@@ -117,7 +114,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	}
 	args := append(binary.Entrypoints, binary.Args...)
 	var errstart error
-	if c.StdoutPipe, c.StderrPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
+	if c.Reader, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
 		return nil, fmt.Errorf("plugin:%s unable to start GRPC plugin... Aborting. err:%v", pluginName, errstart)
 	}
 

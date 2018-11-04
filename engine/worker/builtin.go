@@ -113,6 +113,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		}
 
 		defer func() {
+			delete(w.mapPluginClient, pluginName)
 			if strings.Contains(pluginSocket.Socket, ".sock") {
 				if err := os.RemoveAll(socketPath); err != nil {
 					log.Warning("Could not remove socket path %v", pluginSocket.Socket)
