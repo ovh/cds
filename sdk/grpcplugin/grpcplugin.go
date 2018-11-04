@@ -31,26 +31,22 @@ type Plugin interface {
 	Instance() *Common
 }
 
-// StartPlugin starts a plugin, returns reader, socketName and error
-func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, args []string, env []string) (io.Reader, string, error) {
+// StartPlugin starts a plugin, returns stdoutPipe, stderrPipe and socketName
+func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, args []string, env []string) (io.ReadCloser, io.ReadCloser, string, error) {
 	c := exec.CommandContext(ctx, cmd, args...)
 	c.Dir = workdir
 	c.Env = env
 	stdoutPipe, err := c.StdoutPipe()
 	if err != nil {
-		return nil, "", err
+		return nil, nil, "", err
 	}
 	stderrPipe, err := c.StderrPipe()
 	if err != nil {
-		return nil, "", err
+		return nil, nil, "", err
 	}
 
-	r1 := bufio.NewReader(stdoutPipe)
-	r2 := bufio.NewReader(stderrPipe)
-	reader := io.MultiReader(r1, r2)
-
 	if err := c.Start(); err != nil {
-		return nil, "", err
+		return nil, nil, "", err
 	}
 
 	log.Info("GRPC Plugin %s started", cmd)
@@ -83,7 +79,7 @@ func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, ar
 			break
 		}
 	}
-	return reader, socket, errReturn
+	return stdoutPipe, stderrPipe, socket, errReturn
 }
 
 type Common struct {
