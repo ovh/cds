@@ -34,9 +34,7 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerF
 	stdoutreader := bufio.NewReader(c.StdoutPipe)
 	stderrreader := bufio.NewReader(c.StderrPipe)
 
-	defer func() {
-		close(done)
-	}()
+	defer close(done)
 
 	go func() {
 		for {
