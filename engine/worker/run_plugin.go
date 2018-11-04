@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin"
@@ -132,37 +131,8 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	}
 	args := append(binary.Entrypoints, binary.Args...)
 	var errstart error
-	if c.StdoutPipe, c.StderrPipe, errstart = grpcplugin.StartPlugin(ctx, dir, cmd, args, envs); errstart != nil {
+	if c.StdoutPipe, c.StderrPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
 		return nil, fmt.Errorf("plugin:%s unable to start GRPC plugin... Aborting. err:%v", pluginName, errstart)
-	}
-	log.Info("GRPC Plugin %s started", binary.Name)
-
-	//Sleep a while, to let the plugin write on stdout the socket address
-	time.Sleep(500 * time.Millisecond)
-	tsStart := time.Now()
-
-	stdoutreader := bufio.NewReader(c.StdoutPipe)
-
-	for {
-		line, errs := stdoutreader.ReadString('\n')
-		if errs == io.EOF {
-			continue
-		}
-		if errs != nil {
-			if time.Now().Before(tsStart.Add(5 * time.Second)) {
-				log.Warning("plugin:%s error on ReadString, retry in 500ms...", pluginName)
-				time.Sleep(500 * time.Millisecond)
-				continue
-			}
-			log.Error("plugin:%s error on ReadString(len buff %d, content: %s): %v", pluginName, len(line), line, err)
-			continue
-		}
-		if strings.HasSuffix(line, "is ready to accept new connection\n") {
-			socket := strings.TrimSpace(strings.Replace(line, " is ready to accept new connection\n", "", 1))
-			log.Info("socket %s ready", socket)
-			c.Socket = socket
-			break
-		}
 	}
 
 	registerPluginClient(w, pluginName, &c)
