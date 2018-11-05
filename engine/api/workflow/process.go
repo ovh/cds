@@ -549,6 +549,12 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		run.Payload = runPayload
 		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
 
+		// Take first value in pipeline parameter list if no default value is set
+		for i := range run.PipelineParameters {
+			if run.PipelineParameters[i].Type == sdk.ListParameter && strings.Contains(run.PipelineParameters[i].Value, ";") {
+				run.PipelineParameters[i].Value = strings.Split(run.PipelineParameters[i].Value, ";")[0]
+			}
+		}
 	}
 
 	if sourceOutgoingHookRun != nil {
