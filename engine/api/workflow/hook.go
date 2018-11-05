@@ -299,10 +299,6 @@ func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		return nil, nil
 	}
 
-	if wf.Root.Context.Application == nil {
-		return wf.Root.Context.DefaultPayload, nil
-	}
-
 	var defaultPayload interface{}
 	// Load application if not available
 	if wf.Root.Context != nil && wf.Root.Context.Application == nil && wf.Root.Context.ApplicationID != 0 {
@@ -311,6 +307,10 @@ func DefaultPayload(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 			return wf.Root.Context.DefaultPayload, sdk.WrapError(errLa, "DefaultPayload> unable to load application by id %d", wf.Root.Context.ApplicationID)
 		}
 		wf.Root.Context.Application = app
+	}
+
+	if wf.Root.Context.Application == nil {
+		return wf.Root.Context.DefaultPayload, nil
 	}
 
 	if wf.Root.Context.Application.RepositoryFullname != "" {
