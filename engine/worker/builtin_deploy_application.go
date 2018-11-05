@@ -34,13 +34,45 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		pluginSocket, has := w.mapPluginClient[pf.Model.PluginName]
-		if !has {
+		//First check OS and Architecture
+		var currentOS = strings.ToLower(sdk.GOOS)
+		var currentARCH = strings.ToLower(sdk.GOARCH)
+		var binary *sdk.GRPCPluginBinary
+		for _, b := range w.currentJob.wJob.PlatformPluginBinaries {
+			if b.OS == currentOS && b.Arch == currentARCH && pf.Model.PluginName == b.Name {
+				binary = &b
+				break
+			}
+		}
+
+		pluginSocket, err := startGRPCPlugin(context.Background(), binary.PluginName, w, binary, startGRPCPluginOptions{})
+		if err != nil {
 			res := sdk.Result{
-				Reason: "Unable to retrieve plugin client... Aborting",
+				Reason: "Unable to startGRPCPlugin... Aborting",
 				Status: sdk.StatusFail.String(),
 			}
-			sendLog(res.Reason)
+			sendLog(err.Error())
+			return res
+		}
+
+		c, err := platformplugin.Client(context.Background(), pluginSocket.Socket)
+		if err != nil {
+			res := sdk.Result{
+				Reason: "Unable to call grpc plugin... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(err.Error())
+			return res
+		}
+
+		pluginSocket.Client = c
+
+		if _, err := c.Manifest(context.Background(), new(empty.Empty)); err != nil {
+			res := sdk.Result{
+				Reason: "Unable to call grpc plugin manifest... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(err.Error())
 			return res
 		}
 

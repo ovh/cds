@@ -28,9 +28,7 @@ type pluginClientSocket struct {
 }
 
 func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerFunc, c *pluginClientSocket) {
-	defer close(done)
 	reader := bufio.NewReader(c.StdPipe)
-
 	var accumulator string
 	var shouldExit bool
 	defer func() {
@@ -72,10 +70,6 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerF
 func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p *sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
 	currentOS := strings.ToLower(sdk.GOOS)
 	currentARCH := strings.ToLower(sdk.GOARCH)
-	pluginSocket, has := w.mapPluginClient[pluginName]
-	if has {
-		return pluginSocket, nil
-	}
 
 	binary := p
 	if binary == nil {
@@ -138,11 +132,5 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 		return nil, sdk.WrapError(errstart, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}
 
-	registerPluginClient(w, pluginName, &c)
-
 	return &c, nil
-}
-
-func registerPluginClient(w *currentWorker, pluginName string, c *pluginClientSocket) {
-	w.mapPluginClient[pluginName] = c
 }

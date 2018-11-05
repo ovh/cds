@@ -14,6 +14,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 
@@ -27,7 +28,7 @@ const readyString = "is ready to accept new connection\n"
 // Plugin is the interface to be implemented by plugin
 type Plugin interface {
 	Start(context.Context) error
-	Stop()
+	Stop(context.Context, *empty.Empty) (*empty.Empty, error)
 	Instance() *Common
 }
 
@@ -52,6 +53,12 @@ func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, ar
 	if err := c.Start(); err != nil {
 		return nil, "", err
 	}
+
+	go func() {
+		if err := c.Wait(); err != nil {
+			log.Info("GRPC Plugin wait failed:%+v", err)
+		}
+	}()
 
 	log.Info("GRPC Plugin %s started", cmd)
 
@@ -156,9 +163,9 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 	return c, s.Serve(l)
 }
 
-func (c *Common) Stop() {
+func (c *Common) Stop(context.Context, *empty.Empty) (*empty.Empty, error) {
 	c.s.Stop()
-	return
+	return new(empty.Empty), nil
 }
 
 // InfoMarkdown returns string formatted with markdown
