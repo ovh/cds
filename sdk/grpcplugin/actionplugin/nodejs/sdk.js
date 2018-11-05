@@ -8,6 +8,7 @@ const getPort = require('get-port');
 const YAML = require('yaml')
 const fs = require('fs')
 let httpPort, pluginManifest, run;
+let server;
 
 class Client {
   constructor(yamlFilename, runFunc) {
@@ -18,8 +19,8 @@ class Client {
 
   start(ip) {
     let localIP = ip || '127.0.0.1';
-    let server = new grpc.Server();
-    server.addService(services.ActionPluginService, {run, workerHTTPPort, manifest});
+    server = new grpc.Server();
+    server.addService(services.ActionPluginService, {run, workerHTTPPort, manifest, stop});
     return getPort()
       .then((port) => {
         server.bind(localIP + ':' + port, grpc.ServerCredentials.createInsecure());
@@ -58,6 +59,12 @@ function manifest(call, callback) {
 function workerHTTPPort(call, callback) {
   var reply = new google_protobuf_empty_pb.Empty();
   httpPort = call.request;
+  callback(null, reply);
+}
+
+function stop(call, callback) {
+  var reply = new google_protobuf_empty_pb.Empty();
+  server.stop()
   callback(null, reply);
 }
 

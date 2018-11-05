@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -73,7 +72,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		log.Debug("runGRPCPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
 	}()
 
-	var socketPath string
 	chanRes := make(chan sdk.Result, 1)
 	done := make(chan struct{})
 	sdk.GoRoutine(ctx, "runGRPCPlugin", func(ctx context.Context) {
@@ -112,14 +110,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			return
 		}
 
-		defer func() {
-			if strings.Contains(pluginSocket.Socket, ".sock") {
-				if err := os.RemoveAll(socketPath); err != nil {
-					log.Warning("Could not remove socket path %v", pluginSocket.Socket)
-				}
-			}
-		}()
-
 		c, err := actionplugin.Client(ctx, pluginSocket.Socket)
 		if err != nil {
 			close(done)
@@ -144,11 +134,11 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 
 		logCtx, stopLogs := context.WithCancel(ctx)
 		go enablePluginLogger(logCtx, done, sendLog, pluginSocket)
-		defer stopLogs()
 
 		manifest, err := actionPluginClient.Manifest(ctx, &empty.Empty{})
 		if err != nil {
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to retrieve plugin manifest... Aborting (%v)", err))
+			stopLogs()
 			return
 		}
 		log.Debug("plugin successfully initialized: %#v", manifest)
@@ -163,13 +153,20 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		pluginDetails := fmt.Sprintf("plugin %s v%s", manifest.Name, manifest.Version)
 		if err != nil {
 			t := fmt.Sprintf("failure %s err: %v", pluginDetails, err)
-			syncStd(t)
+			stopLogs()
+			if _, errstop := actionPluginClient.Stop(ctx, new(empty.Empty)); errstop != nil {
+				log.Error("Error on actionPluginClient.Stop: %s", errstop)
+			}
 			log.Error(t)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Error running action: %v", err))
 			return
 		}
 
-		syncStd(pluginDetails)
+		if _, err := actionPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+			log.Error("Error on actionPluginClient.Stop: %s", err)
+		}
+
+		stopLogs()
 
 		chanRes <- sdk.Result{
 			Status: result.GetStatus(),
@@ -188,15 +185,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		// Useful to wait all logs are send before sending final status and log
 		<-done
 		return res
-	}
-}
-
-func syncStd(p string) {
-	if err := os.Stdout.Sync(); err != nil {
-		log.Error("os.Stdout.Sync %s err:%v", p, err)
-	}
-	if err := os.Stderr.Sync(); err != nil {
-		log.Error("os.Stderr.Sync %s err:%v", p, err)
 	}
 }
 
