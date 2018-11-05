@@ -106,6 +106,9 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Reason: "Unable to retrieve plugin manifest... Aborting",
 				Status: sdk.StatusFail.String(),
 			}
+			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+				log.Error("Error on platformPluginClient.Stop: %s", err)
+			}
 			stopLogs()
 			<-done
 			sendLog(err.Error())
