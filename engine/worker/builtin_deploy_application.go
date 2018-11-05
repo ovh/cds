@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func runDeployApplication(w *currentWorker) BuiltInAction {
@@ -138,6 +139,10 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 			return sdk.Result{
 				Status: sdk.StatusSuccess.String(),
 			}
+		}
+
+		if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+			log.Error("Error on platformPluginClient.Stop: %s", err)
 		}
 
 		stopLogs()
