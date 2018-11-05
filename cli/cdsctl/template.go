@@ -51,8 +51,8 @@ var templateApplyCmd = cli.Command{
 		},
 		{
 			Kind:      reflect.Bool,
-			Name:      "ignore-prompt",
-			ShortHand: "i",
+			Name:      "no-interactive",
+			ShortHand: "n",
 			Usage:     "Set to not ask interactively for params",
 		},
 		{
@@ -196,7 +196,7 @@ func templateApplyRun(v cli.Values) error {
 	}
 
 	// ask interactively for params if prompt not disabled
-	if !v.GetBool("ignore-prompt") {
+	if !v.GetBool("no-interactive") {
 		if workflowName == "" {
 			if localRepoName != "" {
 				ss := strings.Split(localRepoName, "/")
