@@ -22,36 +22,51 @@ type startGRPCPluginOptions struct {
 }
 
 type pluginClientSocket struct {
-	Socket     string
-	StdoutPipe io.ReadCloser
-	StderrPipe io.ReadCloser
-	Client     interface{}
-}
-
-func readFromPlugin(ctx context.Context, readCloser io.ReadCloser, sendLog LoggerFunc) {
-	var shouldExit bool
-	stdreader := bufio.NewReader(readCloser)
-	go func() {
-		for {
-			if ctx.Err() != nil {
-				shouldExit = true
-			}
-			line, errs := stdreader.ReadString('\n')
-			if errs != nil || shouldExit {
-				readCloser.Close()
-				return
-			} else if errs == io.EOF {
-				continue
-			}
-			sendLog(line)
-		}
-	}()
+	Socket  string
+	StdPipe io.Reader
+	Client  interface{}
 }
 
 func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerFunc, c *pluginClientSocket) {
 	defer close(done)
-	readFromPlugin(ctx, c.StdoutPipe, sendLog)
-	readFromPlugin(ctx, c.StderrPipe, sendLog)
+	reader := bufio.NewReader(c.StdPipe)
+
+	var accumulator string
+	var shouldExit bool
+	defer func() {
+		if accumulator != "" {
+			sendLog(accumulator)
+		}
+		close(done)
+	}()
+
+	for {
+		if ctx.Err() != nil {
+			shouldExit = true
+		}
+
+		b, err := reader.ReadByte()
+		if err == io.EOF {
+			if shouldExit {
+				return
+			}
+			continue
+		}
+
+		content := string(b)
+		switch content {
+		case "":
+			continue
+		case "\n":
+			accumulator += content
+			sendLog(accumulator)
+			accumulator = ""
+			continue
+		default:
+			accumulator += content
+			continue
+		}
+	}
 }
 
 func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p *sdk.GRPCPluginBinary, opts startGRPCPluginOptions) (*pluginClientSocket, error) {
@@ -119,7 +134,7 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 	}
 	args := append(binary.Entrypoints, binary.Args...)
 	var errstart error
-	if c.StdoutPipe, c.StderrPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
+	if c.StdPipe, c.Socket, errstart = grpcplugin.StartPlugin(ctx, pluginName, dir, cmd, args, envs); errstart != nil {
 		return nil, sdk.WrapError(errstart, "plugin:%s unable to start GRPC plugin... Aborting", pluginName)
 	}
 
