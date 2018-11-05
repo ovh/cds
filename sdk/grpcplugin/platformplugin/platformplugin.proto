@@ -36,4 +36,5 @@ service PlatformPlugin {
     rpc Manifest (google.protobuf.Empty) returns (PlatformPluginManifest) {}
     rpc Deploy (DeployQuery) returns (DeployResult) {}
     rpc DeployStatus (DeployStatusQuery) returns (DeployResult) {}
+    rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
