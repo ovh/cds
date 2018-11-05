@@ -66,7 +66,6 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		}
 
 		pluginSocket.Client = c
-
 		if _, err := c.Manifest(context.Background(), new(empty.Empty)); err != nil {
 			res := sdk.Result{
 				Reason: "Unable to call grpc plugin manifest... Aborting",
