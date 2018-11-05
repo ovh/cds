@@ -20,6 +20,11 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
+var (
+	True  = true
+	False = false
+)
+
 func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 	db, cache, end := test.SetupPG(t)
 	defer end()
@@ -1021,11 +1026,11 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 				SourceNodeRefs: []string{"pip6", "pip5"},
 				Settings: sdk.UserNotificationSettings{
 					OnFailure:    sdk.UserNotificationAlways,
-					OnStart:      true,
+					OnStart:      &True,
 					OnSuccess:    sdk.UserNotificationAlways,
-					SendToAuthor: true,
-					SendToGroups: true,
-					Template: sdk.UserNotificationTemplate{
+					SendToAuthor: &True,
+					SendToGroups: &True,
+					Template: &sdk.UserNotificationTemplate{
 						Body:    "body",
 						Subject: "title",
 					},
