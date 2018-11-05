@@ -39,10 +39,19 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		var currentARCH = strings.ToLower(sdk.GOARCH)
 		var binary *sdk.GRPCPluginBinary
 		for _, b := range w.currentJob.wJob.PlatformPluginBinaries {
-			if b.OS == currentOS && b.Arch == currentARCH && pf.Model.PluginName == b.Name {
+			if b.OS == currentOS && b.Arch == currentARCH {
 				binary = &b
 				break
 			}
+		}
+
+		if binary == nil {
+			res := sdk.Result{
+				Reason: fmt.Sprintf("Unable to retrieve deployment platform binary named %s... Aborting", pf.Model.PluginName),
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(res.Reason)
+			return res
 		}
 
 		pluginSocket, err := startGRPCPlugin(context.Background(), binary.PluginName, w, binary, startGRPCPluginOptions{})
