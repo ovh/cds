@@ -106,6 +106,9 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Reason: "Unable to retrieve plugin manifest... Aborting",
 				Status: sdk.StatusFail.String(),
 			}
+			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+				log.Error("Error on platformPluginClient.Stop: %s", err)
+			}
 			stopLogs()
 			<-done
 			sendLog(err.Error())
@@ -124,6 +127,9 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Reason: fmt.Sprintf("Error deploying application: %v", err),
 				Status: sdk.StatusFail.String(),
 			}
+			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+				log.Error("Error on platformPluginClient.Stop: %s", err)
+			}
 			sendLog(res.Reason)
 			stopLogs()
 			<-done
@@ -134,6 +140,9 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		sendLog(fmt.Sprintf("# Status: %s", res.Status))
 
 		if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess.String()) {
+			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+				log.Error("Error on platformPluginClient.Stop: %s", err)
+			}
 			stopLogs()
 			<-done
 			return sdk.Result{
