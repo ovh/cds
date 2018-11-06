@@ -164,10 +164,10 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 			// Post the callback
 			if code, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
-				log.Error("doOutgoingWorkflowExecution.HandleError: unable to perform outgoing hook callback: %v", err)
 				if code >= 500 {
 					return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
 				}
+				log.Error("doOutgoingWorkflowExecution.HandleError: unable to perform outgoing hook callback: %v", err)
 				return nil
 			}
 		}
@@ -205,10 +205,10 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 	// Post the callback
 	if code, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
-		log.Error("doOutgoingWorkflowExecution> unable to perform outgoing hook callback: %v", err)
 		if code >= 500 {
-			return err
+			return sdk.WrapError(err, "unable to perform outgoing hook callback")
 		}
+		log.Error("doOutgoingWorkflowExecution> unable to perform outgoing hook callback: %v", err)
 	}
 	return nil
 }
@@ -255,10 +255,10 @@ func (s *Service) doOutgoingWebHookExecution(t *sdk.TaskExecution) error {
 
 			// Post the callback
 			if code, err := s.Client.(cdsclient.Raw).PostJSON(context.Background(), callbackURL, callbackData, nil); err != nil {
-				log.Error("unable to perform outgoing hook callback : %v", err)
 				if code >= 500 {
 					return fmt.Errorf("unable to perform outgoing hook callback: %v", err)
 				}
+				log.Error("unable to perform outgoing hook callback : %v", err)
 				return nil
 			}
 		}

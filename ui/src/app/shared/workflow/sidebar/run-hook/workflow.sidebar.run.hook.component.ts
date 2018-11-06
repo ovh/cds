@@ -42,48 +42,46 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     ngOnInit(): void {
         this._workflowEventStore.selectedHook().subscribe(h => {
             this.hook = h;
-            if (this.hook && this.wr) {
-                this.loadHookDetails();
-            }
+            this.loadHookDetails();
         });
         this._workflowEventStore.selectedRun().subscribe(r => {
             this.wr = r;
-            if (this.wr && this.hook) {
-                this.loadHookDetails();
-            }
+            this.loadHookDetails();
         });
     }
 
     loadHookDetails() {
-        this.loading = true;
-        this._hookService.getHookLogs(this.project.key, this.wr.workflow.name, this.hook.uuid)
-            .pipe(finalize(() => this.loading = false))
-            .subscribe((hook) => {
-                if (Array.isArray(hook.executions) && hook.executions.length) {
-                    let found = false;
-                    hook.executions = hook.executions.map((exec) => {
-                        if (exec.nb_errors > 0) {
-                            exec.status = HookStatus.FAIL;
-                        }
-                        if (!found && exec.workflow_run === this.wr.num) {
-                            found = true;
-                        }
-                        return exec;
-                    });
+        if (this.wr && this.hook) {
+            this.loading = true;
+            this._hookService.getHookLogs(this.project.key, this.wr.workflow.name, this.hook.uuid)
+                .pipe(finalize(() => this.loading = false))
+                .subscribe((hook) => {
+                    if (Array.isArray(hook.executions) && hook.executions.length) {
+                        let found = false;
+                        hook.executions = hook.executions.map((exec) => {
+                            if (exec.nb_errors > 0) {
+                                exec.status = HookStatus.FAIL;
+                            }
+                            if (!found && exec.workflow_run === this.wr.num) {
+                                found = true;
+                            }
+                            return exec;
+                        });
 
-                    if (found) {
-                        hook.executions = hook.executions.filter((h) => h.workflow_run === this.wr.num);
+                        if (found) {
+                            hook.executions = hook.executions.filter((h) => h.workflow_run === this.wr.num);
+                        }
                     }
-                }
-                this.hookDetails = hook;
-            });
-        if (this.wr.nodes) {
-            Object.keys(this.wr.nodes).forEach(k => {
-                let nr = this.wr.nodes[k][0];
-                if (nr.hook_event && nr.hook_event.uuid === this.hook.uuid) {
-                    this.hookEvent = nr.hook_event;
-                }
-            });
+                    this.hookDetails = hook;
+                });
+            if (this.wr.nodes) {
+                Object.keys(this.wr.nodes).forEach(k => {
+                    let nr = this.wr.nodes[k][0];
+                    if (nr.hook_event && nr.hook_event.uuid === this.hook.uuid) {
+                        this.hookEvent = nr.hook_event;
+                    }
+                });
+            }
         }
     }
 

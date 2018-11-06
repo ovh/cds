@@ -84,5 +84,4 @@ func (w *WorkflowData) NodeByName(s string) *Node {
 		}
 	}
 	return nil
-
 }

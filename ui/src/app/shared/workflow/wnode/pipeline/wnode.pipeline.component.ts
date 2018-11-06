@@ -31,11 +31,7 @@ export class WorkflowWNodePipelineComponent implements OnInit {
 
     ngOnInit(): void {
         this.subSelectedNode = this._workflowEventStore.selectedNode().subscribe(n => {
-            if (n) {
-                this.selected = (n.id === this.node.id);
-            } else {
-                this.selected = false;
-            }
+            this.selected =  n && (n.id === this.node.id);
         });
     }
 }
