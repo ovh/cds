@@ -44,6 +44,7 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	r.HandleFunc("/tag", w.tagHandler)
 	r.HandleFunc("/tmpl", w.tmplHandler)
 	r.HandleFunc("/upload", w.uploadHandler)
+	r.HandleFunc("/checksecret", w.checkSecretHandler)
 	r.HandleFunc("/var", w.addBuildVarHandler)
 	r.HandleFunc("/vulnerability", w.vulnerabilityHandler)
 

@@ -5,6 +5,21 @@ type WorkflowData struct {
 	Joins []Node `json:"joins" db:"-" cli:"-"`
 }
 
+func (w *WorkflowData) AncestorsNames(n Node) []string {
+	res, ok := w.Node.ancestorNames(n.Name)
+	if ok {
+		return res
+	}
+
+	for _, j := range w.Joins {
+		resAncestor, found := (&j).ancestorNames(n.Name)
+		if found {
+			return resAncestor
+		}
+	}
+	return nil
+}
+
 // GetHooks returns the list of all hooks in the workflow tree
 func (w *WorkflowData) GetHooks() map[string]NodeHook {
 	if w == nil {

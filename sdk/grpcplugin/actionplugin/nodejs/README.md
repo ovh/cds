@@ -2,7 +2,13 @@
 
 ## How to use
 
-+ First you have to create a link on npm locally with this package by typing the following command in its directory:
++ First you have to install GRPC Tools:
+
+```
+$ npm install -g grpc-tools
+```
+
++ You have to create a link on npm locally with this package by typing the following command in its directory:
 
 ```
 $ npm link

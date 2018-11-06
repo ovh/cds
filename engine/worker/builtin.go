@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -103,8 +102,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		}
 
 		pluginSocket, err := startGRPCPlugin(context.Background(), pluginName, w, nil, startGRPCPluginOptions{
-			out:  os.Stdout,
-			err:  os.Stderr,
 			envs: envs,
 		})
 		if err != nil {
@@ -137,11 +134,11 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 
 		logCtx, stopLogs := context.WithCancel(ctx)
 		go enablePluginLogger(logCtx, done, sendLog, pluginSocket)
-		defer stopLogs()
 
 		manifest, err := actionPluginClient.Manifest(ctx, &empty.Empty{})
 		if err != nil {
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to retrieve plugin manifest... Aborting (%v)", err))
+			stopLogs()
 			return
 		}
 		log.Debug("plugin successfully initialized: %#v", manifest)
@@ -153,13 +150,23 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		}
 
 		result, err := actionPluginClient.Run(ctx, &query)
+		pluginDetails := fmt.Sprintf("plugin %s v%s", manifest.Name, manifest.Version)
 		if err != nil {
+			t := fmt.Sprintf("failure %s err: %v", pluginDetails, err)
+			stopLogs()
+			if _, errstop := actionPluginClient.Stop(ctx, new(empty.Empty)); errstop != nil {
+				log.Error("Error on actionPluginClient.Stop: %s", errstop)
+			}
+			log.Error(t)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Error running action: %v", err))
 			return
 		}
 
-		_ = os.Stdout.Sync()
-		_ = os.Stderr.Sync()
+		if _, err := actionPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+			log.Error("Error on actionPluginClient.Stop: %s", err)
+		}
+
+		stopLogs()
 
 		chanRes <- sdk.Result{
 			Status: result.GetStatus(),

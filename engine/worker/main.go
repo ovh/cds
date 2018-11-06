@@ -51,22 +51,20 @@ type currentWorker struct {
 		Status string `json:"status"`
 	}
 	client              cdsclient.Interface
-	mapPluginClient     map[string]*pluginClientSocket
 	disableOldWorkflows bool
 }
 
 func main() {
 	sdk.SetAgent(sdk.WorkerAgent)
 
-	w := &currentWorker{
-		mapPluginClient: make(map[string]*pluginClientSocket),
-	}
+	w := &currentWorker{}
 	cmd := cmdMain(w)
 	cmd.AddCommand(cmdExport)
 	cmd.AddCommand(cmdUpload(w))
 	cmd.AddCommand(cmdArtifacts(w))
 	cmd.AddCommand(cmdDownload(w))
 	cmd.AddCommand(cmdTmpl(w))
+	cmd.AddCommand(cmdCheckSecret(w))
 	cmd.AddCommand(cmdTag(w))
 	cmd.AddCommand(cmdRun(w))
 	cmd.AddCommand(cmdUpdate(w))

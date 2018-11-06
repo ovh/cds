@@ -67,56 +67,49 @@ const (
 	WorkflowVersion1 = "v1.0"
 )
 
-func craftNodeEntry(w sdk.Workflow, nodes map[int64]*sdk.Node, n sdk.Node) (NodeEntry, error) {
+func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 	entry := NodeEntry{}
-	ancestorIDs := n.Ancestors(w.WorkflowData, nodes, false)
-	ancestors := make([]string, 0, len(ancestorIDs))
-	for _, aID := range ancestorIDs {
-		a := w.WorkflowData.NodeByID(aID)
-		if a == nil {
-			return entry, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "Unable to find node %d", aID)
-		}
-		ancestors = append(ancestors, a.Name)
-	}
+
+	ancestors := w.WorkflowData.AncestorsNames(n)
 
 	sort.Strings(ancestors)
 	entry.DependsOn = ancestors
 
-	if n.Context != nil && n.Context.PipelineID != 0 {
-		entry.PipelineName = w.Pipelines[n.Context.PipelineID].Name
-	}
-
-	conditions := []sdk.WorkflowNodeCondition{}
-	for _, c := range n.Context.Conditions.PlainConditions {
-		if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
-			c.Value == sdk.StatusSuccess.String() &&
-			c.Variable == "cds.status" {
-			entry.When = append(entry.When, "success")
-		} else if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
-			c.Value == "true" &&
-			c.Variable == "cds.manual" {
-			entry.When = append(entry.When, "manual")
-		} else {
-			conditions = append(conditions, c)
-		}
-	}
-
-	if len(conditions) > 0 || n.Context.Conditions.LuaScript != "" {
-		entry.Conditions = &sdk.WorkflowNodeConditions{
-			PlainConditions: conditions,
-			LuaScript:       n.Context.Conditions.LuaScript,
-		}
+	if n.Context != nil && n.Context.PipelineName != "" {
+		entry.PipelineName = n.Context.PipelineName
 	}
 
 	if n.Context != nil {
-		if n.Context.ApplicationID != 0 {
-			entry.ApplicationName = w.Applications[n.Context.ApplicationID].Name
+		conditions := []sdk.WorkflowNodeCondition{}
+		for _, c := range n.Context.Conditions.PlainConditions {
+			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
+				c.Value == sdk.StatusSuccess.String() &&
+				c.Variable == "cds.status" {
+				entry.When = append(entry.When, "success")
+			} else if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
+				c.Value == "true" &&
+				c.Variable == "cds.manual" {
+				entry.When = append(entry.When, "manual")
+			} else {
+				conditions = append(conditions, c)
+			}
 		}
-		if n.Context.EnvironmentID != 0 {
-			entry.EnvironmentName = w.Environments[n.Context.EnvironmentID].Name
+
+		if len(conditions) > 0 || n.Context.Conditions.LuaScript != "" {
+			entry.Conditions = &sdk.WorkflowNodeConditions{
+				PlainConditions: conditions,
+				LuaScript:       n.Context.Conditions.LuaScript,
+			}
 		}
-		if n.Context.ProjectPlatformID != 0 {
-			entry.ProjectPlatformName = w.ProjectPlatforms[n.Context.ProjectPlatformID].Name
+
+		if n.Context.ApplicationName != "" {
+			entry.ApplicationName = n.Context.ApplicationName
+		}
+		if n.Context.EnvironmentName != "" {
+			entry.EnvironmentName = n.Context.EnvironmentName
+		}
+		if n.Context.ProjectPlatformName != "" {
+			entry.ProjectPlatformName = n.Context.ProjectPlatformName
 		}
 
 		if n.Context.Mutex {
@@ -143,8 +136,13 @@ func craftNodeEntry(w sdk.Workflow, nodes map[int64]*sdk.Node, n sdk.Node) (Node
 	}
 
 	if n.OutGoingHookContext != nil {
-		entry.OutgoingHookModelName = w.OutGoingHookModels[n.OutGoingHookContext.HookModelID].Name
-		entry.OutgoingHookConfig = n.OutGoingHookContext.Config.Values()
+		entry.OutgoingHookModelName = n.OutGoingHookContext.HookModelName
+
+		m := sdk.GetBuiltinOutgoingHookModelByName(entry.OutgoingHookModelName)
+		if m == nil {
+			return entry, sdk.WrapError(sdk.ErrNotFound, "unable to find outgoing hook model %s", entry.OutgoingHookModelName)
+		}
+		entry.OutgoingHookConfig = n.OutGoingHookContext.Config.Values(m.DefaultConfig)
 	}
 
 	return entry, nil
@@ -194,7 +192,10 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	if len(w.Metadata) > 0 {
 		exportedWorkflow.Metadata = make(map[string]string, len(w.Metadata))
 		for k, v := range w.Metadata {
-			exportedWorkflow.Metadata[k] = v
+			// don't export empty metadata
+			if v != "" {
+				exportedWorkflow.Metadata[k] = v
+			}
 		}
 	}
 
@@ -205,13 +206,12 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	}
 
 	exportedWorkflow.PurgeTags = w.PurgeTags
-	nodes := w.WorkflowData.Maps()
 
-	hooks := w.WorkflowData.GetHooks()
+	nodes := w.WorkflowData.Array()
 
 	if len(nodes) == 1 {
 		n := w.WorkflowData.Node
-		entry, err := craftNodeEntry(w, nodes, n)
+		entry, err := craftNodeEntry(w, n)
 		if err != nil {
 			return exportedWorkflow, err
 		}
@@ -224,15 +224,20 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 			exportedWorkflow.When = entry.When
 			exportedWorkflow.Conditions = entry.Conditions
 		}
-		for _, h := range hooks {
+		for _, h := range n.Hooks {
 			if exportedWorkflow.Hooks == nil {
 				exportedWorkflow.Hooks = make(map[string][]HookEntry)
 			}
 
+			m := sdk.GetBuiltinHookModelByName(h.HookModelName)
+			if m == nil {
+				return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find outgoing hook model %s", h.HookModelName)
+			}
+
 			exportedWorkflow.PipelineHooks = append(exportedWorkflow.PipelineHooks, HookEntry{
-				Model:  w.HookModels[h.HookModelID].Name,
+				Model:  h.HookModelName,
 				Ref:    h.Ref,
-				Config: h.Config.Values(),
+				Config: h.Config.Values(m.DefaultConfig),
 			})
 		}
 		exportedWorkflow.Payload = entry.Payload
@@ -242,22 +247,29 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 			if n.Type == sdk.NodeTypeJoin {
 				continue
 			}
-			entry, err := craftNodeEntry(w, nodes, *n)
+
+			entry, err := craftNodeEntry(w, *n)
 			if err != nil {
 				return exportedWorkflow, sdk.WrapError(err, "Unable to craft Node entry %s", n.Name)
 			}
 			exportedWorkflow.Workflow[n.Name] = entry
-		}
 
-		for _, h := range hooks {
-			if exportedWorkflow.Hooks == nil {
-				exportedWorkflow.Hooks = make(map[string][]HookEntry)
+			for _, h := range n.Hooks {
+				if exportedWorkflow.Hooks == nil {
+					exportedWorkflow.Hooks = make(map[string][]HookEntry)
+				}
+
+				m := sdk.GetBuiltinHookModelByName(h.HookModelName)
+				if m == nil {
+					return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find outgoing hook model %s", h.HookModelName)
+				}
+
+				exportedWorkflow.Hooks[n.Name] = append(exportedWorkflow.Hooks[n.Name], HookEntry{
+					Model:  h.HookModelName,
+					Ref:    h.Ref,
+					Config: h.Config.Values(m.DefaultConfig),
+				})
 			}
-			exportedWorkflow.Hooks[nodes[h.NodeID].Name] = append(exportedWorkflow.Hooks[nodes[h.NodeID].Name], HookEntry{
-				Model:  w.HookModels[h.HookModelID].Name,
-				Ref:    h.Ref,
-				Config: h.Config.Values(),
-			})
 		}
 	}
 
@@ -440,12 +452,19 @@ func (e *NodeEntry) getNode(name string, w *sdk.Workflow) (*sdk.Node, error) {
 	node := &sdk.Node{
 		Name: name,
 		Ref:  name,
+		Type: sdk.NodeTypeFork,
 		Context: &sdk.NodeContext{
 			PipelineName:        e.PipelineName,
 			ApplicationName:     e.ApplicationName,
 			EnvironmentName:     e.EnvironmentName,
 			ProjectPlatformName: e.ProjectPlatformName,
 		},
+	}
+
+	if e.PipelineName != "" {
+		node.Type = sdk.NodeTypePipeline
+	} else if e.OutgoingHookModelName != "" {
+		node.Type = sdk.NodeTypeOutGoingHook
 	}
 
 	if e.Conditions != nil {

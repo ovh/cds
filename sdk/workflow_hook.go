@@ -166,11 +166,31 @@ const WorkflowHookModelBuiltin = "builtin"
 //WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
 type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
 
+// GetBuiltinHookModelByName retrieve the hook model
+func GetBuiltinHookModelByName(name string) *WorkflowHookModel {
+	for _, m := range BuiltinHookModels {
+		if m.Name == name {
+			return m
+		}
+	}
+	return nil
+}
+
+// GetBuiltinOutgoingHookModelByName retrieve the outgoing hook model
+func GetBuiltinOutgoingHookModelByName(name string) *WorkflowHookModel {
+	for _, m := range BuiltinOutgoingHookModels {
+		if m.Name == name {
+			return m
+		}
+	}
+	return nil
+}
+
 //Values return values of the WorkflowNodeHookConfig
-func (cfg WorkflowNodeHookConfig) Values() map[string]string {
+func (cfg WorkflowNodeHookConfig) Values(model WorkflowNodeHookConfig) map[string]string {
 	r := make(map[string]string)
 	for k, v := range cfg {
-		if v.Configurable {
+		if model[k].Configurable {
 			r[k] = v.Value
 		}
 	}

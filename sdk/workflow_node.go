@@ -252,6 +252,34 @@ func (n *Node) Ancestors(w *WorkflowData, mapNodes map[int64]*Node, deep bool) [
 	return keys
 }
 
+func (n *Node) ancestorNames(name string) ([]string, bool) {
+	res := make([]string, 0)
+	if name == n.Name {
+		return res, true
+	}
+	for _, t := range n.Triggers {
+		if t.ChildNode.Name == name {
+			// If current node is a join
+			if n.Type != NodeTypeJoin {
+				res = append(res, n.Name)
+				return res, true
+			}
+
+			parents := make([]string, 0, len(n.JoinContext))
+			for _, jp := range n.JoinContext {
+				parents = append(parents, jp.ParentName)
+			}
+			return parents, true
+		}
+		trigRes, ok := (&t.ChildNode).ancestorNames(name)
+		if ok {
+			res = append(res, trigRes...)
+			return res, true
+		}
+	}
+	return res, false
+}
+
 func (n *Node) ancestor(id int64, deep bool) (map[int64]bool, bool) {
 	res := map[int64]bool{}
 	if id == n.ID {

@@ -92,7 +92,7 @@ func (actPlugin *venomActionPlugin) Run(ctx context.Context, q *actionplugin.Act
 	v.RegisterTestCaseContext(redisctx.Name, redisctx.New())
 
 	v.PrintFunc = func(format string, aa ...interface{}) (n int, err error) {
-		fmt.Printf(format, aa)
+		fmt.Printf(format, aa...)
 		return 0, nil
 	}
 

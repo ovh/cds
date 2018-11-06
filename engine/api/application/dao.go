@@ -41,7 +41,6 @@ var LoadOptions = struct {
 	WithTriggers                   LoadOptionFunc
 	WithGroups                     LoadOptionFunc
 	WithHooks                      LoadOptionFunc
-	WithNotifs                     LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithClearKeys                  LoadOptionFunc
 	WithDeploymentStrategies       LoadOptionFunc
@@ -56,7 +55,6 @@ var LoadOptions = struct {
 	WithTriggers:                   &loadTriggers,
 	WithGroups:                     &loadGroups,
 	WithHooks:                      &loadHooks,
-	WithNotifs:                     &loadNotifs,
 	WithKeys:                       &loadKeys,
 	WithClearKeys:                  &loadClearKeys,
 	WithDeploymentStrategies:       &loadDeploymentStrategies,

@@ -20,19 +20,24 @@
     "precommit": "lint-staged"
   },
   "lint-staged": {
-    "*.ts": "ng lint ui-ng2"
+    "linters": {
+      "*.ts": "ng lint ui-ng2 --files"
+    },
+    "ignore": [
+      "**/*.spec.ts"
+    ]
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "6.0.4",
-    "@angular/common": "6.0.4",
-    "@angular/compiler": "6.0.4",
-    "@angular/core": "6.0.4",
-    "@angular/forms": "6.0.4",
-    "@angular/http": "6.0.4",
-    "@angular/platform-browser": "6.0.4",
-    "@angular/platform-browser-dynamic": "6.0.4",
-    "@angular/router": "6.0.4",
+    "@angular/animations": "7.0.1",
+    "@angular/common": "7.0.1",
+    "@angular/compiler": "7.0.1",
+    "@angular/core": "7.0.1",
+    "@angular/forms": "7.0.1",
+    "@angular/http": "7.0.1",
+    "@angular/platform-browser": "7.0.1",
+    "@angular/platform-browser-dynamic": "7.0.1",
+    "@angular/router": "7.0.1",
     "@ngui/auto-complete": "^0.16.1",
     "@ngx-translate/core": "^9.0.1",
     "@ngx-translate/http-loader": "^2.0.0",
@@ -40,7 +45,7 @@
     "@types/dagre-d3": "^0.4.36",
     "angular2-moment": "^1.0.0",
     "angular2-prettyjson": "2.0.5",
-    "angular2-toaster": "^2.0.0",
+    "angular2-toaster": "6.1.0",
     "animate.css": "^3.5.2",
     "ansi_up": "^1.3.0",
     "codemirror": "^5.22.0",
@@ -67,17 +72,17 @@
     "ngx-infinite-scroll": "^6.0.1",
     "ngx-markdown": "6.1.0",
     "prismjs": "^1.15.0",
-    "rxjs": "6.2.0",
-    "rxjs-compat": "6.2.0",
+    "rxjs": "6.3.3",
+    "rxjs-compat": "6.3.3",
     "semantic-ui": "2.2.13",
     "string-format-obj": "^1.1.1",
     "ts-helpers": "^1.1.1",
     "zone.js": "^0.8.26"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "~0.6.6",
-    "@angular/cli": "^6.0.7",
-    "@angular/compiler-cli": "6.0.4",
+    "@angular-devkit/build-angular": "~0.10.3",
+    "@angular/cli": "7.0.3",
+    "@angular/compiler-cli": "7.0.1",
     "@compodoc/compodoc": "^1.0.0-beta.8",
     "@types/dagre": "^0.7.35",
     "@types/jasmine": "2.8.6",
@@ -99,7 +104,7 @@
     "node-sass": "4.8.3",
     "ts-node": "~4.1.0",
     "tslint": "~5.9.1",
-    "typescript": "2.7.2",
+    "typescript": "3.1.1",
     "webdriver-manager": "10.2.5",
     "wrench-sui": "0.0.3"
   }
