@@ -82,6 +82,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     limitFrom: number;
     limitTo: number;
     basicView = false;
+    allLogsView = false;
 
     zone: NgZone;
     _showLog = false;
@@ -164,7 +165,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                             this.splittedLogs = this.getLogsSplitted().map((log, i) => ({lineNumber: i + 1, value: log}));
                             this.splittedLogsToDisplay = cloneDeep(this.splittedLogs);
 
-                            if (this.splittedLogs.length > 1000 && !this._route.snapshot.fragment) {
+                            if (!this.allLogsView && this.splittedLogs.length > 1000 && !this._route.snapshot.fragment) {
                                 this.limitFrom = 30;
                                 this.limitTo = this.splittedLogs.length - 40;
                                 this.splittedLogsToDisplay.splice(this.limitFrom, this.limitTo - this.limitFrom);
@@ -236,6 +237,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     showAllLogs() {
         this.loadingMore = true;
+        this.allLogsView = true;
         setTimeout(() => {
             this.limitFrom = null;
             if (this.splittedLogs.length > 3500) {
