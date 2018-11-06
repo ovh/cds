@@ -403,7 +403,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			wf.WorkflowData.Node.Context.DefaultPayload = wf.Root.Context.DefaultPayload
 		}
 
-		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
+		if err := workflow.Update(ctx, tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot update workflow")
 		}
 

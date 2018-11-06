@@ -14,7 +14,7 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 	report := new(ProcessorReport)
 	start := mapNodes[*startingFromNode]
 	if start == nil {
-		return report, false, sdk.ErrWorkflowNodeNotFound
+		return nil, false, sdk.ErrWorkflowNodeNotFound
 	}
 
 	//Run the node : manual or from an event
@@ -32,13 +32,13 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 		if ok && len(nodesRuns) > 0 {
 			sourceNodesRun = append(sourceNodesRun, &nodesRuns[0])
 		} else {
-			return report, false, sdk.ErrWorkflowNodeParentNotRun
+			return nil, false, sdk.ErrWorkflowNodeParentNotRun
 		}
 	}
 
 	r1, conditionOK, errP := processNodeRun(ctx, db, store, proj, wr, mapNodes, start, int(nextSubNumber), sourceNodesRun, hookEvent, manual)
 	if errP != nil {
-		return report, conditionOK, sdk.WrapError(errP, "processWorkflowRun> Unable to processNodeRun")
+		return nil, conditionOK, sdk.WrapError(errP, "processWorkflowRun> Unable to processNodeRun")
 	}
 
 	report, _ = report.Merge(r1, nil)
@@ -61,7 +61,7 @@ func processStartFromRootNode(ctx context.Context, db gorp.SqlExecutor, store ca
 
 	r1, conditionOK, errP := processNodeRun(ctx, db, store, proj, wr, mapNodes, &wr.Workflow.WorkflowData.Node, 0, nil, hookEvent, manual)
 	if errP != nil {
-		return report, false, sdk.WrapError(errP, "processNodeRun> Unable to process workflow node run")
+		return nil, false, sdk.WrapError(errP, "Unable to process workflow node run")
 	}
 	report, _ = report.Merge(r1, nil)
 	return report, conditionOK, nil
@@ -74,19 +74,12 @@ func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cac
 		// only check the last node run
 		nodeRun := &wr.WorkflowNodeRuns[k][0]
 
-		haveToUpdate := false
 		//Trigger only if the node is over (successful or not)
 		if sdk.StatusIsTerminated(nodeRun.Status) && nodeRun.Status != sdk.StatusNeverBuilt.String() {
 			//Find the node in the workflow
 			node := mapNodes[nodeRun.WorkflowNodeID]
 			r1, _ := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{nodeRun}, node, int(nodeRun.SubNumber))
 			_, _ = report.Merge(r1, nil)
-		}
-
-		if haveToUpdate {
-			if err := updateNodeRunStatusAndTriggersRun(db, nodeRun); err != nil {
-				return nil, sdk.WrapError(err, "processAllNodesTriggers> Cannot update node run")
-			}
 		}
 	}
 	return report, nil

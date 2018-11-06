@@ -56,6 +56,12 @@ type Workflow struct {
 	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
 }
 
+// GetApplication retrieve application from workflow
+func (w *Workflow) GetApplication(ID int64) Application {
+	return w.Applications[ID]
+}
+
+// RetroMigrate  temporary method that convert new workflow structure into old workflow structure for backward compatibility
 func (w *Workflow) RetroMigrate() {
 	root := w.WorkflowData.Node.retroMigrate()
 	w.Root = &root
@@ -68,6 +74,7 @@ func (w *Workflow) RetroMigrate() {
 	}
 }
 
+// Migrate old workflow struct into new workflow struct
 func (w *Workflow) Migrate(withID bool) WorkflowData {
 	work := WorkflowData{}
 
@@ -540,6 +547,61 @@ func (w *Workflow) Sort() {
 			return join.Triggers[i].WorkflowDestNode.Name < join.Triggers[j].WorkflowDestNode.Name
 		})
 	}
+}
+
+// AssignEmptyType fill node type field
+func (w *Workflow) AssignEmptyType(nodes map[int64]*Node) {
+	// set node type for join
+	for i := range w.WorkflowData.Joins {
+		j := &w.WorkflowData.Joins[i]
+		j.Type = NodeTypeJoin
+	}
+
+	for i := range nodes {
+		n := nodes[i]
+		if n.Type == "" {
+			if n.Context != nil && n.Context.PipelineID != 0 {
+				n.Type = NodeTypePipeline
+			} else if n.OutGoingHookContext != nil && n.OutGoingHookContext.HookModelID != 0 {
+				n.Type = NodeTypeOutGoingHook
+			} else {
+				n.Type = NodeTypeFork
+			}
+		}
+	}
+}
+
+// ValidateType check if nodes have a correct nodeType
+func (w *Workflow) ValidateType(nodes map[int64]*Node) error {
+	namesInError := make([]string, 0)
+	for _, n := range nodes {
+		switch n.Type {
+		case NodeTypePipeline:
+			if n.Context == nil || n.Context.PipelineID == 0 {
+				namesInError = append(namesInError, n.Name)
+			}
+		case NodeTypeOutGoingHook:
+			if n.OutGoingHookContext == nil || n.OutGoingHookContext.HookModelID == 0 {
+				namesInError = append(namesInError, n.Name)
+			}
+		case NodeTypeJoin:
+			if n.JoinContext == nil || len(n.JoinContext) == 0 {
+				namesInError = append(namesInError, n.Name)
+			}
+		case NodeTypeFork:
+			if (n.Context != nil && n.Context.PipelineID != 0) ||
+				(n.OutGoingHookContext != nil && n.OutGoingHookContext.HookModelID != 0) ||
+				(n.JoinContext != nil && len(n.JoinContext) > 0) {
+				namesInError = append(namesInError, n.Name)
+			}
+		default:
+			namesInError = append(namesInError, n.Name)
+		}
+	}
+	if len(namesInError) > 0 {
+		return WithStack(fmt.Errorf("wrong type for nodes %v", namesInError))
+	}
+	return nil
 }
 
 //Visit all the workflow and apply the visitor func on the current node and the children
@@ -1368,40 +1430,6 @@ func (n *WorkflowNode) InvolvedPlatforms() []int64 {
 		}
 	}
 	return res
-}
-
-// CheckApplicationDeploymentStrategies checks application deployment strategies
-func (n *WorkflowNode) CheckApplicationDeploymentStrategies(proj *Project) error {
-	if n.Context == nil {
-		return nil
-	}
-	if n.Context.Application == nil {
-		return nil
-	}
-
-	var id = n.Context.ProjectPlatformID
-	if id == 0 && n.Context.ProjectPlatform != nil {
-		id = n.Context.ProjectPlatform.ID
-	}
-
-	if id == 0 {
-		return nil
-	}
-
-	pf := proj.GetPlatformByID(id)
-	if pf == nil {
-		return fmt.Errorf("platform unavailable")
-	}
-
-	for _, a := range proj.Applications {
-		if a.ID == n.Context.ApplicationID || (n.Context.Application != nil && n.Context.Application.ID == a.ID) {
-			if _, has := a.DeploymentStrategies[pf.Name]; !has {
-				return fmt.Errorf("platform %s unavailable", pf.Name)
-			}
-		}
-	}
-
-	return nil
 }
 
 //WorkflowNodeTrigger is a link between two pipelines in a workflow

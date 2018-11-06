@@ -31,12 +31,13 @@ type Node struct {
 
 //NodeHook represents a hook which cann trigger the workflow from a given node
 type NodeHook struct {
-	ID          int64                  `json:"id" db:"id"`
-	UUID        string                 `json:"uuid" db:"uuid"`
-	Ref         string                 `json:"ref" db:"ref"`
-	NodeID      int64                  `json:"node_id" db:"node_id"`
-	HookModelID int64                  `json:"hook_model_id" db:"hook_model_id"`
-	Config      WorkflowNodeHookConfig `json:"config" db:"-"`
+	ID            int64                  `json:"id" db:"id"`
+	UUID          string                 `json:"uuid" db:"uuid"`
+	Ref           string                 `json:"ref" db:"ref"`
+	NodeID        int64                  `json:"node_id" db:"node_id"`
+	HookModelID   int64                  `json:"hook_model_id" db:"hook_model_id"`
+	HookModelName string                 `json:"-" db:"-"`
+	Config        WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
 // NodeContext represents a node linked to a pipeline
@@ -44,9 +45,13 @@ type NodeContext struct {
 	ID                        int64                  `json:"id" db:"id"`
 	NodeID                    int64                  `json:"node_id" db:"node_id"`
 	PipelineID                int64                  `json:"pipeline_id" db:"pipeline_id"`
+	PipelineName              string                 `json:"-" db:"-"`
 	ApplicationID             int64                  `json:"application_id" db:"application_id"`
+	ApplicationName           string                 `json:"-" db:"-"`
 	EnvironmentID             int64                  `json:"environment_id" db:"environment_id"`
+	EnvironmentName           string                 `json:"-" db:"-"`
 	ProjectPlatformID         int64                  `json:"project_platform_id" db:"project_platform_id"`
+	ProjectPlatformName       string                 `json:"-" db:"-"`
 	DefaultPayload            interface{}            `json:"default_payload" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions" db:"-"`
@@ -127,10 +132,11 @@ type NodeTrigger struct {
 
 // NodeOutGoingHook represents the link between a node a its outgoings hooks
 type NodeOutGoingHook struct {
-	ID          int64                  `json:"id" db:"id"`
-	NodeID      int64                  `json:"node_id" db:"node_id"`
-	HookModelID int64                  `json:"hook_model_id" db:"hook_model_id"`
-	Config      WorkflowNodeHookConfig `json:"config" db:"-"`
+	ID            int64                  `json:"id" db:"id"`
+	NodeID        int64                  `json:"node_id" db:"node_id"`
+	HookModelID   int64                  `json:"hook_model_id" db:"hook_model_id"`
+	HookModelName string                 `json:"-" db:"-"`
+	Config        WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
 // NodeJoin represents a join type node
@@ -293,6 +299,31 @@ func (n *Node) GetNodeByName(name interface{}) *Node {
 		if n2 != nil {
 			return n2
 		}
+	}
+	return nil
+}
+
+// CheckApplicationDeploymentStrategies checks application deployment strategies
+func (n Node) CheckApplicationDeploymentStrategies(proj *Project, w *Workflow) error {
+	if n.Context == nil {
+		return nil
+	}
+	if n.Context.ApplicationID == 0 {
+		return nil
+	}
+
+	if n.Context.ProjectPlatformID == 0 {
+		return nil
+	}
+
+	pf := proj.GetPlatformByID(n.Context.ProjectPlatformID)
+	if pf == nil {
+		return WithStack(fmt.Errorf("platform unavailable"))
+	}
+
+	app := w.Applications[n.Context.ApplicationID]
+	if _, has := app.DeploymentStrategies[pf.Name]; !has {
+		return WithStack(fmt.Errorf("platform %s unavailable on application %s", pf.Name, app.Name))
 	}
 	return nil
 }

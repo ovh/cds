@@ -66,10 +66,21 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
 
-		wf, globalError := workflow.Parse(api.mustDB(), proj, ew)
+		wf, globalError := workflow.Parse(proj, ew, getUser(ctx))
 		if globalError != nil {
 			return sdk.WrapError(globalError, "postWorkflowPreviewHandler> Unable import workflow %s", ew.Name)
 		}
+
+		// Browse all node to find IDs
+		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, proj, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "Workflow is not valid")
+		}
+
+		if err := workflow.RenameNode(api.mustDB(), wf); err != nil {
+			return sdk.WrapError(err, "Unable to rename node")
+		}
+
+		wf.RetroMigrate()
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}

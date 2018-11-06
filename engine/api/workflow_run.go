@@ -858,7 +858,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 }
 
 func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) (*workflow.ProcessorReport, error) {
-	ctx, end := observability.Span(ctx, "api.startWorkflowRun")
+	ctx, end := observability.Span(ctx, "api.startWorkflowRunV2")
 	defer end()
 
 	report := new(workflow.ProcessorReport)

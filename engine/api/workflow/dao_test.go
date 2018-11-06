@@ -622,7 +622,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1.Root.Context.Application = &app2
 	w1.Root.Context.ApplicationID = app2.ID
 
-	test.NoError(t, workflow.Update(db, cache, w1, w1old, proj, u))
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
 	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})
@@ -1230,7 +1230,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	test.NoError(t, workflow.RenameNode(db, w1))
 	w1.RetroMigrate()
 
-	test.NoError(t, workflow.Update(db, cache, w1, &w1old, proj, u))
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, &w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
 	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})

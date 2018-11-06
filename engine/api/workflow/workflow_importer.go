@@ -72,7 +72,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 
 	w.ID = oldW.ID
-	if err := Update(db, store, w, oldW, proj, u); err != nil {
+	if err := Update(ctx, db, store, w, oldW, proj, u); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
 

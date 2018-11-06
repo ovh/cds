@@ -61,7 +61,7 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	}
 
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.processWorkflowNodeRun",
+	ctx, end = observability.Span(ctx, "workflow.processNodeRun",
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 		observability.Tag(observability.TagWorkflowRun, wr.Number),
 		observability.Tag(observability.TagWorkflowNode, n.Name),
@@ -70,14 +70,19 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 
 	switch n.Type {
 	case sdk.NodeTypeFork, sdk.NodeTypePipeline, sdk.NodeTypeJoin:
-		// r1, errT := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber)
 		r1, conditionOK, errT := processNode(ctx, db, store, proj, wr, mapNodes, n, subNumber, parentNodeRuns, hookEvent, manual)
-		_, _ = report.Merge(r1, nil)
-		return report, conditionOK, sdk.WrapError(errT, "processNode> Unable to processNode")
+		if errT != nil {
+			return nil, false, sdk.WrapError(errT, "Unable to processNode")
+		}
+		report.Merge(r1, nil) // nolint
+		return report, conditionOK, nil
 	case sdk.NodeTypeOutGoingHook:
 		r1, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber)
-		_, _ = report.Merge(r1, nil)
-		return report, true, sdk.WrapError(errO, "processNodeRun> Unable to processNodeOutGoingHook")
+		if errO != nil {
+			return nil, false, sdk.WrapError(errO, "Unable to processNodeOutGoingHook")
+		}
+		report.Merge(r1, nil) // nolint
+		return report, true, nil
 	}
 	return nil, false, nil
 }
@@ -91,7 +96,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	if n.Context.PipelineID == 0 && n.Type == sdk.NodeTypePipeline {
-		return report, false, sdk.ErrPipelineNotFound
+		return nil, false, sdk.ErrPipelineNotFound
 	}
 
 	// For node with pipeline
@@ -276,7 +281,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		parentsParams, errPP := getParentParameters(wr, parents, runPayload)
 		next()
 		if errPP != nil {
-			return report, false, sdk.WrapError(errPP, "processNode> getParentParameters failed")
+			return nil, false, sdk.WrapError(errPP, "processNode> getParentParameters failed")
 		}
 		mapBuildParams := sdk.ParametersToMap(run.BuildParameters)
 		mapParentParams := sdk.ParametersToMap(parentsParams)
@@ -331,7 +336,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 			})
 		}
 		if isRoot {
-			return report, false, sdk.WrapError(errVcs, "processNode> Cannot get VCSInfos")
+			return nil, false, sdk.WrapError(errVcs, "processNode> Cannot get VCSInfos")
 		}
 		return nil, true, nil
 	}
@@ -347,7 +352,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		hooks := wr.Workflow.WorkflowData.GetHooks()
 		hook, ok := hooks[hookEvent.WorkflowNodeHookUUID]
 		if !ok {
-			return report, false, sdk.WrapError(sdk.ErrNoHook, "processNode> Unable to find hook %s", hookEvent.WorkflowNodeHookUUID)
+			return nil, false, sdk.WrapError(sdk.ErrNoHook, "Unable to find hook %s", hookEvent.WorkflowNodeHookUUID)
 		}
 
 		// Check conditions
@@ -355,17 +360,17 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		// Define specific destination parameters
 		dest := mapNodes[hook.NodeID]
 		if dest == nil {
-			return report, false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processNode> Unable to find node %d", hook.NodeID)
+			return nil, false, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "Unable to find node %d", hook.NodeID)
 		}
 
 		if !checkNodeRunCondition(wr, dest.Context.Conditions, params) {
-			log.Debug("processNode> Avoid trigger workflow from hook %s", hook.UUID)
-			return report, false, nil
+			log.Debug("Avoid trigger workflow from hook %s", hook.UUID)
+			return nil, false, nil
 		}
 	} else {
 		if !checkNodeRunCondition(wr, n.Context.Conditions, run.BuildParameters) {
-			log.Debug("processNode> Condition failed %d/%d %+v", wr.ID, n.ID, run.BuildParameters)
-			return report, false, nil
+			log.Debug("Condition failed %d/%d %+v", wr.ID, n.ID, run.BuildParameters)
+			return nil, false, nil
 		}
 	}
 
@@ -404,7 +409,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	}
 
 	if err := insertWorkflowNodeRun(db, run); err != nil {
-		return report, false, sdk.WrapError(err, "processNode> unable to insert run (node id : %d, node name : %s, subnumber : %d)", run.WorkflowNodeID, run.WorkflowNodeName, run.SubNumber)
+		return nil, false, sdk.WrapError(err, "unable to insert run (node id : %d, node name : %s, subnumber : %d)", run.WorkflowNodeID, run.WorkflowNodeName, run.SubNumber)
 	}
 	wr.LastExecution = time.Now()
 
@@ -421,7 +426,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 
 		if err := UpdateNodeRunBuildParameters(db, run.ID, run.BuildParameters); err != nil {
-			return report, false, sdk.WrapError(err, "processNode> unable to update workflow node run build parameters")
+			return nil, false, sdk.WrapError(err, "unable to update workflow node run build parameters")
 		}
 	}
 
@@ -435,7 +440,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	wr.LastSubNumber = MaxSubNumber(wr.WorkflowNodeRuns)
 
 	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
-		return report, false, sdk.WrapError(err, "processNode> unable to update workflow run")
+		return nil, false, sdk.WrapError(err, "unable to update workflow run")
 	}
 
 	//Check the context.mutex to know if we are allowed to run it
@@ -451,17 +456,17 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		and workflow_node_run.status = $4`
 		nbMutex, err := db.SelectInt(mutexQuery, n.WorkflowID, run.ID, n.Name, string(sdk.StatusBuilding))
 		if err != nil {
-			return report, false, sdk.WrapError(err, "processNode> unable to check mutexes")
+			return nil, false, sdk.WrapError(err, "unable to check mutexes")
 		}
 		if nbMutex > 0 {
-			log.Debug("processNode> Noderun %s processed but not executed because of mutex", n.Name)
+			log.Debug("Noderun %s processed but not executed because of mutex", n.Name)
 			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowNodeMutex.ID,
 				Args: []interface{}{n.Name},
 			})
 
 			if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
-				return report, false, sdk.WrapError(err, "processNode> unable to update workflow run")
+				return nil, false, sdk.WrapError(err, "unable to update workflow run")
 			}
 
 			//Mutex is locked. exit without error
@@ -473,7 +478,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	//Execute the node run !
 	r1, err := execute(ctx, db, store, proj, run, runContext)
 	if err != nil {
-		return report, false, sdk.WrapError(err, "processNode> unable to execute workflow run")
+		return nil, false, sdk.WrapError(err, "unable to execute workflow run")
 	}
 	_, _ = report.Merge(r1, nil)
 	return report, true, nil

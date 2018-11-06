@@ -201,47 +201,6 @@ func TestWorkflow_checkValidity(t *testing.T) {
 }
 
 func TestWorkflow_GetWorkflow(t *testing.T) {
-	proj := sdk.Project{
-		Pipelines: []sdk.Pipeline{
-			{
-				ID:   1,
-				Name: "pipeline",
-			},
-			{
-				ID:   2,
-				Name: "pipeline-root",
-			},
-			{
-				ID:   3,
-				Name: "pipeline-child",
-			},
-		},
-		Platforms: []sdk.ProjectPlatform{
-			{
-				ID:   1,
-				Name: "platform",
-			},
-		},
-	}
-	hooksModels := []sdk.WorkflowHookModel{
-		{
-			ID:            1,
-			Name:          "Scheduler",
-			Type:          sdk.WorkflowHookModelBuiltin,
-			Identifier:    sdk.SchedulerModel.Identifier,
-			Author:        "CDS",
-			Icon:          "fa-clock-o",
-			DefaultConfig: sdk.SchedulerModel.DefaultConfig,
-		},
-	}
-
-	outgoingModels := []sdk.WorkflowHookModel{
-		{
-			ID:   1,
-			Name: "webhook",
-		},
-	}
-
 	type fields struct {
 		Name                string
 		Description         string
@@ -709,7 +668,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				Permissions:         tt.fields.Permissions,
 				HistoryLength:       tt.fields.HistoryLength,
 			}
-			got, err := w.GetWorkflow(&proj, hooksModels, outgoingModels)
+			got, err := w.GetWorkflow()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.GetWorkflow() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -42,7 +42,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 				log.Debug("checking trigger %+v", t)
 				r1, err := processNodeTriggers(ctx, db, store, proj, wr, mapNodes, []*sdk.WorkflowNodeRun{exitingNodeRun}, node, subNumber)
 				if err != nil {
-					return report, sdk.WrapError(err, "processNodeOutGoingHook> Unable to process outgoing hook triggers")
+					return nil, sdk.WrapError(err, "Unable to process outgoing hook triggers")
 				}
 				report.Merge(r1, nil) // nolint
 			}
@@ -61,7 +61,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 
 	srvs, err := services.FindByType(db, services.TypeHooks)
 	if err != nil {
-		return nil, sdk.WrapError(err, "processNodeOutGoingHook> Cannot get hooks service")
+		return nil, sdk.WrapError(err, "Cannot get hooks service")
 	}
 
 	mapParams := map[string]string{}
@@ -113,7 +113,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 	}
 
 	if err := insertWorkflowNodeRun(db, &hookRun); err != nil {
-		return report, sdk.WrapError(err, "processNodeOutGoingHook> unable to insert run (node id : %d, node name : %s, subnumber : %d)", hookRun.WorkflowNodeID, hookRun.WorkflowNodeName, hookRun.SubNumber)
+		return nil, sdk.WrapError(err, "unable to insert run (node id : %d, node name : %s, subnumber : %d)", hookRun.WorkflowNodeID, hookRun.WorkflowNodeName, hookRun.SubNumber)
 	}
 	wr.LastExecution = time.Now()
 
@@ -125,7 +125,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 		}
 
 		if err := UpdateNodeRunBuildParameters(db, hookRun.ID, hookRun.BuildParameters); err != nil {
-			return report, sdk.WrapError(err, "processNodeOutGoingHook> unable to update workflow node run build parameters")
+			return nil, sdk.WrapError(err, "unable to update workflow node run build parameters")
 		}
 	}
 
@@ -147,7 +147,7 @@ func processNodeOutGoingHook(ctx context.Context, db gorp.SqlExecutor, store cac
 	wr.LastSubNumber = MaxSubNumber(wr.WorkflowNodeRuns)
 
 	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
-		return report, sdk.WrapError(err, "processNodeOutGoingHook> unable to update workflow run")
+		return nil, sdk.WrapError(err, "unable to update workflow run")
 	}
 
 	return report, nil

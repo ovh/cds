@@ -831,7 +831,7 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
-	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{}, nil)
+	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	assert.NoError(t, errmr)
 
 	// Call post coverage report handler
@@ -1055,6 +1055,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "master",
 		},
+		User: *u,
 	}, nil)
 	assert.NoError(t, errmr)
 
@@ -1063,6 +1064,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "my-branch",
 		},
+		User: *u,
 	}, nil)
 	assert.NoError(t, errm)
 
@@ -1113,6 +1115,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "my-branch",
 		},
+		User: *u,
 	}, nil)
 	assert.NoError(t, errT)
 

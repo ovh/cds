@@ -21,9 +21,9 @@ type nodeRunContext struct {
 }
 
 func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) (*ProcessorReport, bool, error) {
-	//TRACABILITY
+	//TRACEABILITY
 	var end func()
-	ctx, end = observability.Span(ctx, "workflow.processWorkflowRun",
+	ctx, end = observability.Span(ctx, "workflow.processWorkflowDataRun",
 		observability.Tag(observability.TagWorkflowRun, wr.Number),
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 	)
@@ -62,7 +62,7 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if startingFromNode != nil {
 		r1, conditionOK, err := processStartFromNode(ctx, db, store, proj, wr, mapNodes, startingFromNode, maxsn, hookEvent, manual)
 		if err != nil {
-			return report, false, sdk.WrapError(err, "processWorkflowDataRun> Unable to processStartFromNode")
+			return nil, false, sdk.WrapError(err, "processWorkflowDataRun> Unable to processStartFromNode")
 		}
 		report, _ = report.Merge(r1, nil)
 		return report, conditionOK, nil
@@ -72,27 +72,27 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if len(wr.WorkflowNodeRuns) == 0 {
 		r1, conditionOK, err := processStartFromRootNode(ctx, db, store, proj, wr, mapNodes, hookEvent, manual)
 		if err != nil {
-			return report, false, sdk.WrapError(err, "processWorkflowDataRun> Unable to processStartFromRootNode")
+			return nil, false, sdk.WrapError(err, "processWorkflowDataRun> Unable to processStartFromRootNode")
 		}
 		report, _ = report.Merge(r1, nil)
-		return report, conditionOK, err
+		return report, conditionOK, nil
 	}
 
 	r1, errT := processAllNodesTriggers(ctx, db, store, proj, wr, mapNodes)
 	if errT != nil {
-		return report, false, errT
+		return nil, false, errT
 	}
 	report, _ = report.Merge(r1, nil)
 
 	r2, errJ := processAllJoins(ctx, db, store, proj, wr, mapNodes, maxsn)
 	if errJ != nil {
-		return report, false, errJ
+		return nil, false, errJ
 	}
 	report, _ = report.Merge(r2, nil)
 
 	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 	if err != nil {
-		return report, false, sdk.WrapError(err, "processWorkflowDataRun> unable to compute workflow run status")
+		return nil, false, sdk.WrapError(err, "processWorkflowDataRun> unable to compute workflow run status")
 	}
 	report.Merge(r1, nil) // nolint
 

@@ -44,8 +44,8 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 	var number int64
 	if h.WorkflowNodeID == w.Root.ID {
 
-		if err := IsValid(db, w, p); err != nil {
-			return nil, report, sdk.WrapError(err, "Unable to valid workflow")
+		if err := IsValid(ctx, store, db, w, p, nil); err != nil {
+			return nil, nil, sdk.WrapError(err, "Unable to valid workflow")
 		}
 
 		//Get the next number from our sequence
@@ -172,8 +172,8 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, number))
 	defer end()
 
-	if err := IsValid(db, w, p); err != nil {
-		return nil, report, sdk.WrapError(err, "Unable to valid workflow")
+	if err := IsValid(ctx, store, db, w, p, &e.User); err != nil {
+		return nil, nil, sdk.WrapError(err, "Unable to valid workflow")
 	}
 
 	wr := &sdk.WorkflowRun{

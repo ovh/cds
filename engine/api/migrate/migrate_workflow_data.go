@@ -21,17 +21,9 @@ func MigrateToWorkflowData(DBFunc func() *gorp.DbMap, store cache.Store) {
 		db := DBFunc()
 		var IDs []int64
 		query := "SELECT id FROM workflow WHERE workflow_data IS NULL AND to_delete = false AND root_node_id is not null LIMIT 100"
-		rows, err := db.Query(query)
-		if err != nil {
+		if _, err := db.Select(&IDs, query); err != nil {
 			log.Error("MigrateToWorkflowData> Unable to select workflows id: %v", err)
 			return
-		}
-		for rows.Next() {
-			var id int64
-			if err := rows.Scan(&id); err != nil {
-				log.Error("MigrateToWorkflowData> unable to scan id: %v", err)
-			}
-			IDs = append(IDs, id)
 		}
 		if len(IDs) == 0 {
 			return
@@ -91,9 +83,6 @@ func migrateWorkflowData(db *gorp.DbMap, store cache.Store, ID int64) error {
 	}
 
 	data := w.Migrate(false)
-	if data.Node.ID == 0 {
-		return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "migrateWorkflowData> Unable to migrate %s/%s, root node is null", p.Key, w.Name)
-	}
 	w.WorkflowData = &data
 
 	if err := workflow.RenameNode(tx, w); err != nil {
