@@ -234,7 +234,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
-			return sdk.WrapError(globalError, "Unable to import pipeline")
+			return sdk.WrapError(sdk.NewError(sdk.ErrInvalidPipeline, globalError), "unable to parse and import pipeline")
 		}
 
 		if err := tx.Commit(); err != nil {

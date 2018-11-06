@@ -158,7 +158,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 	t := time.Now()
 	log.Debug("CheckJob> Begin")
 	defer log.Debug("CheckJob> End (%d ns)", time.Since(t).Nanoseconds())
-	errs := new(sdk.Errors)
+	errs := []sdk.Message{}
 	//Check steps
 	for i := range job.Action.Actions {
 		step := &job.Action.Actions[i]
@@ -166,7 +166,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 		a, err := action.LoadPublicAction(db, step.Name)
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrNoAction) {
-				*errs = append(*errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
+				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidActionNotFound, job.Action.Name, step.Name, i+1))
 				continue
 			}
 			return sdk.WrapError(err, "Unable to load public action %s", step.Name)
@@ -189,8 +189,12 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 				}
 			}
 			if !found {
-				*errs = append(*errs, sdk.NewMessage(sdk.MsgJobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
+				errs = append(errs, sdk.NewMessage(sdk.MsgJobNotValidInvalidActionParameter, job.Action.Name, sp.Name, i+1, step.Name))
 			}
+		}
+
+		if len(errs) > 0 {
+			return sdk.MessagesToError(errs)
 		}
 
 		//Set default values
@@ -215,9 +219,6 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 
 	}
 
-	if len(*errs) > 0 {
-		return errs
-	}
 	return nil
 }
 

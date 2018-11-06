@@ -35,6 +35,14 @@ func TestErrorIs(t *testing.T) {
 			true,
 		},
 		{
+			"Check for NewErrorFrom is true",
+			args{
+				err: NewErrorFrom(ErrNoProject, "My from value"),
+				t:   ErrNoProject,
+			},
+			true,
+		},
+		{
 			"Check for other error is false",
 			args{
 				err: fmt.Errorf("project does not exist"),
@@ -57,31 +65,34 @@ func TestNewError(t *testing.T) {
 	assert.Equal(t, "TestNewError: wrong request (caused by: this is an error generated from vendor)", err.Error())
 
 	// print the error call stack
-	fmt.Println(err)
+	t.Log(err)
 	// print the error stack trace
-	fmt.Printf("%+v\n", err)
+	t.Logf("%+v\n", err)
 
 	httpErr := ExtractHTTPError(err, "fr")
 
 	// print the http error
-	fmt.Println(httpErr)
+	t.Log(httpErr)
 
-	assert.Equal(t, "la requête est incorrecte (caused by: this is an error generated from vendor)", httpErr.Error())
+	assert.Equal(t, "la requête est incorrecte (from: this is an error generated from vendor)", httpErr.Error())
 }
 
 func TestWrapError(t *testing.T) {
-	err := oneForStackTest()
-	assert.Equal(t, "TestWrapError>oneForStackTest>twoForStackTest>threeForStackTest>fourForStackTest>fiveForStackTest: internal server error (caused by: one: two: three: four: five: this is an error generated from vendor)", err.Error())
+	err := fourForStackTest()
+	assert.Equal(t, "TestWrapError>fourForStackTest>fiveForStackTest: internal server error (caused by: four: five: this is an error generated from vendor)", err.Error())
+
+	err = oneForStackTest()
+	assert.Equal(t, "TestWrapError>oneForStackTest>twoForStackTest>threeForStackTest>fourForStackTest>fiveForStackTest: action definition contains a recursive loop (caused by: one: two: three: four: five: this is an error generated from vendor)", err.Error())
 
 	// print the error call stack
-	fmt.Println(err)
+	t.Log(err)
 	// print the error stack trace
-	fmt.Printf("%+v\n", err)
+	t.Logf("%+v\n", err)
 }
 
 func oneForStackTest() error   { return WrapError(twoForStackTest(), "one") }
 func twoForStackTest() error   { return WrapError(threeForStackTest(), "two") }
-func threeForStackTest() error { return WrapError(fourForStackTest(), "three") }
+func threeForStackTest() error { return NewError(ErrActionLoop, WrapError(fourForStackTest(), "three")) }
 func fourForStackTest() error  { return WrapError(fiveForStackTest(), "four") }
 func fiveForStackTest() error {
 	return WrapError(fmt.Errorf("this is an error generated from vendor"), "five")
@@ -100,4 +111,16 @@ func TestCause(t *testing.T) {
 	err = sql.ErrConnDone
 	cause = Cause(err)
 	assert.Equal(t, sql.ErrConnDone, cause)
+}
+
+func TestNewAdvancedError(t *testing.T) {
+	err := NewErrorFrom(ErrWrongRequest, "this is an error generated from vendor")
+	httpErr := ExtractHTTPError(err, "fr")
+	assert.Equal(t, "la requête est incorrecte (from: this is an error generated from vendor)", httpErr.Error())
+
+	err = WrapError(err, "Something no visible for http error")
+
+	err = NewError(ErrAlreadyTaken, err)
+	httpErr = ExtractHTTPError(err, "fr")
+	assert.Equal(t, "Ce job est déjà en cours de traitement par un autre worker (from: this is an error generated from vendor)", httpErr.Error())
 }
