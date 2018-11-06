@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -14,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/slug"
 )
 
@@ -437,5 +439,36 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, wti, http.StatusOK)
+	}
+}
+
+func (api *API) pullTemplateHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+
+		wt := getWorkflowTemplate(ctx)
+
+		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+			return err
+		}
+
+		buf := new(bytes.Buffer)
+		if err := workflowtemplate.Pull(wt, exportentities.FormatYAML, buf); err != nil {
+			return err
+		}
+
+		w.Header().Add("Content-Type", "application/tar")
+		w.WriteHeader(http.StatusOK)
+		_, err = io.Copy(w, buf)
+		return sdk.WrapError(err, "Unable to copy content buffer in the response writer")
+	}
+}
+
+func (api *API) pushTemplateHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return nil
 	}
 }

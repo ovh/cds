@@ -138,7 +138,6 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		Size: int64(size),
 	}
 	if err := tw.WriteHeader(hdr); err != nil {
-		tw.Close()
 		return sdk.WrapError(err, "Unable to write workflow header %+v", hdr)
 	}
 	if _, err := io.Copy(tw, buffw); err != nil {

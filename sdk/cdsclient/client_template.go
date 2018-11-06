@@ -56,7 +56,19 @@ func (c *client) TemplateApply(groupName, templateSlug string, req sdk.WorkflowT
 		return nil, err
 	}
 
-	// Open the tar archive for reading.
+	r := bytes.NewReader(body)
+	tr := tar.NewReader(r)
+	return tr, nil
+}
+
+func (c *client) TemplatePull(groupName, templateSlug string) (*tar.Reader, error) {
+	url := fmt.Sprintf("/template/%s/%s/pull", groupName, templateSlug)
+
+	body, _, _, err := c.Request(context.Background(), "POST", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	r := bytes.NewReader(body)
 	tr := tar.NewReader(r)
 	return tr, nil
