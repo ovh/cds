@@ -107,7 +107,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Status: sdk.StatusFail.String(),
 			}
 			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-				log.Error("Error on platformPluginClient.Stop: %s", err)
+				log.Error("Error on platformPluginClient.Stop (manifest): %s", err)
 			}
 			stopLogs()
 			<-done
@@ -128,7 +128,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Status: sdk.StatusFail.String(),
 			}
 			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-				log.Error("Error on platformPluginClient.Stop: %s", err)
+				log.Error("Error on platformPluginClient.Stop (Deploy): %s", err)
 			}
 			sendLog(res.Reason)
 			stopLogs()
@@ -141,7 +141,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 
 		if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess.String()) {
 			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-				log.Error("Error on platformPluginClient.Stop: %s", err)
+				log.Error("Error on platformPluginClient.Stop (success): %s", err)
 			}
 			stopLogs()
 			<-done
@@ -151,7 +151,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		}
 
 		if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-			log.Error("Error on platformPluginClient.Stop: %s", err)
+			log.Error("Error on platformPluginClient.Stop (end): %s", err)
 		}
 
 		stopLogs()
