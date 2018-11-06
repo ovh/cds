@@ -155,7 +155,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			t := fmt.Sprintf("failure %s err: %v", pluginDetails, err)
 			stopLogs()
 			if _, errstop := actionPluginClient.Stop(ctx, new(empty.Empty)); errstop != nil {
-				log.Error("Error on actionPluginClient.Stop: %s", errstop)
+				log.Info("Error on actionPluginClient.Stop: %s", errstop)
 			}
 			log.Error(t)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Error running action: %v", err))
@@ -163,7 +163,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		}
 
 		if _, err := actionPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-			log.Error("Error on actionPluginClient.Stop: %s", err)
+			log.Info("Error on actionPluginClient.Stop: %s", err)
 		}
 
 		stopLogs()

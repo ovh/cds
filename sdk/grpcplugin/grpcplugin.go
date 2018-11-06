@@ -56,8 +56,9 @@ func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, ar
 
 	go func() {
 		if err := c.Wait(); err != nil {
-			log.Info("GRPC Plugin wait failed:%+v", err)
+			log.Info("GRPC Plugin %s wait failed:%+v", cmd, err)
 		}
+		log.Info("GRPC Plugin %s end", cmd)
 	}()
 
 	log.Info("GRPC Plugin %s started", cmd)
