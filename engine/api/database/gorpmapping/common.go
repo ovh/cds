@@ -1,4 +1,4 @@
-package database
+package gorpmapping
 
 import (
 	"fmt"
@@ -8,6 +8,11 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
+)
+
+const (
+	// ViolateUniqueKeyPGCode is the pg code when duplicating unique key
+	ViolateUniqueKeyPGCode = "23505"
 )
 
 // IDsToQueryString returns a comma separated list of given ids.

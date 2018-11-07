@@ -71,9 +71,9 @@ func Write(w http.ResponseWriter, btes []byte, status int, contentType string) e
 
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
 func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
-	b, e := json.Marshal(data)
-	if e != nil {
-		return sdk.WrapError(e, "WriteJSON> unable to marshal : %v", e)
+	b, err := json.Marshal(data)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to marshal json data")
 	}
 	return sdk.WithStack(Write(w, b, status, "application/json"))
 }

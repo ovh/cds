@@ -1,8 +1,6 @@
 package group
 
-import (
-	"github.com/ovh/cds/engine/api/database"
-)
+import "github.com/ovh/cds/engine/api/database/gorpmapping"
 
 func NewCriteria() Criteria { return Criteria{} }
 
@@ -25,11 +23,11 @@ func (c Criteria) where() string {
 		return "false"
 	}
 
-	return database.And(reqs...)
+	return gorpmapping.And(reqs...)
 }
 
 func (c Criteria) args() interface{} {
 	return map[string]interface{}{
-		"ids": database.IDsToQueryString(c.ids),
+		"ids": gorpmapping.IDsToQueryString(c.ids),
 	}
 }

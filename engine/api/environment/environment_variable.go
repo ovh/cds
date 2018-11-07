@@ -8,7 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 )
@@ -221,7 +221,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 
 	err = db.QueryRow(query, environmentID, variable.Name, clear, cipher, string(variable.Type)).Scan(&variable.ID)
 	if err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
 			err = sdk.ErrVariableExists
 		}
 		return sdk.WrapError(err, "Cannot insert variable %s in db", variable.Name)
@@ -265,7 +265,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, va
 	          WHERE environment_id = $4 AND environment_variable.id = $5`
 	result, err := db.Exec(query, clear, cipher, string(variable.Type), envID, variable.ID, variable.Name)
 	if err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
 			err = sdk.ErrVariableExists
 		}
 		return sdk.WrapError(err, "Cannot update variable %s in db", variable.Name)

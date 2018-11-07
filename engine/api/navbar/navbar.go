@@ -6,7 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 )
@@ -160,7 +160,7 @@ func loadNavbarAsUser(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data
 	)
   `
 
-	rows, err := db.Query(query, u.ID, database.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
+	rows, err := db.Query(query, u.ID, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
 	if err != nil {
 		return data, err
 	}

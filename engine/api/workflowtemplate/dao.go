@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -37,26 +37,26 @@ func Get(db gorp.SqlExecutor, c Criteria) (*sdk.WorkflowTemplate, error) {
 
 // Insert template in database.
 func Insert(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate) error {
-	return sdk.WrapError(database.Insert(db, wt), "Unable to insert workflow template %s", wt.Name)
+	return sdk.WrapError(gorpmapping.Insert(db, wt), "Unable to insert workflow template %s", wt.Name)
 }
 
 // Update template in database.
 func Update(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate) error {
-	return sdk.WrapError(database.Update(db, wt), "Unable to update workflow template %s", wt.Name)
+	return sdk.WrapError(gorpmapping.Update(db, wt), "Unable to update workflow template %s", wt.Name)
 }
 
 // Delete template in database.
 func Delete(db gorp.SqlExecutor, wt *sdk.WorkflowTemplate) error {
-	return sdk.WrapError(database.Delete(db, wt), "Unable to delete workflow template %s", wt.Name)
+	return sdk.WrapError(gorpmapping.Delete(db, wt), "Unable to delete workflow template %s", wt.Name)
 }
 
 // InsertAudit for workflow template in database.
 func InsertAudit(db gorp.SqlExecutor, awt *sdk.AuditWorkflowTemplate) error {
-	return sdk.WrapError(database.Insert(db, awt), "Unable to insert audit for workflow template %d", awt.WorkflowTemplateID)
+	return sdk.WrapError(gorpmapping.Insert(db, awt), "Unable to insert audit for workflow template %d", awt.WorkflowTemplateID)
 }
 
 // GetAudits returns all workflow template audits for given criteria.
-func GetAudits(db *gorp.DbMap, c CriteriaAudit) ([]*sdk.AuditWorkflowTemplate, error) {
+func GetAudits(db gorp.SqlExecutor, c CriteriaAudit) ([]*sdk.AuditWorkflowTemplate, error) {
 	awts := []*sdk.AuditWorkflowTemplate{}
 
 	if _, err := db.Select(&awts, fmt.Sprintf("SELECT * FROM workflow_template_audit WHERE %s ORDER BY created ASC", c.where()), c.args()); err != nil {
@@ -68,13 +68,13 @@ func GetAudits(db *gorp.DbMap, c CriteriaAudit) ([]*sdk.AuditWorkflowTemplate, e
 
 // InsertInstance for workflow template in database.
 func InsertInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) error {
-	return sdk.WrapError(database.Insert(db, wti), "Unable to insert workflow template relation %d with workflow %d",
+	return sdk.WrapError(gorpmapping.Insert(db, wti), "Unable to insert workflow template relation %d with workflow %d",
 		wti.WorkflowTemplateID, wti.WorkflowID)
 }
 
 // UpdateInstance for workflow template in database.
 func UpdateInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) error {
-	return sdk.WrapError(database.Update(db, wti), "Unable to update workflow template instance %d", wti.ID)
+	return sdk.WrapError(gorpmapping.Update(db, wti), "Unable to update workflow template instance %d", wti.ID)
 }
 
 // DeleteInstanceNotIDAndWorkflowID removes all instances of a template where not id and workflow id equal in database.

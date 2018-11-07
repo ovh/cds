@@ -3,7 +3,7 @@ package workflowtemplate
 import (
 	"strings"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 )
 
 func NewCriteria() Criteria { return Criteria{} }
@@ -47,13 +47,13 @@ func (c Criteria) where() string {
 		return "false"
 	}
 
-	return database.And(reqs...)
+	return gorpmapping.And(reqs...)
 }
 
 func (c Criteria) args() interface{} {
 	return map[string]interface{}{
-		"ids":      database.IDsToQueryString(c.ids),
-		"groupIDs": database.IDsToQueryString(c.groupIDs),
+		"ids":      gorpmapping.IDsToQueryString(c.ids),
+		"groupIDs": gorpmapping.IDsToQueryString(c.groupIDs),
 		"slugs":    strings.Join(c.slugs, ","),
 	}
 }
@@ -100,14 +100,14 @@ func (c CriteriaInstance) where() string {
 		return "false"
 	}
 
-	return database.And(reqs...)
+	return gorpmapping.And(reqs...)
 }
 
 func (c CriteriaInstance) args() interface{} {
 	return map[string]interface{}{
-		"workflowTemplateIDs": database.IDsToQueryString(c.workflowTemplateIDs),
-		"workflowIDs":         database.IDsToQueryString(c.workflowIDs),
-		"projectIDs":          database.IDsToQueryString(c.projectIDs),
+		"workflowTemplateIDs": gorpmapping.IDsToQueryString(c.workflowTemplateIDs),
+		"workflowIDs":         gorpmapping.IDsToQueryString(c.workflowIDs),
+		"projectIDs":          gorpmapping.IDsToQueryString(c.projectIDs),
 	}
 }
 
@@ -143,12 +143,12 @@ func (c CriteriaAudit) where() string {
 		return "false"
 	}
 
-	return database.And(reqs...)
+	return gorpmapping.And(reqs...)
 }
 
 func (c CriteriaAudit) args() interface{} {
 	return map[string]interface{}{
 		"eventTypes":          strings.Join(c.eventTypes, ","),
-		"workflowTemplateIDs": database.IDsToQueryString(c.workflowTemplateIDs),
+		"workflowTemplateIDs": gorpmapping.IDsToQueryString(c.workflowTemplateIDs),
 	}
 }
