@@ -11,7 +11,7 @@ import (
 //AddBuildLog adds a build log
 func AddBuildLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 	existingLogs, errLog := LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
-	if errLog != nil && errLog != sql.ErrNoRows {
+	if errLog != nil && sdk.Cause(errLog) != sql.ErrNoRows {
 		return sdk.WrapError(errLog, "AddBuildLog> Cannot load existing logs")
 	}
 

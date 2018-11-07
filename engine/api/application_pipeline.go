@@ -8,9 +8,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/notification"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/engine/service"
@@ -42,6 +39,7 @@ func (api *API) attachPipelineToApplicationHandler() service.Handler {
 	}
 }
 
+// Deprecated
 func (api *API) attachPipelinesToApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -227,259 +225,30 @@ func (api *API) removePipelineFromApplicationHandler() service.Handler {
 	}
 }
 
-func (api *API) getUserNotificationTypeHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var types = []sdk.UserNotificationSettingsType{sdk.EmailUserNotification, sdk.JabberUserNotification}
-		return service.WriteJSON(w, types, http.StatusOK)
-	}
-}
-
-func (api *API) getUserNotificationStateValueHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		states := []sdk.UserNotificationEventType{sdk.UserNotificationAlways, sdk.UserNotificationChange, sdk.UserNotificationNever}
-		return service.WriteJSON(w, states, http.StatusOK)
-	}
-}
-
+// Deprecated
 func (api *API) getUserNotificationApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
-		pipelineName := vars["permPipelineKey"]
-
-		err := r.ParseForm()
-		if err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "getPipelineHistoryHandler> Cannot parse form")
-		}
-		envName := r.Form.Get("envName")
-
-		//Load application
-		application, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load application %s for project %s from db", appName, key)
-		}
-
-		//Load pipeline
-		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
-		}
-
-		//Load environment
-		env := &sdk.DefaultEnv
-		if envName != "" {
-			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
-			if err != nil {
-				return sdk.WrapError(err, "cannot load environment %s", envName)
-			}
-		}
-
-		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getUserNotificationApplicationPipelineHandler> Cannot access to this environment")
-		}
-
-		//Load notifs
-		notifs, err := notification.LoadUserNotificationSettings(api.mustDB(), application.ID, pipeline.ID, env.ID)
-		if err != nil {
-			return sdk.WrapError(err, "cannot load notification settings")
-		}
-		if notifs == nil {
-			return nil
-		}
-
-		return service.WriteJSON(w, notifs, http.StatusOK)
+		return nil
 	}
 }
 
+// Deprecated
 func (api *API) deleteUserNotificationApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
-		pipelineName := vars["permPipelineKey"]
-
-		err := r.ParseForm()
-		if err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "deleteUserNotificationApplicationPipelineHandler> Cannot parse form")
-
-		}
-		envName := r.Form.Get("envName")
-
-		///Load application
-		applicationData, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load application %s for project %s from db", appName, key)
-
-		}
-
-		//Load pipeline
-		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
-
-		}
-
-		//Load environment
-		env := &sdk.DefaultEnv
-		if envName != "" && envName != sdk.DefaultEnv.Name {
-			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
-			if err != nil {
-				return sdk.WrapError(err, "cannot load environment %s", envName)
-
-			}
-		}
-
-		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "deleteUserNotificationApplicationPipelineHandler> Cannot access to this environment")
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "cannot start transaction")
-		}
-
-		err = notification.DeleteNotification(tx, applicationData.ID, pipeline.ID, env.ID)
-		if err != nil {
-			return sdk.WrapError(err, "cannot delete user notification")
-		}
-
-		err = tx.Commit()
-		if err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
-
-		}
-
-		var errN error
-		applicationData.Notifications, errN = notification.LoadAllUserNotificationSettings(api.mustDB(), applicationData.ID)
-		if errN != nil {
-			return sdk.WrapError(errN, "deleteUserNotificationApplicationPipelineHandler> cannot load notifications")
-		}
-		return service.WriteJSON(w, applicationData, http.StatusOK)
+		return nil
 	}
 }
 
+// Deprecated
 func (api *API) addNotificationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
-
-		var notifs []sdk.UserNotification
-		if err := service.UnmarshalBody(r, &notifs); err != nil {
-			return err
-		}
-
-		app, errApp := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithPipelines)
-		if errApp != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "addNotificationsHandler: Cannot load application")
-		}
-
-		mapID := map[int64]string{}
-		for _, appPip := range app.Pipelines {
-			mapID[appPip.ID] = ""
-		}
-
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "addNotificationsHandler: Cannot begin transaction")
-		}
-		defer tx.Rollback()
-
-		for _, n := range notifs {
-			if _, ok := mapID[n.ApplicationPipelineID]; !ok {
-				return sdk.WrapError(sdk.ErrWrongRequest, "addNotificationsHandler: Cannot get pipeline for this application")
-			}
-
-			//Load environment
-			if n.Environment.ID == 0 {
-				n.Environment = sdk.DefaultEnv
-			}
-
-			if !permission.AccessToEnvironment(key, n.Environment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
-				return sdk.WrapError(sdk.ErrForbidden, "addNotificationsHandler > Cannot access to this environment")
-			}
-
-			// Insert or update notification
-			if err := notification.InsertOrUpdateUserNotificationSettings(tx, app.ID, n.Pipeline.ID, n.Environment.ID, &n); err != nil {
-				return sdk.WrapError(err, "cannot update user notification")
-
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addNotificationsHandler: Cannot commit transaction")
-		}
-
-		var errNotif error
-		app.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.mustDB(), app.ID)
-		if errNotif != nil {
-			return sdk.WrapError(errNotif, "addNotificationsHandler> cannot load notifications")
-		}
-
-		return service.WriteJSON(w, app, http.StatusOK)
+		return nil
 	}
 }
 
+// Deprecated
 func (api *API) updateUserNotificationApplicationPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
-		pipelineName := vars["permPipelineKey"]
-
-		///Load application
-		applicationData, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load application %s for project %s from db", appName, key)
-		}
-
-		//Load pipeline
-		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
-
-		}
-
-		//Parse notification settings
-		notifs := &sdk.UserNotification{}
-		if err := service.UnmarshalBody(r, &notifs); err != nil {
-			return err
-		}
-
-		//Load environment
-		if notifs.Environment.ID == 0 {
-			notifs.Environment = sdk.DefaultEnv
-		}
-
-		if !permission.AccessToEnvironment(key, notifs.Environment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "updateUserNotificationApplicationPipelineHandler> Cannot access to this environment")
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "cannot start transaction")
-
-		}
-		defer tx.Rollback()
-
-		// Insert or update notification
-		if err := notification.InsertOrUpdateUserNotificationSettings(tx, applicationData.ID, pipeline.ID, notifs.Environment.ID, notifs); err != nil {
-			return sdk.WrapError(err, "cannot update user notification")
-
-		}
-
-		err = tx.Commit()
-		if err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
-		}
-
-		var errNotif error
-		applicationData.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.mustDB(), applicationData.ID)
-		if errNotif != nil {
-			return sdk.WrapError(errNotif, "updateUserNotificationApplicationPipelineHandler> Cannot load notifications")
-		}
-
-		return service.WriteJSON(w, applicationData, http.StatusOK)
+		return nil
 	}
 }

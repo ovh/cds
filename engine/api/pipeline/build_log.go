@@ -138,7 +138,7 @@ func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineB
 
 	// Get the logs for the given pbJob
 	logs, errLog := LoadStepLogs(db, currentPbJob.ID, stepOrder)
-	if errLog != nil && errLog != sql.ErrNoRows {
+	if errLog != nil && sdk.Cause(errLog) != sql.ErrNoRows {
 		return nil, errLog
 	}
 

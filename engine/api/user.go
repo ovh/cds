@@ -478,7 +478,7 @@ func (api *API) loginUserHandler() service.Handler {
 		}
 		// Load user
 		u, errl := user.LoadUserWithoutAuth(api.mustDB(), loginUserRequest.Username)
-		if errl != nil && errl == sql.ErrNoRows {
+		if errl != nil && sdk.Cause(errl) == sql.ErrNoRows {
 			return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login error %s: %s", loginUserRequest.Username, errl)
 		}
 		if errl != nil {
@@ -564,7 +564,7 @@ func (api *API) getUserTokenListHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		tokens, err := token.LoadTokens(api.mustDB(), getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "cannot load group for user %s", getUser(ctx).Username)
+			return sdk.WrapError(err, "Cannot load group for user %s", getUser(ctx).Username)
 		}
 
 		return service.WriteJSON(w, tokens, http.StatusOK)
@@ -575,11 +575,11 @@ func (api *API) getUserTokenHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		tok, err := token.LoadTokenWithGroup(api.mustDB(), vars["token"])
-		if err == sdk.ErrInvalidToken {
+		if sdk.ErrorIs(err, sdk.ErrInvalidToken) {
 			return sdk.ErrTokenNotFound
 		}
 		if err != nil {
-			return sdk.WrapError(err, "cannot load token for user %s", getUser(ctx).Username)
+			return sdk.WrapError(err, "Cannot load token for user %s", getUser(ctx).Username)
 		}
 		tok.Token = ""
 

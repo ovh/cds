@@ -45,7 +45,12 @@ func WorkflowPermission(key string, name string, u *sdk.User) int {
 		return PermissionReadWriteExecute
 	}
 
-	return u.Permissions.WorkflowsPerm[sdk.UserPermissionKey(key, name)]
+	if perm, ok := u.Permissions.WorkflowsPerm[sdk.UserPermissionKey(key, name)]; ok {
+		return perm
+	}
+
+	// By default all workflows are RO
+	return PermissionRead
 }
 
 // PipelinePermission  Get the permission for the given pipeline

@@ -21,7 +21,7 @@ TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X githu
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 
-GO_BUILD = GO111MODULE=on go build -mod=vendor -v
+GO_BUILD = go build -v
 
 $(TARGET_DIR):
 	$(info create $(TARGET_DIR) directory)
@@ -33,7 +33,7 @@ clean:
 	@rm -rf $(TARGET_DIR)
 
 build: $(TARGET_DIR)
-	@cp $TARGET_NAME.yml $(TARGET_DIR)/plugin.yml
+	@cp $(TARGET_NAME).yml $(TARGET_DIR)/plugin.yml
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
 			EXTENSION=""; \

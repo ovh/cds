@@ -43,11 +43,11 @@ spec:
         - name: CDS_API_AUTH_DEFAULTGROUP
           value: cdsdemo
         - name: CDS_LOG_LEVEL
-          value: {{ default "" .Values.logLevel | quote }} 
+          value: {{ default "" .Values.logLevel | quote }}
         - name: CDS_API_CACHE_MODE
           value: redis #No alternative in this chart
         - name: CDS_API_CACHE_REDIS_HOST
-          value: {{ template "cds.redis.fullname" . }}-master:{{ default "" .Values.redis.master.port }} 
+          value: {{ template "cds.redis.fullname" . }}-master:{{ default "" .Values.redis.master.port }}
         - name: CDS_API_CACHE_REDIS_PASSWORD
         {{- if .Values.redis.enabled }}
           valueFrom:
@@ -66,12 +66,12 @@ spec:
         - name: CDS_API_AUTH_SHAREDINFRATOKEN
           valueFrom:
             secretKeyRef:
-              name: {{ template "cds.fullname" . }}-api
+              name: {{ template "cds.fullname" . }}
               key: cds-api_auth_sharedinfratoken
         - name: CDS_API_SECRETS_KEY
           valueFrom:
             secretKeyRef:
-              name: {{ template "cds.fullname" . }}-api
+              name: {{ template "cds.fullname" . }}
               key: cds-api_secrets_key
         command: ["/bin/sh"]
         args: ["-c", "/app/cds-engine-linux-amd64 start api"]

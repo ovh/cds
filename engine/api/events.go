@@ -157,7 +157,11 @@ func (b *eventsBroker) Start(ctx context.Context) {
 }
 
 func (b *eventsBroker) ServeHTTP() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	// This function may panic when the SSE ResponseWriter is closed, with following message
+	// index > windowEnd
+	// runtime error: index out of range
+	// runtime error: slice bounds out of range
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (err error) {
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
@@ -270,6 +274,12 @@ func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
 	client.mutex.Lock()
 	defer client.mutex.Unlock()
 
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("eventsBrokerSubscribe.Send recovered %v", r)
+		}
+	}()
+
 	if client == nil || client.w == nil {
 		return nil
 	}
@@ -297,12 +307,6 @@ func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
 	if !client.isAlive.IsSet() {
 		return nil
 	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("%v", r)
-		}
-	}()
 
 	if _, err := client.w.Write(buffer.Bytes()); err != nil {
 		return sdk.WrapError(err, "unable to write to client")

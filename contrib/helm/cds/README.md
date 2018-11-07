@@ -23,12 +23,19 @@ $ helm install stable/cds
 
 This chart bootstraps a [CDS](https://github.com/ovh/cds) deployment on a [Kubernetes](http://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
-It also starts a PostgreSQL server and a Redis server using the helm built-in dependency system.
+It starts a PostgreSQL server, a Redis server and an Elasticsearch server using the helm built-in dependency system. It also starts all µServices that CDS needed to use all CDS features :
+
++ Hatchery over Kubernetes
++ VCS service
++ Hooks service
++ Elasticsearch service
++ Repositories service
 
 ## Prerequisites
 
 - Kubernetes 1.4+ with Beta APIs enabled
 - PV provisioner support in the underlying infrastructure
+- Kubernetes config file (`kubeconfig.yaml`) located at this path. (For minikube it's often located `~/.kube/config`)
 
 ## Installing the Chart
 
@@ -69,11 +76,13 @@ $ helm install --name my-release -f values.yaml .
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
 
-+ If you use a Kubernetes provider without LoadBalancer ability you just have to set your `ui.serviceType` to `ClusterIP` and set `ingress.enabled` to `true` with the right `ingress.hostname` (for example: `helm install --kubeconfig kubeconfig.yml --name my-release -f values.yaml --set ui.serviceType=ClusterIP --set ingress.enabled=true --set ingress.hostname=cds.MY_NODES_URL .` cds.[YOUR-NODES-URL]).
++ If you use a Kubernetes provider without LoadBalancer ability you just have to set your `ui.serviceType` to `ClusterIP` and set `ingress.enabled` to `true` with the right `ingress.hostname` and `ingress.port` (for example: `helm install --kubeconfig kubeconfig.yml --name my-release -f values.yaml --set ui.serviceType=ClusterIP --set ingress.enabled=true --set ingress.hostname=cds.MY_NODES_URL --set ingress.port=32080 .` cds.[YOUR-NODES-URL]).
 
 + If you use a minikube you have to set `ui.serviceType` to `ClusterIP`.
 
 + If you use a Kubernetes as GKE, EKS or if your cloud provider provide you an available LoadBalancer you just have to set `ui.serviceType` to `LoadBalancer`.
+
++ If your `kubeconfig.yaml` is not located in this directory you can set path in `values.yaml` or launch with `--set kubernetesConfigFile=myPathTo/kubeconfig.yaml`.
 
 ## Image
 

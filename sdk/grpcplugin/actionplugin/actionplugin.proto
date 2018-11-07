@@ -37,4 +37,5 @@ service ActionPlugin {
     rpc Manifest (google.protobuf.Empty) returns (ActionPluginManifest) {}
     rpc Run (ActionQuery) returns (ActionResult) {}
     rpc WorkerHTTPPort (WorkerHTTPPortQuery) returns (google.protobuf.Empty) {}
+    rpc Stop (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }

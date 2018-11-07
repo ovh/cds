@@ -466,6 +466,47 @@ type Error struct {
 	Message    string `json:"message"`
 	UUID       string `json:"uuid,omitempty"`
 	StackTrace string `json:"stack_trace,omitempty"`
+	from       string
+}
+
+func (e Error) Error() string {
+	if e.Message != "" {
+		return e.Message
+	}
+
+	if en, ok := errorsAmericanEnglish[e.ID]; ok {
+		return en
+	}
+
+	return errorsAmericanEnglish[ErrUnknownError.ID]
+}
+
+func (e Error) Translate(al string) string {
+	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
+	if err != nil {
+		acceptedLanguages = []language.Tag{language.AmericanEnglish}
+	}
+
+	// try to get error message for accepted language and error ID, else use unknown error message
+	tag, _, _ := matcher.Match(acceptedLanguages...)
+	var msg string
+	var ok bool
+	switch tag {
+	case language.French:
+		msg, ok = errorsFrench[e.ID]
+		break
+	case language.AmericanEnglish:
+		msg, ok = errorsAmericanEnglish[e.ID]
+		break
+	default:
+		msg, ok = errorsAmericanEnglish[e.ID]
+		break
+	}
+	if !ok {
+		return errorsAmericanEnglish[ErrUnknownError.ID]
+	}
+
+	return msg
 }
 
 type errorWithStack struct {
@@ -475,19 +516,23 @@ type errorWithStack struct {
 }
 
 func (w errorWithStack) Error() string {
-	return fmt.Sprintf("%s: %s (caused by: %s)", w.stack.String(), w.httpError, w.root)
+	var cause string
+	if w.root.Error() != "" {
+		cause = fmt.Sprintf(" (caused by: %s)", w.root)
+	}
+	return fmt.Sprintf("%s: %s%s", w.stack.String(), w.httpError, cause)
 }
-func (w errorWithStack) Cause() error { return w.root }
 
 func (w errorWithStack) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if s.Flag('+') {
-			fmt.Fprintf(s, "%+v", w.Cause())
+			// print the root stack trace
+			fmt.Fprintf(s, "%+v", w.root)
 			return
 		}
 		fallthrough
-	case 's':
+	default:
 		_, _ = io.WriteString(s, w.Error())
 	}
 }
@@ -537,21 +582,32 @@ func callers() *stack {
 	return &st
 }
 
-// NewError just set an error with a root cause.
+// NewError returns a merge of given err with new http error.
 func NewError(httpError Error, err error) error {
-	// if the given error is a error with stack, replace the http error
-	if err != nil {
-		if e, ok := err.(errorWithStack); ok {
-			e.httpError = httpError
-			return e
-		}
+	// if the given error is nil do nothing
+	if err == nil {
+		return nil
 	}
 
+	// if it's already an error with stack, override the http error and set from value with err cause
+	if e, ok := err.(errorWithStack); ok {
+		httpError.from = Cause(e).Error()
+		e.httpError = httpError
+		return e
+	}
+
+	// if it's a library error create a new error with stack
+	httpError.from = err.Error()
 	return errorWithStack{
 		root:      errors.WithStack(err),
 		stack:     callers(),
 		httpError: httpError,
 	}
+}
+
+// NewErrorFrom returns the given http error with from details.
+func NewErrorFrom(httpError Error, from string, args ...interface{}) error {
+	return NewError(httpError, fmt.Errorf(from, args...))
 }
 
 // WrapError returns an error with stack and message.
@@ -572,7 +628,7 @@ func WrapError(err error, format string, args ...interface{}) error {
 	// if it's a Error wrap it in error with stack
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
-			root:      errors.Wrap(err, m),
+			root:      errors.WithStack(fmt.Errorf(format, args...)),
 			stack:     callers(),
 			httpError: e,
 		}
@@ -600,7 +656,7 @@ func WithStack(err error) error {
 	// if it's a Error wrap it in error with stack
 	if e, ok := err.(Error); ok {
 		return errorWithStack{
-			root:      errors.WithStack(err),
+			root:      errors.New(""),
 			stack:     callers(),
 			httpError: e,
 		}
@@ -616,14 +672,16 @@ func WithStack(err error) error {
 // ExtractHTTPError tries to recognize given error and return http error
 // with message in a language matching Accepted-Language.
 func ExtractHTTPError(source error, al string) Error {
-	httpError := ErrUnknownError
+	var httpError Error
 
 	// try to recognize http error from source
-	if e, ok := source.(errorWithStack); ok {
+	switch e := source.(type) {
+	case errorWithStack:
 		httpError = e.httpError
-	}
-	if e, ok := source.(Error); ok {
+	case Error:
 		httpError = e
+	default:
+		httpError = ErrUnknownError
 	}
 
 	// if it's a custom err with no status use unknown error status
@@ -632,37 +690,15 @@ func ExtractHTTPError(source error, al string) Error {
 	}
 
 	// if error's message is not empty do not override (custom message)
-	if httpError.Message != "" {
-		return httpError
+	// else set message for given accepted languages.
+	if httpError.Message == "" {
+		httpError.Message = httpError.Translate(al)
 	}
 
-	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
-	if err != nil {
-		httpError.Message = errorsAmericanEnglish[ErrUnknownError.ID]
-		return httpError
+	if httpError.from != "" {
+		httpError.Message = fmt.Sprintf("%s (from: %s)", httpError.Message, httpError.from)
 	}
 
-	// try to get error message for accepted language and error ID, else use unknown error message
-	tag, _, _ := matcher.Match(acceptedLanguages...)
-	var msg string
-	var ok bool
-	switch tag {
-	case language.French:
-		msg, ok = errorsFrench[httpError.ID]
-		break
-	case language.AmericanEnglish:
-		msg, ok = errorsAmericanEnglish[httpError.ID]
-		break
-	default:
-		msg, ok = errorsAmericanEnglish[httpError.ID]
-		break
-	}
-	if !ok {
-		httpError.Message = errorsAmericanEnglish[ErrUnknownError.ID]
-		return httpError
-	}
-
-	httpError.Message = msg
 	return httpError
 }
 
@@ -690,23 +726,7 @@ func DecodeError(data []byte) error {
 	return e
 }
 
-func (e Error) String() string {
-	if e.Message != "" {
-		return e.Message
-	}
-
-	if en, ok := errorsAmericanEnglish[e.ID]; ok {
-		return en
-	}
-
-	return errorsAmericanEnglish[ErrUnknownError.ID]
-
-}
-
-func (e Error) Error() string { return e.String() }
-
-// ErrorIs returns true if error is same as and sdk.HTTPError Message
-// this func checks msg in all languages
+// ErrorIs returns true if error match the target error.
 func ErrorIs(err error, target Error) bool {
 	if err == nil {
 		return false
@@ -720,7 +740,21 @@ func ErrorIs(err error, target Error) bool {
 		return e.httpError.ID == target.ID
 	}
 
-	return false
+	// if err is not of type Error or errorWithStack, it's a unknown error
+	return target.ID == ErrUnknownError.ID
+}
+
+// Cause returns recursively the root error from given error.
+func Cause(err error) error {
+	if e, ok := err.(errorWithStack); ok {
+		return errors.Cause(e.root)
+	}
+	return errors.Cause(err)
+}
+
+// ErrorIsUnknown returns true the error is unknown (sdk.ErrUnknownError or lib error).
+func ErrorIsUnknown(err error) bool {
+	return ErrorIs(err, ErrUnknownError)
 }
 
 // MultiError is just an array of error

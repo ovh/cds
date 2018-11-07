@@ -11,7 +11,7 @@ import {AppModule} from '../../../app.module';
 import {Router, ActivatedRoute} from '@angular/router';
 import {AccountModule} from '../account.module';
 
-import {Observable} from 'rxjs/Observable';
+import {of} from 'rxjs';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import 'rxjs/add/observable/of';
 
@@ -25,7 +25,7 @@ describe('CDS: LoginComponent', () => {
                 UserService,
                 AuthentificationStore,
                 { provide: Router, useClass: MockRouter},
-                { provide: ActivatedRoute, useValue: { queryParams: Observable.of({redirection: null})} },
+                { provide: ActivatedRoute, useValue: { queryParams: of({redirection: null})} },
             ],
             imports : [
                 AppModule,

@@ -47,7 +47,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 			//Load the specific user
 			u, err = user.LoadUserWithoutAuth(api.mustDB(), requestedUserName)
 			if err != nil {
-				if err == sql.ErrNoRows {
+				if sdk.Cause(err) == sql.ErrNoRows {
 					return sdk.ErrUserNotFound
 				}
 				return sdk.WrapError(err, "unable to load user '%s'", requestedUserName)
@@ -240,7 +240,6 @@ func (api *API) getApplicationHandler() service.Handler {
 
 		applicationStatus := FormBool(r, "applicationStatus")
 		withHooks := FormBool(r, "withHooks")
-		withNotifs := FormBool(r, "withNotifs")
 		withWorkflow := FormBool(r, "withWorkflow")
 		withTriggers := FormBool(r, "withTriggers")
 		withSchedulers := FormBool(r, "withSchedulers")
@@ -262,9 +261,6 @@ func (api *API) getApplicationHandler() service.Handler {
 		}
 		if withTriggers {
 			loadOptions = append(loadOptions, application.LoadOptions.WithTriggers)
-		}
-		if withNotifs {
-			loadOptions = append(loadOptions, application.LoadOptions.WithNotifs)
 		}
 		if withKeys {
 			loadOptions = append(loadOptions, application.LoadOptions.WithKeys)
@@ -605,7 +601,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
 		if err != nil {
-			if err != sdk.ErrApplicationNotFound {
+			if !sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 				log.Warning("deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
 			}
 			return err

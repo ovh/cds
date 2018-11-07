@@ -473,7 +473,7 @@ func loadWorkflowRoot(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 	var err error
 	w.Root, err = loadNode(ctx, db, store, proj, w, w.RootID, u, opts)
 	if err != nil {
-		if err == sdk.ErrWorkflowNodeNotFound {
+		if sdk.ErrorIs(err, sdk.ErrWorkflowNodeNotFound) {
 			log.Debug("Load> Unable to load root %d for workflow %d", w.RootID, w.ID)
 			return nil
 		}

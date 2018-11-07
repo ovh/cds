@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func runDeployApplication(w *currentWorker) BuiltInAction {
@@ -34,13 +35,53 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		pluginSocket, has := w.mapPluginClient[pf.Model.PluginName]
-		if !has {
+		//First check OS and Architecture
+		var currentOS = strings.ToLower(sdk.GOOS)
+		var currentARCH = strings.ToLower(sdk.GOARCH)
+		var binary *sdk.GRPCPluginBinary
+		for _, b := range w.currentJob.wJob.PlatformPluginBinaries {
+			if b.OS == currentOS && b.Arch == currentARCH {
+				binary = &b
+				break
+			}
+		}
+
+		if binary == nil {
 			res := sdk.Result{
-				Reason: "Unable to retrieve plugin client... Aborting",
+				Reason: fmt.Sprintf("Unable to retrieve deployment platform binary named %s... Aborting", pf.Model.PluginName),
 				Status: sdk.StatusFail.String(),
 			}
 			sendLog(res.Reason)
+			return res
+		}
+
+		pluginSocket, err := startGRPCPlugin(context.Background(), binary.PluginName, w, binary, startGRPCPluginOptions{})
+		if err != nil {
+			res := sdk.Result{
+				Reason: "Unable to startGRPCPlugin... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(err.Error())
+			return res
+		}
+
+		c, err := platformplugin.Client(context.Background(), pluginSocket.Socket)
+		if err != nil {
+			res := sdk.Result{
+				Reason: "Unable to call grpc plugin... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(err.Error())
+			return res
+		}
+
+		pluginSocket.Client = c
+		if _, err := c.Manifest(context.Background(), new(empty.Empty)); err != nil {
+			res := sdk.Result{
+				Reason: "Unable to call grpc plugin manifest... Aborting",
+				Status: sdk.StatusFail.String(),
+			}
+			sendLog(err.Error())
 			return res
 		}
 
@@ -65,8 +106,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Reason: "Unable to retrieve plugin manifest... Aborting",
 				Status: sdk.StatusFail.String(),
 			}
-			stopLogs()
-			<-done
+			platformPluginClientStop(ctx, platformPluginClient, done, stopLogs)
 			sendLog(err.Error())
 			return res
 		}
@@ -83,9 +123,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Reason: fmt.Sprintf("Error deploying application: %v", err),
 				Status: sdk.StatusFail.String(),
 			}
-			sendLog(res.Reason)
-			stopLogs()
-			<-done
+			platformPluginClientStop(ctx, platformPluginClient, done, stopLogs)
 			return res
 		}
 
@@ -93,18 +131,28 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		sendLog(fmt.Sprintf("# Status: %s", res.Status))
 
 		if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess.String()) {
-			stopLogs()
-			<-done
+			platformPluginClientStop(ctx, platformPluginClient, done, stopLogs)
 			return sdk.Result{
 				Status: sdk.StatusSuccess.String(),
 			}
 		}
 
-		stopLogs()
-		<-done
+		platformPluginClientStop(ctx, platformPluginClient, done, stopLogs)
+
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: res.Details,
 		}
 	}
+}
+
+func platformPluginClientStop(ctx context.Context, platformPluginClient platformplugin.PlatformPluginClient, done chan struct{}, stopLogs context.CancelFunc) {
+	if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+		// Transport is closing is a "normal" error, as we requested plugin to stop
+		if !strings.Contains(err.Error(), "transport is closing") {
+			log.Error("Error on platformPluginClient.Stop: %s", err)
+		}
+	}
+	stopLogs()
+	<-done
 }

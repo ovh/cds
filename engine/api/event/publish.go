@@ -9,7 +9,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -109,11 +108,6 @@ func PublishActionBuild(pb *sdk.PipelineBuild, pbJob *sdk.PipelineBuildJob) {
 
 // PublishPipelineBuild sends a pipelineBuild event
 func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) {
-	// get and send all user notifications
-	for _, event := range notification.GetUserEvents(db, pb, previous) {
-		Publish(event, nil)
-	}
-
 	rmn := ""
 	rfn := ""
 	if pb.Application.VCSServer != "" {
@@ -122,11 +116,11 @@ func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *
 	}
 
 	e := sdk.EventPipelineBuild{
-		Version:     pb.Version,
-		BuildNumber: pb.BuildNumber,
-		Status:      pb.Status,
-		Start:       pb.Start.Unix(),
-		Done:        pb.Done.Unix(),
+		Version:               pb.Version,
+		BuildNumber:           pb.BuildNumber,
+		Status:                pb.Status,
+		Start:                 pb.Start.Unix(),
+		Done:                  pb.Done.Unix(),
 		RepositoryManagerName: rmn,
 		RepositoryFullname:    rfn,
 		PipelineName:          pb.Pipeline.Name,

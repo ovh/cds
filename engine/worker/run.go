@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os"
+	"os/user"
 	"path"
 	"strings"
 	"time"
@@ -91,11 +92,22 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 
 func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, stepOrder int, stepName string) sdk.Result {
 	// Process action build arguments
+	var project, workflow, node, job string
 	for _, abp := range *params {
 		// Process build variable for root action
 		for j := range a.Parameters {
 			if abp.Name == a.Parameters[j].Name {
 				a.Parameters[j].Value = abp.Value
+			}
+			switch abp.Name {
+			case "cds.project":
+				project = abp.Value
+			case "cds.worklow":
+				workflow = abp.Value
+			case "cds.node":
+				node = abp.Value
+			case "cds.job":
+				job = abp.Value
 			}
 		}
 	}
@@ -113,6 +125,7 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 		}
 	}
 
+	log.Info("startAction> project:%s workflow:%s node:%s job:%s", project, workflow, node, job)
 	return w.runJob(ctx, a, buildID, params, secrets, stepOrder, stepName)
 }
 
@@ -324,6 +337,15 @@ func setupBuildDirectory(wd string) error {
 		return err
 	}
 
+	var err error
+	u, err := user.Current()
+	if err != nil {
+		log.Error("Error while getting current user %v", err)
+	} else if u != nil && u.HomeDir != "" {
+		if err := os.Setenv("HOME_CDS_PLUGINS", u.HomeDir); err != nil {
+			log.Error("Error while setting home_plugin %v", err)
+		}
+	}
 	return os.Setenv("HOME", wd)
 }
 
