@@ -313,14 +313,40 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, hatc
 					query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
 					if _, err := ntx.Exec(query, modelID, b, b, string(sdk.BinaryRequirement)); err != nil {
 						//Ignore errors because we let the database to check constraints...
-						log.Debug("registerWorker> Cannot insert into worker_capability: %s", err)
+						log.Debug("registerWorker> Cannot insert into worker_capability: %v", err)
+						return
+					}
+				}
+			}
+
+			var capaToDelete []string
+			for _, existingCapa := range existingCapas {
+				var found bool
+				for _, currentCapa := range binaryCapabilities {
+					if existingCapa.Value == currentCapa {
+						found = true
+						break
+					}
+				}
+				if !found {
+					capaToDelete = append(capaToDelete, existingCapa.Value)
+				}
+			}
+
+			if len(capaToDelete) > 0 {
+				log.Debug("Updating model %d binary capabilities with %d capabilities to delete", modelID, len(capaToDelete))
+				for _, capa := range capaToDelete {
+					query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=$2 AND argument=$3 AND type=$4`
+					if _, err := db.Exec(query, modelID, capa, capa, string(sdk.BinaryRequirement)); err != nil {
+						//Ignore errors because we let the database to check constraints...
+						log.Warning("registerWorker> Cannot delete from worker_capability: %v", err)
 						return
 					}
 				}
 			}
 
 			if OS != "" && arch != "" {
-				if err := updateOSAndArch(ntx, modelID, OS, arch); err != nil {
+				if err := updateOSAndArch(db, modelID, OS, arch); err != nil {
 					log.Warning("registerWorker> Cannot update os and arch for worker model %d : %s", modelID, err)
 					return
 				}
