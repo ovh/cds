@@ -244,8 +244,8 @@ func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowN
 		return nil, err
 	}
 
-	deadJobs := make([]sdk.WorkflowNodeJobRun, 0, len(deadJobsDB))
-	for _, deadJob := range deadJobsDB {
+	deadJobs := make([]sdk.WorkflowNodeJobRun, len(deadJobsDB))
+	for i, deadJob := range deadJobsDB {
 		if store != nil {
 			getHatcheryInfo(store, &deadJob)
 		}
@@ -254,7 +254,7 @@ func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowN
 		if err != nil {
 			return nil, err
 		}
-		deadJobs = append(deadJobs, jr)
+		deadJobs[i] = jr
 	}
 
 	return deadJobs, nil
