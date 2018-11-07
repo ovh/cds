@@ -277,9 +277,13 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		return nil, sdk.WrapError(err, "Unable to load workflow %s in project %s", name, proj.Key)
 	}
 	res.ProjectKey = proj.Key
-	if err := IsValid(ctx, store, db, res, proj, u); err != nil {
-		return nil, sdk.WrapError(err, "Unable to valid workflow")
+
+	if !opts.WithoutNode {
+		if err := IsValid(ctx, store, db, res, proj, u); err != nil {
+			return nil, sdk.WrapError(err, "Unable to valid workflow")
+		}
 	}
+
 	return res, nil
 }
 
@@ -293,8 +297,11 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, id int6
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
 	}
-	if err := IsValid(context.TODO(), store, db, res, proj, u); err != nil {
-		return nil, sdk.WrapError(err, "Unable to valid workflow")
+
+	if !opts.WithoutNode {
+		if err := IsValid(context.TODO(), store, db, res, proj, u); err != nil {
+			return nil, sdk.WrapError(err, "Unable to valid workflow")
+		}
 	}
 	return res, nil
 }
