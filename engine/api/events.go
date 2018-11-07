@@ -157,18 +157,16 @@ func (b *eventsBroker) Start(ctx context.Context) {
 }
 
 func (b *eventsBroker) ServeHTTP() service.Handler {
+	// This function may panic when the SSE ResponseWriter is closed, with following message
+	// index > windowEnd
+	// runtime error: index out of range
+	// runtime error: slice bounds out of range
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (err error) {
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
 			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
-
-		defer func() {
-			if r := recover(); r != nil {
-				err = fmt.Errorf("eventsBroker.ServeHTTP recovered %v", r)
-			}
-		}()
 
 		user := getUser(ctx)
 		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
