@@ -2149,15 +2149,15 @@ func three() error { return sdk.WrapError(two(), &quot;Error calling two&quot;) 
 <p>To create an error that will generate a specific HTTP status code you should use the <strong>sdk.NewError</strong> func or returned an existing sdk.Error.</p>
 
 <pre><code class="language-go">if err := json.Unmarshal(...); err != nil {
-    return sdk.NewError(sdk.ErrWrongRequest, err) // returns a 400 http code with translated message and cause. 
+    return sdk.NewError(sdk.ErrWrongRequest, err) // returns a 400 http code with default translated message and from value that contains err cause. 
 }
 
 if err := json.Unmarshal(...); err != nil {
-    return sdk.WrapError(sdk.ErrWrongRequest, &quot;Cannot unmarshal given data&quot;) // returns a 400 http code with translated message and cause. 
+    return sdk.NewErrorFrom(sdk.ErrWrongRequest, &quot;A text that will be in from message&quot;) // returns a 400 http code with default translated message and test as from. 
 }
 
 if err := json.Unmarshal(...); err != nil {
-    return sdk.WithStack(sdk.ErrWrongRequest) // returns a 400 http code with translated message but no info about the source error. 
+    return sdk.WrapError(sdk.ErrWrongRequest, &quot;Cannot unmarshal given data&quot;) // or return sdk.WithStack(sdk.ErrWrongRequest) returns a 400 http code with default translated message.
 }
 </code></pre>
 
