@@ -106,11 +106,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Reason: "Unable to retrieve plugin manifest... Aborting",
 				Status: sdk.StatusFail.String(),
 			}
-			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-				log.Error("Error on platformPluginClient.Stop: %s", err)
-			}
-			stopLogs()
-			<-done
+			platformPluginClientStop(ctx, platformPluginClient, done, stopLogs)
 			sendLog(err.Error())
 			return res
 		}
@@ -127,12 +123,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 				Reason: fmt.Sprintf("Error deploying application: %v", err),
 				Status: sdk.StatusFail.String(),
 			}
-			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-				log.Error("Error on platformPluginClient.Stop: %s", err)
-			}
-			sendLog(res.Reason)
-			stopLogs()
-			<-done
+			platformPluginClientStop(ctx, platformPluginClient, done, stopLogs)
 			return res
 		}
 
@@ -140,25 +131,28 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 		sendLog(fmt.Sprintf("# Status: %s", res.Status))
 
 		if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess.String()) {
-			if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-				log.Error("Error on platformPluginClient.Stop: %s", err)
-			}
-			stopLogs()
-			<-done
+			platformPluginClientStop(ctx, platformPluginClient, done, stopLogs)
 			return sdk.Result{
 				Status: sdk.StatusSuccess.String(),
 			}
 		}
 
-		if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-			log.Error("Error on platformPluginClient.Stop: %s", err)
-		}
+		platformPluginClientStop(ctx, platformPluginClient, done, stopLogs)
 
-		stopLogs()
-		<-done
 		return sdk.Result{
 			Status: sdk.StatusFail.String(),
 			Reason: res.Details,
 		}
 	}
+}
+
+func platformPluginClientStop(ctx context.Context, platformPluginClient platformplugin.PlatformPluginClient, done chan struct{}, stopLogs context.CancelFunc) {
+	if _, err := platformPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+		// Transport is closing is a "normal" error, as we requested plugin to stop
+		if !strings.Contains(err.Error(), "transport is closing") {
+			log.Error("Error on platformPluginClient.Stop: %s", err)
+		}
+	}
+	stopLogs()
+	<-done
 }

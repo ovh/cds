@@ -138,7 +138,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		manifest, err := actionPluginClient.Manifest(ctx, &empty.Empty{})
 		if err != nil {
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to retrieve plugin manifest... Aborting (%v)", err))
-			stopLogs()
+			actionPluginClientStop(ctx, actionPluginClient, stopLogs)
 			return
 		}
 		log.Debug("plugin successfully initialized: %#v", manifest)
@@ -153,20 +153,13 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		pluginDetails := fmt.Sprintf("plugin %s v%s", manifest.Name, manifest.Version)
 		if err != nil {
 			t := fmt.Sprintf("failure %s err: %v", pluginDetails, err)
-			stopLogs()
-			if _, errstop := actionPluginClient.Stop(ctx, new(empty.Empty)); errstop != nil {
-				log.Error("Error on actionPluginClient.Stop: %s", errstop)
-			}
+			actionPluginClientStop(ctx, actionPluginClient, stopLogs)
 			log.Error(t)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Error running action: %v", err))
 			return
 		}
 
-		if _, err := actionPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
-			log.Error("Error on actionPluginClient.Stop: %s", err)
-		}
-
-		stopLogs()
+		actionPluginClientStop(ctx, actionPluginClient, stopLogs)
 
 		chanRes <- sdk.Result{
 			Status: result.GetStatus(),
@@ -186,6 +179,16 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		<-done
 		return res
 	}
+}
+
+func actionPluginClientStop(ctx context.Context, actionPluginClient actionplugin.ActionPluginClient, stopLogs context.CancelFunc) {
+	if _, err := actionPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+		// Transport is closing is a "normal" error, as we requested plugin to stop
+		if !strings.Contains(err.Error(), "transport is closing") {
+			log.Error("Error on actionPluginClient.Stop: %s", err)
+		}
+	}
+	stopLogs()
 }
 
 func pluginFail(chanRes chan<- sdk.Result, sendLog LoggerFunc, reason string) {

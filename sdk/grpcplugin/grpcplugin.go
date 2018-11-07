@@ -56,8 +56,9 @@ func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, ar
 
 	go func() {
 		if err := c.Wait(); err != nil {
-			log.Info("GRPC Plugin wait failed:%+v", err)
+			log.Info("GRPC Plugin %s wait failed:%+v", cmd, err)
 		}
+		log.Info("GRPC Plugin %s end", cmd)
 	}()
 
 	log.Info("GRPC Plugin %s started", cmd)
@@ -149,7 +150,7 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 
 	go func() {
 		<-ctx.Done()
-		fmt.Printf("exiting plugin")
+		fmt.Printf("exiting plugin\n")
 		defer os.RemoveAll(c.Socket)
 		c.s.Stop()
 	}()
@@ -164,7 +165,11 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 }
 
 func (c *Common) Stop(context.Context, *empty.Empty) (*empty.Empty, error) {
-	c.s.Stop()
+	defer func() {
+		fmt.Printf("Stopping plugin...")
+		time.Sleep(2 * time.Second)
+		c.s.Stop()
+	}()
 	return new(empty.Empty), nil
 }
 
