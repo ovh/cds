@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
@@ -20,6 +22,7 @@ var (
 	template = cli.NewCommand(templateCmd, nil, []*cobra.Command{
 		cli.NewCommand(templateApplyCmd, templateApplyRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(templatePushCmd, templatePushRun, nil, withAllCommandModifiers()...),
 	})
 )
 
@@ -79,4 +82,78 @@ func templatePullRun(v cli.Values) error {
 	}
 
 	return workflowTarReaderToFiles(dir, t, v.GetBool("force"), v.GetBool("quiet"))
+}
+
+var templatePushCmd = cli.Command{
+	Name:    "push",
+	Short:   "Push CDS workflow template",
+	Example: "cdsctl push my-template.yml workflow.yml 0.pipeline.yml",
+	VariadicArgs: cli.Arg{
+		Name: "yaml-file",
+	},
+	Flags: []cli.Flag{
+		{
+			Kind:  reflect.Bool,
+			Name:  "skip-update-files",
+			Usage: "Useful if you don't want to update yaml files after pushing the template.",
+		},
+	},
+}
+
+func templatePushRun(v cli.Values) error {
+	files := strings.Split(v.GetString("yaml-file"), ",")
+
+	buf := new(bytes.Buffer)
+	var dir string
+
+	// Create a new tar archive.
+	filesToRead := []string{}
+	for _, file := range files {
+		fi, err := os.Lstat(file)
+		if err != nil {
+			fmt.Printf("Skipping file %s: %v\n", file, err)
+			continue
+		}
+
+		//Skip the directory
+		if fi.IsDir() {
+			continue
+		}
+
+		fmt.Println("Reading file ", cli.Magenta(file))
+		if dir == "" {
+			dir = filepath.Dir(file)
+		}
+		if dir != filepath.Dir(file) {
+			return fmt.Errorf("files must be ine the same directory")
+		}
+
+		filesToRead = append(filesToRead, file)
+	}
+
+	if len(filesToRead) == 0 {
+		return fmt.Errorf("wrong usage: you should specify your workflow template YAML files. See %s template push --help for more details", os.Args[0])
+	}
+
+	if err := workflowFilesToTarWriter(filesToRead, buf); err != nil {
+		return err
+	}
+
+	btes := buf.Bytes()
+	r := bytes.NewBuffer(btes)
+	msgList, tr, err := client.TemplatePush(r)
+	for _, msg := range msgList {
+		fmt.Println(msg)
+	}
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Template successfully pushed !")
+
+	if v.GetBool("skip-update-files") {
+		return nil
+	}
+
+	return workflowTarReaderToFiles(dir, tr, false, false)
 }

@@ -37,3 +37,25 @@ func NewTemplate(wt sdk.WorkflowTemplate) (Template, error) {
 
 	return exportedTemplate, nil
 }
+
+// GetTemplate returns a sdk.WorkflowTemplate.
+func (w Template) GetTemplate() sdk.WorkflowTemplate {
+	wt := sdk.WorkflowTemplate{
+		Slug: w.Slug,
+		Name: w.Name,
+		Group: &sdk.Group{
+			Name: w.Group,
+		},
+		Description: w.Description,
+	}
+
+	for _, p := range w.Parameters {
+		wt.Parameters = append(wt.Parameters, sdk.WorkflowTemplateParameter{
+			Key:      p.Key,
+			Type:     sdk.TemplateParameterType(p.Type),
+			Required: p.Required,
+		})
+	}
+
+	return wt
+}

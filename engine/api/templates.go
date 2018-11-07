@@ -1,9 +1,11 @@
 package api
 
 import (
+	"archive/tar"
 	"bytes"
 	"context"
 	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -16,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/slug"
 )
 
@@ -147,6 +150,7 @@ func (api *API) postTemplateHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
 		}
 
+		// duplicate couple of group id and slug will failed with sql constraint
 		if err := workflowtemplate.Insert(api.mustDB(), &t); err != nil {
 			return err
 		}
@@ -224,16 +228,7 @@ func (api *API) putTemplateHandler() service.Handler {
 
 		// update fields from request data
 		new := sdk.WorkflowTemplate(*old)
-		new.Name = data.Name
-		new.Slug = data.Slug
-		new.GroupID = data.GroupID
-		new.Description = data.Description
-		new.Value = data.Value
-		new.Parameters = data.Parameters
-		new.Pipelines = data.Pipelines
-		new.Applications = data.Applications
-		new.Environments = data.Environments
-		new.Version = old.Version + 1
+		new.Update(data)
 
 		if err := workflowtemplate.Update(api.mustDB(), &new); err != nil {
 			return err
@@ -469,6 +464,28 @@ func (api *API) pullTemplateHandler() service.Handler {
 
 func (api *API) pushTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return nil
+		btes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Error("%v", sdk.WrapError(err, "Unable to read body"))
+			return sdk.ErrWrongRequest
+		}
+		defer r.Body.Close()
+
+		tr := tar.NewReader(bytes.NewReader(btes))
+
+		msgs, wt, err := workflowtemplate.Push(api.mustDB(), getUser(ctx), tr)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot push template")
+		}
+
+		if wt != nil {
+			if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+				return err
+			}
+			w.Header().Add(sdk.ResponseTemplateGroupNameHeader, wt.Group.Name)
+			w.Header().Add(sdk.ResponseTemplateSlugHeader, wt.Slug)
+		}
+
+		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)
 	}
 }

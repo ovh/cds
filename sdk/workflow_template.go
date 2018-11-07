@@ -129,6 +129,20 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 	return nil
 }
 
+// Update workflow template field from new data.
+func (w *WorkflowTemplate) Update(data WorkflowTemplate) {
+	w.Name = data.Name
+	w.Slug = data.Slug
+	w.GroupID = data.GroupID
+	w.Description = data.Description
+	w.Value = data.Value
+	w.Parameters = data.Parameters
+	w.Pipelines = data.Pipelines
+	w.Applications = data.Applications
+	w.Environments = data.Environments
+	w.Version = w.Version + 1
+}
+
 // WorkflowTemplatesToIDs returns ids of given workflow templates.
 func WorkflowTemplatesToIDs(wts []*WorkflowTemplate) []int64 {
 	ids := make([]int64, len(wts))

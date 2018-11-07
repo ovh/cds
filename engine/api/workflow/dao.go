@@ -1352,7 +1352,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	// We only use the multiError the une unmarshalling steps.
+	// We only use the multiError during unmarshalling steps.
 	// When a DB transaction has been started, just return at the first error
 	// because transaction may have to be aborted
 	if !mError.IsEmpty() {

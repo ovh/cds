@@ -6,6 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -72,4 +74,36 @@ func (c *client) TemplatePull(groupName, templateSlug string) (*tar.Reader, erro
 	r := bytes.NewReader(body)
 	tr := tar.NewReader(r)
 	return tr, nil
+}
+
+func (c *client) TemplatePush(tarContent io.Reader) ([]string, *tar.Reader, error) {
+	url := "/template/push"
+
+	btes, headers, code, err := c.Request(context.Background(), "POST", url, tarContent, func(r *http.Request) {
+		r.Header.Set("Content-Type", "application/tar")
+	})
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if code >= 400 {
+		return nil, nil, fmt.Errorf("HTTP Status code %d", code)
+	}
+
+	messages := []string{}
+	if err := json.Unmarshal(btes, &messages); err != nil {
+		return nil, nil, err
+	}
+
+	tGroupName := headers.Get(sdk.ResponseTemplateGroupNameHeader)
+	tSlug := headers.Get(sdk.ResponseTemplateSlugHeader)
+	if tGroupName == "" || tSlug == "" {
+		return messages, nil, nil
+	}
+	tarReader, err := c.TemplatePull(tGroupName, tSlug)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return messages, tarReader, nil
 }

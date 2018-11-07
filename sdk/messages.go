@@ -78,6 +78,8 @@ var (
 	MsgSpawnInfoHatcheryCannotStartJob     = &Message{"MsgSpawnInfoHatcheryCannotStart", trad{FR: "Aucune hatchery n'a pu démarrer de worker respectant vos pré-requis de job, merci de les vérifier.", EN: "No hatchery can spawn a worker corresponding your job's requirements. Please check your job's requirements."}, nil}
 	MsgWorkflowRunBranchDeleted            = &Message{"MsgWorkflowRunBranchDeleted", trad{FR: "La branche %s  a été supprimée", EN: "Branch %s has been deleted"}, nil}
 	MsgSpawnInfoDeprecatedModel            = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "Attention vous utilisez un worker model (%s) déprécié", EN: "Pay attention you are using a deprecated worker model (%s)"}, nil}
+	MsgWorkflowTemplateImportedInserted    = &Message{"MsgWorkflowTemplateImportedInserted", trad{FR: "Le template de workflow %s/%s a été créé", EN: "Workflow template %s/%s has been created"}, nil}
+	MsgWorkflowTemplateImportedUpdated     = &Message{"MsgWorkflowTemplateImportedUpdated", trad{FR: "Le template de workflow %s/%s a été mis à jour", EN: "Workflow template %s/%s has been updated"}, nil}
 )
 
 // Messages contains all sdk Messages

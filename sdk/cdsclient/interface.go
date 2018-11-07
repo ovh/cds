@@ -21,6 +21,7 @@ type TemplateClient interface {
 	TemplateGetAll() ([]*sdk.WorkflowTemplate, error)
 	TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
 	TemplatePull(groupName, templateSlug string) (*tar.Reader, error)
+	TemplatePush(tarContent io.Reader) ([]string, *tar.Reader, error)
 }
 
 // AdminService expose all function to CDS services
