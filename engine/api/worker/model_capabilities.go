@@ -3,7 +3,6 @@ package worker
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -12,34 +11,25 @@ import (
 )
 
 //ModelCapabilititiesCacheLoader set all model Capabilities in the cache
-func ModelCapabilititiesCacheLoader(c context.Context, delay time.Duration, DBFunc func() *gorp.DbMap, store cache.Store) {
-	tick := time.NewTicker(delay).C
-	for {
-		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting worker.ModelCapabilititiesCacheLoader: %v", c.Err())
-				return
+func ModelCapabilititiesCacheLoader(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+	var mayIWork string
+	dbmap := DBFunc()
+	if dbmap == nil {
+		return
+	}
+
+	loaderKey := cache.Key("worker", "modelcapabilitites", "loading")
+	if store.Get(loaderKey, &mayIWork) {
+		store.SetWithTTL(loaderKey, "true", 60)
+		wms, err := LoadWorkerModels(dbmap)
+		if err != nil {
+			log.Warning("ModelCapabilititiesCacheLoader> Unable to load worker models: %s", err)
+		} else {
+			for _, wm := range wms {
+				modelKey := cache.Key("worker", "modelcapabilitites", fmt.Sprintf("%d", wm.ID))
+				store.Set(modelKey, wm.RegisteredCapabilities)
 			}
-		case <-tick:
-			dbmap := DBFunc()
-			if dbmap != nil {
-				var mayIWork string
-				loaderKey := cache.Key("worker", "modelcapabilitites", "loading")
-				if store.Get(loaderKey, &mayIWork) {
-					store.SetWithTTL(loaderKey, "true", 60)
-					wms, err := LoadWorkerModels(dbmap)
-					if err != nil {
-						log.Warning("ModelCapabilititiesCacheLoader> Unable to load worker models: %s", err)
-						continue
-					}
-					for _, wm := range wms {
-						modelKey := cache.Key("worker", "modelcapabilitites", fmt.Sprintf("%d", wm.ID))
-						store.Set(modelKey, wm.RegisteredCapabilities)
-					}
-					store.Delete(loaderKey)
-				}
-			}
+			store.Delete(loaderKey)
 		}
 	}
 }

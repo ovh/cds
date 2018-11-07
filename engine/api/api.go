@@ -638,14 +638,15 @@ func (a *API) Serve(ctx context.Context) error {
 		go event.DequeueEvent(ctx)
 	}
 
-	if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
-		log.Error("error while initializing workers routine: %s", err)
-	}
-
 	a.warnChan = make(chan sdk.Event)
 	event.Subscribe(a.warnChan)
 
 	log.Info("Initializing internal routines...")
+	sdk.GoRoutine(ctx, "worker.Initialize", func(ctx context.Context) {
+		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
+			log.Error("error while initializing workers routine: %s", err)
+		}
+	})
 	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
 		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	})

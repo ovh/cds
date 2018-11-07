@@ -31,8 +31,8 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store,
 				return
 			}
 		case <-tickHeart.C:
-			if err := checkHeartbeat(c, db, store); err != nil {
-				log.Warning("workflow.stopRunsBlocked> Error on stopRunsBlocked : %v", err)
+			if err := restartDeadJob(c, DBFunc, store); err != nil {
+				log.Warning("workflow.restartDeadJob> Error on restartDeadJob : %v", err)
 			}
 		case <-tickStop.C:
 			if err := stopRunsBlocked(db); err != nil {
