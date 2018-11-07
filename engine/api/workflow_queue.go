@@ -428,6 +428,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
 			}
 		}
+
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
 		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
 		next()
