@@ -191,7 +191,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.createCustomArrow();
 
         // Setup transition
-        this.g.graph().transition = function (selection) {
+        this.g.graph().transition = (selection: d3.Selection<any>): d3.Transition<any>  =>{
             return selection.transition().duration(100);
         };
 
