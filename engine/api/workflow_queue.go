@@ -419,21 +419,23 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 			return sdk.WrapError(err, "unable to post job result")
 		}
 
-		workflowRuns := report.WorkflowRuns()
-		if len(workflowRuns) > 0 {
-			observability.Current(ctx,
-				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
+		// report could be nil, even if there is no error on workflow.UpdateNodeJobRunStatus
+		if report != nil {
+			workflowRuns := report.WorkflowRuns()
+			if len(workflowRuns) > 0 {
+				observability.Current(ctx,
+					observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
 
-			if workflowRuns[0].Status == sdk.StatusFail.String() {
-				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+				if workflowRuns[0].Status == sdk.StatusFail.String() {
+					observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+				}
 			}
+			_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
+			workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
+			next()
+
+			go workflow.SendEvent(api.mustDB(), proj.Key, report)
 		}
-
-		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
-		next()
-
-		go workflow.SendEvent(api.mustDB(), proj.Key, report)
 
 		return nil
 	}
@@ -496,10 +498,13 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		return nil, sdk.WrapError(err, "Cannot commit tx")
 	}
 
-	for i := range report.WorkflowRuns() {
-		run := &report.WorkflowRuns()[i]
-		if err := updateParentWorkflowRun(ctx, newDBFunc, store, run); err != nil {
-			return nil, sdk.WrapError(err, "postJobResult")
+	// report could be nil, even if there is no error on workflow.UpdateNodeJobRunStatus
+	if report != nil {
+		for i := range report.WorkflowRuns() {
+			run := &report.WorkflowRuns()[i]
+			if err := updateParentWorkflowRun(ctx, newDBFunc, store, run); err != nil {
+				return nil, sdk.WrapError(err, "postJobResult")
+			}
 		}
 	}
 
