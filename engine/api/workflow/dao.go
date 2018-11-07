@@ -277,6 +277,9 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		return nil, sdk.WrapError(err, "Unable to load workflow %s in project %s", name, proj.Key)
 	}
 	res.ProjectKey = proj.Key
+	if err := IsValid(ctx, store, db, res, proj, u); err != nil {
+		return nil, sdk.WrapError(err, "Unable to valid workflow")
+	}
 	return res, nil
 }
 
@@ -289,6 +292,9 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, id int6
 	res, err := load(context.TODO(), db, store, proj, opts, u, query, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
+	}
+	if err := IsValid(context.TODO(), store, db, res, proj, u); err != nil {
+		return nil, sdk.WrapError(err, "Unable to valid workflow")
 	}
 	return res, nil
 }
@@ -846,8 +852,8 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	if _, err := db.Update(&dbw); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
+	*w = sdk.Workflow(dbw)
 	event.PublishWorkflowUpdate(p.Key, *w, *oldWorkflow, u)
-
 	return nil
 }
 
@@ -938,25 +944,34 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		}
 	}
 
-	w.Pipelines = make(map[int64]sdk.Pipeline)
-	w.Applications = make(map[int64]sdk.Application)
-	w.Environments = make(map[int64]sdk.Environment)
-	w.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
-	w.HookModels = make(map[int64]sdk.WorkflowHookModel)
-	w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
-
-	// Check node type for others nodes
-	// Get all nodes
-	mapNodes := w.WorkflowData.Maps()
+	if w.Pipelines == nil {
+		w.Pipelines = make(map[int64]sdk.Pipeline)
+	}
+	if w.Applications == nil {
+		w.Applications = make(map[int64]sdk.Application)
+	}
+	if w.Environments == nil {
+		w.Environments = make(map[int64]sdk.Environment)
+	}
+	if w.ProjectPlatforms == nil {
+		w.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
+	}
+	if w.HookModels == nil {
+		w.HookModels = make(map[int64]sdk.WorkflowHookModel)
+	}
+	if w.OutGoingHookModels == nil {
+		w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
+	}
 
 	// Fill empty node type
-	w.AssignEmptyType(mapNodes)
-	if err := w.ValidateType(mapNodes); err != nil {
+	w.AssignEmptyType()
+	if err := w.ValidateType(); err != nil {
 		return err
 	}
 
-	for i := range mapNodes {
-		n := mapNodes[i]
+	nodesArray := w.WorkflowData.Array()
+	for i := range nodesArray {
+		n := nodesArray[i]
 		if n.Context == nil {
 			continue
 		}

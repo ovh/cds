@@ -492,15 +492,16 @@ func (w *Workflow) Sort() {
 }
 
 // AssignEmptyType fill node type field
-func (w *Workflow) AssignEmptyType(nodes map[int64]*Node) {
+func (w *Workflow) AssignEmptyType() {
 	// set node type for join
 	for i := range w.WorkflowData.Joins {
 		j := &w.WorkflowData.Joins[i]
 		j.Type = NodeTypeJoin
 	}
 
-	for i := range nodes {
-		n := nodes[i]
+	nodesArray := w.WorkflowData.Array()
+	for i := range nodesArray {
+		n := nodesArray[i]
 		if n.Type == "" {
 			if n.Context != nil && n.Context.PipelineID != 0 {
 				n.Type = NodeTypePipeline
@@ -514,16 +515,17 @@ func (w *Workflow) AssignEmptyType(nodes map[int64]*Node) {
 }
 
 // ValidateType check if nodes have a correct nodeType
-func (w *Workflow) ValidateType(nodes map[int64]*Node) error {
+func (w *Workflow) ValidateType() error {
 	namesInError := make([]string, 0)
-	for _, n := range nodes {
+
+	for _, n := range w.WorkflowData.Array() {
 		switch n.Type {
 		case NodeTypePipeline:
-			if n.Context == nil || n.Context.PipelineID == 0 {
+			if n.Context == nil || (n.Context.PipelineID == 0 && n.Context.PipelineName == "") {
 				namesInError = append(namesInError, n.Name)
 			}
 		case NodeTypeOutGoingHook:
-			if n.OutGoingHookContext == nil || n.OutGoingHookContext.HookModelID == 0 {
+			if n.OutGoingHookContext == nil || (n.OutGoingHookContext.HookModelID == 0 && n.OutGoingHookContext.HookModelName == "") {
 				namesInError = append(namesInError, n.Name)
 			}
 		case NodeTypeJoin:
@@ -531,8 +533,8 @@ func (w *Workflow) ValidateType(nodes map[int64]*Node) error {
 				namesInError = append(namesInError, n.Name)
 			}
 		case NodeTypeFork:
-			if (n.Context != nil && n.Context.PipelineID != 0) ||
-				(n.OutGoingHookContext != nil && n.OutGoingHookContext.HookModelID != 0) ||
+			if (n.Context != nil && (n.Context.PipelineID != 0 || n.Context.PipelineName != "")) ||
+				(n.OutGoingHookContext != nil && (n.OutGoingHookContext.HookModelID != 0 || n.OutGoingHookContext.HookModelName != "")) ||
 				(n.JoinContext != nil && len(n.JoinContext) > 0) {
 				namesInError = append(namesInError, n.Name)
 			}

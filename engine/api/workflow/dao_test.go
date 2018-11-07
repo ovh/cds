@@ -402,40 +402,45 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			Name:         "Root",
-			PipelineID:   pip1.ID,
-			PipelineName: pip1.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						Name:         "First",
-						PipelineID:   pip2.ID,
-						PipelineName: pip2.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "=",
-										Value:    "master",
-										Variable: ".git.branch",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "Root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:   pip1.ID,
+					PipelineName: pip1.Name,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "First",
+							Context: &sdk.NodeContext{
+								PipelineID:   pip2.ID,
+								PipelineName: pip2.Name,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										{
+											Operator: "=",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
 									},
 								},
 							},
-						},
-						Triggers: []sdk.WorkflowNodeTrigger{
-							sdk.WorkflowNodeTrigger{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "Second",
-									PipelineID:   pip3.ID,
-									PipelineName: pip3.Name,
-									Context: &sdk.WorkflowNodeContext{
-										Conditions: sdk.WorkflowNodeConditions{
-											PlainConditions: []sdk.WorkflowNodeCondition{
-												sdk.WorkflowNodeCondition{
-													Operator: "=",
-													Value:    "master",
-													Variable: ".git.branch",
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Name: "Second",
+										Context: &sdk.NodeContext{
+											PipelineID:   pip3.ID,
+											PipelineName: pip3.Name,
+											Conditions: sdk.WorkflowNodeConditions{
+												PlainConditions: []sdk.WorkflowNodeCondition{
+													{
+														Operator: "=",
+														Value:    "master",
+														Variable: ".git.branch",
+													},
 												},
 											},
 										},
@@ -444,19 +449,19 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 							},
 						},
 					},
-				},
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						Name:         "Last",
-						PipelineID:   pip4.ID,
-						PipelineName: pip4.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "=",
-										Value:    "master",
-										Variable: ".git.branch",
+					{
+						ChildNode: sdk.Node{
+							Name: "Last",
+							Context: &sdk.NodeContext{
+								PipelineID:   pip4.ID,
+								PipelineName: pip4.Name,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										{
+											Operator: "=",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
 									},
 								},
 							},

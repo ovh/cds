@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -478,6 +478,7 @@ func Test_postWorkflowRollbackHandler(t *testing.T) {
 
 	assert.NotEmpty(t, payload["git.branch"], "git.branch should not be empty")
 
+	test.NoError(t, workflow.IsValid(context.Background(), api.Cache, db, wf, proj, u))
 	eWf, err := exportentities.NewWorkflow(*wf)
 	test.NoError(t, err)
 	wfBts, err := yaml.Marshal(eWf)
