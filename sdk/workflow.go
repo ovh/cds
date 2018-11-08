@@ -1376,6 +1376,40 @@ func (n *WorkflowNode) InvolvedPlatforms() []int64 {
 	return res
 }
 
+// CheckApplicationDeploymentStrategies checks application deployment strategies
+func (n *WorkflowNode) CheckApplicationDeploymentStrategies(proj *Project) error {
+	if n.Context == nil {
+		return nil
+	}
+	if n.Context.Application == nil {
+		return nil
+	}
+
+	var id = n.Context.ProjectPlatformID
+	if id == 0 && n.Context.ProjectPlatform != nil {
+		id = n.Context.ProjectPlatform.ID
+	}
+
+	if id == 0 {
+		return nil
+	}
+
+	pf := proj.GetPlatformByID(id)
+	if pf == nil {
+		return fmt.Errorf("platform unavailable")
+	}
+
+	for _, a := range proj.Applications {
+		if a.ID == n.Context.ApplicationID || (n.Context.Application != nil && n.Context.Application.ID == a.ID) {
+			if _, has := a.DeploymentStrategies[pf.Name]; !has {
+				return fmt.Errorf("platform %s unavailable", pf.Name)
+			}
+		}
+	}
+
+	return nil
+}
+
 //WorkflowNodeTrigger is a link between two pipelines in a workflow
 type WorkflowNodeTrigger struct {
 	ID                 int64        `json:"id" db:"id"`

@@ -970,46 +970,116 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
 	}
 
-	if w.WorkflowData != nil {
-		// Fill empty node type
-		w.AssignEmptyType()
-		if err := w.ValidateType(); err != nil {
+	if w.WorkflowData == nil {
+		//Checks application are in the current project
+		apps := w.InvolvedApplications()
+		for _, appID := range apps {
+			var found bool
+			for _, a := range proj.Applications {
+				if appID == a.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown application %d", appID))
+			}
+		}
+
+		//Checks pipelines are in the current project
+		pips := w.InvolvedPipelines()
+		for _, pipID := range pips {
+			var found bool
+			for _, p := range proj.Pipelines {
+				if pipID == p.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
+			}
+		}
+
+		//Checks environments are in the current project
+		envs := w.InvolvedEnvironments()
+		for _, envID := range envs {
+			var found bool
+			for _, e := range proj.Environments {
+				if envID == e.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
+			}
+		}
+
+		//Checks platforms are in the current project
+		pfs := w.InvolvedPlatforms()
+		for _, id := range pfs {
+			var found bool
+			for _, p := range proj.Platforms {
+				if id == p.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown platforms %d", id))
+			}
+		}
+
+		//Check contexts
+		nodes := w.Nodes(true)
+		for _, n := range nodes {
+			if err := n.CheckApplicationDeploymentStrategies(proj); err != nil {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, err)
+			}
+		}
+		return nil
+	}
+
+	// Fill empty node type
+	w.AssignEmptyType()
+	if err := w.ValidateType(); err != nil {
+		return err
+	}
+
+	nodesArray := w.WorkflowData.Array()
+	for i := range nodesArray {
+		n := nodesArray[i]
+		if n.Context == nil {
+			continue
+		}
+
+		if err := checkPipeline(ctx, db, proj, w, n); err != nil {
+			return err
+		}
+		if err := checkApplication(store, db, proj, w, n, u); err != nil {
+			return err
+		}
+		if err := checkEnvironment(db, proj, w, n); err != nil {
+			return err
+		}
+		if err := checkProjectPlatform(proj, w, n); err != nil {
+			return err
+		}
+		if err := checkHooks(db, w, n); err != nil {
+			return err
+		}
+		if err := checkOutGoingHook(db, w, n); err != nil {
 			return err
 		}
 
-		nodesArray := w.WorkflowData.Array()
-		for i := range nodesArray {
-			n := nodesArray[i]
-			if n.Context == nil {
-				continue
-			}
-
-			if err := checkPipeline(ctx, db, proj, w, n); err != nil {
-				return err
-			}
-			if err := checkApplication(store, db, proj, w, n, u); err != nil {
-				return err
-			}
-			if err := checkEnvironment(db, proj, w, n); err != nil {
-				return err
-			}
-			if err := checkProjectPlatform(proj, w, n); err != nil {
-				return err
-			}
-			if err := checkHooks(db, w, n); err != nil {
-				return err
-			}
-			if err := checkOutGoingHook(db, w, n); err != nil {
-				return err
-			}
-
-			if n.Context.ApplicationID != 0 && n.Context.ProjectPlatformID != 0 {
-				if err := n.CheckApplicationDeploymentStrategies(proj, w); err != nil {
-					return sdk.NewError(sdk.ErrWorkflowInvalid, err)
-				}
+		if n.Context.ApplicationID != 0 && n.Context.ProjectPlatformID != 0 {
+			if err := n.CheckApplicationDeploymentStrategies(proj, w); err != nil {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, err)
 			}
 		}
 	}
+
 	return nil
 }
 
