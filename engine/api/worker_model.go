@@ -158,7 +158,7 @@ func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return err
+			return sdk.WithStack(err)
 		}
 		defer tx.Rollback()
 
