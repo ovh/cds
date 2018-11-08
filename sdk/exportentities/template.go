@@ -1,6 +1,8 @@
 package exportentities
 
 import (
+	"encoding/base64"
+
 	"github.com/ovh/cds/sdk"
 )
 
@@ -13,6 +15,7 @@ type Template struct {
 	Parameters  []TemplateParameter `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
+// TemplateParameter is the "as code" representation of a sdk.TemplateParameter.
 type TemplateParameter struct {
 	Key      string `json:"key" yaml:"key"`
 	Type     string `json:"type" yaml:"type"`
@@ -39,14 +42,18 @@ func NewTemplate(wt sdk.WorkflowTemplate) (Template, error) {
 }
 
 // GetTemplate returns a sdk.WorkflowTemplate.
-func (w Template) GetTemplate() sdk.WorkflowTemplate {
+func (w Template) GetTemplate(wkf []byte, pips, apps, envs [][]byte) sdk.WorkflowTemplate {
 	wt := sdk.WorkflowTemplate{
 		Slug: w.Slug,
 		Name: w.Name,
 		Group: &sdk.Group{
 			Name: w.Group,
 		},
-		Description: w.Description,
+		Description:  w.Description,
+		Value:        base64.StdEncoding.EncodeToString(wkf),
+		Pipelines:    make([]sdk.PipelineTemplate, len(pips)),
+		Applications: make([]sdk.ApplicationTemplate, len(apps)),
+		Environments: make([]sdk.EnvironmentTemplate, len(envs)),
 	}
 
 	for _, p := range w.Parameters {
@@ -55,6 +62,18 @@ func (w Template) GetTemplate() sdk.WorkflowTemplate {
 			Type:     sdk.TemplateParameterType(p.Type),
 			Required: p.Required,
 		})
+	}
+
+	for i := 0; i < len(pips); i++ {
+		wt.Pipelines[i].Value = base64.StdEncoding.EncodeToString(pips[i])
+	}
+
+	for i := 0; i < len(apps); i++ {
+		wt.Applications[i].Value = base64.StdEncoding.EncodeToString(apps[i])
+	}
+
+	for i := 0; i < len(envs); i++ {
+		wt.Environments[i].Value = base64.StdEncoding.EncodeToString(envs[i])
 	}
 
 	return wt

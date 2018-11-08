@@ -3,16 +3,16 @@ package workflowtemplate
 import (
 	"archive/tar"
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"strings"
 
 	"github.com/go-gorp/gorp"
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // Push creates or updates a workflow template from a tar.
@@ -72,23 +72,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 	}
 
 	// init workflow template struct from data
-	wt := tmpl.GetTemplate()
-	wt.Value = base64.StdEncoding.EncodeToString(wkf)
-	for _, p := range pips {
-		wt.Pipelines = append(wt.Pipelines, sdk.PipelineTemplate{
-			Value: base64.StdEncoding.EncodeToString(p),
-		})
-	}
-	for _, a := range apps {
-		wt.Applications = append(wt.Applications, sdk.ApplicationTemplate{
-			Value: base64.StdEncoding.EncodeToString(a),
-		})
-	}
-	for _, e := range envs {
-		wt.Environments = append(wt.Environments, sdk.EnvironmentTemplate{
-			Value: base64.StdEncoding.EncodeToString(e),
-		})
-	}
+	wt := tmpl.GetTemplate(wkf, pips, apps, envs)
 
 	// check the workflow template extracted
 	if err := wt.ValidateStruct(); err != nil {
