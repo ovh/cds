@@ -55,6 +55,10 @@ func (bot *botClient) born() {
 	bot.creation = time.Now().UTC()
 	rand.Seed(time.Now().Unix())
 
+	if viper.GetString("admin_conference") != "" {
+		conferences = append(conferences, viper.GetString("admin_conference"))
+	}
+
 	bot.chats = make(chan xmpp.Chat)
 	go bot.sendToXMPP()
 
