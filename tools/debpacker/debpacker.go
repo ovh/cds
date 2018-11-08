@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	zglob "github.com/mattn/go-zglob"
+	"github.com/pkg/errors"
 )
 
 // DebPacker represents a packagin configuration
@@ -239,22 +240,57 @@ func (p DebPacker) copyOtherFiles() error {
 		}
 
 		for _, m := range matches {
-			originFile, err := os.Open(m)
+			fi, err := os.Stat(m)
 			if err != nil {
-				return err
+				return errors.Wrapf(err, "Cannot stat file or directory at %s", m)
 			}
-			defer originFile.Close()
 
-			destFileName := filepath.Join(path, filepath.Base(originFile.Name()))
-			destFile, err := os.OpenFile(destFileName, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
-			if err != nil {
-				return err
+			var list []string
+			if fi.IsDir() {
+				if err := filepath.Walk(m,
+					func(path string, info os.FileInfo, err error) error {
+						if err != nil {
+							return err
+						}
+						if !info.IsDir() {
+							list = append(list, path)
+						}
+						return nil
+					}); err != nil {
+					return errors.Wrapf(err, "Cannot walk on directory at %s", m)
+				}
+			} else {
+				list = []string{m}
 			}
-			defer destFile.Close()
-			fmt.Printf("copying file %s to %s\n", originFile.Name(), destFileName)
 
-			if _, err := io.Copy(destFile, originFile); err != nil {
-				return err
+			for _, l := range list {
+				originFile, err := os.Open(l)
+				if err != nil {
+					return err
+				}
+				defer originFile.Close()
+
+				var destPath string
+				if l == m {
+					destPath = path
+				} else {
+					destPath = filepath.Join(path, strings.TrimPrefix(filepath.Dir(l), filepath.Dir(m)))
+					if err := os.MkdirAll(destPath, os.FileMode(0755)); err != nil {
+						return err
+					}
+				}
+
+				destFileName := filepath.Join(destPath, filepath.Base(originFile.Name()))
+				destFile, err := os.OpenFile(destFileName, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
+				if err != nil {
+					return errors.Wrapf(err, "Cannot open file at %s", destFileName)
+				}
+				defer destFile.Close()
+				fmt.Printf("copying file %s to %s\n", originFile.Name(), destFileName)
+
+				if _, err := io.Copy(destFile, originFile); err != nil {
+					return errors.Wrap(err, "Cannot copy file content")
+				}
 			}
 		}
 	}
