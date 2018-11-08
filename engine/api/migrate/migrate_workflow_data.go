@@ -68,7 +68,11 @@ func migrateWorkflowData(db *gorp.DbMap, store cache.Store, ID int64) error {
 		return nil
 	}
 
-	p, err := project.LoadProjectByWorkflowID(tx, store, nil, ID, project.LoadOptions.WithPlatforms)
+	p, err := project.LoadProjectByWorkflowID(tx, store, nil, ID,
+		project.LoadOptions.WithPlatforms,
+		project.LoadOptions.WithPipelines,
+		project.LoadOptions.WithEnvironments,
+		project.LoadOptions.WithApplicationWithDeploymentStrategies)
 	if err != nil {
 		return sdk.WrapError(err, "migrateWorkflowData> Unable to load project from workflow %d", ID)
 	}
