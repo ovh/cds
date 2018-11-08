@@ -23,6 +23,7 @@
     "linters": {
       "*.ts": "ng lint ui-ng2 --files"
     },
+    "relative": true,
     "ignore": [
       "**/*.spec.ts"
     ]
@@ -101,7 +102,7 @@
     "karma-jasmine": "~1.1.1",
     "karma-jasmine-html-reporter": "^0.2.2",
     "karma-junit-reporter": "^1.1.0",
-    "lint-staged": "^7.2.0",
+    "lint-staged": "git+https://github.com/bnjjj/lint-staged.git",
     "node-sass": "4.8.3",
     "ts-node": "~4.1.0",
     "tslint": "~5.9.1",

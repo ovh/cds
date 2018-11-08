@@ -191,6 +191,9 @@
             "tsConfig": [
               "src/tsconfig.lint.json"
             ],
+            "files": [
+              "src/**/*.ts"
+            ],
             "exclude": [
               "src/**/*.spec.ts",
               "src/test.ts",
