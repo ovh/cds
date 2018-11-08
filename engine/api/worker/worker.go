@@ -6,10 +6,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
@@ -203,7 +205,7 @@ type TakeForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, hatchery *sdk.Service, binaryCapabilities []string, OS, arch string) (*sdk.Worker, error) {
+func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, modelID int64, hatchery *sdk.Service, binaryCapabilities []string, OS, arch string) (*sdk.Worker, error) {
 	if name == "" {
 		return nil, fmt.Errorf("cannot register worker with empty name")
 	}
@@ -335,13 +337,11 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, hatc
 
 			if len(capaToDelete) > 0 {
 				log.Debug("Updating model %d binary capabilities with %d capabilities to delete", modelID, len(capaToDelete))
-				for _, capa := range capaToDelete {
-					query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=$2 AND argument=$3 AND type=$4`
-					if _, err := db.Exec(query, modelID, capa, capa, string(sdk.BinaryRequirement)); err != nil {
-						//Ignore errors because we let the database to check constraints...
-						log.Warning("registerWorker> Cannot delete from worker_capability: %v", err)
-						return
-					}
+				query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=ANY(string_to_array($2, ',')::text[]) AND argument=ANY(string_to_array($2, ',')::text[]) AND type=$3`
+				if _, err := db.Exec(query, modelID, strings.Join(capaToDelete, ","), string(sdk.BinaryRequirement)); err != nil {
+					//Ignore errors because we let the database to check constraints...
+					log.Warning("registerWorker> Cannot delete from worker_capability: %v", err)
+					return
 				}
 			}
 
@@ -356,11 +356,20 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, hatc
 				log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
 			}
 		}()
-		if err := updateRegistration(db, modelID); err != nil {
+		if err := updateRegistration(tx, modelID); err != nil {
 			log.Warning("registerWorker> Unable updateRegistration: %s", err)
 		}
 	}
-	return w, tx.Commit()
+
+	if err := tx.Commit(); err != nil {
+		return w, err
+	}
+
+	// Useful to let models cache in hatchery refresh
+	keyWorkerModel := keyBookWorkerModel(modelID)
+	store.UpdateTTL(keyWorkerModel, modelsCacheTTLInSeconds+10)
+
+	return w, nil
 }
 
 // SetStatus sets action_build_id and status to building on given worker

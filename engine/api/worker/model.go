@@ -39,7 +39,10 @@ const modelColumns = `
 	worker_model.is_deprecated,
 	"group".name as groupname`
 
-const bookRegisterTTLInSeconds = 360
+const (
+	bookRegisterTTLInSeconds = 360
+	modelsCacheTTLInSeconds  = 30
+)
 
 var defaultEnvs = map[string]string{
 	"CDS_SINGLE_USE":          "1",
@@ -227,7 +230,7 @@ func LoadWorkerModelsByUser(db gorp.SqlExecutor, store cache.Store, user *sdk.Us
 		return nil, sdk.WrapError(err, "LoadWorkerModelsByUser")
 	}
 
-	store.SetWithTTL(key, models, 30)
+	store.SetWithTTL(key, models, modelsCacheTTLInSeconds)
 	return models, nil
 }
 
@@ -262,7 +265,7 @@ func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, store cache.Store, group
 		models = append(models, sdk.Model(ms[i]))
 	}
 
-	store.SetWithTTL(key, models, 30)
+	store.SetWithTTL(key, models, modelsCacheTTLInSeconds)
 
 	return models, nil
 }
