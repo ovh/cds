@@ -19,6 +19,9 @@ import (
 
 // SendEvent Send event on workflow run
 func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
+	if report == nil {
+		return
+	}
 	for _, wr := range report.workflows {
 		event.PublishWorkflowRun(wr, key)
 	}

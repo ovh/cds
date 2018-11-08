@@ -99,6 +99,10 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 
 // ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
 func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, report *ProcessorReport) {
+	if report == nil {
+		return
+	}
+
 	nodeRuns := report.nodes
 	for _, nodeRun := range nodeRuns {
 		if len(nodeRun.Commits) > 0 || nodeRun.ApplicationID == 0 {

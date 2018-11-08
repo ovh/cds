@@ -33,6 +33,9 @@ type ProcessorReport struct {
 
 // WorkflowRuns returns the list of concerned workflow runs
 func (r *ProcessorReport) WorkflowRuns() []sdk.WorkflowRun {
+	if r == nil {
+		return nil
+	}
 	return r.workflows
 }
 

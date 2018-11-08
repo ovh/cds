@@ -551,7 +551,12 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		run.ApplicationID = n.Context.Application.ID
 	}
 
-	runPayload := map[string]string{}
+	var runPayload map[string]string
+	var errPayload error
+	runPayload, errPayload = n.Context.DefaultPayloadToMap()
+	if errPayload != nil {
+		return nil, false, sdk.WrapError(errPayload, "Default payload is malformatted")
+	}
 
 	//If the pipeline has parameter but none are defined on context, use the defaults
 	if len(pip.Parameter) > 0 && len(n.Context.DefaultPipelineParameters) == 0 {
