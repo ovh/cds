@@ -337,7 +337,7 @@ func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, 
 
 			if len(capaToDelete) > 0 {
 				log.Debug("Updating model %d binary capabilities with %d capabilities to delete", modelID, len(capaToDelete))
-				query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=ANY(string_to_array($2, ',')::text[]) AND argument=ANY(string_to_array($2, ',')::text[]) AND type=$3`
+				query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=ANY(string_to_array($2, ',')::text[]) AND type=$3`
 				if _, err := db.Exec(query, modelID, strings.Join(capaToDelete, ","), string(sdk.BinaryRequirement)); err != nil {
 					//Ignore errors because we let the database to check constraints...
 					log.Warning("registerWorker> Cannot delete from worker_capability: %v", err)
