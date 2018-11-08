@@ -88,7 +88,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 			payload := fillPayload(pushEvent)
 			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
 				WorkflowNodeHookUUID: task.UUID,
-				Payload:              sdk.ParametersMapMerge(payloadValues, payload),
+				Payload:              sdk.ParametersMapMerge(payloadValues, payload, true),
 			}
 			i++
 		}
@@ -97,7 +97,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 			payload := fillPayload(pullRequestEvent.Head)
 			hookEvents[i] = sdk.WorkflowNodeRunHookEvent{
 				WorkflowNodeHookUUID: task.UUID,
-				Payload:              sdk.ParametersMapMerge(payloadValues, payload),
+				Payload:              sdk.ParametersMapMerge(payloadValues, payload, true),
 			}
 			i++
 		}

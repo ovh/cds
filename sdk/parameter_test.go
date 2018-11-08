@@ -17,7 +17,7 @@ func TestParameterMapMerge(t *testing.T) {
 		"git.hash": "XXXBIS",
 	}
 
-	res := ParametersMapMerge(original, override)
+	res := ParametersMapMerge(original, override, false)
 	assert.Equal(t, "override", res["test"])
 	assert.Equal(t, "ok", res["default"])
 	assert.Equal(t, "XXX", res["git.hash"])

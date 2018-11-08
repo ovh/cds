@@ -189,10 +189,10 @@ func ParametersMerge(src []Parameter, overwritter []Parameter) []Parameter {
 }
 
 // ParametersMapMerge merges two maps of parameters preserving all git values
-func ParametersMapMerge(params map[string]string, otherParams map[string]string) map[string]string {
+func ParametersMapMerge(params map[string]string, otherParams map[string]string, overrideGitValues bool) map[string]string {
 	for k, overrideValue := range otherParams {
 		if _, ok := params[k]; ok {
-			if !strings.Contains(k, "git.") {
+			if !strings.Contains(k, "git.") || overrideGitValues {
 				params[k] = overrideValue
 			}
 		} else {
