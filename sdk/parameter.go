@@ -177,7 +177,7 @@ func VariablesToParameters(prefix string, variables []Variable) []Parameter {
 	return res
 }
 
-// ParametersMerge merges two slices of parameters preserving all values
+// ParametersMerge merges two slices of parameters
 func ParametersMerge(src []Parameter, overwritter []Parameter) []Parameter {
 	params := make([]Parameter, 0, len(src)+len(overwritter))
 	params = append(params, src...)
@@ -188,21 +188,16 @@ func ParametersMerge(src []Parameter, overwritter []Parameter) []Parameter {
 	return params
 }
 
-// ParametersMapMerge merges two maps of parameters preserving all values
+// ParametersMapMerge merges two maps of parameters preserving all git values
 func ParametersMapMerge(params map[string]string, otherParams map[string]string) map[string]string {
-	for k, v := range otherParams {
-		if val, ok := params[k]; ok {
-			if val != v {
-				if val == "" { // val empty, take v, even if v is empty
-					params[k] = fmt.Sprintf("%s", v)
-				} else { // take val, if v is empty or not
-					params[k] = fmt.Sprintf("%s", val)
-				}
-				continue
+	for k, overrideValue := range otherParams {
+		if _, ok := params[k]; ok {
+			if !strings.Contains(k, "git.") {
+				params[k] = overrideValue
 			}
-			continue
+		} else {
+			params[k] = overrideValue
 		}
-		params[k] = v
 	}
 	return params
 }
