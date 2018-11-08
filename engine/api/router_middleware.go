@@ -142,9 +142,8 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	if rc.Options["needService"] == "true" {
 		if getService(ctx) != nil {
 			return ctx, nil
-		} else {
-			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Need worker")
 		}
+		return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Need worker")
 	}
 
 	if rc.Options["needWorker"] == "true" {
