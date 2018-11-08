@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	zglob "github.com/mattn/go-zglob"
 )
@@ -212,12 +213,24 @@ func (p DebPacker) copyOtherFiles() error {
 		return nil
 	}
 
-	path := filepath.Join(p.outputDirectory, "var", "lib", p.PackageName)
-	if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
+	libPath := filepath.Join(p.outputDirectory, "var", "lib", p.PackageName)
+	if err := os.MkdirAll(libPath, os.FileMode(0755)); err != nil {
 		return err
 	}
 
 	for _, c := range p.CopyFiles {
+		path := libPath
+
+		// check if copy file contains an out dir
+		split := strings.Split(c, ":")
+		if len(split) > 1 {
+			c = split[0]
+			path = filepath.Join(libPath, split[1])
+			if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
+				return err
+			}
+		}
+
 		fmt.Println("searching files", c)
 
 		matches, err := zglob.Glob(c)
