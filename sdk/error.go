@@ -454,7 +454,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowConditionBadOperator.ID:           "Opérateur de condition de lancement incorrect",
 	ErrColorBadFormat.ID:                         "Format de la couleur incorrect. Vous devez utiliser le format hexadécimal (exemple: #FFFF)",
 	ErrInvalidHookConfiguration.ID:               "Configuration de hook invalide",
-	ErrWorkerModelDeploymentFailed.ID:            "Echec de déploiement du modèle de worker",
+	ErrWorkerModelDeploymentFailed.ID:            "Échec de déploiement du modèle de worker",
 }
 
 var errorsLanguages = []map[int]string{
