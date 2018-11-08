@@ -43,6 +43,9 @@ func enablePluginLogger(ctx context.Context, done chan struct{}, sendLog LoggerF
 			shouldExit = true
 		}
 
+		if reader.Buffered() == 0 && shouldExit {
+			return
+		}
 		b, err := reader.ReadByte()
 		if err == io.EOF {
 			if shouldExit {
