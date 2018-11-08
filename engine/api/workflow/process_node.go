@@ -99,6 +99,13 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		return nil, false, sdk.ErrPipelineNotFound
 	}
 
+	var runPayload map[string]string
+	var errPayload error
+	runPayload, errPayload = n.Context.DefaultPayloadToMap()
+	if errPayload != nil {
+		return nil, false, sdk.WrapError(errPayload, "Default payload is malformatted")
+	}
+
 	// For node with pipeline
 	var stages []sdk.Stage
 	if n.Context.PipelineID > 0 {
@@ -137,8 +144,6 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if n.Context.ApplicationID != 0 {
 		run.ApplicationID = n.Context.ApplicationID
 	}
-
-	runPayload := map[string]string{}
 
 	parentsIDs := make([]int64, len(parents))
 	for i := range parents {
