@@ -55,22 +55,23 @@ func (bot *botClient) born() {
 	bot.creation = time.Now().UTC()
 	rand.Seed(time.Now().Unix())
 
-	if viper.GetString("admin_conference") != "" {
-		conferences = append(conferences, viper.GetString("admin_conference"))
-	}
-
 	bot.chats = make(chan xmpp.Chat)
 	go bot.sendToXMPP()
 
 	bot.helloWorld()
 
 	go bot.receive()
-	go do()
 
 	for {
-		sendInitialPresence(bot.XMPPClient)
+		if err := sendInitialPresence(bot.XMPPClient); err != nil {
+			log.Errorf("born - sendInitialPresence >> error: %v", err)
+			bot.reconnectXMPPClient()
+		}
 		time.Sleep(10 * time.Second)
-		bot.sendPresencesOnConfs()
+
+		if err := bot.sendPresencesOnConfs(); err != nil {
+			log.Errorf("born - sendPresencesOnConfs >> error: %v", err)
+		}
 		time.Sleep(20 * time.Second)
 	}
 }
@@ -163,17 +164,14 @@ func (bot *botClient) receive() {
 		if err != nil {
 			if !strings.Contains(err.Error(), "EOF") {
 				log.Errorf("receive >> err: %s", err)
-
-				log.Warn("We will try to get a new XMPP client now to fix this error")
-				newXMPPClient, errGetNewXMPPClient := getNewXMPPClient()
-				if errGetNewXMPPClient != nil {
-					log.Errorf("XMPP Client renewal >> error with getNewXMPPClient errGetNewXMPPClient:%s", errGetNewXMPPClient)
-				} else {
-					log.Info("Reconnection successful, replace the old client with the new one")
-					bot.XMPPClient = newXMPPClient
-				}
-
-				// In any case, wait 10 seconds between each retry to avoid spamming logs and connection retries
+				bot.reconnectXMPPClient()
+			} else {
+				// FIXME: This log (and the else block) are here to troubleshoot potential connexion problems
+				// If this log here shows that we can have connection problems not handled by the code below,
+				// we will need to apply the same fix as below to renew the XMPP client
+				// Else, we will be able to remove this log securely
+				// Until then, keep it here to troubleshoot potential connection problems
+				log.Errorf("receive >> err WITH EOF: %v", err)
 				time.Sleep(waitTimeOnError)
 			}
 		}
@@ -232,4 +230,18 @@ func (bot *botClient) receiveMsg(chat xmpp.Chat) {
 		bot.answer(chat)
 	}
 
+}
+
+func (bot *botClient) reconnectXMPPClient() {
+	log.Warn("We will try to get a new XMPP client now to fix this error")
+	newXMPPClient, err := getNewXMPPClient()
+	if err != nil {
+		log.Errorf("XMPP Client renewal >> error with getNewXMPPClient err:%s", err)
+	} else {
+		log.Info("Reconnection successful, replace the old client with the new one")
+		bot.XMPPClient = newXMPPClient
+	}
+
+	// Wait 10 seconds between each retry after an error to avoid spamming logs and connection retries
+	time.Sleep(waitTimeOnError)
 }
