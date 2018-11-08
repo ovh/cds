@@ -417,7 +417,20 @@ func (h *HatcheryOpenstack) deleteServer(s servers.Server) error {
 		if err != nil {
 			log.Error("killAndRemove> unable to get model from registering server %s", s.Name)
 		} else {
-			hatchery.CheckWorkerModelRegister(h, modelID)
+			//Send registering logs....
+			consoleLog, err := h.getConsoleLog(s)
+			if err != nil {
+				log.Error("killAndRemove> unable to get console log from registering server %s: %v", s.Name, err)
+			}
+			if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
+				var spawnErr = sdk.SpawnErrorForm{
+					Error: err.Error(),
+					Logs:  []byte(consoleLog),
+				}
+				if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
+					log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, spawnErr)
+				}
+			}
 		}
 	}
 

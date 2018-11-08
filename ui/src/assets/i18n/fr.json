@@ -814,6 +814,7 @@
   "worker_model_enable": "Activer",
   "worker_model_enabled": "Ce modèle de worker est activé",
   "worker_model_error": "Ce modèle de worker est en erreur. En sauvegardant, les erreurs seront supprimées.",
+  "worker_model_error_log": "Sortie console",
   "worker_model_deleted": "Modèle de worker supprimé",
   "worker_model_description": "Description",
   "worker_model_is_deprecated": "Modèle de worker déprécié",

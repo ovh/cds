@@ -1,4 +1,7 @@
 @import '../../../../../common';
+
+$squareSize: 32px;
+
 .ui.input {
   position: inherit;
 }
@@ -16,5 +19,25 @@
 
   h4.ui.header {
     text-align: center;
+  }
+
+  .content {
+    overflow: auto;
+  }
+
+  .logs {
+    background-color: #222;
+    color: white;
+    clear: both;
+    padding: 10px $squareSize 10px $squareSize;
+
+    pre {
+      font-size: 0.8em;
+      line-height: 1.1em;
+      max-height: 300px;
+      overflow-y: auto;
+      overflow-x: auto;
+
+    }
   }
 }

@@ -34,6 +34,7 @@ const modelColumns = `
 	worker_model.restricted,
 	worker_model.user_last_modified,
 	worker_model.last_spawn_err,
+	worker_model.last_spawn_err_log,
 	worker_model.nb_spawn_err,
 	worker_model.date_last_spawn_err,
 	worker_model.is_deprecated,
@@ -86,6 +87,7 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 	model.NeedRegistration = true
 	model.NbSpawnErr = 0
 	model.LastSpawnErr = ""
+	model.LastSpawnErrLogs = nil
 	dbmodel := WorkerModel(*model)
 	if _, err := db.Update(&dbmodel); err != nil {
 		return err
@@ -100,6 +102,7 @@ func UpdateWorkerModelWithoutRegistration(db gorp.SqlExecutor, model sdk.Model) 
 	model.NeedRegistration = false
 	model.NbSpawnErr = 0
 	model.LastSpawnErr = ""
+	model.LastSpawnErrLogs = nil
 	dbmodel := WorkerModel(model)
 	if _, err := db.Update(&dbmodel); err != nil {
 		return err
@@ -171,6 +174,7 @@ func LoadAndLockWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, erro
 		worker_model.restricted,
 		worker_model.user_last_modified,
 		worker_model.last_spawn_err,
+		worker_model.last_spawn_err_log,
 		worker_model.nb_spawn_err,
 		worker_model.date_last_spawn_err,
 		worker_model.is_deprecated,
@@ -414,25 +418,27 @@ func updateAllToCheckRegistration(db gorp.SqlExecutor) error {
 }
 
 // UpdateSpawnErrorWorkerModel updates worker model error registration
-func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, info string) error {
-	query := `UPDATE worker_model SET nb_spawn_err=nb_spawn_err+1, last_spawn_err=$1, date_last_spawn_err=$2 WHERE id = $3`
-	res, err := db.Exec(query, info, time.Now(), modelID)
+func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, spawnError sdk.SpawnErrorForm) error {
+	query := `UPDATE worker_model SET nb_spawn_err=nb_spawn_err+1, last_spawn_err=$3, last_spawn_err_log=$4, date_last_spawn_err=$2 WHERE id = $1`
+	res, err := db.Exec(query, modelID, time.Now(), spawnError.Error, spawnError.Logs)
 	if err != nil {
 		return sdk.WithStack(err)
 	}
 
-	rows, err := res.RowsAffected()
+	n, err := res.RowsAffected()
 	if err != nil {
 		return sdk.WithStack(err)
 	}
-	log.Debug("UpdateSpawnErrorWorkerModel> %d worker model updated", rows)
+	if n == 0 {
+		return sdk.ErrNoWorkerModel
+	}
 	return nil
 }
 
 // updateRegistration updates need_registration to false and last_registration time, reset err registration
 func updateRegistration(db gorp.SqlExecutor, modelID int64) error {
-	query := `UPDATE worker_model SET need_registration=$1, check_registration=$1, last_registration = $2, nb_spawn_err=$3, last_spawn_err=$4 WHERE id = $5`
-	res, err := db.Exec(query, false, time.Now(), 0, "", modelID)
+	query := `UPDATE worker_model SET need_registration=false, check_registration=false, last_registration = $2, nb_spawn_err=0, last_spawn_err=NULL, last_spawn_err_log=NULL WHERE id = $1`
+	res, err := db.Exec(query, modelID, time.Now())
 	if err != nil {
 		return sdk.WithStack(err)
 	}

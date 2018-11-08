@@ -160,6 +160,7 @@ var (
 	ErrWorkflowConditionBadOperator           = Error{ID: 143, Status: http.StatusBadRequest}
 	ErrColorBadFormat                         = Error{ID: 144, Status: http.StatusBadRequest}
 	ErrInvalidHookConfiguration               = Error{ID: 145, Status: http.StatusBadRequest}
+	ErrWorkerModelDeploymentFailed            = Error{ID: 146, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -306,6 +307,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowConditionBadOperator.ID:           "Your run conditions have bad operator",
 	ErrColorBadFormat.ID:                         "The format of color isn't correct. You must use hexadecimal format (example: #FFFF)",
 	ErrInvalidHookConfiguration.ID:               "Invalid hook configuration",
+	ErrWorkerModelDeploymentFailed.ID:            "Worker deployment failed",
 }
 
 var errorsFrench = map[int]string{
@@ -452,6 +454,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowConditionBadOperator.ID:           "Opérateur de condition de lancement incorrect",
 	ErrColorBadFormat.ID:                         "Format de la couleur incorrect. Vous devez utiliser le format hexadécimal (exemple: #FFFF)",
 	ErrInvalidHookConfiguration.ID:               "Configuration de hook invalide",
+	ErrWorkerModelDeploymentFailed.ID:            "Echec de déploiement du modèle de worker",
 }
 
 var errorsLanguages = []map[int]string{

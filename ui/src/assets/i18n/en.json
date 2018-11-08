@@ -824,6 +824,7 @@
   "worker_model_spawn_error_tooltip": "Model in error",
   "worker_model_enabled": "This worker model is enabled",
   "worker_model_error": "This worker model is in error. You can reset error by saving it.",
+  "worker_model_error_log": "Console output",
   "worker_model_group": "Group",
   "worker_model_help_capabilities": "Binaries automatically discovered by CDS when a worker model is starting. If your instance of CDS uses an Hatchery, all worker models are scheduled to be registered.",
   "worker_model_help_line_1": "The goal of CDS is to start a worker when you need it, which should match all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model.",

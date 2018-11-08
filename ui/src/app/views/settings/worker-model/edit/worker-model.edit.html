@@ -70,12 +70,12 @@
                 <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=false;clickSaveButton()">{{ 'worker_model_enable' | translate }}</button>
               </div>
               <div class="ui icon message" *ngIf="workerModel.nb_spawn_err > 0">
-                <i class="warning red icon"></i>
+                <i class="exclamation triangle icon large red"></i>
                 <div class="content">
-                  <p>{{ 'worker_model_error' | translate }}</p>
+                  <h3>{{ 'worker_model_error' | translate }}</h3>
                   <p>{{workerModel.last_spawn_err}}</p>
                   <div>
-                    <i class="fa fa-question-circle"></i> {{'worker_model_help_error' | translate}}
+                    <h4>{{'worker_model_help_error' | translate}}</h4>
                     <div class="ui list">
                       <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_1' | translate}}</div>
                       <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_2' | translate}}</div>
@@ -85,6 +85,10 @@
                       <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_2' | translate}}</div>
                     </div>
                   </div>
+                    <h4>{{ 'worker_model_error_log' | translate }}</h4>
+                    <div class="logs" *ngIf="workerModel.last_spawn_err_log">
+                        <pre>{{workerModel.last_spawn_err_log}}</pre>
+                    </div>
                 </div>
               </div>
             </div>

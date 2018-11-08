@@ -79,7 +79,7 @@ func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) er
 }
 
 // CheckWorkerModelRegister checks if a model has been registered, if not it raises an error on the API
-func CheckWorkerModelRegister(h Interface, modelID int64) {
+func CheckWorkerModelRegister(h Interface, modelID int64) error {
 	var sendError bool
 	var m *sdk.Model
 	for i := range models {
@@ -92,8 +92,7 @@ func CheckWorkerModelRegister(h Interface, modelID int64) {
 		}
 	}
 	if m != nil && sendError {
-		if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("worker model deployment failed")); err != nil {
-			log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
-		}
+		return sdk.ErrWorkerModelDeploymentFailed
 	}
+	return nil
 }
