@@ -55,22 +55,23 @@ func (bot *botClient) born() {
 	bot.creation = time.Now().UTC()
 	rand.Seed(time.Now().Unix())
 
-	if viper.GetString("admin_conference") != "" {
-		conferences = append(conferences, viper.GetString("admin_conference"))
-	}
-
 	bot.chats = make(chan xmpp.Chat)
 	go bot.sendToXMPP()
 
 	bot.helloWorld()
 
 	go bot.receive()
-	go do()
 
 	for {
-		sendInitialPresence(bot.XMPPClient)
+		if err := sendInitialPresence(bot.XMPPClient); err != nil {
+			log.Errorf("born - sendInitialPresence >> error: %v", err)
+			bot.reconnectXMPPClient()
+		}
 		time.Sleep(10 * time.Second)
-		bot.sendPresencesOnConfs()
+
+		if err := bot.sendPresencesOnConfs(); err != nil {
+			log.Errorf("born - sendPresencesOnConfs >> error: %v", err)
+		}
 		time.Sleep(20 * time.Second)
 	}
 }
