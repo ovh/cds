@@ -970,41 +970,43 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
 	}
 
-	// Fill empty node type
-	w.AssignEmptyType()
-	if err := w.ValidateType(); err != nil {
-		return err
-	}
-
-	nodesArray := w.WorkflowData.Array()
-	for i := range nodesArray {
-		n := nodesArray[i]
-		if n.Context == nil {
-			continue
-		}
-
-		if err := checkPipeline(ctx, db, proj, w, n); err != nil {
-			return err
-		}
-		if err := checkApplication(store, db, proj, w, n, u); err != nil {
-			return err
-		}
-		if err := checkEnvironment(db, proj, w, n); err != nil {
-			return err
-		}
-		if err := checkProjectPlatform(proj, w, n); err != nil {
-			return err
-		}
-		if err := checkHooks(db, w, n); err != nil {
-			return err
-		}
-		if err := checkOutGoingHook(db, w, n); err != nil {
+	if w.WorkflowData != nil {
+		// Fill empty node type
+		w.AssignEmptyType()
+		if err := w.ValidateType(); err != nil {
 			return err
 		}
 
-		if n.Context.ApplicationID != 0 && n.Context.ProjectPlatformID != 0 {
-			if err := n.CheckApplicationDeploymentStrategies(proj, w); err != nil {
-				return sdk.NewError(sdk.ErrWorkflowInvalid, err)
+		nodesArray := w.WorkflowData.Array()
+		for i := range nodesArray {
+			n := nodesArray[i]
+			if n.Context == nil {
+				continue
+			}
+
+			if err := checkPipeline(ctx, db, proj, w, n); err != nil {
+				return err
+			}
+			if err := checkApplication(store, db, proj, w, n, u); err != nil {
+				return err
+			}
+			if err := checkEnvironment(db, proj, w, n); err != nil {
+				return err
+			}
+			if err := checkProjectPlatform(proj, w, n); err != nil {
+				return err
+			}
+			if err := checkHooks(db, w, n); err != nil {
+				return err
+			}
+			if err := checkOutGoingHook(db, w, n); err != nil {
+				return err
+			}
+
+			if n.Context.ApplicationID != 0 && n.Context.ProjectPlatformID != 0 {
+				if err := n.CheckApplicationDeploymentStrategies(proj, w); err != nil {
+					return sdk.NewError(sdk.ErrWorkflowInvalid, err)
+				}
 			}
 		}
 	}
