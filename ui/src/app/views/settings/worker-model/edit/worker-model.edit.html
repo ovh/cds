@@ -85,7 +85,7 @@
                       <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_2' | translate}}</div>
                     </div>
                   </div>
-                    <h4>{{ 'worker_model_error_log' | translate }}</h4>
+                    <h4 *ngIf="workerModel.last_spawn_err_log">{{ 'worker_model_error_log' | translate }}</h4>
                     <div class="logs" *ngIf="workerModel.last_spawn_err_log">
                         <pre>{{workerModel.last_spawn_err_log}}</pre>
                     </div>
