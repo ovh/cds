@@ -8,13 +8,6 @@
          [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
          [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
     ></div>
-    <div class="content">
-        <ng-container *ngIf="node.id.toString() === node.name">
-            join
-        </ng-container>
-        <ng-container *ngIf="node.id.toString() !== node.name">
-            {{node.name}}
-        </ng-container>
-    </div>
+    <div class="content">join</div>
 </div>
 
