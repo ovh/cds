@@ -1494,6 +1494,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, u, wf); err != nil {
 					return nil, nil, sdk.WrapError(err, "Unable to get default payload")
 				}
+				wf.WorkflowData.Node.Context.DefaultPayload = wf.Root.Context.DefaultPayload
 			}
 
 			if wf.Root.Context.Application != nil {

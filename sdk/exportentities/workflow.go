@@ -70,7 +70,32 @@ const (
 func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 	entry := NodeEntry{}
 
-	ancestors := w.WorkflowData.AncestorsNames(n)
+	ancestors := []string{}
+
+	nodes := w.WorkflowData.Array()
+	for _, node := range nodes {
+		if n.Name == node.Name {
+			continue
+		}
+		for _, t := range node.Triggers {
+			if t.ChildNode.Name == n.Name {
+
+				if node.Type == sdk.NodeTypeJoin {
+					for _, jp := range node.JoinContext {
+						parentNode := w.WorkflowData.NodeByRef(jp.ParentName)
+						if parentNode == nil {
+							return entry, sdk.WithStack(sdk.ErrWorkflowNodeNotFound)
+						}
+						if parentNode != nil {
+							ancestors = append(ancestors, parentNode.Name)
+						}
+					}
+				} else {
+					ancestors = append(ancestors, node.Name)
+				}
+			}
+		}
+	}
 
 	sort.Strings(ancestors)
 	entry.DependsOn = ancestors
