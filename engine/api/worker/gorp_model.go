@@ -86,7 +86,7 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 
 	query := "select * from worker_capability where worker_model_id = $1"
 	if _, err := s.Select(&capabilities, query, m.ID); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	m.RegisteredCapabilities = make(sdk.RequirementList, len(capabilities))
@@ -103,7 +103,7 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	var createdBy, model, registeredOS, registeredArch sql.NullString
 	err := s.QueryRow("select created_by, model, registered_os, registered_arch from worker_model where id = $1", m.ID).Scan(&createdBy, &model, &registeredOS, &registeredArch)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "unable to load created_by, model, registered_os, registered_arch")
 	}
 
 	if registeredOS.Valid {
@@ -126,7 +126,7 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	}
 
 	if err := gorpmapping.JSONNullString(createdBy, &m.CreatedBy); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	m.CreatedBy.Groups = nil
