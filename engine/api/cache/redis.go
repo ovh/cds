@@ -112,7 +112,27 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 		}
 		time.Sleep(retryWaitDuration)
 	}
-	if err != nil {
+	if errRedis != nil {
+		log.Error("redis> set error %s: %v", key, errRedis)
+	}
+}
+
+//UpdateTTL update the ttl linked to the key
+func (s *RedisStore) UpdateTTL(key string, ttl int) {
+	if s.Client == nil {
+		log.Error("redis> cannot get redis client")
+		return
+	}
+
+	var errRedis error
+	for i := 0; i < 3; i++ {
+		errRedis = s.Client.Expire(key, time.Duration(ttl)*time.Second).Err()
+		if errRedis == nil {
+			break
+		}
+		time.Sleep(retryWaitDuration)
+	}
+	if errRedis != nil {
 		log.Error("redis> set error %s: %v", key, errRedis)
 	}
 }
