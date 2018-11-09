@@ -5,4 +5,4 @@ application: ITSCWRKFLW2-APPLICATION
 payload:
   git.branch: master
   test: ok
-  uknown: hereisatest
+  unknown: hereisatest
