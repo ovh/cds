@@ -338,9 +338,9 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoProject
+			return nil, sdk.WithStack(sdk.ErrNoProject)
 		}
-		return nil, sdk.WrapError(err, "db.Select")
+		return nil, sdk.WithStack(err)
 	}
 
 	projs := make([]sdk.Project, 0, len(res))

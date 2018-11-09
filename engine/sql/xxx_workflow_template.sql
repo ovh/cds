@@ -39,8 +39,22 @@ CREATE TABLE IF NOT EXISTS workflow_template_audit (
 
 SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TEMPLATE_AUDIT', 'workflow_template_audit', 'workflow_template', 'workflow_template_id', 'id');
 
+CREATE TABLE IF NOT EXISTS workflow_template_instance_audit (
+  id BIGSERIAL PRIMARY KEY,
+  triggered_by VARCHAR(100),
+  created TIMESTAMP WITH TIME ZONE,
+  data_before TEXT,
+  data_after TEXT,
+  event_type VARCHAR(100),
+  data_type VARCHAR(20),
+  workflow_template_instance_id BIGINT
+);
+
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TEMPLATE_INSTANCE_AUDIT', 'workflow_template_instance_audit', 'workflow_template_instance', 'workflow_template_instance_id', 'id');
+
 -- +migrate Down
 
+DROP TABLE IF EXISTS workflow_template_instance_audit;
 DROP TABLE IF EXISTS workflow_template_audit;
 DROP TABLE IF EXISTS workflow_template_instance;
 DROP TABLE IF EXISTS workflow_template;

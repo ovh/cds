@@ -146,7 +146,7 @@ func (w *WorkflowTemplate) Update(data WorkflowTemplate) {
 // WorkflowTemplatesToIDs returns ids of given workflow templates.
 func WorkflowTemplatesToIDs(wts []*WorkflowTemplate) []int64 {
 	ids := make([]int64, len(wts))
-	for i := 0; i < len(wts); i++ {
+	for i := range wts {
 		ids[i] = wts[i].ID
 	}
 	return ids
@@ -155,7 +155,7 @@ func WorkflowTemplatesToIDs(wts []*WorkflowTemplate) []int64 {
 // WorkflowTemplatesToGroupIDs returns group ids of given workflow templates.
 func WorkflowTemplatesToGroupIDs(wts []*WorkflowTemplate) []int64 {
 	ids := make([]int64, len(wts))
-	for i := 0; i < len(wts); i++ {
+	for i := range wts {
 		ids[i] = wts[i].GroupID
 	}
 	return ids
@@ -315,5 +315,27 @@ type WorkflowTemplateInstance struct {
 	WorkflowTemplateVersion int64                   `json:"workflow_template_version" db:"workflow_template_version"`
 	Request                 WorkflowTemplateRequest `json:"request" db:"request"`
 	// aggregates
-	Template *WorkflowTemplate `json:"template,omitempty" db:"-"`
+	FirstAudit *AuditWorkflowTemplateInstance `json:"first_audit,omitempty" db:"-"`
+	LastAudit  *AuditWorkflowTemplateInstance `json:"last_audit,omitempty" db:"-"`
+	Template   *WorkflowTemplate              `json:"template,omitempty" db:"-"`
+	Project    *Project                       `json:"project,omitempty" db:"-"`
+	Workflow   *Workflow                      `json:"workflow,omitempty" db:"-"`
+}
+
+// WorkflowTemplateInstancesToIDs returns ids of given workflow template instances.
+func WorkflowTemplateInstancesToIDs(wtis []*WorkflowTemplateInstance) []int64 {
+	ids := make([]int64, len(wtis))
+	for i := range wtis {
+		ids[i] = wtis[i].ID
+	}
+	return ids
+}
+
+// WorkflowTemplateInstancesToWorkflowIDs returns workflow ids of given workflow template instances.
+func WorkflowTemplateInstancesToWorkflowIDs(wtis []*WorkflowTemplateInstance) []int64 {
+	ids := make([]int64, len(wtis))
+	for i := range wtis {
+		ids[i] = wtis[i].WorkflowID
+	}
+	return ids
 }

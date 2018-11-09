@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -152,8 +153,18 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 	if err := workflowtemplate.DeleteInstanceNotIDAndWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
 		return err
 	}
+
+	old := sdk.WorkflowTemplateInstance(*wTemplateInstance)
+
 	// set the workflow id on target instance
-	return workflowtemplate.UpdateInstanceWorkflowID(db, wTemplateInstance.ID, w.ID)
+	wTemplateInstance.WorkflowID = w.ID
+	if err := workflowtemplate.UpdateInstance(db, wTemplateInstance); err != nil {
+		return err
+	}
+
+	event.PublishWorkflowTemplateInstanceUpdate(old, *wTemplateInstance, u)
+
+	return nil
 }
 
 func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {

@@ -30,6 +30,17 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// GetAll returns all workflows for given criteria.
+func GetAll(db gorp.SqlExecutor, c Criteria) ([]sdk.Workflow, error) {
+	ws := []sdk.Workflow{}
+
+	if _, err := db.Select(&ws, fmt.Sprintf(`SELECT * FROM workflow WHERE %s`, c.where()), c.args()); err != nil {
+		return nil, sdk.WrapError(err, "Cannot get workflows")
+	}
+
+	return ws, nil
+}
+
 // LoadOptions custom option for loading workflow
 type LoadOptions struct {
 	DeepPipeline  bool

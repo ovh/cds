@@ -64,15 +64,15 @@ func (w Template) GetTemplate(wkf []byte, pips, apps, envs [][]byte) sdk.Workflo
 		})
 	}
 
-	for i := 0; i < len(pips); i++ {
+	for i := range pips {
 		wt.Pipelines[i].Value = base64.StdEncoding.EncodeToString(pips[i])
 	}
 
-	for i := 0; i < len(apps); i++ {
+	for i := range apps {
 		wt.Applications[i].Value = base64.StdEncoding.EncodeToString(apps[i])
 	}
 
-	for i := 0; i < len(envs); i++ {
+	for i := range envs {
 		wt.Environments[i].Value = base64.StdEncoding.EncodeToString(envs[i])
 	}
 

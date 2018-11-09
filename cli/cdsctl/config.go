@@ -295,7 +295,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				}
 			} else if len(project.Applications) > 1 {
 				opts := make([]string, len(project.Applications))
-				for i := 0; i < len(project.Applications); i++ {
+				for i := range project.Applications {
 					opts[i] = project.Applications[i].Name
 				}
 				if mctx[_ApplicationName].AllowEmpty {
@@ -329,7 +329,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				}
 			} else if len(project.Workflows) > 1 {
 				opts := make([]string, len(project.Workflows))
-				for i := 0; i < len(project.Workflows); i++ {
+				for i := range project.Workflows {
 					opts[i] = project.Workflows[i].Name
 				}
 				if mctx[_WorkflowName].AllowEmpty {

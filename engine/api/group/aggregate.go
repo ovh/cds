@@ -14,7 +14,7 @@ func AggregateOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.WorkflowTempla
 	}
 
 	m := make(map[int64]sdk.Group, len(gs))
-	for i := 0; i < len(gs); i++ {
+	for i := range gs {
 		m[gs[i].ID] = gs[i]
 	}
 

@@ -36,8 +36,14 @@ type Audit interface {
 	Compute(db gorp.SqlExecutor, e Event) error
 }
 
-// AuditWorkflowTemplate respresents an audit data on a workflow template.
+// AuditWorkflowTemplate represents an audit data on a workflow template.
 type AuditWorkflowTemplate struct {
 	AuditCommon
 	WorkflowTemplateID int64 `json:"workflow_template_id" db:"workflow_template_id"`
+}
+
+// AuditWorkflowTemplateInstance represents an audit data on a workflow template instance.
+type AuditWorkflowTemplateInstance struct {
+	AuditCommon
+	WorkflowTemplateInstanceID int64 `json:"workflow_template_instance_id" db:"workflow_template_instance_id"`
 }

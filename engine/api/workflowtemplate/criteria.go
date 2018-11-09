@@ -152,3 +152,45 @@ func (c CriteriaAudit) args() interface{} {
 		"workflowTemplateIDs": gorpmapping.IDsToQueryString(c.workflowTemplateIDs),
 	}
 }
+
+func NewCriteriaInstanceAudit() CriteriaInstanceAudit { return CriteriaInstanceAudit{} }
+
+type CriteriaInstanceAudit struct {
+	workflowTemplateInstanceIDs []int64
+	eventTypes                  []string
+}
+
+func (c CriteriaInstanceAudit) EventTypes(ets ...string) CriteriaInstanceAudit {
+	c.eventTypes = ets
+	return c
+}
+
+func (c CriteriaInstanceAudit) WorkflowTemplateInstanceIDs(ids ...int64) CriteriaInstanceAudit {
+	c.workflowTemplateInstanceIDs = ids
+	return c
+}
+
+func (c CriteriaInstanceAudit) where() string {
+	var reqs []string
+
+	if c.eventTypes != nil {
+		reqs = append(reqs, "event_type = ANY(string_to_array(:eventTypes, ',')::text[])")
+	}
+
+	if c.workflowTemplateInstanceIDs != nil {
+		reqs = append(reqs, "workflow_template_instance_id = ANY(string_to_array(:workflowTemplateInstanceIDs, ',')::int[])")
+	}
+
+	if len(reqs) == 0 {
+		return "false"
+	}
+
+	return gorpmapping.And(reqs...)
+}
+
+func (c CriteriaInstanceAudit) args() interface{} {
+	return map[string]interface{}{
+		"eventTypes":                  strings.Join(c.eventTypes, ","),
+		"workflowTemplateInstanceIDs": gorpmapping.IDsToQueryString(c.workflowTemplateInstanceIDs),
+	}
+}

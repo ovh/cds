@@ -105,7 +105,7 @@ func Convert(source string) string {
 	diacriticsMap := map[rune]string{}
 
 	for base, letters := range defaultDiacriticsRemovalMap {
-		for i := 0; i < len(letters); i++ {
+		for i := range letters {
 			runeValue, _ := utf8.DecodeRuneInString(letters[i])
 			diacriticsMap[runeValue] = base
 		}

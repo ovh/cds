@@ -32,3 +32,31 @@ func AggregateAuditsOnWorkflowTemplate(db *gorp.DbMap, wts ...*sdk.WorkflowTempl
 
 	return nil
 }
+
+// AggregateAuditsOnWorkflowTemplateInstance set audits for each workflow template instance.
+func AggregateAuditsOnWorkflowTemplateInstance(db *gorp.DbMap, wtis ...*sdk.WorkflowTemplateInstance) error {
+	as, err := GetInstanceAudits(db, NewCriteriaInstanceAudit().
+		WorkflowTemplateInstanceIDs(sdk.WorkflowTemplateInstancesToIDs(wtis)...).
+		EventTypes("WorkflowTemplateInstanceAdd", "WorkflowTemplateInstanceUpdate"))
+	if err != nil {
+		return err
+	}
+
+	m := map[int64][]*sdk.AuditWorkflowTemplateInstance{}
+	for _, a := range as {
+		if _, ok := m[a.WorkflowTemplateInstanceID]; !ok {
+			m[a.WorkflowTemplateInstanceID] = []*sdk.AuditWorkflowTemplateInstance{}
+		}
+		m[a.WorkflowTemplateInstanceID] = append(m[a.WorkflowTemplateInstanceID], a)
+	}
+
+	// assume that audits are sorted by creation date with GetInstanceAudits
+	for _, wti := range wtis {
+		if as, ok := m[wti.ID]; ok {
+			wti.FirstAudit = as[0]
+			wti.LastAudit = as[len(as)-1]
+		}
+	}
+
+	return nil
+}

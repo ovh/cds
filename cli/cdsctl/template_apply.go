@@ -105,7 +105,7 @@ func suggestTemplate() (*sdk.WorkflowTemplate, error) {
 		return nil, err
 	}
 	opts := make([]string, len(wts))
-	for i := 0; i < len(wts); i++ {
+	for i := range wts {
 		opts[i] = fmt.Sprintf("%s (%s/%s) - %s", wts[i].Name, wts[i].Group.Name, wts[i].Slug, wts[i].Description)
 	}
 	selected := cli.MultiChoice("Choose the CDS template to apply:", opts...)

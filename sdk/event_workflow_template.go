@@ -11,7 +11,13 @@ type EventWorkflowTemplateUpdate struct {
 	OldWorkflowTemplate WorkflowTemplate `json:"old_workflow_template"`
 }
 
-// EventWorkflowTemplateDelete represents the event when deleting a workflow template.
-type EventWorkflowTemplateDelete struct {
-	WorkflowTemplate WorkflowTemplate `json:"workflow_template"`
+// EventWorkflowTemplateInstanceAdd represents the event when adding a workflow template instance.
+type EventWorkflowTemplateInstanceAdd struct {
+	WorkflowTemplateInstance WorkflowTemplateInstance `json:"workflow_template_instance"`
+}
+
+// EventWorkflowTemplateInstanceUpdate represents the event when updating a workflow template instance.
+type EventWorkflowTemplateInstanceUpdate struct {
+	NewWorkflowTemplateInstance WorkflowTemplateInstance `json:"new_workflow_template_instance"`
+	OldWorkflowTemplateInstance WorkflowTemplateInstance `json:"old_workflow_template_instance"`
 }

@@ -89,12 +89,6 @@ func DeleteInstancesForWorkflowTemplateID(db gorp.SqlExecutor, workflowTemplateI
 	return sdk.WrapError(err, "Unable to remove all instances for workflow template %d", workflowTemplateID)
 }
 
-// UpdateInstanceWorkflowID updates the workflow id of given instance by id.
-func UpdateInstanceWorkflowID(db gorp.SqlExecutor, id, workflowID int64) error {
-	_, err := db.Exec("UPDATE workflow_template_instance SET workflow_id= $1 WHERE id = $2", workflowID, id)
-	return sdk.WrapError(err, "Unable to update instance %d", id)
-}
-
 // GetInstances returns all workflow template instances for given criteria.
 func GetInstances(db gorp.SqlExecutor, c CriteriaInstance) ([]*sdk.WorkflowTemplateInstance, error) {
 	wtis := []*sdk.WorkflowTemplateInstance{}
@@ -118,4 +112,20 @@ func GetInstance(db gorp.SqlExecutor, c CriteriaInstance) (*sdk.WorkflowTemplate
 	}
 
 	return &wti, nil
+}
+
+// InsertInstanceAudit for workflow template instance in database.
+func InsertInstanceAudit(db gorp.SqlExecutor, awti *sdk.AuditWorkflowTemplateInstance) error {
+	return sdk.WrapError(gorpmapping.Insert(db, awti), "Unable to insert audit for workflow template instance %d", awti.WorkflowTemplateInstanceID)
+}
+
+// GetInstanceAudits returns all workflow template instance audits for given criteria.
+func GetInstanceAudits(db gorp.SqlExecutor, c CriteriaInstanceAudit) ([]*sdk.AuditWorkflowTemplateInstance, error) {
+	awtis := []*sdk.AuditWorkflowTemplateInstance{}
+
+	if _, err := db.Select(&awtis, fmt.Sprintf("SELECT * FROM workflow_template_instance_audit WHERE %s ORDER BY created ASC", c.where()), c.args()); err != nil {
+		return nil, sdk.WrapError(err, "Cannot get workflow template instance audits")
+	}
+
+	return awtis, nil
 }

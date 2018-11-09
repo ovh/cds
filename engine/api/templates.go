@@ -28,7 +28,6 @@ const (
 	contextWorkflowTemplate contextKey = iota
 )
 
-// TODO create real middleware
 func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) (context.Context, error) {
 		// try to get template for given id or path that match user's groups with/without admin grants
@@ -58,7 +57,7 @@ func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w h
 		}
 
 		if groupName != "" {
-			for i := 0; i < len(gs); i++ {
+			for i := range gs {
 				if gs[i].Name == groupName {
 					gs = []sdk.Group{gs[i]}
 					break
@@ -274,8 +273,6 @@ func (api *API) deleteTemplateHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishWorkflowTemplateDelete(*wt, getUser(ctx))
-
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
@@ -352,12 +349,14 @@ func (api *API) applyTemplateHandler() service.Handler {
 
 		// if a previous instance exist for the same workflow update it, else create a new one
 		if wti != nil {
+			old := sdk.WorkflowTemplateInstance(*wti)
 			req.WorkflowSlug = wti.Request.WorkflowSlug
 			wti.WorkflowTemplateVersion = wt.Version
 			wti.Request = req
 			if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
 				return err
 			}
+			event.PublishWorkflowTemplateInstanceUpdate(old, *wti, u)
 		} else {
 			wti = &sdk.WorkflowTemplateInstance{
 				ProjectID:               p.ID,
@@ -368,6 +367,7 @@ func (api *API) applyTemplateHandler() service.Handler {
 			if err := workflowtemplate.InsertInstance(tx, wti); err != nil {
 				return err
 			}
+			event.PublishWorkflowTemplateInstanceAdd(*wti, u)
 		}
 
 		// execute template with request
@@ -397,8 +397,31 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		}
 		t := getWorkflowTemplate(ctx)
 
-		is, err := workflowtemplate.GetInstances(api.mustDB(), workflowtemplate.NewCriteriaInstance().WorkflowTemplateIDs(t.ID))
+		u := getUser(ctx)
+
+		ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u)
 		if err != nil {
+			return err
+		}
+
+		is, err := workflowtemplate.GetInstances(api.mustDB(), workflowtemplate.NewCriteriaInstance().
+			WorkflowTemplateIDs(t.ID).ProjectIDs(sdk.ProjectsToIDs(ps)...))
+		if err != nil {
+			return err
+		}
+
+		mProjects := make(map[int64]sdk.Project, len(ps))
+		for i := range ps {
+			mProjects[ps[i].ID] = ps[i]
+		}
+		for _, i := range is {
+			p := mProjects[i.ProjectID]
+			i.Project = &p
+		}
+		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplateInstance(api.mustDB(), is...); err != nil {
+			return err
+		}
+		if err := workflow.AggregateOnWorkflowTemplateInstance(api.mustDB(), is...); err != nil {
 			return err
 		}
 

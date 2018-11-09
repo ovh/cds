@@ -51,7 +51,7 @@ type WorkflowGroup struct {
 // GroupsToIDs returns ids of given groups.
 func GroupsToIDs(gs []Group) []int64 {
 	ids := make([]int64, len(gs))
-	for i := 0; i < len(gs); i++ {
+	for i := range gs {
 		ids[i] = gs[i].ID
 	}
 	return ids

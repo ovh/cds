@@ -15,9 +15,10 @@ import (
 
 var (
 	audits = map[string]sdk.Audit{
-		fmt.Sprintf("%T", sdk.EventWorkflowTemplateAdd{}):    addWorkflowTemplateAudit{},
-		fmt.Sprintf("%T", sdk.EventWorkflowTemplateUpdate{}): updateWorkflowTemplateAudit{},
-		fmt.Sprintf("%T", sdk.EventWorkflowTemplateDelete{}): deleteWorkflowTemplateAudit{},
+		fmt.Sprintf("%T", sdk.EventWorkflowTemplateAdd{}):            addWorkflowTemplateAudit{},
+		fmt.Sprintf("%T", sdk.EventWorkflowTemplateUpdate{}):         updateWorkflowTemplateAudit{},
+		fmt.Sprintf("%T", sdk.EventWorkflowTemplateInstanceAdd{}):    addWorkflowTemplateInstanceAudit{},
+		fmt.Sprintf("%T", sdk.EventWorkflowTemplateInstanceUpdate{}): updateWorkflowTemplateInstanceAudit{},
 	}
 )
 
@@ -104,27 +105,58 @@ func (a updateWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) e
 	})
 }
 
-type deleteWorkflowTemplateAudit struct{}
+type addWorkflowTemplateInstanceAudit struct{}
 
-func (d deleteWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
-	var wtEvent sdk.EventWorkflowTemplateDelete
+func (a addWorkflowTemplateInstanceAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+	var wtEvent sdk.EventWorkflowTemplateInstanceAdd
 	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
 		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
-	b, err := json.Marshal(wtEvent.WorkflowTemplate)
+	b, err := json.Marshal(wtEvent.WorkflowTemplateInstance)
 	if err != nil {
-		return sdk.WrapError(err, "Unable to marshal workflow template")
+		return sdk.WrapError(err, "Unable to marshal workflow template instance")
 	}
 
-	return InsertAudit(db, &sdk.AuditWorkflowTemplate{
+	return InsertInstanceAudit(db, &sdk.AuditWorkflowTemplateInstance{
 		AuditCommon: sdk.AuditCommon{
 			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
 			Created:     e.Timestamp,
 			TriggeredBy: e.Username,
-			DataBefore:  string(b),
+			DataAfter:   string(b),
 			DataType:    "json",
 		},
-		WorkflowTemplateID: wtEvent.WorkflowTemplate.ID,
+		WorkflowTemplateInstanceID: wtEvent.WorkflowTemplateInstance.ID,
+	})
+}
+
+type updateWorkflowTemplateInstanceAudit struct{}
+
+func (a updateWorkflowTemplateInstanceAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
+	var wtEvent sdk.EventWorkflowTemplateInstanceUpdate
+	if err := mapstructure.Decode(e.Payload, &wtEvent); err != nil {
+		return sdk.WrapError(err, "Unable to decode payload")
+	}
+
+	before, err := json.Marshal(wtEvent.NewWorkflowTemplateInstance)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to marshal workflow template instance")
+	}
+
+	after, err := json.Marshal(wtEvent.OldWorkflowTemplateInstance)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to marshal workflow template instance")
+	}
+
+	return InsertInstanceAudit(db, &sdk.AuditWorkflowTemplateInstance{
+		AuditCommon: sdk.AuditCommon{
+			EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
+			Created:     e.Timestamp,
+			TriggeredBy: e.Username,
+			DataBefore:  string(before),
+			DataAfter:   string(after),
+			DataType:    "json",
+		},
+		WorkflowTemplateInstanceID: wtEvent.NewWorkflowTemplateInstance.ID,
 	})
 }

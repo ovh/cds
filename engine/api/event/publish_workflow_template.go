@@ -37,9 +37,15 @@ func PublishWorkflowTemplateUpdate(new, old sdk.WorkflowTemplate, u *sdk.User) {
 	}, u)
 }
 
-// PublishWorkflowTemplateDelete publishes an event for the deletion of the given workflow template.
-func PublishWorkflowTemplateDelete(wt sdk.WorkflowTemplate, u *sdk.User) {
-	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateDelete{
-		WorkflowTemplate: wt,
+// PublishWorkflowTemplateInstanceAdd publishes an event for the creation of the given workflow template instance.
+func PublishWorkflowTemplateInstanceAdd(wti sdk.WorkflowTemplateInstance, u *sdk.User) {
+	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateInstanceAdd{WorkflowTemplateInstance: wti}, u)
+}
+
+// PublishWorkflowTemplateInstanceUpdate publishes an event for the update of the given workflow template instance.
+func PublishWorkflowTemplateInstanceUpdate(new, old sdk.WorkflowTemplateInstance, u *sdk.User) {
+	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateInstanceUpdate{
+		NewWorkflowTemplateInstance: new,
+		OldWorkflowTemplateInstance: old,
 	}, u)
 }
