@@ -87,6 +87,7 @@ var (
 // SpawnErrorForm represents the arguments needed to add error registration on worker model
 type SpawnErrorForm struct {
 	Error string
+	Logs  []byte
 }
 
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
@@ -116,6 +117,7 @@ type Model struct {
 	Group                  Group               `json:"group" db:"-" cli:"-"`
 	NbSpawnErr             int64               `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
 	LastSpawnErr           string              `json:"last_spawn_err" db:"last_spawn_err" cli:"-"`
+	LastSpawnErrLogs       *string             `json:"last_spawn_err_log" db:"last_spawn_err_log" cli:"-"`
 	DateLastSpawnErr       *time.Time          `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
 	IsDeprecated           bool                `json:"is_deprecated" db:"is_deprecated" cli:"deprecated"`
 	IsOfficial             bool                `json:"is_official" db:"-" cli:"official"`

@@ -8,6 +8,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -143,4 +144,10 @@ func (h *HatcheryOpenstack) getServers() []servers.Server {
 	}
 
 	return lservers.list
+}
+
+func (h *HatcheryOpenstack) getConsoleLog(s servers.Server) (string, error) {
+	result := servers.ShowConsoleOutput(h.openstackClient, s.ID, servers.ShowConsoleOutputOpts{})
+	info, err := result.Extract()
+	return info, sdk.WrapError(err, "unable to get console log from %s", s.ID)
 }

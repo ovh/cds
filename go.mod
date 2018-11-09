@@ -96,7 +96,7 @@ require (
 	github.com/google/martian v2.1.0+incompatible // indirect
 	github.com/googleapis/gax-go v2.0.0+incompatible // indirect
 	github.com/googleapis/gnostic v0.1.0 // indirect
-	github.com/gophercloud/gophercloud v0.0.0-20170519040446-baa2eb4d1d56
+	github.com/gophercloud/gophercloud v0.0.0-20181102031606-aa00757ee3ab
 	github.com/gopherjs/gopherjs v0.0.0-20181017120253-0766667cb4d1 // indirect
 	github.com/gorhill/cronexpr v0.0.0-20161205141322-d520615e531a
 	github.com/gorilla/context v1.1.1
@@ -271,6 +271,7 @@ require (
 	gopkg.in/vmihailenco/msgpack.v2 v2.9.1 // indirect
 	gopkg.in/yaml.v2 v2.2.1
 	gotest.tools v2.1.0+incompatible // indirect
+	honnef.co/go/tools v0.0.0-20180920025451-e3ad64cb4ed3 // indirect
 	k8s.io/api v0.0.0-20180126130815-dc0dd48d5a5c
 	k8s.io/apimachinery v0.0.0-20180126010535-b621949a1923
 	k8s.io/client-go v6.0.0+incompatible

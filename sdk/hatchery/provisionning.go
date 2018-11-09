@@ -79,7 +79,11 @@ func provisioning(h Interface, models []sdk.Model) {
 				go func(m sdk.Model) {
 					if name, errSpawn := h.SpawnWorker(context.Background(), SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
-						if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning: %v", h.Service().Name, m.Name, errSpawn)); err != nil {
+						var spawnError = sdk.SpawnErrorForm{
+							Error: fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning", h.Service().Name, m.Name),
+							Logs:  []byte(errSpawn.Error()),
+						}
+						if err := h.CDSClient().WorkerModelSpawnError(m.ID, spawnError); err != nil {
 							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
 						}
 					}

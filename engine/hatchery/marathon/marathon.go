@@ -593,7 +593,14 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 				if err != nil {
 					log.Error("killAndRemove> unable to get model from registering container %s", app.ID)
 				} else {
-					hatchery.CheckWorkerModelRegister(h, modelID)
+					if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
+						var spawnErr = sdk.SpawnErrorForm{
+							Error: err.Error(),
+						}
+						if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
+							log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, err)
+						}
+					}
 				}
 			}
 			if _, err := h.marathonClient.DeleteApplication(app.ID, true); err != nil {

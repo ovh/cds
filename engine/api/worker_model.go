@@ -146,33 +146,33 @@ func (api *API) bookWorkerModelHandler() service.Handler {
 
 func (api *API) spawnErrorWorkerModelHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		spawnErrorForm := &sdk.SpawnErrorForm{}
-		if err := service.UnmarshalBody(r, spawnErrorForm); err != nil {
+		var spawnErrorForm sdk.SpawnErrorForm
+		if err := service.UnmarshalBody(r, &spawnErrorForm); err != nil {
 			return sdk.WrapError(err, "Unable to parse spawn error form")
 		}
 
-		workerModelID, errr := requestVarInt(r, "permModelID")
-		if errr != nil {
-			return sdk.WrapError(errr, "spawnErrorWorkerModelHandler> Invalid permModelID")
+		workerModelID, err := requestVarInt(r, "permModelID")
+		if err != nil {
+			return err
 		}
 
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "spawnErrorWorkerModelHandler> Cannot start transaction")
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WithStack(err)
 		}
 		defer tx.Rollback()
 
-		model, errLoad := worker.LoadWorkerModelByID(api.mustDB(), workerModelID)
-		if errLoad != nil {
-			return sdk.WrapError(errLoad, "spawnErrorWorkerModelHandler> cannot load worker model by id")
+		model, err := worker.LoadWorkerModelByID(tx, workerModelID)
+		if err != nil {
+			return err
 		}
 
-		if err := worker.UpdateSpawnErrorWorkerModel(tx, model.ID, spawnErrorForm.Error); err != nil {
+		if err := worker.UpdateSpawnErrorWorkerModel(tx, model.ID, spawnErrorForm); err != nil {
 			return sdk.WrapError(err, "cannot update spawn error on worker model")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit tx")
+			return err
 		}
 
 		key := cache.Key("api:workermodels:*")
