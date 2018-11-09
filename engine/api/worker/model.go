@@ -259,12 +259,12 @@ func LoadWorkerModelsUsableOnGroup(db gorp.SqlExecutor, store cache.Store, group
 		_, err = db.Select(&ms, `SELECT * from worker_model WHERE disabled = FALSE AND group_id = $1 ORDER by name`, groupID)
 	}
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	for i := range ms {
 		if err := ms[i].PostSelect(db); err != nil {
-			return nil, err
+			return nil, sdk.WithStack(err)
 		}
 		models = append(models, sdk.Model(ms[i]))
 	}
