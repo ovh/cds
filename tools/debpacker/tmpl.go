@@ -29,6 +29,7 @@ chmod 770 /var/lib/{{.PackageName}}
 chmod +x {{.SystemdServiceConfig.ExecStart}}
 
 echo "Service installed"
+systemctl enable {{.PackageName}}
 systemctl status {{.PackageName}}
 echo "run systemctl start {{.PackageName}} to start"
 `
