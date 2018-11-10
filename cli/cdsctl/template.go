@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -23,13 +24,14 @@ var (
 		cli.NewCommand(templateApplyCmd, templateApplyRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePushCmd, templatePushRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, nil, withAllCommandModifiers()...),
 	})
 )
 
 var templatePullCmd = cli.Command{
 	Name:    "pull",
 	Short:   "Pull CDS workflow template",
-	Example: "cdsctl pull group-name/template-slug",
+	Example: "cdsctl template pull group-name/template-slug",
 	OptionalArgs: []cli.Arg{
 		{Name: "template-path"},
 	},
@@ -87,7 +89,7 @@ func templatePullRun(v cli.Values) error {
 var templatePushCmd = cli.Command{
 	Name:    "push",
 	Short:   "Push CDS workflow template",
-	Example: "cdsctl push my-template.yml workflow.yml 0.pipeline.yml",
+	Example: "cdsctl template push my-template.yml workflow.yml 0.pipeline.yml",
 	VariadicArgs: cli.Arg{
 		Name: "yaml-file",
 	},
@@ -156,4 +158,57 @@ func templatePushRun(v cli.Values) error {
 	}
 
 	return workflowTarReaderToFiles(dir, tr, false, false)
+}
+
+var templateInstancesCmd = cli.Command{
+	Name:    "instances",
+	Short:   "Get instances for a CDS workflow template",
+	Example: "cdsctl template instances group-name/template-slug",
+	OptionalArgs: []cli.Arg{
+		{Name: "template-path"},
+	},
+}
+
+func templateInstancesRun(v cli.Values) (cli.ListResult, error) {
+	wt, err := getTemplateFromCLI(v)
+	if err != nil {
+		return nil, err
+	}
+	if wt == nil {
+		wt, err = suggestTemplate()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	wtis, err := client.TemplateGetInstances(wt.Group.Name, wt.Slug)
+	if err != nil {
+		return nil, err
+	}
+
+	type TemplateInstanceDisplay struct {
+		ID       int64  `cli:"ID,key"`
+		Created  string `cli:"Created"`
+		Project  string `cli:"Project"`
+		Workflow string `cli:"Workflow"`
+		Params   string `cli:"Params"`
+	}
+
+	tids := make([]TemplateInstanceDisplay, len(wtis))
+	for i := range wtis {
+		tids[i].ID = wtis[i].ID
+		tids[i].Created = fmt.Sprintf("On %s by %s", wtis[i].FirstAudit.Created.Format(time.RFC3339),
+			wtis[i].FirstAudit.AuditCommon.TriggeredBy)
+		tids[i].Project = fmt.Sprintf("%s", wtis[i].Project.Name)
+		if wtis[i].Workflow != nil {
+			tids[i].Workflow = fmt.Sprintf("%s", wtis[i].Workflow.Name)
+		} else {
+			tids[i].Workflow = fmt.Sprintf("%s (not imported)", wtis[i].Request.WorkflowSlug)
+		}
+		for k, v := range wtis[i].Request.Parameters {
+			tids[i].Params = fmt.Sprintf("%s%s:%s\n", tids[i].Params, k, v)
+		}
+	}
+
+	return cli.AsListResult(tids), nil
 }

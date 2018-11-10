@@ -348,15 +348,16 @@ func (api *API) applyTemplateHandler() service.Handler {
 		}
 
 		// if a previous instance exist for the same workflow update it, else create a new one
+		var old *sdk.WorkflowTemplateInstance
 		if wti != nil {
-			old := sdk.WorkflowTemplateInstance(*wti)
+			clone := sdk.WorkflowTemplateInstance(*wti)
+			old = &clone
 			req.WorkflowSlug = wti.Request.WorkflowSlug
 			wti.WorkflowTemplateVersion = wt.Version
 			wti.Request = req
 			if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
 				return err
 			}
-			event.PublishWorkflowTemplateInstanceUpdate(old, *wti, u)
 		} else {
 			wti = &sdk.WorkflowTemplateInstance{
 				ProjectID:               p.ID,
@@ -367,7 +368,6 @@ func (api *API) applyTemplateHandler() service.Handler {
 			if err := workflowtemplate.InsertInstance(tx, wti); err != nil {
 				return err
 			}
-			event.PublishWorkflowTemplateInstanceAdd(*wti, u)
 		}
 
 		// execute template with request
@@ -383,6 +383,12 @@ func (api *API) applyTemplateHandler() service.Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
+		}
+
+		if old != nil {
+			event.PublishWorkflowTemplateInstanceUpdate(*old, *wti, u)
+		} else {
+			event.PublishWorkflowTemplateInstanceAdd(*wti, u)
 		}
 
 		return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")

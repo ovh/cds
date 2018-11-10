@@ -95,7 +95,6 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	test.NoError(t, err)
 
 	fmt.Println(string(btes))
-
 }
 
 func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
@@ -858,7 +857,6 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	test.NoError(t, err)
 
 	fmt.Println(string(btes))
-
 }
 
 func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
