@@ -55,9 +55,15 @@ func main() {
 
 				p.outputDirectory = c.String("target")
 				if ok, _ := isDirEmpty(p.outputDirectory); !ok {
-					fmt.Printf("Error: directory %s is not empty. Aborting\n", p.outputDirectory)
-					fmt.Printf("Run %s clean --target %s\n", os.Args[0], p.outputDirectory)
-					os.Exit(1)
+					if !c.Bool("force") {
+						fmt.Printf("Error: directory %s is not empty. Aborting\n", p.outputDirectory)
+						fmt.Printf("Run %s clean --target %s\n", os.Args[0], p.outputDirectory)
+						os.Exit(1)
+					}
+
+					if err := p.Clean(); err != nil {
+						return err
+					}
 				}
 
 				p.Init()
@@ -78,6 +84,10 @@ func main() {
 					Name:  "target",
 					Value: "./target",
 					Usage: "Target output directory",
+				},
+				cli.BoolFlag{
+					Name:  "force",
+					Usage: "Force override of existing target folder",
 				},
 			},
 		},

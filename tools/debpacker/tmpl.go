@@ -41,12 +41,14 @@ Group={{.PackageName}}
 ExecStart={{.SystemdServiceConfig.ExecStart}} {{ StringsJoin .SystemdServiceConfig.ExecStartArgs " "}}
 ExecStop={{.SystemdServiceConfig.ExecStop}}
 Restart={{.SystemdServiceConfig.Restart}}
+{{if .SystemdServiceConfig.WorkingDirectory -}}
+WorkingDirectory={{.SystemdServiceConfig.WorkingDirectory}}
+{{end -}}
 {{with .SystemdServiceConfig.Environments -}}
 {{ range $key, $value := . -}}
 Environment="{{$key}}={{$value}}"
-{{- end}}
-{{- end}}
-
+{{end -}}
+{{end}}
 [Install]
 WantedBy={{.SystemdServiceConfig.WantedBy}}
 `

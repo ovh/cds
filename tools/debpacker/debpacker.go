@@ -31,14 +31,15 @@ type DebPacker struct {
 
 // SystemdServiceConfig will generate a .service file which will be located in /lib/systemd/system/
 type SystemdServiceConfig struct {
-	After         string            `yaml:"after,omitempty"` //default network.target
-	User          string            `yaml:"user,omitempty"`
-	ExecStart     string            `yaml:"-"`
-	ExecStartArgs []string          `yaml:"args"`
-	ExecStop      string            `yaml:"stop-command,omitempty"` //default /bin/kill -15 $MAINPID
-	Restart       string            `yaml:"restart,omitempty"`      //default always
-	WantedBy      string            `yaml:"wanted-by,omitempty"`    //default multi-user.target
-	Environments  map[string]string `yaml:"environments"`
+	After            string            `yaml:"after,omitempty"` //default network.target
+	User             string            `yaml:"user,omitempty"`
+	ExecStart        string            `yaml:"-"`
+	ExecStartArgs    []string          `yaml:"args"`
+	ExecStop         string            `yaml:"stop-command,omitempty"` //default /bin/kill -15 $MAINPID
+	Restart          string            `yaml:"restart,omitempty"`      //default always
+	WantedBy         string            `yaml:"wanted-by,omitempty"`    //default multi-user.target
+	Environments     map[string]string `yaml:"environments"`
+	WorkingDirectory string            `yaml:"working-directory,omitempty"`
 }
 
 // Init the configuration
