@@ -20,7 +20,9 @@ Depends: {{ StringsJoin .Dependencies ", "}}
 
 	postinstTmpl = `#!/bin/bash
 echo "Create the {{.SystemdServiceConfig.User}} User, Group and Directories"
+{{if not (eq .SystemdServiceConfig.User "root") -}}
 adduser --system --group {{.SystemdServiceConfig.User}}
+{{end -}}
 mkdir -p /var/lib/{{.PackageName}}
 chown -R {{.SystemdServiceConfig.User}}:{{.SystemdServiceConfig.User}} /var/lib/{{.PackageName}}
 chmod 770 /var/lib/{{.PackageName}}
@@ -36,8 +38,10 @@ Description={{.Description}}
 After={{.SystemdServiceConfig.After}}
 
 [Service]
-User={{.PackageName}}
-Group={{.PackageName}}
+{{if not (eq .SystemdServiceConfig.User "root") -}}
+User={{.SystemdServiceConfig.User}}
+Group={{.SystemdServiceConfig.User}}
+{{end -}}
 ExecStart={{.SystemdServiceConfig.ExecStart}} {{ StringsJoin .SystemdServiceConfig.ExecStartArgs " "}}
 ExecStop={{.SystemdServiceConfig.ExecStop}}
 Restart={{.SystemdServiceConfig.Restart}}
