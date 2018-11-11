@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"

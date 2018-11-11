@@ -2,11 +2,12 @@ package workflowtemplate
 
 import (
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/sdk"
 )
 
 // AggregateAuditsOnWorkflowTemplate set audits for each workflow template.
-func AggregateAuditsOnWorkflowTemplate(db *gorp.DbMap, wts ...*sdk.WorkflowTemplate) error {
+func AggregateAuditsOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.WorkflowTemplate) error {
 	as, err := GetAudits(db, NewCriteriaAudit().
 		WorkflowTemplateIDs(sdk.WorkflowTemplatesToIDs(wts)...).
 		EventTypes("WorkflowTemplateAdd", "WorkflowTemplateUpdate"))
@@ -34,7 +35,7 @@ func AggregateAuditsOnWorkflowTemplate(db *gorp.DbMap, wts ...*sdk.WorkflowTempl
 }
 
 // AggregateAuditsOnWorkflowTemplateInstance set audits for each workflow template instance.
-func AggregateAuditsOnWorkflowTemplateInstance(db *gorp.DbMap, wtis ...*sdk.WorkflowTemplateInstance) error {
+func AggregateAuditsOnWorkflowTemplateInstance(db gorp.SqlExecutor, wtis ...*sdk.WorkflowTemplateInstance) error {
 	as, err := GetInstanceAudits(db, NewCriteriaInstanceAudit().
 		WorkflowTemplateInstanceIDs(sdk.WorkflowTemplateInstancesToIDs(wtis)...).
 		EventTypes("WorkflowTemplateInstanceAdd", "WorkflowTemplateInstanceUpdate"))
