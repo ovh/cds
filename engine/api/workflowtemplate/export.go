@@ -119,7 +119,7 @@ func Pull(wt *sdk.WorkflowTemplate, f exportentities.Format, w io.Writer) error 
 		}
 		buff := bytes.NewBuffer(data)
 		hdr := &tar.Header{
-			Name: fmt.Sprintf("%d.env.yml", i+1),
+			Name: fmt.Sprintf("%d.environment.yml", i+1),
 			Mode: 0644,
 			Size: int64(buff.Len()),
 		}

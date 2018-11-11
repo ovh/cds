@@ -1,0 +1,34 @@
+name: Action Command TestSuite with cdsctl
+testcases:
+- name: cdsctl template push
+  steps:
+  - script: {{.cds.build.cdsctl}} template push ./tests/fixtures/template/*.yml --skip-update-files
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring Template successfully pushed
+
+- name: cdsctl template pull
+  steps:
+  - script: {{.cds.build.cdsctl}} template pull shared.infra/example --output-dir ./tests/fixtures/template/export --force
+    assertions:
+      - result.code ShouldEqual 0
+
+- name: readSourceFiles
+  steps:
+  - type: readfile
+    path: ./tests/fixtures/template/*.yml
+    assertions:
+    - result.err ShouldEqual ""
+
+- name: compare exported files with source
+  steps:
+  - type: readfile
+    path: ./tests/fixtures/template/export/*.yml
+    assertions:
+    - result.err ShouldEqual ""
+    - result.md5sum.tests_fixtures_template_export_1.application.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_1.application.yml}}"
+    - result.md5sum.tests_fixtures_template_export_1.environment.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_1.environment.yml}}"
+    - result.md5sum.tests_fixtures_template_export_1.pipeline.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_1.pipeline.yml}}"
+    - result.md5sum.tests_fixtures_template_export_2.pipeline.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_2.pipeline.yml}}"
+    - result.md5sum.tests_fixtures_template_export_example.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_example.yml}}"
+    - result.md5sum.tests_fixtures_template_export_workflow.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_workflow.yml}}"
