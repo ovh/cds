@@ -86,9 +86,7 @@ func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 						if parentNode == nil {
 							return entry, sdk.WithStack(sdk.ErrWorkflowNodeNotFound)
 						}
-						if parentNode != nil {
-							ancestors = append(ancestors, parentNode.Name)
-						}
+						ancestors = append(ancestors, parentNode.Name)
 					}
 				} else {
 					ancestors = append(ancestors, node.Name)
