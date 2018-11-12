@@ -145,7 +145,7 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 
 		sendLog(fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 		query := actionplugin.ActionQuery{
-			Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(a.Parameters)),
+			Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(a.Parameters), sdk.MapMergeOptions.ExcludeGitParams),
 			JobID:   buildID,
 		}
 
