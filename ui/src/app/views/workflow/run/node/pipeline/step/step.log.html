@@ -28,7 +28,7 @@
                   id="L{{job.pipeline_stage_id}}-{{job.pipeline_action_id}}-{{stepOrder}}-{{logLine.lineNumber}}"
                   *ngIf="!last">
                   <td class="number yellow right aligned pointing" (click)="generateLink(logLine.lineNumber)">{{logLine.lineNumber}}</td>
-                  <td [innerHTML]="logLine.value"></td>
+                  <td [innerHTML]="logLine.value | safeHtml"></td>
                 </tr>
                 <tr *ngIf="logLine.lineNumber === limitFrom" valign="middle" class="fold-log pointing" (click)="showAllLogs()">
                     <td colspan="2"><hr class="mb25"><a *ngIf="!loadingMore"><i class="resize vertical icon"></i>{{'workflow_logs_all' | translate}}</a><div class="ui active centered inline loader" *ngIf="loadingMore"></div><hr></td>

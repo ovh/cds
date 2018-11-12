@@ -1,10 +1,9 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import * as AU from 'ansi_up';
 import {Job} from '../../../../../../model/job.model';
 import {Parameter} from '../../../../../../model/parameter.model';
 import {SpawnInfo} from '../../../../../../model/pipeline.model';
 import {JobVariableComponent} from '../../../../../run/workflow/variables/job.variables.component';
-
-declare var ansi_up: any;
 
 @Component({
     selector: 'app-workflow-rin-job-spawn-info',
@@ -41,6 +40,7 @@ export class WorkflowRunJobSpawnInfoComponent {
     displayServiceLogsLink = false;
     _job: Job;
     _displayServiceLogs: boolean;
+    ansi_up = new AU.default;
 
     constructor() { }
 
@@ -62,7 +62,7 @@ export class WorkflowRunJobSpawnInfoComponent {
             });
         }
         if (msg !== '') {
-            return ansi_up.ansi_to_html(msg);
+            return this.ansi_up.ansi_to_html(msg);
         }
         return '';
     }

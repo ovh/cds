@@ -1,8 +1,7 @@
 import {Component, Input} from '@angular/core';
+import * as AU from 'ansi_up';
 import {TestCase, TestSuite} from '../../../../model/pipeline.model';
 import {Table} from '../../../../shared/table/table';
-
-declare var ansi_up: any;
 
 @Component({
     selector: 'app-test-table',
@@ -13,6 +12,7 @@ export class TestTableComponent extends Table {
 
     filteredTests: Array<TestCase>;
     filter: string;
+    ansi_up = new AU.default;
 
     @Input() tests: Array<TestSuite>;
     @Input('statusFilter')
@@ -78,7 +78,7 @@ export class TestTableComponent extends Table {
 
     getLogs(logs) {
         if (logs && logs.value) {
-            return ansi_up.ansi_to_html(logs.value);
+            return this.ansi_up.ansi_to_html(logs.value);
         }
         return '';
     }
