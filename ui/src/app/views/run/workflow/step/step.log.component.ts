@@ -1,4 +1,5 @@
 import {Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import * as AU from 'ansi_up';
 import {Subscription} from 'rxjs';
 import {environment} from '../../../../../environments/environment';
 import {Action} from '../../../../model/action.model';
@@ -9,8 +10,6 @@ import {Project} from '../../../../model/project.model';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {DurationService} from '../../../../shared/duration/duration.service';
 import {CDSWebWorker} from '../../../../shared/worker/web.worker';
-
-declare var ansi_up: any;
 
 @Component({
     selector: 'app-step-log',
@@ -71,6 +70,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
     doneExec: Date;
     duration: string;
     intervalListener: any;
+    ansi_up = new AU.default;
 
     @ViewChild('logsContent') logsElt: ElementRef;
 
@@ -168,7 +168,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
 
     getLogs() {
         if (this.logs && this.logs.val) {
-            return ansi_up.ansi_to_html(this.logs.val);
+            return this.ansi_up.ansi_to_html(this.logs.val);
         }
         return '';
     }
