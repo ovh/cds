@@ -182,7 +182,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 				})
 				log.Error("processNode> Unable to compute hook payload: %v", errm1)
 			}
-			runPayload = sdk.ParametersMapMerge(runPayload, m1)
+			runPayload = sdk.ParametersMapMerge(runPayload, m1, sdk.MapMergeOptions.ExcludeGitParams)
 		}
 		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
@@ -191,7 +191,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	run.HookEvent = hookEvent
 	if hookEvent != nil {
-		runPayload = sdk.ParametersMapMerge(runPayload, hookEvent.Payload)
+		runPayload = sdk.ParametersMapMerge(runPayload, hookEvent.Payload, sdk.MapMergeOptions.ExcludeGitParams)
 		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
@@ -214,7 +214,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		if errm1 != nil {
 			return report, false, sdk.WrapError(errm1, "r> Unable to compute payload")
 		}
-		runPayload = sdk.ParametersMapMerge(runPayload, m1)
+		runPayload = sdk.ParametersMapMerge(runPayload, m1, sdk.MapMergeOptions.ExcludeGitParams)
 		run.Payload = runPayload
 		run.PipelineParameters = manual.PipelineParameters
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
@@ -251,6 +251,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		sdk.ParametersMapMerge(
 			sdk.ParametersToMap(run.BuildParameters),
 			sdk.ParametersToMap([]sdk.Parameter{cdsStatusParam}),
+			sdk.MapMergeOptions.ExcludeGitParams,
 		),
 	)
 
@@ -291,7 +292,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		mapBuildParams := sdk.ParametersToMap(run.BuildParameters)
 		mapParentParams := sdk.ParametersToMap(parentsParams)
 
-		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
+		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams, sdk.MapMergeOptions.ExcludeGitParams))
 	}
 
 	//Parse job params to get the VCS infos
