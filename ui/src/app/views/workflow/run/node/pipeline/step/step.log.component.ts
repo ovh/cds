@@ -89,6 +89,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     _force = false;
     _stepStatus: StepStatus;
     pipelineBuildStatusEnum = PipelineStatus;
+    MAX_PRETTY_LOGS_LINES = 3500;
     @ViewChild('logsContent') logsElt: ElementRef;
 
     constructor(
@@ -241,7 +242,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this.allLogsView = true;
         setTimeout(() => {
             this.limitFrom = null;
-            if (this.splittedLogs.length > 3500) {
+            if (this.splittedLogs.length > this.MAX_PRETTY_LOGS_LINES) {
                 this.basicView = true;
             }
             this.splittedLogsToDisplay = this.splittedLogs;
