@@ -26,12 +26,10 @@ type downloadActionPlugin struct {
 
 func (actPlugin *downloadActionPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*actionplugin.ActionPluginManifest, error) {
 	return &actionplugin.ActionPluginManifest{
-		Name:   "plugin-tmpl",
-		Author: "Alexandre JIN  <alexandre.jin@corp.ovh.com>",
-		Description: `This action helps you generates a file using a template file and text/template golang package.
-
-	Check documentation on text/template for more information https://golang.org/pkg/text/template.`,
-		Version: sdk.VERSION,
+		Name:        "plugin-download",
+		Author:      "Benjamin COENEN <benjamin.coenen@corp.ovh.com>",
+		Description: "This is a plugin to download file from URL",
+		Version:     sdk.VERSION,
 	}, nil
 }
 

@@ -73,7 +73,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
-	workr, err := worker.RegisterWorker(api.mustDB(), "test-worker", "test-key", model.ID, &h, nil, "linux", "amd64")
+	workr, err := worker.RegisterWorker(api.mustDB(), api.Cache, "test-worker", "test-key", model.ID, &h, nil, "linux", "amd64")
 	if err != nil {
 		t.Fatalf("Error Registering worker : %s", err)
 	}

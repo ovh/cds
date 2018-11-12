@@ -209,7 +209,8 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 
 	//Start a goroutine to update commit statuses in repositories manager
 	go func(wfRun *sdk.WorkflowRun) {
-		if sdk.StatusIsTerminated(wfRun.Status) {
+		//The function could be called with nil project so we need to test if project is not nil
+		if sdk.StatusIsTerminated(wfRun.Status) && proj != nil {
 			wr.LastExecution = time.Now()
 			if err := ResyncCommitStatus(context.Background(), dbFunc(), store, proj, wfRun); err != nil {
 				log.Error("workflow.UpdateNodeJobRunStatus> %v", err)

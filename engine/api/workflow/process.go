@@ -206,7 +206,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 			nodeRunIDs = append(nodeRunIDs, nodeRun.ID)
 			//Merge build parameters from all sources
-			sourcesParams = sdk.ParametersMapMerge(sourcesParams, sdk.ParametersToMap(nodeRun.BuildParameters))
+			sourcesParams = sdk.ParametersMapMerge(sourcesParams, sdk.ParametersToMap(nodeRun.BuildParameters), sdk.MapMergeOptions.ExcludeGitParams)
 		}
 
 		//All the sources are completed
@@ -547,9 +547,9 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 					ID:   sdk.MsgWorkflowError.ID,
 					Args: []interface{}{errm1.Error()},
 				})
-				log.Error("processWorkflowNodeRun> Unable to compute hook payload: %v", errm1)
+				log.Error("processWorkflowNodeRun> Unable to compute payload: %v", errm1)
 			}
-			runPayload = sdk.ParametersMapMerge(runPayload, m1)
+			runPayload = sdk.ParametersMapMerge(runPayload, m1, sdk.MapMergeOptions.ExcludeGitParams)
 		}
 		run.Payload = runPayload
 		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
@@ -633,6 +633,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		sdk.ParametersMapMerge(
 			sdk.ParametersToMap(run.BuildParameters),
 			sdk.ParametersToMap([]sdk.Parameter{cdsStatusParam}),
+			sdk.MapMergeOptions.ExcludeGitParams,
 		),
 	)
 
@@ -658,7 +659,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 		mapBuildParams := sdk.ParametersToMap(run.BuildParameters)
 		mapParentParams := sdk.ParametersToMap(parentsParams)
 
-		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
+		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams, sdk.MapMergeOptions.ExcludeGitParams))
 	}
 
 	//Parse job params to get the VCS infos
