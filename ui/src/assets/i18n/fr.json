@@ -1015,7 +1015,8 @@
   "workflow_notification_form": "Ajouter une notification",
   "workflow_notification_copy": "Copié",
   "workflow_logs_all": "Afficher tous les logs",
-  "workflow_logs_pretty": "Afficher les logs avec interpreteur ANSI et HTML",
+  "workflow_logs_pretty_ansi": "Afficher les logs avec interpreteur ANSI",
+  "workflow_logs_pretty_html": "Afficher les logs avec interpreteur HTML",
   "workflow_logs_raw": "Afficher les logs bruts",
 
   "workflow_wizard_select_repo_man": "Sélectionner un gestionnaire de dépôt",

@@ -76,6 +76,7 @@
     "prismjs": "^1.15.0",
     "rxjs": "6.3.3",
     "rxjs-compat": "6.3.3",
+    "sanitize-html": "^1.19.1",
     "semantic-ui": "2.2.13",
     "string-format-obj": "^1.1.1",
     "ts-helpers": "^1.1.1",

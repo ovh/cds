@@ -82,6 +82,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     limitTo: number;
     basicView = false;
     allLogsView = false;
+    ansiViewSelected = true;
+    htmlViewSelected = false;
     ansi_up = new AU.default;
 
     zone: NgZone;
@@ -163,17 +165,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                     this.zone.run(() => {
                         if (build.step_logs) {
                             this.logs = build.step_logs;
-                            this.splittedLogs = this.getLogsSplitted()
-                                .map((log, i) => ({lineNumber: i + 1, value: this.ansi_up.ansi_to_html(log)}));
-                            this.splittedLogsToDisplay = cloneDeep(this.splittedLogs);
-
-                            if (!this.allLogsView && this.splittedLogs.length > 1000 && !this._route.snapshot.fragment) {
-                                this.limitFrom = 30;
-                                this.limitTo = this.splittedLogs.length - 40;
-                                this.splittedLogsToDisplay.splice(this.limitFrom, this.limitTo - this.limitFrom);
-                            } else {
-                                this.splittedLogsToDisplay = this.splittedLogs;
-                            }
+                            this.parseLogs();
                         }
                         if (this.loading) {
                             this.loading = false;
@@ -182,6 +174,39 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                     });
                 }
             });
+        }
+    }
+
+    htmlView() {
+        this.htmlViewSelected = !this.htmlViewSelected;
+        this.basicView = false;
+        this.ansi_up.escape_for_html = !this.htmlViewSelected;
+        this.parseLogs();
+    }
+
+    ansiView() {
+        this.ansiViewSelected = !this.ansiViewSelected;
+        this.basicView = false;
+        this.ansi_up.escape_for_html = !this.htmlViewSelected;
+        this.parseLogs();
+    }
+
+    parseLogs() {
+        this.splittedLogs = this.getLogsSplitted()
+            .map((log, i) => {
+                if (this.ansiViewSelected) {
+                    return {lineNumber: i + 1, value: this.ansi_up.ansi_to_html(log)};
+                }
+                return {lineNumber: i + 1, value: log};
+            });
+        this.splittedLogsToDisplay = cloneDeep(this.splittedLogs);
+
+        if (!this.allLogsView && this.splittedLogs.length > 1000 && !this._route.snapshot.fragment) {
+            this.limitFrom = 30;
+            this.limitTo = this.splittedLogs.length - 40;
+            this.splittedLogsToDisplay.splice(this.limitFrom, this.limitTo - this.limitFrom);
+        } else {
+            this.splittedLogsToDisplay = this.splittedLogs;
         }
     }
 
