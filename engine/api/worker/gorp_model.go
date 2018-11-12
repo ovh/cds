@@ -100,8 +100,8 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 
 	//Load created_by
 	m.CreatedBy = sdk.User{}
-	var createdBy, model, registeredOS, registeredArch sql.NullString
-	err := s.QueryRow("select created_by, model, registered_os, registered_arch from worker_model where id = $1", m.ID).Scan(&createdBy, &model, &registeredOS, &registeredArch)
+	var createdBy, model, registeredOS, registeredArch, lastSpawnErr, lastSpawnErrLogs sql.NullString
+	err := s.QueryRow("select created_by, model, registered_os, registered_arch, last_spawn_err, last_spawn_err_log from worker_model where id = $1", m.ID).Scan(&createdBy, &model, &registeredOS, &registeredArch, &lastSpawnErr, &lastSpawnErrLogs)
 	if err != nil {
 		return sdk.WrapError(err, "unable to load created_by, model, registered_os, registered_arch")
 	}
@@ -112,6 +112,14 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 
 	if registeredArch.Valid {
 		m.RegisteredArch = registeredArch.String
+	}
+
+	if lastSpawnErr.Valid {
+		m.LastSpawnErr = lastSpawnErr.String
+	}
+
+	if lastSpawnErrLogs.Valid {
+		m.LastSpawnErrLogs = &lastSpawnErrLogs.String
 	}
 
 	switch m.Type {
