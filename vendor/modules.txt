@@ -240,7 +240,7 @@ github.com/google/gops/signal
 github.com/googleapis/gnostic/OpenAPIv2
 github.com/googleapis/gnostic/compiler
 github.com/googleapis/gnostic/extensions
-# github.com/gophercloud/gophercloud v0.0.0-20170519040446-baa2eb4d1d56
+# github.com/gophercloud/gophercloud v0.0.0-20181102031606-aa00757ee3ab
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack
 github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks

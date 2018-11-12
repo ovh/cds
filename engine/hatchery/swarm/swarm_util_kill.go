@@ -36,7 +36,14 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 			if err != nil {
 				log.Error("hatchery> swarm> killAndRemove> unable to get model from registering container %s", container.Name)
 			} else {
-				hatchery.CheckWorkerModelRegister(h, modelID)
+				if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
+					var spawnErr = sdk.SpawnErrorForm{
+						Error: err.Error(),
+					}
+					if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
+						log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, err)
+					}
+				}
 			}
 		}
 	}

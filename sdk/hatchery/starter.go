@@ -99,9 +99,12 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 
 			atomic.AddInt64(&nbWorkerToStart, 1)
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
-			if _, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
-				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, errSpawn)
-				if err := h.CDSClient().WorkerModelSpawnError(m.ID, fmt.Sprintf("cannot spawn worker for register: %s", errSpawn)); err != nil {
+			if _, err := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); err != nil {
+				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
+				var spawnError = sdk.SpawnErrorForm{
+					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
+				}
+				if err := h.CDSClient().WorkerModelSpawnError(m.ID, spawnError); err != nil {
 					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 				}
 			}

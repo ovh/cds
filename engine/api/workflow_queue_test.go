@@ -241,7 +241,7 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 		OS:    "linux",
 		Arch:  "amd64",
 	}
-	ctx.worker, err = worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities, params.OS, params.Arch)
+	ctx.worker, err = worker.RegisterWorker(api.mustDB(), api.Cache, params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities, params.OS, params.Arch)
 	test.NoError(t, err)
 }
 

@@ -59,13 +59,12 @@ func (c *client) workerModels(withDisabled bool, binary, state string) ([]sdk.Mo
 	return models, nil
 }
 
-func (c *client) WorkerModelSpawnError(id int64, info string) error {
-	data := sdk.SpawnErrorForm{Error: info}
+func (c *client) WorkerModelSpawnError(id int64, data sdk.SpawnErrorForm) error {
 	code, err := c.PutJSON(context.Background(), fmt.Sprintf("/worker/model/error/%d", id), &data, nil)
 	if code > 300 && err == nil {
 		return fmt.Errorf("WorkerModelSpawnError> HTTP %d", code)
 	} else if err != nil {
-		return sdk.WrapError(err, "Error")
+		return sdk.WithStack(err)
 	}
 	return nil
 }

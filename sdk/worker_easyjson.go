@@ -74,9 +74,7 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *Model) {
 				}
 				for !in.IsDelim(']') {
 					var v1 Requirement
-					if data := in.Raw(); in.Ok() {
-						in.AddError((v1).UnmarshalJSON(data))
-					}
+					(v1).UnmarshalEasyJSON(in)
 					out.RegisteredCapabilities = append(out.RegisteredCapabilities, v1)
 					in.WantComma()
 				}
@@ -110,6 +108,16 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk(in *jlexer.Lexer, out *Model) {
 			out.NbSpawnErr = int64(in.Int64())
 		case "last_spawn_err":
 			out.LastSpawnErr = string(in.String())
+		case "last_spawn_err_log":
+			if in.IsNull() {
+				in.Skip()
+				out.LastSpawnErrLogs = nil
+			} else {
+				if out.LastSpawnErrLogs == nil {
+					out.LastSpawnErrLogs = new(string)
+				}
+				*out.LastSpawnErrLogs = string(in.String())
+			}
 		case "date_last_spawn_err":
 			if in.IsNull() {
 				in.Skip()
@@ -258,7 +266,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in Model) {
 				if v2 > 0 {
 					out.RawByte(',')
 				}
-				out.Raw((v3).MarshalJSON())
+				(v3).MarshalEasyJSON(out)
 			}
 			out.RawByte(']')
 		}
@@ -382,6 +390,20 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk(out *jwriter.Writer, in Model) {
 			out.RawString(prefix)
 		}
 		out.String(string(in.LastSpawnErr))
+	}
+	{
+		const prefix string = ",\"last_spawn_err_log\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		if in.LastSpawnErrLogs == nil {
+			out.RawString("null")
+		} else {
+			out.String(string(*in.LastSpawnErrLogs))
+		}
 	}
 	{
 		const prefix string = ",\"date_last_spawn_err\":"
@@ -849,9 +871,7 @@ func easyjson82a45abeDecodeGithubComOvhCdsSdk3(in *jlexer.Lexer, out *User) {
 				in.Delim(']')
 			}
 		case "permissions":
-			if data := in.Raw(); in.Ok() {
-				in.AddError((out.Permissions).UnmarshalJSON(data))
-			}
+			(out.Permissions).UnmarshalEasyJSON(in)
 		default:
 			in.SkipRecursive()
 		}
@@ -974,7 +994,7 @@ func easyjson82a45abeEncodeGithubComOvhCdsSdk3(out *jwriter.Writer, in User) {
 		} else {
 			out.RawString(prefix)
 		}
-		out.Raw((in.Permissions).MarshalJSON())
+		(in.Permissions).MarshalEasyJSON(out)
 	}
 	out.RawByte('}')
 }

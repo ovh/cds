@@ -6,10 +6,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
@@ -20,20 +22,10 @@ import (
 var ErrNoWorker = fmt.Errorf("cds: no worker found")
 
 // DeleteWorker remove worker from database
-func DeleteWorker(db *gorp.DbMap, id string) error {
-	tx, errb := db.Begin()
-	if errb != nil {
-		return fmt.Errorf("DeleteWorker> Cannot start tx: %s", errb)
-	}
-	defer tx.Rollback()
-
+func DeleteWorker(db gorp.SqlExecutor, id string) error {
 	query := `DELETE FROM worker WHERE id = $1`
-	if _, err := tx.Exec(query, id); err != nil {
+	if _, err := db.Exec(query, id); err != nil {
 		return sdk.WrapError(err, "DeleteWorker")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "unable to commit tx")
 	}
 
 	return nil
@@ -103,16 +95,16 @@ func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error)
 }
 
 // LoadDeadWorkers load worker with refresh last beat > timeout (seconds)
-func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error) {
+func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64, status []string) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
 	query := `SELECT id, action_build_id, job_type, name, last_beat, group_id, model, status, hatchery_name
 				FROM worker
-				WHERE 1 = 1
-				AND now() - last_beat > $1 * INTERVAL '1' SECOND
+				WHERE status = ANY(string_to_array($1, ',')::text[])
+				AND now() - last_beat > $2 * INTERVAL '1' SECOND
 				ORDER BY name ASC
 				LIMIT 10000`
-	rows, err := db.Query(query, int64(math.Floor(timeout)))
+	rows, err := db.Query(query, strings.Join(status, ","), int64(math.Floor(timeout)))
 	if err != nil {
 		log.Warning("LoadDeadWorkers> Error querying workers")
 		return nil, err
@@ -203,7 +195,7 @@ type TakeForm struct {
 }
 
 // RegisterWorker  Register new worker
-func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, hatchery *sdk.Service, binaryCapabilities []string, OS, arch string) (*sdk.Worker, error) {
+func RegisterWorker(db *gorp.DbMap, store cache.Store, name string, key string, modelID int64, hatchery *sdk.Service, binaryCapabilities []string, OS, arch string) (*sdk.Worker, error) {
 	if name == "" {
 		return nil, fmt.Errorf("cannot register worker with empty name")
 	}
@@ -313,14 +305,38 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, hatc
 					query := `insert into worker_capability (worker_model_id, name, argument, type) values ($1, $2, $3, $4)`
 					if _, err := ntx.Exec(query, modelID, b, b, string(sdk.BinaryRequirement)); err != nil {
 						//Ignore errors because we let the database to check constraints...
-						log.Debug("registerWorker> Cannot insert into worker_capability: %s", err)
+						log.Debug("registerWorker> Cannot insert into worker_capability: %v", err)
 						return
 					}
 				}
 			}
 
+			var capaToDelete []string
+			for _, existingCapa := range existingCapas {
+				var found bool
+				for _, currentCapa := range binaryCapabilities {
+					if existingCapa.Value == currentCapa {
+						found = true
+						break
+					}
+				}
+				if !found {
+					capaToDelete = append(capaToDelete, existingCapa.Value)
+				}
+			}
+
+			if len(capaToDelete) > 0 {
+				log.Debug("Updating model %d binary capabilities with %d capabilities to delete", modelID, len(capaToDelete))
+				query := `DELETE FROM worker_capability WHERE worker_model_id=$1 AND name=ANY(string_to_array($2, ',')::text[]) AND type=$3`
+				if _, err := db.Exec(query, modelID, strings.Join(capaToDelete, ","), string(sdk.BinaryRequirement)); err != nil {
+					//Ignore errors because we let the database to check constraints...
+					log.Warning("registerWorker> Cannot delete from worker_capability: %v", err)
+					return
+				}
+			}
+
 			if OS != "" && arch != "" {
-				if err := updateOSAndArch(ntx, modelID, OS, arch); err != nil {
+				if err := updateOSAndArch(db, modelID, OS, arch); err != nil {
 					log.Warning("registerWorker> Cannot update os and arch for worker model %d : %s", modelID, err)
 					return
 				}
@@ -330,11 +346,20 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, hatc
 				log.Warning("RegisterWorker> Unable to commit transaction: %s", err)
 			}
 		}()
-		if err := updateRegistration(db, modelID); err != nil {
+		if err := updateRegistration(tx, modelID); err != nil {
 			log.Warning("registerWorker> Unable updateRegistration: %s", err)
 		}
 	}
-	return w, tx.Commit()
+
+	if err := tx.Commit(); err != nil {
+		return w, err
+	}
+
+	// Useful to let models cache in hatchery refresh
+	keyWorkerModel := keyBookWorkerModel(modelID)
+	store.UpdateTTL(keyWorkerModel, modelsCacheTTLInSeconds+10)
+
+	return w, nil
 }
 
 // SetStatus sets action_build_id and status to building on given worker

@@ -103,7 +103,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 	}
 
 	//Merge the dumped payload with vars
-	vars = sdk.ParametersMapMerge(vars, tmpVars)
+	vars = sdk.ParametersMapMerge(vars, tmpVars, sdk.MapMergeOptions.ExcludeGitParams)
 
 	// TODO Update suggest.go  with new variable
 

@@ -6,6 +6,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -38,7 +39,14 @@ func (h *HatcheryKubernetes) killAwolWorkers() error {
 				if err != nil {
 					log.Error("killAndRemove> unable to get model from registering container %s", pod.Name)
 				} else {
-					hatchery.CheckWorkerModelRegister(h, modelID)
+					if err := hatchery.CheckWorkerModelRegister(h, modelID); err != nil {
+						var spawnErr = sdk.SpawnErrorForm{
+							Error: err.Error(),
+						}
+						if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
+							log.Error("killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, err)
+						}
+					}
 				}
 			}
 			if err := h.k8sClient.CoreV1().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
