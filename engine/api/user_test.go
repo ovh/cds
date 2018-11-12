@@ -494,11 +494,18 @@ func Test_postUserFavoriteHandler(t *testing.T) {
 		Name:       "wf_test1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
+
+	(&wf).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u1))
 

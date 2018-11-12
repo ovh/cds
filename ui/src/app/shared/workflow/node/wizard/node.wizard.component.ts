@@ -9,7 +9,7 @@ import {Application} from '../../../../model/application.model';
 import {Environment} from '../../../../model/environment.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {IdName, Project} from '../../../../model/project.model';
-import {WorkflowNode} from '../../../../model/workflow.model';
+import {WNode, WNodeType} from '../../../../model/workflow.model';
 import {ApplicationStore} from '../../../../service/application/application.store';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {ProjectStore} from '../../../../service/project/project.store';
@@ -31,12 +31,13 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     }
     @Input() hideCancel: boolean;
     @Input() hideNext: boolean;
-    @Output() nodeCreated: EventEmitter<WorkflowNode> = new EventEmitter<WorkflowNode>();
+    @Input() loading: boolean;
+    @Output() nodeCreated: EventEmitter<WNode> = new EventEmitter<WNode>();
     @Output() pipelineSectionChanged: EventEmitter<string> = new EventEmitter<string>();
 
     _project: Project;
-    node: WorkflowNode = new WorkflowNode();
-    loading = false;
+    node: WNode = new WNode();
+
     applicationsName: IdName[] = [];
     environmentsName: IdName[] = [];
 
@@ -45,7 +46,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
       this._createNewPipeline = data;
       if (data) {
         this.newPipeline = new Pipeline();
-        this.node.pipeline_id = null;
+        this.node.context.pipeline_id = null;
       }
     }
     get createNewPipeline() {
@@ -136,9 +137,9 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     }
 
     createNode(): void {
-        this.loading = true;
-        if (this.node.pipeline_id) {
-            this.node.pipeline_id = Number(this.node.pipeline_id);
+        if (this.node.context.pipeline_id) {
+            this.node.type = WNodeType.PIPELINE;
+            this.node.context.pipeline_id = Number(this.node.context.pipeline_id);
         }
         if (this.node.context.application_id) {
             this.node.context.application_id = Number(this.node.context.application_id);
@@ -149,7 +150,6 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
         if (this.node.context.project_platform_id) {
             this.node.context.project_platform_id = Number(this.node.context.project_platform_id);
         }
-
         this.nodeCreated.emit(this.node);
     }
 
@@ -168,7 +168,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
             ).pipe(
             map((pip) => {
                 this._toast.success('', this._translate.instant('pipeline_added'));
-                this.node.pipeline_id = pip.id;
+                this.node.context.pipeline_id = pip.id;
                 this.pipelineSection = 'application';
                 return pip
             }));

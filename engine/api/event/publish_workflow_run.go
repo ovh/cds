@@ -2,6 +2,7 @@ package event
 
 import (
 	"fmt"
+	"github.com/ovh/cds/sdk/log"
 	"time"
 
 	"github.com/fatih/structs"
@@ -66,6 +67,11 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 		NodeID:         nr.WorkflowNodeID,
 		RunID:          nr.WorkflowRunID,
 		StagesSummary:  make([]sdk.StageSummary, len(nr.Stages)),
+		HookUUID:       nr.UUID,
+	}
+
+	if nr.Callback != nil {
+		e.HookLog = nr.Callback.Log
 	}
 
 	for i := range nr.Stages {
@@ -73,46 +79,54 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 	}
 
 	var pipName string
-	node := w.GetNode(nr.WorkflowNodeID)
-	if node != nil {
-		pipName = w.Pipelines[node.PipelineID].Name
-		e.NodeName = node.Name
+	var nodeName string
+	var app sdk.Application
+	var env sdk.Environment
+	n := w.GetNode(nr.WorkflowNodeID)
+	if n == nil {
+		// check on workflow data
+		wnode := w.WorkflowData.NodeByID(nr.WorkflowNodeID)
+		if wnode == nil {
+			log.Warning("PublishWorkflowNodeRun> Unable to publish event on node %d", nr.WorkflowNodeID)
+			return
+		}
+		nodeName = wnode.Name
+		if wnode.Context != nil && wnode.Context.PipelineID != 0 {
+			pipName = w.Pipelines[wnode.Context.PipelineID].Name
+		}
+
+		if wnode.Context != nil && wnode.Context.ApplicationID != 0 {
+			app = w.Applications[wnode.Context.ApplicationID]
+		}
+		if wnode.Context != nil && wnode.Context.EnvironmentID != 0 {
+			env = w.Environments[wnode.Context.EnvironmentID]
+		}
+	} else {
+		nodeName = n.Name
+		pipName = w.Pipelines[n.PipelineID].Name
+		if n.Context != nil && n.Context.Application != nil {
+			app = *n.Context.Application
+		}
+		if n.Context != nil && n.Context.Environment != nil {
+			env = *n.Context.Environment
+		}
 	}
+
+	e.NodeName = nodeName
 	var envName string
 	var appName string
-	if node.Context != nil {
-		if node.Context.Application != nil {
-			appName = node.Context.Application.Name
-			e.RepositoryManagerName = node.Context.Application.VCSServer
-			e.RepositoryFullName = node.Context.Application.RepositoryFullname
-		}
-		if node.Context.Environment != nil {
-			envName = node.Context.Environment.Name
-		}
+	if app.ID != 0 {
+		appName = app.Name
+		e.RepositoryManagerName = app.VCSServer
+		e.RepositoryFullName = app.RepositoryFullname
+	}
+	if env.ID != 0 {
+		envName = env.Name
 	}
 	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()
 	}
 	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status)
-}
-
-// PublishWorkflowNodeOutgoingHookRun publish a EventRunWorkflowOutgoingHook
-func PublishWorkflowNodeOutgoingHookRun(db gorp.SqlExecutor, hr sdk.WorkflowNodeOutgoingHookRun, w sdk.Workflow) {
-	evt := sdk.EventRunWorkflowOutgoingHook{
-		ID:            hr.HookRunID,
-		HookID:        hr.Hook.ID,
-		Status:        hr.Status,
-		WorkflowRunID: hr.WorkflowRunID,
-	}
-
-	if hr.Callback != nil {
-		evt.Start = hr.Callback.Start.Unix()
-		evt.Done = hr.Callback.Done.Unix()
-		evt.Log = hr.Callback.Log
-		evt.WorkflowRunNumber = hr.Callback.WorkflowRunNumber
-	}
-
-	publishRunWorkflow(evt, w.ProjectKey, w.Name, "", "", "", hr.Number, hr.SubNumber, hr.Status)
 }
 
 // PublishWorkflowNodeJobRun publish a WorkflowNodeJobRun

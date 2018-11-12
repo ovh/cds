@@ -150,13 +150,13 @@ func (s *Service) postTaskHandler() service.Handler {
 func (s *Service) postAndExecuteTaskHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//This handler read a sdk.WorkflowNodeOutgoingHook from the body
-		var hook sdk.WorkflowNodeOutgoingHookRun
-		if err := service.UnmarshalBody(r, &hook); err != nil {
-			return sdk.WithStack(err)
+		var nr sdk.WorkflowNodeRun
+		if err := service.UnmarshalBody(r, &nr); err != nil {
+			return sdk.WrapError(err, "Hooks> postAndExecuteTaskHandler")
 		}
-		t, e, err := s.addAndExecuteTask(ctx, hook)
+		t, e, err := s.addAndExecuteTask(ctx, nr)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to add Task")
+			return sdk.WrapError(err, "Hooks> postAndExecuteTaskHandler> unable to add Task")
 		}
 		t.Executions = []sdk.TaskExecution{e}
 		return service.WriteJSON(w, t, http.StatusOK)
@@ -429,11 +429,11 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 	return nil
 }
 
-func (s *Service) addAndExecuteTask(ctx context.Context, h sdk.WorkflowNodeOutgoingHookRun) (sdk.Task, sdk.TaskExecution, error) {
+func (s *Service) addAndExecuteTask(ctx context.Context, nr sdk.WorkflowNodeRun) (sdk.Task, sdk.TaskExecution, error) {
 	// Parse the hook as a task
-	t, err := s.outgoingHookToTask(h)
+	t, err := s.nodeRunToTask(nr)
 	if err != nil {
-		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Unable to parse hook (%+v)", h)
+		return t, sdk.TaskExecution{}, sdk.WrapError(err, "Hooks> addAndExecuteTask> Unable to parse node run (%+v)", nr)
 	}
 	// Save the task
 	s.Dao.SaveTask(&t)

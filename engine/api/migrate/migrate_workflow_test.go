@@ -2,7 +2,6 @@ package migrate
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -93,7 +92,6 @@ func Test_ToWorkflow(t *testing.T) {
 	}
 
 	proj2, errP := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithEnvironments, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines)
-	fmt.Printf("%+v", proj2)
 	test.NoError(t, errP)
 	wfs, err := ToWorkflow(db, cache, oldW, proj2, u, true, false, true, true)
 	test.NoError(t, err)
@@ -108,13 +106,13 @@ func Test_ToWorkflow(t *testing.T) {
 
 	assert.Equal(t, pip1.ID, wf.Root.PipelineID)
 	assert.Equal(t, 1, len(wf.Root.Triggers))
-	assert.Equal(t, pip2.ID, wf.Root.Triggers[0].WorkflowDestNode.PipelineID)
-	assert.Equal(t, env1.ID, wf.Root.Triggers[0].WorkflowDestNode.Context.Environment.ID)
-	assert.Equal(t, "master", wf.Root.Triggers[0].WorkflowDestNode.Context.Conditions.PlainConditions[0].Value)
-	assert.Equal(t, "git.branch", wf.Root.Triggers[0].WorkflowDestNode.Context.Conditions.PlainConditions[0].Variable)
-	assert.Equal(t, 1, len(wf.Root.Triggers[0].WorkflowDestNode.Context.DefaultPipelineParameters))
-	assert.Equal(t, "valueTriggered", wf.Root.Triggers[0].WorkflowDestNode.Context.DefaultPipelineParameters[0].Value)
-	assert.Equal(t, "param1", wf.Root.Triggers[0].WorkflowDestNode.Context.DefaultPipelineParameters[0].Name)
-	assert.Equal(t, 3, len(wf.Root.Triggers[0].WorkflowDestNode.Context.Conditions.PlainConditions))
+	assert.Equal(t, pip2.ID, wf.WorkflowData.Node.Triggers[0].ChildNode.Context.PipelineID)
+	assert.Equal(t, env1.ID, wf.WorkflowData.Node.Triggers[0].ChildNode.Context.EnvironmentID)
+	assert.Equal(t, "master", wf.WorkflowData.Node.Triggers[0].ChildNode.Context.Conditions.PlainConditions[0].Value)
+	assert.Equal(t, "git.branch", wf.WorkflowData.Node.Triggers[0].ChildNode.Context.Conditions.PlainConditions[0].Variable)
+	assert.Equal(t, 1, len(wf.WorkflowData.Node.Triggers[0].ChildNode.Context.DefaultPipelineParameters))
+	assert.Equal(t, "valueTriggered", wf.WorkflowData.Node.Triggers[0].ChildNode.Context.DefaultPipelineParameters[0].Value)
+	assert.Equal(t, "param1", wf.WorkflowData.Node.Triggers[0].ChildNode.Context.DefaultPipelineParameters[0].Name)
+	assert.Equal(t, 3, len(wf.WorkflowData.Node.Triggers[0].ChildNode.Context.Conditions.PlainConditions))
 
 }

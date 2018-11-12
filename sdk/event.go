@@ -76,6 +76,8 @@ type EventRunWorkflowNode struct {
 	BranchName            string                    `json:"branch_name"`
 	NodeName              string                    `json:"node_name"`
 	StagesSummary         []StageSummary            `json:"stages_summary"`
+	HookUUID              string                    `json:"hook_uuid"`
+	HookLog               string                    `json:"log,omitempty"`
 }
 
 type EventRunWorkflowOutgoingHook struct {

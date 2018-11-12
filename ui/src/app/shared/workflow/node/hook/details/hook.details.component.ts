@@ -3,7 +3,6 @@ import {cloneDeep} from 'lodash';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {TaskExecution} from '../../../../../model/workflow.hook.model';
-import { WorkflowNodeOutgoingHookRun } from '../../../../../model/workflow.run.model';
 
 @Component({
     selector: 'app-workflow-node-hook-details',
@@ -20,7 +19,6 @@ export class WorkflowNodeHookDetailsComponent {
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
     task: TaskExecution;
-    outgoingHookRun: WorkflowNodeOutgoingHookRun;
 
     constructor(private _modalService: SuiModalService) {
         this.codeMirrorConfig = {
@@ -35,7 +33,6 @@ export class WorkflowNodeHookDetailsComponent {
 
     show(taskExec: TaskExecution): void {
         this.task = cloneDeep(taskExec);
-        this.outgoingHookRun = null;
         if (this.task.webhook && this.task.webhook.request_body) {
           let body = atob(this.task.webhook.request_body);
           try {
@@ -46,14 +43,6 @@ export class WorkflowNodeHookDetailsComponent {
 
         }
         this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookDetailsModal);
-        this.modal = this._modalService.open(this.modalConfig);
-    }
-
-    showOutgoingHook(hr: WorkflowNodeOutgoingHookRun): void {
-        this.outgoingHookRun = cloneDeep(hr);
-        this.task = null;
-        this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookDetailsModal);
-        this.modalConfig.mustScroll = true;
         this.modal = this._modalService.open(this.modalConfig);
     }
 }

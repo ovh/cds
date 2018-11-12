@@ -110,12 +110,13 @@ func (w *Workflow) PostInsert(db gorp.SqlExecutor) error {
 // PostGet is a db hook
 func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {
-		Metadata  sql.NullString `db:"metadata"`
-		PurgeTags sql.NullString `db:"purge_tags"`
+		Metadata     sql.NullString `db:"metadata"`
+		PurgeTags    sql.NullString `db:"purge_tags"`
+		WorkflowData sql.NullString `db:"workflow_data"`
 	}{}
 
-	if err := db.SelectOne(&res, "SELECT metadata, purge_tags FROM workflow WHERE id = $1", w.ID); err != nil {
-		return sdk.WrapError(err, "Unable to load marshalled workflow")
+	if err := db.SelectOne(&res, "SELECT metadata, purge_tags, workflow_data FROM workflow WHERE id = $1", w.ID); err != nil {
+		return sdk.WrapError(err, "PostGet> Unable to load marshalled workflow")
 	}
 
 	metadata := sdk.Metadata{}
@@ -129,6 +130,14 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 		return err
 	}
 	w.PurgeTags = purgeTags
+
+	data := &sdk.WorkflowData{}
+	if err := gorpmapping.JSONNullString(res.WorkflowData, data); err != nil {
+		return sdk.WrapError(err, "Unable to unmarshall workflow data")
+	}
+	if data.Node.ID != 0 {
+		w.WorkflowData = data
+	}
 
 	return nil
 }
@@ -157,7 +166,12 @@ func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
 	if errPt != nil {
 		return errPt
 	}
-	if _, err := db.Exec("update workflow set purge_tags = $1 where id = $2", pt, w.ID); err != nil {
+
+	data, errD := gorpmapping.JSONToNullString(w.WorkflowData)
+	if errD != nil {
+		return sdk.WrapError(errD, "Workflow.PostUpdate> Unable to marshall workflow data")
+	}
+	if _, err := db.Exec("update workflow set purge_tags = $1, workflow_data = $3 where id = $2", pt, w.ID, data); err != nil {
 		return err
 	}
 
@@ -263,6 +277,13 @@ func Load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		return nil, sdk.WrapError(err, "Unable to load workflow %s in project %s", name, proj.Key)
 	}
 	res.ProjectKey = proj.Key
+
+	if !opts.WithoutNode {
+		if err := IsValid(ctx, store, db, res, proj, u); err != nil {
+			return nil, sdk.WrapError(err, "Unable to valid workflow")
+		}
+	}
+
 	return res, nil
 }
 
@@ -275,6 +296,12 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, id int6
 	res, err := load(context.TODO(), db, store, proj, opts, u, query, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow %d", id)
+	}
+
+	if !opts.WithoutNode {
+		if err := IsValid(context.TODO(), store, db, res, proj, u); err != nil {
+			return nil, sdk.WrapError(err, "Unable to valid workflow")
+		}
 	}
 	return res, nil
 }
@@ -402,6 +429,10 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 	next()
 
 	res.Pipelines = map[int64]sdk.Pipeline{}
+	res.Applications = map[int64]sdk.Application{}
+	res.Environments = map[int64]sdk.Environment{}
+	res.HookModels = map[int64]sdk.WorkflowHookModel{}
+	res.OutGoingHookModels = map[int64]sdk.WorkflowHookModel{}
 
 	if !opts.WithoutNode {
 		_, next = observability.Span(ctx, "workflow.load.loadNodes")
@@ -415,7 +446,8 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		// Load joins
 		if !opts.OnlyRootNode {
 			_, next = observability.Span(ctx, "workflow.load.loadJoins")
-			joins, errJ := loadJoins(ctx, db, store, proj, &res, u, opts)
+			joins, errJ :=
+				loadJoins(ctx, db, store, proj, &res, u, opts)
 			next()
 
 			if errJ != nil {
@@ -492,8 +524,8 @@ func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, erro
 
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
-	if err := IsValid(w, p); err != nil {
-		return err
+	if err := IsValid(context.TODO(), store, db, w, p, u); err != nil {
+		return sdk.WrapError(err, "Unable to valid workflow")
 	}
 
 	if w.HistoryLength == 0 {
@@ -511,11 +543,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 
 	if w.Root == nil {
-		return sdk.ErrWorkflowInvalidRoot
-	}
-
-	if err := renameNodeFork(db, w); err != nil {
-		return sdk.WrapError(err, "Cannot rename node")
+		return sdk.WrapError(sdk.ErrWorkflowInvalidRoot, "Root node is not here")
 	}
 
 	if errIN := insertNode(db, store, w, w.Root, u, false); errIN != nil {
@@ -562,145 +590,189 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 	}
 
+	if err := InsertWorkflowData(db, w); err != nil {
+		return sdk.WrapError(err, "Insert> Unable to insert Workflow Data")
+	}
+
+	dbWorkflow := Workflow(*w)
+	if err := dbWorkflow.PostUpdate(db); err != nil {
+		return sdk.WrapError(err, "Insert> Unable to create workflow data")
+	}
+
 	event.PublishWorkflowAdd(p.Key, *w, u)
 
 	return nil
 }
 
-func renameNodeFork(db gorp.SqlExecutor, w *sdk.Workflow) error {
-	nameByPipeline := map[int64][]*sdk.WorkflowNode{}
-	unamedFork := make([]*sdk.WorkflowNodeFork, 0)
-	maxNumberFork := 0
-	maxNumberByPipeline := map[int64]int64{}
+func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
+	nodes := w.WorkflowData.Array()
+	var maxJoinNumber int
+	maxNumberByPipeline := map[int64]int{}
+	maxNumberByHookModel := map[int64]int{}
+	var maxForkNumber int
 
-	// browse node
-	var errS error
-	unamedFork, errS = saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &maxNumberFork, unamedFork, w.Root, w)
-	if errS != nil {
-		return errS
-	}
-
-	// browse join
-	for i := range w.Joins {
-		join := &w.Joins[i]
-		for j := range join.Triggers {
-			var errJ error
-			unamedFork, errJ = saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &maxNumberFork, unamedFork, &join.Triggers[j].WorkflowDestNode, w)
-			if errJ != nil {
-				return errJ
-			}
+	nodesToNamed := []*sdk.Node{}
+	// Search max numbers by nodes type
+	for i := range nodes {
+		if nodes[i].Name == "" {
+			nodesToNamed = append(nodesToNamed, nodes[i])
 		}
-	}
 
-	// Generate node name
-	for _, v := range nameByPipeline {
-		for _, n := range v {
-			if n.Name == "" {
-				nextNumber := maxNumberByPipeline[n.PipelineID] + 1
-				if nextNumber > 1 {
-					n.Name = fmt.Sprintf("%s_%d", w.Pipelines[n.PipelineID].Name, nextNumber)
-				} else {
-					n.Name = w.Pipelines[n.PipelineID].Name
+		switch nodes[i].Type {
+		case sdk.NodeTypePipeline:
+			if w.Pipelines == nil {
+				w.Pipelines = make(map[int64]sdk.Pipeline)
+			}
+			_, has := w.Pipelines[nodes[i].Context.PipelineID]
+			if !has {
+				p, errPip := pipeline.LoadPipelineByID(context.TODO(), db, nodes[i].Context.PipelineID, true)
+				if errPip != nil {
+					return sdk.WrapError(errPip, "renameNode> Unable to load pipeline %d", nodes[i].Context.PipelineID)
 				}
-				maxNumberByPipeline[n.PipelineID] = nextNumber
+				w.Pipelines[nodes[i].Context.PipelineID] = *p
 			}
+		case sdk.NodeTypeOutGoingHook:
+			if w.OutGoingHookModels == nil {
+				w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
+			}
+			_, has := w.OutGoingHookModels[nodes[i].OutGoingHookContext.HookModelID]
+			if !has {
+				m, errM := LoadOutgoingHookModelByID(db, nodes[i].OutGoingHookContext.HookModelID)
+				if errM != nil {
+					return sdk.WrapError(errM, "renameNode> Unable to load outgoing hook model %d", nodes[i].OutGoingHookContext.HookModelID)
+				}
+				w.OutGoingHookModels[nodes[i].OutGoingHookContext.HookModelID] = *m
+			}
+		}
+
+		switch nodes[i].Type {
+		case sdk.NodeTypePipeline:
+			pip := w.Pipelines[nodes[i].Context.PipelineID]
+			// Check if node is named pipName_12
+			if nodes[i].Name == pip.Name || strings.HasPrefix(nodes[i].Name, pip.Name+"_") {
+				var pipNumber int
+				if nodes[i].Name == pip.Name {
+					pipNumber = 1
+				} else {
+					// Retrieve Number
+					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, pip.Name+"_", "", 1))
+					if errI == nil {
+						pipNumber = current
+					}
+				}
+				currentMax, ok := maxNumberByPipeline[pip.ID]
+				if !ok || currentMax < pipNumber {
+					maxNumberByPipeline[pip.ID] = pipNumber
+				}
+			}
+		case sdk.NodeTypeJoin:
+			if nodes[i].Name == sdk.NodeTypeJoin || strings.HasPrefix(nodes[i].Name, sdk.NodeTypeJoin+"_") {
+				var joinNumber int
+				if nodes[i].Name == sdk.NodeTypeJoin {
+					joinNumber = 1
+				} else {
+					// Retrieve Number
+					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, sdk.NodeTypeJoin+"_", "", 1))
+					if errI == nil {
+						joinNumber = current
+					}
+				}
+				if maxJoinNumber < joinNumber {
+					maxJoinNumber = joinNumber
+				}
+			}
+		case sdk.NodeTypeFork:
+			if nodes[i].Name == sdk.NodeTypeFork || strings.HasPrefix(nodes[i].Name, sdk.NodeTypeFork+"_") {
+				var forkNumber int
+				if nodes[i].Name == sdk.NodeTypeFork {
+					forkNumber = 1
+				} else {
+					// Retrieve Number
+					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, sdk.NodeTypeFork+"_", "", 1))
+					if errI == nil {
+						forkNumber = current
+					}
+				}
+				if maxForkNumber < forkNumber {
+					maxForkNumber = forkNumber
+				}
+			}
+		case sdk.NodeTypeOutGoingHook:
+			model := w.OutGoingHookModels[nodes[i].OutGoingHookContext.HookModelID]
+			// Check if node is named pipName_12
+			if nodes[i].Name == model.Type || strings.HasPrefix(nodes[i].Name, model.Type+"_") {
+				var hookNumber int
+				if nodes[i].Name == model.Type {
+					hookNumber = 1
+				} else {
+					// Retrieve Number
+					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, model.Type+"_", "", 1))
+					if errI == nil {
+						hookNumber = current
+					}
+				}
+				currentMax, ok := maxNumberByHookModel[model.ID]
+				if !ok || currentMax < hookNumber {
+					maxNumberByHookModel[model.ID] = hookNumber
+				}
+			}
+		}
+
+		if nodes[i].Ref == "" {
+			nodes[i].Ref = nodes[i].Name
 		}
 	}
 
-	// Generate fork name
-	for _, f := range unamedFork {
-		maxNumberFork++
-		f.Name = fmt.Sprintf("fork_%d", maxNumberFork)
+	// Name node
+	for i := range nodesToNamed {
+		switch nodesToNamed[i].Type {
+		case sdk.NodeTypePipeline:
+			pipID := nodesToNamed[i].Context.PipelineID
+			nextNumber := maxNumberByPipeline[pipID] + 1
+			if nextNumber > 1 {
+				nodesToNamed[i].Name = fmt.Sprintf("%s_%d", w.Pipelines[pipID].Name, nextNumber)
+			} else {
+				nodesToNamed[i].Name = w.Pipelines[pipID].Name
+			}
+			maxNumberByPipeline[pipID] = nextNumber
+		case sdk.NodeTypeJoin:
+			nextNumber := maxJoinNumber + 1
+			if nextNumber > 1 {
+				nodesToNamed[i].Name = fmt.Sprintf("%s_%d", sdk.NodeTypeJoin, nextNumber)
+			} else {
+				nodesToNamed[i].Name = sdk.NodeTypeJoin
+			}
+			maxJoinNumber++
+		case sdk.NodeTypeFork:
+			nextNumber := maxForkNumber + 1
+			if nextNumber > 1 {
+				nodesToNamed[i].Name = fmt.Sprintf("%s_%d", sdk.NodeTypeFork, nextNumber)
+			} else {
+				nodesToNamed[i].Name = sdk.NodeTypeFork
+			}
+			maxForkNumber++
+		case sdk.NodeTypeOutGoingHook:
+			hookModelID := nodesToNamed[i].OutGoingHookContext.HookModelID
+			nextNumber := maxNumberByHookModel[hookModelID] + 1
+			if nextNumber > 1 {
+				nodesToNamed[i].Name = fmt.Sprintf("%s_%d", w.OutGoingHookModels[hookModelID].Name, nextNumber)
+			} else {
+				nodesToNamed[i].Name = w.OutGoingHookModels[hookModelID].Name
+			}
+			maxNumberByHookModel[hookModelID] = nextNumber
+		}
+		if nodesToNamed[i].Ref == "" {
+			nodesToNamed[i].Ref = nodesToNamed[i].Name
+		}
 	}
 
 	return nil
 }
 
-func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, maxForkNumber *int, unamedFork []*sdk.WorkflowNodeFork, n *sdk.WorkflowNode, w *sdk.Workflow) ([]*sdk.WorkflowNodeFork, error) {
-	// Load pipeline to have name
-	pip, has := w.Pipelines[n.PipelineID]
-	if !has {
-		pip2, errorP := pipeline.LoadPipelineByID(context.TODO(), db, n.PipelineID, true)
-		if errorP != nil {
-			return unamedFork, sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", n.PipelineID)
-		}
-		if w.Pipelines == nil {
-			w.Pipelines = map[int64]sdk.Pipeline{}
-		}
-		w.Pipelines[n.PipelineID] = *pip2
-		pip = *pip2
-	}
-	n.PipelineName = pip.Name
-
-	// Save node in pipeline node map
-	if _, ok := (*dict)[n.PipelineID]; !ok {
-		(*dict)[n.PipelineID] = []*sdk.WorkflowNode{}
-	}
-	(*dict)[n.PipelineID] = append((*dict)[n.PipelineID], n)
-
-	// Check max number for current pipeline
-	if n.Name == n.PipelineName || (n.Name != "" && strings.HasPrefix(n.Name, n.PipelineName+"_")) {
-		pipNumber, errI := strconv.ParseInt(strings.Replace(n.Name, n.PipelineName+"_", "", 1), 10, 64)
-
-		if n.Name == n.PipelineName {
-			pipNumber = 1
-		}
-
-		if errI == nil || pipNumber == 1 {
-			currentMax, ok := (*mapMaxNumber)[n.PipelineID]
-			if !ok || currentMax < pipNumber {
-				(*mapMaxNumber)[n.PipelineID] = pipNumber
-			}
-		}
-	}
-
-	for k := range n.Triggers {
-		var errT error
-		unamedFork, errT = saveNodeByPipeline(db, dict, mapMaxNumber, maxForkNumber, unamedFork, &n.Triggers[k].WorkflowDestNode, w)
-		if errT != nil {
-			return unamedFork, errT
-		}
-	}
-
-	for i := range n.OutgoingHooks {
-		for j := range n.OutgoingHooks[i].Triggers {
-			var errO error
-			unamedFork, errO = saveNodeByPipeline(db, dict, mapMaxNumber, maxForkNumber, unamedFork, &n.OutgoingHooks[i].Triggers[j].WorkflowDestNode, w)
-			if errO != nil {
-				return unamedFork, errO
-			}
-		}
-	}
-
-	for i := range n.Forks {
-		if n.Forks[i].Name == "" {
-			unamedFork = append(unamedFork, &n.Forks[i])
-		} else if strings.HasPrefix(n.Forks[i].Name, "fork_") {
-			forkNumber, errI := strconv.Atoi(strings.Replace(n.Forks[i].Name, "fork_", "", 1))
-			if errI == nil && forkNumber > *maxForkNumber {
-				*maxForkNumber = forkNumber
-			}
-		}
-		for j := range n.Forks[i].Triggers {
-			var errF error
-			unamedFork, errF = saveNodeByPipeline(db, dict, mapMaxNumber, maxForkNumber, unamedFork, &n.Forks[i].Triggers[j].WorkflowDestNode, w)
-			if errF != nil {
-				return unamedFork, errF
-			}
-		}
-	}
-
-	return unamedFork, nil
-}
-
 // Update updates a workflow
-func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
-	if err := IsValid(w, p); err != nil {
+func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
+	if err := IsValid(ctx, store, db, w, p, u); err != nil {
 		return err
-	}
-
-	if err := renameNodeFork(db, w); err != nil {
-		return sdk.WrapError(err, "Cannot check pipeline name")
 	}
 
 	// Delete all OLD JOIN
@@ -723,6 +795,11 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		if err := deleteNode(db, oldWorkflow, oldWorkflow.Root); err != nil {
 			return sdk.WrapError(err, "unable to delete root node on workflow(%d)", w.ID)
 		}
+	}
+
+	// Delete workflow data
+	if err := DeleteWorkflowData(db, *oldWorkflow); err != nil {
+		return sdk.WrapError(err, "Update> unable to delete workflow data(%d)", w.ID)
 	}
 
 	// Delete all node ID
@@ -761,13 +838,29 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		w.Icon = oldWorkflow.Icon
 	}
 
+	// TODO: DELETE in step 3: Synchronize HOOK datas
+	hooks := w.GetHooks()
+	w.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
+	for _, h := range hooks {
+		w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
+			Ref:         h.Ref,
+			HookModelID: h.WorkflowHookModelID,
+			Config:      h.Config,
+			UUID:        h.UUID,
+		})
+	}
+
+	if err := InsertWorkflowData(db, w); err != nil {
+		return sdk.WrapError(err, "Update> Unable to insert workflow data")
+	}
+
 	w.LastModified = time.Now()
 	dbw := Workflow(*w)
 	if _, err := db.Update(&dbw); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
+	*w = sdk.Workflow(dbw)
 	event.PublishWorkflowUpdate(p.Key, *w, *oldWorkflow, u)
-
 	return nil
 }
 
@@ -806,6 +899,10 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		return sdk.WrapError(err, "Unable to delete workflow root")
 	}
 
+	if err := DeleteWorkflowData(db, *w); err != nil {
+		return sdk.WrapError(err, "Delete> Unable to delete workflow data")
+	}
+
 	//Delete workflow
 	dbw := Workflow(*w)
 	if _, err := db.Delete(&dbw); err != nil {
@@ -816,7 +913,7 @@ func Delete(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.
 }
 
 // IsValid cheks workflow validity
-func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
+func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk.Workflow, proj *sdk.Project, u *sdk.User) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
@@ -854,74 +951,336 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 		}
 	}
 
-	//Checks application are in the current project
-	apps := w.InvolvedApplications()
-	for _, appID := range apps {
-		var found bool
-		for _, a := range proj.Applications {
-			if appID == a.ID {
-				found = true
-				break
+	if w.Pipelines == nil {
+		w.Pipelines = make(map[int64]sdk.Pipeline)
+	}
+	if w.Applications == nil {
+		w.Applications = make(map[int64]sdk.Application)
+	}
+	if w.Environments == nil {
+		w.Environments = make(map[int64]sdk.Environment)
+	}
+	if w.ProjectPlatforms == nil {
+		w.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
+	}
+	if w.HookModels == nil {
+		w.HookModels = make(map[int64]sdk.WorkflowHookModel)
+	}
+	if w.OutGoingHookModels == nil {
+		w.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
+	}
+
+	if w.WorkflowData == nil {
+		//Checks application are in the current project
+		apps := w.InvolvedApplications()
+		for _, appID := range apps {
+			var found bool
+			for _, a := range proj.Applications {
+				if appID == a.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown application %d", appID))
 			}
 		}
-		if !found {
-			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown application %d", appID))
-		}
-	}
 
-	//Checks pipelines are in the current project
-	pips := w.InvolvedPipelines()
-	for _, pipID := range pips {
-		var found bool
-		for _, p := range proj.Pipelines {
-			if pipID == p.ID {
-				found = true
-				break
+		//Checks pipelines are in the current project
+		pips := w.InvolvedPipelines()
+		for _, pipID := range pips {
+			var found bool
+			for _, p := range proj.Pipelines {
+				if pipID == p.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
 			}
 		}
-		if !found {
-			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown pipeline %d", pipID))
-		}
-	}
 
-	//Checks environments are in the current project
-	envs := w.InvolvedEnvironments()
-	for _, envID := range envs {
-		var found bool
-		for _, e := range proj.Environments {
-			if envID == e.ID {
-				found = true
-				break
+		//Checks environments are in the current project
+		envs := w.InvolvedEnvironments()
+		for _, envID := range envs {
+			var found bool
+			for _, e := range proj.Environments {
+				if envID == e.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
 			}
 		}
-		if !found {
-			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
-		}
-	}
 
-	//Checks platforms are in the current project
-	pfs := w.InvolvedPlatforms()
-	for _, id := range pfs {
-		var found bool
-		for _, p := range proj.Platforms {
-			if id == p.ID {
-				found = true
-				break
+		//Checks platforms are in the current project
+		pfs := w.InvolvedPlatforms()
+		for _, id := range pfs {
+			var found bool
+			for _, p := range proj.Platforms {
+				if id == p.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown platforms %d", id))
 			}
 		}
-		if !found {
-			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown platforms %d", id))
+
+		//Check contexts
+		nodes := w.Nodes(true)
+		for _, n := range nodes {
+			if err := n.CheckApplicationDeploymentStrategies(proj); err != nil {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, err)
+			}
+		}
+		return nil
+	}
+
+	// Fill empty node type
+	w.AssignEmptyType()
+	if err := w.ValidateType(); err != nil {
+		return err
+	}
+
+	nodesArray := w.WorkflowData.Array()
+	for i := range nodesArray {
+		n := nodesArray[i]
+		if n.Context == nil {
+			continue
+		}
+
+		if err := checkPipeline(ctx, db, proj, w, n); err != nil {
+			return err
+		}
+		if err := checkApplication(store, db, proj, w, n, u); err != nil {
+			return err
+		}
+		if err := checkEnvironment(db, proj, w, n); err != nil {
+			return err
+		}
+		if err := checkProjectPlatform(proj, w, n); err != nil {
+			return err
+		}
+		if err := checkHooks(db, w, n); err != nil {
+			return err
+		}
+		if err := checkOutGoingHook(db, w, n); err != nil {
+			return err
+		}
+
+		if n.Context.ApplicationID != 0 && n.Context.ProjectPlatformID != 0 {
+			if err := n.CheckApplicationDeploymentStrategies(proj, w); err != nil {
+				return sdk.NewError(sdk.ErrWorkflowInvalid, err)
+			}
 		}
 	}
 
-	//Check contexts
-	nodes := w.Nodes(true)
-	for _, n := range nodes {
-		if err := n.CheckApplicationDeploymentStrategies(proj); err != nil {
-			return sdk.NewError(sdk.ErrWorkflowInvalid, err)
-		}
+	return nil
+}
+
+func checkOutGoingHook(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
+	if n.OutGoingHookContext == nil {
+		return nil
 	}
 
+	if n.OutGoingHookContext.HookModelID != 0 {
+		hm, ok := w.OutGoingHookModels[n.OutGoingHookContext.HookModelID]
+		if !ok {
+			hmDB, err := LoadOutgoingHookModelByID(db, n.OutGoingHookContext.HookModelID)
+			if err != nil {
+				return err
+			}
+			hm = *hmDB
+			w.OutGoingHookModels[n.OutGoingHookContext.HookModelID] = hm
+		}
+		n.OutGoingHookContext.HookModelName = hm.Name
+		return nil
+	}
+
+	if n.OutGoingHookContext.HookModelName != "" {
+		hmDB, err := LoadOutgoingHookModelByName(db, n.OutGoingHookContext.HookModelName)
+		if err != nil {
+			return err
+		}
+		w.OutGoingHookModels[hmDB.ID] = *hmDB
+		n.OutGoingHookContext.HookModelID = hmDB.ID
+		return nil
+	}
+	return nil
+}
+
+func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
+	for i := range n.Hooks {
+		h := &n.Hooks[i]
+		if h.HookModelID != 0 {
+			hm, ok := w.HookModels[h.HookModelID]
+			if !ok {
+				hmDB, err := LoadHookModelByID(db, h.HookModelID)
+				if err != nil {
+					return err
+				}
+				hm = *hmDB
+				w.HookModels[h.HookModelID] = hm
+			}
+			h.HookModelName = hm.Name
+		} else if h.HookModelName != "" {
+			hm, err := LoadHookModelByName(db, h.HookModelName)
+			if err != nil {
+				return err
+			}
+			w.HookModels[hm.ID] = *hm
+			h.HookModelID = hm.ID
+		}
+	}
+	return nil
+}
+
+// CheckProjectPlatform checks CheckProjectPlatform data
+func checkProjectPlatform(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
+	if n.Context.ProjectPlatformID != 0 {
+		pp, ok := w.ProjectPlatforms[n.Context.ProjectPlatformID]
+		if !ok {
+			var ppProj *sdk.ProjectPlatform
+			for _, pl := range proj.Platforms {
+				if pl.ID == n.Context.ProjectPlatformID {
+					ppProj = &pl
+				}
+			}
+			if ppProj == nil {
+				return sdk.WrapError(sdk.ErrNotFound, "Platform %d not found", n.Context.ProjectPlatformID)
+			}
+			pp = *ppProj
+			w.ProjectPlatforms[n.Context.ProjectPlatformID] = *ppProj
+		}
+		n.Context.ProjectPlatformName = pp.Name
+		return nil
+	}
+	if n.Context.ProjectPlatformName != "" {
+		var ppProj *sdk.ProjectPlatform
+		for _, pl := range proj.Platforms {
+			if pl.Name == n.Context.ProjectPlatformName {
+				ppProj = &pl
+			}
+		}
+		w.ProjectPlatforms[n.Context.ProjectPlatformID] = *ppProj
+		n.Context.ProjectPlatformID = ppProj.ID
+	}
+	return nil
+}
+
+// CheckEnvironment checks environment data
+func checkEnvironment(db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
+	if n.Context.EnvironmentID != 0 {
+		env, ok := w.Environments[n.Context.EnvironmentID]
+		if !ok {
+			found := false
+			for _, e := range proj.Environments {
+				if e.ID == n.Context.EnvironmentID {
+					found = true
+				}
+			}
+			if !found {
+				return sdk.WithStack(sdk.ErrNoEnvironment)
+			}
+
+			// Load environment from db to get stage/jobs
+			envDB, err := environment.LoadEnvironmentByID(db, n.Context.EnvironmentID)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load environment %d", n.Context.EnvironmentID)
+			}
+			env = *envDB
+			w.Environments[n.Context.EnvironmentID] = env
+		}
+		n.Context.EnvironmentName = env.Name
+		return nil
+	}
+	if n.Context.EnvironmentName != "" {
+		envDB, err := environment.LoadEnvironmentByName(db, proj.Key, n.Context.EnvironmentName)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load environment %s", n.Context.EnvironmentName)
+		}
+		w.Environments[envDB.ID] = *envDB
+		n.Context.EnvironmentID = envDB.ID
+	}
+	return nil
+}
+
+// CheckApplication checks application data
+func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n *sdk.Node, u *sdk.User) error {
+	if n.Context.ApplicationID != 0 {
+		app, ok := w.Applications[n.Context.ApplicationID]
+		if !ok {
+			found := false
+			for _, a := range proj.Applications {
+				if a.ID == n.Context.ApplicationID {
+					found = true
+				}
+			}
+			if !found {
+				return sdk.WithStack(sdk.ErrApplicationNotFound)
+			}
+
+			// Load application from db to get stage/jobs
+			appDB, err := application.LoadByID(db, store, n.Context.ApplicationID, u, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load application %d", n.Context.ApplicationID)
+			}
+			app = *appDB
+			w.Applications[n.Context.ApplicationID] = app
+		}
+		n.Context.ApplicationName = app.Name
+		return nil
+	}
+	if n.Context.ApplicationName != "" {
+		appDB, err := application.LoadByName(db, store, proj.Key, n.Context.ApplicationName, u, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load application %s", n.Context.ApplicationName)
+		}
+		w.Applications[appDB.ID] = *appDB
+		n.Context.ApplicationID = appDB.ID
+	}
+	return nil
+}
+
+// CheckPipeline checks pipeline data
+func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
+	if n.Context.PipelineID != 0 {
+		pip, ok := w.Pipelines[n.Context.PipelineID]
+		if !ok {
+			found := false
+			for _, p := range proj.Pipelines {
+				if p.ID == n.Context.PipelineID {
+					found = true
+				}
+			}
+			if !found {
+				return sdk.WithStack(sdk.ErrPipelineNotFound)
+			}
+
+			// Load pipeline from db to get stage/jobs
+			pipDB, err := pipeline.LoadPipelineByID(ctx, db, n.Context.PipelineID, true)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load pipeline %d", n.Context.PipelineID)
+			}
+			pip = *pipDB
+			w.Pipelines[n.Context.PipelineID] = pip
+		}
+		n.Context.PipelineName = pip.Name
+		return nil
+	}
+	if n.Context.PipelineName != "" {
+		pipDB, err := pipeline.LoadPipeline(db, proj.Key, n.Context.PipelineName, true)
+		if err != nil {
+			return sdk.WrapError(err, "unable to load pipeline %s", n.Context.PipelineName)
+		}
+		w.Pipelines[pipDB.ID] = *pipDB
+		n.Context.PipelineID = pipDB.ID
+	}
 	return nil
 }
 
@@ -1135,6 +1494,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 				if wf.Root.Context.DefaultPayload, err = DefaultPayload(ctx, tx, store, proj, u, wf); err != nil {
 					return nil, nil, sdk.WrapError(err, "Unable to get default payload")
 				}
+				wf.WorkflowData.Node.Context.DefaultPayload = wf.Root.Context.DefaultPayload
 			}
 
 			if wf.Root.Context.Application != nil {
@@ -1144,7 +1504,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 			}
 		}
 
-		if err := Update(tx, store, wf, wf, proj, u); err != nil {
+		if err := Update(ctx, tx, store, wf, wf, proj, u); err != nil {
 			return nil, nil, sdk.WrapError(err, "Unable to update workflow")
 		}
 

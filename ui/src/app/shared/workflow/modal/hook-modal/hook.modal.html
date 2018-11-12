@@ -1,0 +1,18 @@
+<ng-template let-context let-modal="modal" #hookModalComponent>
+    <div class="header">{{ 'workflow_node_hook_edit' | translate }}</div>
+    <div class="content">
+        <app-workflow-node-hook-form
+                [project]="project"
+                [workflow]="workflow"
+                [node]="node"
+                [hook]="hook"
+                #hookFormComponent></app-workflow-node-hook-form>
+    </div>
+    <div class="actions">
+        <div class="deleteButton" *ngIf="workflow.permission >= permissionEnum.READ_WRITE_EXECUTE">
+            <app-delete-button [loading]="loading" [disabled]="loading || (workflow.from_repository && workflow.from_repository.length > 0)" (event)="deleteHook()"></app-delete-button>
+        </div>
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="saveHook()">{{ 'btn_save' | translate }}</button>
+    </div>
+</ng-template>

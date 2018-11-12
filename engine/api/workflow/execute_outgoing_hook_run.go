@@ -2,15 +2,13 @@ package workflow
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
-	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/services"
-
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -23,33 +21,51 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 	report := new(ProcessorReport)
 
 	//Checking if the hook is still at status waiting or building
-	var hookRun = wr.GetOutgoingHookRun(hookRunID)
-	if hookRun == nil {
-		return nil, sdk.ErrNotFound
-	}
-	if hookRun.Status != sdk.StatusWaiting.String() && hookRun.Status != sdk.StatusBuilding.String() {
-		log.Debug("UpdateOutgoingHookRunStatus> hookRun status is %s. aborting", hookRun.Status)
-		hookRun = nil
+	pendingOutgoingHooks := wr.PendingOutgoingHook()
+	nodeRun, ok := pendingOutgoingHooks[hookRunID]
+	if !ok {
+		return nil, sdk.WrapError(sdk.ErrNotFound, "Unable to find node run")
 	}
 
-	if hookRun == nil {
-		return nil, sdk.ErrNotFound
+	nodeRun.Status = callback.Status
+	nodeRun.Callback = &callback
+
+	if sdk.StatusIsTerminated(nodeRun.Status) {
+		nodeRun.Done = time.Now()
 	}
 
-	hookRun.Status = callback.Status
-	hookRun.Callback = &callback
+	if err := UpdateNodeRun(db, nodeRun); err != nil {
+		return nil, sdk.WrapError(err, "UpdateOutgoingHookRunStatus> Unable to update callback for outgoing node run")
+	}
 
-	report.Add(hookRun)
-	report1, _, err := processWorkflowRun(ctx, db, store, proj, wr, nil, nil, nil)
-	report.Merge(report1, err) //nolint
+	report.Add(nodeRun)
+
+	if wr.Version < 2 {
+		report1, _, err := processWorkflowRun(ctx, db, store, proj, wr, nil, nil, nil)
+		report.Merge(report1, err) //nolint
+		if err != nil {
+			return nil, sdk.WrapError(err, "Unable to process workflow run")
+		}
+	} else {
+		mapNodes := wr.Workflow.WorkflowData.Maps()
+		node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+
+		report1, err := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, nil, node, int(nodeRun.SubNumber))
+		report.Merge(report1, err) //nolint
+		if err != nil {
+			return nil, sdk.WrapError(err, "Unable to processNodeOutGoingHook")
+		}
+	}
+
+	oldStatus := wr.Status
+	r1, err := computeAndUpdateWorkflowRunStatus(ctx, db, wr)
 	if err != nil {
-		return nil, err
+		return report, sdk.WrapError(err, "processNodeOutGoingHook> Unable to compute workflow run status")
 	}
-
-	if err := UpdateWorkflowRun(ctx, db, wr); err != nil {
-		return nil, err
+	report.Merge(r1, nil) // nolint
+	if wr.Status != oldStatus {
+		report.Add(wr)
 	}
-
 	return report, nil
 
 }
@@ -72,14 +88,14 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 
 	tx, err := dbFunc().Begin()
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "Unable to start transaction")
 	}
 
 	defer tx.Rollback() //nolint
 
 	hookrun := parentWR.GetOutgoingHookRun(wr.RootRun().HookEvent.ParentWorkflow.HookRunID)
 	if hookrun == nil {
-		return errors.New("unable to find hookrun")
+		return sdk.WrapError(sdk.ErrNotFound, "unable to find hookrun")
 	}
 
 	if hookrun.Callback == nil {
@@ -94,52 +110,19 @@ func UpdateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 
 	report, err := UpdateOutgoingHookRunStatus(ctx, tx, store, parentProj, parentWR, wr.RootRun().HookEvent.ParentWorkflow.HookRunID, *hookrun.Callback)
 	if err != nil {
-		log.Error("workflow.UpdateWorkflowRun> unable to update hook run status run %s/%s#%d: %v",
+		log.Error("workflow.UpdateParentWorkflowRun> unable to update hook run status run %s/%s#%d: %v",
 			parentProj.Key,
 			parentWR.Workflow.Name,
 			wr.RootRun().HookEvent.ParentWorkflow.Run,
 			err)
-		return err
+		return sdk.WrapError(err, "Unable to update outgoing hook run status")
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
+		return sdk.WrapError(err, "Unable to commit transaction")
 	}
 
 	go SendEvent(dbFunc(), parentProj.Key, report)
 
 	return nil
-}
-
-// StopWorkflowNodeOutgoingHookRun stops a outgoing hook run
-func StopWorkflowNodeOutgoingHookRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, hr *sdk.WorkflowNodeOutgoingHookRun) (*ProcessorReport, error) {
-	var end func()
-	ctx, end = observability.Span(ctx, "workflow.StopWorkflowNodeOutgoingHookRun")
-	defer end()
-
-	report := new(ProcessorReport)
-
-	if hr.Callback == nil {
-		hr.Callback = new(sdk.WorkflowNodeOutgoingHookRunCallback)
-	}
-	hr.Callback.Done = time.Now()
-	hr.Callback.Log += "\nStopped"
-	hr.Callback.Status = sdk.StatusStopped.String()
-	hr.Status = hr.Callback.Status
-
-	srvs, err := services.FindByType(db, services.TypeHooks)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get hooks services: %v", err)
-	}
-
-	if hr.TaskExecution != nil {
-		path := fmt.Sprintf("/task/%s/execution/%d/stop", hr.TaskExecution.UUID, hr.TaskExecution.Timestamp)
-		if _, err := services.DoJSONRequest(ctx, srvs, "POST", path, nil, nil); err != nil {
-			return nil, fmt.Errorf("unable to stop task execution: %v", err)
-		}
-	}
-
-	report.Add(hr)
-
-	return report, nil
 }

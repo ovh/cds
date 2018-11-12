@@ -22,32 +22,73 @@ var ColorRegexp = regexp.MustCompile(`^#\w{3,8}$`)
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID                      int64                  `json:"id" db:"id" cli:"-"`
-	Name                    string                 `json:"name" db:"name" cli:"name,key"`
-	Description             string                 `json:"description,omitempty" db:"description" cli:"description"`
-	Icon                    string                 `json:"icon,omitempty" db:"icon" cli:"-"`
-	LastModified            time.Time              `json:"last_modified" db:"last_modified" mapstructure:"-"`
-	ProjectID               int64                  `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey              string                 `json:"project_key" db:"-" cli:"-"`
-	RootID                  int64                  `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
-	Root                    *WorkflowNode          `json:"root" db:"-" cli:"-"`
-	Joins                   []WorkflowNodeJoin     `json:"joins,omitempty" db:"-" cli:"-"`
-	Groups                  []GroupPermission      `json:"groups,omitempty" db:"-" cli:"-"`
-	Permission              int                    `json:"permission,omitempty" db:"-" cli:"-"`
-	Metadata                Metadata               `json:"metadata" yaml:"metadata" db:"-"`
-	Usage                   *Usage                 `json:"usage,omitempty" db:"-" cli:"-"`
-	HistoryLength           int64                  `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags               []string               `json:"purge_tags,omitempty" db:"-" cli:"-"`
-	Notifications           []WorkflowNotification `json:"notifications,omitempty" db:"-" cli:"-"`
-	FromRepository          string                 `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
-	DerivedFromWorkflowID   int64                  `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
-	DerivedFromWorkflowName string                 `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
-	DerivationBranch        string                 `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
-	Audits                  []AuditWorklflow       `json:"audits" db:"-"`
-	Pipelines               map[int64]Pipeline     `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
-	Labels                  []Label                `json:"labels" db:"-" cli:"labels"`
-	ToDelete                bool                   `json:"to_delete" db:"to_delete" cli:"-"`
-	Favorite                bool                   `json:"favorite" db:"-" cli:"favorite"`
+	ID                      int64                       `json:"id" db:"id" cli:"-"`
+	Name                    string                      `json:"name" db:"name" cli:"name,key"`
+	Description             string                      `json:"description,omitempty" db:"description" cli:"description"`
+	Icon                    string                      `json:"icon,omitempty" db:"icon" cli:"-"`
+	LastModified            time.Time                   `json:"last_modified" db:"last_modified" mapstructure:"-"`
+	ProjectID               int64                       `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey              string                      `json:"project_key" db:"-" cli:"-"`
+	RootID                  int64                       `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
+	Root                    *WorkflowNode               `json:"root,omitempty" db:"-" cli:"-"`
+	Joins                   []WorkflowNodeJoin          `json:"joins,omitempty" db:"-" cli:"-"`
+	Groups                  []GroupPermission           `json:"groups,omitempty" db:"-" cli:"-"`
+	Permission              int                         `json:"permission,omitempty" db:"-" cli:"-"`
+	Metadata                Metadata                    `json:"metadata" yaml:"metadata" db:"-"`
+	Usage                   *Usage                      `json:"usage,omitempty" db:"-" cli:"-"`
+	HistoryLength           int64                       `json:"history_length" db:"history_length" cli:"-"`
+	PurgeTags               []string                    `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	Notifications           []WorkflowNotification      `json:"notifications,omitempty" db:"-" cli:"-"`
+	FromRepository          string                      `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
+	DerivedFromWorkflowID   int64                       `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
+	DerivedFromWorkflowName string                      `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
+	DerivationBranch        string                      `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
+	Audits                  []AuditWorklflow            `json:"audits" db:"-"`
+	Pipelines               map[int64]Pipeline          `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
+	Applications            map[int64]Application       `json:"applications" db:"-" cli:"-"  mapstructure:"-"`
+	Environments            map[int64]Environment       `json:"environments" db:"-" cli:"-"  mapstructure:"-"`
+	ProjectPlatforms        map[int64]ProjectPlatform   `json:"project_platforms" db:"-" cli:"-"  mapstructure:"-"`
+	HookModels              map[int64]WorkflowHookModel `json:"hook_models" db:"-" cli:"-"  mapstructure:"-"`
+	OutGoingHookModels      map[int64]WorkflowHookModel `json:"outgoing_hook_models" db:"-" cli:"-"  mapstructure:"-"`
+	Labels                  []Label                     `json:"labels" db:"-" cli:"labels"`
+	ToDelete                bool                        `json:"to_delete" db:"to_delete" cli:"-"`
+	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
+	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
+}
+
+// GetApplication retrieve application from workflow
+func (w *Workflow) GetApplication(ID int64) Application {
+	return w.Applications[ID]
+}
+
+// RetroMigrate  temporary method that convert new workflow structure into old workflow structure for backward compatibility
+func (w *Workflow) RetroMigrate() {
+	root := w.WorkflowData.Node.retroMigrate()
+	w.Root = &root
+
+	if len(w.WorkflowData.Joins) > 0 {
+		w.Joins = make([]WorkflowNodeJoin, 0, len(w.WorkflowData.Joins))
+		for _, j := range w.WorkflowData.Joins {
+			w.Joins = append(w.Joins, j.retroMigrateJoin())
+		}
+	}
+}
+
+// Migrate old workflow struct into new workflow struct
+func (w *Workflow) Migrate(withID bool) WorkflowData {
+	work := WorkflowData{}
+
+	if w != nil && w.Root != nil {
+		// Add root node
+		work.Node = (*w.Root).migrate(withID)
+
+		// Add Join
+		work.Joins = make([]Node, 0, len(w.Joins))
+		for _, j := range w.Joins {
+			work.Joins = append(work.Joins, j.migrate(withID))
+		}
+	}
+	return work
 }
 
 // WorkflowNotification represents notifications on a workflow
@@ -58,16 +99,6 @@ type WorkflowNotification struct {
 	SourceNodeIDs  []int64                  `json:"source_node_id,omitempty" db:"-"`
 	Type           string                   `json:"type" db:"type"`
 	Settings       UserNotificationSettings `json:"settings" db:"-"`
-}
-
-//workflowNotificationInput is a way to parse notification
-type workflowNotificationInput struct {
-	Notification   UserNotificationSettings `json:"settings"`
-	ID             int64                    `json:"id,omitempty"`
-	WorkflowID     int64                    `json:"workflow_id,omitempty"`
-	SourceNodeRefs []string                 `json:"source_node_ref,omitempty"`
-	SourceNodeIDs  []int64                  `json:"source_node_id,omitempty"`
-	Type           string                   `json:"type"`
 }
 
 func (w *Workflow) Forks() (map[int64]WorkflowNodeFork, map[int64]string) {
@@ -141,71 +172,17 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	return res
 }
 
-func (w *Workflow) OutgoingHooks() []WorkflowNodeOutgoingHook {
-	if w.Root == nil {
-		return nil
-	}
-
-	res := []WorkflowNodeOutgoingHook{}
-	res = append(res, w.Root.OutgoingHooks...)
-	for _, j := range w.Joins {
-		for _, t := range j.Triggers {
-			res = append(res, t.WorkflowDestNode.OutgoingHooks...)
-		}
-	}
-
-	return res
-}
-
-func (w *Workflow) AddNodeFork(name string, dest WorkflowNodeFork) {
-	if w.Root == nil {
-		return
-	}
-	w.Root.AddNodeFork(name, dest)
-	for i := range w.Joins {
-		for j := range w.Joins[i].Triggers {
-			w.Joins[i].Triggers[j].WorkflowDestNode.AddNodeFork(name, dest)
-		}
-	}
-}
-
 //AddTrigger adds a trigger to the destination node from the node found by its name
-func (w *Workflow) AddTrigger(name string, dest WorkflowNode) {
-	if w.Root == nil {
+func (w *Workflow) AddTrigger(name string, dest Node) {
+	if w.WorkflowData == nil || w.WorkflowData.Node.Name == "" {
 		return
 	}
 
-	w.Root.AddTrigger(name, dest)
-	for i := range w.Joins {
-		for j := range w.Joins[i].Triggers {
-			w.Joins[i].Triggers[j].WorkflowDestNode.AddTrigger(name, dest)
+	(&w.WorkflowData.Node).AddTrigger(name, dest)
+	for i := range w.WorkflowData.Joins {
+		for j := range w.WorkflowData.Joins[i].Triggers {
+			(&w.WorkflowData.Joins[i].Triggers[j].ChildNode).AddTrigger(name, dest)
 		}
-	}
-}
-
-//AddNodeFork adds a fork to from the node found by its name
-func (n *WorkflowNode) AddNodeFork(name string, dest WorkflowNodeFork) {
-	if n.Name == name {
-		n.Forks = append(n.Forks, dest)
-		return
-	}
-	for i := range n.Triggers {
-		destNode := &n.Triggers[i].WorkflowDestNode
-		destNode.AddNodeFork(name, dest)
-	}
-}
-
-//AddTrigger adds a trigger to the destination node from the node found by its name
-func (n *WorkflowNode) AddTrigger(name string, dest WorkflowNode) {
-	if n.Name == name {
-		n.Triggers = append(n.Triggers, WorkflowNodeTrigger{
-			WorkflowDestNode: dest,
-		})
-		return
-	}
-	for i := range n.Triggers {
-		destNode := &n.Triggers[i].WorkflowDestNode
-		destNode.AddTrigger(name, dest)
 	}
 }
 
@@ -479,6 +456,29 @@ func (w *Workflow) Visit(visitor func(*WorkflowNode)) {
 	}
 }
 
+//Visit all the workflow and apply the visitor func on all nodes
+func (w *Workflow) VisitNode(visitor func(*Node, *Workflow)) {
+	w.WorkflowData.Node.VisitNode(w, visitor)
+	for i := range w.WorkflowData.Joins {
+		for j := range w.WorkflowData.Joins[i].Triggers {
+			n := &w.WorkflowData.Joins[i].Triggers[j].ChildNode
+			n.VisitNode(w, visitor)
+		}
+	}
+}
+
+//Sort sorts the workflow
+func (w *Workflow) SortNode() {
+	w.VisitNode(func(n *Node, w *Workflow) {
+		n.Sort()
+	})
+	for _, join := range w.WorkflowData.Joins {
+		sort.Slice(join.Triggers, func(i, j int) bool {
+			return join.Triggers[i].ChildNode.Name < join.Triggers[j].ChildNode.Name
+		})
+	}
+}
+
 //Sort sorts the workflow
 func (w *Workflow) Sort() {
 	w.Visit(func(n *WorkflowNode) {
@@ -489,6 +489,63 @@ func (w *Workflow) Sort() {
 			return join.Triggers[i].WorkflowDestNode.Name < join.Triggers[j].WorkflowDestNode.Name
 		})
 	}
+}
+
+// AssignEmptyType fill node type field
+func (w *Workflow) AssignEmptyType() {
+	// set node type for join
+	for i := range w.WorkflowData.Joins {
+		j := &w.WorkflowData.Joins[i]
+		j.Type = NodeTypeJoin
+	}
+
+	nodesArray := w.WorkflowData.Array()
+	for i := range nodesArray {
+		n := nodesArray[i]
+		if n.Type == "" {
+			if n.Context != nil && n.Context.PipelineID != 0 {
+				n.Type = NodeTypePipeline
+			} else if n.OutGoingHookContext != nil && n.OutGoingHookContext.HookModelID != 0 {
+				n.Type = NodeTypeOutGoingHook
+			} else {
+				n.Type = NodeTypeFork
+			}
+		}
+	}
+}
+
+// ValidateType check if nodes have a correct nodeType
+func (w *Workflow) ValidateType() error {
+	namesInError := make([]string, 0)
+
+	for _, n := range w.WorkflowData.Array() {
+		switch n.Type {
+		case NodeTypePipeline:
+			if n.Context == nil || (n.Context.PipelineID == 0 && n.Context.PipelineName == "") {
+				namesInError = append(namesInError, n.Name)
+			}
+		case NodeTypeOutGoingHook:
+			if n.OutGoingHookContext == nil || (n.OutGoingHookContext.HookModelID == 0 && n.OutGoingHookContext.HookModelName == "") {
+				namesInError = append(namesInError, n.Name)
+			}
+		case NodeTypeJoin:
+			if n.JoinContext == nil || len(n.JoinContext) == 0 {
+				namesInError = append(namesInError, n.Name)
+			}
+		case NodeTypeFork:
+			if (n.Context != nil && (n.Context.PipelineID != 0 || n.Context.PipelineName != "")) ||
+				(n.OutGoingHookContext != nil && (n.OutGoingHookContext.HookModelID != 0 || n.OutGoingHookContext.HookModelName != "")) ||
+				(n.JoinContext != nil && len(n.JoinContext) > 0) {
+				namesInError = append(namesInError, n.Name)
+			}
+		default:
+			namesInError = append(namesInError, n.Name)
+		}
+	}
+	if len(namesInError) > 0 {
+		return WithStack(fmt.Errorf("wrong type for nodes %v", namesInError))
+	}
+	return nil
 }
 
 //Visit all the workflow and apply the visitor func on the current node and the children
@@ -529,6 +586,37 @@ type WorkflowNodeJoin struct {
 	Triggers       []WorkflowNodeJoinTrigger `json:"triggers,omitempty" db:"-"`
 }
 
+func (j WorkflowNodeJoin) migrate(withID bool) Node {
+	newNode := Node{
+		Name:        j.Ref,
+		Ref:         j.Ref,
+		Type:        NodeTypeJoin,
+		JoinContext: make([]NodeJoin, 0, len(j.SourceNodeIDs)),
+		Triggers:    make([]NodeTrigger, 0, len(j.Triggers)),
+	}
+	if newNode.Ref == "" {
+		newNode.Ref = RandomString(5)
+	}
+	if withID {
+		newNode.ID = j.ID
+	}
+	for i := range j.SourceNodeIDs {
+		newNode.JoinContext = append(newNode.JoinContext, NodeJoin{
+			ParentID:   j.SourceNodeIDs[i],
+			ParentName: j.SourceNodeRefs[i],
+		})
+	}
+
+	for _, t := range j.Triggers {
+		child := t.WorkflowDestNode.migrate(withID)
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: newNode.Name,
+			ChildNode:      child,
+		})
+	}
+	return newNode
+}
+
 //WorkflowNodeJoinTrigger is a trigger for joins
 type WorkflowNodeJoinTrigger struct {
 	ID                 int64        `json:"id" db:"id"`
@@ -555,6 +643,198 @@ type WorkflowNode struct {
 	Forks              []WorkflowNodeFork         `json:"forks,omitempty" db:"-"`
 	Triggers           []WorkflowNodeTrigger      `json:"triggers,omitempty" db:"-"`
 	OutgoingHooks      []WorkflowNodeOutgoingHook `json:"outgoing_hooks,omitempty" db:"-"`
+}
+
+func (n Node) retroMigrate() WorkflowNode {
+	newNode := WorkflowNode{
+		Ref:        n.Ref,
+		Name:       n.Name,
+		WorkflowID: n.WorkflowID,
+		Context: &WorkflowNodeContext{
+			ProjectPlatformID:         n.Context.ProjectPlatformID,
+			EnvironmentID:             n.Context.EnvironmentID,
+			ApplicationID:             n.Context.ApplicationID,
+			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
+			DefaultPayload:            n.Context.DefaultPayload,
+			Mutex:                     n.Context.Mutex,
+			Conditions:                n.Context.Conditions,
+		},
+		PipelineID:    n.Context.PipelineID,
+		OutgoingHooks: nil,
+		Hooks:         make([]WorkflowNodeHook, 0, len(n.Hooks)),
+		Triggers:      nil,
+		Forks:         nil,
+	}
+
+	for _, h := range n.Hooks {
+		hook := WorkflowNodeHook{
+			UUID:                h.UUID,
+			Ref:                 h.Ref,
+			WorkflowHookModelID: h.HookModelID,
+			Config:              h.Config,
+		}
+		newNode.Hooks = append(newNode.Hooks, hook)
+	}
+
+	for _, t := range n.Triggers {
+		switch t.ChildNode.Type {
+		case NodeTypePipeline:
+			trig := WorkflowNodeTrigger{
+				WorkflowDestNode: t.ChildNode.retroMigrate(),
+			}
+			newNode.Triggers = append(newNode.Triggers, trig)
+		case NodeTypeFork:
+			newNode.Forks = append(newNode.Forks, t.ChildNode.retroMigrateFork())
+		case NodeTypeOutGoingHook:
+			newNode.OutgoingHooks = append(newNode.OutgoingHooks, t.ChildNode.retroMigrateOutGoingHook())
+		}
+	}
+	return newNode
+}
+
+func (n Node) retroMigrateFork() WorkflowNodeFork {
+	fork := WorkflowNodeFork{
+		Name: n.Name,
+	}
+	if len(n.Triggers) > 0 {
+		fork.Triggers = make([]WorkflowNodeForkTrigger, 0, len(n.Triggers))
+	}
+	for _, t := range n.Triggers {
+		trig := WorkflowNodeForkTrigger{}
+		switch t.ChildNode.Type {
+		case NodeTypePipeline:
+			trig.WorkflowDestNode = t.ChildNode.retroMigrate()
+		default:
+			continue
+		}
+		fork.Triggers = append(fork.Triggers, trig)
+	}
+	return fork
+}
+
+func (n Node) retroMigrateOutGoingHook() WorkflowNodeOutgoingHook {
+	h := WorkflowNodeOutgoingHook{
+		Config:              n.OutGoingHookContext.Config,
+		WorkflowHookModelID: n.OutGoingHookContext.HookModelID,
+		Ref:                 n.Ref,
+		Name:                n.Name,
+	}
+	if len(n.Triggers) > 0 {
+		h.Triggers = make([]WorkflowNodeOutgoingHookTrigger, 0, len(n.Triggers))
+		for _, t := range n.Triggers {
+			trig := WorkflowNodeOutgoingHookTrigger{}
+			switch t.ChildNode.Type {
+			case NodeTypePipeline:
+				trig.WorkflowDestNode = t.ChildNode.retroMigrate()
+			default:
+				continue
+			}
+			h.Triggers = append(h.Triggers, trig)
+		}
+	}
+	return h
+}
+
+func (n Node) retroMigrateJoin() WorkflowNodeJoin {
+	j := WorkflowNodeJoin{
+		Ref: n.Ref,
+	}
+
+	j.SourceNodeRefs = make([]string, 0, len(n.JoinContext))
+	for _, jc := range n.JoinContext {
+		j.SourceNodeRefs = append(j.SourceNodeRefs, jc.ParentName)
+	}
+
+	if len(n.Triggers) > 0 {
+		j.Triggers = make([]WorkflowNodeJoinTrigger, 0, len(n.Triggers))
+		for _, t := range n.Triggers {
+			trig := WorkflowNodeJoinTrigger{}
+			switch t.ChildNode.Type {
+			case NodeTypePipeline:
+				trig.WorkflowDestNode = t.ChildNode.retroMigrate()
+			default:
+				continue
+			}
+			j.Triggers = append(j.Triggers, trig)
+		}
+	}
+
+	return j
+}
+
+func (n WorkflowNode) migrate(withID bool) Node {
+	newNode := Node{
+		WorkflowID: n.WorkflowID,
+		Type:       NodeTypePipeline,
+		Name:       n.Name,
+		Ref:        n.Ref,
+		Context: &NodeContext{
+			PipelineID:                n.PipelineID,
+			ApplicationID:             n.Context.ApplicationID,
+			EnvironmentID:             n.Context.EnvironmentID,
+			ProjectPlatformID:         n.Context.ProjectPlatformID,
+			Conditions:                n.Context.Conditions,
+			DefaultPayload:            n.Context.DefaultPayload,
+			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
+			Mutex:                     n.Context.Mutex,
+		},
+		Hooks:    make([]NodeHook, 0, len(n.Hooks)),
+		Triggers: make([]NodeTrigger, 0, len(n.Triggers)+len(n.Forks)+len(n.OutgoingHooks)),
+	}
+	if n.Context.ApplicationID == 0 && n.Context.Application != nil {
+		newNode.Context.ApplicationID = n.Context.Application.ID
+	}
+	if n.Context.EnvironmentID == 0 && n.Context.Environment != nil {
+		newNode.Context.EnvironmentID = n.Context.Environment.ID
+	}
+	if n.Context.ProjectPlatformID == 0 && n.Context.ProjectPlatform != nil {
+		newNode.Context.ProjectPlatformID = n.Context.ProjectPlatform.ID
+	}
+	if withID {
+		newNode.ID = n.ID
+	}
+	if n.Ref == "" {
+		n.Ref = n.Name
+	}
+
+	for _, h := range n.Hooks {
+		nh := NodeHook{
+			Ref:         h.Ref,
+			HookModelID: h.WorkflowHookModelID,
+			Config:      h.Config,
+			UUID:        h.UUID,
+		}
+		if withID {
+			nh.ID = h.ID
+		}
+		newNode.Hooks = append(newNode.Hooks, nh)
+	}
+
+	for _, t := range n.Triggers {
+		triggeredNode := t.WorkflowDestNode.migrate(withID)
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: n.Name,
+			ChildNode:      triggeredNode,
+		})
+	}
+
+	for _, f := range n.Forks {
+		forkNode := f.migrate(withID)
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: n.Name,
+			ChildNode:      forkNode,
+		})
+	}
+
+	for _, h := range n.OutgoingHooks {
+		ogh := h.migrate(withID)
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: n.Name,
+			ChildNode:      ogh,
+		})
+	}
+
+	return newNode
 }
 
 func (n *WorkflowNode) ForksMap(forkMap *map[int64]WorkflowNodeFork, triggerMap *map[int64]string) {
@@ -979,6 +1259,9 @@ func (n *WorkflowNode) InvolvedApplications() []int64 {
 //InvolvedPipelines returns all pipelines used in the workflow
 func (n *WorkflowNode) InvolvedPipelines() []int64 {
 	res := []int64{}
+	if n.PipelineID != 0 {
+		res = append(res, n.PipelineID)
+	}
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedPipelines()...)
 	}

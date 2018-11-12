@@ -60,7 +60,9 @@ export class WorkflowRunService {
      * @returns {Observable<WorkflowRun>}
      */
     getWorkflowRun(key: string, workflowName: string, number: number): Observable<WorkflowRun> {
-        return this._http.get<WorkflowRun>('/project/' + key + '/workflows/' + workflowName + '/runs/' + number);
+        return this._http.get<WorkflowRun>('/project/' + key + '/workflows/' + workflowName + '/runs/' + number).map(wr => {
+            return wr;
+        });
     }
 
     /**

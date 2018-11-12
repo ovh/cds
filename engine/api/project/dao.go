@@ -333,11 +333,20 @@ func Load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts 
 	return load(nil, db, store, u, opts, "select project.* from project where projectkey = $1", key)
 }
 
+// LoadByPipelineID loads a project from workflow iD
+func LoadProjectByWorkflowID(db gorp.SqlExecutor, store cache.Store, u *sdk.User, workflowID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
+	          FROM project
+	          JOIN workflow ON workflow.project_id = project.id
+	          WHERE workflow.id = $1 `
+	return load(nil, db, store, u, opts, query, workflowID)
+}
+
 // LoadByPipelineID loads an project from pipeline iD
 func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, u *sdk.User, pipelineID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
 	          FROM project
-	          JOIN pipeline ON pipeline.project_id = projecT.id
+	          JOIN pipeline ON pipeline.project_id = project.id
 	          WHERE pipeline.id = $1 `
 	return load(nil, db, store, u, opts, query, pipelineID)
 }

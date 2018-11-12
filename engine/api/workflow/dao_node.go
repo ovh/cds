@@ -42,7 +42,7 @@ func updateWorkflowTriggerHookSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 	//Update node
 	query := "UPDATE workflow_node SET workflow_outgoing_hook_trigger_id = $1 WHERE id = $2"
 	if _, err := db.Exec(query, n.TriggerHookSrcID, n.ID); err != nil {
-		return sdk.WrapError(err, "Unable to set  workflow_outgoing_hook_trigger_id ON node %d", n.ID)
+		return sdk.WrapError(err, "updateWorkflowTriggerHookSrc> Unable to set  workflow_outgoing_hook_trigger_id ON node %d", n.ID)
 	}
 	return nil
 }
@@ -84,6 +84,7 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 					paramFound = true
 				}
 			}
+
 			if paramFound {
 				defaultPipParams = append(defaultPipParams, *param)
 			}
@@ -368,8 +369,24 @@ func loadNode(c context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 	wn.Context = ctx
 
+	// Add application in maps
+	if w.Applications == nil {
+		w.Applications = map[int64]sdk.Application{}
+	}
+	if ctx.Application != nil {
+		w.Applications[ctx.Application.ID] = *ctx.Application
+	}
+
+	// Add environment in maps
+	if w.Environments == nil {
+		w.Environments = map[int64]sdk.Environment{}
+	}
+	if ctx.Environment != nil {
+		w.Environments[ctx.Environment.ID] = *ctx.Environment
+	}
+
 	//Load hooks
-	hooks, errHooks := loadHooks(db, &wn)
+	hooks, errHooks := loadHooks(db, w, &wn)
 	if errHooks != nil {
 		return nil, sdk.WrapError(errHooks, "LoadNode> Unable to load hooks of %d", id)
 	}

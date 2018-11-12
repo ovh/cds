@@ -227,23 +227,30 @@ func Test_getWorkflowPushHandler(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				ApplicationID: app.ID,
-			},
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip.ID,
-						PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					ApplicationID: app.ID,
+					PipelineID:    pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "child",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
+	(&w).RetroMigrate()
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))

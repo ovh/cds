@@ -167,14 +167,19 @@ func TestLoadByWorkflowID(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
 			},
 		},
 	}
+
+	test.NoError(t, workflow.RenameNode(db, &w))
+	(&w).RetroMigrate()
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 

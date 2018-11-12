@@ -1,0 +1,36 @@
+version: v1.0
+name: build_front
+stages:
+- Build
+
+jobs:
+
+- job: Build front sources
+  stage: Build
+  description: Create javascript bundle
+  steps:
+  - gitClone:
+      branch: '{{.git.branch}}'
+      commit: '{{.git.hash}}'
+      directory: /go/src/github.com/ovh/cds/
+      url: '{{.git.http_url}}'
+  - script:
+    - cd /go/src/github.com/ovh/cds/ui
+    - '#echo ''Extracting npm cache'' '
+    - '#tar -xzf node_modules.tar.gz'
+    - npm set registry https://registry.npmjs.org
+    - npm install
+    - ng build -prod --aot
+    - cp Caddyfile dist/
+    - cp setup dist/
+    - tar cfz ui.tar.gz dist
+  - artifactUpload:
+      path: cds/ui/ui.tar.gz
+      tag: '{{.cds.version}}'
+  - artifactUpload:
+      path: cds/ui/setup
+      tag: '{{.cds.version}}'
+  requirements:
+  - binary: git
+  - memory: "6000"
+  - model: Node8.9.1

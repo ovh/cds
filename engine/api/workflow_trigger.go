@@ -48,7 +48,7 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			}
 		}
 
-		refNode := wf.GetNode(id)
+		refNode := wf.WorkflowData.NodeByID(id)
 		if refNode == nil {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
 		}
@@ -63,10 +63,11 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			}
 		}
 
+		mapNodes := wf.WorkflowData.Maps()
 		// If node node found in last workflow run
 		if len(params) == 0 {
 			var errp error
-			ancestorIds := refNode.Ancestors(wf, true)
+			ancestorIds := refNode.Ancestors(wf.WorkflowData, mapNodes, true)
 			params, errp = workflow.NodeBuildParametersFromWorkflow(ctx, api.mustDB(), api.Cache, proj, wf, refNode, ancestorIds)
 			if errp != nil {
 				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow")
@@ -75,15 +76,15 @@ func (api *API) getWorkflowTriggerConditionHandler() service.Handler {
 			sdk.AddParameter(&params, "cds.status", sdk.StringParameter, "")
 			sdk.AddParameter(&params, "cds.manual", sdk.StringParameter, "")
 
-			if refNode.Context != nil && refNode.Context.Application != nil {
+			if refNode.Context != nil && refNode.Context.ApplicationID != 0 {
 				sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, "")
 			}
-			if refNode.Context != nil && refNode.Context.Environment != nil {
+			if refNode.Context != nil && refNode.Context.EnvironmentID != 0 {
 				sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, "")
 			}
 		}
 
-		if refNode.IsLinkedToRepo() {
+		if refNode.IsLinkedToRepo(wf) {
 			if sdk.ParameterFind(&params, "git.repository") == nil {
 				data.ConditionNames = append(data.ConditionNames, "git.repository")
 				data.ConditionNames = append(data.ConditionNames, "git.branch")
