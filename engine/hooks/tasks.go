@@ -181,6 +181,9 @@ func (s *Service) startTasks(ctx context.Context) error {
 	//Start the tasks
 	for i := range tasks {
 		t := &tasks[i]
+		if t.Type == TypeOutgoingWebHook || t.Type == TypeOutgoingWorkflow {
+			continue
+		}
 		if _, err := s.startTask(c, t); err != nil {
 			log.Error("Hooks> runLongRunningTasks> Unable to start task: %v", err)
 			continue

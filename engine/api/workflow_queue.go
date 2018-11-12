@@ -95,19 +95,19 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 		}
 
 		pbji := &sdk.WorkflowNodeJobRunData{}
-		report, errT := takeJob(ctx, api.mustDB, api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
+		report, errT := takeJob(ctx, api.mustDB, api.Cache, p, id, takeForm, workerModel, pbji)
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot takeJob nodeJobRunID:%d", id)
 		}
 
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, p, report)
+		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, report)
 		go workflow.SendEvent(api.mustDB(), p.Key, report)
 
 		return service.WriteJSON(w, pbji, http.StatusOK)
 	}
 }
 
-func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.Worker, id int64, takeForm *sdk.WorkerTakeForm, workerModel string, wnjri *sdk.WorkflowNodeJobRunData) (*workflow.ProcessorReport, error) {
+func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, p *sdk.Project, id int64, takeForm *sdk.WorkerTakeForm, workerModel string, wnjri *sdk.WorkflowNodeJobRunData) (*workflow.ProcessorReport, error) {
 	// Start a tx
 	tx, errBegin := dbFunc().Begin()
 	if errBegin != nil {
@@ -181,7 +181,7 @@ func takeJob(ctx context.Context, dbFunc func() *gorp.DbMap, store cache.Store, 
 	wnjri.SubNumber = noderun.SubNumber
 	wnjri.Secrets = secrets
 
-	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, store, job, noderun, workflowRun, p)
+	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(p, workflowRun, noderun)
 	if errK != nil {
 		return nil, sdk.WrapError(errK, "Cannot load keys")
 	}
@@ -430,7 +430,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		}
 
 		_, next = observability.Span(ctx, "workflow.ResyncNodeRunsWithCommits")
-		workflow.ResyncNodeRunsWithCommits(ctx, api.mustDB(), api.Cache, proj, report)
+		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, proj, report)
 		next()
 
 		go workflow.SendEvent(api.mustDB(), proj.Key, report)
@@ -674,16 +674,6 @@ func (api *API) postWorkflowJobStepStatusHandler() service.Handler {
 				return nil
 			}
 			nodeRun = *nodeRunP
-		}
-
-		run, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID, workflow.LoadRunOptions{
-			DisableDetailledNodeRun: true,
-		})
-		if err != nil {
-			return err
-		}
-		if err := updateParentWorkflowRun(ctx, api.mustDB, api.Cache, run); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler")
 		}
 
 		work, errW := workflow.LoadWorkflowFromWorkflowRunID(api.mustDB(), nodeRun.WorkflowRunID)

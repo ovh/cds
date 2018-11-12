@@ -9,7 +9,7 @@ import {Event, EventType} from './model/event.model';
 import {PipelineStatus} from './model/pipeline.model';
 import {LoadOpts} from './model/project.model';
 import {TimelineFilter} from './model/timeline.model';
-import {WorkflowNodeOutgoingHookRun, WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
 import {ApplicationStore} from './service/application/application.store';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {BroadcastStore} from './service/broadcast/broadcast.store';
@@ -266,18 +266,12 @@ export class AppService {
                             event.workflow_name,
                             wnr.num,
                             wnr.id
-                        ).subscribe((wfNodeRun) => this._workflowEventStore.broadcastNodeRunEvents(wfNodeRun));
+                        ).subscribe((wfNodeRun) => this._workflowEventStore.broadcastNodeRunEvents(<WorkflowNodeRun>wfNodeRun));
                     } else {
                         this._workflowEventStore.broadcastNodeRunEvents(wnr);
                     }
-
                 }
                 break;
-            case EventType.RUN_WORKFLOW_OUTGOING_HOOK:
-                if (this.routeParams['number'] === event.workflow_run_num.toString()) {
-                    let hr = WorkflowNodeOutgoingHookRun.fromEventRunWorkflowOutgoingHook(event);
-                    this._workflowEventStore.broadcastOutgoingHookEvents(hr);
-                }
         }
     }
 

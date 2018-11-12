@@ -62,11 +62,19 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
+
+	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -118,9 +126,15 @@ func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
 		Name:       "test_ 1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Ref:  "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
 
@@ -166,16 +180,22 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
-				Environment: &env,
-				Mutex:       true,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+					EnvironmentID: env.ID,
+					Mutex:         true,
+				},
 			},
 		},
 	}
+
+	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -239,40 +259,47 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			Name:         "Root",
-			PipelineID:   pip1.ID,
-			PipelineName: pip1.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						Name:         "First",
-						PipelineID:   pip2.ID,
-						PipelineName: pip2.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "eq",
-										Value:    "master",
-										Variable: ".git.branch",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "Root",
+				Ref:  "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip1.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "First",
+							Ref:  "first",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip2.ID,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										{
+											Operator: "eq",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
 									},
 								},
 							},
-						},
-						Triggers: []sdk.WorkflowNodeTrigger{
-							sdk.WorkflowNodeTrigger{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "Second",
-									PipelineID:   pip3.ID,
-									PipelineName: pip3.Name,
-									Context: &sdk.WorkflowNodeContext{
-										Conditions: sdk.WorkflowNodeConditions{
-											PlainConditions: []sdk.WorkflowNodeCondition{
-												sdk.WorkflowNodeCondition{
-													Operator: "eq",
-													Value:    "master",
-													Variable: ".git.branch",
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Name: "Second",
+										Ref:  "second",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip3.ID,
+											Conditions: sdk.WorkflowNodeConditions{
+												PlainConditions: []sdk.WorkflowNodeCondition{
+													{
+														Operator: "eq",
+														Value:    "master",
+														Variable: ".git.branch",
+													},
 												},
 											},
 										},
@@ -281,19 +308,20 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 							},
 						},
 					},
-				},
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						Name:         "Last",
-						PipelineID:   pip4.ID,
-						PipelineName: pip4.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "eq",
-										Value:    "master",
-										Variable: ".git.branch",
+					{
+						ChildNode: sdk.Node{
+							Name: "Last",
+							Ref:  "last",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip4.ID,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										sdk.WorkflowNodeCondition{
+											Operator: "eq",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
 									},
 								},
 							},
@@ -304,6 +332,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 		},
 	}
 
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -378,40 +407,45 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			Name:         "Root",
-			PipelineID:   pip1.ID,
-			PipelineName: pip1.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						Name:         "First",
-						PipelineID:   pip2.ID,
-						PipelineName: pip2.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "=",
-										Value:    "master",
-										Variable: ".git.branch",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "Root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:   pip1.ID,
+					PipelineName: pip1.Name,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "First",
+							Context: &sdk.NodeContext{
+								PipelineID:   pip2.ID,
+								PipelineName: pip2.Name,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										{
+											Operator: "=",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
 									},
 								},
 							},
-						},
-						Triggers: []sdk.WorkflowNodeTrigger{
-							sdk.WorkflowNodeTrigger{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Name:         "Second",
-									PipelineID:   pip3.ID,
-									PipelineName: pip3.Name,
-									Context: &sdk.WorkflowNodeContext{
-										Conditions: sdk.WorkflowNodeConditions{
-											PlainConditions: []sdk.WorkflowNodeCondition{
-												sdk.WorkflowNodeCondition{
-													Operator: "=",
-													Value:    "master",
-													Variable: ".git.branch",
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Name: "Second",
+										Context: &sdk.NodeContext{
+											PipelineID:   pip3.ID,
+											PipelineName: pip3.Name,
+											Conditions: sdk.WorkflowNodeConditions{
+												PlainConditions: []sdk.WorkflowNodeCondition{
+													{
+														Operator: "=",
+														Value:    "master",
+														Variable: ".git.branch",
+													},
 												},
 											},
 										},
@@ -420,19 +454,19 @@ func TestInsertComplexeWorkflowWithBadOperator(t *testing.T) {
 							},
 						},
 					},
-				},
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						Name:         "Last",
-						PipelineID:   pip4.ID,
-						PipelineName: pip4.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "=",
-										Value:    "master",
-										Variable: ".git.branch",
+					{
+						ChildNode: sdk.Node{
+							Name: "Last",
+							Context: &sdk.NodeContext{
+								PipelineID:   pip4.ID,
+								PipelineName: pip4.Name,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										{
+											Operator: "=",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
 									},
 								},
 							},
@@ -543,37 +577,46 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
-				Environment: &env,
-				DefaultPipelineParameters: []sdk.Parameter{
-					{
-						Name:  "param1",
-						Type:  sdk.StringParameter,
-						Value: "param1_value",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+					EnvironmentID: env.ID,
+					DefaultPipelineParameters: []sdk.Parameter{
+						{
+							Name:  "param1",
+							Type:  sdk.StringParameter,
+							Value: "param1_value",
+						},
+					},
+					DefaultPayload: []sdk.Parameter{
+						{
+							Name:  "git.branch",
+							Type:  sdk.StringParameter,
+							Value: "master",
+						},
 					},
 				},
-				DefaultPayload: []sdk.Parameter{
+				Triggers: []sdk.NodeTrigger{
 					{
-						Name:  "git.branch",
-						Type:  sdk.StringParameter,
-						Value: "master",
-					},
-				},
-			},
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip3.ID,
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Context: &sdk.NodeContext{
+								PipelineID: pip3.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -589,7 +632,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1.Root.Context.Application = &app2
 	w1.Root.Context.ApplicationID = app2.ID
 
-	test.NoError(t, workflow.Update(db, cache, w1, w1old, proj, u))
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
 	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})
@@ -660,59 +703,30 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip1.ID,
-			PipelineName: pip1.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip2.ID,
-						PipelineName: pip2.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "eq",
-										Value:    "master",
-										Variable: ".git.branch",
-									},
-								},
-							},
+		WorkflowData: &sdk.WorkflowData{
+			Joins: []sdk.Node{
+				{
+					Type: sdk.NodeTypeJoin,
+					JoinContext: []sdk.NodeJoin{
+						{
+							ParentName: "pip3",
 						},
-						Triggers: []sdk.WorkflowNodeTrigger{
-							sdk.WorkflowNodeTrigger{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Ref:          "pip3",
-									PipelineID:   pip3.ID,
-									PipelineName: pip3.Name,
-									Context: &sdk.WorkflowNodeContext{
-										Conditions: sdk.WorkflowNodeConditions{
-											PlainConditions: []sdk.WorkflowNodeCondition{
-												sdk.WorkflowNodeCondition{
-													Operator: "eq",
-													Value:    "master",
-													Variable: ".git.branch",
-												},
-											},
-										},
-									},
-									Triggers: []sdk.WorkflowNodeTrigger{
-										sdk.WorkflowNodeTrigger{
-											WorkflowDestNode: sdk.WorkflowNode{
-												Ref:          "pip4",
-												PipelineID:   pip4.ID,
-												PipelineName: pip4.Name,
-												Context: &sdk.WorkflowNodeContext{
-													Conditions: sdk.WorkflowNodeConditions{
-														PlainConditions: []sdk.WorkflowNodeCondition{
-															sdk.WorkflowNodeCondition{
-																Operator: "eq",
-																Value:    "master",
-																Variable: ".git.branch",
-															},
-														},
-													},
-												},
+						{
+							ParentName: "pip4",
+						},
+					},
+					Triggers: []sdk.NodeTrigger{
+						{
+							ChildNode: sdk.Node{
+								Type: sdk.NodeTypePipeline,
+								Context: &sdk.NodeContext{
+									PipelineID: pip5.ID,
+									Conditions: sdk.WorkflowNodeConditions{
+										PlainConditions: []sdk.WorkflowNodeCondition{
+											{
+												Operator: "eq",
+												Value:    "master",
+												Variable: ".git.branch",
 											},
 										},
 									},
@@ -722,24 +736,62 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 					},
 				},
 			},
-		},
-		Joins: []sdk.WorkflowNodeJoin{
-			sdk.WorkflowNodeJoin{
-				SourceNodeRefs: []string{
-					"pip3", "pip4",
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip1.ID,
 				},
-				Triggers: []sdk.WorkflowNodeJoinTrigger{
-					sdk.WorkflowNodeJoinTrigger{
-						WorkflowDestNode: sdk.WorkflowNode{
-							PipelineID:   pip5.ID,
-							PipelineName: pip5.Name,
-							Context: &sdk.WorkflowNodeContext{
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip2.ID,
 								Conditions: sdk.WorkflowNodeConditions{
 									PlainConditions: []sdk.WorkflowNodeCondition{
-										sdk.WorkflowNodeCondition{
+										{
 											Operator: "eq",
 											Value:    "master",
 											Variable: ".git.branch",
+										},
+									},
+								},
+							},
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Ref:  "pip3",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip3.ID,
+											Conditions: sdk.WorkflowNodeConditions{
+												PlainConditions: []sdk.WorkflowNodeCondition{
+													{
+														Operator: "eq",
+														Value:    "master",
+														Variable: ".git.branch",
+													},
+												},
+											},
+										},
+										Triggers: []sdk.NodeTrigger{{
+											ChildNode: sdk.Node{
+												Ref:  "pip4",
+												Type: sdk.NodeTypePipeline,
+												Context: &sdk.NodeContext{
+													PipelineID: pip4.ID,
+													Conditions: sdk.WorkflowNodeConditions{
+														PlainConditions: []sdk.WorkflowNodeCondition{
+															{
+																Operator: "eq",
+																Value:    "master",
+																Variable: ".git.branch",
+															},
+														},
+													},
+												},
+											},
+										},
 										},
 									},
 								},
@@ -751,6 +803,8 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 		},
 	}
 
+	test.NoError(t, workflow.RenameNode(db, &w))
+	w.RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -888,55 +942,59 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip1.ID,
-			PipelineName: pip1.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip2.ID,
-						PipelineName: pip2.Name,
-						Context: &sdk.WorkflowNodeContext{
-							Conditions: sdk.WorkflowNodeConditions{
-								PlainConditions: []sdk.WorkflowNodeCondition{
-									sdk.WorkflowNodeCondition{
-										Operator: "eq",
-										Value:    "master",
-										Variable: ".git.branch",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip1.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip2.ID,
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										{
+											Operator: "eq",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
 									},
 								},
 							},
-						},
-						Triggers: []sdk.WorkflowNodeTrigger{
-							sdk.WorkflowNodeTrigger{
-								WorkflowDestNode: sdk.WorkflowNode{
-									Ref:          "pip3",
-									PipelineID:   pip3.ID,
-									PipelineName: pip3.Name,
-									Context: &sdk.WorkflowNodeContext{
-										Conditions: sdk.WorkflowNodeConditions{
-											PlainConditions: []sdk.WorkflowNodeCondition{
-												sdk.WorkflowNodeCondition{
-													Operator: "eq",
-													Value:    "master",
-													Variable: ".git.branch",
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Ref:  "pip3",
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip3.ID,
+											Conditions: sdk.WorkflowNodeConditions{
+												PlainConditions: []sdk.WorkflowNodeCondition{
+													{
+														Operator: "eq",
+														Value:    "master",
+														Variable: ".git.branch",
+													},
 												},
 											},
 										},
-									},
-									Triggers: []sdk.WorkflowNodeTrigger{
-										sdk.WorkflowNodeTrigger{
-											WorkflowDestNode: sdk.WorkflowNode{
-												Ref:          "pip4",
-												PipelineID:   pip4.ID,
-												PipelineName: pip4.Name,
-												Context: &sdk.WorkflowNodeContext{
-													Conditions: sdk.WorkflowNodeConditions{
-														PlainConditions: []sdk.WorkflowNodeCondition{
-															sdk.WorkflowNodeCondition{
-																Operator: "eq",
-																Value:    "master",
-																Variable: ".git.branch",
+										Triggers: []sdk.NodeTrigger{
+											{
+												ChildNode: sdk.Node{
+													Ref:  "pip4",
+													Type: sdk.NodeTypePipeline,
+													Context: &sdk.NodeContext{
+														PipelineID: pip4.ID,
+														Conditions: sdk.WorkflowNodeConditions{
+															PlainConditions: []sdk.WorkflowNodeCondition{
+																{
+																	Operator: "eq",
+																	Value:    "master",
+																	Variable: ".git.branch",
+																},
 															},
 														},
 													},
@@ -950,67 +1008,79 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 					},
 				},
 			},
-		},
-		Joins: []sdk.WorkflowNodeJoin{
-			sdk.WorkflowNodeJoin{
-				SourceNodeRefs: []string{
-					"pip3", "pip4",
-				},
-				Triggers: []sdk.WorkflowNodeJoinTrigger{
-					sdk.WorkflowNodeJoinTrigger{
-						WorkflowDestNode: sdk.WorkflowNode{
-							PipelineID:   pip5.ID,
-							PipelineName: pip5.Name,
-							Ref:          "pip5",
-							Context: &sdk.WorkflowNodeContext{
-								Conditions: sdk.WorkflowNodeConditions{
-									PlainConditions: []sdk.WorkflowNodeCondition{
-										sdk.WorkflowNodeCondition{
-											Operator: "eq",
-											Value:    "master",
-											Variable: ".git.branch",
+			Joins: []sdk.Node{
+				{
+					Type: sdk.NodeTypeJoin,
+					JoinContext: []sdk.NodeJoin{
+						{
+							ParentName: "pip3",
+						},
+						{
+							ParentName: "pip4",
+						},
+					},
+					Triggers: []sdk.NodeTrigger{
+						{
+							ChildNode: sdk.Node{
+								Ref:  "pip5",
+								Type: sdk.NodeTypePipeline,
+								Context: &sdk.NodeContext{
+									PipelineID: pip5.ID,
+									Conditions: sdk.WorkflowNodeConditions{
+										PlainConditions: []sdk.WorkflowNodeCondition{
+											{
+												Operator: "eq",
+												Value:    "master",
+												Variable: ".git.branch",
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							ChildNode: sdk.Node{
+								Ref:  "pip6",
+								Type: sdk.NodeTypePipeline,
+								Context: &sdk.NodeContext{
+									PipelineID: pip6.ID,
+									Conditions: sdk.WorkflowNodeConditions{
+										PlainConditions: []sdk.WorkflowNodeCondition{
+											{
+												Operator: "eq",
+												Value:    "master",
+												Variable: ".git.branch",
+											},
 										},
 									},
 								},
 							},
 						},
 					},
-					sdk.WorkflowNodeJoinTrigger{
-						WorkflowDestNode: sdk.WorkflowNode{
-							PipelineID:   pip6.ID,
-							PipelineName: pip6.Name,
-							Ref:          "pip6",
-							Context: &sdk.WorkflowNodeContext{
-								Conditions: sdk.WorkflowNodeConditions{
-									PlainConditions: []sdk.WorkflowNodeCondition{
-										sdk.WorkflowNodeCondition{
-											Operator: "eq",
-											Value:    "master",
-											Variable: ".git.branch",
-										},
-									},
-								},
-							},
+				},
+				{
+					Type: sdk.NodeTypeJoin,
+					JoinContext: []sdk.NodeJoin{
+						{
+							ParentName: "pip5",
+						},
+						{
+							ParentName: "pip6",
 						},
 					},
-				},
-			},
-			sdk.WorkflowNodeJoin{
-				SourceNodeRefs: []string{
-					"pip5", "pip6",
-				},
-				Triggers: []sdk.WorkflowNodeJoinTrigger{
-					sdk.WorkflowNodeJoinTrigger{
-						WorkflowDestNode: sdk.WorkflowNode{
-							PipelineID:   pip7.ID,
-							PipelineName: pip7.Name,
-							Context: &sdk.WorkflowNodeContext{
-								Conditions: sdk.WorkflowNodeConditions{
-									PlainConditions: []sdk.WorkflowNodeCondition{
-										sdk.WorkflowNodeCondition{
-											Operator: "eq",
-											Value:    "master",
-											Variable: ".git.branch",
+					Triggers: []sdk.NodeTrigger{
+						{
+							ChildNode: sdk.Node{
+								Type: sdk.NodeTypePipeline,
+								Context: &sdk.NodeContext{
+									PipelineID: pip7.ID,
+									Conditions: sdk.WorkflowNodeConditions{
+										PlainConditions: []sdk.WorkflowNodeCondition{
+											{
+												Operator: "eq",
+												Value:    "master",
+												Variable: ".git.branch",
+											},
 										},
 									},
 								},
@@ -1021,7 +1091,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 			},
 		},
 		Notifications: []sdk.WorkflowNotification{
-			sdk.WorkflowNotification{
+			{
 				Type:           "jabber",
 				SourceNodeRefs: []string{"pip6", "pip5"},
 				Settings: sdk.UserNotificationSettings{
@@ -1039,6 +1109,8 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		},
 	}
 
+	test.NoError(t, workflow.RenameNode(db, &w))
+	w.RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -1110,12 +1182,20 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip2.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip2.ID,
+							},
+						},
 					},
 				},
 			},
@@ -1124,32 +1204,43 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
+	test.NoError(t, workflow.RenameNode(db, &w))
+	w.RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	w1old := w1
+	w1old := *w1
 	w1.Name = "test_2"
-	w1.Root.PipelineID = pip2.ID
-	w1.Root.PipelineName = pip2.Name
-	w1.Joins = []sdk.WorkflowNodeJoin{
-		sdk.WorkflowNodeJoin{
-			SourceNodeRefs: []string{
-				fmt.Sprintf("%d", w1.Root.ID),
-				fmt.Sprintf("%d", w1.Root.Triggers[0].WorkflowDestNode.ID),
+	w1.WorkflowData.Joins = []sdk.Node{
+		{
+			Type: sdk.NodeTypeJoin,
+			JoinContext: []sdk.NodeJoin{
+				{
+					ParentName: "pip1",
+				},
+				{
+					ParentName: "pip2",
+				},
 			},
-			Triggers: []sdk.WorkflowNodeJoinTrigger{
-				sdk.WorkflowNodeJoinTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip3.ID,
+			Triggers: []sdk.NodeTrigger{
+				{
+					ChildNode: sdk.Node{
+						Type: sdk.NodeTypePipeline,
+						Context: &sdk.NodeContext{
+							PipelineID: pip3.ID,
+						},
 					},
 				},
 			},
 		},
 	}
 
-	test.NoError(t, workflow.Update(db, cache, w1, w1old, proj, u))
+	test.NoError(t, workflow.RenameNode(db, w1))
+	w1.RetroMigrate()
+
+	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, &w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
 	w2, err := workflow.LoadByID(db, cache, proj, w1.ID, u, workflow.LoadOptions{})
@@ -1188,6 +1279,26 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	test.NoError(t, workflow.CreateBuiltinWorkflowOutgoingHookModels(db))
 
+	hookModels, err := workflow.LoadHookModels(db)
+	test.NoError(t, err)
+	var webHookID int64
+	for _, h := range hookModels {
+		if h.Name == sdk.WebHookModel.Name {
+			webHookID = h.ID
+			break
+		}
+	}
+
+	outHookModels, err := workflow.LoadOutgoingHookModels(db)
+	test.NoError(t, err)
+	var outWebHookID int64
+	for _, h := range outHookModels {
+		if h.Name == sdk.OutgoingWebHookModel.Name {
+			outWebHookID = h.ID
+			break
+		}
+	}
+
 	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
@@ -1208,100 +1319,116 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Conditions: sdk.WorkflowNodeConditions{
-					PlainConditions: []sdk.WorkflowNodeCondition{
-						sdk.WorkflowNodeCondition{
-							Operator: "eq",
-							Value:    "master",
-							Variable: ".git.branch",
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+					Conditions: sdk.WorkflowNodeConditions{
+						PlainConditions: []sdk.WorkflowNodeCondition{
+							{
+								Operator: "eq",
+								Value:    "master",
+								Variable: ".git.branch",
+							},
 						},
 					},
 				},
-			},
-			Hooks: []sdk.WorkflowNodeHook{
-				{
-					WorkflowHookModel: sdk.WorkflowHookModel{
-						Name: sdk.WebHookModelName,
-					},
-					Config: sdk.WorkflowNodeHookConfig{
-						"method": sdk.WorkflowNodeHookConfigValue{
-							Value:        "POST",
-							Configurable: true,
-						},
-						"username": sdk.WorkflowNodeHookConfigValue{
-							Value:        "test",
-							Configurable: false,
-						},
-						"password": sdk.WorkflowNodeHookConfigValue{
-							Value:        "password",
-							Configurable: false,
-						},
-					},
-				},
-			},
-			OutgoingHooks: []sdk.WorkflowNodeOutgoingHook{
-				{
-					WorkflowHookModel: sdk.WorkflowHookModel{
-						Name: sdk.OutgoingWebHookModel.Name,
-					},
-					Config: sdk.WorkflowNodeHookConfig{
-						"method": sdk.WorkflowNodeHookConfigValue{
-							Value:        "POST",
-							Configurable: true,
-						},
-						"username": sdk.WorkflowNodeHookConfigValue{
-							Value:        "test",
-							Configurable: false,
-						},
-						"password": sdk.WorkflowNodeHookConfigValue{
-							Value:        "password",
-							Configurable: false,
-						},
-						"payload": sdk.WorkflowNodeHookConfigValue{
-							Value:        "{}",
-							Configurable: true,
-						},
-						"URL": sdk.WorkflowNodeHookConfigValue{
-							Value:        "https://www.github.com",
-							Configurable: true,
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelID: webHookID,
+						Config: sdk.WorkflowNodeHookConfig{
+							"method": sdk.WorkflowNodeHookConfigValue{
+								Value:        "POST",
+								Configurable: true,
+							},
+							"username": sdk.WorkflowNodeHookConfigValue{
+								Value:        "test",
+								Configurable: false,
+							},
+							"password": sdk.WorkflowNodeHookConfigValue{
+								Value:        "password",
+								Configurable: false,
+							},
+							"payload": sdk.WorkflowNodeHookConfigValue{
+								Value:        "{}",
+								Configurable: true,
+							},
+							"URL": sdk.WorkflowNodeHookConfigValue{
+								Value:        "https://www.github.com",
+								Configurable: true,
+							},
 						},
 					},
 				},
-				{
-					WorkflowHookModel: sdk.WorkflowHookModel{
-						Name: sdk.OutgoingWebHookModel.Name,
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Type: sdk.NodeTypeOutGoingHook,
+							OutGoingHookContext: &sdk.NodeOutGoingHook{
+								HookModelID: outWebHookID,
+								Config: sdk.WorkflowNodeHookConfig{
+									"method": sdk.WorkflowNodeHookConfigValue{
+										Value:        "POST",
+										Configurable: true,
+									},
+									"username": sdk.WorkflowNodeHookConfigValue{
+										Value:        "test",
+										Configurable: false,
+									},
+									"password": sdk.WorkflowNodeHookConfigValue{
+										Value:        "password",
+										Configurable: false,
+									},
+									"payload": sdk.WorkflowNodeHookConfigValue{
+										Value:        "{}",
+										Configurable: true,
+									},
+									"URL": sdk.WorkflowNodeHookConfigValue{
+										Value:        "https://www.github.com",
+										Configurable: true,
+									},
+								},
+							},
+						},
 					},
-					Config: sdk.WorkflowNodeHookConfig{
-						"method": sdk.WorkflowNodeHookConfigValue{
-							Value:        "POST",
-							Configurable: true,
-						},
-						"username": sdk.WorkflowNodeHookConfigValue{
-							Value:        "test",
-							Configurable: false,
-						},
-						"password": sdk.WorkflowNodeHookConfigValue{
-							Value:        "password",
-							Configurable: false,
-						},
-						"payload": sdk.WorkflowNodeHookConfigValue{
-							Value:        "{}",
-							Configurable: true,
-						},
-						"URL": sdk.WorkflowNodeHookConfigValue{
-							Value:        "https://www.github.com",
-							Configurable: true,
-						},
-					},
-					Triggers: []sdk.WorkflowNodeOutgoingHookTrigger{
-						{
-							WorkflowDestNode: sdk.WorkflowNode{
-								PipelineID:   pip.ID,
-								PipelineName: pip.Name,
+					{
+						ChildNode: sdk.Node{
+							Type: sdk.NodeTypeOutGoingHook,
+							OutGoingHookContext: &sdk.NodeOutGoingHook{
+								HookModelID: outWebHookID,
+								Config: sdk.WorkflowNodeHookConfig{
+									"method": sdk.WorkflowNodeHookConfigValue{
+										Value:        "POST",
+										Configurable: true,
+									},
+									"username": sdk.WorkflowNodeHookConfigValue{
+										Value:        "test",
+										Configurable: false,
+									},
+									"password": sdk.WorkflowNodeHookConfigValue{
+										Value:        "password",
+										Configurable: false,
+									},
+									"payload": sdk.WorkflowNodeHookConfigValue{
+										Value:        "{}",
+										Configurable: true,
+									},
+									"URL": sdk.WorkflowNodeHookConfigValue{
+										Value:        "https://www.github.com",
+										Configurable: true,
+									},
+								},
+							},
+							Triggers: []sdk.NodeTrigger{
+								{
+									ChildNode: sdk.Node{
+										Type: sdk.NodeTypePipeline,
+										Context: &sdk.NodeContext{
+											PipelineID: pip.ID,
+										},
+									},
+								},
 							},
 						},
 					},
@@ -1310,6 +1437,8 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 		},
 	}
 
+	test.NoError(t, workflow.RenameNode(db, &w))
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u), "unable to insert workflow")
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{})
@@ -1331,7 +1460,6 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	}
 
 	assert.Len(t, w.Root.Hooks, 1)
-	t.Log(w.Root.Hooks)
 
 	exp, err := exportentities.NewWorkflow(*w1)
 	test.NoError(t, err)

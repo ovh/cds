@@ -74,14 +74,6 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 		}
 	}
 
-	for _, wnrs := range wr.WorkflowNodeOutgoingHookRuns {
-		for _, wnr := range wnrs {
-			if wr.LastSubNumber == wnr.SubNumber {
-				computeRunStatus(wnr.Status, &counterStatus)
-			}
-		}
-	}
-
 	var isInError bool
 	var newStatus string
 	for _, info := range wr.Infos {
@@ -106,12 +98,17 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) (*Process
 }
 
 // ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
-func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, report *ProcessorReport) {
+func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, report *ProcessorReport) {
+	if report == nil {
+		return
+	}
+
 	nodeRuns := report.nodes
 	for _, nodeRun := range nodeRuns {
-		if len(nodeRun.Commits) > 0 {
+		if len(nodeRun.Commits) > 0 || nodeRun.ApplicationID == 0 {
 			continue
 		}
+
 		go func(nr sdk.WorkflowNodeRun) {
 			wr, errL := LoadRunByID(db, nr.WorkflowRunID, LoadRunOptions{})
 			if errL != nil {
@@ -119,18 +116,44 @@ func ResyncNodeRunsWithCommits(ctx context.Context, db gorp.SqlExecutor, store c
 				return
 			}
 
-			n := wr.Workflow.GetNode(nr.WorkflowNodeID)
-			if n == nil {
-				log.Error("ResyncNodeRuns> Unable to find node by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
-				return
-			}
+			var nodeName string
+			var app sdk.Application
+			var env *sdk.Environment
 
-			if n.Context == nil || n.Context.Application == nil {
-				return
+			if wr.Version < 2 {
+				n := wr.Workflow.GetNode(nr.WorkflowNodeID)
+				if n == nil {
+					log.Error("ResyncNodeRuns> Unable to find node by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
+					return
+				}
+
+				if n.Context == nil || n.Context.Application == nil {
+					return
+				}
+				nodeName = n.Name
+				app = *n.Context.Application
+
+				if n.Context.Environment != nil {
+					env = n.Context.Environment
+				}
+			} else {
+				n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
+				if n == nil {
+					log.Error("ResyncNodeRuns> Unable to find node data by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
+					return
+				}
+				if n.Context == nil || n.Context.ApplicationID == 0 {
+					return
+				}
+				app = wr.Workflow.Applications[n.Context.ApplicationID]
+				if n.Context.EnvironmentID != 0 {
+					e := wr.Workflow.Environments[n.Context.EnvironmentID]
+					env = &e
+				}
 			}
 
 			//New context because we are in goroutine
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(context.TODO(), db, store, proj, &wr.Workflow, n.Name, wr.Number, &nr, n.Context.Application, n.Context.Environment)
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(context.TODO(), db, store, proj, &wr.Workflow, nodeName, wr.Number, &nr, &app, env)
 			if err != nil {
 				log.Error("ResyncNodeRuns> cannot get build commits on a node run %v", err)
 			} else if commits != nil {

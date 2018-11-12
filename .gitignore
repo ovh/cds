@@ -1,4 +1,5 @@
 *.swp
+*.iml
 .idea
 *.iml
 .vscode

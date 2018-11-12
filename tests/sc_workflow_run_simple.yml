@@ -34,7 +34,7 @@ testcases:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
     - result.systemoutjson.start ShouldNotBeEmpty
-    - result.systemoutjson.payload ShouldBeEmpty
+    - result.systemoutjson.payload ShouldNotBeEmpty
     - result.systemoutjson.num ShouldContainSubstring 1
     - result.systemoutjson.status ShouldEqual Building
     - result.systemoutjson.tags ShouldContainSubstring triggered_by

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -73,7 +72,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		log.Debug("runGRPCPlugin> End buildID:%d stepOrder:%d", buildID, stepOrder)
 	}()
 
-	var socketPath string
 	chanRes := make(chan sdk.Result, 1)
 	done := make(chan struct{})
 	sdk.GoRoutine(ctx, "runGRPCPlugin", func(ctx context.Context) {
@@ -112,14 +110,6 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 			return
 		}
 
-		defer func() {
-			if strings.Contains(pluginSocket.Socket, ".sock") {
-				if err := os.RemoveAll(socketPath); err != nil {
-					log.Warning("Could not remove socket path %v", pluginSocket.Socket)
-				}
-			}
-		}()
-
 		c, err := actionplugin.Client(ctx, pluginSocket.Socket)
 		if err != nil {
 			close(done)
@@ -144,18 +134,18 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 
 		logCtx, stopLogs := context.WithCancel(ctx)
 		go enablePluginLogger(logCtx, done, sendLog, pluginSocket)
-		defer stopLogs()
 
 		manifest, err := actionPluginClient.Manifest(ctx, &empty.Empty{})
 		if err != nil {
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Unable to retrieve plugin manifest... Aborting (%v)", err))
+			actionPluginClientStop(ctx, actionPluginClient, stopLogs)
 			return
 		}
 		log.Debug("plugin successfully initialized: %#v", manifest)
 
 		sendLog(fmt.Sprintf("# Plugin %s v%s is ready", manifest.Name, manifest.Version))
 		query := actionplugin.ActionQuery{
-			Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(a.Parameters)),
+			Options: sdk.ParametersMapMerge(sdk.ParametersToMap(params), sdk.ParametersToMap(a.Parameters), sdk.MapMergeOptions.ExcludeGitParams),
 			JobID:   buildID,
 		}
 
@@ -163,13 +153,13 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 		pluginDetails := fmt.Sprintf("plugin %s v%s", manifest.Name, manifest.Version)
 		if err != nil {
 			t := fmt.Sprintf("failure %s err: %v", pluginDetails, err)
-			syncStd(t)
+			actionPluginClientStop(ctx, actionPluginClient, stopLogs)
 			log.Error(t)
 			pluginFail(chanRes, sendLog, fmt.Sprintf("Error running action: %v", err))
 			return
 		}
 
-		syncStd(pluginDetails)
+		actionPluginClientStop(ctx, actionPluginClient, stopLogs)
 
 		chanRes <- sdk.Result{
 			Status: result.GetStatus(),
@@ -191,13 +181,14 @@ func (w *currentWorker) runGRPCPlugin(ctx context.Context, a *sdk.Action, buildI
 	}
 }
 
-func syncStd(p string) {
-	if err := os.Stdout.Sync(); err != nil {
-		log.Error("os.Stdout.Sync %s err:%v", p, err)
+func actionPluginClientStop(ctx context.Context, actionPluginClient actionplugin.ActionPluginClient, stopLogs context.CancelFunc) {
+	if _, err := actionPluginClient.Stop(ctx, new(empty.Empty)); err != nil {
+		// Transport is closing is a "normal" error, as we requested plugin to stop
+		if !strings.Contains(err.Error(), "transport is closing") {
+			log.Error("Error on actionPluginClient.Stop: %s", err)
+		}
 	}
-	if err := os.Stderr.Sync(); err != nil {
-		log.Error("os.Stderr.Sync %s err:%v", p, err)
-	}
+	stopLogs()
 }
 
 func pluginFail(chanRes chan<- sdk.Result, sendLog LoggerFunc, reason string) {

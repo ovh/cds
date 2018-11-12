@@ -234,7 +234,7 @@ type WorkerClient interface {
 	WorkerModelUpdate(ID int64, name string, modelType string, dockerModel *sdk.ModelDocker, vmModel *sdk.ModelVirtualMachine, groupID int64) (sdk.Model, error)
 	WorkerModel(name string) (sdk.Model, error)
 	WorkerModelDelete(name string) error
-	WorkerModelSpawnError(id int64, info string) error
+	WorkerModelSpawnError(id int64, info sdk.SpawnErrorForm) error
 	WorkerModelsEnabled() ([]sdk.Model, error)
 	WorkerModels() ([]sdk.Model, error)
 	WorkerModelsByBinary(binary string) ([]sdk.Model, error)

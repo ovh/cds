@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/sdk/log"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -88,11 +89,19 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
+
+	(&w).RetroMigrate()
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
@@ -232,7 +241,7 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 		OS:    "linux",
 		Arch:  "amd64",
 	}
-	ctx.worker, err = worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities, params.OS, params.Arch)
+	ctx.worker, err = worker.RegisterWorker(api.mustDB(), api.Cache, params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities, params.OS, params.Arch)
 	test.NoError(t, err)
 }
 
@@ -262,7 +271,8 @@ func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWo
 }
 
 func TestGetWorkflowJobQueueHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t); defer end()
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -314,7 +324,8 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 }
 
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t); defer end()
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -355,7 +366,8 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 
 }
 func Test_postBookWorkflowJobHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t); defer end()
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsHatchery(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -382,7 +394,8 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t); defer end()
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -449,7 +462,8 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t); defer end()
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -561,7 +575,8 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobVariableHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t); defer end()
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -612,7 +627,8 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t); defer end()
+	api, db, router, end := newTestAPI(t)
+	defer end()
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJobAsWorker(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
@@ -731,7 +747,8 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 }
 
 func TestPostVulnerabilityReportHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t); defer end()
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	// Create user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -796,27 +813,35 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			Name:         "node1",
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
 			},
 		},
 	}
+
+	(&w).RetroMigrate()
 	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
-	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{}, nil)
+	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	assert.NoError(t, errmr)
 
 	// Call post coverage report handler
 	// Prepare request
 
+	t.Logf("%+v", w.WorkflowData.Node.ID)
+	t.Logf("%+v", w.Root.ID)
+	t.Logf("%+v", wrDB.WorkflowNodeRuns)
 	vars := map[string]string{
-		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID),
+		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.Root.ID][0].Stages[0].RunJobs[0].ID),
 	}
 
 	ctx := testRunWorkflowCtx{
@@ -856,7 +881,8 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 }
 
 func TestInsertNewCodeCoverageReport(t *testing.T) {
-	api, db, router, end := newTestAPI(t); defer end()
+	api, db, router, end := newTestAPI(t)
+	defer end()
 
 	// Create user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -932,15 +958,21 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			Name:         "node1",
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
 			},
 		},
 	}
+
+	(&w).RetroMigrate()
+
 	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
@@ -1023,6 +1055,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "master",
 		},
+		User: *u,
 	}, nil)
 	assert.NoError(t, errmr)
 
@@ -1031,6 +1064,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "my-branch",
 		},
+		User: *u,
 	}, nil)
 	assert.NoError(t, errm)
 
@@ -1081,16 +1115,18 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "my-branch",
 		},
+		User: *u,
 	}, nil)
 	assert.NoError(t, errT)
 
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
 	assert.NoError(t, err)
 
+	log.Warning("%s", wrr.Status)
 	// Call post coverage report handler
 	// Prepare request
 	vars := map[string]string{
-		"permID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID),
+		"permID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.Root.ID][0].Stages[0].RunJobs[0].ID),
 	}
 
 	request := coverage.Report{

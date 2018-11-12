@@ -3,6 +3,7 @@ package sdk
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
 	"golang.org/x/text/language"
 )
 
@@ -182,21 +183,14 @@ func (m *Message) String(al string) string {
 	}
 }
 
-// Errors implement error interface and is a set of error
-type Errors []Message
-
-func (e *Errors) Error() string {
-	return e.TranslatedError(language.AmericanEnglish.String())
-}
-
-// TranslatedError returns translation for all errors
-func (e *Errors) TranslatedError(al string) string {
+// MessagesToError returns a translated slices of messages as an error
+func MessagesToError(messages []Message) error {
 	var s string
-	for i, err := range *e {
+	for i, err := range messages {
 		if i != 0 {
-			s += "\n"
+			s += "; "
 		}
 		s += err.String(language.AmericanEnglish.String())
 	}
-	return s
+	return errors.New(s)
 }

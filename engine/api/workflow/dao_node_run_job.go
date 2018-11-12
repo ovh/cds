@@ -233,6 +233,33 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 	return &jr, nil
 }
 
+//LoadDeadNodeJobRun load a NodeJobRun which is Building but without worker
+func LoadDeadNodeJobRun(db gorp.SqlExecutor, store cache.Store) ([]sdk.WorkflowNodeJobRun, error) {
+	var deadJobsDB []JobRun
+	query := `SELECT workflow_node_run_job.* FROM workflow_node_run_job WHERE status = $1 AND worker_id IS NULL`
+	if _, err := db.Select(&deadJobsDB, query, sdk.StatusBuilding.String()); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	deadJobs := make([]sdk.WorkflowNodeJobRun, len(deadJobsDB))
+	for i, deadJob := range deadJobsDB {
+		if store != nil {
+			getHatcheryInfo(store, &deadJob)
+		}
+
+		jr, err := deadJob.WorkflowNodeRunJob()
+		if err != nil {
+			return nil, err
+		}
+		deadJobs[i] = jr
+	}
+
+	return deadJobs, nil
+}
+
 //LoadAndLockNodeJobRunWait load for update a NodeJobRun given its ID
 func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}

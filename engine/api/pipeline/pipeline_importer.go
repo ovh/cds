@@ -244,18 +244,10 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, pip *sdk.
 	if !ok {
 		if err := importNew(db, store, proj, pip, u); err != nil {
 			log.Error("pipeline.Import> %s", err)
-			switch err.(type) {
-			case *sdk.Errors:
-				if msgChan != nil {
-					msgChan <- sdk.NewMessage(sdk.MsgPipelineCreationAborted, pip.Name)
-				}
-				for _, m := range *err.(*sdk.Errors) {
-					msgChan <- m
-				}
-				return sdk.ErrInvalidPipeline
-			default:
-				return sdk.WrapError(err, "pipeline.Import")
+			if msgChan != nil {
+				msgChan <- sdk.NewMessage(sdk.MsgPipelineCreationAborted, pip.Name)
 			}
+			return sdk.WrapError(sdk.NewError(sdk.ErrInvalidPipeline, err), "unable to import new pipeline")
 		}
 		if msgChan != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgPipelineCreated, pip.Name)

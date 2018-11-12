@@ -19,6 +19,9 @@ import (
 
 // SendEvent Send event on workflow run
 func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
+	if report == nil {
+		return
+	}
 	for _, wr := range report.workflows {
 		event.PublishWorkflowRun(wr, key)
 	}
@@ -44,22 +47,11 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 					log.Warning("SendEvent.workflow> Cannot load previous node run: %s", errN)
 				}
 			} else {
-				log.Warning("SendEvent.workflow > Unable to find node %d in workflow", wnr.WorkflowNodeID)
+				log.Info("SendEvent.workflow.previousNodeRun > Unable to find node %d in workflow", wnr.WorkflowNodeID)
 			}
 		}
 
 		event.PublishWorkflowNodeRun(db, wnr, wr.Workflow, &previousNodeRun)
-	}
-
-	for _, hr := range report.outgoingHooks {
-		wr, errWR := LoadRunByID(db, hr.WorkflowRunID, LoadRunOptions{
-			WithLightTests: true,
-		})
-		if errWR != nil {
-			log.Warning("SendEvent.workflow> Cannot load workflow run %d: %s", hr.WorkflowRunID, errWR)
-			continue
-		}
-		event.PublishWorkflowNodeOutgoingHookRun(db, hr, wr.Workflow)
 	}
 
 	for _, jobrun := range report.jobs {

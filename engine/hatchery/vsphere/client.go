@@ -155,7 +155,14 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 			log.Error("deleteServer> unable to get server annotation")
 		} else {
 			if strings.Contains(s.Name, "register-") {
-				hatchery.CheckWorkerModelRegister(h, annot.WorkerModelID)
+				if err := hatchery.CheckWorkerModelRegister(h, annot.WorkerModelID); err != nil {
+					var spawnErr = sdk.SpawnErrorForm{
+						Error: err.Error(),
+					}
+					if err := h.CDSClient().WorkerModelSpawnError(annot.WorkerModelID, spawnErr); err != nil {
+						log.Error("CheckWorkerModelRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %v", annot.WorkerModelName, err)
+					}
+				}
 			}
 		}
 

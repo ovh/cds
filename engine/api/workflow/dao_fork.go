@@ -100,7 +100,6 @@ func loadForks(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj
 				}
 				return nil, sdk.WrapError(err, "Unable to load hook trigger %d", t)
 			}
-
 			forks[i].Triggers = append(forks[i].Triggers, jt)
 		}
 	}

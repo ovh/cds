@@ -68,7 +68,6 @@ export class WorkflowService {
      * @param workflow Workflow to update
      */
     updateWorkflow(key: string, name: string, workflow: Workflow): Observable<Workflow> {
-        // reinit node id
         let w = deepClone(workflow);
         Workflow.prepareRequestForAPI(w);
         return this._http.put<Workflow>('/project/' + key + '/workflows/' + name, w);

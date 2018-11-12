@@ -44,12 +44,12 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 
 	var icon string
 	if hook.WorkflowHookModelID != 0 {
-		icon = hook.WorkflowHookModel.Icon
 		model, errm := LoadHookModelByID(db, hook.WorkflowHookModelID)
 		if errm != nil {
 			return sdk.WrapError(errm, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
 		}
 		hook.WorkflowHookModel = *model
+		icon = hook.WorkflowHookModel.Icon
 	} else {
 		model, errm := LoadHookModelByName(db, hook.WorkflowHookModel.Name)
 		if errm != nil {
@@ -152,7 +152,7 @@ func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.WorkflowNodeHook, error) {
 	return nodes, nil
 }
 
-func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeHook, error) {
+func loadHooks(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeHook, error) {
 	res := []NodeHook{}
 	if _, err := db.Select(&res, "select id, uuid, ref, workflow_hook_model_id, workflow_node_id from workflow_node_hook where workflow_node_id = $1", node.ID); err != nil {
 		if err == sql.ErrNoRows {
@@ -167,6 +167,7 @@ func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeH
 			return nil, sdk.WrapError(err, "loadHooks")
 		}
 		res[i].WorkflowNodeID = node.ID
+		w.HookModels[res[i].WorkflowHookModelID] = res[i].WorkflowHookModel
 		nodes = append(nodes, sdk.WorkflowNodeHook(res[i]))
 	}
 	return nodes, nil
@@ -188,6 +189,7 @@ func loadOutgoingHooks(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 		}
 		res[i].WorkflowNodeID = node.ID
 		hooks[i] = sdk.WorkflowNodeOutgoingHook(res[i])
+		w.OutGoingHookModels[hooks[i].WorkflowHookModelID] = hooks[i].WorkflowHookModel
 
 		//Select triggers id
 		var triggerIDs []int64
@@ -385,15 +387,6 @@ func insertOutgoingTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workfl
 		return sdk.WrapError(err, "Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 
-	return nil
-}
-
-// DeleteOutgoingHook deletes cascade a hook
-func DeleteOutgoingHook(db gorp.SqlExecutor, h sdk.WorkflowNodeOutgoingHook) error {
-	dbh := nodeOutgoingHook(h)
-	if _, err := db.Delete(&dbh); err != nil {
-		return sdk.WrapError(err, "unable to delete outgoing hook %d", h.ID)
-	}
 	return nil
 }
 

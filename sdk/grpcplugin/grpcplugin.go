@@ -1,6 +1,7 @@
 package grpcplugin
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -9,28 +10,88 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
+// readyString have to be written by plugin, worker read it
+const readyString = "is ready to accept new connection\n"
+
+// Plugin is the interface to be implemented by plugin
 type Plugin interface {
 	Start(context.Context) error
-	Stop()
+	Stop(context.Context, *empty.Empty) (*empty.Empty, error)
 	Instance() *Common
 }
 
-func StartPlugin(ctx context.Context, workdir, cmd string, args []string, env []string, writer io.Writer) error {
+// StartPlugin starts a plugin, returns stdoutPipe, stderrPipe and socketName
+func StartPlugin(ctx context.Context, pluginName string, workdir, cmd string, args []string, env []string) (io.Reader, string, error) {
 	c := exec.CommandContext(ctx, cmd, args...)
 	c.Dir = workdir
 	c.Env = env
-	c.Stdout = writer
-	c.Stderr = writer
-	return c.Start()
+	stdoutPipe, err := c.StdoutPipe()
+	if err != nil {
+		return nil, "", err
+	}
+	stderrPipe, err := c.StderrPipe()
+	if err != nil {
+		return nil, "", err
+	}
+
+	r1 := bufio.NewReader(stdoutPipe)
+	r2 := bufio.NewReader(stderrPipe)
+	reader := io.MultiReader(r1, r2)
+
+	if err := c.Start(); err != nil {
+		return nil, "", err
+	}
+
+	go func() {
+		if err := c.Wait(); err != nil {
+			log.Info("GRPC Plugin %s wait failed:%+v", cmd, err)
+		}
+		log.Info("GRPC Plugin %s end", cmd)
+	}()
+
+	log.Info("GRPC Plugin %s started", cmd)
+
+	//Sleep a while, to let the plugin write on stdout the socket address
+	time.Sleep(500 * time.Millisecond)
+	tsStart := time.Now()
+
+	stdoutreader := bufio.NewReader(stdoutPipe)
+
+	var socket string
+	var errReturn error
+	for {
+		line, errs := stdoutreader.ReadString('\n')
+		if errs == io.EOF {
+			continue
+		}
+		if errs != nil {
+			if time.Now().Before(tsStart.Add(5 * time.Second)) {
+				log.Warning("plugin:%s error on ReadString, retry in 500ms...", pluginName)
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+			errReturn = fmt.Errorf("plugin:%s error on ReadString(len buff %d, content: %s): %v", pluginName, len(line), line, err)
+			break
+		}
+		if strings.HasSuffix(line, readyString) {
+			socket = strings.TrimSpace(strings.Replace(line, fmt.Sprintf(" %s", readyString), "", 1))
+			log.Info("socket %s ready", socket)
+			break
+		}
+	}
+	return reader, socket, errReturn
 }
 
 type Common struct {
@@ -89,7 +150,7 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 
 	go func() {
 		<-ctx.Done()
-		fmt.Printf("exiting plugin")
+		fmt.Printf("exiting plugin\n")
 		defer os.RemoveAll(c.Socket)
 		c.s.Stop()
 	}()
@@ -97,15 +158,19 @@ func (c *Common) start(ctx context.Context, desc *grpc.ServiceDesc, srv interfac
 	go func() {
 		time.Sleep(5 * time.Millisecond)
 		socket, _ := filepath.Abs(c.Socket)
-		fmt.Printf("%s is ready to accept new connection\n", socket)
+		fmt.Printf("%s %s", socket, readyString)
 	}()
 
 	return c, s.Serve(l)
 }
 
-func (c *Common) Stop() {
-	c.s.Stop()
-	return
+func (c *Common) Stop(context.Context, *empty.Empty) (*empty.Empty, error) {
+	defer func() {
+		fmt.Printf("Stopping plugin...")
+		time.Sleep(2 * time.Second)
+		c.s.Stop()
+	}()
+	return new(empty.Empty), nil
 }
 
 // InfoMarkdown returns string formatted with markdown

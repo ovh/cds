@@ -38,15 +38,15 @@ export class WorkflowComponent implements OnInit {
     sidebarModes = WorkflowSidebarMode;
 
     asCodeEditorSubscription: Subscription;
-    asCodeEditorOpen: boolean;
-
-    // Selected node
-    selectedNodeID: number;
+    asCodeEditorOpen = false;
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
 
     onScroll = new EventEmitter<boolean>();
+    selectedNodeID: number;
+    selectedNodeRef: string;
+    selectecHookRef: string;
 
     constructor(private _activatedRoute: ActivatedRoute,
                 private _workflowStore: WorkflowStore,
@@ -72,6 +72,22 @@ export class WorkflowComponent implements OnInit {
 
         this.initSidebar();
 
+        this._activatedRoute.queryParams.subscribe(qps => {
+            if (qps['node_id']) {
+                this.selectedNodeID = Number(qps['node_id']);
+                delete this.selectecHookRef;
+            }
+            if (qps['node_ref']) {
+                this.selectedNodeRef = qps['node_ref'];
+                delete this.selectecHookRef;
+            }
+            if (qps['hook_ref']) {
+                this.selectecHookRef = qps['hook_ref'];
+                delete this.selectedNodeRef;
+                delete this.selectedNodeID;
+            }
+        });
+
         // Workflow subscription
         this._activatedRoute.params.subscribe(p => {
             let workflowName = p['workflowName'];
@@ -87,14 +103,27 @@ export class WorkflowComponent implements OnInit {
                         if (ws) {
                             let updatedWorkflow = ws.get(key + '-' + workflowName);
                             if (updatedWorkflow && !updatedWorkflow.externalChange) {
-
                                 if (!this.workflow || (this.workflow && updatedWorkflow.id !== this.workflow.id)) {
                                     this.initRuns(key, workflowName);
                                 }
                                 this.workflow = updatedWorkflow;
+
                                 if (this.selectedNodeID) {
-                                    this._workflowEventStore.setSelectedNode(
-                                        Workflow.getNodeByID(this.selectedNodeID, this.workflow), true);
+                                    let n = Workflow.getNodeByID(this.selectedNodeID, this.workflow);
+                                    if (!n && this.selectedNodeRef) {
+                                        n = Workflow.getNodeByRef(this.selectedNodeRef, this.workflow);
+                                    }
+                                    if (n) {
+                                        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
+                                            queryParams: { 'node_id': n.id, 'node_ref': n.ref}});
+                                        this._router.navigateByUrl(url.toString()).then(() => {});
+                                    }
+                                }
+                                if (this.selectecHookRef) {
+                                    let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
+                                    if (h) {
+                                        this._workflowEventStore.setSelectedHook(h);
+                                    }
                                 }
                             }
                         }
@@ -106,20 +135,11 @@ export class WorkflowComponent implements OnInit {
             }
         });
 
-        this._activatedRoute.queryParams.subscribe(qps => {
-            if (qps['node_id']) {
-                this.selectedNodeID = Number(qps['node_id']);
-                if (this.workflow) {
-                    this._workflowEventStore.setSelectedNode(Workflow.getNodeByID(this.selectedNodeID, this.workflow), true);
-                }
-            }
-        });
-
         // unselect all when returning on workflow main page
         this._router.events.subscribe(e => {
             if (e instanceof NavigationStart && this.workflow) {
                 if (e.url.indexOf('/project/' + this.project.key + '/workflow/') === 0 && e.url.indexOf('/run/') === -1) {
-                    this._workflowEventStore.unselectAll();
+                    this._workflowEventStore.setSelectedRun(null);
                 }
             }
         });
@@ -165,8 +185,6 @@ export class WorkflowComponent implements OnInit {
     changeToRunsMode(): void {
         let activatedRoute = this._routerService.getActivatedRoute(this._activatedRoute);
         this._router.navigate([], {relativeTo: activatedRoute});
-        this.selectedNodeID = null;
-        this._workflowEventStore.setSelectedNode(null, false);
         if (!activatedRoute.snapshot.params['nodeId']) {
             this._workflowEventStore.setSelectedNodeRun(null, false);
         }

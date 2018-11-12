@@ -49,6 +49,17 @@ type Parameter struct {
 	Advanced    bool   `json:"advanced,omitempty" yaml:"advanced,omitempty"`
 }
 
+// CheckFunc is a function to check key of a map for map merge
+type CheckFunc func(string) bool
+
+// MMapMergeOptions options for mapMerge functions
+var MapMergeOptions = struct {
+	// Function to exclude git parameters
+	ExcludeGitParams CheckFunc
+}{
+	ExcludeGitParams: excludeGitParams,
+}
+
 // NewStringParameter creates a Parameter from a string with <name>=<value> format
 func NewStringParameter(s string) (Parameter, error) {
 	var p Parameter
@@ -177,7 +188,7 @@ func VariablesToParameters(prefix string, variables []Variable) []Parameter {
 	return res
 }
 
-// ParametersMerge merges two slices of parameters preserving all values
+// ParametersMerge merges two slices of parameters
 func ParametersMerge(src []Parameter, overwritter []Parameter) []Parameter {
 	params := make([]Parameter, 0, len(src)+len(overwritter))
 	params = append(params, src...)
@@ -188,21 +199,27 @@ func ParametersMerge(src []Parameter, overwritter []Parameter) []Parameter {
 	return params
 }
 
-// ParametersMapMerge merges two maps of parameters preserving all values
-func ParametersMapMerge(params map[string]string, otherParams map[string]string) map[string]string {
-	for k, v := range otherParams {
-		if val, ok := params[k]; ok {
-			if val != v {
-				if val == "" { // val empty, take v, even if v is empty
-					params[k] = fmt.Sprintf("%s", v)
-				} else { // take val, if v is empty or not
-					params[k] = fmt.Sprintf("%s", val)
+// ParametersMapMerge merges two maps of parameters preserving all git values
+func ParametersMapMerge(params map[string]string, otherParams map[string]string, checkFuncs ...func(string) bool) map[string]string {
+	for k, overrideValue := range otherParams {
+		if _, ok := params[k]; ok {
+			if len(checkFuncs) > 0 {
+				for _, checkFunc := range checkFuncs {
+					if checkFunc(k) {
+						params[k] = overrideValue
+						break
+					}
 				}
-				continue
+			} else {
+				params[k] = overrideValue
 			}
-			continue
+		} else {
+			params[k] = overrideValue
 		}
-		params[k] = v
 	}
 	return params
+}
+
+func excludeGitParams(key string) bool {
+	return !strings.HasPrefix(key, "git.")
 }

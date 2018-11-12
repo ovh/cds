@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 )
@@ -25,7 +26,7 @@ const (
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
-func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
+func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent, asCodeMsg []sdk.Message) (*sdk.WorkflowRun, *ProcessorReport, error) {
 	var end func()
 	ctx, end = observability.Span(ctx, "workflow.RunFromHook")
 	defer end()
@@ -41,7 +42,11 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 	//If the hook is on the root, it will trigger a new workflow run
 	//Else if will trigger a new subnumber of the last workflow run
 	var number int64
-	if h.WorkflowNodeID == w.RootID {
+	if h.WorkflowNodeID == w.Root.ID {
+
+		if err := IsValid(ctx, store, db, w, p, nil); err != nil {
+			return nil, nil, sdk.WrapError(err, "Unable to valid workflow")
+		}
 
 		//Get the next number from our sequence
 		var errnum error
@@ -71,6 +76,11 @@ func RunFromHook(ctx context.Context, dbCopy *gorp.DbMap, db gorp.SqlExecutor, s
 		// Add ass code spawn info
 		for _, msg := range asCodeMsg {
 			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
+		}
+
+		ok, has := p.Features[feature.FeatWNode]
+		if has && ok && wr.Workflow.WorkflowData != nil {
+			wr.Version = 2
 		}
 
 		//Insert it
@@ -162,6 +172,10 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 	ctx, end := observability.Span(ctx, "workflow.ManualRun", observability.Tag(observability.TagWorkflowRun, number))
 	defer end()
 
+	if err := IsValid(ctx, store, db, w, p, &e.User); err != nil {
+		return nil, nil, sdk.WrapError(err, "Unable to valid workflow")
+	}
+
 	wr := &sdk.WorkflowRun{
 		Number:        number,
 		Workflow:      *w,
@@ -176,6 +190,11 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 
 	for _, msg := range asCodeInfos {
 		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
+	}
+
+	ok, has := p.Features[feature.FeatWNode]
+	if has && ok && wr.Workflow.WorkflowData != nil {
+		wr.Version = 2
 	}
 
 	if err := insertWorkflowRun(db, wr); err != nil {

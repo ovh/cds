@@ -85,6 +85,12 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 			}
 			newW.Root.Hooks = []sdk.WorkflowNodeHook{*h}
 
+			(&newW).Migrate(false)
+			if err := workflow.RenameNode(db, &newW); err != nil {
+				return nil, sdk.WrapError(err, "Unable to rename node")
+			}
+			(&newW).RetroMigrate()
+
 			if errW := workflow.Insert(db, store, &newW, proj, u); errW != nil {
 				return nil, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
 			}
@@ -101,6 +107,12 @@ func ToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPipeline,
 				return nil, sdk.WrapError(errHr, "migratePipeline> Cannot register hook 2")
 			}
 		} else {
+			data := (&newW).Migrate(false)
+			newW.WorkflowData = &data
+			if err := workflow.RenameNode(db, &newW); err != nil {
+				return nil, sdk.WrapError(err, "Unable to rename node")
+			}
+			(&newW).RetroMigrate()
 			if errW := workflow.Insert(db, store, &newW, proj, u); errW != nil {
 				return nil, sdk.WrapError(errW, "MigrateToWorkflow workflow.Insert>")
 			}

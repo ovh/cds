@@ -109,6 +109,22 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				default:
 					err = sdk.ErrUnknownError
 				}
+
+				// the SSE handler can panic, and it's the way gorilla/mux works :(
+				if strings.HasPrefix(req.URL.String(), "/events") {
+					msg := fmt.Sprintf("%v", err)
+					handledErrors := []string{
+						"index > windowEnd",
+						"runtime error: index out of range",
+						"runtime error: slice bounds out of range",
+					}
+					for _, s := range handledErrors {
+						if strings.Contains(msg, s) {
+							return
+						}
+					}
+				}
+
 				log.Error("[PANIC_RECOVERY] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
 				trace := make([]byte, 4096)
 				count := runtime.Stack(trace, true)

@@ -2,3 +2,7 @@ name: ITSCWRKFLW2-WORKFLOW
 version: v1.0
 pipeline: ITSCWRKFLW2-PIPELINE
 application: ITSCWRKFLW2-APPLICATION
+payload:
+  git.branch: master
+  test: ok
+  unknown: hereisatest
