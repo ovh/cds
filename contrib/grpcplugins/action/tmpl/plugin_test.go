@@ -3,18 +3,16 @@ package main
 import (
 	"context"
 	"io/ioutil"
-	"log"
 	"os"
 	"reflect"
 	"testing"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 func TestRun(t *testing.T) {
 	// replace plugin logger
-	plugin.Trace = log.New(os.Stderr, "", 0)
 
 	tmpdir := os.TempDir()
 	content := `My name is {{.name}}, I am {{.age}}!`
@@ -48,7 +46,7 @@ age=42`
 		t.Error("should not return error")
 		return
 	}
-	if res.GetStatus() != plugin.Success {
+	if res.GetStatus() != sdk.StatusSuccess.String() {
 		t.Errorf("unexpected error on Run")
 		return
 	}

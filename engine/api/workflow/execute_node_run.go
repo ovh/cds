@@ -606,7 +606,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 		tempParams := sdk.ParametersToMap(res)
 		m1, errm1 := e.ToStringMap(wf.Root.Context.DefaultPayload)
 		if errm1 == nil {
-			mergedParameters := sdk.ParametersMapMerge(tempParams, m1)
+			mergedParameters := sdk.ParametersMapMerge(tempParams, m1, sdk.MapMergeOptions.ExcludeGitParams)
 			res = sdk.ParametersFromMap(mergedParameters)
 		}
 	}

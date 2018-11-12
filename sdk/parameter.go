@@ -49,6 +49,17 @@ type Parameter struct {
 	Advanced    bool   `json:"advanced,omitempty" yaml:"advanced,omitempty"`
 }
 
+// CheckFunc is a function to check key of a map for map merge
+type CheckFunc func(string) bool
+
+// MMapMergeOptions options for mapMerge functions
+var MapMergeOptions = struct {
+	// Function to exclude git parameters
+	ExcludeGitParams CheckFunc
+}{
+	ExcludeGitParams: excludeGitParams,
+}
+
 // NewStringParameter creates a Parameter from a string with <name>=<value> format
 func NewStringParameter(s string) (Parameter, error) {
 	var p Parameter
@@ -189,10 +200,17 @@ func ParametersMerge(src []Parameter, overwritter []Parameter) []Parameter {
 }
 
 // ParametersMapMerge merges two maps of parameters preserving all git values
-func ParametersMapMerge(params map[string]string, otherParams map[string]string) map[string]string {
+func ParametersMapMerge(params map[string]string, otherParams map[string]string, checkFuncs ...func(string) bool) map[string]string {
 	for k, overrideValue := range otherParams {
 		if _, ok := params[k]; ok {
-			if !strings.Contains(k, "git.") {
+			if len(checkFuncs) > 0 {
+				for _, checkFunc := range checkFuncs {
+					if checkFunc(k) {
+						params[k] = overrideValue
+						break
+					}
+				}
+			} else {
 				params[k] = overrideValue
 			}
 		} else {
@@ -200,4 +218,8 @@ func ParametersMapMerge(params map[string]string, otherParams map[string]string)
 		}
 	}
 	return params
+}
+
+func excludeGitParams(key string) bool {
+	return !strings.HasPrefix(key, "git.")
 }

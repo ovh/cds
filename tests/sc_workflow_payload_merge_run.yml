@@ -14,27 +14,31 @@ testcases:
 
 - name: import pipeline
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline import --force ITSCWRKFLW2 ./tests/fixtures/ITSCWRKFLW2/pipeline.yml
+  - script: "{{.cds.build.cdsctl}} pipeline import --force ITSCWRKFLW2 ./tests/fixtures/ITSCWRKFLW2/pipeline.yml"
 
 - name: import workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow import --force ITSCWRKFLW2 ./tests/fixtures/ITSCWRKFLW2/workflow.yml
+  - script:  "{{.cds.build.cdsctl}} workflow import --force ITSCWRKFLW2 ./tests/fixtures/ITSCWRKFLW2/workflow.yml"
 
 - name: run workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
+  - script: "{{.cds.build.cdsctl}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW -d '{\"git.master\": \"develop\", \"coucou\": \"test\", \"test\": \"ko\"}'"
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been launched"
 
 - name: check workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
+  - script: "{{.cds.build.cdsctl}} workflow status ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json"
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.last_execution ShouldNotBeEmpty
     - result.systemoutjson.start ShouldNotBeEmpty
     - result.systemoutjson.payload ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldContainSubstring develop
+    - result.systemoutjson.payload ShouldContainSubstring coucou
+    - result.systemoutjson.payload ShouldContainSubstring hereisatest
+    - result.systemoutjson.payload ShouldContainSubstring ko
     - result.systemoutjson.num ShouldContainSubstring 1
     - result.systemoutjson.status ShouldEqual Building
     - result.systemoutjson.tags ShouldContainSubstring triggered_by

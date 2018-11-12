@@ -20,6 +20,23 @@ func TestParameterMapMerge(t *testing.T) {
 	res := ParametersMapMerge(original, override)
 	assert.Equal(t, "override", res["test"])
 	assert.Equal(t, "ok", res["default"])
+	assert.Equal(t, "XXXBIS", res["git.hash"])
+}
+
+func TestParameterMapMerge_WithExcludeGitParams(t *testing.T) {
+	original := map[string]string{
+		"test":     "value1",
+		"default":  "ok",
+		"git.hash": "XXX",
+	}
+	override := map[string]string{
+		"test":     "override",
+		"git.hash": "XXXBIS",
+	}
+
+	res := ParametersMapMerge(original, override, MapMergeOptions.ExcludeGitParams)
+	assert.Equal(t, "override", res["test"])
+	assert.Equal(t, "ok", res["default"])
 	assert.Equal(t, "XXX", res["git.hash"])
 }
 

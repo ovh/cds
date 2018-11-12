@@ -305,7 +305,7 @@ func (api *API) getWorkflowJobHookDetailsHandler() service.Handler {
 			return sdk.WrapError(errSecret, "getWorkflowJobHookDetailsHandler> Cannot load secrets")
 		}
 		mapSecrets := sdk.ParametersToMap(sdk.VariablesToParameters("", secrets))
-		hr.Params = sdk.ParametersMapMerge(hr.Params, mapSecrets)
+		hr.Params = sdk.ParametersMapMerge(hr.Params, mapSecrets, sdk.MapMergeOptions.ExcludeGitParams)
 		return service.WriteJSON(w, hr, http.StatusOK)
 	}
 }

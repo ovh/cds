@@ -22,20 +22,10 @@ import (
 var ErrNoWorker = fmt.Errorf("cds: no worker found")
 
 // DeleteWorker remove worker from database
-func DeleteWorker(db *gorp.DbMap, id string) error {
-	tx, errb := db.Begin()
-	if errb != nil {
-		return fmt.Errorf("DeleteWorker> Cannot start tx: %s", errb)
-	}
-	defer tx.Rollback()
-
+func DeleteWorker(db gorp.SqlExecutor, id string) error {
 	query := `DELETE FROM worker WHERE id = $1`
-	if _, err := tx.Exec(query, id); err != nil {
+	if _, err := db.Exec(query, id); err != nil {
 		return sdk.WrapError(err, "DeleteWorker")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "unable to commit tx")
 	}
 
 	return nil
@@ -105,16 +95,16 @@ func LoadWorkers(db gorp.SqlExecutor, hatcheryName string) ([]sdk.Worker, error)
 }
 
 // LoadDeadWorkers load worker with refresh last beat > timeout (seconds)
-func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error) {
+func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64, status []string) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
 	query := `SELECT id, action_build_id, job_type, name, last_beat, group_id, model, status, hatchery_name
 				FROM worker
-				WHERE 1 = 1
-				AND now() - last_beat > $1 * INTERVAL '1' SECOND
+				WHERE status = ANY(string_to_array($1, ',')::text[])
+				AND now() - last_beat > $2 * INTERVAL '1' SECOND
 				ORDER BY name ASC
 				LIMIT 10000`
-	rows, err := db.Query(query, int64(math.Floor(timeout)))
+	rows, err := db.Query(query, strings.Join(status, ","), int64(math.Floor(timeout)))
 	if err != nil {
 		log.Warning("LoadDeadWorkers> Error querying workers")
 		return nil, err
