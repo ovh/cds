@@ -16,14 +16,14 @@ testcases:
 - name: readSourceFiles
   steps:
   - type: readfile
-    path: ./tests/fixtures/template/*.yml
+    path: tests/fixtures/template/*.yml
     assertions:
     - result.err ShouldEqual ""
 
 - name: compare exported files with source
   steps:
   - type: readfile
-    path: ./tests/fixtures/template/export/*.yml
+    path: tests/fixtures/template/export/*.yml
     assertions:
     - result.err ShouldEqual ""
     - result.md5sum.tests_fixtures_template_export_1.application.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_1.application.yml}}"
