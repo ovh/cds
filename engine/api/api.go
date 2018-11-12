@@ -638,14 +638,15 @@ func (a *API) Serve(ctx context.Context) error {
 		go event.DequeueEvent(ctx)
 	}
 
-	if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
-		log.Error("error while initializing workers routine: %s", err)
-	}
-
 	a.warnChan = make(chan sdk.Event)
 	event.Subscribe(a.warnChan)
 
 	log.Info("Initializing internal routines...")
+	sdk.GoRoutine(ctx, "worker.Initialize", func(ctx context.Context) {
+		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
+			log.Error("error while initializing workers routine: %s", err)
+		}
+	})
 	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
 		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	})
@@ -739,7 +740,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	sdk.GoRoutine(ctx, "workflow.Initialize", func(ctx context.Context) {
-		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
 	})
 	sdk.GoRoutine(ctx, "PushInElasticSearch", func(ctx context.Context) { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
 	metrics.Init(ctx, a.DBConnectionFactory.GetDBMap)
