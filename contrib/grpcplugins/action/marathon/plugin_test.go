@@ -7,12 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/sdk/grpcplugin/actionplugin"
-	"github.com/ovh/cds/sdk/plugin"
 )
 
 func Test_parseEmptyMarathonFileShouldFail(t *testing.T) {
-	plugin.SetTrace(os.Stdout)
-
 	filepath := "./fixtures/marathon1.json"
 	app, err := parseApplicationConfigFile(filepath)
 	assert.Nil(t, app)
@@ -21,8 +18,6 @@ func Test_parseEmptyMarathonFileShouldFail(t *testing.T) {
 }
 
 func Test_parseInvalidJSONFileShouldFail(t *testing.T) {
-	plugin.SetTrace(os.Stdout)
-
 	filepath := "./fixtures/marathon2.json"
 	app, err := parseApplicationConfigFile(filepath)
 	assert.Nil(t, app)
@@ -31,8 +26,6 @@ func Test_parseInvalidJSONFileShouldFail(t *testing.T) {
 }
 
 func Test_parseInvalidMarathonFileShouldFail(t *testing.T) {
-	plugin.SetTrace(os.Stdout)
-
 	filepath := "./fixtures/marathon3.json"
 	app, err := parseApplicationConfigFile(filepath)
 	assert.Nil(t, app)
@@ -41,8 +34,6 @@ func Test_parseInvalidMarathonFileShouldFail(t *testing.T) {
 }
 
 func Test_parseValidMarathonFileShouldSuccess(t *testing.T) {
-	plugin.SetTrace(os.Stdout)
-
 	filepath := "./fixtures/marathon4.json"
 	app, err := parseApplicationConfigFile(filepath)
 	assert.NotNil(t, app)
@@ -51,8 +42,6 @@ func Test_parseValidMarathonFileShouldSuccess(t *testing.T) {
 }
 
 func Test_tmplApplicationConfigFile(t *testing.T) {
-	plugin.SetTrace(os.Stdout)
-
 	filepath := "./fixtures/marathon5.json"
 
 	q := &actionplugin.ActionQuery{
@@ -77,8 +66,6 @@ func Test_tmplApplicationConfigFile(t *testing.T) {
 }
 
 func Test_tmplApplicationConfigFileX(t *testing.T) {
-	plugin.SetTrace(os.Stdout)
-
 	filepath := "./fixtures/marathon6.json"
 	q := &actionplugin.ActionQuery{
 		Options: map[string]string{
