@@ -32,7 +32,7 @@ func StatsHandler() service.Handler {
 	}
 }
 
-// Record an in64 measure
+// Record an int64 measure
 func Record(ctx context.Context, m stats.Measure, v int64) {
 	if m == nil {
 		return
