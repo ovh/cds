@@ -43,6 +43,13 @@ type eventsBroker struct {
 	chanRemoveClient chan (string)
 }
 
+var handledEventErrors = []string{
+	"index > windowEnd",
+	"runtime error: index out of range",
+	"runtime error: slice bounds out of range",
+	"runtime error: invalid memory address or nil pointer dereference",
+}
+
 //Init the eventsBroker
 func (b *eventsBroker) Init(ctx context.Context) {
 	// Start cache Subscription
@@ -133,8 +140,15 @@ func (b *eventsBroker) Start(ctx context.Context) {
 						if c.isAlive.IsSet() {
 							log.Debug("send data to %s", c.UUID)
 							if err := c.Send(receivedEvent); err != nil {
-								log.Error("eventsBroker> unable to send event to %s: %v", c.UUID, err)
 								b.chanRemoveClient <- c.UUID
+								msg := fmt.Sprintf("%v", err)
+								for _, s := range handledEventErrors {
+									if strings.Contains(msg, s) {
+										// do not log knowned error
+										return
+									}
+								}
+								log.Error("eventsBroker> unable to send event to %s: %v", c.UUID, err)
 							}
 						}
 					},
