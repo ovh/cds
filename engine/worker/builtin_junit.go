@@ -105,7 +105,7 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 			time.Sleep(500 * time.Millisecond)
 		}
 		if errPost == nil && statusCode > 300 {
-			err = fmt.Errorf("HTTP %d", statusCode)
+			errPost = fmt.Errorf("HTTP %d", statusCode)
 		}
 
 		if errPost != nil {
