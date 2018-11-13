@@ -42,12 +42,7 @@ export class WorkflowNotificationFormComponent {
             this._workflow = data;
             this.nodes = Workflow.getAllNodes(data);
             if (this.nodes) {
-                for (let i = 0; i < this.nodes.length; i++) {
-                    if (this.nodes[i].type !== WNodeType.PIPELINE) {
-                        this.nodes.splice(i, 1);
-                        i--;
-                    }
-                }
+                this.nodes = this.nodes.filter(n => n.type === WNodeType.PIPELINE);
             }
             this.initNotif()
         }
