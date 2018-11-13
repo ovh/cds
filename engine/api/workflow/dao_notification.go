@@ -2,7 +2,7 @@ package workflow
 
 import (
 	"database/sql"
-	"fmt"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -57,7 +57,7 @@ func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.Workf
 	for _, id := range n.SourceNodeIDs {
 		notifNode := w.GetNode(id)
 		if notifNode != nil {
-			n.SourceNodeRefs = append(n.SourceNodeRefs, fmt.Sprintf("%s", notifNode.Name))
+			n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
 		}
 
 	}
