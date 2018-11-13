@@ -582,10 +582,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 	}
 
-	nodes := w.Nodes(true)
+	// Insert notifications
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
-		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
+		if err := insertNotification(db, store, w, n, u); err != nil {
 			return sdk.WrapError(err, "Unable to insert update workflow(%d) notification (%#v)", w.ID, n)
 		}
 	}
@@ -818,10 +818,10 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 		}
 	}
 
-	nodes := w.Nodes(true)
+	// Insert notifications
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
-		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
+		if err := insertNotification(db, store, w, n, u); err != nil {
 			return sdk.WrapError(err, "Unable to update workflow(%d) notification (%#v)", w.ID, n)
 		}
 	}
