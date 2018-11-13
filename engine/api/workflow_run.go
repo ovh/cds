@@ -300,12 +300,15 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load workflow %s run number %d", name, number)
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
-		migrateWorkflowRun(run)
+
+		// Here we can ignore error
+		_ = migrateWorkflowRun(ctx, api.mustDB(), run)
+
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
 
-func migrateWorkflowRun(run *sdk.WorkflowRun) {
+func migrateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 	if run != nil && run.Workflow.WorkflowData == nil {
 		data := run.Workflow.Migrate(true)
 		run.Workflow.WorkflowData = &data
@@ -341,7 +344,11 @@ func migrateWorkflowRun(run *sdk.WorkflowRun) {
 				}
 			}
 		}
+		if err := workflow.UpdateWorkflowRun(ctx, db, run); err != nil {
+			return sdk.WrapError(err, "unable to migrate old workflow run")
+		}
 	}
+	return nil
 }
 
 func (api *API) stopWorkflowRunHandler() service.Handler {
@@ -797,7 +804,9 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			var errlr error
 			_, next := observability.Span(ctx, "workflow.LoadRun")
 			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
-			migrateWorkflowRun(lastRun)
+			if err := migrateWorkflowRun(ctx, api.mustDB(), lastRun); err != nil {
+				return sdk.WrapError(err, "unable to migrate workflow run")
+			}
 			next()
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
