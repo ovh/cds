@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"database/sql"
-	"fmt"
 
 	"github.com/go-gorp/gorp"
 
@@ -56,7 +55,11 @@ func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.Workf
 	n := sdk.WorkflowNotification(dbnotif)
 
 	for _, id := range n.SourceNodeIDs {
-		n.SourceNodeRefs = append(n.SourceNodeRefs, fmt.Sprintf("%d", id))
+		notifNode := w.GetNode(id)
+		if notifNode != nil {
+			n.SourceNodeRefs = append(n.SourceNodeRefs, notifNode.Name)
+		}
+
 	}
 
 	return n, nil
