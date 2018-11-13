@@ -52,7 +52,7 @@ type NodeContext struct {
 	EnvironmentName           string                 `json:"-" db:"-"`
 	ProjectPlatformID         int64                  `json:"project_platform_id" db:"project_platform_id"`
 	ProjectPlatformName       string                 `json:"-" db:"-"`
-	DefaultPayload            interface{}            `json:"default_payload" db:"-"`
+	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions" db:"-"`
 	Mutex                     bool                   `json:"mutex" db:"mutex"`
