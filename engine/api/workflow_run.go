@@ -316,13 +316,13 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 				if n.Context == nil {
 					continue
 				}
-				if n.Context.Application.ID > 0 {
+				if n.Context.Application != nil && n.Context.Application.ID > 0 {
 					run.Workflow.Applications[n.Context.Application.ID] = *n.Context.Application
 				}
-				if n.Context.Environment.ID > 0 {
+				if n.Context.Environment != nil && n.Context.Environment.ID > 0 {
 					run.Workflow.Environments[n.Context.Environment.ID] = *n.Context.Environment
 				}
-				if n.Context.ProjectPlatform.ID > 0 {
+				if n.Context.ProjectPlatform != nil && n.Context.ProjectPlatform.ID > 0 {
 					run.Workflow.ProjectPlatforms[n.Context.ProjectPlatform.ID] = *n.Context.ProjectPlatform
 				}
 				for _, h := range n.Hooks {
