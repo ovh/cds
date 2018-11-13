@@ -254,7 +254,7 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 
 			m := sdk.GetBuiltinHookModelByName(h.HookModelName)
 			if m == nil {
-				return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find outgoing hook model %s", h.HookModelName)
+				return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find hook model %s", h.HookModelName)
 			}
 
 			exportedWorkflow.PipelineHooks = append(exportedWorkflow.PipelineHooks, HookEntry{
@@ -284,7 +284,7 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 
 				m := sdk.GetBuiltinHookModelByName(h.HookModelName)
 				if m == nil {
-					return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find outgoing hook model %s", h.HookModelName)
+					return exportedWorkflow, sdk.WrapError(sdk.ErrNotFound, "unable to find hook model %s", h.HookModelName)
 				}
 
 				exportedWorkflow.Hooks[n.Name] = append(exportedWorkflow.Hooks[n.Name], HookEntry{
