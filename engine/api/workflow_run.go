@@ -304,6 +304,38 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		if run.Workflow.WorkflowData == nil {
 			data := run.Workflow.Migrate(true)
 			run.Workflow.WorkflowData = &data
+
+			run.Workflow.Applications = make(map[int64]sdk.Application)
+			run.Workflow.Environments = make(map[int64]sdk.Environment)
+			run.Workflow.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
+			run.Workflow.HookModels = make(map[int64]sdk.WorkflowHookModel)
+			run.Workflow.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
+
+			nodes := run.Workflow.Nodes(true)
+			for _, n := range nodes {
+				if n.Context == nil {
+					continue
+				}
+				if n.Context.Application.ID > 0 {
+					run.Workflow.Applications[n.Context.Application.ID] = *n.Context.Application
+				}
+				if n.Context.Environment.ID > 0 {
+					run.Workflow.Environments[n.Context.Environment.ID] = *n.Context.Environment
+				}
+				if n.Context.ProjectPlatform.ID > 0 {
+					run.Workflow.ProjectPlatforms[n.Context.ProjectPlatform.ID] = *n.Context.ProjectPlatform
+				}
+				for _, h := range n.Hooks {
+					if h.WorkflowHookModel.ID > 0 {
+						run.Workflow.HookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
+					}
+				}
+				for _, h := range n.OutgoingHooks {
+					if h.WorkflowHookModel.ID > 0 {
+						run.Workflow.OutGoingHookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
+					}
+				}
+			}
 		}
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
