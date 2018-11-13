@@ -804,12 +804,12 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			var errlr error
 			_, next := observability.Span(ctx, "workflow.LoadRun")
 			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
-			if err := migrateWorkflowRun(ctx, api.mustDB(), lastRun); err != nil {
-				return sdk.WrapError(err, "unable to migrate workflow run")
-			}
 			next()
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
+			}
+			if err := migrateWorkflowRun(ctx, api.mustDB(), lastRun); err != nil {
+				return sdk.WrapError(err, "unable to migrate workflow run")
 			}
 		}
 
