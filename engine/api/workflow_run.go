@@ -300,6 +300,11 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load workflow %s run number %d", name, number)
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
+
+		if run.Workflow.WorkflowData == nil {
+			data := run.Workflow.Migrate(true)
+			run.Workflow.WorkflowData = &data
+		}
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }

@@ -1,9 +1,8 @@
 import {Component, Input, ViewChild} from '@angular/core';
+import * as AU from 'ansi_up';
 import {Parameter} from '../../../../model/parameter.model';
 import {SpawnInfo} from '../../../../model/pipeline.model';
 import {JobVariableComponent} from '../variables/job.variables.component';
-
-declare var ansi_up: any;
 
 @Component({
     selector: 'app-spawn-info',
@@ -19,6 +18,7 @@ export class SpawnInfoComponent {
     jobVariable: JobVariableComponent;
 
     show = true;
+    ansi_up = new AU.default;
 
     constructor() { }
 
@@ -34,7 +34,7 @@ export class SpawnInfoComponent {
             });
         }
         if (msg !== '') {
-            return ansi_up.ansi_to_html(msg);
+            return this.ansi_up.ansi_to_html(msg);
         }
         return '';
     }

@@ -102,16 +102,6 @@ func loadJoinTrigger(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 	return &t, nil
 }
 
-func findNodeByRef(ref string, nodes []sdk.WorkflowNode) *sdk.WorkflowNode {
-	for i := range nodes {
-		n := &nodes[i]
-		if n.Ref == ref {
-			return n
-		}
-	}
-	return nil
-}
-
 func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u *sdk.User) error {
 	log.Debug("insertOrUpdateJoin> %#v", n)
 	n.WorkflowID = w.ID
@@ -189,7 +179,7 @@ func insertJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, 
 
 	return nil
 }
- 
+
 func deleteJoin(db gorp.SqlExecutor, n sdk.WorkflowNodeJoin) error {
 	j := Join(n)
 	if _, err := db.Delete(&j); err != nil {

@@ -49,6 +49,7 @@ import {CutPipe} from './pipes/cut.pipe';
 import {KeysPipe} from './pipes/keys.pipe';
 import {ForMapPipe} from './pipes/map.pipe';
 import {NgForNumber} from './pipes/ngfor.number.pipe';
+import {SafeHtmlPipe} from './pipes/safeHtml.pipe';
 import {TruncatePipe} from './pipes/truncate.pipe';
 import {PrerequisitesFormComponent} from './prerequisites/form/prerequisites.form.component';
 import {PrerequisiteComponent} from './prerequisites/list/prerequisites.component';
@@ -146,6 +147,7 @@ import {ZoneComponent} from './zone/zone.component';
         RepoManagerFormComponent,
         StatusIconComponent,
         TruncatePipe,
+        SafeHtmlPipe,
         VariableComponent,
         VariableAuditComponent,
         VariableDiffComponent,
@@ -259,6 +261,7 @@ import {ZoneComponent} from './zone/zone.component';
         SuiModule,
         TranslateModule,
         TruncatePipe,
+        SafeHtmlPipe,
         VariableComponent,
         VariableFormComponent,
         VariableValueComponent,

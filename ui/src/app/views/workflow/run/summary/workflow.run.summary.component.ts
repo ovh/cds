@@ -1,5 +1,6 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
+import * as AU from 'ansi_up';
 import {finalize} from 'rxjs/operators';
 import {Subscription} from 'rxjs/Subscription';
 import {PermissionValue} from '../../../../model/permission.model';
@@ -11,8 +12,6 @@ import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.
 import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {ToastService} from '../../../../shared/toast/ToastService';
-
-declare var ansi_up: any;
 
 @Component({
     selector: 'app-workflow-run-summary',
@@ -41,6 +40,7 @@ export class WorkflowRunSummaryComponent {
     author: string;
     loadingAction = false;
     showInfos = false;
+    ansi_up = new AU.default;
 
     pipelineStatusEnum = PipelineStatus;
     permissionEnum = PermissionValue;
@@ -67,7 +67,7 @@ export class WorkflowRunSummaryComponent {
             });
         }
         if (msg !== '') {
-            return ansi_up.ansi_to_html(msg);
+            return this.ansi_up.ansi_to_html(msg);
         }
         return '';
     }
