@@ -56,8 +56,14 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 	escape(container, object)
 	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
 
+	headers := map[string]string{
+		"X-Web-Mode":                    "TRUE",
+		"X-Container-Meta-Web-Listings": "TRUE",
+		"X-Container-Meta-Web-Index":    "index.html",
+	}
+	fmt.Println(container)
 	log.Debug("SwiftStore> creating container %s", container)
-	if err := s.ContainerCreate(container, nil); err != nil {
+	if err := s.ContainerCreate(container, headers); err != nil {
 		return "", sdk.WrapError(err, "Unable to create container %s", container)
 	}
 
@@ -130,7 +136,13 @@ func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
 	object := o.GetName()
 	escape(container, object)
 
-	if err := s.ContainerCreate(container, nil); err != nil {
+	headers := map[string]string{
+		"X-Web-Mode":                    "TRUE",
+		"X-Container-Meta-Web-Listings": "TRUE",
+		"X-Container-Meta-Web-Index":    "index.html",
+	}
+	fmt.Println(container)
+	if err := s.ContainerCreate(container, headers); err != nil {
 		return "", "", sdk.WrapError(err, "Unable to create container %s", container)
 	}
 
