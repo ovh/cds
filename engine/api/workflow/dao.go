@@ -843,10 +843,11 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	w.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
 	for _, h := range hooks {
 		w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
-			Ref:         h.Ref,
-			HookModelID: h.WorkflowHookModelID,
-			Config:      h.Config,
-			UUID:        h.UUID,
+			Ref:           h.Ref,
+			HookModelID:   h.WorkflowHookModelID,
+			Config:        h.Config,
+			UUID:          h.UUID,
+			HookModelName: h.WorkflowHookModel.Name,
 		})
 	}
 
@@ -860,6 +861,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
 	*w = sdk.Workflow(dbw)
+
 	event.PublishWorkflowUpdate(p.Key, *w, *oldWorkflow, u)
 	return nil
 }
