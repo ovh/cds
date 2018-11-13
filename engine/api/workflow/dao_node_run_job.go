@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
@@ -221,6 +222,9 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNodeRunJobNotFound
 		}
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
+			return nil, sdk.ErrJobLocked
+		}
 		return nil, err
 	}
 	if store != nil {
@@ -284,6 +288,9 @@ func LoadAndLockNodeJobRunNoWait(ctx context.Context, db gorp.SqlExecutor, store
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update nowait`
 	if err := db.SelectOne(&j, query, id); err != nil {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
+			return nil, sdk.ErrJobLocked
+		}
 		return nil, err
 	}
 	getHatcheryInfo(store, &j)

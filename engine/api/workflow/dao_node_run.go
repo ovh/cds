@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/ovh/venom"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -164,6 +165,9 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, 
 		query += " nowait"
 	}
 	if err := db.SelectOne(&rr, query, id); err != nil {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
+			return nil, sdk.ErrWorkflowNodeRunLocked
+		}
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
 	}
 	return fromDBNodeRun(rr, LoadRunOptions{})
@@ -678,8 +682,8 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 					SELECT %s FROM workflow_node_run
 					JOIN workflow_run ON workflow_run.id = workflow_node_run.workflow_run_id AND workflow_run.workflow_id = $1
 					WHERE workflow_node_run.workflow_node_name = $2
-						AND workflow_node_run.vcs_branch = $3 AND workflow_node_run.vcs_tag = $4 
-						AND workflow_node_run.num <= $5 
+						AND workflow_node_run.vcs_branch = $3 AND workflow_node_run.vcs_tag = $4
+						AND workflow_node_run.num <= $5
 						AND workflow_node_run.id != $6
 					ORDER BY workflow_node_run.num DESC, workflow_node_run.sub_num DESC
 					LIMIT 1
