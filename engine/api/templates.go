@@ -294,7 +294,7 @@ func (api *API) applyTemplateHandler() service.Handler {
 			return err
 		}
 		if err := wt.CheckParams(req); err != nil {
-			return sdk.NewError(sdk.ErrInvalidData, err)
+			return err
 		}
 
 		// check right on project

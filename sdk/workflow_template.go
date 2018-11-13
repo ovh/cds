@@ -3,7 +3,6 @@ package sdk
 import (
 	"database/sql/driver"
 	json "encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/ovh/cds/sdk/slug"
@@ -97,30 +96,30 @@ func (w *WorkflowTemplate) ValidateStruct() error {
 // TODO replace fmt.Error
 func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 	if r.ProjectKey == "" {
-		return fmt.Errorf("Project key is required")
+		return NewErrorFrom(ErrInvalidData, "Project key is required")
 	}
 	if !slug.Valid(r.WorkflowSlug) {
-		return fmt.Errorf("Invalid given workflow slug is required")
+		return NewErrorFrom(ErrInvalidData, "Invalid given workflow slug is required")
 	}
 
 	for _, p := range w.Parameters {
 		v, ok := r.Parameters[p.Key]
 		if !ok && p.Required {
-			return fmt.Errorf("Param %s is required", p.Key)
+			return NewErrorFrom(ErrInvalidData, "Param %s is required", p.Key)
 		}
 		if ok {
 			if p.Required && v == "" {
-				return fmt.Errorf("Param %s is required", p.Key)
+				return NewErrorFrom(ErrInvalidData, "Param %s is required", p.Key)
 			}
 			switch p.Type {
 			case ParameterTypeBoolean:
 				if v != "" && !(v == "true" || v == "false") {
-					return fmt.Errorf("Given value it's not a boolean for %s", p.Key)
+					return NewErrorFrom(ErrInvalidData, "Given value it's not a boolean for %s", p.Key)
 				}
 			case ParameterTypeRepository:
 				sp := strings.Split(v, "/")
 				if len(sp) != 3 {
-					return fmt.Errorf("Given value don't match vcs/repository pattern for %s", p.Key)
+					return NewErrorFrom(ErrInvalidData, "Given value don't match vcs/repository pattern for %s", p.Key)
 				}
 			}
 		}
@@ -169,7 +168,7 @@ type PipelineTemplate struct {
 // ValidateStruct returns pipeline template validity.
 func (p *PipelineTemplate) ValidateStruct() error {
 	if len(p.Value) == 0 {
-		return WrapError(ErrInvalidData, "Invalid given pipeline value")
+		return NewErrorFrom(ErrInvalidData, "Invalid given pipeline value")
 	}
 	return nil
 }
@@ -182,7 +181,7 @@ type ApplicationTemplate struct {
 // ValidateStruct returns application template validity.
 func (a *ApplicationTemplate) ValidateStruct() error {
 	if len(a.Value) == 0 {
-		return WrapError(ErrInvalidData, "Invalid given application value")
+		return NewErrorFrom(ErrInvalidData, "Invalid given application value")
 	}
 	return nil
 }
@@ -195,7 +194,7 @@ type EnvironmentTemplate struct {
 // ValidateStruct returns environment template validity.
 func (e *EnvironmentTemplate) ValidateStruct() error {
 	if len(e.Value) == 0 {
-		return WrapError(ErrInvalidData, "Invalid given environment value")
+		return NewErrorFrom(ErrInvalidData, "Invalid given environment value")
 	}
 	return nil
 }
@@ -301,7 +300,7 @@ func (e *EnvironmentTemplates) Scan(src interface{}) error {
 // ValidateStruct returns pipeline template validity.
 func (w *WorkflowTemplateParameter) ValidateStruct() error {
 	if w.Key == "" || !w.Type.IsValid() {
-		return WrapError(ErrInvalidData, "Invalid given key or type for parameter")
+		return NewErrorFrom(ErrInvalidData, "Invalid given key or type for parameter")
 	}
 	return nil
 }

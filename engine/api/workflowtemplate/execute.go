@@ -131,7 +131,10 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 	// add generated workflow to writer
 	var wor exportentities.Workflow
 	if err := yaml.Unmarshal([]byte(res.Workflow), &wor); err != nil {
-		return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated workflow"))
+		return sdk.NewError(sdk.Error{
+			ID:      sdk.ErrWrongRequest.ID,
+			Message: "Cannot parse generated workflow",
+		}, err)
 	}
 
 	// set the workflow template instance path on export
@@ -157,7 +160,10 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 	for _, p := range res.Pipelines {
 		var pip exportentities.PipelineV1
 		if err := yaml.Unmarshal([]byte(p), &pip); err != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated pipeline"))
+			return sdk.NewError(sdk.Error{
+				ID:      sdk.ErrWrongRequest.ID,
+				Message: "Cannot parse generated pipeline",
+			}, err)
 		}
 
 		bs, err := exportentities.Marshal(pip, exportentities.FormatYAML)
@@ -180,7 +186,10 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 	for _, a := range res.Applications {
 		var app exportentities.Application
 		if err := yaml.Unmarshal([]byte(a), &app); err != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated application"))
+			return sdk.NewError(sdk.Error{
+				ID:      sdk.ErrWrongRequest.ID,
+				Message: "Cannot parse generated application",
+			}, err)
 		}
 
 		bs, err := exportentities.Marshal(app, exportentities.FormatYAML)
@@ -203,7 +212,10 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 	for _, e := range res.Environments {
 		var env exportentities.Environment
 		if err := yaml.Unmarshal([]byte(e), &env); err != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Cannot parse generated environment"))
+			return sdk.NewError(sdk.Error{
+				ID:      sdk.ErrWrongRequest.ID,
+				Message: "Cannot parse generated environment",
+			}, err)
 		}
 
 		bs, err := exportentities.Marshal(env, exportentities.FormatYAML)
