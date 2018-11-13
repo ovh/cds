@@ -300,44 +300,47 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load workflow %s run number %d", name, number)
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
+		migrateWorkflowRun(run)
+		return service.WriteJSON(w, run, http.StatusOK)
+	}
+}
 
-		if run.Workflow.WorkflowData == nil {
-			data := run.Workflow.Migrate(true)
-			run.Workflow.WorkflowData = &data
+func migrateWorkflowRun(run *sdk.WorkflowRun) {
+	if run != nil && run.Workflow.WorkflowData == nil {
+		data := run.Workflow.Migrate(true)
+		run.Workflow.WorkflowData = &data
 
-			run.Workflow.Applications = make(map[int64]sdk.Application)
-			run.Workflow.Environments = make(map[int64]sdk.Environment)
-			run.Workflow.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
-			run.Workflow.HookModels = make(map[int64]sdk.WorkflowHookModel)
-			run.Workflow.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
+		run.Workflow.Applications = make(map[int64]sdk.Application)
+		run.Workflow.Environments = make(map[int64]sdk.Environment)
+		run.Workflow.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
+		run.Workflow.HookModels = make(map[int64]sdk.WorkflowHookModel)
+		run.Workflow.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
 
-			nodes := run.Workflow.Nodes(true)
-			for _, n := range nodes {
-				if n.Context == nil {
-					continue
+		nodes := run.Workflow.Nodes(true)
+		for _, n := range nodes {
+			if n.Context == nil {
+				continue
+			}
+			if n.Context.Application != nil && n.Context.Application.ID > 0 {
+				run.Workflow.Applications[n.Context.Application.ID] = *n.Context.Application
+			}
+			if n.Context.Environment != nil && n.Context.Environment.ID > 0 {
+				run.Workflow.Environments[n.Context.Environment.ID] = *n.Context.Environment
+			}
+			if n.Context.ProjectPlatform != nil && n.Context.ProjectPlatform.ID > 0 {
+				run.Workflow.ProjectPlatforms[n.Context.ProjectPlatform.ID] = *n.Context.ProjectPlatform
+			}
+			for _, h := range n.Hooks {
+				if h.WorkflowHookModel.ID > 0 {
+					run.Workflow.HookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
 				}
-				if n.Context.Application != nil && n.Context.Application.ID > 0 {
-					run.Workflow.Applications[n.Context.Application.ID] = *n.Context.Application
-				}
-				if n.Context.Environment != nil && n.Context.Environment.ID > 0 {
-					run.Workflow.Environments[n.Context.Environment.ID] = *n.Context.Environment
-				}
-				if n.Context.ProjectPlatform != nil && n.Context.ProjectPlatform.ID > 0 {
-					run.Workflow.ProjectPlatforms[n.Context.ProjectPlatform.ID] = *n.Context.ProjectPlatform
-				}
-				for _, h := range n.Hooks {
-					if h.WorkflowHookModel.ID > 0 {
-						run.Workflow.HookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
-					}
-				}
-				for _, h := range n.OutgoingHooks {
-					if h.WorkflowHookModel.ID > 0 {
-						run.Workflow.OutGoingHookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
-					}
+			}
+			for _, h := range n.OutgoingHooks {
+				if h.WorkflowHookModel.ID > 0 {
+					run.Workflow.OutGoingHookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
 				}
 			}
 		}
-		return service.WriteJSON(w, run, http.StatusOK)
 	}
 }
 
@@ -794,6 +797,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			var errlr error
 			_, next := observability.Span(ctx, "workflow.LoadRun")
 			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, workflow.LoadRunOptions{})
+			migrateWorkflowRun(lastRun)
 			next()
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
