@@ -5,36 +5,37 @@ weight = 4
 +++
 
 ## What is a workflow template?
-A workflow template is usefull to easily create a new workflow for a project. Also if you need to manage multiple workflows, you can 
-use a template to create one unique generic workflow then apply it on each workflow.
+A workflow template is useful to easily create a new workflow for a project. Also if you need to manage multiple workflows, you can 
+use a template to create one unique and generic workflow then apply it on each workflow.
 
-Template are versioned, so you can easily improve your template then re-apply it on a workflow.
+Templates are versioned, so you can easily improve your template then re-apply it on a workflow.
 
 A template contains a workflow, pipelines, applications, environments in yaml format.
 Each yaml file of a template is evaluated as a Golang template (with [[ and ]] delimiters) so loop or condition can be used in templates.
 
 ## Template parameters
-There are three types of custom parameters available in a template (string, boolean, repository). //TODO screen params
-There are some other parameters that are automatically added by CDS:
-- name: the name of the generated workflow given when template is applied (could be used to set the workflow name but also application names for example).
-- id: the id of the template instance, this is unique for each generated workflow and reused when a template is re-applied (you can append this value to pipeline names to prevent override of existing pipeline).
+There are three types of custom parameters available in a template (string, boolean, repository).
+![Parameters](/images/workflow_template_parameters.png)
+
+There are some others parameters that are automatically added by CDS:
+
+* **name**: the name of the generated workflow given when template is applied (could be used to set the workflow name but also application names for example).
+* **id**: the id of the template instance, this is unique for each generated workflow and reused when a template is re-applied (you can append this value to pipeline names to prevent override of existing pipeline).
 
 ## Apply a template
-To generate a new workflow from a template you should use the cdsctl: //TODO screen gif template apply execution
+To generate a new workflow from a template you should use the cdsctl. Then use the same command to update a generated workflow:
 ```sh
 cdsctl template apply
 ```
+![Apply](/images/workflow_template_apply.gif)
 
 ## Import/Create/Export
-With cdsctl you can import a template from given yaml files:
+With cdsctl you can import/export a template from/to yaml files with cdsctl, you can also create a template in the ui from **settings** menu:
 ```sh
 cdsctl template push ./my-template/*.yml
-```
-
-You can also create a template from the ui, then export it with: // TODO screen creation page
-```sh
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
 ```
+![PullPush](/images/workflow_template_pull_push.gif)
 
 ## Delete/Change template group
 When removing a template, all info about the template and its instances are removed but all generated stuff will not be deleted.
