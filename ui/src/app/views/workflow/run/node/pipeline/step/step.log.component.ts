@@ -83,7 +83,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     basicView = false;
     allLogsView = false;
     ansiViewSelected = true;
-    htmlViewSelected = false;
+    htmlViewSelected = true;
     ansi_up = new AU.default;
 
     zone: NgZone;
@@ -100,7 +100,9 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         private _router: Router,
         private _route: ActivatedRoute,
         private _hostElement: ElementRef
-      ) { }
+      ) {
+          this.ansi_up.escape_for_html = !this.htmlViewSelected;
+      }
 
     ngOnInit(): void {
         let nodeRunDone = this.nodeRun.status !== this.pipelineBuildStatusEnum.BUILDING &&
