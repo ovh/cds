@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {cloneDeep} from 'lodash';
 import {notificationOnFailure, notificationOnSuccess, notificationTypes} from '../../../../../model/notification.model';
 import {Project} from '../../../../../model/project.model';
-import {WNode, Workflow, WorkflowNotification} from '../../../../../model/workflow.model';
+import {WNode, WNodeType, Workflow, WorkflowNotification} from '../../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-notifications-form',
@@ -41,10 +41,14 @@ export class WorkflowNotificationFormComponent {
         if (data) {
             this._workflow = data;
             this.nodes = Workflow.getAllNodes(data);
-            this.nodes.map(node => {
-                let n = node;
-                n.ref = n.id.toString();
-            });
+            if (this.nodes) {
+                for (let i = 0; i < this.nodes.length; i++) {
+                    if (this.nodes[i].type !== WNodeType.PIPELINE) {
+                        this.nodes.splice(i, 1);
+                        i--;
+                    }
+                }
+            }
             this.initNotif()
         }
     }
@@ -68,7 +72,7 @@ export class WorkflowNotificationFormComponent {
     initNotif(): void {
         if (this.nodes && this.notification && !this.notification.id) {
             this.notification.source_node_ref = this.nodes.map(n => {
-                return n.id.toString();
+                return n.name;
             });
         }
 

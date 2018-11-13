@@ -23,7 +23,7 @@
                                   [(ngModel)]="notification.source_node_ref"
                                   [options]="nodes"
                                   labelField="name"
-                                  valueField="ref"
+                                  valueField="name"
                                   [isSearchable]="true" #select>
                     <sui-select-option *ngFor="let n of select.filteredOptions"
                                        [value]="n">
