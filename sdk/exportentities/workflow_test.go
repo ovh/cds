@@ -241,7 +241,8 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
-				Description: "this is my description",
+				HistoryLength: sdk.DefaultHistoryLength,
+				Description:   "this is my description",
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "pipeline",
@@ -287,6 +288,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -328,6 +330,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				HistoryLength: 25,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -350,7 +353,6 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						},
 					},
 				},
-				HistoryLength: 25,
 			},
 		},
 		// root(pipeline-root) -> first(pipeline-child) -> second(pipeline-child)
@@ -373,6 +375,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "root",
@@ -459,6 +462,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -586,6 +590,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "pipeline",
@@ -617,6 +622,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 			wantErr: false,
 			want: sdk.Workflow{
+				HistoryLength: sdk.DefaultHistoryLength,
 				WorkflowData: &sdk.WorkflowData{
 					Node: sdk.Node{
 						Name: "A",
@@ -665,7 +671,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				ProjectPlatformName: tt.fields.ProjectPlatformName,
 				PipelineHooks:       tt.fields.PipelineHooks,
 				Permissions:         tt.fields.Permissions,
-				HistoryLength:       tt.fields.HistoryLength,
+				HistoryLength:       &tt.fields.HistoryLength,
 			}
 			got, err := w.GetWorkflow()
 			if (err != nil) != tt.wantErr {
@@ -744,7 +750,6 @@ workflow:
     when:
     - success
     pipeline: test
-history_length: 20
 `,
 		}, {
 			name: "test with outgoing hooks",
@@ -785,7 +790,6 @@ workflow:
     pipeline: DDOS-me
 metadata:
   default_tags: git.branch,git.author
-history_length: 20
 `,
 		}, {
 			name: "tests with outgoing hooks with a join",
@@ -833,7 +837,6 @@ workflow:
     pipeline: DDOS-me
 metadata:
   default_tags: git.branch,git.author
-history_length: 20
 `,
 		}, {
 			name: "test with outgoing hooks, a join, and a fork",
@@ -896,7 +899,6 @@ workflow:
     - 4_end
 metadata:
   default_tags: git.branch,git.author
-history_length: 20
 `,
 		}, {
 			name: "simple pipeline triggered by a webhook",
@@ -911,7 +913,49 @@ pipeline_hooks:
     method: POST
 metadata:
   default_tags: git.branch,git.author
-history_length: 20
+`,
+		}, {
+			name: "pipeline with two hooks",
+			yaml: `name: test3
+version: v1.0
+workflow:
+  1_start:
+    pipeline: test
+  2_webHook:
+    depends_on:
+    - 1_start
+    trigger: WebHook
+    config:
+      URL: a
+      method: POST
+      payload: '{}'
+  3_after_webhook:
+    depends_on:
+    - 2_webHook
+    when:
+    - success
+    pipeline: test
+  4_fork_before_end:
+    depends_on:
+    - 3_after_webhook
+  5_end:
+    depends_on:
+    - 4_fork_before_end
+    when:
+    - success
+    pipeline: test
+hooks:
+  1_start:
+  - type: Scheduler
+    ref: "1542119521"
+    config:
+      cron: 0 * * * *
+      payload: '{}'
+      timezone: UTC
+  - type: WebHook
+    ref: "1542119475"
+    config:
+      method: POST
 `,
 		},
 	}

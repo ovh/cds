@@ -32,7 +32,7 @@ type Workflow struct {
 	Permissions         map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 	Metadata            map[string]string              `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	PurgeTags           []string                       `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
-	HistoryLength       int64                          `json:"history_length,omitempty" yaml:"history_length,omitempty"`
+	HistoryLength       *int64                         `json:"history_length,omitempty" yaml:"history_length,omitempty"`
 	Notifications       []NotificationEntry            `json:"notify,omitempty" yaml:"notify,omitempty"`               // This is used when the workflow have only one pipeline
 	MapNotifications    map[string][]NotificationEntry `json:"notifications,omitempty" yaml:"notifications,omitempty"` // This is used when the workflow have more than one pipeline
 }
@@ -224,10 +224,8 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 		}
 	}
 
-	if w.HistoryLength > 0 {
-		exportedWorkflow.HistoryLength = w.HistoryLength
-	} else {
-		exportedWorkflow.HistoryLength = 20
+	if w.HistoryLength > 0 && w.HistoryLength != sdk.DefaultHistoryLength {
+		exportedWorkflow.HistoryLength = &w.HistoryLength
 	}
 
 	exportedWorkflow.PurgeTags = w.PurgeTags
@@ -439,8 +437,10 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 			wf.Metadata[k] = v
 		}
 	}
-	if w.HistoryLength > 0 && w.HistoryLength != sdk.DefaultHistoryLength {
-		wf.HistoryLength = w.HistoryLength
+	if w.HistoryLength != nil && *w.HistoryLength > 0 {
+		wf.HistoryLength = *w.HistoryLength
+	} else {
+		wf.HistoryLength = sdk.DefaultHistoryLength
 	}
 
 	rand.Seed(time.Now().Unix())

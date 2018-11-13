@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Booleans
@@ -23,11 +24,12 @@ type NotificationEntry struct {
 // craftNotificationEntry returns the NotificationEntry and the name of the nodeEntries concerned
 func craftNotificationEntry(w sdk.Workflow, notif sdk.WorkflowNotification) ([]string, NotificationEntry, error) {
 	entry := NotificationEntry{}
-	nodeNames := make([]string, len(notif.SourceNodeIDs))
-	for i, id := range notif.SourceNodeIDs {
-		node := w.GetNode(id)
+	nodeNames := make([]string, len(notif.SourceNodeRefs))
+	for i, ref := range notif.SourceNodeRefs {
+		node := w.WorkflowData.NodeByName(ref)
 		if node == nil {
-			return nil, entry, fmt.Errorf("workflow node %d not found", id)
+			log.Error("unable to find workflow node %s", ref)
+			return nil, entry, sdk.ErrWorkflowNodeNotFound
 		}
 		nodeNames[i] = node.Name
 	}
@@ -103,7 +105,7 @@ func craftNotifications(w sdk.Workflow, exportedWorkflow *Workflow) error {
 	return nil
 }
 
-func checkWorkflowNotificationsValidity(w Workflow) *sdk.MultiError {
+func checkWorkflowNotificationsValidity(w Workflow) error {
 	mError := new(sdk.MultiError)
 	if len(w.Workflow) != 0 {
 		if len(w.Notifications) != 0 {
@@ -123,6 +125,9 @@ func checkWorkflowNotificationsValidity(w Workflow) *sdk.MultiError {
 				mError.Append(fmt.Errorf("Error: wrong usage: invalid notification on %s (%s is missing)", nodeNames, name))
 			}
 		}
+	}
+	if len(*mError) == 0 {
+		return nil
 	}
 	return mError
 }
@@ -200,7 +205,7 @@ func (w *Workflow) processNotifications(wrkflw *sdk.Workflow) error {
 			if err != nil {
 				return sdk.WrapError(err, "unable to process notification")
 			}
-			n.SourceNodeRefs = []string{wrkflw.Root.Name}
+			n.SourceNodeRefs = []string{wrkflw.WorkflowData.Node.Name}
 			wrkflw.Notifications = append(wrkflw.Notifications, n)
 		}
 	}
