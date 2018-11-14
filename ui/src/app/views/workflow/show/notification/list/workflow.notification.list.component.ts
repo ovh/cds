@@ -1,7 +1,8 @@
 import {Component, Input} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
+import { NotificationService } from 'app/service/notification/notification.service';
 import {cloneDeep} from 'lodash';
-import {finalize} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 import {Project} from '../../../../../model/project.model';
 import {Workflow, WorkflowNotification} from '../../../../../model/workflow.model';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
@@ -16,6 +17,7 @@ export class WorkflowNotificationListComponent {
 
     newNotification: WorkflowNotification;
     loading = false;
+    loadingNotifTemplate = false;
     selectedNotification: number;
     mapNodesNotif: Map<number, Array<string>>;
     _workflow: Workflow;
@@ -33,7 +35,8 @@ export class WorkflowNotificationListComponent {
 
     @Input() project: Project;
 
-    constructor(private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService) {
+    constructor(private _workflowStore: WorkflowStore, private _notificationService: NotificationService,
+        private _translate: TranslateService, private _toast: ToastService) {
     }
 
     createNotification(n: WorkflowNotification): void {
@@ -55,9 +58,20 @@ export class WorkflowNotificationListComponent {
         delete this.newNotification.id;
     }
 
+    setNotificationTemplate() {
+        this.loadingNotifTemplate = true;
+        this._notificationService.getNotificationTypes().pipe(first(), finalize(() => {
+            this.loadingNotifTemplate = false;
+        })).subscribe(data => {
+            if (data && data[this.newNotification.type]) {
+                this.newNotification.settings = data[this.newNotification.type];
+            }
+        });
+    }
 
     openNewNotifArea() {
         this.newNotification = new WorkflowNotification();
+        this.setNotificationTemplate();
         delete this.selectedNotification;
     }
 

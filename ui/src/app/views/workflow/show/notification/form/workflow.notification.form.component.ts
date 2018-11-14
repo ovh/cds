@@ -1,5 +1,7 @@
 import {Component, EventEmitter, Input, Output} from '@angular/core';
+import { NotificationService } from 'app/service/notification/notification.service';
 import {cloneDeep} from 'lodash';
+import { finalize, first } from 'rxjs/operators';
 import {notificationOnFailure, notificationOnSuccess, notificationTypes} from '../../../../../model/notification.model';
 import {Project} from '../../../../../model/project.model';
 import {WNode, WNodeType, Workflow, WorkflowNotification} from '../../../../../model/workflow.model';
@@ -33,6 +35,7 @@ export class WorkflowNotificationFormComponent {
     notifOnFailure: Array<string>;
     selectedUsers: string;
     nodeError = false;
+    loadingNotifTemplate = false;
 
     nodes: Array<WNode>;
     _workflow: Workflow;
@@ -58,7 +61,7 @@ export class WorkflowNotificationFormComponent {
     @Input() project: Project;
     @Input() canDelete: boolean;
 
-    constructor() {
+    constructor(private _notificationService: NotificationService) {
         this.notifOnSuccess = notificationOnSuccess;
         this.notifOnFailure = notificationOnFailure;
         this.types = notificationTypes;
@@ -74,6 +77,7 @@ export class WorkflowNotificationFormComponent {
     }
 
     formatNode(): void {
+        this.setNotificationTemplate();
         this.notification.source_node_ref = this.notification.source_node_ref.map(id => id.toString());
     }
 
@@ -94,5 +98,16 @@ export class WorkflowNotificationFormComponent {
             this.notification.settings.recipients = this.selectedUsers.split(',');
         }
         this.updatedNotification.emit(this.notification);
+    }
+
+    setNotificationTemplate() {
+        this.loadingNotifTemplate = true;
+        this._notificationService.getNotificationTypes().pipe(first(), finalize(() => {
+            this.loadingNotifTemplate = false;
+        })).subscribe(data => {
+            if (data && data[this.notification.type]) {
+                this.notification.settings = data[this.notification.type];
+            }
+        });
     }
 }
