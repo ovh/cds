@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 
@@ -70,7 +69,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	start := time.Now()
 
-	result, errr := e.readfile(path.Join(workdir, e.Path))
+	result, errr := e.readfile(workdir)
 	if errr != nil {
 		result.Err = errr.Error()
 	}
@@ -82,21 +81,23 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	return executors.Dump(result)
 }
 
-func (e *Executor) readfile(path string) (Result, error) {
+func (e *Executor) readfile(workdir string) (Result, error) {
 	result := Result{Executor: *e}
 
-	fileInfo, _ := os.Stat(path)
+	absPath := filepath.Join(workdir, e.Path)
+
+	fileInfo, _ := os.Stat(absPath)
 	if fileInfo != nil && fileInfo.IsDir() {
-		path = filepath.Dir(path)
+		absPath = filepath.Dir(absPath)
 	}
 
-	filesPath, errg := zglob.Glob(path)
+	filesPath, errg := zglob.Glob(absPath)
 	if errg != nil {
-		return result, fmt.Errorf("Error reading files on path:%s :%s", path, errg)
+		return result, fmt.Errorf("Error reading files on path:%s :%s", absPath, errg)
 	}
 
 	if len(filesPath) == 0 {
-		return result, fmt.Errorf("Invalid path '%s' or file not found", path)
+		return result, fmt.Errorf("Invalid path '%s' or file not found", absPath)
 	}
 
 	var content string
@@ -112,6 +113,11 @@ func (e *Executor) readfile(path string) (Result, error) {
 		}
 		defer f.Close()
 
+		relativeName, err := filepath.Rel(workdir, f.Name())
+		if err != nil {
+			return result, fmt.Errorf("Error cannot evaluate relative path to file at %s: %s", f.Name(), err)
+		}
+
 		b, errr := ioutil.ReadAll(f)
 		if errr != nil {
 			return result, fmt.Errorf("Error while reading file: %s", errr)
@@ -123,17 +129,16 @@ func (e *Executor) readfile(path string) (Result, error) {
 			return result, fmt.Errorf("Error while compute md5sum: %s", err)
 		}
 
-		md5sum[f.Name()] = hex.EncodeToString(h.Sum(nil))
+		md5sum[relativeName] = hex.EncodeToString(h.Sum(nil))
 
 		stat, errs := f.Stat()
 		if errs != nil {
 			return result, fmt.Errorf("Error while compute file size: %s", errs)
 		}
 
-		size[f.Name()] = stat.Size()
-		modtime[f.Name()] = stat.ModTime().Unix()
-		mod[f.Name()] = stat.Mode().String()
-
+		size[relativeName] = stat.Size()
+		modtime[relativeName] = stat.ModTime().Unix()
+		mod[relativeName] = stat.Mode().String()
 	}
 
 	result.Content = content

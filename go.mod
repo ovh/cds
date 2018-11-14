@@ -182,7 +182,7 @@ require (
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
-	github.com/ovh/venom v0.23.0
+	github.com/ovh/venom v0.23.1
 	github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
