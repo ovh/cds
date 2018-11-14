@@ -383,7 +383,7 @@ github.com/opencontainers/runc/libcontainer/devices
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
-# github.com/ovh/venom v0.0.0-20180926113330-936246765cb7
+# github.com/ovh/venom v0.23.0
 github.com/ovh/venom
 github.com/ovh/venom/context/default
 github.com/ovh/venom/context/redis
