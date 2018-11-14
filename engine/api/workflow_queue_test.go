@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/ovh/cds/sdk/log"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -88,11 +89,19 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
 		},
 	}
+
+	(&w).RetroMigrate()
 
 	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
 	test.NoError(t, errP)
@@ -804,27 +813,35 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			Name:         "node1",
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
 			},
 		},
 	}
+
+	(&w).RetroMigrate()
 	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
 
-	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{}, nil)
+	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	assert.NoError(t, errmr)
 
 	// Call post coverage report handler
 	// Prepare request
 
+	t.Logf("%+v", w.WorkflowData.Node.ID)
+	t.Logf("%+v", w.Root.ID)
+	t.Logf("%+v", wrDB.WorkflowNodeRuns)
 	vars := map[string]string{
-		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID),
+		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.Root.ID][0].Stages[0].RunJobs[0].ID),
 	}
 
 	ctx := testRunWorkflowCtx{
@@ -941,15 +958,21 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Name:       sdk.RandomString(10),
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			Name:         "node1",
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Context: &sdk.WorkflowNodeContext{
-				Application: &app,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID:    pip.ID,
+					ApplicationID: app.ID,
+				},
 			},
 		},
 	}
+
+	(&w).RetroMigrate()
+
 	p, err := project.Load(db, api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	assert.NoError(t, err)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, p, u))
@@ -1032,6 +1055,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "master",
 		},
+		User: *u,
 	}, nil)
 	assert.NoError(t, errmr)
 
@@ -1040,6 +1064,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "my-branch",
 		},
+		User: *u,
 	}, nil)
 	assert.NoError(t, errm)
 
@@ -1090,16 +1115,18 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "my-branch",
 		},
+		User: *u,
 	}, nil)
 	assert.NoError(t, errT)
 
 	wrr, err := workflow.LoadRunByID(db, wrToTest.ID, workflow.LoadRunOptions{})
 	assert.NoError(t, err)
 
+	log.Warning("%s", wrr.Status)
 	// Call post coverage report handler
 	// Prepare request
 	vars := map[string]string{
-		"permID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID),
+		"permID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.Root.ID][0].Stages[0].RunJobs[0].ID),
 	}
 
 	request := coverage.Report{

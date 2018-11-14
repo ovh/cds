@@ -64,7 +64,8 @@ func TestCanBeRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRun(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -91,19 +92,34 @@ func TestPurgeWorkflowRun(t *testing.T) {
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
+
 		HistoryLength: 2,
 		PurgeTags:     []string{"git.branch"},
 	}
+
+	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -141,7 +157,8 @@ func TestPurgeWorkflowRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -168,12 +185,24 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
@@ -181,6 +210,8 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 		HistoryLength: 2,
 		PurgeTags:     []string{"git.branch"},
 	}
+
+	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -221,7 +252,8 @@ func TestPurgeWorkflowRunWithRunningStatus(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -248,12 +280,24 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
@@ -261,6 +305,8 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 		HistoryLength: 2,
 		PurgeTags:     []string{"git.branch"},
 	}
+
+	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -314,7 +360,8 @@ func TestPurgeWorkflowRunWithOneSuccessWorkflowRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -341,12 +388,24 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
@@ -354,6 +413,8 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 		HistoryLength: 2,
 		PurgeTags:     []string{"git.branch"},
 	}
+
+	(&w).RetroMigrate()
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
@@ -394,7 +455,8 @@ func TestPurgeWorkflowRunWithNoSuccessWorkflowRun(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -421,19 +483,31 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 		HistoryLength: 2,
 	}
-
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{
@@ -471,7 +545,8 @@ func TestPurgeWorkflowRunWithoutTags(t *testing.T) {
 }
 
 func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
-	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB); defer end()
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
 	event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -498,19 +573,31 @@ func TestPurgeWorkflowRunWithoutTagsBiggerHistoryLength(t *testing.T) {
 		Name:       "test_purge_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID: pip.ID,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 		HistoryLength: 20,
 	}
-
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_purge_1", u, workflow.LoadOptions{

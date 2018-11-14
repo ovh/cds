@@ -4,7 +4,7 @@ import {TranslateService} from '@ngx-translate/core';
 import {finalize, first} from 'rxjs/operators';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
-import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
+import {WNode, Workflow} from '../../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRunRequest} from '../../../../../model/workflow.run.model';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {ToastService} from '../../../../../shared/toast/ToastService';
@@ -25,7 +25,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
     @ViewChild('workflowNodeRunParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
 
-    node: WorkflowNode;
+    node: WNode;
     pipelineStatusEnum = PipelineStatus;
 
     loading = false;

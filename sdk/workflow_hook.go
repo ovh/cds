@@ -62,12 +62,62 @@ type WorkflowNodeOutgoingHook struct {
 	Triggers            []WorkflowNodeOutgoingHookTrigger `json:"triggers,omitempty" db:"-"`
 }
 
+func (h WorkflowNodeOutgoingHook) migrate(withID bool) Node {
+	newNode := Node{
+		Name: h.Name,
+		Ref:  h.Ref,
+		Type: NodeTypeOutGoingHook,
+		OutGoingHookContext: &NodeOutGoingHook{
+			Config:      h.Config,
+			HookModelID: h.WorkflowHookModelID,
+		},
+		Triggers: make([]NodeTrigger, 0, len(h.Triggers)),
+	}
+	if withID {
+		newNode.ID = h.ID
+	}
+	if h.Ref == "" {
+		h.Ref = h.Name
+	}
+	for _, t := range h.Triggers {
+		child := t.WorkflowDestNode.migrate(withID)
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: newNode.Name,
+			ChildNode:      child,
+		})
+	}
+	return newNode
+}
+
 //WorkflowNodeFork represents a hook which cann trigger the workflow from a given node
 type WorkflowNodeFork struct {
 	ID             int64                     `json:"id" db:"id"`
 	Name           string                    `json:"name" db:"name"`
 	WorkflowNodeID int64                     `json:"workflow_node_id" db:"workflow_node_id"`
 	Triggers       []WorkflowNodeForkTrigger `json:"triggers,omitempty" db:"-"`
+}
+
+func (f WorkflowNodeFork) migrate(withID bool) Node {
+	newNode := Node{
+		Name:     f.Name,
+		Ref:      f.Name,
+		Type:     NodeTypeFork,
+		Triggers: make([]NodeTrigger, 0, len(f.Triggers)),
+	}
+	if withID {
+		newNode.ID = f.ID
+	}
+	if newNode.Ref == "" {
+		newNode.Ref = newNode.Name
+	}
+	for _, t := range f.Triggers {
+		child := t.WorkflowDestNode.migrate(withID)
+		newNode.Triggers = append(newNode.Triggers, NodeTrigger{
+			ParentNodeName: newNode.Name,
+			ChildNode:      child,
+		})
+	}
+	return newNode
 }
 
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
@@ -116,11 +166,31 @@ const WorkflowHookModelBuiltin = "builtin"
 //WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
 type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
 
+// GetBuiltinHookModelByName retrieve the hook model
+func GetBuiltinHookModelByName(name string) *WorkflowHookModel {
+	for _, m := range BuiltinHookModels {
+		if m.Name == name {
+			return m
+		}
+	}
+	return nil
+}
+
+// GetBuiltinOutgoingHookModelByName retrieve the outgoing hook model
+func GetBuiltinOutgoingHookModelByName(name string) *WorkflowHookModel {
+	for _, m := range BuiltinOutgoingHookModels {
+		if m.Name == name {
+			return m
+		}
+	}
+	return nil
+}
+
 //Values return values of the WorkflowNodeHookConfig
-func (cfg WorkflowNodeHookConfig) Values() map[string]string {
+func (cfg WorkflowNodeHookConfig) Values(model WorkflowNodeHookConfig) map[string]string {
 	r := make(map[string]string)
 	for k, v := range cfg {
-		if v.Configurable {
+		if model[k].Configurable {
 			r[k] = v.Value
 		}
 	}

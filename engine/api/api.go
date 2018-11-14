@@ -646,6 +646,7 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "maintenance.Subscribe", func(ctx context.Context) {
 		a.listenMaintenance(ctx)
 	})
+
 	sdk.GoRoutine(ctx, "worker.Initialize", func(ctx context.Context) {
 		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
 			log.Error("error while initializing workers routine: %s", err)
@@ -692,6 +693,9 @@ func (a *API) Serve(ctx context.Context) error {
 	})
 	sdk.GoRoutine(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)
+	})
+	sdk.GoRoutine(ctx, "migrate.WorkflowData", func(ctx context.Context) {
+		migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache)
 	})
 
 	//Temporary migration code

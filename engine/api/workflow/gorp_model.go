@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// Workflow is a gorp wrapper around sdk.Workflow
+// Workflow is a gorp wrapper around sdk.WorkflowData
 type Workflow sdk.Workflow
 
 // Node is a gorp wrapper around sdk.WorkflowNode
@@ -44,34 +44,39 @@ type dbNodeRunVulenrabilitiesReport sdk.WorkflowNodeRunVulnerabilityReport
 
 // NodeRun is a gorp wrapper around sdk.WorkflowNodeRun
 type NodeRun struct {
-	WorkflowID         sql.NullInt64  `db:"workflow_id"`
-	WorkflowRunID      int64          `db:"workflow_run_id"`
-	ApplicationID      sql.NullInt64  `db:"application_id"`
-	ID                 int64          `db:"id"`
-	WorkflowNodeID     int64          `db:"workflow_node_id"`
-	WorkflowNodeName   string         `db:"workflow_node_name"`
-	Number             int64          `db:"num"`
-	SubNumber          int64          `db:"sub_num"`
-	Status             string         `db:"status"`
-	Start              time.Time      `db:"start"`
-	Done               time.Time      `db:"done"`
-	LastModified       time.Time      `db:"last_modified"`
-	HookEvent          sql.NullString `db:"hook_event"`
-	Manual             sql.NullString `db:"manual"`
-	SourceNodeRuns     sql.NullString `db:"source_node_runs"`
-	Payload            sql.NullString `db:"payload"`
-	PipelineParameters sql.NullString `db:"pipeline_parameters"`
-	BuildParameters    sql.NullString `db:"build_parameters"`
-	Tests              sql.NullString `db:"tests"`
-	Commits            sql.NullString `db:"commits"`
-	Stages             sql.NullString `db:"stages"`
-	TriggersRun        sql.NullString `db:"triggers_run"`
-	VCSRepository      sql.NullString `db:"vcs_repository"`
-	VCSBranch          sql.NullString `db:"vcs_branch"`
-	VCSTag             sql.NullString `db:"vcs_tag"`
-	VCSHash            sql.NullString `db:"vcs_hash"`
-	VCSServer          sql.NullString `db:"vcs_server"`
-	Header             sql.NullString `db:"header"`
+	WorkflowID             sql.NullInt64  `db:"workflow_id"`
+	WorkflowRunID          int64          `db:"workflow_run_id"`
+	ApplicationID          sql.NullInt64  `db:"application_id"`
+	ID                     int64          `db:"id"`
+	WorkflowNodeID         int64          `db:"workflow_node_id"`
+	WorkflowNodeName       string         `db:"workflow_node_name"`
+	Number                 int64          `db:"num"`
+	SubNumber              int64          `db:"sub_num"`
+	Status                 string         `db:"status"`
+	Start                  time.Time      `db:"start"`
+	Done                   time.Time      `db:"done"`
+	LastModified           time.Time      `db:"last_modified"`
+	HookEvent              sql.NullString `db:"hook_event"`
+	Manual                 sql.NullString `db:"manual"`
+	SourceNodeRuns         sql.NullString `db:"source_node_runs"`
+	Payload                sql.NullString `db:"payload"`
+	PipelineParameters     sql.NullString `db:"pipeline_parameters"`
+	BuildParameters        sql.NullString `db:"build_parameters"`
+	Tests                  sql.NullString `db:"tests"`
+	Commits                sql.NullString `db:"commits"`
+	Stages                 sql.NullString `db:"stages"`
+	TriggersRun            sql.NullString `db:"triggers_run"`
+	VCSRepository          sql.NullString `db:"vcs_repository"`
+	VCSBranch              sql.NullString `db:"vcs_branch"`
+	VCSTag                 sql.NullString `db:"vcs_tag"`
+	VCSHash                sql.NullString `db:"vcs_hash"`
+	VCSServer              sql.NullString `db:"vcs_server"`
+	Header                 sql.NullString `db:"header"`
+	UUID                   sql.NullString `db:"uuid"`
+	OutgoingHook           sql.NullString `db:"outgoinghook"`
+	HookExecutionTimestamp sql.NullInt64  `db:"hook_execution_timestamp"`
+	ExecutionID            sql.NullString `db:"execution_id"`
+	Callback               sql.NullString `db:"callback"`
 }
 
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun
@@ -215,6 +220,13 @@ type outgoingHookModel sdk.WorkflowHookModel
 
 type auditWorkflow sdk.AuditWorklflow
 
+type dbNodeData sdk.Node
+type dbNodeContextData sqlNodeContextData
+type dbNodeTriggerData sdk.NodeTrigger
+type dbNodeOutGoingHookData sdk.NodeOutGoingHook
+type dbNodeJoinData sdk.NodeJoin
+type dbNodeHookData sdk.NodeHook
+
 func init() {
 	gorpmapping.Register(gorpmapping.New(Workflow{}, "workflow", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Node{}, "workflow_node", true, "id"))
@@ -239,4 +251,10 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbNodeRunVulenrabilitiesReport{}, "workflow_node_run_vulnerability", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeFork{}, "workflow_node_fork", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeForkTrigger{}, "workflow_node_fork_trigger", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeData{}, "w_node", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeHookData{}, "w_node_hook", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeContextData{}, "w_node_context", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeTriggerData{}, "w_node_trigger", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeOutGoingHookData{}, "w_node_outgoing_hook", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbNodeJoinData{}, "w_node_join", true, "id"))
 }

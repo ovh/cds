@@ -1,0 +1,24 @@
+version: v1.0
+name: tests
+stages:
+- Tests
+
+jobs:
+
+- job: Tests front
+  stage: Tests
+  description: Test javascript bundle
+  steps:
+  - gitClone:
+      branch: '{{.git.branch}}'
+      commit: '{{.git.hash}}'
+      directory: /go/src/github.com/ovh/cds/
+      url: '{{.git.http_url}}'
+  - script:
+    - cd /go/src/github.com/ovh/cds/ui
+    - '#echo ''Launch npm test'' '
+    - npm test
+  requirements:
+  - binary: git
+  - memory: "6000"
+  - model: Node8.9.1

@@ -113,12 +113,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				// the SSE handler can panic, and it's the way gorilla/mux works :(
 				if strings.HasPrefix(req.URL.String(), "/events") {
 					msg := fmt.Sprintf("%v", err)
-					handledErrors := []string{
-						"index > windowEnd",
-						"runtime error: index out of range",
-						"runtime error: slice bounds out of range",
-					}
-					for _, s := range handledErrors {
+					for _, s := range handledEventErrors {
 						if strings.Contains(msg, s) {
 							return
 						}

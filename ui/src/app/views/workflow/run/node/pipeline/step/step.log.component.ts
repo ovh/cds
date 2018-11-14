@@ -1,5 +1,6 @@
 import {Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import * as AU from 'ansi_up';
 import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs';
 import {environment} from '../../../../../../../environments/environment';
@@ -12,8 +13,6 @@ import {AuthentificationStore} from '../../../../../../service/auth/authentifica
 import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
 import {DurationService} from '../../../../../../shared/duration/duration.service';
 import {CDSWebWorker} from '../../../../../../shared/worker/web.worker';
-
-declare var ansi_up: any;
 
 @Component({
     selector: 'app-workflow-step-log',
@@ -83,12 +82,14 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     limitTo: number;
     basicView = false;
     allLogsView = false;
+    ansi_up = new AU.default;
 
     zone: NgZone;
     _showLog = false;
     _force = false;
     _stepStatus: StepStatus;
     pipelineBuildStatusEnum = PipelineStatus;
+    MAX_PRETTY_LOGS_LINES = 3500;
     @ViewChild('logsContent') logsElt: ElementRef;
 
     constructor(
@@ -158,11 +159,12 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
             this.workerSubscription = this.worker.response().subscribe(msg => {
                 if (msg) {
-                    let build: BuildResult = JSON.parse(msg);
+                    let build: BuildResult = JSON.parse(String.raw`${msg}`);
                     this.zone.run(() => {
                         if (build.step_logs) {
                             this.logs = build.step_logs;
-                            this.splittedLogs = this.getLogsSplitted().map((log, i) => ({lineNumber: i + 1, value: log}));
+                            this.splittedLogs = this.getLogsSplitted()
+                                .map((log, i) => ({lineNumber: i + 1, value: this.ansi_up.ansi_to_html(log)}));
                             this.splittedLogsToDisplay = cloneDeep(this.splittedLogs);
 
                             if (!this.allLogsView && this.splittedLogs.length > 1000 && !this._route.snapshot.fragment) {
@@ -226,7 +228,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     getLogs(): string {
         if (this.logs && this.logs.val) {
-            return ansi_up.ansi_to_html(this.logs.val);
+            return this.logs.val;
         }
         return '';
     }
@@ -240,7 +242,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         this.allLogsView = true;
         setTimeout(() => {
             this.limitFrom = null;
-            if (this.splittedLogs.length > 3500) {
+            if (this.splittedLogs.length > this.MAX_PRETTY_LOGS_LINES) {
                 this.basicView = true;
             }
             this.splittedLogsToDisplay = this.splittedLogs;

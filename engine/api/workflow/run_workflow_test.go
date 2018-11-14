@@ -79,20 +79,31 @@ func TestManualRun1(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip.ID,
-						PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
 
@@ -213,20 +224,30 @@ func TestManualRun2(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip.ID,
-						PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
-
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
 
@@ -348,20 +369,31 @@ func TestManualRun3(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip2.ID,
-						PipelineName: pip2.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip2.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
+	(&w).RetroMigrate()
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
@@ -650,20 +682,31 @@ func TestNoStage(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip.ID,
-						PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
@@ -710,20 +753,31 @@ func TestNoJob(t *testing.T) {
 		Name:       "test_1",
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			PipelineID:   pip.ID,
-			PipelineName: pip.Name,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						PipelineID:   pip.ID,
-						PipelineName: pip.Name,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "node1",
+				Ref:  "node1",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+				Triggers: []sdk.NodeTrigger{
+					{
+						ChildNode: sdk.Node{
+							Name: "node2",
+							Ref:  "node2",
+							Type: sdk.NodeTypePipeline,
+							Context: &sdk.NodeContext{
+								PipelineID: pip.ID,
+							},
+						},
 					},
 				},
 			},
 		},
 	}
 
+	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,

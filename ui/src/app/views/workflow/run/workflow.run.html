@@ -2,7 +2,7 @@
     <app-workflow-run-summary
         [(direction)]="direction"
         [project]="project"
-        [workflow]="workflow"
+        [workflow]="workflowRun.workflow"
         [workflowName]="workflowName"
         (relaunch)="relaunch()">
     </app-workflow-run-summary>
@@ -25,9 +25,9 @@
 <div class="ui text active loader" *ngIf="!workflowRun">{{ 'workflow_loading' | translate }}</div>
 <app-workflow-node-run-param
   *ngIf="workflowRun"
-  #workflowNodeRunParam
+  #workflowRunParam
   [project]="project"
-  [workflow]="workflow"
+  [workflow]="workflowRun.workflow"
   [workflowRun]="workflowRun"
   [num]="workflowRun.num"
   [nodeToRun]="nodeToRun">
