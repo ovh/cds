@@ -500,6 +500,14 @@ func Auth(v bool) HandlerConfigParam {
 	return f
 }
 
+// MaintenanceAware route need CDS maintenance off
+func MaintenanceAware() HandlerConfigParam {
+	f := func(rc *service.HandlerConfig) {
+		rc.Options["maintenance_aware"] = "true"
+	}
+	return f
+}
+
 // EnableTracing on a route
 func EnableTracing() HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {

@@ -12,7 +12,7 @@ import (
 func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
-	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware)
+	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware, api.maintenanceMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
 
 	api.eventsBroker = &eventsBroker{
@@ -38,6 +38,7 @@ func (api *API) InitRouter() {
 	r.Handle("/action/{actionID}/audit", r.GET(api.getActionAuditHandler, NeedAdmin(true)))
 
 	// Admin
+	r.Handle("/admin/maintenance", r.POST(api.postMaintenanceHandler, NeedAdmin(true)))
 	r.Handle("/admin/warning", r.DELETE(api.adminTruncateWarningsHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug", r.GET(api.getProfileIndexHandler, Auth(false)))
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
@@ -317,25 +318,25 @@ func (api *API) InitRouter() {
 	r.Handle("/build/{id}/step", r.POST(api.updateStepStatusHandler))
 
 	//Workflow queue
-	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler, EnableTracing()))
-	r.Handle("/queue/workflows/count", r.GET(api.countWorkflowJobQueueHandler, EnableTracing()))
-	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing()), r.DELETE(api.deleteBookWorkflowJobHandler, NeedHatchery(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), NeedHatchery(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/vulnerability", r.POSTEXECUTE(api.postVulnerabilityReportHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1), NeedWorker()))
-	r.Handle("/queue/workflows/log/service", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), NeedHatchery()))
-	r.Handle("/queue/workflows/{permID}/coverage", r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/tag", r.POSTEXECUTE(api.postWorkflowJobTagsHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/artifact/{ref}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing()))
-	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/count", r.GET(api.countWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery(), EnableTracing(), MaintenanceAware()), r.DELETE(api.deleteBookWorkflowJobHandler, NeedHatchery(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/attempt", r.POST(api.postIncWorkflowJobAttemptHandler, NeedHatchery(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/infos", r.GET(api.getWorkflowJobHandler, NeedWorker(), NeedHatchery(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/vulnerability", r.POSTEXECUTE(api.postVulnerabilityReportHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 1), NeedHatchery(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 1), NeedWorker(), MaintenanceAware()))
+	r.Handle("/queue/workflows/log/service", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobServiceLogsHandler, 1), NeedHatchery(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/coverage", r.POSTEXECUTE(api.postWorkflowJobCoverageResultsHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/tag", r.POSTEXECUTE(api.postWorkflowJobTagsHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/artifact/{ref}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", r.GET(api.getParameterTypeHandler))

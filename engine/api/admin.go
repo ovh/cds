@@ -14,6 +14,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func (api *API) postMaintenanceHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		enable := FormString(r, "enable")
+		api.Cache.Publish(maintenanceQueueName, enable)
+		return nil
+	}
+}
 func (api *API) adminTruncateWarningsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, err := api.mustDB().Exec("delete from warning"); err != nil {
