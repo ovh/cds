@@ -76,6 +76,7 @@ func FetchTempURL(o Object) (string, error) {
 type Driver interface {
 	Status() sdk.MonitoringStatusLine
 	Store(o Object, data io.ReadCloser) (string, error)
+	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
 	Fetch(o Object) (io.ReadCloser, error)
 	Delete(o Object) error
 }

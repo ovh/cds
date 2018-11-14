@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -367,4 +368,99 @@ func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
 	}
 
 	return bytes.NewBuffer(body), nil
+}
+
+// ----------- STATIC FILES
+
+func (c *client) WorkflowUploadStaticFiles(projectKey, ref string, tarContent io.Reader) (string, error) {
+	store := new(sdk.ArtifactsStore)
+	_, _ = c.GetJSON(context.Background(), "/artifact/store", store)
+	if store.TemporaryURLSupported {
+		return c.workflowStaticFilesIndirectUpload(projectKey, ref, tarContent)
+	}
+	return c.workflowStaticFilesDirectUpload(projectKey, ref, tarContent)
+}
+
+func (c *client) workflowStaticFilesDirectUpload(projectKey, ref string, tarContent io.Reader) (string, error) {
+	url := fmt.Sprintf("/project/%s/staticfiles/%s", projectKey, ref)
+
+	mods := []RequestModifier{
+		(func(r *http.Request) {
+			r.Header.Set("Content-Type", "application/tar")
+		}),
+	}
+
+	body, _, code, err := c.Stream(context.Background(), "POST", url, tarContent, true, mods...)
+	if err != nil {
+		return "", sdk.WrapError(err, "Error on call POST")
+	}
+	defer body.Close()
+
+	if err := json.NewDecoder(body).Decode(); err != nil {
+		return ""
+		sdk.WrapError(err, "Cannot unmarshall body")
+	}
+
+	if code >= 400 {
+		return fmt.Errorf("HTTP Code %d", code)
+	}
+
+	return nil
+}
+
+func (c *client) workflowStaticFilesIndirectUpload(projectKey, ref string, tarContent io.Reader) (string, error) {
+	url := fmt.Sprintf("/project/%s/staticfiles/%s/url", projectKey, ref)
+
+	cacheObj := sdk.Cache{}
+	code, err := c.PostJSON(context.Background(), url, nil, &cacheObj)
+	if err != nil {
+		return err
+	}
+
+	if code >= 400 {
+		return fmt.Errorf("HTTP Code %d", code)
+	}
+
+	if err := c.workflowStaticFilesIndirectUploadPost(cacheObj.TmpURL, tarContent); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *client) workflowStaticFilesIndirectUploadPost(url string, tarContent io.Reader) (string, error) {
+	//Post the file to the temporary URL
+	var retry = 10
+	var globalErr error
+	var body []byte
+	for i := 0; i < retry; i++ {
+		req, errRequest := http.NewRequest("PUT", url, tarContent)
+		if errRequest != nil {
+			return errRequest
+		}
+		req.Header.Set("Content-Type", "application/tar")
+
+		var resp *http.Response
+		resp, globalErr = http.DefaultClient.Do(req)
+		if globalErr == nil {
+			defer resp.Body.Close()
+
+			var err error
+			body, err = ioutil.ReadAll(resp.Body)
+			if err != nil {
+				globalErr = err
+				continue
+			}
+
+			if resp.StatusCode >= 300 {
+				globalErr = fmt.Errorf("[%d] Unable to upload cache: (HTTP %d) %s", i, resp.StatusCode, string(body))
+				continue
+			}
+
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return globalErr
 }

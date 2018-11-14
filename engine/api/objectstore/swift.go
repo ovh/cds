@@ -49,21 +49,48 @@ func (s *SwiftStore) Status() sdk.MonitoringStatusLine {
 	}
 }
 
+// ServeStaticFiles send files to serve static files with the entrypoint of html page and return public URL taking a tar file
+func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
+	container := s.containerprefix + o.GetPath()
+	object := o.GetName()
+	escape(container, object)
+	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
+
+	if entrypoint == "" {
+		entrypoint = "index.html"
+	}
+	headers := map[string]string{
+		"X-Web-Mode":                    "TRUE",
+		"X-Container-Meta-Web-Listings": "TRUE",
+		"X-Container-Meta-Web-Index":    entrypoint,
+		"X-Container-Read":              ".r:*,.rlistings",
+	}
+	fmt.Println(container)
+	log.Debug("SwiftStore> creating container %s", container)
+	if err := s.ContainerCreate(container, headers); err != nil {
+		return "", sdk.WrapError(err, "Unable to create container %s", container)
+	}
+
+	log.Debug("SwiftStore> creating object %s/%s", container, object)
+	if _, errU := s.BulkUpload(container, data, "tar.gz", nil); errU != nil {
+		return "", sdk.WrapError(errU, "SwiftStore> Unable to bulk upload %s : %v", object, errU)
+	}
+
+	if err := data.Close(); err != nil {
+		return "", sdk.WrapError(err, "Unable to close data buffer")
+	}
+
+	return s.AuthToken + container, nil
+}
+
 // Store stores in swift
 func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 	container := s.containerprefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
 	log.Debug("SwiftStore> Storing /%s/%s\n", container, object)
-
-	headers := map[string]string{
-		"X-Web-Mode":                    "TRUE",
-		"X-Container-Meta-Web-Listings": "TRUE",
-		"X-Container-Meta-Web-Index":    "index.html",
-	}
-	fmt.Println(container)
 	log.Debug("SwiftStore> creating container %s", container)
-	if err := s.ContainerCreate(container, headers); err != nil {
+	if err := s.ContainerCreate(container, nil); err != nil {
 		return "", sdk.WrapError(err, "Unable to create container %s", container)
 	}
 
@@ -135,13 +162,34 @@ func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
 	container := s.containerprefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
+	if err := s.ContainerCreate(container, nil); err != nil {
+		return "", "", sdk.WrapError(err, "Unable to create container %s", container)
+	}
+
+	key, err := s.containerKey(container)
+	if err != nil {
+		return "", "", sdk.WrapError(err, "Unable to get container key %s", container)
+	}
+
+	url := s.ObjectTempUrl(container, object, string(key), "PUT", time.Now().Add(time.Hour))
+	return url, string(key), nil
+}
+
+// ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
+func (s *SwiftStore) ServeStaticFilesURL(o Object, entrypoint string) (string, string, error) {
+	container := s.containerprefix + o.GetPath()
+	object := o.GetName()
+	escape(container, object)
+	if entrypoint == "" {
+		entrypoint = "index.html"
+	}
 
 	headers := map[string]string{
 		"X-Web-Mode":                    "TRUE",
 		"X-Container-Meta-Web-Listings": "TRUE",
-		"X-Container-Meta-Web-Index":    "index.html",
+		"X-Container-Meta-Web-Index":    entrypoint,
+		"X-Container-Read":              ".r:*,.rlistings",
 	}
-	fmt.Println(container)
 	if err := s.ContainerCreate(container, headers); err != nil {
 		return "", "", sdk.WrapError(err, "Unable to create container %s", container)
 	}
@@ -190,5 +238,5 @@ func (s *SwiftStore) FetchURL(o Object) (string, string, error) {
 	url := s.ObjectTempUrl(container, object, string(key), "GET", time.Now().Add(time.Hour))
 
 	log.Debug("SwiftStore> Fetch URL: %s", string(url))
-	return url, string(key), nil
+	return url + "&extract-archive=tar.gz", string(key), nil
 }

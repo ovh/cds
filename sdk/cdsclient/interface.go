@@ -270,6 +270,7 @@ type WorkflowClient interface {
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 	WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error
 	WorkflowCachePull(projectKey, ref string) (io.Reader, error)
+	WorkflowUploadStaticFiles(projectKey, ref string, tarContent io.Reader) (string, error)
 }
 
 // MonitoringClient exposes monitoring functions

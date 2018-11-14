@@ -384,3 +384,31 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 
 	return tx.Commit()
 }
+
+func createBuiltinServeStaticFilesAction(db *gorp.DbMap) error {
+	serveStaticAct := sdk.NewAction(sdk.ServeStaticFiles)
+	serveStaticAct.Type = sdk.BuiltinAction
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "path",
+		Description: "Path where static files will be uploaded",
+		Type:        sdk.StringParameter})
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "entrypoint",
+		Description: "Filename for the entrypoint when serving static files",
+		Type:        sdk.StringParameter,
+		Value:       "index.html",
+		Advanced:    true})
+
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	log.Info("createBuiltinServeStaticFilesAction> create builtin action %s", serveStaticAct.Name)
+	if err := InsertAction(tx, serveStaticAct, true); err != nil {
+		return sdk.WithStack(err)
+	}
+
+	return tx.Commit()
+}
