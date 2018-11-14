@@ -227,6 +227,7 @@ type API struct {
 	Config              Configuration
 	DBConnectionFactory *database.DBConnectionFactory
 	StartupTime         time.Time
+	Maintenance         bool
 	eventsBroker        *eventsBroker
 	warnChan            chan sdk.Event
 	Cache               cache.Store
@@ -642,6 +643,9 @@ func (a *API) Serve(ctx context.Context) error {
 	event.Subscribe(a.warnChan)
 
 	log.Info("Initializing internal routines...")
+	sdk.GoRoutine(ctx, "maintenance.Subscribe", func(ctx context.Context) {
+		a.listenMaintenance(ctx)
+	})
 
 	sdk.GoRoutine(ctx, "worker.Initialize", func(ctx context.Context) {
 		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
