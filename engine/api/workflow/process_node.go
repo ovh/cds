@@ -105,6 +105,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if errPayload != nil {
 		return nil, false, sdk.WrapError(errPayload, "Default payload is malformatted")
 	}
+	isDefaultPayload := true
 
 	// For node with pipeline
 	var stages []sdk.Stage
@@ -182,7 +183,14 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 				})
 				log.Error("processNode> Unable to compute hook payload: %v", errm1)
 			}
-			runPayload = sdk.ParametersMapMerge(runPayload, m1, sdk.MapMergeOptions.ExcludeGitParams)
+			if isDefaultPayload {
+				// Check if we try to merge for the first time so try to merge the default payload with the first parent run found
+				// if it is the default payload then we have to take the previous git values
+				runPayload = sdk.ParametersMapMerge(runPayload, m1)
+				isDefaultPayload = false
+			} else {
+				runPayload = sdk.ParametersMapMerge(runPayload, m1, sdk.MapMergeOptions.ExcludeGitParams)
+			}
 		}
 		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
@@ -214,7 +222,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		if errm1 != nil {
 			return report, false, sdk.WrapError(errm1, "r> Unable to compute payload")
 		}
-		runPayload = sdk.ParametersMapMerge(runPayload, m1, sdk.MapMergeOptions.ExcludeGitParams)
+		runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		run.Payload = runPayload
 		run.PipelineParameters = manual.PipelineParameters
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{

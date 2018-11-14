@@ -557,6 +557,7 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	if errPayload != nil {
 		return nil, false, sdk.WrapError(errPayload, "Default payload is malformatted")
 	}
+	isDefaultPayload := true
 
 	//If the pipeline has parameter but none are defined on context, use the defaults
 	if len(pip.Parameter) > 0 && len(n.Context.DefaultPipelineParameters) == 0 {
@@ -596,7 +597,15 @@ func processWorkflowNodeRun(ctx context.Context, db gorp.SqlExecutor, store cach
 				})
 				log.Error("processWorkflowNodeRun> Unable to compute payload: %v", errm1)
 			}
-			runPayload = sdk.ParametersMapMerge(runPayload, m1, sdk.MapMergeOptions.ExcludeGitParams)
+
+			if isDefaultPayload {
+				// Check if we try to merge for the first time so try to merge the default payload with the first parent run found
+				// if it is the default payload then we have to take the previous git values
+				runPayload = sdk.ParametersMapMerge(runPayload, m1)
+				isDefaultPayload = false
+			} else {
+				runPayload = sdk.ParametersMapMerge(runPayload, m1, sdk.MapMergeOptions.ExcludeGitParams)
+			}
 		}
 		run.Payload = runPayload
 		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
