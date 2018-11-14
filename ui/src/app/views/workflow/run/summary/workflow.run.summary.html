@@ -45,9 +45,9 @@
                                     </button>
                                 </div>
                                 <div class="four wide column">
-                                        <span *ngIf="workflowRun.workflow.from_repository" id="fromRepositoryInfo">
-                                            {{'workflow_from_repository' | translate: {repo: workflowRun.workflow.from_repository} }}
-                                        </span>
+                                    <span *ngIf="workflowRun.workflow.from_repository" class="workflowInfo">
+                                        {{'workflow_from_repository' | translate: {repo: workflowRun.workflow.from_repository} }}
+                                    </span>
                                 </div>
                                 <div class="six wide column centered" title="{{ 'commit_author' | translate }}">
                                     <ng-container *ngIf="author">

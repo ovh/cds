@@ -55,7 +55,8 @@ type Workflow struct {
 	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
 	// aggregates
-	Template *WorkflowTemplate `json:"template,omitempty" db:"-"`
+	Template     *WorkflowTemplate `json:"-" db:"-" cli:"-"`
+	FromTemplate string            `json:"from_template,omitempty" db:"-" cli:"-"`
 }
 
 // GetApplication retrieve application from workflow
@@ -1622,4 +1623,13 @@ func (label *Label) Validate() error {
 	}
 
 	return nil
+}
+
+// WorkflowToIDs returns ids of given workflows.
+func WorkflowToIDs(ws []*Workflow) []int64 {
+	ids := make([]int64, len(ws))
+	for i := range ws {
+		ids[i] = ws[i].ID
+	}
+	return ids
 }

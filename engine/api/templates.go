@@ -435,37 +435,6 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 	}
 }
 
-func (api *API) getTemplateInstanceHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-
-		key := vars["key"]
-		workflowName := vars["permWorkflowName"]
-
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
-		if err != nil {
-			return sdk.WrapError(err, "Unable to load projet")
-		}
-
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getUser(ctx), workflow.LoadOptions{})
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load workflow %s", workflowName)
-		}
-
-		// return the template instance if workflow is a generated one
-		wti, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().
-			WorkflowIDs(wf.ID))
-		if err != nil {
-			return err
-		}
-		if wti == nil {
-			return sdk.WithStack(sdk.ErrNotFound)
-		}
-
-		return service.WriteJSON(w, wti, http.StatusOK)
-	}
-}
-
 func (api *API) pullTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		ctx, err := api.middlewareTemplate(false)(ctx, w, r)

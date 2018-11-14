@@ -14,11 +14,13 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -50,6 +52,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		withAudits := FormBool(r, "withAudits")
 		withLabels := FormBool(r, "withLabels")
 		withDeepPipelines := FormBool(r, "withDeepPipelines")
+		withTemplate := FormBool(r, "withTemplate")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
@@ -81,6 +84,20 @@ func (api *API) getWorkflowHandler() service.Handler {
 				return sdk.WrapError(errA, "Cannot load audits for workflow %s", name)
 			}
 			w1.Audits = audits
+		}
+
+		if withTemplate {
+			if err := workflowtemplate.AggregateTemplateOnWorkflow(api.mustDB(), w1); err != nil {
+				return err
+			}
+			if w1.Template != nil {
+				if err := group.AggregateOnWorkflowTemplate(api.mustDB(), w1.Template); err != nil {
+					return err
+				}
+				if w1.Template != nil {
+					w1.FromTemplate = fmt.Sprintf("%s/%s", w1.Template.Group.Name, w1.Template.Slug)
+				}
+			}
 		}
 
 		w1.Permission = permission.WorkflowPermission(key, w1.Name, getUser(ctx))

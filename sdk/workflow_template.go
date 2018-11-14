@@ -93,7 +93,6 @@ func (w *WorkflowTemplate) ValidateStruct() error {
 }
 
 // CheckParams returns template parameters validity.
-// TODO replace fmt.Error
 func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 	if r.ProjectKey == "" {
 		return NewErrorFrom(ErrInvalidData, "Project key is required")
@@ -335,6 +334,15 @@ func WorkflowTemplateInstancesToWorkflowIDs(wtis []*WorkflowTemplateInstance) []
 	ids := make([]int64, len(wtis))
 	for i := range wtis {
 		ids[i] = wtis[i].WorkflowID
+	}
+	return ids
+}
+
+// WorkflowTemplateInstancesToWorkflowTemplateIDs returns workflow template ids of given workflow template instances.
+func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInstance) []int64 {
+	ids := make([]int64, len(wtis))
+	for i := range wtis {
+		ids[i] = wtis[i].WorkflowTemplateID
 	}
 	return ids
 }

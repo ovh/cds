@@ -59,10 +59,15 @@
                                                                 <i class="resize vertical icon"></i>
                                                             </button>
                                                         </div>
-                                                        <div class="four wide column centered">
-                                                            <span *ngIf="detailedWorkflow.from_repository" id="fromRepositoryInfo">
-                                                                {{'workflow_from_repository' | translate: {repo: detailedWorkflow.from_repository} }}
-                                                            </span>
+                                                        <div class="four wide column centered workflowInfo">
+                                                            <div class="ui grid">
+                                                                <div *ngIf="detailedWorkflow.from_repository" class="row">
+                                                                    {{'workflow_from_repository' | translate: {repo: detailedWorkflow.from_repository} }}
+                                                                </div>
+                                                                <div *ngIf="detailedWorkflow.from_template" class="row">
+                                                                    {{'workflow_from_template' | translate: {path: detailedWorkflow.from_template} }}
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                         <div class="six wide column centered">
                                                             <div class="ui buttons">
@@ -79,7 +84,6 @@
                                                                   <i class="save icon"></i> {{'btn_save' | translate}}
                                                               </div>
                                                             </div>
-
                                                         </div>
                                                         <div class="right aligned five wide column" title="{{'btn_run_workflow' | translate}}">
                                                             <div class="ui green buttons">
