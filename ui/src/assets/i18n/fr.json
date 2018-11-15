@@ -1015,7 +1015,7 @@
   "workflow_notification_form": "Ajouter une notification",
   "workflow_notification_copy": "Copié",
   "workflow_logs_all": "Afficher tous les logs",
-  "workflow_logs_pretty_ansi": "Afficher les logs avec interpreteur ANSI",
+  "workflow_logs_pretty_ansi": "Afficher les logs avec l'interpréteur ANSI",
   "workflow_logs_pretty_html": "Afficher les logs avec interpreteur HTML",
   "workflow_logs_raw": "Afficher les logs bruts",
 
