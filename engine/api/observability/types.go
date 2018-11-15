@@ -22,10 +22,11 @@ type Configuration struct {
 			HTTPCollectorEndpoint string `toml:"HTTPCollectorEndpoint" default:"http://localhost:14268" json:"httpCollectorEndpoint"`
 		} `json:"jaeger"`
 		Prometheus struct {
-			ReporteringPeriod int `toml:"ReporteringPeriod" default:"60" json:"reporteringPeriod"`
+			ReporteringPeriod int `toml:"ReporteringPeriod" default:"10" json:"reporteringPeriod"`
 		} `json:"prometheus"`
 	} `json:"exporter"`
 	SamplingProbability float64 `json:"samplingProbability"`
+	Name                string  `toml:"name" default:"cdsinstance" comment:"Name of this CDS Instance. This value is added to /mon/metrics as label on each series" json:"name"`
 }
 
 //Options is the options struct for a new tracing span

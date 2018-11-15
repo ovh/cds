@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"go.opencensus.io/stats"
-
 	"go.opencensus.io/stats/view"
 
 	"github.com/ovh/cds/engine/service"

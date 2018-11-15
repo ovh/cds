@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	_ "github.com/spf13/viper/remote"
 	"github.com/yesnault/go-toml"
+	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
@@ -429,8 +430,16 @@ See $ engine config command for more details.
 			}
 		}
 
-		// initialize context
 		ctx, cancel := context.WithCancel(context.Background())
+
+		// initialize context
+		instance := "cdsinstance"
+		if conf.Tracing != nil && conf.Tracing.Name != "" {
+			instance = conf.Tracing.Name
+		}
+		tagInstance, _ := tag.NewKey("instance")
+		ctx, _ = tag.New(ctx, tag.Upsert(tagInstance, instance))
+
 		defer cancel()
 
 		// gracefully shutdown all
@@ -455,7 +464,7 @@ See $ engine config command for more details.
 			switch a {
 			case "api":
 				services = append(services, serviceConf{arg: a, service: api.New(), cfg: *conf.API})
-				names = append(names, conf.API.Name)
+				names = append(names, instance)
 			case "migrate":
 				services = append(services, serviceConf{arg: a, service: migrateservice.New(), cfg: *conf.DatabaseMigrate})
 				names = append(names, conf.DatabaseMigrate.Name)

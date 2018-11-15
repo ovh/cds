@@ -165,7 +165,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 		return err
 	}
 
-	if err := hatchery.Create(h); err != nil {
+	if err := hatchery.Create(ctx, h); err != nil {
 		return err
 	}
 
@@ -235,7 +235,7 @@ func getWorkersPoolHandler(h hatchery.Interface) service.HandlerFunc {
 			if h == nil {
 				return nil
 			}
-			pool, err := hatchery.WorkerPool(h)
+			pool, err := hatchery.WorkerPool(ctx, h)
 			if err != nil {
 				return sdk.WrapError(err, "getWorkersPoolHandler")
 			}

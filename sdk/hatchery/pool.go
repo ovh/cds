@@ -13,8 +13,8 @@ import (
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
-func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
-	ctx := WithTags(context.Background(), h)
+func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
+	ctx = WithTags(ctx, h)
 
 	// First: call API
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)

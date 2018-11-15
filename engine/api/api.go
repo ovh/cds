@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
@@ -48,8 +49,7 @@ import (
 
 // Configuration is the configuraton structure for CDS API
 type Configuration struct {
-	Name string `toml:"name" default:"cdsinstance" comment:"Name of this CDS Instance" json:"name"`
-	URL  struct {
+	URL struct {
 		API string `toml:"api" default:"http://localhost:8081" json:"api"`
 		UI  string `toml:"ui" default:"http://localhost:2015" json:"ui"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
@@ -573,8 +573,12 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("unable to init router stats: %v", err)
 	}
 
+<<<<<<< HEAD
 	log.Info("Initializing Stats")
 	if err := a.initStats(); err != nil {
+=======
+	if err := a.initStats(ctx); err != nil {
+>>>>>>> cr
 		log.Error("unable to init api stats: %v", err)
 	}
 
@@ -659,6 +663,7 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	})
+<<<<<<< HEAD
 	sdk.GoRoutine(ctx, "metrics.Initialize", func(ctx context.Context) {
 		minInstances := metrics.MinInstances{
 			TypeAPI:           a.Config.Status.API.MinInstance,
@@ -671,6 +676,8 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 		metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name, minInstances)
 	}, a.PanicDump())
+=======
+>>>>>>> cr
 	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	}, a.PanicDump())
@@ -797,7 +804,7 @@ func (a *API) Serve(ctx context.Context) error {
 	return nil
 }
 
-func (a *API) initStats() error {
+func (a *API) initStats(ctx context.Context) error {
 	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", a.Name)
 	a.Stats.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
 
@@ -806,18 +813,34 @@ func (a *API) initStats() error {
 
 	log.Info("api> Stats initialized")
 
+	minInstances := observability.MinInstances{
+		TypeAPI:           a.Config.Status.API.MinInstance,
+		TypeRepositories:  a.Config.Status.Repositories.MinInstance,
+		TypeVCS:           a.Config.Status.VCS.MinInstance,
+		TypeHooks:         a.Config.Status.Hooks.MinInstance,
+		TypeHatchery:      a.Config.Status.Hatchery.MinInstance,
+		TypeDBMigrate:     a.Config.Status.DBMigrate.MinInstance,
+		TypeElasticsearch: a.Config.Status.ElasticSearch.MinInstance,
+	}
+
+	tagInstance, _ := tag.NewKey("instance")
+	tags := []tag.Key{tagInstance}
+	observability.Initialize(ctx, a.DBConnectionFactory.GetDBMap, minInstances)
+
 	return observability.RegisterView(
 		&view.View{
 			Name:        "workflow_runs_started",
 			Description: a.Stats.WorkflowRunStarted.Description(),
 			Measure:     a.Stats.WorkflowRunStarted,
 			Aggregation: view.Count(),
+			TagKeys:     tags,
 		},
 		&view.View{
 			Name:        "workflow_runs_failed",
 			Description: a.Stats.WorkflowRunFailed.Description(),
 			Measure:     a.Stats.WorkflowRunFailed,
 			Aggregation: view.Count(),
+			TagKeys:     tags,
 		},
 	)
 }

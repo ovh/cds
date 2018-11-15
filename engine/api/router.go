@@ -19,6 +19,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/observability"
@@ -543,7 +544,10 @@ func (r *Router) InitStats(service, name string) error {
 	label = fmt.Sprintf("cds/%s/%s/sse_events", service, name)
 	r.Stats.SSEEvents = stats.Int64(label, "number of sse events", stats.UnitDimensionless)
 
-	log.Info("router> Stats initialized")
+	tagInstance, _ := tag.NewKey("instance")
+	tags := []tag.Key{tagInstance}
+
+	log.Info("api> Stats initialized")
 
 	return observability.RegisterView(
 		&view.View{
@@ -551,24 +555,28 @@ func (r *Router) InitStats(service, name string) error {
 			Description: r.Stats.Errors.Description(),
 			Measure:     r.Stats.Errors,
 			Aggregation: view.Count(),
+			TagKeys:     tags,
 		},
 		&view.View{
 			Name:        "router_hits",
 			Description: r.Stats.Hits.Description(),
 			Measure:     r.Stats.Hits,
 			Aggregation: view.Count(),
+			TagKeys:     tags,
 		},
 		&view.View{
 			Name:        "sse_clients",
 			Description: r.Stats.SSEClients.Description(),
 			Measure:     r.Stats.SSEClients,
 			Aggregation: view.LastValue(),
+			TagKeys:     tags,
 		},
 		&view.View{
 			Name:        "sse_events",
 			Description: r.Stats.SSEEvents.Description(),
 			Measure:     r.Stats.SSEEvents,
 			Aggregation: view.Count(),
+			TagKeys:     tags,
 		},
 	)
 }

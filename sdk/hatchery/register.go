@@ -1,6 +1,7 @@
 package hatchery
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"strings"
@@ -18,12 +19,12 @@ import (
 // than a tick.
 var nbRegisteringWorkerModels int64
 
-func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) error {
+func workerRegister(ctx context.Context, h Interface, startWorkerChan chan<- workerStarterRequest) error {
 	if len(models) == 0 {
 		return fmt.Errorf("hatchery> workerRegister> No model returned by GetWorkerModels")
 	}
 	// currentRegister contains the register spawned in this ticker
-	currentRegistering, err := WorkerPool(h, sdk.StatusWorkerRegistering, sdk.StatusWorkerPending)
+	currentRegistering, err := WorkerPool(ctx, h, sdk.StatusWorkerRegistering, sdk.StatusWorkerPending)
 	if err != nil {
 		log.Error("hatchery> workerRegister> %v", err)
 	}
@@ -45,7 +46,7 @@ func workerRegister(h Interface, startWorkerChan chan<- workerStarterRequest) er
 			return nil
 		}
 
-		if !checkCapacities(h) {
+		if !checkCapacities(ctx, h) {
 			log.Debug("hatchery> workerRegister> unable to register now")
 			return nil
 		}
