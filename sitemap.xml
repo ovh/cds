@@ -698,6 +698,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/maintenance/disable/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/worker/disable/</loc>
   </url>
   
@@ -727,6 +731,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/worker/download/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/maintenance/enable/</loc>
   </url>
   
   <url>
@@ -1051,6 +1059,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/logs/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/maintenance/</loc>
   </url>
   
   <url>
