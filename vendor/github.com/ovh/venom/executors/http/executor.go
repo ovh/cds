@@ -46,6 +46,7 @@ type Executor struct {
 	SkipHeaders       bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
 	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
 	Proxy             string      `json:"proxy" yaml:"proxy" mapstructure:"proxy"`
+	NoFollowRedirect  bool        `json:"no_follow_redirect" yaml:"no_follow_redirect" mapstructure:"no_follow_redirect"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -111,6 +112,11 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		tr.Proxy = http.ProxyURL(proxyURL)
 	}
 	client := &http.Client{Transport: tr}
+	if e.NoFollowRedirect {
+		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	}
 
 	start := time.Now()
 	l.Debugf("http.Run.doRequest> Begin")
