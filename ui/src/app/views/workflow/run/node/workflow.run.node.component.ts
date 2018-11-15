@@ -75,7 +75,7 @@ export class WorkflowNodeRunComponent {
         this._activatedRoute.params.subscribe(params => {
             this.nodeRun = null;
             let number = params['number'];
-            let nodeRunId = params['node_id'];
+            let nodeRunId = params['nodeId'];
 
             if (this.project && this.project.key && this.workflowName && number && nodeRunId) {
                 // Get workflow Run
