@@ -103,7 +103,8 @@ export class WorkflowWNodeComponent implements OnInit {
                 if (this._workflowEventStore.isRunSelected() && this.currentNodeRun) {
                     this._router.navigate([
                         'node', this.currentNodeRun.id
-                    ], {relativeTo: this._activatedRoute, queryParams: {name: this.node.name, node_id: this.node.id, node_ref: this.node.ref}});
+                    ], {relativeTo: this._activatedRoute, queryParams: {name: this.node.name,
+                            node_id: this.node.id, node_ref: this.node.ref}});
                 } else {
                     this._router.navigate([
                         '/project', this.project.key,
