@@ -19,8 +19,6 @@ type event struct {
 	s sdk.Service
 }
 
-type eventFunc func(s sdk.Service)
-
 type iCache struct {
 	dbConnFactory *database.DBConnectionFactory
 	mutex         *sync.RWMutex
@@ -133,9 +131,6 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 			}
 
 		case n := <-listener.Notify:
-			log.Debug("Received data from channel [%s]", n.Channel)
-			// Prepare notification payload for pretty print
-
 			e := map[string]interface{}{}
 			if err := json.Unmarshal([]byte(n.Extra), &e); err != nil {
 				log.Warning("unable to unmarshal received event: %v", err)
@@ -165,26 +160,32 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 				continue
 			}
 
-			jsonData, _ := json.Marshal(data) // this cannot append
-			var srv sdk.Service
-			if err := json.Unmarshal(jsonData, &srv); err != nil {
-				log.Warning("unable to unmarshal received event data: %v", err)
+			dataAsObject, ok := data.(map[string]interface{})
+			if !ok {
 				continue
 			}
 
-			log.Debug("handling %s on (%d)%s", action, srv.ID, srv.Name)
+			name := dataAsObject["name"].(string)
+			db := database.DBMap(c.dbConnFactory.DB())
 
 			switch action {
 			case "UPDATE", "INSERT":
-				c.chanEvent <- event{c.updateCache, srv}
+				srv, err := FindByName(db, name)
+				if err != nil {
+					log.Error("unable to find service %s: %v", name, err)
+					continue
+				}
+				c.chanEvent <- event{c.updateCache, *srv}
 			case "DELETE":
-				c.chanEvent <- event{c.removeFromCache, srv}
+				c.chanEvent <- event{c.removeFromCache, sdk.Service{
+					Name: name,
+				}}
 			}
 
 		case <-time.After(90 * time.Second):
 			log.Debug("Received no events for 90 seconds, checking connection")
 			go func() {
-				listener.Ping()
+				listener.Ping() // nolint
 			}()
 		}
 	}

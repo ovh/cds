@@ -87,7 +87,7 @@ func (api *API) getPanicDumpHandler() service.Handler {
 		if !api.Cache.Get(k, &data) {
 			return sdk.ErrNotFound
 		}
-		w.Write([]byte(data))
+		w.Write([]byte(data)) // nolint
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.WriteHeader(http.StatusOK)
 		return nil

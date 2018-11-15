@@ -68,5 +68,5 @@ type writerCloser struct {
 
 func (w *writerCloser) Close() error {
 	w.store.SetWithTTL(w.key, w.String(), w.ttl)
-	return w.Close()
+	return nil
 }
