@@ -1035,5 +1035,7 @@
   "workflow_template_created": "Modèle de workflow créé",
   "workflow_template_saved": "Modèle de workflow sauvegardé",
   "workflow_template_deleted": "Modèle de workflow supprimé",
-  "workflow_templates": "Modèles de workflow"
+  "workflow_templates": "Modèles de workflow",
+  "workflow_template_help_line_1": "Un modèle de workflow vous permet d'initialiser et de mettre à jour un workflow et ses composants rapidement.",
+  "workflow_template_help_howto_link_1": "En savoir plus"
 }
