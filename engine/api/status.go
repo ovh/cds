@@ -271,7 +271,7 @@ func (api *API) countMetricRange(ctx context.Context, status string, timerange s
 		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
 	}
 	ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, status), tag.Upsert(tagRange, timerange))
-	observability.Record(ctx, v, n.Int64)
+	observability.Record(ctx, v, n)
 }
 
 func (api *API) processStatusMetrics(ctx context.Context, v *stats.Int64Measure) {
