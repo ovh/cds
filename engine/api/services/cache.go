@@ -21,7 +21,7 @@ type event struct {
 
 type iCache struct {
 	dbConnFactory *database.DBConnectionFactory
-	mutex         *sync.RWMutex
+	mutex         sync.RWMutex
 	data          map[string][]sdk.Service
 	chanEvent     chan event
 }
@@ -34,7 +34,7 @@ func Initialize(c context.Context, dbF *database.DBConnectionFactory, panicCallb
 		chanEvent:     make(chan event),
 		data:          make(map[string][]sdk.Service),
 		dbConnFactory: dbF,
-		mutex:         new(sync.RWMutex),
+		mutex:         sync.RWMutex{},
 	}
 	sdk.GoRoutine(c, "service.internalCache.doUpdateData", internalCache.doUpdateData, panicCallback)
 	sdk.GoRoutine(c, "service.internalCache.doListenDatabase", internalCache.doListenDatabase, panicCallback)
