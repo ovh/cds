@@ -11,21 +11,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var servicesCacheByType map[string][]sdk.Service
-var sEvent chan serviceEvent
-
-type serviceEvent struct {
-	Action  string
-	Service sdk.Service
-}
-
-func init() {
-	sEvent = make(chan serviceEvent, 10)
-	servicesCacheByType = make(map[string][]sdk.Service)
-
-	go managerServiceEvent(sEvent)
-}
-
 // FindByNameAndType a service by its name and type
 func FindByNameAndType(db gorp.SqlExecutor, name, stype string) (*sdk.Service, error) {
 	query := "SELECT * FROM services WHERE name = $1 and type = $2"
@@ -46,7 +31,7 @@ func FindByHash(db gorp.SqlExecutor, hash string) (*sdk.Service, error) {
 
 // FindByType services by type
 func FindByType(db gorp.SqlExecutor, t string) ([]sdk.Service, error) {
-	if ss, ok := servicesCacheByType[t]; ok {
+	if ss, ok := internalCache.getFromCache(t); ok {
 		return ss, nil
 	}
 	query := `SELECT * FROM services WHERE type = $1`
@@ -115,11 +100,6 @@ func Insert(db gorp.SqlExecutor, s *sdk.Service) error {
 		return sdk.WrapError(err, "unable to insert service %s", s.Name)
 	}
 	*s = sdk.Service(sdb)
-
-	sEvent <- serviceEvent{
-		Service: *s,
-		Action:  "update",
-	}
 	return nil
 }
 
@@ -129,11 +109,6 @@ func Update(db gorp.SqlExecutor, s *sdk.Service) error {
 	if _, err := db.Update(&sdb); err != nil {
 		return sdk.WrapError(err, "unable to update service %s", s.Name)
 	}
-	*s = sdk.Service(sdb)
-	sEvent <- serviceEvent{
-		Service: *s,
-		Action:  "update",
-	}
 	return nil
 }
 
@@ -142,10 +117,6 @@ func Delete(db gorp.SqlExecutor, s *sdk.Service) error {
 	sdb := service(*s)
 	if _, err := db.Delete(&sdb); err != nil {
 		return sdk.WrapError(err, "unable to delete service %s", s.Name)
-	}
-	sEvent <- serviceEvent{
-		Service: *s,
-		Action:  "remove",
 	}
 	return nil
 }
@@ -211,52 +182,4 @@ func FindDeadServices(db gorp.SqlExecutor, t time.Duration) ([]sdk.Service, erro
 		return nil, sdk.WrapError(err, "Unable to find dead services")
 	}
 	return services, nil
-}
-
-func managerServiceEvent(c <-chan serviceEvent) {
-	for se := range c {
-		switch se.Action {
-		case "update":
-			updateCache(se.Service)
-		case "remove":
-			removeFromCache(se.Service)
-		}
-	}
-}
-
-func updateCache(s sdk.Service) {
-	ss, ok := servicesCacheByType[s.Type]
-	indexToUpdate := -1
-	if !ok {
-		ss = make([]sdk.Service, 0, 1)
-	} else {
-		for i, sub := range ss {
-			if sub.Name == s.Name {
-				indexToUpdate = i
-				break
-			}
-		}
-	}
-	if indexToUpdate == -1 {
-		ss = append(ss, s)
-	} else {
-		ss[indexToUpdate] = s
-	}
-	servicesCacheByType[s.Type] = ss
-}
-
-func removeFromCache(s sdk.Service) {
-	ss, ok := servicesCacheByType[s.Type]
-	if !ok || len(ss) == 0 {
-		return
-	}
-	indexToSplit := 0
-	for i, sub := range ss {
-		if sub.Name == s.Name {
-			indexToSplit = i
-			break
-		}
-	}
-	ss = append(ss[:indexToSplit], ss[indexToSplit+1:]...)
-	servicesCacheByType[s.Type] = ss
 }

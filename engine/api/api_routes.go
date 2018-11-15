@@ -1,11 +1,9 @@
 package api
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/sdk"
 )
 
 // InitRouter initializes the router and all the routes
@@ -14,15 +12,6 @@ func (api *API) InitRouter() {
 	api.Router.SetHeaderFunc = DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.tracingMiddleware, api.maintenanceMiddleware)
 	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware, TracingPostMiddleware)
-
-	api.eventsBroker = &eventsBroker{
-		router:   api.Router,
-		cache:    api.Cache,
-		clients:  make(map[string]*eventsBrokerSubscribe),
-		dbFunc:   api.DBConnectionFactory.GetDBMap,
-		messages: make(chan sdk.Event),
-	}
-	api.eventsBroker.Init(context.Background())
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
@@ -95,6 +84,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 	r.Handle("/mon/stats", r.GET(observability.StatsHandler, Auth(false)))
 	r.Handle("/mon/errors/{uuid}", r.GET(api.getErrorHandler, NeedAdmin(true)))
+	r.Handle("/mon/panic/{uuid}", r.GET(api.getPanicDumpHandler, Auth(false)))
 
 	r.Handle("/ui/navbar", r.GET(api.getNavbarHandler))
 	r.Handle("/ui/project/{key}/application/{permApplicationName}/overview", r.GET(api.getApplicationOverviewHandler))

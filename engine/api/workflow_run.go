@@ -896,7 +896,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			if err := workflow.PurgeWorkflowRun(api.mustDB(), *wf); err != nil {
 				log.Error("workflow.PurgeWorkflowRun> error %v", err)
 			}
-		})
+		}, api.PanicDump())
 
 		var wr *sdk.WorkflowRun
 		if len(report.WorkflowRuns()) > 0 {

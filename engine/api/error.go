@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
@@ -73,5 +74,22 @@ func (api *API) getErrorHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, e, http.StatusOK)
+	}
+}
+
+func (api *API) getPanicDumpHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		id := vars["uuid"]
+
+		k := cache.Key("api", "panic_dump", id)
+		var data string
+		if !api.Cache.Get(k, &data) {
+			return sdk.ErrNotFound
+		}
+		w.Write([]byte(data))
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.WriteHeader(http.StatusOK)
+		return nil
 	}
 }

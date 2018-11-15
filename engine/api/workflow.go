@@ -507,7 +507,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 				if err := txg.Commit(); err != nil {
 					log.Error("deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
-			})
+			}, api.PanicDump())
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

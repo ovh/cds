@@ -1,7 +1,9 @@
 package cache
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"strings"
 	"time"
 
@@ -46,4 +48,25 @@ type Store interface {
 //New init a cache
 func New(redisHost, redisPassword string, TTL int) (Store, error) {
 	return NewRedisStore(redisHost, redisPassword, TTL)
+}
+
+//NewWriteCloser returns a write closer
+func NewWriteCloser(store Store, key string, ttl int) io.WriteCloser {
+	return &writerCloser{
+		store: store,
+		key:   key,
+		ttl:   ttl,
+	}
+}
+
+type writerCloser struct {
+	store Store
+	key   string
+	ttl   int
+	bytes.Buffer
+}
+
+func (w *writerCloser) Close() error {
+	w.store.SetWithTTL(w.key, w.String(), w.ttl)
+	return w.Close()
 }
