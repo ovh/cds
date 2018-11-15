@@ -75,7 +75,7 @@ func (w *Workflow) RetroMigrate() {
 
 	// Set context on old node
 	for _, n := range w.Nodes(true) {
-		node := w.GetNode(n.ID)
+		node := w.GetNodeByName(n.Name)
 		if node.Context == nil {
 			continue
 		}
