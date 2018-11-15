@@ -5,6 +5,7 @@ import {Subscription} from 'rxjs';
 import {first} from 'rxjs/operators';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
+import {WNode, Workflow} from '../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {RouterService} from '../../../../service/router/router.service';
@@ -21,6 +22,7 @@ import {DurationService} from '../../../../shared/duration/duration.service';
 @AutoUnsubscribe()
 export class WorkflowNodeRunComponent {
 
+    node: WNode;
     nodeRun: WorkflowNodeRun;
     subNodeRun: Subscription;
 
@@ -93,6 +95,7 @@ export class WorkflowNodeRunComponent {
             this.subNodeRun = this._workflowRunService.getWorkflowNodeRun(this.project.key, this.workflowName, number, nodeRunId)
                 .pipe(first()).subscribe(nodeRun => {
                 this.nodeRun = nodeRun;
+                this.node = Workflow.getNodeByID(this.nodeRun.workflow_node_id, this.workflowRun.workflow);
                 if (!historyChecked) {
                     historyChecked = true;
                     this._workflowRunService.nodeRunHistory(
@@ -103,7 +106,9 @@ export class WorkflowNodeRunComponent {
                 }
                 this.initVulnerabilitySummary();
 
-                this._workflowEventStore.setSelectedNodeRun(this.nodeRun);
+                this._workflowEventStore.setSelectedNode(this.node, false);
+                this._workflowEventStore.setSelectedNodeRun(this.nodeRun, true);
+
                 this.subNodeRun = this._workflowEventStore.selectedNodeRun().subscribe(wnr => {
                     this.nodeRun = wnr;
                     if (this.nodeRun && !PipelineStatus.isActive(this.nodeRun.status)) {
