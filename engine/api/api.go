@@ -250,15 +250,6 @@ type API struct {
 		queue                *stats.Int64Measure
 		status               *stats.Int64Measure
 	}
-	minInstances struct {
-		TypeAPI           int
-		TypeRepositories  int
-		TypeVCS           int
-		TypeHooks         int
-		TypeHatchery      int
-		TypeDBMigrate     int
-		TypeElasticsearch int
-	}
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -591,16 +582,12 @@ func (a *API) Serve(ctx context.Context) error {
 		Background: ctx,
 	}
 	a.InitRouter()
-	if err := a.Router.InitStats("cds-api", a.Name); err != nil {
+	if err := a.Router.InitMetrics("cds-api", a.Name); err != nil {
 		log.Error("unable to init router stats: %v", err)
 	}
 
-<<<<<<< HEAD
 	log.Info("Initializing Stats")
-	if err := a.initStats(); err != nil {
-=======
 	if err := a.initStats(ctx); err != nil {
->>>>>>> cr
 		log.Error("unable to init api stats: %v", err)
 	}
 
@@ -685,21 +672,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	})
-<<<<<<< HEAD
-	sdk.GoRoutine(ctx, "metrics.Initialize", func(ctx context.Context) {
-		minInstances := metrics.MinInstances{
-			TypeAPI:           a.Config.Status.API.MinInstance,
-			TypeRepositories:  a.Config.Status.Repositories.MinInstance,
-			TypeVCS:           a.Config.Status.VCS.MinInstance,
-			TypeHooks:         a.Config.Status.Hooks.MinInstance,
-			TypeHatchery:      a.Config.Status.Hatchery.MinInstance,
-			TypeDBMigrate:     a.Config.Status.DBMigrate.MinInstance,
-			TypeElasticsearch: a.Config.Status.ElasticSearch.MinInstance,
-		}
-		metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name, minInstances)
-	}, a.PanicDump())
-=======
->>>>>>> cr
 	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	}, a.PanicDump())
@@ -826,14 +798,14 @@ func (a *API) Serve(ctx context.Context) error {
 	return nil
 }
 
-func (a *API) initStats(ctx context.Context) error {
+func (a *API) initMetrics(ctx context.Context) error {
 	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", a.Name)
 	a.Metrics.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", a.Name)
 	a.Metrics.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
 
-	log.Info("api> Stats initialized")
+	log.Info("api> Metrics initialized")
 
 	tagCDSInstance, _ := tag.NewKey("cds")
 	tags := []tag.Key{tagCDSInstance}

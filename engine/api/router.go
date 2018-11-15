@@ -533,8 +533,8 @@ func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
 	return sdk.MonitoringStatusLine{Component: "Nb of Panics", Value: fmt.Sprintf("%d", r.nbPanic), Status: statusPanic}
 }
 
-// InitStats initialize prometheus metrics
-func (r *Router) InitStats(service, name string) error {
+// InitMetrics initialize prometheus metrics
+func (r *Router) InitMetrics(service, name string) error {
 	label := fmt.Sprintf("cds/%s/%s/router_errors", service, name)
 	r.Stats.Errors = stats.Int64(label, "number of errors", stats.UnitDimensionless)
 	label = fmt.Sprintf("cds/%s/%s/router_hits", service, name)

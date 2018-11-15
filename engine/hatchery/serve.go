@@ -161,7 +161,7 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 		}
 	}()
 
-	if err := c.initStats(h.Configuration().Name); err != nil {
+	if err := c.initMetrics(h.Configuration().Name); err != nil {
 		return err
 	}
 

@@ -17,7 +17,7 @@ func (c *Common) Stats() *hatchery.Stats {
 	return &c.stats
 }
 
-func (c *Common) initStats(hatcheryName string) error {
+func (c *Common) initMetrics(hatcheryName string) error {
 	label := fmt.Sprintf("cds/%s/%s/jobs", c.ServiceName(), hatcheryName)
 	c.stats.Jobs = stats.Int64(label, "number of analyzed jobs", stats.UnitDimensionless)
 
