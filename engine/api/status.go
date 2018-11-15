@@ -99,11 +99,11 @@ type computeGlobalNumbers struct {
 }
 
 var (
-	tagRange    tag.Key
-	tagStatus   tag.Key
-	tagService  tag.Key
-	tagType     tag.Key
-	tagsService []tag.Key
+	tagRange       tag.Key
+	tagStatus      tag.Key
+	tagServiceName tag.Key
+	tagType        tag.Key
+	tagsService    []tag.Key
 )
 
 // computeGlobalStatus returns global status
@@ -238,11 +238,11 @@ func (api *API) initMetrics(ctx context.Context) error {
 
 	tagRange, _ = tag.NewKey("range")
 	tagStatus, _ = tag.NewKey("status")
-	tagService, _ = tag.NewKey("service")
+	tagServiceName, _ = tag.NewKey("name")
 	tagType, _ = tag.NewKey("type")
 
 	tagsRange := []tag.Key{tagCDSInstance, tagRange, tagStatus}
-	tagsService = []tag.Key{tagCDSInstance, tagService, tagStatus, tagType}
+	tagsService = []tag.Key{tagCDSInstance, tagServiceName, tagStatus, tagType}
 
 	api.computeMetrics(ctx)
 
@@ -374,8 +374,12 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 			stype = "global"
 		}
 
-		ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, line.Status), tag.Upsert(tagService, service), tag.Upsert(tagType, stype))
+		ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, line.Status), tag.Upsert(tagServiceName, service), tag.Upsert(tagType, stype))
 		v, err := observability.FindAndRegisterViewLast(name, tagsService)
+		if err != nil {
+			log.Warning("metrics>Errors while FindAndRegisterViewLast %s: %v", name, err)
+			continue
+		}
 
 		observability.Record(ctx, v.Measure, number)
 	}
