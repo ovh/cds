@@ -1220,19 +1220,13 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 			found := false
 			for _, a := range proj.Applications {
 				if a.ID == n.Context.ApplicationID {
+					app = a
 					found = true
 				}
 			}
 			if !found {
 				return sdk.WithStack(sdk.ErrApplicationNotFound)
 			}
-
-			// Load application from db to get stage/jobs
-			appDB, err := application.LoadByID(db, store, n.Context.ApplicationID, u, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
-			if err != nil {
-				return sdk.WrapError(err, "unable to load application %d", n.Context.ApplicationID)
-			}
-			app = *appDB
 			w.Applications[n.Context.ApplicationID] = app
 		}
 		n.Context.ApplicationName = app.Name
