@@ -185,7 +185,7 @@ export class WorkflowComponent implements OnInit {
     changeToRunsMode(): void {
         let activatedRoute = this._routerService.getActivatedRoute(this._activatedRoute);
         this._router.navigate([], {relativeTo: activatedRoute});
-        if (!activatedRoute.snapshot.params['node_id']) {
+        if (!activatedRoute.snapshot.params['nodeId']) {
             this._workflowEventStore.setSelectedNode(null, true);
             this._workflowEventStore.setSelectedNodeRun(null, true);
 
