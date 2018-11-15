@@ -12,7 +12,7 @@ import (
 // WorkflowTemplateRequest struct use for execution request.
 type WorkflowTemplateRequest struct {
 	ProjectKey   string            `json:"project_key"`
-	WorkflowSlug string            `json:"workflow_slug"`
+	WorkflowName string            `json:"workflow_name"`
 	Parameters   map[string]string `json:"parameters"`
 }
 
@@ -97,8 +97,9 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 	if r.ProjectKey == "" {
 		return NewErrorFrom(ErrInvalidData, "Project key is required")
 	}
-	if !slug.Valid(r.WorkflowSlug) {
-		return NewErrorFrom(ErrInvalidData, "Invalid given workflow slug is required")
+	regexp := NamePatternRegex
+	if !regexp.MatchString(r.WorkflowName) {
+		return NewErrorFrom(ErrInvalidData, "Invalid given workflow name, should match %s pattern", NamePattern)
 	}
 
 	for _, p := range w.Parameters {

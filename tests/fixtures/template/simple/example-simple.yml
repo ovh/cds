@@ -1,5 +1,5 @@
-slug: example
-name: 'Example 🤖️ '
+slug: example-simple
+name: 'Example simple 🤖️ '
 group: shared.infra
 description: A example template for test purpose, made with ❤️ by
   CDS team.
@@ -9,7 +9,4 @@ parameters:
   required: true
 - key: deployWhen
   type: string
-  required: true
-- key: repo
-  type: repository
   required: true

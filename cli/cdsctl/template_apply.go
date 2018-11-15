@@ -288,7 +288,7 @@ func templateApplyRun(v cli.Values) error {
 	// check request before submit
 	req := sdk.WorkflowTemplateRequest{
 		ProjectKey:   projectKey,
-		WorkflowSlug: workflowName,
+		WorkflowName: workflowName,
 		Parameters:   params,
 	}
 	if err := wt.CheckParams(req); err != nil {

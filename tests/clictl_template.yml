@@ -1,34 +1,70 @@
-name: Action Command TestSuite with cdsctl
+name: Template command TestSuite with cdsctl
 testcases:
-- name: cdsctl template push
+- name: push example with repository
   steps:
-  - script: {{.cds.build.cdsctl}} template push ./tests/fixtures/template/*.yml --skip-update-files
+  - script: {{.cds.build.cdsctl}} template push ./tests/fixtures/template/with_repository/*.yml --skip-update-files
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring Template successfully pushed
 
-- name: cdsctl template pull
+- name: pull example with repository
   steps:
-  - script: {{.cds.build.cdsctl}} template pull shared.infra/example --output-dir ./tests/fixtures/template/export --force
+  - script: {{.cds.build.cdsctl}} template pull shared.infra/example-with-repository --output-dir ./tests/fixtures/template/with_repository/export --force
     assertions:
       - result.code ShouldEqual 0
 
-- name: readSourceFiles
+- name: readTemplateSourceFiles
   steps:
   - type: readfile
-    path: tests/fixtures/template/*.yml
+    path: tests/fixtures/template/with_repository/*.yml
     assertions:
     - result.err ShouldEqual ""
 
 - name: compare exported files with source
   steps:
   - type: readfile
-    path: tests/fixtures/template/export/*.yml
+    path: tests/fixtures/template/with_repository/export/*.yml
     assertions:
     - result.err ShouldEqual ""
-    - result.md5sum.tests_fixtures_template_export_1.application.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_1.application.yml}}"
-    - result.md5sum.tests_fixtures_template_export_1.environment.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_1.environment.yml}}"
-    - result.md5sum.tests_fixtures_template_export_1.pipeline.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_1.pipeline.yml}}"
-    - result.md5sum.tests_fixtures_template_export_2.pipeline.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_2.pipeline.yml}}"
-    - result.md5sum.tests_fixtures_template_export_example.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_example.yml}}"
-    - result.md5sum.tests_fixtures_template_export_workflow.yml ShouldEqual "{{.readSourceFiles.result.md5sum.tests_fixtures_template_workflow.yml}}"
+    - result.md5sum.tests_fixtures_template_with_repository_export_1.application.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.tests_fixtures_template_with_repository_1.application.yml}}"
+    - result.md5sum.tests_fixtures_template_with_repository_export_1.environment.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.tests_fixtures_template_with_repository_1.environment.yml}}"
+    - result.md5sum.tests_fixtures_template_with_repository_export_1.pipeline.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.tests_fixtures_template_with_repository_1.pipeline.yml}}"
+    - result.md5sum.tests_fixtures_template_with_repository_export_2.pipeline.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.tests_fixtures_template_with_repository_2.pipeline.yml}}"
+    - result.md5sum.tests_fixtures_template_with_repository_export_example-with-repository.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.tests_fixtures_template_with_repository_example-with-repository.yml}}"
+    - result.md5sum.tests_fixtures_template_with_repository_export_workflow.yml ShouldEqual "{{.readTemplateSourceFiles.result.md5sum.tests_fixtures_template_with_repository_workflow.yml}}"
+
+- name: prepare test
+  steps:
+  - script: {{.cds.build.cdsctl}} project delete --force ITCLIPRJ
+  - script: {{.cds.build.cdsctl}} project add ITCLIPRJ "Test Project"
+
+- name: cdsctl template push example simple
+  steps:
+  - script: {{.cds.build.cdsctl}} template push ./tests/fixtures/template/simple/*.yml --skip-update-files
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring Template successfully pushed
+
+- name: apply example simple template
+  steps:
+  - script: {{.cds.build.cdsctl}} template apply ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success --import-push --output-dir ./tests/fixtures/template/simple/export --force
+
+- name: readWorkflowSourceFiles
+  steps:
+  - type: readfile
+    path: tests/fixtures/template/simple/workflow/*.yml
+    assertions:
+    - result.err ShouldEqual ""
+
+- name: compare generated files with source
+  steps:
+  - type: readfile
+    path: tests/fixtures/template/simple/export/*.yml
+    assertions:
+    - result.err ShouldEqual ""
+    - result.md5sum.tests_fixtures_template_simple_export_first-environment.env.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.tests_fixtures_template_simple_workflow_first-environment.env.yml}}"
+    - result.md5sum.tests_fixtures_template_simple_export_first-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.tests_fixtures_template_simple_workflow_first-pipeline.pip.yml}}"
+    - result.md5sum.tests_fixtures_template_simple_export_second-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.tests_fixtures_template_simple_workflow_second-pipeline.pip.yml}}"
+    - result.md5sum.tests_fixtures_template_simple_export_itcliwkf.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.tests_fixtures_template_simple_workflow_itcliwkf.yml}}"
+
+

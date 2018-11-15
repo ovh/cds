@@ -1,0 +1,14 @@
+name: ITCLIWKF
+description: Test example workflow
+version: v1.0
+template: shared.infra/example-simple
+workflow:
+  Node-1:
+    pipeline: First-pipeline
+  Node-2:
+    depends_on:
+    - Node-1
+    when:
+    - success
+    pipeline: Second-pipeline
+    environment: First-environment

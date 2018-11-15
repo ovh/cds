@@ -311,7 +311,7 @@ func (api *API) applyTemplateHandler() service.Handler {
 		}
 
 		// check if a workflow exists with given slug
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, req.WorkflowSlug, u, workflow.LoadOptions{})
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, req.WorkflowName, u, workflow.LoadOptions{})
 		if err != nil && !sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
 			return err
 		}
@@ -340,7 +340,7 @@ func (api *API) applyTemplateHandler() service.Handler {
 			}
 
 			for _, res := range wtis {
-				if res.Request.WorkflowSlug == req.WorkflowSlug {
+				if res.Request.WorkflowName == req.WorkflowName {
 					wti = res
 					break
 				}
@@ -352,7 +352,7 @@ func (api *API) applyTemplateHandler() service.Handler {
 		if wti != nil {
 			clone := sdk.WorkflowTemplateInstance(*wti)
 			old = &clone
-			req.WorkflowSlug = wti.Request.WorkflowSlug
+			req.WorkflowName = wti.Request.WorkflowName
 			wti.WorkflowTemplateVersion = wt.Version
 			wti.Request = req
 			if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
@@ -432,6 +432,35 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, is, http.StatusOK)
+	}
+}
+
+func (api *API) getTemplateInstanceHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		workflowName := vars["permWorkflowName"]
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to load projet")
+		}
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getUser(ctx), workflow.LoadOptions{})
+		if err != nil {
+			if sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
+				return sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot load workflow %s", workflowName)
+			}
+			return sdk.WithStack(err)
+		}
+		// return the template instance if workflow is a generated one
+		wti, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().
+			WorkflowIDs(wf.ID))
+		if err != nil {
+			return err
+		}
+		if wti == nil {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "No workflow template instance found")
+		}
+		return service.WriteJSON(w, wti, http.StatusOK)
 	}
 }
 

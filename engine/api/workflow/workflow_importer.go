@@ -140,7 +140,7 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 	}
 	var wTemplateInstance *sdk.WorkflowTemplateInstance
 	for _, wti := range wtis {
-		if wti.Request.WorkflowSlug == w.Name {
+		if wti.Request.WorkflowName == w.Name {
 			wTemplateInstance = wti
 			break
 		}
