@@ -8,6 +8,7 @@ import (
 	"go.opencensus.io/stats/view"
 
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -17,7 +18,7 @@ func RegisterView(views ...*view.View) error {
 		log.Info("observability> stats are disabled")
 		return nil
 	}
-	return view.Register(views...)
+	return sdk.WithStack(view.Register(views...))
 }
 
 // StatsHandler returns a Handler to exposer prometheus views

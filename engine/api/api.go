@@ -825,7 +825,9 @@ func (a *API) initStats(ctx context.Context) error {
 
 	tagInstance, _ := tag.NewKey("instance")
 	tags := []tag.Key{tagInstance}
-	observability.Initialize(ctx, a.DBConnectionFactory.GetDBMap, minInstances)
+	if err := observability.Initialize(ctx, a.DBConnectionFactory.GetDBMap, minInstances); err != nil {
+		return sdk.WrapError(err, "Error while initialize observability")
+	}
 
 	return observability.RegisterView(
 		&view.View{
