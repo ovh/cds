@@ -232,10 +232,32 @@ type API struct {
 	eventsBroker        *eventsBroker
 	warnChan            chan sdk.Event
 	Cache               cache.Store
-	Stats               struct {
-		WorkflowRunFailed  *stats.Int64Measure
-		WorkflowRunStarted *stats.Int64Measure
-		Sessions           *stats.Int64Measure
+	Metrics             struct {
+		WorkflowRunFailed    *stats.Int64Measure
+		WorkflowRunStarted   *stats.Int64Measure
+		Sessions             *stats.Int64Measure
+		nbUsers              *stats.Int64Measure
+		nbApplications       *stats.Int64Measure
+		nbProjects           *stats.Int64Measure
+		nbGroups             *stats.Int64Measure
+		nbPipelines          *stats.Int64Measure
+		nbWorkflows          *stats.Int64Measure
+		nbArtifacts          *stats.Int64Measure
+		nbWorkerModels       *stats.Int64Measure
+		nbWorkflowRuns       *stats.Int64Measure
+		nbWorkflowNodeRuns   *stats.Int64Measure
+		nbMaxWorkersBuilding *stats.Int64Measure
+		queue                *stats.Int64Measure
+		status               *stats.Int64Measure
+	}
+	minInstances struct {
+		TypeAPI           int
+		TypeRepositories  int
+		TypeVCS           int
+		TypeHooks         int
+		TypeHatchery      int
+		TypeDBMigrate     int
+		TypeElasticsearch int
 	}
 }
 
@@ -806,45 +828,81 @@ func (a *API) Serve(ctx context.Context) error {
 
 func (a *API) initStats(ctx context.Context) error {
 	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", a.Name)
-	a.Stats.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
+	a.Metrics.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", a.Name)
-	a.Stats.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
+	a.Metrics.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
 
 	log.Info("api> Stats initialized")
 
-	minInstances := observability.MinInstances{
-		TypeAPI:           a.Config.Status.API.MinInstance,
-		TypeRepositories:  a.Config.Status.Repositories.MinInstance,
-		TypeVCS:           a.Config.Status.VCS.MinInstance,
-		TypeHooks:         a.Config.Status.Hooks.MinInstance,
-		TypeHatchery:      a.Config.Status.Hatchery.MinInstance,
-		TypeDBMigrate:     a.Config.Status.DBMigrate.MinInstance,
-		TypeElasticsearch: a.Config.Status.ElasticSearch.MinInstance,
-	}
+	tagCDSInstance, _ := tag.NewKey("cds")
+	tags := []tag.Key{tagCDSInstance}
 
-	tagInstance, _ := tag.NewKey("instance")
-	tags := []tag.Key{tagInstance}
-	if err := observability.Initialize(ctx, a.DBConnectionFactory.GetDBMap, minInstances); err != nil {
-		return sdk.WrapError(err, "Error while initialize observability")
-	}
+	a.Metrics.nbUsers = stats.Int64("cds/cds-api/nb_users", "number of users", stats.UnitDimensionless)
+	a.Metrics.nbApplications = stats.Int64("cds/cds-api/nb_applications", "nb_applications", stats.UnitDimensionless)
+	a.Metrics.nbProjects = stats.Int64("cds/cds-api/nb_projects", "nb_projects", stats.UnitDimensionless)
+	a.Metrics.nbGroups = stats.Int64("cds/cds-api/nb_groups", "nb_groups", stats.UnitDimensionless)
+	a.Metrics.nbPipelines = stats.Int64("cds/cds-api/nb_pipelines", "nb_pipelines", stats.UnitDimensionless)
+	a.Metrics.nbWorkflows = stats.Int64("cds/cds-api/nb_workflows", "nb_workflows", stats.UnitDimensionless)
+	a.Metrics.nbArtifacts = stats.Int64("cds/cds-api/nb_artifacts", "nb_artifacts", stats.UnitDimensionless)
+	a.Metrics.nbWorkerModels = stats.Int64("cds/cds-api/nb_worker_models", "nb_worker_models", stats.UnitDimensionless)
+	a.Metrics.nbWorkflowRuns = stats.Int64("cds/cds-api/nb_workflow_runs", "nb_workflow_runs", stats.UnitDimensionless)
+	a.Metrics.nbWorkflowNodeRuns = stats.Int64("cds/cds-api/nb_workflow_node_runs", "nb_workflow_node_runs", stats.UnitDimensionless)
+	a.Metrics.nbMaxWorkersBuilding = stats.Int64("cds/cds-api/nb_max_workers_building", "nb_max_workers_building", stats.UnitDimensionless)
 
-	return observability.RegisterView(
+	a.Metrics.queue = stats.Int64("cds/cds-api/queue", "queue", stats.UnitDimensionless)
+	a.Metrics.status = stats.Int64("cds/cds-api/status", "status", stats.UnitDimensionless)
+
+	tagRange, _ = tag.NewKey("range")
+	tagStatus, _ = tag.NewKey("status")
+	tagComponent, _ = tag.NewKey("component")
+
+	tagsRange := []tag.Key{tagCDSInstance, tagRange, tagStatus}
+	tagsComponent := []tag.Key{tagCDSInstance, tagComponent, tagStatus}
+
+	a.computeMetrics(ctx)
+
+	err := observability.RegisterView(
+		newView("nb_users", a.Metrics.nbUsers, tags),
+		newView("nb_applications", a.Metrics.nbApplications, tags),
+		newView("nb_projects", a.Metrics.nbProjects, tags),
+		newView("nb_groups", a.Metrics.nbGroups, tags),
+		newView("nb_pipelines", a.Metrics.nbPipelines, tags),
+		newView("nb_workflows", a.Metrics.nbWorkflows, tags),
+		newView("nb_artifacts", a.Metrics.nbArtifacts, tags),
+		newView("nb_worker_models", a.Metrics.nbWorkerModels, tags),
+		newView("nb_workflow_runs", a.Metrics.nbWorkflowRuns, tags),
+		newView("nb_workflow_node_runs", a.Metrics.nbWorkflowNodeRuns, tags),
+		newView("nb_max_workers_building", a.Metrics.nbMaxWorkersBuilding, tags),
+		newView("queue", a.Metrics.queue, tagsRange),
+		newView("status", a.Metrics.status, tagsComponent),
 		&view.View{
 			Name:        "workflow_runs_started",
-			Description: a.Stats.WorkflowRunStarted.Description(),
-			Measure:     a.Stats.WorkflowRunStarted,
+			Description: a.Metrics.WorkflowRunStarted.Description(),
+			Measure:     a.Metrics.WorkflowRunStarted,
 			Aggregation: view.Count(),
 			TagKeys:     tags,
 		},
 		&view.View{
 			Name:        "workflow_runs_failed",
-			Description: a.Stats.WorkflowRunFailed.Description(),
-			Measure:     a.Stats.WorkflowRunFailed,
+			Description: a.Metrics.WorkflowRunFailed.Description(),
+			Measure:     a.Metrics.WorkflowRunFailed,
 			Aggregation: view.Count(),
 			TagKeys:     tags,
 		},
 	)
+
+	return err
+}
+
+func newView(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.LastValue(),
+		TagKeys:     tags,
+	}
 }
 
 const panicDumpTTL = 60 * 60 * 24 // 24 hours

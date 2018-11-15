@@ -437,8 +437,8 @@ See $ engine config command for more details.
 		if conf.Tracing != nil && conf.Tracing.Name != "" {
 			instance = conf.Tracing.Name
 		}
-		tagInstance, _ := tag.NewKey("instance")
-		ctx, _ = tag.New(ctx, tag.Upsert(tagInstance, instance))
+		tagCDSInstance, _ := tag.NewKey("cds")
+		ctx, _ = tag.New(ctx, tag.Upsert(tagCDSInstance, instance))
 
 		defer cancel()
 

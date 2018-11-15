@@ -47,8 +47,8 @@ func (c *Common) initStats(hatcheryName string) error {
 
 	log.Info("hatchery> Stats initialized on %s", c.ServiceName())
 
-	tagInstance, _ := tag.NewKey("instance")
-	tags := []tag.Key{tagInstance, hatchery.TagHatchery, hatchery.TagHatcheryName}
+	tagCDSInstance, _ := tag.NewKey("cds")
+	tags := []tag.Key{tagCDSInstance, hatchery.TagHatchery, hatchery.TagHatcheryName}
 
 	return observability.RegisterView(
 		&view.View{

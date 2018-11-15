@@ -386,7 +386,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			)
 
 			if workflowRuns[0].Status == sdk.StatusFail.String() {
-				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+				observability.Record(ctx, api.Metrics.WorkflowRunFailed, 1)
 			}
 		}
 
@@ -732,7 +732,7 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 	)
 	if wr.Status == sdk.StatusFail.String() {
-		observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+		observability.Record(ctx, api.Metrics.WorkflowRunFailed, 1)
 	}
 
 	if errC := tx.Commit(); errC != nil {
@@ -776,7 +776,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			observability.Tag(observability.TagProjectKey, key),
 			observability.Tag(observability.TagWorkflow, name),
 		)
-		observability.Record(ctx, api.Stats.WorkflowRunStarted, 1)
+		observability.Record(ctx, api.Metrics.WorkflowRunStarted, 1)
 
 		_, next := observability.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,

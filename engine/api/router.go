@@ -544,8 +544,8 @@ func (r *Router) InitStats(service, name string) error {
 	label = fmt.Sprintf("cds/%s/%s/sse_events", service, name)
 	r.Stats.SSEEvents = stats.Int64(label, "number of sse events", stats.UnitDimensionless)
 
-	tagInstance, _ := tag.NewKey("instance")
-	tags := []tag.Key{tagInstance}
+	tagCDSInstance, _ := tag.NewKey("cds")
+	tags := []tag.Key{tagCDSInstance}
 
 	log.Info("api> Stats initialized")
 
