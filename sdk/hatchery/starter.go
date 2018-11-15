@@ -118,7 +118,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	ctx, end := observability.Span(j.ctx, "hatchery.spawnWorkerForJob")
 	defer end()
 
-	stats.Record(WithTags(ctx, h), h.Stats().SpawnedWorkers.M(1))
+	stats.Record(WithTags(ctx, h), h.Metrics().SpawnedWorkers.M(1))
 
 	log.Debug("hatchery> spawnWorkerForJob> %d", j.id)
 	defer log.Debug("hatchery> spawnWorkerForJob> %d (%.3f seconds elapsed)", j.id, time.Since(time.Unix(j.timestamp, 0)).Seconds())

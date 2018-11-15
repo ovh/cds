@@ -18,7 +18,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api/auth"
@@ -550,33 +549,9 @@ func (r *Router) InitMetrics(service, name string) error {
 	log.Info("api> Stats initialized")
 
 	return observability.RegisterView(
-		&view.View{
-			Name:        "router_errors",
-			Description: r.Stats.Errors.Description(),
-			Measure:     r.Stats.Errors,
-			Aggregation: view.Count(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "router_hits",
-			Description: r.Stats.Hits.Description(),
-			Measure:     r.Stats.Hits,
-			Aggregation: view.Count(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "sse_clients",
-			Description: r.Stats.SSEClients.Description(),
-			Measure:     r.Stats.SSEClients,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "sse_events",
-			Description: r.Stats.SSEEvents.Description(),
-			Measure:     r.Stats.SSEEvents,
-			Aggregation: view.Count(),
-			TagKeys:     tags,
-		},
+		observability.NewViewCount("router_errors", r.Stats.Errors, tags),
+		observability.NewViewCount("router_hits", r.Stats.Hits, tags),
+		observability.NewViewLast("sse_clients", r.Stats.SSEClients, tags),
+		observability.NewViewCount("sse_events", r.Stats.SSEEvents, tags),
 	)
 }

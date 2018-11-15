@@ -27,7 +27,7 @@ type Common struct {
 	service.Common
 	Router      *api.Router
 	initialized bool
-	stats       hatchery.Stats
+	metrics     hatchery.Metrics
 }
 
 const panicDumpDir = "panic_dumps"

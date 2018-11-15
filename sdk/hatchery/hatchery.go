@@ -282,10 +282,10 @@ func Create(ctx context.Context, h Interface) error {
 				}
 			}()
 
-			stats.Record(currentCtx, h.Stats().Jobs.M(1))
+			stats.Record(currentCtx, h.Metrics().Jobs.M(1))
 
 			if _, ok := j.Header["SSE"]; ok {
-				stats.Record(currentCtx, h.Stats().JobsSSE.M(1))
+				stats.Record(currentCtx, h.Metrics().JobsSSE.M(1))
 			}
 
 			//Check if the jobs is concerned by a pending worker creation
