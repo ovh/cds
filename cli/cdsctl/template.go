@@ -199,9 +199,9 @@ func templateInstancesRun(v cli.Values) (cli.ListResult, error) {
 		tids[i].ID = wtis[i].ID
 		tids[i].Created = fmt.Sprintf("On %s by %s", wtis[i].FirstAudit.Created.Format(time.RFC3339),
 			wtis[i].FirstAudit.AuditCommon.TriggeredBy)
-		tids[i].Project = fmt.Sprintf("%s", wtis[i].Project.Name)
+		tids[i].Project = wtis[i].Project.Name
 		if wtis[i].Workflow != nil {
-			tids[i].Workflow = fmt.Sprintf("%s", wtis[i].Workflow.Name)
+			tids[i].Workflow = wtis[i].Workflow.Name
 		} else {
 			tids[i].Workflow = fmt.Sprintf("%s (not imported)", wtis[i].Request.WorkflowName)
 		}

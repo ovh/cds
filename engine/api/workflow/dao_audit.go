@@ -26,7 +26,7 @@ func LoadAudits(db gorp.SqlExecutor, workflowID int64) ([]sdk.AuditWorkflow, err
 		return nil, sdk.WrapError(err, "Unable to load audits")
 	}
 
-	workflowAudits := make([]sdk.AuditWorkflow, len(audits), len(audits))
+	workflowAudits := make([]sdk.AuditWorkflow, len(audits))
 	for i := range audits {
 		workflowAudits[i] = sdk.AuditWorkflow(audits[i])
 	}

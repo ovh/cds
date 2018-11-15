@@ -23,6 +23,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 	var tmpl exportentities.Template
 
 	mError := new(sdk.MultiError)
+	var templateFileName string
 	for {
 		hdr, err := tr.Next()
 		if err == io.EOF {
@@ -37,7 +38,6 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
 		}
 
-		var templateFileName string
 		b := buff.Bytes()
 		switch {
 		case strings.Contains(hdr.Name, ".application."):
