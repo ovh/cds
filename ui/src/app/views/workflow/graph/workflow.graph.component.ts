@@ -42,20 +42,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
     set workflowData(data: Workflow) {
         this.workflow = data;
         this.nodeHeight = 78;
-        if (data.forceRefresh) {
-            this.nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
-            this.hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
-        } else {
-            let nodesRef = Workflow.getMapNodesRef(this.workflow);
-            // Update node reference inside component
-            this.nodesComponent.forEach((v, k, m) => {
-                let n = nodesRef.get(v.instance.node.ref);
-                if (n) {
-                    v.instance.node = n;
-                    v.instance.workflow = this.workflow;
-                }
-            });
-        }
+        this.nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
+        this.hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
         this.calculateDynamicWidth();
         this.changeDisplay();
     }
@@ -63,7 +51,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
     @Input('workflowRun')
     set workflowRun(data: WorkflowRun) {
         if (data) {
-            // check if nodes have to be updated
             this._workflowRun = data;
             this.workflow = data.workflow;
             this.nodeHeight = 78;
@@ -289,14 +276,16 @@ export class WorkflowGraphComponent implements AfterViewInit {
         let width: number;
         let height: number;
         let componentRefWidth = '97%';
+        let shape = 'rect';
         switch (node.type) {
             case 'pipeline':
                 width = this.nodeWidth;
                 height = this.nodeHeight;
                 break;
             case 'join':
-                width = 70;
-                height = 70;
+                width = 50;
+                height = 50;
+                shape = 'circle';
                 break;
             case 'outgoinghook':
                 componentRefWidth = '98%';
@@ -315,6 +304,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 componentRef.location.nativeElement.style.height = '100%';
                 return componentRef.location.nativeElement;
             },
+            shape: shape,
             labelStyle: 'width: ' + width + 'px; height: ' + height + 'px',
             width: width,
             height: height
