@@ -835,33 +835,21 @@ func (a *API) initMetrics(ctx context.Context) error {
 	a.computeMetrics(ctx)
 
 	err := observability.RegisterView(
-		newView("nb_users", a.Metrics.nbUsers, tags),
-		newView("nb_applications", a.Metrics.nbApplications, tags),
-		newView("nb_projects", a.Metrics.nbProjects, tags),
-		newView("nb_groups", a.Metrics.nbGroups, tags),
-		newView("nb_pipelines", a.Metrics.nbPipelines, tags),
-		newView("nb_workflows", a.Metrics.nbWorkflows, tags),
-		newView("nb_artifacts", a.Metrics.nbArtifacts, tags),
-		newView("nb_worker_models", a.Metrics.nbWorkerModels, tags),
-		newView("nb_workflow_runs", a.Metrics.nbWorkflowRuns, tags),
-		newView("nb_workflow_node_runs", a.Metrics.nbWorkflowNodeRuns, tags),
-		newView("nb_max_workers_building", a.Metrics.nbMaxWorkersBuilding, tags),
-		newView("queue", a.Metrics.queue, tagsRange),
-		newView("status", a.Metrics.status, tagsComponent),
-		&view.View{
-			Name:        "workflow_runs_started",
-			Description: a.Metrics.WorkflowRunStarted.Description(),
-			Measure:     a.Metrics.WorkflowRunStarted,
-			Aggregation: view.Count(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "workflow_runs_failed",
-			Description: a.Metrics.WorkflowRunFailed.Description(),
-			Measure:     a.Metrics.WorkflowRunFailed,
-			Aggregation: view.Count(),
-			TagKeys:     tags,
-		},
+		observability.NewViewLast("nb_users", a.Metrics.nbUsers, tags),
+		observability.NewViewLast("nb_applications", a.Metrics.nbApplications, tags),
+		observability.NewViewLast("nb_projects", a.Metrics.nbProjects, tags),
+		observability.NewViewLast("nb_groups", a.Metrics.nbGroups, tags),
+		observability.NewViewLast("nb_pipelines", a.Metrics.nbPipelines, tags),
+		observability.NewViewLast("nb_workflows", a.Metrics.nbWorkflows, tags),
+		observability.NewViewLast("nb_artifacts", a.Metrics.nbArtifacts, tags),
+		observability.NewViewLast("nb_worker_models", a.Metrics.nbWorkerModels, tags),
+		observability.NewViewLast("nb_workflow_runs", a.Metrics.nbWorkflowRuns, tags),
+		observability.NewViewLast("nb_workflow_node_runs", a.Metrics.nbWorkflowNodeRuns, tags),
+		observability.NewViewLast("nb_max_workers_building", a.Metrics.nbMaxWorkersBuilding, tags),
+		observability.NewViewLast("queue", a.Metrics.queue, tagsRange),
+		observability.NewViewLast("status", a.Metrics.status, tagsComponent),
+		observability.NewViewCount("workflow_runs_started", a.Metrics.WorkflowRunStarted, tags),
+		observability.NewViewCount("workflow_runs_failed", a.Metrics.WorkflowRunFailed, tags),
 	)
 
 	return err

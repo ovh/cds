@@ -106,3 +106,22 @@ func findPrimaryKeyFromRequest(req *http.Request, db gorp.SqlExecutor, store cac
 
 	return pkey, pkey != ""
 }
+
+func NewViewLast(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.LastValue(),
+		TagKeys:     tags,
+	}
+}
+func NewViewCount(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.Count(),
+		TagKeys:     tags,
+	}
+}
