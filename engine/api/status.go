@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"fmt"
 	"net/http"
 	"sort"
@@ -259,26 +258,20 @@ func (api *API) computeMetrics(ctx context.Context) {
 }
 
 func (api *API) countMetric(ctx context.Context, v *stats.Int64Measure, query string) {
-	var n sql.NullInt64
-	if err := api.mustDB().QueryRow(query).Scan(&n); err != nil {
+	n, err := api.mustDB().SelectInt(query)
+	if err != nil {
 		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
-		return
 	}
-	if n.Valid {
-		observability.Record(ctx, v, n.Int64)
-	}
+	observability.Record(ctx, v, n)
 }
 
 func (api *API) countMetricRange(ctx context.Context, status string, timerange string, v *stats.Int64Measure, query string, args ...interface{}) {
-	var n sql.NullInt64
-	if err := api.mustDB().QueryRow(query, args...).Scan(&n); err != nil {
+	n, err := api.mustDB().SelectInt(query, args...)
+	if err != nil {
 		log.Warning("metrics>Errors while fetching count %s: %v", query, err)
-		return
 	}
-	if n.Valid {
-		ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, status), tag.Upsert(tagRange, timerange))
-		observability.Record(ctx, v, n.Int64)
-	}
+	ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, status), tag.Upsert(tagRange, timerange))
+	observability.Record(ctx, v, n.Int64)
 }
 
 func (api *API) processStatusMetrics(ctx context.Context, v *stats.Int64Measure) {
