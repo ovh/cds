@@ -11,8 +11,11 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
+<<<<<<< HEAD
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
+=======
+>>>>>>> cr
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
@@ -29,7 +32,6 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/purge"
@@ -248,7 +250,6 @@ type API struct {
 		nbWorkflowNodeRuns   *stats.Int64Measure
 		nbMaxWorkersBuilding *stats.Int64Measure
 		queue                *stats.Int64Measure
-		status               *stats.Int64Measure
 	}
 }
 
@@ -583,12 +584,16 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 	if err := a.Router.InitMetrics("cds-api", a.Name); err != nil {
-		log.Error("unable to init router stats: %v", err)
+		log.Error("unable to init router metrics: %v", err)
 	}
 
 	log.Info("Initializing Stats")
 	if err := a.initStats(ctx); err != nil {
 		log.Error("unable to init api stats: %v", err)
+	}
+	
+	if err := a.initMetrics(ctx); err != nil {
+		log.Error("unable to init api metrics: %v", err)
 	}
 
 	//Initiliaze hook package
@@ -872,3 +877,4 @@ func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
 	}
 }
+

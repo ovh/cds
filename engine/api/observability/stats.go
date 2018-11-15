@@ -3,9 +3,11 @@ package observability
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -15,10 +17,26 @@ import (
 // RegisterView begins collecting data for the given views
 func RegisterView(views ...*view.View) error {
 	if statsExporter == nil {
-		log.Info("observability> stats are disabled")
+		log.Info("observability> metrics are disabled")
 		return nil
 	}
 	return sdk.WithStack(view.Register(views...))
+}
+
+// FindAndRegisterViewLast begins collecting data for the given views
+func FindAndRegisterViewLast(nameInput string, tags []tag.Key) (*view.View, error) {
+	if statsExporter == nil {
+		log.Info("observability> metrics are disabled")
+		return nil, nil
+	}
+	name := strings.ToLower(nameInput)
+	viewFind := view.Find(name)
+	if viewFind != nil {
+		return viewFind, nil
+	}
+	value := stats.Int64("cds/cds-api/"+name, name, stats.UnitDimensionless)
+	newView := NewViewLast(name, value, tags)
+	return newView, view.Register(newView)
 }
 
 // StatsHandler returns a Handler to exposer prometheus views

@@ -99,9 +99,11 @@ type computeGlobalNumbers struct {
 }
 
 var (
-	tagRange     tag.Key
-	tagStatus    tag.Key
-	tagComponent tag.Key
+	tagRange    tag.Key
+	tagStatus   tag.Key
+	tagService  tag.Key
+	tagType     tag.Key
+	tagsService []tag.Key
 )
 
 // computeGlobalStatus returns global status
@@ -207,8 +209,65 @@ func (api *API) computeGlobalStatusByNumbers(s computeGlobalNumbers) string {
 	return r
 }
 
+func (api *API) initMetrics(ctx context.Context) error {
+	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", api.Name)
+	api.Metrics.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
+
+	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", api.Name)
+	api.Metrics.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
+
+	log.Info("api> Metrics initialized")
+
+	tagCDSInstance, _ := tag.NewKey("cds")
+	tags := []tag.Key{tagCDSInstance}
+
+	api.Metrics.nbUsers = stats.Int64("cds/cds-api/nb_users", "number of users", stats.UnitDimensionless)
+	api.Metrics.nbApplications = stats.Int64("cds/cds-api/nb_applications", "nb_applications", stats.UnitDimensionless)
+	api.Metrics.nbProjects = stats.Int64("cds/cds-api/nb_projects", "nb_projects", stats.UnitDimensionless)
+	api.Metrics.nbGroups = stats.Int64("cds/cds-api/nb_groups", "nb_groups", stats.UnitDimensionless)
+	api.Metrics.nbPipelines = stats.Int64("cds/cds-api/nb_pipelines", "nb_pipelines", stats.UnitDimensionless)
+	api.Metrics.nbWorkflows = stats.Int64("cds/cds-api/nb_workflows", "nb_workflows", stats.UnitDimensionless)
+	api.Metrics.nbArtifacts = stats.Int64("cds/cds-api/nb_artifacts", "nb_artifacts", stats.UnitDimensionless)
+	api.Metrics.nbWorkerModels = stats.Int64("cds/cds-api/nb_worker_models", "nb_worker_models", stats.UnitDimensionless)
+	api.Metrics.nbWorkflowRuns = stats.Int64("cds/cds-api/nb_workflow_runs", "nb_workflow_runs", stats.UnitDimensionless)
+	api.Metrics.nbWorkflowNodeRuns = stats.Int64("cds/cds-api/nb_workflow_node_runs", "nb_workflow_node_runs", stats.UnitDimensionless)
+	api.Metrics.nbMaxWorkersBuilding = stats.Int64("cds/cds-api/nb_max_workers_building", "nb_max_workers_building", stats.UnitDimensionless)
+
+	api.Metrics.queue = stats.Int64("cds/cds-api/queue", "queue", stats.UnitDimensionless)
+	//api.Metrics.status = stats.Int64("cds/cds-api/status", "status", stats.UnitDimensionless)
+
+	tagRange, _ = tag.NewKey("range")
+	tagStatus, _ = tag.NewKey("status")
+	tagService, _ = tag.NewKey("service")
+	tagType, _ = tag.NewKey("type")
+
+	tagsRange := []tag.Key{tagCDSInstance, tagRange, tagStatus}
+	tagsService = []tag.Key{tagCDSInstance, tagService, tagStatus, tagType}
+
+	api.computeMetrics(ctx)
+
+	err := observability.RegisterView(
+		observability.NewViewLast("nb_users", api.Metrics.nbUsers, tags),
+		observability.NewViewLast("nb_applications", api.Metrics.nbApplications, tags),
+		observability.NewViewLast("nb_projects", api.Metrics.nbProjects, tags),
+		observability.NewViewLast("nb_groups", api.Metrics.nbGroups, tags),
+		observability.NewViewLast("nb_pipelines", api.Metrics.nbPipelines, tags),
+		observability.NewViewLast("nb_workflows", api.Metrics.nbWorkflows, tags),
+		observability.NewViewLast("nb_artifacts", api.Metrics.nbArtifacts, tags),
+		observability.NewViewLast("nb_worker_models", api.Metrics.nbWorkerModels, tags),
+		observability.NewViewLast("nb_workflow_runs", api.Metrics.nbWorkflowRuns, tags),
+		observability.NewViewLast("nb_workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, tags),
+		observability.NewViewLast("nb_max_workers_building", api.Metrics.nbMaxWorkersBuilding, tags),
+		observability.NewViewLast("queue", api.Metrics.queue, tagsRange),
+		observability.NewViewCount("workflow_runs_started", api.Metrics.WorkflowRunStarted, tags),
+		observability.NewViewCount("workflow_runs_failed", api.Metrics.WorkflowRunFailed, tags),
+	)
+
+	return err
+}
+
 func (api *API) computeMetrics(ctx context.Context) {
-	sdk.GoRoutine(ctx, "observability.compute", func(ctx context.Context) {
+	sdk.GoRoutine(ctx, "api.computeMetrics", func(ctx context.Context) {
 		tick := time.NewTicker(9 * time.Second).C
 		for {
 			select {
@@ -251,7 +310,7 @@ func (api *API) computeMetrics(ctx context.Context) {
 				api.countMetricRange(ctx, "waiting", "60_more_5min_less_10min", api.Metrics.queue, query, now10min, now5min)
 				api.countMetricRange(ctx, "waiting", "70_more_10min", api.Metrics.queue, queryOld, now10min)
 
-				api.processStatusMetrics(ctx, api.Metrics.status)
+				api.processStatusMetrics(ctx)
 			}
 		}
 	})
@@ -274,31 +333,50 @@ func (api *API) countMetricRange(ctx context.Context, status string, timerange s
 	observability.Record(ctx, v, n)
 }
 
-func (api *API) processStatusMetrics(ctx context.Context, v *stats.Int64Measure) {
+func (api *API) processStatusMetrics(ctx context.Context) {
 	srvs, err := services.All(api.mustDB())
 	if err != nil {
 		log.Error("Error while getting services list: %v", err)
 		return
 	}
 	mStatus := api.computeGlobalStatus(srvs)
-	apis := make(map[string]int)
+
+	ignoreList := []string{"version", "hostname", "time", "uptime", "cdsname"}
+
 	for _, line := range mStatus.Lines {
 		number, err := strconv.ParseInt(line.Value, 10, 64)
 		if err != nil {
 			number = 1
 		}
-		name := line.Component
 
-		// rename api_foobar to api_0, api_1, etc...
-		// this will avoid creating series with custom name
-		if line.Type == services.TypeAPI {
-			idx := strings.Index(line.Component, "/")
-			if _, ok := apis[line.Component[0:idx]]; !ok {
-				apis[line.Component[0:idx]] = len(apis)
+		idx := strings.Index(line.Component, "/")
+		service := line.Component[0:idx]
+		item := strings.ToLower(line.Component[idx+1:])
+
+		// ignore some status line
+		var found bool
+		for _, v := range ignoreList {
+			if v == item {
+				found = true
+				break
 			}
-			name = fmt.Sprintf("%s_%d%s", services.TypeAPI, apis[line.Component[0:idx]], line.Component[idx:])
 		}
-		ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, line.Status), tag.Upsert(tagComponent, name))
-		observability.Record(ctx, v, number)
+		if found {
+			continue
+		}
+		name := item
+		if item != "status" {
+			name = "status_" + item
+		}
+
+		stype := line.Type
+		if stype == "" {
+			stype = "global"
+		}
+
+		ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, line.Status), tag.Upsert(tagService, service), tag.Upsert(tagType, stype))
+		v, err := observability.FindAndRegisterViewLast(name, tagsService)
+
+		observability.Record(ctx, v.Measure, number)
 	}
 }
