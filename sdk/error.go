@@ -161,6 +161,8 @@ var (
 	ErrColorBadFormat                         = Error{ID: 144, Status: http.StatusBadRequest}
 	ErrInvalidHookConfiguration               = Error{ID: 145, Status: http.StatusBadRequest}
 	ErrWorkerModelDeploymentFailed            = Error{ID: 146, Status: http.StatusBadRequest}
+	ErrJobLocked                              = Error{ID: 147, Status: http.StatusConflict}
+	ErrWorkflowNodeRunLocked                  = Error{ID: 148, Status: http.StatusConflict}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -308,6 +310,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrColorBadFormat.ID:                         "The format of color isn't correct. You must use hexadecimal format (example: #FFFF)",
 	ErrInvalidHookConfiguration.ID:               "Invalid hook configuration",
 	ErrWorkerModelDeploymentFailed.ID:            "Worker deployment failed",
+	ErrJobLocked.ID:                              "Job already locked",
+	ErrWorkflowNodeRunLocked.ID:                  "Workflow node run already locked",
 }
 
 var errorsFrench = map[int]string{
@@ -455,6 +459,8 @@ var errorsFrench = map[int]string{
 	ErrColorBadFormat.ID:                         "Format de la couleur incorrect. Vous devez utiliser le format hexadécimal (exemple: #FFFF)",
 	ErrInvalidHookConfiguration.ID:               "Configuration de hook invalide",
 	ErrWorkerModelDeploymentFailed.ID:            "Échec de déploiement du modèle de worker",
+	ErrJobLocked.ID:                              "Job déjà verrouillé",
+	ErrWorkflowNodeRunLocked.ID:                  "Noeud de workflow run déjà verrouillé",
 }
 
 var errorsLanguages = []map[int]string{
