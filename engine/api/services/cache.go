@@ -78,6 +78,9 @@ func (c *iCache) removeFromCache(s sdk.Service) {
 }
 
 func (c *iCache) getFromCache(s string) ([]sdk.Service, bool) {
+	if c == nil {
+		return nil, false
+	}
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
@@ -105,7 +108,6 @@ func (c *iCache) doUpdateData(ctx context.Context) {
 }
 
 func (c *iCache) doListenDatabase(ctx context.Context) {
-
 	chanErr := make(chan error)
 	eventCallback := func(ev pq.ListenerEventType, err error) {
 		if err != nil {
