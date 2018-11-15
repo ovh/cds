@@ -55,6 +55,7 @@
               "node_modules/codemirror/addon/display/autorefresh.js",
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
+              "node_modules/sanitize-html/dist/sanitize-html.min.js",
               "node_modules/duration-js/duration.js",
               "node_modules/graphlib/dist/graphlib.js",
               "node_modules/dagre/dist/dagre.js",
@@ -145,6 +146,7 @@
               "node_modules/codemirror/addon/display/autorefresh.js",
               "resources/cds-hint.js",
               "node_modules/ansi_up/ansi_up.js",
+              "node_modules/sanitize-html/dist/sanitize-html.min.js",
               "node_modules/duration-js/duration.js",
               "node_modules/graphlib/dist/graphlib.js",
               "node_modules/dagre/dist/dagre.js"
