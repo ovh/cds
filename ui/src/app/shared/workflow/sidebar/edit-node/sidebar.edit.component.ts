@@ -96,6 +96,17 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
             return;
         }
         node.name = this.node.name;
+        // Update join
+        if (clonedWorkflow.workflow_data.joins) {
+            clonedWorkflow.workflow_data.joins.forEach( j => {
+                    j.parents.forEach( p => {
+                        if (p.parent_id === node.id) {
+                            p.parent_name = node.name;
+                        }
+                    });
+            });
+        }
+
         this.updateWorkflow(clonedWorkflow, null);
     }
 
