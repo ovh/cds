@@ -68,7 +68,7 @@ values:
 	instance := &sdk.WorkflowTemplateInstance{
 		ID: 5,
 		Request: sdk.WorkflowTemplateRequest{
-			WorkflowSlug: "my-workflow",
+			WorkflowName: "my-workflow",
 			Parameters: map[string]string{
 				"withDeploy": "true",
 				"deployWhen": "failure",

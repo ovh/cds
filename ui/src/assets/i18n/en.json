@@ -273,7 +273,7 @@
   "common_no_data": "No data found",
   "common_required": "Required",
   "common_created_by": "Created By",
-  "common_last_modified": "Dernière modification",
+  "common_last_modified": "Last modified",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
@@ -1034,7 +1034,7 @@
   "workflow_template_edit_title": "Edit workflow template",
   "workflow_template_created": "Workflow template created",
   "workflow_template_saved": "Workflow template saved",
-  "workflow_template_deleted": "Modèle de workflow deleted",
+  "workflow_template_deleted": "Workflow template deleted",
   "workflow_templates": "Workflow templates",
   "workflow_template_help_line_1": "A workflow template allows you to quickly create then update a workflow and its components.",
   "workflow_template_help_howto_link_1": "Read more"
