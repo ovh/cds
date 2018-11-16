@@ -9,6 +9,14 @@ import { Label } from './project.model';
 import {Usage} from './usage.model';
 import {WorkflowHookModel} from './workflow.hook.model';
 
+// Node type enum
+export class WNodeType {
+    static PIPELINE = 'pipeline';
+    static JOIN = 'join';
+    static FORK = 'fork';
+    static OUTGOINGHOOK = 'outgoinghook';
+}
+
 // Workflow represents a pipeline based workflow
 export class Workflow {
     id: number;
@@ -416,13 +424,6 @@ export class WorkflowNotification {
 export class WorkflowData {
     node: WNode;
     joins: Array<WNode>;
-}
-
-export class WNodeType {
-    static PIPELINE = 'pipeline';
-    static JOIN = 'join';
-    static FORK = 'fork';
-    static OUTGOINGHOOK = 'outgoinghook';
 }
 
 export class WNode {
