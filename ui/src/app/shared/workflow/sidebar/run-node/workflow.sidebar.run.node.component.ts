@@ -193,7 +193,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
 
             if (this.currentWorkflowRun) {
                 let nbNodeFound = 0;
-                let parentNodes = Workflow.getParentNodeIds(this.currentWorkflowRun.workflow, this.node.id);
+                let parentNodes = Workflow.getParentNodeIds(this.currentWorkflowRun, this.node.id);
                 for (let parentNodeId of parentNodes) {
                     for (let nodeRunId in this.currentWorkflowRun.nodes) {
                         if (!this.currentWorkflowRun.nodes[nodeRunId]) {
