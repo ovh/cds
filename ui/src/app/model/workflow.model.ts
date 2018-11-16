@@ -8,6 +8,7 @@ import { ProjectPlatform } from './platform.model';
 import { Label } from './project.model';
 import {Usage} from './usage.model';
 import {WorkflowHookModel} from './workflow.hook.model';
+import {WorkflowRun} from './workflow.run.model';
 
 // Node type enum
 export class WNodeType {
@@ -299,74 +300,38 @@ export class Workflow {
         return res;
     }
 
-    static getParentNodeIds(workflow: Workflow, currentNodeID: number): number[] {
-        let ancestors = {};
+    static getParentNodeIds(workflowRun: WorkflowRun, currentNodeID: number): number[] {
+        let ancestors = new Array<number>();
 
-        if (workflow.workflow_data.joins) {
-            for (let join of workflow.workflow_data.joins) {
-
-                let parentNodeInfos = Workflow.getParentNode(workflow, join, currentNodeID);
-                if (parentNodeInfos.found) {
-                    if (parentNodeInfos.node) {
-                        ancestors[parentNodeInfos.node.id] = true;
-                    } else {
-                        ancestors[workflow.workflow_data.node.id] = true;
-                        join.parents.forEach((source) => ancestors[source.parent_id] = true);
-                        return Object.keys(ancestors).map((ancestor) => parseInt(ancestor, 10));
-                    }
-                }
-
-                for (let parent of join.parents) {
-                    let nodeFound = Workflow.getNodeByID(parent.parent_id, workflow);
-                    if (nodeFound) {
-                        let pni = Workflow.getParentNode(workflow, nodeFound, currentNodeID);
-                        if (pni.found) {
-                            if (pni.node) {
-                                ancestors[pni.node.id] = true;
+        let nodes = Workflow.getAllNodes(workflowRun.workflow);
+        if (nodes) {
+            loop: for (let i = 0; i < nodes.length; i++) {
+                let n = nodes[i];
+                if (n.triggers) {
+                    for (let j = 0; j < n.triggers.length; j++) {
+                        let t = n.triggers[j];
+                        if (t.child_node.id === currentNodeID) {
+                            if (workflowRun.version < 2) {
+                                switch (n.type) {
+                                    case WNodeType.JOIN:
+                                        ancestors.push(...n.parents.map(p => p.parent_id));
+                                        break;
+                                    case WNodeType.FORK:
+                                        ancestors.push(...Workflow.getParentNodeIds(workflowRun, n.id));
+                                        break;
+                                    default:
+                                        ancestors.push(n.id);
+                                }
+                            } else {
+                                ancestors.push(n.id);
                             }
+                            break loop;
                         }
                     }
                 }
             }
         }
-
-
-        let parentNodeInfosFromRoot = Workflow.getParentNode(workflow, workflow.workflow_data.node, currentNodeID);
-        if (parentNodeInfosFromRoot.found) {
-            if (parentNodeInfosFromRoot.node) {
-                ancestors[parentNodeInfosFromRoot.node.id] = true;
-            } else {
-                ancestors[workflow.workflow_data.node.id] = true;
-            }
-        }
-
-        return Object.keys(ancestors).map((id) => parseInt(id, 10));
-    }
-
-    static getParentNode(workflow: Workflow, workflowNode: WNode, currentNodeID: number): { found: boolean, node?: WNode } {
-        if (!workflowNode) {
-            return {found: false};
-        }
-        if (workflowNode.id === currentNodeID) {
-            return {found: true};
-        }
-
-        if (!Array.isArray(workflowNode.triggers)) {
-            return {found: false};
-        }
-
-        for (let trigger of workflowNode.triggers) {
-            let parentNodeInfos = Workflow.getParentNode(workflow, trigger.child_node, currentNodeID);
-            if (parentNodeInfos.found) {
-                if (parentNodeInfos.node) {
-                    return parentNodeInfos;
-                } else {
-                    return {found: true, node: workflowNode};
-                }
-            }
-        }
-
-        return {found: false};
+        return ancestors;
     }
 
     constructor() {

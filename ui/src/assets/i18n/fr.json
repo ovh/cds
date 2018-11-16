@@ -50,6 +50,9 @@
   "application_home_no_platform": "Lier une plateforme",
   "application_home_no_graph": "Aucun graphique à afficher (vulnerabilités, tests unitaires)",
   "application_home_no_usage": "L'application n'est pas utilisée",
+  "application_platform_added": "Plateforme ajoutée",
+  "application_platform_deleted": "Plateforme supprimée",
+  "application_platform_updated": "Plateforme mise à jour",
 
   "application_create": "Créer une application",
   "application_created": "Application créée",
