@@ -10,6 +10,17 @@
     position: absolute;
     border: 1px solid black;
     border-radius: 25px;
+
+      .iconPosition {
+          top: 15px;
+          left: 5px;
+          font-size: 2.5em;
+          position: fixed;
+          cursor: pointer;
+          animation: color_change 0.7s infinite alternate;
+          color: #344860;
+          transition-timing-function: ease-in-out;
+      }
   }
   .circle.success {
     border: 2px solid $cds_color_green;
@@ -40,4 +51,9 @@
     align-items:center;
     position: absolute;
   }
+}
+
+@keyframes color_change {
+    from { opacity: 1; }
+    to { opacity: 0.2; }
 }

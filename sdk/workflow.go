@@ -66,6 +66,7 @@ func (w *Workflow) RetroMigrate() {
 	root := w.WorkflowData.Node.retroMigrate()
 	w.Root = &root
 
+	w.Joins = nil
 	if len(w.WorkflowData.Joins) > 0 {
 		w.Joins = make([]WorkflowNodeJoin, 0, len(w.WorkflowData.Joins))
 		for _, j := range w.WorkflowData.Joins {
