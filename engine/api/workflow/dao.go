@@ -1147,29 +1147,32 @@ func checkProjectPlatform(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error
 	if n.Context.ProjectPlatformID != 0 {
 		pp, ok := w.ProjectPlatforms[n.Context.ProjectPlatformID]
 		if !ok {
-			var ppProj *sdk.ProjectPlatform
 			for _, pl := range proj.Platforms {
 				if pl.ID == n.Context.ProjectPlatformID {
-					ppProj = &pl
+					pp = pl
+					break
 				}
 			}
-			if ppProj == nil {
+			if pp.ID == 0 {
 				return sdk.WrapError(sdk.ErrNotFound, "Platform %d not found", n.Context.ProjectPlatformID)
 			}
-			pp = *ppProj
-			w.ProjectPlatforms[n.Context.ProjectPlatformID] = *ppProj
+			w.ProjectPlatforms[n.Context.ProjectPlatformID] = pp
 		}
 		n.Context.ProjectPlatformName = pp.Name
 		return nil
 	}
 	if n.Context.ProjectPlatformName != "" {
-		var ppProj *sdk.ProjectPlatform
+		var ppProj sdk.ProjectPlatform
 		for _, pl := range proj.Platforms {
 			if pl.Name == n.Context.ProjectPlatformName {
-				ppProj = &pl
+				ppProj = pl
+				break
 			}
 		}
-		w.ProjectPlatforms[n.Context.ProjectPlatformID] = *ppProj
+		if ppProj.ID == 0 {
+			return sdk.WrapError(sdk.ErrNotFound, "Platform %s not found", n.Context.ProjectPlatformName)
+		}
+		w.ProjectPlatforms[ppProj.ID] = ppProj
 		n.Context.ProjectPlatformID = ppProj.ID
 	}
 	return nil

@@ -268,7 +268,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     createNode(node: WNode): void {
         let componentRef = this.nodesComponent.get(node.ref);
-        if (!componentRef) {
+        if (!componentRef || componentRef.instance.node.id !== node.id) {
             componentRef = this.createNodeComponent(node);
             this.nodesComponent.set(node.ref, componentRef);
         }
