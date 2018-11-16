@@ -160,11 +160,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         // Add our custom arrow (a hollow-point)
         this.createCustomArrow();
 
-        // Setup transition
-        this.g.graph().transition = (selection: d3.Selection<any>): d3.Transition<any> => {
-            return selection.transition().duration(100);
-        };
-
         // Run the renderer. This is what draws the final graph.
         this.render(d3.select('svg g'), this.g);
 
