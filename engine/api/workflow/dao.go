@@ -1150,6 +1150,7 @@ func checkProjectPlatform(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error
 			for _, pl := range proj.Platforms {
 				if pl.ID == n.Context.ProjectPlatformID {
 					pp = pl
+					break
 				}
 			}
 			if pp.ID == 0 {
@@ -1165,6 +1166,7 @@ func checkProjectPlatform(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error
 		for _, pl := range proj.Platforms {
 			if pl.Name == n.Context.ProjectPlatformName {
 				ppProj = pl
+				break
 			}
 		}
 		if ppProj.ID == 0 {
