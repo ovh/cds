@@ -65,6 +65,7 @@ func (bot *botClient) born() {
 	bot.helloWorld()
 
 	go bot.receive()
+	go do()
 
 	for {
 		if err := sendInitialPresence(bot.XMPPClient); err != nil {
