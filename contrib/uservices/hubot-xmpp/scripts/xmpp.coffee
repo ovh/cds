@@ -7,7 +7,7 @@ module.exports = (robot) ->
     send = (event, dest) -> 
       robot.logger.info "recipient:#{dest} #{event.subject} #{event.body}"
       if event.subject && event.body
-        message += '\n' + event.body
+        message = event.subject + '\n' + event.body
       else if event.subject
         message = event.subject
       else if event.body
