@@ -2,7 +2,6 @@ package event
 
 import (
 	"fmt"
-	"github.com/ovh/cds/sdk/log"
 	"time"
 
 	"github.com/fatih/structs"
@@ -10,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string) {
