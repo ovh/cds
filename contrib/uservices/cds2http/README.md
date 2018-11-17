@@ -1,6 +1,6 @@
 # CDS to HTTP
 
-This µServices allow your to:
+This µservice:
 - consume a CDS Event Kafka topic
 - for each event of type "EventNotif", POST to a HTTP Url the event content
 
