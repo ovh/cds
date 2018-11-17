@@ -18,8 +18,6 @@ import (
 	"github.com/ovh/cds/sdk/event"
 )
 
-var conferences []string
-
 func do() {
 	httpClient := cdsclient.NewHTTPClient(10*time.Second, false)
 	log.Debugf("do> consume kafka: %s", viper.GetString("event_kafka_topic"))
@@ -63,16 +61,18 @@ func process(event sdk.Event, client *http.Client) error {
 	}
 
 	req, err := http.NewRequest("POST", viper.GetString("event_remote_url"), body)
+	if err != nil {
+		return fmt.Errorf("process> Error during http.NewRequest: %v", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("process> Error during client.Do: %v", err)
 	}
 	defer resp.Body.Close()
 
 	response, _ := ioutil.ReadAll(resp.Body)
-	fmt.Println("response Body:", string(response))
 	log.Debugf("process> event:%+v > response body: %v", event, response)
 
 	return nil

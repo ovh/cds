@@ -68,31 +68,31 @@ func init() {
 	flags := mainCmd.Flags()
 
 	flags.String("log-level", "", "Log Level : debug, info or warn")
-	viper.BindPFlag("log_level", flags.Lookup("log-level"))
+	viper.BindPFlag("log_level", flags.Lookup("log-level")) // nolint
 
 	flags.String("listen-port", "8085", "Listen Port")
-	viper.BindPFlag("listen_port", flags.Lookup("listen-port"))
+	viper.BindPFlag("listen_port", flags.Lookup("listen-port")) // nolint
 
 	flags.String("event-kafka-broker-addresses", "", "Ex: --event-kafka-broker-addresses=host:port,host2:port2")
-	viper.BindPFlag("event_kafka_broker_addresses", flags.Lookup("event-kafka-broker-addresses"))
+	viper.BindPFlag("event_kafka_broker_addresses", flags.Lookup("event-kafka-broker-addresses")) // nolint
 
 	flags.String("event-kafka-topic", "", "Ex: --kafka-topic=your-kafka-topic")
-	viper.BindPFlag("event_kafka_topic", flags.Lookup("event-kafka-topic"))
+	viper.BindPFlag("event_kafka_topic", flags.Lookup("event-kafka-topic")) // nolint
 
 	flags.String("event-kafka-user", "", "Ex: --kafka-user=your-kafka-user")
-	viper.BindPFlag("event_kafka_user", flags.Lookup("event-kafka-user"))
+	viper.BindPFlag("event_kafka_user", flags.Lookup("event-kafka-user")) // nolint
 
 	flags.String("event-kafka-password", "", "Ex: --kafka-password=your-kafka-password")
-	viper.BindPFlag("event_kafka_password", flags.Lookup("event-kafka-password"))
+	viper.BindPFlag("event_kafka_password", flags.Lookup("event-kafka-password")) // nolint
 
 	flags.String("event-kafka-group", "", "Ex: --kafka-group=your-kafka-group")
-	viper.BindPFlag("event_kafka_group", flags.Lookup("event-kafka-group"))
+	viper.BindPFlag("event_kafka_group", flags.Lookup("event-kafka-group")) // nolint
 
 	flags.String("event-remote-url", "", "Ex: --event-remote-url=your-remote-url")
-	viper.BindPFlag("event_remote_url", flags.Lookup("event-remote-url"))
+	viper.BindPFlag("event_remote_url", flags.Lookup("event-remote-url")) // nolint
 
 	flags.Bool("force-dot", true, "If destination (except conference) does not contains '.' skip destination")
-	viper.BindPFlag("force_dot", flags.Lookup("force-dot"))
+	viper.BindPFlag("force_dot", flags.Lookup("force-dot")) // nolint
 }
 
 func main() {
