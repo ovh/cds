@@ -17,7 +17,7 @@ $ curl \
 
 ```
 
-Data is a `https://godoc.org/github.com/ovh/cds/sdk#EventNotif`.
+`--data` is a [EventNotif](https://godoc.org/github.com/ovh/cds/sdk#EventNotif).
 
 You can use [cds2http](https://github.com/ovh/cds/tree/master/contrib/uservices/cds2http) µservice to send CDS Event to CDS Hubot-xmpp.
 
