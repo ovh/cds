@@ -21,7 +21,9 @@ See [Plugins Documentation](https://ovh.github.io/cds/workflows/pipelines/pipeli
 
 ## µServices
 
-- [cds2xmpp](https://github.com/ovh/cds/tree/master/contrib/uservices/cds2xmpp)
+- [cds2es](https://github.com/ovh/cds/tree/master/contrib/uservices/cds2es)
+- [cds2http](https://github.com/ovh/cds/tree/master/contrib/uservices/cds2http)
+- [Hubot XMPP](https://github.com/ovh/cds/tree/master/contrib/uservices/hubot-xmpp)
 
 ## Contributions
 
