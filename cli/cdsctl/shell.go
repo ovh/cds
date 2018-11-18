@@ -163,11 +163,11 @@ func getCompleter() *readline.PrefixCompleter {
 func listCurrent(onlyCommands bool) func(string) []string {
 	return func(line string) []string {
 		if onlyCommands {
-			_, _, cmds, _ := current.shellListCommand(current.path, nil, onlyCommands)
+			_, _, _, cmds, _ := current.shellListCommand(current.path, nil, onlyCommands)
 			return sdk.DeleteEmptyValueFromArray(cmds)
 		}
-		output, submenus, _, _ := current.shellListCommand(current.path, nil, onlyCommands)
-		return sdk.DeleteEmptyValueFromArray(append(output, submenus...))
+		_, items, submenus, _, _ := current.shellListCommand(current.path, nil, onlyCommands)
+		return sdk.DeleteEmptyValueFromArray(append(items, submenus...))
 	}
 }
 
@@ -214,8 +214,11 @@ func getShellCommands() map[string]shellCommandFunc {
 					if idx >= 0 {
 						current.path = current.path[:idx]
 					}
-				} else {
-					current.path += "/" + s
+				} else if s != "" {
+					if current.path != "/" {
+						current.path += "/"
+					}
+					current.path += s
 				}
 			}
 		},
@@ -316,12 +319,8 @@ func (s *shellCurrent) lsCmd(args []string) {
 		args = args[1:]
 	}
 
-	output, submenus, cmds, _ := s.shellListCommand(path, args, false)
-	for _, s := range output {
-		if len(strings.TrimSpace(s)) > 0 {
-			fmt.Println(s)
-		}
-	}
+	output, _, submenus, cmds, _ := s.shellListCommand(path, args, false)
+	fmt.Print(output)
 	if len(submenus) > 0 || len(cmds) > 0 {
 		fmt.Println() // empty line between list data and sub-menus/commands list
 	}
@@ -352,7 +351,7 @@ func (s *shellCurrent) shellProcessCommand(input string) {
 		return
 	}
 	// default commands not found, search a sub commands
-	_, _, _, cdmsCobra := s.shellListCommand(s.path, tuple[1:], true)
+	_, _, _, _, cdmsCobra := s.shellListCommand(s.path, tuple[1:], true)
 	for _, c := range cdmsCobra {
 		if c.Name() == s.cmd {
 			flags := tuple[1:]
@@ -374,7 +373,7 @@ func (s *shellCurrent) shellProcessCommand(input string) {
 	fmt.Println("unknown command", input)
 }
 
-func (s *shellCurrent) shellListCommand(path string, flags []string, onlyCommands bool) ([]string, []string, []string, []*cobra.Command) {
+func (s *shellCurrent) shellListCommand(path string, flags []string, onlyCommands bool) (string, []string, []string, []string, []*cobra.Command) {
 	spath := strings.Split(path, "/")
 
 	cmd := s.tree
@@ -388,7 +387,8 @@ func (s *shellCurrent) shellListCommand(path string, flags []string, onlyCommand
 	}
 	cmdStrict := cmd.Name() == spath[len(spath)-1] || (cmd.Name() == s.tree.Name() && spath[len(spath)-1] == "")
 
-	var out []string
+	var out string
+	var items []string
 	if !onlyCommands {
 		buf := new(bytes.Buffer)
 		// if the command found is at the end of given path
@@ -401,6 +401,13 @@ func (s *shellCurrent) shellListCommand(path string, flags []string, onlyCommand
 				lsCmd.ParseFlags(flags)
 				lsCmd.SetOutput(buf)
 				lsCmd.Run(lsCmd, s.getArgsFromPathForCmd(path, lsCmd))
+				if buf.Len() > 0 {
+					for _, v := range strings.Split(buf.String(), "\n") {
+						if v != "" {
+							items = append(items, v)
+						}
+					}
+				}
 			}
 		} else { // try show command
 			if showCmd := findCommand(cmd, "show"); showCmd != nil {
@@ -409,13 +416,7 @@ func (s *shellCurrent) shellListCommand(path string, flags []string, onlyCommand
 				showCmd.Run(showCmd, s.getArgsFromPathForCmd(path, showCmd))
 			}
 		}
-		if buf.Len() > 0 {
-			for _, v := range strings.Split(buf.String(), "\n") {
-				if v != "" {
-					out = append(out, v)
-				}
-			}
-		}
+		out = buf.String()
 	}
 
 	// compute list sub-menus and commands
@@ -454,10 +455,10 @@ func (s *shellCurrent) shellListCommand(path string, flags []string, onlyCommand
 	}
 
 	if onlyCommands {
-		return nil, nil, cmds, cmdsCobra
+		return "", nil, nil, cmds, cmdsCobra
 	}
 
-	return out, submenus, cmds, nil
+	return out, items, submenus, cmds, nil
 }
 
 func (s *shellCurrent) hasCtx(path string, cmd *cobra.Command) bool {
