@@ -18,18 +18,17 @@ var (
 		Short: "Manage CDS application",
 	}
 
-	application = cli.NewCommand(applicationCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...),
-			cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil, withAllCommandModifiers()...),
-			cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil, withAllCommandModifiers()...),
-			applicationKey,
-			applicationGroup,
-			applicationVariable,
-			cli.NewCommand(applicationExportCmd, applicationExportRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(applicationImportCmd, applicationImportRun, nil, withAllCommandModifiers()...),
-		})
+	application = cli.NewCommand(applicationCmd, nil, []*cobra.Command{
+		cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil, withAllCommandModifiers()...),
+		applicationKey,
+		applicationGroup,
+		applicationVariable,
+		cli.NewCommand(applicationExportCmd, applicationExportRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(applicationImportCmd, applicationImportRun, nil, withAllCommandModifiers()...),
+	})
 )
 
 var applicationListCmd = cli.Command{

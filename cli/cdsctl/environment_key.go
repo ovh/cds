@@ -13,12 +13,11 @@ var (
 		Short: "Manage CDS environment keys",
 	}
 
-	environmentKey = cli.NewCommand(environmentKeyCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(environmentKeyCreateCmd, environmentCreateKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewListCommand(environmentKeyListCmd, environmentListKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(environmentKeyDeleteCmd, environmentDeleteKeyRun, nil, withAllCommandModifiers()...),
-		})
+	environmentKey = cli.NewCommand(environmentKeyCmd, nil, []*cobra.Command{
+		cli.NewCommand(environmentKeyCreateCmd, environmentCreateKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(environmentKeyListCmd, environmentListKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(environmentKeyDeleteCmd, environmentDeleteKeyRun, nil, withAllCommandModifiers()...),
+	})
 )
 
 var environmentKeyCreateCmd = cli.Command{

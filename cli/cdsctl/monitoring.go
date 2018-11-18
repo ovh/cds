@@ -16,11 +16,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var monitoringCmd = cli.Command{
-	Name:    "monitoring",
-	Short:   "CDS monitoring",
-	Aliases: []string{"ui"},
-}
+var (
+	monitoringCmd = cli.Command{
+		Name:    "monitoring",
+		Short:   "CDS monitoring",
+		Aliases: []string{"ui"},
+	}
+
+	monitoring = cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
+)
 
 func monitoringRun(v cli.Values) (interface{}, error) {
 	defer func() {

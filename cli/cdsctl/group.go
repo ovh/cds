@@ -15,15 +15,14 @@ var (
 		Short: "Manage CDS group",
 	}
 
-	group = cli.NewCommand(groupCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(groupListCmd, groupListRun, nil),
-			cli.NewGetCommand(groupShowCmd, groupShowRun, nil),
-			cli.NewCommand(groupCreateCmd, groupCreateRun, nil),
-			cli.NewCommand(groupRenameCmd, groupRenameRun, nil),
-			cli.NewDeleteCommand(groupDeleteCmd, groupDeleteRun, nil),
-			groupUser,
-		})
+	group = cli.NewCommand(groupCmd, nil, []*cobra.Command{
+		cli.NewListCommand(groupListCmd, groupListRun, nil),
+		cli.NewGetCommand(groupShowCmd, groupShowRun, nil),
+		cli.NewCommand(groupCreateCmd, groupCreateRun, nil),
+		cli.NewCommand(groupRenameCmd, groupRenameRun, nil),
+		cli.NewDeleteCommand(groupDeleteCmd, groupDeleteRun, nil),
+		groupUser,
+	})
 )
 
 var groupListCmd = cli.Command{

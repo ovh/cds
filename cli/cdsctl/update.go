@@ -5,24 +5,28 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/inconshreveable/go-update"
+	goUpdate "github.com/inconshreveable/go-update"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 )
 
-var updateCmd = cli.Command{
-	Name:  "update",
-	Short: "Update cdsctl from CDS API or from CDS Release",
-	Flags: []cli.Flag{
-		{
-			Name:    "from-github",
-			Usage:   "Update binary from latest github release",
-			Default: "false",
-			Kind:    reflect.Bool,
+var (
+	updateCmd = cli.Command{
+		Name:  "update",
+		Short: "Update cdsctl from CDS API or from CDS Release",
+		Flags: []cli.Flag{
+			{
+				Name:    "from-github",
+				Usage:   "Update binary from latest github release",
+				Default: "false",
+				Kind:    reflect.Bool,
+			},
 		},
-	},
-}
+	}
+
+	update = cli.NewCommand(updateCmd, updateRun, nil, cli.CommandWithoutExtraFlags)
+)
 
 func updateRun(v cli.Values) error {
 	fmt.Println(sdk.VersionString())
@@ -55,7 +59,7 @@ func updateRun(v cli.Values) error {
 		return fmt.Errorf("Error http code: %d, url called: %s", resp.StatusCode, urlBinary)
 	}
 
-	if err := update.Apply(resp.Body, update.Options{}); err != nil {
+	if err := goUpdate.Apply(resp.Body, goUpdate.Options{}); err != nil {
 		return fmt.Errorf("Error while updating binary from CDS API: %s", err)
 	}
 	fmt.Println("Update cdsctl done.")

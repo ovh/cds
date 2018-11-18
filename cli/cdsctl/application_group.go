@@ -19,10 +19,9 @@ var (
 		Short: "Manage CDS group linked to an application",
 	}
 
-	applicationGroup = cli.NewCommand(applicationGroupCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(applicationGroupImportCmd, applicationGroupImportRun, nil, withAllCommandModifiers()...),
-		})
+	applicationGroup = cli.NewCommand(applicationGroupCmd, nil, []*cobra.Command{
+		cli.NewCommand(applicationGroupImportCmd, applicationGroupImportRun, nil, withAllCommandModifiers()...),
+	})
 )
 
 var applicationGroupImportCmd = cli.Command{

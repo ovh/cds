@@ -17,10 +17,8 @@ var (
 		Name:  "project",
 		Short: "Manage CDS project",
 	}
-)
 
-func project() *cobra.Command {
-	cmds := []*cobra.Command{
+	projectCommands = []*cobra.Command{
 		cli.NewListCommand(projectListCmd, projectListRun, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectCreateCmd, projectCreateRun, nil),
@@ -31,11 +29,15 @@ func project() *cobra.Command {
 		projectVariable,
 		projectPlatform,
 	}
-	if cli.ShellMode {
-		cmds = append(cmds, application, workflow, environment)
-	}
-	return cli.NewCommand(projectCmd, nil, cmds)
-}
+
+	project = cli.NewCommand(projectCmd, nil, projectCommands)
+
+	projectShell = cli.NewCommand(projectCmd, nil, append(projectCommands,
+		application,
+		workflow,
+		environment,
+	))
+)
 
 var projectListCmd = cli.Command{
 	Name:  "list",

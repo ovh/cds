@@ -13,10 +13,9 @@ var (
 		Short: "Manage CDS errors",
 	}
 
-	adminErrors = cli.NewCommand(adminErrorsCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(adminErrorsGetCmd, adminErrorsGetFunc, nil),
-		})
+	adminErrors = cli.NewCommand(adminErrorsCmd, nil, []*cobra.Command{
+		cli.NewCommand(adminErrorsGetCmd, adminErrorsGetFunc, nil),
+	})
 )
 
 var adminErrorsGetCmd = cli.Command{

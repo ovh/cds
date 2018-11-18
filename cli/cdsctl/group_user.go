@@ -12,13 +12,12 @@ var (
 		Short: "Manage CDS users group",
 	}
 
-	groupUser = cli.NewCommand(groupUserCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(groupUserAdd, groupUserAddRun, nil),
-			cli.NewDeleteCommand(groupUserRemove, groupUserRemoveRun, nil),
-			cli.NewCommand(groupUserSetAdmin, groupUserSetAdminRun, nil),
-			cli.NewCommand(groupUserAdminRemove, groupUserAdminRemoveRun, nil),
-		})
+	groupUser = cli.NewCommand(groupUserCmd, nil, []*cobra.Command{
+		cli.NewCommand(groupUserAdd, groupUserAddRun, nil),
+		cli.NewDeleteCommand(groupUserRemove, groupUserRemoveRun, nil),
+		cli.NewCommand(groupUserSetAdmin, groupUserSetAdminRun, nil),
+		cli.NewCommand(groupUserAdminRemove, groupUserAdminRemoveRun, nil),
+	})
 )
 
 var groupUserAdd = cli.Command{

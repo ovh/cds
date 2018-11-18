@@ -19,10 +19,9 @@ var (
 		Short: "Manage CDS group linked to a pipeline",
 	}
 
-	pipelineGroup = cli.NewCommand(pipelineGroupCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(pipelineGroupImportCmd, pipelineGroupImportRun, nil, withAllCommandModifiers()...),
-		})
+	pipelineGroup = cli.NewCommand(pipelineGroupCmd, nil, []*cobra.Command{
+		cli.NewCommand(pipelineGroupImportCmd, pipelineGroupImportRun, nil, withAllCommandModifiers()...),
+	})
 )
 
 var pipelineGroupImportCmd = cli.Command{

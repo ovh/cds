@@ -13,14 +13,13 @@ var (
 		Short: "Manage CDS project variables",
 	}
 
-	projectVariable = cli.NewCommand(projectVariableCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(projectVariableCreateCmd, projectCreateVariableRun, nil, withAllCommandModifiers()...),
-			cli.NewListCommand(projectVariableListCmd, projectListVariableRun, nil, withAllCommandModifiers()...),
-			cli.NewGetCommand(projectVariableShowCmd, projectVariableShowRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(projectVariableDeleteCmd, projectDeleteVariableRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(projectVariableUpdateCmd, projectUpdateVariableRun, nil, withAllCommandModifiers()...),
-		})
+	projectVariable = cli.NewCommand(projectVariableCmd, nil, []*cobra.Command{
+		cli.NewCommand(projectVariableCreateCmd, projectCreateVariableRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(projectVariableListCmd, projectListVariableRun, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(projectVariableShowCmd, projectVariableShowRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectVariableDeleteCmd, projectDeleteVariableRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectVariableUpdateCmd, projectUpdateVariableRun, nil, withAllCommandModifiers()...),
+	})
 )
 
 var projectVariableCreateCmd = cli.Command{

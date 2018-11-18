@@ -15,36 +15,40 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-var loginCmd = cli.Command{
-	Name:  "login",
-	Short: "Login to CDS",
-	Flags: []cli.Flag{
-		{
-			Name:      "api-url",
-			ShortHand: "H",
-			Usage:     "CDS API URL",
-			IsValid: func(s string) bool {
-				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
-				return match
+var (
+	loginCmd = cli.Command{
+		Name:  "login",
+		Short: "Login to CDS",
+		Flags: []cli.Flag{
+			{
+				Name:      "api-url",
+				ShortHand: "H",
+				Usage:     "CDS API URL",
+				IsValid: func(s string) bool {
+					match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
+					return match
+				},
+				Kind: reflect.String,
+			}, {
+				Name:      "username",
+				ShortHand: "u",
+				Usage:     "CDS Username",
+				Kind:      reflect.String,
+			}, {
+				Name:      "password",
+				ShortHand: "p",
+				Usage:     "CDS Password",
+				Kind:      reflect.String,
+			}, {
+				Name:  "env",
+				Usage: "Display the commands to set up the environment for the cds client",
+				Kind:  reflect.Bool,
 			},
-			Kind: reflect.String,
-		}, {
-			Name:      "username",
-			ShortHand: "u",
-			Usage:     "CDS Username",
-			Kind:      reflect.String,
-		}, {
-			Name:      "password",
-			ShortHand: "p",
-			Usage:     "CDS Password",
-			Kind:      reflect.String,
-		}, {
-			Name:  "env",
-			Usage: "Display the commands to set up the environment for the cds client",
-			Kind:  reflect.Bool,
 		},
-	},
-}
+	}
+
+	login = cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
+)
 
 func loginRun(v cli.Values) error {
 	url := v.GetString("api-url")

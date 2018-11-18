@@ -21,14 +21,13 @@ var (
 		Short: "Manage CDS pipeline",
 	}
 
-	pipeline = cli.NewCommand(pipelineCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...),
-			cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
-			pipelineGroup,
-		})
+	pipeline = cli.NewCommand(pipelineCmd, nil, []*cobra.Command{
+		cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
+		pipelineGroup,
+	})
 )
 
 var pipelineListCmd = cli.Command{

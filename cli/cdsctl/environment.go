@@ -21,17 +21,16 @@ var (
 		},
 	}
 
-	environment = cli.NewCommand(environmentCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(environmentCreateCmd, environmentCreateRun, nil, withAllCommandModifiers()...),
-			cli.NewDeleteCommand(environmentDeleteCmd, environmentDeleteRun, nil, withAllCommandModifiers()...),
-			environmentKey,
-			environmentVariable,
-			environmentGroup,
-			cli.NewCommand(environmentExportCmd, environmentExportRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(environmentImportCmd, environmentImportRun, nil, withAllCommandModifiers()...),
-		})
+	environment = cli.NewCommand(environmentCmd, nil, []*cobra.Command{
+		cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(environmentCreateCmd, environmentCreateRun, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(environmentDeleteCmd, environmentDeleteRun, nil, withAllCommandModifiers()...),
+		environmentKey,
+		environmentVariable,
+		environmentGroup,
+		cli.NewCommand(environmentExportCmd, environmentExportRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(environmentImportCmd, environmentImportRun, nil, withAllCommandModifiers()...),
+	})
 )
 
 var environmentListCmd = cli.Command{

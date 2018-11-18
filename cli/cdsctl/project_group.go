@@ -19,10 +19,9 @@ var (
 		Short: "Manage CDS group linked to a project",
 	}
 
-	projectGroup = cli.NewCommand(projectGroupCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(projectGroupImportCmd, projectGroupImportRun, nil, withAllCommandModifiers()...),
-		})
+	projectGroup = cli.NewCommand(projectGroupCmd, nil, []*cobra.Command{
+		cli.NewCommand(projectGroupImportCmd, projectGroupImportRun, nil, withAllCommandModifiers()...),
+	})
 )
 
 var projectGroupImportCmd = cli.Command{

@@ -14,13 +14,12 @@ var (
 		Short: "Manage CDS group token",
 	}
 
-	token = cli.NewCommand(tokenCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(tokenListCmd, tokenListRun, nil),
-			cli.NewGetCommand(tokenCreateCmd, tokenCreateRun, nil),
-			cli.NewGetCommand(tokenFindCmd, tokenFindRun, nil),
-			cli.NewDeleteCommand(tokenDeleteCmd, tokenDeleteRun, nil),
-		})
+	token = cli.NewCommand(tokenCmd, nil, []*cobra.Command{
+		cli.NewListCommand(tokenListCmd, tokenListRun, nil),
+		cli.NewGetCommand(tokenCreateCmd, tokenCreateRun, nil),
+		cli.NewGetCommand(tokenFindCmd, tokenFindRun, nil),
+		cli.NewDeleteCommand(tokenDeleteCmd, tokenDeleteRun, nil),
+	})
 )
 
 var tokenCreateCmd = cli.Command{

@@ -13,12 +13,11 @@ var (
 		Short: "Manage CDS project keys",
 	}
 
-	projectKey = cli.NewCommand(projectKeyCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(projectKeyCreateCmd, projectCreateKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewListCommand(projectKeyListCmd, projectListKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(projectKeyDeleteCmd, projectDeleteKeyRun, nil, withAllCommandModifiers()...),
-		})
+	projectKey = cli.NewCommand(projectKeyCmd, nil, []*cobra.Command{
+		cli.NewCommand(projectKeyCreateCmd, projectCreateKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(projectKeyListCmd, projectListKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectKeyDeleteCmd, projectDeleteKeyRun, nil, withAllCommandModifiers()...),
+	})
 )
 
 var projectKeyCreateCmd = cli.Command{

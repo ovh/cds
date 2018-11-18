@@ -7,10 +7,14 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var versionCmd = cli.Command{
-	Name:  "version",
-	Short: "show cdsctl version",
-}
+var (
+	versionCmd = cli.Command{
+		Name:  "version",
+		Short: "show cdsctl version",
+	}
+
+	version = cli.NewCommand(versionCmd, versionRun, nil, cli.CommandWithoutExtraFlags)
+)
 
 func versionRun(v cli.Values) error {
 	fmt.Println(sdk.VersionString())

@@ -11,33 +11,23 @@ var (
 		Name:  "admin",
 		Short: "Manage CDS (admin only)",
 	}
-)
 
-func admin() *cobra.Command {
-	if cli.ShellMode {
-		return cli.NewCommand(adminCmd, nil,
-			[]*cobra.Command{
-				adminServices,
-				adminHooks,
-				adminPlatformModels,
-				adminPlugins,
-				adminBroadcasts,
-				adminMaintenance,
-				adminErrors,
-				usr,
-				group,
-				worker,
-				health,
-			})
+	adminCommands = []*cobra.Command{
+		adminServices,
+		adminHooks,
+		adminPlatformModels,
+		adminMaintenance,
+		adminPlugins,
+		adminBroadcasts,
+		adminErrors,
 	}
-	return cli.NewCommand(adminCmd, nil,
-		[]*cobra.Command{
-			adminServices,
-			adminHooks,
-			adminPlatformModels,
-			adminMaintenance,
-			adminPlugins,
-			adminBroadcasts,
-			adminErrors,
-		})
-}
+
+	admin = cli.NewCommand(adminCmd, nil, adminCommands)
+
+	adminShell = cli.NewCommand(adminCmd, nil, append(adminCommands,
+		usr,
+		group,
+		worker,
+		health,
+	))
+)

@@ -12,34 +12,38 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-var signupCmd = cli.Command{
-	Name:  "signup",
-	Short: "Signup on CDS",
-	Flags: []cli.Flag{
-		{
-			Name:      "api-url",
-			ShortHand: "H",
-			Usage:     "CDS API URL",
-			IsValid: func(s string) bool {
-				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
-				return match
+var (
+	signupCmd = cli.Command{
+		Name:  "signup",
+		Short: "Signup on CDS",
+		Flags: []cli.Flag{
+			{
+				Name:      "api-url",
+				ShortHand: "H",
+				Usage:     "CDS API URL",
+				IsValid: func(s string) bool {
+					match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
+					return match
+				},
+				Kind: reflect.String,
+			}, {
+				Name:  "username",
+				Usage: "CDS Username",
+				Kind:  reflect.String,
+			}, {
+				Name:  "fullname",
+				Usage: "Fullname",
+				Kind:  reflect.String,
+			}, {
+				Name:  "email",
+				Usage: "Email",
+				Kind:  reflect.String,
 			},
-			Kind: reflect.String,
-		}, {
-			Name:  "username",
-			Usage: "CDS Username",
-			Kind:  reflect.String,
-		}, {
-			Name:  "fullname",
-			Usage: "Fullname",
-			Kind:  reflect.String,
-		}, {
-			Name:  "email",
-			Usage: "Email",
-			Kind:  reflect.String,
 		},
-	},
-}
+	}
+
+	signup = cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
+)
 
 func signupRun(v cli.Values) error {
 	url := v.GetString("api-url")

@@ -12,11 +12,10 @@ var (
 		Short: "Check CDS health",
 	}
 
-	health = cli.NewCommand(healthCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(healthStatusCmd, healthStatusRun, nil),
-			cli.NewListCommand(healthMonDBMigrateCmd, healthMonDBMigrateRun, nil),
-		})
+	health = cli.NewCommand(healthCmd, nil, []*cobra.Command{
+		cli.NewListCommand(healthStatusCmd, healthStatusRun, nil),
+		cli.NewListCommand(healthMonDBMigrateCmd, healthMonDBMigrateRun, nil),
+	})
 )
 
 var healthStatusCmd = cli.Command{
