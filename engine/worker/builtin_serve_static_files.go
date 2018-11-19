@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -13,11 +12,6 @@ import (
 func runServeStaticFiles(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		res := sdk.Result{Status: sdk.StatusSuccess.String()}
-
-		pipeline := sdk.ParameterValue(*params, "cds.pipeline")
-		project := sdk.ParameterValue(*params, "cds.project")
-		node := sdk.ParameterValue(*params, "cds.node")
-		run := sdk.ParameterValue(*params, "cds.run")
 
 		path := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "path"))
 		if path == "" {
@@ -28,6 +22,14 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 		if entrypoint == nil || entrypoint.Value == "" {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("entrypoint parameter is empty. aborting")
+			sendLog(res.Reason)
+			return res
+		}
+
+		name := sdk.ParameterFind(&a.Parameters, "name")
+		if name == nil || name.Value == "" {
+			res.Status = sdk.StatusFail.String()
+			res.Reason = fmt.Sprintf("name parameter is empty. aborting")
 			sendLog(res.Reason)
 			return res
 		}
@@ -48,7 +50,8 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		file, err := sdk.CreateTarFromPaths(w.currentJob.workingDirectory, filesPath)
+		sendLog("Fetching files in progress...")
+		file, err := sdk.CreateTarFromPaths(filepath.Join(w.currentJob.workingDirectory, filepath.Dir(path)), filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
 		if err != nil {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("Cannot tar files: %v", err)
@@ -56,33 +59,16 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		buildNumber, errBN := strconv.Atoi(buildNumberString)
-		if errBN != nil {
+		sendLog("Upload and serving files in progress...")
+		publicURL, _, _, err := w.client.QueueStaticFilesUpload(ctx, buildID, name.Value, entrypoint.Value, file)
+		if err != nil {
 			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("BuilNumber is not an integer %s", errBN)
+			res.Reason = fmt.Sprintf("Cannot upload static files: %v", err)
 			sendLog(res.Reason)
 			return res
 		}
 
-		for _, filePath := range filesPath {
-			filename := filepath.Base(filePath)
-			throughTempURL, duration, err := sdk.UploadArtifact(project, pipeline, application, tag.Value, filePath, buildNumber, environment)
-			if throughTempURL {
-				sendLog(fmt.Sprintf("File '%s' uploaded in %.2fs to object store", filename, duration.Seconds()))
-			} else {
-				sendLog(fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", filename, duration.Seconds()))
-			}
-			if err != nil {
-				res.Status = sdk.StatusFail.String()
-				if throughTempURL {
-					res.Reason = fmt.Sprintf("Error while uploading artifact '%s' to object store: %v", filename, err)
-				} else {
-					res.Reason = fmt.Sprintf("Error while uploading artifact '%s' to CDS API: %v", filename, err)
-				}
-				sendLog(res.Reason)
-				return res
-			}
-		}
+		sendLog(fmt.Sprintf("Your files are serving at this URL: %s", publicURL))
 
 		return res
 	}

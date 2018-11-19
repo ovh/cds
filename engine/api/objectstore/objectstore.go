@@ -39,6 +39,14 @@ func Store(o Object, data io.ReadCloser) (string, error) {
 	return "", fmt.Errorf("store not initialized")
 }
 
+//ServeStaticFiles send files to serve static files with the entrypoint of html page and return public URL taking a tar file
+func ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
+	if storage != nil {
+		return storage.ServeStaticFiles(o, entrypoint, data)
+	}
+	return "", fmt.Errorf("store not initialized")
+}
+
 //Fetch an object with default objectstore driver
 func Fetch(o Object) (io.ReadCloser, error) {
 	if storage != nil {

@@ -117,6 +117,7 @@
   "artifact_tag": "Tag",
   "artifact_sha512": "SHA512 Checksum",
   "artifact_none": "No artifact",
+  "static_file_name": "Static filenames",
 
   "audit_change": "Change",
   "audit_no": "No audit",
@@ -161,7 +162,9 @@
 
   "common_action": "Action",
   "common_search": "Search",
+  "common_link": "Link",
   "common_run": "Run",
+  "common_created": "Creation date",
   "common_project": "Project",
   "common_preview": "Preview",
   "common_details": "Details",

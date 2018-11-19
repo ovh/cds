@@ -248,7 +248,29 @@ Semver used if fully compatible with https://semver.org/
 		Description: "Set a list of artifacts, separate by , . You can also use regexp.",
 		Type:        sdk.StringParameter,
 	})
-	return checkBuiltinAction(db, gitrelease)
+	if err := checkBuiltinAction(db, gitrelease); err != nil {
+		return err
+	}
+
+	// ----------------------------------- Serve Static Files -----------------------
+	serveStaticAct := sdk.NewAction(sdk.ServeStaticFiles)
+	serveStaticAct.Type = sdk.BuiltinAction
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "path",
+		Description: "Path where static files will be uploaded",
+		Type:        sdk.StringParameter})
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "name",
+		Description: "Name to display in CDS UI",
+		Type:        sdk.StringParameter})
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "entrypoint",
+		Description: "Filename (and not path) for the entrypoint when serving static files",
+		Type:        sdk.StringParameter,
+		Value:       "index.html",
+		Advanced:    true})
+
+	return checkBuiltinAction(db, serveStaticAct)
 }
 
 // checkBuiltinAction add builtin actions in database if needed
@@ -380,34 +402,6 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 	log.Info("createBuiltinArtifactDownloadAction> create builtin action %s", dl.Name)
 	if err := InsertAction(tx, dl, true); err != nil {
 		return sdk.WrapError(err, "createBuiltinArtifactDownloadAction err")
-	}
-
-	return tx.Commit()
-}
-
-func createBuiltinServeStaticFilesAction(db *gorp.DbMap) error {
-	serveStaticAct := sdk.NewAction(sdk.ServeStaticFiles)
-	serveStaticAct.Type = sdk.BuiltinAction
-	serveStaticAct.Parameter(sdk.Parameter{
-		Name:        "path",
-		Description: "Path where static files will be uploaded",
-		Type:        sdk.StringParameter})
-	serveStaticAct.Parameter(sdk.Parameter{
-		Name:        "entrypoint",
-		Description: "Filename for the entrypoint when serving static files",
-		Type:        sdk.StringParameter,
-		Value:       "index.html",
-		Advanced:    true})
-
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	log.Info("createBuiltinServeStaticFilesAction> create builtin action %s", serveStaticAct.Name)
-	if err := InsertAction(tx, serveStaticAct, true); err != nil {
-		return sdk.WithStack(err)
 	}
 
 	return tx.Commit()

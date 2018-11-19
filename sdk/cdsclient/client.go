@@ -24,22 +24,29 @@ type client struct {
 
 // NewHTTPClient returns a new HTTP Client
 func NewHTTPClient(timeout time.Duration, insecureSkipVerifyTLS bool) *http.Client {
+	transport := http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 0 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       30 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		ResponseHeaderTimeout: 30 * time.Second,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
+	}
+
+	if timeout == 0 {
+		transport.IdleConnTimeout = 0
+		transport.ResponseHeaderTimeout = 0
+	}
+
 	return &http.Client{
-		Timeout: timeout,
-		Transport: &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
-				Timeout:   30 * time.Second,
-				KeepAlive: 0 * time.Second,
-				DualStack: true,
-			}).DialContext,
-			MaxIdleConns:          100,
-			IdleConnTimeout:       30 * time.Second,
-			TLSHandshakeTimeout:   10 * time.Second,
-			ExpectContinueTimeout: 1 * time.Second,
-			ResponseHeaderTimeout: 30 * time.Second,
-			TLSClientConfig:       &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
-		},
+		Timeout:   timeout,
+		Transport: &transport,
 	}
 }
 

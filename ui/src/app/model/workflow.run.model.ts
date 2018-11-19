@@ -261,6 +261,16 @@ export class WorkflowNodeRunArtifact {
     created: string;
 }
 
+// WorkflowNodeRunStaticFiles represent static files
+export class WorkflowNodeRunStaticFiles {
+    workflow_node_run_id: number;
+    id: number;
+    name: string;
+    entrypoint: string;
+    public_url: string;
+    created: string;
+}
+
 // WorkflowNodeJobRun represents an job to be run
 export class WorkflowNodeJobRun {
     id: number;

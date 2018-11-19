@@ -72,15 +72,18 @@ func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 	}
 
 	log.Debug("SwiftStore> creating object %s/%s", container, object)
-	if _, errU := s.BulkUpload(container, data, "tar.gz", nil); errU != nil {
-		return "", sdk.WrapError(errU, "SwiftStore> Unable to bulk upload %s : %v", object, errU)
+	res, errU := s.BulkUpload(container, data, "tar", nil)
+	if errU != nil {
+		return "", sdk.WrapError(errU, "SwiftStore> Unable to bulk upload %s : %v : %+v", object, errU, res.Errors)
 	}
+
+	fmt.Printf("bulkResult --> %+v\n", res)
 
 	if err := data.Close(); err != nil {
 		return "", sdk.WrapError(err, "Unable to close data buffer")
 	}
 
-	return s.AuthToken + container, nil
+	return s.StorageUrl + "/" + container, nil
 }
 
 // Store stores in swift

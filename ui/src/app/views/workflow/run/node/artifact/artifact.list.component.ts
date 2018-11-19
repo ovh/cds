@@ -1,6 +1,6 @@
 import {Component, Input, NgZone} from '@angular/core';
 import {environment} from '../../../../../../environments/environment';
-import {WorkflowNodeRunArtifact} from '../../../../../model/workflow.run.model';
+import {WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles} from '../../../../../model/workflow.run.model';
 import {Table} from '../../../../../shared/table/table';
 
 @Component({
@@ -11,6 +11,7 @@ import {Table} from '../../../../../shared/table/table';
 export class WorkflowRunArtifactListComponent extends Table {
 
     @Input() artifacts: Array<WorkflowNodeRunArtifact>;
+    @Input() staticFiles: Array<WorkflowNodeRunStaticFiles>;
 
     // Allow angular update from work started outside angular context
     zone: NgZone;

@@ -179,7 +179,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	res, errTar := sdk.CreateTarFromPaths(c.WorkingDirectory, c.Files)
+	res, errTar := sdk.CreateTarFromPaths(c.WorkingDirectory, c.Files, nil)
 	if errTar != nil {
 		errTar = sdk.Error{
 			Message: "worker cache push > Cannot tar : " + errTar.Error(),

@@ -205,6 +205,7 @@ type QueueClient interface {
 	QueueJobSendSpawnInfo(ctx context.Context, isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
 	QueueArtifactUpload(ctx context.Context, id int64, tag, filePath string) (bool, time.Duration, error)
+	QueueStaticFilesUpload(ctx context.Context, nodeJobRunID int64, name, entrypoint string, tarContent io.Reader) (string, bool, time.Duration, error)
 	QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error
 	QueueJobIncAttempts(ctx context.Context, jobID int64) ([]int64, error)
 	QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error
@@ -270,7 +271,6 @@ type WorkflowClient interface {
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 	WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error
 	WorkflowCachePull(projectKey, ref string) (io.Reader, error)
-	WorkflowUploadStaticFiles(projectKey, ref string, tarContent io.Reader) (string, error)
 }
 
 // MonitoringClient exposes monitoring functions
