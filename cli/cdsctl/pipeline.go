@@ -15,20 +15,20 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-var (
-	pipelineCmd = cli.Command{
-		Name:  "pipeline",
-		Short: "Manage CDS pipeline",
-	}
+var pipelineCmd = cli.Command{
+	Name:  "pipeline",
+	Short: "Manage CDS pipeline",
+}
 
-	pipeline = cli.NewCommand(pipelineCmd, nil, []*cobra.Command{
+func pipeline() *cobra.Command {
+	return cli.NewCommand(pipelineCmd, nil, []*cobra.Command{
 		cli.NewListCommand(pipelineListCmd, pipelineListRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
-		pipelineGroup,
+		pipelineGroup(),
 	})
-)
+}
 
 var pipelineListCmd = cli.Command{
 	Name:  "list",

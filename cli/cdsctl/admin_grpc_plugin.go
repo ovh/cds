@@ -15,23 +15,21 @@ import (
 	"github.com/ovh/cds/sdk/grpcplugin"
 )
 
-var (
-	adminPluginsCmd = cli.Command{
-		Name:  "plugins",
-		Short: "Manage CDS Plugins",
-	}
+var adminPluginsCmd = cli.Command{
+	Name:  "plugins",
+	Short: "Manage CDS Plugins",
+}
 
-	adminPlugins = cli.NewCommand(adminPluginsCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(adminPluginsListCmd, adminPluginsListFunc, nil),
-			cli.NewCommand(adminPluginsImportCmd, adminPluginsImportFunc, nil),
-			cli.NewCommand(adminPluginsExportCmd, adminPluginsExportFunc, nil),
-			cli.NewDeleteCommand(adminPluginsDeleteCmd, adminPluginsDeleteFunc, nil),
-			cli.NewCommand(adminPluginsAddBinaryCmd, adminPluginsAddBinaryFunc, nil),
-			cli.NewCommand(adminPluginsDocCmd, adminPluginsDocFunc, nil),
-		},
-	)
-)
+func adminPlugins() *cobra.Command {
+	return cli.NewCommand(adminPluginsCmd, nil, []*cobra.Command{
+		cli.NewListCommand(adminPluginsListCmd, adminPluginsListFunc, nil),
+		cli.NewCommand(adminPluginsImportCmd, adminPluginsImportFunc, nil),
+		cli.NewCommand(adminPluginsExportCmd, adminPluginsExportFunc, nil),
+		cli.NewDeleteCommand(adminPluginsDeleteCmd, adminPluginsDeleteFunc, nil),
+		cli.NewCommand(adminPluginsAddBinaryCmd, adminPluginsAddBinaryFunc, nil),
+		cli.NewCommand(adminPluginsDocCmd, adminPluginsDocFunc, nil),
+	})
+}
 
 var adminPluginsListCmd = cli.Command{
 	Name:  "list",

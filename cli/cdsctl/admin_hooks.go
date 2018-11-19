@@ -13,23 +13,22 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	adminHooksCmd = cli.Command{
-		Name:  "hooks",
-		Short: "Manage CDS Hooks tasks",
-	}
+var adminHooksCmd = cli.Command{
+	Name:  "hooks",
+	Short: "Manage CDS Hooks tasks",
+}
 
-	adminHooks = cli.NewCommand(adminHooksCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(adminHooksTaskListCmd, adminHooksTaskListRun, nil),
-			cli.NewListCommand(adminHooksTaskExecutionListCmd, adminHooksTaskExecutionListRun, nil),
-			cli.NewCommand(adminHooksTaskExecutionStartCmd, adminHooksTaskExecutionStartRun, nil),
-			cli.NewCommand(adminHooksTaskExecutionStopCmd, adminHooksTaskExecutionStopRun, nil),
-			cli.NewCommand(adminHooksTaskExecutionDeleteAllCmd, adminHooksTaskExecutionDeleteAllRun, nil),
-			cli.NewCommand(adminHooksTaskExecutionStartAllCmd, adminHooksTaskExecutionStartAllRun, nil),
-			cli.NewCommand(adminHooksTaskExecutionStopAllCmd, adminHooksTaskExecutionStopAllRun, nil),
-		})
-)
+func adminHooks() *cobra.Command {
+	return cli.NewCommand(adminHooksCmd, nil, []*cobra.Command{
+		cli.NewListCommand(adminHooksTaskListCmd, adminHooksTaskListRun, nil),
+		cli.NewListCommand(adminHooksTaskExecutionListCmd, adminHooksTaskExecutionListRun, nil),
+		cli.NewCommand(adminHooksTaskExecutionStartCmd, adminHooksTaskExecutionStartRun, nil),
+		cli.NewCommand(adminHooksTaskExecutionStopCmd, adminHooksTaskExecutionStopRun, nil),
+		cli.NewCommand(adminHooksTaskExecutionDeleteAllCmd, adminHooksTaskExecutionDeleteAllRun, nil),
+		cli.NewCommand(adminHooksTaskExecutionStartAllCmd, adminHooksTaskExecutionStartAllRun, nil),
+		cli.NewCommand(adminHooksTaskExecutionStopAllCmd, adminHooksTaskExecutionStopAllRun, nil),
+	})
+}
 
 var adminHooksTaskListCmd = cli.Command{
 	Name:  "list",

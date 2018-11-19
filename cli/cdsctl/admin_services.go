@@ -9,18 +9,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	adminServicesCmd = cli.Command{
-		Name:  "services",
-		Short: "Manage CDS services",
-	}
+var adminServicesCmd = cli.Command{
+	Name:  "services",
+	Short: "Manage CDS services",
+}
 
-	adminServices = cli.NewCommand(adminServicesCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(adminServiceListCmd, adminServiceListRun, nil),
-			cli.NewListCommand(adminServiceStatusCmd, adminServiceStatusRun, nil),
-		})
-)
+func adminServices() *cobra.Command {
+	return cli.NewCommand(adminServicesCmd, nil, []*cobra.Command{
+		cli.NewListCommand(adminServiceListCmd, adminServiceListRun, nil),
+		cli.NewListCommand(adminServiceStatusCmd, adminServiceStatusRun, nil),
+	})
+}
 
 var adminServiceListCmd = cli.Command{
 	Name:  "list",

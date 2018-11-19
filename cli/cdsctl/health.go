@@ -6,17 +6,17 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var (
-	healthCmd = cli.Command{
-		Name:  "health",
-		Short: "Check CDS health",
-	}
+var healthCmd = cli.Command{
+	Name:  "health",
+	Short: "Check CDS health",
+}
 
-	health = cli.NewCommand(healthCmd, nil, []*cobra.Command{
+func health() *cobra.Command {
+	return cli.NewCommand(healthCmd, nil, []*cobra.Command{
 		cli.NewListCommand(healthStatusCmd, healthStatusRun, nil),
 		cli.NewListCommand(healthMonDBMigrateCmd, healthMonDBMigrateRun, nil),
 	})
-)
+}
 
 var healthStatusCmd = cli.Command{
 	Name:  "status",

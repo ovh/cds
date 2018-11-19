@@ -17,11 +17,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	shellCmd = cli.Command{
-		Name:  "shell",
-		Short: "cdsctl interactive shell",
-		Long: `
+var shellCmd = cli.Command{
+	Name:  "shell",
+	Short: "cdsctl interactive shell",
+	Long: `
 CDS Shell Mode. default commands:
 
 - cd: reset current position.
@@ -46,10 +45,11 @@ Other commands are available depending on your position. Example, run interactiv
 
 
 `,
-	}
+}
 
-	shell = cli.NewCommand(shellCmd, shellRun, nil, cli.CommandWithoutExtraFlags)
-)
+func shell() *cobra.Command {
+	return cli.NewCommand(shellCmd, shellRun, nil, cli.CommandWithoutExtraFlags)
+}
 
 var current *shellCurrent
 
@@ -91,8 +91,8 @@ func shellRun(v cli.Values) error {
 	current = &shellCurrent{
 		rline: l,
 		tree: rootFromSubCommands([]*cobra.Command{
-			projectShell,
-			adminShell,
+			projectShell(),
+			adminShell(),
 		}),
 	}
 

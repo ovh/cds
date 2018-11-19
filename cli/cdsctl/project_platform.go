@@ -11,19 +11,19 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	projectPlatformCmd = cli.Command{
-		Name:  "platform",
-		Short: "Manage CDS project platforms",
-	}
+var projectPlatformCmd = cli.Command{
+	Name:  "platform",
+	Short: "Manage CDS project platforms",
+}
 
-	projectPlatform = cli.NewCommand(projectPlatformCmd, nil, []*cobra.Command{
+func projectPlatform() *cobra.Command {
+	return cli.NewCommand(projectPlatformCmd, nil, []*cobra.Command{
 		cli.NewListCommand(projectPlatformListCmd, projectPlatformListFunc, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(projectPlatformDeleteCmd, projectPlatformDeleteFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectPlatformImportCmd, projectPlatformImportFunc, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectPlatformExportCmd, projectPlatformExportFunc, nil, withAllCommandModifiers()...),
 	})
-)
+}
 
 var projectPlatformListCmd = cli.Command{
 	Name:  "list",

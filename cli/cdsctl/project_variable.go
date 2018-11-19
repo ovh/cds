@@ -7,20 +7,20 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	projectVariableCmd = cli.Command{
-		Name:  "variable",
-		Short: "Manage CDS project variables",
-	}
+var projectVariableCmd = cli.Command{
+	Name:  "variable",
+	Short: "Manage CDS project variables",
+}
 
-	projectVariable = cli.NewCommand(projectVariableCmd, nil, []*cobra.Command{
+func projectVariable() *cobra.Command {
+	return cli.NewCommand(projectVariableCmd, nil, []*cobra.Command{
 		cli.NewCommand(projectVariableCreateCmd, projectCreateVariableRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(projectVariableListCmd, projectListVariableRun, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectVariableShowCmd, projectVariableShowRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableDeleteCmd, projectDeleteVariableRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectVariableUpdateCmd, projectUpdateVariableRun, nil, withAllCommandModifiers()...),
 	})
-)
+}
 
 var projectVariableCreateCmd = cli.Command{
 	Name:  "add",

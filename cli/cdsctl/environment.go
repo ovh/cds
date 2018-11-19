@@ -12,26 +12,26 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	environmentCmd = cli.Command{
-		Name:  "environment",
-		Short: "Manage CDS environment",
-		Aliases: []string{
-			"env",
-		},
-	}
+var environmentCmd = cli.Command{
+	Name:  "environment",
+	Short: "Manage CDS environment",
+	Aliases: []string{
+		"env",
+	},
+}
 
-	environment = cli.NewCommand(environmentCmd, nil, []*cobra.Command{
+func environment() *cobra.Command {
+	return cli.NewCommand(environmentCmd, nil, []*cobra.Command{
 		cli.NewListCommand(environmentListCmd, environmentListRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(environmentCreateCmd, environmentCreateRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(environmentDeleteCmd, environmentDeleteRun, nil, withAllCommandModifiers()...),
-		environmentKey,
-		environmentVariable,
-		environmentGroup,
+		environmentKey(),
+		environmentVariable(),
+		environmentGroup(),
 		cli.NewCommand(environmentExportCmd, environmentExportRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(environmentImportCmd, environmentImportRun, nil, withAllCommandModifiers()...),
 	})
-)
+}
 
 var environmentListCmd = cli.Command{
 	Name:  "list",

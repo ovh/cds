@@ -7,20 +7,20 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	environmentVariableCmd = cli.Command{
-		Name:  "variable",
-		Short: "Manage CDS environment variables",
-	}
+var environmentVariableCmd = cli.Command{
+	Name:  "variable",
+	Short: "Manage CDS environment variables",
+}
 
-	environmentVariable = cli.NewCommand(environmentVariableCmd, nil, []*cobra.Command{
+func environmentVariable() *cobra.Command {
+	return cli.NewCommand(environmentVariableCmd, nil, []*cobra.Command{
 		cli.NewCommand(environmentVariableCreateCmd, environmentCreateVariableRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(environmentVariableListCmd, environmentListVariableRun, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(environmentVariableShowCmd, environmentVariableShowRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(environmentVariableDeleteCmd, environmentDeleteVariableRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(environmentVariableUpdateCmd, environmentUpdateVariableRun, nil, withAllCommandModifiers()...),
 	})
-)
+}
 
 var environmentVariableCreateCmd = cli.Command{
 	Name:  "add",

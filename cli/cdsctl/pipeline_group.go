@@ -13,16 +13,16 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-var (
-	pipelineGroupCmd = cli.Command{
-		Name:  "group",
-		Short: "Manage CDS group linked to a pipeline",
-	}
+var pipelineGroupCmd = cli.Command{
+	Name:  "group",
+	Short: "Manage CDS group linked to a pipeline",
+}
 
-	pipelineGroup = cli.NewCommand(pipelineGroupCmd, nil, []*cobra.Command{
+func pipelineGroup() *cobra.Command {
+	return cli.NewCommand(pipelineGroupCmd, nil, []*cobra.Command{
 		cli.NewCommand(pipelineGroupImportCmd, pipelineGroupImportRun, nil, withAllCommandModifiers()...),
 	})
-)
+}
 
 var pipelineGroupImportCmd = cli.Command{
 	Name:  "import",

@@ -13,16 +13,16 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-var (
-	projectGroupCmd = cli.Command{
-		Name:  "group",
-		Short: "Manage CDS group linked to a project",
-	}
+var projectGroupCmd = cli.Command{
+	Name:  "group",
+	Short: "Manage CDS group linked to a project",
+}
 
-	projectGroup = cli.NewCommand(projectGroupCmd, nil, []*cobra.Command{
+func projectGroup() *cobra.Command {
+	return cli.NewCommand(projectGroupCmd, nil, []*cobra.Command{
 		cli.NewCommand(projectGroupImportCmd, projectGroupImportRun, nil, withAllCommandModifiers()...),
 	})
-)
+}
 
 var projectGroupImportCmd = cli.Command{
 	Name:  "import",

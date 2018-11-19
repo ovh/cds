@@ -12,20 +12,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	adminBroadcastsCmd = cli.Command{
-		Name:  "broadcasts",
-		Short: "Manage CDS broadcasts",
-	}
+var adminBroadcastsCmd = cli.Command{
+	Name:  "broadcasts",
+	Short: "Manage CDS broadcasts",
+}
 
-	adminBroadcasts = cli.NewCommand(adminBroadcastsCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(adminBroadcastListCmd, adminBroadcastListRun, nil),
-			cli.NewGetCommand(adminBroadcastShowCmd, adminBroadcastShowRun, nil),
-			cli.NewCommand(adminBroadcastDeleteCmd, adminBroadcastDeleteRun, nil),
-			cli.NewCommand(adminBroadcastCreateCmd, adminBroadcastCreateRun, nil),
-		})
-)
+func adminBroadcasts() *cobra.Command {
+	return cli.NewCommand(adminBroadcastsCmd, nil, []*cobra.Command{
+		cli.NewListCommand(adminBroadcastListCmd, adminBroadcastListRun, nil),
+		cli.NewGetCommand(adminBroadcastShowCmd, adminBroadcastShowRun, nil),
+		cli.NewCommand(adminBroadcastDeleteCmd, adminBroadcastDeleteRun, nil),
+		cli.NewCommand(adminBroadcastCreateCmd, adminBroadcastCreateRun, nil),
+	})
+}
 
 var adminBroadcastCreateCmd = cli.Command{
 	Name:  "create",
@@ -49,10 +48,10 @@ var adminBroadcastCreateCmd = cli.Command{
 		},
 	},
 	Example: `level info:
-	
+
 	cdsctl admin broadcasts create "the title" < content.md
 
-level warning:	
+level warning:
 
 	cdsctl admin broadcasts create --level warning "the title" "the content"
 	`,

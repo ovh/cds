@@ -17,22 +17,21 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-var (
-	actionCmd = cli.Command{
-		Name:  "action",
-		Short: "Manage CDS action",
-	}
+var actionCmd = cli.Command{
+	Name:  "action",
+	Short: "Manage CDS action",
+}
 
-	action = cli.NewCommand(actionCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(actionListCmd, actionListRun, nil),
-			cli.NewGetCommand(actionShowCmd, actionShowRun, nil),
-			cli.NewCommand(actionDeleteCmd, actionDeleteRun, nil),
-			cli.NewCommand(actionDocCmd, actionDocRun, nil),
-			cli.NewCommand(actionImportCmd, actionImportRun, nil),
-			cli.NewCommand(actionExportCmd, actionExportRun, nil),
-		})
-)
+func action() *cobra.Command {
+	return cli.NewCommand(actionCmd, nil, []*cobra.Command{
+		cli.NewListCommand(actionListCmd, actionListRun, nil),
+		cli.NewGetCommand(actionShowCmd, actionShowRun, nil),
+		cli.NewCommand(actionDeleteCmd, actionDeleteRun, nil),
+		cli.NewCommand(actionDocCmd, actionDocRun, nil),
+		cli.NewCommand(actionImportCmd, actionImportRun, nil),
+		cli.NewCommand(actionExportCmd, actionExportRun, nil),
+	})
+}
 
 var actionListCmd = cli.Command{
 	Name:  "list",

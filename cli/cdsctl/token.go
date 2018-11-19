@@ -8,19 +8,19 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var (
-	tokenCmd = cli.Command{
-		Name:  "token",
-		Short: "Manage CDS group token",
-	}
+var tokenCmd = cli.Command{
+	Name:  "token",
+	Short: "Manage CDS group token",
+}
 
-	token = cli.NewCommand(tokenCmd, nil, []*cobra.Command{
+func token() *cobra.Command {
+	return cli.NewCommand(tokenCmd, nil, []*cobra.Command{
 		cli.NewListCommand(tokenListCmd, tokenListRun, nil),
 		cli.NewGetCommand(tokenCreateCmd, tokenCreateRun, nil),
 		cli.NewGetCommand(tokenFindCmd, tokenFindRun, nil),
 		cli.NewDeleteCommand(tokenDeleteCmd, tokenDeleteRun, nil),
 	})
-)
+}
 
 var tokenCreateCmd = cli.Command{
 	Name:  "generate",

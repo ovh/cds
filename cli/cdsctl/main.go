@@ -22,34 +22,35 @@ var (
 )
 
 func main() {
-	if err := rootFromSubCommands([]*cobra.Command{
-		doc, // hidden command
-		action,
-		login,
-		signup,
-		application,
-		environment,
-		pipeline,
-		group,
-		health,
-		project,
-		worker,
-		workflow,
-		update,
-		usr,
-		shell,
-		monitoring,
-		version,
-		encrypt,
-		token,
-		admin,
-	}).Execute(); err != nil {
+	root = rootFromSubCommands([]*cobra.Command{
+		doc(), // hidden command
+		action(),
+		login(),
+		signup(),
+		application(),
+		environment(),
+		pipeline(),
+		group(),
+		health(),
+		project(),
+		worker(),
+		workflow(),
+		update(),
+		usr(),
+		shell(),
+		monitoring(),
+		version(),
+		encrypt(),
+		token(),
+		admin(),
+	})
+	if err := root.Execute(); err != nil {
 		cli.ExitOnError(err)
 	}
 }
 
 func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
-	root = cli.NewCommand(mainCmd, mainRun, cmds)
+	root := cli.NewCommand(mainCmd, mainRun, cmds)
 
 	root.PersistentFlags().StringVarP(&configFile, "file", "f", "", "set configuration file")
 	root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
@@ -58,13 +59,13 @@ func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
 
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		//Do not load config on login
-		if cmd == login || cmd == signup || cmd == doc || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
+		if cmd.Name() == "login" || cmd.Name() == "signup" || cmd.Name() == "doc" || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
 			return
 		}
 
 		var err error
 		cfg, err = loadConfig(configFile)
-		cli.ExitOnError(err, login.Help)
+		cli.ExitOnError(err, login().Help)
 
 		client = cdsclient.New(*cfg)
 	}

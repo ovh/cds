@@ -7,19 +7,18 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	applicationKeyCmd = cli.Command{
-		Name:  "keys",
-		Short: "Manage CDS application keys",
-	}
+var applicationKeyCmd = cli.Command{
+	Name:  "keys",
+	Short: "Manage CDS application keys",
+}
 
-	applicationKey = cli.NewCommand(applicationKeyCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(applicationKeyCreateCmd, applicationCreateKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewListCommand(applicationKeyListCmd, applicationListKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(applicationKeyDeleteCmd, applicationDeleteKeyRun, nil, withAllCommandModifiers()...),
-		})
-)
+func applicationKey() *cobra.Command {
+	return cli.NewCommand(applicationKeyCmd, nil, []*cobra.Command{
+		cli.NewCommand(applicationKeyCreateCmd, applicationCreateKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(applicationKeyListCmd, applicationListKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(applicationKeyDeleteCmd, applicationDeleteKeyRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var applicationKeyCreateCmd = cli.Command{
 	Name:  "add",
