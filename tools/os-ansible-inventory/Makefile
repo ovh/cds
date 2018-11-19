@@ -35,7 +35,6 @@ build: $(TARGET_DIR)
 		done; \
 	done
 
-
 lint: $(GO_LINT)
 	$(GO_LINT) --install --force
 	$(GO_LINT) --fast --tests --vendor --disable=gas --disable=gotype ./...

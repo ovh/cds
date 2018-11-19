@@ -129,7 +129,8 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	done; \
 	for XML in `find .. -name "tests.log.xml"`; do \
 		if [ "$$XML" =  "./tests.log.xml" ]; then \
-		 	mv $$XML $(TARGET_DIR)/`basename `pwd``.xml; \
+      PWD=`pwd`; \
+		 	mv $$XML $(TARGET_DIR)/`basename $(PWD)`.xml; \
 		else \
 			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
