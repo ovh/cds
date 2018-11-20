@@ -617,7 +617,17 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 		if nodes[i].Name == "" {
 			nodesToNamed = append(nodesToNamed, nodes[i])
 		} else {
+			oldChild := nodes[i].Ref
 			nodes[i].Ref = nodes[i].Name
+			for i := range w.WorkflowData.Joins {
+				j := &w.WorkflowData.Joins[i]
+				for k := range j.JoinContext {
+					jc := &j.JoinContext[k]
+					if jc.ParentName == oldChild {
+						jc.ParentName = nodes[i].Name
+					}
+				}
+			}
 		}
 
 		switch nodes[i].Type {
