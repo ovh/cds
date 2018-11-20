@@ -575,7 +575,7 @@ func (s *shellCurrent) openBrowser() {
 		return
 	}
 
-	browser.OpenURL(baseURL + s.path)
+	_ = browser.OpenURL(baseURL + s.path)
 }
 
 func shellASCII() {
