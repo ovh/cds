@@ -697,8 +697,8 @@ func (c *client) queueDirectStaticFilesUpload(staticFile *sdk.StaticFiles, tarCo
 		return "", err
 	}
 
-	writer.WriteField("name", staticFile.Name)
-	writer.WriteField("entrypoint", staticFile.EntryPoint)
+	_ = writer.WriteField("name", staticFile.Name)
+	_ = writer.WriteField("entrypoint", staticFile.EntryPoint)
 
 	if errclose := writer.Close(); errclose != nil {
 		return "", errclose
