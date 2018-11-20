@@ -205,7 +205,7 @@ func getShellCommands(rline *readline.Instance, s *shellCurrent) map[string]shel
 		"ls":      func(current *shellCurrent, args []string) { s.lsCmd(args) },
 		"ll":      func(current *shellCurrent, args []string) { s.lsCmd(args) },
 		"pwd":     func(current *shellCurrent, args []string) { fmt.Println(s.pwdCmd()) },
-		"version": func(current *shellCurrent, args []string) { versionRun(nil) },
+		"version": func(current *shellCurrent, args []string) { _ = versionRun(nil) },
 	}
 }
 
