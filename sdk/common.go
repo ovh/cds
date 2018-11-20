@@ -27,6 +27,12 @@ const MaxIconSize = 120000
 // IconFormat is the format prefix accepted for icon
 const IconFormat = "data:image/"
 
+// True of false
+var (
+	True  = true
+	False = false
+)
+
 // EncryptFunc is a common type
 type EncryptFunc func(gorp.SqlExecutor, int64, string, string) (string, error)
 

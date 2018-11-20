@@ -50,6 +50,9 @@
   "application_home_no_platform": "Link a  platform",
   "application_home_no_graph": "No graph to display (vulnerabilities, unit tests)",
   "application_home_no_usage": "Application is not used",
+  "application_platform_added": "Platform added",
+  "application_platform_deleted": "Platform deleted",
+  "application_platform_updated": "Platform updated",
 
   "application_create": "Create a new application",
   "application_created": "Application created",
@@ -1018,7 +1021,8 @@
   "workflow_notification_form": "Add a notification",
   "workflow_notification_copy": "Copy",
   "workflow_logs_all": "Show all logs",
-  "workflow_logs_pretty": "Show pretty logs (with ANSI and HTML interpreter)",
+  "workflow_logs_pretty_ansi": "Show pretty logs with ANSI interpreter",
+  "workflow_logs_pretty_html": "Show pretty logs with HTML interpreter",
   "workflow_logs_raw": "Show raw logs (without ANSI and HTML interpreter)",
 
   "workflow_wizard_select_repo_man": "Select a repository manager",

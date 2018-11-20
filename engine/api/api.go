@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -227,6 +228,7 @@ type API struct {
 	Config              Configuration
 	DBConnectionFactory *database.DBConnectionFactory
 	StartupTime         time.Time
+	Maintenance         bool
 	eventsBroker        *eventsBroker
 	warnChan            chan sdk.Event
 	Cache               cache.Store
@@ -561,16 +563,6 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot connect to cache store: %v", errCache)
 	}
 
-	log.Info("Initializing Events broker")
-	// Initialize event broker
-	a.eventsBroker = &eventsBroker{
-		cache:    a.Cache,
-		clients:  make(map[string]*eventsBrokerSubscribe),
-		dbFunc:   a.DBConnectionFactory.GetDBMap,
-		messages: make(chan sdk.Event),
-	}
-	a.eventsBroker.Init(context.Background())
-
 	log.Info("Initializing HTTP router")
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),
@@ -581,9 +573,21 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("unable to init router stats: %v", err)
 	}
 
+	log.Info("Initializing Stats")
 	if err := a.initStats(); err != nil {
 		log.Error("unable to init api stats: %v", err)
 	}
+
+	log.Info("Initializing Events broker")
+	// Initialize event broker
+	a.eventsBroker = &eventsBroker{
+		router:   a.Router,
+		cache:    a.Cache,
+		clients:  make(map[string]*eventsBrokerSubscribe),
+		dbFunc:   a.DBConnectionFactory.GetDBMap,
+		messages: make(chan sdk.Event),
+	}
+	a.eventsBroker.Init(context.Background(), a.PanicDump())
 
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
@@ -642,57 +646,60 @@ func (a *API) Serve(ctx context.Context) error {
 	event.Subscribe(a.warnChan)
 
 	log.Info("Initializing internal routines...")
+	sdk.GoRoutine(ctx, "maintenance.Subscribe", func(ctx context.Context) {
+		a.listenMaintenance(ctx)
+	}, a.PanicDump())
 
 	sdk.GoRoutine(ctx, "worker.Initialize", func(ctx context.Context) {
 		if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
 			log.Error("error while initializing workers routine: %s", err)
 		}
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
 		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "warning.Start", func(ctx context.Context) {
 		warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "queue.Pipelines", func(ctx context.Context) {
 		queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "pipeline.AWOLPipelineKiller", func(ctx context.Context) {
 		pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	})
 	sdk.GoRoutine(ctx, "metrics.Initialize", func(ctx context.Context) {
 		metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "action.RequirementsCacheLoader", func(ctx context.Context) {
 		action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "hookRecoverer(ctx", func(ctx context.Context) {
 		hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "migrate.CleanOldWorkflow", func(ctx context.Context) {
 		migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
 		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "broadcast.Initialize", func(ctx context.Context) {
 		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)
-	})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "migrate.WorkflowData", func(ctx context.Context) {
 		migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache)
-	})
+	}, a.PanicDump())
 
 	//Temporary migration code
 	go migrate.WorkflowNodeRunArtifacts(a.Cache, a.DBConnectionFactory.GetDBMap)
@@ -705,6 +712,8 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	// Init Services
+	services.Initialize(ctx, a.DBConnectionFactory, a.PanicDump())
+
 	externalServices := make([]sdk.ExternalService, 0, len(a.Config.Services))
 	for _, s := range a.Config.Services {
 		serv := sdk.ExternalService{
@@ -726,7 +735,10 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := services.InitExternal(a.mustDB, a.Cache, externalServices); err != nil {
 		return fmt.Errorf("unable to init external service: %v", err)
 	}
-	sdk.GoRoutine(ctx, "pings-external-services", func(ctx context.Context) { services.Pings(ctx, a.mustDB, externalServices) })
+	sdk.GoRoutine(ctx, "pings-external-services",
+		func(ctx context.Context) {
+			services.Pings(ctx, a.mustDB, externalServices)
+		}, a.PanicDump())
 
 	// TODO: to delete after migration
 	if os.Getenv("CDS_MIGRATE_GIT_CLONE") == "true" {
@@ -743,12 +755,13 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 
-	sdk.GoRoutine(ctx, "workflow.Initialize", func(ctx context.Context) {
-		workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
-	})
-	sdk.GoRoutine(ctx, "PushInElasticSearch", func(ctx context.Context) { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) })
-	metrics.Init(ctx, a.DBConnectionFactory.GetDBMap)
-	sdk.GoRoutine(ctx, "Purge", func(ctx context.Context) { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) })
+	sdk.GoRoutine(ctx, "workflow.Initialize",
+		func(ctx context.Context) {
+			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
+		}, a.PanicDump())
+	sdk.GoRoutine(ctx, "PushInElasticSearch", func(ctx context.Context) { event.PushInElasticSearch(ctx, a.mustDB(), a.Cache) }, a.PanicDump())
+	sdk.GoRoutine(ctx, "Metrics.pushInElasticSearch", func(ctx context.Context) { metrics.Init(ctx, a.DBConnectionFactory.GetDBMap) }, a.PanicDump())
+	sdk.GoRoutine(ctx, "Purge", func(ctx context.Context) { purge.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap) }, a.PanicDump())
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),
@@ -809,4 +822,12 @@ func (a *API) initStats() error {
 			Aggregation: view.Count(),
 		},
 	)
+}
+
+const panicDumpTTL = 60 * 60 * 24 // 24 hours
+
+func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
+	return func(s string) (io.WriteCloser, error) {
+		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
+	}
 }

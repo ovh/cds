@@ -85,6 +85,20 @@ func (api *API) getWorkflowHandler() service.Handler {
 
 		w1.Permission = permission.WorkflowPermission(key, w1.Name, getUser(ctx))
 
+		// FIXME Sync hooks on new model. To delete when hooks will be compute on new model
+		hooks := w1.GetHooks()
+		w1.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
+		for _, h := range hooks {
+			w1.WorkflowData.Node.Hooks = append(w1.WorkflowData.Node.Hooks, sdk.NodeHook{
+				Ref:           h.Ref,
+				HookModelID:   h.WorkflowHookModelID,
+				Config:        h.Config,
+				UUID:          h.UUID,
+				HookModelName: h.WorkflowHookModel.Name,
+				NodeID:        w1.WorkflowData.Node.ID,
+			})
+		}
+
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig(sdk.HookConfigProject, sdk.HookConfigWorkflow)
 		return service.WriteJSON(w, w1, http.StatusOK)
@@ -493,7 +507,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 				if err := txg.Commit(); err != nil {
 					log.Error("deleteWorkflowHandler> Cannot commit transaction: %v", err)
 				}
-			})
+			}, api.PanicDump())
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}

@@ -216,3 +216,10 @@ func TracingMiddlewareFunc(serviceName string, db gorp.SqlExecutor, store cache.
 		return ctx, err
 	}
 }
+
+func (api *API) maintenanceMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *service.HandlerConfig) (context.Context, error) {
+	if rc.Options["maintenance_aware"] == "true" && api.Maintenance {
+		return ctx, sdk.WrapError(sdk.ErrServiceUnavailable, "CDS Maintenance ON")
+	}
+	return ctx, nil
+}

@@ -2,13 +2,13 @@ package notification
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -50,7 +50,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 			case sdk.JabberUserNotification:
 				jn := &notif.Settings
 				//Get recipents from groups
-				if jn.SendToGroups {
+				if jn.SendToGroups != nil && *jn.SendToGroups {
 					u, errPerm := projectPermissionUsers(db, w.ProjectID, permission.PermissionRead)
 					if errPerm != nil {
 						log.Error("notification[Jabber]. error while loading permission:%s", errPerm.Error())
@@ -59,7 +59,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 						jn.Recipients = append(jn.Recipients, u[i].Username)
 					}
 				}
-				if jn.SendToAuthor {
+				if jn.SendToAuthor == nil || *jn.SendToAuthor {
 					if author, ok := params["cds.author"]; ok {
 						jn.Recipients = append(jn.Recipients, author)
 					}
@@ -67,27 +67,32 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 
 				//Finally deduplicate everyone
 				removeDuplicates(&jn.Recipients)
-				events = append(events, getWorkflowEvent(jn, params))
+				notif, err := getWorkflowEvent(jn, params)
+				if err != nil {
+					log.Error("notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
+				}
+				events = append(events, notif)
+
 			case sdk.EmailUserNotification:
 				jn := &notif.Settings
 				//Get recipents from groups
-				if jn.SendToGroups {
+				if jn.SendToGroups != nil && *jn.SendToGroups {
 					u, errPerm := projectPermissionUsers(db, w.ProjectID, permission.PermissionRead)
 					if errPerm != nil {
-						log.Error("notification[Email].SendPipelineBuild> error while loading permission:%s", errPerm.Error())
+						log.Error("notification[Email].GetUserWorkflowEvents> error while loading permission:%s", errPerm.Error())
 						return nil
 					}
 					for i := range u {
 						jn.Recipients = append(jn.Recipients, u[i].Email)
 					}
 				}
-				if jn.SendToAuthor {
+				if jn.SendToAuthor == nil || *jn.SendToAuthor {
 					if email, ok := params["cds.author.email"]; ok {
 						jn.Recipients = append(jn.Recipients, email)
 					} else if author, okA := params["cds.author"]; okA && author != "" {
 						u, err := user.LoadUserWithoutAuth(db, author)
 						if err != nil {
-							log.Warning("notification[Email].SendPipelineBuild> Cannot load author %s: %s", author, err)
+							log.Warning("notification[Email].GetUserWorkflowEvents> Cannot load author %s: %s", author, err)
 							continue
 						}
 						jn.Recipients = append(jn.Recipients, u.Email)
@@ -95,7 +100,11 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, w sdk.Workflow, previousWR *sdk.
 				}
 				//Finally deduplicate everyone
 				removeDuplicates(&jn.Recipients)
-				go SendMailNotif(getWorkflowEvent(jn, params))
+				notif, err := getWorkflowEvent(jn, params)
+				if err != nil {
+					log.Error("notification.GetUserWorkflowEvents> unable to handle event %+v: %v", jn, err)
+				}
+				go SendMailNotif(notif)
 			}
 		}
 	}
@@ -120,8 +129,8 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 	}
 
 	var found bool
-	for _, n := range notif.SourceNodeIDs {
-		if n == nodeRun.WorkflowNodeID {
+	for _, n := range notif.SourceNodeRefs {
+		if n == nodeRun.WorkflowNodeName {
 			found = true
 			break
 		}
@@ -140,19 +149,21 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 			return true
 		}
 	case sdk.StatusWaiting.String():
-		return notif.Settings.OnStart
+		return notif.Settings.OnStart != nil && *notif.Settings.OnStart
 	}
 
 	return false
 }
 
-func getWorkflowEvent(notif *sdk.UserNotificationSettings, params map[string]string) sdk.EventNotif {
-	subject := notif.Template.Subject
-	body := notif.Template.Body
-	for k, value := range params {
-		key := "{{." + k + "}}"
-		subject = strings.Replace(subject, key, value, -1)
-		body = strings.Replace(body, key, value, -1)
+func getWorkflowEvent(notif *sdk.UserNotificationSettings, params map[string]string) (sdk.EventNotif, error) {
+	subject, err := interpolate.Do(notif.Template.Subject, params)
+	if err != nil {
+		return sdk.EventNotif{}, err
+	}
+
+	body, err := interpolate.Do(notif.Template.Body, params)
+	if err != nil {
+		return sdk.EventNotif{}, err
 	}
 
 	e := sdk.EventNotif{
@@ -163,7 +174,7 @@ func getWorkflowEvent(notif *sdk.UserNotificationSettings, params map[string]str
 		e.Recipients = append(e.Recipients, r)
 	}
 
-	return e
+	return e, nil
 }
 
 func removeDuplicates(xs *[]string) {

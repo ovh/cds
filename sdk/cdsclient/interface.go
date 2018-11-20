@@ -160,6 +160,11 @@ type PipelineClient interface {
 	PipelineList(projectKey string) ([]sdk.Pipeline, error)
 }
 
+// MaintenanceClient manage maintenance mode on CDS
+type MaintenanceClient interface {
+	Maintenance(enable bool) error
+}
+
 // ProjectClient exposes project related functions
 type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project, groupName string) error
@@ -304,6 +309,7 @@ type Interface interface {
 	GRPCPluginsClient
 	HatcheryClient
 	BroadcastClient
+	MaintenanceClient
 	PipelineClient
 	PlatformClient
 	ProjectClient

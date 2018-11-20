@@ -1,4 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import {Injectable} from '@angular/core';
+import { UserNotificationSettings } from 'app/model/notification.model';
 import {Observable} from 'rxjs';
 import {NotificationOpts, Permission} from './notification.type';
 
@@ -9,7 +11,7 @@ export class NotificationService {
 
     permission: Permission;
 
-    constructor() {
+    constructor(private _http: HttpClient) {
         this.permission  = this.isSupported() ? Notification.permission : 'denied';
     }
 
@@ -77,5 +79,9 @@ export class NotificationService {
                 obs.complete();
             };
         });
+    }
+
+    getNotificationTypes(): Observable<{[key: string]: UserNotificationSettings }> {
+        return this._http.get<{[key: string]: UserNotificationSettings}>('/notification/type');
     }
 }

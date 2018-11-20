@@ -97,6 +97,9 @@ export class WorkflowNodeHookFormComponent implements OnInit {
             readOnly: this.readonly,
         };
         this.loadingModels = true;
+        if (!this.node && this.hook) {
+            this.node = Workflow.getNodeByID(this.hook.node_id, this.workflow);
+        }
         this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(
             first(),
             finalize(() => this.loadingModels = false)

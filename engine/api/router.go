@@ -495,6 +495,14 @@ func Auth(v bool) HandlerConfigParam {
 	return f
 }
 
+// MaintenanceAware route need CDS maintenance off
+func MaintenanceAware() HandlerConfigParam {
+	f := func(rc *service.HandlerConfig) {
+		rc.Options["maintenance_aware"] = "true"
+	}
+	return f
+}
+
 // EnableTracing on a route
 func EnableTracing() HandlerConfigParam {
 	f := func(rc *service.HandlerConfig) {
@@ -535,7 +543,7 @@ func (r *Router) InitStats(service, name string) error {
 	label = fmt.Sprintf("cds/%s/%s/sse_events", service, name)
 	r.Stats.SSEEvents = stats.Int64(label, "number of sse events", stats.UnitDimensionless)
 
-	log.Info("api> Stats initialized")
+	log.Info("router> Stats initialized")
 
 	return observability.RegisterView(
 		&view.View{

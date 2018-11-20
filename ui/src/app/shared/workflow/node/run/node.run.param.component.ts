@@ -10,7 +10,7 @@ import {Parameter} from '../../../../model/parameter.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Commit} from '../../../../model/repositories.model';
-import {WNode, WNodeContext, Workflow} from '../../../../model/workflow.model';
+import {WNode, WNodeContext, WNodeType, Workflow} from '../../../../model/workflow.model';
 import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
@@ -90,6 +90,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     loadingBranches = false;
     readOnly = false;
     linkedToRepo = false;
+    nodeTypeEnum = WNodeType;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
                 private _workflowEventStore: WorkflowEventStore, private _translate: TranslateService, private _toast: ToastService,

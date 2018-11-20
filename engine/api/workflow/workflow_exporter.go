@@ -44,8 +44,8 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, w io.Writer, opts 
 	}
 
 	// Useful to not display history_length in yaml or json if it's his default value
-	if e.HistoryLength == sdk.DefaultHistoryLength {
-		e.HistoryLength = 0
+	if e.HistoryLength != nil && *e.HistoryLength == sdk.DefaultHistoryLength {
+		e.HistoryLength = nil
 	}
 
 	// Marshal to the desired format

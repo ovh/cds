@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -51,15 +52,15 @@ var handledEventErrors = []string{
 }
 
 //Init the eventsBroker
-func (b *eventsBroker) Init(ctx context.Context) {
+func (b *eventsBroker) Init(ctx context.Context, panicCallback func(s string) (io.WriteCloser, error)) {
 	// Start cache Subscription
 	sdk.GoRoutine(ctx, "eventsBroker.Init.CacheSubscribe", func(ctx context.Context) {
 		b.cacheSubscribe(ctx, b.messages, b.cache)
-	})
+	}, panicCallback)
 
 	sdk.GoRoutine(ctx, "eventsBroker.Init.Start", func(ctx context.Context) {
-		b.Start(ctx)
-	})
+		b.Start(ctx, panicCallback)
+	}, panicCallback)
 }
 
 func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk.Event, store cache.Store) {
@@ -100,7 +101,7 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 }
 
 // Start the broker
-func (b *eventsBroker) Start(ctx context.Context) {
+func (b *eventsBroker) Start(ctx context.Context, panicCallback func(s string) (io.WriteCloser, error)) {
 	b.chanAddClient = make(chan (*eventsBrokerSubscribe))
 	b.chanRemoveClient = make(chan (string))
 
@@ -151,7 +152,7 @@ func (b *eventsBroker) Start(ctx context.Context) {
 								log.Error("eventsBroker> unable to send event to %s: %v", c.UUID, err)
 							}
 						}
-					},
+					}, panicCallback,
 				)
 			}
 

@@ -582,10 +582,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 	}
 
-	nodes := w.Nodes(true)
+	// Insert notifications
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
-		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
+		if err := insertNotification(db, store, w, n, u); err != nil {
 			return sdk.WrapError(err, "Unable to insert update workflow(%d) notification (%#v)", w.ID, n)
 		}
 	}
@@ -818,10 +818,10 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 		}
 	}
 
-	nodes := w.Nodes(true)
+	// Insert notifications
 	for i := range w.Notifications {
 		n := &w.Notifications[i]
-		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
+		if err := insertNotification(db, store, w, n, u); err != nil {
 			return sdk.WrapError(err, "Unable to update workflow(%d) notification (%#v)", w.ID, n)
 		}
 	}
@@ -843,10 +843,11 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	w.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
 	for _, h := range hooks {
 		w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
-			Ref:         h.Ref,
-			HookModelID: h.WorkflowHookModelID,
-			Config:      h.Config,
-			UUID:        h.UUID,
+			Ref:           h.Ref,
+			HookModelID:   h.WorkflowHookModelID,
+			Config:        h.Config,
+			UUID:          h.UUID,
+			HookModelName: h.WorkflowHookModel.Name,
 		})
 	}
 
@@ -860,6 +861,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 		return sdk.WrapError(err, "Unable to update workflow")
 	}
 	*w = sdk.Workflow(dbw)
+
 	event.PublishWorkflowUpdate(p.Key, *w, *oldWorkflow, u)
 	return nil
 }
@@ -1145,29 +1147,32 @@ func checkProjectPlatform(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error
 	if n.Context.ProjectPlatformID != 0 {
 		pp, ok := w.ProjectPlatforms[n.Context.ProjectPlatformID]
 		if !ok {
-			var ppProj *sdk.ProjectPlatform
 			for _, pl := range proj.Platforms {
 				if pl.ID == n.Context.ProjectPlatformID {
-					ppProj = &pl
+					pp = pl
+					break
 				}
 			}
-			if ppProj == nil {
+			if pp.ID == 0 {
 				return sdk.WrapError(sdk.ErrNotFound, "Platform %d not found", n.Context.ProjectPlatformID)
 			}
-			pp = *ppProj
-			w.ProjectPlatforms[n.Context.ProjectPlatformID] = *ppProj
+			w.ProjectPlatforms[n.Context.ProjectPlatformID] = pp
 		}
 		n.Context.ProjectPlatformName = pp.Name
 		return nil
 	}
 	if n.Context.ProjectPlatformName != "" {
-		var ppProj *sdk.ProjectPlatform
+		var ppProj sdk.ProjectPlatform
 		for _, pl := range proj.Platforms {
 			if pl.Name == n.Context.ProjectPlatformName {
-				ppProj = &pl
+				ppProj = pl
+				break
 			}
 		}
-		w.ProjectPlatforms[n.Context.ProjectPlatformID] = *ppProj
+		if ppProj.ID == 0 {
+			return sdk.WrapError(sdk.ErrNotFound, "Platform %s not found", n.Context.ProjectPlatformName)
+		}
+		w.ProjectPlatforms[ppProj.ID] = ppProj
 		n.Context.ProjectPlatformID = ppProj.ID
 	}
 	return nil
@@ -1218,19 +1223,13 @@ func checkApplication(store cache.Store, db gorp.SqlExecutor, proj *sdk.Project,
 			found := false
 			for _, a := range proj.Applications {
 				if a.ID == n.Context.ApplicationID {
+					app = a
 					found = true
 				}
 			}
 			if !found {
 				return sdk.WithStack(sdk.ErrApplicationNotFound)
 			}
-
-			// Load application from db to get stage/jobs
-			appDB, err := application.LoadByID(db, store, n.Context.ApplicationID, u, application.LoadOptions.WithDeploymentStrategies, application.LoadOptions.WithVariables)
-			if err != nil {
-				return sdk.WrapError(err, "unable to load application %d", n.Context.ApplicationID)
-			}
-			app = *appDB
 			w.Applications[n.Context.ApplicationID] = app
 		}
 		n.Context.ApplicationName = app.Name

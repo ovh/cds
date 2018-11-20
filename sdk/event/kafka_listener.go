@@ -12,7 +12,6 @@ import (
 
 // ConsumeKafka consume CDS Event from a kafka topic
 func ConsumeKafka(addr, topic, group, user, password string, ProcessEventFunc func(sdk.Event) error, ErrorLogFunc func(string, ...interface{})) error {
-
 	var config = sarama.NewConfig()
 	config.Net.TLS.Enable = true
 	config.Net.SASL.Enable = true

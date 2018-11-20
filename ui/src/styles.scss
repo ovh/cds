@@ -563,12 +563,12 @@ ngui-auto-complete .no-match-found {
   white-space: nowrap;
 }
 
-.node rect
+.node rect, .node circle
 {
   fill: transparent;
 }
 
-.node circle, .node ellipse {
+.node ellipse {
   stroke: #333;
   fill: white;
   stroke-width: 1.5px;

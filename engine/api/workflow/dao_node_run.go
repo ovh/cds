@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 	"github.com/ovh/venom"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -179,6 +180,9 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, 
 		query += " nowait"
 	}
 	if err := db.SelectOne(&rr, query, id); err != nil {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
+			return nil, sdk.ErrWorkflowNodeRunLocked
+		}
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
 	}
 	return fromDBNodeRun(rr, LoadRunOptions{})

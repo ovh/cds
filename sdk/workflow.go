@@ -66,10 +66,38 @@ func (w *Workflow) RetroMigrate() {
 	root := w.WorkflowData.Node.retroMigrate()
 	w.Root = &root
 
+	w.Joins = nil
 	if len(w.WorkflowData.Joins) > 0 {
 		w.Joins = make([]WorkflowNodeJoin, 0, len(w.WorkflowData.Joins))
 		for _, j := range w.WorkflowData.Joins {
 			w.Joins = append(w.Joins, j.retroMigrateJoin())
+		}
+	}
+
+	// Set context on old node
+	for _, n := range w.Nodes(true) {
+		node := w.GetNodeByName(n.Name)
+		if node.Context == nil {
+			continue
+		}
+
+		if node.Context.ApplicationID != 0 {
+			app, ok := w.Applications[node.Context.ApplicationID]
+			if ok {
+				node.Context.Application = &app
+			}
+		}
+		if node.Context.EnvironmentID != 0 {
+			env, ok := w.Environments[node.Context.EnvironmentID]
+			if ok {
+				node.Context.Environment = &env
+			}
+		}
+		if node.Context.ProjectPlatformID != 0 {
+			pp, ok := w.ProjectPlatforms[node.Context.ProjectPlatformID]
+			if ok {
+				node.Context.ProjectPlatform = &pp
+			}
 		}
 	}
 }

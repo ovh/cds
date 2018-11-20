@@ -97,12 +97,8 @@ export class WorkflowRunComponent implements OnInit {
         });
 
         this._activatedRoute.queryParams.subscribe(params => {
-            if (params['node_id']) {
-                this.selectedNodeID = params['node_id'];
-            }
-            if (params['node_ref']) {
-                this.selectedNodeRef = params['node_ref'];
-            }
+            this.selectedNodeID = params['node_id'];
+            this.selectedNodeRef = params['node_ref'];
             this.selectNode();
         });
     }

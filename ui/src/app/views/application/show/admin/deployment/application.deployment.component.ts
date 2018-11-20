@@ -1,5 +1,4 @@
 import {Component, Input, ViewChild} from '@angular/core';
-// import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize, first} from 'rxjs/operators';
 import {Application} from '../../../../../model/application.model';
@@ -7,6 +6,7 @@ import {ProjectPlatform} from '../../../../../model/platform.model';
 import {Project} from '../../../../../model/project.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
+import {ToastService} from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-application-deployment',
@@ -44,6 +44,10 @@ export class ApplicationDeploymentComponent {
         return null;
     }
 
+    constructor(private _appStore: ApplicationStore, private _toast: ToastService,
+                public _translate: TranslateService) {
+    }
+
     clickDeletePlatform(pfName: string) {
         this.loadingBtn = true;
         this._appStore.deleteDeploymentStrategy(
@@ -56,11 +60,12 @@ export class ApplicationDeploymentComponent {
         ).subscribe(
             app => {
                 this.application = app;
+                this._toast.success('', this._translate.instant('application_platform_deleted'));
             }
         );
     }
 
-    clickSavePlatform(pfName: string) {
+    updatePlatform(pfName: string) {
         this.loadingBtn = true;
         this._appStore.saveDeploymentStrategy(
             this._project.key,
@@ -73,11 +78,12 @@ export class ApplicationDeploymentComponent {
         ).subscribe(
             app => {
                 this.application = app;
+                this._toast.success('', this._translate.instant('application_platform_updated'));
             }
         );
     }
 
-    savePlatform() {
+    addPlatform() {
         this.loadingBtn = true;
         if (this.selectedPlatform.model) {
             this._appStore.saveDeploymentStrategy(
@@ -92,13 +98,9 @@ export class ApplicationDeploymentComponent {
                 app => {
                     this.application = app;
                     this.selectedPlatform = null;
+                    this._toast.success('', this._translate.instant('application_platform_added'));
                 }
             );
         }
     }
-
-    constructor(private _appStore: ApplicationStore,
-                /*private _toast: ToastService,*/ public _translate: TranslateService) {
-    }
-
 }

@@ -6,9 +6,11 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/venom"
@@ -93,13 +95,21 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 			uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, url.QueryEscape(envName))
 		}
 
-		_, code, err := sdk.Request("POST", uri, []byte(dataS))
-		if err == nil && code > 300 {
-			err = fmt.Errorf("HTTP %d", code)
+		var statusCode int
+		var errPost error
+		for retry := 0; retry < 10; retry++ {
+			_, statusCode, errPost = sdk.Request("POST", uri, []byte(dataS))
+			if statusCode != http.StatusConflict {
+				break
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+		if errPost == nil && statusCode > 300 {
+			errPost = fmt.Errorf("HTTP %d", statusCode)
 		}
 
-		if err != nil {
-			res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", err)
+		if errPost != nil {
+			res.Reason = fmt.Sprintf("JUnit parse: failed to send tests details: %s", errPost)
 			res.Status = sdk.StatusFail.String()
 			sendLog(res.Reason)
 			return res

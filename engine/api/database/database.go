@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/go-gorp/gorp"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -107,7 +108,7 @@ func Init(user, role, password, name, host string, port int, sslmode string, con
 
 	// connect_timeout in seconds
 	// statement_timeout in milliseconds
-	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d statement_timeout=%d", f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbConnectTimeout, f.dbTimeout)
+	dsn := f.dsn()
 	f.db, err = sql.Open(f.dbDriver, dsn)
 	if err != nil {
 		f.db = nil
@@ -135,6 +136,10 @@ func Init(user, role, password, name, host string, port int, sslmode string, con
 	return f, nil
 }
 
+func (f *DBConnectionFactory) dsn() string {
+	return fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d statement_timeout=%d", f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbConnectTimeout, f.dbTimeout)
+}
+
 // Status returns database driver and status in a printable string
 func (f *DBConnectionFactory) Status() sdk.MonitoringStatusLine {
 	if f.db == nil {
@@ -154,4 +159,9 @@ func (f *DBConnectionFactory) Close() error {
 		return f.db.Close()
 	}
 	return nil
+}
+
+// NewListener creates a new database connection dedicated to LISTEN / NOTIFY.
+func (f *DBConnectionFactory) NewListener(minReconnectInterval time.Duration, maxReconnectInterval time.Duration, eventCallback pq.EventCallbackType) *pq.Listener {
+	return pq.NewListener(f.dsn(), minReconnectInterval, maxReconnectInterval, eventCallback)
 }

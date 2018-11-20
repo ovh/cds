@@ -268,7 +268,16 @@ func (c *client) QueueJobSendSpawnInfo(ctx context.Context, isWorkflowJob bool, 
 		path = fmt.Sprintf("/queue/%d/spawn/infos", id)
 	}
 
-	_, err := c.PostJSON(ctx, path, &in, nil)
+	var statusCode int
+	var err error
+	for retry := 0; retry < 10; retry++ {
+		statusCode, err = c.PostJSON(ctx, path, &in, nil)
+		if statusCode != http.StatusConflict {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
 	return err
 }
 
@@ -304,8 +313,18 @@ func (c *client) QueueJobRelease(isWorkflowJob bool, id int64) error {
 }
 
 func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) error {
+	var statusCode int
+	var err error
+
 	path := fmt.Sprintf("/queue/workflows/%d/result", id)
-	_, err := c.PostJSON(ctx, path, res, nil)
+	for retry := 0; retry < 10; retry++ {
+		statusCode, err = c.PostJSON(ctx, path, res, nil)
+		if statusCode != http.StatusConflict {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
 	return err
 }
 

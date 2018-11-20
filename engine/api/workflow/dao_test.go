@@ -1091,11 +1091,11 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 				SourceNodeRefs: []string{"pip6", "pip5"},
 				Settings: sdk.UserNotificationSettings{
 					OnFailure:    sdk.UserNotificationAlways,
-					OnStart:      true,
+					OnStart:      &sdk.True,
 					OnSuccess:    sdk.UserNotificationAlways,
-					SendToAuthor: true,
-					SendToGroups: true,
-					Template: sdk.UserNotificationTemplate{
+					SendToAuthor: &sdk.True,
+					SendToGroups: &sdk.True,
+					Template: &sdk.UserNotificationTemplate{
 						Body:    "body",
 						Subject: "title",
 					},
