@@ -364,20 +364,16 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 		if found {
 			continue
 		}
-		name := item
-		if item != "status" {
-			name = "status_" + item
-		}
-
 		stype := line.Type
-		if stype == "" {
-			stype = "global"
+		if stype == "" || stype == "global" {
+			// ignore global status
+			continue
 		}
 
 		ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, line.Status), tag.Upsert(tagServiceName, service), tag.Upsert(tagType, stype))
-		v, err := observability.FindAndRegisterViewLast(name, tagsService)
+		v, err := observability.FindAndRegisterViewLast(item, tagsService)
 		if err != nil {
-			log.Warning("metrics>Errors while FindAndRegisterViewLast %s: %v", name, err)
+			log.Warning("metrics>Errors while FindAndRegisterViewLast %s: %v", item, err)
 			continue
 		}
 
