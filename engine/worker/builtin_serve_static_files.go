@@ -19,11 +19,11 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 		}
 
 		entrypoint := sdk.ParameterFind(&a.Parameters, "entrypoint")
-		if entrypoint == nil || entrypoint.Value == "" {
-			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("entrypoint parameter is empty. aborting")
-			sendLog(res.Reason)
-			return res
+		if entrypoint == nil {
+			entrypoint = &sdk.Parameter{Value: "index.html"}
+		}
+		if entrypoint.Value == "" {
+			entrypoint.Value = "index.html"
 		}
 
 		name := sdk.ParameterFind(&a.Parameters, "name")
@@ -50,6 +50,11 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		// To set entrypoint dynamically when the path is a single file
+		if len(filesPath) == 1 {
+			entrypoint.Value = filepath.Base(filesPath[0])
+		}
+
 		sendLog("Fetching files in progress...")
 		file, err := sdk.CreateTarFromPaths(filepath.Join(w.currentJob.workingDirectory, filepath.Dir(path)), filesPath, &sdk.TarOptions{TrimDirName: filepath.Dir(path)})
 		if err != nil {
@@ -59,7 +64,7 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		sendLog("Upload and serving files in progress...")
+		sendLog(fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
 		publicURL, _, _, err := w.client.QueueStaticFilesUpload(ctx, buildID, name.Value, entrypoint.Value, file)
 		if err != nil {
 			res.Status = sdk.StatusFail.String()
@@ -69,6 +74,7 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 		}
 
 		sendLog(fmt.Sprintf("Your files are serving at this URL: %s", publicURL))
+		sendLog("If you are in the CDS UI you can find all your static files in the artifact tab")
 
 		return res
 	}

@@ -256,18 +256,18 @@ Semver used if fully compatible with https://semver.org/
 	serveStaticAct := sdk.NewAction(sdk.ServeStaticFiles)
 	serveStaticAct.Type = sdk.BuiltinAction
 	serveStaticAct.Parameter(sdk.Parameter{
-		Name:        "path",
-		Description: "Path where static files will be uploaded",
-		Type:        sdk.StringParameter})
-	serveStaticAct.Parameter(sdk.Parameter{
 		Name:        "name",
 		Description: "Name to display in CDS UI",
 		Type:        sdk.StringParameter})
 	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "path",
+		Description: "Path where static files will be uploaded (example: mywebsite/*). If it's a file, the entrypoint would be set to this filename by default.",
+		Type:        sdk.StringParameter})
+	serveStaticAct.Parameter(sdk.Parameter{
 		Name:        "entrypoint",
-		Description: "Filename (and not path) for the entrypoint when serving static files",
+		Description: "Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html)",
 		Type:        sdk.StringParameter,
-		Value:       "index.html",
+		Value:       "",
 		Advanced:    true})
 
 	return checkBuiltinAction(db, serveStaticAct)
