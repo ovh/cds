@@ -688,7 +688,7 @@ func (c *client) queueIndirectStaticFilesUpload(ctx context.Context, staticFile 
 func (c *client) queueDirectStaticFilesUpload(staticFile *sdk.StaticFiles, tarContent io.Reader) (string, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, errc := writer.CreateFormFile("archive.tar.gz", "archive.tar.gz")
+	part, errc := writer.CreateFormFile("archive.tar", "archive.tar")
 	if errc != nil {
 		return "", errc
 	}
@@ -710,7 +710,7 @@ func (c *client) queueDirectStaticFilesUpload(staticFile *sdk.StaticFiles, tarCo
 	for i := 0; i <= c.config.Retry; i++ {
 		var code int
 		respBody, code, err = c.UploadMultiPart("POST", uri, body,
-			SetHeader("Content-Disposition", "attachment; filename=archive.tar.gz"),
+			SetHeader("Content-Disposition", "attachment; filename=archive.tar"),
 			SetHeader("Content-Type", writer.FormDataContentType()))
 		if err == nil && code < 300 {
 			var staticFileResp sdk.StaticFiles
@@ -719,9 +719,9 @@ func (c *client) queueDirectStaticFilesUpload(staticFile *sdk.StaticFiles, tarCo
 			}
 			return staticFileResp.PublicURL, nil
 		}
-		// if c.config.Verbose {
-		fmt.Printf("queueDirectStaticFilesUpload> Retry %d for status code %d : %v\n", i, code, err)
-		// }
+		if c.config.Verbose {
+			fmt.Printf("queueDirectStaticFilesUpload> Retry %d for status code %d : %v\n", i, code, err)
+		}
 		time.Sleep(3 * time.Second)
 	}
 

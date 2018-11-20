@@ -65,7 +65,7 @@ func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 		"X-Container-Meta-Web-Index":    entrypoint,
 		"X-Container-Read":              ".r:*,.rlistings",
 	}
-	fmt.Println(container)
+
 	log.Debug("SwiftStore> creating container %s", container)
 	if err := s.ContainerCreate(container, headers); err != nil {
 		return "", sdk.WrapError(err, "Unable to create container %s", container)
@@ -76,8 +76,6 @@ func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 	if errU != nil {
 		return "", sdk.WrapError(errU, "SwiftStore> Unable to bulk upload %s : %v : %+v", object, errU, res.Errors)
 	}
-
-	fmt.Printf("bulkResult --> %+v\n", res)
 
 	if err := data.Close(); err != nil {
 		return "", sdk.WrapError(err, "Unable to close data buffer")
