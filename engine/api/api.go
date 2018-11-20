@@ -11,11 +11,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
-<<<<<<< HEAD
-	"go.opencensus.io/stats/view"
-	"go.opencensus.io/tag"
-=======
->>>>>>> cr
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
@@ -587,11 +582,7 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("unable to init router metrics: %v", err)
 	}
 
-	log.Info("Initializing Stats")
-	if err := a.initStats(ctx); err != nil {
-		log.Error("unable to init api stats: %v", err)
-	}
-	
+	log.Info("Initializing Metrics")
 	if err := a.initMetrics(ctx); err != nil {
 		log.Error("unable to init api metrics: %v", err)
 	}
@@ -803,73 +794,6 @@ func (a *API) Serve(ctx context.Context) error {
 	return nil
 }
 
-func (a *API) initMetrics(ctx context.Context) error {
-	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", a.Name)
-	a.Metrics.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
-
-	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", a.Name)
-	a.Metrics.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
-
-	log.Info("api> Metrics initialized")
-
-	tagCDSInstance, _ := tag.NewKey("cds")
-	tags := []tag.Key{tagCDSInstance}
-
-	a.Metrics.nbUsers = stats.Int64("cds/cds-api/nb_users", "number of users", stats.UnitDimensionless)
-	a.Metrics.nbApplications = stats.Int64("cds/cds-api/nb_applications", "nb_applications", stats.UnitDimensionless)
-	a.Metrics.nbProjects = stats.Int64("cds/cds-api/nb_projects", "nb_projects", stats.UnitDimensionless)
-	a.Metrics.nbGroups = stats.Int64("cds/cds-api/nb_groups", "nb_groups", stats.UnitDimensionless)
-	a.Metrics.nbPipelines = stats.Int64("cds/cds-api/nb_pipelines", "nb_pipelines", stats.UnitDimensionless)
-	a.Metrics.nbWorkflows = stats.Int64("cds/cds-api/nb_workflows", "nb_workflows", stats.UnitDimensionless)
-	a.Metrics.nbArtifacts = stats.Int64("cds/cds-api/nb_artifacts", "nb_artifacts", stats.UnitDimensionless)
-	a.Metrics.nbWorkerModels = stats.Int64("cds/cds-api/nb_worker_models", "nb_worker_models", stats.UnitDimensionless)
-	a.Metrics.nbWorkflowRuns = stats.Int64("cds/cds-api/nb_workflow_runs", "nb_workflow_runs", stats.UnitDimensionless)
-	a.Metrics.nbWorkflowNodeRuns = stats.Int64("cds/cds-api/nb_workflow_node_runs", "nb_workflow_node_runs", stats.UnitDimensionless)
-	a.Metrics.nbMaxWorkersBuilding = stats.Int64("cds/cds-api/nb_max_workers_building", "nb_max_workers_building", stats.UnitDimensionless)
-
-	a.Metrics.queue = stats.Int64("cds/cds-api/queue", "queue", stats.UnitDimensionless)
-	a.Metrics.status = stats.Int64("cds/cds-api/status", "status", stats.UnitDimensionless)
-
-	tagRange, _ = tag.NewKey("range")
-	tagStatus, _ = tag.NewKey("status")
-	tagComponent, _ = tag.NewKey("component")
-
-	tagsRange := []tag.Key{tagCDSInstance, tagRange, tagStatus}
-	tagsComponent := []tag.Key{tagCDSInstance, tagComponent, tagStatus}
-
-	a.computeMetrics(ctx)
-
-	err := observability.RegisterView(
-		observability.NewViewLast("nb_users", a.Metrics.nbUsers, tags),
-		observability.NewViewLast("nb_applications", a.Metrics.nbApplications, tags),
-		observability.NewViewLast("nb_projects", a.Metrics.nbProjects, tags),
-		observability.NewViewLast("nb_groups", a.Metrics.nbGroups, tags),
-		observability.NewViewLast("nb_pipelines", a.Metrics.nbPipelines, tags),
-		observability.NewViewLast("nb_workflows", a.Metrics.nbWorkflows, tags),
-		observability.NewViewLast("nb_artifacts", a.Metrics.nbArtifacts, tags),
-		observability.NewViewLast("nb_worker_models", a.Metrics.nbWorkerModels, tags),
-		observability.NewViewLast("nb_workflow_runs", a.Metrics.nbWorkflowRuns, tags),
-		observability.NewViewLast("nb_workflow_node_runs", a.Metrics.nbWorkflowNodeRuns, tags),
-		observability.NewViewLast("nb_max_workers_building", a.Metrics.nbMaxWorkersBuilding, tags),
-		observability.NewViewLast("queue", a.Metrics.queue, tagsRange),
-		observability.NewViewLast("status", a.Metrics.status, tagsComponent),
-		observability.NewViewCount("workflow_runs_started", a.Metrics.WorkflowRunStarted, tags),
-		observability.NewViewCount("workflow_runs_failed", a.Metrics.WorkflowRunFailed, tags),
-	)
-
-	return err
-}
-
-func newView(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
-	return &view.View{
-		Name:        name,
-		Description: s.Description(),
-		Measure:     s,
-		Aggregation: view.LastValue(),
-		TagKeys:     tags,
-	}
-}
-
 const panicDumpTTL = 60 * 60 * 24 // 24 hours
 
 func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
@@ -877,4 +801,3 @@ func (a *API) PanicDump() func(s string) (io.WriteCloser, error) {
 		return cache.NewWriteCloser(a.Cache, cache.Key("api", "panic_dump", s), panicDumpTTL), nil
 	}
 }
-
