@@ -95,6 +95,10 @@ type DriverWithRedirect interface {
 	StoreURL(o Object) (url string, key string, err error)
 	// FetchURL returns a temporary url and a secret key to fetch an object
 	FetchURL(o Object) (url string, key string, err error)
+	// ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
+	ServeStaticFilesURL(o Object, entrypoint string) (string, string, error)
+	// GetPublicURL returns a public url to fetch an object (check your object ACLs before)
+	GetPublicURL(o Object) (url string, err error)
 }
 
 // Initialize setup wanted ObjectStore driver

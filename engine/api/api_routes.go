@@ -340,8 +340,8 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing()))
 	r.Handle("/queue/workflows/{permID}/staticfiles/{name}", r.POSTEXECUTE(api.postWorkflowJobStaticFilesHandler, NeedWorker(), EnableTracing()))
-	// r.Handle("/queue/workflows/{permID}/staticfiles/{ref}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing()))
-	// r.Handle("/queue/workflows/{permID}/staticfiles/{ref}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/staticfiles/{name}/url", r.POSTEXECUTE(api.postWorkflowJobStaticFilesWithTempURLHandler, NeedWorker(), EnableTracing()))
+	r.Handle("/queue/workflows/{permID}/staticfiles/{name}/url/callback", r.POSTEXECUTE(api.postWorkflowJobStaticFilesWithTempURLCallbackHandler, NeedWorker(), EnableTracing()))
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", r.GET(api.getParameterTypeHandler))

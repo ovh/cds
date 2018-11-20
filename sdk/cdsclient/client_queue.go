@@ -587,11 +587,12 @@ func (c *client) queueIndirectStaticFilesTempURL(ctx context.Context, staticFile
 
 func (c *client) queueIndirectStaticFilesTempURLPost(url string, content []byte) error {
 	//Post the file to the temporary URL
+	fmt.Println(url + "&extract-archive=tar")
 	var retry = 10
 	var globalErr error
 	var body []byte
 	for i := 0; i < retry; i++ {
-		req, errRequest := http.NewRequest("PUT", url, bytes.NewBuffer(content))
+		req, errRequest := http.NewRequest("PUT", url+"&extract-archive=tar", bytes.NewBuffer(content))
 		if errRequest != nil {
 			return errRequest
 		}
@@ -607,6 +608,7 @@ func (c *client) queueIndirectStaticFilesTempURLPost(url string, content []byte)
 				globalErr = err
 				continue
 			}
+			fmt.Println("body --->", string(body))
 
 			if resp.StatusCode >= 300 {
 				globalErr = fmt.Errorf("[%d] Unable to upload static files: (HTTP %d) %s", i, resp.StatusCode, string(body))
@@ -634,6 +636,7 @@ func (c *client) queueIndirectStaticFilesUpload(ctx context.Context, staticFile 
 	if err != nil {
 		return "", sdk.WrapError(err, "Cannot read tar content")
 	}
+	fmt.Println("iciiii ----->", string(tarBytes))
 
 	if err := c.queueIndirectStaticFilesTempURLPost(staticFile.TempURL, tarBytes); err != nil {
 		// If we got a 401 error from the objectstore, ask for a fresh temporary url and repost the artifact

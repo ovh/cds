@@ -4,9 +4,11 @@ import (
 	"context"
 	"mime"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -84,119 +86,103 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 	}
 }
 
-//
-// func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
-// 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-// 		if !objectstore.Instance().TemporaryURLSupported {
-// 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler")
-// 		}
-//
-// 		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
-// 		if !ok {
-// 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler > cast error")
-// 		}
-//
-// 		// Load existing workflow Run Job
-// 		id, errI := requestVarInt(r, "permID")
-// 		if errI != nil {
-// 			return sdk.WrapError(errI, "postWorkflowJobArtifacWithTempURLHandler> Invalid node job run ID")
-// 		}
-//
-// 		vars := mux.Vars(r)
-// 		ref := vars["ref"]
-//
-// 		hash, errG := generateHash()
-// 		if errG != nil {
-// 			return sdk.WrapError(errG, "postWorkflowJobArtifacWithTempURLHandler> Could not generate hash")
-// 		}
-//
-// 		art := sdk.WorkflowNodeRunArtifact{}
-// 		if err := service.UnmarshalBody(r, &art); err != nil {
-// 			return sdk.WithStack(err)
-// 		}
-//
-// 		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
-// 		if errJ != nil {
-// 			return sdk.WrapError(errJ, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node job run")
-// 		}
-//
-// 		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
-// 		if errR != nil {
-// 			return sdk.WrapError(errR, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node run")
-// 		}
-//
-// 		tag, errT := base64.RawURLEncoding.DecodeString(ref)
-// 		if errT != nil {
-// 			return sdk.WrapError(errT, "postWorkflowJobArtifacWithTempURLHandler> Cannot decode ref")
-// 		}
-//
-// 		art.WorkflowID = nodeRun.WorkflowRunID
-// 		art.WorkflowNodeRunID = nodeRun.ID
-// 		art.DownloadHash = hash
-// 		art.Tag = string(tag)
-// 		art.Ref = ref
-//
-// 		var retryURL = 10
-// 		var url, key string
-// 		var errorStoreURL error
-//
-// 		for i := 0; i < retryURL; i++ {
-// 			url, key, errorStoreURL = store.StoreURL(&art)
-// 			if errorStoreURL != nil {
-// 				log.Warning("Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
-// 			} else {
-// 				// no error
-// 				break
-// 			}
-// 			time.Sleep(100 * time.Millisecond)
-// 		}
-//
-// 		if url == "" || key == "" {
-// 			return sdk.WrapError(errorStoreURL, "Could not generate hash after %d attempts", retryURL)
-// 		}
-//
-// 		art.TempURL = url
-// 		art.TempURLSecretKey = key
-//
-// 		cacheKey := cache.Key("workflows:staticfiles", art.GetPath(), art.GetName())
-// 		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour
-//
-// 		return service.WriteJSON(w, art, http.StatusOK)
-// 	}
-// }
-//
-// func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
-// 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-// 		if !objectstore.Instance().TemporaryURLSupported {
-// 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler")
-// 		}
-//
-// 		art := sdk.WorkflowNodeRunArtifact{}
-// 		if err := service.UnmarshalBody(r, &art); err != nil {
-// 			return err
-// 		}
-//
-// 		cacheKey := cache.Key("workflows:artifacts", art.GetPath(), art.GetName())
-// 		cachedArt := sdk.WorkflowNodeRunArtifact{}
-// 		if !api.Cache.Get(cacheKey, &cachedArt) {
-// 			return sdk.WrapError(sdk.ErrNotFound, "postWorkflowJobArtifactWithTempURLCallbackHandler> Unable to find artifact, key:%s", cacheKey)
-// 		}
-//
-// 		if !art.Equal(cachedArt) {
-// 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler> Submitted artifact doesn't match, key:%s art:%v cachedArt:%v", cacheKey, art, cachedArt)
-// 		}
-//
-// 		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), art.WorkflowNodeRunID, workflow.LoadRunOptions{WithArtifacts: true, DisableDetailledNodeRun: true})
-// 		if errR != nil {
-// 			return sdk.WrapError(errR, "Cannot load node run")
-// 		}
-//
-// 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
-// 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-// 			_ = objectstore.Delete(&art)
-// 			return sdk.WrapError(err, "Cannot update workflow node run")
-// 		}
-//
-// 		return nil
-// 	}
-// }
+func (api *API) postWorkflowJobStaticFilesWithTempURLHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !objectstore.Instance().TemporaryURLSupported {
+			return sdk.ErrForbidden
+		}
+
+		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		if !ok {
+			return sdk.WrapError(sdk.ErrForbidden, "cast error")
+		}
+
+		// Load existing workflow Run Job
+		id, errI := requestVarInt(r, "permID")
+		if errI != nil {
+			return sdk.WrapError(errI, "Invalid node job run ID")
+		}
+
+		vars := mux.Vars(r)
+		name := vars["name"]
+
+		var staticfile sdk.StaticFiles
+		if err := service.UnmarshalBody(r, &staticfile); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		if errJ != nil {
+			return sdk.WrapError(errJ, "Cannot load node job run")
+		}
+		staticfile.NodeRunID = nodeJobRun.WorkflowNodeRunID
+		staticfile.Name = name
+
+		var retryURL = 10
+		var url, key string
+		var errorStoreURL error
+		for i := 0; i < retryURL; i++ {
+			url, key, errorStoreURL = store.ServeStaticFilesURL(&staticfile, staticfile.EntryPoint)
+			if errorStoreURL != nil {
+				log.Warning("Error on store.StoreURL: %v - Try %d/%d", errorStoreURL, i, retryURL)
+			} else {
+				// no error
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+
+		if url == "" || key == "" {
+			return sdk.WrapError(errorStoreURL, "Could not generate hash after %d attempts", retryURL)
+		}
+
+		staticfile.TempURL = url
+		staticfile.SecretKey = key
+
+		cacheKey := cache.Key("workflows:staticfiles", staticfile.GetPath(), staticfile.GetName())
+		api.Cache.SetWithTTL(cacheKey, staticfile, 60*60) //Put this in cache for 1 hour
+
+		return service.WriteJSON(w, staticfile, http.StatusOK)
+	}
+}
+
+func (api *API) postWorkflowJobStaticFilesWithTempURLCallbackHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !objectstore.Instance().TemporaryURLSupported {
+			return sdk.ErrForbidden
+		}
+
+		var staticfile sdk.StaticFiles
+		if err := service.UnmarshalBody(r, &staticfile); err != nil {
+			return err
+		}
+
+		cacheKey := cache.Key("workflows:staticfiles", staticfile.GetPath(), staticfile.GetName())
+		var cachedStaticFiles sdk.StaticFiles
+		if !api.Cache.Get(cacheKey, &cachedStaticFiles) {
+			return sdk.WrapError(sdk.ErrNotFound, "Unable to find artifact, key:%s", cacheKey)
+		}
+
+		if !staticfile.Equal(cachedStaticFiles) {
+			return sdk.WrapError(sdk.ErrForbidden, "Submitted artifact doesn't match, key:%s art:%v cachedStaticFiles:%v", cacheKey, staticfile, cachedStaticFiles)
+		}
+
+		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		if !ok {
+			return sdk.WrapError(sdk.ErrForbidden, "cast error")
+		}
+
+		publicURL, errP := store.GetPublicURL(&cachedStaticFiles)
+		if errP != nil {
+			return sdk.WrapError(errP, "Cannot get public URL")
+		}
+		staticfile.PublicURL = publicURL
+
+		if err := workflow.InsertStaticFiles(api.mustDB(), &staticfile); err != nil {
+			_ = objectstore.Delete(&staticfile)
+			return sdk.WrapError(err, "Cannot update workflow node run")
+		}
+
+		return service.WriteJSON(w, staticfile, http.StatusOK)
+	}
+}

@@ -178,6 +178,11 @@ func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
 	return url, string(key), nil
 }
 
+// GetPublicURL returns a public url to fetch an object (check your object ACLs before)
+func (s *SwiftStore) GetPublicURL(o Object) (url string, err error) {
+	return s.StorageUrl + "/" + (s.containerprefix + o.GetPath()), nil
+}
+
 // ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
 func (s *SwiftStore) ServeStaticFilesURL(o Object, entrypoint string) (string, string, error) {
 	container := s.containerprefix + o.GetPath()

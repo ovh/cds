@@ -22,12 +22,19 @@ type StaticFiles struct {
 }
 
 //GetName returns the name the artifact
-func (c *StaticFiles) GetName() string {
-	return base64.RawURLEncoding.EncodeToString([]byte(c.Name))
+func (staticfile *StaticFiles) GetName() string {
+	return base64.RawURLEncoding.EncodeToString([]byte(staticfile.Name))
 }
 
 //GetPath returns the path of the artifact
-func (c *StaticFiles) GetPath() string {
-	container := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%d-%s", c.NodeJobRunID, url.PathEscape(c.Name))))
+func (staticfile *StaticFiles) GetPath() string {
+	container := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%d-%s", staticfile.NodeJobRunID, url.PathEscape(staticfile.Name))))
 	return container
+}
+
+// Equal returns true if  StaticFiles are equal to another one
+func (staticfile StaticFiles) Equal(currStaticfile StaticFiles) bool {
+	return currStaticfile.NodeRunID == staticfile.NodeRunID &&
+		currStaticfile.Name == staticfile.Name &&
+		currStaticfile.EntryPoint == staticfile.EntryPoint
 }
