@@ -575,7 +575,6 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		WorkflowData: &sdk.WorkflowData{
 			Node: sdk.Node{
 				Name: "node1",
-				Ref:  "node1",
 				Type: sdk.NodeTypePipeline,
 				Context: &sdk.NodeContext{
 					PipelineID:    pip.ID,
@@ -600,7 +599,6 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 					{
 						ChildNode: sdk.Node{
 							Name: "node2",
-							Ref:  "node2",
 							Context: &sdk.NodeContext{
 								PipelineID: pip3.ID,
 							},
@@ -623,9 +621,8 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
 
 	w1.Name = "test_2"
-	w1.Root.PipelineID = pip2.ID
-	w1.Root.Context.Application = &app2
-	w1.Root.Context.ApplicationID = app2.ID
+	w1.WorkflowData.Node.Context.PipelineID = pip2.ID
+	w1.WorkflowData.Node.Context.ApplicationID = app2.ID
 
 	test.NoError(t, workflow.Update(context.TODO(), db, cache, w1, w1old, proj, u))
 
@@ -634,8 +631,8 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	test.NoError(t, err)
 
 	assert.Equal(t, w1.ID, w2.ID)
-	assert.Equal(t, app2.ID, w2.Root.Context.Application.ID)
-	assert.Equal(t, env.ID, w2.Root.Context.Environment.ID)
+	assert.Equal(t, app2.ID, w2.WorkflowData.Node.Context.ApplicationID)
+	assert.Equal(t, env.ID, w2.WorkflowData.Node.Context.EnvironmentID)
 
 	test.NoError(t, workflow.Delete(context.TODO(), db, cache, proj, w2))
 }

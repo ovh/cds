@@ -14,12 +14,14 @@ func insertNodeTriggerData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) er
 	for i := range n.Triggers {
 		t := &n.Triggers[i]
 		t.ID = 0
-		// Create child to get its ID
-		if err := insertNodeData(db, w, &t.ChildNode, false); err != nil {
-			return sdk.WrapError(err, "insertNodeTriggerData> Unable to insert destination node")
-		}
 
-		// Set ID
+		// Is child already exist
+		if t.ChildNode.ID == 0 {
+			// Create child to get its ID
+			if err := insertNodeData(db, w, &t.ChildNode, false); err != nil {
+				return sdk.WrapError(err, "Unable to insert destination node")
+			}
+		}
 		t.ChildNodeID = t.ChildNode.ID
 		t.ParentNodeID = n.ID
 
