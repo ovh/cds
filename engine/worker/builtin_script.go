@@ -123,7 +123,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			res.Status = sdk.StatusUnknown.String()
 
 			env := os.Environ()
-			cmd.Env = []string{}
+			cmd.Env = []string{"CI=1"}
 			// filter technical env variables
 			for _, e := range env {
 				if strings.HasPrefix(e, "CDS_") {
