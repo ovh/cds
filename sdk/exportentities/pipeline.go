@@ -477,6 +477,11 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 		return
 	}
 
+	a, ok, e = s.AsServeStaticFiles()
+	if ok {
+		return
+	}
+
 	a, ok, e = s.AsJUnitReport()
 	if ok {
 		return
