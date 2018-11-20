@@ -365,9 +365,8 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 			continue
 		}
 		stype := line.Type
-		if stype == "" || stype == "global" {
-			// ignore global status
-			continue
+		if stype == "" {
+			stype = "global"
 		}
 
 		ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, line.Status), tag.Upsert(tagServiceName, service), tag.Upsert(tagType, stype))
