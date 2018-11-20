@@ -84,7 +84,7 @@ func processWorkflowDataRun(ctx context.Context, db gorp.SqlExecutor, store cach
 	}
 	report, _ = report.Merge(r1, nil)
 
-	r2, errJ := processAllJoins(ctx, db, store, proj, wr, mapNodes, maxsn)
+	r2, errJ := processAllJoins(ctx, db, store, proj, wr, mapNodes)
 	if errJ != nil {
 		return nil, false, errJ
 	}
