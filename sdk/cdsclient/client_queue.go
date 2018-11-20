@@ -572,7 +572,7 @@ func (c *client) QueueStaticFilesUpload(ctx context.Context, nodeJobRunID int64,
 		NodeJobRunID: nodeJobRunID,
 	}
 	var store sdk.ArtifactsStore
-	_, _ = c.GetJSON(ctx, "/artifact/store", &store)
+	_, _ = c.GetJSON(ctx, "/staticfiles/store", &store)
 	if store.TemporaryURLSupported {
 		publicURL, err := c.queueIndirectStaticFilesUpload(ctx, &staticFile, tarContent)
 		return publicURL, true, time.Since(t0), err
@@ -606,7 +606,6 @@ func (c *client) queueIndirectStaticFilesTempURL(ctx context.Context, staticFile
 
 func (c *client) queueIndirectStaticFilesTempURLPost(url string, content []byte) error {
 	//Post the file to the temporary URL
-	fmt.Println(url + "&extract-archive=tar")
 	var retry = 10
 	var globalErr error
 	var body []byte
@@ -627,7 +626,6 @@ func (c *client) queueIndirectStaticFilesTempURLPost(url string, content []byte)
 				globalErr = err
 				continue
 			}
-			fmt.Println("body --->", string(body))
 
 			if resp.StatusCode >= 300 {
 				globalErr = fmt.Errorf("[%d] Unable to upload static files: (HTTP %d) %s", i, resp.StatusCode, string(body))
@@ -655,7 +653,6 @@ func (c *client) queueIndirectStaticFilesUpload(ctx context.Context, staticFile 
 	if err != nil {
 		return "", sdk.WrapError(err, "Cannot read tar content")
 	}
-	fmt.Println("iciiii ----->", string(tarBytes))
 
 	if err := c.queueIndirectStaticFilesTempURLPost(staticFile.TempURL, tarBytes); err != nil {
 		// If we got a 401 error from the objectstore, ask for a fresh temporary url and repost the artifact

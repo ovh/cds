@@ -16,6 +16,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func (api *API) getStaticFilesStoreHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//TODO: to delete when swift will be available with auto-extract and temporary url middlewares
+		store := objectstore.Instance()
+		store.TemporaryURLSupported = false
+		return service.WriteJSON(w, store, http.StatusOK)
+	}
+}
+
 func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		db := api.mustDB()
