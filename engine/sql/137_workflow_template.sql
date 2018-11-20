@@ -14,8 +14,9 @@ CREATE TABLE IF NOT EXISTS "workflow_template" (
   parameters JSONB
 );
 
-SELECT create_index('workflow_template','IDX_WORKFLOW_TEMPLATES_GROUP_ID', 'group_id');
 SELECT create_unique_index('workflow_template', 'IDX_WORKFLOW_TEMPLATES_KEY_NAME', 'group_id,slug');
+
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TEMPLATE_GROUP', 'workflow_template', 'group', 'group_id', 'id');
 
 CREATE TABLE IF NOT EXISTS "workflow_template_instance" (
   id BIGSERIAL PRIMARY KEY,
@@ -25,6 +26,10 @@ CREATE TABLE IF NOT EXISTS "workflow_template_instance" (
   workflow_template_version BIGINT NOT NULL,
   request JSONB
 );
+
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TEMPLATE_INSTANCE_TEMPLATE', 'workflow_template_instance', 'workflow_template', 'workflow_template_id', 'id');
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TEMPLATE_INSTANCE_PROJECT', 'workflow_template_instance', 'project', 'project_id', 'id');
+SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TEMPLATE_INSTANCE_WORKFLOW', 'workflow_template_instance', 'workflow', 'workflow_id', 'id');
 
 CREATE TABLE IF NOT EXISTS workflow_template_audit (
   id BIGSERIAL PRIMARY KEY,
