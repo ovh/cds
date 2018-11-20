@@ -2118,6 +2118,7 @@
 <li><a href="#get-mon-db-migrate">GET <code>/mon/db/migrate</code></a></li>
 <li><a href="#get-mon-errors-uuid">GET <code>/mon/errors/&lt;uuid&gt;</code></a></li>
 <li><a href="#get-mon-metrics">GET <code>/mon/metrics</code></a></li>
+<li><a href="#get-mon-panic-uuid">GET <code>/mon/panic/&lt;uuid&gt;</code></a></li>
 <li><a href="#get-mon-smtp-ping">GET <code>/mon/smtp/ping</code></a></li>
 <li><a href="#get-mon-status">GET <code>/mon/status</code></a></li>
 </ul></li>
@@ -2279,6 +2280,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getMetricsHandler%22">getMetricsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-mon-panic-uuid">GET <code>/mon/panic/&lt;uuid&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/mon/panic/&lt;uuid&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: false</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPanicDumpHandler%22">getPanicDumpHandler</a></td>
 </tr>
 </tbody>
 </table>
