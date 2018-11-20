@@ -129,8 +129,8 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 	}
 
 	var found bool
-	for _, n := range notif.SourceNodeIDs {
-		if n == nodeRun.WorkflowNodeID {
+	for _, n := range notif.SourceNodeRefs {
+		if n == nodeRun.WorkflowNodeName {
 			found = true
 			break
 		}
