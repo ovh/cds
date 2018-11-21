@@ -82,13 +82,16 @@ func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Serv
 		}
 		return nil, sdk.WithStack(err)
 	}
-	ss := make([]sdk.Service, len(sdbs))
+	ss := make([]sdk.Service, 0, len(sdbs))
 	for i := 0; i < len(sdbs); i++ {
 		s := &sdbs[i]
 		if err := s.PostGet(db); err != nil {
+			if err == sql.ErrNoRows {
+				continue
+			}
 			return nil, sdk.WrapError(err, "postGet on srv id:%d name:%s type:%s lastHeartbeat:%v", s.ID, s.Name, s.Type, s.LastHeartbeat)
 		}
-		ss[i] = sdk.Service(sdbs[i])
+		ss = append(ss, sdk.Service(sdbs[i]))
 	}
 	return ss, nil
 }
