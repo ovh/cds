@@ -44,6 +44,3 @@ func Delete(db gorp.SqlExecutor, i interface{}) error {
 	_, err := db.Delete(i)
 	return sdk.WithStack(err)
 }
-
-// And returns givens query strings joined with AND.
-func And(qs ...string) string { return fmt.Sprintf("(%s)", strings.Join(qs, " AND ")) }

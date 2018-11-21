@@ -15,7 +15,7 @@ func GetAllForGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.WorkflowTem
 	wts := []sdk.WorkflowTemplate{}
 
 	if _, err := db.Select(&wts,
-		"SELECT * FROM workflow_template WHERE group_id = ANY(string_to_array(:$1, ',')::int[])",
+		"SELECT * FROM workflow_template WHERE group_id = ANY(string_to_array($1, ',')::int[])",
 		gorpmapping.IDsToQueryString(groupIDs),
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflow templates")
@@ -29,7 +29,7 @@ func GetAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.WorkflowTemplate, erro
 	wts := []sdk.WorkflowTemplate{}
 
 	if _, err := db.Select(&wts,
-		"SELECT * FROM workflow_template WHERE id = ANY(string_to_array(:$1, ',')::int[])",
+		"SELECT * FROM workflow_template WHERE id = ANY(string_to_array($1, ',')::int[])",
 		gorpmapping.IDsToQueryString(ids),
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflow templates")
@@ -57,7 +57,7 @@ func GetByIDAndGroupIDs(db gorp.SqlExecutor, id int64, groupIDs []int64) (*sdk.W
 	w := sdk.WorkflowTemplate{}
 
 	if err := db.SelectOne(&w,
-		"SELECT * FROM workflow_template WHERE id = $1 AND group_id = ANY(string_to_array(:$2, ',')::int[])",
+		"SELECT * FROM workflow_template WHERE id = $1 AND group_id = ANY(string_to_array($2, ',')::int[])",
 		id, gorpmapping.IDsToQueryString(groupIDs),
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -74,7 +74,7 @@ func GetBySlugAndGroupIDs(db gorp.SqlExecutor, slug string, groupIDs []int64) (*
 	w := sdk.WorkflowTemplate{}
 
 	if err := db.SelectOne(&w,
-		"SELECT * FROM workflow_template WHERE slug = $1 AND group_id = ANY(string_to_array(:$2, ',')::int[])",
+		"SELECT * FROM workflow_template WHERE slug = $1 AND group_id = ANY(string_to_array($2, ',')::int[])",
 		slug, gorpmapping.IDsToQueryString(groupIDs),
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -112,8 +112,8 @@ func GetAuditsByTemplateIDsAndEventTypes(db gorp.SqlExecutor, templateIDs []int6
 
 	if _, err := db.Select(&awts,
 		`SELECT * FROM workflow_template_audit
-     WHERE workflow_template_id = ANY(string_to_array(:$1, ',')::int[])
-     AND event_type = ANY(string_to_array(:$2, ',')::text[])
+     WHERE workflow_template_id = ANY(string_to_array($1, ',')::int[])
+     AND event_type = ANY(string_to_array($2, ',')::text[])
      ORDER BY created ASC`,
 		gorpmapping.IDsToQueryString(templateIDs), strings.Join(eventTypes, ","),
 	); err != nil {
@@ -193,7 +193,7 @@ func GetInstancesByWorkflowIDs(db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.
 	wtis := []sdk.WorkflowTemplateInstance{}
 
 	if _, err := db.Select(&wtis,
-		"SELECT * FROM workflow_id = ANY(string_to_array(:$1, ',')::int[])",
+		"SELECT * FROM workflow_id = ANY(string_to_array($1, ',')::int[])",
 		gorpmapping.IDsToQueryString(workflowIDs),
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflow template instances")
@@ -244,8 +244,8 @@ func GetInstanceAuditsByInstanceIDsAndEventTypes(db gorp.SqlExecutor, instanceID
 
 	if _, err := db.Select(&awtis,
 		`SELECT * FROM workflow_template_instance_audit
-     WHERE workflow_template_instance_id = ANY(string_to_array(:$1, ',')::int[])
-     AND event_type = ANY(string_to_array(:$2, ',')::text[])
+     WHERE workflow_template_instance_id = ANY(string_to_array($1, ',')::int[])
+     AND event_type = ANY(string_to_array($2, ',')::text[])
      ORDER BY created ASC`,
 		gorpmapping.IDsToQueryString(instanceIDs), strings.Join(eventTypes, ","),
 	); err != nil {

@@ -7,7 +7,7 @@ import (
 
 // AggregateOnWorkflowTemplateInstance set workflow for each workflow template instance.
 func AggregateOnWorkflowTemplateInstance(db gorp.SqlExecutor, wtis ...*sdk.WorkflowTemplateInstance) error {
-	ws, err := GetAll(db, NewCriteria().IDs(sdk.WorkflowTemplateInstancesToWorkflowIDs(wtis)...))
+	ws, err := GetAllByIDs(db, sdk.WorkflowTemplateInstancesToWorkflowIDs(wtis))
 	if err != nil {
 		return err
 	}
