@@ -11,6 +11,7 @@ import (
 
 	"github.com/gizak/termui"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -20,6 +21,10 @@ var monitoringCmd = cli.Command{
 	Name:    "monitoring",
 	Short:   "CDS monitoring",
 	Aliases: []string{"ui"},
+}
+
+func monitoring() *cobra.Command {
+	return cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
 }
 
 func monitoringRun(v cli.Values) (interface{}, error) {

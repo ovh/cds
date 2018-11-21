@@ -9,7 +9,7 @@ import (
 // Action is the base element of CDS pipeline
 type Action struct {
 	ID             int64         `json:"id" yaml:"-"`
-	Name           string        `json:"name" cli:"name"`
+	Name           string        `json:"name" cli:"name,key"`
 	StepName       string        `json:"step_name,omitempty" yaml:"step_name,omitempty" cli:"step_name"`
 	Type           string        `json:"type" yaml:"-" cli:"type"`
 	Description    string        `json:"description" yaml:"desc,omitempty"`

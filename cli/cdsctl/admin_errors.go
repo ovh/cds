@@ -3,21 +3,21 @@ package main
 import (
 	"fmt"
 
-	"github.com/ovh/cds/cli"
 	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/cli"
 )
 
-var (
-	adminErrorsCmd = cli.Command{
-		Name:  "errors",
-		Short: "Manage CDS errors",
-	}
+var adminErrorsCmd = cli.Command{
+	Name:  "errors",
+	Short: "Manage CDS errors",
+}
 
-	adminErrors = cli.NewCommand(adminErrorsCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(adminErrorsGetCmd, adminErrorsGetFunc, nil),
-		})
-)
+func adminErrors() *cobra.Command {
+	return cli.NewCommand(adminErrorsCmd, nil, []*cobra.Command{
+		cli.NewCommand(adminErrorsGetCmd, adminErrorsGetFunc, nil),
+	})
+}
 
 var adminErrorsGetCmd = cli.Command{
 	Name:  "get",

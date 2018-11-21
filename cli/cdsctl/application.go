@@ -12,25 +12,24 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	applicationCmd = cli.Command{
-		Name:  "application",
-		Short: "Manage CDS application",
-	}
+var applicationCmd = cli.Command{
+	Name:  "application",
+	Short: "Manage CDS application",
+}
 
-	application = cli.NewCommand(applicationCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...),
-			cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil, withAllCommandModifiers()...),
-			cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil, withAllCommandModifiers()...),
-			applicationKey,
-			applicationGroup,
-			applicationVariable,
-			cli.NewCommand(applicationExportCmd, applicationExportRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(applicationImportCmd, applicationImportRun, nil, withAllCommandModifiers()...),
-		})
-)
+func application() *cobra.Command {
+	return cli.NewCommand(applicationCmd, nil, []*cobra.Command{
+		cli.NewListCommand(applicationListCmd, applicationListRun, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil, withAllCommandModifiers()...),
+		applicationKey(),
+		applicationGroup(),
+		applicationVariable(),
+		cli.NewCommand(applicationExportCmd, applicationExportRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(applicationImportCmd, applicationImportRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var applicationListCmd = cli.Command{
 	Name:  "list",

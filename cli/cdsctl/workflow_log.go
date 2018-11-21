@@ -14,35 +14,34 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-var (
-	workflowLogCmd = cli.Command{
-		Name:    "logs",
-		Aliases: []string{"log"},
-		Short:   "Manage CDS Workflow Run Logs",
-		Long: `Download logs from a workflow run.
+var workflowLogCmd = cli.Command{
+	Name:    "logs",
+	Aliases: []string{"log"},
+	Short:   "Manage CDS Workflow Run Logs",
+	Long: `Download logs from a workflow run.
 
-	# list all logs files on latest run 
+	# list all logs files on latest run
 	$ cdsctl workflow logs list KEY WF
 
 	# list all logs files on run number 1
 	$ cdsctl workflow logs list KEY WF 1
-	
+
 	# download all logs files on latest run
 	$ cdsctl workflow logs download KEY WF
-	
+
 	# download only one file, for run number 1
 	$ cdsctl workflow logs download KEY WF 1 --pattern="MyJob"
 	# this will download file WF-1.0-pipeline.myPipeline-stage.MyStage-job.MyJob-status.Success-step.0.log
 
 `,
-	}
+}
 
-	workflowLog = cli.NewCommand(workflowLogCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(workflowLogListCmd, workflowLogListRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowLogDownloadCmd, workflowLogDownloadRun, nil, withAllCommandModifiers()...),
-		})
-)
+func workflowLog() *cobra.Command {
+	return cli.NewCommand(workflowLogCmd, nil, []*cobra.Command{
+		cli.NewCommand(workflowLogListCmd, workflowLogListRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowLogDownloadCmd, workflowLogDownloadRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var workflowLogListCmd = cli.Command{
 	Name:  "list",
@@ -53,7 +52,7 @@ var workflowLogListCmd = cli.Command{
 	$ cdsctl workflow logs list KEY WF
 
 	# list all logs files from projet KEY, with workflow named WD on run 1
-	$ cdsctl workflow logs list KEY WF 1	
+	$ cdsctl workflow logs list KEY WF 1
 
 `,
 	Ctx: []cli.Arg{

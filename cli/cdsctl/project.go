@@ -12,29 +12,33 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-var (
-	projectCmd = cli.Command{
-		Name:  "project",
-		Short: "Manage CDS project",
-	}
-)
+var projectCmd = cli.Command{
+	Name:  "project",
+	Short: "Manage CDS project",
+}
 
-func project() *cobra.Command {
-	cmds := []*cobra.Command{
+func projectCommands() []*cobra.Command {
+	return []*cobra.Command{
 		cli.NewListCommand(projectListCmd, projectListRun, nil, withAllCommandModifiers()...),
 		cli.NewGetCommand(projectShowCmd, projectShowRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectCreateCmd, projectCreateRun, nil),
 		cli.NewDeleteCommand(projectDeleteCmd, projectDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(projectFavoriteCmd, projectFavoriteRun, nil, withAllCommandModifiers()...),
-		projectKey,
-		projectGroup,
-		projectVariable,
-		projectPlatform,
+		projectKey(),
+		projectGroup(),
+		projectVariable(),
+		projectPlatform(),
 	}
-	if cli.ShellMode {
-		cmds = append(cmds, application, workflow, environment)
-	}
-	return cli.NewCommand(projectCmd, nil, cmds)
+}
+
+func project() *cobra.Command { return cli.NewCommand(projectCmd, nil, projectCommands()) }
+
+func projectShell() *cobra.Command {
+	return cli.NewCommand(projectCmd, nil, append(projectCommands(),
+		application(),
+		workflow(),
+		environment(),
+	))
 }
 
 var projectListCmd = cli.Command{

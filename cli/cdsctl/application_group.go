@@ -13,17 +13,16 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-var (
-	applicationGroupCmd = cli.Command{
-		Name:  "group",
-		Short: "Manage CDS group linked to an application",
-	}
+var applicationGroupCmd = cli.Command{
+	Name:  "group",
+	Short: "Manage CDS group linked to an application",
+}
 
-	applicationGroup = cli.NewCommand(applicationGroupCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(applicationGroupImportCmd, applicationGroupImportRun, nil, withAllCommandModifiers()...),
-		})
-)
+func applicationGroup() *cobra.Command {
+	return cli.NewCommand(applicationGroupCmd, nil, []*cobra.Command{
+		cli.NewCommand(applicationGroupImportCmd, applicationGroupImportRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var applicationGroupImportCmd = cli.Command{
 	Name:  "import",

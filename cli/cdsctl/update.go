@@ -5,7 +5,8 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/inconshreveable/go-update"
+	goUpdate "github.com/inconshreveable/go-update"
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -22,6 +23,10 @@ var updateCmd = cli.Command{
 			Kind:    reflect.Bool,
 		},
 	},
+}
+
+func update() *cobra.Command {
+	return cli.NewCommand(updateCmd, updateRun, nil, cli.CommandWithoutExtraFlags)
 }
 
 func updateRun(v cli.Values) error {
@@ -55,7 +60,7 @@ func updateRun(v cli.Values) error {
 		return fmt.Errorf("Error http code: %d, url called: %s", resp.StatusCode, urlBinary)
 	}
 
-	if err := update.Apply(resp.Body, update.Options{}); err != nil {
+	if err := goUpdate.Apply(resp.Body, goUpdate.Options{}); err != nil {
 		return fmt.Errorf("Error while updating binary from CDS API: %s", err)
 	}
 	fmt.Println("Update cdsctl done.")

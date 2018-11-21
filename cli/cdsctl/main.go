@@ -22,71 +22,54 @@ var (
 )
 
 func main() {
-	root = getRoot(false)
+	root = rootFromSubCommands([]*cobra.Command{
+		doc(), // hidden command
+		action(),
+		login(),
+		signup(),
+		application(),
+		environment(),
+		pipeline(),
+		group(),
+		health(),
+		project(),
+		worker(),
+		workflow(),
+		update(),
+		usr(),
+		shell(),
+		monitoring(),
+		version(),
+		encrypt(),
+		token(),
+		admin(),
+	})
 	if err := root.Execute(); err != nil {
 		cli.ExitOnError(err)
 	}
 }
 
-func getRoot(isShell bool) *cobra.Command {
-	login := cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
-	signup := cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
-	update := cli.NewCommand(updateCmd, updateRun, nil, cli.CommandWithoutExtraFlags)
-	version := cli.NewCommand(versionCmd, versionRun, nil, cli.CommandWithoutExtraFlags)
-	shell := cli.NewCommand(shellCmd, shellRun, nil, cli.CommandWithoutExtraFlags)
-	doc := cli.NewCommand(docCmd, docRun, nil, cli.CommandWithoutExtraFlags)
-	monitoring := cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
-
-	var cmds []*cobra.Command
-
-	if isShell {
-		cmds = []*cobra.Command{
-			project(),
-			admin(),
-		}
-	} else {
-		cmds = []*cobra.Command{
-			doc, // hidden command
-			action,
-			login,
-			signup,
-			application,
-			environment,
-			pipeline,
-			group,
-			health,
-			project(),
-			worker,
-			workflow,
-			update,
-			usr,
-			shell,
-			monitoring,
-			version,
-			encrypt,
-			token,
-			admin(),
-		}
-	}
-
-	root = cli.NewCommand(mainCmd, mainRun, cmds)
+func rootFromSubCommands(cmds []*cobra.Command) *cobra.Command {
+	root := cli.NewCommand(mainCmd, mainRun, cmds)
 
 	root.PersistentFlags().StringVarP(&configFile, "file", "f", "", "set configuration file")
 	root.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
 	root.PersistentFlags().BoolVarP(&noWarnings, "no-warnings", "w", false, "do not display warnings")
 	root.PersistentFlags().BoolVarP(&insecureSkipVerifyTLS, "insecure", "k", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
+
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		//Do not load config on login
-		if cmd == login || cmd == signup || cmd == doc || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
+		if cmd.Name() == "login" || cmd.Name() == "signup" || cmd.Name() == "doc" || strings.HasPrefix(cmd.Use, "doc ") || (cmd.Run == nil && cmd.RunE == nil) {
 			return
 		}
 
 		var err error
 		cfg, err = loadConfig(configFile)
-		cli.ExitOnError(err, login.Help)
+		cli.ExitOnError(err, login().Help)
 
 		client = cdsclient.New(*cfg)
 	}
+
 	return root
 }
 

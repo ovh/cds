@@ -13,17 +13,16 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-var (
-	environmentGroupCmd = cli.Command{
-		Name:  "group",
-		Short: "Manage CDS group linked to an environment",
-	}
+var environmentGroupCmd = cli.Command{
+	Name:  "group",
+	Short: "Manage CDS group linked to an environment",
+}
 
-	environmentGroup = cli.NewCommand(environmentGroupCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(environmentGroupImportCmd, environmentGroupImportRun, nil, withAllCommandModifiers()...),
-		})
-)
+func environmentGroup() *cobra.Command {
+	return cli.NewCommand(environmentGroupCmd, nil, []*cobra.Command{
+		cli.NewCommand(environmentGroupImportCmd, environmentGroupImportRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var environmentGroupImportCmd = cli.Command{
 	Name:  "import",

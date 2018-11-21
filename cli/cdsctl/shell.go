@@ -47,12 +47,14 @@ Other commands are available depending on your position. Example, run interactiv
 `,
 }
 
-var current *shellCurrent
+func shell() *cobra.Command {
+	return cli.NewCommand(shellCmd, shellRun, nil, cli.CommandWithoutExtraFlags)
+}
 
 type shellCurrent struct {
-	cmd   string // contains first word: "ls", "cd", etc...
-	path  string
-	rline *readline.Instance
+	cmd        string // contains first word: "ls", "cd", etc...
+	path, home string
+	tree       *cobra.Command
 }
 
 func shellRun(v cli.Values) error {
@@ -67,10 +69,18 @@ func shellRun(v cli.Values) error {
 	// enable shell mode, this will prevent to os.Exit if there is an error on a command
 	cli.ShellMode = true
 
+	// prepare cobra command tree for shell
+	current := &shellCurrent{
+		tree: rootFromSubCommands([]*cobra.Command{
+			projectShell(),
+			adminShell(),
+		}),
+	}
+
 	l, err := readline.NewEx(&readline.Config{
 		Prompt:            "\033[31m»\033[0m ",
 		HistoryFile:       path.Join(userHomeDir(), ".cdsctl_history"),
-		AutoComplete:      getCompleter(),
+		AutoComplete:      getCompleter(current),
 		InterruptPrompt:   "^C",
 		EOFPrompt:         "exit",
 		HistorySearchFold: true,
@@ -82,24 +92,26 @@ func shellRun(v cli.Values) error {
 
 	defer l.Close()
 
-	current = &shellCurrent{rline: l}
-
+	home := "/"
 	// auto-discover current project with .git
 	if err := discoverConf(); err == nil {
 		if r, err := repo.New("."); err == nil {
 			if proj, _ := r.LocalConfigGet("cds", "project"); proj != "" {
-				current.path = "/project/" + proj
+				home = "/project/" + proj
 				if wf, _ := r.LocalConfigGet("cds", "workflow"); wf != "" {
-					current.path += "/workflow/" + wf
+					home += "/workflow/" + wf
 				} else if app, _ := r.LocalConfigGet("cds", "application"); app != "" {
-					current.path += "/application/" + app
+					home += "/application/" + app
 				}
 			}
 		}
 	}
+	current.home = home
+
+	current.path = home
 
 	for {
-		l.SetPrompt(fmt.Sprintf("%s \033[31m»\033[0m ", current.pwd()))
+		l.SetPrompt(fmt.Sprintf("\033[96m%s\033[0m \033[31m»\033[0m ", current.pwdCmd()))
 		line, err := l.Readline()
 		if err == readline.ErrInterrupt {
 			if len(line) == 0 {
@@ -117,13 +129,14 @@ func shellRun(v cli.Values) error {
 			break
 		}
 		if len(line) > 0 {
-			current.shellProcessCommand(line)
+			current.shellProcessCommand(l, line)
 		}
 	}
+
 	return nil
 }
 
-func getCompleter() *readline.PrefixCompleter {
+func getCompleter(s *shellCurrent) *readline.PrefixCompleter {
 	return readline.NewPrefixCompleter(
 		readline.PcItem("mode",
 			readline.PcItem("vi"),
@@ -131,41 +144,41 @@ func getCompleter() *readline.PrefixCompleter {
 		),
 		readline.PcItem("help"),
 		readline.PcItem("cd",
-			readline.PcItemDynamic(listCurrent(false)),
+			readline.PcItemDynamic(listCurrent(s, false)),
 			readline.PcItemDynamic(findComplete()),
 		),
 		readline.PcItem("ls",
-			readline.PcItemDynamic(listCurrent(false)),
+			readline.PcItemDynamic(listCurrent(s, false)),
 		),
 		readline.PcItem("ll",
-			readline.PcItemDynamic(listCurrent(false)),
+			readline.PcItemDynamic(listCurrent(s, false)),
 		),
 		readline.PcItem("open"),
 		readline.PcItem("pwd"),
 		readline.PcItem("version"),
 		readline.PcItem("exit"),
-		readline.PcItemDynamic(listCurrent(true)),
+		readline.PcItemDynamic(listCurrent(s, true)),
 	)
 }
 
-func listCurrent(onlyCommands bool) func(string) []string {
+func listCurrent(s *shellCurrent, onlyCommands bool) func(string) []string {
 	return func(line string) []string {
 		if onlyCommands {
-			_, _, cmds, _ := current.shellListCommand(current.path, nil, onlyCommands)
+			_, _, _, cmds, _ := s.shellListCommand(s.path, nil, onlyCommands)
 			return sdk.DeleteEmptyValueFromArray(cmds)
 		}
-		output, submenus, _, _ := current.shellListCommand(current.path, nil, onlyCommands)
-		return sdk.DeleteEmptyValueFromArray(append(output, submenus...))
+		_, items, submenus, _, _ := s.shellListCommand(s.path, nil, onlyCommands)
+		return sdk.DeleteEmptyValueFromArray(append(items, submenus...))
 	}
 }
 
 type shellCommandFunc func(current *shellCurrent, args []string)
 
-func getShellCommands() map[string]shellCommandFunc {
-	m := map[string]shellCommandFunc{
+func getShellCommands(rline *readline.Instance, s *shellCurrent) map[string]shellCommandFunc {
+	return map[string]shellCommandFunc{
 		"mode": func(current *shellCurrent, args []string) {
 			if len(args) == 0 {
-				if current.rline.IsVimMode() {
+				if rline.IsVimMode() {
 					println("current mode: vim")
 				} else {
 					println("current mode: emacs")
@@ -173,61 +186,27 @@ func getShellCommands() map[string]shellCommandFunc {
 			} else {
 				switch args[0] {
 				case "vi":
-					current.rline.SetVimMode(true)
+					rline.SetVimMode(true)
 				case "emacs":
-					current.rline.SetVimMode(false)
+					rline.SetVimMode(false)
 				default:
 					fmt.Println("invalid mode:", args[0])
 				}
 			}
 		},
-		"help": func(current *shellCurrent, args []string) {
-			fmt.Println(shellCmd.Long)
-		},
+		"help": func(current *shellCurrent, args []string) { fmt.Println(shellCmd.Long) },
 		"cd": func(current *shellCurrent, args []string) {
-			if len(args) == 0 {
-				current.path = ""
-				return
+			if !s.cdCmd(args) {
+				fmt.Println("no such item or command")
 			}
-
-			if args[0] == ".." {
-				idx := strings.LastIndex(current.path, "/")
-				current.path = current.path[:idx]
-				return
-			}
-
-			// path must start with / and end without /
-			if strings.HasPrefix(args[0], "/") { // absolute cd /...
-				current.path = args[0]
-			} else { // relative cd foo...
-				current.path += "/" + args[0]
-			}
-			current.path = strings.TrimSuffix(current.path, "/")
 		},
-		"find": func(current *shellCurrent, args []string) {
-			if len(args) == 0 {
-				current.path = ""
-				return
-			}
-			current.findCmd(args[0])
-		},
-		"open": func(current *shellCurrent, args []string) {
-			current.openBrowser()
-		},
-		"ls": func(current *shellCurrent, args []string) {
-			current.lsCmd(args)
-		},
-		"ll": func(current *shellCurrent, args []string) {
-			current.lsCmd(args)
-		},
-		"pwd": func(current *shellCurrent, args []string) {
-			fmt.Println(current.pwd())
-		},
-		"version": func(current *shellCurrent, args []string) {
-			versionRun(nil)
-		},
+		"find":    func(current *shellCurrent, args []string) { s.findCmd(args) },
+		"open":    func(current *shellCurrent, args []string) { s.openBrowser() },
+		"ls":      func(current *shellCurrent, args []string) { s.lsCmd(args) },
+		"ll":      func(current *shellCurrent, args []string) { s.lsCmd(args) },
+		"pwd":     func(current *shellCurrent, args []string) { fmt.Println(s.pwdCmd()) },
+		"version": func(current *shellCurrent, args []string) { _ = versionRun(nil) },
 	}
-	return m
 }
 
 func findComplete() func(string) []string {
@@ -258,7 +237,62 @@ func findComplete() func(string) []string {
 	}
 }
 
-func (current *shellCurrent) findCmd(search string) {
+func (s *shellCurrent) cdCmd(args []string) bool {
+	path := s.path
+	defer func() { s.path = path }()
+
+	if len(args) == 0 || args[0] == "" {
+		path = s.home
+		return true
+	}
+
+	split := strings.Split(args[0], "/")
+	for i, s := range split {
+		if s == "" {
+			// check for absolute path
+			if i == 0 {
+				path = "/"
+			}
+		} else if s == ".." {
+			idx := strings.LastIndex(path, "/")
+			if idx >= 0 {
+				path = path[:idx]
+			}
+		} else if s != "" && s != "." {
+			if path != "/" {
+				path += "/"
+			}
+			path += s
+		}
+	}
+
+	split = strings.Split(path, "/")
+	if len(split) > 0 && path != "/" {
+		for i := 1; i < len(split); i++ {
+			_, items, submenus, _, _ := s.shellListCommand(strings.Join(split[:i], "/"), nil, false)
+			var found bool
+			for _, v := range append(items, submenus...) {
+				if v == split[i] {
+					found = true
+					break
+				}
+			}
+			if !found {
+				path = s.path
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func (s *shellCurrent) findCmd(args []string) {
+	var search string
+	if len(args) > 0 {
+		search = args[0]
+	}
+
 	nav, err := client.Navbar()
 	if err != nil {
 		fmt.Printf("Error while getting data: %s\n", err)
@@ -290,63 +324,52 @@ func (current *shellCurrent) findCmd(search string) {
 	}
 }
 
-func (current *shellCurrent) lsCmd(args []string) {
-	inargs := args
-	path := current.path
-	if len(args) == 0 { // ls -> no path
-		// default values
-	} else {
-		if strings.HasPrefix(args[0], "/") { // ls /foo -> absolute path
+func (s *shellCurrent) lsCmd(args []string) {
+	path := s.path
+	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
+		if strings.HasPrefix(args[0], "/") { // absolute path
 			path = args[0]
-			inargs = args[1:]
-		} else if strings.HasPrefix(args[0], "-") { // ls foo -> relative path
-			// default values
-		} else { // ls foo -> relative path
-			path = current.path + args[0]
-			inargs = args[1:]
+		} else { // relative path
+			path = s.path + args[0]
 		}
+		args = args[1:]
 	}
 
-	output, submenus, cmds, _ := current.shellListCommand(path, inargs, false)
-	for _, s := range output {
-		if len(strings.TrimSpace(s)) > 0 {
-			fmt.Println(s)
-		}
-	}
+	output, _, submenus, cmds, _ := s.shellListCommand(path, args, false)
+	fmt.Print(output)
 	if len(submenus) > 0 || len(cmds) > 0 {
 		fmt.Println() // empty line between list data and sub-menus/commands list
 	}
 	if len(submenus) > 0 {
 		fmt.Printf("\033[32m»\033[0m sub-menu: %s\n", strings.Join(submenus, " - "))
 	}
-
 	if len(cmds) > 0 {
 		fmt.Printf("\033[32m»\033[0m additional commands: %s\n", strings.Join(cmds, " - "))
 	}
 }
 
-func (current *shellCurrent) pwd() string {
-	if current.path == "" {
+func (s *shellCurrent) pwdCmd() string {
+	if s.path == "" {
 		return "/"
 	}
-	return current.path
+	return s.path
 }
 
-func (current *shellCurrent) shellProcessCommand(input string) {
+func (s *shellCurrent) shellProcessCommand(rline *readline.Instance, input string) {
 	tuple := strings.Split(input, " ")
-	current.cmd = tuple[0]
-	if f, ok := getShellCommands()[current.cmd]; ok {
+	s.cmd = tuple[0]
+	if f, ok := getShellCommands(rline, s)[s.cmd]; ok {
 		if f == nil {
 			fmt.Printf("Command %s not defined in this context\n", input)
 			return
 		}
-		f(current, tuple[1:])
+		f(s, tuple[1:])
 		return
 	}
 	// default commands not found, search a sub commands
-	_, _, _, cdmsCobra := current.shellListCommand(current.path, tuple[1:], true)
+	_, _, _, _, cdmsCobra := s.shellListCommand(s.path, tuple[1:], true)
 	for _, c := range cdmsCobra {
-		if c.Name() == current.cmd {
+		if c.Name() == s.cmd {
 			flags := tuple[1:]
 			if sdk.IsInArray("-h", flags) || sdk.IsInArray("--help", flags) {
 				c.Usage()
@@ -359,76 +382,122 @@ func (current *shellCurrent) shellProcessCommand(input string) {
 					args = append(args, a)
 				}
 			}
-			c.Run(c, append(current.getArgs(c), args...))
+			c.Run(c, append(s.getArgsFromPathForCmd(s.path, c), args...))
 			return
 		}
 	}
 	fmt.Println("unknown command", input)
 }
 
-func (current *shellCurrent) shellListCommand(path string, flags []string, onlyCommands bool) ([]string, []string, []string, []*cobra.Command) {
+func (s *shellCurrent) shellListCommand(path string, flags []string, onlyCommands bool) (string, []string, []string, []string, []*cobra.Command) {
 	spath := strings.Split(path, "/")
-	cmd := getRoot(true)
-	for index := 1; index < len(spath); index++ {
-		key := spath[index]
+
+	cmd := s.tree
+	// try to find recursively the cobra command that match given path
+	// /project/TEST/workflow/test -> cmd = workflow
+	for i := range spath {
+		key := spath[i]
 		if f := findCommand(cmd, key); f != nil {
 			cmd = f
 		}
 	}
-	if cmd.Name() == "" {
-		return []string{"root cmd NOT found"}, nil, nil, nil
-	}
+	cmdStrict := cmd.Name() == spath[len(spath)-1] || (cmd.Name() == s.tree.Name() && spath[len(spath)-1] == "")
 
-	var out []string
+	var out string
+	var items []string
 	if !onlyCommands {
 		buf := new(bytes.Buffer)
-		if cmd.Name() == spath[len(spath)-1] { // list command
+		// if the command found is at the end of given path
+		if cmdStrict {
+			// if command has a list sub command, execute it
 			if lsCmd := findCommand(cmd, "list"); lsCmd != nil {
-				if len(flags) == 0 && current.cmd != "ll" {
+				if len(flags) == 0 {
 					flags = []string{"-q"}
 				}
 				lsCmd.ParseFlags(flags)
 				lsCmd.SetOutput(buf)
-				lsCmd.Run(lsCmd, current.getArgs(lsCmd))
+				lsCmd.Run(lsCmd, s.getArgsFromPathForCmd(path, lsCmd))
+				if buf.Len() > 0 {
+					for _, v := range strings.Split(buf.String(), "\n") {
+						if v != "" {
+							items = append(items, v)
+						}
+					}
+				}
 			}
 		} else { // try show command
 			if showCmd := findCommand(cmd, "show"); showCmd != nil {
 				showCmd.ParseFlags(flags)
 				showCmd.SetOutput(buf)
-				showCmd.Run(showCmd, current.getArgs(showCmd))
+				showCmd.Run(showCmd, s.getArgsFromPathForCmd(path, showCmd))
 			}
 		}
-		out = strings.Split(buf.String(), "\n")
+		out = buf.String()
 	}
 
 	// compute list sub-menus and commands
-	var submenus, cmds []string
-	var cmdsCobra []*cobra.Command
+	var submenus []string
 	for _, c := range cmd.Commands() {
 		// list only command with sub commands
-		if len(c.Commands()) > 0 && current.isCtxOK(c) {
-			submenus = append(submenus, c.Name())
-		} else if c.Name() != "list" && c.Name() != "show" { // list and show are the "ls" cmd
-			cmds = append(cmds, c.Name())
-			cmdsCobra = append(cmdsCobra, c)
+		if len(c.Commands()) > 0 && c.Run == nil {
+			var hasShowOrListCdm bool
+			allContextValid := true
+			for _, sub := range c.Commands() {
+				if !s.isCtxOK(path, sub) {
+					allContextValid = false
+					continue
+				}
+				if sub.Name() == "show" || sub.Name() == "list" {
+					hasShowOrListCdm = true
+					break
+				}
+			}
+			if hasShowOrListCdm || allContextValid {
+				submenus = append(submenus, c.Name())
+			}
+		}
+	}
+
+	var cmds []string
+	var cmdsCobra []*cobra.Command
+	for _, c := range cmd.Commands() {
+		if len(c.Commands()) == 0 && c.Name() != "list" && c.Name() != "show" {
+			if (!s.hasCtx(path, c) && cmdStrict) ||
+				(s.hasCtx(path, c) && s.isCtxOK(path, c) && !s.isCtxOK(strings.Join(spath[:len(spath)-2], "/"), c)) {
+				cmds = append(cmds, c.Name())
+				cmdsCobra = append(cmdsCobra, c)
+			}
 		}
 	}
 
 	if onlyCommands {
-		return nil, nil, cmds, cmdsCobra
+		return "", nil, nil, cmds, cmdsCobra
 	}
 
-	return out, submenus, cmds, nil
+	return out, items, submenus, cmds, nil
 }
 
-func (current *shellCurrent) isCtxOK(cmd *cobra.Command) bool {
-	if a, withContext := current.extractArg(cmd, _ProjectKey); withContext && a == "" {
+func (s *shellCurrent) hasCtx(path string, cmd *cobra.Command) bool {
+	if _, withContext := s.extractArg(path, cmd, _ProjectKey); withContext {
+		return true
+	}
+	if _, withContext := s.extractArg(path, cmd, _ApplicationName); withContext {
+		return true
+	}
+	if _, withContext := s.extractArg(path, cmd, _WorkflowName); withContext {
+		return true
+	}
+	return false
+}
+
+func (s *shellCurrent) isCtxOK(path string, cmd *cobra.Command) bool {
+	if a, withContext := s.extractArg(path, cmd, _ProjectKey); withContext && a == "" {
 		return false
 	}
-	if a, withContext := current.extractArg(cmd, _ApplicationName); withContext && a == "" {
+	if a, withContext := s.extractArg(path, cmd, _ApplicationName); withContext && a == "" {
 		return false
 	}
-	if a, withContext := current.extractArg(cmd, _WorkflowName); withContext && a == "" {
+	if a, withContext := s.extractArg(path, cmd, _WorkflowName); withContext && a == "" {
 		return false
 	}
 	return true
@@ -436,7 +505,7 @@ func (current *shellCurrent) isCtxOK(cmd *cobra.Command) bool {
 
 // key: _ProjectKey, _ApplicationName, _WorkflowName
 // pos: position to extract
-func (current *shellCurrent) extractArg(cmd *cobra.Command, key string) (string, bool) {
+func (s *shellCurrent) extractArg(path string, cmd *cobra.Command, key string) (string, bool) {
 	var inpath string
 	switch key {
 	case _ApplicationName:
@@ -444,11 +513,18 @@ func (current *shellCurrent) extractArg(cmd *cobra.Command, key string) (string,
 	case _WorkflowName:
 		inpath = "workflow"
 	}
-	var cmdWithContext bool
-	if strings.Contains(cmd.Use, strings.ToUpper(key)) {
-		cmdWithContext = true
-		if strings.HasPrefix(current.path, "/project/") {
-			t := strings.Split(current.path, "/")
+
+	// check is ctx key is in cmd use, ex: [ PROJECT-KEY ]
+	split := strings.Split(cmd.Use, "[")
+	if len(split) < 2 {
+		return "", false
+	}
+	split = strings.Split(split[1], "]")
+
+	cmdWithContext := strings.Contains(split[0], strings.ToUpper(key))
+	if cmdWithContext {
+		if strings.HasPrefix(path, "/project/") {
+			t := strings.Split(path, "/")
 			if inpath == "" {
 				return t[2], cmdWithContext
 			} else if inpath != "" && len(t) >= 5 && t[3] == inpath {
@@ -459,15 +535,15 @@ func (current *shellCurrent) extractArg(cmd *cobra.Command, key string) (string,
 	return "", cmdWithContext
 }
 
-func (current *shellCurrent) getArgs(cmd *cobra.Command) []string {
+func (s *shellCurrent) getArgsFromPathForCmd(path string, cmd *cobra.Command) []string {
 	args := []string{}
-	if a, _ := current.extractArg(cmd, _ProjectKey); a != "" {
+	if a, _ := s.extractArg(path, cmd, _ProjectKey); a != "" {
 		args = append(args, a)
 	}
-	if a, _ := current.extractArg(cmd, _ApplicationName); a != "" {
+	if a, _ := s.extractArg(path, cmd, _ApplicationName); a != "" {
 		args = append(args, a)
 	}
-	if a, _ := current.extractArg(cmd, _WorkflowName); a != "" {
+	if a, _ := s.extractArg(path, cmd, _WorkflowName); a != "" {
 		args = append(args, a)
 	}
 	return args
@@ -482,7 +558,7 @@ func findCommand(cmd *cobra.Command, key string) *cobra.Command {
 	return nil
 }
 
-func (current *shellCurrent) openBrowser() {
+func (s *shellCurrent) openBrowser() {
 	var baseURL string
 	configUser, err := client.ConfigUser()
 	if err != nil {
@@ -499,7 +575,7 @@ func (current *shellCurrent) openBrowser() {
 		return
 	}
 
-	browser.OpenURL(baseURL + current.path)
+	_ = browser.OpenURL(baseURL + s.path)
 }
 
 func shellASCII() {

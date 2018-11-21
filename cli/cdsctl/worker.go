@@ -11,19 +11,18 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var (
-	workerCmd = cli.Command{
-		Name:  "worker",
-		Short: "Manage CDS worker",
-	}
+var workerCmd = cli.Command{
+	Name:  "worker",
+	Short: "Manage CDS worker",
+}
 
-	worker = cli.NewCommand(workerCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(workerListCmd, workerListRun, nil),
-			cli.NewCommand(workerDisableCmd, workerDisableRun, nil),
-			workerModel,
-		})
-)
+func worker() *cobra.Command {
+	return cli.NewCommand(workerCmd, nil, []*cobra.Command{
+		cli.NewListCommand(workerListCmd, workerListRun, nil),
+		cli.NewCommand(workerDisableCmd, workerDisableRun, nil),
+		workerModel(),
+	})
+}
 
 var workerListCmd = cli.Command{
 	Name:  "list",
@@ -43,10 +42,10 @@ func workerListRun(v cli.Values) (cli.ListResult, error) {
 var workerDisableCmd = cli.Command{
 	Name:  "disable",
 	Short: "Disable CDS workers",
-	Long: `Disable one on more CDS worker by their names. 
+	Long: `Disable one on more CDS worker by their names.
 
 For example if your want to disable all CDS workers you can run:
-	
+
 $ cdsctl worker disable $(cdsctl worker list)`,
 	VariadicArgs: cli.Arg{
 		Name: "name",

@@ -7,21 +7,20 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	applicationVariableCmd = cli.Command{
-		Name:  "variable",
-		Short: "Manage CDS application variables",
-	}
+var applicationVariableCmd = cli.Command{
+	Name:  "variable",
+	Short: "Manage CDS application variables",
+}
 
-	applicationVariable = cli.NewCommand(applicationVariableCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(applicationVariableCreateCmd, applicationCreateVariableRun, nil, withAllCommandModifiers()...),
-			cli.NewGetCommand(applicationVariableShowCmd, applicationVariableShowRun, nil, withAllCommandModifiers()...),
-			cli.NewListCommand(applicationVariableListCmd, applicationListVariableRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(applicationVariableDeleteCmd, applicationDeleteVariableRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(applicationVariableUpdateCmd, applicationUpdateVariableRun, nil, withAllCommandModifiers()...),
-		})
-)
+func applicationVariable() *cobra.Command {
+	return cli.NewCommand(applicationVariableCmd, nil, []*cobra.Command{
+		cli.NewCommand(applicationVariableCreateCmd, applicationCreateVariableRun, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(applicationVariableShowCmd, applicationVariableShowRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(applicationVariableListCmd, applicationListVariableRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(applicationVariableDeleteCmd, applicationDeleteVariableRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(applicationVariableUpdateCmd, applicationUpdateVariableRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var applicationVariableCreateCmd = cli.Command{
 	Name:  "add",

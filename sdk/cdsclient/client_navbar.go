@@ -8,7 +8,7 @@ import (
 
 func (c *client) Navbar() ([]sdk.NavbarProjectData, error) {
 	navbar := []sdk.NavbarProjectData{}
-	if _, err := c.GetJSON(context.Background(), "/navbar", &navbar); err != nil {
+	if _, err := c.GetJSON(context.Background(), "/ui/navbar", &navbar); err != nil {
 		return nil, err
 	}
 	return navbar, nil

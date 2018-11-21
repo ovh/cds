@@ -6,38 +6,30 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var (
-	adminCmd = cli.Command{
-		Name:  "admin",
-		Short: "Manage CDS (admin only)",
-	}
-)
+var adminCmd = cli.Command{
+	Name:  "admin",
+	Short: "Manage CDS (admin only)",
+}
 
-func admin() *cobra.Command {
-	if cli.ShellMode {
-		return cli.NewCommand(adminCmd, nil,
-			[]*cobra.Command{
-				adminServices,
-				adminHooks,
-				adminPlatformModels,
-				adminPlugins,
-				adminBroadcasts,
-				adminMaintenance,
-				adminErrors,
-				usr,
-				group,
-				worker,
-				health,
-			})
+func adminCommands() []*cobra.Command {
+	return []*cobra.Command{
+		adminServices(),
+		adminHooks(),
+		adminPlatformModels(),
+		adminMaintenance(),
+		adminPlugins(),
+		adminBroadcasts(),
+		adminErrors(),
 	}
-	return cli.NewCommand(adminCmd, nil,
-		[]*cobra.Command{
-			adminServices,
-			adminHooks,
-			adminPlatformModels,
-			adminMaintenance,
-			adminPlugins,
-			adminBroadcasts,
-			adminErrors,
-		})
+}
+
+func admin() *cobra.Command { return cli.NewCommand(adminCmd, nil, adminCommands()) }
+
+func adminShell() *cobra.Command {
+	return cli.NewCommand(adminCmd, nil, append(adminCommands(),
+		usr(),
+		group(),
+		worker(),
+		health(),
+	))
 }

@@ -11,21 +11,20 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	adminPlatformModelsCmd = cli.Command{
-		Name:  "platform-model",
-		Short: "Manage CDS Platform models",
-	}
+var adminPlatformModelsCmd = cli.Command{
+	Name:  "platform-model",
+	Short: "Manage CDS Platform models",
+}
 
-	adminPlatformModels = cli.NewCommand(adminPlatformModelsCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(adminPlatformModelsListCmd, adminPlatformModelsListRun, nil),
-			cli.NewGetCommand(adminPlatformModelShowCmd, adminPlatformModelShowRun, nil),
-			cli.NewCommand(adminPlatformModelExportCmd, adminPlatformModelExportRun, nil),
-			cli.NewCommand(adminPlatformModelImportCmd, adminPlatformModelImportRun, nil),
-			cli.NewDeleteCommand(adminPlatformModelDeleteCmd, adminPlatformModelDeleteRun, nil),
-		})
-)
+func adminPlatformModels() *cobra.Command {
+	return cli.NewCommand(adminPlatformModelsCmd, nil, []*cobra.Command{
+		cli.NewListCommand(adminPlatformModelsListCmd, adminPlatformModelsListRun, nil),
+		cli.NewGetCommand(adminPlatformModelShowCmd, adminPlatformModelShowRun, nil),
+		cli.NewCommand(adminPlatformModelExportCmd, adminPlatformModelExportRun, nil),
+		cli.NewCommand(adminPlatformModelImportCmd, adminPlatformModelImportRun, nil),
+		cli.NewDeleteCommand(adminPlatformModelDeleteCmd, adminPlatformModelDeleteRun, nil),
+	})
+}
 
 // List command
 var adminPlatformModelsListCmd = cli.Command{

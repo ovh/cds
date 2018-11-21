@@ -6,18 +6,17 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var (
-	adminMaintenancesCmd = cli.Command{
-		Name:  "maintenance",
-		Short: "Manage CDS maintenance",
-	}
+var adminMaintenancesCmd = cli.Command{
+	Name:  "maintenance",
+	Short: "Manage CDS maintenance",
+}
 
-	adminMaintenance = cli.NewCommand(adminMaintenancesCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(adminMaintenanceEnableCmd, adminMaintenanceEnable, nil),
-			cli.NewCommand(adminMaintenanceDisableCmd, adminMaintenanceDisable, nil),
-		})
-)
+func adminMaintenance() *cobra.Command {
+	return cli.NewCommand(adminMaintenancesCmd, nil, []*cobra.Command{
+		cli.NewCommand(adminMaintenanceEnableCmd, adminMaintenanceEnable, nil),
+		cli.NewCommand(adminMaintenanceDisableCmd, adminMaintenanceDisable, nil),
+	})
+}
 
 var adminMaintenanceEnableCmd = cli.Command{
 	Name:  "enable",
