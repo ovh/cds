@@ -24,7 +24,7 @@ const (
 
 var izanami *client.Client
 
-// CheckContext represents the context send to izanami to check if the feature is enabled
+// CheckContext represents the context send to Izanami to check if the feature is enabled
 type CheckContext struct {
 	Key string `json:"key"`
 }
@@ -40,43 +40,66 @@ func List() []string {
 	return []string{FeatWorkflowAsCode, FeatWNode}
 }
 
-// Init initialize izanami client
+// Init initialize Izanami client
 func Init(apiURL, clientID, clientSecret string) error {
 	izc, err := client.New(apiURL, clientID, clientSecret)
 	SetClient(izc)
 	return err
 }
 
-// SetClient set a client driver for izanami
+// SetClient set a client driver for Izanami
 func SetClient(c *client.Client) {
 	izanami = c
 }
 
-// GetFromCache get feature tree for the given project from cache
+// GetFromCache get feature tree for the given project from cache, if not found in cache init from Izanami.
 func GetFromCache(store cache.Store, projectKey string) map[string]bool {
 	projFeats := ProjectFeatures{}
-	store.Get(cacheFeatureKey+projectKey, &projFeats)
-	return projFeats.Features
-}
 
-// IsEnabled check if feature is enabled for the given project
-func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
-	projFeats := ProjectFeatures{Key: projectKey, Features: make(map[string]bool)}
-	// No feature flipping
-	if izanami == nil || izanami.Feature() == nil {
-		projFeats.Features[featureID] = true
-		cache.Set(cacheFeatureKey+projectKey, projFeats)
-		return true
-	}
-
-	// Get from cache
-	if cache.Get(cacheFeatureKey+projectKey, &projFeats) {
-		if v, ok := projFeats.Features[featureID]; ok {
-			return v
+	if store.Get(cacheFeatureKey+projectKey, &projFeats) {
+		// if missing features, invalidate cache are rebuild data from Izanami
+		var missingFeature bool
+		for _, f := range List() {
+			if _, ok := projFeats.Features[f]; !ok {
+				missingFeature = true
+			}
+		}
+		if !missingFeature {
+			return projFeats.Features
 		}
 	}
 
-	// Get from izanami
+	// get all features from Izanami and store in cache
+	projFeats = ProjectFeatures{Key: projectKey, Features: make(map[string]bool)}
+	for _, f := range List() {
+		projFeats.Features[f] = getStatusFromIzanami(f, projectKey)
+	}
+
+	store.SetWithTTL(cacheFeatureKey+projectKey, projFeats, 60)
+
+	return projFeats.Features
+}
+
+// IsEnabled check if feature is enabled for the given project.
+func IsEnabled(store cache.Store, featureID string, projectKey string) bool {
+	fs := GetFromCache(store, projectKey)
+
+	if v, ok := fs[featureID]; ok {
+		return v
+	}
+
+	// if features not in cache, it means that it's not a key from listed in List() func
+	// try to get a value from Izanami
+	return getStatusFromIzanami(featureID, projectKey)
+}
+
+func getStatusFromIzanami(featureID string, projectKey string) bool {
+	// no feature flipping always return active.
+	if izanami == nil || izanami.Feature() == nil {
+		return true
+	}
+
+	// get from Izanami
 	resp, errCheck := izanami.Feature().CheckWithContext(featureID, CheckContext{projectKey})
 	if errCheck != nil {
 		if !strings.Contains(errCheck.Error(), "404") {
@@ -85,14 +108,6 @@ func IsEnabled(cache cache.Store, featureID string, projectKey string) bool {
 		}
 		resp.Active = true
 	}
-	projFeats.Key = projectKey
-	if projFeats.Features == nil {
-		projFeats.Features = make(map[string]bool)
-	}
-	projFeats.Features[featureID] = resp.Active
-
-	// Push in cache
-	cache.Set(cacheFeatureKey+projectKey, projFeats)
 
 	return resp.Active
 }
