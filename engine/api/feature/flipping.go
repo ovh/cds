@@ -57,7 +57,7 @@ func GetFromCache(store cache.Store, projectKey string) map[string]bool {
 	projFeats := ProjectFeatures{}
 
 	if store.Get(cacheFeatureKey+projectKey, &projFeats) {
-		// if missing features, invalidate cache are rebuild data from Izanami
+		// if missing features, invalidate cache and rebuild data from Izanami
 		var missingFeature bool
 		for _, f := range List() {
 			if _, ok := projFeats.Features[f]; !ok {
