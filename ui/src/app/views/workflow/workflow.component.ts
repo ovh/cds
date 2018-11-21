@@ -108,17 +108,6 @@ export class WorkflowComponent implements OnInit {
                                 }
                                 this.workflow = updatedWorkflow;
 
-                                if (this.selectedNodeID) {
-                                    let n = Workflow.getNodeByID(this.selectedNodeID, this.workflow);
-                                    if (!n && this.selectedNodeRef) {
-                                        n = Workflow.getNodeByRef(this.selectedNodeRef, this.workflow);
-                                    }
-                                    if (n) {
-                                        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
-                                            queryParams: { 'node_id': n.id, 'node_ref': n.ref}});
-                                        this._router.navigateByUrl(url.toString()).then(() => {});
-                                    }
-                                }
                                 if (this.selectecHookRef) {
                                     let h = Workflow.getHookByRef(this.selectecHookRef, this.workflow);
                                     if (h) {
