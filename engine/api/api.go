@@ -578,17 +578,6 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("unable to init api stats: %v", err)
 	}
 
-	log.Info("Initializing Events broker")
-	// Initialize event broker
-	a.eventsBroker = &eventsBroker{
-		router:   a.Router,
-		cache:    a.Cache,
-		clients:  make(map[string]*eventsBrokerSubscribe),
-		dbFunc:   a.DBConnectionFactory.GetDBMap,
-		messages: make(chan sdk.Event),
-	}
-	a.eventsBroker.Init(context.Background(), a.PanicDump())
-
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
 
