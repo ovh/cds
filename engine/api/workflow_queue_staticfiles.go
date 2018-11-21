@@ -56,8 +56,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 		}
 
 		if fileName == "" {
-			log.Warning("postWorkflowJobStaticFilesHandler> %s header is not set", "Content-Disposition")
-			return sdk.WrapError(sdk.ErrWrongRequest, "%s header is not set", "Content-Disposition")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Content-Disposition header is not set")
 		}
 
 		nodeJobRun, errJ := workflow.LoadNodeJobRun(db, api.Cache, nodeJobRunID)
@@ -103,7 +102,7 @@ func (api *API) postWorkflowJobStaticFilesWithTempURLHandler() service.Handler {
 
 		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
 		if !ok {
-			return sdk.WrapError(sdk.ErrForbidden, "cast error")
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "A cast error occured (seems that your objectstore doesn't support redirect)")
 		}
 
 		// Load existing workflow Run Job
