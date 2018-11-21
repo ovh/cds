@@ -19,7 +19,7 @@ import (
 func TestInsertStaticFiles(t *testing.T) {
 	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
-	event.Initialize(event.KafkaConfig{}, cache)
+	_ = event.Initialize(event.KafkaConfig{}, cache)
 
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
