@@ -68,14 +68,13 @@ func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w h
 			}
 		}
 
-		cr := workflowtemplate.NewCriteria()
+		var wt *sdk.WorkflowTemplate
+		var err error
 		if id != 0 {
-			cr = cr.IDs(id)
+			wt, err = workflowtemplate.GetByIDAndGroupIDs(api.mustDB(), id, sdk.GroupsToIDs(gs))
 		} else {
-			cr = cr.Slugs(templateSlug)
+			wt, err = workflowtemplate.GetBySlugAndGroupIDs(api.mustDB(), templateSlug, sdk.GroupsToIDs(gs))
 		}
-
-		wt, err := workflowtemplate.Get(api.mustDB(), cr.GroupIDs(sdk.GroupsToIDs(gs)...))
 		if err != nil {
 			return nil, err
 		}
@@ -103,16 +102,20 @@ func (api *API) getTemplatesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := getUser(ctx)
 
-		ts, err := workflowtemplate.GetAll(api.mustDB(), workflowtemplate.NewCriteria().
-			GroupIDs(sdk.GroupsToIDs(u.Groups)...))
+		ts, err := workflowtemplate.GetAllForGroupIDs(api.mustDB(), sdk.GroupsToIDs(u.Groups))
 		if err != nil {
 			return err
 		}
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), ts...); err != nil {
+		tsPointers := make([]*sdk.WorkflowTemplate, len(ts))
+		for i := range ts {
+			tsPointers[i] = &ts[i]
+		}
+
+		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
 			return err
 		}
-		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), ts...); err != nil {
+		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), tsPointers...); err != nil {
 			return err
 		}
 
@@ -126,7 +129,7 @@ func (api *API) postTemplateHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &t); err != nil {
 			return err
 		}
-		if err := t.ValidateStruct(); err != nil {
+		if err := t.IsValid(); err != nil {
 			return err
 		}
 		t.Version = 0
@@ -193,7 +196,7 @@ func (api *API) putTemplateHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
-		if err := data.ValidateStruct(); err != nil {
+		if err := data.IsValid(); err != nil {
 			return err
 		}
 
@@ -325,23 +328,21 @@ func (api *API) applyTemplateHandler() service.Handler {
 		var wti *sdk.WorkflowTemplateInstance
 		if wf != nil {
 			// check if workflow is a generated one for the current template
-			wti, err = workflowtemplate.GetInstance(tx, workflowtemplate.NewCriteriaInstance().
-				WorkflowIDs(wf.ID).WorkflowTemplateIDs(wt.ID))
+			wti, err = workflowtemplate.GetInstanceByWorkflowIDAndTemplateID(tx, wf.ID, wt.ID)
 			if err != nil {
 				return err
 			}
 		}
 		if wti == nil {
 			// try to get a instance not assign to a workflow but with the same slug
-			wtis, err := workflowtemplate.GetInstances(tx, workflowtemplate.NewCriteriaInstance().
-				WorkflowIDs(0).WorkflowTemplateIDs(wt.ID).ProjectIDs(p.ID))
+			wtis, err := workflowtemplate.GetInstancesByWorkflowIDAndTemplateIDAndProjectID(tx, 0, wt.ID, p.ID)
 			if err != nil {
 				return err
 			}
 
 			for _, res := range wtis {
 				if res.Request.WorkflowName == req.WorkflowName {
-					wti = res
+					wti = &res
 					break
 				}
 			}
@@ -410,8 +411,7 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 			return err
 		}
 
-		is, err := workflowtemplate.GetInstances(api.mustDB(), workflowtemplate.NewCriteriaInstance().
-			WorkflowTemplateIDs(t.ID).ProjectIDs(sdk.ProjectsToIDs(ps)...))
+		is, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDs(api.mustDB(), t.ID, sdk.ProjectsToIDs(ps))
 		if err != nil {
 			return err
 		}
@@ -420,14 +420,20 @@ func (api *API) getTemplateInstancesHandler() service.Handler {
 		for i := range ps {
 			mProjects[ps[i].ID] = ps[i]
 		}
-		for _, i := range is {
-			p := mProjects[i.ProjectID]
-			i.Project = &p
+		for i := range is {
+			p := mProjects[is[i].ProjectID]
+			is[i].Project = &p
 		}
-		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplateInstance(api.mustDB(), is...); err != nil {
+
+		isPointers := make([]*sdk.WorkflowTemplateInstance, len(is))
+		for i := range is {
+			isPointers[i] = &is[i]
+		}
+
+		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplateInstance(api.mustDB(), isPointers...); err != nil {
 			return err
 		}
-		if err := workflow.AggregateOnWorkflowTemplateInstance(api.mustDB(), is...); err != nil {
+		if err := workflow.AggregateOnWorkflowTemplateInstance(api.mustDB(), isPointers...); err != nil {
 			return err
 		}
 
@@ -452,8 +458,7 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 		// return the template instance if workflow is a generated one
-		wti, err := workflowtemplate.GetInstance(api.mustDB(), workflowtemplate.NewCriteriaInstance().
-			WorkflowIDs(wf.ID))
+		wti, err := workflowtemplate.GetInstanceByWorkflowID(api.mustDB(), wf.ID)
 		if err != nil {
 			return err
 		}

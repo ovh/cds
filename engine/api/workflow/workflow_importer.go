@@ -124,8 +124,7 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given workflow template")
 	}
 
-	wt, err := workflowtemplate.Get(db, workflowtemplate.NewCriteria().
-		Slugs(wt.Slug).GroupIDs(group.ID))
+	wt, err := workflowtemplate.GetBySlugAndGroupIDs(db, wt.Slug, []int64{group.ID})
 	if err != nil {
 		return err
 	}
@@ -133,15 +132,14 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given workflow template")
 	}
 
-	wtis, err := workflowtemplate.GetInstances(db, workflowtemplate.NewCriteriaInstance().
-		WorkflowTemplateIDs(wt.ID).ProjectIDs(p.ID))
+	wtis, err := workflowtemplate.GetInstancesByWorkflowIDAndProjectID(db, wt.ID, p.ID)
 	if err != nil {
 		return err
 	}
 	var wTemplateInstance *sdk.WorkflowTemplateInstance
 	for _, wti := range wtis {
 		if wti.Request.WorkflowName == w.Name {
-			wTemplateInstance = wti
+			wTemplateInstance = &wti
 			break
 		}
 	}

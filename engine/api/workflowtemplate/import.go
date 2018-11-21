@@ -75,7 +75,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 	wt := tmpl.GetTemplate(wkf, pips, apps, envs)
 
 	// check the workflow template extracted
-	if err := wt.ValidateStruct(); err != nil {
+	if err := wt.IsValid(); err != nil {
 		return nil, nil, err
 	}
 
@@ -98,7 +98,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 	wt.GroupID = group.ID
 
 	// check if a template already exists for group with same slug
-	old, err := Get(db, NewCriteria().Slugs(wt.Slug).GroupIDs(group.ID))
+	old, err := GetBySlugAndGroupIDs(db, wt.Slug, []int64{group.ID})
 	if err != nil {
 		return nil, nil, err
 	}

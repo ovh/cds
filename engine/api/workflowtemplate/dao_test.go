@@ -1,12 +1,6 @@
 package workflowtemplate
 
-import (
-	"testing"
-
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/stretchr/testify/assert"
-)
-
+/*
 func TestTemplate(t *testing.T) {
 	db := &test.SqlExecutorMock{}
 
@@ -54,3 +48,4 @@ func TestInstanceAudit(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expected, db.LastQuery().Query)
 }
+*/

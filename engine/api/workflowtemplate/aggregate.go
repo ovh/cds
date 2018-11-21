@@ -8,17 +8,15 @@ import (
 
 // AggregateAuditsOnWorkflowTemplate set audits for each workflow template.
 func AggregateAuditsOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.WorkflowTemplate) error {
-	as, err := GetAudits(db, NewCriteriaAudit().
-		WorkflowTemplateIDs(sdk.WorkflowTemplatesToIDs(wts)...).
-		EventTypes("WorkflowTemplateAdd", "WorkflowTemplateUpdate"))
+	as, err := GetAuditsByTemplateIDsAndEventTypes(db, sdk.WorkflowTemplatesToIDs(wts), []string{"WorkflowTemplateAdd", "WorkflowTemplateUpdate"})
 	if err != nil {
 		return err
 	}
 
-	m := map[int64][]*sdk.AuditWorkflowTemplate{}
+	m := map[int64][]sdk.AuditWorkflowTemplate{}
 	for _, a := range as {
 		if _, ok := m[a.WorkflowTemplateID]; !ok {
-			m[a.WorkflowTemplateID] = []*sdk.AuditWorkflowTemplate{}
+			m[a.WorkflowTemplateID] = []sdk.AuditWorkflowTemplate{}
 		}
 		m[a.WorkflowTemplateID] = append(m[a.WorkflowTemplateID], a)
 	}
@@ -26,8 +24,8 @@ func AggregateAuditsOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.Workflow
 	// assume that audits are sorted by creation date with GetAudits
 	for _, wt := range wts {
 		if as, ok := m[wt.ID]; ok {
-			wt.FirstAudit = as[0]
-			wt.LastAudit = as[len(as)-1]
+			wt.FirstAudit = &as[0]
+			wt.LastAudit = &as[len(as)-1]
 		}
 	}
 
@@ -36,17 +34,18 @@ func AggregateAuditsOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.Workflow
 
 // AggregateAuditsOnWorkflowTemplateInstance set audits for each workflow template instance.
 func AggregateAuditsOnWorkflowTemplateInstance(db gorp.SqlExecutor, wtis ...*sdk.WorkflowTemplateInstance) error {
-	as, err := GetInstanceAudits(db, NewCriteriaInstanceAudit().
-		WorkflowTemplateInstanceIDs(sdk.WorkflowTemplateInstancesToIDs(wtis)...).
-		EventTypes("WorkflowTemplateInstanceAdd", "WorkflowTemplateInstanceUpdate"))
+	as, err := GetInstanceAuditsByInstanceIDsAndEventTypes(db,
+		sdk.WorkflowTemplateInstancesToIDs(wtis),
+		[]string{"WorkflowTemplateInstanceAdd", "WorkflowTemplateInstanceUpdate"},
+	)
 	if err != nil {
 		return err
 	}
 
-	m := map[int64][]*sdk.AuditWorkflowTemplateInstance{}
+	m := map[int64][]sdk.AuditWorkflowTemplateInstance{}
 	for _, a := range as {
 		if _, ok := m[a.WorkflowTemplateInstanceID]; !ok {
-			m[a.WorkflowTemplateInstanceID] = []*sdk.AuditWorkflowTemplateInstance{}
+			m[a.WorkflowTemplateInstanceID] = []sdk.AuditWorkflowTemplateInstance{}
 		}
 		m[a.WorkflowTemplateInstanceID] = append(m[a.WorkflowTemplateInstanceID], a)
 	}
@@ -54,8 +53,8 @@ func AggregateAuditsOnWorkflowTemplateInstance(db gorp.SqlExecutor, wtis ...*sdk
 	// assume that audits are sorted by creation date with GetInstanceAudits
 	for _, wti := range wtis {
 		if as, ok := m[wti.ID]; ok {
-			wti.FirstAudit = as[0]
-			wti.LastAudit = as[len(as)-1]
+			wti.FirstAudit = &as[0]
+			wti.LastAudit = &as[len(as)-1]
 		}
 	}
 
@@ -64,7 +63,7 @@ func AggregateAuditsOnWorkflowTemplateInstance(db gorp.SqlExecutor, wtis ...*sdk
 
 // AggregateTemplateOnWorkflow set template data for each workflow.
 func AggregateTemplateOnWorkflow(db gorp.SqlExecutor, ws ...*sdk.Workflow) error {
-	wtis, err := GetInstances(db, NewCriteriaInstance().WorkflowIDs(sdk.WorkflowToIDs(ws)...))
+	wtis, err := GetInstancesByWorkflowIDs(db, sdk.WorkflowToIDs(ws))
 	if err != nil {
 		return err
 	}
@@ -72,7 +71,7 @@ func AggregateTemplateOnWorkflow(db gorp.SqlExecutor, ws ...*sdk.Workflow) error
 		return nil
 	}
 
-	wts, err := GetAll(db, NewCriteria().IDs(sdk.WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis)...))
+	wts, err := GetAllByIDs(db, sdk.WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis))
 	if err != nil {
 		return err
 	}
@@ -80,12 +79,12 @@ func AggregateTemplateOnWorkflow(db gorp.SqlExecutor, ws ...*sdk.Workflow) error
 		return nil
 	}
 
-	mWorkflowTemplates := make(map[int64]*sdk.WorkflowTemplate, len(wts))
+	mWorkflowTemplates := make(map[int64]sdk.WorkflowTemplate, len(wts))
 	for _, wt := range wts {
 		mWorkflowTemplates[wt.ID] = wt
 	}
 
-	mWorkflowTemplateInstances := make(map[int64]*sdk.WorkflowTemplateInstance, len(wtis))
+	mWorkflowTemplateInstances := make(map[int64]sdk.WorkflowTemplateInstance, len(wtis))
 	for _, wti := range wtis {
 		mWorkflowTemplateInstances[wti.WorkflowID] = wti
 	}
@@ -93,7 +92,7 @@ func AggregateTemplateOnWorkflow(db gorp.SqlExecutor, ws ...*sdk.Workflow) error
 	for _, w := range ws {
 		if wti, ok := mWorkflowTemplateInstances[w.ID]; ok {
 			if wt, ok := mWorkflowTemplates[wti.WorkflowTemplateID]; ok {
-				w.Template = wt
+				w.Template = &wt
 			}
 		}
 	}

@@ -58,33 +58,33 @@ type WorkflowTemplate struct {
 	LastAudit  *AuditWorkflowTemplate `json:"last_audit,omitempty" db:"-"`
 }
 
-// ValidateStruct returns workflow template validity.
-func (w *WorkflowTemplate) ValidateStruct() error {
+// IsValid returns workflow template validity.
+func (w *WorkflowTemplate) IsValid() error {
 	w.Slug = slug.Convert(w.Name)
 	if !slug.Valid(w.Slug) {
 		return WrapError(ErrWrongRequest, "Invalid given name")
 	}
 
 	for _, p := range w.Parameters {
-		if err := p.ValidateStruct(); err != nil {
+		if err := p.IsValid(); err != nil {
 			return err
 		}
 	}
 
 	for _, p := range w.Pipelines {
-		if err := p.ValidateStruct(); err != nil {
+		if err := p.IsValid(); err != nil {
 			return err
 		}
 	}
 
 	for _, a := range w.Applications {
-		if err := a.ValidateStruct(); err != nil {
+		if err := a.IsValid(); err != nil {
 			return err
 		}
 	}
 
 	for _, e := range w.Environments {
-		if err := e.ValidateStruct(); err != nil {
+		if err := e.IsValid(); err != nil {
 			return err
 		}
 	}
@@ -165,8 +165,8 @@ type PipelineTemplate struct {
 	Value string `json:"value"`
 }
 
-// ValidateStruct returns pipeline template validity.
-func (p *PipelineTemplate) ValidateStruct() error {
+// IsValid returns pipeline template validity.
+func (p *PipelineTemplate) IsValid() error {
 	if len(p.Value) == 0 {
 		return NewErrorFrom(ErrInvalidData, "Invalid given pipeline value")
 	}
@@ -178,8 +178,8 @@ type ApplicationTemplate struct {
 	Value string `json:"value"`
 }
 
-// ValidateStruct returns application template validity.
-func (a *ApplicationTemplate) ValidateStruct() error {
+// IsValid returns application template validity.
+func (a *ApplicationTemplate) IsValid() error {
 	if len(a.Value) == 0 {
 		return NewErrorFrom(ErrInvalidData, "Invalid given application value")
 	}
@@ -191,8 +191,8 @@ type EnvironmentTemplate struct {
 	Value string `json:"value"`
 }
 
-// ValidateStruct returns environment template validity.
-func (e *EnvironmentTemplate) ValidateStruct() error {
+// IsValid returns environment template validity.
+func (e *EnvironmentTemplate) IsValid() error {
 	if len(e.Value) == 0 {
 		return NewErrorFrom(ErrInvalidData, "Invalid given environment value")
 	}
@@ -297,8 +297,8 @@ func (e *EnvironmentTemplates) Scan(src interface{}) error {
 	return WrapError(json.Unmarshal(source, e), "cannot unmarshal EnvironmentTemplates")
 }
 
-// ValidateStruct returns pipeline template validity.
-func (w *WorkflowTemplateParameter) ValidateStruct() error {
+// IsValid returns pipeline template validity.
+func (w *WorkflowTemplateParameter) IsValid() error {
 	if w.Key == "" || !w.Type.IsValid() {
 		return NewErrorFrom(ErrInvalidData, "Invalid given key or type for parameter")
 	}
@@ -340,7 +340,7 @@ func WorkflowTemplateInstancesToWorkflowIDs(wtis []*WorkflowTemplateInstance) []
 }
 
 // WorkflowTemplateInstancesToWorkflowTemplateIDs returns workflow template ids of given workflow template instances.
-func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInstance) []int64 {
+func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []WorkflowTemplateInstance) []int64 {
 	ids := make([]int64, len(wtis))
 	for i := range wtis {
 		ids[i] = wtis[i].WorkflowTemplateID

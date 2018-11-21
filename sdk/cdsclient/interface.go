@@ -18,11 +18,11 @@ type Filter struct {
 type TemplateClient interface {
 	TemplateGet(groupName, templateSlug string) (*sdk.WorkflowTemplate, error)
 	TemplateGetByID(id int64) (*sdk.WorkflowTemplate, error)
-	TemplateGetAll() ([]*sdk.WorkflowTemplate, error)
+	TemplateGetAll() ([]sdk.WorkflowTemplate, error)
 	TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
 	TemplatePull(groupName, templateSlug string) (*tar.Reader, error)
 	TemplatePush(tarContent io.Reader) ([]string, *tar.Reader, error)
-	TemplateGetInstances(groupName, templateSlug string) ([]*sdk.WorkflowTemplateInstance, error)
+	TemplateGetInstances(groupName, templateSlug string) ([]sdk.WorkflowTemplateInstance, error)
 }
 
 // AdminService expose all function to CDS services

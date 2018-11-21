@@ -13,26 +13,26 @@ import (
 func TestAggregateAuditsOnWorkflowTemplate(t *testing.T) {
 	db := &test.SqlExecutorMock{}
 	db.OnSelect = func(i interface{}) {
-		awts := i.(*[]*sdk.AuditWorkflowTemplate)
-		*awts = append(*awts, &sdk.AuditWorkflowTemplate{
+		awts := i.(*[]sdk.AuditWorkflowTemplate)
+		*awts = append(*awts, sdk.AuditWorkflowTemplate{
 			AuditCommon: sdk.AuditCommon{
 				ID:        1,
 				EventType: "EventWorkflowTemplateAdd",
 			},
 			WorkflowTemplateID: 1,
-		}, &sdk.AuditWorkflowTemplate{
+		}, sdk.AuditWorkflowTemplate{
 			AuditCommon: sdk.AuditCommon{
 				ID:        2,
 				EventType: "EventWorkflowTemplateAdd",
 			},
 			WorkflowTemplateID: 2,
-		}, &sdk.AuditWorkflowTemplate{
+		}, sdk.AuditWorkflowTemplate{
 			AuditCommon: sdk.AuditCommon{
 				ID:        3,
 				EventType: "EventWorkflowTemplateUpdate",
 			},
 			WorkflowTemplateID: 1,
-		}, &sdk.AuditWorkflowTemplate{
+		}, sdk.AuditWorkflowTemplate{
 			AuditCommon: sdk.AuditCommon{
 				ID:        4,
 				EventType: "EventWorkflowTemplateUpdate",
@@ -57,26 +57,26 @@ func TestAggregateAuditsOnWorkflowTemplate(t *testing.T) {
 func TestAggregateAuditsOnWorkflowTemplateInstance(t *testing.T) {
 	db := &test.SqlExecutorMock{}
 	db.OnSelect = func(i interface{}) {
-		awtis := i.(*[]*sdk.AuditWorkflowTemplateInstance)
-		*awtis = append(*awtis, &sdk.AuditWorkflowTemplateInstance{
+		awtis := i.(*[]sdk.AuditWorkflowTemplateInstance)
+		*awtis = append(*awtis, sdk.AuditWorkflowTemplateInstance{
 			AuditCommon: sdk.AuditCommon{
 				ID:        1,
 				EventType: "EventWorkflowTemplateInstanceAdd",
 			},
 			WorkflowTemplateInstanceID: 1,
-		}, &sdk.AuditWorkflowTemplateInstance{
+		}, sdk.AuditWorkflowTemplateInstance{
 			AuditCommon: sdk.AuditCommon{
 				ID:        2,
 				EventType: "EventWorkflowTemplateInstanceAdd",
 			},
 			WorkflowTemplateInstanceID: 2,
-		}, &sdk.AuditWorkflowTemplateInstance{
+		}, sdk.AuditWorkflowTemplateInstance{
 			AuditCommon: sdk.AuditCommon{
 				ID:        3,
 				EventType: "EventWorkflowTemplateInstanceUpdate",
 			},
 			WorkflowTemplateInstanceID: 1,
-		}, &sdk.AuditWorkflowTemplateInstance{
+		}, sdk.AuditWorkflowTemplateInstance{
 			AuditCommon: sdk.AuditCommon{
 				ID:        4,
 				EventType: "EventWorkflowTemplateInstanceUpdate",
@@ -101,29 +101,29 @@ func TestAggregateAuditsOnWorkflowTemplateInstance(t *testing.T) {
 func TestAggregateWorkflowTemplateInstance(t *testing.T) {
 	db := &test.SqlExecutorMock{}
 	db.OnSelect = func(i interface{}) {
-		if wtis, ok := i.(*[]*sdk.WorkflowTemplateInstance); ok {
-			*wtis = append(*wtis, &sdk.WorkflowTemplateInstance{},
-				&sdk.WorkflowTemplateInstance{
+		if wtis, ok := i.(*[]sdk.WorkflowTemplateInstance); ok {
+			*wtis = append(*wtis, sdk.WorkflowTemplateInstance{},
+				sdk.WorkflowTemplateInstance{
 					WorkflowTemplateID: 1,
 					WorkflowID:         4,
 				},
-				&sdk.WorkflowTemplateInstance{
+				sdk.WorkflowTemplateInstance{
 					WorkflowTemplateID: 1,
 					WorkflowID:         5,
 				},
-				&sdk.WorkflowTemplateInstance{
+				sdk.WorkflowTemplateInstance{
 					WorkflowTemplateID: 2,
 					WorkflowID:         6,
 				})
 		}
-		if wts, ok := i.(*[]*sdk.WorkflowTemplate); ok {
-			*wts = append(*wts, &sdk.WorkflowTemplate{},
-				&sdk.WorkflowTemplate{
+		if wts, ok := i.(*[]sdk.WorkflowTemplate); ok {
+			*wts = append(*wts, sdk.WorkflowTemplate{},
+				sdk.WorkflowTemplate{
 					ID:    1,
 					Slug:  "one",
 					Group: &sdk.Group{Name: "one"},
 				},
-				&sdk.WorkflowTemplate{
+				sdk.WorkflowTemplate{
 					ID:    2,
 					Slug:  "two",
 					Group: &sdk.Group{Name: "two"},

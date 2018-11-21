@@ -34,10 +34,10 @@ func (c *client) TemplateGetByID(id int64) (*sdk.WorkflowTemplate, error) {
 	return &wt, nil
 }
 
-func (c *client) TemplateGetAll() ([]*sdk.WorkflowTemplate, error) {
+func (c *client) TemplateGetAll() ([]sdk.WorkflowTemplate, error) {
 	url := "/template"
 
-	var wts []*sdk.WorkflowTemplate
+	var wts []sdk.WorkflowTemplate
 	if _, err := c.GetJSON(context.Background(), url, &wts); err != nil {
 		return nil, err
 	}
@@ -108,10 +108,10 @@ func (c *client) TemplatePush(tarContent io.Reader) ([]string, *tar.Reader, erro
 	return messages, tarReader, nil
 }
 
-func (c *client) TemplateGetInstances(groupName, templateSlug string) ([]*sdk.WorkflowTemplateInstance, error) {
+func (c *client) TemplateGetInstances(groupName, templateSlug string) ([]sdk.WorkflowTemplateInstance, error) {
 	url := fmt.Sprintf("/template/%s/%s/instance", groupName, templateSlug)
 
-	var wtis []*sdk.WorkflowTemplateInstance
+	var wtis []sdk.WorkflowTemplateInstance
 	if _, err := c.GetJSON(context.Background(), url, &wtis); err != nil {
 		return nil, err
 	}

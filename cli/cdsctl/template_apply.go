@@ -109,7 +109,7 @@ func suggestTemplate() (*sdk.WorkflowTemplate, error) {
 		opts[i] = fmt.Sprintf("%s (%s/%s) - %s", wts[i].Name, wts[i].Group.Name, wts[i].Slug, wts[i].Description)
 	}
 	selected := cli.MultiChoice("Choose the CDS template to apply:", opts...)
-	return wts[selected], nil
+	return &wts[selected], nil
 }
 
 func templateApplyRun(v cli.Values) error {

@@ -73,12 +73,12 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		return sdk.WrapError(errload, "Cannot load workflow %s", name)
 	}
 
-	i, err := workflowtemplate.GetInstance(db, workflowtemplate.NewCriteriaInstance().WorkflowIDs(wf.ID))
+	i, err := workflowtemplate.GetInstanceByWorkflowID(db, wf.ID)
 	if err != nil {
 		return err
 	}
 	if i != nil {
-		wf.Template, err = workflowtemplate.Get(db, workflowtemplate.NewCriteria().IDs(i.WorkflowTemplateID))
+		wf.Template, err = workflowtemplate.GetByID(db, i.WorkflowTemplateID)
 		if err != nil {
 			return err
 		}
