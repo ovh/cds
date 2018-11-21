@@ -21,9 +21,10 @@ func TestAggregateOnWorkflowTemplateInstance(t *testing.T) {
 		})
 	}
 
+	ids := []int64{1, 2}
 	wtis := []*sdk.WorkflowTemplateInstance{
-		{WorkflowID: 1},
-		{WorkflowID: 2},
+		{WorkflowID: &ids[0]},
+		{WorkflowID: &ids[1]},
 	}
 
 	assert.Nil(t, AggregateOnWorkflowTemplateInstance(db, wtis...))

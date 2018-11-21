@@ -86,7 +86,9 @@ func AggregateTemplateOnWorkflow(db gorp.SqlExecutor, ws ...*sdk.Workflow) error
 
 	mWorkflowTemplateInstances := make(map[int64]sdk.WorkflowTemplateInstance, len(wtis))
 	for _, wti := range wtis {
-		mWorkflowTemplateInstances[wti.WorkflowID] = wti
+		if wti.WorkflowID != nil {
+			mWorkflowTemplateInstances[*wti.WorkflowID] = wti
+		}
 	}
 
 	for _, w := range ws {

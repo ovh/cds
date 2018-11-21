@@ -132,7 +132,7 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given workflow template")
 	}
 
-	wtis, err := workflowtemplate.GetInstancesByWorkflowIDAndProjectID(db, wt.ID, p.ID)
+	wtis, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDs(db, wt.ID, []int64{p.ID})
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 		}
 	}
 	if wTemplateInstance == nil {
-		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given a template instance for workflow")
+		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find a template instance for workflow %s", w.Name)
 	}
 
 	// remove existing relations between workflow and template
@@ -155,7 +155,7 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 	old := sdk.WorkflowTemplateInstance(*wTemplateInstance)
 
 	// set the workflow id on target instance
-	wTemplateInstance.WorkflowID = w.ID
+	wTemplateInstance.WorkflowID = &w.ID
 	if err := workflowtemplate.UpdateInstance(db, wTemplateInstance); err != nil {
 		return err
 	}

@@ -151,7 +151,7 @@ func GetInstancesByTemplateIDAndProjectIDs(db gorp.SqlExecutor, templateID int64
 	wtis := []sdk.WorkflowTemplateInstance{}
 
 	if _, err := db.Select(&wtis,
-		"SELECT * FROM workflow_template_instance WHERE workflow_template_id = $1 AND project_id = ANY(string_to_array(:projectIDs, ',')::int[])",
+		"SELECT * FROM workflow_template_instance WHERE workflow_template_id = $1 AND project_id = ANY(string_to_array($2, ',')::int[])",
 		templateID, gorpmapping.IDsToQueryString(projectIDs),
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflow template instances")
@@ -165,22 +165,8 @@ func GetInstancesByWorkflowIDAndTemplateIDAndProjectID(db gorp.SqlExecutor, work
 	wtis := []sdk.WorkflowTemplateInstance{}
 
 	if _, err := db.Select(&wtis,
-		"SELECT * FROM workflow_id = $1 AND workflow_template_id = $2 AND project_id = $3",
+		"SELECT * FROM workflow_template_instance WHERE workflow_id = $1 AND workflow_template_id = $2 AND project_id = $3",
 		workflowID, templateID, projectID,
-	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get workflow template instances")
-	}
-
-	return wtis, nil
-}
-
-// GetInstancesByWorkflowIDAndProjectID returns all workflow template instances by workflow id and project ids.
-func GetInstancesByWorkflowIDAndProjectID(db gorp.SqlExecutor, workflowID, projectID int64) ([]sdk.WorkflowTemplateInstance, error) {
-	wtis := []sdk.WorkflowTemplateInstance{}
-
-	if _, err := db.Select(&wtis,
-		"SELECT * FROM workflow_id = $1 AND project_id = $2",
-		workflowID, projectID,
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflow template instances")
 	}
@@ -193,7 +179,7 @@ func GetInstancesByWorkflowIDs(db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.
 	wtis := []sdk.WorkflowTemplateInstance{}
 
 	if _, err := db.Select(&wtis,
-		"SELECT * FROM workflow_id = ANY(string_to_array($1, ',')::int[])",
+		"SELECT * FROM workflow_template_instance WHERE workflow_id = ANY(string_to_array($1, ',')::int[])",
 		gorpmapping.IDsToQueryString(workflowIDs),
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflow template instances")
@@ -207,7 +193,7 @@ func GetInstanceByWorkflowIDAndTemplateID(db gorp.SqlExecutor, workflowID, templ
 	wti := sdk.WorkflowTemplateInstance{}
 
 	if err := db.SelectOne(&wti,
-		"SELECT * FROM workflow_id = $1 AND workflow_template_id = $2",
+		"SELECT * FROM workflow_template_instance WHERE workflow_id = $1 AND workflow_template_id = $2",
 		workflowID, templateID,
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -223,7 +209,7 @@ func GetInstanceByWorkflowIDAndTemplateID(db gorp.SqlExecutor, workflowID, templ
 func GetInstanceByWorkflowID(db gorp.SqlExecutor, workflowID int64) (*sdk.WorkflowTemplateInstance, error) {
 	wti := sdk.WorkflowTemplateInstance{}
 
-	if err := db.SelectOne(&wti, "SELECT * FROM workflow_id = $1", workflowID); err != nil {
+	if err := db.SelectOne(&wti, "SELECT * FROM workflow_template_instance WHERE workflow_id = $1", workflowID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}

@@ -310,7 +310,7 @@ type WorkflowTemplateInstance struct {
 	ID                      int64                   `json:"id" db:"id" `
 	WorkflowTemplateID      int64                   `json:"workflow_template_id" db:"workflow_template_id"`
 	ProjectID               int64                   `json:"project_id" db:"project_id"`
-	WorkflowID              int64                   `json:"workflow_id" db:"workflow_id"`
+	WorkflowID              *int64                  `json:"workflow_id" db:"workflow_id"`
 	WorkflowTemplateVersion int64                   `json:"workflow_template_version" db:"workflow_template_version"`
 	Request                 WorkflowTemplateRequest `json:"request" db:"request"`
 	// aggregates
@@ -334,7 +334,9 @@ func WorkflowTemplateInstancesToIDs(wtis []*WorkflowTemplateInstance) []int64 {
 func WorkflowTemplateInstancesToWorkflowIDs(wtis []*WorkflowTemplateInstance) []int64 {
 	ids := make([]int64, len(wtis))
 	for i := range wtis {
-		ids[i] = wtis[i].WorkflowID
+		if wtis[i].WorkflowID != nil {
+			ids[i] = *wtis[i].WorkflowID
+		}
 	}
 	return ids
 }

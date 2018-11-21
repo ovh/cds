@@ -18,8 +18,10 @@ func AggregateOnWorkflowTemplateInstance(db gorp.SqlExecutor, wtis ...*sdk.Workf
 	}
 
 	for _, wti := range wtis {
-		if w, ok := m[wti.WorkflowID]; ok {
-			wti.Workflow = &w
+		if wti.WorkflowID != nil {
+			if w, ok := m[*wti.WorkflowID]; ok {
+				wti.Workflow = &w
+			}
 		}
 	}
 
