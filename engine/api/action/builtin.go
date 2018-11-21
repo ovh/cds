@@ -255,9 +255,12 @@ Semver used if fully compatible with https://semver.org/
 	// ----------------------------------- Serve Static Files -----------------------
 	serveStaticAct := sdk.NewAction(sdk.ServeStaticFiles)
 	serveStaticAct.Type = sdk.BuiltinAction
+	serveStaticAct.Description = `CDS Builtin Action
+	Useful to upload static files and serve them.
+	For example your report about coverage, tests, performances, ...`
 	serveStaticAct.Parameter(sdk.Parameter{
 		Name:        "name",
-		Description: "Name to display in CDS UI",
+		Description: "Name to display in CDS UI and identify your static files",
 		Type:        sdk.StringParameter})
 	serveStaticAct.Parameter(sdk.Parameter{
 		Name:        "path",

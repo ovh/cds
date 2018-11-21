@@ -6,14 +6,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/sdk/log"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
@@ -744,6 +746,76 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 
 	assert.Equal(t, 200, rec.Code)
 	assert.Equal(t, "Hi, I am foo", string(body))
+}
+
+func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJobAsWorker(t, api, router, &ctx)
+	assert.NotNil(t, ctx.job)
+
+	// Init store
+	cfg := objectstore.Config{
+		Kind: objectstore.Filesystem,
+		Options: objectstore.ConfigOptions{
+			Filesystem: objectstore.ConfigOptionsFilesystem{
+				Basedir: path.Join(os.TempDir(), "store"),
+			},
+		},
+	}
+
+	errO := objectstore.Initialize(context.Background(), cfg)
+	test.NoError(t, errO)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	//Register the worker
+	testRegisterWorker(t, api, router, &ctx)
+
+	//Take
+	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
+	test.NotEmpty(t, uri)
+
+	takeForm := sdk.WorkerTakeForm{
+		BookedJobID: ctx.job.ID,
+		Time:        time.Now(),
+	}
+
+	req := assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, takeForm)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	vars = map[string]string{
+		"name":   url.PathEscape("mywebsite"),
+		"permID": fmt.Sprintf("%d", ctx.job.ID),
+	}
+
+	uri = router.GetRoute("POST", api.postWorkflowJobStaticFilesHandler, vars)
+	test.NotEmpty(t, uri)
+
+	mystaticfile, errF := os.Create(path.Join(os.TempDir(), "mystaticfile"))
+	defer os.RemoveAll(path.Join(os.TempDir(), "mystaticfile"))
+	test.NoError(t, errF)
+	_, errW := mystaticfile.Write([]byte("<html>Hi, I am foo</html>"))
+	test.NoError(t, errW)
+
+	errClose := mystaticfile.Close()
+	test.NoError(t, errClose)
+
+	params := map[string]string{
+		"entrypoint": "index.html",
+	}
+	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "mystaticfile"), "mystaticfile", params)
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, http.StatusNotImplemented, rec.Code)
 }
 
 func TestPostVulnerabilityReportHandler(t *testing.T) {
