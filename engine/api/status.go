@@ -17,8 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
@@ -41,9 +39,7 @@ func (api *API) Status() sdk.MonitoringStatus {
 	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "Hostname", Value: event.GetHostname(), Status: sdk.MonitoringStatusOK}))
 	m.Lines = append(m.Lines, getStatusLine(sdk.MonitoringStatusLine{Component: "CDSName", Value: event.GetCDSName(), Status: sdk.MonitoringStatusOK}))
 	m.Lines = append(m.Lines, getStatusLine(api.Router.StatusPanic()))
-	m.Lines = append(m.Lines, getStatusLine(scheduler.Status()))
 	m.Lines = append(m.Lines, getStatusLine(event.Status()))
-	m.Lines = append(m.Lines, getStatusLine(repositoriesmanager.EventsStatus(api.Cache)))
 	m.Lines = append(m.Lines, getStatusLine(api.Cache.Status()))
 	m.Lines = append(m.Lines, getStatusLine(sessionstore.Status))
 	m.Lines = append(m.Lines, getStatusLine(objectstore.Status()))
@@ -99,11 +95,12 @@ type computeGlobalNumbers struct {
 }
 
 var (
-	tagRange       tag.Key
-	tagStatus      tag.Key
-	tagServiceName tag.Key
-	tagType        tag.Key
-	tagsService    []tag.Key
+	tagRange                tag.Key
+	tagStatus               tag.Key
+	tagServiceName          tag.Key
+	tagService              tag.Key
+	tagsService             []tag.Key
+	tagsServiceAvailability []tag.Key
 )
 
 // computeGlobalStatus returns global status
@@ -175,11 +172,25 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 		})
 	}
 
-	linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
-		Status:    api.computeGlobalStatusByNumbers(nbg),
-		Component: "Global/Status",
-		Value:     fmt.Sprintf("%d services", len(srvs)),
-	})
+	for stype, r := range resume {
+		if r.minInstance == 0 {
+			continue
+		}
+		st := sdk.MonitoringStatusOK
+		if r.nbSrv < r.minInstance {
+			st = sdk.MonitoringStatusAlert
+			nbg.nbAlerts++
+		} else {
+			nbg.nbOK++
+		}
+		percent := float64(r.nbSrv / r.minInstance)
+		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
+			Status:    st,
+			Component: fmt.Sprintf("Availability/%s", stype),
+			Value:     fmt.Sprintf("%f", percent),
+			Type:      stype,
+		})
+	}
 
 	for stype, r := range resume {
 		linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
@@ -188,6 +199,12 @@ func (api *API) computeGlobalStatus(srvs []sdk.Service) sdk.MonitoringStatus {
 			Value:     fmt.Sprintf("%d", r.nbSrv),
 		})
 	}
+
+	linesGlobal = append(linesGlobal, sdk.MonitoringStatusLine{
+		Status:    api.computeGlobalStatusByNumbers(nbg),
+		Component: "Global/Status",
+		Value:     fmt.Sprintf("%d services", len(srvs)),
+	})
 
 	sort.Slice(linesGlobal, func(i, j int) bool {
 		return linesGlobal[i].Component < linesGlobal[j].Component
@@ -234,15 +251,15 @@ func (api *API) initMetrics(ctx context.Context) error {
 	api.Metrics.nbMaxWorkersBuilding = stats.Int64("cds/cds-api/nb_max_workers_building", "nb_max_workers_building", stats.UnitDimensionless)
 
 	api.Metrics.queue = stats.Int64("cds/cds-api/queue", "queue", stats.UnitDimensionless)
-	//api.Metrics.status = stats.Int64("cds/cds-api/status", "status", stats.UnitDimensionless)
 
 	tagRange, _ = tag.NewKey("range")
 	tagStatus, _ = tag.NewKey("status")
 	tagServiceName, _ = tag.NewKey("name")
-	tagType, _ = tag.NewKey("type")
+	tagService, _ = tag.NewKey("service")
 
 	tagsRange := []tag.Key{tagCDSInstance, tagRange, tagStatus}
-	tagsService = []tag.Key{tagCDSInstance, tagServiceName, tagStatus, tagType}
+	tagsService = []tag.Key{tagCDSInstance, tagServiceName, tagService}
+	tagsServiceAvailability = []tag.Key{tagCDSInstance, tagService}
 
 	api.computeMetrics(ctx)
 
@@ -344,14 +361,16 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 	ignoreList := []string{"version", "hostname", "time", "uptime", "cdsname"}
 
 	for _, line := range mStatus.Lines {
-		number, err := strconv.ParseInt(line.Value, 10, 64)
-		if err != nil {
-			number = 1
-		}
-
 		idx := strings.Index(line.Component, "/")
 		service := line.Component[0:idx]
 		item := strings.ToLower(line.Component[idx+1:])
+
+		if service == "Global" {
+			// Global is an aggregation of status, useful only for cdsctl ui
+			// we avoid to push them, with metrics pushed, aggregation have be done
+			// with metrics tools (grafana, etc...)
+			continue
+		}
 
 		// ignore some status line
 		var found bool
@@ -364,18 +383,42 @@ func (api *API) processStatusMetrics(ctx context.Context) {
 		if found {
 			continue
 		}
-		stype := line.Type
-		if stype == "" {
-			stype = "global"
+
+		if service == "Availability" {
+			number, err := strconv.ParseFloat(line.Value, 64)
+			if err != nil {
+				number = 0
+				log.Warning("metrics>Errors while parsing float %s: %v", line.Value, err)
+			}
+
+			item = "Availability"
+			ctx, _ = tag.New(ctx, tag.Upsert(tagService, line.Type))
+			v, err := observability.FindAndRegisterViewLastFloat64(item, tagsServiceAvailability)
+			if err != nil {
+				log.Warning("metrics>Errors while FindAndRegisterViewLastFloat64 %s: %v", item, err)
+				continue
+			}
+			observability.RecordFloat64(ctx, v.Measure, number)
+			continue
 		}
 
-		ctx, _ = tag.New(ctx, tag.Upsert(tagStatus, line.Status), tag.Upsert(tagServiceName, service), tag.Upsert(tagType, stype))
+		// take the value if it's an integer for metrics
+		// if it's not an integer, AL -> 0, OK -> 1
+		number, err := strconv.ParseInt(line.Value, 10, 64)
+		if err != nil {
+			number = 1
+			if line.Status == sdk.MonitoringStatusAlert {
+				number = 0
+			}
+		}
+
+		ctx, _ = tag.New(ctx, tag.Upsert(tagServiceName, service), tag.Upsert(tagService, line.Type))
 		v, err := observability.FindAndRegisterViewLast(item, tagsService)
 		if err != nil {
 			log.Warning("metrics>Errors while FindAndRegisterViewLast %s: %v", item, err)
 			continue
 		}
-
 		observability.Record(ctx, v.Measure, number)
+
 	}
 }

@@ -121,6 +121,17 @@ func NewViewLast(name string, s *stats.Int64Measure, tags []tag.Key) *view.View 
 	}
 }
 
+// NewViewLastFloat64 creates a new view via aggregation LastValue()
+func NewViewLastFloat64(name string, s *stats.Float64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.LastValue(),
+		TagKeys:     tags,
+	}
+}
+
 // NewViewCount creates a new view via aggregation LastValue()
 func NewViewCount(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
 	return &view.View{
