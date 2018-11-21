@@ -100,20 +100,22 @@ func TestAggregateAuditsOnWorkflowTemplateInstance(t *testing.T) {
 
 func TestAggregateWorkflowTemplateInstance(t *testing.T) {
 	db := &test.SqlExecutorMock{}
+
+	ids := []int64{4, 5, 6}
 	db.OnSelect = func(i interface{}) {
 		if wtis, ok := i.(*[]sdk.WorkflowTemplateInstance); ok {
 			*wtis = append(*wtis, sdk.WorkflowTemplateInstance{},
 				sdk.WorkflowTemplateInstance{
 					WorkflowTemplateID: 1,
-					WorkflowID:         4,
+					WorkflowID:         &ids[0],
 				},
 				sdk.WorkflowTemplateInstance{
 					WorkflowTemplateID: 1,
-					WorkflowID:         5,
+					WorkflowID:         &ids[1],
 				},
 				sdk.WorkflowTemplateInstance{
 					WorkflowTemplateID: 2,
-					WorkflowID:         6,
+					WorkflowID:         &ids[2],
 				})
 		}
 		if wts, ok := i.(*[]sdk.WorkflowTemplate); ok {

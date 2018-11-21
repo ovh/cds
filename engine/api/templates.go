@@ -102,7 +102,7 @@ func (api *API) getTemplatesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := getUser(ctx)
 
-		ts, err := workflowtemplate.GetAllForGroupIDs(api.mustDB(), sdk.GroupsToIDs(u.Groups))
+		ts, err := workflowtemplate.GetAllByGroupIDs(api.mustDB(), sdk.GroupsToIDs(u.Groups))
 		if err != nil {
 			return err
 		}

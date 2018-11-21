@@ -1,0 +1,111 @@
+package workflowtemplate_test
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
+	"github.com/ovh/cds/sdk"
+)
+
+func TestCRUD(t *testing.T) {
+	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	defer func() {
+		assets.DeleteTestGroup(t, db, grp1)
+		assets.DeleteTestGroup(t, db, grp2)
+	}()
+
+	tmpls := []sdk.WorkflowTemplate{
+		{
+			GroupID:     grp1.ID,
+			Slug:        "tmpl-1",
+			Name:        "Template 1",
+			Description: "My template 1 description",
+			Parameters: []sdk.WorkflowTemplateParameter{
+				{Key: "my-bool", Type: sdk.ParameterTypeBoolean, Required: true},
+				{Key: "my-string", Type: sdk.ParameterTypeString, Required: true},
+				{Key: "my-repository", Type: sdk.ParameterTypeRepository, Required: true},
+			},
+			Value:        "the-yml-workflow-encoded",
+			Pipelines:    []sdk.PipelineTemplate{{Value: "the-yml-pipeline-encoded"}},
+			Applications: []sdk.ApplicationTemplate{{Value: "the-yml-application-encoded"}},
+			Environments: []sdk.EnvironmentTemplate{{Value: "the-yml-environment-encoded"}},
+			Version:      10,
+		},
+		{
+			GroupID: grp1.ID,
+			Slug:    "tmpl-2",
+			Name:    "Template 2",
+		},
+		{
+			GroupID: grp2.ID,
+			Slug:    "tmpl-3",
+			Name:    "Template 3",
+		},
+	}
+
+	// Insert
+	for i := range tmpls {
+		if !assert.Nil(t, workflowtemplate.Insert(db, &tmpls[i]), "No err should be returned when adding a template") {
+			t.FailNow()
+		}
+	}
+
+	// Update
+	tmpls[0].Version++
+	assert.Nil(t, workflowtemplate.Update(db, &tmpls[0]), "No err should be returned when updating a template")
+	assert.Equal(t, int64(11), tmpls[0].Version)
+
+	// GetByID
+	result, err := workflowtemplate.GetByID(db, 0)
+	assert.Nil(t, err)
+	assert.Nil(t, result)
+	result, err = workflowtemplate.GetByID(db, tmpls[0].ID)
+	assert.Nil(t, err)
+	assert.Equal(t, result.Name, tmpls[0].Name)
+
+	// GetByIDAndGroupIDs
+	result, err = workflowtemplate.GetByIDAndGroupIDs(db, tmpls[0].ID, nil)
+	assert.Nil(t, err)
+	assert.Nil(t, result)
+	result, err = workflowtemplate.GetByIDAndGroupIDs(db, tmpls[0].ID, []int64{grp1.ID, grp2.ID})
+	assert.Nil(t, err)
+	assert.Equal(t, result.Name, tmpls[0].Name)
+
+	// GetBySlugAndGroupIDs
+	result, err = workflowtemplate.GetBySlugAndGroupIDs(db, tmpls[0].Slug, nil)
+	assert.Nil(t, err)
+	assert.Nil(t, result)
+	result, err = workflowtemplate.GetBySlugAndGroupIDs(db, tmpls[0].Slug, []int64{grp1.ID, grp2.ID})
+	assert.Nil(t, err)
+	assert.Equal(t, result.Name, tmpls[0].Name)
+
+	// GetAllByGroupIDs
+	results, err := workflowtemplate.GetAllByGroupIDs(db, nil)
+	assert.Nil(t, err)
+	assert.Nil(t, nil)
+	results, err = workflowtemplate.GetAllByGroupIDs(db, []int64{grp1.ID, grp2.ID})
+	assert.Nil(t, err)
+	assert.Equal(t, 3, len(results))
+
+	// GetAllByIDs
+	results, err = workflowtemplate.GetAllByIDs(db, nil)
+	assert.Nil(t, err)
+	assert.Equal(t, 0, len(results))
+	results, err = workflowtemplate.GetAllByIDs(db, []int64{tmpls[0].ID, tmpls[1].ID})
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(results))
+
+	// Delete
+	for i := range tmpls {
+		assert.Nil(t, workflowtemplate.Delete(db, &tmpls[i]), "No err should be returned when removing a template")
+	}
+}
