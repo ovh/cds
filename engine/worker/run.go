@@ -252,9 +252,9 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			}
 
 			if w.manualExit {
-				w.sendLog(buildID, fmt.Sprintf("End of Step \"%s\" [Disabled - user worker exit]\n", childName), w.currentJob.currentStep, true)
+				_ = w.sendLog(buildID, fmt.Sprintf("End of Step \"%s\" [Disabled - user worker exit]\n", childName), w.currentJob.currentStep, true)
 			} else {
-				w.sendLog(buildID, fmt.Sprintf("End of Step \"%s\" [Disabled]\n", childName), w.currentJob.currentStep, true)
+				_ = w.sendLog(buildID, fmt.Sprintf("End of Step \"%s\" [Disabled]\n", childName), w.currentJob.currentStep, true)
 			}
 			nbDisabledChildren++
 			continue
@@ -265,7 +265,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			if err := w.updateStepStatus(ctx, buildID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
-			w.sendLog(buildID, fmt.Sprintf("Starting step \"%s\"\n", childName), w.currentJob.currentStep, false)
+			_ = w.sendLog(buildID, fmt.Sprintf("Starting step \"%s\"\n", childName), w.currentJob.currentStep, false)
 
 			r = w.startAction(ctx, &child, buildID, params, secrets, w.currentJob.currentStep, childName)
 			if r.Status != sdk.StatusSuccess.String() && !child.Optional {
@@ -273,9 +273,9 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			}
 
 			if r.Reason != "" {
-				w.sendLog(buildID, fmt.Sprintf("End of step \"%s\" [%s] with reason: %s", childName, r.Status, r.Reason), w.currentJob.currentStep, true)
+				_ = w.sendLog(buildID, fmt.Sprintf("End of step \"%s\" [%s] with reason: %s", childName, r.Status, r.Reason), w.currentJob.currentStep, true)
 			} else {
-				w.sendLog(buildID, fmt.Sprintf("End of step \"%s\" [%s]", childName, r.Status), w.currentJob.currentStep, true)
+				_ = w.sendLog(buildID, fmt.Sprintf("End of step \"%s\" [%s]", childName, r.Status), w.currentJob.currentStep, true)
 			}
 
 			// Update step status
