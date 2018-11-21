@@ -558,26 +558,23 @@ func (e *NodeEntry) getNode(name string, w *sdk.Workflow) (*sdk.Node, error) {
 func (w *Workflow) processHooks(n *sdk.Node, wf *sdk.Workflow) {
 	var addHooks = func(hooks []HookEntry) {
 		for _, h := range hooks {
-			cfg := make(sdk.WorkflowNodeHookConfig, len(h.Config))
-			for k, v := range h.Config {
-				var hType string
-				switch h.Model {
-				case sdk.KafkaHookModelName, sdk.RabbitMQHookModelName:
-					if k == sdk.HookModelPlatform {
-						hType = sdk.HookConfigTypePlatform
-					} else {
-						hType = sdk.HookConfigTypeString
-					}
-				default:
-					hType = sdk.HookConfigTypeString
-				}
 
-				cfg[k] = sdk.WorkflowNodeHookConfigValue{
-					Value:        v,
-					Configurable: true,
-					Type:         hType,
+			var cfg sdk.WorkflowNodeHookConfig
+			for _, model := range sdk.BuiltinHookModels {
+				if h.Model == model.Name {
+					cfg = model.DefaultConfig
+					break
 				}
 			}
+
+			for k := range cfg {
+				if v, has := h.Config[k]; has && cfg[k].Configurable {
+					value := cfg[k]
+					value.Value = v
+					cfg[k] = value
+				}
+			}
+
 			if h.Ref == "" {
 				h.Ref = fmt.Sprintf("%d", time.Now().Unix())
 			}

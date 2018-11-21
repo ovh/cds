@@ -90,12 +90,12 @@ func (u updateWorkflowAudit) Compute(db gorp.SqlExecutor, e sdk.Event) error {
 	oldWorkflowBuffer := bytes.NewBufferString("")
 	_, errE := exportWorkflow(wEvent.OldWorkflow, exportentities.FormatYAML, oldWorkflowBuffer)
 	if errE != nil {
-		return sdk.WrapError(errE, "updateWorkflowAudit.Compute> Unable to export workflow")
+		return sdk.WrapError(errE, "updateWorkflowAudit.Compute> Unable to export old workflow")
 	}
 	newWorkflowBuffer := bytes.NewBufferString("")
 	_, errN := exportWorkflow(wEvent.NewWorkflow, exportentities.FormatYAML, newWorkflowBuffer)
 	if errN != nil {
-		return sdk.WrapError(errN, "updateWorkflowAudit.Compute> Unable to export workflow")
+		return sdk.WrapError(errN, "updateWorkflowAudit.Compute> Unable to export new workflow ")
 	}
 	a := sdk.AuditWorklflow{
 		EventType:   strings.Replace(e.EventType, "sdk.Event", "", -1),
