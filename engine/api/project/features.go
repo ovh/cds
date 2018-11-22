@@ -8,5 +8,5 @@ import (
 
 // LoadFeatures loads features into a project from the feature flipping provider.
 func LoadFeatures(store cache.Store, p *sdk.Project) {
-	p.Features = feature.GetFromCache(store, p.Key)
+	p.Features = feature.GetFeatures(store, p.Key)
 }

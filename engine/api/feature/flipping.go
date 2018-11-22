@@ -16,7 +16,7 @@ const (
 	// FeatEnableTracing is the opencensus tracing feature id
 	FeatEnableTracing = "cds:tracing"
 
-	// FeatDisabledWNode wnode workflow representation
+	// FeatWNode wnode workflow representation
 	FeatWNode = "cds:wnode"
 
 	cacheFeatureKey = "feature:"
@@ -52,8 +52,8 @@ func SetClient(c *client.Client) {
 	izanami = c
 }
 
-// GetFromCache get feature tree for the given project from cache, if not found in cache init from Izanami.
-func GetFromCache(store cache.Store, projectKey string) map[string]bool {
+// GetFeatures tree for the given project from cache, if not found in cache init from Izanami.
+func GetFeatures(store cache.Store, projectKey string) map[string]bool {
 	projFeats := ProjectFeatures{}
 
 	if store.Get(cacheFeatureKey+projectKey, &projFeats) {
@@ -84,7 +84,7 @@ func GetFromCache(store cache.Store, projectKey string) map[string]bool {
 
 // IsEnabled check if feature is enabled for the given project.
 func IsEnabled(store cache.Store, featureID string, projectKey string) bool {
-	fs := GetFromCache(store, projectKey)
+	fs := GetFeatures(store, projectKey)
 
 	if v, ok := fs[featureID]; ok {
 		return v
