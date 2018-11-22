@@ -63,7 +63,8 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 	// Check configuration of the hook vs the model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
 		if _, ok := hook.Config[k]; !ok {
-			errmu = append(errmu, fmt.Errorf("Missing %s configuration key: %s", hook.WorkflowHookModel.Name, k))
+			// Add missing conf
+			hook.Config[k] = hook.WorkflowHookModel.DefaultConfig[k]
 		}
 	}
 	if len(errmu) > 0 {
