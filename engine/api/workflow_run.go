@@ -293,7 +293,7 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 			workflow.LoadRunOptions{
 				WithArtifacts:           true,
 				WithLightTests:          true,
-				DisableDetailledNodeRun: true,
+				DisableDetailledNodeRun: getService(ctx) == nil,
 			},
 		)
 		if err != nil {
