@@ -14,8 +14,8 @@
                                         <div class="description">{{'workflow_wizard_description' | translate}}</div>
                                     </div>
                                 </div>
-                                <div class="step pointing" [class.disabled]="!workflow.name || duplicateWorkflowName" [class.active]="currentStep === 1"
-                                    (click)="goToNextStep(1)">
+                                <div class="step pointing" [class.disabled]="!workflow.name || duplicateWorkflowName"
+                                    [class.active]="currentStep === 1" (click)="goToNextStep(1)">
                                     <i class="sitemap icon"></i>
                                     <div class="content">
                                         <div class="title">{{'common_pipeline' | translate}}</div>
@@ -31,169 +31,170 @@
                                             <div class="ui row">
                                                 <div class="one wide column"></div>
                                                 <div class="fourteen wide column">
-                                                    <div class="three ui buttons" [class.three]="project.features['cds:wasc']" [class.two]="!project.features['cds:wasc']">
-                                                        <button class="ui button"
-                                                                type="button"
-                                                                [class.active]="creationMode === 'graphical'"
-                                                                [class.blue]="creationMode === 'graphical'"
-                                                                [class.disabled]="!project.application_names || !project.application_names.length"
-                                                                (click)="creationMode = 'graphical'">
+                                                    <div class="three ui buttons" [class.four]="project.features['cds:wasc']"
+                                                        [class.three]="!project.features['cds:wasc']">
+                                                        <button class="ui button" type="button" [class.active]="creationMode === 'graphical'"
+                                                            [class.blue]="creationMode === 'graphical'"
+                                                            [class.disabled]="!project.application_names || !project.application_names.length"
+                                                            (click)="creationMode = 'graphical'">
                                                             {{'common_create' | translate}}
                                                         </button>
                                                         <button class="ui button" type="button" [class.blue]="creationMode === 'text'"
-                                                                [class.active]="creationMode === 'text'" (click)="creationMode = 'text'">
+                                                            [class.active]="creationMode === 'text'" (click)="creationMode = 'text'">
                                                             {{'common_import' | translate}}
                                                         </button>
                                                         <button class="ui button" *ngIf="project.features['cds:wasc']"
-                                                                type="button"
-                                                                [class.active]="creationMode === 'repository'"
-                                                                [class.blue]="creationMode === 'repository'"
-                                                                (click)="creationMode = 'repository'">{{'common_create_repo' | translate}}
+                                                            type="button" [class.active]="creationMode === 'repository'"
+                                                            [class.blue]="creationMode === 'repository'" (click)="creationMode = 'repository'">{{'common_create_repo'
+                                                            | translate}}
                                                         </button>
-
+                                                        <button class="ui button" type="button" [class.active]="creationMode === 'template'"
+                                                            [class.blue]="creationMode === 'template'" (click)="creationMode = 'template'">{{'common_create_template'
+                                                            | translate}}
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="ui row">
-                                                <div class="one wide column">
-
-                                                </div>
+                                                <div class="one wide column"></div>
                                                 <div class="fourteen wide column" *ngIf="creationMode === 'graphical'">
                                                     <div class="field" [class.error]="name.invalid || duplicateWorkflowName">
                                                         <label>{{ 'workflow_name' | translate}} *</label>
-                                                        <input
-                                                                name="name"
-                                                                class="ui input"
-                                                                [(ngModel)]="workflow.name"
-                                                                pattern="^[a-zA-Z0-9._-]{1,}$"
-                                                                (ngModelChange)="duplicateWorkflowName = false"
-                                                                #name="ngModel">
-                                                        <p class="red" *ngIf="name.invalid">{{'workflow_name_error' | translate}}</p>
-                                                        <p class="red" *ngIf="duplicateWorkflowName">{{'workflow_name_error_duplicate' |
+                                                        <input name="name" class="ui input" [(ngModel)]="workflow.name"
+                                                            pattern="^[a-zA-Z0-9._-]{1,}$" (ngModelChange)="duplicateWorkflowName = false"
+                                                            #name="ngModel">
+                                                        <p class="red" *ngIf="name.invalid">{{'workflow_name_error' |
+                                                            translate}}</p>
+                                                        <p class="red" *ngIf="duplicateWorkflowName">{{'workflow_name_error_duplicate'
+                                                            |
                                                             translate}}</p>
                                                     </div>
                                                     <div class="field">
                                                         <label>{{ 'workflow_description' | translate}}</label>
-                                                        <textarea name="description" class="ui"
-                                                                  [(ngModel)]="workflow.description"></textarea>
+                                                        <textarea name="description" class="ui" [(ngModel)]="workflow.description"></textarea>
                                                     </div>
                                                     <div class="field center aligned">
-                                                          <label>{{ 'workflow_icon' | translate }} ({{'common_optional' | translate}})</label>
-                                                          <div>
-                                                              <div *ngIf="!fileTooLarge && workflow.icon">
-                                                                  <img class="app-icon" [src]="workflow.icon" alt="icon"/>
-                                                              </div>
-                                                              <app-upload-button accept=".png,.jpg,.jpeg" image="true" (event)="fileEventIcon($event)">
-                                                              </app-upload-button>
-                                                          </div>
-                                                      </div>
-                                                      <div class="ui red message field" *ngIf="fileTooLarge"  [textContent]="'common_file_too_large' | translate"></div>
+                                                        <label>{{ 'workflow_icon' | translate }} ({{'common_optional' |
+                                                            translate}})</label>
+                                                        <div>
+                                                            <div *ngIf="!fileTooLarge && workflow.icon">
+                                                                <img class="app-icon" [src]="workflow.icon" alt="icon" />
+                                                            </div>
+                                                            <app-upload-button accept=".png,.jpg,.jpeg" image="true"
+                                                                (event)="fileEventIcon($event)">
+                                                            </app-upload-button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ui red message field" *ngIf="fileTooLarge"
+                                                        [textContent]="'common_file_too_large' | translate"></div>
 
                                                     <div class="field">
-                                                        <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' |
+                                                        <button class="ui button" type="button" (click)="goToProject()">{{
+                                                            'btn_cancel' |
                                                             translate }}
                                                         </button>
-                                                        <button class="ui right floated green button" type="button" (click)="goToNextStep()"
-                                                                [disabled]="!workflow.name || name.invalid || duplicateWorkflowName"
-                                                                [class.loading]="loading">{{ 'btn_next' | translate }}
+                                                        <button class="ui right floated green button" type="button"
+                                                            (click)="goToNextStep()" [disabled]="!workflow.name || name.invalid || duplicateWorkflowName"
+                                                            [class.loading]="loading">{{ 'btn_next' | translate }}
                                                         </button>
                                                     </div>
                                                 </div>
                                                 <div class="fourteen wide column" *ngIf="creationMode === 'text'">
-                                                  <div class="ui row">
-                                                    <div class="sixteen wide column centered">
-                                                        <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)">
-                                                        </app-upload-button>
-                                                    </div>
-                                                  </div>
-                                                  <div class="ui row">
-                                                    <div class="one wide column"></div>
-                                                    <div class="fourteen wide column">
-                                                        <div class="ui horizontal divider">
-                                                          {{'common_or' | translate}}
+                                                    <div class="ui row">
+                                                        <div class="sixteen wide column centered">
+                                                            <app-upload-button accept=".yml,.yaml" size="large" (event)="fileEvent($event)">
+                                                            </app-upload-button>
                                                         </div>
                                                     </div>
-                                                  </div>
-                                                  <div class="ui row">
-                                                      <div class="field">
-                                                            <codemirror
-                                                                    name="wfToImport"
-                                                                    [(ngModel)]="wfToImport"
-                                                                    (keydown)="updated = true"
-                                                                    [config]="codeMirrorConfig" #codeMirror>
+                                                    <div class="ui row">
+                                                        <div class="one wide column"></div>
+                                                        <div class="fourteen wide column">
+                                                            <div class="ui horizontal divider">
+                                                                {{'common_or' | translate}}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ui row">
+                                                        <div class="field">
+                                                            <codemirror name="wfToImport" [(ngModel)]="wfToImport"
+                                                                (keydown)="updated = true" [config]="codeMirrorConfig"
+                                                                #codeMirror>
                                                             </codemirror>
                                                         </div>
-                                                  </div>
-                                                  <div class="ui row">
-                                                      <div class="field mt5">
-                                                          <button class="ui button" type="button" (click)="goToProject()">{{ 'btn_cancel' |
-                                                              translate }}
-                                                          </button>
-                                                          <button class="ui right floated green button" type="button"
-                                                                  (click)="importWorkflow()" *ngIf="creationMode === 'text'"
-                                                                  [disabled]="!wfToImport" [class.loading]="loading">{{ 'btn_create' |
-                                                              translate }}
-                                                          </button>
-                                                      </div>
-                                                  </div>
+                                                    </div>
+                                                    <div class="ui row">
+                                                        <div class="field mt5">
+                                                            <button class="ui button" type="button" (click)="goToProject()">{{
+                                                                'btn_cancel' |
+                                                                translate }}
+                                                            </button>
+                                                            <button class="ui right floated green button" type="button"
+                                                                (click)="importWorkflow()" *ngIf="creationMode === 'text'"
+                                                                [disabled]="!wfToImport" [class.loading]="loading">{{
+                                                                'btn_create' |
+                                                                translate }}
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                                 <div class="fourteen wide column" *ngIf="creationMode === 'repository'">
                                                     <ng-container *ngIf="!asCodeResult">
                                                         <div class="ui fields">
                                                             <div class="ui eight wide field">
-                                                                <label>{{ 'workflow_wizard_select_repo_man' | translate}}</label>
-                                                                <sui-select class="selection"
-                                                                            name="repoman"
-                                                                            [(ngModel)]="selectedRepoManager"
-                                                                            (selectedOptionChange)="fetchRepos($event)"
-                                                                            [options]="project.vcs_servers"
-                                                                            [isSearchable]="true" #select>
+                                                                <label>{{ 'workflow_wizard_select_repo_man' |
+                                                                    translate}}</label>
+                                                                <sui-select class="selection" name="repoman"
+                                                                    [(ngModel)]="selectedRepoManager"
+                                                                    (selectedOptionChange)="fetchRepos($event)"
+                                                                    [options]="project.vcs_servers" [isSearchable]="true"
+                                                                    #select>
                                                                     <sui-select-option *ngFor="let vcs of select.filteredOptions"
-                                                                                       [value]="vcs.name">
+                                                                        [value]="vcs.name">
                                                                     </sui-select-option>
                                                                 </sui-select>
                                                             </div>
                                                             <div class="ui eight wide field">
-                                                                <label>{{ 'workflow_wizard_select_repo_man_add' | translate}}</label>
+                                                                <label>{{ 'workflow_wizard_select_repo_man_add' |
+                                                                    translate}}</label>
                                                                 <app-repomanager-form [project]="project"></app-repomanager-form>
                                                             </div>
                                                         </div>
                                                         <div class="ui fields" *ngIf="selectedRepoManager">
-                                                          <div class="ui eleven wide field">
-                                                              <label>{{ 'workflow_wizard_select_repo' | translate}}</label>
-                                                              <div class="ui info message" *ngIf="loadingRepo">
-                                                                  {{'workflow_wizard_select_repo_loading' | translate }}
-                                                              </div>
-                                                              <ng-container *ngIf="!loadingRepo">
-                                                                  <sui-select class="selection"
-                                                                              name="repo"
-                                                                              [(ngModel)]="selectedRepo"
-                                                                              [options]="repos"
-                                                                              [optionsFilter]="filterRepo"
-                                                                              labelField="fullname"
-                                                                              [isSearchable]="true" #repositorySelect>
-                                                                      <sui-select-option *ngFor="let r of repositorySelect.filteredOptions"
-                                                                                         [value]="r">
+                                                            <div class="ui eleven wide field">
+                                                                <label>{{ 'workflow_wizard_select_repo' | translate}}</label>
+                                                                <div class="ui info message" *ngIf="loadingRepo">
+                                                                    {{'workflow_wizard_select_repo_loading' | translate
+                                                                    }}
+                                                                </div>
+                                                                <ng-container *ngIf="!loadingRepo">
+                                                                    <sui-select class="selection" name="repo"
+                                                                        [(ngModel)]="selectedRepo" [options]="repos"
+                                                                        [optionsFilter]="filterRepo" labelField="fullname"
+                                                                        [isSearchable]="true" #repositorySelect>
+                                                                        <sui-select-option *ngFor="let r of repositorySelect.filteredOptions"
+                                                                            [value]="r">
 
-                                                                      </sui-select-option>
-                                                                  </sui-select>
-                                                              </ng-container>
-                                                          </div>
-                                                          <div class="ui one wide field">
-                                                            <button class="ui blue button resync" name="resync" type="button" [class.loading]="loading"
-                                                                    [disabled]="loading" (click)="resyncRepos()">
+                                                                        </sui-select-option>
+                                                                    </sui-select>
+                                                                </ng-container>
+                                                            </div>
+                                                            <div class="ui one wide field">
+                                                                <button class="ui blue button resync" name="resync"
+                                                                    type="button" [class.loading]="loading" [disabled]="loading"
+                                                                    (click)="resyncRepos()">
                                                                     {{'btn_resync_repo' | translate }}
-                                                            </button>
-                                                          </div>
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                         <div class="ui field" *ngIf="selectedRepo">
-                                                            <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy" [createOnProject]="true"
-                                                                              (strategyChange)="createWorkflowFromRepo()" [sshWarning]="true" [projectKeysOnly]="true"
-                                                                              [hideBranch]="true" [hideButton]="true"></app-vcs-strategy>
+                                                            <app-vcs-strategy [project]="project" [(strategy)]="selectedStrategy"
+                                                                [createOnProject]="true" (strategyChange)="createWorkflowFromRepo()"
+                                                                [sshWarning]="true" [projectKeysOnly]="true"
+                                                                [hideBranch]="true" [hideButton]="true"></app-vcs-strategy>
                                                         </div>
                                                         <div class="right aligned field" *ngIf="!pollingResponse && selectedRepo">
-                                                            <button class="ui green button" type="button" [class.loading]="loading"
-                                                                    [disabled]="loading" (click)="createWorkflowFromRepo()">{{
+                                                            <button class="ui green button" type="button"
+                                                                [class.loading]="loading" [disabled]="loading" (click)="createWorkflowFromRepo()">{{
                                                                 'btn_inspect_repo' | translate }}
                                                             </button>
                                                         </div>
@@ -216,8 +217,9 @@
                                                             </ng-container>
 
                                                             <div class="right aligned field" *ngIf="pollingResponse.status === 2">
-                                                                <button class="ui green button" type="button" [class.loading]="loading"
-                                                                        [disabled]="loading" (click)="perform()">{{ 'btn_create_workflow' |
+                                                                <button class="ui green button" type="button"
+                                                                    [class.loading]="loading" [disabled]="loading"
+                                                                    (click)="perform()">{{ 'btn_create_workflow' |
                                                                     translate }}
                                                                 </button>
                                                             </div>
@@ -228,7 +230,50 @@
                                                             <li *ngFor="let s of asCodeResult.msgs">{{s}}</li>
                                                         </ul>
                                                         <div class="ui right aligned field">
-                                                            <button class="ui blue button" type="button" (click)="goToWorkflow()">{{ 'btn_goto_workflow' | translate}}</button>
+                                                            <button class="ui blue button" type="button" (click)="goToWorkflow()">{{
+                                                                'btn_goto_workflow' | translate}}</button>
+                                                        </div>
+                                                    </ng-container>
+                                                </div>
+                                                <div class="fourteen wide column" *ngIf="creationMode === 'template'">
+                                                    <ng-container>
+                                                        <div class="ui grid">
+                                                            <div class="sixteen wide column">
+                                                                <div class="ui wide eighteen field">
+                                                                    <label>{{ 'workflow_wizard_select_template' |
+                                                                        translate}}</label>
+                                                                    <sui-select class="selection" name="selectedTemplatePath"
+                                                                        [(ngModel)]="selectedTemplatePath"
+                                                                        (selectedOptionChange)="showTemplateForm($event)"
+                                                                        [options]="templates" [isSearchable]="true"
+                                                                        #select>
+                                                                        <sui-select-option *ngFor="let t of select.filteredOptions"
+                                                                            [value]="t.group.name + '/' + t.slug">
+                                                                        </sui-select-option>
+                                                                    </sui-select>
+                                                                </div>
+                                                                <div class="ui wide eighteen field" *ngIf="selectedTemplate">
+                                                                    <div class="fields">
+                                                                        <div class="nine wide field">
+                                                                            <label>{{'common_name' | translate}}</label>
+                                                                            <input class="ui input" type="text" name="name"
+                                                                                [disabled]="true" [ngModel]="selectedTemplate.name">
+                                                                        </div>
+                                                                        <div class="nine wide field">
+                                                                            <label>{{'common_group' | translate}}</label>
+                                                                            <input class="ui input" type="text" name="group"
+                                                                                [disabled]="true" [ngModel]="selectedTemplate.group.name">
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="field">
+                                                                        <label>{{'common_description' | translate}}</label>
+                                                                        <textarea readonly name="description" [ngModel]="selectedTemplate.description"
+                                                                            [rows]="descriptionRows"></textarea>
+                                                                    </div>
+                                                                    <app-workflow-template-apply-form [project]="project"
+                                                                        [workflowTemplate]="selectedTemplate"></app-workflow-template-apply-form>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     </ng-container>
                                                 </div>
@@ -239,7 +284,7 @@
                                     <!-- ######### WORKFLOW PIPELINE SECOND STEP ######### -->
                                     <ng-container *ngSwitchCase="1">
                                         <app-workflow-node-add-wizard [project]="project" [loading]="loading"
-                                                                      (nodeCreated)="createWorkflow($event)"></app-workflow-node-add-wizard>
+                                            (nodeCreated)="createWorkflow($event)"></app-workflow-node-add-wizard>
                                     </ng-container>
                                 </div>
                             </div>

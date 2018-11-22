@@ -133,6 +133,7 @@
   "audit_context": "Contexte",
   "audit_modification_type": "Type de modification",
 
+  "btn_apply": "Appliquer",
   "btn_cancel": "Annuler",
   "btn_close": "Fermer",
   "btn_continue": "Continuer",
@@ -259,6 +260,7 @@
   "common_select": "Sélectionner",
   "common_create": "Créer",
   "common_create_repo" : "Depuis un dépôt",
+  "common_create_template" : "Depuis un modèle",
   "common_import": "Importer",
   "common_show_all": "Voir tout",
   "common_hide_all": "Cacher tout",
@@ -1032,6 +1034,7 @@
   "workflow_wiazrd_select_repo_loading": "Chargement des dépots...",
   "workflow_wizard_repo_analyse" : "Analyse du dépôt...",
   "workflow_wizard_select_repo_man_add" : "Ou ajouter un gestionnaire de dépôt",
+  "workflow_wizard_select_template": "Sélectionner un modèle de workflow",
   "wizard_repo_files" : "Fichiers trouvés : ",
 
   "workflow_template_add_title": "Création d'un modèle de workflow",

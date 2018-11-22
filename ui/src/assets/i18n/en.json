@@ -133,6 +133,7 @@
   "audit_context": "Context",
   "audit_modification_type": "Modification type",
 
+  "btn_apply": "Apply",
   "btn_cancel": "Cancel",
   "btn_continue": "Continue",
   "btn_close": "Close",
@@ -259,6 +260,7 @@
   "common_select": "Select",
   "common_create": "Create",
   "common_create_repo" : "From repository",
+  "common_create_template" : "From template",
   "common_import": "Import",
   "common_show_all": "Show all",
   "common_hide_all": "Hide all",
@@ -1032,6 +1034,7 @@
   "workflow_wizard_select_repo_loading": "Loading repositories...",
   "workflow_wizard_repo_analyse" : "Analyzing repository...",
   "workflow_wizard_select_repo_man_add" : "Or add a repository manager",
+  "workflow_wizard_select_template": "Select a workflow template",
   "wizard_repo_files" : "Files found: ",
 
   "workflow_template_add_title": "Create workflow template",
