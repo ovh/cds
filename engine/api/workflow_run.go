@@ -289,6 +289,9 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		if err != nil {
 			return err
 		}
+    
+    // loadRun, DisableDetailledNodeRun = false for calls from CDS Service
+    // as hook service. It's needed to have the buildParameters.
 		run, err := workflow.LoadRun(api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
 				WithArtifacts:           true,
