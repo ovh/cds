@@ -3,8 +3,8 @@
 CREATE TABLE IF NOT EXISTS "workflow_template" (
   id BIGSERIAL PRIMARY KEY,
   group_id BIGINT NOT NULL,
-  name TEXT NOT NULL,
-  slug TEXT NOT NULL,
+  name VARCHAR(100) NOT NULL,
+  slug VARCHAR(100) NOT NULL,
   description TEXT,
   version BIGINT NOT NULL,
   value TEXT,

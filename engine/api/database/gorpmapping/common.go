@@ -13,6 +13,9 @@ import (
 const (
 	// ViolateUniqueKeyPGCode is the pg code when duplicating unique key
 	ViolateUniqueKeyPGCode = "23505"
+
+	// StringDataRightTruncation is raisedalue is too long for varchar.
+	StringDataRightTruncation = "22001"
 )
 
 // IDsToQueryString returns a comma separated list of given ids.
@@ -27,8 +30,13 @@ func IDsToQueryString(ids []int64) string {
 // Insert value in given db.
 func Insert(db gorp.SqlExecutor, i interface{}) error {
 	err := db.Insert(i)
-	if e, ok := err.(*pq.Error); ok && e.Code == ViolateUniqueKeyPGCode {
-		err = sdk.NewError(sdk.ErrConflict, e)
+	if e, ok := err.(*pq.Error); ok {
+		switch e.Code {
+		case ViolateUniqueKeyPGCode:
+			err = sdk.NewError(sdk.ErrInvalidData, e)
+		case StringDataRightTruncation:
+			err = sdk.NewError(sdk.ErrConflict, e)
+		}
 	}
 	return sdk.WithStack(err)
 }
@@ -36,6 +44,12 @@ func Insert(db gorp.SqlExecutor, i interface{}) error {
 // Update value in given db.
 func Update(db gorp.SqlExecutor, i interface{}) error {
 	_, err := db.Update(i)
+	if e, ok := err.(*pq.Error); ok {
+		switch e.Code {
+		case StringDataRightTruncation:
+			err = sdk.NewError(sdk.ErrInvalidData, e)
+		}
+	}
 	return sdk.WithStack(err)
 }
 
