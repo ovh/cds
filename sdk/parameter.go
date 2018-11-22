@@ -162,6 +162,15 @@ func ParametersFromPipelineParameters(pipParams []Parameter) map[string]string {
 	return ParametersToMap(res)
 }
 
+// ParametersToMapWithPrefix returns a map from a slice of parameters
+func ParametersToMapWithPrefix(prefix string, params []Parameter) map[string]string {
+	res := make([]Parameter, len(params))
+	for i, t := range params {
+		res[i] = Parameter{Name: prefix + t.Name, Type: t.Type, Value: t.Value}
+	}
+	return ParametersToMap(res)
+}
+
 // ParametersFromPlatform returns a map of variables from a ProjectPlatform
 func ParametersFromPlatform(ppf PlatformConfig) map[string]string {
 	vars := make([]Variable, len(ppf))
