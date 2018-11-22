@@ -199,7 +199,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	run.HookEvent = hookEvent
 	if hookEvent != nil {
-		runPayload = sdk.ParametersMapMerge(runPayload, hookEvent.Payload, sdk.MapMergeOptions.ExcludeGitParams)
+		runPayload = sdk.ParametersMapMerge(runPayload, hookEvent.Payload)
 		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
