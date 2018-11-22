@@ -18,3 +18,7 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldNotContainSubstring hatchery
       - result.systemout ShouldContainSubstring api
+  - script: {{.cds.build.cdsctl}} admin services request --name `{{.cds.build.cdsctl}} admin services list -q|grep hatchery|head -n1` --query /debug/pprof/goroutine
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring transport.go
