@@ -64,6 +64,7 @@ func (s *SwiftStore) ServeStaticFiles(o Object, entrypoint string, data io.ReadC
 		"X-Container-Meta-Web-Listings": "TRUE",
 		"X-Container-Meta-Web-Index":    entrypoint,
 		"X-Container-Read":              ".r:*,.rlistings",
+		"X-Delete-After":                fmt.Sprintf("%d", time.Now().Add(time.Hour*1500).Unix()), //TODO: to delete when purge will be developed
 	}
 
 	log.Debug("SwiftStore> creating container %s", container)

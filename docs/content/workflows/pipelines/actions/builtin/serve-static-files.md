@@ -7,6 +7,8 @@ chapter = true
 
 This action can be used to upload static files and serve them. For example your HTML report about coverage, tests, performances, ...
 
+Pay attention this action is only available if your objectstore is configured to use Openstack Swift. And fow now by default your static files will be deleted after 2 months.
+
 ## Parameters
 * name: Name to display in CDS UI and identify your static files
 * path: Path where static files will be uploaded (example: mywebsite/*). If it's a file, the entrypoint would be set to this filename by default.
