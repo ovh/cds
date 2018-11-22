@@ -62,6 +62,7 @@ func GetFromCache(store cache.Store, projectKey string) map[string]bool {
 		for _, f := range List() {
 			if _, ok := projFeats.Features[f]; !ok {
 				missingFeature = true
+				break
 			}
 		}
 		if !missingFeature {
