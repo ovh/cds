@@ -76,7 +76,8 @@ func GetFromCache(store cache.Store, projectKey string) map[string]bool {
 		projFeats.Features[f] = getStatusFromIzanami(f, projectKey)
 	}
 
-	store.SetWithTTL(cacheFeatureKey+projectKey, projFeats, 60)
+	// no expiration delay is set, the cache is cleared by Izanami calls on /feature/clean
+	store.Set(cacheFeatureKey+projectKey, projFeats)
 
 	return projFeats.Features
 }
