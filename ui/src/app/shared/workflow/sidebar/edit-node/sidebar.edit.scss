@@ -14,6 +14,16 @@
 
   .content {
     width: 100%;
+    .line {
+        display: flex;
+
+        .name {
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
   }
   .edit-menu {
     &:hover {

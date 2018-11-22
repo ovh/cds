@@ -63,7 +63,8 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 	// Check configuration of the hook vs the model
 	for k := range hook.WorkflowHookModel.DefaultConfig {
 		if _, ok := hook.Config[k]; !ok {
-			errmu = append(errmu, fmt.Errorf("Missing %s configuration key: %s", hook.WorkflowHookModel.Name, k))
+			// Add missing conf
+			hook.Config[k] = hook.WorkflowHookModel.DefaultConfig[k]
 		}
 	}
 	if len(errmu) > 0 {
@@ -270,18 +271,18 @@ func LoadHooksByNodeID(db gorp.SqlExecutor, nodeID int64) ([]sdk.WorkflowNodeHoo
 // insertOutgoingHook inserts a outgoing hook
 func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeOutgoingHook, u *sdk.User) error {
 	hook.WorkflowNodeID = node.ID
-	if hook.WorkflowHookModelID == 0 {
-		hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
-	}
 
 	var icon string
 	if hook.WorkflowHookModelID != 0 {
-		icon = hook.WorkflowHookModel.Icon
-		model, errm := LoadOutgoingHookModelByID(db, hook.WorkflowHookModelID)
-		if errm != nil {
-			return sdk.WrapError(errm, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
+		model, has := w.OutGoingHookModels[hook.WorkflowHookModelID]
+		if !has {
+			modelDB, errm := LoadOutgoingHookModelByID(db, hook.WorkflowHookModelID)
+			if errm != nil {
+				return sdk.WrapError(errm, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
+			}
+			model = *modelDB
 		}
-		hook.WorkflowHookModel = *model
+		hook.WorkflowHookModel = model
 	} else {
 		model, errm := LoadOutgoingHookModelByName(db, hook.WorkflowHookModel.Name)
 		if errm != nil {
@@ -310,7 +311,7 @@ func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 
 	dbhook := nodeOutgoingHook(*hook)
 	if err := db.Insert(&dbhook); err != nil {
-		return sdk.WrapError(err, "Unable to insert hook")
+		return sdk.WrapError(err, "Unable to insert hook: %+v", dbhook)
 	}
 	*hook = sdk.WorkflowNodeOutgoingHook(dbhook)
 

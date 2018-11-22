@@ -590,7 +590,6 @@ func (w *Workflow) processHooks(n *sdk.Node, wf *sdk.Workflow) {
 				default:
 					hType = sdk.HookConfigTypeString
 				}
-
 				cfg[k] = sdk.WorkflowNodeHookConfigValue{
 					Value:        v,
 					Configurable: true,

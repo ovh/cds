@@ -7,6 +7,7 @@ import (
 	"regexp"
 
 	"github.com/howeyc/gopass"
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -39,6 +40,10 @@ var signupCmd = cli.Command{
 			Kind:  reflect.String,
 		},
 	},
+}
+
+func signup() *cobra.Command {
+	return cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
 }
 
 func signupRun(v cli.Values) error {

@@ -1,1 +1,0 @@
-# CDS to XMPP

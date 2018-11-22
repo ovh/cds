@@ -7,11 +7,14 @@
         <ng-container *ngIf="node.type === 'pipeline' || node.type === 'fork'">
             <div class="content">
                 <ng-container *ngIf="!displayInputName">
-                    <span>{{node.name}}</span>
-                    <a class="inline pointing ml5" (click)="openRenameArea()"
-                       *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
-                        <i class="pencil icon float"></i>
-                    </a>
+                    <div class="line">
+                        <span class="name" title="{{node.name}}">{{node.name}}</span>
+                        <a class="toto inline pointing ml5" (click)="openRenameArea()"
+                           *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">
+                            <i class="pencil icon float"></i>
+                        </a>
+                    </div>
+
                 </ng-container>
                 <ng-container *ngIf="displayInputName">
                     <div class="ui fluid mini action input">

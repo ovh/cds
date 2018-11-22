@@ -14,19 +14,19 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var (
-	templateCmd = cli.Command{
-		Name:  "template",
-		Short: "Manage CDS workflow template",
-	}
+var templateCmd = cli.Command{
+	Name:  "template",
+	Short: "Manage CDS workflow template",
+}
 
-	template = cli.NewCommand(templateCmd, nil, []*cobra.Command{
+func template() *cobra.Command {
+	return cli.NewCommand(templateCmd, nil, []*cobra.Command{
 		cli.NewCommand(templateApplyCmd("apply"), templateApplyRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePushCmd, templatePushRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, nil, withAllCommandModifiers()...),
 	})
-)
+}
 
 var templatePullCmd = cli.Command{
 	Name:    "pull",

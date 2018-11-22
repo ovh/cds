@@ -9,22 +9,21 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	userCmd = cli.Command{
-		Name:  "user",
-		Short: "Manage CDS user",
-	}
+var userCmd = cli.Command{
+	Name:  "user",
+	Short: "Manage CDS user",
+}
 
-	usr = cli.NewCommand(userCmd, nil,
-		[]*cobra.Command{
-			cli.NewGetCommand(userMeCmd, userMeRun, nil),
-			cli.NewListCommand(userListCmd, userListRun, nil),
-			cli.NewGetCommand(userShowCmd, userShowRun, nil),
-			cli.NewCommand(userResetCmd, userResetRun, nil),
-			cli.NewCommand(userConfirmCmd, userConfirmRun, nil),
-			cli.NewCommand(userFavoriteCmd, userFavoriteRun, nil),
-		})
-)
+func usr() *cobra.Command {
+	return cli.NewCommand(userCmd, nil, []*cobra.Command{
+		cli.NewGetCommand(userMeCmd, userMeRun, nil),
+		cli.NewListCommand(userListCmd, userListRun, nil),
+		cli.NewGetCommand(userShowCmd, userShowRun, nil),
+		cli.NewCommand(userResetCmd, userResetRun, nil),
+		cli.NewCommand(userConfirmCmd, userConfirmRun, nil),
+		cli.NewCommand(userFavoriteCmd, userFavoriteRun, nil),
+	})
+}
 
 var userListCmd = cli.Command{
 	Name:  "list",

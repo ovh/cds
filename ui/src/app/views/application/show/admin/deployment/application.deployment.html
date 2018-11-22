@@ -30,8 +30,8 @@
             </ng-container>
         </div>
         <div class="six wide right aligned field">
-            <button name="savebtn" class="ui green button" [class.loading]="loadingBtn" type="button" (click)="savePlatform()" [disabled]="!selectedPlatform" >{{ 'btn_add' | translate }}</button>
-            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="savePlatform()" #linkWarning></app-warning-modal>
+            <button name="savebtn" class="ui green button" [class.loading]="loadingBtn" type="button" (click)="addPlatform()" [disabled]="!selectedPlatform || loadingBtn" >{{ 'btn_add' | translate }}</button>
+            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="addPlatform()" #linkWarning></app-warning-modal>
         </div>
     </div>
     <div class="fields">
@@ -64,7 +64,7 @@
                             </td>
                             <td class="center aligned">
                                 <div>
-                                  <button class="ui green button mb5" [class.loading]="loadingBtn" type="button" (click)="clickSavePlatform(pf)" >{{ 'btn_save' | translate }}</button>
+                                  <button class="ui green button mb5" [disabled]="loadingBtn" [class.loading]="loadingBtn" type="button" (click)="updatePlatform(pf)" >{{ 'btn_save' | translate }}</button>
                                 </div>
                                 <div>
                                   <app-delete-button (event)="clickDeletePlatform(pf)" [loading]="loadingBtn"></app-delete-button>

@@ -15,20 +15,19 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-var (
-	workerModelCmd = cli.Command{
-		Name:  "model",
-		Short: "Manage Worker Model",
-	}
+var workerModelCmd = cli.Command{
+	Name:  "model",
+	Short: "Manage Worker Model",
+}
 
-	workerModel = cli.NewCommand(workerModelCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(workerModelListCmd, workerModelListRun, nil),
-			cli.NewGetCommand(workerModelShowCmd, workerModelShowRun, nil, withAllCommandModifiers()...),
-			cli.NewDeleteCommand(workerModelDeleteCmd, workerModelDeleteRun, nil),
-			cli.NewCommand(workerModelImportCmd, workerModelImportRun, nil),
-		})
-)
+func workerModel() *cobra.Command {
+	return cli.NewCommand(workerModelCmd, nil, []*cobra.Command{
+		cli.NewListCommand(workerModelListCmd, workerModelListRun, nil),
+		cli.NewGetCommand(workerModelShowCmd, workerModelShowRun, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(workerModelDeleteCmd, workerModelDeleteRun, nil),
+		cli.NewCommand(workerModelImportCmd, workerModelImportRun, nil),
+	})
+}
 
 var workerModelListCmd = cli.Command{
 	Name:  "list",

@@ -10,32 +10,31 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-var (
-	workflowCmd = cli.Command{
-		Name:  "workflow",
-		Short: "Manage CDS workflow",
-	}
+var workflowCmd = cli.Command{
+	Name:  "workflow",
+	Short: "Manage CDS workflow",
+}
 
-	workflow = cli.NewCommand(workflowCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(workflowInitCmd, workflowInitRun, nil),
-			cli.NewCommand(templateApplyCmd("applyTemplate"), templateApplyRun, nil, withAllCommandModifiers()...),
-			cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...),
-			cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil, withAllCommandModifiers()...),
-			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...),
-			cli.NewGetCommand(workflowStatusCmd, workflowStatusRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowStopCmd, workflowStopRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowExportCmd, workflowExportRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowImportCmd, workflowImportRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowPullCmd, workflowPullRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowFavoriteCmd, workflowFavoriteRun, nil, withAllCommandModifiers()...),
-			workflowArtifact,
-			workflowLog,
-			workflowAdvanced,
-		})
-)
+func workflow() *cobra.Command {
+	return cli.NewCommand(workflowCmd, nil, []*cobra.Command{
+		cli.NewCommand(workflowInitCmd, workflowInitRun, nil),
+		cli.NewCommand(templateApplyCmd("applyTemplate"), templateApplyRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(workflowListCmd, workflowListRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(workflowHistoryCmd, workflowHistoryRun, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil, withAllCommandModifiers()...),
+		cli.NewGetCommand(workflowStatusCmd, workflowStatusRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowStopCmd, workflowStopRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowExportCmd, workflowExportRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowImportCmd, workflowImportRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowPullCmd, workflowPullRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowPushCmd, workflowPushRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowFavoriteCmd, workflowFavoriteRun, nil, withAllCommandModifiers()...),
+		workflowArtifact(),
+		workflowLog(),
+		workflowAdvanced(),
+	})
+}
 
 func workflowNodeForCurrentRepo(projectKey, workflowName string) (int64, error) {
 	//Try to get the latest commit

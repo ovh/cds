@@ -6,20 +6,19 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var (
-	groupUserCmd = cli.Command{
-		Name:  "user",
-		Short: "Manage CDS users group",
-	}
+var groupUserCmd = cli.Command{
+	Name:  "user",
+	Short: "Manage CDS users group",
+}
 
-	groupUser = cli.NewCommand(groupUserCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(groupUserAdd, groupUserAddRun, nil),
-			cli.NewDeleteCommand(groupUserRemove, groupUserRemoveRun, nil),
-			cli.NewCommand(groupUserSetAdmin, groupUserSetAdminRun, nil),
-			cli.NewCommand(groupUserAdminRemove, groupUserAdminRemoveRun, nil),
-		})
-)
+func groupUser() *cobra.Command {
+	return cli.NewCommand(groupUserCmd, nil, []*cobra.Command{
+		cli.NewCommand(groupUserAdd, groupUserAddRun, nil),
+		cli.NewDeleteCommand(groupUserRemove, groupUserRemoveRun, nil),
+		cli.NewCommand(groupUserSetAdmin, groupUserSetAdminRun, nil),
+		cli.NewCommand(groupUserAdminRemove, groupUserAdminRemoveRun, nil),
+	})
+}
 
 var groupUserAdd = cli.Command{
 	Name:  "add",

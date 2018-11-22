@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/ovh/cds/cli"
 )
 
@@ -56,7 +58,9 @@ my-data: 01234567890987654321`,
 	},
 }
 
-var encrypt = cli.NewCommand(encryptCmd, encryptRun, nil, withAllCommandModifiers()...)
+func encrypt() *cobra.Command {
+	return cli.NewCommand(encryptCmd, encryptRun, nil, withAllCommandModifiers()...)
+}
 
 func encryptRun(v cli.Values) error {
 	secretValue := v.GetString("secret-value")

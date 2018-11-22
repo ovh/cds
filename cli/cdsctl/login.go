@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/howeyc/gopass"
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -44,6 +45,10 @@ var loginCmd = cli.Command{
 			Kind:  reflect.Bool,
 		},
 	},
+}
+
+func login() *cobra.Command {
+	return cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
 }
 
 func loginRun(v cli.Values) error {

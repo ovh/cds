@@ -5,7 +5,7 @@ import "time"
 // Variable represent a variable for a project or pipeline
 type Variable struct {
 	ID    int64  `json:"id,omitempty" cli:"-"`
-	Name  string `json:"name" cli:"name"`
+	Name  string `json:"name" cli:"name,key"`
 	Value string `json:"value" cli:"value"`
 	Type  string `json:"type" cli:"type"`
 }

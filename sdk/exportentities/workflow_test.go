@@ -948,10 +948,6 @@ hooks:
   1_start:
   - type: Scheduler
     ref: "1542119521"
-    config:
-      cron: 0 * * * *
-      payload: '{}'
-      timezone: UTC
   - type: WebHook
     ref: "1542119475"
     config:

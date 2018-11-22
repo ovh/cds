@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -85,7 +86,7 @@ func processAllNodesTriggers(ctx context.Context, db gorp.SqlExecutor, store cac
 	return report, nil
 }
 
-func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, maxsn int64) (*ProcessorReport, error) {
+func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node) (*ProcessorReport, error) {
 	report := new(ProcessorReport)
 	//Checks the joins
 	for i := range wr.Workflow.WorkflowData.Joins {
@@ -118,7 +119,7 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 				break
 			}
 
-			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusStopped.String() || nodeRun.SubNumber < maxsn {
+			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusStopped.String() || nodeRun.SubNumber < wr.LastSubNumber {
 				//One of the sources have not been completed
 				ok = false
 				break
@@ -136,9 +137,10 @@ func processAllJoins(ctx context.Context, db gorp.SqlExecutor, store cache.Store
 		if len(sources) != len(j.JoinContext) {
 			ok = false
 		}
+
 		//All the sources are completed
 		if ok {
-			r1, _, err := processNode(ctx, db, store, proj, wr, mapNodes, j, int(wr.LastSubNumber), sources, nil, nil)
+			r1, _, err := processNodeRun(ctx, db, store, proj, wr, mapNodes, j, int(wr.LastSubNumber), sources, nil, nil)
 			if err != nil {
 				return report, sdk.WrapError(err, "processAllJoins> Unable to process join node")
 			}

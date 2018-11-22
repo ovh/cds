@@ -243,10 +243,25 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 			return nil, sdk.WrapError(err, "Unable to delete node %d job runs ", nr.ID)
 		}
 
-		node := updatedWorkflowRun.Workflow.GetNode(nr.WorkflowNodeID)
+		var hasMutex bool
+		var nodeName string
+		if updatedWorkflowRun.Version < 2 {
+			node := updatedWorkflowRun.Workflow.GetNode(nr.WorkflowNodeID)
+			if node != nil && node.Context != nil && node.Context.Mutex {
+				hasMutex = node.Context.Mutex
+				nodeName = node.Name
+			}
+		} else {
+			node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
+			if node != nil && node.Context != nil && node.Context.Mutex {
+				hasMutex = node.Context.Mutex
+				nodeName = node.Name
+			}
+		}
+
 		//Do we release a mutex ?
 		//Try to find one node run of the same node from the same workflow at status Waiting
-		if node != nil && node.Context != nil && node.Context.Mutex {
+		if hasMutex {
 			_, next := observability.Span(ctx, "workflow.releaseMutex")
 
 			mutexQuery := `select workflow_node_run.id
@@ -258,7 +273,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 			and workflow_node_run.status = $3
 			order by workflow_node_run.start asc
 			limit 1`
-			waitingRunID, errID := db.SelectInt(mutexQuery, updatedWorkflowRun.WorkflowID, node.Name, string(sdk.StatusWaiting))
+			waitingRunID, errID := db.SelectInt(mutexQuery, updatedWorkflowRun.WorkflowID, nodeName, string(sdk.StatusWaiting))
 			if errID != nil && errID != sql.ErrNoRows {
 				log.Error("workflow.execute> Unable to load mutex-locked workflow node run ID: %v", errID)
 				return report, nil

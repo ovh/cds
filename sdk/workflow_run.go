@@ -39,7 +39,7 @@ func (h *WorkflowRunHeaders) Get(k string) (string, bool) {
 //WorkflowRun is an execution instance of a run
 type WorkflowRun struct {
 	ID               int64                            `json:"id" db:"id"`
-	Number           int64                            `json:"num" db:"num" cli:"num"`
+	Number           int64                            `json:"num" db:"num" cli:"num,key"`
 	ProjectID        int64                            `json:"project_id,omitempty" db:"project_id"`
 	WorkflowID       int64                            `json:"workflow_id" db:"workflow_id"`
 	Status           string                           `json:"status" db:"status" cli:"status"`
@@ -323,7 +323,7 @@ type WorkflowNodeRunArtifact struct {
 	WorkflowID        int64     `json:"workflow_id" db:"workflow_run_id"`
 	WorkflowNodeRunID int64     `json:"workflow_node_run_id" db:"workflow_node_run_id"`
 	ID                int64     `json:"id" db:"id"`
-	Name              string    `json:"name" db:"name" cli:"name"`
+	Name              string    `json:"name" db:"name" cli:"name,key"`
 	Tag               string    `json:"tag" db:"tag" cli:"tag"`
 	Ref               string    `json:"ref" db:"ref" cli:"ref"`
 	DownloadHash      string    `json:"download_hash" db:"download_hash"`

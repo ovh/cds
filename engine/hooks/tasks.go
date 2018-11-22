@@ -326,18 +326,17 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 	var h *sdk.WorkflowNodeRunHookEvent
 	var err error
 
-	var doRestart = true
+	var doRestart = false
 	switch {
 	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
 		err = s.doOutgoingWebHookExecution(e)
-		doRestart = false
 	case e.Type == TypeOutgoingWorkflow:
 		err = s.doOutgoingWorkflowExecution(e)
-		doRestart = false
 	case e.WebHook != nil && (e.Type == TypeWebHook || e.Type == TypeRepoManagerWebHook):
 		h, err = s.doWebHookExecution(e)
 	case e.ScheduledTask != nil && e.Type == TypeScheduler:
 		h, err = s.doScheduledTaskExecution(e)
+		doRestart = true
 	case e.ScheduledTask != nil && e.Type == TypeRepoPoller:
 		//Populate next execution
 		hs, err = s.doPollerTaskExecution(t, e)
