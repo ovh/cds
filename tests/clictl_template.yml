@@ -49,6 +49,10 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} template apply ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success --import-push --output-dir ./tests/fixtures/template/simple/export --force
 
+- name: re-apply with cmd from workflow submenu
+  steps:
+  - script: {{.cds.build.cdsctl}} workflow applyTemplate ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success --import-push --output-dir ./tests/fixtures/template/simple/export --force
+
 - name: readWorkflowSourceFiles
   steps:
   - type: readfile

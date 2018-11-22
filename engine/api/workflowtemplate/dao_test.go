@@ -19,8 +19,8 @@ func TestCRUD(t *testing.T) {
 	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	grp2 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
 	defer func() {
-		assets.DeleteTestGroup(t, db, grp1)
-		assets.DeleteTestGroup(t, db, grp2)
+		assert.Nil(t, assets.DeleteTestGroup(t, db, grp1))
+		assert.Nil(t, assets.DeleteTestGroup(t, db, grp2))
 	}()
 
 	tmpls := []sdk.WorkflowTemplate{
@@ -91,7 +91,7 @@ func TestCRUD(t *testing.T) {
 	// GetAllByGroupIDs
 	results, err := workflowtemplate.GetAllByGroupIDs(db, nil)
 	assert.Nil(t, err)
-	assert.Nil(t, nil)
+	assert.Equal(t, 0, len(results))
 	results, err = workflowtemplate.GetAllByGroupIDs(db, []int64{grp1.ID, grp2.ID})
 	assert.Nil(t, err)
 	assert.Equal(t, 3, len(results))

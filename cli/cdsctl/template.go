@@ -21,7 +21,7 @@ var (
 	}
 
 	template = cli.NewCommand(templateCmd, nil, []*cobra.Command{
-		cli.NewCommand(templateApplyCmd, templateApplyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(templateApplyCmd("apply"), templateApplyRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePushCmd, templatePushRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, nil, withAllCommandModifiers()...),

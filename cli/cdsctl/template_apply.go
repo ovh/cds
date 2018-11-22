@@ -11,68 +11,71 @@ import (
 	"strings"
 
 	repo "github.com/fsamin/go-repo"
+
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-var templateApplyCmd = cli.Command{
-	Name:    "apply",
-	Short:   "Apply CDS workflow template",
-	Example: "cdsctl template apply project-key workflow-name group-name/template-slug",
-	Ctx: []cli.Arg{
-		{Name: _ProjectKey},
-		{Name: _WorkflowName, AllowEmpty: true},
-	},
-	OptionalArgs: []cli.Arg{
-		{Name: "template-path"},
-	},
-	Flags: []cli.Flag{
-		{
-			Kind:      reflect.Slice,
-			Name:      "params",
-			ShortHand: "p",
-			Usage:     "Specify params for template",
-			Default:   "",
+func templateApplyCmd(name string) cli.Command {
+	return cli.Command{
+		Name:    name,
+		Short:   "Apply CDS workflow template",
+		Example: "cdsctl template apply project-key workflow-name group-name/template-slug",
+		Ctx: []cli.Arg{
+			{Name: _ProjectKey},
+			{Name: _WorkflowName, AllowEmpty: true},
 		},
-		{
-			Kind:      reflect.Bool,
-			Name:      "no-interactive",
-			ShortHand: "n",
-			Usage:     "Set to not ask interactively for params",
+		OptionalArgs: []cli.Arg{
+			{Name: "template-path"},
 		},
-		{
-			Kind:      reflect.String,
-			Name:      "output-dir",
-			ShortHand: "d",
-			Usage:     "Output directory",
-			Default:   ".cds",
+		Flags: []cli.Flag{
+			{
+				Kind:      reflect.Slice,
+				Name:      "params",
+				ShortHand: "p",
+				Usage:     "Specify params for template",
+				Default:   "",
+			},
+			{
+				Kind:      reflect.Bool,
+				Name:      "no-interactive",
+				ShortHand: "n",
+				Usage:     "Set to not ask interactively for params",
+			},
+			{
+				Kind:      reflect.String,
+				Name:      "output-dir",
+				ShortHand: "d",
+				Usage:     "Output directory",
+				Default:   ".cds",
+			},
+			{
+				Kind:    reflect.Bool,
+				Name:    "force",
+				Usage:   "Force, may override files",
+				Default: "false",
+			},
+			{
+				Kind:    reflect.Bool,
+				Name:    "quiet",
+				Usage:   "If true, do not output filename created",
+				Default: "false",
+			},
+			{
+				Kind:    reflect.Bool,
+				Name:    "import-as-code",
+				Usage:   "If true, will import the generated workflow as code on given project",
+				Default: "false",
+			},
+			{
+				Kind:    reflect.Bool,
+				Name:    "import-push",
+				Usage:   "If true, will push the generated workflow on given project",
+				Default: "false",
+			},
 		},
-		{
-			Kind:    reflect.Bool,
-			Name:    "force",
-			Usage:   "Force, may override files",
-			Default: "false",
-		},
-		{
-			Kind:    reflect.Bool,
-			Name:    "quiet",
-			Usage:   "If true, do not output filename created",
-			Default: "false",
-		},
-		{
-			Kind:    reflect.Bool,
-			Name:    "import-as-code",
-			Usage:   "If true, will import the generated workflow as code on given project",
-			Default: "false",
-		},
-		{
-			Kind:    reflect.Bool,
-			Name:    "import-push",
-			Usage:   "If true, will push the generated workflow on given project",
-			Default: "false",
-		},
-	},
+	}
 }
 
 func getTemplateFromCLI(v cli.Values) (*sdk.WorkflowTemplate, error) {
