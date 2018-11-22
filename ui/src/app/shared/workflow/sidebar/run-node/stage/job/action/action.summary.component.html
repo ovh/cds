@@ -3,6 +3,6 @@
     <app-status-icon [status]="actionStatus.status" [optional]="action.optional" class="action"></app-status-icon>
   </div>
   <div>
-    <div class="title action">{{action.name}}</div>
+    <div class="title action">{{action.step_name || action.name}}</div>
   </div>
 </a>
