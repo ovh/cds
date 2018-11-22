@@ -271,13 +271,9 @@ func LoadHooksByNodeID(db gorp.SqlExecutor, nodeID int64) ([]sdk.WorkflowNodeHoo
 // insertOutgoingHook inserts a outgoing hook
 func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeOutgoingHook, u *sdk.User) error {
 	hook.WorkflowNodeID = node.ID
-	if hook.WorkflowHookModelID == 0 {
-		hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
-	}
 
 	var icon string
 	if hook.WorkflowHookModelID != 0 {
-		log.Debug("insertOutgoingHook> Search outgoing hook model %d", hook.WorkflowHookModelID)
 		model, has := w.OutGoingHookModels[hook.WorkflowHookModelID]
 		if !has {
 			modelDB, errm := LoadOutgoingHookModelByID(db, hook.WorkflowHookModelID)
@@ -287,7 +283,6 @@ func insertOutgoingHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 			model = *modelDB
 		}
 		hook.WorkflowHookModel = model
-		log.Debug("insertOutgoingHook> Model found: %+v", model)
 	} else {
 		model, errm := LoadOutgoingHookModelByName(db, hook.WorkflowHookModel.Name)
 		if errm != nil {
