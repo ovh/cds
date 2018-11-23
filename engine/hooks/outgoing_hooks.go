@@ -188,7 +188,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 	prefix := fmt.Sprintf("parent.%s.", hookRun.WorkflowNodeName)
 	evt := sdk.WorkflowNodeRunHookEvent{
 		WorkflowNodeHookUUID: targetHook,
-		Payload:              sdk.ParametersToMapWithPrefix(prefix, hookRun.BuildParameters),
+		Payload:              sdk.ParametersToMapWithPrefixBuiltinVar(prefix, hookRun.BuildParameters),
 	}
 	evt.ParentWorkflow.Key = pkey
 	evt.ParentWorkflow.Name = workflow
