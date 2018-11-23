@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -58,5 +59,49 @@ func TestParametersMerge(t *testing.T) {
 		if param.Name == "default" {
 			assert.Equal(t, "ok", param.Value)
 		}
+	}
+}
+
+func TestParametersToMapWithPrefixBuiltinVar(t *testing.T) {
+	type args struct {
+		prefix string
+		params []Parameter
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]string
+	}{
+		{
+			name: "simpletest",
+			args: args{
+				prefix: "theprefix.",
+				params: []Parameter{{Name: "foo", Value: "bar"}},
+			},
+			want: map[string]string{"foo": "bar"},
+		},
+		{
+			name: "simpletest with git var",
+			args: args{
+				prefix: "theprefix.",
+				params: []Parameter{{Name: "git.hash", Value: "bar"}},
+			},
+			want: map[string]string{"theprefix.git.hash": "bar"},
+		},
+		{
+			name: "simpletest with cds var",
+			args: args{
+				prefix: "theprefix.",
+				params: []Parameter{{Name: "cds.name", Value: "bar"}},
+			},
+			want: map[string]string{"theprefix.cds.name": "bar"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ParametersToMapWithPrefixBuiltinVar(tt.args.prefix, tt.args.params); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParametersToMapWithPrefixBuiltinVar() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
