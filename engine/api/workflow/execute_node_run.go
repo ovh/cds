@@ -578,7 +578,6 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 
 //NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
 func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.Node, ancestorsIds []int64) ([]sdk.Parameter, error) {
-
 	runContext := nodeRunContext{}
 	if refNode != nil && refNode.Context != nil {
 		if refNode.Context.PipelineID != 0 && wf.Pipelines != nil {
@@ -610,7 +609,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 	res := []sdk.Parameter{}
 	if len(res) == 0 {
 		var err error
-		res, err = GetNodeBuildParameters(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload)
+		res, err = GetNodeBuildParameters(proj, wf, runContext, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload, nil)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
 		}

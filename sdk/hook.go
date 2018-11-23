@@ -235,6 +235,11 @@ var (
 				Configurable: true,
 				Type:         HookConfigTypeHook,
 			},
+			Payload: {
+				Value:        "{}",
+				Configurable: true,
+				Type:         HookConfigTypeString,
+			},
 		},
 	}
 )
