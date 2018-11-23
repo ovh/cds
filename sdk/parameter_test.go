@@ -96,6 +96,17 @@ func TestParametersToMapWithPrefixBuiltinVar(t *testing.T) {
 			},
 			want: map[string]string{"theprefix.cds.name": "bar"},
 		},
+		{
+			name: "simpletest with mixed var",
+			args: args{
+				prefix: "theprefix.",
+				params: []Parameter{
+					{Name: "aaa", Value: "bbb"},
+					{Name: "cds.name", Value: "bar"},
+				},
+			},
+			want: map[string]string{"aaa": "bbb", "theprefix.cds.name": "bar"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
