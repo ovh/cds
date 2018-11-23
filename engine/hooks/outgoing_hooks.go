@@ -185,10 +185,9 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 		return handleError(errors.New("unable to find hook" + hookRunID))
 	}
 
-	prefix := fmt.Sprintf("parent.%s.", hookRun.WorkflowNodeName)
 	evt := sdk.WorkflowNodeRunHookEvent{
 		WorkflowNodeHookUUID: targetHook,
-		Payload:              sdk.ParametersToMapWithPrefixBuiltinVar(prefix, hookRun.BuildParameters),
+		Payload:              sdk.ParametersToMap(hookRun.BuildParameters),
 	}
 	evt.ParentWorkflow.Key = pkey
 	evt.ParentWorkflow.Name = workflow

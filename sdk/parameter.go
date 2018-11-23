@@ -162,20 +162,6 @@ func ParametersFromPipelineParameters(pipParams []Parameter) map[string]string {
 	return ParametersToMap(res)
 }
 
-// ParametersToMapWithPrefixBuiltinVar returns a map from a slice of parameters
-// variable with prefix cds. and .git are prefixed with the prefix argument
-func ParametersToMapWithPrefixBuiltinVar(prefix string, params []Parameter) map[string]string {
-	res := make([]Parameter, len(params))
-	for i, t := range params {
-		if strings.HasPrefix(t.Name, "cds.") || strings.HasPrefix(t.Name, "git.") {
-			res[i] = Parameter{Name: prefix + t.Name, Type: t.Type, Value: t.Value}
-		} else {
-			res[i] = Parameter{Name: t.Name, Type: t.Type, Value: t.Value}
-		}
-	}
-	return ParametersToMap(res)
-}
-
 // ParametersFromPlatform returns a map of variables from a ProjectPlatform
 func ParametersFromPlatform(ppf PlatformConfig) map[string]string {
 	vars := make([]Variable, len(ppf))
