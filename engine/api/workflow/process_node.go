@@ -109,8 +109,10 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	// For node with pipeline
 	var stages []sdk.Stage
+	var pip sdk.Pipeline
 	if n.Context.PipelineID > 0 {
-		pip, has := wr.Workflow.Pipelines[n.Context.PipelineID]
+		var has bool
+		pip, has = wr.Workflow.Pipelines[n.Context.PipelineID]
 		if !has {
 			return nil, false, fmt.Errorf("pipeline %d not found in workflow", n.Context.PipelineID)
 		}
@@ -121,7 +123,6 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		if len(pip.Parameter) > 0 && len(n.Context.DefaultPipelineParameters) == 0 {
 			n.Context.DefaultPipelineParameters = pip.Parameter
 		}
-
 	}
 
 	// Create run
@@ -193,15 +194,22 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 			}
 		}
 		run.Payload = runPayload
-		run.PipelineParameters = n.Context.DefaultPipelineParameters
+		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
+
+		// Take first value in pipeline parameter list if no default value is set
+		for i := range run.PipelineParameters {
+			if run.PipelineParameters[i].Type == sdk.ListParameter && strings.Contains(run.PipelineParameters[i].Value, ";") {
+				run.PipelineParameters[i].Value = strings.Split(run.PipelineParameters[i].Value, ";")[0]
+			}
+		}
 		next()
 	}
 
 	run.HookEvent = hookEvent
 	if hookEvent != nil {
-		runPayload = sdk.ParametersMapMerge(runPayload, hookEvent.Payload, sdk.MapMergeOptions.ExcludeGitParams)
+		runPayload = sdk.ParametersMapMerge(runPayload, hookEvent.Payload)
 		run.Payload = runPayload
-		run.PipelineParameters = n.Context.DefaultPipelineParameters
+		run.PipelineParameters = sdk.ParametersMerge(pip.Parameter, n.Context.DefaultPipelineParameters)
 	}
 
 	run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
@@ -224,7 +232,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 		runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		run.Payload = runPayload
-		run.PipelineParameters = manual.PipelineParameters
+		run.PipelineParameters = sdk.ParametersMerge(n.Context.DefaultPipelineParameters, manual.PipelineParameters)
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
 			Type:  sdk.StringParameter,
