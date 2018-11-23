@@ -114,6 +114,7 @@ services:
     environment:
       CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_NAME: hatchery-local
       CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+      CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_URL: http://cds-hatchery-local:8086
       CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_API_HTTP_URL: http://cds-api:8081
       CDS_HATCHERY_LOCAL_NBPROVISION: 5
     links:
