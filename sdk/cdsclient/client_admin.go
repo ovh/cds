@@ -37,6 +37,11 @@ func (c *client) ServiceNameCallGET(name string, query string) ([]byte, error) {
 	return btes, err
 }
 
+func (c *client) ServiceDelete(name string) error {
+	_, err := c.DeleteJSON(context.Background(), "/admin/service/"+name, nil)
+	return err
+}
+
 func (c *client) ServiceCallGET(stype string, query string) ([]byte, error) {
 	btes, _, _, err := c.Request(context.Background(), "GET", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(query), nil)
 	return btes, err

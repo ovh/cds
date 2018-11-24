@@ -55,7 +55,7 @@ func (api *API) InitRouter() {
 	r.Handle("/admin/plugin/{name}/binary/{os}/{arch}/infos", r.GET(api.getGRPCluginBinaryInfosHandler))
 
 	// Admin service
-	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)))
+	r.Handle("/admin/service/{name}", r.GET(api.getAdminServiceHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceHandler, NeedAdmin(true)))
 	r.Handle("/admin/services", r.GET(api.getAdminServicesHandler, NeedAdmin(true)))
 	r.Handle("/admin/services/call", r.GET(api.getAdminServiceCallHandler, NeedAdmin(true)), r.POST(api.postAdminServiceCallHandler, NeedAdmin(true)), r.PUT(api.putAdminServiceCallHandler, NeedAdmin(true)), r.DELETE(api.deleteAdminServiceCallHandler, NeedAdmin(true)))
 

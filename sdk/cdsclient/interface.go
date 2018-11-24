@@ -18,6 +18,7 @@ type Filter struct {
 type AdminService interface {
 	Services() ([]sdk.Service, error)
 	ServicesByName(name string) (*sdk.Service, error)
+	ServiceDelete(name string) error
 	ServicesByType(stype string) ([]sdk.Service, error)
 	ServiceNameCallGET(name string, url string) ([]byte, error)
 	ServiceCallGET(stype string, url string) ([]byte, error)

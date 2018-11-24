@@ -20,6 +20,7 @@ func adminServices() *cobra.Command {
 		cli.NewListCommand(adminServiceListCmd, adminServiceListRun, nil),
 		cli.NewListCommand(adminServiceStatusCmd, adminServiceStatusRun, nil),
 		cli.NewCommand(adminServiceGetCmd, adminServiceGetRun, nil),
+		cli.NewDeleteCommand(adminServiceDeleteCmd, adminServiceDeleteRun, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -130,4 +131,21 @@ func adminServiceGetRun(v cli.Values) error {
 	}
 	fmt.Println(string(btes))
 	return nil
+}
+
+var adminServiceDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete a CDS service from registered service",
+	Flags: []cli.Flag{
+		{
+			Kind:    reflect.String,
+			Name:    "name",
+			Usage:   "service name",
+			Default: "",
+		},
+	},
+}
+
+func adminServiceDeleteRun(v cli.Values) error {
+	return client.ServiceDelete(v.GetString("name"))
 }
