@@ -92,11 +92,9 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	}
 
 	report := new(ProcessorReport)
-	defer func(oldStatus string, wNr *sdk.WorkflowNodeRun) {
-		if oldStatus != wNr.Status {
-			report.Add(*wNr)
-		}
-	}(nr.Status, nr)
+	defer func(wNr *sdk.WorkflowNodeRun) {
+		report.Add(*wNr)
+	}(nr)
 
 	//If status is not waiting neither build: nothing to do
 	if sdk.StatusIsTerminated(nr.Status) {
