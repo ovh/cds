@@ -23,5 +23,5 @@ testcases:
     assertions:
     - result.code ShouldEqual 0
     - result.systemoutjson.jobs.jobs0.steps.steps1.servestaticfiles.path ShouldContainSubstring website
-    - result.systemoutjson.jobs.jobs0.step.steps1.servestaticfiles.entrypoint ShouldContainSubstring index.html
+    - result.systemoutjson.jobs.jobs0.steps.steps1.servestaticfiles.entrypoint ShouldContainSubstring index.html
     - result.systemoutjson.jobs.jobs0.steps.steps1.servestaticfiles.path ShouldContainSubstring website
