@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Export an application
@@ -44,7 +45,8 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 	for _, v := range app.Variable {
 		switch v.Type {
 		case sdk.KeyVariable:
-			return 0, sdk.WrapError(fmt.Errorf("Unsupported variable %s", v.Name), "application.Export> Unable to export application")
+			log.Info("application.Export> Ignoring unsupported variable %s of type key (deprecated)", v.Name)
+			continue
 		case sdk.SecretVariable:
 			content, err := encryptFunc(db, app.ProjectID, fmt.Sprintf("appID:%d:%s", app.ID, v.Name), v.Value)
 			if err != nil {
