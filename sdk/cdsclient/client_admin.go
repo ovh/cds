@@ -32,6 +32,11 @@ func (c *client) ServicesByType(stype string) ([]sdk.Service, error) {
 	return srvs, nil
 }
 
+func (c *client) ServiceNameCallGET(name string, query string) ([]byte, error) {
+	btes, _, _, err := c.Request(context.Background(), "GET", "/admin/services/call?name="+name+"&query="+url.QueryEscape(query), nil)
+	return btes, err
+}
+
 func (c *client) ServiceCallGET(stype string, query string) ([]byte, error) {
 	btes, _, _, err := c.Request(context.Background(), "GET", "/admin/services/call?type="+stype+"&query="+url.QueryEscape(query), nil)
 	return btes, err
