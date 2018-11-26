@@ -80,6 +80,10 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot compute registration needs")
 		}
 
+		if err := pipeline.UpdatePipeline(tx, pip); err != nil {
+			return sdk.WrapError(err, "Cannot update pipeline")
+		}
+
 		if err := tx.Commit(); err != nil {
 			return err
 		}
@@ -172,6 +176,10 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot compute registration needs")
 		}
 
+		if err := pipeline.UpdatePipeline(tx, pipelineData); err != nil {
+			return sdk.WrapError(err, "Cannot update pipeline")
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
@@ -239,6 +247,10 @@ func (api *API) deleteJobHandler() service.Handler {
 
 		if err := pipeline.DeleteJob(tx, jobToDelete, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete pipeline action")
+		}
+
+		if err := pipeline.UpdatePipeline(tx, pipelineData); err != nil {
+			return sdk.WrapError(err, "Cannot update pipeline")
 		}
 
 		if err := tx.Commit(); err != nil {
