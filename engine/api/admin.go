@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/mux"
 
@@ -96,12 +97,25 @@ func (api *API) putAdminServiceCallHandler() service.Handler {
 
 func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		srvs, err := services.FindByType(api.mustDB(), r.FormValue("type"))
-		if err != nil {
-			return err
+		var srvs []sdk.Service
+		if r.FormValue("name") != "" {
+			srv, err := services.FindByName(api.mustDB(), r.FormValue("name"))
+			if err != nil {
+				return err
+			}
+			if srv != nil {
+				srvs = []sdk.Service{*srv}
+			}
+		} else {
+			var errFind error
+			srvs, errFind = services.FindByType(api.mustDB(), r.FormValue("type"))
+			if errFind != nil {
+				return errFind
+			}
 		}
+
 		if len(srvs) == 0 {
-			return sdk.WrapError(sdk.ErrNotFound, "No hooks service found")
+			return sdk.WrapError(sdk.ErrNotFound, "No service found")
 		}
 
 		query := r.FormValue("query")
@@ -115,7 +129,9 @@ func selectDeleteAdminServiceCallHandler(api *API, method string) service.Handle
 
 		log.Debug("selectDeleteAdminServiceCallHandler> %s : %s", query, string(btes))
 
-		//TODO: assuming it's only json...
+		if strings.HasPrefix(query, "/debug/pprof/") {
+			return service.Write(w, btes, code, "text/plain")
+		}
 		return service.Write(w, btes, code, "application/json")
 	}
 }

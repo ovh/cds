@@ -7,19 +7,18 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	environmentKeyCmd = cli.Command{
-		Name:  "keys",
-		Short: "Manage CDS environment keys",
-	}
+var environmentKeyCmd = cli.Command{
+	Name:  "keys",
+	Short: "Manage CDS environment keys",
+}
 
-	environmentKey = cli.NewCommand(environmentKeyCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(environmentKeyCreateCmd, environmentCreateKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewListCommand(environmentKeyListCmd, environmentListKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(environmentKeyDeleteCmd, environmentDeleteKeyRun, nil, withAllCommandModifiers()...),
-		})
-)
+func environmentKey() *cobra.Command {
+	return cli.NewCommand(environmentKeyCmd, nil, []*cobra.Command{
+		cli.NewCommand(environmentKeyCreateCmd, environmentCreateKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(environmentKeyListCmd, environmentListKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(environmentKeyDeleteCmd, environmentDeleteKeyRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var environmentKeyCreateCmd = cli.Command{
 	Name:  "add",

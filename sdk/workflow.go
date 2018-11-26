@@ -165,6 +165,10 @@ func (w *Workflow) ResetIDs() {
 			(&t.WorkflowDestNode).ResetIDs()
 		}
 	}
+
+	for _, n := range w.WorkflowData.Array() {
+		n.ID = 0
+	}
 }
 
 //Nodes returns nodes IDs excluding the root ID

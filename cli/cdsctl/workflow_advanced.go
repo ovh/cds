@@ -9,29 +9,29 @@ import (
 	"github.com/ovh/cds/cli"
 )
 
-var (
-	workflowAdvancedCmd = cli.Command{
-		Name:  "advanced",
-		Short: "Manage Workflow Advanced",
-	}
+var workflowAdvancedCmd = cli.Command{
+	Name:  "advanced",
+	Short: "Manage Workflow Advanced",
+}
 
-	workflowAdvanced = cli.NewCommand(workflowAdvancedCmd, nil,
-		[]*cobra.Command{
-			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil, withAllCommandModifiers()...),
-			workflowAdvancedRunNumber,
-		})
+func workflowAdvanced() *cobra.Command {
+	return cli.NewCommand(workflowAdvancedCmd, nil, []*cobra.Command{
+		cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil, withAllCommandModifiers()...),
+		workflowAdvancedRunNumber(),
+	})
+}
 
-	workflowAdvancedRunNumberCmd = cli.Command{
-		Name:  "number",
-		Short: "Manage Workflow Run Number",
-	}
+var workflowAdvancedRunNumberCmd = cli.Command{
+	Name:  "number",
+	Short: "Manage Workflow Run Number",
+}
 
-	workflowAdvancedRunNumber = cli.NewCommand(workflowAdvancedRunNumberCmd, nil,
-		[]*cobra.Command{
-			cli.NewGetCommand(workflowRunNumberShowCmd, workflowRunNumberShowRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowRunNumberSetCmd, workflowRunNumberSetRun, nil, withAllCommandModifiers()...),
-		})
-)
+func workflowAdvancedRunNumber() *cobra.Command {
+	return cli.NewCommand(workflowAdvancedRunNumberCmd, nil, []*cobra.Command{
+		cli.NewGetCommand(workflowRunNumberShowCmd, workflowRunNumberShowRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowRunNumberSetCmd, workflowRunNumberSetRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var workflowRunNumberShowCmd = cli.Command{
 	Name:    "show",

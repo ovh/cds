@@ -1,7 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/engine/api/observability"
 )
@@ -15,6 +19,17 @@ func (api *API) InitRouter() {
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
+
+	log.Info("Initializing Events broker")
+	// Initialize event broker
+	api.eventsBroker = &eventsBroker{
+		router:   api.Router,
+		cache:    api.Cache,
+		clients:  make(map[string]*eventsBrokerSubscribe),
+		dbFunc:   api.DBConnectionFactory.GetDBMap,
+		messages: make(chan sdk.Event),
+	}
+	api.eventsBroker.Init(context.Background(), api.PanicDump())
 
 	// Action
 	r.Handle("/action", r.GET(api.getActionsHandler))

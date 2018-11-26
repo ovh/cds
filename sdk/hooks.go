@@ -13,7 +13,7 @@ type Task struct {
 
 // TaskExecution represents an execution instance of a task. It the task is a webhook; this represents the call of the webhook
 type TaskExecution struct {
-	UUID                string                  `json:"uuid" cli:"uuid"`
+	UUID                string                  `json:"uuid" cli:"uuid,key"`
 	Type                string                  `json:"type" cli:"type"`
 	Timestamp           int64                   `json:"timestamp" cli:"timestamp"`
 	NbErrors            int64                   `json:"nb_errors" cli:"nb_errors"`

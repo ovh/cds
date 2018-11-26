@@ -223,7 +223,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		oldW, errL := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, getUser(ctx), workflow.LoadOptions{WithoutNode: true})
+		oldW, errL := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, getUser(ctx), workflow.LoadOptions{})
 		if errL == nil {
 			event.PublishWorkflowUpdate(key, *wrkflw, *oldW, getUser(ctx))
 		}

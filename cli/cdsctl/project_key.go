@@ -7,19 +7,18 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	projectKeyCmd = cli.Command{
-		Name:  "keys",
-		Short: "Manage CDS project keys",
-	}
+var projectKeyCmd = cli.Command{
+	Name:  "keys",
+	Short: "Manage CDS project keys",
+}
 
-	projectKey = cli.NewCommand(projectKeyCmd, nil,
-		[]*cobra.Command{
-			cli.NewCommand(projectKeyCreateCmd, projectCreateKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewListCommand(projectKeyListCmd, projectListKeyRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(projectKeyDeleteCmd, projectDeleteKeyRun, nil, withAllCommandModifiers()...),
-		})
-)
+func projectKey() *cobra.Command {
+	return cli.NewCommand(projectKeyCmd, nil, []*cobra.Command{
+		cli.NewCommand(projectKeyCreateCmd, projectCreateKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewListCommand(projectKeyListCmd, projectListKeyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(projectKeyDeleteCmd, projectDeleteKeyRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var projectKeyCreateCmd = cli.Command{
 	Name:  "add",

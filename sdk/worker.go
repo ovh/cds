@@ -95,7 +95,7 @@ type SpawnErrorForm struct {
 //easyjson:json
 type Model struct {
 	ID                     int64               `json:"id" db:"id" cli:"-"`
-	Name                   string              `json:"name"  db:"name" cli:"name"`
+	Name                   string              `json:"name" db:"name" cli:"name,key"`
 	Description            string              `json:"description"  db:"description" cli:"description"`
 	Type                   string              `json:"type"  db:"type" cli:"type"`
 	Image                  string              `json:"image" db:"image" cli:"image"` // TODO: DELETE after migration done

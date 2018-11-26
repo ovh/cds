@@ -11,18 +11,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var (
-	workflowArtifactCmd = cli.Command{
-		Name:  "artifact",
-		Short: "Manage Workflow Artifact",
-	}
+var workflowArtifactCmd = cli.Command{
+	Name:  "artifact",
+	Short: "Manage Workflow Artifact",
+}
 
-	workflowArtifact = cli.NewCommand(workflowArtifactCmd, nil,
-		[]*cobra.Command{
-			cli.NewListCommand(workflowArtifactListCmd, workflowArtifactListRun, nil, withAllCommandModifiers()...),
-			cli.NewCommand(workflowArtifactDownloadCmd, workflowArtifactDownloadRun, nil, withAllCommandModifiers()...),
-		})
-)
+func workflowArtifact() *cobra.Command {
+	return cli.NewCommand(workflowArtifactCmd, nil, []*cobra.Command{
+		cli.NewListCommand(workflowArtifactListCmd, workflowArtifactListRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(workflowArtifactDownloadCmd, workflowArtifactDownloadRun, nil, withAllCommandModifiers()...),
+	})
+}
 
 var workflowArtifactListCmd = cli.Command{
 	Name:  "list",

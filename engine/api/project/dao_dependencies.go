@@ -125,7 +125,8 @@ var (
 	}
 
 	loadFeatures = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		return LoadFeatures(store, proj)
+		LoadFeatures(store, proj)
+		return nil
 	}
 
 	loadClearPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {

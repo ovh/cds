@@ -1,9 +1,11 @@
 package main
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/doc"
+	docSDK "github.com/ovh/cds/sdk/doc"
 )
 
 var docCmd = cli.Command{
@@ -22,8 +24,10 @@ var docCmd = cli.Command{
 	},
 }
 
+func doc() *cobra.Command { return cli.NewCommand(docCmd, docRun, nil, cli.CommandWithoutExtraFlags) }
+
 func docRun(v cli.Values) error {
-	if err := doc.GenerateDocumentation(root, v.GetString("generation-path"), ""); err != nil {
+	if err := docSDK.GenerateDocumentation(root, v.GetString("generation-path"), ""); err != nil {
 		sdk.Exit(err.Error())
 	}
 	return nil

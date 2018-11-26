@@ -23,8 +23,8 @@
                 </sui-select>
             </ng-container>
             <ng-container *ngIf="_hook.model && displayConfig">
-                <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
                 <ng-container *ngIf="_hook.config && _hook.model.name !== 'Workflow'">
+                    <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
                     <div class="inline fields" *ngFor="let k of hook.config | keys">
                         <div class="four wide field"><label>{{k}}</label></div>
                         <div class="twelve wide field">
