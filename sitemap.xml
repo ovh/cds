@@ -1206,6 +1206,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/services/request/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/requirement/</loc>
   </url>
   
