@@ -44,6 +44,7 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
     availableHooks: Array<WNodeHook>;
     wSub: Subscription;
     invalidJSON = false;
+    outgoing_default_payload: {};
 
     constructor(private _hookService: HookService, private _workflowStore: WorkflowStore) {
     }
@@ -106,6 +107,7 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
                         let key = this.project.key + '-' + this.hook.outgoing_hook.config['target_workflow'].value;
                         let wf = data.get(key);
                         if (wf) {
+                            this.outgoing_default_payload = wf.workflow_data.node.context.default_payload;
                             let allHooks = Workflow.getAllHooks(wf);
                             if (allHooks) {
                                 this.availableHooks = allHooks.filter(h => wf.hook_models[h.hook_model_id].name === 'Workflow');
@@ -129,7 +131,12 @@ export class WorkflowNodeOutGoingHookFormComponent implements OnInit {
                 this.wSub.unsubscribe();
             }
         }
+    }
 
+    updateWorkflowOutgoingHook(): void {
+        if (this.hook.outgoing_hook.config['target_hook']) {
+            this.hook.outgoing_hook.config['payload'].value = JSON.stringify(this.outgoing_default_payload, undefined, 4);
+        }
     }
 
     changeCodeMirror(code: string) {

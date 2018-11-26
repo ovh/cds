@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	dump "github.com/fsamin/go-dump"
 	"github.com/mitchellh/hashstructure"
 
 	"github.com/ovh/cds/sdk"
@@ -185,9 +187,30 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 		return handleError(errors.New("unable to find hook" + hookRunID))
 	}
 
+	payloadValues := map[string]string{}
+	if payload, ok := hookRun.OutgoingHook.Config[sdk.Payload]; ok && payload.Value != "{}" {
+		var payloadInt interface{}
+		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
+			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+			e.ExtraFields.DetailedMap = false
+			e.ExtraFields.DetailedStruct = false
+			e.ExtraFields.Len = false
+			e.ExtraFields.Type = false
+			m1, errm1 := e.ToStringMap(payloadInt)
+			if errm1 != nil {
+				log.Error("Hooks> doOutgoingWorkflowExecution> Cannot convert payload to map %s", errm1)
+			} else {
+				payloadValues = m1
+			}
+		} else {
+			log.Error("Hooks> doOutgoingWorkflowExecution> Cannot unmarshall payload %s", err)
+		}
+	}
+
 	evt := sdk.WorkflowNodeRunHookEvent{
 		WorkflowNodeHookUUID: targetHook,
-		Payload:              sdk.ParametersToMap(hookRun.BuildParameters),
+		Payload:              payloadValues,
 	}
 	evt.ParentWorkflow.Key = pkey
 	evt.ParentWorkflow.Name = workflow
