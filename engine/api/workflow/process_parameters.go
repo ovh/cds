@@ -135,7 +135,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 	if hookEvent != nil {
 		vars["parent.project"] = hookEvent.ParentWorkflow.Key
 		vars["parent.run"] = fmt.Sprintf("%d", hookEvent.ParentWorkflow.Run)
-		vars["parent.name"] = hookEvent.ParentWorkflow.Name
+		vars["parent.workflow"] = hookEvent.ParentWorkflow.Name
 		vars["parent.outgoinghook"] = hookEvent.WorkflowNodeHookUUID
 	}
 
