@@ -3,8 +3,8 @@
 
     <h3 class="ui header ml5">
         <i class="settings icon"></i>
-        <!-- PIPELINE AND FORK -->
-        <ng-container *ngIf="node.type === 'pipeline' || node.type === 'fork'">
+        <!-- PIPELINE AND OUTGOINGHOOK -->
+        <ng-container *ngIf="node.type === 'pipeline' || node.type === 'outgoinghook'">
             <div class="content">
                 <ng-container *ngIf="!displayInputName">
                     <div class="line">
@@ -14,7 +14,6 @@
                             <i class="pencil icon float"></i>
                         </a>
                     </div>
-
                 </ng-container>
                 <ng-container *ngIf="displayInputName">
                     <div class="ui fluid mini action input">
@@ -36,10 +35,10 @@
                 </div>
             </div>
         </ng-container>
-        <!-- JOIN -->
-        <ng-container *ngIf="node.type === 'join' || node.type === 'outgoinghook'">
+        <!-- JOIN AND FORK -->
+        <ng-container *ngIf="node.type === 'join' || node.type === 'fork'">
             <div class="content">
-                <span>{{ node.type | titlecase}}</span>
+                <span>{{ node.name | titlecase}}</span>
                 <div class="sub header">
                     <span>{{ 'workflow_node_edition' | translate }}</span>
                 </div>
