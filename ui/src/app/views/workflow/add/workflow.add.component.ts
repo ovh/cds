@@ -74,7 +74,7 @@ workflow:
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
         private _router: Router, private _workflowStore: WorkflowStore, private _import: ImportAsCodeService,
-        private _translate: TranslateService, private _toast: ToastService, private _repoManSerivce: RepoManagerService,
+        private _translate: TranslateService, private _toast: ToastService, private _repoManagerService: RepoManagerService,
         private _workflowTemplateService: WorkflowTemplateService, private _sharedService: SharedService) {
         this.workflow = new Workflow();
         this.selectedStrategy = new VCSStrategy();
@@ -136,7 +136,7 @@ workflow:
 
     fetchRepos(repoMan: string): void {
         this.loadingRepo = true;
-        this._repoManSerivce.getRepositories(this.project.key, repoMan, false).pipe(first(), finalize(() => {
+        this._repoManagerService.getRepositories(this.project.key, repoMan, false).pipe(first(), finalize(() => {
             this.loadingRepo = false
         })).subscribe(rs => {
             this.repos = rs;
@@ -220,7 +220,7 @@ workflow:
     resyncRepos() {
         if (this.selectedRepoManager) {
             this.loading = true;
-            this._repoManSerivce.getRepositories(this.project.key, this.selectedRepoManager, true)
+            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, true)
                 .pipe(
                     first(),
                     finalize(() => this.loading = false)

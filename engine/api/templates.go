@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowtemplate"
@@ -282,6 +284,8 @@ func (api *API) deleteTemplateHandler() service.Handler {
 
 func (api *API) applyTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		withImport := FormBool(r, "import")
+
 		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
 		if err != nil {
 			return err
@@ -301,8 +305,11 @@ func (api *API) applyTemplateHandler() service.Handler {
 		}
 
 		// check right on project
-		if !checkProjectReadPermission(ctx, req.ProjectKey) {
+		if !withImport && !checkProjectReadPermission(ctx, req.ProjectKey) {
 			return sdk.WithStack(sdk.ErrNoProject)
+		}
+		if withImport && !api.checkProjectPermissions(ctx, req.ProjectKey, permission.PermissionReadWriteExecute, nil) {
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "Write permission required to import genareted workflow.")
 		}
 
 		u := getUser(ctx)
@@ -390,6 +397,23 @@ func (api *API) applyTemplateHandler() service.Handler {
 			event.PublishWorkflowTemplateInstanceUpdate(*old, *wti, u)
 		} else {
 			event.PublishWorkflowTemplateInstanceAdd(*wti, u)
+		}
+
+		if withImport {
+			tr := tar.NewReader(buf)
+
+			msgs, wkf, err := workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, u, project.DecryptWithBuiltinKey)
+			if err != nil {
+				return sdk.WrapError(err, "Cannot push generated workflow")
+			}
+			msgStrings := translate(r, msgs)
+
+			if w != nil {
+				w.Header().Add(sdk.ResponseWorkflowIDHeader, fmt.Sprintf("%d", wkf.ID))
+				w.Header().Add(sdk.ResponseWorkflowNameHeader, wkf.Name)
+			}
+
+			return service.WriteJSON(w, msgStrings, http.StatusOK)
 		}
 
 		return service.Write(w, buf.Bytes(), http.StatusOK, "application/tar")

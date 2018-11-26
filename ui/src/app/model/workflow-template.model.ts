@@ -35,3 +35,14 @@ export class ApplicationTemplate {
 export class EnvironmentTemplate {
     value: string;
 }
+
+export class WorkflowTemplateRequest {
+    project_key: string
+    workflow_name: string
+    parameters: { [key: string]: string; }
+}
+
+export class WorkflowTemplateApplyResult {
+    msgs: Array<string>;
+    workflow_name: string;
+}
