@@ -82,7 +82,6 @@ export class AppComponent  implements OnInit {
                 this.isConnected = true;
                 this.startSSE();
             }
-            console.log('iciiii');
             this.startVersionWorker();
         });
 
