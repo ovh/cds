@@ -1,5 +1,27 @@
-<div class="artifact" *ngIf="artifacts">
-    <div class="ui form">
+<div class="artifact" *ngIf="artifacts || staticFiles">
+  <table class="ui fixed celled table" *ngIf="staticFiles && staticFiles.length > 0">
+      <thead>
+      <tr>
+          <th class="six wide">{{ 'static_file_name' | translate }}</th>
+          <th class="six wide">{{ 'common_created' | translate }}</th>
+          <th class="four wide center">{{ 'common_link' | translate }}</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr *ngFor="let sFile of staticFiles">
+          <td>
+            {{sFile.name}}
+          </td>
+          <td>
+              {{sFile.created | date:'short'}}
+          </td>
+          <td class="center">
+              <a [href]="sFile.public_url" target="_blank"><i class="external alternate icon"></i></a>
+          </td>
+      </tr>
+      </tbody>
+  </table>
+    <div class="ui form" *ngIf="artifacts">
         <div class="field">
             <div class="fields">
             <div class="sixteen wide field">
@@ -8,7 +30,7 @@
             </div>
         </div>
     </div>
-    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+    <table class="ui fixed celled table" *ngIf="artifacts && getDataForCurrentPage().length > 0">
         <thead>
         <tr>
             <th class="five wide">{{ 'artifact_name' | translate }}</th>
@@ -50,7 +72,7 @@
         </tr>
         </tfoot>
     </table>
-    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+    <div class="ui info message" *ngIf="!artifacts || getDataForCurrentPage().length === 0">
         {{ 'artifact_none' | translate }}
     </div>
 </div>

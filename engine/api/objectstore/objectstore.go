@@ -39,6 +39,14 @@ func Store(o Object, data io.ReadCloser) (string, error) {
 	return "", fmt.Errorf("store not initialized")
 }
 
+//ServeStaticFiles send files to serve static files with the entrypoint of html page and return public URL taking a tar file
+func ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
+	if storage != nil {
+		return storage.ServeStaticFiles(o, entrypoint, data)
+	}
+	return "", fmt.Errorf("store not initialized")
+}
+
 //Fetch an object with default objectstore driver
 func Fetch(o Object) (io.ReadCloser, error) {
 	if storage != nil {
@@ -76,6 +84,7 @@ func FetchTempURL(o Object) (string, error) {
 type Driver interface {
 	Status() sdk.MonitoringStatusLine
 	Store(o Object, data io.ReadCloser) (string, error)
+	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
 	Fetch(o Object) (io.ReadCloser, error)
 	Delete(o Object) error
 }
@@ -86,6 +95,10 @@ type DriverWithRedirect interface {
 	StoreURL(o Object) (url string, key string, err error)
 	// FetchURL returns a temporary url and a secret key to fetch an object
 	FetchURL(o Object) (url string, key string, err error)
+	// ServeStaticFilesURL returns a temporary url and a secret key to serve static files in a container
+	ServeStaticFilesURL(o Object, entrypoint string) (string, string, error)
+	// GetPublicURL returns a public url to fetch an object (check your object ACLs before)
+	GetPublicURL(o Object) (url string, err error)
 }
 
 // Initialize setup wanted ObjectStore driver

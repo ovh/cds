@@ -93,6 +93,13 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 		}
 		r.Artifacts = arts
 	}
+	if loadOpts.WithStaticFiles {
+		staticFiles, errS := loadStaticFilesByNodeRunID(db, r.ID)
+		if errS != nil {
+			return nil, sdk.WrapError(errS, "LoadNodeRun>Error loading static files for run %d", r.ID)
+		}
+		r.StaticFiles = staticFiles
+	}
 	if loadOpts.WithCoverage {
 		cov, errCov := LoadCoverageReport(db, r.ID)
 		if errCov != nil && !sdk.ErrorIs(errCov, sdk.ErrNotFound) {
@@ -144,6 +151,14 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 			return nil, sdk.WrapError(errA, "LoadNodeRunByNodeJobID>Error loading artifacts for run %d", r.ID)
 		}
 		r.Artifacts = arts
+	}
+
+	if loadOpts.WithStaticFiles {
+		staticFiles, errS := loadStaticFilesByNodeRunID(db, r.ID)
+		if errS != nil {
+			return nil, sdk.WrapError(errS, "LoadNodeRunByNodeJobID>Error loading static files for run %d", r.ID)
+		}
+		r.StaticFiles = staticFiles
 	}
 
 	return r, nil
@@ -198,9 +213,17 @@ func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*s
 	if loadOpts.WithArtifacts {
 		arts, errA := loadArtifactByNodeRunID(db, r.ID)
 		if errA != nil {
-			return nil, sdk.WrapError(errA, "LoadNodeRun>Error loading artifacts for run %d", r.ID)
+			return nil, sdk.WrapError(errA, "LoadNodeRunByID>Error loading artifacts for run %d", r.ID)
 		}
 		r.Artifacts = arts
+	}
+
+	if loadOpts.WithStaticFiles {
+		staticFiles, errS := loadStaticFilesByNodeRunID(db, r.ID)
+		if errS != nil {
+			return nil, sdk.WrapError(errS, "LoadNodeRunByID>Error loading static files for run %d", r.ID)
+		}
+		r.StaticFiles = staticFiles
 	}
 
 	return r, nil

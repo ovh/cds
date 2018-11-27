@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 
 	"github.com/ovh/cds/sdk"
+
 	"golang.org/x/crypto/ssh"
 )
 

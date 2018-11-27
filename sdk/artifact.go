@@ -64,6 +64,7 @@ func (a *Artifact) GetPath() string {
 const (
 	ArtifactUpload   = "Artifact Upload"
 	ArtifactDownload = "Artifact Download"
+	ServeStaticFiles = "Serve Static Files"
 )
 
 // Header name for artifact upload

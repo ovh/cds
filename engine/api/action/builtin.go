@@ -248,7 +248,32 @@ Semver used if fully compatible with https://semver.org/
 		Description: "Set a list of artifacts, separate by , . You can also use regexp.",
 		Type:        sdk.StringParameter,
 	})
-	return checkBuiltinAction(db, gitrelease)
+	if err := checkBuiltinAction(db, gitrelease); err != nil {
+		return err
+	}
+
+	// ----------------------------------- Serve Static Files -----------------------
+	serveStaticAct := sdk.NewAction(sdk.ServeStaticFiles)
+	serveStaticAct.Type = sdk.BuiltinAction
+	serveStaticAct.Description = `CDS Builtin Action
+	Useful to upload static files and serve them.
+	For example your report about coverage, tests, performances, ...`
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "name",
+		Description: "Name to display in CDS UI and identify your static files",
+		Type:        sdk.StringParameter})
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "path",
+		Description: "Path where static files will be uploaded (example: mywebsite/*). If it's a file, the entrypoint would be set to this filename by default.",
+		Type:        sdk.StringParameter})
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "entrypoint",
+		Description: "Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html)",
+		Type:        sdk.StringParameter,
+		Value:       "",
+		Advanced:    true})
+
+	return checkBuiltinAction(db, serveStaticAct)
 }
 
 // checkBuiltinAction add builtin actions in database if needed
