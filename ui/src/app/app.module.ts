@@ -49,7 +49,17 @@ if (environment.sentryUrl) {
     class RavenErrorHandler implements ErrorHandler {
         handleError(err: any): void {
             console.error(err);
-            Raven.captureException(err);
+            let tags = {};
+            let userStr = localStorage.getItem('CDS-USER');
+            if (userStr) {
+                try {
+                    tags['CDS_USER'] = JSON.parse(userStr).username;
+                } catch (e) {
+
+                }
+            }
+
+            Raven.captureException(err, {tags});
         }
     }
 
