@@ -312,6 +312,11 @@
           <span>Script</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/serve-static-files/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/serve-static-files/">
+          <span>Serve Static Files</span>
+        </a>
+    </li>
         </ul>
     </li>
     <li data-nav-id="/workflows/pipelines/actions/user/" class="dd-item">
@@ -734,6 +739,11 @@
       <li data-nav-id="/cli/api/services/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/services/">
           <span>services</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/staticfiles/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/staticfiles/">
+          <span>staticfiles</span>
         </a>
     </li>
       <li data-nav-id="/cli/api/suggest/" class="dd-item">
@@ -2137,6 +2147,9 @@
 <li><a href="#postexecute-queue-workflows-token-coverage">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/coverage</code></a></li>
 <li><a href="#postexecute-queue-workflows-token-log">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/log</code></a></li>
 <li><a href="#postexecute-queue-workflows-token-result">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/result</code></a></li>
+<li><a href="#postexecute-queue-workflows-token-staticfiles-name">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/staticfiles/&lt;name&gt;</code></a></li>
+<li><a href="#postexecute-queue-workflows-token-staticfiles-name-url">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/staticfiles/&lt;name&gt;/url</code></a></li>
+<li><a href="#postexecute-queue-workflows-token-staticfiles-name-url-callback">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/staticfiles/&lt;name&gt;/url/callback</code></a></li>
 <li><a href="#postexecute-queue-workflows-token-step">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/step</code></a></li>
 <li><a href="#postexecute-queue-workflows-token-tag">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/tag</code></a></li>
 <li><a href="#postexecute-queue-workflows-token-test">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/test</code></a></li>
@@ -2695,6 +2708,90 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowJobResultHandler%22">postWorkflowJobResultHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="postexecute-queue-workflows-token-staticfiles-name">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/staticfiles/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/queue/workflows/&lt;token&gt;/staticfiles/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POSTEXECUTE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedWorker:  -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowJobStaticFilesHandler%22">postWorkflowJobStaticFilesHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="postexecute-queue-workflows-token-staticfiles-name-url">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/staticfiles/&lt;name&gt;/url</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/queue/workflows/&lt;token&gt;/staticfiles/&lt;name&gt;/url</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POSTEXECUTE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedWorker:  -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowJobStaticFilesWithTempURLHandler%22">postWorkflowJobStaticFilesWithTempURLHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="postexecute-queue-workflows-token-staticfiles-name-url-callback">POSTEXECUTE <code>/queue/workflows/&lt;token&gt;/staticfiles/&lt;name&gt;/url/callback</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/queue/workflows/&lt;token&gt;/staticfiles/&lt;name&gt;/url/callback</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POSTEXECUTE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedWorker:  -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postWorkflowJobStaticFilesWithTempURLCallbackHandler%22">postWorkflowJobStaticFilesWithTempURLCallbackHandler</a></td>
 </tr>
 </tbody>
 </table>

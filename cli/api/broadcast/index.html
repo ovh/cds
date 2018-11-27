@@ -312,6 +312,11 @@
           <span>Script</span>
         </a>
     </li>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/serve-static-files/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/serve-static-files/">
+          <span>Serve Static Files</span>
+        </a>
+    </li>
         </ul>
     </li>
     <li data-nav-id="/workflows/pipelines/actions/user/" class="dd-item">
@@ -734,6 +739,11 @@
       <li data-nav-id="/cli/api/services/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/services/">
           <span>services</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/staticfiles/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/staticfiles/">
+          <span>staticfiles</span>
         </a>
     </li>
       <li data-nav-id="/cli/api/suggest/" class="dd-item">
@@ -2120,8 +2130,8 @@
 <ul>
 <li><a href="#post-broadcast">POST <code>/broadcast</code></a></li>
 <li><a href="#get-broadcast">GET <code>/broadcast</code></a></li>
-<li><a href="#delete-broadcast-id">DELETE <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></a></li>
+<li><a href="#delete-broadcast-id">DELETE <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#get-broadcast-id">GET <code>/broadcast/&lt;id&gt;</code></a></li>
 <li><a href="#post-broadcast-id-mark">POST <code>/broadcast/&lt;id&gt;/mark</code></a></li>
 </ul></li>
@@ -2203,34 +2213,6 @@
 </tbody>
 </table>
 
-<h3 id="delete-broadcast-id">DELETE <code>/broadcast/&lt;id&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>DELETE</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>NeedAdmin: true -  Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBroadcastHandler%22">deleteBroadcastHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="put-broadcast-id">PUT <code>/broadcast/&lt;id&gt;</code></h3>
 
 <table>
@@ -2255,6 +2237,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+updateBroadcastHandler%22">updateBroadcastHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-broadcast-id">DELETE <code>/broadcast/&lt;id&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/broadcast/&lt;id&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteBroadcastHandler%22">deleteBroadcastHandler</a></td>
 </tr>
 </tbody>
 </table>

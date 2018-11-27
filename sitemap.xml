@@ -433,6 +433,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/serve-static-files/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/tags/</loc>
     <priority>0</priority>
   </url>
@@ -1307,6 +1311,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/startall/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/staticfiles/</loc>
   </url>
   
   <url>
