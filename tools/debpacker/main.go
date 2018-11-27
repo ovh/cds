@@ -21,18 +21,13 @@ func main() {
 		{
 			Name: "init",
 			Action: func(c *cli.Context) error {
-				p := new(DebPacker)
-				p.Init()
-				b, _ := yaml.Marshal(p)
+				p := New(nil, Config{}, "")
+				b, _ := yaml.Marshal(p.Config())
 				return ioutil.WriteFile(".debpacker.yml", b, os.FileMode(0644))
 			},
 		}, {
-			Name: "clean",
-			Action: func(c *cli.Context) error {
-				p := new(DebPacker)
-				p.outputDirectory = c.String("target")
-				return p.Clean()
-			},
+			Name:   "clean",
+			Action: func(c *cli.Context) error { return os.RemoveAll(c.String("target")) },
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "target",
@@ -43,24 +38,31 @@ func main() {
 		}, {
 			Name: "make",
 			Action: func(c *cli.Context) error {
-				p := new(DebPacker)
 				b, err := ioutil.ReadFile(c.String("config"))
 				if err != nil {
 					return err
 				}
 
-				if err := yaml.Unmarshal(b, p); err != nil {
+				var config Config
+				if err := yaml.Unmarshal(b, &config); err != nil {
 					return err
 				}
 
-				p.outputDirectory = c.String("target")
-				if ok, _ := isDirEmpty(p.outputDirectory); !ok {
-					fmt.Printf("Error: directory %s is not empty. Aborting\n", p.outputDirectory)
-					fmt.Printf("Run %s clean --target %s\n", os.Args[0], p.outputDirectory)
-					os.Exit(1)
+				target := c.String("target")
+				if ok, _ := isDirEmpty(target); !ok {
+					if !c.Bool("force") {
+						fmt.Printf("Error: directory %s is not empty. Aborting\n", target)
+						fmt.Printf("Run %s clean --target %s\n", os.Args[0], target)
+						os.Exit(1)
+					}
+
+					fmt.Println("removing directory", target)
+					if err := os.RemoveAll(target); err != nil {
+						return err
+					}
 				}
 
-				p.Init()
+				p := New(&fileSystemWriter{}, config, target)
 
 				if err := p.Prepare(); err != nil {
 					return err
@@ -78,6 +80,10 @@ func main() {
 					Name:  "target",
 					Value: "./target",
 					Usage: "Target output directory",
+				},
+				cli.BoolFlag{
+					Name:  "force",
+					Usage: "Force override of existing target folder",
 				},
 			},
 		},

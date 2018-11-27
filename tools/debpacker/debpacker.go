@@ -3,17 +3,60 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
+	"text/template"
 
-	zglob "github.com/mattn/go-zglob"
+	"github.com/pkg/errors"
 )
 
-// DebPacker represents a packagin configuration
-type DebPacker struct {
-	outputDirectory      string
+// New returns a new packer.
+func New(w Writer, c Config, out string) *Packer {
+	if c.SystemdServiceConfig.User == "" {
+		c.SystemdServiceConfig.User = c.PackageName
+	}
+
+	if c.SystemdServiceConfig.After == "" {
+		c.SystemdServiceConfig.After = "network.target"
+	}
+
+	if c.SystemdServiceConfig.ExecStop == "" {
+		c.SystemdServiceConfig.ExecStop = "/bin/kill $MAINPID"
+	}
+
+	if c.SystemdServiceConfig.Restart == "" {
+		c.SystemdServiceConfig.Restart = "always"
+	}
+
+	if c.SystemdServiceConfig.WantedBy == "" {
+		c.SystemdServiceConfig.WantedBy = "multi-user.target"
+	}
+
+	if c.SystemdServiceConfig.ExecStart == "" {
+		c.SystemdServiceConfig.ExecStart = "/usr/bin/" + filepath.Base(c.BinaryFile)
+	}
+
+	return &Packer{
+		writer:          w,
+		config:          c,
+		outputDirectory: filepath.Join(out, c.PackageName),
+	}
+}
+
+// Packer struct.
+type Packer struct {
+	writer          Writer
+	config          Config
+	outputDirectory string
+}
+
+// Config returns packer's config.
+func (p Packer) Config() Config { return p.config }
+
+// Config struct.
+type Config struct {
 	PackageName          string               `yaml:"package-name"`
 	Architecture         string               `yaml:"architecture"`
 	BinaryFile           string               `yaml:"binary-file"`
@@ -27,58 +70,23 @@ type DebPacker struct {
 	SystemdServiceConfig SystemdServiceConfig `yaml:"systemd-configuration"`
 }
 
-// SystemdServiceConfig will generate a .service file which will be located in /lib/systemd/system/
+// SystemdServiceConfig will generate a .service file which will be located in /lib/systemd/system/.
 type SystemdServiceConfig struct {
-	After         string            `yaml:"after,omitempty"` //default network.target
-	User          string            `yaml:"user,omitempty"`
-	ExecStart     string            `yaml:"-"`
-	ExecStartArgs []string          `yaml:"args"`
-	ExecStop      string            `yaml:"stop-command,omitempty"` //default /bin/kill -15 $MAINPID
-	Restart       string            `yaml:"restart,omitempty"`      //default always
-	WantedBy      string            `yaml:"wanted-by,omitempty"`    //default multi-user.target
-	Environments  map[string]string `yaml:"environments"`
+	After            string            `yaml:"after,omitempty"` //default network.target
+	User             string            `yaml:"user,omitempty"`
+	ExecStart        string            `yaml:"-"`
+	ExecStartArgs    []string          `yaml:"args"`
+	ExecStop         string            `yaml:"stop-command,omitempty"` //default /bin/kill -15 $MAINPID
+	Restart          string            `yaml:"restart,omitempty"`      //default always
+	WantedBy         string            `yaml:"wanted-by,omitempty"`    //default multi-user.target
+	Environments     map[string]string `yaml:"environments"`
+	WorkingDirectory string            `yaml:"working-directory,omitempty"`
 }
 
-// Init the configuration
-func (p *DebPacker) Init() {
-	if p.SystemdServiceConfig.User == "" {
-		p.SystemdServiceConfig.User = p.PackageName
-	}
-
-	if p.SystemdServiceConfig.After == "" {
-		p.SystemdServiceConfig.After = "network.target"
-	}
-
-	if p.SystemdServiceConfig.ExecStop == "" {
-		p.SystemdServiceConfig.ExecStop = "/bin/kill $MAINPID"
-	}
-
-	if p.SystemdServiceConfig.Restart == "" {
-		p.SystemdServiceConfig.Restart = "always"
-	}
-
-	if p.SystemdServiceConfig.WantedBy == "" {
-		p.SystemdServiceConfig.WantedBy = "multi-user.target"
-	}
-
-	if p.SystemdServiceConfig.ExecStart == "" {
-		p.SystemdServiceConfig.ExecStart = "/usr/bin/" + filepath.Base(p.BinaryFile)
-	}
-
-	p.outputDirectory = filepath.Join(p.outputDirectory, p.PackageName)
-}
-
-// Clean the target directory
-func (p *DebPacker) Clean() error {
-	fmt.Println("cleaning directory", p.outputDirectory)
-	return os.RemoveAll(p.outputDirectory)
-}
-
-// Prepare the debian package config file
-func (p DebPacker) Prepare() error {
+// Prepare the debian package config file.
+func (p Packer) Prepare() error {
 	path := filepath.Join(p.outputDirectory, "DEBIAN")
-	fmt.Println("creating directory", path)
-	if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
+	if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
 		return err
 	}
 
@@ -106,16 +114,12 @@ func (p DebPacker) Prepare() error {
 		return err
 	}
 
-	if err := p.writePostinstFile(); err != nil {
-		return err
-	}
-
-	return nil
+	return p.writePostinstFile()
 }
 
-// Build the debian package with dpkg
-func (p DebPacker) Build() (err error) {
-	c := exec.Command("dpkg-deb", "--build", p.PackageName)
+// Build the debian package with dpkg.
+func (p Packer) Build() (err error) {
+	c := exec.Command("dpkg-deb", "--build", p.config.PackageName)
 	c.Dir = filepath.Dir(p.outputDirectory)
 
 	bufOut := new(bytes.Buffer)
@@ -130,76 +134,48 @@ func (p DebPacker) Build() (err error) {
 	fmt.Println(bufOut.String())
 
 	if err != nil {
-		fmt.Printf("your package is ready: %s.deb\n", filepath.Join(filepath.Dir(p.outputDirectory), p.PackageName))
+		fmt.Printf("your package is ready: %s.deb\n", filepath.Join(filepath.Dir(p.outputDirectory), p.config.PackageName))
 	}
 
-	return err
+	return errors.Wrap(err, "Error running dpkg-deb")
 }
 
-func (p DebPacker) buildControlFile() error {
-	path := filepath.Join(p.outputDirectory, "DEBIAN")
-	if err := render(controlTmpl, filepath.Join(path, "control"), p, os.FileMode(0644)); err != nil {
-		return err
-	}
-	return nil
+func (p Packer) buildControlFile() error {
+	path := filepath.Join(p.outputDirectory, "DEBIAN", "control")
+	return p.render(controlTmpl, path, os.FileMode(0644))
 }
 
-func (p DebPacker) copyBinaryFile() error {
+func (p Packer) copyBinaryFile() error {
 	path := filepath.Join(p.outputDirectory, "usr", "bin")
-	fmt.Println("creating directory", path)
-	if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
+	if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
 		return err
 	}
 
-	originFile, err := os.Open(p.BinaryFile)
-	if err != nil {
-		return err
-	}
-	defer originFile.Close()
-
-	destFileName := filepath.Join(path, filepath.Base(originFile.Name()))
-	destFile, err := os.OpenFile(destFileName, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
-	if err != nil {
-		return err
-	}
-	defer destFile.Close()
-
-	fmt.Printf("copying file %s to %s\n", filepath.Base(originFile.Name()), destFileName)
-	if _, err := io.Copy(destFile, originFile); err != nil {
-		return err
-	}
-
-	return nil
+	return p.writer.CopyFiles(path, os.FileMode(0644), p.config.BinaryFile)
 }
 
-func (p DebPacker) copyConfigurationFiles() error {
-	if len(p.ConfigurationFiles) == 0 {
-		fmt.Println("skipping configuration files")
+func (p Packer) copyConfigurationFiles() error {
+	if len(p.config.ConfigurationFiles) == 0 {
 		return nil
 	}
 
-	path := filepath.Join(p.outputDirectory, "etc", p.PackageName)
-	fmt.Println("creating directory", path)
-	if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
+	path := filepath.Join(p.outputDirectory, "etc", p.config.PackageName)
+	if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
 		return err
 	}
 
-	for _, c := range p.ConfigurationFiles {
-		originFile, err := os.Open(c)
-		if err != nil {
-			return err
-		}
-		defer originFile.Close()
+	return p.writer.CopyFiles(path, os.FileMode(0644), p.config.ConfigurationFiles...)
+}
 
-		destFileName := filepath.Join(path, filepath.Base(originFile.Name()))
-		destFile, err := os.OpenFile(destFileName, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
-		if err != nil {
-			return err
-		}
-		defer destFile.Close()
+func (p Packer) mkDirs() error {
+	path := filepath.Join(p.outputDirectory, "var", "lib", p.config.PackageName)
+	if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
+		return err
+	}
 
-		fmt.Printf("copying file %s to %s\n", filepath.Base(originFile.Name()), destFileName)
-		if _, err := io.Copy(destFile, originFile); err != nil {
+	for _, d := range p.config.Mkdirs {
+		path := filepath.Join(p.outputDirectory, "var", "lib", p.config.PackageName, d)
+		if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
 			return err
 		}
 	}
@@ -207,84 +183,46 @@ func (p DebPacker) copyConfigurationFiles() error {
 	return nil
 }
 
-func (p DebPacker) copyOtherFiles() error {
-	if len(p.CopyFiles) == 0 {
+func (p Packer) copyOtherFiles() error {
+	if len(p.config.CopyFiles) == 0 {
 		return nil
 	}
 
-	path := filepath.Join(p.outputDirectory, "var", "lib", p.PackageName)
-	if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
+	path := filepath.Join(p.outputDirectory, "var", "lib", p.config.PackageName)
+	if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
 		return err
 	}
 
-	for _, c := range p.CopyFiles {
-		fmt.Println("searching files", c)
-
-		matches, err := zglob.Glob(c)
-		if err != nil && err.Error() != "file does not exist" {
-			return err
-		}
-
-		for _, m := range matches {
-			originFile, err := os.Open(m)
-			if err != nil {
-				return err
-			}
-			defer originFile.Close()
-
-			destFileName := filepath.Join(path, filepath.Base(originFile.Name()))
-			destFile, err := os.OpenFile(destFileName, os.O_CREATE|os.O_RDWR, os.FileMode(0644))
-			if err != nil {
-				return err
-			}
-			defer destFile.Close()
-			fmt.Printf("copying file %s to %s\n", originFile.Name(), destFileName)
-
-			if _, err := io.Copy(destFile, originFile); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return p.writer.CopyFiles(path, os.FileMode(0644), p.config.CopyFiles...)
 }
 
-func (p DebPacker) mkDirs() error {
-	path := filepath.Join(p.outputDirectory, "var", "lib", p.PackageName)
-	fmt.Println("creating directory", path)
-	if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
+func (p Packer) writeSystemdServiceFile() error {
+	path := filepath.Join(p.outputDirectory, "lib", "systemd", "system")
+	if err := p.writer.CreateDirectory(path, os.FileMode(0755)); err != nil {
 		return err
 	}
 
-	for _, d := range p.Mkdirs {
-		path2 := filepath.Join(p.outputDirectory, "var", "lib", p.PackageName, d)
-		fmt.Println("creating directory", path2)
-		if err := os.MkdirAll(path2, os.FileMode(0755)); err != nil {
-			return err
-		}
-	}
-	return nil
+	return p.render(systemdServiceTmpl, filepath.Join(path, p.config.PackageName+".service"), os.FileMode(0644))
 }
 
-func (p DebPacker) writePostinstFile() error {
+func (p Packer) writePostinstFile() error {
 	path := filepath.Join(p.outputDirectory, "DEBIAN", "postinst")
-
-	if err := render(postinstTmpl, path, p, os.FileMode(0755)); err != nil {
-		return err
-	}
-
-	return nil
+	return p.render(postinstTmpl, path, os.FileMode(0755))
 }
 
-func (p DebPacker) writeSystemdServiceFile() error {
-	path := filepath.Join(p.outputDirectory, "/lib/systemd/system/")
-	fmt.Println("creating directory", path)
-	if err := os.MkdirAll(path, os.FileMode(0755)); err != nil {
-		return err
+func (p Packer) render(tmpl string, path string, perm os.FileMode) error {
+	t, err := template.New("tmpl").
+		Funcs(template.FuncMap{"StringsJoin": strings.Join}).
+		Parse(tmpl)
+	if err != nil {
+		return errors.Wrap(err, "Cannot parse template")
 	}
 
-	if err := render(systemdServiceTmpl, filepath.Join(path, p.PackageName+".service"), p, os.FileMode(0644)); err != nil {
-		return err
+	buf := new(bytes.Buffer)
+
+	if err := t.Execute(buf, p.config); err != nil {
+		return errors.Wrap(err, "Cannot execute template")
 	}
-	return nil
+
+	return p.writer.CreateFile(path, buf.Bytes(), perm)
 }
