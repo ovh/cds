@@ -430,7 +430,7 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	//Update pipeline
 	query := `UPDATE pipeline SET name=$1, description = $2, type=$3, last_modified=$5 WHERE id=$4`
 	_, err := db.Exec(query, p.Name, p.Description, p.Type, p.ID, now)
-	return err
+	return sdk.WithStack(err)
 }
 
 // InsertPipeline inserts pipeline informations in database
