@@ -47,7 +47,7 @@
                                             <div class="content">
                                                 <div class="ui grid">
                                                     <div class="row">
-                                                        <div class="one wide column" title="{{'common_orientation' | translate}}">
+                                                        <div class="five wide column" title="{{'common_orientation' | translate}}">
                                                             <button class="ui icon button"
                                                                     *ngIf="direction === 'TB'"
                                                                     (click)="changeDirection()">
@@ -58,16 +58,6 @@
                                                                     (click)="changeDirection()">
                                                                 <i class="resize vertical icon"></i>
                                                             </button>
-                                                        </div>
-                                                        <div class="four wide column centered workflowInfo">
-                                                            <div class="ui grid">
-                                                                <div *ngIf="detailedWorkflow.from_repository" class="row">
-                                                                    {{'workflow_from_repository' | translate: {repo: detailedWorkflow.from_repository} }}
-                                                                </div>
-                                                                <div *ngIf="detailedWorkflow.from_template" class="row">
-                                                                    <a (click)="showTemplateFrom()">{{'workflow_from_template' | translate: {path: detailedWorkflow.from_template} }}</a>
-                                                                </div>
-                                                            </div>
                                                         </div>
                                                         <div class="six wide column centered">
                                                             <div class="ui buttons">
@@ -151,9 +141,6 @@
         <ng-container>
             <app-workflow-node-run-param #workflowStartParam [project]="project" [workflow]="detailedWorkflow"
                                          [nodeToRun]="detailedWorkflow.workflow_data.node"></app-workflow-node-run-param>
-        </ng-container>
-        <ng-container>
-            <app-workflow-template-modal #templateForm [project]="project" [workflow]="detailedWorkflow"></app-workflow-template-modal>
         </ng-container>
     </div>
 </ng-template>

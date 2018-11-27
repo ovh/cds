@@ -128,7 +128,9 @@ export class WorkflowTemplateApplyFormComponent {
             this.loading = true;
             this._repoManagerService.getRepositories(this.project.key, this.parameterValues[parameterKey], true)
                 .pipe(first(), finalize(() => this.loading = false))
-                .subscribe(rs => this.parameterValues[parameterKey + '-repositories'] = rs);
+                .subscribe(rs => {
+                    this.parameterValues[parameterKey + '-repositories'] = rs.map(r => r.fullname);
+                });
         }
     }
 

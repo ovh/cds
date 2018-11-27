@@ -4,8 +4,8 @@ $sidebarWidth: 255px;
 
 .content-wrap, .sidebar {
   transition: width 0.1s;
-
 }
+
 .sidebar {
   float: left;
   width: 0;
@@ -51,17 +51,20 @@ $sidebarWidth: 255px;
 }
 
 i {
+  color: black;
+  margin-left: 10px;
+  font-size: 1.3em;
+  &.inactive {
+    opacity: 0.3;
+  }
   &.favorite {
     color: $cds_favorite_color;
-    font-size: 1.3em;
     &:hover {
       opacity: 0.4;
     }
   }
   &.unfavorite {
-    color: black;
     opacity: 0.3;
-    font-size: 1.3em;
     &:hover {
       color: $cds_favorite_color;
     }

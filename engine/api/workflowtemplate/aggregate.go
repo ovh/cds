@@ -61,12 +61,38 @@ func AggregateAuditsOnWorkflowTemplateInstance(db gorp.SqlExecutor, wtis ...*sdk
 	return nil
 }
 
-// AggregateTemplateOnWorkflow set template data for each workflow.
-func AggregateTemplateOnWorkflow(db gorp.SqlExecutor, ws ...*sdk.Workflow) error {
+// AggregateTemplateInstanceOnWorkflow set template instance data for each workflow.
+func AggregateTemplateInstanceOnWorkflow(db gorp.SqlExecutor, ws ...*sdk.Workflow) error {
+	if len(ws) == 0 {
+		return nil
+	}
+
 	wtis, err := GetInstancesByWorkflowIDs(db, sdk.WorkflowToIDs(ws))
 	if err != nil {
 		return err
 	}
+	if len(wtis) == 0 {
+		return nil
+	}
+
+	mWorkflowTemplateInstances := make(map[int64]sdk.WorkflowTemplateInstance, len(wtis))
+	for _, wti := range wtis {
+		if wti.WorkflowID != nil {
+			mWorkflowTemplateInstances[*wti.WorkflowID] = wti
+		}
+	}
+
+	for _, w := range ws {
+		if wti, ok := mWorkflowTemplateInstances[w.ID]; ok {
+			w.TemplateInstance = &wti
+		}
+	}
+
+	return nil
+}
+
+// AggregateTemplateOnInstance set template data for each instance.
+func AggregateTemplateOnInstance(db gorp.SqlExecutor, wtis ...*sdk.WorkflowTemplateInstance) error {
 	if len(wtis) == 0 {
 		return nil
 	}
@@ -84,18 +110,9 @@ func AggregateTemplateOnWorkflow(db gorp.SqlExecutor, ws ...*sdk.Workflow) error
 		mWorkflowTemplates[wt.ID] = wt
 	}
 
-	mWorkflowTemplateInstances := make(map[int64]sdk.WorkflowTemplateInstance, len(wtis))
 	for _, wti := range wtis {
-		if wti.WorkflowID != nil {
-			mWorkflowTemplateInstances[*wti.WorkflowID] = wti
-		}
-	}
-
-	for _, w := range ws {
-		if wti, ok := mWorkflowTemplateInstances[w.ID]; ok {
-			if wt, ok := mWorkflowTemplates[wti.WorkflowTemplateID]; ok {
-				w.Template = &wt
-			}
+		if wt, ok := mWorkflowTemplates[wti.WorkflowTemplateID]; ok {
+			wti.Template = &wt
 		}
 	}
 

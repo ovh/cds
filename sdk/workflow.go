@@ -55,8 +55,10 @@ type Workflow struct {
 	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
 	// aggregates
-	Template     *WorkflowTemplate `json:"-" db:"-" cli:"-"`
-	FromTemplate string            `json:"from_template,omitempty" db:"-" cli:"-"`
+	Template         *WorkflowTemplate         `json:"-" db:"-" cli:"-"`
+	TemplateInstance *WorkflowTemplateInstance `json:"-" db:"-" cli:"-"`
+	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
+	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
 }
 
 // GetApplication retrieve application from workflow
@@ -811,7 +813,7 @@ func (n WorkflowNode) migrate(withID bool) Node {
 			Conditions:                n.Context.Conditions,
 			DefaultPayload:            n.Context.DefaultPayload,
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
-			Mutex: n.Context.Mutex,
+			Mutex:                     n.Context.Mutex,
 		},
 		Hooks:    make([]NodeHook, 0, len(n.Hooks)),
 		Triggers: make([]NodeTrigger, 0, len(n.Triggers)+len(n.Forks)+len(n.OutgoingHooks)),

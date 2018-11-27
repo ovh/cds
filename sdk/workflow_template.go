@@ -342,7 +342,7 @@ func WorkflowTemplateInstancesToWorkflowIDs(wtis []*WorkflowTemplateInstance) []
 }
 
 // WorkflowTemplateInstancesToWorkflowTemplateIDs returns workflow template ids of given workflow template instances.
-func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []WorkflowTemplateInstance) []int64 {
+func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInstance) []int64 {
 	ids := make([]int64, len(wtis))
 	for i := range wtis {
 		ids[i] = wtis[i].WorkflowTemplateID

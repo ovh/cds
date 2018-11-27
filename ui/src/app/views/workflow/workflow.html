@@ -4,6 +4,14 @@
         <div class="ui active small inline loader" *ngIf="loadingFav"></div>
         <i class="pointing star icon" *ngIf="!loadingFav" [class.pointing]="!loading" [ngClass]="{'animated infinite pulse' : loadingFav}" [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
     </div>
+    <div class="right floated" [title]="'workflow_from_repository_btn' | translate">
+        <i *ngIf="workflow && workflow.from_repository" class="pointing git icon" suiPopup [popupText]="'workflow_from_repository' | translate: {repo: workflow.from_repository}" popupPlacement="top right"></i>
+        <i *ngIf="!workflow || !workflow.from_repository" class="pointing git icon inactive"></i>
+    </div>
+    <div class="right floated" [title]="'workflow_from_template_btn' | translate">
+        <i *ngIf="workflow && workflow.from_template" class="pointing paste icon" [class.orange]="!workflow.template_up_to_date" suiPopup [popupText]="'workflow_from_template' | translate: {path: workflow.from_template}" popupPlacement="top right" (click)="showTemplateFrom()"></i>
+        <i *ngIf="!workflow || !workflow.from_template" class="pointing paste icon inactive"></i>
+    </div>
 </div>
 <aside class="sidebar scrollable expanded"
    infiniteScroll
@@ -44,4 +52,7 @@
         [workflow]="workflow"
         [open]="asCodeEditorOpen">
     </app-workflow-sidebar-code>
+    <ng-container>
+        <app-workflow-template-modal #templateForm [project]="project" [workflow]="workflow"></app-workflow-template-modal>
+    </ng-container>
 </section>
