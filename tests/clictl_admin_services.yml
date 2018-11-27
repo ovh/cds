@@ -22,5 +22,5 @@ testcases:
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring transport.go
-  - script: {{.cds.build.cdsctl}} admin services delete --force --name `{{.cds.build.cdsctl}} admin services list -q|grep hatchery|head -n1`
+  - script: {{.cds.build.cdsctl}} admin services delete --force `{{.cds.build.cdsctl}} admin services list -q|grep hatchery|head -n1`
   

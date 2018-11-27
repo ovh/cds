@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -136,16 +137,19 @@ func adminServiceGetRun(v cli.Values) error {
 var adminServiceDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a CDS service from registered service",
-	Flags: []cli.Flag{
-		{
-			Kind:    reflect.String,
-			Name:    "name",
-			Usage:   "service name",
-			Default: "",
-		},
+	VariadicArgs: cli.Arg{
+		Name: "name",
 	},
 }
 
 func adminServiceDeleteRun(v cli.Values) error {
-	return client.ServiceDelete(v.GetString("name"))
+	if v.GetString("name") == "" {
+		return fmt.Errorf("name for service is mandatory")
+	}
+	for _, n := range strings.Split(v.GetString("name"), ",") {
+		if err := client.ServiceDelete(n); err != nil {
+			return err
+		}
+	}
+	return nil
 }
