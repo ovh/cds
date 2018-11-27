@@ -2,7 +2,12 @@
     <h3 class="ui header ml5">
         <i class="cubes icon"></i>
         <div class="content">
-            <span>{{node.name}}</span>
+            <ng-container *ngIf="node.type === 'pipeline' || node.type === 'outgoinghook'">
+                <span>{{node.name}}</span>
+            </ng-container>
+            <ng-container *ngIf="node.type !== 'pipeline' && node.type !== 'outgoinghook'">
+                <span>{{node.type}}</span>
+            </ng-container>
             <a class="inline pointing ml5"
               *ngIf="displayEditOption"
               (click)="goToEditNode()">
