@@ -1,5 +1,6 @@
 export const environment = {
    production: true,
    apiURL: './cdsapi',
-    name: 'prod'
+   name: 'prod',
+   sentryUrl: ''
 };

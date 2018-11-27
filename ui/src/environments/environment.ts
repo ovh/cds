@@ -1,5 +1,6 @@
 export const environment = {
     production: false,
     apiURL: 'http://localhost:8081',
-    name: 'local'
+    name: 'local',
+    sentryUrl: ''
 };

@@ -6,5 +6,6 @@
 export const environment = {
     production: false,
     apiURL: 'foo.bar',
-    name: 'test'
+    name: 'test',
+    sentryUrl: ''
 };
