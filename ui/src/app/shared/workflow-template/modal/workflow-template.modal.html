@@ -1,6 +1,31 @@
 <ng-template let-context let-modal="modal" #workflowTemplateModal>
     <div class="content">
-        <app-workflow-template-apply-form *ngIf="workflowTemplate" [project]="project" [workflowTemplate]="workflowTemplate"
-            [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true" (close)="close()"></app-workflow-template-apply-form>
+        <div class="ui form">
+            <div class="ui grid">
+                <div class="sixteen wide column">
+                    <div class="ui wide eighteen field" *ngIf="workflowTemplate && workflowTemplateInstance">
+                        <div class="fields">
+                            <div class="six wide field">
+                                <label>{{'common_name' | translate}}</label>
+                                <input class="ui input" type="text" name="name" [disabled]="true" [ngModel]="workflowTemplate.name">
+                            </div>
+                            <div class="six wide field">
+                                <label>{{'common_group' | translate}}</label>
+                                <input class="ui input" type="text" name="group" [disabled]="true" [ngModel]="workflowTemplate.group.name">
+                            </div>
+                            <div class="four wide field right aligned">
+                                <a *ngIf="workflowTemplateInstance.workflow_template_version === workflowTemplate.version"
+                                    class="ui green label">{{'common_up_to_date' | translate}}</a>
+                                <a *ngIf="workflowTemplateInstance.workflow_template_version !== workflowTemplate.version"
+                                    class="ui orange label">{{'common_not_up_to_date' | translate }}</a>
+                            </div>
+                        </div>
+                        <app-workflow-template-apply-form *ngIf="workflowTemplate" [project]="project"
+                            [workflowTemplate]="workflowTemplate" [workflowTemplateInstance]="workflowTemplateInstance"
+                            [withClose]="true" (close)="close()" (apply)="loadInstance()"></app-workflow-template-apply-form>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </ng-template>

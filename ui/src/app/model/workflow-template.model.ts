@@ -48,5 +48,6 @@ export class WorkflowTemplateApplyResult {
 }
 
 export class WorkflowTemplateInstance {
+    workflow_template_version: number;
     request: WorkflowTemplateRequest;
 }

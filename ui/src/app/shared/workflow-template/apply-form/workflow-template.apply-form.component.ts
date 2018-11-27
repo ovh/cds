@@ -52,6 +52,8 @@ export class WorkflowTemplateApplyFormComponent {
     @Input() withClose: boolean;
     @Output() close = new EventEmitter<number>();
 
+    @Output() apply = new EventEmitter<number>();
+
     vcsNames: Array<string>;
     parameterName: string;
     parameterValues: any;
@@ -97,6 +99,7 @@ export class WorkflowTemplateApplyFormComponent {
             .pipe(first(), finalize(() => this.loading = false))
             .subscribe(res => {
                 this.result = res;
+                this.apply.emit();
             });
     }
 

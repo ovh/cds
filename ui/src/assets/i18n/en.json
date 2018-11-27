@@ -279,6 +279,8 @@
   "common_required": "Required",
   "common_created_by": "Created By",
   "common_last_modified": "Last modified",
+  "common_up_to_date": "Up to date",
+  "common_not_up_to_date": "New version available",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
