@@ -13,6 +13,7 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
+import {WorkflowTemplateModalComponent} from '../../../shared/workflow-template/modal/workflow-template.modal.component';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 
@@ -37,6 +38,8 @@ export class WorkflowShowComponent implements OnInit {
     runWithParamComponent: WorkflowNodeRunParamComponent;
     @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;
+    @ViewChild('templateForm')
+    templateFormComponent: WorkflowTemplateModalComponent;
 
     selectedNode: WNode;
     selectedNodeID: number;
@@ -217,5 +220,11 @@ export class WorkflowShowComponent implements OnInit {
           this._toast.success('', this._translate.instant('workflow_updated'));
           this._router.navigate(['/project', this.project.key, 'workflow', wf.name]);
         });
+    }
+
+    showTemplateFrom(): void {
+        if (this.templateFormComponent) {
+            this.templateFormComponent.show();
+        }
     }
 }

@@ -1,8 +1,7 @@
 slug: example-with-repository
-name: 'Example with repository 🤖️ '
+name: Example with repository
 group: shared.infra
-description: A example template for test purpose, made with ❤️ by
-  CDS team.
+description: A example template for test purpose, made with ❤️ by CDS team.
 parameters:
 - key: withDeploy
   type: boolean

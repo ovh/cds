@@ -4,7 +4,7 @@ version: v1.0
 workflow:
   Node-1:
     pipeline: First-pipeline
-[[if .params.withDeploy -]]
+[[if .params.withDeploy]]
   Node-2:
     depends_on:
     - Node-1
@@ -12,4 +12,4 @@ workflow:
     - [[.params.deployWhen]]
     pipeline: Second-pipeline
     environment: First-environment
-[[- end -]]
+[[end]]

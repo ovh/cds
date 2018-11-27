@@ -2,7 +2,12 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { WorkflowTemplate, WorkflowTemplateApplyResult, WorkflowTemplateRequest, } from '../../model/workflow-template.model';
+import {
+    WorkflowTemplate,
+    WorkflowTemplateApplyResult,
+    WorkflowTemplateInstance,
+    WorkflowTemplateRequest
+} from '../../model/workflow-template.model';
 
 @Injectable()
 export class WorkflowTemplateService {
@@ -38,5 +43,9 @@ export class WorkflowTemplateService {
                 result.msgs = res.body;
                 return result;
             });
+    }
+
+    getWorkflowTemplateInstance(projectKey: string, workflowName: string): Observable<WorkflowTemplateInstance> {
+        return this._http.get<WorkflowTemplateInstance>('/project/' + projectKey + '/workflow/' + workflowName + '/templateInstance');
     }
 }

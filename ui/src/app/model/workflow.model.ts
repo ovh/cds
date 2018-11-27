@@ -35,6 +35,7 @@ export class Workflow {
     purge_tags: Array<string>;
     notifications: Array<WorkflowNotification>;
     from_repository: string;
+    from_template: string;
     favorite: boolean;
     pipelines: {[key: number]: Pipeline; };
     applications: {[key: number]: Application; };

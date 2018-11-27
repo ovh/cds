@@ -1,9 +1,14 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize, first } from 'rxjs/operators';
 import { Project } from '../../../model/project.model';
-import { WorkflowTemplate, WorkflowTemplateApplyResult, WorkflowTemplateRequest } from '../../../model/workflow-template.model';
+import {
+    WorkflowTemplate,
+    WorkflowTemplateApplyResult,
+    WorkflowTemplateInstance,
+    WorkflowTemplateRequest
+} from '../../../model/workflow-template.model';
 import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
 import { WorkflowTemplateService } from '../../../service/workflow-template/workflow-template.service';
 
@@ -13,10 +18,15 @@ import { WorkflowTemplateService } from '../../../service/workflow-template/work
     styleUrls: ['./workflow-template.apply-form.scss']
 })
 export class WorkflowTemplateApplyFormComponent {
+    _project: Project;
+    @Input() set project(p: Project) {
+        this._project = p;
+
+        this.vcsNames = this._project.vcs_servers.map(vcs => vcs.name);
+    }
+    get project() { return this._project; }
+
     _workflowTemplate: WorkflowTemplate;
-
-    @Input() project: Project;
-
     @Input() set workflowTemplate(wt: WorkflowTemplate) {
         this._workflowTemplate = wt;
 
@@ -27,10 +37,22 @@ export class WorkflowTemplateApplyFormComponent {
                 this.parameterValues[parameter.key] = new FormControl();
             }
         });
-    }
 
+        this.fillFormWithInstanceData();
+    }
     get workflowTemplate() { return this._workflowTemplate; }
 
+    _workflowTemplateInstance: WorkflowTemplateInstance;
+    @Input() set workflowTemplateInstance(wti: WorkflowTemplateInstance) {
+        this._workflowTemplateInstance = wti;
+        this.fillFormWithInstanceData();
+    }
+    get workflowTemplateInstance() { return this._workflowTemplateInstance; }
+
+    @Input() withClose: boolean;
+    @Output() close = new EventEmitter<number>();
+
+    vcsNames: Array<string>;
     parameterName: string;
     parameterValues: any;
 
@@ -59,7 +81,7 @@ export class WorkflowTemplateApplyFormComponent {
                     case 'repository':
                         if (this.parameterValues[parameter.key + '-repository']) {
                             req.parameters[parameter.key] = this.parameterValues[parameter.key] + '/' +
-                                this.parameterValues[parameter.key + '-repository'].fullname;
+                                this.parameterValues[parameter.key + '-repository'];
                         }
                         break;
                     default:
@@ -80,7 +102,21 @@ export class WorkflowTemplateApplyFormComponent {
 
     fetchRepos(parameterKey: string, repoMan: string): void {
         this._repoManagerService.getRepositories(this.project.key, repoMan, false).subscribe(rs => {
-            this.parameterValues[parameterKey + '-repositories'] = rs;
+            let repoNames = rs.map(r => r.fullname);
+
+            this.parameterValues[parameterKey + '-repositories'] = repoNames;
+
+            if (this._workflowTemplateInstance && this._workflowTemplateInstance.request.parameters[parameterKey]) {
+                let v = this._workflowTemplateInstance.request.parameters[parameterKey];
+                let s = v.split('/');
+                if (s.length > 1) {
+                    let selectedRepo = s.splice(1, s.length - 1).join('/');
+                    let existingRepo = repoNames.find(n => n === selectedRepo);
+                    if (existingRepo) {
+                        this.parameterValues[parameterKey + '-repository'] = existingRepo;
+                    }
+                }
+            }
         });
     }
 
@@ -95,5 +131,39 @@ export class WorkflowTemplateApplyFormComponent {
 
     goToWorkflow(): void {
         this._router.navigate(['/project', this.project.key, 'workflow', this.result.workflow_name]);
+    }
+
+    fillFormWithInstanceData(): void {
+        if (this._workflowTemplate && this._workflowTemplateInstance) {
+            this.parameterName = this._workflowTemplateInstance.request.workflow_name;
+            this._workflowTemplate.parameters.forEach(parameter => {
+
+                let v = this._workflowTemplateInstance.request.parameters[parameter.key];
+                if (v) {
+                    switch (parameter.type) {
+                        case 'boolean':
+                            this.parameterValues[parameter.key].setValue(v === 'true');
+                            break;
+                        case 'repository':
+                            let s = v.split('/');
+                            if (s.length > 1) {
+                                let existingVcs = this.vcsNames.find(vcs => vcs === s[0]);
+                                if (existingVcs) {
+                                    this.parameterValues[parameter.key] = existingVcs;
+                                    this.fetchRepos(parameter.key, existingVcs);
+                                }
+                            }
+                            break;
+                        default:
+                            this.parameterValues[parameter.key] = v;
+                            break;
+                    }
+                }
+            });
+        }
+    }
+
+    clickClose() {
+        this.close.emit();
     }
 }

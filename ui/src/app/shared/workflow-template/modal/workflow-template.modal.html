@@ -1,0 +1,6 @@
+<ng-template let-context let-modal="modal" #workflowTemplateModal>
+    <div class="content">
+        <app-workflow-template-apply-form *ngIf="workflowTemplate" [project]="project" [workflowTemplate]="workflowTemplate"
+            [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true" (close)="close()"></app-workflow-template-apply-form>
+    </div>
+</ng-template>

@@ -46,3 +46,7 @@ export class WorkflowTemplateApplyResult {
     msgs: Array<string>;
     workflow_name: string;
 }
+
+export class WorkflowTemplateInstance {
+    request: WorkflowTemplateRequest;
+}
