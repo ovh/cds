@@ -1,15 +1,15 @@
 importScripts('./common.js');
 importScripts('./eventsource.js');
 
-let sse;
-let sseURL;
-let pingUrl;
-let headerKey;
-let headerValue;
-const connections = [];
-let offline = false;
+var sse;
+var sseURL;
+var pingUrl;
+var headerKey;
+var headerValue;
+var connections = [];
+var offline = false;
 onconnect = function(e) {
-    let port = e.ports[0];
+    var port = e.ports[0];
     connections.push(port);
     port.onmessage = function (event) {
         pingUrl = event.data.pingURL;
@@ -29,7 +29,7 @@ function initSSE(force) {
             if (evt.data.indexOf('ACK: ') === 0) {
                 return;
             }
-            let jsonEvent = JSON.parse(evt.data);
+            var jsonEvent = JSON.parse(evt.data);
             connections.forEach( p => {
                 p.postMessage(jsonEvent);
             });
@@ -53,7 +53,7 @@ setInterval(() => {
 setInterval(() => {
     if (pingUrl) {
         try {
-            let xhr = new XMLHttpRequest();
+            var xhr = new XMLHttpRequest();
             xhr.open('GET', pingUrl , false, null, null);
             xhr.setRequestHeader(headerKey, headerValue);
             xhr.send(null);
