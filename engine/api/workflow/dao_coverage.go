@@ -4,13 +4,12 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/ovh/cds/engine/api/metrics"
-
 	"github.com/go-gorp/gorp"
 	"github.com/sguiheux/go-coverage"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 )

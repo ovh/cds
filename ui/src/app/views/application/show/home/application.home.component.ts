@@ -31,16 +31,18 @@ export class ApplicationHomeComponent implements OnInit {
             this.overview = d;
             if (d && d.graphs.length > 0) {
                 d.graphs.forEach(g => {
-                    switch (g.type) {
-                        case 'Vulnerability':
-                            this.createVulnDashboard(g.datas);
-                            break;
-                        case 'UnitTest':
-                            this.createUnitTestDashboard(g.datas);
-                            break;
-                        case 'Coverage':
-                            this.createCoverageDashboard(g.datas);
-                            break;
+                    if (g.datas && g.datas.length) {
+                        switch (g.type) {
+                            case 'Vulnerability':
+                                this.createVulnDashboard(g.datas);
+                                break;
+                            case 'UnitTest':
+                                this.createUnitTestDashboard(g.datas);
+                                break;
+                            case 'Coverage':
+                                this.createCoverageDashboard(g.datas);
+                                break;
+                        }
                     }
                 });
             }
