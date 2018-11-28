@@ -353,6 +353,8 @@
   "graph_unittest_title": "Tests unitaires",
   "graph_unittest_x": "N° workflow",
   "graph_unittest_y": "Total",
+  "graph_coverage_title": "Couverture",
+  "graph_coverage_y": "Taux de couverture",
 
   "group_added": "Groupe ajouté",
   "group_deleted": "Groupe supprimé",

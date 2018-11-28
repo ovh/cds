@@ -31,30 +31,31 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
+		db := api.mustDB()
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(db, api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getApplicationOverviewHandler> unable to load project")
 		}
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(db, api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getApplicationOverviewHandler> unable to load application")
 		}
 
-		usage, errU := loadApplicationUsage(api.mustDB(), key, appName)
+		usage, errU := loadApplicationUsage(db, key, appName)
 		if errU != nil {
 			return sdk.WrapError(errU, "getApplicationOverviewHandler> Cannot load application usage")
 		}
 		app.Usage = &usage
 
 		appOverview := sdk.ApplicationOverview{
-			Graphs:  make([]sdk.ApplicationOverviewGraph, 0, 2),
+			Graphs:  make([]sdk.ApplicationOverviewGraph, 0, 3),
 			History: make(map[string][]sdk.WorkflowRun, len(app.Usage.Workflows)),
 		}
 
 		// GET METRICS
-		m1, errMV := metrics.GetMetrics(api.mustDB(), key, app.ID, sdk.MetricKeyVulnerability)
+		m1, errMV := metrics.GetMetrics(db, key, app.ID, sdk.MetricKeyVulnerability)
 		if errMV != nil {
 			return sdk.WrapError(errMV, "getApplicationOverviewHandler> Cannot list vulnerability metrics")
 		}
@@ -63,7 +64,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			Datas: m1,
 		})
 
-		m2, errUT := metrics.GetMetrics(api.mustDB(), key, app.ID, sdk.MetricKeyUnitTest)
+		m2, errUT := metrics.GetMetrics(db, key, app.ID, sdk.MetricKeyUnitTest)
 		if errUT != nil {
 			return sdk.WrapError(errUT, "getApplicationOverviewHandler> Cannot list Unit test metrics")
 		}
@@ -72,10 +73,19 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			Datas: m2,
 		})
 
+		mCov, errCov := metrics.GetMetrics(db, key, app.ID, sdk.MetricKeyCoverage)
+		if errCov != nil {
+			return sdk.WrapError(errCov, "getApplicationOverviewHandler> Cannot list coverage metrics")
+		}
+		appOverview.Graphs = append(appOverview.Graphs, sdk.ApplicationOverviewGraph{
+			Type:  sdk.MetricKeyCoverage,
+			Datas: mCov,
+		})
+
 		// GET VCS URL
 		// Get vcs info to known if we are on the default branch or not
 		if projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer); projectVCSServer != nil {
-			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, projectVCSServer)
+			client, erra := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, projectVCSServer)
 			if erra != nil {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationOverviewHandler> Cannot get repo client %s: %v", app.VCSServer, erra)
 			}
@@ -93,7 +103,7 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 			tagFilter := make(map[string]string, 1)
 			tagFilter["git.branch"] = defaultBranch
 			for _, w := range app.Usage.Workflows {
-				runs, _, _, _, errR := workflow.LoadRuns(api.mustDB(), key, w.Name, 0, 5, tagFilter)
+				runs, _, _, _, errR := workflow.LoadRuns(db, key, w.Name, 0, 5, tagFilter)
 				if errR != nil {
 					return sdk.WrapError(errR, "getApplicationOverviewHandler> Unable to load runs")
 				}

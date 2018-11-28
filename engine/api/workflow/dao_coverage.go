@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/ovh/cds/engine/api/metrics"
+
 	"github.com/go-gorp/gorp"
 	"github.com/sguiheux/go-coverage"
 
@@ -194,6 +196,9 @@ func ComputeLatestDefaultBranchReport(ctx context.Context, db gorp.SqlExecutor, 
 		}
 		defaultCoverage.Report.Files = nil
 		covReport.Trend.DefaultBranch = defaultCoverage.Report
+	} else {
+		metrics.PushCoverage(proj.Key, wnr.ApplicationID, wnr.WorkflowID, wnr.Number, covReport.Report)
 	}
+
 	return nil
 }
