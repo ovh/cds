@@ -9,8 +9,8 @@ fi;
 
 if [ ! -z ${SENTRY_URL_UI} ]; then
     echo "# Inject sentry url variable"
-	sed -i -e "s/window.cds_sentry_url = '';/window.cds_sentry_url='${SENTRY_URL_UI}';/g" index.html
-    sed -i -e "s/window.cds_version = '';/window.cds_version='${VERSION}';/g" index.html
+	sed -i -e "s|window.cds_sentry_url = '';|window.cds_sentry_url='${SENTRY_URL_UI}';|g" index.html
+    sed -i -e "s|window.cds_version = '';|window.cds_version='${VERSION}';|g" index.html
 fi;
 
 
