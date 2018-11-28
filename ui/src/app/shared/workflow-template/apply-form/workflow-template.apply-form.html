@@ -5,7 +5,7 @@
                 <label>{{'workflow_name' | translate}}</label>
                 <input class="ui input" type="text" name="workflow_name" [(ngModel)]="parameterName" [disabled]="_workflowTemplateInstance">
             </div>
-            <div class="wide field">
+            <div *ngIf="workflowTemplate.parameters.length > 0" class="wide field">
                 <label>{{'common_parameters' | translate}}</label>
             </div>
             <ng-container *ngFor="let parameter of workflowTemplate.parameters; let index = index">

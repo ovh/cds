@@ -281,6 +281,8 @@
   "common_last_modified": "Last modified",
   "common_up_to_date": "Up to date",
   "common_not_up_to_date": "New version available",
+  "common_read_more": "Read more",
+  "common_update": "Update",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
@@ -845,7 +847,6 @@
   "worker_model_help_howto_link_1": "Create a worker model based on a docker image from Docker Hub",
   "worker_model_help_howto_link_2": "Create a worker model with your own image",
   "worker_model_help_howto_link_3": "Create a worker model based on a Openstack image",
-  "worker_model_help_howto_link_4": "Read more",
   "worker_model_image": "Image",
   "worker_model_help_error": "Checklist:",
   "worker_model_help_error_docker_1": "Check that you have the right to write on $TMPDIR in your image",
@@ -1048,5 +1049,8 @@
   "workflow_template_deleted": "Workflow template deleted",
   "workflow_templates": "Workflow templates",
   "workflow_template_help_line_1": "A workflow template allows you to quickly create then update a workflow and its components.",
-  "workflow_template_help_howto_link_1": "Read more"
+  "workflow_template_update_title": "Update workflow from template",
+  "workflow_template_update_info_line_1": "Apply will override your existing workflow and components according to the latest version of selected template.",
+
+  "workflow_repository_help_line_1": "Manage your workflow with code from your repository."
 }

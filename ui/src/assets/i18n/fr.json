@@ -281,6 +281,8 @@
   "common_last_modified": "Dernière modification",
   "common_up_to_date": "À jour",
   "common_not_up_to_date": "Mise à jour disponible",
+  "common_read_more": "En savoir plus",
+  "common_update": "Modifier",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
@@ -845,7 +847,6 @@
   "worker_model_help_howto_link_1": "Créer un modèle de worker en utilisant une image depuis Docker Hub",
   "worker_model_help_howto_link_2": "Créer un modèle de worker avec votre propre image docker",
   "worker_model_help_howto_link_3": "Créer un modèle de worker Openstack",
-  "worker_model_help_howto_link_4": "En savoir plus",
   "worker_model_help_error": "Ce que vous pouvez vérifier:",
   "worker_model_help_error_docker_1": "Vérifiez que vous avez les droits d'écriture dans $TMPDIR dans votre image docker",
   "worker_model_help_error_docker_2": "Vérifiez que vous avez curl dans le PATH de l'image docker",
@@ -1048,5 +1049,8 @@
   "workflow_template_deleted": "Modèle de workflow supprimé",
   "workflow_templates": "Modèles de workflow",
   "workflow_template_help_line_1": "Un modèle de workflow vous permet d'initialiser et de mettre à jour un workflow et ses composants rapidement.",
-  "workflow_template_help_howto_link_1": "En savoir plus"
+  "workflow_template_update_title": "Mise à jour du workflow à partir du modèle",
+  "workflow_template_update_info_line_1": "Appliquer le template va écraser le workflow existant ainsi que ses composants avec la dernière version du modèle sélectionné.",
+
+  "workflow_repository_help_line_1": "Gérez votre workflow avec du code depuis votre gestionnaire de dépôt."
 }

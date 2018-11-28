@@ -54,8 +54,17 @@ i {
   color: black;
   margin-left: 10px;
   font-size: 1.3em;
-  &.inactive {
-    opacity: 0.3;
+  &.activeFeature {
+    opacity: 1;
+    &:hover {
+      opacity: 0.4;
+    }
+  }
+  &.inactiveFeature {
+    opacity: 0.4;
+    &:hover {
+      opacity: 1;
+    }
   }
   &.favorite {
     color: $cds_favorite_color;
@@ -67,6 +76,11 @@ i {
     opacity: 0.3;
     &:hover {
       color: $cds_favorite_color;
+      opacity: 1;
     }
   }
+}
+
+.infoPopup {
+  width: 250px;
 }

@@ -1,7 +1,15 @@
 <ng-template let-context let-modal="modal" #workflowTemplateModal>
+    <div class="header">
+        {{'workflow_template_update_title' | translate}}
+    </div>
     <div class="content">
         <div class="ui form">
             <div class="ui grid">
+                <div class="sixteen wide column">
+                    <div class="ui blue message">
+                        {{'workflow_template_update_info_line_1' | translate}}
+                    </div>
+                </div>
                 <div class="sixteen wide column">
                     <div class="ui wide eighteen field" *ngIf="workflowTemplate && workflowTemplateInstance">
                         <div class="fields">
