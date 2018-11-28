@@ -35,9 +35,6 @@ function initSSE(force) {
             });
             return;
         };
-        sse.onerror = function (err) {
-          console.log('Error on SSE: ', err);
-        };
     }
 }
 
