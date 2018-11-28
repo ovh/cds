@@ -36,6 +36,7 @@ export class Workflow {
     notifications: Array<WorkflowNotification>;
     from_repository: string;
     from_template: string;
+    template_up_to_date: boolean;
     favorite: boolean;
     pipelines: {[key: number]: Pipeline; };
     applications: {[key: number]: Application; };
