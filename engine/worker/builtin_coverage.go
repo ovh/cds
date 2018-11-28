@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/sguiheux/go-coverage"
 
@@ -27,6 +28,20 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 			res.Reason = fmt.Sprintf("Coverage parser: format not provided")
 			sendLog(res.Reason)
 			return res
+		}
+
+		var min_req float64
+		minimum := sdk.ParameterValue(a.Parameters, "minimum")
+		if minimum == "" {
+			min_req = -1
+		} else {
+			f, errMin := strconv.ParseFloat(minimum, 64)
+			if errMin != nil {
+				res.Reason = fmt.Sprintf("Coverage parser: wrong value for 'minimum': %s", errMin)
+				sendLog(res.Reason)
+				return res
+			}
+			min_req = f
 		}
 
 		var parserMode coverage.CoverageMode
@@ -68,6 +83,18 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 			res.Status = sdk.StatusFail.String()
 			sendLog(res.Reason)
 			return res
+		}
+
+		if min_req > 0 {
+			total = report.TotalLines
+			parsed = report.CoveredLines
+			cov_percent := float(parsed) / total * 100
+			if cov_percent < min_req {
+				res.Reason = fmt.Sprintf("Coverage parser: minimum coverage failed: %.2f < %.2f", cov_percent, min_req)
+				res.Status = sdk.StatusFail.String()
+				sendLog(res.Reason)
+				return res
+			}
 		}
 
 		res.Status = sdk.StatusSuccess.String()
