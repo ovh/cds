@@ -1,15 +1,15 @@
 importScripts('./common.js');
 importScripts('./eventsource.js');
 
-var sse;
-var sseURL;
-var pingUrl;
-var headerKey;
-var headerValue;
+let sse;
+let sseURL;
+let pingUrl;
+let headerKey;
+let headerValue;
 const connections = [];
-var offline = false;
+let offline = false;
 onconnect = function(e) {
-    var port = e.ports[0];
+    let port = e.ports[0];
     connections.push(port);
     port.onmessage = function (event) {
         pingUrl = event.data.pingURL;
@@ -30,18 +30,33 @@ function initSSE(force) {
                 return;
             }
             let jsonEvent = JSON.parse(evt.data);
-            connections.forEach(p => {
+            connections.forEach( p => {
                 p.postMessage(jsonEvent);
             });
             return;
         };
+        sse.onerror = function (err) {
+          console.log('Error on SSE: ', err);
+        };
     }
 }
 
+// Send state of the connexion every 5 seconds
+setInterval(() => {
+    if (sse && sse.readyState > 1) {
+        sse.close();
+        sse = undefined;
+    }
+    connections.forEach( p => {
+        p.postMessage({ healthCheck: sse.readyState });
+    });
+}, 5000);
+
+// Check if token is still valid
 setInterval(() => {
     if (pingUrl) {
         try {
-            var xhr = new XMLHttpRequest();
+            let xhr = new XMLHttpRequest();
             xhr.open('GET', pingUrl , false, null, null);
             xhr.setRequestHeader(headerKey, headerValue);
             xhr.send(null);
@@ -67,4 +82,4 @@ setInterval(() => {
         }
 
     }
-}, 5000);
+}, 60000);

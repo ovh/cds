@@ -46,6 +46,9 @@ export class AppService {
     }
 
     manageEvent(event: Event): void {
+        if (!event.type_event) {
+            return
+        }
         if (event.type_event.indexOf(EventType.ACTION_PREFIX) === 0) {
             this._actionStore.resync();
         }
