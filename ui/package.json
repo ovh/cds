@@ -88,6 +88,7 @@
     "@angular/cli": "7.0.2",
     "@angular/compiler-cli": "7.0.2",
     "@compodoc/compodoc": "^1.0.0-beta.8",
+    "@sentry/cli": "^1.36.4",
     "@types/dagre": "^0.7.35",
     "@types/jasmine": "2.8.6",
     "@types/jasminewd2": "~2.0.3",
