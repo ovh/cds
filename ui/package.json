@@ -74,6 +74,7 @@
     "ngx-infinite-scroll": "^6.0.1",
     "ngx-markdown": "6.1.0",
     "prismjs": "^1.15.0",
+    "raven-js": "^3.27.0",
     "rxjs": "6.3.3",
     "rxjs-compat": "6.3.3",
     "sanitize-html": "^1.19.1",
