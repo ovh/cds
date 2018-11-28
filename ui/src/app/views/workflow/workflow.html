@@ -28,9 +28,9 @@
         </ng-template>
     </div>
     <div class="right floated labelFeature" [title]="'workflow_from_template_btn' | translate">
-        <a class="ui label small basic" [ngClass]="workflow && workflow.from_template ? 'green' : 'inactiveFeature'"
-            [class.orange]="workflow && workflow.from_template && !workflow.template_up_to_date" suiPopup
-            [popupTemplate]="popupFromTemplate" popupPlacement="bottom right" popupTrigger="outsideClick" #popup="suiPopup">
+        <a class="ui label small basic" [ngClass]="workflow && workflow.from_template ? (workflow.template_up_to_date ? 'green' : 'orange') : 'inactiveFeature'"
+            suiPopup [popupTemplate]="popupFromTemplate" popupPlacement="bottom right" popupTrigger="outsideClick"
+            #popup="suiPopup">
             <i class="paste icon"></i>template
         </a>
         <ng-template let-popup #popupFromTemplate>
