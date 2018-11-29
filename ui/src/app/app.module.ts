@@ -6,7 +6,6 @@ import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { ToasterModule } from 'angular2-toaster/angular2-toaster';
 import * as Raven from 'raven-js';
-import { environment } from '../environments/environment';
 import { AppComponent } from './app.component';
 import { routing } from './app.routing';
 import { AppService } from './app.service';
@@ -45,7 +44,7 @@ let ngModule: NgModule = {
     bootstrap: [AppComponent]
 };
 
-if (environment.sentryUrl) {
+if ((<any>window).cds_sentry_url) {
     class RavenErrorHandler implements ErrorHandler {
         handleError(err: any): void {
             console.error(err);
@@ -64,7 +63,7 @@ if (environment.sentryUrl) {
     }
 
     Raven
-        .config(environment.sentryUrl)
+        .config((<any>window).cds_sentry_url, { release: (<any>window).cds_version })
         .install();
 
     ngModule.providers.unshift({ provide: ErrorHandler, useClass: RavenErrorHandler });
