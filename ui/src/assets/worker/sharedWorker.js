@@ -29,10 +29,14 @@ function initSSE(force) {
             if (evt.data.indexOf('ACK: ') === 0) {
                 return;
             }
-            let jsonEvent = JSON.parse(evt.data);
-            connections.forEach(p => {
-                p.postMessage(jsonEvent);
-            });
+            try {
+                var jsonEvent = JSON.parse(evt.data);
+                connections.forEach(p => {
+                    p.postMessage(jsonEvent);
+                });
+            } catch (error) {
+                console.log('Error parsing data: ', evt.data);
+            }
             return;
         };
     }
