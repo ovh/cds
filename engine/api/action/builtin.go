@@ -59,7 +59,6 @@ Parse given file to extract coverage results.`
 	cover.Parameter(sdk.Parameter{
 		Name:        "minimum",
 		Description: `Minimum percentage of coverage required (-1 means no minimum).`,
-		Value:       "-1",
 		Type:        sdk.NumberParameter,
 		Advanced:    true,
 	})
