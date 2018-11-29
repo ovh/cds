@@ -13,7 +13,7 @@
               (click)="goToEditNode()">
               <i class="pencil icon float"></i>
             </a>
-            <div class="sub header" *ngIf="node.context && node.context.pipeline_id">
+            <div class="sub header" *ngIf="node.context && node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
               <span>{{ 'common_pipeline' | translate }} : {{workflow.pipelines[node.context.pipeline_id].name}}</span>
             </div>
         </div>
