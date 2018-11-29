@@ -60,6 +60,7 @@ Parse given file to extract coverage results.`
 		Name:        "minimum",
 		Description: `Minimum percentage of coverage required (-1 means no minimum).`,
 		Type:        sdk.StringParameter,
+		Advanced:    true,
 	})
 	if err := checkBuiltinAction(db, cover); err != nil {
 		return err
