@@ -35,7 +35,7 @@ function initSSE(force) {
                     p.postMessage(jsonEvent);
                 });
             } catch (error) {
-                console.log('Error parsing data: ', evt.data);
+                console.error('Error parsing data: ', evt.data);
             }
             return;
         };
