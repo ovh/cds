@@ -420,15 +420,17 @@ func LoadGroupByPipeline(ctx context.Context, db gorp.SqlExecutor, pipeline *sdk
 
 // UpdatePipeline update the pipeline
 func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
+	now := time.Now()
+	p.LastModified = now.Unix()
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(p.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid pipeline name. It should match %s", sdk.NamePattern))
 	}
 
 	//Update pipeline
-	query := `UPDATE pipeline SET name=$1, description = $2, type=$3 WHERE id=$4`
-	_, err := db.Exec(query, p.Name, p.Description, p.Type, p.ID)
-	return err
+	query := `UPDATE pipeline SET name=$1, description = $2, type=$3, last_modified=$5 WHERE id=$4`
+	_, err := db.Exec(query, p.Name, p.Description, p.Type, p.ID, now)
+	return sdk.WithStack(err)
 }
 
 // InsertPipeline inserts pipeline informations in database

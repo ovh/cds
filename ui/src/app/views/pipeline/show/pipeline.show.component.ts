@@ -1,4 +1,4 @@
-import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Params, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {Subscription} from 'rxjs';
@@ -14,6 +14,7 @@ import {AuthentificationStore} from '../../../service/auth/authentification.stor
 import {KeyService} from '../../../service/keys/keys.service';
 import {PipelineCoreService} from '../../../service/pipeline/pipeline.core.service';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
@@ -24,7 +25,8 @@ import {ToastService} from '../../../shared/toast/ToastService';
     templateUrl: './pipeline.show.html',
     styleUrls: ['./pipeline.show.scss']
 })
-export class PipelineShowComponent implements OnInit, OnDestroy {
+@AutoUnsubscribe()
+export class PipelineShowComponent implements OnInit {
 
     public permFormLoading = false;
     public paramFormLoading = false;
@@ -97,12 +99,6 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     getQueryParam(name: string): string {
         if (this._routeActivated.snapshot.queryParams[name]) {
             return this._routeActivated.snapshot.queryParams[name];
-        }
-    }
-
-    ngOnDestroy(): void {
-        if (this.pipelineSubscriber) {
-            this.pipelineSubscriber.unsubscribe();
         }
     }
 

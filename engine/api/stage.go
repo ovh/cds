@@ -49,6 +49,10 @@ func (api *API) addStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot insert stage")
 		}
 
+		if err := pipeline.UpdatePipeline(tx, pipelineData); err != nil {
+			return sdk.WrapError(err, "Cannot update pipeline")
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
@@ -143,6 +147,10 @@ func (api *API) moveStageHandler() service.Handler {
 			}
 		}
 
+		if err := pipeline.UpdatePipeline(tx, pipelineData); err != nil {
+			return sdk.WrapError(err, "Cannot update pipeline")
+		}
+
 		if err := pipeline.LoadPipelineStage(ctx, tx, pipelineData); err != nil {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
@@ -204,6 +212,10 @@ func (api *API) updateStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot update stage")
 		}
 
+		if err := pipeline.UpdatePipeline(tx, pipelineData); err != nil {
+			return sdk.WrapError(err, "Cannot update pipeline")
+		}
+
 		err = tx.Commit()
 		if err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
@@ -255,6 +267,10 @@ func (api *API) deleteStageHandler() service.Handler {
 
 		if err := pipeline.DeleteStageByID(tx, s, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot Delete stage")
+		}
+
+		if err := pipeline.UpdatePipeline(tx, pipelineData); err != nil {
+			return sdk.WrapError(err, "Cannot update pipeline")
 		}
 
 		if err := tx.Commit(); err != nil {
