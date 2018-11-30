@@ -91,6 +91,11 @@ var (
 												Type:  sdk.StringParameter,
 												Value: "tag1",
 											},
+											{
+												Name:  "pattern",
+												Type:  sdk.StringParameter,
+												Value: "thepattern",
+											},
 										},
 									},
 									{

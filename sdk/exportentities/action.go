@@ -106,11 +106,19 @@ func newSteps(a sdk.Action) []Step {
 					artifactDownloadArgs["tag"] = tag.Value
 				}
 				application := sdk.ParameterFind(&act.Parameters, "application")
-				if application != nil {
+				if application != nil && application.Value != "" {
 					artifactDownloadArgs["application"] = application.Value
 				}
+				pattern := sdk.ParameterFind(&act.Parameters, "pattern")
+				if pattern != nil && pattern.Value != "" {
+					artifactDownloadArgs["pattern"] = pattern.Value
+				}
+				enabled := sdk.ParameterFind(&act.Parameters, "enabled")
+				if enabled != nil && enabled.Value == "false" {
+					artifactDownloadArgs["enabled"] = enabled.Value
+				}
 				pipeline := sdk.ParameterFind(&act.Parameters, "pipeline")
-				if pipeline != nil {
+				if pipeline != nil && pipeline.Value != "" {
 					artifactDownloadArgs["pipeline"] = pipeline.Value
 				}
 				s["artifactDownload"] = artifactDownloadArgs
