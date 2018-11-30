@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -13,12 +14,18 @@ import (
 )
 
 //loadNodeRunJobInfo load infos (workflow_node_run_job_infos) for a job (workflow_node_run_job)
-func loadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, error) {
+func loadNodeRunJobInfo(db gorp.SqlExecutor, jobIDs []int64) ([]sdk.SpawnInfo, error) {
+	ids := make([]string, len(jobIDs))
+	for i := range ids {
+		ids[i] = fmt.Sprintf("%d", jobIDs[i])
+	}
+	idsJoined := strings.Join(ids, ",")
 	res := []struct {
-		Bytes sql.NullString `db:"spawninfos"`
+		Bytes                sql.NullString `db:"spawninfos"`
+		WorkflowNodeJobRunID int64          `db:"workflow_node_job_run_id"`
 	}{}
-	query := "SELECT spawninfos FROM workflow_node_run_job_info WHERE workflow_node_run_job_id = $1"
-	if _, err := db.Select(&res, query, jobID); err != nil {
+	query := "SELECT workflow_node_run_job_id, spawninfos FROM workflow_node_run_job_info WHERE workflow_node_run_job_id = ANY(string_to_array($1, ',')::bigint[])"
+	if _, err := db.Select(&res, query, idsJoined); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -26,12 +33,14 @@ func loadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, erro
 	}
 
 	spawnInfos := []sdk.SpawnInfo{}
-	for _, r := range res {
-		v := []sdk.SpawnInfo{}
-		gorpmapping.JSONNullString(r.Bytes, &v)
-		spawnInfos = append(spawnInfos, v...)
+	for i := range res {
+		spInfos := []sdk.SpawnInfo{}
+		gorpmapping.JSONNullString(res[i].Bytes, &spInfos)
+		for i := range spInfos {
+			spInfos[i].WorkflowNodeJobRunID = res[i].WorkflowNodeJobRunID
+		}
+		spawnInfos = append(spawnInfos, spInfos...)
 	}
-
 	return spawnInfos, nil
 }
 
