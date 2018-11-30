@@ -55,6 +55,21 @@ func (api *API) getAdminServicesHandler() service.Handler {
 	}
 }
 
+func (api *API) deleteAdminServiceHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
+		srv, err := services.FindByName(api.mustDB(), name)
+		if err != nil {
+			return err
+		}
+		if err := services.Delete(api.mustDB(), srv); err != nil {
+			return err
+		}
+		return service.WriteJSON(w, srv, http.StatusOK)
+	}
+}
+
 func (api *API) getAdminServiceHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
