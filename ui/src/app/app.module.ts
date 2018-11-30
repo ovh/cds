@@ -48,22 +48,22 @@ if ((<any>window).cds_sentry_url) {
     class RavenErrorHandler implements ErrorHandler {
         handleError(err: any): void {
             console.error(err);
-            let tags = {};
-            let userStr = localStorage.getItem('CDS-USER');
-            if (userStr) {
-                try {
-                    tags['CDS_USER'] = JSON.parse(userStr).username;
-                } catch (e) {
+            Raven.captureException(err);
+        }
+    }
 
-                }
-            }
+    let tags = {};
+    let userStr = localStorage.getItem('CDS-USER');
+    if (userStr) {
+        try {
+            tags['CDS_USER'] = JSON.parse(userStr).username;
+        } catch (e) {
 
-            Raven.captureException(err, {tags});
         }
     }
 
     Raven
-        .config((<any>window).cds_sentry_url, { release: (<any>window).cds_version })
+        .config((<any>window).cds_sentry_url, { release: (<any>window).cds_version, tags })
         .install();
 
     ngModule.providers.unshift({ provide: ErrorHandler, useClass: RavenErrorHandler });
