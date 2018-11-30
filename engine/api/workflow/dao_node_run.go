@@ -9,14 +9,13 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
-	"github.com/ovh/venom"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/venom"
 )
 
 const nodeRunFields string = `
@@ -81,7 +80,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run proj=%s, workflow=%s, num=%d, node=%d", projectkey, workflowname, number, id)
 	}
 
-	r, err := fromDBNodeRun(rr, loadOpts)
+	r, err := fromDBNodeRun(db, rr, loadOpts)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -140,7 +139,7 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node_job_id=%d", nodeJobRunID)
 	}
 
-	r, err := fromDBNodeRun(rr, loadOpts)
+	r, err := fromDBNodeRun(db, rr, loadOpts)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -185,7 +184,7 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, 
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
 	}
-	return fromDBNodeRun(rr, LoadRunOptions{})
+	return fromDBNodeRun(db, rr, LoadRunOptions{})
 }
 
 //LoadNodeRunByID load a specific node run on a workflow
@@ -205,7 +204,7 @@ func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*s
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
 	}
 
-	r, err := fromDBNodeRun(rr, loadOpts)
+	r, err := fromDBNodeRun(db, rr, loadOpts)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -248,7 +247,7 @@ func nodeRunExist(db gorp.SqlExecutor, nodeID, num int64, subnumber int) (bool, 
 	return nb > 0, err
 }
 
-func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
+func fromDBNodeRun(db gorp.SqlExecutor, rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	r := new(sdk.WorkflowNodeRun)
 	if rr.WorkflowID.Valid {
 		r.WorkflowID = rr.WorkflowID.Int64
@@ -300,6 +299,11 @@ func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error
 			if rj.Status == sdk.StatusWaiting.String() {
 				rj.QueuedSeconds = time.Now().Unix() - rj.Queued.Unix()
 			}
+			spawnInfos, err := loadNodeRunJobInfo(db, rj.ID)
+			if err != nil {
+				return nil, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", rj.ID)
+			}
+			rj.SpawnInfos = spawnInfos
 		}
 	}
 
@@ -716,7 +720,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 	if err := db.SelectOne(&rr, query, workflowID, n.Name, nr.VCSBranch, nr.VCSTag, nr.Number, nr.ID); err != nil {
 		return nodeRun, sdk.WrapError(err, "Cannot load previous run on workflow %d node %s nr.VCSBranch:%s nr.VCSTag:%s nr.Number:%d nr.ID:%d ", workflowID, n.Name, nr.VCSBranch, nr.VCSTag, nr.Number, nr.ID)
 	}
-	pNodeRun, errF := fromDBNodeRun(rr, LoadRunOptions{})
+	pNodeRun, errF := fromDBNodeRun(db, rr, LoadRunOptions{})
 	if errF != nil {
 		return nodeRun, sdk.WrapError(errF, "PreviousNodeRun> Cannot read node run")
 	}

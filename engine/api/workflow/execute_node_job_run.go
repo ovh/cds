@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
-
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
@@ -745,7 +744,7 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 		return sdk.WrapError(errNR, "RestartWorkflowNodeJob> Cannot load node run")
 	}
 
-	//Synchronise struct but not in db
+	//Synchronize struct but not in db
 	sync, errS := SyncNodeRunRunJob(ctx, db, nodeRun, wNodeJob)
 	if errS != nil {
 		return sdk.WrapError(errS, "RestartWorkflowNodeJob> error on sync nodeJobRun")

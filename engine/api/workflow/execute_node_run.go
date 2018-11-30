@@ -10,7 +10,6 @@ import (
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
@@ -426,6 +425,12 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 				Message:    spawnInfos,
 				RemoteTime: time.Now(),
 			}}
+		} else {
+			wjob.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
+				APITime:    time.Now(),
+				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
+				RemoteTime: time.Now(),
+			}}
 		}
 
 		//Insert in database
@@ -435,6 +440,10 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			return report, sdk.WrapError(err, "Unable to insert in table workflow_node_run_job")
 		}
 		next()
+
+		if err := AddSpawnInfosNodeJobRun(db, wjob.ID, PrepareSpawnInfos(wjob.SpawnInfos)); err != nil {
+			return nil, sdk.WrapError(err, "Cannot save spawn info job %d", wjob.ID)
+		}
 
 		//Put the job run in database
 		stage.RunJobs = append(stage.RunJobs, wjob)

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -52,6 +51,6 @@ func insertNodeRunJobInfo(db gorp.SqlExecutor, info *sdk.WorkflowNodeJobRunInfo)
 		return fmt.Errorf("insertNodeRunJobInfo> Unable to insert into workflow_node_run_job_info id = %d", info.WorkflowNodeJobRunID)
 	}
 
-	log.Debug("insertNodeRunJobInfo> on node run: %d (%d)", info.ID, info.WorkflowNodeJobRunID)
+	log.Debug("insertNodeRunJobInfo> on node run: %v (%d)", info.SpawnInfos, info.WorkflowNodeJobRunID)
 	return nil
 }
