@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>logs :: CDS - Continuous Delivery Service</title>
+    <title>delete :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/workflow/logs/">
+  <body class="" data-url="/cli/cdsctl/admin/services/delete/">
     <nav id="sidebar" class="">
 
 
@@ -844,9 +844,10 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/">
-        <span>admin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>admin</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/admin/broadcasts/" class="dd-item">
@@ -1016,12 +1017,13 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/admin/services/" class="dd-item">
+    <li data-nav-id="/cli/cdsctl/admin/services/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/">
-        <span>services</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>services</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/admin/services/delete/" class="dd-item">
+      <li data-nav-id="/cli/cdsctl/admin/services/delete/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/delete/">
           <span>delete</span>
         </a>
@@ -1629,10 +1631,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/workflow/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/">
-        <span>workflow</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>workflow</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/workflow/advanced/" class="dd-item">
@@ -1711,10 +1712,9 @@
           <span>list</span>
         </a>
     </li>
-    <li data-nav-id="/cli/cdsctl/workflow/logs/" class="dd-item parent active">
+    <li data-nav-id="/cli/cdsctl/workflow/logs/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/">
-        <span>logs</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>logs</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/cdsctl/workflow/logs/download/" class="dd-item">
@@ -2093,7 +2093,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/workflow/logs/_index.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/admin/services/delete.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -2119,7 +2119,12 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/workflow/'>workflow</a> > logs
+
+
+
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/admin/'>admin</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/admin/services/'>services</a> > delete
+
+ 
 
  
 
@@ -2138,7 +2143,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-workflow-logs">cdsctl workflow logs</a>
+<li><a href="#cdsctl-admin-services-delete">cdsctl admin services delete</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#options">Options</a></li>
@@ -2157,7 +2162,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>logs</h1>
+                <h1>delete</h1>
                 <p></p>
             </div>
           
@@ -2167,31 +2172,21 @@
 
 
 
-<h2 id="cdsctl-workflow-logs">cdsctl workflow logs</h2>
+<h2 id="cdsctl-admin-services-delete">cdsctl admin services delete</h2>
 
-<p><code>Manage CDS Workflow Run Logs</code></p>
+<p><code>Delete a CDS service from registered service</code></p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Download logs from a workflow run.</p>
+<p><code>Delete a CDS service from registered service</code></p>
 
-<pre><code># list all logs files on latest run
-$ cdsctl workflow logs list KEY WF
-
-# list all logs files on run number 1
-$ cdsctl workflow logs list KEY WF 1
-
-# download all logs files on latest run
-$ cdsctl workflow logs download KEY WF
-
-# download only one file, for run number 1
-$ cdsctl workflow logs download KEY WF 1 --pattern=&quot;MyJob&quot;
-# this will download file WF-1.0-pipeline.myPipeline-stage.MyStage-job.MyJob-status.Success-step.0.log
+<pre><code>cdsctl admin services delete NAME ... [flags]
 </code></pre>
 
 <h3 id="options">Options</h3>
 
-<pre><code>  -h, --help   help for logs
+<pre><code>      --force   Force delete without confirmation and exit 0 if resource does not exist
+  -h, --help    help for delete
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
@@ -2205,17 +2200,13 @@ $ cdsctl workflow logs download KEY WF 1 --pattern=&quot;MyJob&quot;
 <h3 id="see-also">SEE ALSO</h3>
 
 <ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/">cdsctl workflow</a>   - <code>Manage CDS workflow</code></li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/download/">cdsctl workflow logs download</a>   - <code>Download logs from a workflow run.</code></li>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/list/">cdsctl workflow logs list</a>   - <code>List logs from a workflow run</code></li>
+<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/services/">cdsctl admin services</a>   - <code>Manage CDS services</code></li>
 </ul>
 
 
 <footer class=" footline" >
 	
 </footer>
-
-
 
 
 
@@ -2230,8 +2221,8 @@ $ cdsctl workflow logs download KEY WF 1 --pattern=&quot;MyJob&quot;
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/workflow/list/" title="list"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/workflow/logs/download/" title="download" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/admin/services/" title="services"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/admin/services/list/" title="list" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">
@@ -2251,3 +2242,4 @@ $ cdsctl workflow logs download KEY WF 1 --pattern=&quot;MyJob&quot;
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
   </body>
 </html>
+
