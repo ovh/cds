@@ -44,7 +44,7 @@ func ExportApplication(db gorp.SqlExecutor, app sdk.Application, f exportentitie
 	for _, v := range app.Variable {
 		switch v.Type {
 		case sdk.KeyVariable:
-			return 0, sdk.WrapError(fmt.Errorf("Unsupported variable %s", v.Name), "application.Export> Unable to export application")
+			return 0, sdk.NewErrorFrom(sdk.ErrUnknownError, "variable %s: variable of type key are deprecated. Please use the standard keys from your project or your application", v.Name)
 		case sdk.SecretVariable:
 			content, err := encryptFunc(db, app.ProjectID, fmt.Sprintf("appID:%d:%s", app.ID, v.Name), v.Value)
 			if err != nil {
