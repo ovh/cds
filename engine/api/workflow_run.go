@@ -967,6 +967,7 @@ func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 				User:    opts.Manual.User,
 				Payload: opts.Manual.Payload,
 			}
+			optsCopy.Manual.PipelineParameters = make([]sdk.Parameter, len(opts.Manual.PipelineParameters))
 			copy(optsCopy.Manual.PipelineParameters, opts.Manual.PipelineParameters)
 		}
 		if opts.Hook != nil {
@@ -1068,6 +1069,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 	var wg = &sync.WaitGroup{}
 	wg.Add(len(fromNodes))
 	for i := 0; i < len(fromNodes); i++ {
+
 		optsCopy := sdk.WorkflowRunPostHandlerOption{
 			FromNodeIDs: opts.FromNodeIDs,
 			Number:      opts.Number,
@@ -1077,6 +1079,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 				User:    opts.Manual.User,
 				Payload: opts.Manual.Payload,
 			}
+			optsCopy.Manual.PipelineParameters = make([]sdk.Parameter, len(opts.Manual.PipelineParameters))
 			copy(optsCopy.Manual.PipelineParameters, opts.Manual.PipelineParameters)
 		}
 		if opts.Hook != nil {
@@ -1086,6 +1089,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			}
 		}
 		go func(fromNode *sdk.WorkflowNode) {
+
 			r1, err := runFromNode(ctx, db, store, optsCopy, p, wf, lastRun, u, fromNode)
 			if err != nil {
 				log.Error("error: %v", err)
