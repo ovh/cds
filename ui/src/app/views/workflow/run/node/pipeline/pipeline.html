@@ -56,10 +56,13 @@
                     <ul>
                         <li>
                             <app-workflow-run-job-spawn-info
-                              [spawnInfos]="selectedRunJob.spawninfos"
-                              [variables]="selectedRunJob.parameters"
-                              [job]="selectedRunJob.job"
-                              [(displayServicesLogs)]="displayServiceLogs">
+                                [project]="project"
+                                [workflowName]="workflowName"
+                                [nodeRun]="nodeRun"
+                                [job]="selectedRunJob.job"
+                                [nodeJobRun]="selectedRunJob"
+                                [variables]="selectedRunJob.parameters"
+                                [(displayServicesLogs)]="displayServiceLogs">
                             </app-workflow-run-job-spawn-info>
                         </li>
                         <ng-container *ngIf="!displayServiceLogs">

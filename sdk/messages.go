@@ -59,7 +59,11 @@ var (
 	MsgPipelineJobUpdated                  = &Message{"MsgPipelineJobUpdated", trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil}
 	MsgPipelineJobAdded                    = &Message{"MsgPipelineJobAdded", trad{FR: "Le job %s du stage %s a été ajouté", EN: "Job %s in stage %s added"}, nil}
 	MsgPipelineJobDeleted                  = &Message{"MsgPipelineJobDeleted", trad{FR: "Le job %s du stage %s a été supprimé", EN: "Job %s in stage %s deleted"}, nil}
+	MsgSpawnInfoDeprecatedModel            = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "Attention vous utilisez un worker model (%s) déprécié", EN: "Pay attention you are using a deprecated worker model (%s)"}, nil}
 	MsgSpawnInfoHatcheryStarts             = &Message{"MsgSpawnInfoHatcheryStarts", trad{FR: "La Hatchery %s (%s) a démarré le lancement du worker avec le modèle %s", EN: "Hatchery %s (%s) starts spawn worker with model %s"}, nil}
+	MsgSpawnInfoHatcheryStartDockerPull    = &Message{"MsgSpawnInfoHatcheryStartDockerPull", trad{FR: "La Hatchery %s (%s) a démarré le docker pull de l'image %s...", EN: "Hatchery %s (%s) starts docker pull %s..."}, nil}
+	MsgSpawnInfoHatcheryEndDockerPull      = &Message{"MsgSpawnInfoHatcheryEndDockerPull", trad{FR: "La Hatchery %s (%s) a terminé le docker pull de l'image %s", EN: "Hatchery %s (%s) docker pull %s done"}, nil}
+	MsgSpawnInfoHatcheryEndDockerPullErr   = &Message{"MsgSpawnInfoHatcheryEndDockerPullErr", trad{FR: "ATTENTION: La Hatchery %s (%s) a terminé le docker pull de l'image %s en erreur: %s", EN: "WARNING: Hatchery %s (%s) - docker pull %s done with error: %v"}, nil}
 	MsgSpawnInfoHatcheryErrorSpawn         = &Message{"MsgSpawnInfoHatcheryErrorSpawn", trad{FR: "Une erreur est survenue lorsque la Hatchery %s (%s) a démarré un worker avec le modèle %s après %s, err:%s", EN: "Error while Hatchery %s (%s) spawn worker with model %s after %s, err:%s"}, nil}
 	MsgSpawnInfoHatcheryStartsSuccessfully = &Message{"MsgSpawnInfoHatcheryStartsSuccessfully", trad{FR: "La Hatchery %s (%s) a démarré le worker %s avec succès en %s", EN: "Hatchery %s (%s) spawn worker %s successfully in %s"}, nil}
 	MsgSpawnInfoWorkerEnd                  = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "Worker %s finished working on this job and took %s to work on the steps"}, nil}
@@ -78,7 +82,6 @@ var (
 	MsgWorkflowImportedInserted            = &Message{"MsgWorkflowImportedInserted", trad{FR: "Le workflow %s a été créé", EN: "Workflow %s has been created"}, nil}
 	MsgSpawnInfoHatcheryCannotStartJob     = &Message{"MsgSpawnInfoHatcheryCannotStart", trad{FR: "Aucune hatchery n'a pu démarrer de worker respectant vos pré-requis de job, merci de les vérifier.", EN: "No hatchery can spawn a worker corresponding your job's requirements. Please check your job's requirements."}, nil}
 	MsgWorkflowRunBranchDeleted            = &Message{"MsgWorkflowRunBranchDeleted", trad{FR: "La branche %s  a été supprimée", EN: "Branch %s has been deleted"}, nil}
-	MsgSpawnInfoDeprecatedModel            = &Message{"MsgSpawnInfoDeprecatedModel", trad{FR: "Attention vous utilisez un worker model (%s) déprécié", EN: "Pay attention you are using a deprecated worker model (%s)"}, nil}
 )
 
 // Messages contains all sdk Messages
@@ -125,6 +128,9 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoHatcheryStarts.ID:             MsgSpawnInfoHatcheryStarts,
 	MsgSpawnInfoHatcheryErrorSpawn.ID:         MsgSpawnInfoHatcheryErrorSpawn,
 	MsgSpawnInfoHatcheryStartsSuccessfully.ID: MsgSpawnInfoHatcheryStartsSuccessfully,
+	MsgSpawnInfoHatcheryStartDockerPull.ID:    MsgSpawnInfoHatcheryStartDockerPull,
+	MsgSpawnInfoHatcheryEndDockerPull.ID:      MsgSpawnInfoHatcheryEndDockerPull,
+	MsgSpawnInfoHatcheryEndDockerPullErr.ID:   MsgSpawnInfoHatcheryEndDockerPullErr,
 	MsgSpawnInfoWorkerEnd.ID:                  MsgSpawnInfoWorkerEnd,
 	MsgSpawnInfoJobInQueue.ID:                 MsgSpawnInfoJobInQueue,
 	MsgSpawnInfoJobTaken.ID:                   MsgSpawnInfoJobTaken,

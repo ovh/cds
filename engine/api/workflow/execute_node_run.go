@@ -511,7 +511,7 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 			if runJobDB.Status == sdk.StatusBuilding.String() || runJobDB.Status == sdk.StatusWaiting.String() {
 				stageEnd = false
 			}
-			spawnInfos, err := loadNodeRunJobInfo(db, []int64{runJob.ID})
+			spawnInfos, err := LoadNodeRunJobInfo(db, runJob.ID)
 			if err != nil {
 				return false, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", runJob.ID)
 			}
@@ -846,7 +846,7 @@ func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.Wo
 		for j := range s.RunJobs {
 			runJob := &s.RunJobs[j]
 			if runJob.ID == nodeJobRun.ID {
-				spawnInfos, err := loadNodeRunJobInfo(db, []int64{runJob.ID})
+				spawnInfos, err := LoadNodeRunJobInfo(db, runJob.ID)
 				if err != nil {
 					return false, sdk.WrapError(err, "unable to load spawn infos for runJobID: %d", runJob.ID)
 				}

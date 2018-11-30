@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"strings"
+	"sort"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -13,19 +13,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-//loadNodeRunJobInfo load infos (workflow_node_run_job_infos) for a job (workflow_node_run_job)
-func loadNodeRunJobInfo(db gorp.SqlExecutor, jobIDs []int64) ([]sdk.SpawnInfo, error) {
-	ids := make([]string, len(jobIDs))
-	for i := range ids {
-		ids[i] = fmt.Sprintf("%d", jobIDs[i])
-	}
-	idsJoined := strings.Join(ids, ",")
+// LoadNodeRunJobInfo load infos (workflow_node_run_job_infos) for a job (workflow_node_run_job)
+func LoadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, error) {
 	res := []struct {
-		Bytes                sql.NullString `db:"spawninfos"`
-		WorkflowNodeJobRunID int64          `db:"workflow_node_job_run_id"`
+		Bytes sql.NullString `db:"spawninfos"`
 	}{}
-	query := "SELECT workflow_node_run_job_id, spawninfos FROM workflow_node_run_job_info WHERE workflow_node_run_job_id = ANY(string_to_array($1, ',')::bigint[])"
-	if _, err := db.Select(&res, query, idsJoined); err != nil {
+	query := "SELECT workflow_node_run_job_id, spawninfos FROM workflow_node_run_job_info WHERE workflow_node_run_job_id = $1"
+	if _, err := db.Select(&res, query, jobID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
@@ -37,14 +31,15 @@ func loadNodeRunJobInfo(db gorp.SqlExecutor, jobIDs []int64) ([]sdk.SpawnInfo, e
 		spInfos := []sdk.SpawnInfo{}
 		if err := gorpmapping.JSONNullString(res[i].Bytes, &spInfos); err != nil {
 			// should never append, but log error
-			log.Warning("wrong spawnInfos format: res: %v for ids: %v", res[i].Bytes, ids[i])
+			log.Warning("wrong spawnInfos format: res: %v for id: %v", res[i].Bytes, jobID)
 			continue
-		}
-		for i := range spInfos {
-			spInfos[i].WorkflowNodeJobRunID = res[i].WorkflowNodeJobRunID
 		}
 		spawnInfos = append(spawnInfos, spInfos...)
 	}
+	// sort here and not in sql, as it's could be a json array in sql value
+	sort.Slice(spawnInfos, func(i, j int) bool {
+		return spawnInfos[i].APITime.Before(spawnInfos[j].APITime)
+	})
 	return spawnInfos, nil
 }
 

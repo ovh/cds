@@ -107,11 +107,6 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 		}
 		r.Coverage = cov
 	}
-	if loadOpts.WithSpawnInfos {
-		if err := loadSpawnInfos(db, r); err != nil {
-			return nil, sdk.WrapError(err, "LoadNodeRun>Error load spawn infos %d", r.ID)
-		}
-	}
 	if loadOpts.WithVulnerabilities {
 		vuln, errV := loadVulnerabilityReport(db, r.ID)
 		if errV != nil && !sdk.ErrorIs(errV, sdk.ErrNotFound) {
@@ -121,34 +116,6 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 	}
 	return r, nil
 
-}
-
-func loadSpawnInfos(db gorp.SqlExecutor, nr *sdk.WorkflowNodeRun) error {
-	// load all run job ids, used to get spawnInfos with only one SQL request
-	rjIds := make([]int64, 0)
-	for s := range nr.Stages {
-		for j := range nr.Stages[s].RunJobs {
-			rjIds = append(rjIds, nr.Stages[s].RunJobs[j].ID)
-		}
-	}
-
-	// load all spawnInfos for all jobs in the current node run
-	spawnInfos, err := loadNodeRunJobInfo(db, rjIds)
-	if err != nil {
-		return sdk.WrapError(err, "unable to load spawn infos")
-	}
-
-	// then reattach spawninfo to good node run job
-	for s := range nr.Stages {
-		for j := range nr.Stages[s].RunJobs {
-			for sp := range spawnInfos {
-				if spawnInfos[sp].WorkflowNodeJobRunID == nr.Stages[s].RunJobs[j].ID {
-					nr.Stages[s].RunJobs[j].SpawnInfos = append(nr.Stages[s].RunJobs[j].SpawnInfos, spawnInfos[sp])
-				}
-			}
-		}
-	}
-	return nil
 }
 
 //LoadNodeRunByNodeJobID load a specific node run on a workflow from a node job run id

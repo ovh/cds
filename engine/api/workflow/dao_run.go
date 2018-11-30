@@ -35,7 +35,6 @@ type LoadRunOptions struct {
 	WithCoverage            bool
 	WithArtifacts           bool
 	WithStaticFiles         bool
-	WithSpawnInfos          bool
 	WithTests               bool
 	WithLightTests          bool
 	WithVulnerabilities     bool

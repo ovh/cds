@@ -764,7 +764,6 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 			WithStaticFiles:     true,
 			WithCoverage:        true,
 			WithVulnerabilities: true,
-			WithSpawnInfos:      true,
 		})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
@@ -1342,6 +1341,28 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, arts, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkflowNodeRunJobSpawnInfosHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		runJobID, errJ := requestVarInt(r, "runJobId")
+		if errJ != nil {
+			return sdk.WrapError(errJ, "getWorkflowNodeRunJobSpawnInfosHandler> runJobId: invalid number")
+		}
+		db := api.mustDB()
+
+		spawnInfos, err := workflow.LoadNodeRunJobInfo(db, runJobID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load spawn infos for node run job id %d", runJobID)
+		}
+
+		l := r.Header.Get("Accept-Language")
+		for ki, info := range spawnInfos {
+			m := sdk.NewMessage(sdk.Messages[info.Message.ID], info.Message.Args...)
+			spawnInfos[ki].UserMessage = m.String(l)
+		}
+		return service.WriteJSON(w, spawnInfos, http.StatusOK)
 	}
 }
 
