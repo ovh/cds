@@ -6,7 +6,7 @@ var sseURL;
 var pingUrl;
 var headerKey;
 var headerValue;
-const connections = [];
+var connections = [];
 var offline = false;
 onconnect = function(e) {
     var port = e.ports[0];
@@ -29,6 +29,7 @@ function initSSE(force) {
             if (evt.data.indexOf('ACK: ') === 0) {
                 return;
             }
+
             try {
                 var jsonEvent = JSON.parse(evt.data);
                 connections.forEach(p => {
@@ -42,6 +43,18 @@ function initSSE(force) {
     }
 }
 
+// Send state of the connexion every 5 seconds
+setInterval(() => {
+    if (sse && sse.readyState > 1) {
+        sse.close();
+        sse = undefined;
+    }
+    connections.forEach( p => {
+        p.postMessage({ healthCheck: sse.readyState });
+    });
+}, 5000);
+
+// Check if token is still valid
 setInterval(() => {
     if (pingUrl) {
         try {
@@ -71,4 +84,4 @@ setInterval(() => {
         }
 
     }
-}, 5000);
+}, 60000);

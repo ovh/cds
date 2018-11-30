@@ -34,6 +34,7 @@ export class AppComponent  implements OnInit {
     versionWorker: CDSWebWorker;
 
     sseWorker: CDSWorker;
+    heartbeatToken: number;
 
     zone: NgZone;
 
@@ -42,12 +43,13 @@ export class AppComponent  implements OnInit {
 
     languageSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
-    sseWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
 
     displayResolver = false;
     toasterConfig: any;
+
+    lastPing: number;
 
     constructor(_translate: TranslateService, private _language: LanguageStore,
                 private _activatedRoute: ActivatedRoute, private _titleService: Title,
@@ -77,7 +79,7 @@ export class AppComponent  implements OnInit {
         this._authStore.getUserlst().subscribe(user => {
             if (!user) {
                 this.isConnected = false;
-                this.stopWorker(this.sseWorker, this.sseWorkerSubscription);
+                this.stopWorker(this.sseWorker, null);
             } else {
                 this.isConnected = true;
                 this.startSSE();
@@ -133,6 +135,9 @@ export class AppComponent  implements OnInit {
     }
 
     startSSE(): void {
+        if (this.sseWorker) {
+            this.stopWorker(this.sseWorker, null);
+        }
         let authKey: string;
         let authValue: string;
         // ADD user AUTH
@@ -147,6 +152,17 @@ export class AppComponent  implements OnInit {
 
         if (window['SharedWorker']) {
             this.sseWorker = new CDSSharedWorker('./assets/worker/sharedWorker.js');
+            if (this.heartbeatToken !== 0) {
+                clearInterval(this.heartbeatToken);
+            }
+
+            this.heartbeatToken = setInterval(() => {
+                let d = (new Date()).getTime();
+                if (this.lastPing !== 0 && (d - this.lastPing) > 11000) {
+                    // If no ping in the last 11s restart SSE
+                    this.startSSE();
+                }
+            });
         } else {
             this.sseWorker = new CDSWebWorker('./assets/worker/webWorker.js');
         }
@@ -164,7 +180,16 @@ export class AppComponent  implements OnInit {
                 return;
             }
             this.zone.run(() => {
-                this._appService.manageEvent(<Event>e);
+                if (e.healthCheck != null) {
+                    this.lastPing = (new Date()).getTime();
+                    // 0 = CONNECTING, 1 = OPEN, 2 = CLOSED
+                    if (e.healthCheck > 1) {
+                        // Reopen SSE
+                        this.startSSE();
+                    }
+                } else {
+                    this._appService.manageEvent(<Event>e);
+                }
             });
         });
     }
