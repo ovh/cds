@@ -35,7 +35,11 @@ func loadNodeRunJobInfo(db gorp.SqlExecutor, jobIDs []int64) ([]sdk.SpawnInfo, e
 	spawnInfos := []sdk.SpawnInfo{}
 	for i := range res {
 		spInfos := []sdk.SpawnInfo{}
-		gorpmapping.JSONNullString(res[i].Bytes, &spInfos)
+		if err := gorpmapping.JSONNullString(res[i].Bytes, &spInfos); err != nil {
+			// should never append, but log error
+			log.Warning("wrong spawnInfos format: res: %v for ids: %v", res[i].Bytes, ids[i])
+			continue
+		}
 		for i := range spInfos {
 			spInfos[i].WorkflowNodeJobRunID = res[i].WorkflowNodeJobRunID
 		}
