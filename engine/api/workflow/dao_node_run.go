@@ -81,7 +81,7 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run proj=%s, workflow=%s, num=%d, node=%d", projectkey, workflowname, number, id)
 	}
 
-	r, err := fromDBNodeRun(db, rr, loadOpts)
+	r, err := fromDBNodeRun(rr, loadOpts)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -107,6 +107,11 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 		}
 		r.Coverage = cov
 	}
+	if loadOpts.WithSpawnInfos {
+		if err := loadSpawnInfos(db, r); err != nil {
+			return nil, sdk.WrapError(err, "LoadNodeRun>Error load spawn infos %d", r.ID)
+		}
+	}
 	if loadOpts.WithVulnerabilities {
 		vuln, errV := loadVulnerabilityReport(db, r.ID)
 		if errV != nil && !sdk.ErrorIs(errV, sdk.ErrNotFound) {
@@ -116,6 +121,21 @@ func LoadNodeRun(db gorp.SqlExecutor, projectkey, workflowname string, number, i
 	}
 	return r, nil
 
+}
+
+func loadSpawnInfos(db gorp.SqlExecutor, r *sdk.WorkflowNodeRun) error {
+	for s := range r.Stages {
+		stage := r.Stages[s]
+		for j := range stage.RunJobs {
+			rj := stage.RunJobs[j]
+			spawnInfos, err := loadNodeRunJobInfo(db, rj.ID)
+			if err != nil {
+				return sdk.WrapError(err, "unable to load spawn infos for runJob: %d", rj.ID)
+			}
+			rj.SpawnInfos = spawnInfos
+		}
+	}
+	return nil
 }
 
 //LoadNodeRunByNodeJobID load a specific node run on a workflow from a node job run id
@@ -140,7 +160,7 @@ func LoadNodeRunByNodeJobID(db gorp.SqlExecutor, nodeJobRunID int64, loadOpts Lo
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node_job_id=%d", nodeJobRunID)
 	}
 
-	r, err := fromDBNodeRun(db, rr, loadOpts)
+	r, err := fromDBNodeRun(rr, loadOpts)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -185,7 +205,7 @@ func LoadAndLockNodeRunByID(ctx context.Context, db gorp.SqlExecutor, id int64, 
 		}
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
 	}
-	return fromDBNodeRun(db, rr, LoadRunOptions{})
+	return fromDBNodeRun(rr, LoadRunOptions{})
 }
 
 //LoadNodeRunByID load a specific node run on a workflow
@@ -205,7 +225,7 @@ func LoadNodeRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*s
 		return nil, sdk.WrapError(err, "Unable to load workflow_node_run node=%d", id)
 	}
 
-	r, err := fromDBNodeRun(db, rr, loadOpts)
+	r, err := fromDBNodeRun(rr, loadOpts)
 	if err != nil {
 		return nil, sdk.WithStack(err)
 	}
@@ -248,7 +268,7 @@ func nodeRunExist(db gorp.SqlExecutor, nodeID, num int64, subnumber int) (bool, 
 	return nb > 0, err
 }
 
-func fromDBNodeRun(db gorp.SqlExecutor, rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
+func fromDBNodeRun(rr NodeRun, opts LoadRunOptions) (*sdk.WorkflowNodeRun, error) {
 	r := new(sdk.WorkflowNodeRun)
 	if rr.WorkflowID.Valid {
 		r.WorkflowID = rr.WorkflowID.Int64
@@ -300,11 +320,6 @@ func fromDBNodeRun(db gorp.SqlExecutor, rr NodeRun, opts LoadRunOptions) (*sdk.W
 			if rj.Status == sdk.StatusWaiting.String() {
 				rj.QueuedSeconds = time.Now().Unix() - rj.Queued.Unix()
 			}
-			spawnInfos, err := loadNodeRunJobInfo(db, rj.ID)
-			if err != nil {
-				return nil, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", rj.ID)
-			}
-			rj.SpawnInfos = spawnInfos
 		}
 	}
 
@@ -721,7 +736,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 	if err := db.SelectOne(&rr, query, workflowID, n.Name, nr.VCSBranch, nr.VCSTag, nr.Number, nr.ID); err != nil {
 		return nodeRun, sdk.WrapError(err, "Cannot load previous run on workflow %d node %s nr.VCSBranch:%s nr.VCSTag:%s nr.Number:%d nr.ID:%d ", workflowID, n.Name, nr.VCSBranch, nr.VCSTag, nr.Number, nr.ID)
 	}
-	pNodeRun, errF := fromDBNodeRun(db, rr, LoadRunOptions{})
+	pNodeRun, errF := fromDBNodeRun(rr, LoadRunOptions{})
 	if errF != nil {
 		return nodeRun, sdk.WrapError(errF, "PreviousNodeRun> Cannot read node run")
 	}

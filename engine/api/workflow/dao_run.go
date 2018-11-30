@@ -35,6 +35,7 @@ type LoadRunOptions struct {
 	WithCoverage            bool
 	WithArtifacts           bool
 	WithStaticFiles         bool
+	WithSpawnInfos          bool
 	WithTests               bool
 	WithLightTests          bool
 	WithVulnerabilities     bool
@@ -723,7 +724,7 @@ func syncNodeRuns(db gorp.SqlExecutor, wr *sdk.WorkflowRun, loadOpts LoadRunOpti
 	}
 
 	for _, n := range dbNodeRuns {
-		wnr, err := fromDBNodeRun(db, n, loadOpts)
+		wnr, err := fromDBNodeRun(n, loadOpts)
 		if err != nil {
 			return err
 		}

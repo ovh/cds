@@ -764,6 +764,7 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 			WithStaticFiles:     true,
 			WithCoverage:        true,
 			WithVulnerabilities: true,
+			WithSpawnInfos:      true,
 		})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
