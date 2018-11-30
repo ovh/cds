@@ -225,10 +225,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 				b.chanRemoveClient <- client.UUID
 				break leave
 			case <-tick.C:
-				if _, err := w.Write([]byte("")); err != nil {
-					return sdk.WrapError(err, "Unable to ping client")
-				}
-				f.Flush()
+				_ = client.Send(sdk.Event{})
 			}
 		}
 
@@ -305,19 +302,22 @@ func (client *eventsBrokerSubscribe) Send(event sdk.Event) (err error) {
 		return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 	}
 
-	if ok := client.manageEvent(event); !ok {
-		return nil
-	}
-
-	msg, err := json.Marshal(event)
-	if err != nil {
-		return sdk.WrapError(err, "Unable to marshall event")
-	}
-
 	var buffer bytes.Buffer
-	buffer.WriteString("data: ")
-	buffer.Write(msg)
-	buffer.WriteString("\n\n")
+	if event.EventType != "" {
+		if ok := client.manageEvent(event); !ok {
+			return nil
+		}
+
+		msg, err := json.Marshal(event)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to marshall event")
+		}
+		buffer.WriteString("data: ")
+		buffer.Write(msg)
+		buffer.WriteString("\n\n")
+	} else {
+		buffer.WriteString("")
+	}
 
 	if !client.isAlive.IsSet() {
 		return nil
