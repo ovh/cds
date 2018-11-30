@@ -9,7 +9,7 @@ import {LanguageStore} from './language/language.store';
 export class AuthentificationInterceptor implements  HttpInterceptor {
 
     languageHeader = 'en-US';
-    constructor(private _authStore: AuthentificationStore, private _language: LanguageStore) {
+    constructor(private _authStore: AuthentificationStore, _language: LanguageStore) {
         _language.get().subscribe( l => {
             if (l) {
                 this.languageHeader = l;
