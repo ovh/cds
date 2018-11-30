@@ -289,9 +289,9 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-    
-    // loadRun, DisableDetailledNodeRun = false for calls from CDS Service
-    // as hook service. It's needed to have the buildParameters.
+
+		// loadRun, DisableDetailledNodeRun = false for calls from CDS Service
+		// as hook service. It's needed to have the buildParameters.
 		run, err := workflow.LoadRun(api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
 				WithArtifacts:           true,
@@ -964,10 +964,10 @@ func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		}
 		if opts.Manual != nil {
 			optsCopy.Manual = &sdk.WorkflowNodeRunManual{
-				PipelineParameters: opts.Manual.PipelineParameters,
-				User:               opts.Manual.User,
-				Payload:            opts.Manual.Payload,
+				User:    opts.Manual.User,
+				Payload: opts.Manual.Payload,
 			}
+			copy(optsCopy.Manual.PipelineParameters, opts.Manual.PipelineParameters)
 		}
 		if opts.Hook != nil {
 			optsCopy.Hook = &sdk.WorkflowNodeRunHookEvent{
@@ -1074,10 +1074,10 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		}
 		if opts.Manual != nil {
 			optsCopy.Manual = &sdk.WorkflowNodeRunManual{
-				PipelineParameters: opts.Manual.PipelineParameters,
-				User:               opts.Manual.User,
-				Payload:            opts.Manual.Payload,
+				User:    opts.Manual.User,
+				Payload: opts.Manual.Payload,
 			}
+			copy(optsCopy.Manual.PipelineParameters, opts.Manual.PipelineParameters)
 		}
 		if opts.Hook != nil {
 			optsCopy.Hook = &sdk.WorkflowNodeRunHookEvent{

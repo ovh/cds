@@ -1,25 +1,25 @@
-import {registerLocaleData} from '@angular/common';
+import { registerLocaleData } from '@angular/common';
 import localeEN from '@angular/common/locales/en';
 import localeFR from '@angular/common/locales/fr';
-import {Component, NgZone, OnInit} from '@angular/core';
+import { Component, NgZone, OnInit } from '@angular/core';
 import { Title } from '@angular/platform-browser';
-import {ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {Observable} from 'rxjs';
-import {filter, map, mergeMap} from 'rxjs/operators';
-import {Subscription} from 'rxjs/Subscription';
+import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Observable } from 'rxjs';
+import { filter, map, mergeMap } from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
-import {environment} from '../environments/environment';
-import {AppService} from './app.service';
-import {Event} from './model/event.model';
-import {AuthentificationStore} from './service/auth/authentification.store';
-import {LanguageStore} from './service/language/language.store';
-import {NotificationService} from './service/notification/notification.service';
-import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
-import {ToastService} from './shared/toast/ToastService';
-import {CDSSharedWorker} from './shared/worker/shared.worker';
-import {CDSWebWorker} from './shared/worker/web.worker';
-import {CDSWorker} from './shared/worker/worker';
+import { environment } from '../environments/environment';
+import { AppService } from './app.service';
+import { Event } from './model/event.model';
+import { AuthentificationStore } from './service/auth/authentification.store';
+import { LanguageStore } from './service/language/language.store';
+import { NotificationService } from './service/notification/notification.service';
+import { AutoUnsubscribe } from './shared/decorator/autoUnsubscribe';
+import { ToastService } from './shared/toast/ToastService';
+import { CDSSharedWorker } from './shared/worker/shared.worker';
+import { CDSWebWorker } from './shared/worker/web.worker';
+import { CDSWorker } from './shared/worker/worker';
 
 @Component({
     selector: 'app-root',

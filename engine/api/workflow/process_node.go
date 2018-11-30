@@ -68,6 +68,14 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	)
 	defer end()
 
+	// Send manual event to join and fork children when it was a manual run
+	if manual == nil && len(parentNodeRuns) == 1 && parentNodeRuns[0].Manual != nil {
+		n := wr.Workflow.WorkflowData.NodeByID(parentNodeRuns[0].WorkflowNodeID)
+		if n.Type == sdk.NodeTypeJoin || n.Type == sdk.NodeTypeFork {
+			manual = parentNodeRuns[0].Manual
+		}
+	}
+
 	switch n.Type {
 	case sdk.NodeTypeFork, sdk.NodeTypePipeline, sdk.NodeTypeJoin:
 		r1, conditionOK, errT := processNode(ctx, db, store, proj, wr, mapNodes, n, subNumber, parentNodeRuns, hookEvent, manual)

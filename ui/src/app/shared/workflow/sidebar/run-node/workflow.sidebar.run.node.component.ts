@@ -87,7 +87,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             if (this.node && this.loading) {
                 this.loading = false;
                 this._cd.detectChanges();
-            } else {
+            } else if (!this.node) {
                 this.loading  = true;
                 this._cd.detectChanges();
             }

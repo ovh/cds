@@ -1,0 +1,5 @@
+# https://github.com/golangci/golangci/wiki/Configuration
+
+service:
+  prepare:
+    - apt-get update && apt-get install -y libsecret-1-dev
