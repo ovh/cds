@@ -1,4 +1,5 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {TranslateService} from '@ngx-translate/core';
 import * as AU from 'ansi_up';
 import {Job} from '../../../../../../model/job.model';
 import {Parameter} from '../../../../../../model/parameter.model';
@@ -6,7 +7,7 @@ import {SpawnInfo} from '../../../../../../model/pipeline.model';
 import {JobVariableComponent} from '../../../../../run/workflow/variables/job.variables.component';
 
 @Component({
-    selector: 'app-workflow-rin-job-spawn-info',
+    selector: 'app-workflow-run-job-spawn-info',
     templateUrl: './spawninfo.html',
     styleUrls: ['./spawninfo.scss']
 })
@@ -42,7 +43,7 @@ export class WorkflowRunJobSpawnInfoComponent {
     _displayServiceLogs: boolean;
     ansi_up = new AU.default;
 
-    constructor() { }
+    constructor(private _translate: TranslateService) {}
 
     refreshDisplayServiceLogsLink() {
       if (this.job && this.job.action && Array.isArray(this.job.action.requirements)) {
@@ -64,7 +65,7 @@ export class WorkflowRunJobSpawnInfoComponent {
         if (msg !== '') {
             return this.ansi_up.ansi_to_html(msg);
         }
-        return '';
+        return this._translate.instant('job_spawn_no_information');
     }
 
     openVariableModal(event: Event): void {

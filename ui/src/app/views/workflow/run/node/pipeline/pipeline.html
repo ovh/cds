@@ -55,12 +55,12 @@
                 <div class="log animated fadeIn" *ngIf="selectedRunJob && mapStepStatus">
                     <ul>
                         <li>
-                            <app-workflow-rin-job-spawn-info
+                            <app-workflow-run-job-spawn-info
                               [spawnInfos]="selectedRunJob.spawninfos"
                               [variables]="selectedRunJob.parameters"
                               [job]="selectedRunJob.job"
                               [(displayServicesLogs)]="displayServiceLogs">
-                            </app-workflow-rin-job-spawn-info>
+                            </app-workflow-run-job-spawn-info>
                         </li>
                         <ng-container *ngIf="!displayServiceLogs">
                             <li *ngFor="let step of selectedRunJob.job.action.actions; let i = index">
