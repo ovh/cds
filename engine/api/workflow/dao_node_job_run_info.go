@@ -31,7 +31,7 @@ func LoadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, erro
 		spInfos := []sdk.SpawnInfo{}
 		if err := gorpmapping.JSONNullString(res[i].Bytes, &spInfos); err != nil {
 			// should never append, but log error
-			log.Warning("wrong spawnInfos format: res: %v for id: %v", res[i].Bytes, jobID)
+			log.Warning("wrong spawnInfos format: res: %v for id: %v err: %v", res[i].Bytes, jobID, err)
 			continue
 		}
 		spawnInfos = append(spawnInfos, spInfos...)
