@@ -126,6 +126,7 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoHatcheryErrorSpawn.ID:         MsgSpawnInfoHatcheryErrorSpawn,
 	MsgSpawnInfoHatcheryStartsSuccessfully.ID: MsgSpawnInfoHatcheryStartsSuccessfully,
 	MsgSpawnInfoWorkerEnd.ID:                  MsgSpawnInfoWorkerEnd,
+	MsgSpawnInfoJobInQueue.ID:                 MsgSpawnInfoJobInQueue,
 	MsgSpawnInfoJobTaken.ID:                   MsgSpawnInfoJobTaken,
 	MsgSpawnInfoJobTakenWorkerVersion.ID:      MsgSpawnInfoJobTakenWorkerVersion,
 	MsgSpawnInfoWorkerForJob.ID:               MsgSpawnInfoWorkerForJob,
