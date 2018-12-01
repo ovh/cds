@@ -52,14 +52,14 @@
         </div>
         <div class="row">
             <div class="column">
-                <div class="log animated fadeIn" *ngIf="selectedRunJob && mapStepStatus">
+                <div class="log animated fadeIn" *ngIf="selectedRunJob && mapStepStatus && mapJobStatus">
                     <ul>
                         <li>
                             <app-workflow-run-job-spawn-info
                                 [project]="project"
                                 [workflowName]="workflowName"
                                 [nodeRun]="nodeRun"
-                                [job]="selectedRunJob.job"
+                                [jobStatus]="mapJobStatus.get(selectedRunJob.job.pipeline_action_id).status"
                                 [nodeJobRun]="selectedRunJob"
                                 [variables]="selectedRunJob.parameters"
                                 [(displayServicesLogs)]="displayServiceLogs">

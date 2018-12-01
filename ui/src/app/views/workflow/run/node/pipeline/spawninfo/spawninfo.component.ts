@@ -4,7 +4,6 @@ import * as AU from 'ansi_up';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../../../../../environments/environment';
-import { Job } from '../../../../../../model/job.model';
 import { Parameter } from '../../../../../../model/parameter.model';
 import { SpawnInfo } from '../../../../../../model/pipeline.model';
 import { PipelineStatus } from '../../../../../../model/pipeline.model';
@@ -22,12 +21,16 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
 
     @Input() project: Project;
     @Input() workflowName: string;
+    @Input() jobStatus: string;
     @Input() nodeRun: WorkflowNodeRun;
     @Input('nodeJobRun')
     set nodeJobRun(data: WorkflowNodeJobRun) {
         if (data) {
             this._nodeJobRun = data;
-            if (data.status === PipelineStatus.SUCCESS || data.status === PipelineStatus.FAIL || data.status === PipelineStatus.STOPPED) {
+            this.refreshDisplayServiceLogsLink();
+            if (this.jobStatus === PipelineStatus.SUCCESS ||
+                this.jobStatus === PipelineStatus.FAIL ||
+                this.jobStatus === PipelineStatus.STOPPED) {
                 this.stopWorker();
             }
         }
@@ -38,14 +41,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
 
     spawnInfos: String;
     @Input() variables: Array<Parameter>;
-    @Input('job')
-    set job(data: Job) {
-        this._job = data;
-        this.refreshDisplayServiceLogsLink();
-    }
-    get job(): Job {
-        return this._job
-    }
     @Input('displayServiceLogs')
     set displayServiceLogs(data: boolean) {
         this._displayServiceLogs = data;
@@ -70,7 +65,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
 
     show = true;
     displayServiceLogsLink = false;
-    _job: Job;
     _displayServiceLogs: boolean;
     ansi_up = new AU.default;
 
@@ -85,8 +79,8 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
     constructor(private _authStore: AuthentificationStore, private _translate: TranslateService) { }
 
     refreshDisplayServiceLogsLink() {
-        if (this.job && this.job.action && Array.isArray(this.job.action.requirements)) {
-            this.displayServiceLogsLink = this.job.action.requirements.some((req) => req.type === 'service');
+        if (this.nodeJobRun.job && this.nodeJobRun.job.action && Array.isArray(this.nodeJobRun.job.action.requirements)) {
+            this.displayServiceLogsLink = this.nodeJobRun.job.action.requirements.some((req) => req.type === 'service');
         }
     }
 
@@ -94,10 +88,11 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
         this.show = !this.show;
     }
 
-    getSpawnInfos() {
+    getSpawnInfos(spawnInfosIn: Array<SpawnInfo>) {
+        this.loading = false;
         let msg = '';
-        if (this.nodeJobRun.spawninfos) {
-            this.nodeJobRun.spawninfos.forEach(s => {
+        if (spawnInfosIn) {
+            spawnInfosIn.forEach(s => {
                 msg += '[' + s.api_time.toString().substr(0, 19) + '] ' + s.user_message + '\n';
             });
         }
@@ -112,9 +107,10 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
             this.loading = true;
         }
 
-        if (this.nodeJobRun.status !== PipelineStatus.WAITING && this.nodeJobRun.status !== PipelineStatus.BUILDING) {
-            this.spawnInfos = this.getSpawnInfos();
-            this.loading = false;
+        if (this.jobStatus !== PipelineStatus.WAITING && this.jobStatus !== PipelineStatus.BUILDING) {
+            if (this.nodeJobRun.spawninfos && this.nodeJobRun.spawninfos.length > 0) {
+                this.spawnInfos = this.getSpawnInfos(this.nodeJobRun.spawninfos);
+            }
             return;
         }
 
@@ -134,18 +130,15 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
             this.workerSubscription = this.worker.response().subscribe(msg => {
                 if (msg) {
                     let serviceSpawnInfos: Array<SpawnInfo> = JSON.parse(msg);
-                    if (this.loading) {
-                        this.loading = false;
+                    if (serviceSpawnInfos && serviceSpawnInfos.length > 0) {
+                        this.spawnInfos = this.getSpawnInfos(serviceSpawnInfos);
                     }
-                    let infos = '';
-                    serviceSpawnInfos.forEach(s => {
-                        infos += '[' + s.api_time.toString().substr(0, 19) + '] ' + s.user_message + '\n';
-                    });
-                    this.spawnInfos = this.ansi_up.ansi_to_html(infos);
-                    if (this.nodeJobRun.status === PipelineStatus.SUCCESS || this.nodeJobRun.status === PipelineStatus.FAIL ||
-                        this.nodeJobRun.status === PipelineStatus.STOPPED) {
+                    if (this.jobStatus === PipelineStatus.SUCCESS || this.jobStatus === PipelineStatus.FAIL ||
+                        this.jobStatus === PipelineStatus.STOPPED) {
                         this.stopWorker();
-                        this.spawnInfos = this.getSpawnInfos();
+                        if (this.nodeJobRun.spawninfos && this.nodeJobRun.spawninfos.length > 0) {
+                            this.spawnInfos = this.getSpawnInfos(this.nodeJobRun.spawninfos);
+                        }
                     }
                 }
             });
