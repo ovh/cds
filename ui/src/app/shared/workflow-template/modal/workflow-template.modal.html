@@ -10,8 +10,13 @@
                         {{'workflow_template_update_info_line_1' | translate}}
                     </div>
                 </div>
-                <div class="sixteen wide column">
-                    <div class="ui wide eighteen field" *ngIf="workflowTemplate && workflowTemplateInstance">
+                <div class="sixteen wide column loading" *ngIf="!workflowTemplate || !workflowTemplateInstance">
+                    <div class="ui active inverted dimmer">
+                        <div class="ui text loader">{{ 'common_loading' | translate }}</div>
+                    </div>
+                </div>
+                <div class="sixteen wide column" *ngIf="workflowTemplate && workflowTemplateInstance">
+                    <div class="ui wide eighteen field">
                         <div class="fields">
                             <div class="six wide field">
                                 <label>{{'common_name' | translate}}</label>
@@ -23,14 +28,15 @@
                             </div>
                             <div class="four wide field right aligned">
                                 <a *ngIf="workflowTemplateInstance.workflow_template_version === workflowTemplate.version"
-                                    class="ui green label">{{'common_up_to_date' | translate}}</a>
+                                    class="ui green label">{{'common_up_to_date'
+                                    | translate}}</a>
                                 <a *ngIf="workflowTemplateInstance.workflow_template_version !== workflowTemplate.version"
                                     class="ui orange label">{{'common_not_up_to_date' | translate }}</a>
                             </div>
                         </div>
-                        <app-workflow-template-apply-form *ngIf="workflowTemplate" [project]="project"
-                            [workflowTemplate]="workflowTemplate" [workflowTemplateInstance]="workflowTemplateInstance"
-                            [withClose]="true" (close)="close()" (apply)="loadInstance()"></app-workflow-template-apply-form>
+                        <app-workflow-template-apply-form [project]="project" [workflowTemplate]="workflowTemplate"
+                            [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true" (close)="close()"
+                            (apply)="loadInstance()"></app-workflow-template-apply-form>
                     </div>
                 </div>
             </div>

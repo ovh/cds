@@ -38,8 +38,8 @@ export class WorkflowTemplateFormComponent {
         this.pipelineValues = {};
         this.pipelineKeys = [];
         if (wt.pipelines) {
-            wt.pipelines.map(p => atob(p.value)).forEach((p, i) => {
-                this.pipelineValues[i] = p;
+            wt.pipelines.forEach((p, i) => {
+                this.pipelineValues[i] = atob(p.value);
                 this.pipelineKeys.push(i);
             });
         }
@@ -47,8 +47,8 @@ export class WorkflowTemplateFormComponent {
         this.applicationValues = {};
         this.applicationKeys = [];
         if (wt.applications) {
-            wt.applications.map(a => atob(a.value)).forEach((a, i) => {
-                this.applicationValues[i] = a;
+            wt.applications.forEach((a, i) => {
+                this.applicationValues[i] = atob(a.value);
                 this.applicationKeys.push(i);
             });
         }
@@ -56,8 +56,8 @@ export class WorkflowTemplateFormComponent {
         this.environmentValues = {};
         this.environmentKeys = [];
         if (wt.environments) {
-            wt.environments.map(e => atob(e.value)).forEach((e, i) => {
-                this.environmentValues[i] = e;
+            wt.environments.forEach((e, i) => {
+                this.environmentValues[i] = atob(e.value);
                 this.environmentKeys.push(i);
             });
         }
@@ -178,7 +178,6 @@ export class WorkflowTemplateFormComponent {
         this.environmentKeys.push(k)
         this.environmentValues[k] = this.environmentValueAdd;
         this.environmentValueAdd = '';
-        console.log(k)
     }
 
     clickRemoveEnvironment(key: number) {
