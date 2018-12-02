@@ -1,6 +1,7 @@
 package swarm
 
 import (
+	"fmt"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -47,21 +48,25 @@ func (h *HatcherySwarm) killAndRemove(dockerClient *dockerClient, ID string) err
 						Timestamps: true,
 						Since:      "10s",
 					}
+					var spawnErr = sdk.SpawnErrorForm{
+						Error: err.Error(),
+					}
+
 					logsReader, errL := dockerClient.ContainerLogs(ctx, container.ID, logsOpts)
 					if errL != nil {
 						log.Error("hatchery> swarm> killAndRemove> cannot get logs from docker for containers service %s %v : %v", container.ID, container.Name, errL)
+						spawnErr.Logs = []byte(fmt.Sprintf("unable to get container logs: %v", errL))
+
+					} else if logsReader != nil {
+						defer logsReader.Close()
+						logs, errR := ioutil.ReadAll(logsReader)
+						if errR != nil {
+							log.Error("hatchery> swarm> killAndRemove> cannot read logs for containers service %s %v : %v", container.ID, container.Name, errR)
+						} else if logs != nil {
+							spawnErr.Logs = logs
+						}
 					}
 
-					logs, errR := ioutil.ReadAll(logsReader)
-					defer logsReader.Close()
-					if errR != nil {
-						log.Error("hatchery> swarm> killAndRemove> cannot read logs for containers service %s %v : %v", container.ID, container.Name, errR)
-					}
-
-					var spawnErr = sdk.SpawnErrorForm{
-						Error: err.Error(),
-						Logs:  logs,
-					}
 					if err := h.CDSClient().WorkerModelSpawnError(modelID, spawnErr); err != nil {
 						log.Error("hatchery> swarm> killAndRemove> error on call client.WorkerModelSpawnError on worker model %d for register: %s", modelID, err)
 					}
