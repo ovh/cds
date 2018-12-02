@@ -156,61 +156,40 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s by hatchery %d isWorkflowJob:%t", j.timestamp, j.id, j.model.Name, h.ID(), j.isWorkflowJob)
 
 	start := time.Now()
-	infos := []sdk.SpawnInfo{
-		{
-			RemoteTime: start,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name}},
-		},
-	}
+	SendSpawnInfo(ctx, h, j.isWorkflowJob, j.id, sdk.SpawnMsg{
+		ID:   sdk.MsgSpawnInfoHatcheryStarts.ID,
+		Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name},
+	})
+
 	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", j.model.Name, j.id)
 	_, next = observability.Span(ctx, "hatchery.SpawnWorker")
 	workerName, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: j.model, IsWorkflowJob: j.isWorkflowJob, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
 	next()
 	if errSpawn != nil {
 		_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "errSpawn"))
-		log.Warning("spawnWorkerForJob> %d - cannot spawn worker %s for job %d: %s", j.timestamp, j.model.Name, j.id, errSpawn)
-		infos = append(infos, sdk.SpawnInfo{
-			RemoteTime: time.Now(),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
+		SendSpawnInfo(ctx, h, j.isWorkflowJob, j.id, sdk.SpawnMsg{
+			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
+			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
 		})
-		ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-		if err := h.CDSClient().QueueJobSendSpawnInfo(ctxt, j.isWorkflowJob, j.id, infos); err != nil {
-			log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", j.timestamp, j.id, err)
-		}
 		log.Error("hatchery %s cannot spawn worker %s for job %d: %v", h.Service().Name, j.model.Name, j.id, errSpawn)
 		next()
-		cancel()
 		return false, nil
 	}
 
-	infos = append(infos, sdk.SpawnInfo{
-		RemoteTime: time.Now(),
-		Message: sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
-			Args: []interface{}{
-				h.Service().Name,
-				fmt.Sprintf("%d", h.ID()),
-				workerName,
-				sdk.Round(time.Since(start), time.Second).String()},
-		},
+	SendSpawnInfo(ctx, h, j.isWorkflowJob, j.id, sdk.SpawnMsg{
+		ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
+		Args: []interface{}{
+			h.Service().Name,
+			fmt.Sprintf("%d", h.ID()),
+			workerName,
+			sdk.Round(time.Since(start), time.Second).String()},
 	})
 
 	if j.model.IsDeprecated {
-		infos = append(infos, sdk.SpawnInfo{
-			RemoteTime: time.Now(),
-			Message: sdk.SpawnMsg{
-				ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
-				Args: []interface{}{j.model.Name},
-			},
+		SendSpawnInfo(ctx, h, j.isWorkflowJob, j.id, sdk.SpawnMsg{
+			ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
+			Args: []interface{}{j.model.Name},
 		})
 	}
-
-	ctxtJobSendSpawnInfo, cancelJobSendSpawnInfo := context.WithTimeout(ctx, 10*time.Second)
-	_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "spawnOK"))
-	if err := h.CDSClient().QueueJobSendSpawnInfo(ctxtJobSendSpawnInfo, j.isWorkflowJob, j.id, infos); err != nil {
-		next()
-		log.Warning("spawnWorkerForJob> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", j.timestamp, j.id, err)
-	}
-	next()
-	cancelJobSendSpawnInfo()
 	return true, nil // ok for this job
 }

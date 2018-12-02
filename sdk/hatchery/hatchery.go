@@ -485,6 +485,16 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	return h.CanSpawn(&model, j.id, j.requirements)
 }
 
+// SendSpawnInfo sends a spawnInfo
+func SendSpawnInfo(ctx context.Context, h Interface, isWorkflowJob bool, jobID int64, spawnMsg sdk.SpawnMsg) {
+	infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: spawnMsg}}
+	ctxc, cancel := context.WithTimeout(ctx, 10*time.Second)
+	if err := h.CDSClient().QueueJobSendSpawnInfo(ctxc, isWorkflowJob, jobID, infos); err != nil {
+		log.Warning("spawnWorkerForJob> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
+	}
+	cancel()
+}
+
 func logTime(h Interface, name string, then time.Time) {
 	d := time.Since(then)
 	if d > time.Duration(h.Configuration().LogOptions.SpawnOptions.ThresholdCritical)*time.Second {

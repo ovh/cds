@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"time"
 
 	types "github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -120,64 +119,26 @@ checkImage:
 	}
 
 	if !imageFound {
-		infos := []sdk.SpawnInfo{
-			{
-				RemoteTime: time.Now(),
-				Message: sdk.SpawnMsg{
-					ID:   sdk.MsgSpawnInfoHatcheryStartDockerPull.ID,
-					Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
-				},
-			},
-		}
-
-		ctxtJobSendSpawnInfo, cancelJobSendSpawnInfo := context.WithTimeout(ctx, 10*time.Second)
-		if err := h.CDSClient().QueueJobSendSpawnInfo(ctxtJobSendSpawnInfo, spawnArgs.IsWorkflowJob, spawnArgs.JobID, infos); err != nil {
-			next()
-			log.Warning("spawnWorkerForJob> cannot client.QueueJobSendSpawnInfo for job %d: %s", spawnArgs.JobID, err)
-		}
-		cancelJobSendSpawnInfo()
+		hatchery.SendSpawnInfo(ctx, h, spawnArgs.IsWorkflowJob, spawnArgs.JobID, sdk.SpawnMsg{
+			ID:   sdk.MsgSpawnInfoHatcheryStartDockerPull.ID,
+			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+		})
 
 		_, next := observability.Span(ctx, "swarm.dockerClient.pullImage", observability.Tag("image", cArgs.image))
 		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage); err != nil {
 			next()
-
-			infosEnd := []sdk.SpawnInfo{
-				{
-					RemoteTime: time.Now(),
-					Message: sdk.SpawnMsg{
-						ID:   sdk.MsgSpawnInfoHatcheryEndDockerPullErr.ID,
-						Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image, err},
-					},
-				},
-			}
-
-			ctxtJobSendSpawnInfoEndDockerPullErr, cancelJobSendSpawnInfoDockerPullErr := context.WithTimeout(ctx, 10*time.Second)
-			if err := h.CDSClient().QueueJobSendSpawnInfo(ctxtJobSendSpawnInfoEndDockerPullErr, spawnArgs.IsWorkflowJob, spawnArgs.JobID, infosEnd); err != nil {
-				next()
-				log.Warning("spawnWorkerForJob> cannot client.QueueJobSendSpawnInfo for job %d: %s", spawnArgs.JobID, err)
-			}
-			cancelJobSendSpawnInfoDockerPullErr()
-
+			hatchery.SendSpawnInfo(ctx, h, spawnArgs.IsWorkflowJob, spawnArgs.JobID, sdk.SpawnMsg{
+				ID:   sdk.MsgSpawnInfoHatcheryEndDockerPullErr.ID,
+				Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image, err},
+			})
 			return sdk.WrapError(err, "Unable to pull image %s on %s", cArgs.image, dockerClient.name)
 		}
 		next()
 
-		infosEnd := []sdk.SpawnInfo{
-			{
-				RemoteTime: time.Now(),
-				Message: sdk.SpawnMsg{
-					ID:   sdk.MsgSpawnInfoHatcheryEndDockerPull.ID,
-					Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
-				},
-			},
-		}
-
-		ctxtJobSendSpawnInfoEndDockerPull, cancelJobSendSpawnInfoDockerPull := context.WithTimeout(ctx, 10*time.Second)
-		if err := h.CDSClient().QueueJobSendSpawnInfo(ctxtJobSendSpawnInfoEndDockerPull, spawnArgs.IsWorkflowJob, spawnArgs.JobID, infosEnd); err != nil {
-			next()
-			log.Warning("spawnWorkerForJob> cannot client.QueueJobSendSpawnInfo for job %d: %s", spawnArgs.JobID, err)
-		}
-		cancelJobSendSpawnInfoDockerPull()
+		hatchery.SendSpawnInfo(ctx, h, spawnArgs.IsWorkflowJob, spawnArgs.JobID, sdk.SpawnMsg{
+			ID:   sdk.MsgSpawnInfoHatcheryEndDockerPull.ID,
+			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+		})
 	}
 
 	_, next = observability.Span(ctx, "swarm.dockerClient.ContainerCreate", observability.Tag(observability.TagWorker, cArgs.name), observability.Tag("network", fmt.Sprintf("%v", networkingConfig)))
