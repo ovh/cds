@@ -359,9 +359,9 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 // Status returns the status of the local cache
 func (s *RedisStore) Status() sdk.MonitoringStatusLine {
 	if s.Client.Ping().Err() == nil {
-		return sdk.MonitoringStatusLine{Component: "Cache", Value: "Ping OK", Status: sdk.MonitoringStatusOK}
+		return sdk.MonitoringStatusLine{Component: "Cache Ping", Value: "OK", Status: sdk.MonitoringStatusOK}
 	}
-	return sdk.MonitoringStatusLine{Component: "Cache", Value: "No Ping", Status: sdk.MonitoringStatusAlert}
+	return sdk.MonitoringStatusLine{Component: "Cache Ping", Value: "KO", Status: sdk.MonitoringStatusAlert}
 }
 
 // RemoveFromQueue removes a member from a list

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api/observability"
@@ -12,106 +11,53 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Stats returns the metric stats measures
-func (c *Common) Stats() *hatchery.Stats {
-	return &c.stats
+// Metrics returns the metric stats measures
+func (c *Common) Metrics() *hatchery.Metrics {
+	return &c.metrics
 }
 
-func (c *Common) initStats(hatcheryName string) error {
+func (c *Common) initMetrics(hatcheryName string) error {
 	label := fmt.Sprintf("cds/%s/%s/jobs", c.ServiceName(), hatcheryName)
-	c.stats.Jobs = stats.Int64(label, "number of analyzed jobs", stats.UnitDimensionless)
+	c.metrics.Jobs = stats.Int64(label, "number of analyzed jobs", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/%s/%s/jobs_sse", c.ServiceName(), hatcheryName)
-	c.stats.JobsSSE = stats.Int64(label, "number of analyzed jobs from SSE", stats.UnitDimensionless)
+	c.metrics.JobsSSE = stats.Int64(label, "number of analyzed jobs from SSE", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/%s/%s/spawned_workers", c.ServiceName(), hatcheryName)
-	c.stats.SpawnedWorkers = stats.Int64(label, "number of spawned workers", stats.UnitDimensionless)
+	c.metrics.SpawnedWorkers = stats.Int64(label, "number of spawned workers", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/%s/%s/pending_workers", c.ServiceName(), hatcheryName)
-	c.stats.PendingWorkers = stats.Int64(label, "number of pending workers", stats.UnitDimensionless)
+	c.metrics.PendingWorkers = stats.Int64(label, "number of pending workers", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/%s/%s/registering_workers", c.ServiceName(), hatcheryName)
-	c.stats.RegisteringWorkers = stats.Int64(label, "number of registering workers", stats.UnitDimensionless)
+	c.metrics.RegisteringWorkers = stats.Int64(label, "number of registering workers", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/%s/%s/waiting_workers", c.ServiceName(), hatcheryName)
-	c.stats.WaitingWorkers = stats.Int64(label, "number of waiting workers", stats.UnitDimensionless)
+	c.metrics.WaitingWorkers = stats.Int64(label, "number of waiting workers", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/%s/%s/checking_workers", c.ServiceName(), hatcheryName)
-	c.stats.CheckingWorkers = stats.Int64(label, "number of checking workers", stats.UnitDimensionless)
+	c.metrics.CheckingWorkers = stats.Int64(label, "number of checking workers", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/%s/%s/building_workers", c.ServiceName(), hatcheryName)
-	c.stats.BuildingWorkers = stats.Int64(label, "number of building workers", stats.UnitDimensionless)
+	c.metrics.BuildingWorkers = stats.Int64(label, "number of building workers", stats.UnitDimensionless)
 
 	label = fmt.Sprintf("cds/%s/%s/disabled_workers", c.ServiceName(), hatcheryName)
-	c.stats.DisabledWorkers = stats.Int64(label, "number of disabled workers", stats.UnitDimensionless)
+	c.metrics.DisabledWorkers = stats.Int64(label, "number of disabled workers", stats.UnitDimensionless)
 
 	log.Info("hatchery> Stats initialized on %s", c.ServiceName())
 
-	tags := []tag.Key{hatchery.TagHatchery, hatchery.TagHatcheryName}
+	tagCDSInstance, _ := tag.NewKey("cds")
+	tags := []tag.Key{tagCDSInstance, hatchery.TagHatchery, hatchery.TagHatcheryName}
 
 	return observability.RegisterView(
-		&view.View{
-			Name:        "jobs_count",
-			Description: c.stats.Jobs.Description(),
-			Measure:     c.stats.Jobs,
-			Aggregation: view.Count(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "jobs_sse_count",
-			Description: c.stats.JobsSSE.Description(),
-			Measure:     c.stats.JobsSSE,
-			Aggregation: view.Count(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "spawned_worker_count",
-			Description: c.stats.SpawnedWorkers.Description(),
-			Measure:     c.stats.SpawnedWorkers,
-			Aggregation: view.Count(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "pending_workers",
-			Description: c.stats.PendingWorkers.Description(),
-			Measure:     c.stats.PendingWorkers,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "registering_workers",
-			Description: c.stats.RegisteringWorkers.Description(),
-			Measure:     c.stats.RegisteringWorkers,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "waiting_workers",
-			Description: c.stats.WaitingWorkers.Description(),
-			Measure:     c.stats.WaitingWorkers,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "checking_workers",
-			Description: c.stats.CheckingWorkers.Description(),
-			Measure:     c.stats.CheckingWorkers,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "building_workers",
-			Description: c.stats.BuildingWorkers.Description(),
-			Measure:     c.stats.BuildingWorkers,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
-		},
-		&view.View{
-			Name:        "disabled_workers",
-			Description: c.stats.DisabledWorkers.Description(),
-			Measure:     c.stats.DisabledWorkers,
-			Aggregation: view.LastValue(),
-			TagKeys:     tags,
-		},
+		observability.NewViewCount("jobs_count", c.metrics.Jobs, tags),
+		observability.NewViewCount("jobs_sse_count", c.metrics.JobsSSE, tags),
+		observability.NewViewCount("spawned_worker_count", c.metrics.SpawnedWorkers, tags),
+		observability.NewViewLast("pending_workers", c.metrics.PendingWorkers, tags),
+		observability.NewViewLast("registering_workers", c.metrics.RegisteringWorkers, tags),
+		observability.NewViewLast("waiting_workers", c.metrics.WaitingWorkers, tags),
+		observability.NewViewLast("checking_workers", c.metrics.CheckingWorkers, tags),
+		observability.NewViewLast("building_workers", c.metrics.BuildingWorkers, tags),
+		observability.NewViewLast("disabled_workers", c.metrics.DisabledWorkers, tags),
 	)
 }

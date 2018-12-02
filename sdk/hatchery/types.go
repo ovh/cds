@@ -93,12 +93,12 @@ type Interface interface {
 	IsInitialized() bool
 	SetInitialized()
 	ServiceName() string
-	Stats() *Stats
+	Metrics() *Metrics
 	PanicDumpDirectory() (string, error)
 	WorkerModelsEnabled() ([]sdk.Model, error)
 }
 
-type Stats struct {
+type Metrics struct {
 	Jobs               *stats.Int64Measure
 	JobsSSE            *stats.Int64Measure
 	SpawnedWorkers     *stats.Int64Measure

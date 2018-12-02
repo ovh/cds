@@ -478,12 +478,18 @@ func (s *Service) Status() sdk.MonitoringStatus {
 	}
 	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Queue", Value: fmt.Sprintf("%d", size), Status: status})
 
+	var nbHooksKafkaTotal int64
+
 	tasks, err := s.Dao.FindAllTasks()
 	if err != nil {
 		log.Error("Status> Unable to find all tasks: %v", err)
 	}
 
 	for _, t := range tasks {
+		if t.Type == TypeKafka {
+			nbHooksKafkaTotal++
+		}
+
 		if t.Stopped {
 			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Task Stopped", Value: t.UUID, Status: sdk.MonitoringStatusWarn})
 		}
@@ -522,6 +528,14 @@ func (s *Service) Status() sdk.MonitoringStatus {
 			m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Execs Total " + t.UUID, Value: fmt.Sprintf("%d", nbTotal), Status: status})
 		}
 	}
+
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Hook Kafka", Value: fmt.Sprintf("%d", nbHooksKafkaTotal), Status: status})
+
+	statusConsumer := sdk.MonitoringStatusOK
+	if nbKafkaConsumers > nbHooksKafkaTotal {
+		statusConsumer = sdk.MonitoringStatusWarn
+	}
+	m.Lines = append(m.Lines, sdk.MonitoringStatusLine{Component: "Hook Kafka Consumers", Value: fmt.Sprintf("%d", nbKafkaConsumers), Status: statusConsumer})
 
 	return m
 }

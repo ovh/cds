@@ -94,10 +94,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/smtp/ping", r.GET(api.smtpPingHandler, Auth(true)))
 	r.Handle("/mon/version", r.GET(VersionHandler, Auth(false)))
 	r.Handle("/mon/db/migrate", r.GET(api.getMonDBStatusMigrateHandler, NeedAdmin(true)))
-	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
-	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
-	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
-	r.Handle("/mon/stats", r.GET(observability.StatsHandler, Auth(false)))
+	r.Handle("/mon/metrics", r.GET(observability.StatsHandler, Auth(false)))
 	r.Handle("/mon/errors/{uuid}", r.GET(api.getErrorHandler, NeedAdmin(true)))
 	r.Handle("/mon/panic/{uuid}", r.GET(api.getPanicDumpHandler, Auth(false)))
 

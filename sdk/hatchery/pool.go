@@ -13,8 +13,8 @@ import (
 )
 
 // WorkerPool returns all the worker owned by the hatchery h, registered or not on the CDS API
-func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
-	ctx := WithTags(context.Background(), h)
+func WorkerPool(ctx context.Context, h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
+	ctx = WithTags(ctx, h)
 
 	// First: call API
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -94,12 +94,12 @@ func WorkerPool(h Interface, status ...sdk.Status) ([]sdk.Worker, error) {
 	}
 
 	measures := []stats.Measurement{
-		h.Stats().PendingWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
-		h.Stats().RegisteringWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
-		h.Stats().WaitingWorkers.M(int64(nbPerStatus[sdk.StatusWaiting])),
-		h.Stats().CheckingWorkers.M(int64(nbPerStatus[sdk.StatusChecking])),
-		h.Stats().BuildingWorkers.M(int64(nbPerStatus[sdk.StatusBuilding])),
-		h.Stats().DisabledWorkers.M(int64(nbPerStatus[sdk.StatusDisabled])),
+		h.Metrics().PendingWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
+		h.Metrics().RegisteringWorkers.M(int64(nbPerStatus[sdk.StatusWorkerPending])),
+		h.Metrics().WaitingWorkers.M(int64(nbPerStatus[sdk.StatusWaiting])),
+		h.Metrics().CheckingWorkers.M(int64(nbPerStatus[sdk.StatusChecking])),
+		h.Metrics().BuildingWorkers.M(int64(nbPerStatus[sdk.StatusBuilding])),
+		h.Metrics().DisabledWorkers.M(int64(nbPerStatus[sdk.StatusDisabled])),
 	}
 	stats.Record(ctx, measures...)
 

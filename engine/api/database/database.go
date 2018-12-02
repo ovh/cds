@@ -143,14 +143,14 @@ func (f *DBConnectionFactory) dsn() string {
 // Status returns database driver and status in a printable string
 func (f *DBConnectionFactory) Status() sdk.MonitoringStatusLine {
 	if f.db == nil {
-		return sdk.MonitoringStatusLine{Component: "Database", Value: "No Connection", Status: sdk.MonitoringStatusAlert}
+		return sdk.MonitoringStatusLine{Component: "Database Conns", Value: "No Connection", Status: sdk.MonitoringStatusAlert}
 	}
 
 	if err := f.db.Ping(); err != nil {
-		return sdk.MonitoringStatusLine{Component: "Database", Value: "No Ping", Status: sdk.MonitoringStatusAlert}
+		return sdk.MonitoringStatusLine{Component: "Database Conns", Value: "No Ping", Status: sdk.MonitoringStatusAlert}
 	}
 
-	return sdk.MonitoringStatusLine{Component: "Database", Value: fmt.Sprintf("%d conns", f.db.Stats().OpenConnections), Status: sdk.MonitoringStatusOK}
+	return sdk.MonitoringStatusLine{Component: "Database Conns", Value: fmt.Sprintf("%d", f.db.Stats().OpenConnections), Status: sdk.MonitoringStatusOK}
 }
 
 // Close closes the database, releasing any open resources.
