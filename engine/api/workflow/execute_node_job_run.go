@@ -11,6 +11,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
