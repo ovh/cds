@@ -12,7 +12,6 @@ import (
 	"mime/quotedprintable"
 	"net/mail"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/yesnault/go-imap/imap"
 
 	"github.com/ovh/venom"
@@ -22,7 +21,7 @@ func decodeHeader(msg *mail.Message, headerName string) (string, error) {
 	dec := new(mime.WordDecoder)
 	s, err := dec.DecodeHeader(msg.Header.Get(headerName))
 	if err != nil {
-		return msg.Header.Get(headerName), fmt.Errorf("Error while decode header %s:%s", headerName, msg.Header.Get(headerName))
+		return msg.Header.Get(headerName), err
 	}
 	return s, nil
 }
@@ -46,18 +45,15 @@ func extract(rsp imap.Response, l venom.Logger) (*Mail, error) {
 	}
 	tm.Subject, err = decodeHeader(mmsg, "Subject")
 	if err != nil {
-		log.Warnf("Cannot decode Subject header: %s", err)
-		return nil, nil
+		return nil, fmt.Errorf("Cannot decode Subject header: %s", err)
 	}
 	tm.From, err = decodeHeader(mmsg, "From")
 	if err != nil {
-		log.Warnf("Cannot decode From header: %s", err)
-		return nil, nil
+		return nil, fmt.Errorf("Cannot decode From header: %s", err)
 	}
 	tm.To, err = decodeHeader(mmsg, "To")
 	if err != nil {
-		log.Warnf("Cannot decode To header: %s", err)
-		return nil, nil
+		return nil, fmt.Errorf("Cannot decode To header: %s", err)
 	}
 
 	encoding := mmsg.Header.Get("Content-Transfer-Encoding")
