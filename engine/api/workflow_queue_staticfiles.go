@@ -55,6 +55,11 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			entrypoint = m.Value["entrypoint"][0]
 		}
 
+		var staticKey string
+		if len(m.Value["static_key"]) > 0 {
+			staticKey = m.Value["static_key"][0]
+		}
+
 		if fileName == "" {
 			return sdk.WrapError(sdk.ErrWrongRequest, "Content-Disposition header is not set")
 		}
@@ -64,11 +69,24 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
 
+		nodeRun, errNr := workflow.LoadNodeRunByID(db, nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if errNr != nil {
+			return sdk.WrapError(errNr, "Cannot load node run")
+		}
+
 		staticFile := sdk.StaticFiles{
 			Name:         name,
 			EntryPoint:   entrypoint,
+			StaticKey:    staticKey,
+			WorkflowID:   nodeRun.WorkflowID,
 			NodeRunID:    nodeJobRun.WorkflowNodeRunID,
 			NodeJobRunID: nodeJobRunID,
+		}
+
+		if staticFile.StaticKey != "" {
+			if err := objectstore.Delete(&staticFile); err != nil {
+				return sdk.WrapError(err, "Cannot delete existing static files")
+			}
 		}
 
 		files := m.File[fileName]
@@ -117,6 +135,12 @@ func (api *API) postWorkflowJobStaticFilesWithTempURLHandler() service.Handler {
 		var staticfile sdk.StaticFiles
 		if err := service.UnmarshalBody(r, &staticfile); err != nil {
 			return sdk.WithStack(err)
+		}
+
+		if staticfile.StaticKey != "" {
+			if err := objectstore.Delete(&staticfile); err != nil {
+				return sdk.WrapError(err, "Cannot delete existing static files")
+			}
 		}
 
 		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)

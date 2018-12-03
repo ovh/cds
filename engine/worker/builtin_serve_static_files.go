@@ -33,6 +33,7 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 			sendLog(res.Reason)
 			return res
 		}
+		staticKey := sdk.ParameterValue(a.Parameters, "static-key")
 
 		// Global all files matching filePath
 		filesPath, err := filepath.Glob(path)
@@ -65,7 +66,7 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 		}
 
 		sendLog(fmt.Sprintf(`Upload and serving files in progress... with entrypoint "%s"`, entrypoint.Value))
-		publicURL, _, _, err := w.client.QueueStaticFilesUpload(ctx, buildID, name.Value, entrypoint.Value, file)
+		publicURL, _, _, err := w.client.QueueStaticFilesUpload(ctx, buildID, name.Value, entrypoint.Value, staticKey, file)
 		if err != nil {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("Cannot upload static files: %v", err)
