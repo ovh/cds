@@ -37,7 +37,7 @@ type ProjectFeatures struct {
 
 // List all features
 func List() []string {
-	return []string{FeatWorkflowAsCode, FeatWNode}
+	return []string{FeatWorkflowAsCode, FeatWNode, FeatEnableTracing}
 }
 
 // Init initialize Izanami client
