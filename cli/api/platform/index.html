@@ -537,6 +537,11 @@
     </li>
         </ul>
     </li>
+    <li data-nav-id="/workflows/template/" class="dd-item">
+      <a href="https://ovh.github.io/cds/workflows/template/">
+        <span>Workflow Template</span>
+      </a>
+    </li>
         </ul>
     </li>
           
@@ -749,6 +754,11 @@
       <li data-nav-id="/cli/api/suggest/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/suggest/">
           <span>suggest</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/api/template/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/api/template/">
+          <span>template</span>
         </a>
     </li>
       <li data-nav-id="/cli/api/ui/" class="dd-item">
@@ -1511,6 +1521,33 @@
           <span>signup</span>
         </a>
     </li>
+    <li data-nav-id="/cli/cdsctl/template/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/template/">
+        <span>template</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/template/apply/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/apply/">
+          <span>apply</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/template/instances/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/instances/">
+          <span>instances</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/template/pull/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/pull/">
+          <span>pull</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/template/push/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/push/">
+          <span>push</span>
+        </a>
+    </li>
+        </ul>
+    </li>
     <li data-nav-id="/cli/cdsctl/token/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/token/">
         <span>token</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -1662,6 +1699,11 @@
         </ul>
     </li>
         </ul>
+    </li>
+      <li data-nav-id="/cli/cdsctl/workflow/applytemplate/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/applytemplate/">
+          <span>applyTemplate</span>
+        </a>
     </li>
     <li data-nav-id="/cli/cdsctl/workflow/artifact/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/">
@@ -2135,9 +2177,9 @@
 <ul>
 <li><a href="#post-platform-models">POST <code>/platform/models</code></a></li>
 <li><a href="#get-platform-models">GET <code>/platform/models</code></a></li>
+<li><a href="#get-platform-models-name">GET <code>/platform/models/&lt;name&gt;</code></a></li>
 <li><a href="#put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></a></li>
 <li><a href="#delete-platform-models-name">DELETE <code>/platform/models/&lt;name&gt;</code></a></li>
-<li><a href="#get-platform-models-name">GET <code>/platform/models/&lt;name&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -2217,6 +2259,34 @@
 </tbody>
 </table>
 
+<h3 id="get-platform-models-name">GET <code>/platform/models/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/platform/models/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPlatformModelHandler%22">getPlatformModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></h3>
 
 <table>
@@ -2269,34 +2339,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deletePlatformModelHandler%22">deletePlatformModelHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-platform-models-name">GET <code>/platform/models/&lt;name&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/platform/models/&lt;name&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPlatformModelHandler%22">getPlatformModelHandler</a></td>
 </tr>
 </tbody>
 </table>

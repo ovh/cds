@@ -283,6 +283,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/template/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/</loc>
   </url>
   
@@ -495,6 +499,14 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/application/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/template/apply/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/applytemplate/</loc>
   </url>
   
   <url>
@@ -942,6 +954,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/template/instances/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/worker/key/</loc>
   </url>
   
@@ -1178,6 +1194,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/template/pull/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/pull/</loc>
   </url>
   
@@ -1187,6 +1207,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/admin/hooks/purge/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/template/push/</loc>
   </url>
   
   <url>
@@ -1355,6 +1379,14 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/worker/tag/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/template/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/template/</loc>
   </url>
   
   <url>
