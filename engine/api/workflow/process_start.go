@@ -24,9 +24,10 @@ func processStartFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.
 	if ok && len(nodeRuns) > 0 {
 		nextSubNumber++
 	}
-	log.Debug("processWorkflowRun> starting from node %#v", startingFromNode)
+	log.Debug("processWorkflowRun> starting from node %v", startingFromNode)
+
 	// Find ancestors
-	nodeIds := start.Ancestors(wr.Workflow.WorkflowData, mapNodes, false)
+	nodeIds := start.Ancestors(wr.Workflow.WorkflowData)
 	sourceNodesRun := make([]*sdk.WorkflowNodeRun, 0, len(nodeIds))
 	for i := range nodeIds {
 		nodesRuns, ok := wr.WorkflowNodeRuns[nodeIds[i]]
