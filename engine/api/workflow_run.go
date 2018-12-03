@@ -642,8 +642,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 				nodeIDsAncestors = wNode.Ancestors(&wfRun.Workflow, false)
 			}
 			if node != nil {
-				mapNodes := wfRun.Workflow.WorkflowData.Maps()
-				nodeIDsAncestors = node.Ancestors(wfRun.Workflow.WorkflowData, mapNodes, false)
+				nodeIDsAncestors = node.Ancestors(wfRun.Workflow.WorkflowData)
 			}
 
 			for _, ancestorID := range nodeIDsAncestors {

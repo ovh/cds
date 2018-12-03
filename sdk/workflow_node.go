@@ -206,50 +206,29 @@ func (n *Node) maps(m map[int64]*Node) map[int64]*Node {
 	return m
 }
 
-func (n *Node) Ancestors(w *WorkflowData, mapNodes map[int64]*Node, deep bool) []int64 {
+func (n *Node) Ancestors(w *WorkflowData) []int64 {
 	if n == nil {
 		return nil
 	}
 
-	res, ok := w.Node.ancestor(n.ID, deep)
-
-	if !ok {
-		for _, j := range w.Joins {
-			resAncestor, found := (&j).ancestor(j.ID, deep)
-
-			if found {
-				if len(resAncestor) == 1 || deep {
-					for id := range resAncestor {
-						res[id] = true
-					}
-				}
-
-				if len(resAncestor) == 0 || deep {
-					for _, jc := range j.JoinContext {
-						res[jc.ParentID] = true
-						if deep {
-							node := mapNodes[jc.ParentID]
-							if node != nil {
-								ancerstorRes := node.Ancestors(w, mapNodes, deep)
-								for _, id := range ancerstorRes {
-									res[id] = true
-								}
-							}
+	IDs := make([]int64, 0)
+	for _, node := range w.Array() {
+		for _, t := range node.Triggers {
+			if t.ChildNode.ID == n.ID {
+				if node.Type == NodeTypeJoin {
+					join := w.NodeByID(node.ID)
+					if join != nil {
+						for _, jc := range join.JoinContext {
+							IDs = append(IDs, jc.ParentID)
 						}
 					}
+				} else {
+					IDs = append(IDs, node.ID)
 				}
-				break
 			}
 		}
 	}
-
-	keys := make([]int64, len(res))
-	i := 0
-	for k := range res {
-		keys[i] = k
-		i++
-	}
-	return keys
+	return IDs
 }
 
 func (n *Node) ancestorNames(name string) ([]string, bool) {
