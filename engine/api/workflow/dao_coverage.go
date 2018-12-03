@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 )
@@ -194,6 +195,9 @@ func ComputeLatestDefaultBranchReport(ctx context.Context, db gorp.SqlExecutor, 
 		}
 		defaultCoverage.Report.Files = nil
 		covReport.Trend.DefaultBranch = defaultCoverage.Report
+	} else {
+		metrics.PushCoverage(proj.Key, wnr.ApplicationID, wnr.WorkflowID, wnr.Number, covReport.Report)
 	}
+
 	return nil
 }

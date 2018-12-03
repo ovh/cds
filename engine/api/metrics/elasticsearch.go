@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	coverage "github.com/sguiheux/go-coverage"
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/ovh/cds/engine/api/services"
@@ -103,6 +104,27 @@ func PushUnitTests(projKey string, appID int64, workflowID int64, num int64, tes
 	summary["ko"] = tests.TotalKO
 	summary["ok"] = tests.TotalOK
 	summary["skip"] = tests.TotalSkipped
+
+	m.Value = summary
+
+	metricsChan <- m
+}
+
+// PushCoverage Create metrics from coverage and send them
+func PushCoverage(projKey string, appID int64, workflowID int64, num int64, cover coverage.Report) {
+	m := sdk.Metric{
+		Date:          time.Now(),
+		ProjectKey:    projKey,
+		ApplicationID: appID,
+		WorkflowID:    workflowID,
+		Key:           sdk.MetricKeyCoverage,
+		Num:           num,
+	}
+
+	summary := make(map[string]float64, 3)
+	summary["covered_lines"] = float64(cover.CoveredLines)
+	summary["total_lines"] = float64(cover.TotalLines)
+	summary["percent"] = (summary["covered_lines"] / summary["total_lines"]) * 100
 
 	m.Value = summary
 
