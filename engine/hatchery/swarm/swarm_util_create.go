@@ -119,12 +119,26 @@ checkImage:
 	}
 
 	if !imageFound {
+		hatchery.SendSpawnInfo(ctx, h, spawnArgs.IsWorkflowJob, spawnArgs.JobID, sdk.SpawnMsg{
+			ID:   sdk.MsgSpawnInfoHatcheryStartDockerPull.ID,
+			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+		})
+
 		_, next := observability.Span(ctx, "swarm.dockerClient.pullImage", observability.Tag("image", cArgs.image))
 		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage); err != nil {
 			next()
+			hatchery.SendSpawnInfo(ctx, h, spawnArgs.IsWorkflowJob, spawnArgs.JobID, sdk.SpawnMsg{
+				ID:   sdk.MsgSpawnInfoHatcheryEndDockerPullErr.ID,
+				Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image, err},
+			})
 			return sdk.WrapError(err, "Unable to pull image %s on %s", cArgs.image, dockerClient.name)
 		}
 		next()
+
+		hatchery.SendSpawnInfo(ctx, h, spawnArgs.IsWorkflowJob, spawnArgs.JobID, sdk.SpawnMsg{
+			ID:   sdk.MsgSpawnInfoHatcheryEndDockerPull.ID,
+			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
+		})
 	}
 
 	_, next = observability.Span(ctx, "swarm.dockerClient.ContainerCreate", observability.Tag(observability.TagWorker, cArgs.name), observability.Tag("network", fmt.Sprintf("%v", networkingConfig)))

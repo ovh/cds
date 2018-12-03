@@ -426,6 +426,12 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 				Message:    spawnInfos,
 				RemoteTime: time.Now(),
 			}}
+		} else {
+			wjob.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
+				APITime:    time.Now(),
+				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobInQueue.ID},
+				RemoteTime: time.Now(),
+			}}
 		}
 
 		//Insert in database
@@ -435,6 +441,10 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 			return report, sdk.WrapError(err, "Unable to insert in table workflow_node_run_job")
 		}
 		next()
+
+		if err := AddSpawnInfosNodeJobRun(db, wjob.ID, PrepareSpawnInfos(wjob.SpawnInfos)); err != nil {
+			return nil, sdk.WrapError(err, "Cannot save spawn info job %d", wjob.ID)
+		}
 
 		//Put the job run in database
 		stage.RunJobs = append(stage.RunJobs, wjob)
@@ -502,7 +512,7 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 			if runJobDB.Status == sdk.StatusBuilding.String() || runJobDB.Status == sdk.StatusWaiting.String() {
 				stageEnd = false
 			}
-			spawnInfos, err := loadNodeRunJobInfo(db, runJob.ID)
+			spawnInfos, err := LoadNodeRunJobInfo(db, runJob.ID)
 			if err != nil {
 				return false, sdk.WrapError(err, "unable to load spawn infos for runJob: %d", runJob.ID)
 			}
@@ -837,7 +847,7 @@ func SyncNodeRunRunJob(ctx context.Context, db gorp.SqlExecutor, nodeRun *sdk.Wo
 		for j := range s.RunJobs {
 			runJob := &s.RunJobs[j]
 			if runJob.ID == nodeJobRun.ID {
-				spawnInfos, err := loadNodeRunJobInfo(db, runJob.ID)
+				spawnInfos, err := LoadNodeRunJobInfo(db, runJob.ID)
 				if err != nil {
 					return false, sdk.WrapError(err, "unable to load spawn infos for runJobID: %d", runJob.ID)
 				}

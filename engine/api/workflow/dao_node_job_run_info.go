@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -13,8 +14,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-//loadNodeRunJobInfo load infos (workflow_node_run_job_infos) for a job (workflow_node_run_job)
-func loadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, error) {
+// LoadNodeRunJobInfo load infos (workflow_node_run_job_infos) for a job (workflow_node_run_job)
+func LoadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, error) {
 	res := []struct {
 		Bytes sql.NullString `db:"spawninfos"`
 	}{}
@@ -27,12 +28,19 @@ func loadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, erro
 	}
 
 	spawnInfos := []sdk.SpawnInfo{}
-	for _, r := range res {
-		v := []sdk.SpawnInfo{}
-		gorpmapping.JSONNullString(r.Bytes, &v)
-		spawnInfos = append(spawnInfos, v...)
+	for i := range res {
+		spInfos := []sdk.SpawnInfo{}
+		if err := gorpmapping.JSONNullString(res[i].Bytes, &spInfos); err != nil {
+			// should never append, but log error
+			log.Warning("wrong spawnInfos format: res: %v for id: %v err: %v", res[i].Bytes, jobID, err)
+			continue
+		}
+		spawnInfos = append(spawnInfos, spInfos...)
 	}
-
+	// sort here and not in sql, as it's could be a json array in sql value
+	sort.Slice(spawnInfos, func(i, j int) bool {
+		return spawnInfos[i].APITime.Before(spawnInfos[j].APITime)
+	})
 	return spawnInfos, nil
 }
 
@@ -52,6 +60,6 @@ func insertNodeRunJobInfo(db gorp.SqlExecutor, info *sdk.WorkflowNodeJobRunInfo)
 		return fmt.Errorf("insertNodeRunJobInfo> Unable to insert into workflow_node_run_job_info id = %d", info.WorkflowNodeJobRunID)
 	}
 
-	log.Debug("insertNodeRunJobInfo> on node run: %d (%d)", info.ID, info.WorkflowNodeJobRunID)
+	log.Debug("insertNodeRunJobInfo> on node run: %d (job run:%d)", info.WorkflowNodeRunID, info.WorkflowNodeJobRunID)
 	return nil
 }

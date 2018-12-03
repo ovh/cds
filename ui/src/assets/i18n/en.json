@@ -418,6 +418,7 @@
   "job_delete": "Delete job",
   "job_save": "Save job",
   "job_spawn_title": "Information",
+  "job_spawn_no_information": "No information for now...",
 
   "monitoring": "Monitoring",
 

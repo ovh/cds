@@ -52,15 +52,18 @@
         </div>
         <div class="row">
             <div class="column">
-                <div class="log animated fadeIn" *ngIf="selectedRunJob && mapStepStatus">
+                <div class="log animated fadeIn" *ngIf="selectedRunJob && mapStepStatus && mapJobStatus">
                     <ul>
                         <li>
-                            <app-workflow-rin-job-spawn-info
-                              [spawnInfos]="selectedRunJob.spawninfos"
-                              [variables]="selectedRunJob.parameters"
-                              [job]="selectedRunJob.job"
-                              [(displayServicesLogs)]="displayServiceLogs">
-                            </app-workflow-rin-job-spawn-info>
+                            <app-workflow-run-job-spawn-info
+                                [project]="project"
+                                [workflowName]="workflowName"
+                                [nodeRun]="nodeRun"
+                                [jobStatus]="mapJobStatus.get(selectedRunJob.job.pipeline_action_id).status"
+                                [nodeJobRun]="selectedRunJob"
+                                [variables]="selectedRunJob.parameters"
+                                [(displayServicesLogs)]="displayServiceLogs">
+                            </app-workflow-run-job-spawn-info>
                         </li>
                         <ng-container *ngIf="!displayServiceLogs">
                             <li *ngFor="let step of selectedRunJob.job.action.actions; let i = index">
