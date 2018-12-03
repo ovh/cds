@@ -150,6 +150,12 @@ func (api *API) postWorkflowJobStaticFilesWithTempURLHandler() service.Handler {
 		staticfile.NodeRunID = nodeJobRun.WorkflowNodeRunID
 		staticfile.Name = name
 
+		nodeRun, errNr := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if errNr != nil {
+			return sdk.WrapError(errNr, "Cannot load node run")
+		}
+		staticfile.WorkflowID = nodeRun.WorkflowID
+
 		var retryURL = 10
 		var url, key string
 		var errorStoreURL error

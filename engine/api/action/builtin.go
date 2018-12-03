@@ -274,7 +274,7 @@ Semver used if fully compatible with https://semver.org/
 		Advanced:    true})
 	serveStaticAct.Parameter(sdk.Parameter{
 		Name:        "static-key",
-		Description: "Indicate a static-key which will be a reference to keep the same generated URL",
+		Description: "Indicate a static-key which will be a reference to keep the same generated URL. Example: {{.git.branch}}",
 		Type:        sdk.StringParameter,
 		Value:       "",
 		Advanced:    true})
