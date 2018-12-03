@@ -32,11 +32,11 @@ func (staticfile *StaticFiles) GetName() string {
 func (staticfile *StaticFiles) GetPath() string {
 	var container string
 	if staticfile.StaticKey != "" {
-		container = base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%d-%s-%s", staticfile.WorkflowID, url.PathEscape(staticfile.StaticKey), url.PathEscape(staticfile.Name))))
+		container = fmt.Sprintf("%d-%s-%s", staticfile.WorkflowID, url.PathEscape(staticfile.StaticKey), url.PathEscape(staticfile.Name))
 	} else {
-		container = base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf("%d-%s", staticfile.NodeJobRunID, url.PathEscape(staticfile.Name))))
+		container = fmt.Sprintf("%d-%s", staticfile.NodeJobRunID, url.PathEscape(staticfile.Name))
 	}
-	return container
+	return base64.RawURLEncoding.EncodeToString([]byte(container))
 }
 
 // Equal returns true if  StaticFiles are equal to another one
