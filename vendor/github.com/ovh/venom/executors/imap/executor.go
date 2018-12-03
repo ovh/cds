@@ -138,7 +138,8 @@ func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 	for _, msg := range messages {
 		m, erre := extract(msg, l)
 		if erre != nil {
-			return nil, erre
+			l.Warnf("Cannot extract the content of the mail: %s", erre)
+			continue
 		}
 
 		found, errs := e.isSearched(m)

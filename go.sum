@@ -334,8 +334,6 @@ github.com/mattn/go-shellwords v1.0.3 h1:K/VxK7SZ+cvuPgFSLKi5QPI9Vr/ipOf4C1gN+nt
 github.com/mattn/go-shellwords v1.0.3/go.mod h1:3xCvwCdWdlDJUrvuMn7Wuy9eWs4pE8vqg+NOMyg4B2o=
 github.com/mattn/go-sqlite3 v1.9.0 h1:pDRiWfl+++eC2FEFRy6jXmQlvp4Yh3z1MJKg4UeYM/4=
 github.com/mattn/go-sqlite3 v1.9.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
-github.com/mattn/go-xmpp v0.0.0-20161121012536-f4550b539938 h1:mly5gFat+EGyszRBkOAG9GG7PEQhdsPlLlzxLpB6XfY=
-github.com/mattn/go-xmpp v0.0.0-20161121012536-f4550b539938/go.mod h1:Cs5mF0OsrRRmhkyOod//ldNPOwJsrBvJ+1WRspv0xoc=
 github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817 h1:c8WjsOD82J56r40foSWLqgdmjmzOYmQYzX/nYclFBD4=
 github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817/go.mod h1:9fxibJccNxU2cnpIKLRRFA7zX7qhkJIQWBb449FYHOo=
 github.com/matttproud/golang_protobuf_extensions v1.0.1 h1:4hp9jkHxhMHkqkrB3Ix0jegS5sx/RkqARlsWZ6pIwiU=
@@ -396,8 +394,8 @@ github.com/ory-am/common v0.4.0 h1:edGPoxYX4hno0IJHXh9TCMUPR6ZcJp+y6aClFYxeuUE=
 github.com/ory-am/common v0.4.0/go.mod h1:oCYGuwwM8FyYMKqh9vrhBaeUoyz/edx0bgJN6uS6/+k=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 h1:x9UmLJfoTojbsVpUh0sOpU42p7FqhlzaHKWj6Kcf6ew=
 github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689/go.mod h1:joRatxRJaZBsY3JAOEMcoOp05CnZzsx4scTxi95DHyQ=
-github.com/ovh/venom v0.23.2 h1:B8Hw4YJ7G6eU+CtorqtVbn3RhTFNUXBNdARoQnwGZdY=
-github.com/ovh/venom v0.23.2/go.mod h1:vf+2wztk/hOPS9AU32/B9XhwVPxKZ97wBJLu+AGXhYQ=
+github.com/ovh/venom v0.23.3 h1:qD2rYp8V34xXFjIqH25OeC1M+WI5RZdcRXdNwnR/0+c=
+github.com/ovh/venom v0.23.3/go.mod h1:vf+2wztk/hOPS9AU32/B9XhwVPxKZ97wBJLu+AGXhYQ=
 github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473 h1:WX3Cy2kyJeQp/HGFao07xm75Ec5BlF41hpi0U/37oHg=
 github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473/go.mod h1:5Qy53wJuE3WEGY1sMAlDyhu/Rx9ICM+uUU6X0tBR3Xo=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c h1:Lgl0gzECD8GnQ5QCWA8o6BtfL6mDH5rQgM4/fX3avOs=
@@ -513,7 +511,6 @@ github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b h1:mvFk4C4VehqptP
 github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b/go.mod h1:LH8s5iF2nb4JFQ1A9fAcvsdqzUGZttifagNxO5TOiPQ=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277 h1:5wm+TddKWEVUnNGFEYYThIVBAdJkZjNCnco5SJYo99Q=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277/go.mod h1:SsMrIuedaKvK8GekjwjVv8gMnHNAuvoINpKCARzdsEQ=
-github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f h1:ndiJ8+QzOQ/QPOPBVt3D7JgkXeYtd7VZFHcR0uziFE8=
 github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f/go.mod h1:7nhqtxBPZoPXx86SqUzP/OFLd8prnhkydPk51uJthQc=
 github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed h1:I1vcLHWU9m30rA90rMrKPu0eD3NDA4FBlkB8WMaDyUw=
 github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed/go.mod h1:9w6KSdZh23UWqOywWsRLUcJUrUNjRh4Ql3z9uVgnSP4=

@@ -338,8 +338,6 @@ github.com/mattn/go-isatty
 github.com/mattn/go-runewidth
 # github.com/mattn/go-shellwords v1.0.3
 github.com/mattn/go-shellwords
-# github.com/mattn/go-xmpp v0.0.0-20161121012536-f4550b539938
-github.com/mattn/go-xmpp
 # github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817
 github.com/mattn/go-zglob
 github.com/mattn/go-zglob/fastwalk
@@ -383,7 +381,7 @@ github.com/opencontainers/runc/libcontainer/devices
 github.com/opencontainers/runtime-spec/specs-go
 # github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689
 github.com/ovh/go-ovh/ovh
-# github.com/ovh/venom v0.23.1
+# github.com/ovh/venom v0.23.3
 github.com/ovh/venom
 github.com/ovh/venom/context/default
 github.com/ovh/venom/context/redis
@@ -431,8 +429,8 @@ github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.0.0-20170830190555-bc8b88226a12
 github.com/prometheus/common/expfmt
-github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 github.com/prometheus/common/model
+github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg
 # github.com/prometheus/procfs v0.0.0-20170703101242-e645f4e5aaa8
 github.com/prometheus/procfs
 github.com/prometheus/procfs/xfs
@@ -545,18 +543,18 @@ github.com/yuin/gopher-lua/ast
 github.com/yuin/gopher-lua/parse
 github.com/yuin/gopher-lua/pm
 # go.opencensus.io v0.15.0
+go.opencensus.io/tag
 go.opencensus.io/stats
-go.opencensus.io/stats/view
 go.opencensus.io/exporter/jaeger
 go.opencensus.io/exporter/prometheus
+go.opencensus.io/stats/view
 go.opencensus.io/trace
-go.opencensus.io/tag
 go.opencensus.io/plugin/ochttp/propagation/b3
 go.opencensus.io/trace/propagation
 go.opencensus.io/stats/internal
-go.opencensus.io/internal/tagencoding
 go.opencensus.io/exporter/jaeger/internal/gen-go/jaeger
 go.opencensus.io/internal
+go.opencensus.io/internal/tagencoding
 go.opencensus.io/trace/internal
 go.opencensus.io
 # golang.org/x/crypto v0.0.0-20180820150726-614d502a4dac

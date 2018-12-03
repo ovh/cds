@@ -154,7 +154,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.1 // indirect
 	github.com/mattn/go-shellwords v1.0.3 // indirect
 	github.com/mattn/go-sqlite3 v1.9.0 // indirect
-	github.com/mattn/go-xmpp v0.0.0-20161121012536-f4550b539938
 	github.com/mattn/go-zglob v0.0.0-20171230104132-4959821b4817
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mcuadros/go-defaults v0.0.0-20161116231230-e1c978be3307
@@ -182,7 +181,7 @@ require (
 	github.com/opencontainers/selinux v1.0.0-rc1 // indirect
 	github.com/ory-am/common v0.4.0 // indirect
 	github.com/ovh/go-ovh v0.0.0-20171219162654-02f7e9439689 // indirect
-	github.com/ovh/venom v0.23.2
+	github.com/ovh/venom v0.23.3
 	github.com/ovhlabs/izanami-go-client v0.0.0-20180321094556-73dedd898473
 	github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -195,9 +194,9 @@ require (
 	github.com/pkg/browser v0.0.0-20170505125900-c90ca0c84f15
 	github.com/pkg/errors v0.0.0-20171216070316-e881fd58d78e
 	github.com/pkg/sftp v0.0.0-20160930220758-4d0e916071f6 // indirect
-	github.com/prometheus/client_golang v0.0.0-20180827221046-3653aff4d509
+	github.com/prometheus/client_golang v0.0.0-20180827221046-3653aff4d509 // indirect
 	github.com/prometheus/client_model v0.0.0-20170216185247-6f3806018612 // indirect
-	github.com/prometheus/common v0.0.0-20170830190555-bc8b88226a12
+	github.com/prometheus/common v0.0.0-20170830190555-bc8b88226a12 // indirect
 	github.com/prometheus/procfs v0.0.0-20170703101242-e645f4e5aaa8 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20161128210544-1f30fe9094a5 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20160620083229-6f4757563362
