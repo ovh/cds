@@ -212,22 +212,20 @@ func (n *Node) Ancestors(w *WorkflowData) []int64 {
 	}
 
 	IDs := make([]int64, 0)
-	for _, node := range w.Array() {
-		for _, t := range node.Triggers {
-			if t.ChildNode.ID == n.ID {
-				if node.Type == NodeTypeJoin {
-					join := w.NodeByID(node.ID)
-					if join != nil {
-						for _, jc := range join.JoinContext {
-							IDs = append(IDs, jc.ParentID)
-						}
-					}
-				} else {
+	if n.Type != NodeTypeJoin {
+		for _, node := range w.Array() {
+			for _, t := range node.Triggers {
+				if t.ChildNode.ID == n.ID {
 					IDs = append(IDs, node.ID)
 				}
 			}
 		}
+	} else {
+		for _, jc := range n.JoinContext {
+			IDs = append(IDs, jc.ParentID)
+		}
 	}
+
 	return IDs
 }
 
