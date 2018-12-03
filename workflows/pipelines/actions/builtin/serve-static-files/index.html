@@ -2222,13 +2222,14 @@
 <ul>
 <li>name: Name to display in CDS UI and identify your static files</li>
 <li>path: Path where static files will be uploaded (example: mywebsite/*). If it&rsquo;s a file, the entrypoint would be set to this filename by default.</li>
-<li>tag: Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html).</li>
+<li>entrypoint: Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html).</li>
+<li>static-key: Indicate a static-key which will be a reference to keep the same generated URL. Example: {{.git.branch}}.</li>
 </ul>
 
 <h3 id="example">Example</h3>
 
 <ul>
-<li>In this example I created a website with script in bash and use action <code>Serve Static Files</code>.</li>
+<li>In this example I created a website with script in bash and use action <code>Serve Static Files</code>. If you want to keep the same URL by .git.branch for example you can indicate in the advanced parameters a <code>static-key</code> equals to <code>{{.git.branch}}</code>.</li>
 </ul>
 
 <p><img src="https://ovh.github.io/cds/images/workflows.pipelines.actions.builtin.serve-static-files-job.png" alt="img" /></p>
