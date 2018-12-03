@@ -50,7 +50,6 @@
                 <div class="inline fields">
                     <div class="four wide field"><label>project</label></div>
                     <div class="twelve wide field">
-
                         <input type="text" [(ngModel)]="hook.outgoing_hook.config['target_project'].value" readonly/>
                     </div>
                 </div>
@@ -73,6 +72,7 @@
                     <div class="twelve wide field">
                         <sui-select class="selection" placeholder="{{'hook' | translate}}"
                                     [(ngModel)]="hook.outgoing_hook.config['target_hook'].value"
+                                    (ngModelChange)="updateWorkflowOutgoingHook()"
                                     [options]="availableHooks"
                                     [isSearchable]="true"
                                     labelField="uuid"
@@ -80,6 +80,18 @@
                                     #selectHook>
                             <sui-select-option *ngFor="let option of selectHook.filteredOptions" [value]="option">{{option.name}} </sui-select-option>
                         </sui-select>
+                    </div>
+                </div>
+                <div class="inline fields" *ngIf="availableHooks && hook.outgoing_hook.config['target_hook'].value">
+                    <div class="four wide field"><label>payload</label></div>
+                    <div class="twelve wide field">
+                        <codemirror
+                                [class.invalid]="invalidJSON"
+                                [(ngModel)]="hook.outgoing_hook.config['payload'].value"
+                                [config]="codeMirrorConfig"
+                                (change)="changeCodeMirror($event)"
+                                #textareaCodeMirror>
+                        </codemirror>
                     </div>
                 </div>
             </ng-container>

@@ -745,7 +745,7 @@ func RestartWorkflowNodeJob(ctx context.Context, db gorp.SqlExecutor, wNodeJob s
 		return sdk.WrapError(errNR, "RestartWorkflowNodeJob> Cannot load node run")
 	}
 
-	//Synchronise struct but not in db
+	//Synchronize struct but not in db
 	sync, errS := SyncNodeRunRunJob(ctx, db, nodeRun, wNodeJob)
 	if errS != nil {
 		return sdk.WrapError(errS, "RestartWorkflowNodeJob> error on sync nodeJobRun")

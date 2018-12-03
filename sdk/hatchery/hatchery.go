@@ -48,8 +48,7 @@ func WithTags(ctx context.Context, h Interface) context.Context {
 }
 
 // Create creates hatchery
-func Create(h Interface) error {
-	ctx := context.Background()
+func Create(ctx context.Context, h Interface) error {
 	ctx, cancel := context.WithCancel(ctx)
 
 	// Gracefully shutdown connections
@@ -202,7 +201,7 @@ func Create(h Interface) error {
 			}
 
 			//Check if hatchery if able to start a new worker
-			if !checkCapacities(h) {
+			if !checkCapacities(ctx, h) {
 				log.Info("hatchery %s is not able to provision new worker", h.Service().Name)
 				continue
 			}
@@ -283,10 +282,10 @@ func Create(h Interface) error {
 				}
 			}()
 
-			stats.Record(currentCtx, h.Stats().Jobs.M(1))
+			stats.Record(currentCtx, h.Metrics().Jobs.M(1))
 
 			if _, ok := j.Header["SSE"]; ok {
-				stats.Record(currentCtx, h.Stats().JobsSSE.M(1))
+				stats.Record(currentCtx, h.Metrics().JobsSSE.M(1))
 			}
 
 			//Check if the jobs is concerned by a pending worker creation
@@ -307,7 +306,7 @@ func Create(h Interface) error {
 			}
 
 			//Check if hatchery if able to start a new worker
-			if !checkCapacities(h) {
+			if !checkCapacities(ctx, h) {
 				log.Info("hatchery %s is not able to provision new worker", h.Service().Name)
 				endTrace("no capacities")
 				continue
@@ -358,7 +357,7 @@ func Create(h Interface) error {
 			provisioning(h, models)
 
 		case <-tickerRegister.C:
-			if err := workerRegister(h, workersStartChan); err != nil {
+			if err := workerRegister(ctx, h, workersStartChan); err != nil {
 				log.Warning("Error on workerRegister: %s", err)
 			}
 		}
@@ -483,6 +482,16 @@ func canRunJob(h Interface, j workerStarterRequest, model sdk.Model) bool {
 	}
 
 	return h.CanSpawn(&model, j.id, j.requirements)
+}
+
+// SendSpawnInfo sends a spawnInfo
+func SendSpawnInfo(ctx context.Context, h Interface, isWorkflowJob bool, jobID int64, spawnMsg sdk.SpawnMsg) {
+	infos := []sdk.SpawnInfo{{RemoteTime: time.Now(), Message: spawnMsg}}
+	ctxc, cancel := context.WithTimeout(ctx, 10*time.Second)
+	if err := h.CDSClient().QueueJobSendSpawnInfo(ctxc, isWorkflowJob, jobID, infos); err != nil {
+		log.Warning("spawnWorkerForJob> cannot client.sendSpawnInfo for job %d: %s", jobID, err)
+	}
+	cancel()
 }
 
 func logTime(h Interface, name string, then time.Time) {

@@ -289,9 +289,9 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-    
-    // loadRun, DisableDetailledNodeRun = false for calls from CDS Service
-    // as hook service. It's needed to have the buildParameters.
+
+		// loadRun, DisableDetailledNodeRun = false for calls from CDS Service
+		// as hook service. It's needed to have the buildParameters.
 		run, err := workflow.LoadRun(api.mustDB(), key, name, number,
 			workflow.LoadRunOptions{
 				WithArtifacts:           true,
@@ -389,7 +389,7 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			)
 
 			if workflowRuns[0].Status == sdk.StatusFail.String() {
-				observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+				observability.Record(ctx, api.Metrics.WorkflowRunFailed, 1)
 			}
 		}
 
@@ -735,7 +735,7 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 	)
 	if wr.Status == sdk.StatusFail.String() {
-		observability.Record(ctx, api.Stats.WorkflowRunFailed, 1)
+		observability.Record(ctx, api.Metrics.WorkflowRunFailed, 1)
 	}
 
 	if errC := tx.Commit(); errC != nil {
@@ -758,7 +758,13 @@ func (api *API) getWorkflowNodeRunHandler() service.Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{WithTests: true, WithArtifacts: true, WithCoverage: true, WithVulnerabilities: true})
+		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, workflow.LoadRunOptions{
+			WithTests:           true,
+			WithArtifacts:       true,
+			WithStaticFiles:     true,
+			WithCoverage:        true,
+			WithVulnerabilities: true,
+		})
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
@@ -779,7 +785,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			observability.Tag(observability.TagProjectKey, key),
 			observability.Tag(observability.TagWorkflow, name),
 		)
-		observability.Record(ctx, api.Stats.WorkflowRunStarted, 1)
+		observability.Record(ctx, api.Metrics.WorkflowRunStarted, 1)
 
 		_, next := observability.Span(ctx, "project.Load")
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
@@ -958,10 +964,11 @@ func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		}
 		if opts.Manual != nil {
 			optsCopy.Manual = &sdk.WorkflowNodeRunManual{
-				PipelineParameters: opts.Manual.PipelineParameters,
-				User:               opts.Manual.User,
-				Payload:            opts.Manual.Payload,
+				User:    opts.Manual.User,
+				Payload: opts.Manual.Payload,
 			}
+			optsCopy.Manual.PipelineParameters = make([]sdk.Parameter, len(opts.Manual.PipelineParameters))
+			copy(optsCopy.Manual.PipelineParameters, opts.Manual.PipelineParameters)
 		}
 		if opts.Hook != nil {
 			optsCopy.Hook = &sdk.WorkflowNodeRunHookEvent{
@@ -1062,16 +1069,18 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 	var wg = &sync.WaitGroup{}
 	wg.Add(len(fromNodes))
 	for i := 0; i < len(fromNodes); i++ {
+
 		optsCopy := sdk.WorkflowRunPostHandlerOption{
 			FromNodeIDs: opts.FromNodeIDs,
 			Number:      opts.Number,
 		}
 		if opts.Manual != nil {
 			optsCopy.Manual = &sdk.WorkflowNodeRunManual{
-				PipelineParameters: opts.Manual.PipelineParameters,
-				User:               opts.Manual.User,
-				Payload:            opts.Manual.Payload,
+				User:    opts.Manual.User,
+				Payload: opts.Manual.Payload,
 			}
+			optsCopy.Manual.PipelineParameters = make([]sdk.Parameter, len(opts.Manual.PipelineParameters))
+			copy(optsCopy.Manual.PipelineParameters, opts.Manual.PipelineParameters)
 		}
 		if opts.Hook != nil {
 			optsCopy.Hook = &sdk.WorkflowNodeRunHookEvent{
@@ -1080,6 +1089,7 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			}
 		}
 		go func(fromNode *sdk.WorkflowNode) {
+
 			r1, err := runFromNode(ctx, db, store, optsCopy, p, wf, lastRun, u, fromNode)
 			if err != nil {
 				log.Error("error: %v", err)
@@ -1335,6 +1345,28 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 		}
 
 		return service.WriteJSON(w, arts, http.StatusOK)
+	}
+}
+
+func (api *API) getWorkflowNodeRunJobSpawnInfosHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		runJobID, errJ := requestVarInt(r, "runJobId")
+		if errJ != nil {
+			return sdk.WrapError(errJ, "getWorkflowNodeRunJobSpawnInfosHandler> runJobId: invalid number")
+		}
+		db := api.mustDB()
+
+		spawnInfos, err := workflow.LoadNodeRunJobInfo(db, runJobID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load spawn infos for node run job id %d", runJobID)
+		}
+
+		l := r.Header.Get("Accept-Language")
+		for ki, info := range spawnInfos {
+			m := sdk.NewMessage(sdk.Messages[info.Message.ID], info.Message.Args...)
+			spawnInfos[ki].UserMessage = m.String(l)
+		}
+		return service.WriteJSON(w, spawnInfos, http.StatusOK)
 	}
 }
 

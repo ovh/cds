@@ -11,7 +11,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
@@ -28,7 +27,6 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/purge"
@@ -49,8 +47,7 @@ import (
 
 // Configuration is the configuraton structure for CDS API
 type Configuration struct {
-	Name string `toml:"name" default:"cdsinstance" comment:"Name of this CDS Instance" json:"name"`
-	URL  struct {
+	URL struct {
 		API string `toml:"api" default:"http://localhost:8081" json:"api"`
 		UI  string `toml:"ui" default:"http://localhost:2015" json:"ui"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################" json:"url"`
@@ -233,10 +230,22 @@ type API struct {
 	eventsBroker        *eventsBroker
 	warnChan            chan sdk.Event
 	Cache               cache.Store
-	Stats               struct {
-		WorkflowRunFailed  *stats.Int64Measure
-		WorkflowRunStarted *stats.Int64Measure
-		Sessions           *stats.Int64Measure
+	Metrics             struct {
+		WorkflowRunFailed    *stats.Int64Measure
+		WorkflowRunStarted   *stats.Int64Measure
+		Sessions             *stats.Int64Measure
+		nbUsers              *stats.Int64Measure
+		nbApplications       *stats.Int64Measure
+		nbProjects           *stats.Int64Measure
+		nbGroups             *stats.Int64Measure
+		nbPipelines          *stats.Int64Measure
+		nbWorkflows          *stats.Int64Measure
+		nbArtifacts          *stats.Int64Measure
+		nbWorkerModels       *stats.Int64Measure
+		nbWorkflowRuns       *stats.Int64Measure
+		nbWorkflowNodeRuns   *stats.Int64Measure
+		nbMaxWorkersBuilding *stats.Int64Measure
+		queue                *stats.Int64Measure
 	}
 }
 
@@ -570,13 +579,13 @@ func (a *API) Serve(ctx context.Context) error {
 		Background: ctx,
 	}
 	a.InitRouter()
-	if err := a.Router.InitStats("cds-api", a.Name); err != nil {
-		log.Error("unable to init router stats: %v", err)
+	if err := a.Router.InitMetrics("cds-api", a.Name); err != nil {
+		log.Error("unable to init router metrics: %v", err)
 	}
 
-	log.Info("Initializing Stats")
-	if err := a.initStats(); err != nil {
-		log.Error("unable to init api stats: %v", err)
+	log.Info("Initializing Metrics")
+	if err := a.initMetrics(ctx); err != nil {
+		log.Error("unable to init api metrics: %v", err)
 	}
 
 	//Initiliaze hook package
@@ -663,9 +672,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	})
-	sdk.GoRoutine(ctx, "metrics.Initialize", func(ctx context.Context) {
-		metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)
-	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "repositoriesmanager.ReceiveEvents", func(ctx context.Context) {
 		repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	}, a.PanicDump())
@@ -790,31 +796,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (a *API) initStats() error {
-	label := fmt.Sprintf("cds/cds-api/%s/workflow_runs_started", a.Name)
-	a.Stats.WorkflowRunStarted = stats.Int64(label, "number of started workflow runs", stats.UnitDimensionless)
-
-	label = fmt.Sprintf("cds/cds-api/%s/workflow_runs_failed", a.Name)
-	a.Stats.WorkflowRunFailed = stats.Int64(label, "number of failed workflow runs", stats.UnitDimensionless)
-
-	log.Info("api> Stats initialized")
-
-	return observability.RegisterView(
-		&view.View{
-			Name:        "workflow_runs_started",
-			Description: a.Stats.WorkflowRunStarted.Description(),
-			Measure:     a.Stats.WorkflowRunStarted,
-			Aggregation: view.Count(),
-		},
-		&view.View{
-			Name:        "workflow_runs_failed",
-			Description: a.Stats.WorkflowRunFailed.Description(),
-			Measure:     a.Stats.WorkflowRunFailed,
-			Aggregation: view.Count(),
-		},
-	)
 }
 
 const panicDumpTTL = 60 * 60 * 24 // 24 hours

@@ -133,5 +133,5 @@ func Status() sdk.MonitoringStatusLine {
 		status = sdk.MonitoringStatusAlert
 	}
 
-	return sdk.MonitoringStatusLine{Component: "Event", Value: o, Status: status}
+	return sdk.MonitoringStatusLine{Component: "Event Broker", Value: o, Status: status}
 }

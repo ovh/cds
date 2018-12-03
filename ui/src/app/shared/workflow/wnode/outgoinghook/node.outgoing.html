@@ -4,7 +4,7 @@
      [class.success]="noderun?.status === pipelineStatus.SUCCESS"
      [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED">
     <div class="name">
-        <i class="{{icon}} icon"></i> <span class="hook">{{model.name}}</span>
+        <i class="{{icon}} icon"></i> <span class="hook">{{node.name}}</span>
     </div>
 
     <ng-container *ngIf="model.name === 'WebHook'" >

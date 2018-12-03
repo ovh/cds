@@ -81,6 +81,7 @@ export class WorkflowSidebarCodeComponent {
     }
 
     cancel() {
+        this.updated = false;
         this._workflowCore.setWorkflowPreview(null);
         this._workflowCore.toggleAsCodeEditor({open: false, save: false});
     }
@@ -97,6 +98,7 @@ export class WorkflowSidebarCodeComponent {
         this._workflowStore.importWorkflow(this.project.key, this.workflow.name, this.exportedWf)
             .pipe(finalize(() => this.loading = false))
             .subscribe((wf) => {
+                this.updated = false;
                 this._workflowCore.toggleAsCodeEditor({open: false, save: false});
                 this._workflowCore.setWorkflowPreview(null);
                 this._toast.success('', this._translate.instant('workflow_updated'));

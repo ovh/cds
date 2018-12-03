@@ -714,13 +714,13 @@ func RenameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 		case sdk.NodeTypeOutGoingHook:
 			model := w.OutGoingHookModels[nodes[i].OutGoingHookContext.HookModelID]
 			// Check if node is named pipName_12
-			if nodes[i].Name == model.Type || strings.HasPrefix(nodes[i].Name, model.Type+"_") {
+			if nodes[i].Name == model.Name || strings.HasPrefix(nodes[i].Name, model.Name+"_") {
 				var hookNumber int
-				if nodes[i].Name == model.Type {
+				if nodes[i].Name == model.Name {
 					hookNumber = 1
 				} else {
 					// Retrieve Number
-					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, model.Type+"_", "", 1))
+					current, errI := strconv.Atoi(strings.Replace(nodes[i].Name, model.Name+"_", "", 1))
 					if errI == nil {
 						hookNumber = current
 					}

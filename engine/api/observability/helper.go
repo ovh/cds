@@ -8,6 +8,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
+	"go.opencensus.io/stats"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
 	"go.opencensus.io/trace"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -105,4 +108,37 @@ func findPrimaryKeyFromRequest(req *http.Request, db gorp.SqlExecutor, store cac
 	}
 
 	return pkey, pkey != ""
+}
+
+// NewViewLast creates a new view via aggregation LastValue()
+func NewViewLast(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.LastValue(),
+		TagKeys:     tags,
+	}
+}
+
+// NewViewLastFloat64 creates a new view via aggregation LastValue()
+func NewViewLastFloat64(name string, s *stats.Float64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.LastValue(),
+		TagKeys:     tags,
+	}
+}
+
+// NewViewCount creates a new view via aggregation LastValue()
+func NewViewCount(name string, s *stats.Int64Measure, tags []tag.Key) *view.View {
+	return &view.View{
+		Name:        name,
+		Description: s.Description(),
+		Measure:     s,
+		Aggregation: view.Count(),
+		TagKeys:     tags,
+	}
 }

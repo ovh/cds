@@ -18,7 +18,7 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
-	"go.opencensus.io/stats/view"
+	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/observability"
@@ -532,8 +532,8 @@ func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
 	return sdk.MonitoringStatusLine{Component: "Nb of Panics", Value: fmt.Sprintf("%d", r.nbPanic), Status: statusPanic}
 }
 
-// InitStats initialize prometheus metrics
-func (r *Router) InitStats(service, name string) error {
+// InitMetrics initialize prometheus metrics
+func (r *Router) InitMetrics(service, name string) error {
 	label := fmt.Sprintf("cds/%s/%s/router_errors", service, name)
 	r.Stats.Errors = stats.Int64(label, "number of errors", stats.UnitDimensionless)
 	label = fmt.Sprintf("cds/%s/%s/router_hits", service, name)
@@ -543,32 +543,15 @@ func (r *Router) InitStats(service, name string) error {
 	label = fmt.Sprintf("cds/%s/%s/sse_events", service, name)
 	r.Stats.SSEEvents = stats.Int64(label, "number of sse events", stats.UnitDimensionless)
 
-	log.Info("router> Stats initialized")
+	tagCDSInstance, _ := tag.NewKey("cds")
+	tags := []tag.Key{tagCDSInstance}
+
+	log.Info("api> Stats initialized")
 
 	return observability.RegisterView(
-		&view.View{
-			Name:        "router_errors",
-			Description: r.Stats.Errors.Description(),
-			Measure:     r.Stats.Errors,
-			Aggregation: view.Count(),
-		},
-		&view.View{
-			Name:        "router_hits",
-			Description: r.Stats.Hits.Description(),
-			Measure:     r.Stats.Hits,
-			Aggregation: view.Count(),
-		},
-		&view.View{
-			Name:        "sse_clients",
-			Description: r.Stats.SSEClients.Description(),
-			Measure:     r.Stats.SSEClients,
-			Aggregation: view.LastValue(),
-		},
-		&view.View{
-			Name:        "sse_events",
-			Description: r.Stats.SSEEvents.Description(),
-			Measure:     r.Stats.SSEEvents,
-			Aggregation: view.Count(),
-		},
+		observability.NewViewCount("router_errors", r.Stats.Errors, tags),
+		observability.NewViewCount("router_hits", r.Stats.Hits, tags),
+		observability.NewViewLast("sse_clients", r.Stats.SSEClients, tags),
+		observability.NewViewCount("sse_events", r.Stats.SSEEvents, tags),
 	)
 }

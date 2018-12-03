@@ -14,11 +14,11 @@ var (
 	nbWorkerToStart int64
 )
 
-func checkCapacities(h Interface) bool {
+func checkCapacities(ctx context.Context, h Interface) bool {
 	t := time.Now()
 	defer log.Debug("hatchery> checkCapacities> %.3f seconds elapsed", time.Since(t).Seconds())
 
-	workerPool, err := WorkerPool(h, sdk.StatusChecking, sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusWorkerPending, sdk.StatusWorkerRegistering)
+	workerPool, err := WorkerPool(ctx, h, sdk.StatusChecking, sdk.StatusWaiting, sdk.StatusBuilding, sdk.StatusWorkerPending, sdk.StatusWorkerRegistering)
 	if err != nil {
 		log.Error("hatchery> checkCapacities> Pool> Error: %v", err)
 		return false

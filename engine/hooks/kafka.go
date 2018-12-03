@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/Shopify/sarama"
@@ -14,6 +15,8 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+var nbKafkaConsumers int64
 
 func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 	exec := &sdk.TaskExecution{
@@ -99,6 +102,8 @@ func (s *Service) startKafkaHook(t *sdk.Task) error {
 
 	// consume message
 	go func() {
+		atomic.AddInt64(&nbKafkaConsumers, 1)
+		defer atomic.AddInt64(&nbKafkaConsumers, -1)
 		for msg := range consumer.Messages() {
 			exec := sdk.TaskExecution{
 				ProcessingTimestamp: time.Now().UnixNano(),

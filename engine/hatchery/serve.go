@@ -27,7 +27,7 @@ type Common struct {
 	service.Common
 	Router      *api.Router
 	initialized bool
-	stats       hatchery.Stats
+	metrics     hatchery.Metrics
 }
 
 const panicDumpDir = "panic_dumps"
@@ -161,11 +161,11 @@ func (c *Common) CommonServe(ctx context.Context, h hatchery.Interface) error {
 		}
 	}()
 
-	if err := c.initStats(h.Configuration().Name); err != nil {
+	if err := c.initMetrics(h.Configuration().Name); err != nil {
 		return err
 	}
 
-	if err := hatchery.Create(h); err != nil {
+	if err := hatchery.Create(ctx, h); err != nil {
 		return err
 	}
 
@@ -235,7 +235,7 @@ func getWorkersPoolHandler(h hatchery.Interface) service.HandlerFunc {
 			if h == nil {
 				return nil
 			}
-			pool, err := hatchery.WorkerPool(h)
+			pool, err := hatchery.WorkerPool(ctx, h)
 			if err != nil {
 				return sdk.WrapError(err, "getWorkersPoolHandler")
 			}

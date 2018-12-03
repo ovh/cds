@@ -29,7 +29,9 @@ type TemplateClient interface {
 type AdminService interface {
 	Services() ([]sdk.Service, error)
 	ServicesByName(name string) (*sdk.Service, error)
+	ServiceDelete(name string) error
 	ServicesByType(stype string) ([]sdk.Service, error)
+	ServiceNameCallGET(name string, url string) ([]byte, error)
 	ServiceCallGET(stype string, url string) ([]byte, error)
 	ServiceCallPOST(stype string, url string, body []byte) ([]byte, error)
 	ServiceCallPUT(stype string, url string, body []byte) ([]byte, error)
@@ -221,6 +223,7 @@ type QueueClient interface {
 	QueueJobSendSpawnInfo(ctx context.Context, isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
 	QueueArtifactUpload(ctx context.Context, id int64, tag, filePath string) (bool, time.Duration, error)
+	QueueStaticFilesUpload(ctx context.Context, nodeJobRunID int64, name, entrypoint string, tarContent io.Reader) (string, bool, time.Duration, error)
 	QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error
 	QueueJobIncAttempts(ctx context.Context, jobID int64) ([]int64, error)
 	QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error

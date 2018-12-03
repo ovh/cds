@@ -109,6 +109,16 @@ func NewStepArtifactUpload(i interface{}) Action {
 	return newAction
 }
 
+// NewStepServeStaticFiles returns an action (basically used as a step of a job) of artifact upload type
+func NewStepServeStaticFiles(v map[string]string) Action {
+	newAction := Action{
+		Name:       ServeStaticFiles,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
+	}
+	return newAction
+}
+
 // NewCoverage returns an action of coverage type
 func NewCoverage(v map[string]string) Action {
 	newAction := Action{

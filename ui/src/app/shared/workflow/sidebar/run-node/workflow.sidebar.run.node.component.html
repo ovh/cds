@@ -2,13 +2,18 @@
     <h3 class="ui header ml5">
         <i class="cubes icon"></i>
         <div class="content">
-            <span>{{node.name}}</span>
+            <ng-container *ngIf="node.type === 'pipeline' || node.type === 'outgoinghook'">
+                <span>{{node.name}}</span>
+            </ng-container>
+            <ng-container *ngIf="node.type !== 'pipeline' && node.type !== 'outgoinghook'">
+                <span>{{node.type}}</span>
+            </ng-container>
             <a class="inline pointing ml5"
               *ngIf="displayEditOption"
               (click)="goToEditNode()">
               <i class="pencil icon float"></i>
             </a>
-            <div class="sub header" *ngIf="node.context && node.context.pipeline_id">
+            <div class="sub header" *ngIf="node.context && node.context.pipeline_id && workflow.pipelines[node.context.pipeline_id]">
               <span>{{ 'common_pipeline' | translate }} : {{workflow.pipelines[node.context.pipeline_id].name}}</span>
             </div>
         </div>

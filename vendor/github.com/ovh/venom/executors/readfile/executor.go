@@ -118,16 +118,14 @@ func (e *Executor) readfile(workdir string) (Result, error) {
 			return result, fmt.Errorf("Error cannot evaluate relative path to file at %s: %s", f.Name(), err)
 		}
 
-		b, errr := ioutil.ReadAll(f)
+		h := md5.New()
+		tee := io.TeeReader(f, h)
+
+		b, errr := ioutil.ReadAll(tee)
 		if errr != nil {
 			return result, fmt.Errorf("Error while reading file: %s", errr)
 		}
 		content += string(b)
-
-		h := md5.New()
-		if _, err := io.Copy(h, f); err != nil {
-			return result, fmt.Errorf("Error while compute md5sum: %s", err)
-		}
 
 		md5sum[relativeName] = hex.EncodeToString(h.Sum(nil))
 

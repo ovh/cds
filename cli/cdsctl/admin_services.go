@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -18,6 +20,8 @@ func adminServices() *cobra.Command {
 	return cli.NewCommand(adminServicesCmd, nil, []*cobra.Command{
 		cli.NewListCommand(adminServiceListCmd, adminServiceListRun, nil),
 		cli.NewListCommand(adminServiceStatusCmd, adminServiceStatusRun, nil),
+		cli.NewCommand(adminServiceGetCmd, adminServiceGetRun, nil),
+		cli.NewDeleteCommand(adminServiceDeleteCmd, adminServiceDeleteRun, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -63,6 +67,32 @@ var adminServiceStatusCmd = cli.Command{
 	},
 }
 
+var adminServiceGetCmd = cli.Command{
+	Name:  "request",
+	Short: "request GET on a CDS service",
+	Example: `
+## How to get the goroutine of the service named hatcheryLocal:
+` + "```bash" + `
+cdsctl admin services request --name hatcheryLocal --query /debug/pprof/goroutine\?debug\=2
+` + "```" + `
+
+`,
+	Flags: []cli.Flag{
+		{
+			Kind:    reflect.String,
+			Name:    "name",
+			Usage:   "service name",
+			Default: "",
+		},
+		{
+			Kind:    reflect.String,
+			Name:    "query",
+			Usage:   "http query, example: '/debug/pprof/goroutine?debug=2'",
+			Default: "",
+		},
+	},
+}
+
 func adminServiceStatusRun(v cli.Values) (cli.ListResult, error) {
 	lines := []sdk.MonitoringStatusLine{}
 	if v.GetString("name") != "" {
@@ -93,4 +123,33 @@ func adminServiceStatusRun(v cli.Values) (cli.ListResult, error) {
 	}
 
 	return cli.AsListResult(lines), nil
+}
+
+func adminServiceGetRun(v cli.Values) error {
+	btes, err := client.ServiceNameCallGET(v.GetString("name"), v.GetString("query"))
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(btes))
+	return nil
+}
+
+var adminServiceDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete a CDS service from registered service",
+	VariadicArgs: cli.Arg{
+		Name: "name",
+	},
+}
+
+func adminServiceDeleteRun(v cli.Values) error {
+	if v.GetString("name") == "" {
+		return fmt.Errorf("name for service is mandatory")
+	}
+	for _, n := range strings.Split(v.GetString("name"), ",") {
+		if err := client.ServiceDelete(n); err != nil {
+			return err
+		}
+	}
+	return nil
 }

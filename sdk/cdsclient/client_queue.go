@@ -561,3 +561,169 @@ func (c *client) QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) er
 
 	return err
 }
+
+//  STATIC FILES -----
+
+func (c *client) QueueStaticFilesUpload(ctx context.Context, nodeJobRunID int64, name, entrypoint string, tarContent io.Reader) (string, bool, time.Duration, error) {
+	t0 := time.Now()
+	staticFile := sdk.StaticFiles{
+		EntryPoint:   entrypoint,
+		Name:         name,
+		NodeJobRunID: nodeJobRunID,
+	}
+	var store sdk.ArtifactsStore
+	_, _ = c.GetJSON(ctx, "/staticfiles/store", &store)
+	if store.TemporaryURLSupported {
+		publicURL, err := c.queueIndirectStaticFilesUpload(ctx, &staticFile, tarContent)
+		return publicURL, true, time.Since(t0), err
+	}
+	publicURL, err := c.queueDirectStaticFilesUpload(&staticFile, tarContent)
+	return publicURL, false, time.Since(t0), err
+}
+
+func (c *client) queueIndirectStaticFilesTempURL(ctx context.Context, staticFile *sdk.StaticFiles) error {
+	var retryURL = 10
+	var globalURLErr error
+	uri := fmt.Sprintf("/queue/workflows/%d/staticfiles/%s/url", staticFile.NodeJobRunID, url.PathEscape(staticFile.Name))
+
+	for i := 0; i < retryURL; i++ {
+		var code int
+		ctxTimeout, cancel := context.WithTimeout(ctx, 10*time.Second)
+		code, globalURLErr = c.PostJSON(ctxTimeout, uri, *staticFile, staticFile)
+		if code < 300 {
+			cancel()
+			break
+		}
+		cancel()
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	if globalURLErr != nil {
+		return globalURLErr
+	}
+	return nil
+}
+
+func (c *client) queueIndirectStaticFilesTempURLPost(url string, content []byte) error {
+	//Post the file to the temporary URL
+	var retry = 10
+	var globalErr error
+	var body []byte
+	for i := 0; i < retry; i++ {
+		req, errRequest := http.NewRequest("PUT", url+"&extract-archive=tar", bytes.NewBuffer(content))
+		if errRequest != nil {
+			return errRequest
+		}
+
+		var resp *http.Response
+		resp, globalErr = http.DefaultClient.Do(req)
+		if globalErr == nil {
+			defer resp.Body.Close()
+
+			var err error
+			body, err = ioutil.ReadAll(resp.Body)
+			if err != nil {
+				globalErr = err
+				continue
+			}
+
+			if resp.StatusCode >= 300 {
+				globalErr = fmt.Errorf("[%d] Unable to upload static files: (HTTP %d) %s", i, resp.StatusCode, string(body))
+				continue
+			}
+
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return globalErr
+}
+
+func (c *client) queueIndirectStaticFilesUpload(ctx context.Context, staticFile *sdk.StaticFiles, tarContent io.Reader) (string, error) {
+	if err := c.queueIndirectStaticFilesTempURL(ctx, staticFile); err != nil {
+		return "", err
+	}
+
+	if c.config.Verbose {
+		fmt.Printf("Uploading %s with to %s\n", staticFile.Name, staticFile.TempURL)
+	}
+
+	tarBytes, err := ioutil.ReadAll(tarContent)
+	if err != nil {
+		return "", sdk.WrapError(err, "Cannot read tar content")
+	}
+
+	if err := c.queueIndirectStaticFilesTempURLPost(staticFile.TempURL, tarBytes); err != nil {
+		// If we got a 401 error from the objectstore, ask for a fresh temporary url and repost the artifact
+		if strings.Contains(err.Error(), "401 Unauthorized: Temp URL invalid") {
+			if errTmp := c.queueIndirectStaticFilesTempURL(ctx, staticFile); errTmp != nil {
+				return "", errTmp
+			}
+
+			if errTmpPost := c.queueIndirectStaticFilesTempURLPost(staticFile.TempURL, tarBytes); errTmpPost != nil {
+				return "", errTmpPost
+			}
+		}
+		return "", err
+	}
+
+	//Try 50 times to make the callback
+	var callbackErr error
+	retry := 50
+	for i := 0; i < retry; i++ {
+		uri := fmt.Sprintf("/queue/workflows/%d/staticfiles/%s/url/callback", staticFile.NodeJobRunID, url.PathEscape(staticFile.Name))
+		ctxt, cancel := context.WithTimeout(ctx, 5*time.Second)
+		_, callbackErr = c.PostJSON(ctxt, uri, &staticFile, &staticFile)
+		if callbackErr == nil {
+			cancel()
+			return staticFile.PublicURL, nil
+		}
+		cancel()
+	}
+
+	return "", callbackErr
+}
+
+func (c *client) queueDirectStaticFilesUpload(staticFile *sdk.StaticFiles, tarContent io.Reader) (string, error) {
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, errc := writer.CreateFormFile("archive.tar", "archive.tar")
+	if errc != nil {
+		return "", errc
+	}
+
+	if _, err := io.Copy(part, tarContent); err != nil {
+		return "", err
+	}
+
+	_ = writer.WriteField("name", staticFile.Name)
+	_ = writer.WriteField("entrypoint", staticFile.EntryPoint)
+
+	if errclose := writer.Close(); errclose != nil {
+		return "", errclose
+	}
+
+	var err error
+	var respBody []byte
+	uri := fmt.Sprintf("/queue/workflows/%d/staticfiles/%s", staticFile.NodeJobRunID, url.PathEscape(staticFile.Name))
+	for i := 0; i <= c.config.Retry; i++ {
+		var code int
+		respBody, code, err = c.UploadMultiPart("POST", uri, body,
+			SetHeader("Content-Disposition", "attachment; filename=archive.tar"),
+			SetHeader("Content-Type", writer.FormDataContentType()))
+		if err == nil && code < 300 {
+			var staticFileResp sdk.StaticFiles
+			if errU := json.Unmarshal(respBody, &staticFileResp); errU != nil {
+				return "", sdk.WrapError(errU, "Cannot unmarshal body: %v", string(respBody))
+			}
+			return staticFileResp.PublicURL, nil
+		}
+		if c.config.Verbose {
+			fmt.Printf("queueDirectStaticFilesUpload> Retry %d for status code %d : %v\n", i, code, err)
+		}
+		time.Sleep(3 * time.Second)
+	}
+
+	return "", sdk.WrapError(err, "Cannot upload static files after %d retry", c.config.Retry)
+}

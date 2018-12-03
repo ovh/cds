@@ -158,10 +158,10 @@ func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
 func (v *Venom) computeStats(testsResult *Tests, chanEnd <-chan *TestSuite, wg *sync.WaitGroup) {
 	for t := range chanEnd {
 		testsResult.TestSuites = append(testsResult.TestSuites, *t)
-		if t.Failures > 0 {
-			testsResult.TotalKO += t.Failures
+		if t.Failures > 0 || t.Errors > 0 {
+			testsResult.TotalKO += (t.Failures + t.Errors)
 		} else {
-			testsResult.TotalOK += len(t.TestCases) - t.Failures
+			testsResult.TotalOK += len(t.TestCases) - (t.Failures + t.Errors)
 		}
 		if t.Skipped > 0 {
 			testsResult.TotalSkipped += t.Skipped

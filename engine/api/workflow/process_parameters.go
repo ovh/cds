@@ -38,7 +38,7 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 }
 
 // GetNodeBuildParameters returns build parameters with default values for cds.version, cds.run, cds.run.number, cds.run.subnumber
-func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
+func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeRunContext, pipelineParameters []sdk.Parameter, payload interface{}, hookEvent *sdk.WorkflowNodeRunHookEvent) ([]sdk.Parameter, error) {
 	tmpProj := sdk.ParametersFromProjectVariables(*proj)
 	vars := make(map[string]string, len(tmpProj))
 	for k, v := range tmpProj {
@@ -132,6 +132,13 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 		delete(vars, "git.http.user")
 	}
 
+	if hookEvent != nil {
+		vars["parent.project"] = hookEvent.ParentWorkflow.Key
+		vars["parent.run"] = fmt.Sprintf("%d", hookEvent.ParentWorkflow.Run)
+		vars["parent.workflow"] = hookEvent.ParentWorkflow.Name
+		vars["parent.outgoinghook"] = hookEvent.WorkflowNodeHookUUID
+	}
+
 	params := []sdk.Parameter{}
 	for k, v := range vars {
 		sdk.AddParameter(&params, k, sdk.StringParameter, v)
@@ -193,16 +200,16 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun, pa
 	return params, nil
 }
 
-func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, w *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) ([]sdk.Parameter, error) {
+func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.WorkflowRun, run *sdk.WorkflowNodeRun, runContext nodeRunContext) ([]sdk.Parameter, error) {
 	ctx, end := observability.Span(ctx, "workflow.getNodeRunBuildParameters",
-		observability.Tag(observability.TagWorkflow, w.Workflow.Name),
-		observability.Tag(observability.TagWorkflowRun, w.Number),
+		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
+		observability.Tag(observability.TagWorkflowRun, wr.Number),
 		observability.Tag(observability.TagWorkflowNodeRun, run.ID),
 	)
 	defer end()
 
 	//Get node build parameters
-	params, errparam := GetNodeBuildParameters(proj, &w.Workflow, runContext, run.PipelineParameters, run.Payload)
+	params, errparam := GetNodeBuildParameters(proj, &wr.Workflow, runContext, run.PipelineParameters, run.Payload, run.HookEvent)
 	if errparam != nil {
 		return nil, sdk.WrapError(errparam, "getNodeRunParameters> Unable to compute node build parameters")
 	}

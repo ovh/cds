@@ -154,59 +154,6 @@ func LoadBuildingPipelinesIDs(db gorp.SqlExecutor) ([]int64, error) {
 	return ids, nil
 }
 
-// LoadRecentPipelineBuild retrieves pipelines in database having a build running or finished
-// less than a minute ago
-func LoadRecentPipelineBuild(db gorp.SqlExecutor, args ...FuncArg) ([]sdk.PipelineBuild, error) {
-	whereCondition := `
-		WHERE pb.status = $1
-		ORDER by pb.id ASC
-	`
-	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	var rows []pipelineBuildDbResult
-	_, err := db.Select(&rows, query, sdk.StatusBuilding.String())
-	if err != nil {
-		return nil, err
-	}
-
-	pbs := []sdk.PipelineBuild{}
-	for _, r := range rows {
-		pb, errScan := scanPipelineBuild(r)
-		if errScan != nil {
-			return nil, errScan
-		}
-		pbs = append(pbs, *pb)
-	}
-	return pbs, nil
-}
-
-// LoadUserRecentPipelineBuild retrieves pipelines in database having a build running or finished
-// less than a minute ago
-func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.PipelineBuild, error) {
-	whereCondition := `
-		JOIN pipeline_group ON pipeline_group.pipeline_id = pb.pipeline_id
-		JOIN group_user ON group_user.group_id = pipeline_group.group_id
-		WHERE pb.status = $1
-		AND group_user.user_id = $2
-		ORDER by pb.id ASC`
-
-	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	var rows []pipelineBuildDbResult
-	_, err := db.Select(&rows, query, sdk.StatusBuilding.String(), userID)
-	if err != nil {
-		return nil, err
-	}
-
-	pbs := []sdk.PipelineBuild{}
-	for _, r := range rows {
-		pb, errScan := scanPipelineBuild(r)
-		if errScan != nil {
-			return nil, errScan
-		}
-		pbs = append(pbs, *pb)
-	}
-	return pbs, nil
-}
-
 // LoadPipelineBuildByApplicationPipelineEnvVersion Load pipeline build from application, pipeline, environment, version
 func LoadPipelineBuildByApplicationPipelineEnvVersion(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, version int64, limit int) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
@@ -253,28 +200,6 @@ func LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db gorp.SqlExecutor, a
 	attachPipelineWarnings(pb)
 
 	return pb, nil
-}
-
-// LoadPipelineBuildByHash look for a pipeline build triggered by a change with given hash
-func LoadPipelineBuildByHash(db gorp.SqlExecutor, hash string) ([]sdk.PipelineBuild, error) {
-	whereCondition := `
-		WHERE pb.vcs_changes_hash = $1
-`
-
-	var rows []pipelineBuildDbResult
-	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	if _, errQuery := db.Select(&rows, query, hash); errQuery != nil {
-		return nil, errQuery
-	}
-	pbs := []sdk.PipelineBuild{}
-	for _, r := range rows {
-		pb, errScan := scanPipelineBuild(r)
-		if errScan != nil {
-			return nil, errScan
-		}
-		pbs = append(pbs, *pb)
-	}
-	return pbs, nil
 }
 
 type ExecOptionFunc func(nbArg int) (string, string, int)

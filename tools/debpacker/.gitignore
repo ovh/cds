@@ -1,3 +1,4 @@
 target/
 debpacker
 .debpacker.yml
+dist

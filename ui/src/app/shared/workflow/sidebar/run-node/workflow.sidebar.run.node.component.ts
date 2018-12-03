@@ -87,7 +87,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
             if (this.node && this.loading) {
                 this.loading = false;
                 this._cd.detectChanges();
-            } else {
+            } else if (!this.node) {
                 this.loading  = true;
                 this._cd.detectChanges();
             }
@@ -157,6 +157,9 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     }
 
     getCanBeRun(): boolean {
+        if (!this.workflow) {
+            return;
+        }
         // Get Env permission
         let envForbid = this.node && this.node.context && this.node.context.environment_id > 1
             && this.workflow.environments[this.node.context.environment_id].permission

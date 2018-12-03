@@ -37,8 +37,13 @@ func (c *Cache) GetPath() string {
 	return container
 }
 
+// TarOptions useful to indicate some options when we want to tar directory or files
+type TarOptions struct {
+	TrimDirName string
+}
+
 // CreateTarFromPaths returns a tar formatted reader of a tar made of several path
-func CreateTarFromPaths(cwd string, paths []string) (io.Reader, error) {
+func CreateTarFromPaths(cwd string, paths []string, opts *TarOptions) (io.Reader, error) {
 	// Create a buffer to write our archive to.
 	buf := new(bytes.Buffer)
 
@@ -63,6 +68,11 @@ func CreateTarFromPaths(cwd string, paths []string) (io.Reader, error) {
 			}
 
 			header.Name = strings.TrimPrefix(strings.Replace(file, cwd, "", -1), string(filepath.Separator))
+
+			if opts != nil && opts.TrimDirName != "" {
+				opts.TrimDirName = strings.TrimPrefix(opts.TrimDirName, string(filepath.Separator))
+				header.Name = strings.TrimPrefix(strings.TrimPrefix(header.Name, opts.TrimDirName), string(filepath.Separator))
+			}
 			if fi.Mode()&os.ModeSymlink != 0 {
 				symlink, errEval := filepath.EvalSymlinks(file)
 				if errEval != nil {

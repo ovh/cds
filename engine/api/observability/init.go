@@ -50,7 +50,7 @@ func Init(cfg Configuration, serviceName string) error {
 	}
 	view.RegisterExporter(statsExporter)
 	if cfg.Exporter.Prometheus.ReporteringPeriod == 0 {
-		cfg.Exporter.Prometheus.ReporteringPeriod = 30
+		cfg.Exporter.Prometheus.ReporteringPeriod = 10
 	}
 	view.SetReportingPeriod(time.Duration(cfg.Exporter.Prometheus.ReporteringPeriod) * time.Second)
 

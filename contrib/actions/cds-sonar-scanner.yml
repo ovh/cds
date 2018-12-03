@@ -8,6 +8,7 @@ parameters:
     default: |-
       sonar.projectKey={{.cds.application}}
       sonar.projectName={{.cds.application}}
+      sonar.projectVersion={{.git.hash}}
       sonar.sources=.
       sonar.exclusions=**/*_test.go,**/vendor/**
       sonar.tests=.

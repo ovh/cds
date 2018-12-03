@@ -106,11 +106,19 @@ func newSteps(a sdk.Action) []Step {
 					artifactDownloadArgs["tag"] = tag.Value
 				}
 				application := sdk.ParameterFind(&act.Parameters, "application")
-				if application != nil {
+				if application != nil && application.Value != "" {
 					artifactDownloadArgs["application"] = application.Value
 				}
+				pattern := sdk.ParameterFind(&act.Parameters, "pattern")
+				if pattern != nil && pattern.Value != "" {
+					artifactDownloadArgs["pattern"] = pattern.Value
+				}
+				enabled := sdk.ParameterFind(&act.Parameters, "enabled")
+				if enabled != nil && enabled.Value == "false" {
+					artifactDownloadArgs["enabled"] = enabled.Value
+				}
 				pipeline := sdk.ParameterFind(&act.Parameters, "pipeline")
-				if pipeline != nil {
+				if pipeline != nil && pipeline.Value != "" {
 					artifactDownloadArgs["pipeline"] = pipeline.Value
 				}
 				s["artifactDownload"] = artifactDownloadArgs
@@ -125,6 +133,21 @@ func newSteps(a sdk.Action) []Step {
 					artifactUploadArgs["tag"] = tag.Value
 				}
 				s["artifactUpload"] = artifactUploadArgs
+			case sdk.ServeStaticFiles:
+				serveStaticFilesArgs := map[string]string{}
+				name := sdk.ParameterFind(&act.Parameters, "name")
+				if name != nil {
+					serveStaticFilesArgs["name"] = name.Value
+				}
+				path := sdk.ParameterFind(&act.Parameters, "path")
+				if path != nil {
+					serveStaticFilesArgs["path"] = path.Value
+				}
+				entrypoint := sdk.ParameterFind(&act.Parameters, "entrypoint")
+				if entrypoint != nil && entrypoint.Value != "" {
+					serveStaticFilesArgs["entrypoint"] = entrypoint.Value
+				}
+				s["serveStaticFiles"] = serveStaticFilesArgs
 			case sdk.GitCloneAction:
 				gitCloneArgs := map[string]string{}
 				branch := sdk.ParameterFind(&act.Parameters, "branch")
@@ -450,6 +473,49 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	} else {
 		return nil, false, fmt.Errorf("AsArtifactUpload> Unknown type")
 	}
+
+	var err error
+	a.StepName, err = s.Name()
+	if err != nil {
+		return nil, true, err
+	}
+	a.Enabled, err = s.IsFlagged("enabled")
+	if err != nil {
+		return nil, true, err
+	}
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
+//AsServeStaticFiles returns the step a sdk.Action
+func (s Step) AsServeStaticFiles() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("AsServeStaticFiles.Malformatted Step")
+	}
+
+	bI, ok := s["serveStaticFiles"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	if reflect.ValueOf(bI).Kind() != reflect.Map && reflect.ValueOf(bI).Kind() != reflect.String {
+		return nil, false, nil
+	}
+
+	var argss map[string]string
+	if err := mapstructure.Decode(bI, &argss); err != nil {
+		return nil, true, sdk.WrapError(err, "AsArtifactUpload.Malformatted Step")
+	}
+
+	a := sdk.NewStepServeStaticFiles(argss)
 
 	var err error
 	a.StepName, err = s.Name()
