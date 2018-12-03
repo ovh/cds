@@ -42,6 +42,7 @@ func main() {
 		version(),
 		encrypt(),
 		token(),
+		template(),
 		admin(),
 	})
 	if err := root.Execute(); err != nil {

@@ -49,7 +49,7 @@ func HookRegistration(ctx context.Context, db gorp.SqlExecutor, store cache.Stor
 
 		//Perform the request on one off the hooks service
 		if len(srvs) < 1 {
-			return sdk.WrapError(fmt.Errorf("HookRegistration> No hooks service available, please try again"), "Unable to get services dao")
+			return sdk.WrapError(fmt.Errorf("No hooks service available, please try again"), "Unable to get services dao")
 		}
 
 		// Update scheduler payload

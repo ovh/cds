@@ -28,17 +28,8 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 		Key:  key,
 		Name: name,
 	}
-	g := sdk.Group{
-		Name: name + "-group",
-	}
 
-	eg, _ := group.LoadGroup(db, g.Name)
-	if eg != nil {
-		g = *eg
-	} else if err := group.InsertGroup(db, &g); err != nil {
-		t.Fatalf("Cannot insert group : %s", err)
-		return nil
-	}
+	g := InsertTestGroup(t, db, name+"-group")
 
 	if err := project.Insert(db, store, &proj, u); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
@@ -62,6 +53,29 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, nam
 func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, store cache.Store, key string) error {
 	t.Logf("Delete Project %s", key)
 	return project.Delete(db, store, key)
+}
+
+// InsertTestGroup create a test group
+func InsertTestGroup(t *testing.T, db *gorp.DbMap, name string) *sdk.Group {
+	g := sdk.Group{
+		Name: name,
+	}
+
+	eg, _ := group.LoadGroup(db, g.Name)
+	if eg != nil {
+		g = *eg
+	} else if err := group.InsertGroup(db, &g); err != nil {
+		t.Fatalf("Cannot insert group : %s", err)
+		return nil
+	}
+
+	return &g
+}
+
+// DeleteTestGroup delete a test group.
+func DeleteTestGroup(t *testing.T, db gorp.SqlExecutor, g *sdk.Group) error {
+	t.Logf("Delete Group %s", g.Name)
+	return group.DeleteGroupAndDependencies(db, g)
 }
 
 // InsertAdminUser have to be used only for tests

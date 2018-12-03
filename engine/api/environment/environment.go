@@ -10,7 +10,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
@@ -261,7 +261,7 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 	if err != nil {
 		pqerr, ok := err.(*pq.Error)
 		if ok {
-			if pqerr.Code == "23000" || pqerr.Code == database.ViolateUniqueKeyPGCode || pqerr.Code == "23514" {
+			if pqerr.Code == "23000" || pqerr.Code == gorpmapping.ViolateUniqueKeyPGCode || pqerr.Code == "23514" {
 				return sdk.ErrEnvironmentExist
 			}
 		}

@@ -95,7 +95,6 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	test.NoError(t, err)
 
 	fmt.Println(string(btes))
-
 }
 
 func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
@@ -201,7 +200,6 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w.Root.Context.ApplicationID, w1.Root.Context.ApplicationID)
 	assert.Equal(t, w.Root.Context.EnvironmentID, w1.Root.Context.EnvironmentID)
 	assert.Equal(t, w.Root.Context.Mutex, w1.Root.Context.Mutex)
-
 }
 
 func TestInsertComplexeWorkflowAndExport(t *testing.T) {
@@ -855,7 +853,6 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	test.NoError(t, err)
 
 	fmt.Println(string(btes))
-
 }
 
 func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {

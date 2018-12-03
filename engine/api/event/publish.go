@@ -37,7 +37,7 @@ func publishEvent(e sdk.Event) {
 
 	b, err := json.Marshal(e)
 	if err != nil {
-		log.Warning("publishEvent> Cannot marshal event %+v", e)
+		log.Warning("%v", sdk.WrapError(err, "Cannot marshal event %+v", e))
 		return
 	}
 	store.Publish("events_pubsub", string(b))

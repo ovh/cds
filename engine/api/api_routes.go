@@ -436,6 +436,16 @@ func (api *API) InitRouter() {
 	r.Handle("/services/register", r.POST(api.postServiceRegisterHandler, Auth(false)))
 	r.Handle("/services/{type}", r.GET(api.getExternalServiceHandler, NeedWorker()))
 
+	// Templates
+	r.Handle("/template", r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))
+	r.Handle("/template/push", r.POST(api.pushTemplateHandler))
+	r.Handle("/template/{id}", r.GET(api.getTemplateHandler))
+	r.Handle("/template/{groupName}/{templateSlug}", r.GET(api.getTemplateHandler), r.PUT(api.putTemplateHandler), r.DELETE(api.deleteTemplateHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/pull", r.POST(api.pullTemplateHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/apply", r.POST(api.applyTemplateHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/instance", r.GET(api.getTemplateInstancesHandler))
+	r.Handle("/project/{key}/workflow/{permWorkflowName}/templateInstance", r.GET(api.getTemplateInstanceHandler))
+
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 }

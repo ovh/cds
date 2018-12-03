@@ -1,0 +1,4 @@
+<h2>{{ 'workflow_template_edit_title' | translate }} <span *ngIf="workflowTemplate">{{oldWorkflowTemplate.name}}</span></h2>
+
+<app-workflow-template-form mode="edit" [loading]="loading" [workflowTemplate]="workflowTemplate" [groups]="groups"
+    (save)="saveWorkflowTemplate()" (delete)="deleteWorkflowTemplate()"></app-workflow-template-form>

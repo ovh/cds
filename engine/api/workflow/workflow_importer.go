@@ -7,8 +7,10 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -20,6 +22,8 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 
 	w.ProjectKey = proj.Key
 	w.ProjectID = proj.ID
+
+	wTemplate := w.Template
 
 	// Default value of history length is 20
 	if w.HistoryLength == 0 {
@@ -56,7 +60,12 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
 		if errHr := HookRegistration(ctx, db, store, nil, *w, proj); errHr != nil {
-			return sdk.WrapError(errHr, "Import> Cannot register hook")
+			return sdk.WrapError(errHr, "Cannot register hook")
+		}
+
+		// set the workflow id on template instance if exist
+		if err := setTemplateData(db, proj, w, u, wTemplate); err != nil {
+			return err
 		}
 
 		return importWorkflowGroups(db, w)
@@ -68,7 +77,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 
 	oldW, errO := Load(ctx, db, store, proj, w.Name, u, LoadOptions{WithIcon: true})
 	if errO != nil {
-		return sdk.WrapError(errO, "Import> Unable to load old workflow")
+		return sdk.WrapError(errO, "Unable to load old workflow")
 	}
 
 	w.ID = oldW.ID
@@ -79,7 +88,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	if !dryRun {
 		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
 		if errHr := HookRegistration(ctx, db, store, oldW, *w, proj); errHr != nil {
-			return sdk.WrapError(errHr, "Import> Cannot register hook")
+			return sdk.WrapError(errHr, "Cannot register hook")
 		}
 	}
 
@@ -87,9 +96,72 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return err
 	}
 
+	// set the workflow id on template instance if exist
+	if err := setTemplateData(db, proj, w, u, wTemplate); err != nil {
+		return err
+	}
+
 	if msgChan != nil {
 		msgChan <- sdk.NewMessage(sdk.MsgWorkflowImportedUpdated, w.Name)
 	}
+	return nil
+}
+
+func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sdk.User, wt *sdk.WorkflowTemplate) error {
+	// set the workflow id on template instance if exist
+	if wt == nil {
+		return nil
+	}
+
+	var group *sdk.Group
+	for _, g := range u.Groups {
+		if g.Name == wt.Group.Name {
+			group = &g
+			break
+		}
+	}
+	if group == nil {
+		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given workflow template")
+	}
+
+	wt, err := workflowtemplate.GetBySlugAndGroupIDs(db, wt.Slug, []int64{group.ID})
+	if err != nil {
+		return err
+	}
+	if wt == nil {
+		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given workflow template")
+	}
+
+	wtis, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDs(db, wt.ID, []int64{p.ID})
+	if err != nil {
+		return err
+	}
+	var wTemplateInstance *sdk.WorkflowTemplateInstance
+	for _, wti := range wtis {
+		if wti.Request.WorkflowName == w.Name {
+			wTemplateInstance = &wti
+			break
+		}
+	}
+	if wTemplateInstance == nil {
+		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find a template instance for workflow %s", w.Name)
+	}
+
+	// remove existing relations between workflow and template
+	if err := workflowtemplate.DeleteInstanceNotIDAndWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
+		return err
+	}
+
+	old := sdk.WorkflowTemplateInstance(*wTemplateInstance)
+
+	// set the workflow id on target instance
+	wTemplateInstance.WorkflowID = &w.ID
+	if err := workflowtemplate.UpdateInstance(db, wTemplateInstance); err != nil {
+		return err
+	}
+
+	event.PublishWorkflowTemplateInstanceUpdate(old, *wTemplateInstance, u)
+
 	return nil
 }
 

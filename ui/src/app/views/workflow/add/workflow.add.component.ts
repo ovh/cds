@@ -1,22 +1,25 @@
-import {Component, NgZone, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {Subscription} from 'rxjs';
-import {finalize, first} from 'rxjs/operators';
-import {environment} from '../../../../environments/environment';
-import {Operation, PerformAsCodeResponse} from '../../../model/operation.model';
-import {Project} from '../../../model/project.model';
-import {Repository} from '../../../model/repositories.model';
-import {VCSStrategy} from '../../../model/vcs.model';
-import {WNode, Workflow} from '../../../model/workflow.model';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {ImportAsCodeService} from '../../../service/import-as-code/import.service';
-import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
-import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {CDSWebWorker} from '../../../shared/worker/web.worker';
+import { Component, NgZone, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { Subscription } from 'rxjs';
+import { finalize, first } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
+import { Operation, PerformAsCodeResponse } from '../../../model/operation.model';
+import { Project } from '../../../model/project.model';
+import { Repository } from '../../../model/repositories.model';
+import { VCSStrategy } from '../../../model/vcs.model';
+import { WorkflowTemplate } from '../../../model/workflow-template.model';
+import { WNode, Workflow } from '../../../model/workflow.model';
+import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { ImportAsCodeService } from '../../../service/import-as-code/import.service';
+import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
+import { WorkflowTemplateService } from '../../../service/workflow-template/workflow-template.service';
+import { WorkflowStore } from '../../../service/workflow/workflow.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { SharedService } from '../../../shared/shared.service';
+import { ToastService } from '../../../shared/toast/ToastService';
+import { CDSWebWorker } from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-workflow-add',
@@ -57,6 +60,11 @@ workflow:
     webworkerSub: Subscription;
     asCodeResult: PerformAsCodeResponse;
 
+    templates: Array<WorkflowTemplate>;
+    selectedTemplatePath: string;
+    selectedTemplate: WorkflowTemplate;
+    descriptionRows: number;
+
     updated = false;
     loading = false;
     loadingRepo = false;
@@ -65,8 +73,9 @@ workflow:
     fileTooLarge = false;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-                private _router: Router, private _workflowStore: WorkflowStore, private _import: ImportAsCodeService,
-                private _translate: TranslateService, private _toast: ToastService, private _repoManSerivce: RepoManagerService) {
+        private _router: Router, private _workflowStore: WorkflowStore, private _import: ImportAsCodeService,
+        private _translate: TranslateService, private _toast: ToastService, private _repoManagerService: RepoManagerService,
+        private _workflowTemplateService: WorkflowTemplateService, private _sharedService: SharedService) {
         this.workflow = new Workflow();
         this.selectedStrategy = new VCSStrategy();
         this._activatedRoute.data.subscribe(datas => {
@@ -79,10 +88,12 @@ workflow:
             lineNumbers: true,
             autoRefresh: true,
         };
+
+        this.fetchTemplates();
     }
 
     goToProject(): void {
-        this._router.navigate(['/project', this.project.key], {queryParams: {tab: 'workflows'}});
+        this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows' } });
     }
 
     createWorkflow(node: WNode): void {
@@ -125,7 +136,7 @@ workflow:
 
     fetchRepos(repoMan: string): void {
         this.loadingRepo = true;
-        this._repoManSerivce.getRepositories(this.project.key, repoMan, false).pipe(first(), finalize(() => {
+        this._repoManagerService.getRepositories(this.project.key, repoMan, false).pipe(first(), finalize(() => {
             this.loadingRepo = false
         })).subscribe(rs => {
             this.repos = rs;
@@ -167,7 +178,7 @@ workflow:
 
     startOperationWorker(uuid: string): void {
         // poll operation
-        let zone = new NgZone({enableLongStackTrace: false});
+        let zone = new NgZone({ enableLongStackTrace: false });
         let webworker = new CDSWebWorker('./assets/worker/web/import-as-code.js')
         webworker.start({
             'user': this._authStore.getUser(),
@@ -202,27 +213,38 @@ workflow:
         this._router.navigate(['/project', this.project.key, 'workflow', this.asCodeResult.workflowName]);
     }
 
-    fileEvent(event: {content: string, file: File}) {
+    fileEvent(event: { content: string, file: File }) {
         this.wfToImport = event.content;
     }
 
     resyncRepos() {
-      if (this.selectedRepoManager) {
-          this.loading = true;
-          this._repoManSerivce.getRepositories(this.project.key, this.selectedRepoManager, true)
-            .pipe(
-              first(),
-              finalize(() => this.loading = false)
-            )
-            .subscribe(repos => this.repos = repos);
-      }
+        if (this.selectedRepoManager) {
+            this.loading = true;
+            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, true)
+                .pipe(
+                    first(),
+                    finalize(() => this.loading = false)
+                )
+                .subscribe(repos => this.repos = repos);
+        }
     }
 
-    fileEventIcon(event: {content: string, file: File}) {
+    fileEventIcon(event: { content: string, file: File }) {
         this.fileTooLarge = event.file.size > 100000
         if (this.fileTooLarge) {
-          return;
+            return;
         }
         this.workflow.icon = event.content;
+    }
+
+    fetchTemplates() {
+        this._workflowTemplateService.getWorkflowTemplates().subscribe(ts => {
+            this.templates = ts;
+        });
+    }
+
+    showTemplateForm(selectedTemplatePath: string) {
+        this.selectedTemplate = this.templates.find(template => template.group.name + '/' + template.slug === selectedTemplatePath);
+        this.descriptionRows = this._sharedService.getTextAreaheight(this.selectedTemplate.description);
     }
 }

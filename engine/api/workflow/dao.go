@@ -30,6 +30,20 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// GetAllByIDs returns all workflows by ids.
+func GetAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Workflow, error) {
+	ws := []sdk.Workflow{}
+
+	if _, err := db.Select(&ws,
+		`SELECT * FROM workflow WHERE id = ANY(string_to_array($1, ',')::int[])`,
+		gorpmapping.IDsToQueryString(ids),
+	); err != nil {
+		return nil, sdk.WrapError(err, "Cannot get workflows")
+	}
+
+	return ws, nil
+}
+
 // LoadOptions custom option for loading workflow
 type LoadOptions struct {
 	DeepPipeline  bool
@@ -1355,7 +1369,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	// We only use the multiError the une unmarshalling steps.
+	// We only use the multiError during unmarshalling steps.
 	// When a DB transaction has been started, just return at the first error
 	// because transaction may have to be aborted
 	if !mError.IsEmpty() {
@@ -1477,7 +1491,8 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		if !opts.IsDefaultBranch {
 			wf.DerivationBranch = opts.Branch
 		}
-		if wf.Root.Context.Application != nil {
+		// do not override application data if no opts were given
+		if wf.Root.Context.Application != nil && opts.VCSServer != "" {
 			wf.Root.Context.Application.VCSServer = opts.VCSServer
 			wf.Root.Context.Application.RepositoryFullname = opts.RepositoryName
 			wf.Root.Context.Application.RepositoryStrategy = opts.RepositoryStrategy
@@ -1512,7 +1527,6 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 				return nil, nil, sdk.WrapError(errHr, "Push> hook registration failed")
 			}
 		}
-
 	}
 
 	allMsg = append(allMsg, msgList...)

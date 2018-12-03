@@ -2,15 +2,64 @@
     <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name"></app-worflow-breadcrumb>
     <div class="right floated" [title]="'favorite_add_btn' | translate">
         <div class="ui active small inline loader" *ngIf="loadingFav"></div>
-        <i class="pointing star icon" *ngIf="!loadingFav" [class.pointing]="!loading" [ngClass]="{'animated infinite pulse' : loadingFav}" [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
+        <i class="pointing star icon" *ngIf="!loadingFav" [class.pointing]="!loading" [ngClass]="{'animated infinite pulse' : loadingFav}"
+            [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
+    </div>
+    <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
+        <a class="ui label small basic" [ngClass]="workflow && workflow.from_repository ? 'green' : 'inactiveFeature'"
+            suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
+            #popup="suiPopup">
+            <i class="code icon"></i>as code
+        </a>
+        <ng-template let-popup #popupFromRepository>
+            <div class="content infoPopup">
+                <div *ngIf="workflow && workflow.from_repository;then fromRepositoryInfo;else fromRepositoryHelp"></div>
+                <ng-template #fromRepositoryInfo>
+                    {{ 'workflow_from_repository' | translate: {repo: workflow.from_repository} }}
+                </ng-template>
+                <ng-template #fromRepositoryHelp>
+                    <p>{{'workflow_repository_help_line_1' | translate}}</p>
+                    <div class="ui list">
+                        <a class="item" target="_blank" href="https://ovh.github.io/cds/gettingstarted/init_workflow_with_cdsctl">{{'common_read_more'
+                            | translate}}</a>
+                    </div>
+                </ng-template>
+            </div>
+        </ng-template>
+    </div>
+    <div class="right floated labelFeature" [title]="'workflow_from_template_btn' | translate">
+        <a class="ui label small basic" [ngClass]="workflow && workflow.from_template ? (workflow.template_up_to_date ? 'green' : 'orange') : 'inactiveFeature'"
+            suiPopup [popupTemplate]="popupFromTemplate" popupPlacement="bottom right" popupTrigger="outsideClick"
+            #popup="suiPopup">
+            <i class="paste icon"></i>template
+        </a>
+        <ng-template let-popup #popupFromTemplate>
+            <div class="content infoPopup">
+                <div *ngIf="workflow && workflow.from_template;then fromTemplateInfo;else fromTemplateHelp"></div>
+                <ng-template #fromTemplateInfo>
+                    <p>{{ 'workflow_from_template' | translate: {path: workflow.from_template} }}
+                        <a *ngIf="!workflow.template_up_to_date" class="ui orange label mini">{{'common_not_up_to_date'
+                            | translate }}</a>
+                    </p>
+                    <div class="ui compact menu">
+                        <a class="item small" (click)="showTemplateFrom();popup.close()">
+                            {{'common_update' | translate}}
+                        </a>
+                    </div>
+                </ng-template>
+                <ng-template #fromTemplateHelp>
+                    <p>{{'workflow_template_help_line_1' | translate}}</p>
+                    <div class="ui list">
+                        <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/templates">{{'common_read_more'
+                            | translate}}</a>
+                    </div>
+                </ng-template>
+            </div>
+        </ng-template>
     </div>
 </div>
-<aside class="sidebar scrollable expanded"
-   infiniteScroll
-   [infiniteScrollDistance]="2"
-   [infiniteScrollThrottle]="50"
-   [scrollWindow]="false"
-   (scrolled)="onScroll.emit(true)">
+<aside class="sidebar scrollable expanded" infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
+    [scrollWindow]="false" (scrolled)="onScroll.emit(true)">
     <div class="floated right">
         <button class="ui large icon button transparent close-button" (click)="changeToRunsMode()" *ngIf="sidebarMode !== sidebarModes.RUNS">
             <i class="black close icon"></i>
@@ -31,17 +80,16 @@
             </app-workflow-sidebar-run-node>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_HOOK">
-          <app-workflow-sidebar-run-hook
-            [project]="project">
-        </app-workflow-sidebar-run-hook>
+            <app-workflow-sidebar-run-hook [project]="project">
+            </app-workflow-sidebar-run-hook>
         </ng-container>
     </div>
 </aside>
 <section class="content-wrap" *ngIf="!loading && workflow != null">
     <router-outlet></router-outlet>
-    <app-workflow-sidebar-code
-        [project]="project"
-        [workflow]="workflow"
-        [open]="asCodeEditorOpen">
+    <app-workflow-sidebar-code [project]="project" [workflow]="workflow" [open]="asCodeEditorOpen">
     </app-workflow-sidebar-code>
+    <ng-container>
+        <app-workflow-template-modal #templateForm [project]="project" [workflow]="workflow"></app-workflow-template-modal>
+    </ng-container>
 </section>

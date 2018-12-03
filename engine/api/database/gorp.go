@@ -14,12 +14,9 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-type gorpLogger struct {
-}
+type gorpLogger struct{}
 
-func (g gorpLogger) Printf(format string, v ...interface{}) {
-	log.Debug(format, v...)
-}
+func (g gorpLogger) Printf(format string, v ...interface{}) { log.Debug(format, v...) }
 
 var (
 	lastDB    *sql.DB

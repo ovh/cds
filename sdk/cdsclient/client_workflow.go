@@ -368,3 +368,14 @@ func (c *client) WorkflowCachePull(projectKey, ref string) (io.Reader, error) {
 
 	return bytes.NewBuffer(body), nil
 }
+
+func (c *client) WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error) {
+	url := fmt.Sprintf("/project/%s/workflow/%s/templateInstance", projectKey, workflowName)
+
+	var i sdk.WorkflowTemplateInstance
+	if _, err := c.GetJSON(context.Background(), url, &i); err != nil {
+		return nil, err
+	}
+
+	return &i, nil
+}

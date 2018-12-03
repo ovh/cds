@@ -47,3 +47,12 @@ type WorkflowGroup struct {
 	Workflow   Workflow `json:"workflow"`
 	Permission int      `json:"permission"`
 }
+
+// GroupsToIDs returns ids of given groups.
+func GroupsToIDs(gs []Group) []int64 {
+	ids := make([]int64, len(gs))
+	for i := range gs {
+		ids[i] = gs[i].ID
+	}
+	return ids
+}

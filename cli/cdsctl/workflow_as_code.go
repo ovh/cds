@@ -45,18 +45,14 @@ func interactiveChooseProject(gitRepo repo.Repo) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	var chosenProj *sdk.Project
 	opts := make([]string, len(projs))
 	for i := range projs {
 		opts[i] = fmt.Sprintf("%s - %s", projs[i].Key, projs[i].Name)
 	}
-	choice := cli.MultiChoice("Choose the CDS project", opts...)
-
-	for i := range projs {
-		if choice == fmt.Sprintf("%s - %s", projs[i].Key, projs[i].Name) {
-			chosenProj = &projs[i]
-		}
-	}
+	selected := cli.MultiChoice("Choose the CDS project:", opts...)
+	chosenProj = &projs[selected]
 
 	if err := gitRepo.LocalConfigSet("cds", "project", chosenProj.Key); err != nil {
 		return "", err
@@ -200,7 +196,8 @@ func workflowInitRun(c cli.Values) error {
 	for i, s := range proj.VCSServers {
 		repoManagerNames[i] = s.Name
 	}
-	repoManagerName = cli.MultiChoice("Choose the repository manager", repoManagerNames...)
+	selected := cli.MultiChoice("Choose the repository manager:", repoManagerNames...)
+	repoManagerName = proj.VCSServers[selected].Name
 
 	// Get repositories from the repository manager
 	repos, err := client.RepositoriesList(pkey, repoManagerName)
@@ -261,13 +258,8 @@ func workflowInitRun(c cli.Values) error {
 		for i, p := range pips {
 			pipelineNames[i] = p.Name
 		}
-		pipName := cli.MultiChoice("Choose your pipeline", pipelineNames...)
-		for i, p := range pips {
-			if pipName == p.Name {
-				existingPip = &pips[i]
-				break
-			}
-		}
+		selected := cli.MultiChoice("Choose your pipeline:", pipelineNames...)
+		existingPip = &pips[selected]
 	}
 
 	var pipName string

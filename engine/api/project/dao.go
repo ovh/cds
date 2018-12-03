@@ -3,12 +3,12 @@ package project
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
@@ -25,13 +25,13 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo str
 	// Admin can gets all project
 	// Users can gets only their projects
 	if u == nil || u.Admin {
-		query = `SELECT project.*
+		query = `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
 		WHERE application.repo_fullname = $1
 		ORDER by project.name, project.projectkey ASC`
 	} else {
-		query = `SELECT project.*
+		query = `SELECT DISTINCT project.*
 		FROM  project
 		JOIN  application on project.id = application.project_id
 		WHERE application.repo_fullname = $3
@@ -43,16 +43,7 @@ func LoadAllByRepo(db gorp.SqlExecutor, store cache.Store, u *sdk.User, repo str
 				OR
 				$2 = ANY(string_to_array($1, ',')::int[])
 		)`
-
-		var groupID string
-		for i, g := range u.Groups {
-			if i == 0 {
-				groupID = fmt.Sprintf("%d", g.ID)
-			} else {
-				groupID += "," + fmt.Sprintf("%d", g.ID)
-			}
-		}
-		args = []interface{}{groupID, group.SharedInfraGroup.ID}
+		args = []interface{}{gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID}
 	}
 
 	args = append(args, repo)
@@ -84,15 +75,7 @@ func LoadAll(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk
 						$2 = ANY(string_to_array($1, ',')::int[])
 				)
 				ORDER by project.name, project.projectkey ASC`
-		var groupID string
-		for i, g := range u.Groups {
-			if i == 0 {
-				groupID = fmt.Sprintf("%d", g.ID)
-			} else {
-				groupID += "," + fmt.Sprintf("%d", g.ID)
-			}
-		}
-		args = []interface{}{groupID, group.SharedInfraGroup.ID}
+		args = []interface{}{gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID}
 	}
 	return loadprojects(db, store, u, opts, query, args...)
 }
@@ -355,9 +338,9 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoProject
+			return nil, sdk.WithStack(sdk.ErrNoProject)
 		}
-		return nil, sdk.WrapError(err, "db.Select")
+		return nil, sdk.WithStack(err)
 	}
 
 	projs := make([]sdk.Project, 0, len(res))
@@ -397,9 +380,9 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, u *sdk.Us
 
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoProject
+			return nil, sdk.WithStack(sdk.ErrNoProject)
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	return unwrap(db, store, dbProj, u, opts)

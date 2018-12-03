@@ -71,11 +71,11 @@ func Write(w http.ResponseWriter, btes []byte, status int, contentType string) e
 
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
 func WriteJSON(w http.ResponseWriter, data interface{}, status int) error {
-	b, e := json.Marshal(data)
-	if e != nil {
-		return sdk.WrapError(e, "WriteJSON> unable to marshal : %v", e)
+	b, err := json.Marshal(data)
+	if err != nil {
+		return sdk.WrapError(err, "Unable to marshal json data")
 	}
-	return Write(w, b, status, "application/json")
+	return sdk.WithStack(Write(w, b, status, "application/json"))
 }
 
 // WriteProcessTime writes the duration of the call in the responsewriter
@@ -119,13 +119,12 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 
 // UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.
 func UnmarshalBody(r *http.Request, i interface{}) error {
-	data, errRead := ioutil.ReadAll(r.Body)
-	if errRead != nil {
-		return sdk.ErrWrongRequest
+	data, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return sdk.NewError(sdk.ErrWrongRequest, err)
 	}
 	if err := json.Unmarshal(data, i); err != nil {
-		err = sdk.NewError(sdk.ErrWrongRequest, err)
-		return sdk.WrapError(err, "unable to unmarshal %s", string(data))
+		return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "unable to unmarshal %s", string(data)))
 	}
 	return nil
 }

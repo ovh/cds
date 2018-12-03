@@ -55,9 +55,10 @@ func (v *Values) GetStringSlice(s string) []string {
 
 // Arg represent a command argument
 type Arg struct {
-	Name    string
-	IsValid func(string) bool
-	Weight  int
+	Name       string
+	IsValid    func(string) bool
+	Weight     int
+	AllowEmpty bool
 }
 
 func orderArgs(a ...Arg) args {
@@ -65,7 +66,6 @@ func orderArgs(a ...Arg) args {
 		if a[i].Weight == 0 {
 			a[i].Weight = i
 		}
-
 	}
 	res := args(a)
 	sort.Sort(res)

@@ -23,6 +23,7 @@ export class WorkflowService {
         let params = new HttpParams();
         params = params.append('withUsage', 'true');
         params = params.append('withAudits', 'true');
+        params = params.append('withTemplate', 'true');
 
         return this._http.get<Workflow>('/project/' + key + '/workflows/' + workflowName, {params});
     }

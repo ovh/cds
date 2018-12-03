@@ -119,159 +119,255 @@ func withAllCommandModifiers() []cli.CommandModifier {
 func withAutoConf() cli.CommandModifier {
 	return cli.CommandWithPreRun(
 		func(c *cli.Command, args *[]string) error {
+			// if args length equals or over context args length means that all
+			// context args were given so ignore discover conf
 			if len(*args) >= len(c.Ctx)+len(c.Args) {
 				return nil
 			}
 
-			if _, err := repo.New("."); err != nil {
-				//Ignore error
-				return nil
-			}
-
-			if err := discoverConf(); err != nil {
+			preargs, err := discoverConf(c.Ctx)
+			if err != nil {
 				return err
 			}
 
-			preargs := []string{}
-			for _, arg := range c.Ctx {
-				if arg.Name == _ProjectKey {
-					preargs = []string{autoDiscoveredProj}
-				}
-				if arg.Name == _ApplicationName {
-					preargs = append(preargs, autoDiscoveredApp)
-				}
-				if arg.Name == _WorkflowName {
-					preargs = append(preargs, autoDiscoveredWorkflow)
-				}
-			}
-
-			*args = append(preargs, *args...)
+			(*args) = append(preargs, *args...)
 
 			return nil
 		},
 	)
 }
 
-var (
-	autoDiscoveredProj     string
-	autoDiscoveredApp      string
-	autoDiscoveredWorkflow string
-)
+func discoverConf(ctx []cli.Arg) ([]string, error) {
+	var needProject, needApplication, needWorkflow bool
 
-func discoverConf() error {
+	// populates needs from ctx
+	mctx := make(map[string]cli.Arg, len(ctx))
+	for _, arg := range ctx {
+		mctx[arg.Name] = arg
+		switch arg.Name {
+		case _ProjectKey:
+			needProject = true
+		case _ApplicationName:
+			needApplication = true
+		case _WorkflowName:
+			needWorkflow = true
+		}
+	}
+
+	if !(needProject || needApplication || needWorkflow) {
+		return nil, nil
+	}
+
+	var projectKey, applicationName, workflowName string
+
+	// try to find existing .git repository
+	var repoExists bool
 	r, err := repo.New(".")
-	if err != nil {
-		return err
+	if err == nil {
+		repoExists = true
 	}
 
-	if proj, _ := r.LocalConfigGet("cds", "project"); proj != "" {
-		//It's already configured
-		autoDiscoveredProj = proj
-		autoDiscoveredApp, _ = r.LocalConfigGet("cds", "application")
-		autoDiscoveredWorkflow, _ = r.LocalConfigGet("cds", "workflow")
-		return nil
+	// if repo exists ask for usage
+	if repoExists {
+		gitProjectKey, _ := r.LocalConfigGet("cds", "project")
+		gitApplicationName, _ := r.LocalConfigGet("cds", "application")
+		gitWorkflowName, _ := r.LocalConfigGet("cds", "workflow")
+
+		// if all needs were found in git do not ask for confirmation and use the config
+		needConfirmation := (needProject && gitProjectKey == "") || (needApplication && gitApplicationName == "") || (needWorkflow && gitWorkflowName == "")
+
+		if needConfirmation {
+			fetchURL, err := r.FetchURL()
+			if err != nil {
+				return nil, err
+			}
+			name, err := r.Name()
+			if err != nil {
+				return nil, err
+			}
+			repoExists = cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL))
+		}
 	}
 
-	fetchURL, err := r.FetchURL()
-	if err != nil {
-		return err
+	// if repo exists and is correct get existing config from it's config
+	if repoExists {
+		if needProject {
+			projectKey, _ = r.LocalConfigGet("cds", "project")
+		}
+		if needApplication {
+			applicationName, _ = r.LocalConfigGet("cds", "application")
+		}
+		if needWorkflow {
+			workflowName, _ = r.LocalConfigGet("cds", "workflow")
+		}
 	}
 
-	name, err := r.Name()
-	if err != nil {
-		return err
-	}
+	// updates needs from values found in git config
+	needProject = needProject && projectKey == ""
+	needApplication = needApplication && applicationName == ""
+	needWorkflow = needWorkflow && workflowName == ""
 
-	if cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s (%s). Is it correct?", name, fetchURL)) {
-		projs, err := client.ProjectList(true, true, cdsclient.Filter{
-			Name:  "repo",
-			Value: name,
-		})
-		if err != nil {
-			return err
-		}
+	// populate project, application and workflow if required
+	if needProject || needApplication || needWorkflow {
+		var projects []sdk.Project
 
-		var chosenProj *sdk.Project
-
-		filteredProjs := []sdk.Project{}
-		for i, p := range projs {
-			if len(p.Applications) > 0 || len(p.Workflows) > 0 {
-				filteredProjs = append(filteredProjs, projs[i])
+		if repoExists {
+			name, err := r.Name()
+			if err != nil {
+				return nil, err
 			}
-		}
-		projs = nil
-
-		//Set cds.project
-		if len(filteredProjs) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS project %s - %s. Is it correct?", filteredProjs[0].Key, filteredProjs[0].Name)) {
-				chosenProj = &filteredProjs[0]
-			}
-		} else {
-			opts := make([]string, len(filteredProjs))
-			for i := range filteredProjs {
-				opts[i] = fmt.Sprintf("%s - %s", filteredProjs[i].Key, filteredProjs[i].Name)
-			}
-			choice := cli.MultiChoice("Choose the CDS project", opts...)
-
-			for i := range filteredProjs {
-				if choice == fmt.Sprintf("%s - %s", filteredProjs[i].Key, filteredProjs[i].Name) {
-					chosenProj = &filteredProjs[i]
-				}
+			ps, err := client.ProjectList(true, true, cdsclient.Filter{Name: "repo", Value: name})
+			if err != nil {
+				return nil, err
 			}
 
-			if err := r.LocalConfigSet("cds", "project", chosenProj.Key); err != nil {
-				return err
+			// if there is multiple projects with current repo or zero, ask with the entire list of projects
+			// else suggest the repo found
+			if len(projects) == 1 {
+				projects = ps
 			}
 		}
 
-		if chosenProj == nil {
-			return nil
+		if projects == nil {
+			ps, err := client.ProjectList(true, true)
+			if err != nil {
+				return nil, err
+			}
+			projects = ps
 		}
 
-		//Set cds.application
-		if len(chosenProj.Applications) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS application %s. Is it correct?", chosenProj.Applications[0].Name)) {
-				if err := r.LocalConfigSet("cds", "application", chosenProj.Applications[0].Name); err != nil {
-					return err
-				}
-			}
-		} else {
-			opts := make([]string, len(chosenProj.Applications))
-			for i := range chosenProj.Applications {
-				opts[i] = chosenProj.Applications[i].Name
-			}
-			choice := cli.MultiChoice("Choose the CDS application", opts...)
+		var project *sdk.Project
 
-			for i := range chosenProj.Applications {
-				if choice == chosenProj.Applications[i].Name {
-					if err := r.LocalConfigSet("cds", "application", chosenProj.Applications[i].Name); err != nil {
-						return err
-					}
+		// try to use the given project key
+		if projectKey != "" {
+			for _, p := range projects {
+				if p.Key == projectKey {
+					project = &p
 					break
 				}
 			}
 		}
 
-		//Set cds.workflow
-		if len(chosenProj.Workflows) == 1 {
-			if cli.AskForConfirmation(fmt.Sprintf("Found CDS workflow %s. Is it correct?", chosenProj.Workflows[0].Name)) {
-				if err := r.LocalConfigSet("cds", "workflow", chosenProj.Workflows[0].Name); err != nil {
-					return err
+		// if given project key not valid ask for a project
+		if project == nil {
+			if len(projects) == 1 {
+				if !cli.AskForConfirmation(fmt.Sprintf("Found one CDS project %s - %s. Is it correct?", projects[0].Key, projects[0].Name)) {
+					// there is no filter on repo so there was only one choice possible
+					if !repoExists {
+						return nil, fmt.Errorf("Can't find a project to use")
+					}
+				} else {
+					project = &projects[0]
 				}
 			}
-		} else {
-			opts := make([]string, len(chosenProj.Workflows))
-			for i := range chosenProj.Workflows {
-				opts[i] = chosenProj.Workflows[i].Name
-			}
-			choice := cli.MultiChoice("Choose the CDS workflow", opts...)
+			if project == nil {
+				// if the project found for current repo was not selected load all projects list
+				if repoExists && len(projects) == 1 {
+					ps, err := client.ProjectList(true, true)
+					if err != nil {
+						return nil, err
+					}
+					projects = ps
+				}
 
-			for i := range chosenProj.Workflows {
-				if choice == chosenProj.Workflows[i].Name {
-					return r.LocalConfigSet("cds", "workflow", chosenProj.Workflows[i].Name)
+				opts := make([]string, len(projects))
+				for i := range projects {
+					opts[i] = fmt.Sprintf("%s - %s", projects[i].Key, projects[i].Name)
+				}
+				selected := cli.MultiChoice("Choose the CDS project:", opts...)
+				project = &projects[selected]
+			}
+		}
+
+		// set project key and override repository config if exists
+		projectKey = project.Key
+		if repoExists {
+			if err := r.LocalConfigSet("cds", "project", projectKey); err != nil {
+				return nil, err
+			}
+		}
+
+		if needApplication {
+			var application *sdk.Application
+			if len(project.Applications) == 1 {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", project.Applications[0].Name)) {
+					application = &project.Applications[0]
+				}
+			} else if len(project.Applications) > 1 {
+				opts := make([]string, len(project.Applications))
+				for i := range project.Applications {
+					opts[i] = project.Applications[i].Name
+				}
+				if mctx[_ApplicationName].AllowEmpty {
+					opts = append(opts, "Use a new application")
+				}
+				selected := cli.MultiChoice("Choose the CDS application:", opts...)
+				if selected < len(project.Applications) {
+					application = &project.Applications[selected]
+				}
+			}
+			if application == nil && !mctx[_ApplicationName].AllowEmpty {
+				return nil, fmt.Errorf("Can't find an application to use")
+			}
+
+			// set application name and override repository config if exists
+			applicationName = application.Name
+			if application != nil {
+				if repoExists {
+					if err := r.LocalConfigSet("cds", "application", applicationName); err != nil {
+						return nil, err
+					}
+				}
+			}
+		}
+
+		if needWorkflow {
+			var workflow *sdk.Workflow
+			if len(project.Workflows) == 1 {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", project.Workflows[0].Name)) {
+					workflow = &project.Workflows[0]
+				}
+			} else if len(project.Workflows) > 1 {
+				opts := make([]string, len(project.Workflows))
+				for i := range project.Workflows {
+					opts[i] = project.Workflows[i].Name
+				}
+				if mctx[_WorkflowName].AllowEmpty {
+					opts = append(opts, "Use a new workflow")
+				}
+				selected := cli.MultiChoice("Choose the CDS workflow:", opts...)
+				if selected < len(project.Workflows) {
+					workflow = &project.Workflows[selected]
+				}
+			}
+			if workflow == nil && !mctx[_WorkflowName].AllowEmpty {
+				return nil, fmt.Errorf("Can't find a workflow to use")
+			}
+
+			// set workflow name and override repository config if exists
+			if workflow != nil {
+				workflowName = workflow.Name
+				if repoExists {
+					if err := r.LocalConfigSet("cds", "workflow", workflowName); err != nil {
+						return nil, err
+					}
 				}
 			}
 		}
 	}
-	return nil
+
+	// for all required context args override or add the value in cli args
+	preargs := make([]string, len(ctx))
+	for i, arg := range ctx {
+		switch arg.Name {
+		case _ProjectKey:
+			preargs[i] = projectKey
+		case _ApplicationName:
+			preargs[i] = applicationName
+		case _WorkflowName:
+			preargs[i] = workflowName
+		}
+	}
+
+	return preargs, nil
 }

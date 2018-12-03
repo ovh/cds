@@ -382,3 +382,12 @@ func GetProject(key string, mods ...RequestModifier) (Project, error) {
 
 	return p, nil
 }
+
+// ProjectsToIDs returns ids of given projects.
+func ProjectsToIDs(ps []Project) []int64 {
+	ids := make([]int64, len(ps))
+	for i := range ps {
+		ids[i] = ps[i].ID
+	}
+	return ids
+}

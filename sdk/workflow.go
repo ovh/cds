@@ -43,7 +43,7 @@ type Workflow struct {
 	DerivedFromWorkflowID   int64                       `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
 	DerivedFromWorkflowName string                      `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
 	DerivationBranch        string                      `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
-	Audits                  []AuditWorklflow            `json:"audits" db:"-"`
+	Audits                  []AuditWorkflow             `json:"audits" db:"-"`
 	Pipelines               map[int64]Pipeline          `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
 	Applications            map[int64]Application       `json:"applications" db:"-" cli:"-"  mapstructure:"-"`
 	Environments            map[int64]Environment       `json:"environments" db:"-" cli:"-"  mapstructure:"-"`
@@ -54,6 +54,11 @@ type Workflow struct {
 	ToDelete                bool                        `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
+	// aggregates
+	Template         *WorkflowTemplate         `json:"-" db:"-" cli:"-"`
+	TemplateInstance *WorkflowTemplateInstance `json:"-" db:"-" cli:"-"`
+	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
+	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
 }
 
 // GetApplication retrieve application from workflow
@@ -1652,4 +1657,13 @@ func (label *Label) Validate() error {
 	}
 
 	return nil
+}
+
+// WorkflowToIDs returns ids of given workflows.
+func WorkflowToIDs(ws []*Workflow) []int64 {
+	ids := make([]int64, len(ws))
+	for i := range ws {
+		ids[i] = ws[i].ID
+	}
+	return ids
 }

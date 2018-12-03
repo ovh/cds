@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -12,9 +13,10 @@ import (
 
 // Workflow is the "as code" representation of a sdk.Workflow
 type Workflow struct {
-	Name        string `json:"name" yaml:"name"`
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
-	Version     string `json:"version,omitempty" yaml:"version,omitempty"`
+	Name        string  `json:"name" yaml:"name"`
+	Description string  `json:"description,omitempty" yaml:"description,omitempty"`
+	Version     string  `json:"version,omitempty" yaml:"version,omitempty"`
+	Template    *string `json:"template,omitempty" yaml:"template,omitempty"`
 	// This will be filled for complex workflows
 	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty"`
 	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty"`
@@ -307,6 +309,11 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 		}
 	}
 
+	if w.Template != nil {
+		path := fmt.Sprintf("%s/%s", w.Template.Group.Name, w.Template.Slug)
+		exportedWorkflow.Template = &path
+	}
+
 	return exportedWorkflow, nil
 }
 
@@ -479,6 +486,18 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	//Compute notifications
 	if err := w.processNotifications(wf); err != nil {
 		return nil, err
+	}
+
+	// if there is a template instance id on the workflow export, add it
+	if w.Template != nil {
+		templatePath := strings.Split(*w.Template, "/")
+		if len(templatePath) != 2 {
+			return nil, sdk.WithStack(fmt.Errorf("Invalid template path"))
+		}
+		wf.Template = &sdk.WorkflowTemplate{
+			Group: &sdk.Group{Name: templatePath[0]},
+			Slug:  templatePath[1],
+		}
 	}
 
 	wf.SortNode()

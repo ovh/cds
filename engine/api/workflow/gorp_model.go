@@ -221,7 +221,7 @@ type hookModel sdk.WorkflowHookModel
 // outgoingHookModel is a gorp wrapper around sdk.WorkflowHookModel
 type outgoingHookModel sdk.WorkflowHookModel
 
-type auditWorkflow sdk.AuditWorklflow
+type auditWorkflow sdk.AuditWorkflow
 
 type dbNodeData sdk.Node
 type dbNodeContextData sqlNodeContextData

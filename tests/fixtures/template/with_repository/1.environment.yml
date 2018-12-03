@@ -1,0 +1,5 @@
+name: First-environment-[[.id]]
+values:
+  my-key:
+    type: string
+    value: my-value

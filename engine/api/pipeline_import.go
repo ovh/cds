@@ -68,7 +68,7 @@ func (api *API) importPipelineHandler() service.Handler {
 			return sdk.WrapError(errp, "Unable to load project %s", key)
 		}
 
-		// Get body
+		// get request body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(errRead, "Unable to read body"))
@@ -87,32 +87,32 @@ func (api *API) importPipelineHandler() service.Handler {
 			errorParse = json.Unmarshal(data, &rawPayload)
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, &rawPayload)
+		default:
+			errorParse = sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Given data format not supported")
 		}
 		if errorParse != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errorParse)
 		}
 
-		//Parse the data once to retrieve the version
+		// parse the data once to retrieve the version
 		var pipelineV1Format bool
 		if v, ok := rawPayload["version"]; ok {
-			if v.(string) == exportentities.PipelineVersion1 {
-				pipelineV1Format = true
-			}
+			pipelineV1Format = v.(string) == exportentities.PipelineVersion1
 		}
 
-		//Depending on the version, we will use different struct
+		// depending on the version, we will use different struct
 		type pipeliner interface {
 			Pipeline() (*sdk.Pipeline, error)
 		}
 
 		var payload pipeliner
-		// Parse the pipeline
 		if pipelineV1Format {
 			payload = &exportentities.PipelineV1{}
 		} else {
 			payload = &exportentities.Pipeline{}
 		}
 
+		// parse the pipeline
 		switch f {
 		case exportentities.FormatJSON:
 			errorParse = json.Unmarshal(data, payload)
@@ -127,10 +127,10 @@ func (api *API) importPipelineHandler() service.Handler {
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "Cannot start transaction")
 		}
-
 		defer tx.Rollback()
 
-		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx), pipeline.ImportOptions{Force: forceUpdate})
+		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx),
+			pipeline.ImportOptions{Force: forceUpdate})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import pipeline")

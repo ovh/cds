@@ -173,16 +173,17 @@ func FormInt(r *http.Request, s string) (int, error) {
 // requestVarInt return int value for a var in Request
 func requestVarInt(r *http.Request, s string) (int64, error) {
 	vars := mux.Vars(r)
-	idString := vars[s]
 
 	// Check ID Job
-	id, erri := strconv.ParseInt(idString, 10, 64)
-	if erri != nil {
+	id, err := strconv.ParseInt(vars[s], 10, 64)
+	if err != nil {
+		err = sdk.WrapError(err, "%s is not an integer: %s", s, vars[s])
 		if s == "id" {
-			return id, sdk.WrapError(sdk.ErrInvalidID, "requestVarInt> id not an integer: %s", idString)
+			return 0, sdk.NewError(sdk.ErrInvalidID, err)
 		}
-		return id, sdk.WrapError(sdk.ErrWrongRequest, "requestVarInt> %s is not an integer: %s", s, idString)
+		return 0, sdk.NewError(sdk.ErrWrongRequest, err)
 	}
+
 	return id, nil
 }
 

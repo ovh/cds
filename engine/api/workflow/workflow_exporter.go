@@ -13,10 +13,13 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Export a workflow
@@ -67,7 +70,21 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 	}
 	wf, errload := Load(ctx, db, cache, proj, name, u, options)
 	if errload != nil {
-		return sdk.WrapError(errload, "workflow.Pull> Cannot load workflow %s", name)
+		return sdk.WrapError(errload, "Cannot load workflow %s", name)
+	}
+
+	i, err := workflowtemplate.GetInstanceByWorkflowID(db, wf.ID)
+	if err != nil {
+		return err
+	}
+	if i != nil {
+		wf.Template, err = workflowtemplate.GetByID(db, i.WorkflowTemplateID)
+		if err != nil {
+			return err
+		}
+		if err := group.AggregateOnWorkflowTemplate(db, wf.Template); err != nil {
+			return err
+		}
 	}
 
 	apps := wf.GetApplications()
@@ -79,12 +96,12 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		app := &apps[i]
 		vars, errv := application.GetAllVariable(db, proj.Key, app.Name, application.WithClearPassword())
 		if errv != nil {
-			return sdk.WrapError(errv, "workflow.Pull> Cannot load application variables %s", app.Name)
+			return sdk.WrapError(errv, "Cannot load application variables %s", app.Name)
 		}
 		app.Variable = vars
 
 		if errk := application.LoadAllDecryptedKeys(db, app); errk != nil {
-			return sdk.WrapError(errk, "workflow.Pull> Cannot load application keys %s", app.Name)
+			return sdk.WrapError(errk, "Cannot load application keys %s", app.Name)
 		}
 	}
 
@@ -93,22 +110,26 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		env := &envs[i]
 		vars, errv := environment.GetAllVariable(db, proj.Key, env.Name, environment.WithClearPassword())
 		if errv != nil {
-			return sdk.WrapError(errv, "workflow.Pull> Cannot load environment variables %s", env.Name)
+			return sdk.WrapError(errv, "Cannot load environment variables %s", env.Name)
 		}
 		env.Variable = vars
 
 		if errk := environment.LoadAllDecryptedKeys(db, env); errk != nil {
-			return sdk.WrapError(errk, "workflow.Pull> Cannot load environment keys %s", env.Name)
+			return sdk.WrapError(errk, "Cannot load environment keys %s", env.Name)
 		}
 	}
 
 	tw := tar.NewWriter(w)
+	defer func() {
+		if err := tw.Close(); err != nil {
+			log.Error("%v", sdk.WrapError(err, "Unable to close tar writer"))
+		}
+	}()
 
 	buffw := new(bytes.Buffer)
 	size, errw := exportWorkflow(*wf, f, buffw, opts...)
 	if errw != nil {
-		tw.Close()
-		return sdk.WrapError(errw, "workflow.Pull> Unable to export workflow")
+		return sdk.WrapError(errw, "Unable to export workflow")
 	}
 
 	hdr := &tar.Header{
@@ -117,11 +138,9 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		Size: int64(size),
 	}
 	if err := tw.WriteHeader(hdr); err != nil {
-		tw.Close()
 		return sdk.WrapError(err, "Unable to write workflow header %+v", hdr)
 	}
 	if _, err := io.Copy(tw, buffw); err != nil {
-		tw.Close()
 		return sdk.WrapError(err, "Unable to copy workflow buffer")
 	}
 
@@ -136,7 +155,6 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		buff := new(bytes.Buffer)
 		size, err := application.ExportApplication(db, a, f, withPermissions, encryptFunc, buff)
 		if err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to export app %s", a.Name)
 		}
 		hdr := &tar.Header{
@@ -145,11 +163,9 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 			Size: int64(size),
 		}
 		if err := tw.WriteHeader(hdr); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to write app header %+v", hdr)
 		}
 		if _, err := io.Copy(tw, buff); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to copy app buffer")
 		}
 	}
@@ -158,7 +174,6 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		buff := new(bytes.Buffer)
 		size, err := environment.ExportEnvironment(db, e, f, withPermissions, encryptFunc, buff)
 		if err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to export env %s", e.Name)
 		}
 
@@ -168,11 +183,9 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 			Size: int64(size),
 		}
 		if err := tw.WriteHeader(hdr); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to write env header %+v", hdr)
 		}
 		if _, err := io.Copy(tw, buff); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to copy env buffer")
 		}
 	}
@@ -189,17 +202,12 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 			Size: int64(size),
 		}
 		if err := tw.WriteHeader(hdr); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to write pipeline header %+v", hdr)
 		}
 		if _, err := io.Copy(tw, buff); err != nil {
-			tw.Close()
 			return sdk.WrapError(err, "Unable to copy pip buffer")
 		}
 	}
 
-	if err := tw.Close(); err != nil {
-		return sdk.WrapError(err, "Unable to close tar writer")
-	}
 	return nil
 }

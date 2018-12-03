@@ -14,6 +14,17 @@ type Filter struct {
 	Name, Value string
 }
 
+// TemplateClient exposes templates functions
+type TemplateClient interface {
+	TemplateGet(groupName, templateSlug string) (*sdk.WorkflowTemplate, error)
+	TemplateGetByID(id int64) (*sdk.WorkflowTemplate, error)
+	TemplateGetAll() ([]sdk.WorkflowTemplate, error)
+	TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
+	TemplatePull(groupName, templateSlug string) (*tar.Reader, error)
+	TemplatePush(tarContent io.Reader) ([]string, *tar.Reader, error)
+	TemplateGetInstances(groupName, templateSlug string) ([]sdk.WorkflowTemplateInstance, error)
+}
+
 // AdminService expose all function to CDS services
 type AdminService interface {
 	Services() ([]sdk.Service, error)
@@ -278,6 +289,7 @@ type WorkflowClient interface {
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 	WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error
 	WorkflowCachePull(projectKey, ref string) (io.Reader, error)
+	WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error)
 }
 
 // MonitoringClient exposes monitoring functions
@@ -327,6 +339,7 @@ type Interface interface {
 	MonitoringClient
 	HookClient
 	Version() (*sdk.Version, error)
+	TemplateClient
 }
 
 // InterfaceDeprecated is the interface for using deprecated routes with cdsclient package

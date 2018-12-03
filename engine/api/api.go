@@ -39,6 +39,7 @@ import (
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -655,6 +656,9 @@ func (a *API) Serve(ctx context.Context) error {
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "workflow.ComputeAudit", func(ctx context.Context) {
 		workflow.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
+	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "workflowtemplate.ComputeAudit", func(ctx context.Context) {
+		workflowtemplate.ComputeAudit(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "warning.Start", func(ctx context.Context) {
 		warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan)

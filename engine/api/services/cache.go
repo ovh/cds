@@ -117,7 +117,7 @@ func (c *iCache) doListenDatabase(ctx context.Context) {
 
 	listener := c.dbConnFactory.NewListener(time.Second, 10*time.Second, eventCallback)
 	if err := listener.Listen("events"); err != nil {
-		log.Error("Unable to ", err)
+		log.Error("Unable to %v", err)
 	}
 
 	for {

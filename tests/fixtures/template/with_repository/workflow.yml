@@ -1,0 +1,16 @@
+name: [[.name]]
+description: Test example workflow
+version: v1.0
+workflow:
+  Node-1:
+    pipeline: First-pipeline-[[.id]]
+    application: [[.name]]
+[[if .params.withDeploy]]
+  Node-2:
+    depends_on:
+    - Node-1
+    when:
+    - [[.params.deployWhen]]
+    pipeline: Second-pipeline-[[.id]]
+    environment: First-environment-[[.id]]
+[[end]]

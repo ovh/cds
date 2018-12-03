@@ -9,7 +9,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
@@ -111,15 +111,7 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
 				OR
 				$4 = ANY(string_to_array($3, ',')::int[])
 			)`, appRows)
-		var groupID string
-		for i, g := range u.Groups {
-			if i == 0 {
-				groupID = fmt.Sprintf("%d", g.ID)
-			} else {
-				groupID += "," + fmt.Sprintf("%d", g.ID)
-			}
-		}
-		args = []interface{}{projectKey, appName, groupID, group.SharedInfraGroup.ID}
+		args = []interface{}{projectKey, appName, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID}
 	}
 
 	return load(db, store, projectKey, u, opts, query, args...)
@@ -147,16 +139,7 @@ func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.Us
 				OR
 				$3 = ANY(string_to_array($2, ',')::int[])
 			) FOR UPDATE NOWAIT`, appRows)
-		var groupID string
-
-		for i, g := range u.Groups {
-			if i == 0 {
-				groupID = fmt.Sprintf("%d", g.ID)
-			} else {
-				groupID += "," + fmt.Sprintf("%d", g.ID)
-			}
-		}
-		args = []interface{}{id, groupID, group.SharedInfraGroup.ID}
+		args = []interface{}{id, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID}
 	}
 
 	return load(db, store, "", u, opts, query, args...)
@@ -184,16 +167,7 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opt
 				OR
 				$3 = ANY(string_to_array($2, ',')::int[])
 			)`, appRows)
-		var groupID string
-
-		for i, g := range u.Groups {
-			if i == 0 {
-				groupID = fmt.Sprintf("%d", g.ID)
-			} else {
-				groupID += "," + fmt.Sprintf("%d", g.ID)
-			}
-		}
-		args = []interface{}{id, groupID, group.SharedInfraGroup.ID}
+		args = []interface{}{id, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID}
 	}
 
 	return load(db, store, "", u, opts, query, args...)
@@ -304,7 +278,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 
 	dbApp := dbApplication(*app)
 	if err := db.Insert(&dbApp); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == database.ViolateUniqueKeyPGCode {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
 			err = sdk.ErrApplicationExist
 		}
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)

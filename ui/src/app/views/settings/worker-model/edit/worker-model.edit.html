@@ -1,4 +1,4 @@
-<h2 *ngIf="workerModel && workerModel.id">{{ 'worker_model_edit_title' | translate }} {{workerModel.name}}</h2>
+<h2>{{ 'worker_model_edit_title' | translate }} <span *ngIf="workerModel && workerModel.id">{{workerModel.name}}</span></h2>
 
 <div *ngIf="workerModel;then showWorkerModel;else loadWorkerModel"></div>
 <ng-template #showWorkerModel>
@@ -267,7 +267,7 @@
               <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">{{'worker_model_help_howto_link_1' | translate}}</a>
               <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/">{{'worker_model_help_howto_link_2' | translate}}</a>
               <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">{{'worker_model_help_howto_link_3' | translate}}</a>
-              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">{{'worker_model_help_howto_link_4' | translate}}</a>
+              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">{{'common_read_more' | translate}}</a>
             </div>
           </div>
         </div>
@@ -295,7 +295,7 @@
 
         <div class="six wide column" *ngIf="workerModel.id">
           <div class="field" *ngIf="workerModel.created_by?.username !== ''">
-            <h3>{{'worker_model_created_by' | translate}}</h3>
+            <h3>{{'common_created_by' | translate}}</h3>
             <div>
               <i class="fa fa-user"></i> {{workerModel.created_by?.fullname}} ({{workerModel.created_by?.username}})
               <span *ngIf="workerModel.created_by?.admin"><b>Admin</b></span>
@@ -305,7 +305,7 @@
             </div>
           </div>
           <div class="field" *ngIf="workerModel.user_last_modified !== ''">
-            <h3>{{'worker_model_last_modified' | translate}}</h3>
+            <h3>{{'common_last_modified' | translate}}</h3>
               {{workerModel.user_last_modified}}
           </div>
           <div class="field" *ngIf="workerModel.last_registration !== ''">

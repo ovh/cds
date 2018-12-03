@@ -1,0 +1,68 @@
+<form class="ui form">
+    <div class="ui grid">
+        <div class="wide column">
+            <div class="field">
+                <label>{{'workflow_name' | translate}}</label>
+                <input class="ui input" type="text" name="workflow_name" [(ngModel)]="parameterName" [disabled]="_workflowTemplateInstance">
+            </div>
+            <div *ngIf="workflowTemplate.parameters.length > 0" class="wide field">
+                <label>{{'common_parameters' | translate}}</label>
+            </div>
+            <ng-container *ngFor="let parameter of workflowTemplate.parameters; let index = index">
+                <div class="wide fields">
+                    <div class="eight wide field">
+                        {{parameter.key}}<span *ngIf="parameter.required">*</span>
+                    </div>
+                    <div class="eight wide field" [ngSwitch]="parameter.type">
+                        <input *ngSwitchDefault type="text" name="parameter-{{parameter.key}}" [(ngModel)]="parameterValues[parameter.key]">
+                        <sm-checkbox *ngSwitchCase="'boolean'" name="parameter-{{parameter.key}}" [control]="parameterValues[parameter.key]"
+                            type="toggle" label=" "></sm-checkbox>
+                        <sui-select *ngSwitchCase="'repository'" class="selection" name="parameter-{{parameter.key}}"
+                            placeholder="{{'workflow_wizard_select_repo_man' | translate}}" [options]="vcsNames"
+                            isSearchable="true" [(ngModel)]="parameterValues[parameter.key]" (selectedOptionChange)="fetchRepos(parameter.key, $event)"
+                            #select>
+                            <sui-select-option *ngFor="let vcs of select.filteredOptions" [value]="vcs">
+                            </sui-select-option>
+                        </sui-select>
+                    </div>
+                </div>
+                <div class="wide fields" *ngIf="parameter.type === 'repository'">
+                    <div class="eight wide field"></div>
+                    <div class="four wide field">
+                        <sui-select class="selection" name="parameter-{{parameter.key}}-repo" [(ngModel)]="parameterValues[parameter.key + '-repository']"
+                            [options]="parameterValues[parameter.key + '-repositories']" [isSearchable]="true"
+                            #repositorySelect>
+                            <sui-select-option *ngFor="let repository of repositorySelect.filteredOptions" [value]="repository">
+                            </sui-select-option>
+                        </sui-select>
+                    </div>
+                    <div class="four wide field">
+                        <button class="ui blue button resync" name="resync" type="button" [class.loading]="loading"
+                            [disabled]="loading" (click)="resyncRepos(parameter.key)">
+                            {{'btn_resync_repo' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </ng-container>
+            <div class="wide field" *ngIf="result">
+                <div class="ui message">
+                    <ul>
+                        <li *ngFor="let s of result.msgs">{{s}}</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="wide field">
+                <div class="ui right aligned field">
+                    <button class="ui green button" type="button" (click)="applyTemplate()" [class.loading]="loading">{{
+                        'btn_apply' |
+                        translate }}
+                    </button>
+                    <button class="ui blue button" type="button" (click)="goToWorkflow()" *ngIf="result && !withClose">{{
+                        'btn_goto_workflow' | translate}}</button>
+                    <button class="ui grey button" [disabled]="loading" (click)="clickClose()" *ngIf="withClose">{{
+                        'common_close' | translate }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

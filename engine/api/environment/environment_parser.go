@@ -43,6 +43,10 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	env := new(sdk.Environment)
 	env.Name = eenv.Name
 
+	if exist {
+		env.ID = oldEnv.ID
+	}
+
 	//Inherit permissions from project
 	if len(eenv.Permissions) == 0 {
 		env.EnvironmentGroups = proj.ProjectGroups

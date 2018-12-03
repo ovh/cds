@@ -77,6 +77,8 @@ import {VulnerabilitiesComponent} from './vulnerability/vulnerabilities.componen
 import {WarningMarkListComponent} from './warning/mark-list/warning.mark.list.component';
 import {WarningMarkComponent} from './warning/mark-single/warning.mark.component';
 import {WarningTabComponent} from './warning/tab/warning.tab.component';
+import {WorkflowTemplateApplyFormComponent} from './workflow-template/apply-form/workflow-template.apply-form.component';
+import {WorkflowTemplateModalComponent} from './workflow-template/modal/workflow-template.modal.component';
 import {WorkflowNodeConditionFormComponent} from './workflow/modal/conditions/condition-form/condition.component';
 import {WorkflowNodeConditionListComponent} from './workflow/modal/conditions/condition-list/condition.list.component';
 import {WorkflowNodeConditionsComponent} from './workflow/modal/conditions/node.conditions.component';
@@ -202,7 +204,9 @@ import {ZoneComponent} from './zone/zone.component';
         SpanColoredComponent,
         VCSStrategyComponent,
         FavoriteCardsComponent,
-        DataTableComponent
+        DataTableComponent,
+        WorkflowTemplateApplyFormComponent,
+        WorkflowTemplateModalComponent
     ],
     entryComponents: [SpanColoredComponent],
     providers: [
@@ -302,7 +306,9 @@ import {ZoneComponent} from './zone/zone.component';
         SpanColoredComponent,
         VCSStrategyComponent,
         FavoriteCardsComponent,
-        DataTableComponent
+        DataTableComponent,
+        WorkflowTemplateApplyFormComponent,
+        WorkflowTemplateModalComponent
     ]
 })
 export class SharedModule {

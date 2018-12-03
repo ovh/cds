@@ -110,10 +110,7 @@ func adminPlatformModelImportRun(v cli.Values) error {
 	//Try to load the model to know if we have to add it or update it
 	model, _ := client.PlatformModelGet(m.Name)
 	if model.ID == 0 { // If the model has not been found
-		if err := client.PlatformModelAdd(m); err != nil {
-			return err
-		}
-		return nil
+		return client.PlatformModelAdd(m)
 	}
 
 	return client.PlatformModelUpdate(m)
@@ -130,8 +127,5 @@ var adminPlatformModelDeleteCmd = cli.Command{
 }
 
 func adminPlatformModelDeleteRun(v cli.Values) error {
-	if err := client.PlatformModelDelete(v.GetString("name")); err != nil {
-		return err
-	}
-	return nil
+	return client.PlatformModelDelete(v.GetString("name"))
 }

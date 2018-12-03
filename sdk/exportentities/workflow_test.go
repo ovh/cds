@@ -953,6 +953,19 @@ hooks:
     config:
       method: POST
 `,
+		}, {
+			name: "workflow with template",
+			yaml: `name: test4
+version: v1.0
+template: shared.infra/example
+workflow:
+  1_start:
+    pipeline: test
+  2_webHook:
+    depends_on:
+    - 1_start
+    pipeline: test
+`,
 		},
 	}
 	for _, tst := range tests {
