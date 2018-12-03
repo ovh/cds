@@ -564,10 +564,11 @@ func (c *client) QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) er
 
 //  STATIC FILES -----
 
-func (c *client) QueueStaticFilesUpload(ctx context.Context, nodeJobRunID int64, name, entrypoint string, tarContent io.Reader) (string, bool, time.Duration, error) {
+func (c *client) QueueStaticFilesUpload(ctx context.Context, nodeJobRunID int64, name, entrypoint, staticKey string, tarContent io.Reader) (string, bool, time.Duration, error) {
 	t0 := time.Now()
 	staticFile := sdk.StaticFiles{
 		EntryPoint:   entrypoint,
+		StaticKey:    staticKey,
 		Name:         name,
 		NodeJobRunID: nodeJobRunID,
 	}
@@ -699,6 +700,7 @@ func (c *client) queueDirectStaticFilesUpload(staticFile *sdk.StaticFiles, tarCo
 
 	_ = writer.WriteField("name", staticFile.Name)
 	_ = writer.WriteField("entrypoint", staticFile.EntryPoint)
+	_ = writer.WriteField("static_key", staticFile.StaticKey)
 
 	if errclose := writer.Close(); errclose != nil {
 		return "", errclose

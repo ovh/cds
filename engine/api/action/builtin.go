@@ -272,6 +272,12 @@ Semver used if fully compatible with https://semver.org/
 		Type:        sdk.StringParameter,
 		Value:       "",
 		Advanced:    true})
+	serveStaticAct.Parameter(sdk.Parameter{
+		Name:        "static-key",
+		Description: "Indicate a static-key which will be a reference to keep the same generated URL. Example: {{.git.branch}}",
+		Type:        sdk.StringParameter,
+		Value:       "",
+		Advanced:    true})
 
 	return checkBuiltinAction(db, serveStaticAct)
 }

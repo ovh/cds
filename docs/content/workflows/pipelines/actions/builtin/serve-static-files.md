@@ -12,11 +12,12 @@ Pay attention this action is only available if your objectstore is configured to
 ## Parameters
 * name: Name to display in CDS UI and identify your static files
 * path: Path where static files will be uploaded (example: mywebsite/*). If it's a file, the entrypoint would be set to this filename by default.
-* tag: Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html).
+* entrypoint: Filename (and not path) for the entrypoint when serving static files (default: if empty it would be index.html).
+* static-key: Indicate a static-key which will be a reference to keep the same generated URL. Example: {{.git.branch}}.
 
 ### Example
 
-* In this example I created a website with script in bash and use action `Serve Static Files`.
+* In this example I created a website with script in bash and use action `Serve Static Files`. If you want to keep the same URL by .git.branch for example you can indicate in the advanced parameters a `static-key` equals to `{{.git.branch}}`.
 
 ![img](/images/workflows.pipelines.actions.builtin.serve-static-files-job.png)
 
