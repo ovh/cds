@@ -1,4 +1,4 @@
-import {Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Component, ElementRef, Input, NgZone, OnDestroy, ViewChild} from '@angular/core';
 import * as AU from 'ansi_up';
 import {Subscription} from 'rxjs';
 import {environment} from '../../../../../../../environments/environment';
@@ -16,7 +16,7 @@ import {CDSWebWorker} from '../../../../../../shared/worker/web.worker';
     styleUrls: ['service.log.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
+export class WorkflowServiceLogComponent implements OnDestroy {
 
     @Input() project: Project;
     @Input() workflowName: string;
@@ -29,6 +29,8 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
                 this.stopWorker();
             }
         }
+        this.stopWorker();
+        this.initWorker();
     }
     get nodeJobRun(): WorkflowNodeJobRun {
         return this._nodeJobRun;
@@ -51,10 +53,6 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
 
     constructor(private _authStore: AuthentificationStore) {
         this.zone = new NgZone({enableLongStackTrace: false});
-    }
-
-    ngOnInit(): void {
-        this.initWorker();
     }
 
     getLogs(serviceLog: ServiceLog) {
