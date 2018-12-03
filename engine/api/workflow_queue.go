@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
@@ -546,6 +545,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 
 		globalErr := &sdk.MultiError{}
 		errorOccured := false
+		var wr *sdk.WorkflowRun
 		for _, log := range logs {
 			nodeRunJob, errJob := workflow.LoadNodeJobRun(db, api.Cache, log.WorkflowNodeJobRunID)
 			if errJob != nil {
@@ -555,14 +555,44 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 			}
 			log.WorkflowNodeRunID = nodeRunJob.WorkflowNodeRunID
 
-			pip, errL := pipeline.LoadByNodeRunID(db, log.WorkflowNodeRunID)
-			if errL != nil {
+			if wr == nil {
+				var errW error
+				wr, errW = workflow.LoadRunByNodeRunID(db, log.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+				if errW != nil {
+					errorOccured = true
+					globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot load workflow run by node run id %d : %v", log.WorkflowNodeRunID, errW))
+					continue
+				}
+			}
+
+			var nr *sdk.WorkflowNodeRun
+			for _, nruns := range wr.WorkflowNodeRuns {
+				if len(nruns) > 0 && nruns[0].ID == log.WorkflowNodeRunID {
+					nr = &nruns[0]
+					break
+				}
+			}
+
+			if nr == nil {
 				errorOccured = true
-				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get pipeline for node run id %d : %v", log.WorkflowNodeRunID, errL))
+				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot load workflow node run %d", log.WorkflowNodeRunID))
 				continue
 			}
 
-			if pip == nil {
+			var pip sdk.Pipeline
+			if wr.Version < 2 {
+				n := wr.Workflow.GetNode(nr.WorkflowNodeID)
+				if n != nil {
+					pip = wr.Workflow.Pipelines[n.PipelineID]
+				}
+			} else {
+				n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
+				if n != nil && n.Context != nil && n.Context.PipelineID != 0 {
+					pip = wr.Workflow.Pipelines[n.Context.PipelineID]
+				}
+			}
+
+			if pip.ID == 0 {
 				errorOccured = true
 				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot get pipeline for node run id %d : Not found", log.WorkflowNodeRunID))
 				continue
