@@ -557,7 +557,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 
 			if wr == nil {
 				var errW error
-				wr, errW = workflow.LoadRunByNodeRunID(db, log.WorkflowNodeRunID, workflow.LoadRunOptions{})
+				wr, errW = workflow.LoadRunByNodeRunID(db, log.WorkflowNodeRunID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 				if errW != nil {
 					errorOccured = true
 					globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> Cannot load workflow run by node run id %d : %v", log.WorkflowNodeRunID, errW))
