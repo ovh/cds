@@ -911,9 +911,9 @@
   "workflow_delete_description": "Once you delete a workflow, there is no going back. Please be certain.",
   "workflow_description": "Workflow description",
   "workflow_from_repository": "Workflow imported from {{repo}}",
-  "workflow_from_repository_btn": "Workflow imported from repository",
-  "workflow_from_template": "Workflow imported from template {{path}}",
-  "workflow_from_template_btn": "Workflow imported from template",
+  "workflow_from_repository_btn": "Import workflow from repository",
+  "workflow_from_template": "Workflow generated from template {{path}}",
+  "workflow_from_template_btn": "Generate workflow from template",
   "workflow_join_delete": "Delete this join",
   "workflow_join_delete_alert": "BE CAREFUL, this will remove the join and all his children",
   "workflow_join_src_delete_alert": "Do you really want to remove join source pipeline?",
@@ -1054,9 +1054,11 @@
   "workflow_template_saved": "Workflow template saved",
   "workflow_template_deleted": "Workflow template deleted",
   "workflow_templates": "Workflow templates",
-  "workflow_template_help_line_1": "A workflow template allows you to quickly create then update a workflow and its components.",
+  "workflow_template_help_line_1": "Your workflow was not generated from a template.",
+  "workflow_template_help_line_2": "A workflow template allows you to quickly create then update a workflow and its components.",
   "workflow_template_update_title": "Update workflow from template",
   "workflow_template_update_info_line_1": "Apply will override your existing workflow and components according to the latest version of selected template.",
 
-  "workflow_repository_help_line_1": "Manage your workflow with code from your repository."
+  "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
+  "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."
 }

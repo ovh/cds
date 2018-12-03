@@ -911,9 +911,9 @@
   "workflow_delete_description": "Une fois le workflow supprimé, il n'y a pas de retour possible.",
   "workflow_description": "Description du workflow",
   "workflow_from_repository": "Workflow importé depuis {{repo}}",
-  "workflow_from_repository_btn": "Workflow importé depuis un gestionnaire de dépôt",
+  "workflow_from_repository_btn": "Import du workflow depuis un gestionnaire de dépôt",
   "workflow_from_template": "Workflow importé depuis le modèle {{path}}",
-  "workflow_from_template_btn": "Workflow importé depuis un modèle",
+  "workflow_from_template_btn": "Génération du workflow depuis un modèle",
   "workflow_join_delete": "Suppression de la jointure",
   "workflow_join_delete_alert": "ATTENTION, cela va supprimer la jointure et tout ce qu'elle déclenche",
   "workflow_join_src_delete_alert": "Voulez-vous vraiment supprimer ce lien ?",
@@ -1054,9 +1054,11 @@
   "workflow_template_saved": "Modèle de workflow sauvegardé",
   "workflow_template_deleted": "Modèle de workflow supprimé",
   "workflow_templates": "Modèles de workflow",
-  "workflow_template_help_line_1": "Un modèle de workflow vous permet d'initialiser et de mettre à jour un workflow et ses composants rapidement.",
+  "workflow_template_help_line_1": "Votre workflow n'a pas été généré depuis un modèle de workflow.",
+  "workflow_template_help_line_2": "Un modèle de workflow vous permet d'initialiser et de mettre à jour un workflow et ses composants rapidement.",
   "workflow_template_update_title": "Mise à jour du workflow à partir du modèle",
   "workflow_template_update_info_line_1": "Appliquer le template va écraser le workflow existant ainsi que ses composants avec la dernière version du modèle sélectionné.",
 
-  "workflow_repository_help_line_1": "Gérez votre workflow avec du code depuis votre gestionnaire de dépôt."
+  "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
+  "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."
 }
