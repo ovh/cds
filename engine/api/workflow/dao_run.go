@@ -271,6 +271,15 @@ func LoadRunByIDAndProjectKey(db gorp.SqlExecutor, projectkey string, id int64, 
 	return loadRun(db, loadOpts, query, projectkey, id)
 }
 
+// LoadRunByNodeRunID returns a specific run
+func LoadRunByNodeRunID(db gorp.SqlExecutor, nodeRunID int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
+	query := fmt.Sprintf(`select %s
+	from workflow_run
+	join workflow_node_run on workflow_node_run.workflow_run_id = workflow_run.id
+	where workflow_node_run.id = $1`, wfRunfields)
+	return loadRun(db, loadOpts, query, nodeRunID)
+}
+
 // LoadRunByID loads run by ID
 func LoadRunByID(db gorp.SqlExecutor, id int64, loadOpts LoadRunOptions) (*sdk.WorkflowRun, error) {
 	query := fmt.Sprintf(`select %s
