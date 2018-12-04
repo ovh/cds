@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import * as AU from 'ansi_up';
 import { CDSWebWorker } from 'app/shared/worker/web.worker';
@@ -17,7 +17,7 @@ import { JobVariableComponent } from '../../../../../run/workflow/variables/job.
     templateUrl: './spawninfo.html',
     styleUrls: ['./spawninfo.scss']
 })
-export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
+export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
 
     @Input() project: Project;
     @Input() workflowName: string;
@@ -25,14 +25,14 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
     @Input() nodeRun: WorkflowNodeRun;
     @Input('nodeJobRun')
     set nodeJobRun(data: WorkflowNodeJobRun) {
+        this.stopWorker();
         if (data) {
             this._nodeJobRun = data;
             this.refreshDisplayServiceLogsLink();
-            if (this.jobStatus === PipelineStatus.SUCCESS ||
-                this.jobStatus === PipelineStatus.FAIL ||
-                this.jobStatus === PipelineStatus.STOPPED) {
+            if (PipelineStatus.isDone(data.status)) {
                 this.stopWorker();
             }
+            this.initWorker();
         }
     }
     get nodeJobRun(): WorkflowNodeJobRun {
@@ -70,10 +70,6 @@ export class WorkflowRunJobSpawnInfoComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.stopWorker();
-    }
-
-    ngOnInit(): void {
-        this.initWorker();
     }
 
     constructor(private _authStore: AuthentificationStore, private _translate: TranslateService) { }

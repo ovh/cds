@@ -1,14 +1,14 @@
-import {Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import { Component, ElementRef, Input, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import * as AU from 'ansi_up';
-import {Subscription} from 'rxjs';
-import {environment} from '../../../../../../../environments/environment';
-import {ServiceLog} from '../../../../../../model/pipeline.model';
-import {PipelineStatus} from '../../../../../../model/pipeline.model';
-import {Project} from '../../../../../../model/project.model';
-import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
-import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
-import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
-import {CDSWebWorker} from '../../../../../../shared/worker/web.worker';
+import { Subscription } from 'rxjs';
+import { environment } from '../../../../../../../environments/environment';
+import { ServiceLog } from '../../../../../../model/pipeline.model';
+import { PipelineStatus } from '../../../../../../model/pipeline.model';
+import { Project } from '../../../../../../model/project.model';
+import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../../model/workflow.run.model';
+import { AuthentificationStore } from '../../../../../../service/auth/authentification.store';
+import { AutoUnsubscribe } from '../../../../../../shared/decorator/autoUnsubscribe';
+import { CDSWebWorker } from '../../../../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-workflow-service-log',
@@ -16,19 +16,21 @@ import {CDSWebWorker} from '../../../../../../shared/worker/web.worker';
     styleUrls: ['service.log.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
+export class WorkflowServiceLogComponent implements OnDestroy {
 
     @Input() project: Project;
     @Input() workflowName: string;
     @Input() nodeRun: WorkflowNodeRun;
     @Input('nodeJobRun')
     set nodeJobRun(data: WorkflowNodeJobRun) {
+        this.stopWorker();
         if (data) {
             this._nodeJobRun = data;
-            if (data.status === PipelineStatus.SUCCESS || data.status === PipelineStatus.FAIL || data.status === PipelineStatus.STOPPED) {
+            if (PipelineStatus.isDone(data.status)) {
                 this.stopWorker();
             }
         }
+        this.initWorker();
     }
     get nodeJobRun(): WorkflowNodeJobRun {
         return this._nodeJobRun;
@@ -50,11 +52,7 @@ export class WorkflowServiceLogComponent implements OnInit, OnDestroy {
     ansi_up = new AU.default;
 
     constructor(private _authStore: AuthentificationStore) {
-        this.zone = new NgZone({enableLongStackTrace: false});
-    }
-
-    ngOnInit(): void {
-        this.initWorker();
+        this.zone = new NgZone({ enableLongStackTrace: false });
     }
 
     getLogs(serviceLog: ServiceLog) {
