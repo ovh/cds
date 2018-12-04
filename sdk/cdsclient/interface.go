@@ -273,6 +273,7 @@ type WorkflowClient interface {
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
 	WorkflowDelete(projectKey string, workflowName string) error
 	WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
+	WorkflowRunResync(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunSearch(projectKey string, offset, limit int64, filter ...Filter) ([]sdk.WorkflowRun, error)
 	WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)

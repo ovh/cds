@@ -83,10 +83,20 @@ var workflowRunManualCmd = cli.Command{
 			Usage:     "Open web browser on the workflow run",
 			Kind:      reflect.Bool,
 		},
+		{
+			Name:      "sync",
+			ShortHand: "s",
+			Usage:     "Synchronise your pipelines with your last editions. Must be used with flag run-number",
+			Kind:      reflect.Bool,
+		},
 	},
 }
 
 func workflowRunManualRun(v cli.Values) error {
+	if v.GetBool("sync") && v.GetString("run-number") == "" {
+		return fmt.Errorf("Could not use flag --sync without flag --run-number")
+	}
+
 	manual := sdk.WorkflowNodeRunManual{}
 	if strings.TrimSpace(v.GetString("data")) != "" {
 		data := map[string]interface{}{}
@@ -130,6 +140,12 @@ func workflowRunManualRun(v cli.Values) error {
 		runNumber, errp = strconv.ParseInt(v.GetString("run-number"), 10, 64)
 		if errp != nil {
 			return fmt.Errorf("run-number invalid: not a integer")
+		}
+	}
+
+	if v.GetBool("sync") {
+		if _, err := client.WorkflowRunResync(v[_ProjectKey], v[_WorkflowName], runNumber); err != nil {
+			return fmt.Errorf("Cannot resync your workflow run %d : %v", runNumber, err)
 		}
 	}
 

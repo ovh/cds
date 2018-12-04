@@ -41,6 +41,15 @@ func (c *client) WorkflowRunGet(projectKey string, workflowName string, number i
 	return &run, nil
 }
 
+func (c *client) WorkflowRunResync(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/resync", projectKey, workflowName, number)
+	var run sdk.WorkflowRun
+	if _, err := c.PostJSON(context.Background(), url, nil, &run); err != nil {
+		return nil, err
+	}
+	return &run, nil
+}
+
 func (c *client) WorkflowRunSearch(projectKey string, offset, limit int64, filters ...Filter) ([]sdk.WorkflowRun, error) {
 	if offset < 0 {
 		offset = 0
