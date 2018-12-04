@@ -25,6 +25,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
     @Input() nodeRun: WorkflowNodeRun;
     @Input('nodeJobRun')
     set nodeJobRun(data: WorkflowNodeJobRun) {
+        this.stopWorker();
         if (data) {
             this._nodeJobRun = data;
             this.refreshDisplayServiceLogsLink();
@@ -33,9 +34,8 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
                 this.jobStatus === PipelineStatus.STOPPED) {
                 this.stopWorker();
             }
+            this.initWorker();
         }
-        this.stopWorker();
-        this.initWorker();
     }
     get nodeJobRun(): WorkflowNodeJobRun {
         return this._nodeJobRun;
