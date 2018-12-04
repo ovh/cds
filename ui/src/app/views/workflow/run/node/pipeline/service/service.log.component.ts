@@ -26,9 +26,7 @@ export class WorkflowServiceLogComponent implements OnDestroy {
         this.stopWorker();
         if (data) {
             this._nodeJobRun = data;
-            if (data.status === PipelineStatus.SUCCESS ||
-                data.status === PipelineStatus.FAIL ||
-                data.status === PipelineStatus.STOPPED) {
+            if (PipelineStatus.isDone(data.status)) {
                 this.stopWorker();
             }
         }

@@ -29,9 +29,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
         if (data) {
             this._nodeJobRun = data;
             this.refreshDisplayServiceLogsLink();
-            if (this.jobStatus === PipelineStatus.SUCCESS ||
-                this.jobStatus === PipelineStatus.FAIL ||
-                this.jobStatus === PipelineStatus.STOPPED) {
+            if (PipelineStatus.isDone(data.status)) {
                 this.stopWorker();
             }
             this.initWorker();
