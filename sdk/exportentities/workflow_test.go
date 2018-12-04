@@ -315,6 +315,26 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		},
 		// root(pipeline-root) -> child(pipeline-child)
 		{
+			name: "Complexe workflow without joins with a default payload on a non root node should raise an error",
+			fields: fields{
+				Workflow: map[string]NodeEntry{
+					"root": NodeEntry{
+						PipelineName: "pipeline-root",
+					},
+					"child": NodeEntry{
+						PipelineName: "pipeline-child",
+						DependsOn:    []string{"root"},
+						Payload: map[string]interface{}{
+							"test": "content",
+						},
+						OneAtATime: &True,
+					},
+				},
+			},
+			wantErr: true,
+		},
+		// root(pipeline-root) -> child(pipeline-child)
+		{
 			name: "Complexe workflow unordered without joins should not raise an error",
 			fields: fields{
 				Workflow: map[string]NodeEntry{
@@ -676,6 +696,11 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			got, err := w.GetWorkflow()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Workflow.GetWorkflow() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantErr {
+				assert.Error(t, err)
 				return
 			}
 
