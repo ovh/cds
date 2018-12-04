@@ -1,21 +1,21 @@
-import {Component, EventEmitter, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, NavigationStart, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
-import {Project} from '../../model/project.model';
-import {Workflow} from '../../model/workflow.model';
-import {ProjectStore} from '../../service/project/project.store';
-import {RouterService} from '../../service/router/router.service';
-import {WorkflowRunService} from '../../service/workflow/run/workflow.run.service';
-import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
-import {WorkflowEventStore} from '../../service/workflow/workflow.event.store';
-import {WorkflowSidebarMode, WorkflowSidebarStore} from '../../service/workflow/workflow.sidebar.store';
-import {WorkflowStore} from '../../service/workflow/workflow.store';
-import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../shared/toast/ToastService';
-import {WorkflowTemplateModalComponent} from '../../shared/workflow-template/modal/workflow-template.modal.component';
+import { Component, EventEmitter, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { Project } from '../../model/project.model';
+import { Workflow } from '../../model/workflow.model';
+import { ProjectStore } from '../../service/project/project.store';
+import { RouterService } from '../../service/router/router.service';
+import { WorkflowRunService } from '../../service/workflow/run/workflow.run.service';
+import { WorkflowCoreService } from '../../service/workflow/workflow.core.service';
+import { WorkflowEventStore } from '../../service/workflow/workflow.event.store';
+import { WorkflowSidebarMode, WorkflowSidebarStore } from '../../service/workflow/workflow.sidebar.store';
+import { WorkflowStore } from '../../service/workflow/workflow.store';
+import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
+import { ToastService } from '../../shared/toast/ToastService';
+import { WorkflowTemplateModalComponent } from '../../shared/workflow-template/modal/workflow-template.modal.component';
 
 @Component({
     selector: 'app-workflow',
@@ -176,7 +176,14 @@ export class WorkflowComponent implements OnInit {
 
     changeToRunsMode(): void {
         let activatedRoute = this._routerService.getActivatedRoute(this._activatedRoute);
-        this._router.navigate([], {relativeTo: activatedRoute});
+        let queryParams: Params;
+        if (activatedRoute.snapshot.params['nodeId'] && activatedRoute.snapshot.queryParams['name']) {
+            queryParams = {
+                'name': activatedRoute.snapshot.queryParams['name'],
+            };
+        }
+
+        this._router.navigate([], {relativeTo: activatedRoute, queryParams});
         if (!activatedRoute.snapshot.params['nodeId']) {
             this._workflowEventStore.setSelectedNode(null, true);
             this._workflowEventStore.setSelectedNodeRun(null, true);
