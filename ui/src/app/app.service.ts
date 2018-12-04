@@ -1,25 +1,25 @@
-import {Injectable} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {first} from 'rxjs/operators';
-import {Subscription} from 'rxjs/Subscription';
-import {Broadcast, BroadcastEvent} from './model/broadcast.model';
-import {Event, EventType} from './model/event.model';
-import {PipelineStatus} from './model/pipeline.model';
-import {LoadOpts} from './model/project.model';
-import {TimelineFilter} from './model/timeline.model';
-import {WorkflowNodeRun, WorkflowRun} from './model/workflow.run.model';
-import {ApplicationStore} from './service/application/application.store';
-import {AuthentificationStore} from './service/auth/authentification.store';
-import {BroadcastStore} from './service/broadcast/broadcast.store';
-import {PipelineStore} from './service/pipeline/pipeline.store';
-import {ProjectStore} from './service/project/project.store';
-import {ActionStore, RouterService, TimelineStore} from './service/services.module';
-import {WorkflowRunService} from './service/workflow/run/workflow.run.service';
-import {WorkflowEventStore} from './service/workflow/workflow.event.store';
-import {WorkflowStore} from './service/workflow/workflow.store';
-import {ToastService} from './shared/toast/ToastService';
+import { Injectable } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { cloneDeep } from 'lodash';
+import { first } from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
+import { Broadcast, BroadcastEvent } from './model/broadcast.model';
+import { Event, EventType } from './model/event.model';
+import { PipelineStatus } from './model/pipeline.model';
+import { LoadOpts } from './model/project.model';
+import { TimelineFilter } from './model/timeline.model';
+import { WorkflowNodeRun, WorkflowRun } from './model/workflow.run.model';
+import { ApplicationStore } from './service/application/application.store';
+import { AuthentificationStore } from './service/auth/authentification.store';
+import { BroadcastStore } from './service/broadcast/broadcast.store';
+import { PipelineStore } from './service/pipeline/pipeline.store';
+import { ProjectStore } from './service/project/project.store';
+import { ActionStore, RouterService, TimelineStore } from './service/services.module';
+import { WorkflowRunService } from './service/workflow/run/workflow.run.service';
+import { WorkflowEventStore } from './service/workflow/workflow.event.store';
+import { WorkflowStore } from './service/workflow/workflow.store';
+import { ToastService } from './shared/toast/ToastService';
 
 @Injectable()
 export class AppService {

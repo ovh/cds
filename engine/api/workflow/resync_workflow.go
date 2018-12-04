@@ -142,6 +142,7 @@ func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk
 					log.Error("ResyncNodeRuns> Unable to find node data by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
 					return
 				}
+				nodeName = n.Name
 				if n.Context == nil || n.Context.ApplicationID == 0 {
 					return
 				}
