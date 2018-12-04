@@ -1,15 +1,15 @@
 // WorkflowRun is an execution instance of a run
-import {Action} from './action.model';
-import {Vulnerability} from './application.model';
-import {Event} from './event.model';
-import {Hatchery} from './hatchery.model';
-import {Job, StepStatus} from './job.model';
-import {Parameter} from './parameter.model';
-import {SpawnInfo, Tests} from './pipeline.model';
-import {Commit} from './repositories.model';
-import {Stage} from './stage.model';
-import {User} from './user.model';
-import {WNodeOutgoingHook, Workflow} from './workflow.model';
+import { Action } from './action.model';
+import { Vulnerability } from './application.model';
+import { Event } from './event.model';
+import { Hatchery } from './hatchery.model';
+import { Job, StepStatus } from './job.model';
+import { Parameter } from './parameter.model';
+import { SpawnInfo, Tests } from './pipeline.model';
+import { Commit } from './repositories.model';
+import { Stage } from './stage.model';
+import { User } from './user.model';
+import { WNodeOutgoingHook, Workflow } from './workflow.model';
 
 
 export class RunNumber {
@@ -154,8 +154,9 @@ export class WorkflowNodeRun {
                     wnjr.job.action.actions = new Array<Action>();
                     if (eventJob['Steps']) {
                         eventJob['Steps'].forEach(step => {
-                           let jobStep = new Action();
-                           jobStep.name = step['Name'];
+                            let jobStep = new Action();
+                            jobStep.name = step['Name'];
+                            jobStep.step_name = step['StepName'];
                             wnjr.job.action.actions.push(jobStep);
                         });
                     }

@@ -25,13 +25,15 @@ type Action struct {
 
 // ActionSummary is the light representation of an action for CDS event
 type ActionSummary struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
+	StepName string `json:"step_name"`
 }
 
 // ToSummary returns an ActionSummary from an Action
 func (a Action) ToSummary() ActionSummary {
 	return ActionSummary{
-		Name: a.Name,
+		Name:     a.Name,
+		StepName: a.StepName,
 	}
 }
 

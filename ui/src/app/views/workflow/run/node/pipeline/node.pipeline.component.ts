@@ -1,13 +1,13 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {cloneDeep} from 'lodash';
-import {Subscription} from 'rxjs';
-import {Job, StepStatus} from '../../../../../model/job.model';
-import {PipelineStatus, ServiceLog} from '../../../../../model/pipeline.model';
-import {Project} from '../../../../../model/project.model';
-import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
-import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {DurationService} from '../../../../../shared/duration/duration.service';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { cloneDeep } from 'lodash';
+import { Subscription } from 'rxjs';
+import { Job, StepStatus } from '../../../../../model/job.model';
+import { PipelineStatus, ServiceLog } from '../../../../../model/pipeline.model';
+import { Project } from '../../../../../model/project.model';
+import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../model/workflow.run.model';
+import { AutoUnsubscribe } from '../../../../../shared/decorator/autoUnsubscribe';
+import { DurationService } from '../../../../../shared/duration/duration.service';
 
 @Component({
     selector: 'app-node-run-pipeline',

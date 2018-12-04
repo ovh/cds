@@ -1,18 +1,18 @@
-import {Component} from '@angular/core';
-import {Title} from '@angular/platform-browser';
-import {ActivatedRoute, NavigationExtras, Router} from '@angular/router';
-import {Subscription} from 'rxjs';
-import {first} from 'rxjs/operators';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {WNode, Workflow} from '../../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {RouterService} from '../../../../service/router/router.service';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {DurationService} from '../../../../shared/duration/duration.service';
+import { Component } from '@angular/core';
+import { Title } from '@angular/platform-browser';
+import { ActivatedRoute, NavigationExtras, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { first } from 'rxjs/operators';
+import { PipelineStatus } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { WNode, Workflow } from '../../../../model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from '../../../../model/workflow.run.model';
+import { AuthentificationStore } from '../../../../service/auth/authentification.store';
+import { RouterService } from '../../../../service/router/router.service';
+import { WorkflowRunService } from '../../../../service/workflow/run/workflow.run.service';
+import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
+import { DurationService } from '../../../../shared/duration/duration.service';
 
 @Component({
     selector: 'app-workflow-run-node',
