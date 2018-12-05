@@ -147,23 +147,6 @@ type NodeJoin struct {
 	ParentID   int64  `json:"parent_id,omitempty" db:"parent_id"`
 }
 
-//GetHooks returns all hooks for the node and its children
-func (n *Node) GetHooks() map[string]NodeHook {
-	res := make(map[string]NodeHook, len(n.Hooks))
-
-	for _, h := range n.Hooks {
-		res[h.UUID] = h
-	}
-
-	for _, t := range n.Triggers {
-		b := t.ChildNode.GetHooks()
-		for k, v := range b {
-			res[k] = v
-		}
-	}
-	return res
-}
-
 func (n *Node) nodeByRef(ref string) *Node {
 	if n.Ref == ref {
 		return n
