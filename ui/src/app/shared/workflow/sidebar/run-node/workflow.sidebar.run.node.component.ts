@@ -157,8 +157,10 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
         if (!this.workflow) {
             return;
         }
+
         // Get Env permission
         let envForbid = this.node && this.node.context && this.node.context.environment_id > 1
+            && this.workflow.environments && this.workflow.environments[this.node.context.environment_id]
             && this.workflow.environments[this.node.context.environment_id].permission
             && this.workflow.environments[this.node.context.environment_id].permission < PermissionValue.READ_EXECUTE;
 
@@ -170,7 +172,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
         if (this.currentWorkflowNodeRun && this.currentWorkflowRun && this.currentWorkflowRun.nodes) {
             let nodesRun = this.currentWorkflowRun.nodes[this.currentWorkflowNodeRun.workflow_node_id];
             if (nodesRun) {
-                let nodeRun = nodesRun.find( n => {
+                let nodeRun = nodesRun.find(n => {
                     return n.id === this.currentWorkflowNodeRun.id;
                 });
                 if (nodeRun) {

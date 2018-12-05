@@ -46,7 +46,7 @@ export class AppService {
     }
 
     manageEvent(event: Event): void {
-        if (!event.type_event) {
+        if (!event || !event.type_event) {
             return
         }
         if (event.type_event.indexOf(EventType.ACTION_PREFIX) === 0) {
@@ -78,6 +78,9 @@ export class AppService {
     }
 
     manageEventForTimeline(event: Event) {
+        if (!event || !event.type_event) {
+            return
+        }
         if (event.type_event === EventType.RUN_WORKFLOW_PREFIX) {
             let mustAdd = true;
             // Check if we have to mute it
@@ -100,6 +103,9 @@ export class AppService {
     }
 
     updateProjectCache(event: Event): void {
+        if (!event || !event.type_event) {
+            return
+        }
         this._projStore.getProjects('').pipe(first()).subscribe(projects => {
             // Project not in cache
             let projectInCache = projects.get(event.project_key);
@@ -150,6 +156,9 @@ export class AppService {
     }
 
     updateApplicationCache(event: Event): void {
+        if (!event || !event.type_event) {
+            return
+        }
         let appKey = event.project_key + '-' + event.application_name;
         if (event.type_event === EventType.APPLICATION_DELETE) {
             this._appStore.removeFromStore(appKey);
@@ -186,6 +195,9 @@ export class AppService {
     }
 
     updatePipelineCache(event: Event): void {
+        if (!event || !event.type_event) {
+            return
+        }
         let pipKey = event.project_key + '-' + event.pipeline_name;
         if (event.type_event === EventType.PIPELINE_DELETE) {
             this._appStore.removeFromStore(pipKey);
@@ -219,6 +231,9 @@ export class AppService {
     }
 
     updateWorkflowCache(event: Event): void {
+        if (!event || !event.type_event) {
+            return
+        }
         let wfKey = event.project_key + '-' + event.workflow_name;
         if (event.type_event === EventType.WORKFLOW_DELETE) {
             this._appStore.removeFromStore(wfKey);
@@ -251,6 +266,9 @@ export class AppService {
     }
 
     updateWorkflowRunCache(event: Event): void {
+        if (!event || !event.type_event) {
+            return
+        }
         if (this.routeParams['key'] !== event.project_key || this.routeParams['workflowName'] !== event.workflow_name) {
             return;
         }
@@ -279,6 +297,9 @@ export class AppService {
     }
 
     updateBroadcastCache(event: Event): void {
+        if (!event || !event.type_event) {
+            return
+        }
         switch (event.type_event) {
             case EventType.BROADCAST_ADD:
                 let bEvent: BroadcastEvent = <BroadcastEvent>event.payload['Broadcast'];
