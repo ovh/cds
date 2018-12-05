@@ -95,13 +95,7 @@ export class WorkflowWNodeComponent implements OnInit {
 
          let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
             queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref}});
-        this._router.navigateByUrl(url.toString()).then(() => {
-            if (this.currentNodeRun) {
-                this._workflowEventStore.setSelectedNodeRun(this.currentNodeRun, true);
-            } else {
-                this._workflowEventStore.setSelectedNode(this.node, true);
-            }
-        });
+        this._router.navigateByUrl(url.toString());
     }
 
     dblClickOnNode() {
