@@ -1,12 +1,12 @@
-import {Component, Input, NgZone, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Subscription} from 'rxjs';
-import {PipelineStatus} from '../../../model/pipeline.model';
-import {Project} from '../../../model/project.model';
-import {WNode, WNodeType, Workflow} from '../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
-import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
-import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
+import { Component, Input, NgZone, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { PipelineStatus } from '../../../model/pipeline.model';
+import { Project } from '../../../model/project.model';
+import { WNode, WNodeType, Workflow } from '../../../model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from '../../../model/workflow.run.model';
+import { WorkflowEventStore } from '../../../service/workflow/workflow.event.store';
+import { AutoUnsubscribe } from '../../decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-wnode',
@@ -52,13 +52,14 @@ export class WorkflowWNodeComponent implements OnInit {
             }
         });
 
-        this.subSelectedNode = this._workflowEventStore.selectedNode().subscribe(n => {
-            if (n) {
-                this.isSelected = (n.id === this.node.id);
-            } else {
-                this.isSelected = false;
-            }
-        });
+        this.subSelectedNode = this._workflowEventStore.selectedNode()
+            .subscribe(n => {
+                if (n) {
+                    this.isSelected = (n.id === this.node.id);
+                } else {
+                    this.isSelected = false;
+                }
+            });
 
         // Subscribe to workflow run events
         this.subWorkflowRun = this._workflowEventStore.selectedRun().subscribe(wr => {
@@ -94,7 +95,9 @@ export class WorkflowWNodeComponent implements OnInit {
 
          let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
             queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref}});
-        this._router.navigateByUrl(url.toString()).then(() => {});
+        this._router.navigateByUrl(url.toString()).then(() => {
+            this._workflowEventStore.setSelectedNode(this.node, true);
+        });
     }
 
     dblClickOnNode() {

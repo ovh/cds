@@ -1,14 +1,11 @@
-import {Injectable} from '@angular/core';
-import {Map} from 'immutable';
-import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {Observable} from 'rxjs/Observable';
-import {
-    WNode,
-    WNodeHook,
-} from '../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../model/workflow.run.model';
-import {WorkflowRunService} from './run/workflow.run.service';
-import {WorkflowSidebarMode, WorkflowSidebarStore} from './workflow.sidebar.store';
+import { Injectable } from '@angular/core';
+import { Map } from 'immutable';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
+import { WNode, WNodeHook } from '../../model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from '../../model/workflow.run.model';
+import { WorkflowRunService } from './run/workflow.run.service';
+import { WorkflowSidebarMode, WorkflowSidebarStore } from './workflow.sidebar.store';
 
 @Injectable()
 export class WorkflowEventStore {
@@ -95,6 +92,7 @@ export class WorkflowEventStore {
                 this._sidebarStore.changeMode(WorkflowSidebarMode.RUN_HOOK);
             }
         }
+        this._selectedNode.next(null);
         this._selectedHook.next(h);
     }
 

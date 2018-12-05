@@ -1,12 +1,12 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {PermissionValue} from '../../../../model/permission.model';
-import {Project} from '../../../../model/project.model';
-import {WNode, WNodeHook, Workflow} from '../../../../model/workflow.model';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {WorkflowNodeHookFormComponent} from '../../node/hook/form/hook.form.component';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { cloneDeep } from 'lodash';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { PermissionValue } from '../../../../model/permission.model';
+import { Project } from '../../../../model/project.model';
+import { WNode, WNodeHook, Workflow } from '../../../../model/workflow.model';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import { WorkflowNodeHookFormComponent } from '../../node/hook/form/hook.form.component';
 
 @Component({
     selector: 'app-hook-modal',
@@ -57,9 +57,9 @@ export class WorkflowHookModalComponent {
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         let clonedNode = Workflow.getNodeByID(this.node.id, clonedWorkflow);
         let updatedHook = this.hookFormComponent.hook;
-        if (updatedHook.id) {
+        if (updatedHook.uuid) {
             // Update hook
-            let existingHook = clonedNode.hooks.find( h => h.id === updatedHook.id);
+            let existingHook = clonedNode.hooks.find(h => h.uuid === updatedHook.uuid);
             if (existingHook) {
                 existingHook.config = updatedHook.config;
             }

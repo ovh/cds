@@ -1,15 +1,15 @@
-import {Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {Router} from '@angular/router';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {Workflow} from '../../../../model/workflow.model';
-import {WorkflowRun, WorkflowRunTags} from '../../../../model/workflow.run.model';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {DurationService} from '../../../duration/duration.service';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { PipelineStatus } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { Workflow } from '../../../../model/workflow.model';
+import { WorkflowRun, WorkflowRunTags } from '../../../../model/workflow.run.model';
+import { WorkflowRunService } from '../../../../service/workflow/run/workflow.run.service';
+import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import { DurationService } from '../../../duration/duration.service';
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',
@@ -65,6 +65,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     pipelineStatusEnum = PipelineStatus;
     ready = false;
     listingSub: Subscription;
+    tagsSubs: Subscription;
     filteredTags: {[key: number]: WorkflowRunTags[]} = {};
 
     durationIntervalID: number;
@@ -113,21 +114,22 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
         if (this.workflow.metadata && this.workflow.metadata['default_tags']) {
             this.tagToDisplay = this.workflow.metadata['default_tags'].split(',');
         }
-        this._workflowRunService.getTags(this.project.key, this.workflow.name).subscribe(tags => {
-            this.tagsSelectable = new Array<string>();
-            Object.keys(tags).forEach(k => {
-                if (tags.hasOwnProperty(k)) {
-                    tags[k].forEach(v => {
-                        if (v !== '') {
-                            let newEntry = k + ':' + v;
-                            if (this.tagsSelectable.indexOf(newEntry) === -1) {
-                                this.tagsSelectable.push(newEntry);
+        this.tagsSubs = this._workflowRunService.getTags(this.project.key, this.workflow.name)
+            .subscribe(tags => {
+                this.tagsSelectable = new Array<string>();
+                Object.keys(tags).forEach(k => {
+                    if (tags.hasOwnProperty(k)) {
+                        tags[k].forEach(v => {
+                            if (v !== '') {
+                                let newEntry = k + ':' + v;
+                                if (this.tagsSelectable.indexOf(newEntry) === -1) {
+                                    this.tagsSelectable.push(newEntry);
+                                }
                             }
-                        }
-                    });
-                }
+                        });
+                    }
+                });
             });
-        });
         this.refreshRun();
     }
 
