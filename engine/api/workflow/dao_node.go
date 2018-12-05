@@ -92,6 +92,10 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		n.Context.DefaultPipelineParameters = defaultPipParams
 	}
 
+	if n.Name != w.WorkflowData.Node.Name && n.Context.DefaultPayload != nil {
+		return sdk.ErrInvalidNodeDefaultPayload
+	}
+
 	if n.ID == 0 {
 		//Insert new node
 		dbwn := Node(*n)

@@ -140,14 +140,17 @@ export class AppComponent  implements OnInit {
         }
         let authKey: string;
         let authValue: string;
+        let user = this._authStore.getUser();
         // ADD user AUTH
         let sessionToken = this._authStore.getSessionToken();
         if (sessionToken) {
             authKey = this._authStore.localStorageSessionKey;
             authValue = sessionToken;
-        } else {
+        } else if (user) {
             authKey = 'Authorization';
-            authValue = 'Basic ' + this._authStore.getUser().token;
+            authValue = 'Basic ' + user.token;
+        } else {
+            return;
         }
 
         if (window['SharedWorker']) {
