@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -107,17 +106,8 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		go w.logProcessor(ctx)
 
 		// start queue polling
-		var pbjobs chan sdk.PipelineBuildJob
-		if !w.disableOldWorkflows {
-			pbjobs = make(chan sdk.PipelineBuildJob, 50)
-		}
 		wjobs := make(chan sdk.WorkflowNodeJobRun, 50)
 		errs := make(chan error, 1)
-
-		//Before start the loop, take the bookJobID
-		if !w.disableOldWorkflows && w.bookedPBJobID != 0 {
-			w.processBookedPBJob(ctx, pbjobs)
-		}
 
 		//Definition of the function which must be called to stop the worker
 		var endFunc = func() {
@@ -171,7 +161,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		go func(ctx context.Context, exceptID *int64) {
-			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, 0, "", nil, exceptID); err != nil {
+			if err := w.client.QueuePolling(ctx, wjobs, errs, 2*time.Second, 0, "", nil, exceptID); err != nil {
 				log.Info("Queues polling stopped: %v", err)
 			}
 		}(ctx, &exceptJobID)
@@ -230,59 +220,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			case <-ctx.Done():
 				endFunc()
 				return
-
-			case j := <-pbjobs:
-				if w.disableOldWorkflows || j.ID == 0 {
-					continue
-				}
-
-				if err := w.client.WorkerSetStatus(ctx, sdk.StatusChecking); err != nil {
-					log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusChecking): %s", err)
-				}
-				requirementsOK, _ := checkRequirements(w, &j.Job.Action, j.ExecGroups, j.ID)
-
-				t := ""
-				if j.ID == w.bookedPBJobID {
-					t = ", this was my booked job"
-				}
-
-				//Take the job
-				if requirementsOK {
-					log.Debug("checkQueue> Try take the PipelineBuildJob %d%s", j.ID, t)
-					canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedPBJobID)
-					if canWorkOnAnotherJob {
-						continue
-					}
-				} else if ttl > 0 {
-					if err := w.client.WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
-						log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
-					}
-					log.Debug("Unable to run pipeline build job %d, requirements not OK, let's continue %s", j.ID, t)
-					continue
-				}
-
-				var continueTakeJob bool
-				if !w.singleUse {
-					log.Debug("PipelineBuildJob is done. single_use to false, keep worker alive")
-					continueTakeJob = true
-				}
-				// If the bookedJob has been proceed and the TTL is null the worker has to stop
-				if j.ID != w.bookedPBJobID && ttl == 0 {
-					log.Debug("PipelineBuildJob is done. ttl not null, keep worker alive")
-					continueTakeJob = true
-				}
-
-				if continueTakeJob {
-					//Continue
-					if err := w.client.WorkerSetStatus(ctx, sdk.StatusWaiting); err != nil {
-						log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusWaiting): %s", err)
-					}
-					continue
-				}
-
-				// Unregister from engine and stop the register goroutine
-				log.Info("PipelineBuildJob is done. Unregistering...")
-				cancel()
 			case j := <-wjobs:
 				if j.ID == 0 {
 					continue
@@ -360,43 +297,6 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	}
 }
 
-func (w *currentWorker) processBookedPBJob(ctx context.Context, pbjobs chan<- sdk.PipelineBuildJob) {
-	log.Debug("Try to take the pipeline build job %d", w.bookedPBJobID)
-	b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedPBJobID), nil)
-	if err != nil {
-		log.Error("Unable to load pipeline build job %d: %v on Request", w.bookedPBJobID, err)
-		return
-	}
-
-	j := &sdk.PipelineBuildJob{}
-	if err := json.Unmarshal(b, j); err != nil {
-		log.Error("Unable to load pipeline build job %d: %v on Unmarshal", w.bookedPBJobID, err)
-		return
-	}
-
-	if err := w.client.WorkerSetStatus(ctx, sdk.StatusChecking); err != nil {
-		log.Error("WorkerSetStatus> error on WorkerSetStatus(ctx, sdk.StatusChecking): %s", err)
-	}
-	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action, j.ExecGroups, w.bookedPBJobID)
-	if !requirementsOK {
-		var details string
-		for _, r := range errRequirements {
-			details += fmt.Sprintf(" %s(%s)", r.Value, r.Type)
-		}
-		infos := []sdk.SpawnInfo{{
-			RemoteTime: time.Now(),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
-		}}
-		if err := sdk.AddSpawnInfosPipelineBuildJob(j.ID, infos); err != nil {
-			log.Warning("Cannot record AddSpawnInfosPipelineBuildJob for job (err spawn): %d %s", j.ID, err)
-		}
-		return
-	}
-
-	// requirementsOK is ok
-	pbjobs <- *j
-}
-
 func (w *currentWorker) processBookedWJob(ctx context.Context, wjobs chan<- sdk.WorkflowNodeJobRun) error {
 	log.Debug("Try to take the workflow node job %d", w.bookedWJobID)
 	wjob, err := w.client.QueueJobInfo(w.bookedWJobID)
@@ -455,9 +355,6 @@ func (w *currentWorker) doUpdate() {
 func (w *currentWorker) doRegister() error {
 	if w.id == "" {
 		var info string
-		if w.bookedPBJobID > 0 {
-			info = fmt.Sprintf(", I was born to work on pipeline build job %d", w.bookedPBJobID)
-		}
 		if w.bookedWJobID > 0 {
 			info = fmt.Sprintf(", I was born to work on workflow node job %d", w.bookedWJobID)
 		}

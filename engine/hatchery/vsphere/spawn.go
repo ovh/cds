@@ -208,11 +208,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jo
 		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
-	if isWorkflowJob {
-		udataParam.WorkflowJobID = jobID
-	} else {
-		udataParam.PipelineBuildJobID = jobID
-	}
+	udataParam.WorkflowJobID = jobID
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {

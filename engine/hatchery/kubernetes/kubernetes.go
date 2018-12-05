@@ -271,11 +271,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
-	if spawnArgs.IsWorkflowJob {
-		udataParam.WorkflowJobID = spawnArgs.JobID
-	} else {
-		udataParam.PipelineBuildJobID = spawnArgs.JobID
-	}
+	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
@@ -337,7 +333,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	var gracePeriodSecs int64
 	podSchema := apiv1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
+			Name:                       name,
 			DeletionGracePeriodSeconds: &gracePeriodSecs,
 			Labels: map[string]string{
 				LABEL_WORKER:        label,

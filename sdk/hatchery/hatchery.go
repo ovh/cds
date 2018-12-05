@@ -91,7 +91,6 @@ func Create(ctx context.Context, h Interface) error {
 		tickerGetModels.Stop()
 	}()
 
-	pbjobs := make(chan sdk.PipelineBuildJob, 2)
 	wjobs := make(chan sdk.WorkflowNodeJobRun, h.Configuration().Provision.MaxConcurrentProvisioning)
 	errs := make(chan error, 1)
 
@@ -104,7 +103,7 @@ func Create(ctx context.Context, h Interface) error {
 
 	sdk.GoRoutine(ctx, "queuePolling",
 		func(ctx context.Context) {
-			if err := h.CDSClient().QueuePolling(ctx, wjobs, pbjobs, errs, 20*time.Second, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
+			if err := h.CDSClient().QueuePolling(ctx, wjobs, errs, 20*time.Second, h.Configuration().Provision.GraceTimeQueued, h.ModelType(), h.Hatchery().RatioService, nil); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 				cancel()
 			}
@@ -173,67 +172,6 @@ func Create(ctx context.Context, h Interface) error {
 			if errwm != nil {
 				log.Error("error on h.WorkerModelsEnabled(): %v", errwm)
 			}
-
-		case j := <-pbjobs:
-			t0 := time.Now()
-			if j.ID == 0 {
-				continue
-			}
-
-			//Check spawnsID
-			if _, exist := spawnIDs.Get(strconv.FormatInt(j.ID, 10)); exist {
-				log.Debug("pipeline build job %d already spawned in previous routine", j.ID)
-				continue
-			}
-
-			//Before doing anything, push in cache
-			spawnIDs.SetDefault(strconv.FormatInt(j.ID, 10), j.ID)
-
-			//Check bookedBy current hatchery
-			if j.BookedBy.ID != 0 && j.BookedBy.ID != h.ID() {
-				continue
-			}
-
-			//Check gracetime
-			if j.QueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
-				log.Debug("pipeline build  job %d is too fresh, queued since %d seconds, let existing waiting worker check it", j.ID, j.QueuedSeconds)
-				continue
-			}
-
-			//Check if hatchery if able to start a new worker
-			if !checkCapacities(ctx, h) {
-				log.Info("hatchery %s is not able to provision new worker", h.Service().Name)
-				continue
-			}
-
-			//Ask to start
-			workerRequest := workerStarterRequest{
-				id:            j.ID,
-				isWorkflowJob: false,
-				execGroups:    j.ExecGroups,
-				requirements:  j.Job.Action.Requirements,
-				hostname:      hostname,
-				timestamp:     time.Now().Unix(),
-			}
-
-			// Check at least one worker model can match
-			var chosenModel *sdk.Model
-			for i := range models {
-				if canRunJob(h, workerRequest, models[i]) {
-					chosenModel = &models[i]
-					break
-				}
-			}
-
-			if chosenModel == nil {
-				//do something
-				continue
-			}
-
-			workerRequest.model = *chosenModel
-			log.Info("hatchery> Request a worker for pipeline build job %d (%.3f seconds elapsed)", j.ID, time.Since(t0).Seconds())
-			workersStartChan <- workerRequest
-
 		case j := <-wjobs:
 			t0 := time.Now()
 			if j.ID == 0 {

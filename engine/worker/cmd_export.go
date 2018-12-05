@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -127,35 +126,8 @@ func (wk *currentWorker) addVariableInPipelineBuild(v sdk.Variable, params *[]sd
 		log.Error("addBuildVarHandler> Cannot Marshal err: %s", errm)
 		return http.StatusBadRequest, fmt.Errorf("addBuildVarHandler> Cannot Marshal err: %s", errm)
 	}
-	// Retrieve build info
-	var currentParam []sdk.Parameter
-	if wk.currentJob.wJob != nil {
-		currentParam = wk.currentJob.wJob.Parameters
-	} else {
-		currentParam = wk.currentJob.pbJob.Parameters
-	}
-	var proj, app, pip, bnS, env string
-	for _, p := range currentParam {
-		switch p.Name {
-		case "cds.pipeline":
-			pip = p.Value
-		case "cds.project":
-			proj = p.Value
-		case "cds.application":
-			app = p.Value
-		case "cds.buildNumber":
-			bnS = p.Value
-		case "cds.environment":
-			env = p.Value
-		}
-	}
 
-	var uri string
-	if wk.currentJob.wJob != nil {
-		uri = fmt.Sprintf("/queue/workflows/%d/variable", wk.currentJob.wJob.ID)
-	} else {
-		uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable?envName=%s", proj, app, pip, bnS, url.QueryEscape(env))
-	}
+	uri := fmt.Sprintf("/queue/workflows/%d/variable", wk.currentJob.wJob.ID)
 
 	var lasterr error
 	var code int

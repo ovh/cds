@@ -214,8 +214,7 @@ type ProjectVariablesClient interface {
 type QueueClient interface {
 	QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
-	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
-	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error
+	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error
 	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error)
 	QueueJobBook(ctx context.Context, isWorkflowJob bool, id int64) error
 	QueueJobRelease(isWorkflowJob bool, id int64) error

@@ -359,13 +359,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
-	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			udataParam.WorkflowJobID = spawnArgs.JobID
-		} else {
-			udataParam.PipelineBuildJobID = spawnArgs.JobID
-		}
-	}
+	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {

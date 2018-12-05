@@ -118,17 +118,10 @@ func (wk *currentWorker) uploadHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	sendLog := getLogger(wk, wk.currentJob.pbJob.ID, wk.currentJob.currentStep)
+	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
 
-	if wk.currentJob.wJob == nil {
-		if result := runArtifactUpload(wk)(context.Background(), &action, wk.currentJob.pbJob.ID, &wk.currentJob.pbJob.Parameters, wk.currentJob.secrets, sendLog); result.Status != sdk.StatusSuccess.String() {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	} else {
-		if result := runArtifactUpload(wk)(context.Background(), &action, wk.currentJob.wJob.ID, &wk.currentJob.wJob.Parameters, wk.currentJob.secrets, sendLog); result.Status != sdk.StatusSuccess.String() {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	if result := runArtifactUpload(wk)(context.Background(), &action, wk.currentJob.wJob.ID, &wk.currentJob.wJob.Parameters, wk.currentJob.secrets, sendLog); result.Status != sdk.StatusSuccess.String() {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 }

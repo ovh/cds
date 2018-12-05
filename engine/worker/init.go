@@ -25,7 +25,6 @@ const (
 	flagForceExit           = "force-exit"
 	flagBaseDir             = "basedir"
 	flagTTL                 = "ttl"
-	flagBookedPBJobID       = "booked-pb-job-id"
 	flagBookedWorkflowJobID = "booked-workflow-job-id"
 	flagBookedJobID         = "booked-job-id"
 	flagGRPCAPI             = "grpc-api"
@@ -42,7 +41,6 @@ const (
 	flagName                = "name"
 	flagModel               = "model"
 	flagHatcheryName        = "hatchery-name"
-	flagDisableOldWorkflows = "disable-old-workflows"
 )
 
 func initFlagsRun(cmd *cobra.Command) {
@@ -53,7 +51,6 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags.Bool(flagForceExit, false, "If single_use=true, force exit. This is useful if it's spawned by an Hatchery (default: worker wait 30min for being killed by hatchery)")
 	flags.String(flagBaseDir, "", "This directory (default TMPDIR os environment var) will contains worker working directory and temporary files")
 	flags.Int(flagTTL, 30, "Worker time to live (minutes)")
-	flags.Int64(flagBookedPBJobID, 0, "Booked Pipeline Build job id")
 	flags.Int64(flagBookedWorkflowJobID, 0, "Booked Workflow job id")
 	flags.Int64(flagBookedJobID, 0, "Booked job id")
 	flags.String(flagGRPCAPI, "", "CDS GRPC tcp address")
@@ -70,7 +67,6 @@ func initFlagsRun(cmd *cobra.Command) {
 	flags.String(flagName, "", "Name of worker")
 	flags.Int(flagModel, 0, "Model of worker")
 	flags.String(flagHatcheryName, "", "Hatchery Name spawing worker")
-	flags.Bool(flagDisableOldWorkflows, false, "Disable old workflows")
 }
 
 // FlagBool replaces viper.GetBool
@@ -190,7 +186,6 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 	if w.basedir == "" {
 		w.basedir = os.TempDir()
 	}
-	w.bookedPBJobID = FlagInt64(cmd, flagBookedPBJobID)
 	w.bookedWJobID = FlagInt64(cmd, flagBookedWorkflowJobID)
 
 	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name, cdsclient.NewHTTPClient(time.Second*360, FlagBool(cmd, flagInsecure)))
@@ -199,7 +194,6 @@ func initFlags(cmd *cobra.Command, w *currentWorker) {
 	w.singleUse = FlagBool(cmd, flagSingleUse)
 	w.grpc.address = FlagString(cmd, flagGRPCAPI)
 	w.grpc.insecure = FlagBool(cmd, flagGRPCInsecure)
-	w.disableOldWorkflows = FlagBool(cmd, flagDisableOldWorkflows)
 }
 
 func (w *currentWorker) initServer(c context.Context) {

@@ -51,9 +51,8 @@ func shrinkQueue(queue *sdk.WorkflowQueue, nbJobsToKeep int) time.Time {
 	return t0
 }
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error {
+func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error {
 	jobsTicker := time.NewTicker(delay)
-	pbjobsTicker := time.NewTicker(delay * 2)
 
 	// This goroutine call the SSE route
 	chanSSEvt := make(chan SSEvent)
@@ -69,13 +68,9 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	for {
 		select {
 		case <-ctx.Done():
-			pbjobsTicker.Stop()
 			jobsTicker.Stop()
 			if jobs != nil {
 				close(jobs)
-			}
-			if pbjobs != nil {
-				close(pbjobs)
 			}
 			return ctx.Err()
 		case evt := <-chanSSEvt:
@@ -153,25 +148,6 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 			for _, j := range queue {
 				jobs <- j
 			}
-
-		case <-pbjobsTicker.C:
-			if c.config.Verbose {
-				fmt.Println("pbjobsTicker")
-			}
-
-			if pbjobs == nil {
-				continue
-			}
-
-			queue := []sdk.PipelineBuildJob{}
-			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-			if _, err := c.GetJSON(ctxt, "/queue?status=all", &queue); err != nil {
-				errs <- sdk.WrapError(err, "Unable to load pipeline build jobs")
-			}
-			for _, j := range queue {
-				pbjobs <- j
-			}
-			cancel()
 		}
 
 	}
@@ -219,14 +195,6 @@ func (c *client) QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time
 		SetHeader(RequestedIfModifiedSinceHeader, since.Format(time.RFC1123)),
 		SetHeader("X-CDS-Until", until.Format(time.RFC1123)))
 	return countWJobs, err
-}
-
-func (c *client) QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error) {
-	pbJobs := []sdk.PipelineBuildJob{}
-	if _, err := c.GetJSON(context.Background(), "/queue?status=all", &pbJobs); err != nil {
-		return nil, err
-	}
-	return pbJobs, nil
 }
 
 func (c *client) QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error) {
@@ -277,7 +245,6 @@ func (c *client) QueueJobSendSpawnInfo(ctx context.Context, isWorkflowJob bool, 
 		}
 		time.Sleep(500 * time.Millisecond)
 	}
-
 	return err
 }
 
