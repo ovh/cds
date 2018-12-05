@@ -1,15 +1,12 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {
-    WNode, WNodeTrigger,
-    Workflow, WorkflowNodeCondition, WorkflowNodeConditions
-} from '../../../../model/workflow.model';
-import {WorkflowNodeOutGoingHookFormComponent} from '../../node/outgoinghook-form/outgoinghook.form.component';
-import {WorkflowNodeAddWizardComponent} from '../../node/wizard/node.wizard.component';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { cloneDeep } from 'lodash';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { PipelineStatus } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { WNode, WNodeTrigger, Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from '../../../../model/workflow.model';
+import { WorkflowNodeOutGoingHookFormComponent } from '../../node/outgoinghook-form/outgoinghook.form.component';
+import { WorkflowNodeAddWizardComponent } from '../../node/wizard/node.wizard.component';
 
 @Component({
     selector: 'app-workflow-trigger',
@@ -75,20 +72,25 @@ export class WorkflowTriggerComponent {
 
         let clonedWorkflow = cloneDeep(this.workflow);
         if (this.source && !this.isParent) {
-            let n = Workflow.getNodeByID(this.source.id, clonedWorkflow);
-            if (!n.triggers) {
-                n.triggers = new Array<WNodeTrigger>();
+            let sourceNode = Workflow.getNodeByID(this.source.id, clonedWorkflow);
+            if (!sourceNode.triggers) {
+                sourceNode.triggers = new Array<WNodeTrigger>();
             }
             let newTrigger = new WNodeTrigger();
-            newTrigger.parent_node_name = n.ref;
+            let previousDefaultPayload = this.destNode.context.default_payload;
+            this.destNode.context.default_payload = null;
+            newTrigger.parent_node_name = sourceNode.ref;
             newTrigger.child_node = this.destNode;
-            n.triggers.push(newTrigger);
+            sourceNode.context.default_payload = previousDefaultPayload;
+            sourceNode.triggers.push(newTrigger);
             this.triggerEvent.emit(clonedWorkflow);
         } else if (this.isParent) {
             this.destNode.triggers = new Array<WNodeTrigger>();
             let newTrigger = new WNodeTrigger();
             newTrigger.child_node = clonedWorkflow.workflow_data.node;
             this.destNode.triggers.push(newTrigger);
+            this.destNode.context.default_payload = newTrigger.child_node.context.default_payload;
+            newTrigger.child_node.context.default_payload = null;
             this.destNode.hooks = cloneDeep(clonedWorkflow.workflow_data.node.hooks);
             clonedWorkflow.workflow_data.node.hooks = [];
             clonedWorkflow.workflow_data.node = this.destNode;
