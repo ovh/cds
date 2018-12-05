@@ -77,11 +77,8 @@ export class WorkflowTriggerComponent {
                 sourceNode.triggers = new Array<WNodeTrigger>();
             }
             let newTrigger = new WNodeTrigger();
-            let previousDefaultPayload = this.destNode.context.default_payload;
-            this.destNode.context.default_payload = null;
             newTrigger.parent_node_name = sourceNode.ref;
             newTrigger.child_node = this.destNode;
-            sourceNode.context.default_payload = previousDefaultPayload;
             sourceNode.triggers.push(newTrigger);
             this.triggerEvent.emit(clonedWorkflow);
         } else if (this.isParent) {

@@ -1,20 +1,20 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
-import {Application} from '../../../../model/application.model';
-import {PermissionValue} from '../../../../model/permission.model';
-import {Pipeline} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {WNode, Workflow} from '../../../../model/workflow.model';
-import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
-import {VariableService} from '../../../../service/variable/variable.service';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {ParameterEvent} from '../../../parameter/parameter.event.model';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { cloneDeep } from 'lodash';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { Application } from '../../../../model/application.model';
+import { PermissionValue } from '../../../../model/permission.model';
+import { Pipeline } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { WNode, Workflow } from '../../../../model/workflow.model';
+import { ApplicationWorkflowService } from '../../../../service/application/application.workflow.service';
+import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
+import { VariableService } from '../../../../service/variable/variable.service';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import { ParameterEvent } from '../../../parameter/parameter.event.model';
 declare var CodeMirror: any;
 
 @Component({
@@ -145,6 +145,10 @@ export class WorkflowNodeContextComponent {
         }
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         let node = Workflow.getNodeByID(this.node.id, clonedWorkflow);
+        // If non root node
+        if (this.editableNode.name !== clonedWorkflow.workflow_data.node.name) {
+            this.editableNode.context.default_payload = null;
+        }
         node.context = cloneDeep(this.editableNode.context);
         this.contextEvent.emit(clonedWorkflow);
     }
