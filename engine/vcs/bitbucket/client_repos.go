@@ -14,6 +14,7 @@ func (b *bitbucketClient) Repos(ctx context.Context) ([]sdk.VCSRepo, error) {
 
 	path := "/repos"
 	params := url.Values{}
+	params.Set("limit", "200")
 	nextPage := 0
 	for {
 		if nextPage != 0 {
