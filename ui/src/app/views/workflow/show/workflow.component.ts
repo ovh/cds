@@ -1,20 +1,20 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {Subscription} from 'rxjs';
-import {finalize, first} from 'rxjs/operators';
-import {PermissionValue} from '../../../model/permission.model';
-import {Project} from '../../../model/project.model';
-import {WNode, Workflow} from '../../../model/workflow.model';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {WorkflowEventStore} from '../../../service/workflow/workflow.event.store';
-import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
-import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
+import { finalize, first } from 'rxjs/operators';
+import { PermissionValue } from '../../../model/permission.model';
+import { Project } from '../../../model/project.model';
+import { WNode, Workflow } from '../../../model/workflow.model';
+import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
+import { WorkflowEventStore } from '../../../service/workflow/workflow.event.store';
+import { WorkflowStore } from '../../../service/workflow/workflow.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
+import { PermissionEvent } from '../../../shared/permission/permission.event.model';
+import { ToastService } from '../../../shared/toast/ToastService';
+import { WorkflowNodeRunParamComponent } from '../../../shared/workflow/node/run/node.run.param.component';
+import { WorkflowGraphComponent } from '../graph/workflow.graph.component';
 
 @Component({
     selector: 'app-workflow',
@@ -29,6 +29,9 @@ export class WorkflowShowComponent implements OnInit {
     previewWorkflow: Workflow;
     workflowSubscription: Subscription;
     workflowPreviewSubscription: Subscription;
+    dataSubs: Subscription;
+    paramsSubs: Subscription;
+    qpsSubs: Subscription;
     direction: string;
 
     @ViewChild('workflowGraph')
@@ -58,12 +61,12 @@ export class WorkflowShowComponent implements OnInit {
 
     ngOnInit(): void {
         // Update data if route change
-        this.activatedRoute.data.subscribe(datas => {
+        this.dataSubs = this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
 
-        this.activatedRoute.params.subscribe(params => {
+        this.paramsSubs = this.activatedRoute.params.subscribe(params => {
             let workflowName = params['workflowName'];
             let projkey = params['key'];
 
@@ -107,7 +110,7 @@ export class WorkflowShowComponent implements OnInit {
             }
         });
 
-        this.activatedRoute.queryParams.subscribe(params => {
+        this.qpsSubs = this.activatedRoute.queryParams.subscribe(params => {
             if (params['tab']) {
                 this.selectedTab = params['tab'];
             }

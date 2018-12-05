@@ -38,6 +38,10 @@ export class WorkflowRunComponent implements OnInit {
 
     pipelineStatusEnum = PipelineStatus;
     notificationSubscription: Subscription;
+    dataSubs: Subscription;
+    paramsSubs: Subscription;
+    parentParamsSubs: Subscription;
+    qpsSubs: Subscription;
     loadingRun = false;
 
     // copy of root node to send it into run modal
@@ -55,7 +59,7 @@ export class WorkflowRunComponent implements OnInit {
         this._workflowEventStore.setSelectedNodeRun(null, false);
 
         // Get project
-        this._activatedRoute.data.subscribe(datas => {
+        this.dataSubs = this._activatedRoute.data.subscribe(datas => {
             if (!this.project || (<Project>datas['project']).key !== this.project.key) {
                 this.project = datas['project'];
                 this.workflowRun = null;
@@ -64,7 +68,7 @@ export class WorkflowRunComponent implements OnInit {
         });
 
         // Get workflow
-        this._activatedRoute.parent.params.subscribe(params => {
+        this.parentParamsSubs = this._activatedRoute.parent.params.subscribe(params => {
             this.workflowName = params['workflowName'];
         });
 
@@ -85,7 +89,7 @@ export class WorkflowRunComponent implements OnInit {
         });
 
         // Subscribe to route event
-        this._activatedRoute.params.subscribe(ps => {
+        this.paramsSubs = this._activatedRoute.params.subscribe(ps => {
             // if there is no current workflow run
             if (!this.workflowRun) {
                 this.initWorkflowRun(ps['number']);
@@ -96,7 +100,7 @@ export class WorkflowRunComponent implements OnInit {
             }
         });
 
-        this._activatedRoute.queryParams.subscribe(params => {
+        this.qpsSubs = this._activatedRoute.queryParams.subscribe(params => {
             this.selectedNodeID = params['node_id'];
             this.selectedNodeRef = params['node_ref'];
             this.selectNode();
@@ -131,6 +135,7 @@ export class WorkflowRunComponent implements OnInit {
                 return;
             }
         }
+        this._workflowEventStore.setSelectedNode(null, true);
     }
 
     initWorkflowRun(num): void {

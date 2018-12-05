@@ -56,6 +56,12 @@ Parse given file to extract coverage results.`
 		Description: `Path of the coverage report file.`,
 		Type:        sdk.StringParameter,
 	})
+	cover.Parameter(sdk.Parameter{
+		Name:        "minimum",
+		Description: `Minimum percentage of coverage required (-1 means no minimum).`,
+		Type:        sdk.NumberParameter,
+		Advanced:    true,
+	})
 	if err := checkBuiltinAction(db, cover); err != nil {
 		return err
 	}
