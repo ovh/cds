@@ -1,15 +1,16 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {PipelineStatus} from 'app/model/pipeline.model';
-import {Project} from 'app/model/project.model';
-import {HookStatus, TaskExecution, WorkflowHookTask} from 'app/model/workflow.hook.model';
-import {WorkflowNodeRun, WorkflowNodeRunHookEvent, WorkflowRun} from 'app/model/workflow.run.model';
-import {finalize} from 'rxjs/operators';
-import {WNodeHook} from '../../../../model/workflow.model';
-import {HookService} from '../../../../service/hook/hook.service';
-import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {WorkflowNodeHookDetailsComponent} from '../../node/hook/details/hook.details.component';
-import {WorkflowNodeHookFormComponent} from '../../node/hook/form/hook.form.component';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { PipelineStatus } from 'app/model/pipeline.model';
+import { Project } from 'app/model/project.model';
+import { HookStatus, TaskExecution, WorkflowHookTask } from 'app/model/workflow.hook.model';
+import { WorkflowNodeRun, WorkflowNodeRunHookEvent, WorkflowRun } from 'app/model/workflow.run.model';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { WNodeHook } from '../../../../model/workflow.model';
+import { HookService } from '../../../../service/hook/hook.service';
+import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import { WorkflowNodeHookDetailsComponent } from '../../node/hook/details/hook.details.component';
+import { WorkflowNodeHookFormComponent } from '../../node/hook/form/hook.form.component';
 
 @Component({
     selector: 'app-workflow-sidebar-run-hook',
@@ -35,16 +36,18 @@ export class WorkflowSidebarRunHookComponent implements OnInit {
     wr: WorkflowRun;
     nodeRun: WorkflowNodeRun;
     pipelineStatusEnum = PipelineStatus;
+    _hookSelectedSub: Subscription;
+    _runSelectedSub: Subscription;
 
     constructor(private _hookService: HookService, private _workflowEventStore: WorkflowEventStore) {
     }
 
     ngOnInit(): void {
-        this._workflowEventStore.selectedHook().subscribe(h => {
+        this._hookSelectedSub = this._workflowEventStore.selectedHook().subscribe(h => {
             this.hook = h;
             this.loadHookDetails();
         });
-        this._workflowEventStore.selectedRun().subscribe(r => {
+        this._runSelectedSub = this._workflowEventStore.selectedRun().subscribe(r => {
             this.wr = r;
             this.loadHookDetails();
         });

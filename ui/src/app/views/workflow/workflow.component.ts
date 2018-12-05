@@ -3,7 +3,7 @@ import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router
 import { TranslateService } from '@ngx-translate/core';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
+import { debounceTime, finalize } from 'rxjs/operators';
 import { Project } from '../../model/project.model';
 import { Workflow } from '../../model/workflow.model';
 import { ProjectStore } from '../../service/project/project.store';
@@ -92,9 +92,9 @@ export class WorkflowComponent implements OnInit {
         });
 
         // Workflow subscription
-        this._activatedRoute.params.subscribe(p => {
-            let workflowName = p['workflowName'];
-            let key = p['key'];
+        this._activatedRoute.params.subscribe(params => {
+            let workflowName = params['workflowName'];
+            let key = params['key'];
 
             if (key && workflowName) {
                 if (this.workflowSubscription) {
@@ -149,9 +149,8 @@ export class WorkflowComponent implements OnInit {
     initSidebar(): void {
         // Mode of sidebar
         this.sideBarModeSubscription = this._sidebarStore.sidebarMode()
-            .subscribe(m => {
-              setTimeout(() => this.sidebarMode = m, 0);
-            });
+            .pipe(debounceTime(150))
+            .subscribe(m => setTimeout(() => this.sidebarMode = m, 0));
     }
 
     ngOnInit() {

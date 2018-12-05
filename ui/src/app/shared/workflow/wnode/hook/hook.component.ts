@@ -1,11 +1,11 @@
-import {AfterViewInit, Component, ElementRef, Input, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import { AfterViewInit, Component, ElementRef, Input, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
-import {Subscription} from 'rxjs/Subscription';
-import {Project} from '../../../../model/project.model';
-import {WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
-import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
+import { Subscription } from 'rxjs/Subscription';
+import { Project } from '../../../../model/project.model';
+import { WNode, WNodeHook, Workflow, WorkflowNodeHookConfigValue } from '../../../../model/workflow.model';
+import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -49,7 +49,7 @@ export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
     ngOnInit(): void {
         this.subSelect = this._workflowEventStore.selectedHook().subscribe(h => {
             if (this.hook && h) {
-                this.isSelected = h.id === this.hook.id;
+                this.isSelected = h.uuid === this.hook.uuid;
                 return;
             }
             this.isSelected = false;
@@ -78,9 +78,8 @@ export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
         if (this.workflow.previewMode) {
           return;
         }
-        this._workflowEventStore.setSelectedHook(this.hook);
         let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
             queryParams: { 'hook_ref': this.hook.ref}});
-        this._router.navigateByUrl(url.toString()).then(() => {});
+        this._router.navigateByUrl(url.toString()).then(() => this._workflowEventStore.setSelectedHook(this.hook));
     }
 }
