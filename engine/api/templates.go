@@ -315,7 +315,7 @@ func (api *API) applyTemplateHandler() service.Handler {
 		u := getUser(ctx)
 
 		// load project with key
-		p, err := project.Load(api.mustDB(), api.Cache, req.ProjectKey, u)
+		p, err := project.Load(api.mustDB(), api.Cache, req.ProjectKey, u, project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return err
 		}
