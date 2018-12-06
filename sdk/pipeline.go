@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/ovh/venom"
@@ -199,99 +198,6 @@ func GetPipelineBuildHistory(key, appName, name, env, buildNumber string) ([]Pip
 	}
 
 	return res, nil
-}
-
-// StreamPipelineBuild poll the api to fetch logs of building pipeline and push them in returned channel
-func StreamPipelineBuild(key, appName, pipelineName, env string, buildID int, followTrigger bool) (chan Log, error) {
-	ch := make(chan Log)
-	go func() {
-		var path string
-		var logs []Log
-		currentStep := 0
-		currentStepPosition := 0
-		for {
-
-			if buildID == 0 {
-				path = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/last/log", key, appName, pipelineName)
-			} else {
-				path = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d/log", key, appName, pipelineName, buildID)
-			}
-			if env != "" {
-				path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
-			}
-
-			data, _, err := Request("GET", path, nil)
-			if err != nil {
-				close(ch)
-				return
-			}
-
-			err = json.Unmarshal([]byte(data), &logs)
-			if err != nil {
-				close(ch)
-				return
-			}
-
-			totalStepsReturn := len(logs)
-			if totalStepsReturn > 0 {
-				// remove old step
-				logs = logs[currentStep:]
-
-				// remove line already displayed on current step
-				if currentStepPosition <= len(logs[0].Val) {
-					logs[0].Val = logs[0].Val[currentStepPosition:]
-				}
-
-				// Update data
-
-				// If stay on same stage
-				if currentStep == totalStepsReturn-1 {
-					currentStepPosition += len(logs[len(logs)-1].Val)
-				} else {
-					currentStepPosition = len(logs[len(logs)-1].Val)
-				}
-				currentStep = totalStepsReturn - 1
-
-				for i := range logs {
-					ch <- logs[i]
-					if logs[i].Id != 0 {
-						continue
-					}
-
-					//Before closing the channel, check if we want to  follower triggers
-					if followTrigger {
-						wg := &sync.WaitGroup{}
-						//Get child triggers
-						triggers, err := GetTriggersAsSource(key, appName, pipelineName, env)
-						if err == nil && len(triggers) > 0 {
-							for _, t := range triggers {
-								//If there is any trigger, stream each of them
-								triggerCh, err := StreamPipelineBuild(t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name, 0, followTrigger)
-								if err == nil {
-									wg.Add(1)
-									go func(mainCh, triggerCh chan Log) {
-										//Get log from the trigger's channel and push it to the main channel
-										for l := range triggerCh {
-											ch <- l
-										}
-										wg.Done()
-									}(ch, triggerCh)
-								}
-							}
-						}
-						//When all of the triggers are done, close the main channel
-						wg.Wait()
-					}
-					close(ch)
-					return
-
-				}
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()
-
-	return ch, nil
 }
 
 // DeletePipeline remove given pipeline from CDS
