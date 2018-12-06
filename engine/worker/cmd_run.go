@@ -141,7 +141,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if w.bookedWJobID != 0 {
 			if errP := w.processBookedWJob(ctx, wjobs); errP != nil {
 				// Unbook job
-				if errR := w.client.QueueJobRelease(true, w.bookedWJobID); errR != nil {
+				if errR := w.client.QueueJobRelease(w.bookedWJobID); errR != nil {
 					log.Error("runCmd> QueueJobRelease> Cannot release job")
 				}
 				exceptJobID = w.bookedWJobID
@@ -314,7 +314,7 @@ func (w *currentWorker) processBookedWJob(ctx context.Context, wjobs chan<- sdk.
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
 		}}
-		if err := w.client.QueueJobSendSpawnInfo(ctx, true, wjob.ID, infos); err != nil {
+		if err := w.client.QueueJobSendSpawnInfo(ctx, wjob.ID, infos); err != nil {
 			return sdk.WrapError(err, "Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
 		}
 		return fmt.Errorf("processBookedWJob> the worker have no all requirements")
@@ -328,7 +328,7 @@ func (w *currentWorker) processBookedWJob(ctx context.Context, wjobs chan<- sdk.
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
 		}}
-		if err := w.client.QueueJobSendSpawnInfo(ctx, true, wjob.ID, infos); err != nil {
+		if err := w.client.QueueJobSendSpawnInfo(ctx, wjob.ID, infos); err != nil {
 			return sdk.WrapError(err, "Cannot record QueueJobSendSpawnInfo for job (err spawn): %d", wjob.ID)
 		}
 		return fmt.Errorf("processBookedWJob> the worker have no all plugins")

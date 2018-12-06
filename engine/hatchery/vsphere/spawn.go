@@ -80,7 +80,7 @@ func (h *HatcheryVSphere) SpawnWorker(ctx context.Context, spawnArgs hatchery.Sp
 		return "", sdk.WrapError(errW, "SpawnWorker> state in error")
 	}
 
-	return "", h.launchScriptWorker(name, spawnArgs.IsWorkflowJob, spawnArgs.JobID, spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
+	return "", h.launchScriptWorker(name, spawnArgs.JobID, spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
 }
 
 // createVMModel create a model for a specific worker model
@@ -163,7 +163,7 @@ func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine
 }
 
 // launchScriptWorker launch a script on the worker
-func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jobID int64, model sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
+func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
 	ctx := context.Background()
 	// Retrieve the new VM
 	vm := object.NewVirtualMachine(h.vclient.Client, vmInfo)

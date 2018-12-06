@@ -229,13 +229,8 @@ func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
 }
 
 // QueueJobSendSpawnInfo sends a spawn info on a job
-func (c *client) QueueJobSendSpawnInfo(ctx context.Context, isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error {
+func (c *client) QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error {
 	path := fmt.Sprintf("/queue/workflows/%d/spawn/infos", id)
-	if !isWorkflowJob {
-		// DEPRECATED code -> it's for pipelineBuildJob
-		path = fmt.Sprintf("/queue/%d/spawn/infos", id)
-	}
-
 	var statusCode int
 	var err error
 	for retry := 0; retry < 10; retry++ {
@@ -257,24 +252,15 @@ func (c *client) QueueJobIncAttempts(ctx context.Context, jobID int64) ([]int64,
 }
 
 // QueueJobBook books a job for a Hatchery
-func (c *client) QueueJobBook(ctx context.Context, isWorkflowJob bool, id int64) error {
+func (c *client) QueueJobBook(ctx context.Context, id int64) error {
 	path := fmt.Sprintf("/queue/workflows/%d/book", id)
-	if !isWorkflowJob {
-		// DEPRECATED code -> it's for pipelineBuildJob
-		path = fmt.Sprintf("/queue/%d/book", id)
-	}
 	_, err := c.PostJSON(ctx, path, nil, nil)
 	return err
 }
 
 // QueueJobRelease release a job for a worker
-func (c *client) QueueJobRelease(isWorkflowJob bool, id int64) error {
+func (c *client) QueueJobRelease(id int64) error {
 	path := fmt.Sprintf("/queue/workflows/%d/book", id)
-	if !isWorkflowJob {
-		// DEPRECATED code -> it's for pipelineBuildJob
-		return fmt.Errorf("Not implemented")
-	}
-
 	_, err := c.DeleteJSON(context.Background(), path, nil)
 	return err
 }

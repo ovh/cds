@@ -236,11 +236,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 
 	var logJob string
 	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
-		} else {
-			logJob = fmt.Sprintf("for pipeline build job %d,", spawnArgs.JobID)
-		}
+		logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
 	}
 
 	memory := int64(h.Config.DefaultMemory)
@@ -302,11 +298,7 @@ func (h *HatcheryKubernetes) SpawnWorker(ctx context.Context, spawnArgs hatchery
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
 
 	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		} else {
-			envsWm["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		}
+		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
 	}
 
 	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {
