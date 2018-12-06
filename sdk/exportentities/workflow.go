@@ -530,7 +530,7 @@ func (e *NodeEntry) getNode(name string, w *sdk.Workflow) (*sdk.Node, error) {
 
 	if len(e.Payload) > 0 {
 		if len(e.DependsOn) > 0 {
-			return nil, fmt.Errorf("Default payload cannot be set on another node than the first one")
+			return nil, sdk.WrapError(sdk.ErrInvalidNodeDefaultPayload, "Default payload cannot be set on another node than the first one (node : %s)", name)
 		}
 		node.Context.DefaultPayload = e.Payload
 	}
