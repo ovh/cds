@@ -93,7 +93,13 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	}
 
 	if n.Name != w.WorkflowData.Node.Name && n.Context.DefaultPayload != nil {
-		return sdk.WrapError(sdk.ErrInvalidNodeDefaultPayload, "payload on node %s", n.Name)
+		defaultPayloadMap, err := n.Context.DefaultPayloadToMap()
+		if err == nil && len(defaultPayloadMap) > 0 {
+			return sdk.WrapError(sdk.ErrInvalidNodeDefaultPayload, "payload on node %s", n.Name)
+		}
+		if err != nil {
+			n.Context.DefaultPayload = nil
+		}
 	}
 
 	if n.ID == 0 {
