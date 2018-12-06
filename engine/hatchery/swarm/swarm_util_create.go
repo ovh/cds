@@ -28,7 +28,7 @@ func (h *HatcherySwarm) createNetwork(ctx context.Context, dockerClient *dockerC
 		Driver:         "bridge",
 		Internal:       false,
 		CheckDuplicate: true,
-		EnableIPv6:     false,
+		EnableIPv6:     h.Config.NetworkEnableIPv6,
 		IPAM: &network.IPAM{
 			Driver: "default",
 		},
