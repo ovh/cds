@@ -34,7 +34,7 @@ func (w *WorkflowData) GetHooks() map[string]NodeHook {
 	return res
 }
 
-// GetHooksArray returns the list of all hooks in the workflow tree
+// GetHooksMapRef returns the list of all hooks in the workflow tree
 func (w *WorkflowData) GetHooksMapRef() map[string]NodeHook {
 	if w == nil {
 		return nil
