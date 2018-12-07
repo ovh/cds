@@ -80,6 +80,18 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return sdk.WrapError(errO, "Unable to load old workflow")
 	}
 
+	// Retrieve existing hook
+	oldHooks := oldW.WorkflowData.GetHooksMapRef()
+	for i := range w.Root.Hooks {
+		h := &w.Root.Hooks[i]
+		if h.Ref != "" {
+			if oldH, has := oldHooks[h.Ref]; has {
+				h.Config = oldH.Config
+				h.UUID = oldH.UUID
+			}
+		}
+	}
+
 	w.ID = oldW.ID
 	if err := Update(ctx, db, store, w, oldW, proj, u); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
