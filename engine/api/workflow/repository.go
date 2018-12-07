@@ -64,6 +64,13 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 	var uuid string
 	if opts.Hook != nil {
 		uuid = opts.Hook.WorkflowNodeHookUUID
+	} else {
+		// Search for repo web hook uuid
+		for _, h := range w.WorkflowData.Node.Hooks {
+			if h.HookModelName == sdk.RepositoryWebHookModelName {
+				uuid = h.UUID
+			}
+		}
 	}
 	return extractWorkflow(ctx, db, store, p, w, ope, u, decryptFunc, uuid)
 }
