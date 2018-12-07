@@ -2,7 +2,7 @@
     <div class="ui grid">
         <div class="wide column">
             <div class="field">
-                <label>{{'workflow_name' | translate}}</label>
+                <label>{{'workflow_name' | translate}}*</label>
                 <input class="ui input" type="text" name="workflow_name" [(ngModel)]="parameterName" [disabled]="_workflowTemplateInstance">
             </div>
             <div *ngIf="workflowTemplate.parameters.length > 0" class="wide field">

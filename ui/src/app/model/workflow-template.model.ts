@@ -16,6 +16,7 @@ export class WorkflowTemplate {
     group: Group;
     first_audit: AuditWorkflowTemplate;
     last_audit: AuditWorkflowTemplate;
+    editable: boolean;
 }
 
 export class WorkflowTemplateParameter {

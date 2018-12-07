@@ -113,18 +113,16 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 		return nil
 	}
 
-	var group *sdk.Group
-	for _, g := range u.Groups {
-		if g.Name == wt.Group.Name {
-			group = &g
-			break
-		}
+	// check that group exists
+	grp, err := group.LoadGroup(db, wt.Group.Name)
+	if err != nil {
+		return err
 	}
-	if group == nil {
-		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given workflow template")
+	if err := group.CheckUserIsGroupMember(grp, u); err != nil {
+		return err
 	}
 
-	wt, err := workflowtemplate.GetBySlugAndGroupIDs(db, wt.Slug, []int64{group.ID})
+	wt, err = workflowtemplate.GetBySlugAndGroupIDs(db, wt.Slug, []int64{grp.ID})
 	if err != nil {
 		return err
 	}

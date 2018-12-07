@@ -9,7 +9,8 @@ export enum ColumnType {
     TEXT = 'text',
     ICON = 'icon',
     LINK = 'link',
-    ROUTER_LINK = 'router-link'
+    ROUTER_LINK = 'router-link',
+    MARKDOWN = 'markdown'
 }
 
 export type Selector = (d: any) => any;

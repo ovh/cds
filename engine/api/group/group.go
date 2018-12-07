@@ -79,9 +79,9 @@ func LoadGroup(db gorp.SqlExecutor, name string) (*sdk.Group, error) {
 	err := db.QueryRow(query, name).Scan(&groupID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrGroupNotFound
+			err = sdk.ErrGroupNotFound
 		}
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	return &sdk.Group{
 		ID:   groupID,
@@ -95,7 +95,7 @@ func LoadGroupByID(db gorp.SqlExecutor, id int64) (*sdk.Group, error) {
 	var name string
 	if err := db.QueryRow(query, id).Scan(&name); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrGroupNotFound
+			err = sdk.ErrGroupNotFound
 		}
 		return nil, sdk.WithStack(err)
 	}
@@ -317,6 +317,41 @@ func CheckUserInGroup(db gorp.SqlExecutor, groupID, userID int64) (bool, error) 
 	}
 
 	return false, nil
+}
+
+// CheckUserIsGroupAdmin returns an error if the user is not admin of given group.
+func CheckUserIsGroupAdmin(group *sdk.Group, user *sdk.User) error {
+	if user.Admin {
+		return nil
+	}
+
+	for _, g := range user.Groups {
+		if g.ID == group.ID {
+			for _, a := range g.Admins {
+				if a.ID == user.ID {
+					return nil
+				}
+			}
+			break
+		}
+	}
+
+	return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+}
+
+// CheckUserIsGroupMember returns an error if the user is not a member of given group.
+func CheckUserIsGroupMember(group *sdk.Group, user *sdk.User) error {
+	if user.Admin || group.ID == SharedInfraGroup.ID {
+		return nil
+	}
+
+	for _, g := range user.Groups {
+		if g.ID == group.ID {
+			return nil
+		}
+	}
+
+	return sdk.WithStack(sdk.ErrInvalidGroupMember)
 }
 
 // DeleteUserFromGroup remove user from group

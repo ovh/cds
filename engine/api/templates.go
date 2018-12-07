@@ -45,37 +45,36 @@ func (api *API) middlewareTemplate(needAdmin bool) func(ctx context.Context, w h
 
 		u := getUser(ctx)
 
-		var gs []sdk.Group
-		if needAdmin {
-			for _, g := range u.Groups {
-				for _, a := range g.Admins {
-					if a.ID == u.ID {
-						gs = append(gs, g)
-					}
-				}
-			}
-		} else {
-			gs = u.Groups
-		}
-
+		var g *sdk.Group
+		var err error
 		if groupName != "" {
-			for i := range gs {
-				if gs[i].Name == groupName {
-					gs = []sdk.Group{gs[i]}
-					break
+			// check that group exists
+			g, err = group.LoadGroup(api.mustDB(), groupName)
+			if err != nil {
+				return nil, err
+			}
+
+			if needAdmin {
+				if err := group.CheckUserIsGroupAdmin(g, u); err != nil {
+					return nil, err
+				}
+			} else {
+				if err := group.CheckUserIsGroupMember(g, u); err != nil {
+					return nil, err
 				}
 			}
-			if len(gs) == 0 {
-				return nil, sdk.WrapError(sdk.ErrNotFound, "Invalid given group name")
-			}
 		}
+		gs := append(u.Groups, *group.SharedInfraGroup)
 
 		var wt *sdk.WorkflowTemplate
-		var err error
 		if id != 0 {
-			wt, err = workflowtemplate.GetByIDAndGroupIDs(api.mustDB(), id, sdk.GroupsToIDs(gs))
+			if u.Admin {
+				wt, err = workflowtemplate.GetByID(api.mustDB(), id)
+			} else {
+				wt, err = workflowtemplate.GetByIDAndGroupIDs(api.mustDB(), id, sdk.GroupsToIDs(gs))
+			}
 		} else {
-			wt, err = workflowtemplate.GetBySlugAndGroupIDs(api.mustDB(), templateSlug, sdk.GroupsToIDs(gs))
+			wt, err = workflowtemplate.GetBySlugAndGroupIDs(api.mustDB(), templateSlug, []int64{g.ID})
 		}
 		if err != nil {
 			return nil, err
@@ -104,7 +103,13 @@ func (api *API) getTemplatesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := getUser(ctx)
 
-		ts, err := workflowtemplate.GetAllByGroupIDs(api.mustDB(), sdk.GroupsToIDs(u.Groups))
+		var ts []sdk.WorkflowTemplate
+		var err error
+		if u.Admin {
+			ts, err = workflowtemplate.GetAll(api.mustDB())
+		} else {
+			ts, err = workflowtemplate.GetAllByGroupIDs(api.mustDB(), append(sdk.GroupsToIDs(u.Groups), group.SharedInfraGroup.ID))
+		}
 		if err != nil {
 			return err
 		}
@@ -138,20 +143,14 @@ func (api *API) postTemplateHandler() service.Handler {
 
 		u := getUser(ctx)
 
-		var isAdminForGroup bool
-		for _, g := range u.Groups {
-			if g.ID == t.GroupID {
-				for _, a := range g.Admins {
-					if a.ID == u.ID {
-						isAdminForGroup = true
-						break
-					}
-				}
-				break
-			}
+		// check that group exists
+		g, err := group.LoadGroupByID(api.mustDB(), t.GroupID)
+		if err != nil {
+			return err
 		}
-		if !isAdminForGroup {
-			return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+
+		if err := group.CheckUserIsGroupAdmin(g, u); err != nil {
+			return err
 		}
 
 		// duplicate couple of group id and slug will failed with sql constraint
@@ -167,6 +166,7 @@ func (api *API) postTemplateHandler() service.Handler {
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &t); err != nil {
 			return err
 		}
+		t.Editable = true
 
 		return service.WriteJSON(w, t, http.StatusOK)
 	}
@@ -186,6 +186,9 @@ func (api *API) getTemplateHandler() service.Handler {
 		}
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), t); err != nil {
 			return err
+		}
+		if err := group.CheckUserIsGroupAdmin(t.Group, getUser(ctx)); err == nil {
+			t.Editable = true
 		}
 
 		return service.WriteJSON(w, t, http.StatusOK)
@@ -211,22 +214,15 @@ func (api *API) putTemplateHandler() service.Handler {
 		old := getWorkflowTemplate(ctx)
 		u := getUser(ctx)
 
-		// if group id has changed check that user is admin for new group id
+		// if group id has changed check that the group exists and user is admin for new group id
 		if old.GroupID != data.GroupID {
-			var isAdminForGroup bool
-			for _, g := range u.Groups {
-				if g.ID == data.GroupID {
-					for _, a := range g.Admins {
-						if a.ID == u.ID {
-							isAdminForGroup = true
-							break
-						}
-					}
-					break
-				}
+			newGroup, err := group.LoadGroupByID(api.mustDB(), data.GroupID)
+			if err != nil {
+				return err
 			}
-			if !isAdminForGroup {
-				return sdk.WithStack(sdk.ErrInvalidGroupAdmin)
+
+			if err := group.CheckUserIsGroupAdmin(newGroup, u); err != nil {
+				return err
 			}
 		}
 
@@ -246,6 +242,7 @@ func (api *API) putTemplateHandler() service.Handler {
 		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &new); err != nil {
 			return err
 		}
+		new.Editable = true
 
 		return service.WriteJSON(w, new, http.StatusOK)
 	}
@@ -309,13 +306,19 @@ func (api *API) applyTemplateHandler() service.Handler {
 			return sdk.WithStack(sdk.ErrNoProject)
 		}
 		if withImport && !api.checkProjectPermissions(ctx, req.ProjectKey, permission.PermissionReadWriteExecute, nil) {
-			return sdk.NewErrorFrom(sdk.ErrForbidden, "Write permission required to import genareted workflow.")
+			return sdk.NewErrorFrom(sdk.ErrForbidden, "Write permission on project required to import generated workflow.")
 		}
 
 		u := getUser(ctx)
 
 		// load project with key
-		p, err := project.Load(api.mustDB(), api.Cache, req.ProjectKey, u, project.LoadOptions.WithPlatforms)
+		p, err := project.Load(api.mustDB(), api.Cache, req.ProjectKey, u,
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithApplications,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return err
 		}
