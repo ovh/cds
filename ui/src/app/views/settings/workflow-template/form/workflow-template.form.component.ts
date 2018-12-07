@@ -2,7 +2,6 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Group } from '../../../../model/group.model';
 import { User } from '../../../../model/user.model';
 import { WorkflowTemplate } from '../../../../model/workflow-template.model';
-import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { SharedService } from '../../../../shared/shared.service';
 
 @Component({
