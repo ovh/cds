@@ -48,6 +48,9 @@
                         {{c.selector(d).value}}
                     </a>
                 </td>
+                <td *ngSwitchCase="'markdown'" class="border">
+                    <markdown [data]="c.selector(d)"></markdown>
+                </td>
                 <td *ngSwitchDefault class="border">{{c.selector(d)}}</td>
             </ng-container>
         </tr>
@@ -55,8 +58,8 @@
     <tfoot tfoot *ngIf="nbElementsByPage && pagesCount > 1">
         <tr>
             <td [colSpan]="columns.length">
-                <sui-pagination class="ui right floated" [collectionSize]="filteredData.length" [pageSize]="nbElementsByPage" [maxSize]="20" [hasEllipses]="true"
-                    (pageChange)="pageChange($event)" [page]="currentPage">
+                <sui-pagination class="ui right floated" [collectionSize]="filteredData.length" [pageSize]="nbElementsByPage"
+                    [maxSize]="20" [hasEllipses]="true" (pageChange)="pageChange($event)" [page]="currentPage">
                 </sui-pagination>
             </td>
         </tr>

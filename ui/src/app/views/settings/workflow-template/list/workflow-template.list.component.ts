@@ -31,6 +31,7 @@ export class WorkflowTemplateListComponent {
                 }
             },
             <Column>{
+                type: ColumnType.MARKDOWN,
                 name: this._translate.instant('common_description'),
                 selector: wt => wt.description
             },

@@ -10,6 +10,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// GetAll returns all workflow templates.
+func GetAll(db gorp.SqlExecutor) ([]sdk.WorkflowTemplate, error) {
+	wts := []sdk.WorkflowTemplate{}
+
+	if _, err := db.Select(&wts, "SELECT * FROM workflow_template"); err != nil {
+		return nil, sdk.WrapError(err, "Cannot get workflow templates")
+	}
+
+	return wts, nil
+}
+
 // GetAllByGroupIDs returns all workflow templates by group ids.
 func GetAllByGroupIDs(db gorp.SqlExecutor, groupIDs []int64) ([]sdk.WorkflowTemplate, error) {
 	wts := []sdk.WorkflowTemplate{}

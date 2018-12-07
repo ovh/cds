@@ -267,8 +267,7 @@
                                                                     </div>
                                                                     <div class="field">
                                                                         <label>{{'common_description' | translate}}</label>
-                                                                        <textarea readonly name="description" [ngModel]="selectedTemplate.description"
-                                                                            [rows]="descriptionRows"></textarea>
+                                                                        <markdown [data]="selectedTemplate.description"></markdown>
                                                                     </div>
                                                                     <app-workflow-template-apply-form [project]="project"
                                                                         [workflowTemplate]="selectedTemplate"></app-workflow-template-apply-form>

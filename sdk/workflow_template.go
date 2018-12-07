@@ -56,6 +56,7 @@ type WorkflowTemplate struct {
 	Group      *Group                 `json:"group,omitempty" db:"-"`
 	FirstAudit *AuditWorkflowTemplate `json:"first_audit,omitempty" db:"-"`
 	LastAudit  *AuditWorkflowTemplate `json:"last_audit,omitempty" db:"-"`
+	Editable   bool                   `json:"editable,omitempty" db:"-"`
 }
 
 // IsValid returns workflow template validity.

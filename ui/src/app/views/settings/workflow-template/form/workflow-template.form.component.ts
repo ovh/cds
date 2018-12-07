@@ -1,6 +1,8 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Group } from '../../../../model/group.model';
+import { User } from '../../../../model/user.model';
 import { WorkflowTemplate } from '../../../../model/workflow-template.model';
+import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { SharedService } from '../../../../shared/shared.service';
 
 @Component({
@@ -63,6 +65,8 @@ export class WorkflowTemplateFormComponent {
         }
 
         this.descriptionChange();
+
+        this.codeMirrorConfig.readOnly = !this._workflowTemplate.editable;
     }
     get workflowTemplate() { return this._workflowTemplate; }
 
@@ -90,9 +94,9 @@ export class WorkflowTemplateFormComponent {
     environmentKeys: Array<number>;
     environmentValueAdd: string;
 
-    constructor(
-        private _sharedService: SharedService,
-    ) {
+    user: User;
+
+    constructor(private _sharedService: SharedService) {
         this.templateParameterTypes = ['boolean', 'string', 'repository'];
 
         this.resetParameterValue();
@@ -131,7 +135,7 @@ export class WorkflowTemplateFormComponent {
         });
         this._workflowTemplate.parameters = Object.keys(this.parameterValues).map(k => {
             return this.parameterValues[k];
-        })
+        });
 
         if (!this._workflowTemplate.name || !this._workflowTemplate.group_id) {
             return;

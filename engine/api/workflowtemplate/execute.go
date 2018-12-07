@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"html/template"
 	"io"
 	"strings"
+	"text/template"
 
 	yaml "gopkg.in/yaml.v2"
 

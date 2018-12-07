@@ -22,7 +22,9 @@ export class WorkflowTemplateApplyFormComponent {
     @Input() set project(p: Project) {
         this._project = p;
 
-        this.vcsNames = this._project.vcs_servers.map(vcs => vcs.name);
+        if (this._project.vcs_servers) {
+            this.vcsNames = this._project.vcs_servers.map(vcs => vcs.name);
+        }
     }
     get project() { return this._project; }
 

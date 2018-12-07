@@ -11,6 +11,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
@@ -80,25 +81,18 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 	}
 
 	// check that the user is admin on the given template's group
-	var group *sdk.Group
-	for _, g := range u.Groups {
-		if g.Name == wt.Group.Name {
-			for _, a := range g.Admins {
-				if a.ID == u.ID {
-					group = &g
-					break
-				}
-			}
-			break
-		}
+	grp, err := group.LoadGroup(db, wt.Group.Name)
+	if err != nil {
+		return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
 	}
-	if group == nil {
-		return nil, nil, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid given group for template"))
+	wt.GroupID = grp.ID
+
+	if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
+		return nil, nil, err
 	}
-	wt.GroupID = group.ID
 
 	// check if a template already exists for group with same slug
-	old, err := GetBySlugAndGroupIDs(db, wt.Slug, []int64{group.ID})
+	old, err := GetBySlugAndGroupIDs(db, wt.Slug, []int64{grp.ID})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -108,7 +102,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 		}
 		event.PublishWorkflowTemplateAdd(wt, u)
 
-		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, group.Name, wt.Slug)}, &wt, nil
+		return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedInserted, grp.Name, wt.Slug)}, &wt, nil
 	}
 
 	new := sdk.WorkflowTemplate(*old)
@@ -120,5 +114,5 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 
 	event.PublishWorkflowTemplateUpdate(*old, new, u)
 
-	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, group.Name, new.Slug)}, &new, nil
+	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, grp.Name, new.Slug)}, &new, nil
 }
