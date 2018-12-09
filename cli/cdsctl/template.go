@@ -203,7 +203,7 @@ func templateInstancesRun(v cli.Values) (cli.ListResult, error) {
 		if wtis[i].Workflow != nil {
 			tids[i].Workflow = wtis[i].Workflow.Name
 		} else {
-			tids[i].Workflow = fmt.Sprintf("%s (not imported)", wtis[i].Request.WorkflowName)
+			tids[i].Workflow = fmt.Sprintf("%s (not imported)", wtis[i].WorkflowName)
 		}
 		for k, v := range wtis[i].Request.Parameters {
 			tids[i].Params = fmt.Sprintf("%s%s:%s\n", tids[i].Params, k, v)

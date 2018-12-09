@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
@@ -257,22 +258,8 @@ func (api *API) deleteTemplateHandler() service.Handler {
 
 		wt := getWorkflowTemplate(ctx)
 
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "Cannot start transaction")
-		}
-		defer func() { _ = tx.Rollback() }()
-
-		if err := workflowtemplate.DeleteInstancesForWorkflowTemplateID(tx, wt.ID); err != nil {
+		if err := workflowtemplate.Delete(api.mustDB(), wt); err != nil {
 			return err
-		}
-
-		if err := workflowtemplate.Delete(tx, wt); err != nil {
-			return err
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		return service.WriteJSON(w, nil, http.StatusOK)
@@ -301,15 +288,17 @@ func (api *API) applyTemplateHandler() service.Handler {
 			return err
 		}
 
-		// check right on project
-		if !withImport && !checkProjectReadPermission(ctx, req.ProjectKey) {
-			return sdk.WithStack(sdk.ErrNoProject)
-		}
-		if withImport && !api.checkProjectPermissions(ctx, req.ProjectKey, permission.PermissionReadWriteExecute, nil) {
-			return sdk.NewErrorFrom(sdk.ErrForbidden, "Write permission on project required to import generated workflow.")
-		}
-
 		u := getUser(ctx)
+
+		// check permission on project
+		if !u.Admin {
+			if !withImport && !checkProjectReadPermission(ctx, req.ProjectKey) {
+				return sdk.WithStack(sdk.ErrNoProject)
+			}
+			if withImport && !api.checkProjectPermissions(ctx, req.ProjectKey, permission.PermissionReadWriteExecute, nil) {
+				return sdk.NewErrorFrom(sdk.ErrForbidden, "Write permission on project required to import generated workflow.")
+			}
+		}
 
 		// load project with key
 		p, err := project.Load(api.mustDB(), api.Cache, req.ProjectKey, u,
@@ -345,15 +334,21 @@ func (api *API) applyTemplateHandler() service.Handler {
 		}
 		if wti == nil {
 			// try to get a instance not assign to a workflow but with the same slug
-			wtis, err := workflowtemplate.GetInstancesByWorkflowIDAndTemplateIDAndProjectID(tx, 0, wt.ID, p.ID)
+			wtis, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDAndWorkflowIDNull(tx, wt.ID, p.ID)
 			if err != nil {
 				return err
 			}
 
 			for _, res := range wtis {
 				if res.Request.WorkflowName == req.WorkflowName {
-					wti = &res
-					break
+					if wti == nil {
+						wti = &res
+					} else {
+						// if there are more than one instance found, delete others
+						if err := workflowtemplate.DeleteInstance(tx, &res); err != nil {
+							return err
+						}
+					}
 				}
 			}
 		}
@@ -363,7 +358,6 @@ func (api *API) applyTemplateHandler() service.Handler {
 		if wti != nil {
 			clone := sdk.WorkflowTemplateInstance(*wti)
 			old = &clone
-			req.WorkflowName = wti.Request.WorkflowName
 			wti.WorkflowTemplateVersion = wt.Version
 			wti.Request = req
 			if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
@@ -384,6 +378,19 @@ func (api *API) applyTemplateHandler() service.Handler {
 		// execute template with request
 		res, err := workflowtemplate.Execute(wt, wti)
 		if err != nil {
+			return err
+		}
+
+		// parse the generated workflow to find its name
+		var wor exportentities.Workflow
+		if err := yaml.Unmarshal([]byte(res.Workflow), &wor); err != nil {
+			return sdk.NewError(sdk.Error{
+				ID:      sdk.ErrWrongRequest.ID,
+				Message: "Cannot parse generated workflow",
+			}, err)
+		}
+		wti.WorkflowName = wor.Name
+		if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
 			return err
 		}
 
