@@ -274,23 +274,6 @@ func (n *Node) IsLinkedToRepo(w *Workflow) bool {
 	return n.Context != nil && n.Context.ApplicationID != 0 && w.Applications[n.Context.ApplicationID].RepositoryFullname != ""
 }
 
-// GetNodeByName retrieve a node by his name
-func (n *Node) GetNodeByName(name interface{}) *Node {
-	if n == nil {
-		return nil
-	}
-	if n.Name == name {
-		return n
-	}
-	for _, t := range n.Triggers {
-		n2 := t.ChildNode.GetNodeByName(name)
-		if n2 != nil {
-			return n2
-		}
-	}
-	return nil
-}
-
 // CheckApplicationDeploymentStrategies checks application deployment strategies
 func (n Node) CheckApplicationDeploymentStrategies(proj *Project, w *Workflow) error {
 	if n.Context == nil {

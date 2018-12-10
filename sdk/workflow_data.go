@@ -80,13 +80,8 @@ func (w *WorkflowData) NodeByID(ID int64) *Node {
 	return nil
 }
 func (w *WorkflowData) NodeByName(s string) *Node {
-	n := w.Node.GetNodeByName(s)
-	if n != nil {
-		return n
-	}
-	for _, j := range w.Joins {
-		n = j.GetNodeByName(s)
-		if n != nil {
+	for _, n := range w.Array() {
+		if n.Name == s {
 			return n
 		}
 	}
