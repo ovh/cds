@@ -892,7 +892,7 @@
   "worker_model_shell_docker": "Commande shell",
   "worker_model_post_cmd": "Commande après exécution du worker",
   "worker_model_shell_cmd": "Commande principale du shell",
-  "worker_model_no_usage": "Ce worker modèle n'est pas utilisé explicitement dans un pipeline",
+  "worker_model_no_usage": "Ce modèle de worker n'est pas utilisé explicitement dans un pipeline",
 
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
   "workflow_resync_vcs": "Resynchroniser les statuts VCS",
