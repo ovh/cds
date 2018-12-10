@@ -189,15 +189,6 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 		writeError(w, r, errTar)
 		return
 	}
-	if wk.currentJob.wJob == nil {
-		errW := sdk.Error{
-			Message: "worker cache push > Cannot find workflow job info",
-			Status:  http.StatusInternalServerError,
-		}
-		log.Error("%v", errW)
-		writeError(w, r, errW)
-		return
-	}
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
 	if projectKey == "" {
@@ -309,12 +300,6 @@ func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 
 	path := r.FormValue("path")
-
-	if wk.currentJob.wJob == nil {
-		errW := fmt.Errorf("worker cache pull > Cannot find workflow job info")
-		writeError(w, r, errW)
-		return
-	}
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
 	bts, err := wk.client.WorkflowCachePull(projectKey, vars["ref"])

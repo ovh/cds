@@ -20,7 +20,6 @@ type workerStarterRequest struct {
 	ctx                 context.Context
 	cancel              func(reason string)
 	id                  int64
-	isWorkflowJob       bool
 	model               sdk.Model
 	execGroups          []sdk.Group
 	requirements        []sdk.Requirement
@@ -99,7 +98,7 @@ func workerStarter(ctx context.Context, h Interface, workerNum string, jobs <-ch
 
 			atomic.AddInt64(&nbWorkerToStart, 1)
 			atomic.AddInt64(&nbRegisteringWorkerModels, 1)
-			if _, err := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); err != nil {
+			if _, err := h.SpawnWorker(j.ctx, SpawnArguments{Model: *m, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); err != nil {
 				log.Warning("workerRegister> cannot spawn worker for register:%s err:%v", m.Name, err)
 				var spawnError = sdk.SpawnErrorForm{
 					Error: fmt.Sprintf("cannot spawn worker for register: %v", err),
@@ -144,7 +143,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 
 	_, next := observability.Span(ctx, "hatchery.QueueJobBook")
 	ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-	if err := h.CDSClient().QueueJobBook(ctxt, j.isWorkflowJob, j.id); err != nil {
+	if err := h.CDSClient().QueueJobBook(ctxt, j.id); err != nil {
 		next()
 		// perhaps already booked by another hatchery
 		log.Info("hatchery> spawnWorkerForJob> %d - cannot book job %d %s: %s", j.timestamp, j.id, j.model.Name, err)
@@ -153,21 +152,21 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	}
 	next()
 	cancel()
-	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s by hatchery %d isWorkflowJob:%t", j.timestamp, j.id, j.model.Name, h.ID(), j.isWorkflowJob)
+	log.Debug("hatchery> spawnWorkerForJob> %d - send book job %d %s by hatchery %d", j.timestamp, j.id, j.model.Name, h.ID())
 
 	start := time.Now()
-	SendSpawnInfo(ctx, h, j.isWorkflowJob, j.id, sdk.SpawnMsg{
+	SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
 		ID:   sdk.MsgSpawnInfoHatcheryStarts.ID,
 		Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name},
 	})
 
 	log.Info("hatchery> spawnWorkerForJob> SpawnWorker> starting model %s for job %d", j.model.Name, j.id)
 	_, next = observability.Span(ctx, "hatchery.SpawnWorker")
-	workerName, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: j.model, IsWorkflowJob: j.isWorkflowJob, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
+	workerName, errSpawn := h.SpawnWorker(j.ctx, SpawnArguments{Model: j.model, JobID: j.id, Requirements: j.requirements, LogInfo: "spawn for job"})
 	next()
 	if errSpawn != nil {
 		_, next = observability.Span(ctx, "hatchery.QueueJobSendSpawnInfo", observability.Tag("status", "errSpawn"))
-		SendSpawnInfo(ctx, h, j.isWorkflowJob, j.id, sdk.SpawnMsg{
+		SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryErrorSpawn.ID,
 			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), j.model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()},
 		})
@@ -176,7 +175,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 		return false, nil
 	}
 
-	SendSpawnInfo(ctx, h, j.isWorkflowJob, j.id, sdk.SpawnMsg{
+	SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
 		ID: sdk.MsgSpawnInfoHatcheryStartsSuccessfully.ID,
 		Args: []interface{}{
 			h.Service().Name,
@@ -186,7 +185,7 @@ func spawnWorkerForJob(h Interface, j workerStarterRequest) (bool, error) {
 	})
 
 	if j.model.IsDeprecated {
-		SendSpawnInfo(ctx, h, j.isWorkflowJob, j.id, sdk.SpawnMsg{
+		SendSpawnInfo(ctx, h, j.id, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoDeprecatedModel.ID,
 			Args: []interface{}{j.model.Name},
 		})

@@ -161,17 +161,16 @@ type ModelCmds struct {
 
 // WorkerArgs is all the args needed to run a worker
 type WorkerArgs struct {
-	API                string `json:"api"`
-	Token              string `json:"token"`
-	Name               string `json:"name"`
-	BaseDir            string `json:"base_dir"`
-	HTTPInsecure       bool   `json:"http_insecure"`
-	Model              int64  `json:"model"`
-	HatcheryName       string `json:"hatchery_name"`
-	PipelineBuildJobID int64  `json:"pipeline_build_job_id"`
-	WorkflowJobID      int64  `json:"workflow_job_id"`
-	TTL                int    `json:"ttl"`
-	FromWorkerImage    bool   `json:"from_worker_image"`
+	API             string `json:"api"`
+	Token           string `json:"token"`
+	Name            string `json:"name"`
+	BaseDir         string `json:"base_dir"`
+	HTTPInsecure    bool   `json:"http_insecure"`
+	Model           int64  `json:"model"`
+	HatcheryName    string `json:"hatchery_name"`
+	WorkflowJobID   int64  `json:"workflow_job_id"`
+	TTL             int    `json:"ttl"`
+	FromWorkerImage bool   `json:"from_worker_image"`
 	//Graylog params
 	GraylogHost       string `json:"graylog_host"`
 	GraylogPort       int    `json:"graylog_port"`

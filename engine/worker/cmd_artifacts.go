@@ -119,12 +119,6 @@ func (wk *currentWorker) artifactsHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if wk.currentJob.wJob == nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("command 'worker artifacts' is only available on CDS Workflows"))
-		writeError(w, r, newError)
-		return
-	}
-
 	if reqArgs.Workflow == "" {
 		reqArgs.Workflow = sdk.ParameterValue(wk.currentJob.params, "cds.workflow")
 	}

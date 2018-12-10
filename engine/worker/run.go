@@ -130,30 +130,19 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 }
 
 func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.Parameter) error {
-	if w.currentJob.wJob != nil { // cds workflow, use helper from interpolate
-		tmp := map[string]string{}
-		for _, v := range w.currentJob.buildVariables {
-			tmp[v.Name] = v.Value
-		}
-		for _, v := range params {
-			tmp[v.Name] = v.Value
-		}
+	tmp := map[string]string{}
+	for _, v := range w.currentJob.buildVariables {
+		tmp[v.Name] = v.Value
+	}
+	for _, v := range params {
+		tmp[v.Name] = v.Value
+	}
 
-		for i := range a.Parameters {
-			var err error
-			a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, tmp)
-			if err != nil {
-				return sdk.WrapError(err, "Unable to interpolate action parameters")
-			}
-		}
-	} else { // pipeline build Job
-		for i := range a.Parameters {
-			for _, v := range w.currentJob.buildVariables {
-				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
-			}
-			for _, v := range params {
-				a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
-			}
+	for i := range a.Parameters {
+		var err error
+		a.Parameters[i].Value, err = interpolate.Do(a.Parameters[i].Value, tmp)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to interpolate action parameters")
 		}
 	}
 	return nil
@@ -307,12 +296,7 @@ func (w *currentWorker) updateStepStatus(ctx context.Context, buildID int64, ste
 		Done:      time.Now(),
 	}
 
-	var path string
-	if w.currentJob.wJob != nil {
-		path = fmt.Sprintf("/queue/workflows/%d/step", buildID)
-	} else {
-		path = fmt.Sprintf("/build/%d/step", buildID)
-	}
+	path := fmt.Sprintf("/queue/workflows/%d/step", buildID)
 
 	for try := 1; try <= 10; try++ {
 		log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d", status, buildID, stepOrder)
@@ -465,108 +449,6 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNod
 
 	logsecrets = jobInfo.Secrets
 	res := w.startAction(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, &jobInfo.NodeJobRun.Parameters, logsecrets, -1, "")
-	logsecrets = nil
-
-	if err := teardownBuildDirectory(wd); err != nil {
-		log.Error("Cannot remove build directory: %s", err)
-	}
-	return res
-}
-
-func (w *currentWorker) run(ctx context.Context, pbji *sdk.PipelineBuildJobInfo) sdk.Result {
-	ctx, cancel := context.WithTimeout(ctx, 6*time.Hour)
-	defer cancel()
-
-	t0 := time.Now()
-	defer func() {
-		log.Info("run> Run Pipeline Build Job Done (%s)", sdk.Round(time.Since(t0), time.Second).String())
-	}()
-
-	defer w.drainLogsAndCloseLogger(ctx)
-
-	// Setup working directory
-	pbJobPath := path.Join(fmt.Sprintf("%d", pbji.PipelineID),
-		fmt.Sprintf("%d", pbji.PipelineBuildJob.Job.PipelineActionID),
-		fmt.Sprintf("%d", pbji.BuildNumber))
-	wd := workingDirectory(w.basedir, pbJobPath)
-
-	if err := setupBuildDirectory(wd); err != nil {
-		log.Debug("run> setupBuildDirectory error %s", err)
-		return sdk.Result{
-			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Error: cannot setup working directory: %s", err),
-		}
-	}
-	w.currentJob.workingDirectory = wd
-
-	//Add working directory as job parameter
-	pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
-		Name:  "cds.workspace",
-		Type:  sdk.StringParameter,
-		Value: wd,
-	})
-
-	// add cds.worker on parameters available
-	pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
-		Name:  "cds.worker",
-		Type:  sdk.StringParameter,
-		Value: pbji.PipelineBuildJob.Job.WorkerName,
-	})
-
-	// REPLACE ALL VARIABLE EVEN SECRETS HERE
-	processJobParameter(&pbji.PipelineBuildJob.Parameters, pbji.Secrets)
-
-	if err := w.processActionVariables(&pbji.PipelineBuildJob.Job.Action, nil, pbji.PipelineBuildJob.Parameters, pbji.Secrets); err != nil {
-		log.Warning("run> Cannot process action %s parameters: %s", pbji.PipelineBuildJob.Job.Action.Name, err)
-		return sdk.Result{
-			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Error: cannot process action %s parameters", pbji.PipelineBuildJob.Job.Action.Name),
-		}
-	}
-
-	// Add secrets as string or password in ActionBuild.Args
-	// So they can be used by plugins
-	for _, s := range pbji.Secrets {
-		p := sdk.Parameter{
-			Type:  s.Type,
-			Name:  s.Name,
-			Value: s.Value,
-		}
-		pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, p)
-	}
-
-	// Setup user ssh keys
-	keysDirectory = workingDirectory(w.basedir, pbJobPath)
-	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
-		log.Debug("run> error on MkdirAll %s", err)
-		return sdk.Result{
-			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
-		}
-	}
-
-	// DEPRECATED - BEGIN
-	if err := w.setupSSHKey(pbji.Secrets, keysDirectory); err != nil {
-		log.Debug("run> error on w.setupSSHKey %s", err)
-		return sdk.Result{
-			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
-		}
-	}
-	// DEPRECATED - END
-
-	// The right way to go is :
-	if err := vcs.SetupSSHKey(pbji.Secrets, keysDirectory, nil); err != nil {
-		log.Debug("run> error vcs.SetupSSHKey %s", err)
-		return sdk.Result{
-			Status: sdk.StatusFail.String(),
-			Reason: fmt.Sprintf("Error: cannot setup ssh key (%s)", err),
-		}
-	}
-
-	logsecrets = pbji.Secrets
-
-	res := w.startAction(ctx, &pbji.PipelineBuildJob.Job.Action, pbji.PipelineBuildJob.ID, &pbji.PipelineBuildJob.Parameters, logsecrets, -1, "")
 	logsecrets = nil
 
 	if err := teardownBuildDirectory(wd); err != nil {

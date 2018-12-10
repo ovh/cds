@@ -24,12 +24,7 @@ func (wk *currentWorker) sendLog(buildID int64, value string, stepOrder int, fin
 		}
 	}
 
-	var id = wk.currentJob.pbJob.PipelineBuildID
-	if wk.currentJob.wJob != nil {
-		id = wk.currentJob.wJob.WorkflowNodeRunID
-	}
-
-	l := sdk.NewLog(buildID, value, id, stepOrder)
+	l := sdk.NewLog(buildID, value, wk.currentJob.wJob.WorkflowNodeRunID, stepOrder)
 	if final {
 		l.Done, _ = ptypes.TimestampProto(time.Now())
 	} else {
@@ -128,12 +123,7 @@ func (wk *currentWorker) sendHTTPLog() {
 			continue
 		}
 
-		var path string
-		if wk.currentJob.wJob != nil {
-			path = fmt.Sprintf("/queue/workflows/%d/log", wk.currentJob.wJob.ID)
-		} else {
-			path = fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
-		}
+		path := fmt.Sprintf("/queue/workflows/%d/log", wk.currentJob.wJob.ID)
 
 		if _, _, err := sdk.Request("POST", path, data); err != nil {
 			log.Error("error: cannot send logs: %s", err)
@@ -144,11 +134,6 @@ func (wk *currentWorker) sendHTTPLog() {
 
 func (wk *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) error {
 	log.Info("Logging through grpc")
-
-	stream, err := grpc.NewBuildLogClient(wk.grpc.conn).AddBuildLog(ctx)
-	if err != nil {
-		return err
-	}
 
 	streamWorkflow, err := grpc.NewWorkflowQueueClient(wk.grpc.conn).SendLog(ctx)
 	if err != nil {
@@ -161,16 +146,12 @@ func (wk *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log)
 
 			log.Debug("LOG: %v", l.Val)
 			var errSend error
-			if wk.currentJob.wJob == nil {
-				errSend = stream.Send(&l)
-			} else {
-				errSend = streamWorkflow.Send(&l)
-			}
+
+			errSend = streamWorkflow.Send(&l)
 
 			if errSend != nil {
 				log.Error("grpcLogger> Error sending message : %s", errSend)
 				//Close all
-				stream.CloseSend()
 				streamWorkflow.CloseSend()
 				wk.grpc.conn.Close()
 				wk.grpc.conn = nil
@@ -179,8 +160,7 @@ func (wk *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log)
 				return nil
 			}
 		} else {
-			streamWorkflow.CloseSend()
-			return stream.CloseSend()
+			return streamWorkflow.CloseSend()
 		}
 	}
 }

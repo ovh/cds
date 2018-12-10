@@ -119,7 +119,7 @@ checkImage:
 	}
 
 	if !imageFound {
-		hatchery.SendSpawnInfo(ctx, h, spawnArgs.IsWorkflowJob, spawnArgs.JobID, sdk.SpawnMsg{
+		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryStartDockerPull.ID,
 			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
 		})
@@ -127,7 +127,7 @@ checkImage:
 		_, next := observability.Span(ctx, "swarm.dockerClient.pullImage", observability.Tag("image", cArgs.image))
 		if err := h.pullImage(dockerClient, cArgs.image, timeoutPullImage); err != nil {
 			next()
-			hatchery.SendSpawnInfo(ctx, h, spawnArgs.IsWorkflowJob, spawnArgs.JobID, sdk.SpawnMsg{
+			hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 				ID:   sdk.MsgSpawnInfoHatcheryEndDockerPullErr.ID,
 				Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image, err},
 			})
@@ -135,7 +135,7 @@ checkImage:
 		}
 		next()
 
-		hatchery.SendSpawnInfo(ctx, h, spawnArgs.IsWorkflowJob, spawnArgs.JobID, sdk.SpawnMsg{
+		hatchery.SendSpawnInfo(ctx, h, spawnArgs.JobID, sdk.SpawnMsg{
 			ID:   sdk.MsgSpawnInfoHatcheryEndDockerPull.ID,
 			Args: []interface{}{h.Service().Name, fmt.Sprintf("%d", h.ID()), cArgs.image},
 		})

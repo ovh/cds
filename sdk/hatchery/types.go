@@ -57,12 +57,11 @@ type CommonConfiguration struct {
 
 // SpawnArguments contains arguments to func SpawnWorker
 type SpawnArguments struct {
-	Model         sdk.Model
-	IsWorkflowJob bool
-	JobID         int64
-	Requirements  []sdk.Requirement
-	RegisterOnly  bool
-	LogInfo       string
+	Model        sdk.Model
+	JobID        int64
+	Requirements []sdk.Requirement
+	RegisterOnly bool
+	LogInfo      string
 }
 
 // Interface describe an interface for each hatchery mode

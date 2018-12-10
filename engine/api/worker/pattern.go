@@ -92,7 +92,6 @@ export CDS_TOKEN={{.Token}}
 export CDS_NAME={{.Name}}
 export CDS_MODEL={{.Model}}
 export CDS_HATCHERY_NAME={{.HatcheryName}}
-export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
 export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
 export CDS_TTL={{.TTL}}
 export CDS_INSECURE={{.HTTPInsecure}}
@@ -174,7 +173,7 @@ chmod +x worker
 				Type: sdk.HostProcess,
 				Name: "basic_unix",
 				Model: sdk.ModelCmds{
-					Cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
+					Cmd: "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit",
 				},
 			},
 		},

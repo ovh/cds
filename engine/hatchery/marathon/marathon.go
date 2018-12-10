@@ -245,19 +245,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
-	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			udataParam.WorkflowJobID = spawnArgs.JobID
-		} else {
-			udataParam.PipelineBuildJobID = spawnArgs.JobID
-		}
-	}
-
-	if spawnArgs.IsWorkflowJob {
-		udataParam.WorkflowJobID = spawnArgs.JobID
-	} else {
-		udataParam.PipelineBuildJobID = spawnArgs.JobID
-	}
+	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
@@ -306,11 +294,7 @@ func (h *HatcheryMarathon) SpawnWorker(ctx context.Context, spawnArgs hatchery.S
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
 
 	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		} else {
-			envsWm["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		}
+		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
 	}
 
 	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {

@@ -77,7 +77,7 @@ func provisioning(h Interface, models []sdk.Model) {
 			existing := h.WorkersStartedByModel(&models[k])
 			for i := existing; i < int(models[k].Provision); i++ {
 				go func(m sdk.Model) {
-					if name, errSpawn := h.SpawnWorker(context.Background(), SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
+					if name, errSpawn := h.SpawnWorker(context.Background(), SpawnArguments{Model: m, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
 						var spawnError = sdk.SpawnErrorForm{
 							Error: fmt.Sprintf("hatchery %s cannot spawn worker %s for provisioning", h.Service().Name, m.Name),

@@ -100,11 +100,7 @@ func (h *HatcheryOpenstack) SpawnWorker(ctx context.Context, spawnArgs hatchery.
 		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
-	if spawnArgs.IsWorkflowJob {
-		udataParam.WorkflowJobID = spawnArgs.JobID
-	} else {
-		udataParam.PipelineBuildJobID = spawnArgs.JobID
-	}
+	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {

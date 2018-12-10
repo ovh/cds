@@ -214,13 +214,12 @@ type ProjectVariablesClient interface {
 type QueueClient interface {
 	QueueWorkflowNodeJobRun(status ...sdk.Status) ([]sdk.WorkflowNodeJobRun, error)
 	QueueCountWorkflowNodeJobRun(since *time.Time, until *time.Time, modelType string, ratioService *int) (sdk.WorkflowNodeJobRunCount, error)
-	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
-	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error
+	QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, errs chan<- error, delay time.Duration, graceTime int, modelType string, ratioService *int, exceptWfJobID *int64) error
 	QueueTakeJob(ctx context.Context, job sdk.WorkflowNodeJobRun, isBooked bool) (*sdk.WorkflowNodeJobRunData, error)
-	QueueJobBook(ctx context.Context, isWorkflowJob bool, id int64) error
-	QueueJobRelease(isWorkflowJob bool, id int64) error
+	QueueJobBook(ctx context.Context, id int64) error
+	QueueJobRelease(id int64) error
 	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)
-	QueueJobSendSpawnInfo(ctx context.Context, isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
+	QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
 	QueueArtifactUpload(ctx context.Context, id int64, tag, filePath string) (bool, time.Duration, error)
 	QueueStaticFilesUpload(ctx context.Context, nodeJobRunID int64, name, entrypoint, staticKey string, tarContent io.Reader) (string, bool, time.Duration, error)

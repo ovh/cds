@@ -139,13 +139,7 @@ func (wk *currentWorker) downloadHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	sendLog := getLogger(wk, wk.currentJob.pbJob.ID, wk.currentJob.currentStep)
-
-	if wk.currentJob.wJob == nil {
-		newError := sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("command 'worker download' is only available on CDS Workflows"))
-		writeError(w, r, newError)
-		return
-	}
+	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
 
 	if reqArgs.Workflow == "" {
 		reqArgs.Workflow = sdk.ParameterValue(wk.currentJob.params, "cds.workflow")
