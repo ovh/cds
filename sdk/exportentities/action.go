@@ -147,6 +147,10 @@ func newSteps(a sdk.Action) []Step {
 				if entrypoint != nil && entrypoint.Value != "" {
 					serveStaticFilesArgs["entrypoint"] = entrypoint.Value
 				}
+				staticKey := sdk.ParameterFind(&act.Parameters, "static-key")
+				if staticKey != nil && staticKey.Value != "" {
+					serveStaticFilesArgs["static-key"] = staticKey.Value
+				}
 				s["serveStaticFiles"] = serveStaticFilesArgs
 			case sdk.GitCloneAction:
 				gitCloneArgs := map[string]string{}

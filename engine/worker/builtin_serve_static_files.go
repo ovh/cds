@@ -19,14 +19,6 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 			path = "."
 		}
 
-		entrypoint := sdk.ParameterFind(&a.Parameters, "entrypoint")
-		if entrypoint == nil {
-			entrypoint = &sdk.Parameter{Value: "index.html"}
-		}
-		if entrypoint.Value == "" {
-			entrypoint.Value = "index.html"
-		}
-
 		name := sdk.ParameterFind(&a.Parameters, "name")
 		if name == nil || name.Value == "" {
 			res.Status = sdk.StatusFail.String()
@@ -52,8 +44,13 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		entrypoint := sdk.ParameterFind(&a.Parameters, "entrypoint")
+		if entrypoint == nil {
+			entrypoint = &sdk.Parameter{}
+		}
+
 		// To set entrypoint dynamically when the path is a single file
-		if len(filesPath) == 1 {
+		if entrypoint.Value == "" && len(filesPath) == 1 {
 			fileStat, errS := os.Stat(filesPath[0])
 			if errS != nil {
 				res.Status = sdk.StatusFail.String()
@@ -64,6 +61,10 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 			if !fileStat.IsDir() {
 				entrypoint.Value = filepath.Base(filesPath[0])
 			}
+		}
+
+		if entrypoint.Value == "" {
+			entrypoint.Value = "index.html"
 		}
 
 		sendLog("Fetching files in progress...")
