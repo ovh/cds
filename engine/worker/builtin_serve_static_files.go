@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -53,7 +54,16 @@ func runServeStaticFiles(w *currentWorker) BuiltInAction {
 
 		// To set entrypoint dynamically when the path is a single file
 		if len(filesPath) == 1 {
-			entrypoint.Value = filepath.Base(filesPath[0])
+			fileStat, errS := os.Stat(filesPath[0])
+			if errS != nil {
+				res.Status = sdk.StatusFail.String()
+				res.Reason = fmt.Sprintf("Cannot stat file %s : %v", filesPath[0], errS)
+				sendLog(res.Reason)
+				return res
+			}
+			if !fileStat.IsDir() {
+				entrypoint.Value = filepath.Base(filesPath[0])
+			}
 		}
 
 		sendLog("Fetching files in progress...")
