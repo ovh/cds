@@ -1,8 +1,18 @@
+.wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.scrollview {
+  flex: 1;
+}
+
 .table tbody tr {
-    &:last-child td {
-        border-bottom: none;
-    }
-    td:last-child {
-        border-right: none;
-    }
+  &:last-child td {
+    border-bottom: none;
+  }
+  td:last-child {
+    border-right: none;
+  }
 }

@@ -1,5 +1,4 @@
-<div class="CDSbreadcrumb">
-    <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name"></app-worflow-breadcrumb>
+<app-workflow-breadcrumb [project]="project" [workflow]="workflow" [workflowRun]="workflowRun">
     <div class="right floated" [title]="'favorite_add_btn' | translate">
         <div class="ui active small inline loader" *ngIf="loadingFav"></div>
         <i class="pointing star icon" *ngIf="!loadingFav" [class.pointing]="!loading" [ngClass]="{'animated infinite pulse' : loadingFav}"
@@ -59,7 +58,7 @@
             </div>
         </ng-template>
     </div>
-</div>
+</app-workflow-breadcrumb>
 <aside class="sidebar scrollable expanded" infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
     [scrollWindow]="false" (scrolled)="onScroll.emit(true)">
     <div class="floated right">

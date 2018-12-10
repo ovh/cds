@@ -16,7 +16,6 @@
   "account_verify_title": "Account information",
   "account_verify_error": "Unable to activate this account.",
 
-  "action_add_title": "Add an action",
   "action_step_title": "Job steps",
   "action_step_final_title": "Job final steps",
   "action_list_title": "Actions",
@@ -771,11 +770,9 @@
   "user_load_user": "Loading user...",
   "user_is_admin": "This user is a CDS Administrator",
   "user_saved": "User saved",
-  "user_my_profile": "My profile",
   "user_deleted": "User is deleted",
 
   "user_list_title": "Users",
-  "user_edit_title": "Edit user",
   "user_none": "No user",
 
   "vcs_connection" : "Connection:",
@@ -1048,11 +1045,10 @@
   "workflow_wizard_select_template": "Select a workflow template",
   "wizard_repo_files" : "Files found: ",
 
-  "workflow_template_add_title": "Create workflow template",
-  "workflow_template_edit_title": "Edit workflow template",
   "workflow_template_created": "Workflow template created",
   "workflow_template_saved": "Workflow template saved",
   "workflow_template_deleted": "Workflow template deleted",
+  "workflow_template": "Workflow template",
   "workflow_templates": "Workflow templates",
   "workflow_template_help_line_1": "Your workflow was not generated from a template.",
   "workflow_template_help_line_2": "A workflow template allows you to quickly create then update a workflow and its components.",

@@ -1,4 +1,14 @@
 @import '../../../../../common';
+.wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.scrollview {
+  flex: 1;
+}
+
 .ui.input {
   position: inherit;
 }

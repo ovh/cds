@@ -1,7 +1,7 @@
 <div *ngIf="_workflowTemplate;then showWorkflowTemplate;else loadWorkflowTemplate"></div>
 <ng-template #showWorkflowTemplate>
     <div class="ui grid">
-        <div class="thirteen wide column">
+        <div class="sixteen wide column">
             <form class="ui form">
                 <div class="ui grid">
                     <div class="sixteen wide column">
@@ -149,29 +149,6 @@
                     </div>
                 </div>
             </form>
-        </div>
-        <div class="three wide column">
-            <div class="ui segment">
-                <h2 class="ui header"><i class="fa fa-book"></i> {{ 'settings_tips' | translate }}</h2>
-                <p>{{'workflow_template_help_line_1' | translate}}</p>
-
-                <div class="ui list">
-                    <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/template">{{'common_read_more'
-                        | translate}}</a>
-                </div>
-            </div>
-            <ng-container *ngIf="mode === 'edit'">
-                <br />
-                <div class="field" *ngIf="_workflowTemplate.first_audit">
-                    <h3>{{'common_created_by' | translate}}</h3>
-                    {{_workflowTemplate.first_audit.triggered_by}}
-                </div>
-                <br />
-                <div class="field" *ngIf="_workflowTemplate.last_audit">
-                    <h3>{{'common_last_modified' | translate}}</h3>
-                    {{_workflowTemplate.last_audit.created}}
-                </div>
-            </ng-container>
         </div>
     </div>
 </ng-template>

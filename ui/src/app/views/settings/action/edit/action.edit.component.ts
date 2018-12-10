@@ -1,12 +1,13 @@
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {first} from 'rxjs/operators';
-import {Action, PipelineUsingAction} from '../../../../model/action.model';
-import {ActionService} from '../../../../service/action/action.service';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {ActionEvent} from '../../../../shared/action/action.event.model';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { first } from 'rxjs/operators';
+import { Action, PipelineUsingAction } from '../../../../model/action.model';
+import { ActionService } from '../../../../service/action/action.service';
+import { AuthentificationStore } from '../../../../service/auth/authentification.store';
+import { ActionEvent } from '../../../../shared/action/action.event.model';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-action-edit',
@@ -17,11 +18,14 @@ export class ActionEditComponent implements OnInit {
     action: Action;
     isAdmin: boolean;
     pipelinesUsingAction: Array<PipelineUsingAction>;
+    path: Array<PathItem>;
 
-    constructor(private _actionService: ActionService,
-                private _toast: ToastService, private _translate: TranslateService,
-                private _route: ActivatedRoute, private _router: Router,
-                private _authentificationStore: AuthentificationStore) {
+    constructor(
+        private _actionService: ActionService,
+        private _toast: ToastService, private _translate: TranslateService,
+        private _route: ActivatedRoute, private _router: Router,
+        private _authentificationStore: AuthentificationStore
+    ) {
         if (this._authentificationStore.isConnected()) {
             this.isAdmin = this._authentificationStore.isAdmin();
         }
@@ -29,13 +33,15 @@ export class ActionEditComponent implements OnInit {
 
     ngOnInit() {
         this._route.params.subscribe(params => {
-            this._actionService.getAction(params['name']).subscribe( u => {
+            this._actionService.getAction(params['name']).subscribe(u => {
                 this.action = u;
                 if (this.isAdmin) {
-                  this._actionService.getPiplinesUsingAction(params['name']).pipe(first()).subscribe( p => {
-                      this.pipelinesUsingAction = p;
-                  });
+                    this._actionService.getPiplinesUsingAction(params['name']).pipe(first()).subscribe(p => {
+                        this.pipelinesUsingAction = p;
+                    });
                 }
+
+                this.updatePath();
             });
         });
     }
@@ -45,14 +51,14 @@ export class ActionEditComponent implements OnInit {
 
         if (event.action.actions) {
             event.action.actions.forEach(a => {
-               if (a.parameters) {
-                   a.parameters.forEach(p => {
-                      if (p.type === 'boolean' && !p.value) {
-                          p.value = 'false';
-                      }
-                      p.value = p.value.toString();
-                   });
-               }
+                if (a.parameters) {
+                    a.parameters.forEach(p => {
+                        if (p.type === 'boolean' && !p.value) {
+                            p.value = 'false';
+                        }
+                        p.value = p.value.toString();
+                    });
+                }
             });
         }
         if (event.action.parameters) {
@@ -66,7 +72,7 @@ export class ActionEditComponent implements OnInit {
 
         switch (event.type) {
             case 'update':
-                this._actionService.updateAction(this.action.name, event.action).subscribe( action => {
+                this._actionService.updateAction(this.action.name, event.action).subscribe(action => {
                     this._toast.success('', this._translate.instant('action_saved'));
                     this.action = action;
                 }, () => {
@@ -74,7 +80,7 @@ export class ActionEditComponent implements OnInit {
                 });
                 break;
             case 'delete':
-                this._actionService.deleteAction(event.action.name).subscribe( () => {
+                this._actionService.deleteAction(event.action.name).subscribe(() => {
                     this._toast.success('', this._translate.instant('action_deleted'));
                     this._router.navigate(['settings', 'action']);
                 }, () => {
@@ -84,4 +90,19 @@ export class ActionEditComponent implements OnInit {
         }
     }
 
+    updatePath() {
+        this.path = [<PathItem>{
+            translate: 'common_settings'
+        }, <PathItem>{
+            translate: 'action_list_title',
+            routerLink: ['/', 'settings', 'action']
+        }];
+
+        if (this.action && this.action.id) {
+            this.path.push(<PathItem>{
+                text: this.action.name + ' - ' + this.action.type,
+                routerLink: ['/', 'settings', 'action', this.action.name]
+            });
+        }
+    }
 }

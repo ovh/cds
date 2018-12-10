@@ -1,19 +1,17 @@
 <div *ngIf="project; then projectPart;else loadingPart"></div>
 <ng-template #projectPart>
     <div id="ProjectShow">
-    <div class="CDSbreadcrumb">
-        <app-breadcrumb
-          [project]="project"
-          [workflow]="workflowName"
-          [workflowRun]="workflowNum"
-          [workflowRunNode]="workflowNodeRun"
-          [wPipeline]="workflowPipeline">
-        </app-breadcrumb>
+    <app-project-breadcrumb
+        [project]="project"
+        [workflow]="workflowName"
+        [workflowRun]="workflowNum"
+        [workflowRunNode]="workflowNodeRun"
+        [wPipeline]="workflowPipeline">
         <div class="right floated" [title]="'favorite_add_btn' | translate">
-          <div class="ui active small inline loader" *ngIf="loadingFav"></div>
-          <i class="pointing star icon" *ngIf="!loadingFav" [class.favorite]="project.favorite" [class.unfavorite]="!project.favorite" (click)="updateFav()"></i>
+            <div class="ui active small inline loader" *ngIf="loadingFav"></div>
+            <i class="pointing star icon" *ngIf="!loadingFav" [class.favorite]="project.favorite" [class.unfavorite]="!project.favorite" (click)="updateFav()"></i>
         </div>
-    </div>
+    </app-project-breadcrumb>
 
     <div class="CDSmenu">
         <sm-menu title="" class="pointing stackable secondary">

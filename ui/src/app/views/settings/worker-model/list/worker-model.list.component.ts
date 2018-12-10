@@ -1,8 +1,9 @@
-import {Component} from '@angular/core';
-import {finalize} from 'rxjs/operators';
-import {WorkerModel} from '../../../../model/worker-model.model';
-import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
-import {Table} from '../../../../shared/table/table';
+import { Component } from '@angular/core';
+import { finalize } from 'rxjs/operators';
+import { WorkerModel } from '../../../../model/worker-model.model';
+import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { Table } from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-worker-model-list',
@@ -28,11 +29,19 @@ export class WorkerModelListComponent extends Table {
     }
 
     _selectedFilter: string;
+    path: Array<PathItem>;
 
     constructor(private _workerModelService: WorkerModelService) {
         super();
         this.loadWorkerModels(null);
         this.nbElementsByPage = 25;
+
+        this.path = [<PathItem>{
+            translate: 'common_settings'
+        }, <PathItem>{
+            translate: 'worker_model_list_title',
+            routerLink: ['/', 'settings', 'worker-model']
+        }];
     }
 
     loadWorkerModels(filter: string) {
@@ -54,7 +63,7 @@ export class WorkerModelListComponent extends Table {
         let lowerFilter = this.filter.toLowerCase();
 
         return this.filteredWorkerModels.filter((v) => {
-          return v.name.toLowerCase().indexOf(lowerFilter) !== -1 || v.type.toLowerCase() === lowerFilter;
+            return v.name.toLowerCase().indexOf(lowerFilter) !== -1 || v.type.toLowerCase() === lowerFilter;
         });
     }
 
