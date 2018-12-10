@@ -1,16 +1,17 @@
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {omit} from 'lodash';
-import {finalize} from 'rxjs/operators';
-import {Group} from '../../../../model/group.model';
-import {User} from '../../../../model/user.model';
-import {ModelPattern, WorkerModel} from '../../../../model/worker-model.model';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {GroupService} from '../../../../service/group/group.service';
-import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
-import {SharedService} from '../../../../shared/shared.service';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { omit } from 'lodash';
+import { finalize } from 'rxjs/operators';
+import { Group } from '../../../../model/group.model';
+import { Pipeline } from '../../../../model/pipeline.model';
+import { User } from '../../../../model/user.model';
+import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
+import { AuthentificationStore } from '../../../../service/auth/authentification.store';
+import { GroupService } from '../../../../service/group/group.service';
+import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
+import { SharedService } from '../../../../shared/shared.service';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-worker-model-edit',
@@ -19,6 +20,7 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 })
 export class WorkerModelEditComponent implements OnInit {
     loading = false;
+    loadingUsage = false;
     deleteLoading = false;
     workerModel: WorkerModel;
     workerModelTypes: Array<string>;
@@ -32,6 +34,7 @@ export class WorkerModelEditComponent implements OnInit {
     envNames: Array<string> = [];
     newEnvName: string;
     newEnvValue: string;
+    usages: Array<Pipeline>;
 
     private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     workerModelPatternError = false;
@@ -129,12 +132,12 @@ export class WorkerModelEditComponent implements OnInit {
 
       // cast to int
       this.workerModel.group_id = Number(this.workerModel.group_id);
-      this.workerModelGroups.forEach( g => {
-        if (this.workerModel.group_id === g.id) {
-          this.workerModel.group = g;
-          return;
-        }
-      });
+      for (let group of this.workerModelGroups) {
+          if (this.workerModel.group_id === group.id) {
+              this.workerModel.group = group;
+              break;
+          }
+      }
 
       if (this.patternSelected) {
           this.workerModel.pattern_name = this.patternSelected.name;
@@ -200,6 +203,16 @@ export class WorkerModelEditComponent implements OnInit {
                 this.workerModel.model_virtual_machine.cmd = pattern.model.cmd;
                 this.workerModel.model_virtual_machine.post_cmd = pattern.model.post_cmd;
         }
+    }
+
+    loadUsage() {
+        if (this.usages) {
+            return;
+        }
+        this.loadingUsage = true;
+        this._workerModelService.getUsage(this.workerModel.id)
+            .pipe(finalize(() => this.loadingUsage = false))
+            .subscribe((usages) => this.usages = usages);
     }
 
     addEnv(newEnvName: string, newEnvValue: string) {

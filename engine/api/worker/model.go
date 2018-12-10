@@ -72,6 +72,7 @@ const (
 	StateDisabled   StateLoadOption = "disabled"
 	StateRegister   StateLoadOption = "register"
 	StateDeprecated StateLoadOption = "deprecated"
+	StateActive     StateLoadOption = "active"
 )
 
 // InsertWorkerModel insert a new worker model in database
@@ -511,6 +512,8 @@ func getAdditionalSQLFilters(opts *StateLoadOption) []string {
 			additionalFilters = append(additionalFilters, "worker_model.need_registration = true")
 		case *opts == StateDeprecated:
 			additionalFilters = append(additionalFilters, "worker_model.is_deprecated = true")
+		case *opts == StateActive:
+			additionalFilters = append(additionalFilters, "worker_model.is_deprecated = false")
 		}
 	}
 	return additionalFilters
