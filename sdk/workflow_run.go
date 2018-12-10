@@ -54,7 +54,6 @@ type WorkflowRun struct {
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
-	Version          int                              `json:"version" db:"version" cli:"version"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
@@ -146,19 +145,9 @@ func (r *WorkflowRun) TagExists(tag string) bool {
 
 // TODO remove old struct
 func (r *WorkflowRun) RootRun() *WorkflowNodeRun {
-	var rootNodeRuns []WorkflowNodeRun
-	if r.Version == 2 {
-		var has bool
-		rootNodeRuns, has = r.WorkflowNodeRuns[r.Workflow.WorkflowData.Node.ID]
-		if !has || len(rootNodeRuns) < 1 {
-			return nil
-		}
-	} else {
-		var has bool
-		rootNodeRuns, has = r.WorkflowNodeRuns[r.Workflow.Root.ID]
-		if !has || len(rootNodeRuns) < 1 {
-			return nil
-		}
+	rootNodeRuns, has := r.WorkflowNodeRuns[r.Workflow.WorkflowData.Node.ID]
+	if !has || len(rootNodeRuns) < 1 {
+		return nil
 	}
 	rootRun := rootNodeRuns[0]
 	return &rootRun

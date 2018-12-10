@@ -580,16 +580,9 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 			}
 
 			var pip sdk.Pipeline
-			if wr.Version < 2 {
-				n := wr.Workflow.GetNode(nr.WorkflowNodeID)
-				if n != nil {
-					pip = wr.Workflow.Pipelines[n.PipelineID]
-				}
-			} else {
-				n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
-				if n != nil && n.Context != nil && n.Context.PipelineID != 0 {
-					pip = wr.Workflow.Pipelines[n.Context.PipelineID]
-				}
+			n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
+			if n != nil && n.Context != nil && n.Context.PipelineID != 0 {
+				pip = wr.Workflow.Pipelines[n.Context.PipelineID]
 			}
 
 			if pip.ID == 0 {

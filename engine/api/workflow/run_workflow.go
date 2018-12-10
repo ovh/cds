@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/sdk"
 )
@@ -78,18 +77,13 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 			AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 		}
 
-		ok, has := p.Features[feature.FeatWNode]
-		if has && ok && wr.Workflow.WorkflowData != nil {
-			wr.Version = 2
-		}
-
 		//Insert it
 		if err := insertWorkflowRun(db, wr); err != nil {
 			return nil, nil, sdk.WrapError(err, "Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 		}
 
 		//Process it
-		r1, hasRun, errWR := processWorkflowRun(ctx, db, store, p, wr, e, nil, nil)
+		r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, p, wr, e, nil, nil)
 		if errWR != nil {
 			return nil, nil, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
@@ -117,7 +111,7 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 		}
 
 		//Process the workflow run from the node ID
-		r1, _, err := processWorkflowRun(ctx, db, store, p, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID)
+		r1, _, err := processWorkflowDataRun(ctx, db, store, p, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID)
 		if err != nil {
 			return nil, nil, sdk.WrapError(err, "Unable to process workflow run")
 		}
@@ -142,7 +136,7 @@ func ManualRunFromNode(ctx context.Context, db gorp.SqlExecutor, store cache.Sto
 	}
 	lastWorkflowRun.Tag(tagTriggeredBy, e.User.Username)
 
-	r1, condOk, err := processWorkflowRun(ctx, db, store, p, lastWorkflowRun, nil, e, &nodeID)
+	r1, condOk, err := processWorkflowDataRun(ctx, db, store, p, lastWorkflowRun, nil, e, &nodeID)
 	if err != nil {
 		return nil, report, sdk.WrapError(err, "Unable to process workflow run")
 	}
@@ -192,16 +186,11 @@ func ManualRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p *s
 		AddWorkflowRunInfo(wr, false, sdk.SpawnMsg{ID: msg.ID, Args: msg.Args})
 	}
 
-	ok, has := p.Features[feature.FeatWNode]
-	if has && ok && wr.Workflow.WorkflowData != nil {
-		wr.Version = 2
-	}
-
 	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, report, sdk.WrapError(err, "Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
-	r1, hasRun, errWR := processWorkflowRun(ctx, db, store, p, wr, nil, e, nil)
+	r1, hasRun, errWR := processWorkflowDataRun(ctx, db, store, p, wr, nil, e, nil)
 	if errWR != nil {
 		return wr, report, sdk.WrapError(errWR, "ManualRun")
 	}

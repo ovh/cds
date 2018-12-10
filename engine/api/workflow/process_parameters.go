@@ -152,19 +152,12 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun, pa
 	params := make([]sdk.Parameter, 0, len(nodeRuns))
 	for _, parentNodeRun := range nodeRuns {
 		var nodeName string
-		if w.Version < 2 {
-			node := w.Workflow.GetNode(parentNodeRun.WorkflowNodeID)
-			if node == nil {
-				return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID), "getParentParameters>")
-			}
-			nodeName = node.Name
-		} else {
-			node := w.Workflow.WorkflowData.NodeByID(parentNodeRun.WorkflowNodeID)
-			if node == nil {
-				return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID), "getParentParameters>")
-			}
-			nodeName = node.Name
+
+		node := w.Workflow.WorkflowData.NodeByID(parentNodeRun.WorkflowNodeID)
+		if node == nil {
+			return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID), "getParentParameters>")
 		}
+		nodeName = node.Name
 
 		for i := range parentNodeRun.BuildParameters {
 			p := &parentNodeRun.BuildParameters[i]
