@@ -26,7 +26,6 @@ import { UploadButtonComponent } from './button/upload/upload.button.component';
 import { ChartComponentComponent } from './chart/chart.component';
 import { CommitListComponent } from './commit/commit.list.component';
 import { DiffComponent } from './diff/diff.component';
-import { SpanColoredComponent } from './diff/span-colored/span-colored.component';
 import { DurationService } from './duration/duration.service';
 import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.component';
 import { GroupFormComponent } from './group/form/group.form.component';
@@ -205,7 +204,6 @@ import { ZoneComponent } from './zone/zone.component';
         UsageEnvironmentsComponent,
         UsageComponent,
         DiffComponent,
-        SpanColoredComponent,
         VCSStrategyComponent,
         FavoriteCardsComponent,
         DataTableComponent,
@@ -214,7 +212,7 @@ import { ZoneComponent } from './zone/zone.component';
         TabsComponent,
         ScrollviewComponent
     ],
-    entryComponents: [SpanColoredComponent],
+    entryComponents: [],
     providers: [
         DurationService,
         PermissionService,
@@ -310,7 +308,6 @@ import { ZoneComponent } from './zone/zone.component';
         UsageEnvironmentsComponent,
         UsageComponent,
         DiffComponent,
-        SpanColoredComponent,
         VCSStrategyComponent,
         FavoriteCardsComponent,
         DataTableComponent,

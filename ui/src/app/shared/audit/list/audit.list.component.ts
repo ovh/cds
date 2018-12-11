@@ -1,6 +1,6 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {AuditWorkflow} from '../../../model/audit.model';
-import {Table} from '../../table/table';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { AuditWorkflow } from '../../../model/audit.model';
+import { Table } from '../../table/table';
 
 @Component({
     selector: 'app-audit-list',
@@ -8,7 +8,6 @@ import {Table} from '../../table/table';
     styleUrls: ['./audit.list.scss']
 })
 export class AuditListComponent extends Table {
-
     @Input() audits: Array<AuditWorkflow>;
     @Output() rollback: EventEmitter<number> = new EventEmitter();
 

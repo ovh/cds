@@ -1,3 +1,3 @@
 <pre>
-  <ng-template #diffDisplayUpdated></ng-template>
+    <span *ngFor="let part of diff" [style.background-color]="part.color">{{part.text}}</span>
 </pre>

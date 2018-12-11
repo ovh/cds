@@ -1,17 +1,17 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {compare} from 'fast-json-patch'
-import {cloneDeep} from 'lodash';
-import {finalize, first} from 'rxjs/operators';
-import {Action} from '../../../../model/action.model';
-import {Job} from '../../../../model/job.model';
-import {Pipeline, PipelineAudit, PipelineAuditDiff} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {Stage} from '../../../../model/stage.model';
-import {PipelineAuditService} from '../../../../service/pipeline/pipeline.audit.service';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
-import {Table} from '../../../../shared/table/table';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, Input, OnInit } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { compare } from 'fast-json-patch'
+import { cloneDeep } from 'lodash';
+import { finalize, first } from 'rxjs/operators';
+import { Action } from '../../../../model/action.model';
+import { Job } from '../../../../model/job.model';
+import { Pipeline, PipelineAudit, PipelineAuditDiff } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { Stage } from '../../../../model/stage.model';
+import { PipelineAuditService } from '../../../../service/pipeline/pipeline.audit.service';
+import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
+import { Table } from '../../../../shared/table/table';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-audit',
@@ -75,7 +75,7 @@ export class PipelineAuditComponent extends Table implements OnInit {
 
         this.currentCompare = new Array<PipelineAuditDiff>();
         compare(pipFrom, pipTo).forEach(c => {
-            let diff = new PipelineAuditDiff();
+            let diff: PipelineAuditDiff = null;
             let path = c.path;
             let pathSplitted = path.split('/').filter(p => p !== '');
 
@@ -205,7 +205,6 @@ export class PipelineAuditComponent extends Table implements OnInit {
     }
 
     getDeleteJobDiff(path: Array<string>, pipFrom: Pipeline): PipelineAuditDiff {
-
         let diff = new PipelineAuditDiff();
         let jobIndex = 0;
         if (path.length > 3) {
@@ -221,14 +220,14 @@ export class PipelineAuditComponent extends Table implements OnInit {
     getUpdateJobDiff(path: string, pathSplitted: Array<string>, pipTo: Pipeline, pipFrom: Pipeline): PipelineAuditDiff {
         let diff = new PipelineAuditDiff();
         if (!pathSplitted.length || pathSplitted.length < 2) {
-          return;
+            return;
         }
 
         let stage: Stage = pipTo[pathSplitted[0]][pathSplitted[1]];
         let job: Job = new Job();
 
         if (pathSplitted.length > 3) {
-          job = stage.jobs[pathSplitted[3]];
+            job = stage.jobs[pathSplitted[3]];
         }
 
         if (path.indexOf('requirements') !== -1) {
@@ -264,13 +263,13 @@ export class PipelineAuditComponent extends Table implements OnInit {
 
     getUpdateStageDiff(path: Array<string>, pipTo: Pipeline, pipFrom: Pipeline): PipelineAuditDiff {
         let diff = new PipelineAuditDiff();
+
         if (path.length === 3 && (path[2] === 'enabled' || path[2] === 'name')) {
             diff.type = 'string';
             diff.after = pipTo[path[0]][path[1]][path[2]];
             diff.before = pipFrom[path[0]][path[1]][path[2]];
             diff.title = 'Update ' + pipTo[path[0]][path[1]].name + ' > ' + path[2];
-        }
-        if (path.length === 3 && path[2] === 'prerequisites') {
+        } else if (path.length === 3 && path[2] === 'prerequisites') {
             // add first prerequisite or delete last prerequisite
             if (!pipTo[path[0]][path[1]][path[2]] || pipTo[path[0]][path[1]][path[2]].length === 0) {
                 diff.title = 'Remove ' + pipTo[path[0]][path[1]].name + ' > prerequisite';
@@ -283,14 +282,15 @@ export class PipelineAuditComponent extends Table implements OnInit {
                 diff.before = null;
                 diff.type = 'json';
             }
-        }
-
-        if (path.length > 3 && path[2] === 'prerequisites') {
+        } else if (path.length > 3 && path[2] === 'prerequisites') {
             diff.title = 'Update ' + pipTo[path[0]][path[1]].name + ' > prerequisite';
             diff.before = JSON.stringify(pipFrom[path[0]][path[1]][path[2]], undefined, 4);
             diff.after = JSON.stringify(pipTo[path[0]][path[1]][path[2]], undefined, 4);
             diff.type = 'json';
+        } else {
+            return null;
         }
+
         return diff;
     }
 

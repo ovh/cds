@@ -1,70 +1,54 @@
-import {Component, ComponentFactoryResolver, Input, ViewChild, ViewContainerRef} from '@angular/core';
+import { Component, ComponentFactoryResolver, Input, OnChanges, ViewChild, ViewContainerRef } from '@angular/core';
 import * as JsDiff from 'diff';
-import {SpanColoredComponent} from './span-colored/span-colored.component';
+
+export class Part {
+    color: string;
+    text: string;
+}
 
 @Component({
     selector: 'app-diff',
     templateUrl: './diff.html',
     styleUrls: ['./diff.scss']
 })
-export class DiffComponent {
+export class DiffComponent implements OnChanges {
+    @ViewChild('diffDisplayUpdated', { read: ViewContainerRef }) diffDisplayUpdated;
+    @Input() original: string;
+    @Input() updated: string;
+    diff: Array<Part>;
 
-    _original: string;
-    @Input('original')
-    set original(data: string) {
-        this._original = data;
+    constructor(private componentFactoryResolver: ComponentFactoryResolver) { }
+
+    ngOnChanges() {
         if (this.original && this.updated) {
             this.refresh();
         }
-    }
-    get original() {
-        return this._original;
-    }
-
-    _updated: string;
-    @Input('updated')
-    set updated(data: string) {
-        this._updated = data;
-        if (this.original && this.updated) {
-            this.refresh();
-        }
-    }
-    get updated() {
-        return this._updated;
-    }
-
-    @ViewChild('diffDisplayUpdated', {read: ViewContainerRef}) diffDisplayUpdated;
-
-    constructor(private componentFactoryResolver: ComponentFactoryResolver) {
-
     }
 
     refresh() {
-      let original = this.original || '';
-      if (original === 'null') {
-        original = '';
-      }
-      let diff = JsDiff.diffWordsWithSpace(original, this.updated);
-
-      if (!Array.isArray(diff)) {
-        return;
-      }
-      let viewContainerRef = this.diffDisplayUpdated;
-      viewContainerRef.clear();
-
-      diff.forEach((part) => {
-        let color;
-        if (part.added) {
-          color = '#cdffd8';
-        } else if (part.removed) {
-          color = '#ffeef0'
-        } else {
-          color = 'white';
+        let original = this.original || '';
+        if (original === 'null') {
+            original = '';
         }
-        let componentFactory = this.componentFactoryResolver.resolveComponentFactory(SpanColoredComponent)
-        let componentRef = viewContainerRef.createComponent(componentFactory);
-        (<SpanColoredComponent>componentRef.instance).color = color;
-        (<SpanColoredComponent>componentRef.instance).text = part.value;
-      });
+        let diff = JsDiff.diffWordsWithSpace(original, this.updated);
+
+        if (!Array.isArray(diff)) {
+            return;
+        }
+
+        this.diff = diff.map(part => {
+            let color;
+            if (part.added) {
+                color = '#cdffd8';
+            } else if (part.removed) {
+                color = '#ffeef0'
+            } else {
+                color = 'white';
+            }
+            return <Part>{
+                text: part.value,
+                color
+            }
+        });
     }
 }

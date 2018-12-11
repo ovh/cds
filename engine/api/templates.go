@@ -555,3 +555,21 @@ func (api *API) pushTemplateHandler() service.Handler {
 		return service.WriteJSON(w, translate(r, msgs), http.StatusOK)
 	}
 }
+
+func (api *API) getTemplateAuditsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+		t := getWorkflowTemplate(ctx)
+
+		as, err := workflowtemplate.GetAuditsByTemplateIDsAndEventTypes(api.mustDB(),
+			[]int64{t.ID}, []string{"WorkflowTemplateAdd", "WorkflowTemplateUpdate"})
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, as, http.StatusOK)
+	}
+}
