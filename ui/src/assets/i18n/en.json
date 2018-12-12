@@ -286,6 +286,8 @@
   "common_not_up_to_date": "New version available",
   "common_read_more": "Read more",
   "common_update": "Update",
+  "common_split": "Split",
+  "common_unified": "Unified",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",

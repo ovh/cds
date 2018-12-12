@@ -286,6 +286,8 @@
   "common_not_up_to_date": "Mise à jour disponible",
   "common_read_more": "En savoir plus",
   "common_update": "Modifier",
+  "common_split": "Séparé",
+  "common_unified": "Unifié",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",

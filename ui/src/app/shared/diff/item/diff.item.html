@@ -1,0 +1,18 @@
+<div [ngSwitch]="mode" class="ui grid">
+    <div *ngSwitchCase="'unified'" class="ui row">
+        <div class="ui sixteen wide column">
+            <codemirror [(ngModel)]="contentLeft" [config]="codeMirrorConfig" (change)="onCodeLeftChange($event)"
+                #codeLeft></codemirror>
+        </div>
+    </div>
+    <div *ngSwitchCase="'split'" class="ui row">
+        <div class="ui eight wide column">
+            <codemirror [(ngModel)]="contentLeft" [config]="codeMirrorConfig" (change)="onCodeLeftChange($event)"
+                #codeLeft></codemirror>
+        </div>
+        <div class="ui eight wide column">
+            <codemirror [(ngModel)]="contentRight" [config]="codeMirrorConfig" (change)="onCodeRightChange($event)"
+                #codeRight></codemirror>
+        </div>
+    </div>
+</div>

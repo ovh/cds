@@ -10,6 +10,7 @@ import { Project } from '../../../../model/project.model';
 import { Stage } from '../../../../model/stage.model';
 import { PipelineAuditService } from '../../../../service/pipeline/pipeline.audit.service';
 import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
+import { Item } from '../../../../shared/diff/list/diff.list.component';
 import { Table } from '../../../../shared/table/table';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
@@ -19,13 +20,12 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     styleUrls: ['./pipeline.audit.scss']
 })
 export class PipelineAuditComponent extends Table implements OnInit {
-
     @Input() project: Project;
     @Input() pipeline: Pipeline;
 
     audits: Array<PipelineAudit>;
-
     currentCompare: Array<PipelineAuditDiff>;
+    items: Array<Item>;
 
     indexSelected: number;
     codeMirrorConfig: any;
@@ -102,6 +102,15 @@ export class PipelineAuditComponent extends Table implements OnInit {
 
             if (diff) {
                 this.currentCompare.push(diff);
+            }
+        });
+
+        this.items = this.currentCompare.map(c => {
+            return <Item>{
+                name: c.title,
+                before: c.before,
+                after: c.after,
+                type: c.type === 'json' ? 'application/json' : 'text/plain'
             }
         });
     }

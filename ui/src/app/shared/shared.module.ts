@@ -25,7 +25,8 @@ import { DeleteButtonComponent } from './button/delete/delete.button';
 import { UploadButtonComponent } from './button/upload/upload.button.component';
 import { ChartComponentComponent } from './chart/chart.component';
 import { CommitListComponent } from './commit/commit.list.component';
-import { DiffComponent } from './diff/diff.component';
+import { DiffItemComponent } from './diff/item/diff.item.component';
+import { DiffListComponent } from './diff/list/diff.list.component';
 import { DurationService } from './duration/duration.service';
 import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.component';
 import { GroupFormComponent } from './group/form/group.form.component';
@@ -203,7 +204,8 @@ import { ZoneComponent } from './zone/zone.component';
         UsagePipelinesComponent,
         UsageEnvironmentsComponent,
         UsageComponent,
-        DiffComponent,
+        DiffItemComponent,
+        DiffListComponent,
         VCSStrategyComponent,
         FavoriteCardsComponent,
         DataTableComponent,
@@ -307,7 +309,8 @@ import { ZoneComponent } from './zone/zone.component';
         UsagePipelinesComponent,
         UsageEnvironmentsComponent,
         UsageComponent,
-        DiffComponent,
+        DiffItemComponent,
+        DiffListComponent,
         VCSStrategyComponent,
         FavoriteCardsComponent,
         DataTableComponent,
