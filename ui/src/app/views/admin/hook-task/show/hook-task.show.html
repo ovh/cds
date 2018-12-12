@@ -1,0 +1,53 @@
+<div class="wrapper">
+    <app-breadcrumb [path]="path"></app-breadcrumb>
+    <app-scrollview class="scrollview">
+        <div class="ui form">
+            <div class="ui grid">
+                <div class="ui row">
+                    <div class="wide column">
+                        <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
+                        <br />
+                        <ng-container *ngIf="task && task.config">
+                            <div class="inline fields" *ngFor="let k of task.config | keys">
+                                <div class="four wide field"><label>{{k}}</label></div>
+                                <input type="text" [ngModel]="task.config[k].value" [readonly]="true" *ngIf="k !== 'payload'">
+                                <ng-container *ngIf="k === 'payload'">
+                                    <codemirror class="code" [ngModel]="task.config[k].value" [config]="codeMirrorConfig"
+                                        #textareaCodeMirror>
+                                    </codemirror>
+                                </ng-container>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+                <div class="ui row">
+                    <div [ngClass]="{sixteen: !selectedExecution, eight: selectedExecution, wide: true, column: true}">
+                        <h3>{{ 'hook_task_execs' | translate }}</h3>
+                        <app-data-table [withPagination]="10" [columns]="columns" [data]="executions" [loading]="loading"></app-data-table>
+                    </div>
+                    <div class="eight wide column" *ngIf="selectedExecution">
+                        <h3>{{'workflow_hook_log_title' | translate}}</h3>
+                        <br />
+                        <div class="inline fields" *ngIf="selectedExecution.workflow_run">
+                            <div class="four wide field"><label>{{'workflow_hook_log_workflow_run' | translate}}</label></div>
+                            <input type="text" [value]="selectedExecution.workflow_run" [readonly]="true">
+                        </div>
+                        <div class="inline fields">
+                            <div class="four wide field"><label>{{'worker_model_status' | translate}}</label></div>
+                            <input type="text" [value]="selectedExecution.status" [readonly]="true">
+                        </div>
+                        <div class="inline fields" *ngIf="selectedExecution.last_error">
+                            <div class="four wide field"><label>{{'common_error' | translate}}</label></div>
+                            <input type="text" [value]="selectedExecution.last_error" [readonly]="true">
+                        </div>
+                        <div class="inline fields" *ngIf="selectedExecutionBody">
+                            <div class="four wide field"><label>Body</label></div>
+                            <codemirror class="code" [ngModel]="selectedExecutionBody" [config]="codeMirrorConfig">
+                            </codemirror>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </app-scrollview>
+</div>

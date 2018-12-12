@@ -1,20 +1,22 @@
 import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { WorkflowHookTask } from '../../../model/workflow.hook.model';
-import { HookService } from '../../../service/services.module';
-import { Column, ColumnType, Filter } from '../../../shared/table/data-table.component';
+import { WorkflowHookTask } from '../../../../model/workflow.hook.model';
+import { HookService } from '../../../../service/services.module';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { Column, ColumnType, Filter } from '../../../../shared/table/data-table.component';
 
 @Component({
-    selector: 'app-hooks-tasks',
-    templateUrl: './hooks-tasks.html',
-    styleUrls: ['./hooks-tasks.scss']
+    selector: 'app-hook-task-list',
+    templateUrl: './hook-task.list.html',
+    styleUrls: ['./hook-task.list.scss']
 })
-export class HooksTasksComponent {
+export class HookTaskListComponent {
     loading = false;
     columns: Array<Column>;
     tasks: Array<WorkflowHookTask>;
     filter: Filter;
     dataCount: number;
+    path: Array<PathItem>;
 
     constructor(
         private _hookService: HookService,
@@ -34,6 +36,7 @@ export class HooksTasksComponent {
                     d.nb_executions_total.toString().toLowerCase().indexOf(lowerFilter) !== -1;
             }
         };
+
         this.columns = [
             <Column>{
                 type: ColumnType.ICON,
@@ -82,7 +85,15 @@ export class HooksTasksComponent {
                 sortKey: 'nb_executions_total'
             }
         ];
+
         this.getAdminTasks('');
+
+        this.path = [<PathItem>{
+            translate: 'common_admin'
+        }, <PathItem>{
+            translate: 'hook_tasks_summary',
+            routerLink: ['/', 'admin', 'hooks-tasks']
+        }];
     }
 
     getAdminTasks(sort: string) {

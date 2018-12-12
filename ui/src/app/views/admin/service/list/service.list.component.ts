@@ -1,16 +1,16 @@
 import { Component } from '@angular/core';
 import { MonitoringStatus, MonitoringStatusLine } from 'app/model/monitoring.model';
-import { Global } from '../../../model/service.model';
-import { MonitoringService } from '../../../service/monitoring/monitoring.service';
-import { ServiceService } from '../../../service/service/service.service';
-
+import { Global } from '../../../../model/service.model';
+import { MonitoringService } from '../../../../service/monitoring/monitoring.service';
+import { ServiceService } from '../../../../service/service/service.service';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 
 @Component({
-    selector: 'app-services',
-    templateUrl: './services.html',
-    styleUrls: ['./services.scss']
+    selector: 'app-service-list',
+    templateUrl: './service.list.html',
+    styleUrls: ['./service.list.scss']
 })
-export class ServicesComponent {
+export class ServiceListComponent {
     loading = false;
 
     filter = 'NOTICE';
@@ -23,8 +23,12 @@ export class ServicesComponent {
     globalStatus: Global;
     globalVersion: Global;
 
-    constructor(private _monitoringService: MonitoringService,
-                private _serviceService: ServiceService) {
+    path: Array<PathItem>;
+
+    constructor(
+        private _monitoringService: MonitoringService,
+        private _serviceService: ServiceService
+    ) {
         this.loading = true;
         this._monitoringService.getStatus()
             .subscribe(r => {
@@ -66,7 +70,7 @@ export class ServicesComponent {
                                         global.value = g.value;
                                         global.status = g.status;
                                         global.services = [];
-                                        global.services = services.filter((srv) => { return srv.type === type})
+                                        global.services = services.filter((srv) => { return srv.type === type })
                                         this.globals.push(global);
                                     }
                                 }
@@ -75,58 +79,65 @@ export class ServicesComponent {
                         }
 
                         this._monitoringService.getMetrics()
-                        .subscribe(metrics => {
-                            metrics.forEach(l => {
-                                if (l.name !== 'queue') {
-                                    return
-                                }
-                                l.metric.forEach(m => {
-                                    m.label.forEach(lb => {
-                                        if (lb.name === 'range') {
-                                            let global = new Global();
-                                            if (lb.value === 'all') {
-                                                return;
-                                            }
-                                            global.name = lb.value;
-                                            switch (lb.value) {
-                                            case '10_less_10s':
-                                                global.name = '< 10s';
-                                                break;
-                                            case '20_more_10s_less_30s':
-                                                global.name = '< 30s';
-                                                break;
-                                            case '30_more_30s_less_1min':
-                                                global.name = '< 1min';
-                                                break;
-                                            case '40_more_1min_less_2min':
-                                                global.name = '< 2min';
-                                                break;
-                                            case '50_more_2min_less_5min':
-                                                global.name = '< 5 min';
-                                                break;
-                                            case '60_more_5min_less_10min':
-                                                global.name = '<10min';
-                                                break;
-                                            case '70_more_10min':
-                                                global.name = '> 10min';
-                                                break;
-                                            default:
+                            .subscribe(metrics => {
+                                metrics.forEach(l => {
+                                    if (l.name !== 'queue') {
+                                        return
+                                    }
+                                    l.metric.forEach(m => {
+                                        m.label.forEach(lb => {
+                                            if (lb.name === 'range') {
+                                                let global = new Global();
+                                                if (lb.value === 'all') {
+                                                    return;
+                                                }
                                                 global.name = lb.value;
-                                                break;
+                                                switch (lb.value) {
+                                                    case '10_less_10s':
+                                                        global.name = '< 10s';
+                                                        break;
+                                                    case '20_more_10s_less_30s':
+                                                        global.name = '< 30s';
+                                                        break;
+                                                    case '30_more_30s_less_1min':
+                                                        global.name = '< 1min';
+                                                        break;
+                                                    case '40_more_1min_less_2min':
+                                                        global.name = '< 2min';
+                                                        break;
+                                                    case '50_more_2min_less_5min':
+                                                        global.name = '< 5 min';
+                                                        break;
+                                                    case '60_more_5min_less_10min':
+                                                        global.name = '<10min';
+                                                        break;
+                                                    case '70_more_10min':
+                                                        global.name = '> 10min';
+                                                        break;
+                                                    default:
+                                                        global.name = lb.value;
+                                                        break;
+                                                }
+                                                global.value = String(m.gauge.value);
+                                                global.status = 'OK';
+                                                if (lb.value !== '10_less_10s' && m.gauge.value > 0) {
+                                                    global.status = 'WARN';
+                                                }
+                                                this.globalQueue.push(global);
                                             }
-                                            global.value = String(m.gauge.value);
-                                            global.status = 'OK';
-                                            if (lb.value !== '10_less_10s' && m.gauge.value > 0) {
-                                                global.status = 'WARN';
-                                            }
-                                            this.globalQueue.push(global);
-                                        }
-                                    })
-                                });
-                            })
-                        });
+                                        })
+                                    });
+                                })
+                            });
                     });
             });
+
+        this.path = [<PathItem>{
+            translate: 'common_admin'
+        }, <PathItem>{
+            translate: 'services_list',
+            routerLink: ['/', 'admin', 'services']
+        }];
     }
 
     filterChange(): void {
@@ -157,5 +168,4 @@ export class ServicesComponent {
                 line.value.toLowerCase().indexOf(lowerFilter) !== -1
         });
     }
-
 }

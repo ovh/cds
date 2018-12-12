@@ -3,13 +3,14 @@ import { ActivatedRoute } from '@angular/router';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript';
 import { Service } from '../../../../model/service.model';
 import { ServiceService } from '../../../../service/services.module';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 
 @Component({
-    selector: 'app-service',
-    templateUrl: './service.html',
-    styleUrls: ['./service.scss']
+    selector: 'app-service-show',
+    templateUrl: './service.show.html',
+    styleUrls: ['./service.show.scss']
 })
-export class ServiceComponent {
+export class ServiceShowComponent {
     loading: boolean;
     service: Service;
     codeMirrorConfig: any;
@@ -18,6 +19,8 @@ export class ServiceComponent {
 
     @ViewChild('textareaCodeMirror')
     codemirror: CodemirrorComponent;
+
+    path: Array<PathItem>;
 
     constructor(
         private _serviceService: ServiceService,
@@ -55,7 +58,25 @@ export class ServiceComponent {
                         }
                     }
                 }
+
+                this.updatePath();
             });
         });
+    }
+
+    updatePath() {
+        this.path = [<PathItem>{
+            translate: 'common_admin'
+        }, <PathItem>{
+            translate: 'services_list',
+            routerLink: ['/', 'admin', 'services']
+        }];
+
+        if (this.service) {
+            this.path.push(<PathItem>{
+                text: this.service.type + ' - ' + this.service.name,
+                routerLink: ['/', 'admin', 'services', this.service.name]
+            });
+        }
     }
 }

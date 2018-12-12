@@ -1,47 +1,36 @@
 <div class="wrapper">
-    <app-breadcrumb [path]="path"></app-breadcrumb>
+    <app-breadcrumb [path]="path">
+        <a class="ui right floated green button small buttonBreadcrumb" [routerLink]="['add']">{{ 'btn_add' | translate
+            }}</a></app-breadcrumb>
     <app-scrollview class="scrollview">
-        <div *ngIf="users;then showUsers;else loadUsers"></div>
-        <ng-template #showUsers>
+        <div *ngIf="!loading;then showWorkerModelPatterns;else loadWorkerModelPatterns"></div>
+        <ng-template #showWorkerModelPatterns>
             <div class="model">
                 <div class="ui form">
                     <div class="field">
                         <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
                     </div>
                 </div>
-                <table class="ui selectable fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+                <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
                     <thead>
                         <tr>
-                            <th class="four wide">{{ 'user_label_username' | translate }}</th>
-                            <th class="six wide">{{ 'user_label_fullname' | translate }}</th>
-                            <th class="six wide">{{ 'user_label_email' | translate }}</th>
+                            <th class="eight wide">{{ 'worker_model_name' | translate }}</th>
+                            <th class="eight wide">{{ 'worker_model_type' | translate }}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let v of getDataForCurrentPage()">
+                        <tr *ngFor="let wmp of getDataForCurrentPage()">
                             <td>
-                                <a class="ui" [routerLink]="[v.username]">
-                                    <div class="ui">
-                                        <i class="fa fa-user-circle-o" *ngIf="v.admin" title="{{ 'user_is_admin' | translate }}"></i>
-                                        {{v.username}}
-                                    </div>
+                                <a class="ui" [routerLink]="[wmp.type, wmp.name]">
+                                    {{wmp.name}}
                                 </a>
                             </td>
-                            <td>
-                                <a class="ui" [routerLink]="[v.username]">
-                                    <div class="ui">{{v.fullname}}</div>
-                                </a>
-                            </td>
-                            <td>
-                                <a class="ui" [routerLink]="[v.username]">
-                                    <div class="ui">{{v.email}}</div>
-                                </a>
-                            </td>
+                            <td>{{wmp.type}}</td>
                         </tr>
                     </tbody>
                     <tfoot *ngIf="getNbOfPages() > 1">
                         <tr>
-                            <th colspan="3">
+                            <th colspan="2">
                                 <div class="ui right floated pagination menu">
                                     <a class="icon item" (click)="downPage()">
                                         <i class="left chevron icon"></i>
@@ -57,12 +46,12 @@
                     </tfoot>
                 </table>
                 <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
-                    {{ 'user_none' | translate }}
+                    {{ 'worker_model_none' | translate }}
                 </div>
             </div>
         </ng-template>
-        <ng-template #loadUsers>
-            <div class="ui text active loader">{{ 'user_load_users' | translate }}</div>
+        <ng-template #loadWorkerModelPatterns>
+            <div class="ui text active loader">{{ 'common_loading' | translate }}</div>
         </ng-template>
     </app-scrollview>
 </div>

@@ -4,14 +4,15 @@ import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HookStatus, TaskExecution, WorkflowHookTask } from '../../../../model/workflow.hook.model';
 import { HookService } from '../../../../service/services.module';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 
 @Component({
-    selector: 'app-hooks-task',
-    templateUrl: './hooks-task.html',
-    styleUrls: ['./hooks-task.scss']
+    selector: 'app-hook-task-show',
+    templateUrl: './hook-task.show.html',
+    styleUrls: ['./hook-task.show.scss']
 })
-export class HooksTaskComponent {
+export class HookTaskShowComponent {
     codeMirrorConfig: any;
     columns: Array<Column>;
     task: WorkflowHookTask;
@@ -19,6 +20,7 @@ export class HooksTaskComponent {
     selectedExecution: TaskExecution;
     selectedExecutionBody: string;
     loading: boolean;
+    path: Array<PathItem>;
 
     constructor(
         private _hookService: HookService,
@@ -82,6 +84,7 @@ export class HooksTaskComponent {
                     }
                     return exec;
                 });
+                this.updatePath();
             });
         });
     }
@@ -110,6 +113,22 @@ export class HooksTaskComponent {
             return JSON.stringify(JSON.parse(body), null, 4);
         } catch (e) {
             return body;
+        }
+    }
+
+    updatePath() {
+        this.path = [<PathItem>{
+            translate: 'common_admin'
+        }, <PathItem>{
+            translate: 'hook_tasks_summary',
+            routerLink: ['/', 'admin', 'hooks-tasks']
+        }];
+
+        if (this.task) {
+            this.path.push(<PathItem>{
+                text: this.task.uuid,
+                routerLink: ['/', 'admin', 'hooks-tasks', this.task.uuid]
+            });
         }
     }
 }

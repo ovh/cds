@@ -1,13 +1,14 @@
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {omit} from 'lodash';
-import {finalize} from 'rxjs/operators';
-import {User} from '../../../../model/user.model';
-import {ModelPattern} from '../../../../model/worker-model.model';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { omit } from 'lodash';
+import { finalize } from 'rxjs/operators';
+import { User } from '../../../../model/user.model';
+import { ModelPattern } from '../../../../model/worker-model.model';
+import { AuthentificationStore } from '../../../../service/auth/authentification.store';
+import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-worker-model-pattern-edit',
@@ -23,19 +24,21 @@ export class WorkerModelPatternEditComponent implements OnInit {
     envNames: Array<string> = [];
     newEnvName: string;
     newEnvValue: string;
-
     private workerModelPatternNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     workerModelPatternError = false;
+    path: Array<PathItem>;
 
-    constructor(private _workerModelService: WorkerModelService,
-                private _toast: ToastService, private _translate: TranslateService,
-                private _route: ActivatedRoute, private _router: Router,
-                private _authentificationStore: AuthentificationStore) {
+    constructor(
+        private _workerModelService: WorkerModelService,
+        private _toast: ToastService, private _translate: TranslateService,
+        private _route: ActivatedRoute, private _router: Router,
+        private _authentificationStore: AuthentificationStore
+    ) {
         this.currentUser = this._authentificationStore.getUser();
         this.loading = true;
         this._workerModelService.getWorkerModelTypes()
             .pipe(finalize(() => this.loading = false))
-            .subscribe( wmt => this.workerModelTypes = wmt);
+            .subscribe(wmt => this.workerModelTypes = wmt);
         this.pattern = new ModelPattern();
     }
 
@@ -49,29 +52,30 @@ export class WorkerModelPatternEditComponent implements OnInit {
                         this.envNames = Object.keys(pattern.model.envs);
                     }
                     this.pattern = pattern;
+                    this.updatePath();
                 },
                 () => this._router.navigate(['admin', 'worker-model-pattern'])
             );
     }
 
     clickSaveButton(): void {
-      if (!this.pattern || !this.pattern.name) {
-          return;
-      }
+        if (!this.pattern || !this.pattern.name) {
+            return;
+        }
 
-      if (!this.workerModelPatternNamePattern.test(this.pattern.name)) {
-          this.workerModelPatternError = true;
-          return;
-      }
+        if (!this.workerModelPatternNamePattern.test(this.pattern.name)) {
+            this.workerModelPatternError = true;
+            return;
+        }
 
-      this.editLoading = true;
-      this._workerModelService
-          .updateWorkerModelPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'], this.pattern)
-          .pipe(finalize(() => this.editLoading = false))
-          .subscribe((pattern) => {
-              this._toast.success('', this._translate.instant('worker_model_pattern_saved'));
-              this._router.navigate(['admin', 'worker-model-pattern', pattern.type, pattern.name]);
-          });
+        this.editLoading = true;
+        this._workerModelService
+            .updateWorkerModelPattern(this._route.snapshot.params['type'], this._route.snapshot.params['name'], this.pattern)
+            .pipe(finalize(() => this.editLoading = false))
+            .subscribe((pattern) => {
+                this._toast.success('', this._translate.instant('worker_model_pattern_saved'));
+                this._router.navigate(['admin', 'worker-model-pattern', pattern.type, pattern.name]);
+            });
     }
 
     delete() {
@@ -90,20 +94,36 @@ export class WorkerModelPatternEditComponent implements OnInit {
     }
 
     addEnv(newEnvName: string, newEnvValue: string) {
-          if (!newEnvName) {
-              return;
-          }
-          if (!this.pattern.model.envs) {
-              this.pattern.model.envs = {};
-          }
-          this.pattern.model.envs[newEnvName] = newEnvValue;
-          this.envNames.push(newEnvName);
-          this.newEnvName = '';
-          this.newEnvValue = '';
-      }
+        if (!newEnvName) {
+            return;
+        }
+        if (!this.pattern.model.envs) {
+            this.pattern.model.envs = {};
+        }
+        this.pattern.model.envs[newEnvName] = newEnvValue;
+        this.envNames.push(newEnvName);
+        this.newEnvName = '';
+        this.newEnvValue = '';
+    }
 
-      deleteEnv(envName: string, index: number) {
-          this.envNames.splice(index, 1);
-          this.pattern.model.envs = omit(this.pattern.model.envs, envName);
-      }
+    deleteEnv(envName: string, index: number) {
+        this.envNames.splice(index, 1);
+        this.pattern.model.envs = omit(this.pattern.model.envs, envName);
+    }
+
+    updatePath() {
+        this.path = [<PathItem>{
+            translate: 'common_admin'
+        }, <PathItem>{
+            translate: 'worker_model_pattern_title',
+            routerLink: ['/', 'admin', 'worker-model-pattern']
+        }];
+
+        if (this.pattern && this.pattern.name) {
+            this.path.push(<PathItem>{
+                text: this.pattern.name,
+                routerLink: ['/', 'admin', 'worker-model-pattern', this.pattern.name]
+            });
+        }
+    }
 }

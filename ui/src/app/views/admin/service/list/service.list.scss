@@ -9,20 +9,12 @@
   flex: 1;
 }
 
-.ui.input {
-  position: inherit;
-}
-
-#BroadcastAdd {
+.serviceList {
   display: flex;
   flex-direction: column;
   align-content: stretch;
   height: 100%;
-  padding: 20px;
-  h2 {
-    text-align: center;
-  }
-  h4.ui.header {
-    text-align: center;
+  .segment {
+    margin-bottom: 50px;
   }
 }
