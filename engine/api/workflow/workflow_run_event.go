@@ -67,6 +67,7 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 
 // ResyncCommitStatus resync commit status for a workflow run
 func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
+
 	_, end := observability.Span(ctx, "workflow.resyncCommitStatus",
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 		observability.Tag(observability.TagWorkflowRun, wr.Number),
@@ -74,11 +75,13 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	defer end()
 
 	for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
+
 		sort.Slice(nodeRuns, func(i, j int) bool {
 			return nodeRuns[i].SubNumber >= nodeRuns[j].SubNumber
 		})
 
 		nodeRun := nodeRuns[0]
+
 		if !sdk.StatusIsTerminated(nodeRun.Status) {
 			continue
 		}
@@ -118,6 +121,7 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		if nodeRun.VCSTag != "" {
 			ref = nodeRun.VCSTag
 		}
+
 		statuses, errStatuses := client.ListStatuses(ctx, repoFullName, ref)
 		if errStatuses != nil {
 			return sdk.WrapError(errStatuses, "resyncCommitStatus> Cannot get statuses %s", details)
@@ -166,7 +170,6 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				}
 				continue
 			}
-
 		case sdk.StatusFail.String():
 			switch nodeRun.Status {
 			case sdk.StatusFail.String():
@@ -296,7 +299,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	//Send comment on pull request
 	for _, pr := range prs {
 		if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash {
-			if nodeRun.Status != sdk.StatusFail.String() {
+			if nodeRun.Status != sdk.StatusFail.String() && nodeRun.Status != sdk.StatusStopped.String() {
 				continue
 			}
 			report, err := nodeRun.Report()
