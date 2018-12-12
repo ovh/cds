@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -39,13 +40,14 @@ func cmdKey(w *currentWorker) *cobra.Command {
 var (
 	cmdInstallEnvGIT bool
 	cmdInstallEnv    bool
+	cmdInstallToFile string
 )
 
 func cmdKeyInstall(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "install",
 		Aliases: []string{"i", "add"},
-		Short:   "worker key install [--env-git] [--env] <key-name>",
+		Short:   "worker key install [--env-git] [--env] [--file destination-file] <key-name>",
 		Long: `
 Inside a step script you can install a SSH/PGP key generated in CDS in your ssh environment and return the PKEY variable (only for SSH)
 
@@ -58,6 +60,10 @@ $ eval $(worker key install --env proj-mykey)
 echo $PKEY # variable $PKEY will contains the path of the SSH private key
 ` + "```" + `
 
+You can use the ` + "`--file`" + `  flag to write the private key to a specific path
+` + "```" + `
+$ worker key install --file .ssh/id_rsa proj-mykey
+` + "```" + `
 
 For most advanced usage with git and SSH, you can run ` + "`eval $(worker key install --env-git proj-mykey)`" + `.
 
@@ -79,6 +85,8 @@ So that, you can use custom git commands the the previous installed SSH key.
 	}
 	c.Flags().BoolVar(&cmdInstallEnvGIT, "env", false, "display shell command for export $PKEY variable. See documentation.")
 	c.Flags().BoolVar(&cmdInstallEnv, "env-git", false, "display shell command for advanced usage with git. See documentation.")
+	c.Flags().StringVar(&cmdInstallToFile, "file", "", "write key to destination file. See documentation.")
+
 	return c
 }
 
@@ -107,6 +115,16 @@ func keyInstallCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("Error: worker key install > cannot post worker key install (Request): %s\n", errRequest)
 		}
 
+		if cmdInstallToFile != "" {
+			filename, err := filepath.Abs(cmdInstallToFile)
+			if err != nil {
+				sdk.Exit("Error: worker key install > cannot post worker key install (Request): %s\n", errRequest)
+			}
+			q := req.URL.Query()
+			q.Add("file", filename)
+			req.URL.RawQuery = q.Encode()
+		}
+
 		client := http.DefaultClient
 		client.Timeout = time.Minute
 
@@ -122,7 +140,11 @@ func keyInstallCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("Error: worker key install> HTTP error %v\n", err)
 			}
 			cdsError := sdk.DecodeError(body)
-			sdk.Exit("Error: worker key install> %v\n", cdsError)
+			if cdsError != nil {
+				sdk.Exit("Error: worker key install> error: %v\n", cdsError)
+			} else {
+				sdk.Exit(string(body))
+			}
 		}
 
 		body, err := ioutil.ReadAll(resp.Body)
@@ -137,17 +159,19 @@ func keyInstallCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		switch keyResp.Type {
 		case sdk.KeyTypeSSH:
-			if cmdInstallEnvGIT {
+			switch {
+			case cmdInstallEnvGIT:
 				fmt.Printf("echo \"ssh -i %s -o StrictHostKeyChecking=no \\$@\" > %s.gitssh.sh;\n", keyResp.PKey, keyResp.PKey)
 				fmt.Printf("chmod +x %s.gitssh.sh;\n", keyResp.PKey)
 				fmt.Printf("export GIT_SSH=\"%s.gitssh.sh\";\n", keyResp.PKey)
 				fmt.Printf("export PKEY=\"%s\";\n", keyResp.PKey)
-				return
-			} else if cmdInstallEnv {
+			case cmdInstallEnv:
 				fmt.Printf("export PKEY=\"%s\";\n", keyResp.PKey)
-				return
+			case cmdInstallToFile != "":
+				fmt.Printf("# Key installed to %s\n", cmdInstallToFile)
+			default:
+				fmt.Println(keyResp.PKey)
 			}
-			fmt.Println(keyResp.PKey)
 		case sdk.KeyTypePGP:
 			fmt.Println("Your PGP key is imported with success")
 		}
@@ -157,6 +181,7 @@ func keyInstallCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 func (wk *currentWorker) keyInstallHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	keyName := vars["key"]
+	fileName := r.FormValue("file")
 	var key *sdk.Variable
 
 	if wk.currentJob.secrets == nil {
@@ -188,25 +213,36 @@ func (wk *currentWorker) keyInstallHandler(w http.ResponseWriter, r *http.Reques
 
 	switch key.Type {
 	case sdk.KeyTypeSSH:
-		wk.currentJob.pkey = path.Join(keysDirectory, key.Name)
-		if err := vcs.CleanSSHKeys(keysDirectory, nil); err != nil {
-			errClean := sdk.Error{
-				Message: fmt.Sprintf("Cannot clean ssh keys : %v", err),
-				Status:  http.StatusInternalServerError,
+		if fileName == "" {
+			wk.currentJob.pkey = path.Join(keysDirectory, key.Name)
+			if err := vcs.CleanSSHKeys(keysDirectory, nil); err != nil {
+				errClean := sdk.Error{
+					Message: fmt.Sprintf("Cannot clean ssh keys : %v", err),
+					Status:  http.StatusInternalServerError,
+				}
+				log.Error("%v", errClean)
+				writeJSON(w, errClean, errClean.Status)
+				return
 			}
-			log.Error("%v", errClean)
-			writeJSON(w, errClean, errClean.Status)
-			return
-		}
 
-		if err := vcs.SetupSSHKey(wk.currentJob.secrets, keysDirectory, key); err != nil {
-			errSetup := sdk.Error{
-				Message: fmt.Sprintf("Cannot setup ssh key %s : %v", keyName, err),
-				Status:  http.StatusInternalServerError,
+			if err := vcs.SetupSSHKey(wk.currentJob.secrets, keysDirectory, key); err != nil {
+				errSetup := sdk.Error{
+					Message: fmt.Sprintf("Cannot setup ssh key %s : %v", keyName, err),
+					Status:  http.StatusInternalServerError,
+				}
+				log.Error("%v", errSetup)
+				writeJSON(w, errSetup, errSetup.Status)
+				return
 			}
-			log.Error("%v", errSetup)
-			writeJSON(w, errSetup, errSetup.Status)
-			return
+		} else {
+			if err := ioutil.WriteFile(fileName, []byte(key.Value), os.FileMode(0600)); err != nil {
+				errSetup := sdk.Error{
+					Message: fmt.Sprintf("Cannot setup ssh key %s : %v", keyName, err),
+					Status:  http.StatusInternalServerError,
+				}
+				log.Error("%v", errSetup)
+				writeJSON(w, errSetup, errSetup.Status)
+			}
 		}
 
 		writeJSON(w, keyResponse{PKey: wk.currentJob.pkey, Type: sdk.KeyTypeSSH}, http.StatusOK)
