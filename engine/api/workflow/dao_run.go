@@ -440,16 +440,25 @@ func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun
 	if workflowRun == nil {
 		return false
 	}
-	node := workflowRun.Workflow.GetNode(workflowNodeRun.WorkflowNodeID)
-	if node == nil {
-		return true
+
+	var ancestorsID []int64
+	if workflowRun.Version < 2 {
+		node := workflowRun.Workflow.GetNode(workflowNodeRun.WorkflowNodeID)
+		if node == nil {
+			return true
+		}
+		ancestorsID = node.Ancestors(&workflowRun.Workflow, true)
+	} else {
+		node := workflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
+		if node == nil {
+			return true
+		}
+		ancestorsID = node.Ancestors(workflowRun.Workflow.WorkflowData)
 	}
 
-	ancestorsID := node.Ancestors(&workflowRun.Workflow, true)
 	if ancestorsID == nil || len(ancestorsID) == 0 {
 		return true
 	}
-
 	for _, ancestorID := range ancestorsID {
 		nodeRuns, ok := workflowRun.WorkflowNodeRuns[ancestorID]
 		if ok && (len(nodeRuns) == 0 || !sdk.StatusIsTerminated(nodeRuns[0].Status) ||
@@ -457,7 +466,6 @@ func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun
 			return false
 		}
 	}
-
 	return true
 }
 
