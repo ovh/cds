@@ -38,16 +38,10 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 		if wnr.SubNumber > 0 {
 			previousNodeRun = wnr
 		} else {
-			// Load previous run on current node
-			node := wr.Workflow.GetNode(wnr.WorkflowNodeID)
-			if node != nil {
-				var errN error
-				previousNodeRun, errN = PreviousNodeRun(db, wnr, *node, wr.WorkflowID)
-				if errN != nil {
-					log.Warning("SendEvent.workflow> Cannot load previous node run: %s", errN)
-				}
-			} else {
-				log.Info("SendEvent.workflow.previousNodeRun > Unable to find node %d in workflow", wnr.WorkflowNodeID)
+			var errN error
+			previousNodeRun, errN = PreviousNodeRun(db, wnr, wnr.WorkflowNodeName, wr.WorkflowID)
+			if errN != nil {
+				log.Warning("SendEvent.workflow> Cannot load previous node run: %s", errN)
 			}
 		}
 
