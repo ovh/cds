@@ -1,0 +1,89 @@
+.header {
+  a:not(:first-of-type) {
+    margin-left: 5px;
+  }
+}
+
+.ui.relaxed.divided.list {
+  height: 590px;
+  overflow-y: auto;
+}
+
+.right.floated.content {
+  padding-right: 10px;
+}
+
+.tiles-container {
+  display: table-row-group;
+  table-layout: fixed;
+  border-bottom: 1px solid rgba(0,0,0,0.5);
+  box-shadow: 1px 0px 0px rgba(0,0,0,0.5);
+  
+  label {
+    display: table-cell;
+    vertical-align: middle;
+    border-bottom: 1px solid rgba(0,0,0,0.5);
+  }
+
+  .tiles {
+    display: table-cell;
+    border-bottom: 1px solid rgba(0,0,0,0.5);
+    width: 100%;
+    
+    .tile {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      margin: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      vertical-align: bottom;
+      line-height: 50px;
+      border-radius: 5px;
+
+      .detail {
+        display: none;
+        position: fixed;
+        background-color: white;
+        border-radius: 5px;
+        box-shadow: 0px 5px 5px rgba(0,0,0,0.5);
+        z-index: 1;
+        white-space: nowrap;
+        max-width: 450px;
+        
+        .property {
+          font-weight: bold;
+        }
+
+      }
+
+      &:hover > .detail {
+        display: table;
+      }
+
+      a {
+        color: white;
+        vertical-align: middle;
+      }
+
+      &.green {
+        background: #21ba45;
+      }
+
+      &.blue {
+        background: #2185d0;
+      }
+
+      &.red {
+        background: #db2828;
+      }
+
+      &.grey {
+        background-color: rgba(120,120,120,1);
+      }
+
+    }
+  }
+}

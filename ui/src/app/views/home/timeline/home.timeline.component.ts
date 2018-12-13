@@ -53,10 +53,6 @@ export class HomeTimelineComponent implements OnInit {
         });
     }
 
-    selectTab(t: string): void {
-        this.selectedTab = t;
-    }
-
     onScroll() {
         this._timelineStore.getMore(this.currentItem + 1, false);
     }

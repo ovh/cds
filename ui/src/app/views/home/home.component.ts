@@ -16,6 +16,7 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 @AutoUnsubscribe()
 export class HomeComponent {
 
+    selectedTab = 'heatmap';
     favorites: Array<NavbarProjectData> = [];
     broadcasts: Array<Broadcast> = [];
     loading = true;
@@ -46,6 +47,10 @@ export class HomeComponent {
                     this.broadcasts = broadcasts.toArray().filter((br) => !br.read && !br.archived).slice(0, 5);
                 }
             }, () => this.loadingBroadcasts = false);
+    }
+
+    selectTab(t: string): void {
+        this.selectedTab = t;
     }
 
     markAsRead(id: number) {

@@ -1,0 +1,32 @@
+<ng-container *ngIf="!loading && events.length > 0">
+    <div class="ui relaxed divided list">
+        <div *ngFor="let project of getProjects()" class="tiles-container">
+            <label>{{project}}</label>
+            <div class="tiles">
+                <div *ngFor="let e of getRuns(groupedEvents[project])"
+                    class="tile"
+                    [class.green]="e.status === pipelineStatus.SUCCESS"
+                    [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING"
+                    [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
+                    [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT">
+                    <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name]">{{ e.workflow_run_num }}</a>
+
+                    <table class="ui compact table detail">
+                        <tbody>
+                            <tr *ngFor="let property of getProperties(e)" class="row">
+                                <td class="property">{{ property }}</td>
+                                <td class="value">{{ e[property] }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-container>
+<div class="ui info message" *ngIf="!loading && events.length === 0">
+    {{ 'timeline_no' | translate }}
+</div>
+
+
+<div class="ui text active loader" *ngIf="loading">{{ 'timeline_loading' | translate }}</div>
