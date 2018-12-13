@@ -242,6 +242,7 @@ func (wk *currentWorker) keyInstallHandler(w http.ResponseWriter, r *http.Reques
 				}
 				log.Error("%v", errSetup)
 				writeJSON(w, errSetup, errSetup.Status)
+				return
 			}
 		}
 
