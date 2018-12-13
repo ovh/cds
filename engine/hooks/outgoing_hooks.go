@@ -189,8 +189,14 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 
 	payloadValues := map[string]string{}
 	if payload, ok := hookRun.OutgoingHook.Config[sdk.Payload]; ok && payload.Value != "{}" {
+		mapParams := sdk.ParametersToMap(hookRun.BuildParameters)
+		payloadstr, err := interpolate.Do(payload.Value, mapParams)
+		if err != nil {
+			return handleError(errors.New("unable to interpolate values on payload hook for " + hookRunID))
+		}
+
 		var payloadInt interface{}
-		if err := json.Unmarshal([]byte(payload.Value), &payloadInt); err == nil {
+		if err := json.Unmarshal([]byte(payloadstr), &payloadInt); err == nil {
 			e := dump.NewDefaultEncoder(new(bytes.Buffer))
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 			e.ExtraFields.DetailedMap = false
