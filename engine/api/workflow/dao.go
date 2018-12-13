@@ -604,6 +604,19 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		}
 	}
 
+	// TODO Delete in last migration step
+	hooks := w.GetHooks()
+	w.WorkflowData.Node.Hooks = make([]sdk.NodeHook, 0, len(hooks))
+	for _, h := range hooks {
+		w.WorkflowData.Node.Hooks = append(w.WorkflowData.Node.Hooks, sdk.NodeHook{
+			Ref:           h.Ref,
+			HookModelID:   h.WorkflowHookModelID,
+			Config:        h.Config,
+			UUID:          h.UUID,
+			HookModelName: h.WorkflowHookModel.Name,
+		})
+	}
+
 	if err := InsertWorkflowData(db, w); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert Workflow Data")
 	}
