@@ -1,14 +1,14 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {finalize, first} from 'rxjs/operators';
-import {adminGroupName, GroupPermission} from '../../../model/group.model';
-import {PermissionValue} from '../../../model/permission.model';
-import {Requirement} from '../../../model/requirement.model';
-import {WorkerModel} from '../../../model/worker-model.model';
-import {RequirementStore} from '../../../service/requirement/requirement.store';
-import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
-import {RequirementEvent} from '../requirement.event.model';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { finalize, first } from 'rxjs/operators';
+import { adminGroupName, GroupPermission } from '../../../model/group.model';
+import { PermissionValue } from '../../../model/permission.model';
+import { Requirement } from '../../../model/requirement.model';
+import { WorkerModel } from '../../../model/worker-model.model';
+import { RequirementStore } from '../../../service/requirement/requirement.store';
+import { WorkerModelService } from '../../../service/worker-model/worker-model.service';
+import { RequirementEvent } from '../requirement.event.model';
 
 export const OSArchitecture = 'os-architecture';
 
