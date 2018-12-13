@@ -2210,7 +2210,7 @@
 
 <h2 id="worker-key-install">worker key install</h2>
 
-<p><code>worker key install [--env-git] [--env] &lt;key-name&gt;</code></p>
+<p><code>worker key install [--env-git] [--env] [--file destination-file] &lt;key-name&gt;</code></p>
 
 <h3 id="synopsis">Synopsis</h3>
 
@@ -2222,6 +2222,11 @@
 
 <pre><code>$ eval $(worker key install --env proj-mykey)
 echo $PKEY # variable $PKEY will contains the path of the SSH private key
+</code></pre>
+
+<p>You can use the <code>--file</code>  flag to write the private key to a specific path</p>
+
+<pre><code>$ worker key install --file .ssh/id_rsa proj-mykey
 </code></pre>
 
 <p>For most advanced usage with git and SSH, you can run <code>eval $(worker key install --env-git proj-mykey)</code>.</p>
@@ -2247,9 +2252,10 @@ export PKEY=&quot;/tmp/5/0/2569/655/bd925028e70aea34/cds.key.proj-mykey.priv&quo
 
 <h3 id="options">Options</h3>
 
-<pre><code>      --env       display shell command for export $PKEY variable. See documentation.
-      --env-git   display shell command for advanced usage with git. See documentation.
-  -h, --help      help for install
+<pre><code>      --env           display shell command for export $PKEY variable. See documentation.
+      --env-git       display shell command for advanced usage with git. See documentation.
+      --file string   write key to destination file. See documentation.
+  -h, --help          help for install
 </code></pre>
 
 <h3 id="see-also">SEE ALSO</h3>
