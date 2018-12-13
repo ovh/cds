@@ -15,7 +15,7 @@ import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
 import {Project} from '../../../model/project.model';
-import {WNode, Workflow} from '../../../model/workflow.model';
+import {WNode, WNodeType, Workflow} from '../../../model/workflow.model';
 import {WorkflowRun} from '../../../model/workflow.run.model';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
@@ -106,7 +106,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
         private _cd: ChangeDetectorRef,
         private _workflowStore: WorkflowStore,
         private _workflowCore: WorkflowCoreService
-    ) {}
+    ) {
+    }
 
     @HostListener('window:resize', ['$event'])
     onResize() {
@@ -118,12 +119,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
         let svg = d3.select('svg');
         let inner = d3.select('svg g');
 
-        let w = 0;
-        inner.each(function () {
-            w = this.getBBox().width;
-        });
+        let w = (<any>inner.node()).getBBox().width;
         this.svgWidth = w + 30;
-
         this.svgHeight = this.g.graph().height + 40;
         svg.attr('height', this.svgHeight);
     }
@@ -161,7 +158,25 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.createCustomArrow();
 
         // Run the renderer. This is what draws the final graph.
-        this.render(d3.select('svg g'), this.g);
+        let svg = d3.select('svg');
+        this.render(<any>svg.select('g'), this.g);
+
+        // Rotate fork
+            // Select nodes
+        let allnodes = d3.selectAll('g.nodes g.label');
+        let nodes = Workflow.getAllNodes(this.workflow);
+        let allForks = [];
+            // Browse nodes to identify fork
+        allnodes.each((a, b, c) => {
+            let n = nodes.find(node => 'node-' + node.name === a);
+            if (n && n.type === WNodeType.FORK) {
+                allForks.push(c[b]);
+            }
+        });
+            // Rotate
+        allForks.forEach(g => {
+            d3.select(g).attr('transform', 'rotate(45)');
+        });
 
         // Add listener on graph element
         this.svgHeight = this.g.graph().height + 40;
@@ -288,10 +303,11 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 height = 68;
                 break;
             case 'fork':
-                width = 70;
-                height = 70;
+                width = 60;
+                height = 60;
                 break;
         }
+
         this.svgContainer.insert(componentRef.hostView, 0);
         this.g.setNode('node-' + node.ref, <any>{
             label: () => {
@@ -300,7 +316,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 return componentRef.location.nativeElement;
             },
             shape: shape,
-            labelStyle: 'width: ' + width + 'px; height: ' + height + 'px',
+            labelStyle: 'width: ' + width + 'px; height: ' + height + 'px;',
             width: width,
             height: height
         });
@@ -320,12 +336,12 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
         // Create parent trigger
         if (node.type === 'join') {
-            node.parents.forEach( p => {
+            node.parents.forEach(p => {
                 let options = {
                     id: 'join-trigger-' + p.parent_name,
                     style: 'stroke: #000000;'
                 };
-               this.createEdge('node-' + p.parent_name, 'node-' + node.ref, options);
+                this.createEdge('node-' + p.parent_name, 'node-' + node.ref, options);
             });
         }
 
@@ -376,16 +392,16 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this.workflow.workflow_data.joins.forEach(j => {
                 let maxLevel = 0;
                 if (j.parents) {
-                    j.parents.forEach( r => {
-                       if (levelNode.get(r.parent_name) > maxLevel) {
-                           maxLevel = levelNode.get(r.parent_name);
-                       }
+                    j.parents.forEach(r => {
+                        if (levelNode.get(r.parent_name) > maxLevel) {
+                            maxLevel = levelNode.get(r.parent_name);
+                        }
                     });
                 }
                 maxLevel++;
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        this.getWorkflowMaxNodeByLevel(t.child_node,  mapLevel, maxLevel + 1, levelNode);
+                        this.getWorkflowMaxNodeByLevel(t.child_node, mapLevel, maxLevel + 1, levelNode);
                         if (mapLevel.get(maxLevel)) {
                             mapLevel.set(maxLevel, mapLevel.get(maxLevel) + 1);
                         } else {
