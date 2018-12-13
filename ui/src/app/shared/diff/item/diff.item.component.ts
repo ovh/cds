@@ -17,7 +17,7 @@ export class DiffItemComponent implements OnChanges {
     @Input() original: string;
     @Input() updated: string;
     @Input() mode: Mode = Mode.UNIFIED;
-    @Input() type: string;
+    @Input() type = 'text/plain';
     diff: any[];
     contentLeft: string;
     contentRight: string;
@@ -27,7 +27,7 @@ export class DiffItemComponent implements OnChanges {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
-            mode: 'text/x-yaml',
+            mode: this.type,
             lineWrapping: true,
             autoRefresh: true,
             readOnly: true,
@@ -79,7 +79,18 @@ export class DiffItemComponent implements OnChanges {
         if (original === 'null') {
             original = '';
         }
-        let diff = JsDiff.diffLines(original, this.updated);
+
+        let updated = this.updated;
+        if (this.type === 'application/json') {
+            try {
+                original = JSON.stringify(JSON.parse(original), null, 2);
+            } catch (e) { }
+            try {
+                updated = JSON.stringify(JSON.parse(updated), null, 2);
+            } catch (e) { }
+        }
+
+        let diff = JsDiff.diffLines(original, updated);
 
         if (!Array.isArray(diff)) {
             return;

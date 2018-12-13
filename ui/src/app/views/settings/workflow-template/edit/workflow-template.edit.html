@@ -23,6 +23,13 @@
                 </ng-container>
             </div>
         </div>
-        <div *ngSwitchCase="'audits'" class="ui grid">work in progress</div>
+        <div *ngSwitchCase="'audits'" class="ui grid">
+            <div class="sixteen wide column">
+                <app-data-table [withPagination]="10" [columns]="columns" [data]="audits" [loading]="loading"
+                    [withLineClick]="true" (clickLine)="clickAudit($event)"></app-data-table>
+                <br />
+                <app-diff-list *ngIf="diffItems" [items]="diffItems"></app-diff-list>
+            </div>
+        </div>
     </app-scrollview>
 </div>
