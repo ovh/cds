@@ -1,28 +1,18 @@
 @import '../../../../../common';
-.wrapper {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.scrollview {
-  flex: 1;
-}
-
 .ui.input {
-  position: inherit;
+    position: inherit;
 }
 
 #WorkerModelAdd {
-  display: flex;
-  flex-direction: column;
-  align-content: stretch;
-  height: 100%;
-  padding: 20px;
-  h2 {
-    text-align: center;
-  }
-  h4.ui.header {
-    text-align: center;
-  }
+    display: flex;
+    flex-direction: column;
+    align-content: stretch;
+    height: 100%;
+    padding: 20px;
+    h2 {
+        text-align: center;
+    }
+    h4.ui.header {
+        text-align: center;
+    }
 }

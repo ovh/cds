@@ -1,23 +1,13 @@
 @import '../../../../../common';
-.wrapper {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.scrollview {
-  flex: 1;
-}
-
 .ui.input {
-  position: inherit;
+    position: inherit;
 }
 
 #ActionEdit {
-  align-content: stretch;
-  height: 100%;
-  padding: 20px;
-  h2 {
-    text-align: center;
-  }
+    align-content: stretch;
+    height: 100%;
+    padding: 20px;
+    h2 {
+        text-align: center;
+    }
 }
