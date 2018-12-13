@@ -38,16 +38,10 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 		if wnr.SubNumber > 0 {
 			previousNodeRun = wnr
 		} else {
-			// Load previous run on current node
-			node := wr.Workflow.GetNode(wnr.WorkflowNodeID)
-			if node != nil {
-				var errN error
-				previousNodeRun, errN = PreviousNodeRun(db, wnr, *node, wr.WorkflowID)
-				if errN != nil {
-					log.Warning("SendEvent.workflow> Cannot load previous node run: %s", errN)
-				}
-			} else {
-				log.Info("SendEvent.workflow.previousNodeRun > Unable to find node %d in workflow", wnr.WorkflowNodeID)
+			var errN error
+			previousNodeRun, errN = PreviousNodeRun(db, wnr, wnr.WorkflowNodeName, wr.WorkflowID)
+			if errN != nil {
+				log.Warning("SendEvent.workflow> Cannot load previous node run: %s", errN)
 			}
 		}
 
@@ -73,6 +67,7 @@ func SendEvent(db gorp.SqlExecutor, key string, report *ProcessorReport) {
 
 // ResyncCommitStatus resync commit status for a workflow run
 func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun) error {
+
 	_, end := observability.Span(ctx, "workflow.resyncCommitStatus",
 		observability.Tag(observability.TagWorkflow, wr.Workflow.Name),
 		observability.Tag(observability.TagWorkflowRun, wr.Number),
@@ -80,21 +75,36 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	defer end()
 
 	for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
+
 		sort.Slice(nodeRuns, func(i, j int) bool {
 			return nodeRuns[i].SubNumber >= nodeRuns[j].SubNumber
 		})
 
 		nodeRun := nodeRuns[0]
+
 		if !sdk.StatusIsTerminated(nodeRun.Status) {
 			continue
 		}
 
-		node := wr.Workflow.GetNode(nodeID)
-		if !node.IsLinkedToRepo() {
-			return nil
+		var vcsServerName string
+		var repoFullName string
+		if wr.Version > 1 {
+			node := wr.Workflow.WorkflowData.NodeByID(nodeID)
+			if !node.IsLinkedToRepo(&wr.Workflow) {
+				return nil
+			}
+			vcsServerName = wr.Workflow.Applications[node.Context.ApplicationID].VCSServer
+			repoFullName = wr.Workflow.Applications[node.Context.ApplicationID].RepositoryFullname
+		} else {
+			node := wr.Workflow.GetNode(nodeID)
+			if !node.IsLinkedToRepo() {
+				return nil
+			}
+			vcsServerName = node.Context.Application.VCSServer
+			repoFullName = node.Context.Application.RepositoryFullname
 		}
 
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerName)
 		if vcsServer == nil {
 			return nil
 		}
@@ -111,14 +121,15 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		if nodeRun.VCSTag != "" {
 			ref = nodeRun.VCSTag
 		}
-		statuses, errStatuses := client.ListStatuses(ctx, node.Context.Application.RepositoryFullname, ref)
+
+		statuses, errStatuses := client.ListStatuses(ctx, repoFullName, ref)
 		if errStatuses != nil {
 			return sdk.WrapError(errStatuses, "resyncCommitStatus> Cannot get statuses %s", details)
 		}
 
 		var statusFound *sdk.VCSCommitStatus
 		expected := sdk.VCSCommitStatusDescription(proj.Key, wr.Workflow.Name, sdk.EventRunWorkflowNode{
-			NodeName: node.Name,
+			NodeName: nodeRun.WorkflowNodeName,
 		})
 
 		for i, status := range statuses {
@@ -159,7 +170,6 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				}
 				continue
 			}
-
 		case sdk.StatusFail.String():
 			switch nodeRun.Status {
 			case sdk.StatusFail.String():
@@ -190,12 +200,36 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) error {
 	log.Debug("Send status for node run %d", nodeRun.ID)
 
-	node := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
-	if !node.IsLinkedToRepo() {
-		return nil
+	var app sdk.Application
+	var pip sdk.Pipeline
+	var env sdk.Environment
+	if wr.Version > 1 {
+		node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+		if !node.IsLinkedToRepo(&wr.Workflow) {
+			return nil
+		}
+		app = wr.Workflow.Applications[node.Context.ApplicationID]
+		if node.Context.PipelineID > 0 {
+			pip = wr.Workflow.Pipelines[node.Context.PipelineID]
+		}
+		if node.Context.EnvironmentID > 0 {
+			env = wr.Workflow.Environments[node.Context.EnvironmentID]
+		}
+	} else {
+		node := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
+		if !node.IsLinkedToRepo() {
+			return nil
+		}
+		app = *node.Context.Application
+		if node.PipelineID > 0 {
+			pip = wr.Workflow.Pipelines[node.PipelineID]
+		}
+		if node.Context.EnvironmentID > 0 {
+			env = *node.Context.Environment
+		}
 	}
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, node.Context.Application.VCSServer)
+	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 	if vcsServer == nil {
 		return nil
 	}
@@ -222,7 +256,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 		NodeID:         nodeRun.WorkflowNodeID,
 		RunID:          nodeRun.WorkflowRunID,
 		StagesSummary:  make([]sdk.StageSummary, len(nodeRun.Stages)),
-		NodeName:       node.Name,
+		NodeName:       nodeRun.WorkflowNodeName,
 	}
 
 	for i := range nodeRun.Stages {
@@ -231,13 +265,13 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 	var pipName, appName, envName string
 
-	pipName = node.PipelineName
-	appName = node.Context.Application.Name
-	eventWNR.RepositoryManagerName = node.Context.Application.VCSServer
-	eventWNR.RepositoryFullName = node.Context.Application.RepositoryFullname
+	pipName = pip.Name
+	appName = app.Name
+	eventWNR.RepositoryManagerName = app.VCSServer
+	eventWNR.RepositoryFullName = app.RepositoryFullname
 
-	if node.Context.Environment != nil {
-		envName = node.Context.Environment.Name
+	if env.Name != "" {
+		envName = env.Name
 	}
 
 	evt := sdk.Event{
@@ -256,16 +290,16 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	}
 
 	//Check if this branch and this commit is a pullrequest
-	prs, err := client.PullRequests(ctx, node.Context.Application.RepositoryFullname)
+	prs, err := client.PullRequests(ctx, app.RepositoryFullname)
 	if err != nil {
-		log.Error("sendVCSEventStatus> unable to get pull requests on repo %s: %v", node.Context.Application.RepositoryFullname, err)
+		log.Error("sendVCSEventStatus> unable to get pull requests on repo %s: %v", app.RepositoryFullname, err)
 		return nil
 	}
 
 	//Send comment on pull request
 	for _, pr := range prs {
 		if pr.Head.Branch.DisplayID == nodeRun.VCSBranch && pr.Head.Branch.LatestCommit == nodeRun.VCSHash {
-			if nodeRun.Status != sdk.StatusFail.String() {
+			if nodeRun.Status != sdk.StatusFail.String() && nodeRun.Status != sdk.StatusStopped.String() {
 				continue
 			}
 			report, err := nodeRun.Report()
@@ -273,7 +307,7 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 				log.Error("sendVCSEventStatus> unable to compute node run report%v", err)
 				return nil
 			}
-			if err := client.PullRequestComment(ctx, node.Context.Application.RepositoryFullname, pr.ID, report); err != nil {
+			if err := client.PullRequestComment(ctx, app.RepositoryFullname, pr.ID, report); err != nil {
 				log.Error("sendVCSEventStatus> unable to send PR report%v", err)
 				return nil
 			}

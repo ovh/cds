@@ -27,7 +27,6 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 		failedOn = ""
 		for _, wnrs := range wo.WorkflowNodeRuns {
 			for _, wnr := range wnrs {
-				wn := w.Workflow.GetNode(wnr.WorkflowNodeID)
 				for _, stage := range wnr.Stages {
 					for _, job := range stage.RunJobs {
 						status, _ := statusShort(job.Status)
@@ -39,7 +38,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 							end = fmt.Sprintf(" end:%s", job.Done)
 						}
 
-						jobLine := fmt.Sprintf("%s  %s/%s/%s/%s %s %s \n", status, v[_WorkflowName], wn.Name, stage.Name, job.Job.Action.Name, start, end)
+						jobLine := fmt.Sprintf("%s  %s/%s/%s/%s %s %s \n", status, v[_WorkflowName], wnr.WorkflowNodeName, stage.Name, job.Job.Action.Name, start, end)
 						if job.Status == sdk.StatusFail.String() {
 							newOutput += fmt.Sprintf(tm.Color(tm.Bold(jobLine), tm.RED))
 						} else {
@@ -66,7 +65,7 @@ func workflowRunInteractive(v cli.Values, w *sdk.WorkflowRun, baseURL string) er
 								if step.Status == sdk.StatusFail.String() {
 									if !failedOnStepKnowned {
 										// hide "Starting" text on resume
-										failedOn = fmt.Sprintf("%s%s / %s / %s / %s %s \n", failedOn, v[_WorkflowName], wn.Name, stage.Name, titleStep, strings.Replace(line, "Starting", "", 1))
+										failedOn = fmt.Sprintf("%s%s / %s / %s / %s %s \n", failedOn, v[_WorkflowName], wnr.WorkflowNodeName, stage.Name, titleStep, strings.Replace(line, "Starting", "", 1))
 									}
 									failedOnStepKnowned = true
 									titleStep = fmt.Sprintf(tm.Color(titleStep, tm.RED))
