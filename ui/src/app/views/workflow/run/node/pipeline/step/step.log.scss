@@ -56,6 +56,13 @@ $yellowLogs: #FFFF91;
   clear: both;
   padding: 10px $squareSize 10px $squareSize;
   padding-left: 0px;
+  position: relative;
+
+  .toolbar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
 
   .yellow {
     color: $yellowLogs;
