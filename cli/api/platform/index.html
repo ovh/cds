@@ -2175,11 +2175,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#get-platform-models">GET <code>/platform/models</code></a></li>
 <li><a href="#post-platform-models">POST <code>/platform/models</code></a></li>
-<li><a href="#put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></a></li>
-<li><a href="#get-platform-models-name">GET <code>/platform/models/&lt;name&gt;</code></a></li>
+<li><a href="#get-platform-models">GET <code>/platform/models</code></a></li>
 <li><a href="#delete-platform-models-name">DELETE <code>/platform/models/&lt;name&gt;</code></a></li>
+<li><a href="#get-platform-models-name">GET <code>/platform/models/&lt;name&gt;</code></a></li>
+<li><a href="#put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -2202,34 +2202,6 @@
 
 
 
-
-<h3 id="get-platform-models">GET <code>/platform/models</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/platform/models</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPlatformModelsHandler%22">getPlatformModelsHandler</a></td>
-</tr>
-</tbody>
-</table>
 
 <h3 id="post-platform-models">POST <code>/platform/models</code></h3>
 
@@ -2259,7 +2231,35 @@
 </tbody>
 </table>
 
-<h3 id="put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></h3>
+<h3 id="get-platform-models">GET <code>/platform/models</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/platform/models</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getPlatformModelsHandler%22">getPlatformModelsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-platform-models-name">DELETE <code>/platform/models/&lt;name&gt;</code></h3>
 
 <table>
 <thead>
@@ -2272,7 +2272,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -2282,7 +2282,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putPlatformModelHandler%22">putPlatformModelHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deletePlatformModelHandler%22">deletePlatformModelHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2315,7 +2315,7 @@
 </tbody>
 </table>
 
-<h3 id="delete-platform-models-name">DELETE <code>/platform/models/&lt;name&gt;</code></h3>
+<h3 id="put-platform-models-name">PUT <code>/platform/models/&lt;name&gt;</code></h3>
 
 <table>
 <thead>
@@ -2328,7 +2328,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -2338,7 +2338,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deletePlatformModelHandler%22">deletePlatformModelHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putPlatformModelHandler%22">putPlatformModelHandler</a></td>
 </tr>
 </tbody>
 </table>
