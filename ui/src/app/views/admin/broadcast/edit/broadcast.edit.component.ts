@@ -33,6 +33,7 @@ export class BroadcastEditComponent {
     projects: Array<NavbarProjectData> = [];
     navbarSub: Subscription;
     path: Array<PathItem>;
+    paramsSub: Subscription;
 
     constructor(
         private sharedService: SharedService,
@@ -59,7 +60,7 @@ export class BroadcastEditComponent {
                 }
             });
 
-        this._route.params.subscribe(params => {
+        this.paramsSub = this._route.params.subscribe(params => {
             let id = parseInt(params['id'], 10)
             this.broadcastSub = this._broadcastStore.getBroadcasts(id).subscribe(bcs => {
                 let broadcast = bcs.get(id)

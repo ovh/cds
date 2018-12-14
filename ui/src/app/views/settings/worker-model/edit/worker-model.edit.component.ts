@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { omit } from 'lodash';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
 import { Group } from '../../../../model/group.model';
 import { User } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
@@ -10,6 +11,7 @@ import { AuthentificationStore } from '../../../../service/auth/authentification
 import { GroupService } from '../../../../service/group/group.service';
 import { WorkerModelService } from '../../../../service/worker-model/worker-model.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { SharedService } from '../../../../shared/shared.service';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
@@ -18,6 +20,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     templateUrl: './worker-model.edit.html',
     styleUrls: ['./worker-model.edit.scss']
 })
+@AutoUnsubscribe()
 export class WorkerModelEditComponent implements OnInit {
     loading = false;
     deleteLoading = false;
@@ -36,6 +39,7 @@ export class WorkerModelEditComponent implements OnInit {
     private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     workerModelPatternError = false;
     path: Array<PathItem>;
+    paramsSub: Subscription;
 
     constructor(
         private sharedService: SharedService,
@@ -65,7 +69,7 @@ export class WorkerModelEditComponent implements OnInit {
     }
 
     ngOnInit() {
-        this._route.params.subscribe(params => {
+        this.paramsSub = this._route.params.subscribe(params => {
             this._workerModelService.getWorkerModelTypes().subscribe(wmt => {
                 this.workerModelTypes = wmt;
             });
@@ -136,12 +140,7 @@ export class WorkerModelEditComponent implements OnInit {
 
         // cast to int
         this.workerModel.group_id = Number(this.workerModel.group_id);
-        this.workerModelGroups.forEach(g => {
-            if (this.workerModel.group_id === g.id) {
-                this.workerModel.group = g;
-                return;
-            }
-        });
+        this.workerModel.group = this.workerModelGroups.find(g => this.workerModel.group_id === g.id)
 
         if (this.patternSelected) {
             this.workerModel.pattern_name = this.patternSelected.name;

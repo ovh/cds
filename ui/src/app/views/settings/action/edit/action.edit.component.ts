@@ -2,11 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { first } from 'rxjs/operators';
+import { Subscription } from 'rxjs/Subscription';
 import { Action, PipelineUsingAction } from '../../../../model/action.model';
 import { ActionService } from '../../../../service/action/action.service';
 import { AuthentificationStore } from '../../../../service/auth/authentification.store';
 import { ActionEvent } from '../../../../shared/action/action.event.model';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
@@ -14,11 +16,13 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     templateUrl: './action.edit.html',
     styleUrls: ['./action.edit.scss']
 })
+@AutoUnsubscribe()
 export class ActionEditComponent implements OnInit {
     action: Action;
     isAdmin: boolean;
     pipelinesUsingAction: Array<PipelineUsingAction>;
     path: Array<PathItem>;
+    paramsSub: Subscription;
 
     constructor(
         private _actionService: ActionService,
@@ -32,11 +36,11 @@ export class ActionEditComponent implements OnInit {
     }
 
     ngOnInit() {
-        this._route.params.subscribe(params => {
+        this.paramsSub = this._route.params.subscribe(params => {
             this._actionService.getAction(params['name']).subscribe(u => {
                 this.action = u;
                 if (this.isAdmin) {
-                    this._actionService.getPiplinesUsingAction(params['name']).pipe(first()).subscribe(p => {
+                    this._actionService.getPipelinesUsingAction(params['name']).pipe(first()).subscribe(p => {
                         this.pipelinesUsingAction = p;
                     });
                 }

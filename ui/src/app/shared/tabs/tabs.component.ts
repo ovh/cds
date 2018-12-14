@@ -7,6 +7,8 @@ import {
     Output
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs/Subscription';
+import { AutoUnsubscribe } from '../decorator/autoUnsubscribe';
 
 export class Tab {
     translate: string;
@@ -20,17 +22,18 @@ export class Tab {
     templateUrl: './tabs.html',
     styleUrls: ['./tabs.scss']
 })
+@AutoUnsubscribe()
 export class TabsComponent implements OnInit, OnChanges {
     @Input() tabs: Array<Tab>;
     @Output() onSelect = new EventEmitter<Tab>();
-
     selected: Tab;
+    queryParamsSub: Subscription;
 
     constructor(private _route: ActivatedRoute, private _router: Router) { }
 
     ngOnInit() {
         this.select(this.tabs.find(t => t.default));
-        this._route.queryParams.subscribe(params => {
+        this.queryParamsSub = this._route.queryParams.subscribe(params => {
             if (params['tab']) {
                 this.select(this.tabs.find(t => t.key === params['tab']));
             }

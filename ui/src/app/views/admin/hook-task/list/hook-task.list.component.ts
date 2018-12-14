@@ -26,7 +26,7 @@ export class HookTaskListComponent {
             const lowerFilter = f.toLowerCase();
             return d => {
                 let hookPath: string;
-                if (d.config['project'] && d.config['workflow']) {
+                if (d.config && d.config['project'] && d.config['workflow']) {
                     hookPath = (d.config['project'].value + '/' + d.config['workflow'].value).toLowerCase()
                 }
                 return d.uuid.toLowerCase().indexOf(lowerFilter) !== -1 ||
@@ -60,7 +60,7 @@ export class HookTaskListComponent {
                 type: ColumnType.ROUTER_LINK,
                 name: this._translate.instant('common_project') + '/' + this._translate.instant('common_workflow'),
                 selector: d => {
-                    if (!d.config['project'] || !d.config['workflow']) {
+                    if (!d.config || !d.config['project'] || !d.config['workflow']) {
                         return {
                             link: '',
                             value: ''
