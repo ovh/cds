@@ -73,6 +73,7 @@ const (
 	StateRegister   StateLoadOption = "register"
 	StateDeprecated StateLoadOption = "deprecated"
 	StateActive     StateLoadOption = "active"
+	StateOfficial   StateLoadOption = "official"
 )
 
 // InsertWorkerModel insert a new worker model in database
@@ -514,6 +515,8 @@ func getAdditionalSQLFilters(opts *StateLoadOption) []string {
 			additionalFilters = append(additionalFilters, "worker_model.is_deprecated = true")
 		case *opts == StateActive:
 			additionalFilters = append(additionalFilters, "worker_model.is_deprecated = false")
+		case *opts == StateOfficial:
+			additionalFilters = append(additionalFilters, fmt.Sprintf("worker_model.group_id = %d", group.SharedInfraGroup.ID))
 		}
 	}
 	return additionalFilters
