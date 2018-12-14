@@ -81,7 +81,8 @@ func (s *Service) getMetricsHandler() service.Handler {
 			Index(s.Cfg.ElasticSearch.IndexMetrics).
 			Type(fmt.Sprintf("%T", sdk.Metric{})).
 			Query(elastic.NewBoolQuery().Must(elastic.NewQueryStringQuery(stringQuery))).
-			Sort("run", true).
+			Sort("_score", false).
+			Sort("run", false).
 			Size(10).
 			Do(context.Background())
 		if errR != nil {
