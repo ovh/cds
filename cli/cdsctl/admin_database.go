@@ -19,19 +19,12 @@ func adminDatabase() *cobra.Command {
 
 var adminDatabaseUnlockCmd = cli.Command{
 	Name:  "unlock",
-	Short: "Unlock a pending migration",
+	Short: "Unlock a pending migration (Use with caution)",
 	Args: []cli.Arg{
 		{Name: "id"},
 	},
 }
 
 func adminDatabaseUnlockFunc(v cli.Values) error {
-	res, err := client.AdminDatabaseMigrationUnlock(v.GetString("id"))
-	if err != nil {
-		return err
-	}
-	if len(res) > 0 {
-		println(res)
-	}
-	return nil
+	return client.AdminDatabaseMigrationUnlock(v.GetString("id"))
 }
