@@ -1,9 +1,9 @@
-import {Component,OnInit,OnDestroy} from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {Broadcast} from 'app/model/broadcast.model';
 import {NavbarProjectData} from 'app/model/navbar.model';
 import {Subscription} from 'rxjs';
+import {TimelineFilter} from '../../model/timeline.model';
 import {User} from '../../model/user.model';
-import {ProjectFilter, TimelineFilter} from '../../model/timeline.model';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {BroadcastStore} from '../../service/broadcast/broadcast.store';
 import {NavbarService} from '../../service/navbar/navbar.service';

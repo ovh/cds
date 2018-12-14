@@ -1,12 +1,10 @@
 import {Component, OnInit} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
 import {Subscription} from 'rxjs/Subscription';
 import {Event} from '../../../model/event.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {ProjectFilter, TimelineFilter} from '../../../model/timeline.model';
 import {TimelineStore} from '../../../service/timeline/timeline.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-home-heatmap',
@@ -31,14 +29,13 @@ export class HomeHeatmapComponent implements OnInit {
     filter: TimelineFilter;
     filterSub: Subscription;
 
-    constructor(private _timelineStore: TimelineStore, private _translate: TranslateService,
-                private _toast: ToastService) {
+    constructor(private _timelineStore: TimelineStore) {
         this.filter = new TimelineFilter();
     }
 
     ngOnInit(): void {
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {
-            //this.filter = f;
+            this.filter = f;
 
             if (this.timelineSub) {
                 this.timelineSub.unsubscribe();
