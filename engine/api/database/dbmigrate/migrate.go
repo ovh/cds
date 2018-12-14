@@ -37,7 +37,7 @@ func Do(DBFunc func() *sql.DB, sqlMigrateDir string, dir migrate.MigrationDirect
 
 	_, errExec := migrate.ExecMax(DBFunc(), "postgres", source, dir, limit)
 
-	if err := unlockMigrate(DBFunc(), hostname); err != nil {
+	if err := UnlockMigrate(DBFunc(), hostname); err != nil {
 		return nil, fmt.Errorf("Cannot unlock migration: %v", err)
 	}
 
@@ -100,7 +100,8 @@ func lockMigrate(db *sql.DB, id string) error {
 	return nil
 }
 
-func unlockMigrate(db *sql.DB, id string) error {
+// UnlockMigrate unlocks an ID from table gorp_migrations_lock
+func UnlockMigrate(db *sql.DB, id string) error {
 	// construct a gorp DbMap
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
 	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")

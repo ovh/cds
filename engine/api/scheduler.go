@@ -30,8 +30,7 @@ func (api *API) getSchedulerApplicationPipelineHandler() service.Handler {
 		///Load application
 		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
-			return sdk.WrapError(errA, "getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db", appName, key)
-
+			return sdk.WrapError(errA, "Cannot load application %s for project %s from db", appName, key)
 		}
 
 		//Load pipeline
@@ -43,9 +42,9 @@ func (api *API) getSchedulerApplicationPipelineHandler() service.Handler {
 
 		//Load environment
 		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "getSchedulerApplicationPipelineHandler> Cannot parse form")
-
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Cannot parse form")
 		}
+
 		envName := r.Form.Get("envName")
 		var env *sdk.Environment
 		if envName != "" {
