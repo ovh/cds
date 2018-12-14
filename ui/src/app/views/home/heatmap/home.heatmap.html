@@ -1,7 +1,11 @@
 <ng-container *ngIf="!loading && events.length > 0">
     <div class="ui relaxed divided list">
         <div *ngFor="let project of getProjects()" class="tiles-container">
-            <label>{{project}}</label>
+            <label>
+                {{ project }}
+                <i class="bell slash icon" title="{{ 'heatmap_filter_mute' | translate }}" (click)="addFilter(project)"></i>
+            </label>
+            
             <div class="tiles">
                 <div *ngFor="let e of getRuns(groupedEvents[project])"
                     class="tile"
@@ -9,13 +13,18 @@
                     [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING"
                     [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
                     [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT">
+                    
                     <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name]">{{ e.workflow_run_num }}</a>
 
                     <table class="ui compact table detail">
                         <tbody>
                             <tr *ngFor="let property of getProperties(e)" class="row">
-                                <td class="property">{{ property }}</td>
+                                <td class="property">{{ 'heatmap_'.concat(property) | translate }}</td>
                                 <td class="value">{{ e[property] }}</td>
+                            </tr>
+                            <tr>
+                                <td class="property">{{ 'heatmap_timestamp' | translate }}</td>
+                                <td class="value">{{ e.timestamp | date:'medium' }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -25,7 +34,7 @@
     </div>
 </ng-container>
 <div class="ui info message" *ngIf="!loading && events.length === 0">
-    {{ 'timeline_no' | translate }}
+    {{ 'heatmap_empty' | translate }}
 </div>
 
 

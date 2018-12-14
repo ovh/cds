@@ -38,7 +38,7 @@ export class HomeHeatmapComponent implements OnInit {
 
     ngOnInit(): void {
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {
-            this.filter = f;
+            //this.filter = f;
 
             if (this.timelineSub) {
                 this.timelineSub.unsubscribe();
@@ -53,11 +53,6 @@ export class HomeHeatmapComponent implements OnInit {
                     this.events = es.toArray().filter((el, i, a) => i === a.indexOf(el));
 
                     this.events.forEach((event) => {
-
-                        if (event.project_key === 'PCC') {
-                            console.log(event);
-                        }
-
                         if (!this.groupedEvents[event.project_key]) {
                             this.groupedEvents[event.project_key] = new Object();
                         }
@@ -111,36 +106,30 @@ export class HomeHeatmapComponent implements OnInit {
                 runs.push(run);
             });
         });
-        // console.log(runs);
         return runs;
     }
 
     getProperties(e: Event) {
-        // TODO add filters on useless properties
-        const allowed = ['timestamp', 'workflow_name', 'status'];
+        const allowed = ['workflow_name', 'status'];
         return Object.keys(e).filter(p => allowed.indexOf(p) !== -1);
     }
 
-    addFilter(e: Event): void {
+    addFilter(project_key: string): void {
         if (!this.filter.projects) {
             this.filter.projects = new Array<ProjectFilter>();
         }
-        let pFilter = this.filter.projects.find(p => p.key === e.project_key);
+        console.log(this.filter);
+
+        let pFilter = this.filter.projects.find(p => p.key === project_key);
         if (!pFilter) {
             pFilter = new ProjectFilter();
-            pFilter.key = e.project_key;
+            pFilter.key = project_key;
             this.filter.projects.push(pFilter);
         }
-
-        if (!pFilter.workflow_names) {
-            pFilter.workflow_names = new Array<string>();
-        }
-        let wName = pFilter.workflow_names.find(w => w === e.workflow_name);
-        if (!wName) {
-            pFilter.workflow_names.push(e.workflow_name);
-        }
-        this._timelineStore.saveFilter(this.filter).subscribe(() => {
+        console.log(this.filter);
+        /*this._timelineStore.saveFilter(this.filter).subscribe(() => {
             this._toast.success('', this._translate.instant('timeline_filter_updated'));
-        });
+        });*/
+        delete this.groupedEvents[project_key];
     }
 }

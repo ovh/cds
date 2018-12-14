@@ -408,6 +408,13 @@
   "token_group_name": "Group",
   "token_generated": "Here is your generated token",
 
+  "heatmap": "Event heatmap",
+  "heatmap_empty": "No events triggered yet",
+  "heatmap_filter_mute": "Hide events on this project",
+  "heatmap_status": "Status",
+  "heatmap_timestamp": "Event date",
+  "heatmap_workflow_name": "Workflow name",
+
   "hook_create_label": "Create a hook",
   "hook_deleted": "Hook deleted",
   "hook_edit_title": "Hook edition: {{app}} / {{pip}}",

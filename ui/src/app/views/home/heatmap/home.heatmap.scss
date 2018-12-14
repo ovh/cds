@@ -23,6 +23,19 @@
     display: table-cell;
     vertical-align: middle;
     border-bottom: 1px solid rgba(0,0,0,0.5);
+    padding-right: 2em;
+    position: relative;
+
+    i {
+      display: none;
+      position: absolute;
+      right: 0;
+      cursor: pointer;
+    }
+
+    &:hover > i {
+      display: inline-block;
+    }
   }
 
   .tiles {
@@ -47,11 +60,41 @@
         display: none;
         position: fixed;
         background-color: white;
-        border-radius: 5px;
+        border-top-right-radius: 5px;
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+        border-top-left-radius: 0px;
         box-shadow: 0px 5px 5px rgba(0,0,0,0.5);
+        border: 1px solid #BEBEBE;
         z-index: 1;
         white-space: nowrap;
         max-width: 450px;
+
+        &:after {
+          width: 0;
+          height: 0;
+          content: '';
+          position: absolute;
+          border-right: 18px solid transparent;
+          border-left: 18px solid transparent;
+          border-bottom: 17px solid white;
+          left: 1px;
+          top: -16px;
+          display: block;
+        }
+        
+        &:before {
+          width: 0;
+          height: 0;
+          content: '';
+          position: absolute;
+          border-right: 19px solid transparent;
+          border-left: 19px solid transparent;
+          border-bottom: 19px solid #BEBEBE;
+          left: 0px;
+          top: -18px;
+          display: block;
+        }
         
         .property {
           font-weight: bold;
