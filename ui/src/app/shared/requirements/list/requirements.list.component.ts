@@ -1,11 +1,11 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {finalize, first} from 'rxjs/operators';
-import {Requirement} from '../../../model/requirement.model';
-import {WorkerModel} from '../../../model/worker-model.model';
-import {RequirementStore} from '../../../service/requirement/requirement.store';
-import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
-import {Table} from '../../table/table';
-import {RequirementEvent} from '../requirement.event.model';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { finalize, first } from 'rxjs/operators';
+import { Requirement } from '../../../model/requirement.model';
+import { WorkerModel } from '../../../model/worker-model.model';
+import { RequirementStore } from '../../../service/requirement/requirement.store';
+import { WorkerModelService } from '../../../service/worker-model/worker-model.service';
+import { Table } from '../../table/table';
+import { RequirementEvent } from '../requirement.event.model';
 
 @Component({
     selector: 'app-requirements-list',
