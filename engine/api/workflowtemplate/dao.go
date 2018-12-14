@@ -134,6 +134,27 @@ func GetAuditsByTemplateIDsAndEventTypes(db gorp.SqlExecutor, templateIDs []int6
 	return awts, nil
 }
 
+// GetAuditByTemplateIDAndEventTypesAndVersionAfter returns the template audit for given template version.
+func GetAuditByTemplateIDAndEventTypesAndVersionAfter(db gorp.SqlExecutor, templateID int64,
+	eventTypes []string, version int64) (*sdk.AuditWorkflowTemplate, error) {
+	a := sdk.AuditWorkflowTemplate{}
+
+	if err := db.SelectOne(&a,
+		`SELECT * FROM workflow_template_audit
+      WHERE workflow_template_id = $1
+      AND event_type = ANY(string_to_array($2, ',')::text[])
+      AND (data_after->>'version')::int = $3`,
+		templateID, strings.Join(eventTypes, ","), version,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "Cannot get workflow template audit")
+	}
+
+	return &a, nil
+}
+
 // InsertInstance for workflow template in database.
 func InsertInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) error {
 	return sdk.WrapError(gorpmapping.Insert(db, wti), "Unable to insert workflow template relation %d with workflow %d",

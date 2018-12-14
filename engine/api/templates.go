@@ -573,3 +573,26 @@ func (api *API) getTemplateAuditsHandler() service.Handler {
 		return service.WriteJSON(w, as, http.StatusOK)
 	}
 }
+
+func (api *API) getTemplateAuditHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+		t := getWorkflowTemplate(ctx)
+
+		version, err := requestVarInt(r, "version")
+		if err != nil {
+			return err
+		}
+
+		a, err := workflowtemplate.GetAuditByTemplateIDAndEventTypesAndVersionAfter(api.mustDB(), t.ID,
+			[]string{"WorkflowTemplateAdd", "WorkflowTemplateUpdate"}, version)
+		if err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, a, http.StatusOK)
+	}
+}

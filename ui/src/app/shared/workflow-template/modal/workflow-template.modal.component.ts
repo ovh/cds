@@ -5,6 +5,7 @@ import { Project } from '../../../model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from '../../../model/workflow-template.model';
 import { Workflow } from '../../../model/workflow.model';
 import { WorkflowTemplateService } from '../../../service/services.module';
+import { Item } from '../../../shared/diff/list/diff.list.component';
 
 @Component({
     selector: 'app-workflow-template-modal',
@@ -12,18 +13,18 @@ import { WorkflowTemplateService } from '../../../service/services.module';
     styleUrls: ['./workflow-template.modal.scss']
 })
 export class WorkflowTemplateModalComponent {
-    @ViewChild('workflowTemplateModal')
-    workflowTemplateModal: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
-
+    @ViewChild('workflowTemplateModal') workflowTemplateModal: ModalTemplate<boolean, boolean, void>;
     @Input() project: Project;
     @Input() workflow: Workflow;
-
+    modal: ActiveModal<boolean, boolean, void>;
     workflowTemplate: WorkflowTemplate;
     workflowTemplateInstance: WorkflowTemplateInstance;
+    diffItems: Array<Item>;
 
-    constructor(private _modalService: SuiModalService, private _templateService: WorkflowTemplateService) {
-    }
+    constructor(
+        private _modalService: SuiModalService,
+        private _templateService: WorkflowTemplateService
+    ) { }
 
     show(): void {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateModal);
