@@ -44,6 +44,7 @@ func (api *API) InitRouter() {
 	// Admin
 	r.Handle("/admin/maintenance", r.POST(api.postMaintenanceHandler, NeedAdmin(true)))
 	r.Handle("/admin/warning", r.DELETE(api.adminTruncateWarningsHandler, NeedAdmin(true)))
+	r.Handle("/admin/database/migration/unlock/{id}", r.POST(api.postMigrationUnlockedHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug", r.GET(api.getProfileIndexHandler, Auth(false)))
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)), r.GET(api.getCPUProfileHandler, NeedAdmin(true)))
