@@ -886,6 +886,18 @@
     </li>
         </ul>
     </li>
+    <li data-nav-id="/cli/cdsctl/admin/database/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/database/">
+        <span>database</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/database/unlock/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/database/unlock/">
+          <span>unlock</span>
+        </a>
+    </li>
+        </ul>
+    </li>
     <li data-nav-id="/cli/cdsctl/admin/errors/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/errors/">
         <span>errors</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -2175,11 +2187,11 @@
 <ul>
 <li>
 <ul>
-<li><a href="#post-template">POST <code>/template</code></a></li>
 <li><a href="#get-template">GET <code>/template</code></a></li>
-<li><a href="#put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
-<li><a href="#get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
+<li><a href="#post-template">POST <code>/template</code></a></li>
 <li><a href="#delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
+<li><a href="#get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
+<li><a href="#put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
 <li><a href="#post-template-group-name-templateslug-apply">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply</code></a></li>
 <li><a href="#get-template-group-name-templateslug-audit">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit</code></a></li>
 <li><a href="#get-template-group-name-templateslug-instance">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance</code></a></li>
@@ -2207,34 +2219,6 @@
 
 
 
-
-<h3 id="post-template">POST <code>/template</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/template</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>POST</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateHandler%22">postTemplateHandler</a></td>
-</tr>
-</tbody>
-</table>
 
 <h3 id="get-template">GET <code>/template</code></h3>
 
@@ -2264,7 +2248,35 @@
 </tbody>
 </table>
 
-<h3 id="put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
+<h3 id="post-template">POST <code>/template</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateHandler%22">postTemplateHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
 
 <table>
 <thead>
@@ -2277,7 +2289,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -2287,7 +2299,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putTemplateHandler%22">putTemplateHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateHandler%22">deleteTemplateHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2320,7 +2332,7 @@
 </tbody>
 </table>
 
-<h3 id="delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
+<h3 id="put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
 
 <table>
 <thead>
@@ -2333,7 +2345,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -2343,7 +2355,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateHandler%22">deleteTemplateHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putTemplateHandler%22">putTemplateHandler</a></td>
 </tr>
 </tbody>
 </table>
