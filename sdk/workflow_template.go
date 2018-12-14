@@ -314,6 +314,7 @@ type WorkflowTemplateInstance struct {
 	WorkflowID              *int64                  `json:"workflow_id" db:"workflow_id"`
 	WorkflowTemplateVersion int64                   `json:"workflow_template_version" db:"workflow_template_version"`
 	Request                 WorkflowTemplateRequest `json:"request" db:"request"`
+	WorkflowName            string                  `json:"workflow_name" db:"workflow_name"`
 	// aggregates
 	FirstAudit *AuditWorkflowTemplateInstance `json:"first_audit,omitempty" db:"-"`
 	LastAudit  *AuditWorkflowTemplateInstance `json:"last_audit,omitempty" db:"-"`

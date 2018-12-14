@@ -25,7 +25,9 @@ export class WorkflowTemplateAddComponent {
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
-        this.workflowTemplate = new WorkflowTemplate();
+        let wt = new WorkflowTemplate();
+        wt.editable = true;
+        this.workflowTemplate = wt;
         this.getGroups();
     }
 

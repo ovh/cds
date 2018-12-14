@@ -340,7 +340,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	}
 
-	isRoot := n.ID == wr.Workflow.Root.ID
+	isRoot := n.ID == wr.Workflow.WorkflowData.Node.ID
 
 	gitValues := currentGitValues
 	if previousGitValues[tagGitURL] == currentGitValues[tagGitURL] || previousGitValues[tagGitHTTPURL] == currentGitValues[tagGitHTTPURL] {

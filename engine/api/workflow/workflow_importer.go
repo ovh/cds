@@ -80,6 +80,18 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 		return sdk.WrapError(errO, "Unable to load old workflow")
 	}
 
+	// Retrieve existing hook
+	oldHooks := oldW.WorkflowData.GetHooksMapRef()
+	for i := range w.Root.Hooks {
+		h := &w.Root.Hooks[i]
+		if h.Ref != "" {
+			if oldH, has := oldHooks[h.Ref]; has {
+				h.Config = oldH.Config
+				h.UUID = oldH.UUID
+			}
+		}
+	}
+
 	w.ID = oldW.ID
 	if err := Update(ctx, db, store, w, oldW, proj, u); err != nil {
 		return sdk.WrapError(err, "Unable to update workflow")
@@ -127,38 +139,31 @@ func setTemplateData(db gorp.SqlExecutor, p *sdk.Project, w *sdk.Workflow, u *sd
 		return err
 	}
 	if wt == nil {
-		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find given workflow template")
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Could not find given workflow template")
 	}
 
-	wtis, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDs(db, wt.ID, []int64{p.ID})
+	wti, err := workflowtemplate.GetInstanceByWorkflowNameAndTemplateIDAndProjectID(db, w.Name, wt.ID, p.ID)
 	if err != nil {
 		return err
 	}
-	var wTemplateInstance *sdk.WorkflowTemplateInstance
-	for _, wti := range wtis {
-		if wti.Request.WorkflowName == w.Name {
-			wTemplateInstance = &wti
-			break
-		}
-	}
-	if wTemplateInstance == nil {
-		return sdk.WrapError(sdk.ErrWrongRequest, "Could not find a template instance for workflow %s", w.Name)
+	if wti == nil {
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Could not find a template instance for workflow %s", w.Name)
 	}
 
 	// remove existing relations between workflow and template
-	if err := workflowtemplate.DeleteInstanceNotIDAndWorkflowID(db, wTemplateInstance.ID, w.ID); err != nil {
+	if err := workflowtemplate.DeleteInstanceNotIDAndWorkflowID(db, wti.ID, w.ID); err != nil {
 		return err
 	}
 
-	old := sdk.WorkflowTemplateInstance(*wTemplateInstance)
+	old := sdk.WorkflowTemplateInstance(*wti)
 
 	// set the workflow id on target instance
-	wTemplateInstance.WorkflowID = &w.ID
-	if err := workflowtemplate.UpdateInstance(db, wTemplateInstance); err != nil {
+	wti.WorkflowID = &w.ID
+	if err := workflowtemplate.UpdateInstance(db, wti); err != nil {
 		return err
 	}
 
-	event.PublishWorkflowTemplateInstanceUpdate(old, *wTemplateInstance, u)
+	event.PublishWorkflowTemplateInstanceUpdate(old, *wti, u)
 
 	return nil
 }

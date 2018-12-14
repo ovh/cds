@@ -94,6 +94,10 @@ func newSteps(a sdk.Action) []Step {
 				if format != nil {
 					coverageArgs["format"] = format.Value
 				}
+				minimum := sdk.ParameterFind(&act.Parameters, "minimum")
+				if minimum != nil {
+					coverageArgs["minimum"] = minimum.Value
+				}
 				s["coverage"] = coverageArgs
 			case sdk.ArtifactDownload:
 				artifactDownloadArgs := map[string]string{}
@@ -146,6 +150,10 @@ func newSteps(a sdk.Action) []Step {
 				entrypoint := sdk.ParameterFind(&act.Parameters, "entrypoint")
 				if entrypoint != nil && entrypoint.Value != "" {
 					serveStaticFilesArgs["entrypoint"] = entrypoint.Value
+				}
+				staticKey := sdk.ParameterFind(&act.Parameters, "static-key")
+				if staticKey != nil && staticKey.Value != "" {
+					serveStaticFilesArgs["static-key"] = staticKey.Value
 				}
 				s["serveStaticFiles"] = serveStaticFilesArgs
 			case sdk.GitCloneAction:

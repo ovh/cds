@@ -34,6 +34,20 @@ func (w *WorkflowData) GetHooks() map[string]NodeHook {
 	return res
 }
 
+// GetHooksMapRef returns the list of all hooks in the workflow tree
+func (w *WorkflowData) GetHooksMapRef() map[string]NodeHook {
+	if w == nil {
+		return nil
+	}
+	res := make(map[string]NodeHook)
+	for _, n := range w.Array() {
+		for _, h := range n.Hooks {
+			res[h.Ref] = h
+		}
+	}
+	return res
+}
+
 func (w *WorkflowData) Array() []*Node {
 	nodes := make([]*Node, 0)
 	nodes = w.Node.array(nodes)

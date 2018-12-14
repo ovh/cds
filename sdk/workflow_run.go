@@ -465,12 +465,12 @@ func (w *WorkflowNodeRunArtifact) GetPath() string {
 }
 
 const workflowNodeRunReport = `{{- if .Stages }}
-CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}{{ if eq .Status "Stopped" -}} ■ {{ else }}- {{ end }} {{ end }} {{ end }}
 {{- range $s := .Stages}}
 {{- if $s.RunJobs }}
 * {{$s.Name}}
 {{- range $j := $s.RunJobs}}
-  * {{$j.Job.Action.Name}} {{ if eq $j.Status "Success" -}} ✔ {{ else }}{{ if eq $j.Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+  * {{$j.Job.Action.Name}} {{ if eq $j.Status "Success" -}} ✔ {{ else }}{{ if eq $j.Status "Fail" -}} ✘ {{ else }}{{ if eq $j.Status "Stopped" -}} ■ {{ else }}- {{ end }} {{ end }} {{ end }}
 {{- end}}
 {{- end}}
 {{- end}}

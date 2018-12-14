@@ -7,6 +7,8 @@ import { WorkerModelService } from '../../../service/worker-model/worker-model.s
 import { Table } from '../../table/table';
 import { RequirementEvent } from '../requirement.event.model';
 
+export const OSArchitecture = 'os-architecture';
+
 @Component({
     selector: 'app-requirements-list',
     templateUrl: './requirements.list.html',
@@ -86,7 +88,27 @@ export class RequirementsListComponent extends Table  implements OnInit {
         this.event.emit(new RequirementEvent('delete', r));
     }
 
-    change(): void {
+    change(req: Requirement): void {
+        switch (req.type) {
+            case 'service':
+                // if type service, user have to choose a hostname
+                break;
+            case 'memory':
+                // memory: memory_4096
+                req.name = 'memory_' + req.value;
+                break
+            case 'model':
+                req.name = req.value;
+                break
+            case 'volume':
+                break;
+            case OSArchitecture:
+                req.name = OSArchitecture;
+                break;
+            default:
+                // else, name is the value of the requirement
+                req.name = req.value;
+        }
         this.onChange.emit(this.requirements);
     }
 
