@@ -17,7 +17,7 @@ func (api *API) postMigrationUnlockedHandler() service.Handler {
 		id := vars["id"]
 
 		if len(id) == 0 {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postMigrationUnlockedHandler> id is mandatory. Check id from table gorp_migrations_lock")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Id is mandatory. Check id from table gorp_migrations_lock")
 		}
 
 		return dbmigrate.UnlockMigrate(api.mustDB().Db, id)
