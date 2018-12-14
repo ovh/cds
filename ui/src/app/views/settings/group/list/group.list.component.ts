@@ -1,7 +1,8 @@
-import {Component, Input} from '@angular/core';
-import {Group} from '../../../../model/group.model';
-import {GroupService} from '../../../../service/group/group.service';
-import {Table} from '../../../../shared/table/table';
+import { Component, Input } from '@angular/core';
+import { Group } from '../../../../model/group.model';
+import { GroupService } from '../../../../service/group/group.service';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { Table } from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-group-list',
@@ -16,12 +17,21 @@ export class GroupListComponent extends Table {
 
     filter: string;
     groups: Array<Group>;
+    path: Array<PathItem>;
 
     constructor(private _groupService: GroupService) {
         super();
-        this._groupService.getGroups().subscribe( wms => {
+
+        this._groupService.getGroups().subscribe(wms => {
             this.groups = wms;
         });
+
+        this.path = [<PathItem>{
+            translate: 'common_settings'
+        }, <PathItem>{
+            translate: 'group_list_title',
+            routerLink: ['/', 'settings', 'group']
+        }];
     }
 
     getData(): any[] {

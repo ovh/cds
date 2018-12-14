@@ -16,7 +16,6 @@
   "account_verify_title": "Information du compte",
   "account_verify_error": "Impossible d'activer le compte.",
 
-  "action_add_title": "Ajouter une action",
   "action_step_title": "Étapes du job",
   "action_step_final_title": "Étapes finales du job",
   "action_list_title": "Actions",
@@ -34,6 +33,7 @@
   "action_optional_details": "Cochée, cela signifie que même si cette étape tombe en erreur, le déroulement continue",
   "action_always_executed": "Toujours executée",
   "action_always_executed_details": "Cochée, cela signifie que cette étape sera toujours executée même si les étapes précédentes tombent en erreur",
+  "action_help_line_1": "Qu'est-ce qu'une action ?",
 
   "admin_migration_not_started": "Non commencé",
   "admin_migration_started": "En cours",
@@ -173,6 +173,7 @@
   "common_preview": "Prévisualisation",
   "common_details": "Détails",
   "common_settings": "Configuration",
+  "common_admin": "Administration",
   "common_optional": "Optionel",
   "common_ask_cds_administrator": "Demandez à votre administrateur CDS",
   "common_audit": "Audit",
@@ -286,6 +287,8 @@
   "common_not_up_to_date": "Mise à jour disponible",
   "common_read_more": "En savoir plus",
   "common_update": "Modifier",
+  "common_split": "Séparé",
+  "common_unified": "Unifié",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
@@ -421,7 +424,6 @@
   "hook_task_execs_total": "Total des exécutions",
   "hook_task_repo_fullname": "Nom du dépôt",
   "hook_task_execs": "Exécutions",
-  "hook_task_details": "Détails de la tâche",
 
   "home_documentation": "Documentation",
   "home_title": "Bienvenue sur CDS",
@@ -771,11 +773,9 @@
   "user_load_user": "Chargement de l'utilisateur...",
   "user_is_admin": "Cet utilisateur est un administrateur CDS",
   "user_saved": "Utilisateur sauvegardé",
-  "user_my_profile": "Mon profil",
   "user_deleted": "L'utilisateur est supprimé",
 
   "user_list_title": "Utilisateurs",
-  "user_edit_title": "Édition de l'utisateur",
   "user_none": "Aucun utilisateur",
 
   "vcs_connection" : "Connexion : ",
@@ -883,8 +883,6 @@
   "worker_model_os": "Système d'exploitation",
   "worker_model_arch": "Architecture",
   "worker_model_pattern_title": "Patterns des scripts de configuration",
-  "worker_model_pattern_add": "Ajouter un pattern de modèle de worker",
-  "worker_model_pattern_edit": "Editer un pattern de modèle de worker",
   "worker_model_pre_cmd": "Commande avant exécution du worker",
   "worker_model_cmd": "Commande principale du worker",
   "worker_model_cmd_tooltip": "La commande doit terminer par ./worker",
@@ -1049,11 +1047,10 @@
   "workflow_wizard_select_template": "Sélectionner un modèle de workflow",
   "wizard_repo_files" : "Fichiers trouvés : ",
 
-  "workflow_template_add_title": "Création d'un modèle de workflow",
-  "workflow_template_edit_title": "Édition du modèle de workflow",
   "workflow_template_created": "Modèle de workflow créé",
   "workflow_template_saved": "Modèle de workflow sauvegardé",
   "workflow_template_deleted": "Modèle de workflow supprimé",
+  "workflow_template": "Modèle de workflow",
   "workflow_templates": "Modèles de workflow",
   "workflow_template_help_line_1": "Votre workflow n'a pas été généré depuis un modèle de workflow.",
   "workflow_template_help_line_2": "Un modèle de workflow vous permet d'initialiser et de mettre à jour un workflow et ses composants rapidement.",

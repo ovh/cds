@@ -6,6 +6,7 @@ import { Group } from '../../../../model/group.model';
 import { WorkflowTemplate } from '../../../../model/workflow-template.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
@@ -17,6 +18,7 @@ export class WorkflowTemplateAddComponent {
     workflowTemplate: WorkflowTemplate;
     groups: Array<Group>;
     loading: boolean;
+    path: Array<PathItem>;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -29,6 +31,15 @@ export class WorkflowTemplateAddComponent {
         wt.editable = true;
         this.workflowTemplate = wt;
         this.getGroups();
+
+        this.path = [<PathItem>{
+            translate: 'common_settings'
+        }, <PathItem>{
+            translate: 'workflow_templates',
+            routerLink: ['/', 'settings', 'workflow-template']
+        }, <PathItem>{
+            translate: 'common_create'
+        }];
     }
 
     getGroups() {

@@ -1,10 +1,9 @@
 <div *ngIf="application;then showApp;else loadApp"></div>
 <ng-template #showApp>
     <div id="ApplicationShow">
-        <div class="CDSbreadcrumb">
-            <app-breadcrumb [project]="project" [application]="application" [workflow]="workflowName" [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun"
-             [wPipeline]="workflowPipeline"></app-breadcrumb>
-        </div>
+        <app-project-breadcrumb [project]="project" [application]="application" [workflow]="workflowName" [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun"
+             [wPipeline]="workflowPipeline"></app-project-breadcrumb>
+
         <div class="CDSmenu" *ngIf="application">
             <sm-menu title="" class="pointing secondary">
                 <a sm-item [class.active]="selectedTab === 'home'" (click)="showTab('home')">

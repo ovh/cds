@@ -1,360 +1,341 @@
-<h2>{{ 'worker_model_edit_title' | translate }} <span *ngIf="workerModel && workerModel.id">{{workerModel.name}}</span></h2>
-
-<div *ngIf="workerModel;then showWorkerModel;else loadWorkerModel"></div>
-<ng-template #showWorkerModel>
-  <div id="WorkerModelEdit">
-    <form class="ui form">
-      <div class="ui grid">
-        <div class="ten wide column">
-            <div class="four fields">
-              <div class="field">
+<div class="wrapper">
+  <app-breadcrumb [path]="path"></app-breadcrumb>
+  <app-scrollview class="scrollview">
+    <div *ngIf="workerModel;then showWorkerModel;else loadWorkerModel"></div>
+    <ng-template #showWorkerModel>
+      <div id="WorkerModelEdit">
+        <form class="ui form">
+          <div class="ui grid">
+            <div class="ten wide column">
+              <div class="four fields">
+                <div class="field">
                   <label>{{'worker_model_name' | translate}} *</label>
                   <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name" [disabled]="loading">
-              </div>
-              <div class="field">
+                </div>
+                <div class="field">
                   <label>{{'worker_model_group' | translate}}</label>
-                  <sm-select class="fluid search"
-                      name="group"
-                      *ngIf="workerModelGroups"
-                      [disabled]="loading"
-                      [(model)]="workerModel.group_id"
-                      [options]="{'fullTextSearch': true}">
-                      <option *ngFor="let group of workerModelGroups" [value]="group.id">{{group.name}}</option>
+                  <sm-select class="fluid search" name="group" *ngIf="workerModelGroups" [disabled]="loading" [(model)]="workerModel.group_id"
+                    [options]="{'fullTextSearch': true}">
+                    <option *ngFor="let group of workerModelGroups" [value]="group.id">{{group.name}}</option>
                   </sm-select>
-              </div>
-              <div class="field">
+                </div>
+                <div class="field">
                   <label>{{'worker_model_restricted' | translate}}</label>
                   <div class="ui checkbox">
-                      <input type="checkbox" id="restricted" name="restricted" [(ngModel)]="workerModel.restricted" [disabled]="loading">
-                      <label for="restricted">{{'worker_model_restricted_help' | translate}} <a target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/#what-s-a-restricted-worker-model">{{'common_see_documentation' | translate}}</a></label>
+                    <input type="checkbox" id="restricted" name="restricted" [(ngModel)]="workerModel.restricted"
+                      [disabled]="loading">
+                    <label for="restricted">{{'worker_model_restricted_help' | translate}} <a target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/#what-s-a-restricted-worker-model">{{'common_see_documentation'
+                        | translate}}</a></label>
                   </div>
-              </div>
-              <div class="field">
-                <label>{{'worker_model_is_deprecated' | translate}}</label>
-                <div class="ui checkbox">
-                    <input type="checkbox" id="deprecated" name="deprecated" [(ngModel)]="workerModel.is_deprecated" [disabled]="loading">
+                </div>
+                <div class="field">
+                  <label>{{'worker_model_is_deprecated' | translate}}</label>
+                  <div class="ui checkbox">
+                    <input type="checkbox" id="deprecated" name="deprecated" [(ngModel)]="workerModel.is_deprecated"
+                      [disabled]="loading">
                     <label for="deprecated">{{'worker_model_deprecated_help' | translate}}</label>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="field">
-              <label>{{'common_description' | translate}}</label>
-              <textarea name="description" [(ngModel)]="workerModel.description"
-                        rows="{{getDescriptionHeight()}}"></textarea>
-            </div>
-            <div class="two fields">
               <div class="field">
+                <label>{{'common_description' | translate}}</label>
+                <textarea name="description" [(ngModel)]="workerModel.description" rows="{{getDescriptionHeight()}}"></textarea>
+              </div>
+              <div class="two fields">
+                <div class="field">
                   <label>{{'worker_model_os' | translate}}</label>
                   <input class="ui input" type="text" name="os" [(ngModel)]="workerModel.registered_os" [disabled]="true">
-              </div>
-              <div class="field">
+                </div>
+                <div class="field">
                   <label>{{'worker_model_arch' | translate}}</label>
                   <input class="ui input" type="text" name="arch" [(ngModel)]="workerModel.registered_arch" [disabled]="true">
-              </div>
-            </div>
-            <div class="field" *ngIf="workerModel.id">
-              <label>{{'worker_model_status' | translate}}</label>
-              <div class="ui icon message" *ngIf="!workerModel.disabled">
-                <i class="check green icon"></i>
-                <div class="content">
-                  <p>{{ 'worker_model_enabled' | translate }}</p>
                 </div>
-                <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=true;clickSaveButton()">{{ 'worker_model_disable' | translate }}</button>
               </div>
-
-              <div class="ui icon message" *ngIf="workerModel.disabled">
-                <i class="warning red icon"></i>
-                <div class="content">
-                  <p>{{ 'worker_model_disabled' | translate }}</p>
-                </div>
-                <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=false;clickSaveButton()">{{ 'worker_model_enable' | translate }}</button>
-              </div>
-              <div class="ui icon message" *ngIf="workerModel.nb_spawn_err > 0">
-                <i class="exclamation triangle icon large red"></i>
-                <div class="content">
-                  <h3>{{ 'worker_model_error' | translate }}</h3>
-                  <p>{{workerModel.last_spawn_err}}</p>
-                  <div>
-                    <h4>{{'worker_model_help_error' | translate}}</h4>
-                    <div class="ui list">
-                      <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_1' | translate}}</div>
-                      <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_2' | translate}}</div>
-                      <div class="item" *ngIf="workerModel.type === 'host'">{{'worker_model_help_error_host_1' | translate}}</div>
-                      <div class="item" *ngIf="workerModel.type === 'host'">{{'worker_model_help_error_host_2' | translate}}</div>
-                      <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_1' | translate}}</div>
-                      <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_2' | translate}}</div>
-                    </div>
+              <div class="field" *ngIf="workerModel.id">
+                <label>{{'worker_model_status' | translate}}</label>
+                <div class="ui icon message" *ngIf="!workerModel.disabled">
+                  <i class="check green icon"></i>
+                  <div class="content">
+                    <p>{{ 'worker_model_enabled' | translate }}</p>
                   </div>
+                  <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=true;clickSaveButton()">{{
+                    'worker_model_disable' | translate }}</button>
+                </div>
+
+                <div class="ui icon message" *ngIf="workerModel.disabled">
+                  <i class="warning red icon"></i>
+                  <div class="content">
+                    <p>{{ 'worker_model_disabled' | translate }}</p>
+                  </div>
+                  <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=false;clickSaveButton()">{{
+                    'worker_model_enable' | translate }}</button>
+                </div>
+                <div class="ui icon message" *ngIf="workerModel.nb_spawn_err > 0">
+                  <i class="exclamation triangle icon large red"></i>
+                  <div class="content">
+                    <h3>{{ 'worker_model_error' | translate }}</h3>
+                    <p>{{workerModel.last_spawn_err}}</p>
+                    <div>
+                      <h4>{{'worker_model_help_error' | translate}}</h4>
+                      <div class="ui list">
+                        <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_1' |
+                          translate}}</div>
+                        <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_2' |
+                          translate}}</div>
+                        <div class="item" *ngIf="workerModel.type === 'host'">{{'worker_model_help_error_host_1' |
+                          translate}}</div>
+                        <div class="item" *ngIf="workerModel.type === 'host'">{{'worker_model_help_error_host_2' |
+                          translate}}</div>
+                        <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_1'
+                          | translate}}</div>
+                        <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_2'
+                          | translate}}</div>
+                      </div>
+                    </div>
                     <h4 *ngIf="workerModel.last_spawn_err_log">{{ 'worker_model_error_log' | translate }}</h4>
                     <div class="logs" *ngIf="workerModel.last_spawn_err_log">
-                        <pre>{{workerModel.last_spawn_err_log}}</pre>
+                      <pre>{{workerModel.last_spawn_err_log}}</pre>
                     </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="three fields">
-              <div class="seven wide field">
+              <div class="three fields">
+                <div class="seven wide field">
                   <label>{{'worker_model_type' | translate}} *</label>
                   <ng-container *ngIf="workerModelTypes">
-                    <sui-select class="selection"
-                                name ="type"
-                                placeholder="{{'common_select' | translate}}"
-                                [isDisabled]="loading"
-                                [options]="workerModelTypes"
-                                isSearchable="true"
-                                [(ngModel)]="workerModel.type"
-                                (ngModelChange)="filterPatterns($event)"
-                                #selectType>
-                        <sui-select-option *ngFor="let option of selectType.filteredOptions"
-                                           [value]="option">
-                        </sui-select-option>
+                    <sui-select class="selection" name="type" placeholder="{{'common_select' | translate}}"
+                      [isDisabled]="loading" [options]="workerModelTypes" isSearchable="true" [(ngModel)]="workerModel.type"
+                      (ngModelChange)="filterPatterns($event)" #selectType>
+                      <sui-select-option *ngFor="let option of selectType.filteredOptions" [value]="option">
+                      </sui-select-option>
                     </sui-select>
                   </ng-container>
-              </div>
-              <div class="five wide field">
-                <label>{{'worker_model_communication' | translate}}</label>
-                <sm-select class="fluid search"
-                    name="type"
-                    *ngIf="workerModelCommunications"
-                    [disabled]="loading"
-                    [(model)]="workerModel.communication"
-                    [options]="{'fullTextSearch': true}">
+                </div>
+                <div class="five wide field">
+                  <label>{{'worker_model_communication' | translate}}</label>
+                  <sm-select class="fluid search" name="type" *ngIf="workerModelCommunications" [disabled]="loading"
+                    [(model)]="workerModel.communication" [options]="{'fullTextSearch': true}">
                     <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
-                </sm-select>
-              </div>
-              <div class="four wide field" *ngIf="currentUser.admin || workerModel.restricted">
+                  </sm-select>
+                </div>
+                <div class="four wide field" *ngIf="currentUser.admin || workerModel.restricted">
                   <label>{{'worker_model_provision' | translate}}</label>
                   <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision" [disabled]="loading">
-              </div>
-            </div>
-
-            <ng-container *ngIf="workerModel.type === 'docker'">
-              <div class="field">
-                <label>{{'worker_model_image' | translate}} *</label>
-                <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_docker.image" [disabled]="loading">
-              </div>
-              <div class="field">
-                <label>{{'worker_model_pattern_title' | translate}}</label>
-                <sui-select class="selection"
-                            name="pattern"
-                            placeholder="{{'common_select' | translate}}"
-                            labelField="name"
-                            [options]="workerModelPatternsFiltered"
-                            isSearchable="true"
-                            [(ngModel)]="patternSelected"
-                            (ngModelChange)="preFillModel($event)"
-                            #selectPattern>
-                    <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
-                                       [value]="option">
-                    </sui-select-option>
-                </sui-select>
-              </div>
-              <div class="field">
-                <label>{{'worker_model_shell_docker' | translate}} *</label>
-                <input class="ui input" type="text" name="shell" placeholder="sh -c" [(ngModel)]="workerModel.model_docker.shell" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
-              </div>
-              <div class="field">
-                <label suiPopup [popupText]="'worker_model_cmd_tooltip' | translate" popupPlacement="top left">
-                    {{'worker_model_cmd_docker' | translate}} * <i _ngcontent-c5="" class="fa fa-question-circle"></i>
-                </label>
-                <input
-                  class="ui input"
-                  type="text"
-                  name="cmd"
-                  [(ngModel)]="workerModel.model_docker.cmd"
-                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
-              </div>
-              <div class="field">
-                <label suiPopup [popupText]="'worker_model_env_tooltip' | translate" popupPlacement="top left">
-                  {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
-                </label>
-                <ng-container *ngIf="workerModel.model_docker.envs">
-                  <div class="two fields" *ngFor="let envName of envNames; let index = index">
-                    <div class="field">
-                      <input type="text" name="name-{{envName}}" [placeholder]="'common_name' | translate" [value]="envName" disabled>
-                    </div>
-                    <div class="field">
-                      <input type="text" name="value-{{envName}}" [placeholder]="'common_value' | translate" [(ngModel)]="workerModel.model_docker.envs[envName]" [disabled]="!canEdit">
-                    </div>
-                    <button class="ui icon red button" (click)="deleteEnv(envName, index)" *ngIf="canEdit">
-                      <i class="trash icon"></i>
-                    </button>
-                  </div>
-                </ng-container>
-                <div class="two fields" *ngIf="canEdit">
-                  <div class="field">
-                    <input type="text" name="newEnvName" [placeholder]="'common_name' | translate" [(ngModel)]="newEnvName">
-                  </div>
-                  <div class="field">
-                    <input type="text" name="newEnvValue" [placeholder]="'common_value' | translate" [(ngModel)]="newEnvValue">
-                  </div>
-                  <button class="ui icon green button" (click)="addEnv(newEnvName, newEnvValue)">
-                    <i class="plus icon"></i>
-                  </button>
                 </div>
               </div>
-            </ng-container>
-            <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
-              <div class="field">
-                <label>{{'worker_model_image' | translate}} *</label>
-                <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_virtual_machine.image" [disabled]="loading">
-              </div>
-              <div class="field" *ngIf="workerModel.type === 'openstack'">
-                <label>Flavor</label>
-                <input class="ui input" type="text" name="flavor" [(ngModel)]="workerModel.model_virtual_machine.flavor" [disabled]="loading">
-              </div>
-              <div class="field">
-                <label>{{'worker_model_pattern_title' | translate}}</label>
-                <sui-select class="selection"
-                            name="pattern"
-                            placeholder="{{'common_select' | translate}}"
-                            labelField="name"
-                            [options]="workerModelPatternsFiltered"
-                            isSearchable="true"
-                            [(ngModel)]="patternSelected"
-                            (ngModelChange)="preFillModel($event)"
-                            #selectPattern>
-                    <sui-select-option *ngFor="let option of selectPattern.filteredOptions"
-                                       [value]="option">
-                    </sui-select-option>
-                </sui-select>
-              </div>
-              <div class="field">
-                <label>{{'worker_model_pre_cmd' | translate}}</label>
-                <textarea
-                  class="ui input"
-                  name="pre_cmd"
-                  [(ngModel)]="workerModel.model_virtual_machine.pre_cmd"
-                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
-                </textarea>
-              </div>
-              <div class="field">
-                <label suiPopup [popupText]="'worker_model_cmd_tooltip' | translate" popupPlacement="top left">
-                    {{'worker_model_cmd' | translate}} * <i _ngcontent-c5="" class="fa fa-question-circle"></i>
-                </label>
-                <input
-                  class="ui input"
-                    type="text"
-                    name="cmd"
-                    [(ngModel)]="workerModel.model_virtual_machine.cmd"
-                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
-              </div>
-              <div class="field">
-                <label>{{'worker_model_post_cmd' | translate}}</label>
-                <textarea class="ui input"
-                  name="post_cmd"
-                  [(ngModel)]="workerModel.model_virtual_machine.post_cmd"
-                  [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
-                </textarea>
-              </div>
-            </ng-container>
 
-            <div *ngIf="canEdit" class="field">
+              <ng-container *ngIf="workerModel.type === 'docker'">
+                <div class="field">
+                  <label>{{'worker_model_image' | translate}} *</label>
+                  <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_docker.image"
+                    [disabled]="loading">
+                </div>
+                <div class="field">
+                  <label>{{'worker_model_pattern_title' | translate}}</label>
+                  <sui-select class="selection" name="pattern" placeholder="{{'common_select' | translate}}" labelField="name"
+                    [options]="workerModelPatternsFiltered" isSearchable="true" [(ngModel)]="patternSelected"
+                    (ngModelChange)="preFillModel($event)" #selectPattern>
+                    <sui-select-option *ngFor="let option of selectPattern.filteredOptions" [value]="option">
+                    </sui-select-option>
+                  </sui-select>
+                </div>
+                <div class="field">
+                  <label>{{'worker_model_shell_docker' | translate}} *</label>
+                  <input class="ui input" type="text" name="shell" placeholder="sh -c" [(ngModel)]="workerModel.model_docker.shell"
+                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                </div>
+                <div class="field">
+                  <label suiPopup [popupText]="'worker_model_cmd_tooltip' | translate" popupPlacement="top left">
+                    {{'worker_model_cmd_docker' | translate}} * <i _ngcontent-c5="" class="fa fa-question-circle"></i>
+                  </label>
+                  <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_docker.cmd" [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                </div>
+                <div class="field">
+                  <label suiPopup [popupText]="'worker_model_env_tooltip' | translate" popupPlacement="top left">
+                    {{'worker_model_env' | translate}} <i _ngcontent-c5="" class="fa fa-question-circle"></i>
+                  </label>
+                  <ng-container *ngIf="workerModel.model_docker.envs">
+                    <div class="two fields" *ngFor="let envName of envNames; let index = index">
+                      <div class="field">
+                        <input type="text" name="name-{{envName}}" [placeholder]="'common_name' | translate" [value]="envName"
+                          disabled>
+                      </div>
+                      <div class="field">
+                        <input type="text" name="value-{{envName}}" [placeholder]="'common_value' | translate"
+                          [(ngModel)]="workerModel.model_docker.envs[envName]" [disabled]="!canEdit">
+                      </div>
+                      <button class="ui icon red button" (click)="deleteEnv(envName, index)" *ngIf="canEdit">
+                        <i class="trash icon"></i>
+                      </button>
+                    </div>
+                  </ng-container>
+                  <div class="two fields" *ngIf="canEdit">
+                    <div class="field">
+                      <input type="text" name="newEnvName" [placeholder]="'common_name' | translate" [(ngModel)]="newEnvName">
+                    </div>
+                    <div class="field">
+                      <input type="text" name="newEnvValue" [placeholder]="'common_value' | translate" [(ngModel)]="newEnvValue">
+                    </div>
+                    <button class="ui icon green button" (click)="addEnv(newEnvName, newEnvValue)">
+                      <i class="plus icon"></i>
+                    </button>
+                  </div>
+                </div>
+              </ng-container>
+              <ng-container *ngIf="workerModel.type && workerModel.type !== 'docker'">
+                <div class="field">
+                  <label>{{'worker_model_image' | translate}} *</label>
+                  <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.model_virtual_machine.image"
+                    [disabled]="loading">
+                </div>
+                <div class="field" *ngIf="workerModel.type === 'openstack'">
+                  <label>Flavor</label>
+                  <input class="ui input" type="text" name="flavor" [(ngModel)]="workerModel.model_virtual_machine.flavor"
+                    [disabled]="loading">
+                </div>
+                <div class="field">
+                  <label>{{'worker_model_pattern_title' | translate}}</label>
+                  <sui-select class="selection" name="pattern" placeholder="{{'common_select' | translate}}" labelField="name"
+                    [options]="workerModelPatternsFiltered" isSearchable="true" [(ngModel)]="patternSelected"
+                    (ngModelChange)="preFillModel($event)" #selectPattern>
+                    <sui-select-option *ngFor="let option of selectPattern.filteredOptions" [value]="option">
+                    </sui-select-option>
+                  </sui-select>
+                </div>
+                <div class="field">
+                  <label>{{'worker_model_pre_cmd' | translate}}</label>
+                  <textarea class="ui input" name="pre_cmd" [(ngModel)]="workerModel.model_virtual_machine.pre_cmd"
+                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                </textarea>
+                </div>
+                <div class="field">
+                  <label suiPopup [popupText]="'worker_model_cmd_tooltip' | translate" popupPlacement="top left">
+                    {{'worker_model_cmd' | translate}} * <i _ngcontent-c5="" class="fa fa-question-circle"></i>
+                  </label>
+                  <input class="ui input" type="text" name="cmd" [(ngModel)]="workerModel.model_virtual_machine.cmd"
+                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                </div>
+                <div class="field">
+                  <label>{{'worker_model_post_cmd' | translate}}</label>
+                  <textarea class="ui input" name="post_cmd" [(ngModel)]="workerModel.model_virtual_machine.post_cmd"
+                    [disabled]="loading || (!currentUser.admin && !workerModel.restricted)">
+                </textarea>
+                </div>
+              </ng-container>
+
+              <div *ngIf="canEdit" class="field">
                 <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
                 <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
                   <i class="save icon"></i>{{ 'btn_save' | translate }}
                 </button>
+              </div>
             </div>
-        </div>
-        <div class="six wide column">
-          <div class="ui segment">
-            <h2 class="ui header"><i class="fa fa-book"></i> {{ 'settings_tips' | translate }}</h2>
-            <p>{{'worker_model_help_line_1' | translate}}</p>
-            <p>{{'worker_model_help_line_2' | translate}}</p>
+            <div class="six wide column">
+              <div class="ui segment">
+                <h2 class="ui header"><i class="fa fa-book"></i> {{ 'settings_tips' | translate }}</h2>
+                <p>{{'worker_model_help_line_1' | translate}}</p>
+                <p>{{'worker_model_help_line_2' | translate}}</p>
 
-            <i class="fa fa-question-circle"></i> {{'worker_model_help_howtos' | translate}}
-            <div class="ui list">
-              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">{{'worker_model_help_howto_link_1' | translate}}</a>
-              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/">{{'worker_model_help_howto_link_2' | translate}}</a>
-              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">{{'worker_model_help_howto_link_3' | translate}}</a>
-              <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">{{'common_read_more' | translate}}</a>
+                <i class="fa fa-question-circle"></i> {{'worker_model_help_howtos' | translate}}
+                <div class="ui list">
+                  <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/">{{'worker_model_help_howto_link_1'
+                    | translate}}</a>
+                  <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker/docker-customized/">{{'worker_model_help_howto_link_2'
+                    | translate}}</a>
+                  <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/">{{'worker_model_help_howto_link_3'
+                    | translate}}</a>
+                  <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/">{{'common_read_more'
+                    | translate}}</a>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div class="ten wide column" *ngIf="workerModel.id">
-          <div class="ui raised segment">
+            <div class="ten wide column" *ngIf="workerModel.id">
+              <div class="ui raised segment">
 
-            <h3 class="ui header">{{'worker_model_capabilities' | translate}}
-              <i *ngIf="!workerModel.need_registration" class="fa fa-check" style="cursor:pointer" title="{{'worker_model_capabilities_up_to_date' | translate}}"></i>
-              <i *ngIf="workerModel.need_registration" class="fa fa-warning" style="cursor:pointer" title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></i>
-            </h3>
-            <p>
-              {{'worker_model_help_capabilities' | translate}}
-            </p>
-          </div>
-          
-          <sui-accordion class="styled fluid">
-              <sui-accordion-panel [isOpen]="true">
-                  <div title>
-                      <i class="dropdown icon"></i>
-                      {{'worker_model_binary_capability' | translate}}
-                  </div>
-                  <div content>
-                    <table class="ui fixed celled table">
-                        <tr *ngFor="let v of workerModel?.registered_capabilities">
-                            <td>
-                                <div class="ui">{{v.value}}</div>
-                            </td>
-                        </tr>
-                    </table>
-                  </div>
-              </sui-accordion-panel>
-              <sui-accordion-panel [isOpen]="false" (click)="loadUsage()">
-                  <div title>
-                      <i class="dropdown icon"></i>
-                      {{'common_usage' | translate}} <span *ngIf="!loadingUsage && usages">({{usages.length}})</span>
-                  </div>
-                  <div content>
-                    <div class="ui active centered inline loader" *ngIf="loadingUsage"></div>
-                      <span *ngIf="!loadingUsage && usages && usages.length === 0">{{'worker_model_no_usage' | translate}}</span>
-                      <ul class="ui list" *ngIf="!loadingUsage && usages">
-                        <li *ngFor="let pip of usages">
-                          <a 
-                            [routerLink]="['/project', pip.projectKey, 'pipeline', pip.name]">
-                            Pipeline {{pip.name}}
-                          </a>
-                        </li>
-                      </ul>
-                  </div>
-              </sui-accordion-panel>
-          </sui-accordion>          
-        </div>
+                <h3 class="ui header">{{'worker_model_capabilities' | translate}}
+                  <i *ngIf="!workerModel.need_registration" class="fa fa-check" style="cursor:pointer" title="{{'worker_model_capabilities_up_to_date' | translate}}"></i>
+                  <i *ngIf="workerModel.need_registration" class="fa fa-warning" style="cursor:pointer" title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></i>
+                </h3>
+                <p>
+                  {{'worker_model_help_capabilities' | translate}}
+                </p>
+              </div>
 
-        <div class="six wide column" *ngIf="workerModel.id">
-          <div class="field" *ngIf="workerModel.created_by?.username !== ''">
-            <h3>{{'common_created_by' | translate}}</h3>
-            <div>
-              <i class="fa fa-user"></i> {{workerModel.created_by?.fullname}} ({{workerModel.created_by?.username}})
-              <span *ngIf="workerModel.created_by?.admin"><b>Admin</b></span>
+              <sui-accordion class="styled fluid">
+                    <sui-accordion-panel [isOpen]="true">
+                        <div title>
+                            <i class="dropdown icon"></i>
+                            {{'worker_model_binary_capability' | translate}}
+                        </div>
+                        <div content>
+                          <table class="ui fixed celled table">
+                              <tr *ngFor="let v of workerModel?.registered_capabilities">
+                                  <td>
+                                      <div class="ui">{{v.value}}</div>
+                                  </td>
+                              </tr>
+                          </table>
+                        </div>
+                    </sui-accordion-panel>
+                    <sui-accordion-panel [isOpen]="false" (click)="loadUsage()">
+                        <div title>
+                            <i class="dropdown icon"></i>
+                            {{'common_usage' | translate}} <span *ngIf="!loadingUsage && usages">({{usages.length}})</span>
+                        </div>
+                        <div content>
+                          <div class="ui active centered inline loader" *ngIf="loadingUsage"></div>
+                            <span *ngIf="!loadingUsage && usages && usages.length === 0">{{'worker_model_no_usage' | translate}}</span>
+                            <ul class="ui list" *ngIf="!loadingUsage && usages">
+                              <li *ngFor="let pip of usages">
+                                <a
+                                  [routerLink]="['/project', pip.projectKey, 'pipeline', pip.name]">
+                                  Pipeline {{pip.name}}
+                                </a>
+                              </li>
+                            </ul>
+                        </div>
+                    </sui-accordion-panel>
+                </sui-accordion>
             </div>
-            <div *ngIf="workerModel.created_by?.email !== ''">
-              <i class="fa fa-envelope"></i> {{workerModel.created_by?.email}}
-            </div>
-          </div>
-          <div class="field" *ngIf="workerModel.user_last_modified !== ''">
-            <h3>{{'common_last_modified' | translate}}</h3>
-              {{workerModel.user_last_modified}}
-          </div>
-          <div class="field" *ngIf="workerModel.last_registration !== ''">
-            <h3>{{'worker_model_last_registration' | translate}}</h3>
-              {{workerModel.last_registration}}
-          </div>
-          <div class="field">
-            <h3>Registration infos</h3>
-            <div>
-              Need registration : {{workerModel.need_registration}}
-            </div>
-            <div>
-              Check registration : {{workerModel.check_registration}}
-            </div>
-          </div>
-        </div>
 
+            <div class="six wide column" *ngIf="workerModel.id">
+              <div class="field" *ngIf="workerModel.created_by?.username !== ''">
+                <h3>{{'common_created_by' | translate}}</h3>
+                <div>
+                  <i class="fa fa-user"></i> {{workerModel.created_by?.fullname}}
+                  ({{workerModel.created_by?.username}})
+                  <span *ngIf="workerModel.created_by?.admin"><b>Admin</b></span>
+                </div>
+                <div *ngIf="workerModel.created_by?.email !== ''">
+                  <i class="fa fa-envelope"></i> {{workerModel.created_by?.email}}
+                </div>
+              </div>
+              <div class="field" *ngIf="workerModel.user_last_modified !== ''">
+                <h3>{{'common_last_modified' | translate}}</h3>
+                {{workerModel.user_last_modified}}
+              </div>
+              <div class="field" *ngIf="workerModel.last_registration !== ''">
+                <h3>{{'worker_model_last_registration' | translate}}</h3>
+                {{workerModel.last_registration}}
+              </div>
+              <div class="field">
+                <h3>Registration infos</h3>
+                <div>
+                  Need registration : {{workerModel.need_registration}}
+                </div>
+                <div>
+                  Check registration : {{workerModel.check_registration}}
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </form>
       </div>
-    </form>
-  </div>
-</ng-template>
-<ng-template #loadWorkerModel>
-    <div class="ui text active loader">{{ 'worker_model_load_worker_model' | translate }}</div>
-</ng-template>
+    </ng-template>
+    <ng-template #loadWorkerModel>
+      <div class="ui text active loader">{{ 'worker_model_load_worker_model' | translate }}</div>
+    </ng-template>
+  </app-scrollview>
+</div>

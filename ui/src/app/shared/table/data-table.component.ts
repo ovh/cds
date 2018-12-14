@@ -10,7 +10,8 @@ export enum ColumnType {
     ICON = 'icon',
     LINK = 'link',
     ROUTER_LINK = 'router-link',
-    MARKDOWN = 'markdown'
+    MARKDOWN = 'markdown',
+    DATE = 'date'
 }
 
 export type Selector = (d: any) => any;
@@ -34,6 +35,8 @@ export class DataTableComponent extends Table {
     @Output() sortChange = new EventEmitter<string>();
     @Output() dataChange = new EventEmitter<number>();
     @Input() loading: boolean;
+    @Input() withLineClick: boolean;
+    @Output() clickLine = new EventEmitter<any>();
 
     @Input() set data(d: any) {
         this.allData = d;
@@ -61,6 +64,7 @@ export class DataTableComponent extends Table {
     filterFunc: Filter;
     filter: string;
     filteredData: any;
+    indexSelected: number;
 
     columnClick(event: Event, c: Column) {
         if (!c.sortable) {
@@ -117,5 +121,12 @@ export class DataTableComponent extends Table {
 
     pageChange(n: number) {
         this.goTopage(n);
+    }
+
+    lineClick(i: number, d: any) {
+        if (this.withLineClick) {
+            this.indexSelected = i;
+            this.clickLine.emit(d);
+        }
     }
 }

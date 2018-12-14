@@ -34,7 +34,7 @@ export class ActionService {
      * @param name name of the action to get
      * @returns {Observable<PipelineUsingAction>}
      */
-    getPiplinesUsingAction(name: string): Observable<PipelineUsingAction[]> {
+    getPipelinesUsingAction(name: string): Observable<PipelineUsingAction[]> {
         return this._http.get<PipelineUsingAction[]>('/action/' + name + '/using');
     }
 

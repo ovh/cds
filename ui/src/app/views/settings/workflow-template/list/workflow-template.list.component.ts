@@ -3,6 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { finalize } from 'rxjs/internal/operators/finalize';
 import { WorkflowTemplate } from '../../../../model/workflow-template.model';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 
 @Component({
@@ -14,6 +15,8 @@ export class WorkflowTemplateListComponent {
     loading: boolean;
     columns: Array<Column>;
     workflowTemplates: Array<WorkflowTemplate>;
+
+    path: Array<PathItem>
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -41,6 +44,13 @@ export class WorkflowTemplateListComponent {
             }
         ];
         this.getTemplates();
+
+        this.path = [<PathItem>{
+            translate: 'common_settings'
+        }, <PathItem>{
+            translate: 'workflow_templates',
+            routerLink: ['/', 'settings', 'workflow-template']
+        }];
     }
 
     getTemplates() {

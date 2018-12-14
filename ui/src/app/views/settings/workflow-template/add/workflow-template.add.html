@@ -1,4 +1,14 @@
-<h2>{{ 'workflow_template_add_title' | translate }}</h2>
-
-<app-workflow-template-form mode="add" [loading]="loading" [workflowTemplate]="workflowTemplate" [groups]="groups"
-    (save)="saveWorkflowTemplate()"></app-workflow-template-form>
+<div class="wrapper">
+    <app-breadcrumb [path]="path"></app-breadcrumb>
+    <app-scrollview class="scrollview">
+        <div class="ui grid">
+            <div class="thirteen wide column">
+                <app-workflow-template-form mode="add" [loading]="loading" [workflowTemplate]="workflowTemplate"
+                    [groups]="groups" (save)="saveWorkflowTemplate()"></app-workflow-template-form>
+            </div>
+            <div class="three wide column">
+                <app-workflow-template-help></app-workflow-template-help>
+            </div>
+        </div>
+    </app-scrollview>
+</div>

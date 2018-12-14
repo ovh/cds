@@ -7,7 +7,7 @@
         </div>
     </div>
 </div>
-<table class="ui fixed celled table">
+<table class="ui fixed celled table" [class.selectable]="withLineClick">
     <thead>
         <tr>
             <th *ngFor="let c of columns" class="wide" [class.sortable]="c.sortable && c !== sortedColumn"
@@ -33,7 +33,8 @@
         </tr>
     </tbody>
     <tbody *ngIf="!loading && dataForCurrentPage.length > 0">
-        <tr *ngFor="let d of dataForCurrentPage">
+        <tr *ngFor="let d of dataForCurrentPage; let i = index" (click)="lineClick(i, d)" [class.pointing]="withLineClick"
+            [class.active]="withLineClick && indexSelected === i">
             <ng-container *ngFor="let c of columns" [ngSwitch]="c.type">
                 <td *ngSwitchCase="'icon'" class="border">
                     <i [ngClass]="c.selector(d)"></i>
@@ -50,6 +51,9 @@
                 </td>
                 <td *ngSwitchCase="'markdown'" class="border">
                     <markdown [data]="c.selector(d)"></markdown>
+                </td>
+                <td *ngSwitchCase="'date'" class="border">
+                    {{c.selector(d) | amCalendar}}
                 </td>
                 <td *ngSwitchDefault class="border">{{c.selector(d)}}</td>
             </ng-container>
