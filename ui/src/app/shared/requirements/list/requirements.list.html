@@ -15,7 +15,7 @@
                             <sui-select class="selection mt5"
                                         *ngIf="availableRequirements.length > 0"
                                         [(ngModel)]="r.type"
-                                        (selectedOptionChange)="change()"
+                                        (selectedOptionChange)="change(r)"
                                         [isSearchable]="true">
                                 <sui-select-option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</sui-select-option>
                             </sui-select>
@@ -31,7 +31,7 @@
                             <label for="requirementname">
                             {{ 'requirement_hostname_service' | translate }}
                         </label>
-                            <input name="requirementname" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="r.name" (ngModelChange)="change()" [no-match-found-text]="false">
+                            <input name="requirementname" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="r.name" (ngModelChange)="change(r)" [no-match-found-text]="false">
                         </div>
                         <ng-template #rName>
                             <span>{{r.name}}</span>
@@ -43,15 +43,15 @@
                             <label for="requirementvalue" *ngIf="!loading && (r.type === 'service')">
                                 {{ 'requirement_value_service' | translate }}
                             </label>
-                            <input name="requirementvalue" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="r.value" (ngModelChange)="change()" [no-match-found-text]="false">
+                            <input name="requirementvalue" auto-complete autocomplete="off" type="text" [source]="suggest" [min-chars]="3" [(ngModel)]="r.value" (ngModelChange)="change(r)" [no-match-found-text]="false">
                         </div>
                         <div *ngIf="!loading && r.type === 'os-architecture'">
-                            <input name="value-os-architecture" auto-complete autocomplete="off" type="text" [source]="suggestWithOSArch" [min-chars]="0" [(ngModel)]="r.value" (ngModelChange)="change()" [no-match-found-text]="false">
+                            <input name="value-os-architecture" auto-complete autocomplete="off" type="text" [source]="suggestWithOSArch" [min-chars]="0" [(ngModel)]="r.value" (ngModelChange)="change(r)" [no-match-found-text]="false">
                         </div>
                         <div *ngIf="!loading && r.type === 'model' && workerModels">
                             <div class="ui grid">
                                 <div class="ui fourteen wide column">
-                                        <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="r.value" (ngModelChange)="change()" [no-match-found-text]="false">
+                                        <input name="value-workermodel" auto-complete autocomplete="off" type="text" [source]="suggestWithWorkerModel" [min-chars]="0" [(ngModel)]="r.value" (ngModelChange)="change(r)" [no-match-found-text]="false">
                                 </div>
                                 <div class="ui two wide column valign">
                                     <span *ngIf="getWorkerModel(r.value)?.nb_spawn_err > 0" [smDirTooltip]="'worker_model_spawn_error_tooltip' | translate" smDirPosition="top center"><i class="exclamation triangle icon large red"></i></span>
@@ -64,7 +64,7 @@
                             <label for="opts">
                                 {{ 'requirement_options' | translate }}
                             </label>
-                            <textarea [(ngModel)]="r.opts" (ngModelChange)="change()" rows="3" placeholder="{{'requirement_placeholder_opts_' + r.type | translate}}"></textarea>
+                            <textarea [(ngModel)]="r.opts" (ngModelChange)="change(r)" rows="3" placeholder="{{'requirement_placeholder_opts_' + r.type | translate}}"></textarea>
                         </div>
                     </div>
                     <ng-template #rValue>

@@ -94,6 +94,28 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 	return &p, nil
 }
 
+// LoadByWorkerModelName loads pipelines from database for a given worker model name
+func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string) ([]sdk.Pipeline, error) {
+	var pips []sdk.Pipeline
+	query := `
+	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey 
+		FROM action_requirement
+			JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
+			JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
+			JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
+			JOIN project ON project.id = pipeline.project_id
+		WHERE action_requirement.type = 'model' AND action_requirement.value = $1`
+
+	if _, err := db.Select(&pips, query, workerModelName); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "Unable to load pipelines linked to worker model name %s", workerModelName)
+	}
+
+	return pips, nil
+}
+
 // LoadByWorkflowID loads pipelines from database for a given workflow id
 func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Pipeline, error) {
 	pips := []sdk.Pipeline{}

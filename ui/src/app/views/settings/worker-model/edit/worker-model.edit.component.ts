@@ -5,6 +5,7 @@ import { omit } from 'lodash';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Group } from '../../../../model/group.model';
+import { Pipeline } from '../../../../model/pipeline.model';
 import { User } from '../../../../model/user.model';
 import { ModelPattern, WorkerModel } from '../../../../model/worker-model.model';
 import { AuthentificationStore } from '../../../../service/auth/authentification.store';
@@ -23,6 +24,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @AutoUnsubscribe()
 export class WorkerModelEditComponent implements OnInit {
     loading = false;
+    loadingUsage = false;
     deleteLoading = false;
     workerModel: WorkerModel;
     workerModelTypes: Array<string>;
@@ -36,6 +38,7 @@ export class WorkerModelEditComponent implements OnInit {
     envNames: Array<string> = [];
     newEnvName: string;
     newEnvValue: string;
+    usages: Array<Pipeline>;
     private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     workerModelPatternError = false;
     path: Array<PathItem>;
@@ -206,6 +209,16 @@ export class WorkerModelEditComponent implements OnInit {
                 this.workerModel.model_virtual_machine.cmd = pattern.model.cmd;
                 this.workerModel.model_virtual_machine.post_cmd = pattern.model.post_cmd;
         }
+    }
+
+    loadUsage() {
+        if (this.usages) {
+            return;
+        }
+        this.loadingUsage = true;
+        this._workerModelService.getUsage(this.workerModel.id)
+            .pipe(finalize(() => this.loadingUsage = false))
+            .subscribe((usages) => this.usages = usages);
     }
 
     addEnv(newEnvName: string, newEnvValue: string) {

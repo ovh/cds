@@ -262,13 +262,41 @@
                 </p>
               </div>
 
-              <table class="ui fixed celled table">
-                <tr *ngFor="let v of workerModel?.registered_capabilities">
-                  <td>
-                    <div class="ui">{{v.value}}</div>
-                  </td>
-                </tr>
-              </table>
+              <sui-accordion class="styled fluid">
+                    <sui-accordion-panel [isOpen]="true">
+                        <div title>
+                            <i class="dropdown icon"></i>
+                            {{'worker_model_binary_capability' | translate}}
+                        </div>
+                        <div content>
+                          <table class="ui fixed celled table">
+                              <tr *ngFor="let v of workerModel?.registered_capabilities">
+                                  <td>
+                                      <div class="ui">{{v.value}}</div>
+                                  </td>
+                              </tr>
+                          </table>
+                        </div>
+                    </sui-accordion-panel>
+                    <sui-accordion-panel [isOpen]="false" (click)="loadUsage()">
+                        <div title>
+                            <i class="dropdown icon"></i>
+                            {{'common_usage' | translate}} <span *ngIf="!loadingUsage && usages">({{usages.length}})</span>
+                        </div>
+                        <div content>
+                          <div class="ui active centered inline loader" *ngIf="loadingUsage"></div>
+                            <span *ngIf="!loadingUsage && usages && usages.length === 0">{{'worker_model_no_usage' | translate}}</span>
+                            <ul class="ui list" *ngIf="!loadingUsage && usages">
+                              <li *ngFor="let pip of usages">
+                                <a
+                                  [routerLink]="['/project', pip.projectKey, 'pipeline', pip.name]">
+                                  Pipeline {{pip.name}}
+                                </a>
+                              </li>
+                            </ul>
+                        </div>
+                    </sui-accordion-panel>
+                </sui-accordion>
             </div>
 
             <div class="six wide column" *ngIf="workerModel.id">

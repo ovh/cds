@@ -416,6 +416,28 @@ func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name stri
 	return service.WriteJSON(w, m, http.StatusOK)
 }
 
+func (api *API) getWorkerModelUsageHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		workerModelID, errr := requestVarInt(r, "permModelID")
+		if errr != nil {
+			return sdk.WrapError(errr, "Invalid permModelID")
+		}
+		db := api.mustDB()
+
+		wm, err := worker.LoadWorkerModelByID(db, workerModelID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model for id %d", workerModelID)
+		}
+
+		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name)
+		if errP != nil {
+			return sdk.WrapError(errP, "Cannot load pipelines linked to worker model")
+		}
+
+		return service.WriteJSON(w, pips, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		h := getHatchery(ctx)
@@ -445,7 +467,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		state := r.FormValue("state")
 		var opt *worker.StateLoadOption
 		switch state {
-		case "", worker.StateDisabled.String(), worker.StateError.String(), worker.StateRegister.String(), worker.StateDeprecated.String():
+		case "", worker.StateDisabled.String(), worker.StateError.String(), worker.StateRegister.String(), worker.StateDeprecated.String(), worker.StateActive.String():
 			opt = new(worker.StateLoadOption)
 			*opt = worker.StateLoadOption(state)
 			break
