@@ -9,4 +9,4 @@ parameters:
   required: true
 - key: deployWhen
   type: string
-  required: true
+  required: false
