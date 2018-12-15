@@ -12,6 +12,7 @@ jobs:
     - echo "this is a test" > mydir/test.txt
     - echo "test" > mydir/toto.txt
     - echo "tata" > mydir/tata.txt
+    - worker upload --tag={{.cds.version}} mydir/*.txt
     - cd mydir
     - ln -s toto.txt totosymlink.txt
     - ln -s tata.txt tatasymlink.txt
