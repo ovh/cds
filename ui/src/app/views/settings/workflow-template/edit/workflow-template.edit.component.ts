@@ -65,6 +65,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
             <Column>{
                 name: this._translate.instant('audit_username'),
                 selector: a => a.triggered_by
+            },
+            <Column>{
+                type: ColumnType.MARKDOWN,
+                name: this._translate.instant('common_description'),
+                selector: a => a.change_message
             }
         ];
 
@@ -105,7 +110,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this._workflowTemplateService.getAudits(groupName, templateSlug)
             .pipe(finalize(() => this.loading = false))
             .subscribe(as => {
-                this.audits = as.sort((a, b) => Date.parse(a.created) >= Date.parse(b.created) ? -1 : 1);
+                this.audits = as;
             });
     }
 

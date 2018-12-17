@@ -30,17 +30,24 @@
                                 <div *ngIf="workflowTemplateInstance.workflow_template_version === workflowTemplate.version"
                                     class="ui label green"> {{'common_up_to_date' | translate}}</div>
                                 <a *ngIf="workflowTemplateInstance.workflow_template_version !== workflowTemplate.version"
-                                    class="ui orange label" (click)="toggleDiff()">{{'common_not_up_to_date' |
-                                    translate
-                                    }}</a>
+                                    class="ui orange label" (click)="toggleDiff()" [title]="'workflow_template_update_info_btn' | translate">
+                                    {{'common_not_up_to_date' | translate }}</a>
+                            </div>
+                        </div>
+                        <div *ngIf="workflowTemplateAudits" class="sixteen wide column">
+                            <div class="ui orange message">
+                                <ng-container *ngFor="let a of workflowTemplateAudits">
+                                    <markdown *ngIf="a.change_message">{{a.change_message}}</markdown>
+                                </ng-container>
                             </div>
                         </div>
                         <div class="ui wide sixteen field">
+                            <br />
                             <app-diff-list *ngIf="diffVisible" [items]="diffItems"></app-diff-list>
                         </div>
                         <app-workflow-template-apply-form [project]="project" [workflowTemplate]="workflowTemplate"
                             [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true" (close)="close()"
-                            (apply)="loadInstance()"></app-workflow-template-apply-form>
+                            (apply)="load()"></app-workflow-template-apply-form>
                     </div>
                 </div>
             </div>

@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
@@ -235,7 +236,7 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
-		event.PublishWorkflowTemplateUpdate(*old, new, u)
+		event.PublishWorkflowTemplateUpdate(*old, new, data.ChangeMessage, u)
 
 		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &new); err != nil {
 			return err
@@ -564,35 +565,21 @@ func (api *API) getTemplateAuditsHandler() service.Handler {
 		}
 		t := getWorkflowTemplate(ctx)
 
-		as, err := workflowtemplate.GetAuditsByTemplateIDsAndEventTypes(api.mustDB(),
-			[]int64{t.ID}, []string{"WorkflowTemplateAdd", "WorkflowTemplateUpdate"})
+		since := r.FormValue("sinceVersion")
+		var version int64
+		if since != "" {
+			version, err = strconv.ParseInt(since, 10, 64)
+			if err != nil || version < 0 {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+		}
+
+		as, err := workflowtemplate.GetAuditsByTemplateIDsAndEventTypesAndVersionGTE(api.mustDB(),
+			[]int64{t.ID}, []string{"WorkflowTemplateAdd", "WorkflowTemplateUpdate"}, version)
 		if err != nil {
 			return err
 		}
 
 		return service.WriteJSON(w, as, http.StatusOK)
-	}
-}
-
-func (api *API) getTemplateAuditHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
-		if err != nil {
-			return err
-		}
-		t := getWorkflowTemplate(ctx)
-
-		version, err := requestVarInt(r, "version")
-		if err != nil {
-			return err
-		}
-
-		a, err := workflowtemplate.GetAuditByTemplateIDAndEventTypesAndVersionAfter(api.mustDB(), t.ID,
-			[]string{"WorkflowTemplateAdd", "WorkflowTemplateUpdate"}, version)
-		if err != nil {
-			return err
-		}
-
-		return service.WriteJSON(w, a, http.StatusOK)
 	}
 }

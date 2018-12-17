@@ -1,6 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
+import { forkJoin } from 'rxjs/Observable/forkJoin';
 import { AuditWorkflowTemplate } from '../../../model/audit.model';
 import { Project } from '../../../model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from '../../../model/workflow-template.model';
@@ -21,7 +22,7 @@ export class WorkflowTemplateModalComponent {
     modal: ActiveModal<boolean, boolean, void>;
     workflowTemplate: WorkflowTemplate;
     workflowTemplateInstance: WorkflowTemplateInstance;
-    workflowTemplateAudit: AuditWorkflowTemplate;
+    workflowTemplateAudits: Array<AuditWorkflowTemplate>;
     diffVisible: boolean;
     diffItems: Array<Item>;
 
@@ -35,23 +36,29 @@ export class WorkflowTemplateModalComponent {
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
 
-        this.loadTemplate();
-        this.loadInstance();
+        this.load();
     }
 
-    loadTemplate() {
+    load() {
         let s = this.workflow.from_template.split('/');
-        if (s.length > 1) {
-            this._templateService.getWorkflowTemplate(s[0], s.splice(1, s.length - 1).join('/')).subscribe(wt => {
-                this.workflowTemplate = wt;
-            });
-        }
-    }
 
-    loadInstance() {
-        this._templateService.getWorkflowTemplateInstance(this.project.key, this.workflow.name).subscribe(wti => {
-            this.workflowTemplateInstance = wti;
-        });
+        forkJoin(this._templateService.getWorkflowTemplate(s[0], s.splice(1, s.length - 1).join('/')),
+            this._templateService.getWorkflowTemplateInstance(this.project.key, this.workflow.name)).subscribe(res => {
+                this.workflowTemplate = res[0];
+                this.workflowTemplateInstance = res[1];
+
+                // load audits since instance version if not latest
+                if (this.workflowTemplateInstance.workflow_template_version !== this.workflowTemplate.version) {
+                    this._templateService.getAudits(this.workflowTemplate.group.name, this.workflowTemplate.slug,
+                        this.workflowTemplateInstance.workflow_template_version).subscribe(as => {
+                            this.workflowTemplateAudits = as;
+                            let before = as[0].data_after ? <WorkflowTemplate>JSON.parse(as[0].data_after) : null;
+                            this.diffItems = calculateWorkflowTemplateDiff(before, this.workflowTemplate);
+                        });
+                } else {
+                    this.workflowTemplateAudits = null;
+                }
+            });
     }
 
     close() {
@@ -60,14 +67,6 @@ export class WorkflowTemplateModalComponent {
     }
 
     toggleDiff() {
-        if (!this.diffItems) {
-            this._templateService.getAudit(this.workflowTemplate.group.name, this.workflowTemplate.slug,
-                this.workflowTemplateInstance.workflow_template_version).subscribe(a => {
-                    this.workflowTemplateAudit = a;
-                    let before = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
-                    this.diffItems = calculateWorkflowTemplateDiff(before, this.workflowTemplate);
-                });
-        }
         this.diffVisible = !this.diffVisible;
     }
 }

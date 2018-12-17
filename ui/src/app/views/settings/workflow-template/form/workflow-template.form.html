@@ -139,6 +139,10 @@
                                 <i class="plus icon"></i>
                             </button>
                         </div>
+                        <div *ngIf="_workflowTemplate.editable && mode === 'edit'" class="wide field">
+                            <textarea name="changeMessage" [(ngModel)]="changeMessage" [placeholder]="'workflow_template_change_message' | translate"
+                                [rows]="3"></textarea>
+                        </div>
                         <div *ngIf="_workflowTemplate.editable" class="wide field">
                             <app-delete-button *ngIf="mode === 'edit'" class="left floated" (event)="clickDelete()"
                                 [loading]="loading"></app-delete-button>

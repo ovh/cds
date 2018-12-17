@@ -50,11 +50,8 @@ export class WorkflowTemplateService {
         return this._http.get<WorkflowTemplateInstance>('/project/' + projectKey + '/workflow/' + workflowName + '/templateInstance');
     }
 
-    getAudits(groupName: string, templateSlug: string): Observable<Array<AuditWorkflowTemplate>> {
-        return this._http.get<Array<AuditWorkflowTemplate>>('/template/' + groupName + '/' + templateSlug + '/audit');
-    }
-
-    getAudit(groupName: string, templateSlug: string, version: number): Observable<AuditWorkflowTemplate> {
-        return this._http.get<AuditWorkflowTemplate>('/template/' + groupName + '/' + templateSlug + '/audit/' + version);
+    getAudits(groupName: string, templateSlug: string, version?: number): Observable<Array<AuditWorkflowTemplate>> {
+        let url = '/template/' + groupName + '/' + templateSlug + '/audit' + (version ? '?sinceVersion=' + version : '');
+        return this._http.get<Array<AuditWorkflowTemplate>>(url);
     }
 }
