@@ -53,4 +53,8 @@ export class WorkflowTemplateService {
     getAudits(groupName: string, templateSlug: string): Observable<Array<AuditWorkflowTemplate>> {
         return this._http.get<Array<AuditWorkflowTemplate>>('/template/' + groupName + '/' + templateSlug + '/audit');
     }
+
+    getAudit(groupName: string, templateSlug: string, version: number): Observable<AuditWorkflowTemplate> {
+        return this._http.get<AuditWorkflowTemplate>('/template/' + groupName + '/' + templateSlug + '/audit/' + version);
+    }
 }

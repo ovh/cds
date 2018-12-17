@@ -1,10 +1,12 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
+import { AuditWorkflowTemplate } from '../../../model/audit.model';
 import { Project } from '../../../model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from '../../../model/workflow-template.model';
 import { Workflow } from '../../../model/workflow.model';
 import { WorkflowTemplateService } from '../../../service/services.module';
+import { calculateWorkflowTemplateDiff } from '../../../shared/diff/diff';
 import { Item } from '../../../shared/diff/list/diff.list.component';
 
 @Component({
@@ -19,6 +21,8 @@ export class WorkflowTemplateModalComponent {
     modal: ActiveModal<boolean, boolean, void>;
     workflowTemplate: WorkflowTemplate;
     workflowTemplateInstance: WorkflowTemplateInstance;
+    workflowTemplateAudit: AuditWorkflowTemplate;
+    diffVisible: boolean;
     diffItems: Array<Item>;
 
     constructor(
@@ -26,7 +30,7 @@ export class WorkflowTemplateModalComponent {
         private _templateService: WorkflowTemplateService
     ) { }
 
-    show(): void {
+    show() {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
@@ -51,6 +55,19 @@ export class WorkflowTemplateModalComponent {
     }
 
     close() {
+        this.diffVisible = false;
         this.modal.approve(true);
+    }
+
+    toggleDiff() {
+        if (!this.diffItems) {
+            this._templateService.getAudit(this.workflowTemplate.group.name, this.workflowTemplate.slug,
+                this.workflowTemplateInstance.workflow_template_version).subscribe(a => {
+                    this.workflowTemplateAudit = a;
+                    let before = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
+                    this.diffItems = calculateWorkflowTemplateDiff(before, this.workflowTemplate);
+                });
+        }
+        this.diffVisible = !this.diffVisible;
     }
 }

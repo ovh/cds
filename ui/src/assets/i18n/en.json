@@ -40,7 +40,6 @@
   "admin_migration_done": "Done",
   "admin_migration_title": "Status of application migration to workflow",
 
-  "admin_status_title": "Status of CDS Engine",
   "admin_queue_title": "Current CDS jobs queue",
 
   "application_home_history": "History",
@@ -866,7 +865,6 @@
   "worker_model_load_worker_models": "Loading worker models...",
   "worker_model_load_worker_model": "Loading worker model...",
   "worker_model_name": "Name",
-  "worker_model_new_title": "New worker model",
   "worker_model_need_register": "Need to be registered: ",
   "worker_model_none": "No worker model",
   "worker_model_provision": "Workers provisioning",
@@ -878,7 +876,6 @@
   "worker_model_pattern_deleted": "Pattern deleted",
   "worker_model_status": "Status",
   "worker_model_template": "Template",
-  "worker_model_title": "Worker Models",
   "worker_model_warning": "This worker model is in error. Please check it",
   "worker_model_os": "Operating System",
   "worker_model_arch": "Architecture",
@@ -911,7 +908,7 @@
   "workflow_description": "Workflow description",
   "workflow_from_repository": "Workflow imported from {{repo}}",
   "workflow_from_repository_btn": "Import workflow from repository",
-  "workflow_from_template": "Workflow generated from template {{path}}",
+  "workflow_from_template": "Workflow generated from template",
   "workflow_from_template_btn": "Generate workflow from template",
   "workflow_join_delete": "Delete this join",
   "workflow_join_delete_alert": "BE CAREFUL, this will remove the join and all his children",
@@ -1056,6 +1053,10 @@
   "workflow_template_help_line_2": "A workflow template allows you to quickly create then update a workflow and its components.",
   "workflow_template_update_title": "Update workflow from template",
   "workflow_template_update_info_line_1": "Apply will override your existing workflow and components according to the latest version of selected template.",
+  "workflow_template_diff_workflow": "Workflow",
+  "workflow_template_diff_pipeline": "Pipeline {{number}}",
+  "workflow_template_diff_application": "Application {{number}}",
+  "workflow_template_diff_environment": "Environment {{number}}",
 
   "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."
