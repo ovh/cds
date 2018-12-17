@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"reflect"
+	"regexp"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -60,6 +62,14 @@ var workflowArtifactDownloadCmd = cli.Command{
 	OptionalArgs: []cli.Arg{
 		{Name: "artefact-name"},
 	},
+	Flags: []cli.Flag{
+		{
+			Kind:    reflect.String,
+			Name:    "exclude",
+			Usage:   "exclude files from download - could be a regex: *.log",
+			Default: "",
+		},
+	},
 }
 
 func workflowArtifactDownloadRun(v cli.Values) error {
@@ -73,9 +83,22 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 		return err
 	}
 
+	var reg *regexp.Regexp
+	if len(v["exclude"]) > 0 {
+		var err error
+		reg, err = regexp.Compile(v["exclude"])
+		if err != nil {
+			return fmt.Errorf("exclude parameter is not valid: %v", err)
+		}
+	}
+
 	var ok bool
 	for _, a := range artifacts {
 		if v["artefact-name"] != "" && v["artefact-name"] != a.Name {
+			continue
+		}
+		if v["exclude"] != "" && reg.MatchString(a.Name) {
+			fmt.Printf("File %s is excluded from download\n", a.Name)
 			continue
 		}
 		f, err := os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
