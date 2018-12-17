@@ -36,6 +36,6 @@ testcases:
   - script:  {{.cds.build.cdsctl}} workflow artifact download ITSCWRKFLW4 ITSCWRKFLW4 1 --exclude tata.txt
   - script: ls tata.txt
     assertions:
-    - result.code ShouldEqual 1
+    - result.code ShouldNotEqual 0
   - script: {{.cds.build.cdsctl}} workflow artifact download ITSCWRKFLW4 ITSCWRKFLW4 1
   - script: ls tata.txt
