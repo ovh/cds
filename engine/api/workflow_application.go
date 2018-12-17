@@ -63,23 +63,11 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			workflowArtifacts = append(workflowArtifacts, runs[0].Artifacts...)
 		}
 
-		var app sdk.Application
-		if workflowRun.Version < 2 {
-			workflowNode := workflowRun.Workflow.GetNode(wNodeRun.WorkflowNodeID)
-			if workflowNode == nil {
-				return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "releaseApplicationWorkflowHandler")
-			}
-			if workflowNode.Context == nil || workflowNode.Context.Application == nil {
-				return sdk.WrapError(sdk.ErrApplicationNotFound, "releaseApplicationWorkflowHandler")
-			}
-			app = *workflowNode.Context.Application
-		} else {
-			node := workflowRun.Workflow.WorkflowData.NodeByID(wNodeRun.WorkflowNodeID)
-			if node.Context == nil || node.Context.ApplicationID == 0 {
-				return sdk.WrapError(sdk.ErrApplicationNotFound, "releaseApplicationWorkflowHandler")
-			}
-			app = workflowRun.Workflow.Applications[node.Context.ApplicationID]
+		node := workflowRun.Workflow.WorkflowData.NodeByID(wNodeRun.WorkflowNodeID)
+		if node.Context == nil || node.Context.ApplicationID == 0 {
+			return sdk.WrapError(sdk.ErrApplicationNotFound, "releaseApplicationWorkflowHandler")
 		}
+		app := workflowRun.Workflow.Applications[node.Context.ApplicationID]
 
 		if app.VCSServer == "" {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
