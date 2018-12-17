@@ -14,11 +14,12 @@
     <link href="https://ovh.github.io/cds/css/solarized-light.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/featherlight.min.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/auto-complete.css" rel="stylesheet">
+    <link href="https://ovh.github.io/cds/css/asciinema-player.css" rel="stylesheet">
     
     <link href="https://ovh.github.io/cds/css/theme.css" rel="stylesheet">
     
     
-      <link href="https://ovh.github.io/cds/css/theme-custom.css" rel="stylesheet">
+    <link href="https://ovh.github.io/cds/css/theme-custom.css" rel="stylesheet">
     
     <link rel="stylesheet" href="https://ovh.github.io/cds/css/bootstrap.min.css">
     <script src="https://ovh.github.io/cds/js/jquery-2.x.min.js"></script>
@@ -26,7 +27,7 @@
       :root #header + #content > #left > #rlblock_left {
         display:none !important;
       }
-    </style>
+      </style>
 
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
@@ -2189,9 +2190,9 @@
 <ul>
 <li><a href="#get-template">GET <code>/template</code></a></li>
 <li><a href="#post-template">POST <code>/template</code></a></li>
+<li><a href="#get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
 <li><a href="#put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
 <li><a href="#delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
-<li><a href="#get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
 <li><a href="#post-template-group-name-templateslug-apply">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply</code></a></li>
 <li><a href="#get-template-group-name-templateslug-audit">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit</code></a></li>
 <li><a href="#get-template-group-name-templateslug-instance">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance</code></a></li>
@@ -2276,6 +2277,34 @@
 </tbody>
 </table>
 
+<h3 id="get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateHandler%22">getTemplateHandler</a></td>
+</tr>
+</tbody>
+</table>
+
 <h3 id="put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
 
 <table>
@@ -2328,34 +2357,6 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateHandler%22">deleteTemplateHandler</a></td>
-</tr>
-</tbody>
-</table>
-
-<h3 id="get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateHandler%22">getTemplateHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2537,6 +2538,7 @@
     
 <script src="https://ovh.github.io/cds/js/jquery.sticky-kit.min.js"></script>
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
+<script src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
   </body>
 </html>
 

@@ -14,11 +14,12 @@
     <link href="https://ovh.github.io/cds/css/solarized-light.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/featherlight.min.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/auto-complete.css" rel="stylesheet">
+    <link href="https://ovh.github.io/cds/css/asciinema-player.css" rel="stylesheet">
     
     <link href="https://ovh.github.io/cds/css/theme.css" rel="stylesheet">
     
     
-      <link href="https://ovh.github.io/cds/css/theme-custom.css" rel="stylesheet">
+    <link href="https://ovh.github.io/cds/css/theme-custom.css" rel="stylesheet">
     
     <link rel="stylesheet" href="https://ovh.github.io/cds/css/bootstrap.min.css">
     <script src="https://ovh.github.io/cds/js/jquery-2.x.min.js"></script>
@@ -26,7 +27,7 @@
       :root #header + #content > #left > #rlblock_left {
         display:none !important;
       }
-    </style>
+      </style>
 
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
@@ -2235,7 +2236,7 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 <pre><code class="language-sh">cdsctl template apply
 </code></pre>
 
-<p><img src="https://ovh.github.io/cds/images/workflow_template_apply.gif" alt="Apply" /></p>
+<p><asciinema-player src="https://ovh.github.io/cds/images/workflow_template_apply.cast" cols="100" rows="25"></asciinema-player></p>
 
 <h2 id="import-create-export">Import/Create/Export</h2>
 
@@ -2245,7 +2246,7 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
 </code></pre>
 
-<p><img src="https://ovh.github.io/cds/images/workflow_template_pull_push.gif" alt="PullPush" /></p>
+<p><asciinema-player src="https://ovh.github.io/cds/images/workflow_template_pull_push.cast" cols="100" rows="25"></asciinema-player></p>
 
 <h2 id="delete-change-template-group">Delete/Change template group</h2>
 
@@ -2291,5 +2292,6 @@ With the CDS ui you can change the template name or group, this will not affect 
     
 <script src="https://ovh.github.io/cds/js/jquery.sticky-kit.min.js"></script>
 <script src="https://ovh.github.io/cds/js/custom.js"></script>
+<script src="https://ovh.github.io/cds/js/asciinema-player.js"></script>
   </body>
 </html>
