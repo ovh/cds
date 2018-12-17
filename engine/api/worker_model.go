@@ -467,7 +467,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		state := r.FormValue("state")
 		var opt *worker.StateLoadOption
 		switch state {
-		case "", worker.StateDisabled.String(), worker.StateError.String(), worker.StateRegister.String(), worker.StateDeprecated.String(), worker.StateActive.String():
+		case "", worker.StateDisabled.String(), worker.StateOfficial.String(), worker.StateError.String(), worker.StateRegister.String(), worker.StateDeprecated.String(), worker.StateActive.String():
 			opt = new(worker.StateLoadOption)
 			*opt = worker.StateLoadOption(state)
 			break
