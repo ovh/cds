@@ -12,13 +12,14 @@
     <link href="{{"css/solarized-light.css" | relURL}}" rel="stylesheet">
     <link href="{{"css/featherlight.min.css" | relURL}}" rel="stylesheet">
     <link href="{{"css/auto-complete.css" | relURL}}" rel="stylesheet">
+    <link href="{{"css/asciinema-player.css" | relURL}}" rel="stylesheet">
     {{with .Site.Params.themeStyle}}
     <link href="{{(printf "css/%s.css" .) | relURL}}" rel="stylesheet">
     {{else}}
     <link href="{{"css/theme.css" | relURL}}" rel="stylesheet">
     {{end}}
     {{with .Site.Params.themeVariant}}
-      <link href="{{(printf "css/theme-%s.css" .) | relURL}}" rel="stylesheet">
+    <link href="{{(printf "css/theme-%s.css" .) | relURL}}" rel="stylesheet">
     {{end}}
     <link rel="stylesheet" href="{{"css/bootstrap.min.css" | relURL}}">
     <script src="{{"js/jquery-2.x.min.js" | relURL}}"></script>
@@ -26,7 +27,7 @@
       :root #header + #content > #left > #rlblock_left {
         display:none !important;
       }
-    </style>
+      </style>
 
     {{ partial "custom-head.html" . }}
   </head>
