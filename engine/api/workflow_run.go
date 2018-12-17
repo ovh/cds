@@ -382,6 +382,21 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 
 		go workflow.SendEvent(api.mustDB(), proj.Key, report)
 
+		go func(ID int64) {
+			wRun, errLw := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+			if errLw != nil {
+				log.Error("workflow.stopWorkflowNodeRun> Cannot load run for resync commit status %v", errLw)
+				return
+			}
+			//The function could be called with nil project so we need to test if project is not nil
+			if sdk.StatusIsTerminated(wRun.Status) && proj != nil {
+				wRun.LastExecution = time.Now()
+				if err := workflow.ResyncCommitStatus(context.Background(), api.mustDB(), api.Cache, proj, wRun); err != nil {
+					log.Error("workflow.UpdateNodeJobRunStatus> %v", err)
+				}
+			}
+		}(run.ID)
+
 		if len(workflowRuns) > 0 {
 			observability.Current(ctx,
 				observability.Tag(observability.TagProjectKey, proj.Key),
@@ -726,6 +741,21 @@ func (api *API) stopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbM
 	if errC := tx.Commit(); errC != nil {
 		return nil, sdk.WrapError(errC, "stopWorkflowNodeRunHandler> Unable to commit")
 	}
+
+	go func(ID int64) {
+		wRun, errLw := workflow.LoadRunByID(api.mustDB(), ID, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
+		if errLw != nil {
+			log.Error("workflow.stopWorkflowNodeRun> Cannot load run for resync commit status %v", errLw)
+			return
+		}
+		//The function could be called with nil project so we need to test if project is not nil
+		if sdk.StatusIsTerminated(wRun.Status) && p != nil {
+			wRun.LastExecution = time.Now()
+			if err := workflow.ResyncCommitStatus(context.Background(), api.mustDB(), api.Cache, p, wRun); err != nil {
+				log.Error("workflow.stopWorkflowNodeRun> %v", err)
+			}
+		}
+	}(wr.ID)
 
 	return report, nil
 }

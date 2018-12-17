@@ -1,16 +1,17 @@
-import {Component, NgZone, OnDestroy} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
-import {environment} from '../../../../environments/environment';
-import {PipelineStatus} from '../../../model/pipeline.model';
-import {User} from '../../../model/user.model';
-import {WorkflowNodeJobRun} from '../../../model/workflow.run.model';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {CDSWebWorker} from '../../../shared/worker/web.worker';
+import { Component, NgZone, OnDestroy } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { environment } from '../../../../environments/environment';
+import { PipelineStatus } from '../../../model/pipeline.model';
+import { User } from '../../../model/user.model';
+import { WorkflowNodeJobRun } from '../../../model/workflow.run.model';
+import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { WorkflowRunService } from '../../../service/workflow/run/workflow.run.service';
+import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { ToastService } from '../../../shared/toast/ToastService';
+import { CDSWebWorker } from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-queue',
@@ -19,20 +20,18 @@ import {CDSWebWorker} from '../../../shared/worker/web.worker';
 })
 @AutoUnsubscribe()
 export class QueueComponent implements OnDestroy {
-
     queueWorker: CDSWebWorker;
     zone: NgZone;
     queueSubscription: Subscription;
-
     user: User;
     nodeJobRuns: Array<WorkflowNodeJobRun> = [];
     parametersMaps: Array<{}> = [];
     requirementsList: Array<string> = [];
     bookedOrBuildingByList: Array<string> = [];
     loading = true;
-
     statusOptions: Array<string> = [PipelineStatus.WAITING, PipelineStatus.BUILDING];
     status: Array<string>;
+    path: Array<PathItem>;
 
     constructor(
         private _authStore: AuthentificationStore,
@@ -45,6 +44,12 @@ export class QueueComponent implements OnDestroy {
         this.status = [this.statusOptions[0]];
         this.user = this._authStore.getUser();
         this.startWorker();
+
+        this.path = [<PathItem>{
+            translate: 'common_settings'
+        }, <PathItem>{
+            translate: 'admin_queue_title'
+        }];
     }
 
     ngOnDestroy(): void {
@@ -126,6 +131,6 @@ export class QueueComponent implements OnDestroy {
             parseInt(parameters['cds.run.number'], 10),
             parseInt(parameters['cds.node.id'], 10)
         ).pipe(finalize(() => this.nodeJobRuns[index].updating = false))
-        .subscribe(() => this._toast.success('', this._translate.instant('pipeline_stop')))
+            .subscribe(() => this._toast.success('', this._translate.instant('pipeline_stop')))
     }
 }

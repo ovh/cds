@@ -1,18 +1,17 @@
 <div *ngIf="pipeline;then showPipeline; else loadPipeline"></div>
 <ng-template #showPipeline>
     <div id="PipelineShow">
-        <div class="CDSbreadcrumb">
-            <app-breadcrumb [project]="project"
-                            [pipeline]="pipeline"
-                            [application]="application"
-                            [workflow]="workflowName"
-                            [version]="version"
-                            [buildNumber]="buildNumber"
-                            [envName]="envName"
-                            [remote]="remote"
-                            [branch]="branch">
-            </app-breadcrumb>
-        </div>
+        <app-project-breadcrumb [project]="project"
+                        [pipeline]="pipeline"
+                        [application]="application"
+                        [workflow]="workflowName"
+                        [version]="version"
+                        [buildNumber]="buildNumber"
+                        [envName]="envName"
+                        [remote]="remote"
+                        [branch]="branch">
+        </app-project-breadcrumb>
+
         <div class="CDSmenu">
             <sm-menu title="" class="pointing secondary">
                 <a sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')">

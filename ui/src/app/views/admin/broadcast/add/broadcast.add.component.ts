@@ -1,17 +1,18 @@
-import {Component} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {Broadcast} from 'app/model/broadcast.model';
-import {NavbarProjectData} from 'app/model/navbar.model';
-import {User} from 'app/model/user.model';
-import {AuthentificationStore} from 'app/service/auth/authentification.store';
-import {BroadcastStore} from 'app/service/broadcast/broadcast.store';
-import {NavbarService} from 'app/service/navbar/navbar.service';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
-import {BroadcastLevelService} from '../../../../shared/broadcast/broadcast.level.service';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Broadcast } from 'app/model/broadcast.model';
+import { NavbarProjectData } from 'app/model/navbar.model';
+import { User } from 'app/model/user.model';
+import { AuthentificationStore } from 'app/service/auth/authentification.store';
+import { BroadcastStore } from 'app/service/broadcast/broadcast.store';
+import { NavbarService } from 'app/service/navbar/navbar.service';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { BroadcastLevelService } from '../../../../shared/broadcast/broadcast.level.service';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-broadcast-add',
@@ -28,6 +29,7 @@ export class BroadcastAddComponent {
     broadcastLevelsList;
     projects: Array<NavbarProjectData> = [];
     navbarSub: Subscription;
+    path: Array<PathItem>;
 
     constructor(
         private _navbarService: NavbarService,
@@ -47,9 +49,19 @@ export class BroadcastAddComponent {
                 this.broadcastLevelsList = _broadcastLevelService.getBroadcastLevels();
             }
         });
+
         this._route.params.subscribe(params => {
             this.broadcast = new Broadcast();
         });
+
+        this.path = [<PathItem>{
+            translate: 'common_admin'
+        }, <PathItem>{
+            translate: 'broadcast_list_title',
+            routerLink: ['/', 'admin', 'broadcast']
+        }, <PathItem>{
+            translate: 'common_create'
+        }];
     }
 
     clickSaveButton(): void {
@@ -59,10 +71,10 @@ export class BroadcastAddComponent {
 
         this.loading = true;
         this._broadcastStore.create(this.broadcast)
-        .pipe(finalize(() => this.loading = false))
-        .subscribe( bc => {
-            this._toast.success('', this._translate.instant('broadcast_saved'));
-            this._router.navigate(['admin', 'broadcast', bc.id]);
-        });
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(bc => {
+                this._toast.success('', this._translate.instant('broadcast_saved'));
+                this._router.navigate(['admin', 'broadcast', bc.id]);
+            });
     }
 }

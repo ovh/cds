@@ -1,7 +1,8 @@
-import {Component, Input} from '@angular/core';
-import {Broadcast} from '../../../../model/broadcast.model';
-import {BroadcastStore} from '../../../../service/broadcast/broadcast.store';
-import {Table} from '../../../../shared/table/table';
+import { Component, Input } from '@angular/core';
+import { Broadcast } from '../../../../model/broadcast.model';
+import { BroadcastStore } from '../../../../service/broadcast/broadcast.store';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { Table } from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-broadcast-list',
@@ -17,11 +18,21 @@ export class BroadcastListComponent extends Table {
         this.nbElementsByPage = data;
     };
 
+    path: Array<PathItem>;
+
     constructor(private _broadcastStore: BroadcastStore) {
         super();
-        this._broadcastStore.getBroadcasts().subscribe( broadcasts => {
+
+        this._broadcastStore.getBroadcasts().subscribe(broadcasts => {
             this.broadcasts = broadcasts.toArray().sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
         });
+
+        this.path = [<PathItem>{
+            translate: 'common_admin'
+        }, <PathItem>{
+            translate: 'broadcast_list_title',
+            routerLink: ['/', 'admin', 'broadcast']
+        }];
     }
 
     getData(): any[] {

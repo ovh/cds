@@ -19,6 +19,7 @@ export class WorkflowTemplateFormComponent {
     @Input() set workflowTemplate(wt: WorkflowTemplate) {
         if (!wt) {
             wt = new WorkflowTemplate();
+            wt.editable = true;
         }
 
         this._workflowTemplate = wt;

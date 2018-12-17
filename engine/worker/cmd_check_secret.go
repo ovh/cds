@@ -115,7 +115,7 @@ func (wk *currentWorker) checkSecretHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	sendLog := getLogger(wk, wk.currentJob.pbJob.ID, wk.currentJob.currentStep)
+	sendLog := getLogger(wk, wk.currentJob.wJob.ID, wk.currentJob.currentStep)
 
 	var a filePath
 	if err := json.Unmarshal(data, &a); err != nil {

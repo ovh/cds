@@ -217,9 +217,7 @@ func (w *Workflow) AddTrigger(name string, dest Node) {
 
 	(&w.WorkflowData.Node).AddTrigger(name, dest)
 	for i := range w.WorkflowData.Joins {
-		for j := range w.WorkflowData.Joins[i].Triggers {
-			(&w.WorkflowData.Joins[i].Triggers[j].ChildNode).AddTrigger(name, dest)
-		}
+		(&w.WorkflowData.Joins[i]).AddTrigger(name, dest)
 	}
 }
 

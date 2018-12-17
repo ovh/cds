@@ -1,0 +1,10 @@
+@import '../../../../../common';
+.serviceList {
+    display: flex;
+    flex-direction: column;
+    align-content: stretch;
+    height: 100%;
+    .segment {
+        margin-bottom: 50px;
+    }
+}

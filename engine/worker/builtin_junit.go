@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"path/filepath"
 	"strings"
 	"time"
@@ -20,12 +19,6 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, secrets []sdk.Variable, sendLog LoggerFunc) sdk.Result {
 		var res sdk.Result
 		res.Status = sdk.StatusFail.String()
-
-		pip := sdk.ParameterValue(*params, "cds.pipeline")
-		proj := sdk.ParameterValue(*params, "cds.project")
-		app := sdk.ParameterValue(*params, "cds.application")
-		envName := sdk.ParameterValue(*params, "cds.environment")
-		bnS := sdk.ParameterValue(*params, "cds.buildNumber")
 
 		p := sdk.ParameterValue(a.Parameters, "path")
 		if p == "" {
@@ -88,12 +81,7 @@ func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 			}
 		}
 
-		var uri string
-		if w.currentJob.wJob != nil {
-			uri = fmt.Sprintf("/queue/workflows/%d/test", w.currentJob.wJob.ID)
-		} else {
-			uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, url.QueryEscape(envName))
-		}
+		uri := fmt.Sprintf("/queue/workflows/%d/test", w.currentJob.wJob.ID)
 
 		var statusCode int
 		var errPost error

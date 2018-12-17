@@ -17,7 +17,6 @@ type currentWorker struct {
 	id            string
 	model         sdk.Model
 	groupID       int64
-	bookedPBJobID int64
 	bookedWJobID  int64
 	nbActionsDone int
 	basedir       string
@@ -36,7 +35,6 @@ type currentWorker struct {
 		insecure bool
 	}
 	currentJob struct {
-		pbJob            sdk.PipelineBuildJob
 		wJob             *sdk.WorkflowNodeJobRun
 		currentStep      int
 		buildVariables   []sdk.Variable
@@ -50,8 +48,7 @@ type currentWorker struct {
 		Name   string `json:"name"`
 		Status string `json:"status"`
 	}
-	client              cdsclient.Interface
-	disableOldWorkflows bool
+	client cdsclient.Interface
 }
 
 func main() {

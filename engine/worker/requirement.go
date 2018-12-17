@@ -197,11 +197,6 @@ func checkMemoryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkVolumeRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	// available only on worker booked
-	if w.bookedPBJobID == 0 && w.bookedWJobID == 0 {
-		return false, nil
-	}
-
 	// volume are supported only for Model Docker
 	if w.model.Type != sdk.Docker {
 		return false, nil

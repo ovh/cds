@@ -21,6 +21,7 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 		return sdk.WrapError(errW, "Resync> Cannot load workflow")
 	}
 
+	// Resync old model
 	if err := resyncNode(wr.Workflow.Root, *wf); err != nil {
 		return err
 	}
@@ -35,8 +36,25 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 		}
 	}
 
-	//Resync pipelines
+	// Resync new model
+	oldNode := wr.Workflow.WorkflowData.Array()
+	for i := range oldNode {
+		nodeToUpdate := oldNode[i]
+		for _, n := range wf.WorkflowData.Array() {
+			if nodeToUpdate.Name == n.Name {
+				nodeToUpdate.Context = n.Context
+				break
+			}
+		}
+	}
+
+	//Resync map
 	wr.Workflow.Pipelines = wf.Pipelines
+	wr.Workflow.Applications = wf.Applications
+	wr.Workflow.Environments = wf.Environments
+	wr.Workflow.ProjectPlatforms = wf.ProjectPlatforms
+	wr.Workflow.HookModels = wf.HookModels
+	wr.Workflow.OutGoingHookModels = wf.OutGoingHookModels
 
 	return UpdateWorkflowRun(nil, db, wr)
 }

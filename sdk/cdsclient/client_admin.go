@@ -8,6 +8,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) AdminDatabaseMigrationUnlock(id string) error {
+	_, _, _, err := c.Request(context.Background(), "POST", "/admin/database/migration/unlock/"+id, nil)
+	return err
+}
+
 func (c *client) Services() ([]sdk.Service, error) {
 	srvs := []sdk.Service{}
 	if _, err := c.GetJSON(context.Background(), "/admin/services", &srvs); err != nil {

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/ovh/venom"
@@ -201,99 +200,6 @@ func GetPipelineBuildHistory(key, appName, name, env, buildNumber string) ([]Pip
 	return res, nil
 }
 
-// StreamPipelineBuild poll the api to fetch logs of building pipeline and push them in returned channel
-func StreamPipelineBuild(key, appName, pipelineName, env string, buildID int, followTrigger bool) (chan Log, error) {
-	ch := make(chan Log)
-	go func() {
-		var path string
-		var logs []Log
-		currentStep := 0
-		currentStepPosition := 0
-		for {
-
-			if buildID == 0 {
-				path = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/last/log", key, appName, pipelineName)
-			} else {
-				path = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d/log", key, appName, pipelineName, buildID)
-			}
-			if env != "" {
-				path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
-			}
-
-			data, _, err := Request("GET", path, nil)
-			if err != nil {
-				close(ch)
-				return
-			}
-
-			err = json.Unmarshal([]byte(data), &logs)
-			if err != nil {
-				close(ch)
-				return
-			}
-
-			totalStepsReturn := len(logs)
-			if totalStepsReturn > 0 {
-				// remove old step
-				logs = logs[currentStep:]
-
-				// remove line already displayed on current step
-				if currentStepPosition <= len(logs[0].Val) {
-					logs[0].Val = logs[0].Val[currentStepPosition:]
-				}
-
-				// Update data
-
-				// If stay on same stage
-				if currentStep == totalStepsReturn-1 {
-					currentStepPosition += len(logs[len(logs)-1].Val)
-				} else {
-					currentStepPosition = len(logs[len(logs)-1].Val)
-				}
-				currentStep = totalStepsReturn - 1
-
-				for i := range logs {
-					ch <- logs[i]
-					if logs[i].Id != 0 {
-						continue
-					}
-
-					//Before closing the channel, check if we want to  follower triggers
-					if followTrigger {
-						wg := &sync.WaitGroup{}
-						//Get child triggers
-						triggers, err := GetTriggersAsSource(key, appName, pipelineName, env)
-						if err == nil && len(triggers) > 0 {
-							for _, t := range triggers {
-								//If there is any trigger, stream each of them
-								triggerCh, err := StreamPipelineBuild(t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name, 0, followTrigger)
-								if err == nil {
-									wg.Add(1)
-									go func(mainCh, triggerCh chan Log) {
-										//Get log from the trigger's channel and push it to the main channel
-										for l := range triggerCh {
-											ch <- l
-										}
-										wg.Done()
-									}(ch, triggerCh)
-								}
-							}
-						}
-						//When all of the triggers are done, close the main channel
-						wg.Wait()
-					}
-					close(ch)
-					return
-
-				}
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()
-
-	return ch, nil
-}
-
 // DeletePipeline remove given pipeline from CDS
 func DeletePipeline(key, name string) error {
 	path := fmt.Sprintf("/project/%s/pipeline/%s", key, name)
@@ -441,72 +347,6 @@ func RemoveParameterFromPipeline(projectKey, pipelineName, paramName string) err
 		return errr
 	}
 	return DecodeError(data)
-}
-
-// GetPipelineBuildStatus retrieves current build information.
-// With buildNumber at 0, fetch last build
-func GetPipelineBuildStatus(proj, app, pip, env string, buildNumber int64) (PipelineBuild, error) {
-	var pb PipelineBuild
-	var uri string
-
-	if buildNumber == 0 {
-		uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/last?envName=%s",
-			proj, app, pip, url.QueryEscape(env))
-	} else {
-		uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
-			proj, app, pip, buildNumber, url.QueryEscape(env))
-	}
-
-	data, _, errr := Request("GET", uri, nil)
-	if errr != nil {
-		return pb, errr
-	}
-	if err := json.Unmarshal(data, &pb); err != nil {
-		return pb, err
-	}
-
-	return pb, nil
-}
-
-// GetBuildingPipelines retrieves all building pipelines
-func GetBuildingPipelines() ([]PipelineBuild, error) {
-	data, _, err := Request("GET", "/mon/building", nil)
-	if err != nil {
-		return nil, err
-	}
-	var pbs []PipelineBuild
-	if err := json.Unmarshal(data, &pbs); err != nil {
-		return nil, err
-	}
-
-	return pbs, nil
-}
-
-// GetBuildingPipelineByHash retrieves pipeline building a specific commit hash
-func GetBuildingPipelineByHash(hash string) ([]PipelineBuild, error) {
-	var pbs []PipelineBuild
-
-	data, _, errr := Request("GET", "/mon/building/"+hash, nil)
-	if errr != nil {
-		return nil, errr
-	}
-	if err := json.Unmarshal(data, &pbs); err != nil {
-		return nil, err
-	}
-
-	return pbs, nil
-}
-
-// AddSpawnInfosPipelineBuildJob books a job for a Hatchery
-func AddSpawnInfosPipelineBuildJob(pipelineBuildJobID int64, infos []SpawnInfo) error {
-	data, errm := json.Marshal(infos)
-	if errm != nil {
-		return errm
-	}
-
-	path := fmt.Sprintf("/queue/%d/spawn/infos", pipelineBuildJobID)
-	_, _, err := Request("POST", path, data)
-	return err
 }
 
 // Translate translates messages in pipelineBuild

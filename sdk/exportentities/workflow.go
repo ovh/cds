@@ -76,26 +76,31 @@ func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 
 	ancestors := []string{}
 
-	nodes := w.WorkflowData.Array()
-	for _, node := range nodes {
-		if n.Name == node.Name {
-			continue
-		}
-		for _, t := range node.Triggers {
-			if t.ChildNode.Name == n.Name {
-
-				if node.Type == sdk.NodeTypeJoin {
-					for _, jp := range node.JoinContext {
-						parentNode := w.WorkflowData.NodeByRef(jp.ParentName)
-						if parentNode == nil {
-							return entry, sdk.WithStack(sdk.ErrWorkflowNodeNotFound)
+	if n.Type != sdk.NodeTypeJoin {
+		nodes := w.WorkflowData.Array()
+		for _, node := range nodes {
+			if n.Name == node.Name {
+				continue
+			}
+			for _, t := range node.Triggers {
+				if t.ChildNode.Name == n.Name {
+					if node.Type == sdk.NodeTypeJoin && !joinAsNode(node) {
+						for _, jp := range node.JoinContext {
+							parentNode := w.WorkflowData.NodeByRef(jp.ParentName)
+							if parentNode == nil {
+								return entry, sdk.WithStack(sdk.ErrWorkflowNodeNotFound)
+							}
+							ancestors = append(ancestors, parentNode.Name)
 						}
-						ancestors = append(ancestors, parentNode.Name)
+					} else {
+						ancestors = append(ancestors, node.Name)
 					}
-				} else {
-					ancestors = append(ancestors, node.Name)
 				}
 			}
+		}
+	} else {
+		for _, jc := range n.JoinContext {
+			ancestors = append(ancestors, jc.ParentName)
 		}
 	}
 
@@ -208,6 +213,10 @@ func WorkflowSkipIfOnlyOneRepoWebhook(w sdk.Workflow, exportedWorkflow *Workflow
 	return nil
 }
 
+func joinAsNode(n *sdk.Node) bool {
+	return n.Context != nil && (n.Context.Conditions.LuaScript != "" || len(n.Context.Conditions.PlainConditions) > 0)
+}
+
 //NewWorkflow creates a new exportable workflow
 func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 	exportedWorkflow := Workflow{}
@@ -269,7 +278,7 @@ func NewWorkflow(w sdk.Workflow, opts ...WorkflowOptions) (Workflow, error) {
 		exportedWorkflow.Parameters = entry.Parameters
 	} else {
 		for _, n := range nodes {
-			if n.Type == sdk.NodeTypeJoin {
+			if n.Type == sdk.NodeTypeJoin && !joinAsNode(n) {
 				continue
 			}
 
@@ -522,6 +531,12 @@ func (e *NodeEntry) getNode(name string, w *sdk.Workflow) (*sdk.Node, error) {
 		node.Type = sdk.NodeTypePipeline
 	} else if e.OutgoingHookModelName != "" {
 		node.Type = sdk.NodeTypeOutGoingHook
+	} else if len(e.DependsOn) > 1 {
+		node.Type = sdk.NodeTypeJoin
+		node.JoinContext = make([]sdk.NodeJoin, 0, len(e.DependsOn))
+		for _, parent := range e.DependsOn {
+			node.JoinContext = append(node.JoinContext, sdk.NodeJoin{ParentName: parent})
+		}
 	}
 
 	if e.Conditions != nil {
@@ -674,11 +689,16 @@ func (e *NodeEntry) processNodeAncestors(name string, w *sdk.Workflow) (bool, er
 	case 1:
 		w.AddTrigger(ancestors[0].Name, *n)
 		return true, nil
+	case 2:
+		if n != nil && n.Type == sdk.NodeTypeJoin && joinAsNode(n) {
+			w.WorkflowData.Joins = append(w.WorkflowData.Joins, *n)
+			return true, nil
+		}
 	}
 
 	// Compute join
 
-	//Try to find an existing join with the same references
+	// Try to find an existing join with the same references
 	var join *sdk.Node
 	for i := range w.WorkflowData.Joins {
 		j := &w.WorkflowData.Joins[i]

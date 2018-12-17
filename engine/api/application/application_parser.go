@@ -130,6 +130,9 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	if app.RepositoryStrategy.ConnectionType == "" {
 		app.RepositoryStrategy.ConnectionType = "https"
 	}
+	if app.RepositoryStrategy.ConnectionType == "ssh" && app.RepositoryStrategy.SSHKey == "" {
+		return app, nil, sdk.NewErrorFrom(sdk.ErrInvalidApplicationRepoStrategy, "Could not import application %s with a connection type ssh without ssh key", app.Name)
+	}
 	if eapp.VCSPassword != "" {
 		clearPWD, err := decryptFunc(db, proj.ID, eapp.VCSPassword)
 		if err != nil {

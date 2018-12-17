@@ -1,0 +1,6 @@
+<sm-menu class="pointing secondary">
+    <a *ngFor="let t of tabs" sm-item [class.active]="selected.key === t.key" (click)="clickSelect(t)">
+        <i *ngIf="t.icon" [ngClass]="[t.icon, 'icon']"></i>
+        {{t.translate | translate}}
+    </a>
+</sm-menu>

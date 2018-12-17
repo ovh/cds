@@ -156,24 +156,35 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 	}
 
 	var payload []string
-	if v, ok := run.WorkflowNodeRuns[run.Workflow.RootID]; ok {
-		if len(v) > 0 {
-			e := dump.NewDefaultEncoder(new(bytes.Buffer))
-			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
-			e.ExtraFields.DetailedMap = false
-			e.ExtraFields.DetailedStruct = false
-			e.ExtraFields.Len = false
-			e.ExtraFields.Type = false
-			pl, errm1 := e.ToStringMap(v[0].Payload)
-			if errm1 != nil {
-				return nil, errm1
+	var payloadString interface{}
+	if run.Version < 2 {
+		if v, ok := run.WorkflowNodeRuns[run.Workflow.RootID]; ok {
+			if len(v) > 0 {
+				payloadString = v[0].Payload
 			}
-			for k, kv := range pl {
-				payload = append(payload, fmt.Sprintf("%s:%s", k, kv))
+		}
+	} else {
+		if v, ok := run.WorkflowNodeRuns[run.Workflow.WorkflowData.Node.ID]; ok {
+			if len(v) > 0 {
+				payloadString = v[0].Payload
 			}
-			payload = append(payload)
 		}
 	}
+
+	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	e.ExtraFields.DetailedMap = false
+	e.ExtraFields.DetailedStruct = false
+	e.ExtraFields.Len = false
+	e.ExtraFields.Type = false
+	pl, errm1 := e.ToStringMap(payloadString)
+	if errm1 != nil {
+		return nil, errm1
+	}
+	for k, kv := range pl {
+		payload = append(payload, fmt.Sprintf("%s:%s", k, kv))
+	}
+	payload = append(payload)
 
 	wt := &wtags{*run, strings.Join(payload, " "), strings.Join(tags, " ")}
 	return *wt, nil

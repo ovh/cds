@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	coverage "github.com/sguiheux/go-coverage"
+	"github.com/sguiheux/go-coverage"
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/ovh/cds/engine/api/services"
@@ -67,9 +67,9 @@ func GetMetrics(db gorp.SqlExecutor, key string, appID int64, metricName string)
 		return nil, sdk.WrapError(err, "Unable to get metrics")
 	}
 
-	events := make([]json.RawMessage, 0, len(esMetrics))
-	for _, h := range esMetrics {
-		events = append(events, *h.Source)
+	events := make([]json.RawMessage, len(esMetrics))
+	for i := range esMetrics {
+		events[len(esMetrics)-1-i] = *esMetrics[i].Source
 	}
 	return events, nil
 }

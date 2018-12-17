@@ -992,6 +992,50 @@ workflow:
     pipeline: test
 `,
 		},
+		{
+			name: "Join with condition",
+			yaml: `name: joins
+version: v1.0
+workflow:
+  aa:
+    pipeline: aa
+    application: azer
+    environment: aa
+    parameters:
+      aze: '{{.cds.proj.aa}}'
+  aa_2:
+    depends_on:
+    - aa
+    when:
+    - success
+    pipeline: aa
+  aa_3:
+    depends_on:
+    - join
+    when:
+    - success
+    pipeline: aa
+  aa_4:
+    depends_on:
+    - join
+    when:
+    - success
+    pipeline: aa
+  aa_5:
+    depends_on:
+    - aa_3
+    - aa_4
+    when:
+    - success
+    pipeline: aa
+  join:
+    depends_on:
+    - aa
+    - aa_2
+    when:
+    - manual
+`,
+		},
 	}
 	for _, tst := range tests {
 		t.Run(tst.name, func(t *testing.T) {

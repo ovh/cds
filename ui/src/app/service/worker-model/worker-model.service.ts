@@ -1,9 +1,10 @@
 
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
-import {ModelPattern, WorkerModel} from '../../model/worker-model.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Pipeline } from '../../model/pipeline.model';
+import { ModelPattern, WorkerModel } from '../../model/worker-model.model';
 
 /**
  * Service to get worker model
@@ -118,5 +119,13 @@ export class WorkerModelService {
      */
     getWorkerModelCommunications(): Observable<Array<string>> {
         return this._http.get<Array<string>>('/worker/model/communication');
+    }
+
+     /**
+     * Get the list of worker model pipeline usage
+     * @returns {Observable<Pipeline[]>}
+     */
+    getUsage(workerModelId): Observable<Array<Pipeline>> {
+        return this._http.get<Array<Pipeline>>(`/worker/model/${workerModelId}/usage`);
     }
 }

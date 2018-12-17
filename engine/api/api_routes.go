@@ -44,6 +44,7 @@ func (api *API) InitRouter() {
 	// Admin
 	r.Handle("/admin/maintenance", r.POST(api.postMaintenanceHandler, NeedAdmin(true)))
 	r.Handle("/admin/warning", r.DELETE(api.adminTruncateWarningsHandler, NeedAdmin(true)))
+	r.Handle("/admin/database/migration/unlock/{id}", r.POST(api.postMigrationUnlockedHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug", r.GET(api.getProfileIndexHandler, Auth(false)))
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug/cpu", r.POST(api.getCPUProfileHandler, NeedAdmin(true)), r.GET(api.getCPUProfileHandler, NeedAdmin(true)))
@@ -420,6 +421,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/type", r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/{permModelID}", r.PUT(api.updateWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
+	r.Handle("/worker/model/{permModelID}/usage", r.GET(api.getWorkerModelUsageHandler))
 	r.Handle("/worker/model/capability/type", r.GET(api.getRequirementTypesHandler))
 
 	// Workflows
@@ -444,6 +446,7 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/pull", r.POST(api.pullTemplateHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/apply", r.POST(api.applyTemplateHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/instance", r.GET(api.getTemplateInstancesHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/audit", r.GET(api.getTemplateAuditsHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/templateInstance", r.GET(api.getTemplateInstanceHandler))
 
 	//Not Found handler

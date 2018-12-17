@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { debounceTime, finalize } from 'rxjs/operators';
 import { Project } from '../../model/project.model';
 import { Workflow } from '../../model/workflow.model';
+import { WorkflowRun } from '../../model/workflow.run.model';
 import { ProjectStore } from '../../service/project/project.store';
 import { RouterService } from '../../service/router/router.service';
 import { WorkflowRunService } from '../../service/workflow/run/workflow.run.service';
@@ -51,27 +52,30 @@ export class WorkflowComponent implements OnInit {
     selectedNodeRef: string;
     selectecHookRef: string;
 
+    runSubscription: Subscription;
+    workflowRun: WorkflowRun;
+
     constructor(private _activatedRoute: ActivatedRoute,
-                private _workflowStore: WorkflowStore,
-                private _workflowRunService: WorkflowRunService,
-                private _workflowEventStore: WorkflowEventStore,
-                private _router: Router,
-                private _routerService: RouterService,
-                private _projectStore: ProjectStore,
-                public _sidebarStore: WorkflowSidebarStore,
-                private _workflowCore: WorkflowCoreService,
-                private _toast: ToastService,
-                private _translate: TranslateService) {
+        private _workflowStore: WorkflowStore,
+        private _workflowRunService: WorkflowRunService,
+        private _workflowEventStore: WorkflowEventStore,
+        private _router: Router,
+        private _routerService: RouterService,
+        private _projectStore: ProjectStore,
+        public _sidebarStore: WorkflowSidebarStore,
+        private _workflowCore: WorkflowCoreService,
+        private _toast: ToastService,
+        private _translate: TranslateService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
         this.asCodeEditorSubscription = this._workflowCore.getAsCodeEditor()
-          .subscribe((state) => {
-              if (state != null) {
-                  this.asCodeEditorOpen = state.open;
-              }
-          });
+            .subscribe((state) => {
+                if (state != null) {
+                    this.asCodeEditorOpen = state.open;
+                }
+            });
 
         this.initSidebar();
 
@@ -135,15 +139,23 @@ export class WorkflowComponent implements OnInit {
                 }
             }
         });
+
+        this.runSubscription = this._workflowEventStore.selectedRun().subscribe(wr => {
+            if (wr) {
+                this.workflowRun = wr;
+            } else {
+                delete this.workflowRun;
+            }
+        });
     }
 
     initRuns(key: string, workflowName: string): void {
         this._workflowEventStore.setListingRuns(true);
         this._workflowRunService.runs(key, workflowName, '50')
-          .subscribe(wrs => {
-              this._workflowEventStore.setListingRuns(false);
-              this._workflowEventStore.pushWorkflowRuns(wrs);
-          });
+            .subscribe(wrs => {
+                this._workflowEventStore.setListingRuns(false);
+                this._workflowEventStore.pushWorkflowRuns(wrs);
+            });
     }
 
     initSidebar(): void {
@@ -155,12 +167,12 @@ export class WorkflowComponent implements OnInit {
 
     ngOnInit() {
         this.projectSubscription = this._projectStore.getProjects(this.project.key)
-          .subscribe((proj) => {
-            if (!this.project || !proj || !proj.get(this.project.key)) {
-              return;
-            }
-            this.project = proj.get(this.project.key);
-          });
+            .subscribe((proj) => {
+                if (!this.project || !proj || !proj.get(this.project.key)) {
+                    return;
+                }
+                this.project = proj.get(this.project.key);
+            });
     }
 
     updateFav() {
@@ -182,7 +194,7 @@ export class WorkflowComponent implements OnInit {
             };
         }
 
-        this._router.navigate([], {relativeTo: activatedRoute, queryParams});
+        this._router.navigate([], { relativeTo: activatedRoute, queryParams });
         if (!activatedRoute.snapshot.params['nodeId']) {
             this._workflowEventStore.setSelectedNode(null, true);
             this._workflowEventStore.setSelectedNodeRun(null, true);

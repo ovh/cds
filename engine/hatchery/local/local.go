@@ -136,7 +136,7 @@ func (h *HatcheryLocal) Serve(ctx context.Context) error {
 		Type: sdk.HostProcess,
 		ModelVirtualMachine: sdk.ModelVirtualMachine{
 			Image: h.Name,
-			Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --booked-pb-job-id={{.PipelineBuildJobID}} --single-use --force-exit",
+			Cmd:   "worker --api={{.API}} --token={{.Token}} --basedir={{.BaseDir}} --model={{.Model}} --name={{.Name}} --hatchery-name={{.HatcheryName}} --insecure={{.HTTPInsecure}} --graylog-extra-key={{.GraylogExtraKey}} --graylog-extra-value={{.GraylogExtraValue}} --graylog-host={{.GraylogHost}} --graylog-port={{.GraylogPort}} --booked-workflow-job-id={{.WorkflowJobID}} --single-use --force-exit",
 		},
 		RegisteredArch:         sdk.GOARCH,
 		RegisteredOS:           sdk.GOOS,
@@ -243,19 +243,7 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
-	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			udataParam.WorkflowJobID = spawnArgs.JobID
-		} else {
-			udataParam.PipelineBuildJobID = spawnArgs.JobID
-		}
-	}
-
-	if spawnArgs.IsWorkflowJob {
-		udataParam.WorkflowJobID = spawnArgs.JobID
-	} else {
-		udataParam.PipelineBuildJobID = spawnArgs.JobID
-	}
+	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	if spawnArgs.Model.ModelVirtualMachine.Cmd == "" {
 		return "", fmt.Errorf("hatchery local> Cannot launch main worker command because it's empty")

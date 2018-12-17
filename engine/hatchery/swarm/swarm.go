@@ -297,7 +297,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 					"hatchery":       h.Config.Name,
 				}
 
-				if spawnArgs.IsWorkflowJob {
+				if spawnArgs.JobID > 0 {
 					labels["service_job_id"] = fmt.Sprintf("%d", spawnArgs.JobID)
 					labels["service_id"] = fmt.Sprintf("%d", r.ID)
 					labels["service_req_name"] = r.Name
@@ -359,13 +359,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 		GrpcInsecure:      h.Configuration().API.GRPC.Insecure,
 	}
 
-	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			udataParam.WorkflowJobID = spawnArgs.JobID
-		} else {
-			udataParam.PipelineBuildJobID = spawnArgs.JobID
-		}
-	}
+	udataParam.WorkflowJobID = spawnArgs.JobID
 
 	tmpl, errt := template.New("cmd").Parse(spawnArgs.Model.ModelDocker.Cmd)
 	if errt != nil {
@@ -395,11 +389,7 @@ func (h *HatcherySwarm) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 	envsWm["CDS_INSECURE"] = fmt.Sprintf("%v", udataParam.HTTPInsecure)
 
 	if spawnArgs.JobID > 0 {
-		if spawnArgs.IsWorkflowJob {
-			envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		} else {
-			envsWm["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
-		}
+		envsWm["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
 	}
 
 	if udataParam.GrpcAPI != "" && spawnArgs.Model.Communication == sdk.GRPC {

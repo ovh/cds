@@ -131,12 +131,11 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     }
 
     displayLogs() {
-        let pip = this.workflow.pipelines[this.node.context.pipeline_id];
         this._router.navigate([
             '/project', this.project.key,
             'workflow', this.workflow.name,
             'run', this.currentWorkflowRun.num,
-            'node', this.currentWorkflowNodeRun.id], {queryParams: {name: pip}});
+            'node', this.currentWorkflowNodeRun.id], { queryParams: { name: this.node.name}});
     }
 
     getDuration() {

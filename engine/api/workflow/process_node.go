@@ -68,10 +68,13 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 	)
 	defer end()
 
-	// Send manual event to join and fork children when it was a manual run
+	// Keep old model behaviour on fork and join
+	// Send manual event to join and fork children when it was a manual run and when fork and join don't have run condition
 	if manual == nil && len(parentNodeRuns) == 1 && parentNodeRuns[0].Manual != nil {
 		n := wr.Workflow.WorkflowData.NodeByID(parentNodeRuns[0].WorkflowNodeID)
-		if n.Type == sdk.NodeTypeJoin || n.Type == sdk.NodeTypeFork {
+		// If fork or JOIN and No run conditions
+		if (n.Type == sdk.NodeTypeJoin || n.Type == sdk.NodeTypeFork) &&
+			(n.Context == nil || (n.Context.Conditions.LuaScript == "" && len(n.Context.Conditions.PlainConditions) == 0)) {
 			manual = parentNodeRuns[0].Manual
 		}
 	}
@@ -337,7 +340,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		}
 	}
 
-	isRoot := n.ID == wr.Workflow.Root.ID
+	isRoot := n.ID == wr.Workflow.WorkflowData.Node.ID
 
 	gitValues := currentGitValues
 	if previousGitValues[tagGitURL] == currentGitValues[tagGitURL] || previousGitValues[tagGitHTTPURL] == currentGitValues[tagGitHTTPURL] {

@@ -618,7 +618,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 
 	// Process ancestor
 	for _, aID := range ancestorsIds {
-		ancestor := wf.GetNode(aID)
+		ancestor := wf.WorkflowData.NodeByID(aID)
 		if ancestor == nil {
 			continue
 		}
