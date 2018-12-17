@@ -27,7 +27,7 @@ To generate a new workflow from a template you should use the cdsctl. Then use t
 ```sh
 cdsctl template apply
 ```
-<asciinema-player src="/images/workflow_template_apply.cast" cols="100" rows="25"></asciinema-player>
+<asciinema-player src="/images/workflow_template_apply.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
 
 ## Import/Create/Export
 With cdsctl you can import/export a template from/to yaml files with cdsctl, you can also create a template in the ui from **settings** menu:
@@ -35,7 +35,7 @@ With cdsctl you can import/export a template from/to yaml files with cdsctl, you
 cdsctl template push ./my-template/*.yml
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
 ```
-<asciinema-player src="/images/workflow_template_pull_push.cast" cols="100" rows="25"></asciinema-player>
+<asciinema-player src="/images/workflow_template_pull_push.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
 
 ## Delete/Change template group
 When removing a template, all info about the template and its instances are removed but all generated stuff will not be deleted.
