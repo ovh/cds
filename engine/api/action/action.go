@@ -441,7 +441,7 @@ func GetPipelineUsingAction(db gorp.SqlExecutor, name string) ([]PipelineUsingAc
 		LEFT OUTER JOIN workflow_node ON workflow_node.pipeline_id = pipeline.id
 		LEFT OUTER JOIN workflow ON workflow_node.workflow_id = workflow.id
 		LEFT JOIN action as actionChild ON  actionChild.id = child_id
-		WHERE actionChild.name = $1 and actionChild.public = true
+		WHERE actionChild.name = $1 and actionChild.public = true AND pipeline.name IS NOT NULL
 		ORDER BY projectkey, appName, pipName, actionName;
 	`
 	rows, errq := db.Query(query, name)

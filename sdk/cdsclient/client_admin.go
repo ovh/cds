@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -11,6 +12,19 @@ import (
 func (c *client) AdminDatabaseMigrationUnlock(id string) error {
 	_, _, _, err := c.Request(context.Background(), "POST", "/admin/database/migration/unlock/"+id, nil)
 	return err
+}
+
+func (c *client) AdminCDSMigrationCancel(id int64) error {
+	_, _, _, err := c.Request(context.Background(), "POST", fmt.Sprintf("/admin/cds/migration/%d/cancel", id), nil)
+	return err
+}
+
+func (c *client) AdminCDSMigrationList() ([]sdk.Migration, error) {
+	var migrations []sdk.Migration
+	if _, err := c.GetJSON(context.Background(), "/admin/cds/migration", &migrations); err != nil {
+		return nil, err
+	}
+	return migrations, nil
 }
 
 func (c *client) Services() ([]sdk.Service, error) {

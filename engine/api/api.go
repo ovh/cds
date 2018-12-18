@@ -687,27 +687,39 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "migrate.CleanOldWorkflow", func(ctx context.Context) {
 		migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
-		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
-	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "broadcast.Initialize", func(ctx context.Context) {
 		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)
 	}, a.PanicDump())
+
+	if err := migrate.CheckMigrations(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return sdk.WrapError(err, "Unable to start")
+	}
+
+	//Temporary migration code
+	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
+		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "migrate.WorkflowData", func(ctx context.Context) {
 		migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache)
 	}, a.PanicDump())
+	sdk.GoRoutine(ctx, "migrate.WorkflowNodeRunArtifacts", func(ctx context.Context) {
+		migrate.WorkflowNodeRunArtifacts(a.Cache, a.DBConnectionFactory.GetDBMap)
+	}, a.PanicDump())
+	// sdk.GoRoutine(ctx, "migrate.GitClonePrivateKey", func(ctx context.Context) {
+	// 	if err := migrate.GitClonePrivateKey(a.mustDB, a.Cache); err != nil {
+	// 		log.Error("Bootstrap Error: %v", err)
+	// 	}
+	// }, a.PanicDump())
 
-	//Temporary migration code
-	go migrate.WorkflowNodeRunArtifacts(a.Cache, a.DBConnectionFactory.GetDBMap)
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
-		go func() {
+		sdk.GoRoutine(ctx, "migrate.MigrateActionDEPRECATEDGitClone", func(ctx context.Context) {
 			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
 				log.Error("Bootstrap Error: %v", err)
 			}
-		}()
+		}, a.PanicDump())
 	}
 
 	// Init Services

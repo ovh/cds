@@ -28,6 +28,8 @@ type TemplateClient interface {
 // AdminService expose all function to CDS services
 type AdminService interface {
 	AdminDatabaseMigrationUnlock(id string) error
+	AdminCDSMigrationList() ([]sdk.Migration, error)
+	AdminCDSMigrationCancel(id int64) error
 	Services() ([]sdk.Service, error)
 	ServicesByName(name string) (*sdk.Service, error)
 	ServiceDelete(name string) error
