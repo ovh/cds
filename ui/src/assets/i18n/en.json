@@ -288,6 +288,7 @@
   "common_update": "Update",
   "common_split": "Split",
   "common_unified": "Unified",
+  "common_rollback": "Rollback",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
@@ -529,7 +530,6 @@
   "pipeline_label_detach": "Delete the pipeline from the application",
   "pipeline_label_edit": "Edit the pipeline",
   "pipeline_label_show": "Show the pipeline",
-  "pipeline_label_rollback": "Rollback",
   "pipeline_label_run": "Run pipeline",
   "pipeline_label_run_again": "Run failed stage",
   "pipeline_label_run_new": "Run pipeline again",

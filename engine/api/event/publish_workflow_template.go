@@ -31,7 +31,6 @@ func PublishWorkflowTemplateAdd(wt sdk.WorkflowTemplate, u *sdk.User) {
 
 // PublishWorkflowTemplateUpdate publishes an event for the update of the given workflow template.
 func PublishWorkflowTemplateUpdate(old, new sdk.WorkflowTemplate, changeMessage string, u *sdk.User) {
-	fmt.Println("old", old.Version, "new", new.Version)
 	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateUpdate{
 		OldWorkflowTemplate: old,
 		NewWorkflowTemplate: new,

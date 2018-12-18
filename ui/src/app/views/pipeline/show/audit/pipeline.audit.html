@@ -21,7 +21,7 @@
                     {{a.versionned | date:'short' }}
                 </td>
                 <td>
-                    <app-confirm-button (event)="rollback(a.id); $event.stopPropagation()" title="Rollback">
+                    <app-confirm-button (event)="rollback(a.id); $event.stopPropagation()" [title]="rollback">
                     </app-confirm-button>
                 </td>
             </tr>

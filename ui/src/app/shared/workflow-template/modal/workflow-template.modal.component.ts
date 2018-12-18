@@ -2,7 +2,6 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
 import { forkJoin } from 'rxjs/Observable/forkJoin';
-import { AuditWorkflowTemplate } from '../../../model/audit.model';
 import { Project } from '../../../model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from '../../../model/workflow-template.model';
 import { Workflow } from '../../../model/workflow.model';
@@ -22,9 +21,9 @@ export class WorkflowTemplateModalComponent {
     modal: ActiveModal<boolean, boolean, void>;
     workflowTemplate: WorkflowTemplate;
     workflowTemplateInstance: WorkflowTemplateInstance;
-    workflowTemplateAudits: Array<AuditWorkflowTemplate>;
     diffVisible: boolean;
     diffItems: Array<Item>;
+    workflowTemplateAuditMessages: Array<string>;
 
     constructor(
         private _modalService: SuiModalService,
@@ -51,12 +50,13 @@ export class WorkflowTemplateModalComponent {
                 if (this.workflowTemplateInstance.workflow_template_version !== this.workflowTemplate.version) {
                     this._templateService.getAudits(this.workflowTemplate.group.name, this.workflowTemplate.slug,
                         this.workflowTemplateInstance.workflow_template_version).subscribe(as => {
-                            this.workflowTemplateAudits = as;
+                            this.workflowTemplateAuditMessages = as.filter(a => !!a.change_message).map(a => a.change_message);
                             let before = as[0].data_after ? <WorkflowTemplate>JSON.parse(as[0].data_after) : null;
                             this.diffItems = calculateWorkflowTemplateDiff(before, this.workflowTemplate);
                         });
                 } else {
-                    this.workflowTemplateAudits = null;
+                    this.workflowTemplateAuditMessages = [];
+                    this.diffItems = [];
                 }
             });
     }

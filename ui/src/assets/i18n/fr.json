@@ -288,6 +288,7 @@
   "common_update": "Modifier",
   "common_split": "Séparé",
   "common_unified": "Unifié",
+  "common_rollback": "Effectuer un rollback",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
@@ -529,7 +530,6 @@
   "pipeline_label_detach": "Supprimer le pipeline de l'application",
   "pipeline_label_edit": "Éditer le pipeline",
   "pipeline_label_show": "Voir le pipeline",
-  "pipeline_label_rollback": "Effectuer un rollback",
   "pipeline_label_run": "Lancer le pipeline",
   "pipeline_label_run_again": "Relancer le stage en erreur",
   "pipeline_label_run_new": "Relancer le pipeline",

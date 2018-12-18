@@ -54,21 +54,21 @@ export class WorkflowTemplateEditComponent implements OnInit {
 
         this.columns = [
             <Column>{
-                name: this._translate.instant('audit_modification_type'),
+                name: 'audit_modification_type',
                 selector: a => a.event_type
             },
             <Column>{
                 type: ColumnType.DATE,
-                name: this._translate.instant('audit_time_author'),
+                name: 'audit_time_author',
                 selector: a => a.created
             },
             <Column>{
-                name: this._translate.instant('audit_username'),
+                name: 'audit_username',
                 selector: a => a.triggered_by
             },
             <Column>{
                 type: ColumnType.MARKDOWN,
-                name: this._translate.instant('common_description'),
+                name: 'common_description',
                 selector: a => a.change_message
             }
         ];
@@ -92,6 +92,20 @@ export class WorkflowTemplateEditComponent implements OnInit {
             .subscribe(wt => {
                 this.oldWorkflowTemplate = { ...wt };
                 this.workflowTemplate = wt;
+
+                if (this.workflowTemplate.editable) {
+                    this.columns.push(<Column>{
+                        type: ColumnType.CONFIRM_BUTTON,
+                        name: 'common_action',
+                        selector: a => {
+                            return {
+                                title: 'common_rollback',
+                                click: _ => { this.clickRollback(a) }
+                            };
+                        }
+                    });
+                }
+
                 this.updatePath();
             });
     }
@@ -164,4 +178,6 @@ export class WorkflowTemplateEditComponent implements OnInit {
         let after = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
         this.diffItems = calculateWorkflowTemplateDiff(before, after);
     }
+
+    clickRollback(a: AuditWorkflowTemplate) { }
 }
