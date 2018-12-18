@@ -1,59 +1,14 @@
 package repositories
 
 import (
-	repo "github.com/fsamin/go-repo"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 func (s *Service) processCheckout(op *sdk.Operation) error {
-	r := s.Repo(*op)
-	if err := s.checkOrCreateFS(r); err != nil {
-		log.Error("Repositories> processCheckout> checkOrCreateFS> [%s] Error %v", op.UUID, err)
-		return err
-	}
-
-	// Get the git repository
-	opts := []repo.Option{repo.WithVerbose()}
-	if op.RepositoryStrategy.ConnectionType == "ssh" {
-		log.Debug("Repositories> processCheckout> using ssh key %s", op.RepositoryStrategy.SSHKey)
-		opts = append(opts, repo.WithSSHAuth([]byte(op.RepositoryStrategy.SSHKeyContent)))
-	} else if op.RepositoryStrategy.User != "" && op.RepositoryStrategy.Password != "" {
-		opts = append(opts, repo.WithHTTPAuth(op.RepositoryStrategy.User, op.RepositoryStrategy.Password))
-	}
-
-	gitRepo, err := repo.New(r.Basedir, opts...)
+	gitRepo, currentBranch, err := s.processGitClone(op)
 	if err != nil {
-		log.Debug("Repositories> processCheckout> cloning %s into %s", r.URL, r.Basedir)
-		if _, err = repo.Clone(r.Basedir, r.URL, opts...); err != nil {
-			log.Error("Repositories> processCheckout> Clone> [%s] error %v", op.UUID, err)
-			return err
-		}
-	}
-
-	f, err := gitRepo.FetchURL()
-	if err != nil {
-		log.Error("Repositories> processCheckout> gitRepo.FetchURL> [%s] Error: %v", op.UUID, err)
-		return err
-	}
-	d, err := gitRepo.DefaultBranch()
-	if err != nil {
-		log.Error("Repositories> processCheckout> DefaultBranch> [%s] Error: %v", op.UUID, err)
-		return err
-	}
-
-	op.RepositoryInfo = &sdk.OperationRepositoryInfo{
-		Name:          op.RepoFullName,
-		FetchURL:      f,
-		DefaultBranch: d,
-	}
-
-	//Check branch
-	currentBranch, err := gitRepo.CurrentBranch()
-	if err != nil {
-		log.Error("Repositories> processCheckout> CurrentBranch> [%s] error %v", op.UUID, err)
-		return err
+		return sdk.WrapError(err, "unable to process gitclone")
 	}
 
 	//Check is repo has diverged
@@ -71,11 +26,11 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 	}
 
 	if op.Setup.Checkout.Branch == "" {
-		op.Setup.Checkout.Branch = d
+		op.Setup.Checkout.Branch = op.RepositoryInfo.DefaultBranch
 	}
 
 	if currentBranch != op.Setup.Checkout.Branch {
-		log.Debug("Repositories> processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, r.URL)
+		log.Debug("Repositories> processCheckout> fetching branch %s from %s", op.Setup.Checkout.Branch, op.URL)
 		if err := gitRepo.FetchRemoteBranch("origin", op.Setup.Checkout.Branch); err != nil {
 			log.Error("Repositories> processCheckout> FetchRemoteBranch> [%s] error %v", op.UUID, err)
 			return err
@@ -112,6 +67,6 @@ func (s *Service) processCheckout(op *sdk.Operation) error {
 		}
 	}
 
-	log.Info("Repositories> processCheckout> repository %s ready", r.URL)
+	log.Info("Repositories> processCheckout> repository %s ready", op.URL)
 	return nil
 }

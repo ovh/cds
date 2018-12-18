@@ -187,4 +187,13 @@ export class WorkflowService {
     unlinkLabel(key: string, workflowName: string, labelId: number): Observable<null> {
         return this._http.delete<null>(`/project/${key}/workflows/${workflowName}/label/${labelId}`);
     }
+
+    /**
+     * Transform the workflow as  workflow as code
+     * @param key
+     * @param workflowName
+     */
+    migrateAsCode(key: string, workflowName: string): Observable<Workflow> {
+        return this._http.post<Workflow>(`/project/${key}/workflows/${workflowName}/ascode`, null);
+    }
 }

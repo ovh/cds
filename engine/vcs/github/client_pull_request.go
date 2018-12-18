@@ -55,53 +55,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 
 	prResults := []sdk.VCSPullRequest{}
 	for _, pullr := range pullRequests {
-		pr := sdk.VCSPullRequest{
-			ID: pullr.Number,
-			Base: sdk.VCSPushEvent{
-				Repo: pullr.Base.Repo.FullName,
-				Branch: sdk.VCSBranch{
-					ID:           pullr.Base.Ref,
-					DisplayID:    pullr.Base.Ref,
-					LatestCommit: pullr.Base.Sha,
-				},
-				CloneURL: pullr.Base.Repo.CloneURL,
-				Commit: sdk.VCSCommit{
-					Author: sdk.VCSAuthor{
-						Avatar:      pullr.Base.User.AvatarURL,
-						DisplayName: pullr.Base.User.Login,
-						Name:        pullr.Base.User.Name,
-					},
-					Hash:      pullr.Base.Sha,
-					Message:   pullr.Base.Label,
-					Timestamp: pullr.UpdatedAt.Unix(),
-				},
-			},
-			Head: sdk.VCSPushEvent{
-				Repo: pullr.Head.Repo.FullName,
-				Branch: sdk.VCSBranch{
-					ID:           pullr.Head.Ref,
-					DisplayID:    pullr.Head.Ref,
-					LatestCommit: pullr.Head.Sha,
-				},
-				CloneURL: pullr.Head.Repo.CloneURL,
-				Commit: sdk.VCSCommit{
-					Author: sdk.VCSAuthor{
-						Avatar:      pullr.Head.User.AvatarURL,
-						DisplayName: pullr.Head.User.Login,
-						Name:        pullr.Head.User.Name,
-					},
-					Hash:      pullr.Head.Sha,
-					Message:   pullr.Head.Label,
-					Timestamp: pullr.UpdatedAt.Unix(),
-				},
-			},
-			URL: pullr.URL,
-			User: sdk.VCSAuthor{
-				Avatar:      pullr.User.AvatarURL,
-				DisplayName: pullr.User.Login,
-				Name:        pullr.User.Name,
-			},
-		}
+		pr := fromPullRequestToVCSPuyllRequest(pullr)
 		prResults = append(prResults, pr)
 	}
 
@@ -139,4 +93,81 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id i
 	}
 
 	return nil
+}
+
+func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, fromRef string, toRef string, title string) (sdk.VCSPullRequest, error) {
+	path := fmt.Sprintf("/repos/%s/pulls", repo)
+	payload := map[string]string{
+		"title": title,
+		"head":  fromRef,
+		"base":  toRef,
+	}
+	values, _ := json.Marshal(payload)
+	res, err := g.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
+	if err != nil {
+		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to post status")
+	}
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to read body")
+	}
+
+	var prResponse PullRequest
+	if err := json.Unmarshal(body, &prResponse); err != nil {
+		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to unmarshal pullrequest %s", string(body))
+	}
+
+	return fromPullRequestToVCSPuyllRequest(prResponse), nil
+}
+
+func fromPullRequestToVCSPuyllRequest(pullr PullRequest) sdk.VCSPullRequest {
+	return sdk.VCSPullRequest{
+		ID: pullr.Number,
+		Base: sdk.VCSPushEvent{
+			Repo: pullr.Base.Repo.FullName,
+			Branch: sdk.VCSBranch{
+				ID:           pullr.Base.Ref,
+				DisplayID:    pullr.Base.Ref,
+				LatestCommit: pullr.Base.Sha,
+			},
+			CloneURL: pullr.Base.Repo.CloneURL,
+			Commit: sdk.VCSCommit{
+				Author: sdk.VCSAuthor{
+					Avatar:      pullr.Base.User.AvatarURL,
+					DisplayName: pullr.Base.User.Login,
+					Name:        pullr.Base.User.Name,
+				},
+				Hash:      pullr.Base.Sha,
+				Message:   pullr.Base.Label,
+				Timestamp: pullr.UpdatedAt.Unix(),
+			},
+		},
+		Head: sdk.VCSPushEvent{
+			Repo: pullr.Head.Repo.FullName,
+			Branch: sdk.VCSBranch{
+				ID:           pullr.Head.Ref,
+				DisplayID:    pullr.Head.Ref,
+				LatestCommit: pullr.Head.Sha,
+			},
+			CloneURL: pullr.Head.Repo.CloneURL,
+			Commit: sdk.VCSCommit{
+				Author: sdk.VCSAuthor{
+					Avatar:      pullr.Head.User.AvatarURL,
+					DisplayName: pullr.Head.User.Login,
+					Name:        pullr.Head.User.Name,
+				},
+				Hash:      pullr.Head.Sha,
+				Message:   pullr.Head.Label,
+				Timestamp: pullr.UpdatedAt.Unix(),
+			},
+		},
+		URL: pullr.URL,
+		User: sdk.VCSAuthor{
+			Avatar:      pullr.User.AvatarURL,
+			DisplayName: pullr.User.Login,
+			Name:        pullr.User.Name,
+		},
+	}
 }

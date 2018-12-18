@@ -14,14 +14,28 @@
             <div class="content infoPopup">
                 <div *ngIf="workflow && workflow.from_repository;then fromRepositoryInfo;else fromRepositoryHelp"></div>
                 <ng-template #fromRepositoryInfo>
-                    {{ 'workflow_from_repository' | translate: {repo: workflow.from_repository} }}
+                    <p>
+                        {{ 'workflow_from_repository' | translate: {repo: workflow.from_repository} }}
+                    </p>
                 </ng-template>
                 <ng-template #fromRepositoryHelp>
                     <p>{{'workflow_repository_help_line_1' | translate}}</p>
                     <p>{{'workflow_repository_help_line_2' | translate}}</p>
-                    <div class="ui list">
-                        <a class="item" target="_blank" href="https://ovh.github.io/cds/gettingstarted/init_workflow_with_cdsctl">{{'common_read_more'
-                            | translate}}</a>
+                    <div class="footer">
+                        <div>
+                            <div class="ui list">
+                                <a class="item" target="_blank" href="https://ovh.github.io/cds/gettingstarted/init_workflow_with_cdsctl">{{'common_read_more'
+                                    | translate}}</a>
+                            </div>
+                        </div>
+                        <div class="migrate">
+                            <button class="ui right floated mini button" *ngIf="!showButtons" (click)="showButtons = true">Migrate</button>
+                            <div class="ui mini buttons" *ngIf="showButtons">
+                                <button class="ui button" (click)="showButtons = false">Cancel</button>
+                                <div class="or"></div>
+                                <button class="ui positive button" (click)="migrateAsCode()">Save</button>
+                            </div>
+                        </div>
                     </div>
                 </ng-template>
             </div>

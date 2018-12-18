@@ -55,6 +55,8 @@ export class WorkflowComponent implements OnInit {
     runSubscription: Subscription;
     workflowRun: WorkflowRun;
 
+    showButtons = false;
+
     constructor(private _activatedRoute: ActivatedRoute,
         private _workflowStore: WorkflowStore,
         private _workflowRunService: WorkflowRunService,
@@ -206,5 +208,11 @@ export class WorkflowComponent implements OnInit {
         if (this.templateFormComponent) {
             this.templateFormComponent.show();
         }
+    }
+
+    migrateAsCode(): void {
+        this._workflowStore.migrateAsCode(this.project.key, this.workflow.name).subscribe(() => {
+           console.log('Console. migrate');
+        });
     }
 }

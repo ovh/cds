@@ -43,47 +43,12 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 
 	prs := make([]sdk.VCSPullRequest, len(bbPR))
 	for i, r := range bbPR {
-		pr := sdk.VCSPullRequest{
-			ID: r.ID,
-		}
-		if len(r.Links.Self) > 0 {
-			pr.URL = r.Links.Self[0].Href
-		}
-		//
-		pr.Base = sdk.VCSPushEvent{
-			Branch: sdk.VCSBranch{
-				ID: strings.Replace(r.ToRef.ID, "refs/heads/", "", 1),
-			},
-		}
-		pr.Head = sdk.VCSPushEvent{
-			Branch: sdk.VCSBranch{
-				ID: strings.Replace(r.FromRef.ID, "refs/heads/", "", 1),
-			},
-		}
-		pr.User = sdk.VCSAuthor{
-			Name:        r.Author.User.Name,
-			DisplayName: r.Author.User.DisplayName,
-			Email:       r.Author.User.EmailAddress,
-		}
-
-		baseBranch, err := b.Branch(ctx, repo, pr.Base.Branch.ID)
+		pr, err := b.fromPullRequestToVCSPullRequest(ctx, repo, r)
 		if err != nil {
-			return nil, sdk.WrapError(err, "unable to get branch %v", baseBranch)
+			return nil, err
 		}
-		pr.Base.Branch = *baseBranch
-		pr.Base.Commit = sdk.VCSCommit{
-			Hash: baseBranch.LatestCommit,
-		}
-
-		headBranch, err := b.Branch(ctx, r.FromRef.Repository.Project.Key+"/"+r.FromRef.Repository.Slug, pr.Head.Branch.ID)
-		if err != nil {
-			return nil, sdk.WrapError(err, "unable to get branch %v", headBranch)
-		}
-		pr.Head.Branch = *headBranch
-
 		prs[i] = pr
 	}
-
 	return prs, nil
 }
 
@@ -100,4 +65,88 @@ func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, p
 	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d/comments", project, slug, prID)
 
 	return b.do(ctx, "POST", "core", path, nil, values, nil, &options{asUser: true})
+}
+
+func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, fromRef string, toRef string, title string) (sdk.VCSPullRequest, error) {
+	var pr sdk.VCSPullRequest
+	project, slug, err := getRepo(repo)
+	if err != nil {
+		return pr, sdk.WithStack(err)
+	}
+
+	request := PullRequest{
+		Title:  title,
+		State:  "OPEN",
+		Open:   true,
+		Closed: false,
+		FromRef: PullRequestRef{
+			ID: "",
+			Repository: PullRequestRefRepository{
+				Slug: slug,
+				Project: Project{
+					Key: project,
+				},
+			},
+		},
+		ToRef: PullRequestRef{
+			ID: "",
+			Repository: PullRequestRefRepository{
+				Slug: slug,
+				Project: Project{
+					Key: project,
+				},
+			},
+		},
+		Locked: false,
+	}
+
+	values, _ := json.Marshal(request)
+	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests", project, slug)
+
+	if err := b.do(ctx, "POST", "core", path, nil, values, &request, &options{asUser: true}); err != nil {
+		return pr, sdk.WithStack(err)
+	}
+
+	return b.fromPullRequestToVCSPullRequest(ctx, repo, request)
+}
+
+func (b *bitbucketClient) fromPullRequestToVCSPullRequest(ctx context.Context, repo string, pullRequest PullRequest) (sdk.VCSPullRequest, error) {
+	pr := sdk.VCSPullRequest{
+		ID: pullRequest.ID,
+	}
+	if len(pullRequest.Links.Self) > 0 {
+		pr.URL = pullRequest.Links.Self[0].Href
+	}
+	//
+	pr.Base = sdk.VCSPushEvent{
+		Branch: sdk.VCSBranch{
+			ID: strings.Replace(pullRequest.ToRef.ID, "refs/heads/", "", 1),
+		},
+	}
+	pr.Head = sdk.VCSPushEvent{
+		Branch: sdk.VCSBranch{
+			ID: strings.Replace(pullRequest.FromRef.ID, "refs/heads/", "", 1),
+		},
+	}
+	pr.User = sdk.VCSAuthor{
+		Name:        pullRequest.Author.User.Name,
+		DisplayName: pullRequest.Author.User.DisplayName,
+		Email:       pullRequest.Author.User.EmailAddress,
+	}
+
+	baseBranch, err := b.Branch(ctx, repo, pr.Base.Branch.ID)
+	if err != nil {
+		return pr, sdk.WrapError(err, "unable to get branch %v", baseBranch)
+	}
+	pr.Base.Branch = *baseBranch
+	pr.Base.Commit = sdk.VCSCommit{
+		Hash: baseBranch.LatestCommit,
+	}
+
+	headBranch, err := b.Branch(ctx, pullRequest.FromRef.Repository.Project.Key+"/"+pullRequest.FromRef.Repository.Slug, pr.Head.Branch.ID)
+	if err != nil {
+		return pr, sdk.WrapError(err, "unable to get branch %v", headBranch)
+	}
+	pr.Head.Branch = *headBranch
+	return pr, nil
 }

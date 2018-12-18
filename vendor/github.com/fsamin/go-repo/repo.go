@@ -323,6 +323,16 @@ func (r Repo) Add(s ...string) error {
 	return nil
 }
 
+// Remove file or directory
+func (r Repo) Remove(s ...string) error {
+	args := append([]string{"rm", "-f"}, s...)
+	out, err := r.runCmd("git", args...)
+	if err != nil {
+		return fmt.Errorf("command 'git rm' failed: %v (%s)", err, out)
+	}
+	return nil
+}
+
 // Commit the index
 func (r Repo) Commit(m string) error {
 	out, err := r.runCmd("git", "commit", "-m", strconv.Quote(m))
@@ -339,6 +349,16 @@ func (r Repo) Push(remote, branch string) error {
 		return fmt.Errorf("command 'git push' failed: %v (%s)", err, out)
 	}
 	return nil
+}
+
+// Status run the git status command
+func (r Repo) Status() (string, error) {
+	args := append([]string{"status"})
+	out, err := r.runCmd("git", args...)
+	if err != nil {
+		return "", fmt.Errorf("command 'git status' failed: %v (%s)", err, out)
+	}
+	return out, nil
 }
 
 func (r Repo) HasDiverged() (bool, error) {

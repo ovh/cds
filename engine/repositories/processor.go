@@ -47,6 +47,14 @@ func (s *Service) do(op sdk.Operation) error {
 			op.Error = ""
 			op.Status = sdk.OperationStatusDone
 		}
+	case op.Setup.Push.Branch != "":
+		if err := s.processPush(&op); err != nil {
+			op.Error = err.Error()
+			op.Status = sdk.OperationStatusError
+		} else {
+			op.Error = ""
+			op.Status = sdk.OperationStatusDone
+		}
 	default:
 		op.Error = "unrecognized setup"
 		op.Status = sdk.OperationStatusError

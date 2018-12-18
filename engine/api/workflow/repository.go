@@ -53,7 +53,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		}
 	}
 
-	if err := PostRepositoryOperation(ctx, db, store, *p, &ope); err != nil {
+	if err := PostRepositoryOperation(ctx, db, store, *p, &ope, nil); err != nil {
 		return nil, sdk.WrapError(err, "Unable to post repository operation")
 	}
 
@@ -149,7 +149,7 @@ func pollRepositoryOperation(c context.Context, db gorp.SqlExecutor, store cache
 		case <-tickTimeout.C:
 			return sdk.WrapError(sdk.ErrRepoOperationTimeout, "pollRepositoryOperation> Timeout analyzing repository")
 		case <-tickPoll.C:
-			if err := GetRepositoryOperation(c, db, store, ope); err != nil {
+			if err := GetRepositoryOperation(c, db, ope); err != nil {
 				return sdk.WrapError(err, "Cannot get repository operation status")
 			}
 			switch ope.Status {
@@ -215,7 +215,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 }
 
 // PostRepositoryOperation creates a new repository operation
-func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, prj sdk.Project, ope *sdk.Operation) error {
+func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, prj sdk.Project, ope *sdk.Operation, buf *bytes.Buffer) error {
 	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")
@@ -229,14 +229,22 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, cache cac
 			}
 		}
 	}
-	if _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
-		return sdk.WrapError(err, "Unable to perform operation")
+
+	if buf == nil {
+		if _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
+			return sdk.WrapError(err, "Unable to perform operation")
+		}
+	} else {
+		if _, err := services.DoMultiPartRequest(ctx, srvs, http.MethodPost, "/operations", buf, ope, ope); err != nil {
+			return sdk.WrapError(err, "Unable to perform multipart operation")
+		}
 	}
+
 	return nil
 }
 
 // GetRepositoryOperation get repository operation status
-func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, store cache.Store, ope *sdk.Operation) error {
+func GetRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, ope *sdk.Operation) error {
 	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")

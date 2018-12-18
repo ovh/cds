@@ -23,6 +23,7 @@ type Operation struct {
 // OperationSetup is the setup for an operation basically its a checkout
 type OperationSetup struct {
 	Checkout OperationCheckout `json:"checkout,omitempty"`
+	Push     OperationPush     `json:"push,omitempty"`
 }
 
 // OperationRepositoryInfo represents global information about the repository
@@ -42,6 +43,12 @@ type OperationLoadFiles struct {
 type OperationCheckout struct {
 	Branch string `json:"branch,omitempty"`
 	Commit string `json:"commit,omitempty"`
+}
+
+// OperationPush represents a list of files to commit and push
+type OperationPush struct {
+	Branch  string `json:"branch,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 // OperationStatus is the status of an operation

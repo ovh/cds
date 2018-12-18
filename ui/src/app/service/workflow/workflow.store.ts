@@ -340,4 +340,13 @@ export class WorkflowStore {
         let cache = this._workflows.getValue();
         this._workflows.next(cache.delete(wfKey));
     }
+
+    migrateAsCode(key: string, workflowName: string): Observable<Workflow> {
+        return this._workflowService.migrateAsCode(key, workflowName).pipe(map(wf => {
+            let workflowKey = key + '-' + workflowName;
+            let store = this._workflows.getValue();
+            this._workflows.next(store.set(workflowKey, wf));
+            return wf;
+        }));
+    }
 }
