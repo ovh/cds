@@ -1,7 +1,7 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
-import { forkJoin } from 'rxjs/Observable/forkJoin';
+import { forkJoin } from 'rxjs';
 import { Project } from '../../../model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from '../../../model/workflow-template.model';
 import { Workflow } from '../../../model/workflow.model';

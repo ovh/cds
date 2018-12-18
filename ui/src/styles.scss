@@ -70,6 +70,10 @@ $scrollbarradius: 0px;
     display: inherit;
 }
 
+.message {
+    overflow: hidden;
+}
+
 // Override semantic-ui color to apply CDS theme
 .ui.popup {
     padding: 10px;

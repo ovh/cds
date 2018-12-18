@@ -21,6 +21,7 @@ export type Filter = (f: string) => (d: any) => any;
 export class Column {
     type: ColumnType;
     name: string;
+    class: string;
     selector: Selector;
     sortable: boolean;
     sortKey: string;
@@ -31,7 +32,7 @@ export class SelectorPipe implements PipeTransform {
     transform(columns: Array<Column>, data: any): Array<any> {
         return columns.map(c => {
             return {
-                type: c.type,
+                ...c,
                 selector: c.selector(data)
             };
         });

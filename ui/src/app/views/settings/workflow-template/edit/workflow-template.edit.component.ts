@@ -25,6 +25,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     groups: Array<Group>;
     audits: Array<AuditWorkflowTemplate>;
     loading: boolean;
+    loadingAudits: boolean;
     path: Array<PathItem>;
     tabs: Array<Tab>;
     selectedTab: Tab;
@@ -55,19 +56,23 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.columns = [
             <Column>{
                 name: 'audit_modification_type',
+                class: 'two',
                 selector: a => a.event_type
             },
             <Column>{
                 type: ColumnType.DATE,
+                class: 'two',
                 name: 'audit_time_author',
                 selector: a => a.created
             },
             <Column>{
                 name: 'audit_username',
+                class: 'two',
                 selector: a => a.triggered_by
             },
             <Column>{
                 type: ColumnType.MARKDOWN,
+                class: 'eight',
                 name: 'common_description',
                 selector: a => a.change_message
             }
@@ -97,6 +102,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                     this.columns.push(<Column>{
                         type: ColumnType.CONFIRM_BUTTON,
                         name: 'common_action',
+                        class: 'two right aligned',
                         selector: a => {
                             return {
                                 title: 'common_rollback',
@@ -120,9 +126,9 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     getAudits(groupName: string, templateSlug: string) {
-        this.loading = true;
+        this.loadingAudits = true;
         this._workflowTemplateService.getAudits(groupName, templateSlug)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => this.loadingAudits = false))
             .subscribe(as => {
                 this.audits = as;
             });
@@ -179,5 +185,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.diffItems = calculateWorkflowTemplateDiff(before, after);
     }
 
-    clickRollback(a: AuditWorkflowTemplate) { }
+    clickRollback(a: AuditWorkflowTemplate) {
+        this.workflowTemplate = a.data_before ? <WorkflowTemplate>JSON.parse(a.data_before) : null;
+        if (!this.workflowTemplate) {
+            this.workflowTemplate = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
+        }
+        this.saveWorkflowTemplate();
+    }
 }
