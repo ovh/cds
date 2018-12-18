@@ -51,6 +51,8 @@ func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 	}
 
 	mig.Progress = "done with success"
+	store.Publish(sdk.MaintenanceQueueName, "true")
+	defer store.Publish(sdk.MaintenanceQueueName, "false")
 	if err := migrateGitClonePrivateKey(DBFunc, store); err != nil {
 		log.Error("GitClonePrivateKey> Cannot migrate : %v", err)
 		mig.Error = err.Error()
@@ -59,7 +61,7 @@ func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 	mig.Status = sdk.MigrationStatusDone
 	mig.Done = time.Now()
 
-	return sdk.WrapError(Update(db, mig), "Could not update migration %s : %s", migrationName)
+	return sdk.WrapError(Update(db, mig), "Could not update migration %s : %s", migrationName, mig.Error)
 }
 
 func migrateGitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
