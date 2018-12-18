@@ -111,7 +111,7 @@
     "karma-jasmine-html-reporter": "^0.2.2",
     "karma-junit-reporter": "^1.1.0",
     "lint-staged": "git+https://github.com/bnjjj/lint-staged.git#master",
-    "node-sass": "4.8.3",
+    "node-sass": "4.11.0",
     "ts-node": "~4.1.0",
     "tslint": "~5.9.1",
     "typescript": "3.1.6",
