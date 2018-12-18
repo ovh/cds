@@ -19,6 +19,7 @@ func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowN
 
 	//Prepare the payload
 	//Anything can be pushed in the configuration, just avoid sending
+
 	payloadValues := map[string]string{}
 	if payload, ok := t.Config[sdk.Payload]; ok && payload.Value != "{}" {
 		var payloadInt interface{}
@@ -36,6 +37,7 @@ func (s *Service) doScheduledTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowN
 			} else {
 				payloadValues = m1
 			}
+			payloadValues["payload"] = payload.Value
 		} else {
 			log.Error("Hooks> doScheduledTaskExecution> Cannot unmarshall payload %s", err)
 		}

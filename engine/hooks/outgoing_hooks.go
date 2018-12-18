@@ -212,6 +212,7 @@ func (s *Service) doOutgoingWorkflowExecution(t *sdk.TaskExecution) error {
 		} else {
 			log.Error("Hooks> doOutgoingWorkflowExecution> Cannot unmarshall payload %s", err)
 		}
+		payloadValues["payload"] = string(payloadstr)
 	}
 
 	evt := sdk.WorkflowNodeRunHookEvent{

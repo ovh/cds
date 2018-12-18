@@ -189,7 +189,10 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun, pa
 			}
 
 			prefix := "workflow." + nodeName + "."
-			if strings.HasPrefix(p.Name, "cds.") {
+
+			if p.Name == "payload" {
+				// keep p.Name as is
+			} else if strings.HasPrefix(p.Name, "cds.") {
 				p.Name = strings.Replace(p.Name, "cds.", prefix, 1)
 			} else {
 				p.Name = prefix + p.Name
@@ -208,7 +211,7 @@ func getNodeRunBuildParameters(ctx context.Context, proj *sdk.Project, wr *sdk.W
 	)
 	defer end()
 
-	//Get node build parameters
+	//Get node build parameters$
 	params, errparam := GetNodeBuildParameters(proj, &wr.Workflow, runContext, run.PipelineParameters, run.Payload, run.HookEvent)
 	if errparam != nil {
 		return nil, sdk.WrapError(errparam, "getNodeRunParameters> Unable to compute node build parameters")
