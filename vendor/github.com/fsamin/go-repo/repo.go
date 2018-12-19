@@ -28,8 +28,9 @@ func Clone(path, url string, opts ...Option) (Repo, error) {
 	if r.verbose {
 		r.log("Cloning %s\n", r.url)
 	}
-	_, err := r.runCmd("git", "clone", r.url, ".")
+	stdout, err := r.runCmd("git", "clone", r.url, ".")
 	if err != nil {
+	  r.log("%s", stdout)
 		return r, err
 	}
 	return r, nil
@@ -325,7 +326,7 @@ func (r Repo) Add(s ...string) error {
 
 // Remove file or directory
 func (r Repo) Remove(s ...string) error {
-	args := append([]string{"rm", "-f"}, s...)
+	args := append([]string{"rm", "-f", "-r"}, s...)
 	out, err := r.runCmd("git", args...)
 	if err != nil {
 		return fmt.Errorf("command 'git rm' failed: %v (%s)", err, out)

@@ -30,6 +30,10 @@ func (s *Service) processPush(op *sdk.Operation) error {
 		}
 	}
 
+	if op.Setup.Push.ToBranch == "" {
+		op.Setup.Push.ToBranch = op.RepositoryInfo.DefaultBranch
+	}
+
 	// Switch to default branch
 	if currentBranch != op.RepositoryInfo.DefaultBranch {
 		if err := gitRepo.FetchRemoteBranch("origin", op.RepositoryInfo.DefaultBranch); err != nil {
@@ -39,8 +43,8 @@ func (s *Service) processPush(op *sdk.Operation) error {
 	}
 
 	// Create new branch
-	if err := gitRepo.CheckoutNewBranch(op.Setup.Push.Branch); err != nil {
-		log.Error("Repositories> processPush> Create new branch %s> [%s] error %v", op.Setup.Push.Branch, op.UUID, err)
+	if err := gitRepo.CheckoutNewBranch(op.Setup.Push.FromBranch); err != nil {
+		log.Error("Repositories> processPush> Create new branch %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
 		return err
 	}
 
@@ -81,8 +85,8 @@ func (s *Service) processPush(op *sdk.Operation) error {
 	}
 
 	// Push branch
-	if err := gitRepo.Push("origin", op.Setup.Push.Branch); err != nil {
-		log.Error("Repositories> processPush> push %s> [%s] error %v", op.Setup.Push.Branch, op.UUID, err)
+	if err := gitRepo.Push("origin", op.Setup.Push.FromBranch); err != nil {
+		log.Error("Repositories> processPush> push %s> [%s] error %v", op.Setup.Push.FromBranch, op.UUID, err)
 		return err
 	}
 

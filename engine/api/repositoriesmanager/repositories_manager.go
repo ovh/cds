@@ -367,6 +367,14 @@ func (c *vcsClient) PullRequestComment(ctx context.Context, fullname string, id 
 	return nil
 }
 
+func (c *vcsClient) PullRequestCreate(ctx context.Context, fullname string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests", c.name, fullname)
+	if _, err := c.doJSONRequest(ctx, "POST", path, pr, &pr); err != nil {
+		return pr, err
+	}
+	return pr, nil
+}
+
 func (c *vcsClient) CreateHook(ctx context.Context, fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
 	_, err := c.doJSONRequest(ctx, "POST", path, hook, hook)

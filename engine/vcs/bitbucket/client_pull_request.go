@@ -67,20 +67,19 @@ func (b *bitbucketClient) PullRequestComment(ctx context.Context, repo string, p
 	return b.do(ctx, "POST", "core", path, nil, values, nil, &options{asUser: true})
 }
 
-func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, fromRef string, toRef string, title string) (sdk.VCSPullRequest, error) {
-	var pr sdk.VCSPullRequest
+func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return pr, sdk.WithStack(err)
 	}
 
 	request := PullRequest{
-		Title:  title,
+		Title:  pr.Title,
 		State:  "OPEN",
 		Open:   true,
 		Closed: false,
 		FromRef: PullRequestRef{
-			ID: "",
+			ID: fmt.Sprintf("refs/heads/%s", pr.Head.Branch.DisplayID),
 			Repository: PullRequestRefRepository{
 				Slug: slug,
 				Project: Project{
@@ -89,7 +88,7 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, fr
 			},
 		},
 		ToRef: PullRequestRef{
-			ID: "",
+			ID: fmt.Sprintf("refs/heads/%s", pr.Base.Branch.DisplayID),
 			Repository: PullRequestRefRepository{
 				Slug: slug,
 				Project: Project{

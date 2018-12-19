@@ -18,6 +18,6 @@ func (c *gitlabClient) PullRequestComment(context.Context, string, int, string) 
 }
 
 // PullRequestCreate create a new pullrequest
-func (c *gitlabClient) PullRequestCreate(repo string, branchName string, msg string) (sdk.VCSPullRequest, error) {
+func (c *gitlabClient) PullRequestCreate(ctx context.Context, repo string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
 	return sdk.VCSPullRequest{}, fmt.Errorf("not yet implemented")
 }

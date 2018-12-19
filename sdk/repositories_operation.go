@@ -45,10 +45,12 @@ type OperationCheckout struct {
 	Commit string `json:"commit,omitempty"`
 }
 
-// OperationPush represents a list of files to commit and push
+// OperationPush represents information about push operation
 type OperationPush struct {
-	Branch  string `json:"branch,omitempty"`
-	Message string `json:"message,omitempty"`
+	FromBranch string `json:"from_branch,omitempty"`
+	ToBranch   string `json:"to_branch,omitempty"`
+	Message    string `json:"message,omitempty"`
+	PRLink     string `json:"pr_link,omitempty"`
 }
 
 // OperationStatus is the status of an operation

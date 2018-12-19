@@ -95,12 +95,12 @@ func (g *githubClient) PullRequestComment(ctx context.Context, repo string, id i
 	return nil
 }
 
-func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, fromRef string, toRef string, title string) (sdk.VCSPullRequest, error) {
+func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
 	path := fmt.Sprintf("/repos/%s/pulls", repo)
 	payload := map[string]string{
-		"title": title,
-		"head":  fromRef,
-		"base":  toRef,
+		"title": pr.Title,
+		"head":  pr.Head.Branch.DisplayID,
+		"base":  pr.Base.Branch.DisplayID,
 	}
 	values, _ := json.Marshal(payload)
 	res, err := g.post(path, "application/json", bytes.NewReader(values), &postOptions{skipDefaultBaseURL: false, asUser: true})
