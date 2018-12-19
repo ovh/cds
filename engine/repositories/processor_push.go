@@ -11,11 +11,10 @@ import (
 )
 
 func (s *Service) processPush(op *sdk.Operation) error {
-	gitRepo, currentBranch, err := s.processGitClone(op)
+	gitRepo, path, currentBranch, err := s.processGitClone(op)
 	if err != nil {
 		return sdk.WrapError(err, "unable to process gitclone")
 	}
-
 	//Check is repo has diverged
 	hasDiverged, err := gitRepo.HasDiverged()
 	if err != nil {
@@ -55,8 +54,13 @@ func (s *Service) processPush(op *sdk.Operation) error {
 	}
 
 	// Create files
+	if err := os.Mkdir(filepath.Join(path, ".cds"), os.ModePerm); err != nil {
+		log.Error("Repositories> processPush> Creating cds directory> [%s] error %v", op.UUID, err)
+		return err
+	}
 	for k, v := range op.LoadFiles.Results {
-		fname := filepath.Join(".cds", k)
+		fname := filepath.Join(path, ".cds", k)
+		log.Debug("Creating %s", fname)
 		fi, err := os.Create(fname)
 		if err != nil {
 			log.Error("Repositories> processPush> Create file %s> [%s] error %v", fname, op.UUID, err)
@@ -72,10 +76,10 @@ func (s *Service) processPush(op *sdk.Operation) error {
 			log.Error("Repositories> processPush> Closing file %s> [%s] error %v", fname, op.UUID, err)
 			return err
 		}
-		if err := gitRepo.Add(fname); err != nil {
-			log.Error("Repositories> processPush> Git add file %s> [%s] error %v", fname, op.UUID, err)
-			return err
-		}
+	}
+	if err := gitRepo.Add(path + "/.cds/*"); err != nil {
+		log.Error("Repositories> processPush> Git add file %s> [%s] error %v", op.UUID, err)
+		return err
 	}
 
 	// Commit files
@@ -90,6 +94,6 @@ func (s *Service) processPush(op *sdk.Operation) error {
 		return err
 	}
 
-	log.Info("Repositories> processPush> files pushed")
+	log.Debug("Repositories> processPush> files pushed")
 	return nil
 }

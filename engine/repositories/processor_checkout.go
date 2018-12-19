@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Service) processCheckout(op *sdk.Operation) error {
-	gitRepo, currentBranch, err := s.processGitClone(op)
+	gitRepo, _, currentBranch, err := s.processGitClone(op)
 	if err != nil {
 		return sdk.WrapError(err, "unable to process gitclone")
 	}
