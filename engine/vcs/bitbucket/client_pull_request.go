@@ -131,7 +131,7 @@ func (b *bitbucketClient) fromPullRequestToVCSPullRequest(ctx context.Context, r
 	}
 	if pullRequest.Author != nil {
 		pr.User = sdk.VCSAuthor{
-			Name:        pullRequest.Author.User.Name,
+			Name:        pullRequest.Author.User.Username,
 			DisplayName: pullRequest.Author.User.DisplayName,
 			Email:       pullRequest.Author.User.EmailAddress,
 		}

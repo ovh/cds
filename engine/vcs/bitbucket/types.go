@@ -244,7 +244,6 @@ type User struct {
 	EmailAddress string `json:"emailAddress"`
 	DisplayName  string `json:"displayName"`
 	Slug         string `json:"slug"`
-	Name         string `json:"name"`
 	ID           int    `json:"id"`
 	Active       bool   `json:"active"`
 	Type         string `json:"type"`

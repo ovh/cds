@@ -44,7 +44,9 @@ func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path st
 	if errM != nil {
 		return 0, sdk.WrapError(errM, "unable to marshal data")
 	}
-	writer.WriteField("dataJSON", string(jsonData))
+	if err := writer.WriteField("dataJSON", string(jsonData)); err != nil {
+		return 0, sdk.WrapError(err, "unable to add field dataJSON")
+	}
 
 	// Close writer
 	if err := writer.Close(); err != nil {

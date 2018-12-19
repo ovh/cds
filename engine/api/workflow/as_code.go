@@ -159,7 +159,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				log.Error("postWorkflowAsCodeHandler> unable to start transaction")
 				return
 			}
-			defer tx.Rollback()
+			defer tx.Rollback() // nolint
 			if err := Update(ctx, tx, store, wf, oldW, p, u); err != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to update workflow")
 				return
