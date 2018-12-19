@@ -45,7 +45,6 @@ func MigrateToWorkflowData(DBFunc func() *gorp.DbMap, store cache.Store) error {
 			<-results
 		}
 	}
-	return nil
 }
 
 func migrationWorker(db *gorp.DbMap, store cache.Store, jobs <-chan int64, results chan<- int64) {
