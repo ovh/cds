@@ -1,5 +1,7 @@
 # git.apache.org/thrift.git v0.0.0-20180514124809-e59b73d3c2bf
 git.apache.org/thrift.git/lib/go/thrift
+# github.com/AlecAivazis/survey v1.7.1
+github.com/AlecAivazis/survey
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 github.com/Azure/go-ansiterm/winterm
 github.com/Azure/go-ansiterm
@@ -310,6 +312,8 @@ github.com/juju/ratelimit
 github.com/julienschmidt/httprouter
 # github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
 github.com/kardianos/osext
+# github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51
+github.com/kballard/go-shellquote
 # github.com/kr/fs v0.0.0-20131111012553-2788f0dbd169
 github.com/kr/fs
 # github.com/lib/pq v0.0.0-20161014011634-ae8357db35d7
@@ -634,6 +638,9 @@ google.golang.org/grpc/status
 google.golang.org/grpc/tap
 google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/balancer/base
+# gopkg.in/AlecAivazis/survey.v1 v1.7.1
+gopkg.in/AlecAivazis/survey.v1/core
+gopkg.in/AlecAivazis/survey.v1/terminal
 # gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175
 gopkg.in/asn1-ber.v1
 # gopkg.in/bsm/sarama-cluster.v2 v2.1.4

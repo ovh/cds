@@ -7,6 +7,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"github.com/AlecAivazis/survey"
 )
 
 // AskForConfirmation ask for yes/no confirmation on command line
@@ -77,4 +79,56 @@ func AskValueChoice(s string) string {
 	}
 
 	return strings.TrimSpace(response)
+}
+
+// CustomMultiSelect is a custom multi select over survey multi select
+// that allows to add extra info on items.
+type CustomMultiSelect struct {
+	survey.MultiSelect
+	optionsMap map[string]CustomMultiSelectOption
+	Message    string
+	Options    []CustomMultiSelectOption
+}
+
+// Init survey multi select from options.
+func (c *CustomMultiSelect) Init() {
+	c.optionsMap = make(map[string]CustomMultiSelectOption)
+
+	allOptions := make([]string, len(c.Options))
+	var defaultOptions []string
+	for i := range c.Options {
+		allOptions[i] = fmt.Sprintf("%s (%s)", c.Options[i].Value, c.Options[i].Info)
+		c.optionsMap[allOptions[i]] = c.Options[i]
+		if c.Options[i].Default {
+			defaultOptions = append(defaultOptions, allOptions[i])
+		}
+	}
+	c.MultiSelect = survey.MultiSelect{
+		Message: c.Message,
+		Options: allOptions,
+		Default: defaultOptions,
+	}
+}
+
+// Prompt override to extract option values.
+func (c *CustomMultiSelect) Prompt() (interface{}, error) {
+	resMultiSelect, err := c.MultiSelect.Prompt()
+	if err != nil {
+		return nil, err
+	}
+
+	resMultiSelectStrings := resMultiSelect.([]string)
+	results := make([]string, len(resMultiSelectStrings))
+	for i := range resMultiSelectStrings {
+		results[i] = c.optionsMap[resMultiSelectStrings[i]].Value
+	}
+
+	return results, nil
+}
+
+// CustomMultiSelectOption for CustomMultiSelect.
+type CustomMultiSelectOption struct {
+	Value   string
+	Info    string
+	Default bool
 }
