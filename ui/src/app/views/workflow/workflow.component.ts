@@ -17,6 +17,7 @@ import { WorkflowStore } from '../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../shared/toast/ToastService';
 import { WorkflowTemplateModalComponent } from '../../shared/workflow-template/modal/workflow-template.modal.component';
+import {WorkflowSaveAsCodeComponent} from '../../shared/workflow/modal/save-as-code/save.as.code.component';
 
 @Component({
     selector: 'app-workflow',
@@ -46,6 +47,8 @@ export class WorkflowComponent implements OnInit {
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
+    @ViewChild('saveAsCode')
+    saveAsCode: WorkflowSaveAsCodeComponent;
 
     onScroll = new EventEmitter<boolean>();
     selectedNodeID: number;
@@ -211,8 +214,9 @@ export class WorkflowComponent implements OnInit {
     }
 
     migrateAsCode(): void {
-        this._workflowStore.migrateAsCode(this.project.key, this.workflow.name).subscribe(() => {
-           console.log('Console. migrate');
+        this._workflowStore.migrateAsCode(this.project.key, this.workflow.name).subscribe((ope) => {
+            this.showButtons = false;
+            this.saveAsCode.show(ope);
         });
     }
 }

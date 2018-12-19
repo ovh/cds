@@ -11,6 +11,7 @@ import {ProjectStore} from '../project/project.store';
 import {WorkflowService} from './workflow.service';
 
 import {map, mergeMap} from 'rxjs/operators';
+import {Operation} from '../../model/operation.model';
 
 @Injectable()
 export class WorkflowStore {
@@ -341,12 +342,7 @@ export class WorkflowStore {
         this._workflows.next(cache.delete(wfKey));
     }
 
-    migrateAsCode(key: string, workflowName: string): Observable<Workflow> {
-        return this._workflowService.migrateAsCode(key, workflowName).pipe(map(wf => {
-            let workflowKey = key + '-' + workflowName;
-            let store = this._workflows.getValue();
-            this._workflows.next(store.set(workflowKey, wf));
-            return wf;
-        }));
+    migrateAsCode(key: string, workflowName: string): Observable<Operation> {
+        return this._workflowService.migrateAsCode(key, workflowName);
     }
 }

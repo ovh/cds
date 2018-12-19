@@ -214,6 +214,7 @@
   "common_loading_project": "Chargement du projet...",
   "common_loading_environments": "Chargement des environnements",
   "common_loading_workflow": "Chargement du workflow...",
+  "common_see": "voir",
   "common_name": "Nom",
   "common_slug": "Slug",
   "common_group": "Groupe",
@@ -891,6 +892,11 @@
   "worker_model_post_cmd": "Commande après exécution du worker",
   "worker_model_shell_cmd": "Commande principale du shell",
   "worker_model_no_usage": "Ce modèle de worker n'est pas utilisé explicitement dans un pipeline",
+
+
+  "workflow_save_as_code_title": "Sauvegarde du workflow as code",
+  "workflow_save_as_code_pending": "Envoie des modifications",
+  "workflow_as_code_pr_success": "Une demande de revue a été créée :",
 
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
   "workflow_resync_vcs": "Resynchroniser les statuts VCS",

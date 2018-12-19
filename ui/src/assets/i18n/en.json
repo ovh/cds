@@ -214,6 +214,7 @@
   "common_loading_project": "Loading project...",
   "common_loading_environments": "Loading environments",
   "common_loading_workflow": "Loading workflow...",
+  "common_see": "see",
   "common_name": "Name",
   "common_slug": "Slug",
   "common_group": "Group",
@@ -891,6 +892,10 @@
   "worker_model_post_cmd": "Post worker command",
   "worker_model_shell_cmd": "Main shell command",
   "worker_model_no_usage": "This worker model is not explicitly used in a pipeline",
+
+  "workflow_save_as_code_title": "Save workflow as code",
+  "workflow_save_as_code_pending": "Pushing files...",
+  "workflow_as_code_pr_success": "A pull-request has just been created:",
 
   "workflow_app_info_new_wf": "This project is allowed to use the new CDS Workflows.",
   "workflow_resync_vcs": "Resync VCS status",

@@ -5,6 +5,7 @@ import {deepClone} from 'fast-json-patch/lib/core';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 import {GroupPermission} from '../../model/group.model';
+import {Operation} from '../../model/operation.model';
 import {Label} from '../../model/project.model';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 
@@ -193,7 +194,7 @@ export class WorkflowService {
      * @param key
      * @param workflowName
      */
-    migrateAsCode(key: string, workflowName: string): Observable<Workflow> {
-        return this._http.post<Workflow>(`/project/${key}/workflows/${workflowName}/ascode`, null);
+    migrateAsCode(key: string, workflowName: string): Observable<Operation> {
+        return this._http.post<Operation>(`/project/${key}/workflows/${workflowName}/ascode`, null);
     }
 }

@@ -89,6 +89,7 @@ import { WorkflowNodeContextComponent } from './workflow/modal/context/workflow.
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-modal/hook.modal.component';
 import { WorkflowNodeOutGoingHookEditComponent } from './workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
+import {WorkflowSaveAsCodeComponent} from './workflow/modal/save-as-code/save.as.code.component';
 import { WorkflowTriggerComponent } from './workflow/modal/trigger/workflow.trigger.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeHookFormComponent } from './workflow/node/hook/form/hook.form.component';
@@ -184,6 +185,7 @@ import { ZoneComponent } from './zone/zone.component';
         JobStepSummaryComponent,
         ActionStepSummaryComponent,
         WorkflowSidebarRunHookComponent,
+        WorkflowSaveAsCodeComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowNodeRunParamComponent,
@@ -291,6 +293,7 @@ import { ZoneComponent } from './zone/zone.component';
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
         WorkflowSidebarRunHookComponent,
+        WorkflowSaveAsCodeComponent,
 
         WorkflowNodeAddWizardComponent,
         WorkflowDeleteNodeComponent,
