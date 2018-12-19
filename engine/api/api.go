@@ -711,9 +711,9 @@ func (a *API) Serve(ctx context.Context) error {
 			return migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache)
 		}})
 	}
-	migrate.Add(sdk.Migration{Name: "GitClonePrivateKey", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
-		return migrate.GitClonePrivateKey(a.mustDB, a.Cache)
-	}})
+	// migrate.Add(sdk.Migration{Name: "GitClonePrivateKey", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+	// 	return migrate.GitClonePrivateKey(a.mustDB, a.Cache)
+	// }})
 
 	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
 	if errF != nil {
