@@ -285,7 +285,7 @@ type VCSPullRequest struct {
 	User  VCSAuthor    `json:"user"`
 	Head  VCSPushEvent `json:"head"`
 	Base  VCSPushEvent `json:"base"`
-	Title string       `json:"base"`
+	Title string       `json:"title"`
 }
 
 //VCSPushEvent represents a push events for polling

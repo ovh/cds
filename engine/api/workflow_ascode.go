@@ -2,21 +2,16 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
-
-var cacheOperationKey = cache.Key("repositories", "operation", "push")
 
 // postWorkflowAsCodeHandler Make the workflow as code
 // @title Make the workflow as code
@@ -41,70 +36,14 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.WrapError(errW, "unable to load workflow")
 		}
 
-		ope, err := workflow.MigrateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, project.EncryptWithBuiltinKey, u)
+		ope, err := workflow.UpdateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, project.EncryptWithBuiltinKey, u)
 		if err != nil {
 			return sdk.WrapError(errW, "unable to migrate workflow as code")
 		}
 
-		api.Cache.SetWithTTL(cache.Key(cacheOperationKey, ope.UUID), ope, 300)
-
-		go func(ope sdk.Operation, p *sdk.Project, wf *sdk.Workflow) {
-			ctx := context.TODO()
-			counter := 0
-			for {
-				counter++
-				if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), &ope); err != nil {
-					log.Error("unable to get repository operation %s: %v", ope.UUID, err)
-					continue
-				}
-				if ope.Status == sdk.OperationStatusError || ope.Status == sdk.OperationStatusDone {
-					api.Cache.SetWithTTL(cache.Key(cacheOperationKey, ope.UUID), ope, 300)
-				}
-
-				if ope.Status == sdk.OperationStatusDone {
-					app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
-					vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
-					if vcsServer == nil {
-						log.Error("postWorkflowAsCodeHandler> No vcsServer found")
-						return
-					}
-					client, errclient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
-					if errclient != nil {
-						log.Error("postWorkflowAsCodeHandler> unable to create repositories manager client: %v", err)
-						return
-					}
-					request := sdk.VCSPullRequest{
-						Title: ope.Setup.Push.Message,
-						Head: sdk.VCSPushEvent{
-							Branch: sdk.VCSBranch{
-								DisplayID: ope.Setup.Push.FromBranch,
-							},
-							Repo: app.RepositoryFullname,
-						},
-						Base: sdk.VCSPushEvent{
-							Branch: sdk.VCSBranch{
-								DisplayID: ope.Setup.Push.ToBranch,
-							},
-							Repo: app.RepositoryFullname,
-						},
-					}
-					pr, err := client.PullRequestCreate(ctx, app.RepositoryFullname, request)
-					if err != nil {
-						log.Error("postWorkflowAsCodeHandler> unable to create pull request")
-						return
-					}
-					ope.Setup.Push.PRLink = pr.URL
-					api.Cache.SetWithTTL(cache.Key(cacheOperationKey, ope.UUID), ope, 300)
-				}
-
-				if counter == 30 {
-					ope.Status = sdk.OperationStatusError
-					ope.Error = "Unable to enable workflow as code"
-					break
-				}
-				time.Sleep(2 * time.Second)
-			}
-		}(ope, proj, wf)
+		sdk.GoRoutine(ctx, fmt.Sprintf("UpdateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+			workflow.UpdateWorkflowAsCodeResult(context.Background(), api.mustDB(), api.Cache, proj, ope, wf, u)
+		}, api.PanicDump())
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}

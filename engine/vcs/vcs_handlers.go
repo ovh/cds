@@ -448,6 +448,40 @@ func (s *Service) getPullRequestsHandler() service.Handler {
 	}
 }
 
+func (s *Service) postPullRequestsHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		var prRequest sdk.VCSPullRequest
+		if err := service.UnmarshalBody(r, &prRequest); err != nil {
+			return sdk.WithStack(err)
+		}
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getPullRequestsHandler> Unable to get access token headers %s %s/%s", name, owner, repo)
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS server unavailable %s %s/%s", name, owner, repo)
+		}
+
+		client, err := consumer.GetAuthorizedClient(ctx, accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to get authorized client %s %s/%s", name, owner, repo)
+		}
+
+		c, err := client.PullRequestCreate(ctx, fmt.Sprintf("%s/%s", owner, repo), prRequest)
+		if err != nil {
+			return sdk.WrapError(err, "Unable to get pull requests on %s/%s", owner, repo)
+		}
+		return service.WriteJSON(w, c, http.StatusOK)
+	}
+}
+
 func (s *Service) postPullRequestCommentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		name := muxVar(r, "name")

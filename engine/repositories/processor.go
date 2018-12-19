@@ -30,7 +30,7 @@ func (s *Service) processor(ctx context.Context) error {
 }
 
 func (s *Service) do(op sdk.Operation) error {
-	log.Info("repositories > processing > %v", op.UUID)
+	log.Debug("repositories > processing > %v", op.UUID)
 
 	r := s.Repo(op)
 	if s.dao.lock(r.ID()) == errLockUnavailable {
@@ -75,6 +75,5 @@ func (s *Service) do(op sdk.Operation) error {
 		op.Status = sdk.OperationStatusError
 	}
 
-	log.Info("%+v", op)
 	return s.dao.saveOperation(&op)
 }

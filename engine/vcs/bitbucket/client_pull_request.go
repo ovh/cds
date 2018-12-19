@@ -96,7 +96,9 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 				},
 			},
 		},
-		Locked: false,
+		Locked:       false,
+		Author:       nil,
+		Participants: nil,
 	}
 
 	values, _ := json.Marshal(request)
@@ -127,10 +129,12 @@ func (b *bitbucketClient) fromPullRequestToVCSPullRequest(ctx context.Context, r
 			ID: strings.Replace(pullRequest.FromRef.ID, "refs/heads/", "", 1),
 		},
 	}
-	pr.User = sdk.VCSAuthor{
-		Name:        pullRequest.Author.User.Name,
-		DisplayName: pullRequest.Author.User.DisplayName,
-		Email:       pullRequest.Author.User.EmailAddress,
+	if pullRequest.Author != nil {
+		pr.User = sdk.VCSAuthor{
+			Name:        pullRequest.Author.User.Name,
+			DisplayName: pullRequest.Author.User.DisplayName,
+			Email:       pullRequest.Author.User.EmailAddress,
+		}
 	}
 
 	baseBranch, err := b.Branch(ctx, repo, pr.Base.Branch.ID)
