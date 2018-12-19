@@ -9,9 +9,21 @@ CREATE TABLE cds_migration
     error TEXT,
     mandatory BOOLEAN DEFAULT false,
     created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
-    done TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP
+    done TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP,
+    major BIGINT,
+    minor BIGINT,
+    patch BIGINT
 );
-
 SELECT create_unique_index('cds_migration', 'IDX_CDS_MIGRATION_NAME_UNIQ', 'name');
+
+CREATE TABLE cds_version
+(
+    id BIGSERIAL PRIMARY KEY,
+    release VARCHAR(255) NOT NULL,
+    created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP
+);
+SELECT create_unique_index('cds_version', 'IDX_CDS_VERSION_RELEASE_UNIQ', 'release');
+
 -- +migrate Down
 DROP TABLE cds_migration;
+DROP TABLE cds_version;

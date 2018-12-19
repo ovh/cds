@@ -27,7 +27,9 @@ func TestPostAdminMigrationCancelHandler(t *testing.T) {
 		Status: sdk.MigrationStatusInProgress,
 	}
 	test.NoError(t, migrate.Insert(db, &mig))
-	defer migrate.Delete(db, &mig)
+	defer func() {
+		_ = migrate.Delete(db, &mig)
+	}()
 
 	uri := router.GetRoute("GET", api.getAdminMigrationsHandler, nil)
 	req, err := http.NewRequest("GET", uri, nil)

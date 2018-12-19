@@ -36,6 +36,7 @@ import (
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/version"
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -684,9 +685,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "migrate.CleanOldWorkflow", func(ctx context.Context) {
-		migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
-	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "broadcast.Initialize", func(ctx context.Context) {
 		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap)
 	}, a.PanicDump())
@@ -694,32 +692,45 @@ func (a *API) Serve(ctx context.Context) error {
 		a.serviceAPIHeartbeat(ctx)
 	}, a.PanicDump())
 
-	if err := migrate.CheckMigrations(a.DBConnectionFactory.GetDBMap()); err != nil {
-		return sdk.WrapError(err, "Unable to start")
-	}
-
 	//Temporary migration code
+	//DEPRECATED Migrations
+	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
+		migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
+	}, a.PanicDump())
+
+	//DEPRECATED Migrations
 	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
 		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "migrate.WorkflowData", func(ctx context.Context) {
-		migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "migrate.WorkflowNodeRunArtifacts", func(ctx context.Context) {
-		migrate.WorkflowNodeRunArtifacts(a.Cache, a.DBConnectionFactory.GetDBMap)
-	}, a.PanicDump())
-	// sdk.GoRoutine(ctx, "migrate.GitClonePrivateKey", func(ctx context.Context) {
-	// 	if err := migrate.GitClonePrivateKey(a.mustDB, a.Cache); err != nil {
-	// 		log.Error("Bootstrap Error: %v", err)
-	// 	}
-	// }, a.PanicDump())
 
+	migrate.Add(sdk.Migration{Name: "WorkflowData", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache)
+	}})
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
-		sdk.GoRoutine(ctx, "migrate.MigrateActionDEPRECATEDGitClone", func(ctx context.Context) {
-			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
-				log.Error("Bootstrap Error: %v", err)
-			}
-		}, a.PanicDump())
+		migrate.Add(sdk.Migration{Name: "MigrateActionDEPRECATEDGitClone", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+			return migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache)
+		}})
+	}
+	migrate.Add(sdk.Migration{Name: "GitClonePrivateKey", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.GitClonePrivateKey(a.mustDB, a.Cache)
+	}})
+
+	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
+	if errF != nil {
+		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
+	}
+
+	if isFreshInstall {
+		if err := migrate.SaveAllMigrations(a.mustDB()); err != nil {
+			return sdk.WrapError(err, "Cannot save all migrations to done")
+		}
+	} else {
+		if err := migrate.CheckMigrations(a.DBConnectionFactory.GetDBMap()); err != nil {
+			return sdk.WrapError(err, "Unable to start")
+		}
+
+		// Run all migrations in several goroutines
+		migrate.Run(ctx, a.mustDB(), a.PanicDump())
 	}
 
 	// Init Services
@@ -801,6 +812,10 @@ func (a *API) Serve(ctx context.Context) error {
 			log.Error("Cannot start GRPC server: %v", err)
 		}
 	}()
+
+	if err := version.Upsert(a.mustDB()); err != nil {
+		return sdk.WrapError(err, "Cannot upsert cds version")
+	}
 
 	log.Info("Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {

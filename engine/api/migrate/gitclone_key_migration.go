@@ -4,7 +4,6 @@ import (
 	"context"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -24,44 +23,10 @@ var badKey int64
 
 // GitClonePrivateKey is temporary code
 func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
-	migrationName := "GitClonePrivateKey"
-	db := DBFunc()
-	var mig *sdk.Migration
-	var errMig error
-	mig, errMig = GetByName(db, migrationName)
-	if errMig != nil {
-		return errMig
-	}
-	if mig != nil {
-		if mig.Status == sdk.MigrationStatusDone {
-			log.Info("GitClonePrivateKey> Already done")
-			return nil
-		}
-	} else {
-		mig = &sdk.Migration{
-			Name:      migrationName,
-			Status:    sdk.MigrationStatusInProgress,
-			Release:   sdk.VersionCurrent().Version,
-			Progress:  "Begin",
-			Mandatory: true,
-		}
-		if err := Insert(db, mig); err != nil {
-			return sdk.WrapError(err, "Cannot insert migration %s", migrationName)
-		}
-	}
-
-	mig.Progress = "done with success"
 	store.Publish(sdk.MaintenanceQueueName, "true")
 	defer store.Publish(sdk.MaintenanceQueueName, "false")
-	if err := migrateGitClonePrivateKey(DBFunc, store); err != nil {
-		log.Error("GitClonePrivateKey> Cannot migrate : %v", err)
-		mig.Error = err.Error()
-		mig.Progress = "done with errors"
-	}
-	mig.Status = sdk.MigrationStatusDone
-	mig.Done = time.Now()
 
-	return sdk.WrapError(Update(db, mig), "Could not update migration %s : %s", migrationName, mig.Error)
+	return migrateGitClonePrivateKey(DBFunc, store)
 }
 
 func migrateGitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
