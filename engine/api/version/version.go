@@ -1,6 +1,8 @@
 package version
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -18,5 +20,12 @@ func IsFreshInstall(db gorp.SqlExecutor) (bool, error) {
 	if err != nil {
 		return false, sdk.WithStack(err)
 	}
-	return count == 0, nil
+
+	var noUsers bool
+	var users []sdk.User
+	if _, err := db.Select(&users, `SELECT id FROM "user" LIMIT 2`); err != nil && err == sql.ErrNoRows {
+		noUsers = true
+	}
+
+	return noUsers && count == 0, nil
 }
