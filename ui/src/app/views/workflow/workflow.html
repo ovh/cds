@@ -31,9 +31,9 @@
                         <div class="migrate">
                             <button class="ui right floated mini button" *ngIf="!showButtons" (click)="showButtons = true">Migrate</button>
                             <div class="ui mini buttons" *ngIf="showButtons">
-                                <button class="ui button" (click)="showButtons = false">Cancel</button>
+                                <button class="ui button" (click)="showButtons = false" [class.loading]="loadingPopupButton" [disabled]="loadingPopupButton">Cancel</button>
                                 <div class="or"></div>
-                                <button class="ui positive button" (click)="migrateAsCode()">Save</button>
+                                <button class="ui positive button" (click)="migrateAsCode()" [class.loading]="loadingPopupButton" [disabled]="loadingPopupButton">Save</button>
                             </div>
                         </div>
                     </div>
