@@ -256,7 +256,7 @@ func templateApplyRun(v cli.Values) error {
 						choice = listRepositories[selected]
 					}
 				case sdk.ParameterTypeBoolean:
-					choice = fmt.Sprintf("%t", cli.AskForConfirmation(fmt.Sprintf("Set value to true for param '%s'?", p.Key)))
+					choice = fmt.Sprintf("%t", cli.AskForConfirmation(fmt.Sprintf("Set value to 'true' for param '%s'?", p.Key)))
 				}
 				if choice == "" {
 					choice = cli.AskValueChoice(label)
