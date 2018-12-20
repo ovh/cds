@@ -31,7 +31,7 @@ func processWorkflowRun(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	}
 
 	// Erase workflow data with old struct for ui compatibility
-	if w.Workflow.Root.ID != w.Workflow.WorkflowData.Node.ID {
+	if w.Workflow.WorkflowData == nil || w.Workflow.Root.ID != w.Workflow.WorkflowData.Node.ID {
 		data := w.Workflow.Migrate(true)
 		w.Workflow.WorkflowData = &data
 	}

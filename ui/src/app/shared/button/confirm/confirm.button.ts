@@ -6,21 +6,20 @@ import {Component, EventEmitter, Input, Output} from '@angular/core';
     styleUrls: ['./confirm.button.scss']
 })
 export class ConfirmButtonComponent  {
-
     @Input() loading = false;
     @Input() icon = '';
     @Input() disabled = false;
     @Input() color = 'primary';
     @Input() class: string;
+    @Output() event = new EventEmitter();
     @Input() title: string;
-    @Output() event = new EventEmitter<boolean>();
 
     showConfirmation = false;
 
     constructor() {}
 
     confirmEvent() {
-        this.event.emit(true);
+        this.event.emit();
         this.reset();
     }
 

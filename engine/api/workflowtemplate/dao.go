@@ -117,16 +117,17 @@ func InsertAudit(db gorp.SqlExecutor, awt *sdk.AuditWorkflowTemplate) error {
 	return sdk.WrapError(gorpmapping.Insert(db, awt), "Unable to insert audit for workflow template %d", awt.WorkflowTemplateID)
 }
 
-// GetAuditsByTemplateIDsAndEventTypes returns all workflow template audits by template ids and event types.
-func GetAuditsByTemplateIDsAndEventTypes(db gorp.SqlExecutor, templateIDs []int64, eventTypes []string) ([]sdk.AuditWorkflowTemplate, error) {
+// GetAuditsByTemplateIDsAndEventTypesAndVersionGTE returns all workflow template audits by template ids, event types and version greater or equal.
+func GetAuditsByTemplateIDsAndEventTypesAndVersionGTE(db gorp.SqlExecutor, templateIDs []int64, eventTypes []string, version int64) ([]sdk.AuditWorkflowTemplate, error) {
 	awts := []sdk.AuditWorkflowTemplate{}
 
 	if _, err := db.Select(&awts,
 		`SELECT * FROM workflow_template_audit
      WHERE workflow_template_id = ANY(string_to_array($1, ',')::int[])
      AND event_type = ANY(string_to_array($2, ',')::text[])
-     ORDER BY created ASC`,
-		gorpmapping.IDsToQueryString(templateIDs), strings.Join(eventTypes, ","),
+     AND (data_after->>'version')::int >= $3
+     ORDER BY created DESC`,
+		gorpmapping.IDsToQueryString(templateIDs), strings.Join(eventTypes, ","), version,
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflow template audits")
 	}

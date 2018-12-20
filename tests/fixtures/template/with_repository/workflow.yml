@@ -10,7 +10,7 @@ workflow:
     depends_on:
     - Node-1
     when:
-    - [[.params.deployWhen]]
+    - [[if .params.deployWhen]][[.params.deployWhen]][[else]]manual[[end]]
     pipeline: Second-pipeline-[[.id]]
     environment: First-environment-[[.id]]
 [[end]]

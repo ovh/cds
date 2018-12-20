@@ -30,10 +30,11 @@ func PublishWorkflowTemplateAdd(wt sdk.WorkflowTemplate, u *sdk.User) {
 }
 
 // PublishWorkflowTemplateUpdate publishes an event for the update of the given workflow template.
-func PublishWorkflowTemplateUpdate(new, old sdk.WorkflowTemplate, u *sdk.User) {
+func PublishWorkflowTemplateUpdate(old, new sdk.WorkflowTemplate, changeMessage string, u *sdk.User) {
 	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateUpdate{
-		NewWorkflowTemplate: new,
 		OldWorkflowTemplate: old,
+		NewWorkflowTemplate: new,
+		ChangeMessage:       changeMessage,
 	}, u)
 }
 
@@ -43,9 +44,9 @@ func PublishWorkflowTemplateInstanceAdd(wti sdk.WorkflowTemplateInstance, u *sdk
 }
 
 // PublishWorkflowTemplateInstanceUpdate publishes an event for the update of the given workflow template instance.
-func PublishWorkflowTemplateInstanceUpdate(new, old sdk.WorkflowTemplateInstance, u *sdk.User) {
+func PublishWorkflowTemplateInstanceUpdate(old, new sdk.WorkflowTemplateInstance, u *sdk.User) {
 	publishWorkflowTemplateEvent(sdk.EventWorkflowTemplateInstanceUpdate{
-		NewWorkflowTemplateInstance: new,
 		OldWorkflowTemplateInstance: old,
+		NewWorkflowTemplateInstance: new,
 	}, u)
 }

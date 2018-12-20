@@ -189,7 +189,10 @@ func getParentParameters(w *sdk.WorkflowRun, nodeRuns []*sdk.WorkflowNodeRun, pa
 			}
 
 			prefix := "workflow." + nodeName + "."
-			if strings.HasPrefix(p.Name, "cds.") {
+
+			if p.Name == "payload" {
+				// keep p.Name as is
+			} else if strings.HasPrefix(p.Name, "cds.") {
 				p.Name = strings.Replace(p.Name, "cds.", prefix, 1)
 			} else {
 				p.Name = prefix + p.Name
