@@ -159,6 +159,7 @@ func (s *Service) doKafkaTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNodeR
 		return nil, sdk.WrapError(err, "Unable to dump body %s", t.WebHook.RequestBody)
 	}
 	h.Payload = m
+	h.Payload["payload"] = string(t.Kafka.Message)
 
 	return &h, nil
 }

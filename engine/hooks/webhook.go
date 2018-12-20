@@ -68,6 +68,11 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
+		payloadStr, err := json.Marshal(pushEvent)
+		if err != nil {
+			log.Error("Unable to marshal payload: %v", err)
+		}
+		payload["payload"] = string(payloadStr)
 	case GitlabHeader:
 		var pushEvent GitlabPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
@@ -95,6 +100,11 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
+		payloadStr, err := json.Marshal(pushEvent)
+		if err != nil {
+			log.Error("Unable to marshal payload: %v", err)
+		}
+		payload["payload"] = string(payloadStr)
 	case BitbucketHeader:
 		var pushEvent BitbucketPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
@@ -119,6 +129,11 @@ func executeRepositoryWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEve
 		payload["cds.triggered_by.username"] = pushEvent.Actor.Name
 		payload["cds.triggered_by.fullname"] = pushEvent.Actor.DisplayName
 		payload["cds.triggered_by.email"] = pushEvent.Actor.EmailAddress
+		payloadStr, err := json.Marshal(pushEvent)
+		if err != nil {
+			log.Error("Unable to marshal payload: %v", err)
+		}
+		payload["payload"] = string(payloadStr)
 	default:
 		log.Warning("executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
 		return nil, fmt.Errorf("Repository manager not found. Cannot read request body")
@@ -204,6 +219,7 @@ func executeWebHook(t *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error)
 			for k, v := range m {
 				values.Add(k, v)
 			}
+			h.Payload["payload"] = string(t.WebHook.RequestBody)
 		}
 	}
 
