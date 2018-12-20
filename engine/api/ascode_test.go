@@ -175,6 +175,8 @@ func Test_getImportAsCodeHandler(t *testing.T) {
 
 	UUID := sdk.UUID()
 
+	feature.SetClient(nil)
+
 	//This is a mock for the repositories service
 	services.HTTPClient = mock(
 		func(r *http.Request) (*http.Response, error) {

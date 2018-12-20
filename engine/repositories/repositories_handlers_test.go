@@ -66,8 +66,8 @@ func Test_postOperationMultiPartHandler(t *testing.T) {
 
 	op := new(sdk.Operation)
 	op.Setup.Push = sdk.OperationPush{
-		Branch:  "temp",
-		Message: "initial as code",
+		FromBranch: "temp",
+		Message:    "initial as code",
 	}
 
 	//Prepare request
