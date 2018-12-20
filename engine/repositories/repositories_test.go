@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -116,7 +117,7 @@ func newMultiPartTarRequest(t *testing.T, s *Service, method, uri string, in int
 		t.Errorf("unable to marshal data: %v", errM)
 		t.FailNow()
 	}
-	writer.WriteField("dataJSON", string(jsonData))
+	assert.NoError(t, writer.WriteField("dataJSON", string(jsonData)))
 
 	// Close writer
 	if err := writer.Close(); err != nil {

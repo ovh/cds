@@ -90,7 +90,9 @@ func readOperationMultipart(r *http.Request) (*sdk.Operation, map[string][]byte,
 				}
 
 				fileBuf := new(bytes.Buffer)
-				fileBuf.ReadFrom(tr)
+				if _, err := fileBuf.ReadFrom(tr); err != nil {
+					return nil, nil, sdk.WrapError(err, "error while reading buffer from tar archive")
+				}
 				files[hdr.Name] = fileBuf.Bytes()
 			}
 		}
