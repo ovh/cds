@@ -19,6 +19,11 @@ func (c *client) AdminCDSMigrationCancel(id int64) error {
 	return err
 }
 
+func (c *client) AdminCDSMigrationReset(id int64) error {
+	_, _, _, err := c.Request(context.Background(), "POST", fmt.Sprintf("/admin/cds/migration/%d/todo", id), nil)
+	return err
+}
+
 func (c *client) AdminCDSMigrationList() ([]sdk.Migration, error) {
 	var migrations []sdk.Migration
 	if _, err := c.GetJSON(context.Background(), "/admin/cds/migration", &migrations); err != nil {

@@ -30,6 +30,7 @@ type AdminService interface {
 	AdminDatabaseMigrationUnlock(id string) error
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
+	AdminCDSMigrationReset(id int64) error
 	Services() ([]sdk.Service, error)
 	ServicesByName(name string) (*sdk.Service, error)
 	ServiceDelete(name string) error

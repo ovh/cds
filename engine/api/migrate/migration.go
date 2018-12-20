@@ -2,6 +2,7 @@ package migrate
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -77,4 +78,17 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 // CleanMigrationsList Delete all elements in local migrations
 func CleanMigrationsList() {
 	migrations = []sdk.Migration{}
+}
+
+// Status returns monitoring status, if there are cds migration in progress it returns WARN
+func Status(db gorp.SqlExecutor) sdk.MonitoringStatusLine {
+	count, err := db.SelectInt("SELECT COUNT(id) FROM cds_migration WHERE status <> $1 AND status <> $2", sdk.MigrationStatusDone, sdk.MigrationStatusCanceled)
+	if err != nil {
+		return sdk.MonitoringStatusLine{Component: "CDS Migration", Status: sdk.MonitoringStatusWarn, Value: fmt.Sprintf("KO Cannot request in database : %v", err)}
+	}
+	status := sdk.MonitoringStatusOK
+	if count > 0 {
+		status = sdk.MonitoringStatusWarn
+	}
+	return sdk.MonitoringStatusLine{Component: "Nb of CDS Migrations in progress", Value: fmt.Sprintf("%d", count), Status: status}
 }

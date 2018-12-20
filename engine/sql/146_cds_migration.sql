@@ -15,6 +15,7 @@ CREATE TABLE cds_migration
     patch BIGINT
 );
 SELECT create_unique_index('cds_migration', 'IDX_CDS_MIGRATION_NAME_RELEASE_UNIQ', 'name,release');
+select create_index('cds_migration','IDX_CDS_MIGRATION_STATUS', 'status');
 
 CREATE TABLE cds_version
 (

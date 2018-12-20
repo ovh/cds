@@ -30,18 +30,12 @@ func Upsert(db gorp.SqlExecutor) error {
 
 // IsFreshInstall return true if it's a fresh installation of CDS and not an upgrade
 func IsFreshInstall(db gorp.SqlExecutor) (bool, error) {
-	count, err := db.SelectInt("SELECT COUNT(id) FROM cds_version")
+	count, err := db.SelectInt(`SELECT COUNT(id) FROM "user"`)
 	if err != nil {
 		return false, sdk.WithStack(err)
 	}
 
-	var noUsers bool
-	var users []sdk.User
-	if _, err := db.Select(&users, `SELECT id FROM "user" LIMIT 2`); err != nil && err == sql.ErrNoRows {
-		noUsers = true
-	}
-
-	return noUsers && count == 0, nil
+	return count == 0, nil
 }
 
 // MaxVersion return max CDS version already started major, minor, patch
