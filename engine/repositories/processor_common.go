@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"encoding/base64"
+
 	"github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/sdk"

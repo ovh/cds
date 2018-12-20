@@ -44,8 +44,6 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, u, workflow.LoadOptions{
 			DeepPipeline: true,
-			WithLabels:   true,
-			WithIcon:     true,
 		})
 		if errW != nil {
 			return sdk.WrapError(errW, "unable to load workflow")

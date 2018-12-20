@@ -57,6 +57,7 @@ export class WorkflowSaveAsCodeComponent {
                     this.ope = JSON.parse(operation);
                     if (this.ope.status > 1) {
                         webworker.stop();
+                        this.webworkerSub.unsubscribe();
                     }
                 });
             }

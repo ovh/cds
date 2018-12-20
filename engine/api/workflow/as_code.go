@@ -135,6 +135,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			for _, h := range wf.WorkflowData.GetHooks() {
 				if h.HookModelName == sdk.RepositoryWebHookModelName {
 					found = true
+					break
 				}
 			}
 
@@ -147,7 +148,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			}
 
 			// Update the workflow
-			oldW, err := LoadByID(db, store, p, wf.ID, u, LoadOptions{WithIcon: true})
+			oldW, err := LoadByID(db, store, p, wf.ID, u, LoadOptions{})
 			if err != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to load workflow %s: %v", wf.Name, err)
 				return

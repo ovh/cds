@@ -43,7 +43,7 @@ func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.
 
 	prs := make([]sdk.VCSPullRequest, len(bbPR))
 	for i, r := range bbPR {
-		pr, err := b.fromPullRequestToVCSPullRequest(ctx, repo, r)
+		pr, err := b.ToVCSPullRequest(ctx, repo, r)
 		if err != nil {
 			return nil, err
 		}
@@ -108,17 +108,17 @@ func (b *bitbucketClient) PullRequestCreate(ctx context.Context, repo string, pr
 		return pr, sdk.WithStack(err)
 	}
 
-	return b.fromPullRequestToVCSPullRequest(ctx, repo, request)
+	return b.ToVCSPullRequest(ctx, repo, request)
 }
 
-func (b *bitbucketClient) fromPullRequestToVCSPullRequest(ctx context.Context, repo string, pullRequest PullRequest) (sdk.VCSPullRequest, error) {
+func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pullRequest PullRequest) (sdk.VCSPullRequest, error) {
 	pr := sdk.VCSPullRequest{
 		ID: pullRequest.ID,
 	}
 	if len(pullRequest.Links.Self) > 0 {
 		pr.URL = pullRequest.Links.Self[0].Href
 	}
-	//
+
 	pr.Base = sdk.VCSPushEvent{
 		Branch: sdk.VCSBranch{
 			ID: strings.Replace(pullRequest.ToRef.ID, "refs/heads/", "", 1),

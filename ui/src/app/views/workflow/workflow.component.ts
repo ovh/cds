@@ -222,7 +222,8 @@ export class WorkflowComponent implements OnInit {
     migrateAsCode(): void {
         this.loadingPopupButton = true;
         this._workflowStore.migrateAsCode(this.project.key, this.workflow.name)
-            .pipe(finalize(() => { this.loadingPopupButton = false })).subscribe((ope) => {
+            .pipe(finalize(() => this.loadingPopupButton = false ))
+            .subscribe((ope) => {
             this.showButtons = false;
             this.popupFromlRepository.close();
             this.saveAsCode.show(ope);

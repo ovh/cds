@@ -277,7 +277,7 @@ type PullRequest struct {
 		Role               string `json:"role"`
 		Approved           bool   `json:"approved"`
 		Status             string `json:"status"`
-	} `json:"reviewers,ommitempty"`
+	} `json:"reviewers,omitempty"`
 	Participants []struct {
 		User struct {
 			Name         string `json:"name"`

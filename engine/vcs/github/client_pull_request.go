@@ -55,7 +55,7 @@ func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk
 
 	prResults := []sdk.VCSPullRequest{}
 	for _, pullr := range pullRequests {
-		pr := fromPullRequestToVCSPuyllRequest(pullr)
+		pr := pullr.ToVCSPullRequest()
 		prResults = append(prResults, pr)
 	}
 
@@ -119,10 +119,10 @@ func (g *githubClient) PullRequestCreate(ctx context.Context, repo string, pr sd
 		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to unmarshal pullrequest %s", string(body))
 	}
 
-	return fromPullRequestToVCSPuyllRequest(prResponse), nil
+	return prResponse.ToVCSPullRequest(), nil
 }
 
-func fromPullRequestToVCSPuyllRequest(pullr PullRequest) sdk.VCSPullRequest {
+func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 	return sdk.VCSPullRequest{
 		ID: pullr.Number,
 		Base: sdk.VCSPushEvent{
