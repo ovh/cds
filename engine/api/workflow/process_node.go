@@ -88,12 +88,12 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		report.Merge(r1, nil) // nolint
 		return report, conditionOK, nil
 	case sdk.NodeTypeOutGoingHook:
-		r1, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber)
+		r1, conditionOK, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber)
 		if errO != nil {
 			return nil, false, sdk.WrapError(errO, "Unable to processNodeOutGoingHook")
 		}
 		report.Merge(r1, nil) // nolint
-		return report, true, nil
+		return report, conditionOK, nil
 	}
 	return nil, false, nil
 }
