@@ -70,7 +70,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	if wf.FromRepository == "" {
 		ope.Setup.Push.Message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.Username)
 	} else {
-		ope.Setup.Push.Message = fmt.Sprintf("fix: Update workflow [@%s]", u.Username)
+ 		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.Username)
 	}
 
 	if err := PostRepositoryOperation(ctx, db, store, *proj, &ope, buf); err != nil {
