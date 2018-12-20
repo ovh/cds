@@ -7,11 +7,26 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) getWorkflowAsCodeHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		uuid := vars["uuid"]
+
+		var ope sdk.Operation
+		b := api.Cache.Get(cache.Key(workflow.CacheOperationKey, uuid), &ope)
+		if !b {
+			return sdk.ErrNotFound
+		}
+		return service.WriteJSON(w, ope, http.StatusOK)
+	}
+}
 
 // postWorkflowAsCodeHandler Make the workflow as code
 // @title Make the workflow as code
@@ -45,6 +60,6 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			workflow.UpdateWorkflowAsCodeResult(context.Background(), api.mustDB(), api.Cache, proj, ope, wf, u)
 		}, api.PanicDump())
 
-		return service.WriteJSON(w, wf, http.StatusOK)
+		return service.WriteJSON(w, ope, http.StatusOK)
 	}
 }

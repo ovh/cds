@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var cacheOperationKey = cache.Key("repositories", "operation", "push")
+var CacheOperationKey = cache.Key("repositories", "operation", "push")
 
 // UpdateAsCode does a workflow pull and start an operation to push cds files into the git repository
 func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, encryptFunc sdk.EncryptFunc, u *sdk.User) (*sdk.Operation, error) {
@@ -77,7 +77,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
-	store.SetWithTTL(cache.Key(cacheOperationKey, ope.UUID), ope, 300)
+	store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 
 	return &ope, nil
 }
@@ -92,7 +92,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			continue
 		}
 		if ope.Status == sdk.OperationStatusError || ope.Status == sdk.OperationStatusDone {
-			store.SetWithTTL(cache.Key(cacheOperationKey, ope.UUID), ope, 300)
+			store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 		}
 
 		if ope.Status == sdk.OperationStatusDone {
@@ -128,7 +128,6 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				return
 			}
 			ope.Setup.Push.PRLink = pr.URL
-			store.SetWithTTL(cache.Key(cacheOperationKey, ope.UUID), ope, 300)
 			wf.FromRepository = ope.URL
 
 			// add repo webhook
@@ -174,8 +173,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				log.Error("postWorkflowAsCodeHandler> unable to commit workflow")
 				return
 			}
-			store.SetWithTTL(cache.Key(cacheOperationKey, ope.UUID), ope, 300)
-
+			store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 			log.Info("Migration as code finished.")
 			return
 		}
@@ -183,7 +181,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 		if counter == 30 {
 			ope.Status = sdk.OperationStatusError
 			ope.Error = "Unable to enable workflow as code"
-			store.SetWithTTL(cache.Key(cacheOperationKey, ope.UUID), ope, 300)
+			store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 			break
 		}
 		time.Sleep(2 * time.Second)
