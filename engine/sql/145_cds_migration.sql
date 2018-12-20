@@ -14,12 +14,15 @@ CREATE TABLE cds_migration
     minor BIGINT,
     patch BIGINT
 );
-SELECT create_unique_index('cds_migration', 'IDX_CDS_MIGRATION_NAME_UNIQ', 'name');
+SELECT create_unique_index('cds_migration', 'IDX_CDS_MIGRATION_NAME_RELEASE_UNIQ', 'name,release');
 
 CREATE TABLE cds_version
 (
     id BIGSERIAL PRIMARY KEY,
     release VARCHAR(255) NOT NULL,
+    major BIGINT,
+    minor BIGINT,
+    patch BIGINT,
     created TIMESTAMP WITH TIME ZONE DEFAULT LOCALTIMESTAMP
 );
 SELECT create_unique_index('cds_version', 'IDX_CDS_VERSION_RELEASE_UNIQ', 'release');

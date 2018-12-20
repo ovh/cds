@@ -2,8 +2,6 @@ package migrate
 
 import (
 	"database/sql"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/blang/semver"
@@ -70,42 +68,6 @@ func Delete(db gorp.SqlExecutor, mig *sdk.Migration) error {
 func UpdateStatus(db gorp.SqlExecutor, id int64, status string) error {
 	_, err := db.Exec("UPDATE cds_migration SET status = $1 WHERE id = $2", status, id)
 	return err
-}
-
-// CheckMigrations checks if all mandatory migrations are done
-func CheckMigrations(db gorp.SqlExecutor) error {
-	previousMigration := PreviousMigrationsList()
-	previousMigrationsLength := len(previousMigration)
-	if previousMigration == nil || previousMigrationsLength == 0 {
-		return nil
-	}
-
-	if sdk.VersionCurrent().Version == "" || strings.HasPrefix(sdk.VersionCurrent().Version, "snapshot") {
-		return nil
-	}
-
-	var previousMigrationListStr string
-	var previousMigrationMandatoryCount int
-	for i, mig := range previousMigration {
-		if !mig.Mandatory {
-			continue
-		}
-		previousMigrationMandatoryCount++
-		previousMigrationListStr += mig.Name
-		if i != previousMigrationsLength-1 {
-			previousMigrationListStr += ","
-		}
-	}
-	count, err := db.SelectInt("SELECT COUNT(id) FROM cds_migration WHERE name = ANY(string_to_array($1, ',')::text[])", previousMigrationListStr)
-	if err != nil && err != sql.ErrNoRows {
-		return sdk.WrapError(err, "Cannot load migrations to check")
-	}
-
-	if int(count) != previousMigrationMandatoryCount {
-		return fmt.Errorf("there are some mandatory migrations which aren't done. Please check each changelog of CDS. Maybe you have skipped a release migration")
-	}
-
-	return nil
 }
 
 // SaveAllMigrations save all local migrations marked to "done" into database (in case of a fresh installation)

@@ -3,6 +3,7 @@ package migrate
 import (
 	"context"
 	"io"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -13,11 +14,14 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// MinCompatibleRelease represent the minimum release which is working with these migrations
+const MinCompatibleRelease = "0.36.1"
+
 var migrations = []sdk.Migration{}
 
 // Add usefull to add new migrations
 func Add(migration sdk.Migration) {
-	if migration.Major == 0 && migration.Minor == 0 && migration.Patch == 0 && migration.Release != "" && migration.Release != "snapshot" {
+	if migration.Major == 0 && migration.Minor == 0 && migration.Patch == 0 && migration.Release != "" && !strings.HasPrefix(migration.Release, "snapshot") {
 		v, err := semver.Parse(migration.Release)
 		if err != nil {
 			log.Error("Cannot parse your release reference : %v", err)
@@ -68,27 +72,6 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 			}, panicDump)
 		}(migration)
 	}
-}
-
-// PreviousMigrationsList return previous migration list
-func PreviousMigrationsList() []sdk.Migration {
-	releaseVersion := sdk.VersionCurrent().Version
-	if releaseVersion == "" || releaseVersion == "snapshot" {
-		return migrations
-	}
-	currentSemver, err := semver.Parse(releaseVersion)
-	if err != nil {
-		return migrations
-	}
-
-	var previousMigrations []sdk.Migration
-	for _, migration := range migrations {
-		if currentSemver.Minor > migration.Minor {
-			previousMigrations = append(previousMigrations, migration)
-		}
-	}
-
-	return previousMigrations
 }
 
 // CleanMigrationsList Delete all elements in local migrations

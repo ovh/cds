@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
@@ -725,8 +727,17 @@ func (a *API) Serve(ctx context.Context) error {
 			return sdk.WrapError(err, "Cannot save all migrations to done")
 		}
 	} else {
-		if err := migrate.CheckMigrations(a.DBConnectionFactory.GetDBMap()); err != nil {
-			return sdk.WrapError(err, "Unable to start")
+		if sdk.VersionCurrent().Version != "" && !strings.HasPrefix(sdk.VersionCurrent().Version, "snapshot") {
+			major, minor, _, errV := version.MaxVersion(a.mustDB())
+			if errV != nil {
+				return sdk.WrapError(errV, "Cannot fetch max version of CDS already started")
+			}
+			if major != 0 || minor != 0 {
+				minSemverCompatible, _ := semver.Parse(migrate.MinCompatibleRelease)
+				if major < minSemverCompatible.Major || (major == minSemverCompatible.Major && minor < minSemverCompatible.Minor) {
+					return fmt.Errorf("there are some mandatory migrations which aren't done. Please check each changelog of CDS. Maybe you have skipped a release migration. The minimum compatible release is %s, please update to this release before", migrate.MinCompatibleRelease)
+				}
+			}
 		}
 
 		// Run all migrations in several goroutines
