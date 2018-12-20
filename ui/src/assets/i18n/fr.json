@@ -40,7 +40,6 @@
   "admin_migration_done": "Terminé",
   "admin_migration_title": "Statut de la migration des applications vers les workflows",
 
-  "admin_status_title": "CDS Engine - Statut",
   "admin_queue_title": "File d'attente",
 
   "application_home_history": "Historique",
@@ -289,6 +288,7 @@
   "common_update": "Modifier",
   "common_split": "Séparé",
   "common_unified": "Unifié",
+  "common_rollback": "Effectuer un rollback",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
@@ -530,7 +530,6 @@
   "pipeline_label_detach": "Supprimer le pipeline de l'application",
   "pipeline_label_edit": "Éditer le pipeline",
   "pipeline_label_show": "Voir le pipeline",
-  "pipeline_label_rollback": "Effectuer un rollback",
   "pipeline_label_run": "Lancer le pipeline",
   "pipeline_label_run_again": "Relancer le stage en erreur",
   "pipeline_label_run_new": "Relancer le pipeline",
@@ -866,7 +865,6 @@
   "worker_model_load_worker_models": "Chargement des modèles de workers...",
   "worker_model_load_worker_model": "Chargement du modèle de worker...",
   "worker_model_need_register": "Doit être rafraîchit par CDS :",
-  "worker_model_new_title": "Nouveau modèle de worker",
   "worker_model_name": "Nom",
   "worker_model_none": "Aucun modèle de worker",
   "worker_model_provision": "Provision de workers",
@@ -878,7 +876,6 @@
   "worker_model_saved": "Modèle sauvegardé",
   "worker_model_pattern_saved": "Pattern sauvegardé",
   "worker_model_pattern_deleted": "Pattern supprimé",
-  "worker_model_title": "Modèles de worker",
   "worker_model_warning": "Merci de vérifier ce modèle, il y a des erreurs dessus",
   "worker_model_os": "Système d'exploitation",
   "worker_model_arch": "Architecture",
@@ -911,7 +908,7 @@
   "workflow_description": "Description du workflow",
   "workflow_from_repository": "Workflow importé depuis {{repo}}",
   "workflow_from_repository_btn": "Import du workflow depuis un gestionnaire de dépôt",
-  "workflow_from_template": "Workflow importé depuis le modèle {{path}}",
+  "workflow_from_template": "Workflow importé depuis le modèle",
   "workflow_from_template_btn": "Génération du workflow depuis un modèle",
   "workflow_join_delete": "Suppression de la jointure",
   "workflow_join_delete_alert": "ATTENTION, cela va supprimer la jointure et tout ce qu'elle déclenche",
@@ -1055,7 +1052,13 @@
   "workflow_template_help_line_1": "Votre workflow n'a pas été généré depuis un modèle de workflow.",
   "workflow_template_help_line_2": "Un modèle de workflow vous permet d'initialiser et de mettre à jour un workflow et ses composants rapidement.",
   "workflow_template_update_title": "Mise à jour du workflow à partir du modèle",
+  "workflow_template_update_info_btn": "Afficher les différences de la nouvelle version",
   "workflow_template_update_info_line_1": "Appliquer le template va écraser le workflow existant ainsi que ses composants avec la dernière version du modèle sélectionné.",
+  "workflow_template_diff_workflow": "Workflow",
+  "workflow_template_diff_pipeline": "Pipeline {{number}}",
+  "workflow_template_diff_application": "Application {{number}}",
+  "workflow_template_diff_environment": "Environnement {{number}}",
+  "workflow_template_change_message": "Ajoutez une description optionelle de vos changements...",
 
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."

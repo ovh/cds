@@ -53,10 +53,11 @@ type WorkflowTemplate struct {
 	Environments EnvironmentTemplates       `json:"environments" db:"environments"`
 	Version      int64                      `json:"version" db:"version"`
 	// aggregates
-	Group      *Group                 `json:"group,omitempty" db:"-"`
-	FirstAudit *AuditWorkflowTemplate `json:"first_audit,omitempty" db:"-"`
-	LastAudit  *AuditWorkflowTemplate `json:"last_audit,omitempty" db:"-"`
-	Editable   bool                   `json:"editable,omitempty" db:"-"`
+	Group         *Group                 `json:"group,omitempty" db:"-"`
+	FirstAudit    *AuditWorkflowTemplate `json:"first_audit,omitempty" db:"-"`
+	LastAudit     *AuditWorkflowTemplate `json:"last_audit,omitempty" db:"-"`
+	Editable      bool                   `json:"editable,omitempty" db:"-"`
+	ChangeMessage string                 `json:"change_message,omitempty" db:"-"`
 }
 
 // IsValid returns workflow template validity.

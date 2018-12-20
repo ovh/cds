@@ -39,7 +39,8 @@ type Audit interface {
 // AuditWorkflowTemplate represents an audit data on a workflow template.
 type AuditWorkflowTemplate struct {
 	AuditCommon
-	WorkflowTemplateID int64 `json:"workflow_template_id" db:"workflow_template_id"`
+	WorkflowTemplateID int64  `json:"workflow_template_id" db:"workflow_template_id"`
+	ChangeMessage      string `json:"change_message,omitempty" db:"change_message"`
 }
 
 // AuditWorkflowTemplateInstance represents an audit data on a workflow template instance.

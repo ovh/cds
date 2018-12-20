@@ -3,6 +3,8 @@ import { Mode } from '../item/diff.item.component';
 
 export class Item {
     name: string;
+    translate: string;
+    translateData: any;
     before: string;
     after: string;
     type: string;

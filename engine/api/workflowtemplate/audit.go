@@ -83,12 +83,12 @@ func (a updateWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) e
 		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
-	before, err := json.Marshal(wtEvent.NewWorkflowTemplate)
+	before, err := json.Marshal(wtEvent.OldWorkflowTemplate)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to marshal workflow template")
 	}
 
-	after, err := json.Marshal(wtEvent.OldWorkflowTemplate)
+	after, err := json.Marshal(wtEvent.NewWorkflowTemplate)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to marshal workflow template")
 	}
@@ -103,6 +103,7 @@ func (a updateWorkflowTemplateAudit) Compute(db gorp.SqlExecutor, e sdk.Event) e
 			DataType:    "json",
 		},
 		WorkflowTemplateID: wtEvent.NewWorkflowTemplate.ID,
+		ChangeMessage:      wtEvent.ChangeMessage,
 	})
 }
 
@@ -139,12 +140,12 @@ func (a updateWorkflowTemplateInstanceAudit) Compute(db gorp.SqlExecutor, e sdk.
 		return sdk.WrapError(err, "Unable to decode payload")
 	}
 
-	before, err := json.Marshal(wtEvent.NewWorkflowTemplateInstance)
+	before, err := json.Marshal(wtEvent.OldWorkflowTemplateInstance)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to marshal workflow template instance")
 	}
 
-	after, err := json.Marshal(wtEvent.OldWorkflowTemplateInstance)
+	after, err := json.Marshal(wtEvent.NewWorkflowTemplateInstance)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to marshal workflow template instance")
 	}
