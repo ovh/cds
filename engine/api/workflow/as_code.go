@@ -165,7 +165,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			}
 
 			if errHr := HookRegistration(ctx, tx, store, oldW, *wf, p); errHr != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to update hook registration")
+				log.Error("postWorkflowAsCodeHandler> unable to update hook registration: %v", errHr)
 				return
 			}
 
@@ -174,7 +174,6 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				return
 			}
 			store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
-			log.Info("Migration as code finished.")
 			return
 		}
 
