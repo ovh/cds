@@ -424,6 +424,7 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}", r.GET(api.getTemplateHandler), r.PUT(api.putTemplateHandler), r.DELETE(api.deleteTemplateHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/pull", r.POST(api.pullTemplateHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/apply", r.POST(api.applyTemplateHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/bulk", r.POST(api.bulkTemplateHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/instance", r.GET(api.getTemplateInstancesHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/audit", r.GET(api.getTemplateAuditsHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", r.GET(api.getTemplateUsageHandler))

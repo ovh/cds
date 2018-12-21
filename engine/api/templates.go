@@ -431,6 +431,67 @@ func (api *API) applyTemplateHandler() service.Handler {
 	}
 }
 
+func (api *API) bulkTemplateHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+		wt := getWorkflowTemplate(ctx)
+		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), wt); err != nil {
+			return err
+		}
+
+		// check all requests
+		var req sdk.WorkflowTemplateBulk
+		if err := service.UnmarshalBody(r, &req); err != nil {
+			return err
+		}
+		for i := range req.Operations {
+			if err := wt.CheckParams(req.Operations[i].Request); err != nil {
+				return err
+			}
+		}
+
+		u := getUser(ctx)
+
+		// non admin user should have read/write access to all given project
+		if !u.Admin {
+			for i := range req.Operations {
+				if !api.checkProjectPermissions(ctx, req.Operations[i].Request.ProjectKey, permission.PermissionReadWriteExecute, nil) {
+					return sdk.NewErrorFrom(sdk.ErrForbidden, "Write permission on project required to import generated workflow.")
+				}
+			}
+		}
+
+		// store the bulk request
+		bulk := sdk.WorkflowTemplateBulk{
+			WorkflowTemplateID: wt.ID,
+			Operations:         make([]sdk.WorkflowTemplateBulkOperation, len(req.Operations)),
+		}
+		for i := range req.Operations {
+			bulk.Operations[i].Request = req.Operations[i].Request
+		}
+		if err := workflowtemplate.InsertBulk(api.mustDB(), &bulk); err != nil {
+			return err
+		}
+
+		// TODO start async bulk tasks
+		// TODO apply and import workflow
+
+		// TODO returns info about bulk creation
+		return service.WriteJSON(w, bulk, http.StatusOK)
+	}
+}
+
+func (api *API) getTemplateBulkHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO user is creator of the bulk or admin
+		// TODO returns bulk
+		return service.WriteJSON(w, "", http.StatusOK)
+	}
+}
+
 func (api *API) getTemplateInstancesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		ctx, err := api.middlewareTemplate(true)(ctx, w, r)

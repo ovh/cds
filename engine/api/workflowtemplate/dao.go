@@ -268,3 +268,14 @@ func GetInstanceAuditsByInstanceIDsAndEventTypes(db gorp.SqlExecutor, instanceID
 
 	return awtis, nil
 }
+
+// InsertBulk task for workflow template in database.
+func InsertBulk(db gorp.SqlExecutor, wtb *sdk.WorkflowTemplateBulk) error {
+	return sdk.WrapError(gorpmapping.Insert(db, wtb), "Unable to insert workflow template bulk task for template %d",
+		wtb.WorkflowTemplateID)
+}
+
+// UpdateBulk task for workflow template in database.
+func UpdateBulk(db gorp.SqlExecutor, wtb *sdk.WorkflowTemplateBulk) error {
+	return sdk.WrapError(gorpmapping.Update(db, wtb), "Unable to update workflow template bulk task %d", wtb.ID)
+}

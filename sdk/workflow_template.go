@@ -309,7 +309,7 @@ func (w *WorkflowTemplateParameter) IsValid() error {
 
 // WorkflowTemplateInstance struct.
 type WorkflowTemplateInstance struct {
-	ID                      int64                   `json:"id" db:"id" `
+	ID                      int64                   `json:"id" db:"id"`
 	WorkflowTemplateID      int64                   `json:"workflow_template_id" db:"workflow_template_id"`
 	ProjectID               int64                   `json:"project_id" db:"project_id"`
 	WorkflowID              *int64                  `json:"workflow_id" db:"workflow_id"`
@@ -351,4 +351,35 @@ func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInst
 		ids[i] = wtis[i].WorkflowTemplateID
 	}
 	return ids
+}
+
+// WorkflowTemplateBulk contains info about a template bulk task.
+type WorkflowTemplateBulk struct {
+	ID                 int64                          `json:"id" db:"id"`
+	WorkflowTemplateID int64                          `json:"workflow_template_id" db:"workflow_template_id"`
+	Operations         WorkflowTemplateBulkOperations `json:"operations" db:"operations"`
+}
+
+// WorkflowTemplateBulkOperation contains one operation of a template bulk task.
+type WorkflowTemplateBulkOperation struct {
+	Status  OperationStatus         `json:"status"`
+	Request WorkflowTemplateRequest `json:"request"`
+}
+
+// WorkflowTemplateBulkOperations struct.
+type WorkflowTemplateBulkOperations []WorkflowTemplateBulkOperation
+
+// Value returns driver.Value from workflow template bulk operations.
+func (w WorkflowTemplateBulkOperations) Value() (driver.Value, error) {
+	j, err := json.Marshal(w)
+	return j, WrapError(err, "cannot marshal WorkflowTemplateBulkOperations")
+}
+
+// Scan pipeline templates.
+func (w *WorkflowTemplateBulkOperations) Scan(src interface{}) error {
+	source, ok := src.([]byte)
+	if !ok {
+		return WithStack(errors.New("type assertion .([]byte) failed"))
+	}
+	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateBulkOperations")
 }
