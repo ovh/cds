@@ -409,6 +409,35 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 	return res, nil
 }
 
+// LoadByWorkflowTemplateID load all workflows linked to a workflow template but without loading workflow details
+func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) ([]sdk.Workflow, error) {
+	var dbRes []Workflow
+	query := `
+	SELECT workflow.*
+		FROM workflow
+			JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
+		WHERE workflow_template_instance.workflow_template_id = $1 AND workflow.to_delete = false
+	`
+	if _, err := db.Select(&dbRes, query, templateID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	workflows := make([]sdk.Workflow, len(dbRes))
+	for i, wf := range dbRes {
+		var err error
+		wf.ProjectKey, err = db.SelectStr("SELECT projectkey FROM project WHERE id = $1", wf.ProjectID)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot load project key for workflow %s and project_id %d", wf.Name, wf.ProjectID)
+		}
+		workflows[i] = sdk.Workflow(wf)
+	}
+
+	return workflows, nil
+}
+
 func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts LoadOptions, u *sdk.User, query string, args ...interface{}) (*sdk.Workflow, error) {
 	t0 := time.Now()
 	dbRes := Workflow{}

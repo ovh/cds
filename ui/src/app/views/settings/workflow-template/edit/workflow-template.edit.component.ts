@@ -2,9 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { finalize } from 'rxjs/internal/operators/finalize';
+import { first } from 'rxjs/operators';
 import { AuditWorkflowTemplate } from '../../../../model/audit.model';
 import { Group } from '../../../../model/group.model';
 import { WorkflowTemplate } from '../../../../model/workflow-template.model';
+import { Workflow } from '../../../../model/workflow.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -24,13 +26,17 @@ export class WorkflowTemplateEditComponent implements OnInit {
     workflowTemplate: WorkflowTemplate;
     groups: Array<Group>;
     audits: Array<AuditWorkflowTemplate>;
+    workflowsLinked: Array<Workflow>;
     loading: boolean;
     loadingAudits: boolean;
+    loadingUsage: boolean;
     path: Array<PathItem>;
     tabs: Array<Tab>;
     selectedTab: Tab;
     columns: Array<Column>;
     diffItems: Array<Item>;
+    groupName: string;
+    templateSlug: string;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -51,6 +57,10 @@ export class WorkflowTemplateEditComponent implements OnInit {
             translate: 'common_audit',
             icon: 'history',
             key: 'audits'
+        }, <Tab>{
+            translate: 'common_usage',
+            icon: 'map signs',
+            key: 'usage'
         }];
 
         this.columns = [
@@ -79,10 +89,10 @@ export class WorkflowTemplateEditComponent implements OnInit {
         ];
 
         this._route.params.subscribe(params => {
-            const groupName = params['groupName'];
-            const templateSlug = params['templateSlug'];
-            this.getTemplate(groupName, templateSlug);
-            this.getAudits(groupName, templateSlug);
+            this.groupName = params['groupName'];
+            this.templateSlug = params['templateSlug'];
+            this.getTemplate(this.groupName, this.templateSlug);
+            this.getAudits(this.groupName, this.templateSlug);
         });
 
         this.getGroups();
@@ -160,6 +170,9 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     selectTab(tab: Tab): void {
+        if (tab.key === 'usage') {
+            this.getUsage();
+        }
         this.selectedTab = tab;
     }
 
@@ -191,5 +204,16 @@ export class WorkflowTemplateEditComponent implements OnInit {
             this.workflowTemplate = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
         }
         this.saveWorkflowTemplate();
+    }
+
+    getUsage() {
+        if (this.workflowsLinked) {
+            return;
+        }
+        this.loadingUsage = true;
+        this._workflowTemplateService.getWorkflowTemplateUsage(this.groupName, this.templateSlug)
+            .pipe(first())
+            .pipe(finalize(() => this.loadingUsage = false))
+            .subscribe((workflows) => this.workflowsLinked = workflows);
     }
 }
