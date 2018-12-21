@@ -1,8 +1,6 @@
 package repositories
 
 import (
-	"encoding/base64"
-
 	"github.com/fsamin/go-repo"
 
 	"github.com/ovh/cds/sdk"
@@ -24,15 +22,7 @@ func (s *Service) processGitClone(op *sdk.Operation) (repo.Repo, string, string,
 		log.Debug("Repositories> processGitClone> using ssh key %s", op.RepositoryStrategy.SSHKey)
 		opts = append(opts, repo.WithSSHAuth([]byte(op.RepositoryStrategy.SSHKeyContent)))
 	} else if op.RepositoryStrategy.User != "" && op.RepositoryStrategy.Password != "" {
-		// Decrypt base64 password
-
-		decoded, err := base64.StdEncoding.DecodeString(op.RepositoryStrategy.Password)
-		if err != nil {
-			log.Error("Repositories> processGitClone> decoding password> [%s] Error %v", op.UUID, err)
-			return gitRepo, "", "", err
-		}
-
-		opts = append(opts, repo.WithHTTPAuth(op.RepositoryStrategy.User, string(decoded)))
+		opts = append(opts, repo.WithHTTPAuth(op.RepositoryStrategy.User, op.RepositoryStrategy.Password))
 	}
 
 	gitRepo, err := repo.New(r.Basedir, opts...)

@@ -78,7 +78,7 @@ func (s *Service) processPush(op *sdk.Operation) error {
 		}
 	}
 	if err := gitRepo.Add(path + "/.cds/*"); err != nil {
-		log.Error("Repositories> processPush> Git add file %s> [%s] error %v", op.UUID, err)
+		log.Error("Repositories> processPush> Git add file %s> [%s] error %v", path+"/.cds/*", op.UUID, err)
 		return err
 	}
 

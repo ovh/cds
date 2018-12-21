@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
@@ -47,6 +48,10 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 		return nil, sdk.WrapError(err, "cannot pull workflow")
 	}
 
+	if err := application.DecryptVCSStrategyPassword(&app); err != nil {
+		return nil, sdk.WrapError(err, "unable to decrypt vcs strategy")
+	}
+
 	// Create VCS Operation
 	ope := sdk.Operation{
 		VCSServer:          app.VCSServer,
@@ -70,7 +75,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	if wf.FromRepository == "" {
 		ope.Setup.Push.Message = fmt.Sprintf("feat: Enable workflow as code [@%s]", u.Username)
 	} else {
- 		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.Username)
+		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.Username)
 	}
 
 	if err := PostRepositoryOperation(ctx, db, store, *proj, &ope, buf); err != nil {
