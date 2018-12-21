@@ -9,6 +9,7 @@ import {
     WorkflowTemplateInstance,
     WorkflowTemplateRequest
 } from '../../model/workflow-template.model';
+import { Workflow } from '../../model/workflow.model';
 
 @Injectable()
 export class WorkflowTemplateService {
@@ -53,5 +54,9 @@ export class WorkflowTemplateService {
     getAudits(groupName: string, templateSlug: string, version?: number): Observable<Array<AuditWorkflowTemplate>> {
         let url = '/template/' + groupName + '/' + templateSlug + '/audit' + (version ? '?sinceVersion=' + version : '');
         return this._http.get<Array<AuditWorkflowTemplate>>(url);
+    }
+
+    getWorkflowTemplateUsage(groupName: string, templateSlug: string): Observable<Array<Workflow>> {
+        return this._http.get<Array<Workflow>>('/template/' + groupName + '/' + templateSlug + '/usage');
     }
 }

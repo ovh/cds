@@ -32,5 +32,13 @@
                 <app-diff-list *ngIf="diffItems" [items]="diffItems"></app-diff-list>
             </div>
         </div>
+        <div *ngSwitchCase="'usage'" class="ui grid">
+            <div class="sixteen wide column">
+                <div class="ui active centered inline loader" *ngIf="loadingUsage"></div>
+                <ng-container *ngIf="!loadingUsage">
+                    <app-usage [workflows]="workflowsLinked"></app-usage>
+                </ng-container>
+            </div>
+        </div>
     </app-scrollview>
 </div>
