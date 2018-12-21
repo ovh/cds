@@ -701,7 +701,7 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 					idsStr = append(idsStr, id)
 				}
 			}
-			idsToUpdate = append(idsToUpdate, strings.Join(idsStr, ","))
+			idsToUpdate = append(idsToUpdate, idsStr...)
 		}
 	}
 
