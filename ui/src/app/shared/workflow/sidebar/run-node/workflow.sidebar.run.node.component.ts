@@ -36,6 +36,7 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
 
     node: WNode;
     subNode: Subscription;
+    wNodeType = WNodeType;
 
     // Modal
     @ViewChild('workflowRunNode')
@@ -131,11 +132,25 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
     }
 
     displayLogs() {
-        this._router.navigate([
-            '/project', this.project.key,
-            'workflow', this.workflow.name,
-            'run', this.currentWorkflowRun.num,
-            'node', this.currentWorkflowNodeRun.id], { queryParams: { name: this.node.name}});
+        switch (this.node.type) {
+            case WNodeType.OUTGOINGHOOK:
+                if (this.currentWorkflowNodeRun && this.node && this.node.outgoing_hook
+                    && this.node.outgoing_hook.config['target_workflow']) {
+                    this._router.navigate([
+                        '/project', this.project.key,
+                        'workflow', this.node.outgoing_hook.config['target_workflow'].value,
+                        'run', this.currentWorkflowNodeRun.callback.workflow_run_number
+                    ], { queryParams: {} });
+                }
+            break;
+            default:
+                this._router.navigate([
+                    '/project', this.project.key,
+                    'workflow', this.workflow.name,
+                    'run', this.currentWorkflowRun.num,
+                    'node', this.currentWorkflowNodeRun.id], { queryParams: { name: this.node.name } });
+        }
+
     }
 
     getDuration() {
