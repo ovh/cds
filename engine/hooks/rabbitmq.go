@@ -51,12 +51,12 @@ func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 
 	deliveries, errConsume := consumer.channel.Consume(
 		t.Config[sdk.RabbitMQHookModelQueue].Value, // name
-		consumer.tag,                               // consumerTag,
-		false,                                      // noAck
-		false,                                      // exclusive
-		false,                                      // noLocal
-		false,                                      // noWait
-		nil,                                        // arguments
+		consumer.tag, // consumerTag,
+		false,        // noAck
+		false,        // exclusive
+		false,        // noLocal
+		false,        // noWait
+		nil,          // arguments
 	)
 	if errConsume != nil {
 		_ = s.stopTask(t)
@@ -128,6 +128,7 @@ func (s *Service) doRabbitMQTaskExecution(t *sdk.TaskExecution) (*sdk.WorkflowNo
 		return nil, sdk.WrapError(err, "Unable to dump body %s", t.WebHook.RequestBody)
 	}
 	h.Payload = m
+	h.Payload["payload"] = string(t.RabbitMQ.Message)
 
 	return &h, nil
 }

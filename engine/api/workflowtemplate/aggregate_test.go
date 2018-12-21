@@ -16,14 +16,8 @@ func TestAggregateAuditsOnWorkflowTemplate(t *testing.T) {
 		awts := i.(*[]sdk.AuditWorkflowTemplate)
 		*awts = append(*awts, sdk.AuditWorkflowTemplate{
 			AuditCommon: sdk.AuditCommon{
-				ID:        1,
-				EventType: "EventWorkflowTemplateAdd",
-			},
-			WorkflowTemplateID: 1,
-		}, sdk.AuditWorkflowTemplate{
-			AuditCommon: sdk.AuditCommon{
-				ID:        2,
-				EventType: "EventWorkflowTemplateAdd",
+				ID:        4,
+				EventType: "EventWorkflowTemplateUpdate",
 			},
 			WorkflowTemplateID: 2,
 		}, sdk.AuditWorkflowTemplate{
@@ -34,10 +28,16 @@ func TestAggregateAuditsOnWorkflowTemplate(t *testing.T) {
 			WorkflowTemplateID: 1,
 		}, sdk.AuditWorkflowTemplate{
 			AuditCommon: sdk.AuditCommon{
-				ID:        4,
-				EventType: "EventWorkflowTemplateUpdate",
+				ID:        2,
+				EventType: "EventWorkflowTemplateAdd",
 			},
 			WorkflowTemplateID: 2,
+		}, sdk.AuditWorkflowTemplate{
+			AuditCommon: sdk.AuditCommon{
+				ID:        1,
+				EventType: "EventWorkflowTemplateAdd",
+			},
+			WorkflowTemplateID: 1,
 		})
 	}
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, Pipe, PipeTransform, } from '@angular/core';
 import { Table } from './table';
 
 type direction = string;
@@ -11,7 +11,8 @@ export enum ColumnType {
     LINK = 'link',
     ROUTER_LINK = 'router-link',
     MARKDOWN = 'markdown',
-    DATE = 'date'
+    DATE = 'date',
+    CONFIRM_BUTTON = 'confirm-button'
 }
 
 export type Selector = (d: any) => any;
@@ -20,9 +21,22 @@ export type Filter = (f: string) => (d: any) => any;
 export class Column {
     type: ColumnType;
     name: string;
+    class: string;
     selector: Selector;
     sortable: boolean;
     sortKey: string;
+}
+
+@Pipe({ name: 'selector' })
+export class SelectorPipe implements PipeTransform {
+    transform(columns: Array<Column>, data: any): Array<any> {
+        return columns.map(c => {
+            return {
+                ...c,
+                selector: c.selector(data)
+            };
+        });
+    }
 }
 
 @Component({
@@ -30,7 +44,7 @@ export class Column {
     templateUrl: './data-table.html',
     styleUrls: ['./data-table.scss']
 })
-export class DataTableComponent extends Table {
+export class DataTableComponent extends Table implements OnChanges {
     @Input() columns: Array<Column>;
     @Output() sortChange = new EventEmitter<string>();
     @Output() dataChange = new EventEmitter<number>();
@@ -38,23 +52,9 @@ export class DataTableComponent extends Table {
     @Input() withLineClick: boolean;
     @Output() clickLine = new EventEmitter<any>();
 
-    @Input() set data(d: any) {
-        this.allData = d;
-        this.getDataForCurrentPage();
-    }
-    get data() { return this.allData; }
-
-    @Input() set withPagination(n: number) {
-        this.nbElementsByPage = n;
-        this.getDataForCurrentPage();
-    }
-    get withPagination() { return this.nbElementsByPage; }
-
-    @Input() set withFilter(f: Filter) {
-        this.filterFunc = f;
-        this.getDataForCurrentPage();
-    }
-    get withFilter() { return this.filterFunc; }
+    @Input() data: any;
+    @Input() withPagination: number;
+    @Input() withFilter: Filter;
 
     sortedColumn: Column;
     sortedColumnDirection: direction;
@@ -65,6 +65,13 @@ export class DataTableComponent extends Table {
     filter: string;
     filteredData: any;
     indexSelected: number;
+
+    ngOnChanges() {
+        this.allData = this.data;
+        this.nbElementsByPage = this.withPagination;
+        this.filterFunc = this.withFilter;
+        this.getDataForCurrentPage();
+    }
 
     columnClick(event: Event, c: Column) {
         if (!c.sortable) {

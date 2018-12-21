@@ -8,6 +8,7 @@ import { WorkflowTemplate } from '../../../../model/workflow-template.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { calculateWorkflowTemplateDiff } from '../../../../shared/diff/diff';
 import { Item } from '../../../../shared/diff/list/diff.list.component';
 import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 import { Tab } from '../../../../shared/tabs/tabs.component';
@@ -24,6 +25,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     groups: Array<Group>;
     audits: Array<AuditWorkflowTemplate>;
     loading: boolean;
+    loadingAudits: boolean;
     path: Array<PathItem>;
     tabs: Array<Tab>;
     selectedTab: Tab;
@@ -53,17 +55,26 @@ export class WorkflowTemplateEditComponent implements OnInit {
 
         this.columns = [
             <Column>{
-                name: this._translate.instant('audit_modification_type'),
+                name: 'audit_modification_type',
+                class: 'two',
                 selector: a => a.event_type
             },
             <Column>{
                 type: ColumnType.DATE,
-                name: this._translate.instant('audit_time_author'),
+                class: 'two',
+                name: 'audit_time_author',
                 selector: a => a.created
             },
             <Column>{
-                name: this._translate.instant('audit_username'),
+                name: 'audit_username',
+                class: 'two',
                 selector: a => a.triggered_by
+            },
+            <Column>{
+                type: ColumnType.MARKDOWN,
+                class: 'eight',
+                name: 'common_description',
+                selector: a => a.change_message
             }
         ];
 
@@ -86,6 +97,21 @@ export class WorkflowTemplateEditComponent implements OnInit {
             .subscribe(wt => {
                 this.oldWorkflowTemplate = { ...wt };
                 this.workflowTemplate = wt;
+
+                if (this.workflowTemplate.editable) {
+                    this.columns.push(<Column>{
+                        type: ColumnType.CONFIRM_BUTTON,
+                        name: 'common_action',
+                        class: 'two right aligned',
+                        selector: a => {
+                            return {
+                                title: 'common_rollback',
+                                click: _ => { this.clickRollback(a) }
+                            };
+                        }
+                    });
+                }
+
                 this.updatePath();
             });
     }
@@ -100,11 +126,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     getAudits(groupName: string, templateSlug: string) {
-        this.loading = true;
+        this.loadingAudits = true;
         this._workflowTemplateService.getAudits(groupName, templateSlug)
-            .pipe(finalize(() => this.loading = false))
+            .pipe(finalize(() => this.loadingAudits = false))
             .subscribe(as => {
-                this.audits = as.sort((a, b) => Date.parse(a.created) >= Date.parse(b.created) ? -1 : 1);
+                this.audits = as;
             });
     }
 
@@ -156,77 +182,14 @@ export class WorkflowTemplateEditComponent implements OnInit {
     clickAudit(a: AuditWorkflowTemplate) {
         let before = a.data_before ? <WorkflowTemplate>JSON.parse(a.data_before) : null;
         let after = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
+        this.diffItems = calculateWorkflowTemplateDiff(before, after);
+    }
 
-        let beforeTemplate: any;
-        if (before) {
-            beforeTemplate = {
-                name: before.name,
-                slug: before.slug,
-                group_id: before.group_id,
-                description: before.description,
-                parameters: before.parameters
-            }
+    clickRollback(a: AuditWorkflowTemplate) {
+        this.workflowTemplate = a.data_before ? <WorkflowTemplate>JSON.parse(a.data_before) : null;
+        if (!this.workflowTemplate) {
+            this.workflowTemplate = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
         }
-
-        let afterTemplate: any;
-        if (after) {
-            afterTemplate = {
-                name: after.name,
-                slug: after.slug,
-                group_id: after.group_id,
-                description: after.description,
-                parameters: after.parameters
-            }
-        }
-
-        let diffItems = [
-            <Item>{
-                name: 'template',
-                before: beforeTemplate ? JSON.stringify(beforeTemplate) : null,
-                after: afterTemplate ? JSON.stringify(afterTemplate) : null,
-                type: 'application/json'
-            },
-            <Item>{
-                name: 'workflow',
-                before: before ? atob(before.value) : null,
-                after: after ? atob(after.value) : null,
-                type: 'text/x-yaml'
-            }
-        ];
-
-        let pipelinesLength = Math.max(before ? before.pipelines.length : 0, after ? after.pipelines.length : 0);
-        for (let i = 0; i < pipelinesLength; i++) {
-            diffItems.push(
-                <Item>{
-                    name: 'pipeline ' + i,
-                    before: before && before.pipelines[i] ? atob(before.pipelines[i].value) : null,
-                    after: after && after.pipelines[i] ? atob(after.pipelines[i].value) : null,
-                    type: 'text/x-yaml'
-                })
-        }
-
-        let applicationsLength = Math.max(before ? before.applications.length : 0, after ? after.applications.length : 0);
-        for (let i = 0; i < applicationsLength; i++) {
-            diffItems.push(
-                <Item>{
-                    name: 'application ' + i,
-                    before: before && before.applications[i] ? atob(before.applications[i].value) : null,
-                    after: after && after.applications[i] ? atob(after.applications[i].value) : null,
-                    type: 'text/x-yaml'
-                })
-        }
-
-        let environmentsLength = Math.max(before ? before.environments.length : 0, after ? after.environments.length : 0);
-        for (let i = 0; i < environmentsLength; i++) {
-            diffItems.push(
-                <Item>{
-                    name: 'environment ' + i,
-                    before: before && before.environments[i] ? atob(before.environments[i].value) : null,
-                    after: after && after.environments[i] ? atob(after.environments[i].value) : null,
-                    type: 'text/x-yaml'
-                })
-        }
-
-        this.diffItems = diffItems;
+        this.saveWorkflowTemplate();
     }
 }

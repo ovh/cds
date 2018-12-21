@@ -29,7 +29,7 @@
             <div class="ui one wide column"></div>
             <div class="ui four wide column">
               <sui-select class="selection" [placeholder]="'worker_model_state' | translate" [(ngModel)]="selectedFilter"
-                [options]="['', 'disabled', 'register', 'error', 'deprecated']" [isSearchable]="true" #selectFilter>
+                [options]="['', 'official', 'disabled', 'register', 'error', 'deprecated']" [isSearchable]="true" #selectFilter>
                 <sui-select-option *ngFor="let option of selectFilter.filteredOptions" [value]="option">
                 </sui-select-option>
               </sui-select>

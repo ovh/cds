@@ -14,7 +14,7 @@ GO_BUILD = go build -v
 GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOVERALLS = ${GOPATH}/bin/goveralls
-GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
+GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 
 TEST_PKGS = $(shell go list ../... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
@@ -42,8 +42,8 @@ $(GO_COV_MERGE):
 $(GO_GOVERALLS):
 	go get -u github.com/mattn/goveralls
 
-$(GO_GO2XUNIT):
-	go get -u github.com/tebeka/go2xunit
+$(GO_GOJUNIT):
+	go get -u github.com/jstemmer/go-junit-report
 
 $(GO_COBERTURA):
 	go get -u github.com/t-yuki/gocover-cobertura
@@ -103,7 +103,7 @@ ifneq ($(VERSION), snapshot)
 endif
 
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
-test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
+test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 	@for TST in `find .. -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
 			FAILED=`grep -E '(FAIL)+\s([a-z\.\/]*)\s\[build failed\]' $$TST | wc -l`; \
@@ -120,7 +120,7 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 						worker upload --tag `echo $$TST | sed 's|../||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
 					fi; \
 					echo "Generating xUnit report \t$$TST.xml"; \
-					$(GO_GO2XUNIT) -input $$TST -output $$TST.xml; \
+					cat $$TST | $(GO_GOJUNIT) > $$TST.xml; \
 				fi; \
 			fi; \
 		else \
@@ -141,7 +141,7 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 			"`xmllint --xpath "/testsuite/@tests" $$XML | sed 's/tests=//' | sed 's/"//g'` Tests :" \
 			"`xmllint --xpath "/testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'` Errors "\
 			"`xmllint --xpath "/testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'` Failures" \
-			"`xmllint --xpath "/testsuite/@skip" dist/api.xml | sed 's/skip=//' | sed 's/"//g'` Skipped" \
+			"`xmllint --xpath "/testsuite/@skip" $$XML | sed 's/skip=//' | sed 's/"//g'` Skipped" \
 			>> $(TARGET_DIR)/report; \
 		fi; \
 	done; \

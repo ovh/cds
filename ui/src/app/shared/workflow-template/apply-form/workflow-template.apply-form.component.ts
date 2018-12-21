@@ -170,6 +170,17 @@ export class WorkflowTemplateApplyFormComponent {
         }
     }
 
+    filterRepo(options: Array<string>, query: string): Array<string> | false {
+        if (!options) {
+            return false;
+        }
+        if (!query || query.length < 3) {
+            return options.slice(0, 100);
+        }
+        let queryLowerCase = query.toLowerCase();
+        return options.filter(name => name.toLowerCase().indexOf(queryLowerCase) !== -1);
+    }
+
     clickClose() {
         this.close.emit();
     }

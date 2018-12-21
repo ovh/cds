@@ -1,0 +1,10 @@
+version: v1.0
+name: payload
+jobs:
+- job: New Job
+  steps:
+  - name: "Payload"
+    script:
+    - mkdir -p website/sub
+    - env > thefile
+    - worker upload --tag={{.cds.version}} thefile

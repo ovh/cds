@@ -8,7 +8,7 @@ parameters:
   required: true
 - key: deployWhen
   type: string
-  required: true
+  required: false
 - key: repo
   type: repository
   required: true

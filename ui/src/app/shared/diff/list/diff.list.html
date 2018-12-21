@@ -6,7 +6,8 @@
 </div>
 <ng-container *ngFor="let i of items">
     <h4 class="ui top attached header">
-        {{i.name}}
+        <ng-container *ngIf="i.name">{{i.name}}</ng-container>
+        <ng-container *ngIf="i.translate">{{i.translate | translate: i.translateData}}</ng-container>
     </h4>
     <div class="ui attached segment">
         <app-diff-item [mode]="mode" [type]="i.type" [original]="i.before" [updated]="i.after"></app-diff-item>

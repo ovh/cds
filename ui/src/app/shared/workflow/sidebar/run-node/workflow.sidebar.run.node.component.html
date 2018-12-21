@@ -36,12 +36,12 @@
             *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
             <i class="stop icon"></i>
         </button>
-          <ng-container *ngIf="node.context && node.context.pipeline_id" >
+        <ng-container *ngIf="(node.context && node.context.pipeline_id)
+            || (node.type === wNodeType.OUTGOINGHOOK && currentWorkflowNodeRun?.status === pipelineStatusEnum.SUCCESS && node.outgoing_hook && node.outgoing_hook.config['target_workflow'])">
               <button class="ui icon blue button" [class.disabled]="!currentWorkflowNodeRun" [title]="'btn_logs' | translate" (click)="displayLogs()">
                   <i class="file text icon"></i>
               </button>
           </ng-container>
-
       </div>
     </div>
     <ng-container *ngIf="currentWorkflowNodeRun && currentWorkflowRun">
