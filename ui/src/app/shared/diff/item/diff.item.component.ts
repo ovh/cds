@@ -68,7 +68,7 @@ export class DiffItemComponent implements OnChanges {
     }
 
     ngOnChanges() {
-        if (this.original && this.updated) {
+        if (this.original || this.updated) {
             this.refresh();
         }
         this.codeMirrorConfig.mode = this.type;
@@ -80,7 +80,10 @@ export class DiffItemComponent implements OnChanges {
             original = '';
         }
 
-        let updated = this.updated;
+        let updated = this.updated || '';
+        if (updated === 'null') {
+            updated = '';
+        }
         if (this.type === 'application/json') {
             try {
                 original = JSON.stringify(JSON.parse(original), null, 2);

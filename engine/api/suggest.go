@@ -128,6 +128,7 @@ func (api *API) getVariablesHandler() service.Handler {
 			"{{.cds.worker}}",
 			"{{.cds.workflow}}",
 			"{{.cds.workspace}}",
+			"{{.payload}}",
 		}
 		allVariables = append(allVariables, cdsVar...)
 

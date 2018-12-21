@@ -23,6 +23,7 @@ export class WorkflowTemplateFormComponent {
         }
 
         this._workflowTemplate = wt;
+        this.changeMessage = null;
 
         this.parameterKeys = [];
         this.parameterValues = {};
@@ -96,6 +97,8 @@ export class WorkflowTemplateFormComponent {
 
     user: User;
 
+    changeMessage: string;
+
     constructor(private _sharedService: SharedService) {
         this.templateParameterTypes = ['boolean', 'string', 'repository'];
 
@@ -145,6 +148,10 @@ export class WorkflowTemplateFormComponent {
             this._workflowTemplate.value = btoa(this.workflowValue);
         }
         this.workflowTemplate.group_id = Number(this.workflowTemplate.group_id);
+
+        if (this.changeMessage) {
+            this.workflowTemplate.change_message = this.changeMessage;
+        }
 
         this.save.emit();
     }

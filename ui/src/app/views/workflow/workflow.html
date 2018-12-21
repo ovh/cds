@@ -51,9 +51,10 @@
             <div class="content infoPopup">
                 <div *ngIf="workflow && workflow.from_template;then fromTemplateInfo;else fromTemplateHelp"></div>
                 <ng-template #fromTemplateInfo>
-                    <p>{{ 'workflow_from_template' | translate: {path: workflow.from_template} }}
-                        <a *ngIf="!workflow.template_up_to_date" class="ui orange label mini">{{'common_not_up_to_date'
-                            | translate }}</a>
+                    <p>{{ 'workflow_from_template' | translate}}
+                        <a [routerLink]="['/settings/workflow-template/' + workflow.from_template]">{{workflow.from_template}}</a>
+                        <span *ngIf="!workflow.template_up_to_date" class="ui orange label mini">{{'common_not_up_to_date'
+                            | translate }}</span>
                     </p>
                     <div class="ui compact menu">
                         <a class="item small" (click)="showTemplateFrom();popup.close()">

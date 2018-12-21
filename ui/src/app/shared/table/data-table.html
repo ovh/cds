@@ -7,10 +7,10 @@
         </div>
     </div>
 </div>
-<table class="ui fixed celled table" [class.selectable]="withLineClick">
+<table class="ui striped fixed celled table" [class.selectable]="withLineClick">
     <thead>
         <tr>
-            <th *ngFor="let c of columns" class="wide" [class.sortable]="c.sortable && c !== sortedColumn"
+            <th *ngFor="let c of columns" class="wide {{c.class}}" [class.sortable]="c.sortable && c !== sortedColumn"
                 [class.ascending]="c === sortedColumn && sortedColumnDirection === 'asc'" [class.descending]="c === sortedColumn && sortedColumnDirection === 'desc'"
                 (click)="columnClick($event, c)">
                 {{ c.name | translate }}
@@ -19,7 +19,7 @@
     </thead>
     <tbody *ngIf="loading">
         <tr>
-            <td class="center" [colSpan]="columns.length">
+            <td class="center aligned" [colSpan]="columns.length">
                 <div class="ui active small inline loader"></div>
                 <div>{{ 'common_loading' | translate }}</div>
             </td>
@@ -35,27 +35,21 @@
     <tbody *ngIf="!loading && dataForCurrentPage.length > 0">
         <tr *ngFor="let d of dataForCurrentPage; let i = index" (click)="lineClick(i, d)" [class.pointing]="withLineClick"
             [class.active]="withLineClick && indexSelected === i">
-            <ng-container *ngFor="let c of columns" [ngSwitch]="c.type">
-                <td *ngSwitchCase="'icon'" class="border">
-                    <i [ngClass]="c.selector(d)"></i>
-                </td>
-                <td *ngSwitchCase="'router-link'" class="border">
-                    <a class="ui" [routerLink]="c.selector(d).link">
-                        {{c.selector(d).value}}
+            <ng-container *ngFor="let c of (columns | selector:d)">
+                <td [ngSwitch]="c.type" class="wide {{c.class}}">
+                    <i *ngSwitchCase="'icon'" [ngClass]="c.selector"></i>
+                    <a *ngSwitchCase="'router-link'" class="ui" [routerLink]="c.selector.link">
+                        {{c.selector.value}}
                     </a>
-                </td>
-                <td *ngSwitchCase="'link'" class="border">
-                    <a class="ui pointing" (click)="c.selector(d).callback()">
-                        {{c.selector(d).value}}
+                    <a *ngSwitchCase="'link'" class="ui pointing" (click)="c.selector.callback()">
+                        {{c.selector.value}}
                     </a>
+                    <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
+                    <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
+                    <app-confirm-button *ngSwitchCase="'confirm-button'" (event)="c.selector.click()" [title]="c.selector.title">
+                    </app-confirm-button>
+                    <ng-container *ngSwitchDefault>{{c.selector}}</ng-container>
                 </td>
-                <td *ngSwitchCase="'markdown'" class="border">
-                    <markdown [data]="c.selector(d)"></markdown>
-                </td>
-                <td *ngSwitchCase="'date'" class="border">
-                    {{c.selector(d) | amCalendar}}
-                </td>
-                <td *ngSwitchDefault class="border">{{c.selector(d)}}</td>
             </ng-container>
         </tr>
     </tbody>
