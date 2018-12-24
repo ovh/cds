@@ -36,9 +36,10 @@ export class AppService {
                 private _wfStore: WorkflowStore, private _broadcastStore: BroadcastStore, private _timelineStore: TimelineStore,
                 private _toast: ToastService, private _workflowRunService: WorkflowRunService) {
         this.routeParams = this._routerService.getRouteParams({}, this._routeActivated);
-        this.filterSub = this._timelineStore.getFilter().subscribe(f => {
-            this.filter = f;
-        });
+    }
+
+    initFilter(filter: TimelineFilter) {
+        this.filter = cloneDeep(filter);
     }
 
     updateRoute(params: {}) {
