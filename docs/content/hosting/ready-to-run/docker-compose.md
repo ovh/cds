@@ -56,7 +56,7 @@ After registration on UI, keep the password displayed, we will use it after.
 On UI http://localhost:2015:
 
 - Create a project
-- Create a workflows
+- Create a workflow
 - On the first Pipeline, add a stage and a job
 - Inside job, add a step of type "[script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}})"
 - In script content, add theses lines:
