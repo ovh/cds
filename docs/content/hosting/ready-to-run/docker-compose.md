@@ -25,6 +25,10 @@ $ git clone https://github.com/ovh/cds.git
 $ cd cds
 $ export HOSTNAME=$(hostname)
 
+# Get the latest version
+$ docker pull ovhcom/cds-ui:latest
+$ docker pull ovhcom/cds-engine:latest
+
 # Create PG database
 $ docker-compose up --no-recreate -d cds-db
 
