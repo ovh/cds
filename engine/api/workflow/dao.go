@@ -1389,6 +1389,19 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		return nil, nil, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
 	}
 
+	// load the workflow from database if exists
+	workflowExists, err := Exists(db, proj.Key, wrkflw.Name)
+	if err != nil {
+		return nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
+	}
+	var wf *sdk.Workflow
+	if workflowExists {
+		wf, err = Load(ctx, db, store, proj, wrkflw.Name, u, LoadOptions{WithIcon: true})
+		if err != nil {
+			return nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
+		}
+	}
+
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, nil, sdk.WrapError(err, "Unable to start tx")
@@ -1492,7 +1505,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
+	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, wf, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
 	if err != nil {
 		log.Error("Push> Unable to import workflow: %v", err)
 		return nil, nil, sdk.WrapError(err, "unable to import workflow %s", wrkflw.Name)

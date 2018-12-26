@@ -157,7 +157,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 		workflowName := vars["permWorkflowName"]
 		auditID, errConv := strconv.ParseInt(vars["auditID"], 10, 64)
 		if errConv != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowRollbackHandler> cannot convert auditID to int")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Cannot convert auditID to int")
 		}
 		db := api.mustDB()
 		u := getUser(ctx)
@@ -171,39 +171,39 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		)
 		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowRollbackHandler> cannot load project %s", key)
+			return sdk.WrapError(errP, "Cannot load project %s", key)
 		}
 
 		wf, errW := workflow.Load(ctx, db, api.Cache, proj, workflowName, u, workflow.LoadOptions{WithoutNode: true})
 		if errW != nil {
-			return sdk.WrapError(errW, "postWorkflowRollbackHandler> cannot load workflow %s/%s", key, workflowName)
+			return sdk.WrapError(errW, "Cannot load workflow %s/%s", key, workflowName)
 		}
 
 		audit, errA := workflow.LoadAudit(db, auditID, wf.ID)
 		if errA != nil {
-			return sdk.WrapError(errA, "postWorkflowRollbackHandler> cannot load workflow audit %s/%s", key, workflowName)
+			return sdk.WrapError(errA, "Cannot load workflow audit %s/%s", key, workflowName)
 		}
 
 		var exportWf exportentities.Workflow
 		if err := yaml.Unmarshal([]byte(audit.DataBefore), &exportWf); err != nil {
-			return sdk.WrapError(err, "Cannot unmarshall data before")
+			return sdk.WrapError(err, "Cannot unmarshal data before")
 		}
 
 		tx, errTx := db.Begin()
 		if errTx != nil {
-			return sdk.WrapError(errTx, "postWorkflowRollbackHandler> Cannot begin transaction")
+			return sdk.WrapError(errTx, "Cannot begin transaction")
 		}
 		defer func() {
 			_ = tx.Rollback()
 		}()
 
-		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, proj, &exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
+		newWf, _, errP := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, &exportWf, u, workflow.ImportOptions{Force: true, WorkflowName: workflowName})
 		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowRollbackHandler> cannot parse and import previous workflow")
+			return sdk.WrapError(errP, "Cannot parse and import previous workflow")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "cannot commit transaction")
+			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
 		event.PublishWorkflowUpdate(key, *wf, *newWf, getUser(ctx))
