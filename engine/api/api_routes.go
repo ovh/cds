@@ -416,6 +416,7 @@ func (api *API) InitRouter() {
 
 	// Worker models
 	r.Handle("/worker/model", r.POST(api.addWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
+	r.Handle("/worker/model/import", r.POST(api.postWorkerModelImportHandler))
 	r.Handle("/worker/model/pattern", r.POST(api.postAddWorkerModelPatternHandler, NeedAdmin(true)), r.GET(api.getWorkerModelPatternsHandler))
 	r.Handle("/worker/model/pattern/{type}/{name}", r.GET(api.getWorkerModelPatternHandler), r.PUT(api.putWorkerModelPatternHandler, NeedAdmin(true)), r.DELETE(api.deleteWorkerModelPatternHandler, NeedAdmin(true)))
 	r.Handle("/worker/model/book/{permModelID}", r.PUT(api.bookWorkerModelHandler, NeedHatchery()))
@@ -424,6 +425,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/type", r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/{permModelID}", r.PUT(api.updateWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
+	r.Handle("/worker/model/{permModelID}/export", r.GET(api.getWorkerModelExportHandler))
 	r.Handle("/worker/model/{permModelID}/usage", r.GET(api.getWorkerModelUsageHandler))
 	r.Handle("/worker/model/capability/type", r.GET(api.getRequirementTypesHandler))
 
