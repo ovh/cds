@@ -41,9 +41,7 @@ func groupUserListRun(v cli.Values) (cli.ListResult, error) {
 		admin.GroupAdmin = true
 		users = append(users, admin)
 	}
-	for _, user := range gr.Users {
-		users = append(users, user)
-	}
+	users = append(users, gr.Users...)
 
 	return cli.AsListResult(users), nil
 }
