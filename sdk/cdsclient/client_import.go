@@ -131,13 +131,12 @@ func (c *client) EnvironmentImport(projectKey string, content io.Reader, format 
 
 // WorkerModelImport import a worker model via as code
 func (c *client) WorkerModelImport(content io.Reader, format string, force bool) (*sdk.Model, error) {
-	var url string
-	url = "/worker/model/import"
+	url := "/worker/model/import"
 	if force {
 		url += "?force=true"
 	}
 
-	mods := []RequestModifier{}
+	var mods []RequestModifier
 	switch format {
 	case "json":
 		mods = []RequestModifier{

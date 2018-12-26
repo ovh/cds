@@ -141,7 +141,6 @@ func (wm *WorkerModel) IsValid() error {
 				return fmt.Errorf("Error: VSphere main worker command empty")
 			}
 		}
-		break
 	default:
 		return fmt.Errorf("Unknown worker type: %s", wm.Type)
 	}

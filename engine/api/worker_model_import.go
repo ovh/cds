@@ -51,7 +51,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Unable to start tx")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() //nolint
 
 		wm, err := worker.ParseAndImport(tx, &eWorkerModel, force, getUser(ctx))
 		if err != nil {
