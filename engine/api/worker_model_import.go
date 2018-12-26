@@ -44,7 +44,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "Unsupported content-type: %s", contentType)
 		}
 		if errUnMarshall != nil {
-			return sdk.NewErrorFrom(sdk.ErrWrongRequest, errUnMarshall.Error())
+ 			return sdk.NewError(sdk.ErrWrongRequest, errUnMarshall)
 		}
 
 		tx, err := api.mustDB().Begin()
