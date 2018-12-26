@@ -2237,6 +2237,10 @@
 $ cd cds
 $ export HOSTNAME=$(hostname)
 
+# Get the latest version
+$ docker pull ovhcom/cds-ui:latest
+$ docker pull ovhcom/cds-engine:latest
+
 # Create PG database
 $ docker-compose up --no-recreate -d cds-db
 
@@ -2265,7 +2269,7 @@ run <code>docker-compose logs</code> to get URL for validate the registration.</
 
 <ul>
 <li>Create a project</li>
-<li>Create a workflows</li>
+<li>Create a workflow</li>
 <li>On the first Pipeline, add a stage and a job</li>
 <li>Inside job, add a step of type &ldquo;<a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/">script</a>&ldquo;</li>
 <li>In script content, add theses lines:</li>
