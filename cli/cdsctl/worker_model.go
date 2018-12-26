@@ -160,7 +160,7 @@ func workerModelDeleteRun(v cli.Values) error {
 
 var workerModelExportCmd = cli.Command{
 	Name:  "export",
-	Short: "Export an worker model",
+	Short: "Export a worker model",
 	Args: []cli.Arg{
 		{Name: "name"},
 	},

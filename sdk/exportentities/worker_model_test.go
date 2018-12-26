@@ -3,10 +3,11 @@ package exportentities
 import (
 	"testing"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
-	yaml "gopkg.in/yaml.v2"
 )
 
 func TestNewWorkerModelAndGetWorkerModel(t *testing.T) {

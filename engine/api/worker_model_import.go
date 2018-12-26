@@ -6,11 +6,12 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	yaml "gopkg.in/yaml.v2"
 )
 
 // postWorkerModelImportHandler import a worker model via file
