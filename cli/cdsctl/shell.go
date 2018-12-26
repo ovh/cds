@@ -94,8 +94,8 @@ func shellRun(v cli.Values) error {
 	home := "/"
 
 	// try to discover conf for existing .git repository
-	r, err := repo.New(".")
-	if err == nil {
+	r, errR := repo.New(".")
+	if errR == nil {
 		if _, err := discoverConf([]cli.Arg{
 			{Name: _ProjectKey},
 			{Name: _ApplicationName, AllowEmpty: true},
