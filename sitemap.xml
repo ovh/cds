@@ -530,6 +530,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/api/bookmarks/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/api/broadcast/</loc>
   </url>
   
@@ -811,6 +815,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/project/platform/export/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/worker/model/export/</loc>
   </url>
   
   <url>
