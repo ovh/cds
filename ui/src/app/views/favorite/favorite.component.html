@@ -5,7 +5,7 @@
         <div class="two wide column">
         </div>
         <div class="twelve wide column">
-          <app-favorite-cards [favorites]="favorites" [projects]="projects" [workflows]="workflows"></app-favorite-cards>
+          <app-favorite-cards [favorites]="favorites" [projects]="projects" [workflows]="workflows" (updated)="favoriteUpdated()"></app-favorite-cards>
         </div>
       </div>
     </div>

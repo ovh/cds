@@ -107,6 +107,9 @@ func (api *API) InitRouter() {
 	r.Handle("/import/{permProjectKey}/{uuid}", r.GET(api.getImportAsCodeHandler))
 	r.Handle("/import/{permProjectKey}/{uuid}/perform", r.POST(api.postPerformImportAsCodeHandler))
 
+	// Bookmarks
+	r.Handle("/bookmarks", r.GET(api.getBookmarksHandler))
+
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler, AllowProvider(true), EnableTracing()), r.POST(api.addProjectHandler))
 	r.Handle("/project/{permProjectKey}", r.GET(api.getProjectHandler), r.PUT(api.updateProjectHandler), r.DELETE(api.deleteProjectHandler))
