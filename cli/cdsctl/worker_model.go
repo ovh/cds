@@ -23,6 +23,7 @@ func workerModel() *cobra.Command {
 		cli.NewGetCommand(workerModelShowCmd, workerModelShowRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(workerModelDeleteCmd, workerModelDeleteRun, nil),
 		cli.NewCommand(workerModelImportCmd, workerModelImportRun, nil),
+		cli.NewCommand(workerModelExportCmd, workerModelExportRun, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -154,5 +155,35 @@ func workerModelDeleteRun(v cli.Values) error {
 		}
 		return err
 	}
+	return nil
+}
+
+var workerModelExportCmd = cli.Command{
+	Name:  "export",
+	Short: "Export an worker model",
+	Args: []cli.Arg{
+		{Name: "name"},
+	},
+	Flags: []cli.Flag{
+		{
+			Kind:    reflect.String,
+			Name:    "format",
+			Usage:   "Specify export format (json or yaml)",
+			Default: "yaml",
+		},
+	},
+}
+
+func workerModelExportRun(c cli.Values) error {
+	wmName := c.GetString("name")
+	wm, err := client.WorkerModel(wmName)
+	if err != nil {
+		return sdk.WrapError(err, "cannot load worker model %s", wmName)
+	}
+	btes, err := client.WorkerModelExport(wm.ID, c.GetString("format"))
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(btes))
 	return nil
 }

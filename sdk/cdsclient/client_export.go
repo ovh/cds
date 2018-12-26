@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 
 	"github.com/ovh/cds/sdk/exportentities"
 )
@@ -52,6 +53,21 @@ func (c *client) EnvironmentExport(projectKey, name string, exportWithPermission
 		path += "&withPermissions=true"
 	}
 	body, _, _, err := c.Request(context.Background(), "GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+func (c *client) WorkerModelExport(id int64, format string) ([]byte, error) {
+	path := fmt.Sprintf("/worker/model/%d/export?format=%s", id, url.QueryEscape(format))
+	bodyReader, _, _, err := c.Stream(context.Background(), "GET", path, nil, true)
+	if err != nil {
+		return nil, err
+	}
+	defer bodyReader.Close()
+
+	body, err := ioutil.ReadAll(bodyReader)
 	if err != nil {
 		return nil, err
 	}

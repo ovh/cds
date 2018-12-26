@@ -30,6 +30,11 @@ testcases:
   assertions:
     - result.code ShouldEqual 0
 
+- name: action export
+  steps:
+  - script: {{.cds.build.cdsctl}} worker model export myITModel > ./tests/fixtures/clictl_worker_model_MyITModel.exported
+  - script: diff ./tests/fixtures/clictl_worker_model_MyITModel.exported ./tests/fixtures/my_worker_model_updated.yml
+
 - name: cleanup
   steps:
   - script: {{.cds.build.cdsctl}} worker model delete myITModel --force

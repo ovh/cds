@@ -22,8 +22,8 @@ type WorkerModel struct {
 	PreCmd        string            `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
 	Cmd           string            `json:"cmd,omitempty" yaml:"cmd,omitempty"`
 	PostCmd       string            `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
-	Restricted    bool              `json:"restricted" yaml:"restricted"`
-	IsDeprecated  bool              `json:"is_deprecated" yaml:"is_deprecated"`
+	Restricted    bool              `json:"restricted,omitempty" yaml:"restricted,omitempty"`
+	IsDeprecated  bool              `json:"is_deprecated,omitempty" yaml:"is_deprecated,omitempty"`
 }
 
 // NewWorkerModel creates an exportentities WorkerModel from a struct sdk.Model
