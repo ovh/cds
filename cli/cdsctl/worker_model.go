@@ -1,14 +1,11 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
-	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
@@ -101,24 +98,6 @@ For admin:
 	},
 }
 
-type workerModelFile struct {
-	Name          string            `json:"name" yaml:"name"`
-	Group         string            `json:"group" yaml:"group"`
-	Communication string            `json:"communication,omitempty" yaml:"communication,omitempty"`
-	Provision     int               `json:"provision,omitempty" yaml:"provision,omitempty"`
-	Image         string            `json:"image" yaml:"image"`
-	Description   string            `json:"description" yaml:"description"`
-	Type          string            `json:"type" yaml:"type"`
-	Flavor        string            `json:"flavor,omitempty" yaml:"flavor,omitempty"`
-	Envs          map[string]string `json:"envs,omitempty" yaml:"envs,omitempty"`
-	PatternName   string            `json:"pattern_name,omitempty" yaml:"pattern_name,omitempty"`
-	Shell         string            `json:"shell,omitempty" yaml:"shell,omitempty"`
-	PreCmd        string            `json:"pre_cmd,omitempty" yaml:"pre_cmd,omitempty"`
-	Cmd           string            `json:"cmd,omitempty" yaml:"cmd,omitempty"`
-	PostCmd       string            `json:"post_cmd,omitempty" yaml:"post_cmd,omitempty"`
-	Restricted    bool              `json:"restricted" yaml:"restricted"`
-}
-
 func workerModelImportRun(c cli.Values) error {
 	force := c.GetBool("force")
 	if c.GetString("filepath") == "" {
@@ -132,126 +111,12 @@ func workerModelImportRun(c cli.Values) error {
 			return fmt.Errorf("Error: Cannot read file %s (%v)", filepath, err)
 		}
 
-		buf := new(bytes.Buffer)
-		if _, errR := buf.ReadFrom(reader); errR != nil {
-			reader.Close()
-			return fmt.Errorf("Error: cannot read file content %s : %v", filepath, errR)
-		}
-		reader.Close()
-
-		var modelInfos workerModelFile
-		switch format {
-		case exportentities.FormatJSON:
-			if err := json.Unmarshal(buf.Bytes(), &modelInfos); err != nil {
-				return fmt.Errorf("Error: cannot unmarshal json file %s : %v", filepath, err)
-			}
-		case exportentities.FormatYAML:
-			if err := yaml.Unmarshal(buf.Bytes(), &modelInfos); err != nil {
-				return fmt.Errorf("Error: cannot unmarshal yaml file %s : %v", filepath, err)
-			}
-		default:
-			return fmt.Errorf("Invalid file format")
-		}
-
-		var t string
-		var modelDocker sdk.ModelDocker
-		var modelVM sdk.ModelVirtualMachine
-		switch modelInfos.Type {
-		case sdk.Docker:
-			t = sdk.Docker
-			if modelInfos.Image == "" {
-				sdk.Exit("Error: Docker image not provided\n")
-			}
-			modelDocker.Shell = modelInfos.Shell
-			modelDocker.Image = modelInfos.Image
-			modelDocker.Cmd = modelInfos.Cmd
-			if modelInfos.PatternName == "" {
-				if modelDocker.Shell == "" {
-					sdk.Exit("Error: main shell command not provided\n")
-				}
-				if modelDocker.Cmd == "" {
-					sdk.Exit("Error: main worker command not provided\n")
-				}
-			}
-
-			break
-		case sdk.Openstack:
-			t = sdk.Openstack
-			d := sdk.ModelVirtualMachine{
-				Image:   modelInfos.Image,
-				Flavor:  modelInfos.Flavor,
-				Cmd:     modelInfos.Cmd,
-				PostCmd: modelInfos.PostCmd,
-				PreCmd:  modelInfos.PreCmd,
-			}
-			if d.Image == "" {
-				return fmt.Errorf("Error: Openstack image not provided")
-			}
-			if d.Flavor == "" {
-				return fmt.Errorf("Error: Openstack flavor not provided")
-			}
-			if modelInfos.PatternName == "" {
-				if d.Cmd == "" {
-					return fmt.Errorf("Error: Openstack command not provided")
-				}
-			}
-			modelVM = d
-			break
-		case sdk.VSphere:
-			t = sdk.VSphere
-			d := sdk.ModelVirtualMachine{
-				Image:   modelInfos.Image,
-				Flavor:  modelInfos.Flavor,
-				Cmd:     modelInfos.Cmd,
-				PostCmd: modelInfos.PostCmd,
-				PreCmd:  modelInfos.PreCmd,
-			}
-			if d.Image == "" {
-				return fmt.Errorf("Error: VSphere image not provided")
-			}
-			if modelInfos.PatternName == "" {
-				if d.Cmd == "" {
-					return fmt.Errorf("Error: VSphere main worker command empty")
-				}
-			}
-
-			modelVM = d
-			break
-		default:
-			return fmt.Errorf("Unknown worker type: %s", modelInfos.Type)
-		}
-
-		if modelInfos.Name == "" {
-			return fmt.Errorf("Error: worker model name is not provided")
-		}
-
-		if modelInfos.Group == "" {
-			return fmt.Errorf("Error: group is not provided")
-		}
-
-		g, err := client.GroupGet(modelInfos.Group)
+		formatStr, _ := exportentities.GetFormatStr(format)
+		wm, err := client.WorkerModelImport(reader, formatStr, force)
 		if err != nil {
-			return fmt.Errorf("Error : Unable to get group %s : %s", modelInfos.Group, err)
+			return err
 		}
-
-		if force {
-			if existingWm, err := client.WorkerModel(modelInfos.Name); err != nil {
-				if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, modelInfos.PatternName, &modelDocker, &modelVM, g.ID); errAdd != nil {
-					return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
-				}
-				fmt.Printf("Worker model %s added with success", modelInfos.Name)
-			} else {
-				if _, errU := client.WorkerModelUpdate(existingWm.ID, modelInfos.Name, t, &modelDocker, &modelVM, g.ID); errU != nil {
-					return fmt.Errorf("Error: cannot update worker model %s (%s)", modelInfos.Name, errU)
-				}
-				fmt.Printf("Worker model %s updated with success", modelInfos.Name)
-			}
-		} else {
-			if _, errAdd := client.WorkerModelAdd(modelInfos.Name, t, modelInfos.PatternName, &modelDocker, &modelVM, g.ID); errAdd != nil {
-				return fmt.Errorf("Error: cannot add worker model %s (%s)", modelInfos.Name, errAdd)
-			}
-			fmt.Printf("Worker model %s added with success", modelInfos.Name)
-		}
+		fmt.Printf("Worker model %s imported with success\n", wm.Name)
 	}
 
 	return nil

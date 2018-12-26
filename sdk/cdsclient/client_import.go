@@ -129,6 +129,49 @@ func (c *client) EnvironmentImport(projectKey string, content io.Reader, format 
 	return messages, nil
 }
 
+// WorkerModelImport import a worker model via as code
+func (c *client) WorkerModelImport(content io.Reader, format string, force bool) (*sdk.Model, error) {
+	var url string
+	url = "/worker/model/import"
+	if force {
+		url += "?force=true"
+	}
+
+	mods := []RequestModifier{}
+	switch format {
+	case "json":
+		mods = []RequestModifier{
+			func(r *http.Request) {
+				r.Header.Set("Content-Type", "application/json")
+			},
+		}
+	case "yaml", "yml":
+		mods = []RequestModifier{
+			func(r *http.Request) {
+				r.Header.Set("Content-Type", "application/x-yaml")
+			},
+		}
+	default:
+		return nil, exportentities.ErrUnsupportedFormat
+	}
+
+	btes, _, code, err := c.Request(context.Background(), "POST", url, content, mods...)
+	if err != nil {
+		return nil, err
+	}
+
+	if code >= 400 {
+		return nil, fmt.Errorf("HTTP Status code %d", code)
+	}
+
+	var wm sdk.Model
+	if err := json.Unmarshal(btes, &wm); err != nil {
+		return nil, err
+	}
+
+	return &wm, nil
+}
+
 func (c *client) WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {
 	var url string
 	url = fmt.Sprintf("/project/%s/import/workflows", projectKey)

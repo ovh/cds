@@ -105,6 +105,22 @@ func LoadGroupByID(db gorp.SqlExecutor, id int64) (*sdk.Group, error) {
 	}, nil
 }
 
+// LoadGroupByName retrieves group informations from database given his name
+func LoadGroupByName(db gorp.SqlExecutor, name string) (*sdk.Group, error) {
+	query := `SELECT "group".id FROM "group" WHERE "group".name = $1`
+	var id int64
+	if err := db.QueryRow(query, name).Scan(&id); err != nil {
+		if err == sql.ErrNoRows {
+			err = sdk.ErrGroupNotFound
+		}
+		return nil, sdk.WithStack(err)
+	}
+	return &sdk.Group{
+		ID:   id,
+		Name: name,
+	}, nil
+}
+
 // LoadUserGroup retrieves all group users from database
 func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `SELECT "user".username, "user".data, "group_user".group_admin FROM "user"

@@ -30,6 +30,20 @@ func GetFormat(f string) (Format, error) {
 	}
 }
 
+//GetFormatStr return a format in string
+func GetFormatStr(f Format) (string, error) {
+	switch f {
+	case FormatJSON:
+		return "json", nil
+	case FormatTOML:
+		return "toml", nil
+	case FormatYAML:
+		return "yaml", nil
+	default:
+		return "", sdk.WithStack(ErrUnsupportedFormat)
+	}
+}
+
 //GetContentType returns the content type for a content type
 func GetContentType(f Format) string {
 	switch f {

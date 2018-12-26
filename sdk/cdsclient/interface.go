@@ -48,6 +48,7 @@ type ExportImportInterface interface {
 	WorkflowExport(projectKey, name string, mods ...RequestModifier) ([]byte, error)
 	WorkflowPull(projectKey, name string, mods ...RequestModifier) (*tar.Reader, error)
 	WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
+	WorkerModelImport(content io.Reader, format string, force bool) (*sdk.Model, error)
 	WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error)
 	WorkflowAsCodeInterface
 }
