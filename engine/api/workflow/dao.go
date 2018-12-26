@@ -539,7 +539,7 @@ func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, erro
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
 	if err := IsValid(context.TODO(), store, db, w, p, u); err != nil {
-		return sdk.WrapError(err, "Unable to valid workflow")
+		return sdk.WrapError(err, "Unable to validate workflow")
 	}
 
 	if w.HistoryLength == 0 {
@@ -1285,7 +1285,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 				}
 			}
 			if !found {
-				return sdk.WithStack(sdk.ErrPipelineNotFound)
+				return sdk.NewErrorFrom(sdk.ErrPipelineNotFound, "Can not found a pipeline with id %d", n.Context.PipelineID)
 			}
 
 			// Load pipeline from db to get stage/jobs
