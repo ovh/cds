@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
@@ -34,13 +36,13 @@ func ParseAndImport(db gorp.SqlExecutor, eWorkerModel *exportentities.WorkerMode
 	}
 
 	//User must be admin of the group set in the model
-	var ok bool
+	var isGroupAdmin bool
 currentUGroup:
 	for _, g := range u.Groups {
 		if g.ID == sdkWm.GroupID {
 			for _, a := range g.Admins {
 				if a.ID == u.ID {
-					ok = true
+					isGroupAdmin = true
 					break currentUGroup
 				}
 			}
@@ -48,7 +50,7 @@ currentUGroup:
 	}
 
 	//User should have the right permission or be admin
-	if !u.Admin && !ok {
+	if !u.Admin && !isGroupAdmin {
 		return nil, sdk.ErrWorkerModelNoAdmin
 	}
 
@@ -95,8 +97,12 @@ currentUGroup:
 
 	if force {
 		if existingWm, err := LoadWorkerModelByName(db, sdkWm.Name); err != nil {
-			if errAdd := InsertWorkerModel(db, &sdkWm); errAdd != nil {
-				return nil, sdk.WrapError(errAdd, "cannot add worker model %s", sdkWm.Name)
+			if sdk.Cause(err) == sql.ErrNoRows {
+				if errAdd := InsertWorkerModel(db, &sdkWm); errAdd != nil {
+					return nil, sdk.WrapError(errAdd, "cannot add worker model %s", sdkWm.Name)
+				}
+			} else {
+				return nil, sdk.WrapError(err, "cannot find worker model %s", sdkWm.Name)
 			}
 		} else {
 			sdkWm.ID = existingWm.ID
@@ -108,7 +114,7 @@ currentUGroup:
 	}
 
 	if errAdd := InsertWorkerModel(db, &sdkWm); errAdd != nil {
-		if errPG, ok := errAdd.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
+		if errPG, ok := sdk.Cause(errAdd).(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
 			errAdd = sdk.ErrConflict
 		}
 		return nil, sdk.WrapError(errAdd, "cannot add worker model %s", sdkWm.Name)

@@ -40,13 +40,13 @@ func (api *API) addWorkerModelHandler() service.Handler {
 
 		currentUser := getUser(ctx)
 		//User must be admin of the group set in the model
-		var ok bool
+		var isGroupAdmin bool
 	currentUGroup:
 		for _, g := range currentUser.Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
 					if a.ID == currentUser.ID {
-						ok = true
+						isGroupAdmin = true
 						break currentUGroup
 					}
 				}
@@ -54,7 +54,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !currentUser.Admin && !ok {
+		if !currentUser.Admin && !isGroupAdmin {
 			return sdk.ErrWorkerModelNoAdmin
 		}
 

@@ -1,8 +1,6 @@
 package exportentities
 
 import (
-	"fmt"
-
 	"github.com/ovh/cds/sdk"
 )
 
@@ -100,49 +98,49 @@ func (wm WorkerModel) GetWorkerModel() (sdk.Model, error) {
 // IsValid returns error if worker model is invalid
 func (wm *WorkerModel) IsValid() error {
 	if wm.Name == "" {
-		return fmt.Errorf("Error: worker model name is not provided")
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: worker model name is not provided")
 	}
 
 	if wm.Group == "" {
-		return fmt.Errorf("Error: group is not provided")
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: group is not provided")
 	}
 
 	switch wm.Type {
 	case sdk.Docker:
 		if wm.Image == "" {
-			return fmt.Errorf("Error: Docker image not provided")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: Docker image not provided")
 		}
 		if wm.PatternName == "" {
 			if wm.Shell == "" {
-				return fmt.Errorf("Error: main shell command not provided")
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: main shell command not provided")
 			}
 			if wm.Cmd == "" {
-				return fmt.Errorf("Error: main worker command not provided")
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: main worker command not provided")
 			}
 		}
 	case sdk.Openstack:
 		if wm.Image == "" {
-			return fmt.Errorf("Error: Openstack image not provided")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: Openstack image not provided")
 		}
 		if wm.Flavor == "" {
-			return fmt.Errorf("Error: Openstack flavor not provided")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: Openstack flavor not provided")
 		}
 		if wm.PatternName == "" {
 			if wm.Cmd == "" {
-				return fmt.Errorf("Error: Openstack command not provided")
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: Openstack command not provided")
 			}
 		}
 	case sdk.VSphere:
 		if wm.Image == "" {
-			return fmt.Errorf("Error: VSphere image not provided")
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: VSphere image not provided")
 		}
 		if wm.PatternName == "" {
 			if wm.Cmd == "" {
-				return fmt.Errorf("Error: VSphere main worker command empty")
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Error: VSphere main worker command empty")
 			}
 		}
 	default:
-		return fmt.Errorf("Unknown worker type: %s", wm.Type)
+		return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Unknown worker type: %s", wm.Type)
 	}
 
 	return nil
