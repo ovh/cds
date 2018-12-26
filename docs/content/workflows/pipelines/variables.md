@@ -55,6 +55,7 @@ Here is the list of builtin variables, generated for every build:
 - `{{.cds.version}}` The current version number, it's an alias to `{{.cds.run.number}}`
 - `{{.cds.workflow}}` The name of the current workflow
 - `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), `{{.cds.workspace}}` == $HOME
+- `{{.payload}}` The current payload in JSON format
 
 ## The cds.version variable
 
