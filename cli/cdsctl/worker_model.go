@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"reflect"
-	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -108,26 +106,12 @@ func workerModelImportRun(c cli.Values) error {
 	}
 	files := strings.Split(c.GetString("path"), ",")
 
-	rx := regexp.MustCompile(`http[s]?:\/\/(.*)`)
 	for _, filepath := range files {
-		var contentFile io.Reader
-		var errF error
-
-		formatStr := "yaml"
-		if strings.HasSuffix(filepath, ".json") {
-			formatStr = "json"
+		contentFile, format, err := exportentities.OpenPath(filepath)
+		if err != nil {
+			return err
 		}
-
-		if isURL := rx.MatchString(filepath); isURL {
-			contentFile, _, errF = exportentities.OpenURL(filepath, formatStr)
-		} else {
-			var format exportentities.Format
-			contentFile, format, errF = exportentities.OpenFile(filepath)
-			formatStr, _ = exportentities.GetFormatStr(format)
-		}
-		if errF != nil {
-			return fmt.Errorf("Error: Cannot read file %s (%v)", filepath, errF)
-		}
+		formatStr, _ := exportentities.GetFormatStr(format)
 
 		wm, err := client.WorkerModelImport(contentFile, formatStr, force)
 		if err != nil {

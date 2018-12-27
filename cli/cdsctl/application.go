@@ -5,8 +5,6 @@ import (
 	"io"
 	"os"
 	"reflect"
-	"regexp"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -124,28 +122,13 @@ var applicationImportCmd = cli.Command{
 func applicationImportRun(c cli.Values) error {
 	var contentFile io.Reader
 	path := c.GetString("path")
-
-	var format = "yaml"
-	if strings.HasSuffix(path, ".json") {
-		format = "json"
+	contentFile, format, err := exportentities.OpenPath(path)
+	if err != nil {
+		return err
 	}
+	formatStr, _ := exportentities.GetFormatStr(format)
 
-	if isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, path); isURL {
-		var errF error
-		contentFile, _, errF = exportentities.OpenURL(path, format)
-		if errF != nil {
-			return errF
-		}
-	} else {
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		contentFile = f
-	}
-
-	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), contentFile, format, c.GetBool("force"))
+	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))
 	if err != nil {
 		if msgs != nil {
 			for _, msg := range msgs {

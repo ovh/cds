@@ -3,10 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
-	"os"
 	"reflect"
-	"regexp"
-	"strings"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -40,27 +37,13 @@ If you want to update also dependencies likes pipelines, applications or environ
 func workflowImportRun(c cli.Values) error {
 	var contentFile io.Reader
 	path := c.GetString("path")
-	format := "yaml"
-	if strings.HasSuffix(path, ".json") {
-		format = "json"
+	contentFile, format, err := exportentities.OpenPath(path)
+	if err != nil {
+		return err
 	}
+	formatStr, _ := exportentities.GetFormatStr(format)
 
-	if isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, path); isURL {
-		var errF error
-		contentFile, _, errF = exportentities.OpenURL(path, format)
-		if errF != nil {
-			return errF
-		}
-	} else {
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		contentFile = f
-	}
-
-	msgs, err := client.WorkflowImport(c.GetString(_ProjectKey), contentFile, format, c.GetBool("force"))
+	msgs, err := client.WorkflowImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))
 	if err != nil {
 		return err
 	}
