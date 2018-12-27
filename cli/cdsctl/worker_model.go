@@ -108,6 +108,7 @@ func workerModelImportRun(c cli.Values) error {
 	}
 	files := strings.Split(c.GetString("path"), ",")
 
+	rx := regexp.MustCompile(`http[s]?:\/\/(.*)`)
 	for _, filepath := range files {
 		var contentFile io.Reader
 		var errF error
@@ -117,7 +118,7 @@ func workerModelImportRun(c cli.Values) error {
 			formatStr = "json"
 		}
 
-		if isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, filepath); isURL {
+		if isURL := rx.MatchString(filepath); isURL {
 			contentFile, _, errF = exportentities.OpenURL(filepath, formatStr)
 		} else {
 			var format exportentities.Format
