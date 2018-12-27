@@ -1059,6 +1059,7 @@
   "workflow_template_diff_application": "Application {{number}}",
   "workflow_template_diff_environment": "Environment {{number}}",
   "workflow_template_change_message": "Add an optional description of your changes...",
+  "workflow_template_no_usage": "This template isn't used on one of your workflow",
 
   "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."

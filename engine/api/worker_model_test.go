@@ -124,7 +124,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 	test.NotNil(t, gr)
 
 	model := sdk.Model{
-		Name:    "Test1",
+		Name:    "Test1" + grName,
 		GroupID: gr.ID,
 		Type:    sdk.Docker,
 		ModelDocker: sdk.ModelDocker{
@@ -180,9 +180,9 @@ func Test_WorkerModelUsage(t *testing.T) {
 			Enabled: true,
 			Requirements: []sdk.Requirement{
 				sdk.Requirement{
-					Name:  "Test1",
+					Name:  "Test1" + grName,
 					Type:  sdk.ModelRequirement,
-					Value: "Test1",
+					Value: "Test1" + grName,
 				},
 			},
 		},
@@ -214,7 +214,7 @@ func Test_WorkerModelUsage(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permModelID": fmt.Sprintf("%d", model.ID),
+		"modelID": fmt.Sprintf("%d", model.ID),
 	}
 	uri := router.GetRoute("GET", api.getWorkerModelUsageHandler, vars)
 	test.NotEmpty(t, uri)
