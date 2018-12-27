@@ -66,7 +66,7 @@ func workerModelListRun(v cli.Values) (cli.ListResult, error) {
 
 var workerModelImportCmd = cli.Command{
 	Name:    "import",
-	Example: "cdsctl worker model import my_worker_model_file.yml",
+	Example: "cdsctl worker model import my_worker_model_file.yml https://mydomain.com/myworkermodel.yml",
 	Long: `
 Available model type :
 - Docker images ("docker")
@@ -81,7 +81,7 @@ For admin:
 		"add",
 	},
 	VariadicArgs: cli.Arg{
-		Name: "filepath",
+		Name: "path",
 	},
 	Flags: []cli.Flag{
 		{
@@ -101,23 +101,25 @@ For admin:
 
 func workerModelImportRun(c cli.Values) error {
 	force := c.GetBool("force")
-	if c.GetString("filepath") == "" {
-		return fmt.Errorf("filepath for worker model is mandatory")
+	if c.GetString("path") == "" {
+		return fmt.Errorf("path for worker model is mandatory")
 	}
-	files := strings.Split(c.GetString("filepath"), ",")
+	files := strings.Split(c.GetString("path"), ",")
 
 	for _, filepath := range files {
-		reader, format, err := exportentities.OpenFile(filepath)
-		if err != nil {
-			return fmt.Errorf("Error: Cannot read file %s (%v)", filepath, err)
-		}
-
-		formatStr, _ := exportentities.GetFormatStr(format)
-		wm, err := client.WorkerModelImport(reader, formatStr, force)
+		contentFile, format, err := exportentities.OpenPath(filepath)
 		if err != nil {
 			return err
 		}
+		formatStr, _ := exportentities.GetFormatStr(format)
+
+		wm, err := client.WorkerModelImport(contentFile, formatStr, force)
+		if err != nil {
+			_ = contentFile.Close()
+			return err
+		}
 		fmt.Printf("Worker model %s imported with success\n", wm.Name)
+		_ = contentFile.Close()
 	}
 
 	return nil

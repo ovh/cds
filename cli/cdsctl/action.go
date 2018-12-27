@@ -3,12 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"os"
 	"path"
 	"reflect"
-	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -158,29 +155,14 @@ cdsctl action import myAction.yml`,
 
 func actionImportRun(v cli.Values) error {
 	path := v.GetString("path")
-	var contentFile io.Reader
-	var err error
-
-	format := "yaml"
-	if strings.HasSuffix(path, ".json") {
-		format = "json"
+	contentFile, format, err := exportentities.OpenPath(path)
+	if err != nil {
+		return err
 	}
+	defer contentFile.Close() //nolint
+	formatStr, _ := exportentities.GetFormatStr(format)
 
-	if isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, path); isURL {
-		contentFile, _, err = exportentities.OpenURL(path, format)
-		if err != nil {
-			return err
-		}
-	} else {
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		contentFile = f
-	}
-
-	if errImport := client.ActionImport(contentFile, format); errImport != nil {
+	if errImport := client.ActionImport(contentFile, formatStr); errImport != nil {
 		return errImport
 	}
 
