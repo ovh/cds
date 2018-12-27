@@ -2256,12 +2256,12 @@
 + For each type of model you have to indicate the main worker command to run your workflow (example: worker)
 + For Openstack and VSphere model you can indicate a precmd and postcmd that will execute before and after the main worker command</p>
 
-<pre><code>cdsctl worker model import FILEPATH ... [flags]
+<pre><code>cdsctl worker model import PATH ... [flags]
 </code></pre>
 
 <h3 id="examples">Examples</h3>
 
-<pre><code>cdsctl worker model import my_worker_model_file.yml
+<pre><code>cdsctl worker model import my_worker_model_file.yml https://mydomain.com/myworkermodel.yml
 </code></pre>
 
 <h3 id="options">Options</h3>
