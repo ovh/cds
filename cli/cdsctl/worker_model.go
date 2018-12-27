@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -66,7 +68,7 @@ func workerModelListRun(v cli.Values) (cli.ListResult, error) {
 
 var workerModelImportCmd = cli.Command{
 	Name:    "import",
-	Example: "cdsctl worker model import my_worker_model_file.yml",
+	Example: "cdsctl worker model import my_worker_model_file.yml https://mydomain.com/myworkermodel.yml",
 	Long: `
 Available model type :
 - Docker images ("docker")
@@ -81,7 +83,7 @@ For admin:
 		"add",
 	},
 	VariadicArgs: cli.Arg{
-		Name: "filepath",
+		Name: "path",
 	},
 	Flags: []cli.Flag{
 		{
@@ -101,19 +103,32 @@ For admin:
 
 func workerModelImportRun(c cli.Values) error {
 	force := c.GetBool("force")
-	if c.GetString("filepath") == "" {
-		return fmt.Errorf("filepath for worker model is mandatory")
+	if c.GetString("path") == "" {
+		return fmt.Errorf("path for worker model is mandatory")
 	}
-	files := strings.Split(c.GetString("filepath"), ",")
+	files := strings.Split(c.GetString("path"), ",")
 
 	for _, filepath := range files {
-		reader, format, err := exportentities.OpenFile(filepath)
-		if err != nil {
-			return fmt.Errorf("Error: Cannot read file %s (%v)", filepath, err)
+		var contentFile io.Reader
+		var errF error
+
+		formatStr := "yaml"
+		if strings.HasSuffix(filepath, ".json") {
+			formatStr = "json"
 		}
 
-		formatStr, _ := exportentities.GetFormatStr(format)
-		wm, err := client.WorkerModelImport(reader, formatStr, force)
+		if isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, filepath); isURL {
+			contentFile, _, errF = exportentities.OpenURL(filepath, formatStr)
+		} else {
+			var format exportentities.Format
+			contentFile, format, errF = exportentities.OpenFile(filepath)
+			formatStr, _ = exportentities.GetFormatStr(format)
+		}
+		if errF != nil {
+			return fmt.Errorf("Error: Cannot read file %s (%v)", filepath, errF)
+		}
+
+		wm, err := client.WorkerModelImport(contentFile, formatStr, force)
 		if err != nil {
 			return err
 		}

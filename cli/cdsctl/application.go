@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var applicationCmd = cli.Command{
@@ -101,12 +104,12 @@ func applicationDeleteRun(v cli.Values) error {
 
 var applicationImportCmd = cli.Command{
 	Name:  "import",
-	Short: "Import an application",
+	Short: "Import an application with a local filepath or an URL",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
-		{Name: "filename"},
+		{Name: "path"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -119,19 +122,30 @@ var applicationImportCmd = cli.Command{
 }
 
 func applicationImportRun(c cli.Values) error {
-	path := c.GetString("filename")
-	f, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
+	var contentFile io.Reader
+	path := c.GetString("path")
 
 	var format = "yaml"
 	if strings.HasSuffix(path, ".json") {
 		format = "json"
 	}
 
-	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), f, format, c.GetBool("force"))
+	if isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, path); isURL {
+		var errF error
+		contentFile, _, errF = exportentities.OpenURL(path, format)
+		if errF != nil {
+			return errF
+		}
+	} else {
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		contentFile = f
+	}
+
+	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), contentFile, format, c.GetBool("force"))
 	if err != nil {
 		if msgs != nil {
 			for _, msg := range msgs {

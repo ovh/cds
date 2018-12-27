@@ -2,14 +2,17 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"reflect"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var environmentCmd = cli.Command{
@@ -89,12 +92,12 @@ func environmentDeleteRun(v cli.Values) error {
 
 var environmentImportCmd = cli.Command{
 	Name:  "import",
-	Short: "Import an environment",
+	Short: "Import an environment with local filepath or URL",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
-		{Name: "filename"},
+		{Name: "path"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -107,19 +110,29 @@ var environmentImportCmd = cli.Command{
 }
 
 func environmentImportRun(c cli.Values) error {
-	path := c.GetString("filename")
-	f, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	var format = "yaml"
+	var contentFile io.Reader
+	path := c.GetString("path")
+	format := "yaml"
 	if strings.HasSuffix(path, ".json") {
 		format = "json"
 	}
 
-	msgs, err := client.EnvironmentImport(c.GetString(_ProjectKey), f, format, c.GetBool("force"))
+	if isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, path); isURL {
+		var errF error
+		contentFile, _, errF = exportentities.OpenURL(path, format)
+		if errF != nil {
+			return errF
+		}
+	} else {
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+		contentFile = f
+	}
+
+	msgs, err := client.EnvironmentImport(c.GetString(_ProjectKey), contentFile, format, c.GetBool("force"))
 	if err != nil {
 		return err
 	}
