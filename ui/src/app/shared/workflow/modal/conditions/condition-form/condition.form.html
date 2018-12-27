@@ -20,7 +20,7 @@
                         *ngIf="names"
                         class="search"
                         [(model)]="condition.variable"
-                        (change)="variableChanged($event)"
+                        (click)="variableChanged(condition.variable)"
                         [options]="{'fullTextSearch': true, 'allowAdditions': true}">
                         <option *ngFor="let n of names" [value]="n">{{n}}</option>
                     </sm-select>

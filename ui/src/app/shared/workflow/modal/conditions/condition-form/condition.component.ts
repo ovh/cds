@@ -1,8 +1,8 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {Workflow, WorkflowNodeCondition, WorkflowNodeConditions} from '../../../../../model/workflow.model';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { cloneDeep } from 'lodash';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { PipelineStatus } from '../../../../../model/pipeline.model';
+import { Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from '../../../../../model/workflow.model';
 declare var CodeMirror: any;
 
 @Component({
@@ -35,6 +35,7 @@ export class WorkflowNodeConditionFormComponent {
     _names: Array<string> = [];
     suggest: Array<string> = [];
     condition = new WorkflowNodeCondition();
+    oldVariableCondition: string;
     codeMirrorConfig: {};
     statuses = [PipelineStatus.SUCCESS, PipelineStatus.FAIL, PipelineStatus.SKIPPED];
 
@@ -87,10 +88,13 @@ export class WorkflowNodeConditionFormComponent {
       this.condition.value = event.target.checked ?  'true' : 'false';
     }
 
-    variableChanged(event: any) {
-        this.condition.value = null;
-        this.condition.operator = 'eq';
-        if (event.target.value === 'cds.manual') {
+    variableChanged(variable: any) {
+        if (!variable || variable !== this.oldVariableCondition) {
+            this.condition.value = null;
+            this.condition.operator = 'eq';
+        }
+        this.oldVariableCondition = variable;
+        if (variable === 'cds.manual') {
             this.condition.value = 'false';
         }
     }
