@@ -1,13 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"reflect"
-
-	"github.com/ovh/cds/sdk"
+	"time"
 
 	"github.com/AlecAivazis/survey"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/cli"
 )
 
@@ -33,23 +34,9 @@ var templateBulkCmd = cli.Command{
 			Usage:     "Set to not ask interactively for params",
 		},
 		{
-			Kind:      reflect.String,
-			Name:      "output-dir",
-			ShortHand: "d",
-			Usage:     "Output directory",
-			Default:   ".cds",
-		},
-		{
-			Kind:    reflect.Bool,
-			Name:    "force",
-			Usage:   "Force, may override files",
-			Default: "false",
-		},
-		{
-			Kind:    reflect.Bool,
-			Name:    "quiet",
-			Usage:   "If true, do not output filename created",
-			Default: "false",
+			Kind:  reflect.Bool,
+			Name:  "track",
+			Usage: "Wait the bulk to be over",
 		},
 	},
 }
@@ -76,7 +63,7 @@ func templateBulkRun(v cli.Values) error {
 			return err
 		}
 
-		opts := make([]cli.CustomMultiSelectOption, len(wtis))
+		opts := []cli.CustomMultiSelectOption{}
 		values := make(map[string]sdk.WorkflowTemplateInstance, len(wtis))
 		for i := range wtis {
 			if wtis[i].Workflow != nil {
@@ -106,11 +93,11 @@ func templateBulkRun(v cli.Values) error {
 				}
 
 				key := fmt.Sprintf("%s/%s", wtis[i].Project.Key, wtis[i].Workflow.Name)
-				opts[i] = cli.CustomMultiSelectOption{
+				opts = append(opts, cli.CustomMultiSelectOption{
 					Value:   key,
 					Info:    info,
 					Default: true,
-				}
+				})
 				values[key] = wtis[i]
 			}
 		}
@@ -125,9 +112,13 @@ func templateBulkRun(v cli.Values) error {
 			return err
 		}
 
+		operations := make([]sdk.WorkflowTemplateBulkOperation, len(results))
+
 		projectRepositories := map[string][]string{}
 		for i := range results {
 			wti := values[results[i]]
+
+			operations[i].Request = wti.Request
 
 			// for each param not already in previous request ask for the value
 			for _, p := range wt.Parameters {
@@ -173,8 +164,11 @@ func templateBulkRun(v cli.Values) error {
 							}, &result, nil); err != nil {
 								return err
 							}
-							value = fmt.Sprintf("%T", v)
-						} else {
+							if result {
+								value = projectRepositories[wti.Project.Key][0]
+							}
+						}
+						if value == "" {
 							if err := survey.AskOne(&survey.Input{Message: label}, &value, nil); err != nil {
 								return err
 							}
@@ -187,19 +181,63 @@ func templateBulkRun(v cli.Values) error {
 						}, &result, nil); err != nil {
 							return err
 						}
-						value = fmt.Sprintf("%T", v)
+						value = fmt.Sprintf("%t", result)
 					default:
 						if err := survey.AskOne(&survey.Input{Message: label}, &value, nil); err != nil {
 							return err
 						}
 					}
 
-					wti.Request.Parameters[p.Key] = value
+					operations[i].Request.Parameters[p.Key] = value
 				}
 			}
 		}
 
-		// TODO send bulk request
+		// send bulk request
+		b := sdk.WorkflowTemplateBulk{Operations: operations}
+
+		res, err := client.TemplateBulk(wt.Group.Name, wt.Slug, b)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Bulk request with id %d successfully created for template %s/%s with %d operations\n", res.ID, wt.Group.Name, wt.Slug, len(res.Operations))
+
+		if v.GetBool("track") {
+			var currentDisplay = new(cli.Display)
+			currentDisplay.Printf("Looking for bulk %d...\n", b.ID)
+			currentDisplay.Do(context.Background())
+
+			for {
+				res, err = client.TemplateGetBulk(wt.Group.Name, wt.Slug, res.ID)
+				if err != nil {
+					return err
+				}
+
+				var out string
+				for _, o := range res.Operations {
+					var status string
+					switch o.Status {
+					case sdk.OperationStatusPending:
+						status = "pending"
+					case sdk.OperationStatusProcessing:
+						status = cli.Blue("processing")
+					case sdk.OperationStatusDone:
+						status = cli.Green("done")
+					case sdk.OperationStatusError:
+						status = cli.Red("error")
+					}
+					out += fmt.Sprintf("%s/%s -> %s\n", o.Request.ProjectKey, o.Request.WorkflowName, status)
+				}
+
+				currentDisplay.Printf(out)
+
+				time.Sleep(500 * time.Millisecond)
+				if res.IsDone() {
+					break
+				}
+			}
+		}
 	}
 
 	return nil

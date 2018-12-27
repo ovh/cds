@@ -3,7 +3,11 @@ package cli
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
 	"time"
+
+	surterm "gopkg.in/AlecAivazis/survey.v1/terminal"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -24,12 +28,21 @@ func (d *Display) Do(ctx context.Context) {
 		clear += " "
 	}
 
+	cursor := surterm.Cursor{Out: os.Stdout}
+
+	var count int
 	go func(d *Display) {
 		for {
 			time.Sleep(100 * time.Millisecond)
 			if *d == "" || ctx.Err() != nil {
 				continue
 			}
+
+			for i := 0; i < count-1; i++ {
+				fmt.Printf(clear)
+				cursor.PreviousLine(1)
+			}
+			count = len(strings.Split(string(*d), "\n"))
 
 			fmt.Printf(clear + "\r" + string(*d))
 			*d = ""

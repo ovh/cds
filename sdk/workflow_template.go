@@ -361,6 +361,16 @@ type WorkflowTemplateBulk struct {
 	Operations         WorkflowTemplateBulkOperations `json:"operations" db:"operations"`
 }
 
+// IsDone returns true if all operations are complete.
+func (w WorkflowTemplateBulk) IsDone() bool {
+	for i := range w.Operations {
+		if w.Operations[i].Status != OperationStatusDone && w.Operations[i].Status != OperationStatusError {
+			return false
+		}
+	}
+	return true
+}
+
 // WorkflowTemplateBulkOperation contains one operation of a template bulk task.
 type WorkflowTemplateBulkOperation struct {
 	Status  OperationStatus         `json:"status"`

@@ -279,3 +279,21 @@ func InsertBulk(db gorp.SqlExecutor, wtb *sdk.WorkflowTemplateBulk) error {
 func UpdateBulk(db gorp.SqlExecutor, wtb *sdk.WorkflowTemplateBulk) error {
 	return sdk.WrapError(gorpmapping.Update(db, wtb), "Unable to update workflow template bulk task %d", wtb.ID)
 }
+
+// GetBulkByIDAndTemplateID returns the workflow template bulk for given id and template id.
+func GetBulkByIDAndTemplateID(db gorp.SqlExecutor, id, templateID int64) (*sdk.WorkflowTemplateBulk, error) {
+	b := sdk.WorkflowTemplateBulk{}
+
+	if err := db.SelectOne(&b, `
+    SELECT *
+    FROM workflow_template_bulk
+    WHERE id = $1 AND workflow_template_id = $2
+  `, id, templateID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "Cannot get workflow template")
+	}
+
+	return &b, nil
+}

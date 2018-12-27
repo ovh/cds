@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS "workflow_template_bulk" (
   id BIGSERIAL PRIMARY KEY,
   user_id BIGINT NOT NULL,
   workflow_template_id BIGINT NOT NULL,
-  operations JSONB,
+  operations JSONB
 );
 
 SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_TEMPLATE_BULK_USER', 'workflow_template_bulk', 'user', 'user_id', 'id');

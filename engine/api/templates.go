@@ -456,8 +456,17 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 		if err := service.UnmarshalBody(r, &req); err != nil {
 			return err
 		}
-		for i := range req.Operations {
-			if err := wt.CheckParams(req.Operations[i].Request); err != nil {
+		m := make(map[string]struct{}, len(req.Operations))
+		for _, o := range req.Operations {
+			// check for duplicated request
+			key := fmt.Sprintf("%s-%s", o.Request.ProjectKey, o.Request.WorkflowName)
+			if _, ok := m[key]; ok {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Request should be unique for a given project key and workflow name")
+			}
+			m[key] = struct{}{}
+
+			// check request params
+			if err := wt.CheckParams(o.Request); err != nil {
 				return err
 			}
 		}
@@ -480,6 +489,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			Operations:         make([]sdk.WorkflowTemplateBulkOperation, len(req.Operations)),
 		}
 		for i := range req.Operations {
+			bulk.Operations[i].Status = sdk.OperationStatusPending
 			bulk.Operations[i].Request = req.Operations[i].Request
 		}
 		if err := workflowtemplate.InsertBulk(api.mustDB(), &bulk); err != nil {
@@ -488,10 +498,16 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 		// start async bulk tasks
 		sdk.GoRoutine(context.Background(), "api.templateBulkApply", func(ctx context.Context) {
-			for _, o := range bulk.Operations {
-				if o.Status == sdk.OperationStatusPending {
+			for i := range bulk.Operations {
+				if bulk.Operations[i].Status == sdk.OperationStatusPending {
+					bulk.Operations[i].Status = sdk.OperationStatusProcessing
+					if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
+						log.Error("%v", err)
+						return
+					}
+
 					// load project with key
-					p, err := project.Load(api.mustDB(), api.Cache, o.Request.ProjectKey, u,
+					p, err := project.Load(api.mustDB(), api.Cache, bulk.Operations[i].Request.ProjectKey, u,
 						project.LoadOptions.WithGroups,
 						project.LoadOptions.WithApplications,
 						project.LoadOptions.WithEnvironments,
@@ -500,20 +516,20 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						project.LoadOptions.WithPlatforms)
 					if err != nil {
 						log.Error("%v", err)
-						return
+						continue
 					}
 
 					// apply and import workflow
-					res, err := api.applyTemplate(ctx, u, p, wt, o.Request)
+					res, err := api.applyTemplate(ctx, u, p, wt, bulk.Operations[i].Request)
 					if err != nil {
 						log.Error("%v", err)
-						return
+						continue
 					}
 
 					buf := new(bytes.Buffer)
 					if err := workflowtemplate.Tar(wt, res, buf); err != nil {
 						log.Error("%v", err)
-						return
+						continue
 					}
 
 					tr := tar.NewReader(buf)
@@ -521,6 +537,12 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 					_, _, err = workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, u, project.DecryptWithBuiltinKey)
 					if err != nil {
 						log.Error("%v", sdk.WrapError(err, "Cannot push generated workflow"))
+						continue
+					}
+
+					bulk.Operations[i].Status = sdk.OperationStatusDone
+					if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
+						log.Error("%v", err)
 						return
 					}
 				}
@@ -534,9 +556,28 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 func (api *API) getTemplateBulkHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO user is creator of the bulk or admin
-		// TODO returns bulk
-		return service.WriteJSON(w, "", http.StatusOK)
+		id, _ := requestVarInt(r, "bulkID") // ignore error, will check if not 0
+		if id == 0 {
+			return sdk.WrapError(sdk.ErrWrongRequest, "Invalid given id")
+		}
+
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+		wt := getWorkflowTemplate(ctx)
+
+		u := getUser(ctx)
+
+		b, err := workflowtemplate.GetBulkByIDAndTemplateID(api.mustDB(), id, wt.ID)
+		if err != nil {
+			return err
+		}
+		if b == nil || (!u.Admin && u.ID != b.UserID) {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "No workflow template bulk found for id %d", id)
+		}
+
+		return service.WriteJSON(w, b, http.StatusOK)
 	}
 }
 
