@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
@@ -410,7 +411,7 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 }
 
 // LoadByWorkflowTemplateID load all workflows linked to a workflow template but without loading workflow details
-func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64) ([]sdk.Workflow, error) {
+func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64, u *sdk.User) ([]sdk.Workflow, error) {
 	var dbRes []Workflow
 	query := `
 	SELECT workflow.*
@@ -418,7 +419,29 @@ func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, template
 			JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
 		WHERE workflow_template_instance.workflow_template_id = $1 AND workflow.to_delete = false
 	`
-	if _, err := db.Select(&dbRes, query, templateID); err != nil {
+	args := []interface{}{templateID}
+
+	if !u.Admin {
+		query = `
+			SELECT workflow.*
+				FROM workflow
+					JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
+					JOIN project ON workflow.project_id = project.id
+				WHERE workflow_template_instance.workflow_template_id = $1
+				AND workflow.to_delete = false
+				AND project.id IN (
+					SELECT project_group.project_id
+						FROM project_group
+					WHERE
+						project_group.group_id = ANY(string_to_array($2, ',')::int[])
+						OR
+						$3 = ANY(string_to_array($2, ',')::int[])
+				)
+			`
+		args = append(args, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
+	}
+
+	if _, err := db.Select(&dbRes, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}

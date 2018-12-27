@@ -426,7 +426,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/communication", r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/{permModelID}", r.PUT(api.updateWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
 	r.Handle("/worker/model/{permModelID}/export", r.GET(api.getWorkerModelExportHandler))
-	r.Handle("/worker/model/{permModelID}/usage", r.GET(api.getWorkerModelUsageHandler))
+	r.Handle("/worker/model/{modelID}/usage", r.GET(api.getWorkerModelUsageHandler))
 	r.Handle("/worker/model/capability/type", r.GET(api.getRequirementTypesHandler))
 
 	// Workflows

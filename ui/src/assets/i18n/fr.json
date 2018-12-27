@@ -1059,6 +1059,7 @@
   "workflow_template_diff_application": "Application {{number}}",
   "workflow_template_diff_environment": "Environnement {{number}}",
   "workflow_template_change_message": "Ajoutez une description optionelle de vos changements...",
+  "workflow_template_no_usage": "Ce modèle de workflow n'est pas utilisé sur l'un de vos workflows",
 
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."
