@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"reflect"
 
@@ -108,12 +107,12 @@ var environmentImportCmd = cli.Command{
 }
 
 func environmentImportRun(c cli.Values) error {
-	var contentFile io.Reader
 	path := c.GetString("path")
 	contentFile, format, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
+	defer contentFile.Close() //nolint
 	formatStr, _ := exportentities.GetFormatStr(format)
 
 	msgs, err := client.EnvironmentImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))

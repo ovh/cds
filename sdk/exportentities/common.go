@@ -165,7 +165,6 @@ func OpenPath(path string) (io.ReadCloser, Format, error) {
 		if err != nil {
 			return nil, format, err
 		}
-		defer f.Close()
 		contentFile = f
 	}
 

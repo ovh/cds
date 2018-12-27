@@ -115,9 +115,11 @@ func workerModelImportRun(c cli.Values) error {
 
 		wm, err := client.WorkerModelImport(contentFile, formatStr, force)
 		if err != nil {
+			_ = contentFile.Close()
 			return err
 		}
 		fmt.Printf("Worker model %s imported with success\n", wm.Name)
+		_ = contentFile.Close()
 	}
 
 	return nil

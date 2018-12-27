@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"reflect"
 
 	"github.com/ovh/cds/cli"
@@ -35,12 +34,12 @@ If you want to update also dependencies likes pipelines, applications or environ
 }
 
 func workflowImportRun(c cli.Values) error {
-	var contentFile io.Reader
 	path := c.GetString("path")
 	contentFile, format, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
+	defer contentFile.Close() //nolint
 	formatStr, _ := exportentities.GetFormatStr(format)
 
 	msgs, err := client.WorkflowImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))

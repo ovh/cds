@@ -159,6 +159,7 @@ func actionImportRun(v cli.Values) error {
 	if err != nil {
 		return err
 	}
+	defer contentFile.Close() //nolint
 	formatStr, _ := exportentities.GetFormatStr(format)
 
 	if errImport := client.ActionImport(contentFile, formatStr); errImport != nil {
