@@ -44,6 +44,7 @@ export class WorkflowShowComponent implements OnInit {
     selectedNode: WNode;
     selectedNodeID: number;
     selectedNodeRef: string;
+    selectedHookRef: string;
 
     selectedTab = 'workflows';
 
@@ -124,6 +125,11 @@ export class WorkflowShowComponent implements OnInit {
             } else {
                 delete this.selectedNodeRef;
             }
+            if (params['hook_ref']) {
+                this.selectedHookRef = params['hook_ref'];
+            } else {
+                delete this.selectedHookRef;
+            }
             this.selectNode();
         });
 
@@ -153,6 +159,13 @@ export class WorkflowShowComponent implements OnInit {
             if (n) {
                 this.selectedNode = n;
                 this._workflowEventStore.setSelectedNode(n, true);
+                return;
+            }
+        }
+        if (this.selectedHookRef) {
+            let h = Workflow.getHookByRef(this.selectedHookRef, this.detailedWorkflow)
+            if (h) {
+                this._workflowEventStore.setSelectedHook(h);
                 return;
             }
         }

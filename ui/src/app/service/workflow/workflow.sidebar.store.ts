@@ -1,6 +1,6 @@
-import {Injectable} from '@angular/core';
-import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {Observable} from 'rxjs/Observable';
+import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs/BehaviorSubject';
+import { Observable } from 'rxjs/Observable';
 
 export class WorkflowSidebarMode {
     static EDIT = 'sidebar:edit';
@@ -13,7 +13,7 @@ export class WorkflowSidebarMode {
 @Injectable()
 export class WorkflowSidebarStore {
 
-    private _sidebarMode: BehaviorSubject<string> = new BehaviorSubject(WorkflowSidebarMode.RUNS);
+    private _sidebarMode: BehaviorSubject<string> = new BehaviorSubject(null);
 
     constructor() {
     }
