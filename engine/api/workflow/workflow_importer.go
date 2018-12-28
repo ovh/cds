@@ -16,7 +16,7 @@ import (
 )
 
 //Import is able to create a new workflow and all its components
-func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message, dryRun bool) error {
+func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW, w *sdk.Workflow, u *sdk.User, force bool, msgChan chan<- sdk.Message, dryRun bool) error {
 	ctx, end := observability.Span(ctx, "workflow.Import")
 	defer end()
 
@@ -28,11 +28,6 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	// Default value of history length is 20
 	if w.HistoryLength == 0 {
 		w.HistoryLength = 20
-	}
-
-	doUpdate, errE := Exists(db, proj.Key, w.Name)
-	if errE != nil {
-		return sdk.WrapError(errE, "Import> Cannot check if workflow exists")
 	}
 
 	//Manage default payload
@@ -50,7 +45,8 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 	}
 	w.WorkflowData.Node.Context.DefaultPayload = w.Root.Context.DefaultPayload
 
-	if !doUpdate {
+	// create the workflow if not exists
+	if oldW == nil {
 		if err := Insert(db, store, w, proj, u); err != nil {
 			return sdk.WrapError(err, "Unable to insert workflow")
 		}
@@ -73,11 +69,6 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 
 	if !force {
 		return sdk.NewError(sdk.ErrConflict, fmt.Errorf("Workflow exists"))
-	}
-
-	oldW, errO := Load(ctx, db, store, proj, w.Name, u, LoadOptions{WithIcon: true})
-	if errO != nil {
-		return sdk.WrapError(errO, "Unable to load old workflow")
 	}
 
 	// Retrieve existing hook
