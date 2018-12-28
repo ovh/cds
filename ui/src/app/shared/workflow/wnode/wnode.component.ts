@@ -93,7 +93,7 @@ export class WorkflowWNodeComponent implements OnInit {
             return;
         }
 
-         let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
+        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
             queryParams: { 'node_id': this.node.id, 'node_ref': this.node.ref}});
         this._router.navigateByUrl(url.toString());
     }
