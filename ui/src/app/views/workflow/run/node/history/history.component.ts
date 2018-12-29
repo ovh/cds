@@ -1,18 +1,17 @@
-import {Component, Input} from '@angular/core';
-import {Router} from '@angular/router';
-import {Parameter} from '../../../../../model/parameter.model';
-import {Project} from '../../../../../model/project.model';
-import {Workflow} from '../../../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
-import {Table} from '../../../../../shared/table/table';
+import { Component, Input } from '@angular/core';
+import { Router } from '@angular/router';
+import { Parameter } from '../../../../../model/parameter.model';
+import { Project } from '../../../../../model/project.model';
+import { Workflow } from '../../../../../model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from '../../../../../model/workflow.run.model';
+import { Table } from '../../../../../shared/table/table';
 
 @Component({
     selector: 'app-workflow-node-run-history',
     templateUrl: './history.html',
     styleUrls: ['./history.scss']
 })
-export class WorkflowNodeRunHistoryComponent extends Table {
-
+export class WorkflowNodeRunHistoryComponent extends Table<WorkflowNodeRun> {
     @Input() project: Project;
     @Input() run: WorkflowRun;
     @Input() history: Array<WorkflowNodeRun>;
@@ -25,14 +24,14 @@ export class WorkflowNodeRunHistoryComponent extends Table {
         super();
     }
 
-    getData(): any[] {
+    getData(): Array<WorkflowNodeRun> {
         return this.history;
     }
 
     goToSubNumber(nodeRun: WorkflowNodeRun): void {
         let node = Workflow.getNodeByID(nodeRun.workflow_node_id, this.run.workflow);
         this._router.navigate(['/project', this.project.key, 'workflow', this.workflowName, 'run', nodeRun.num, 'node',
-            nodeRun.id], {queryParams: {sub: nodeRun.subnumber, name: Workflow.getPipeline(this.run.workflow, node).name}});
+            nodeRun.id], { queryParams: { sub: nodeRun.subnumber, name: Workflow.getPipeline(this.run.workflow, node).name } });
     }
 
     getTriggerSource(nr: WorkflowNodeRun): string {

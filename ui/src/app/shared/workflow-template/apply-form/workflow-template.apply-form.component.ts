@@ -97,7 +97,7 @@ export class WorkflowTemplateApplyFormComponent {
 
         this.result = null;
         this.loading = true;
-        this._workflowTemplateService.applyWorkflowTemplate(this._workflowTemplate.group.name, this._workflowTemplate.slug, req)
+        this._workflowTemplateService.apply(this._workflowTemplate.group.name, this._workflowTemplate.slug, req)
             .pipe(first(), finalize(() => this.loading = false))
             .subscribe(res => {
                 this.result = res;

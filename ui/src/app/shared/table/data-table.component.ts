@@ -12,10 +12,11 @@ export enum ColumnType {
     ROUTER_LINK = 'router-link',
     MARKDOWN = 'markdown',
     DATE = 'date',
-    CONFIRM_BUTTON = 'confirm-button'
+    CONFIRM_BUTTON = 'confirm-button',
+    LABEL = 'label',
 }
 
-export type Selector = (d: any) => any;
+export type Selector = <T>(d: T) => any;
 export type Filter = (f: string) => (d: any) => any;
 
 export class Column {
@@ -44,7 +45,7 @@ export class SelectorPipe implements PipeTransform {
     templateUrl: './data-table.html',
     styleUrls: ['./data-table.scss']
 })
-export class DataTableComponent extends Table implements OnChanges {
+export class DataTableComponent<T> extends Table<T> implements OnChanges {
     @Input() columns: Array<Column>;
     @Output() sortChange = new EventEmitter<string>();
     @Output() dataChange = new EventEmitter<number>();
@@ -52,18 +53,18 @@ export class DataTableComponent extends Table implements OnChanges {
     @Input() withLineClick: boolean;
     @Output() clickLine = new EventEmitter<any>();
 
-    @Input() data: any;
+    @Input() data: Array<T>;
     @Input() withPagination: number;
     @Input() withFilter: Filter;
 
     sortedColumn: Column;
     sortedColumnDirection: direction;
-    allData: any;
+    allData: Array<T>;
     dataForCurrentPage: any;
     pagesCount: number;
     filterFunc: Filter;
     filter: string;
-    filteredData: any;
+    filteredData: Array<T>;
     indexSelected: number;
 
     ngOnChanges() {
@@ -92,7 +93,7 @@ export class DataTableComponent extends Table implements OnChanges {
         super();
     }
 
-    getData(): any[] {
+    getData(): Array<T> {
         this.filteredData = this.data;
         if (this.filter && this.filterFunc) {
             this.filteredData = this.data.filter(this.filterFunc(this.filter));
@@ -105,13 +106,13 @@ export class DataTableComponent extends Table implements OnChanges {
         return this.filteredData;
     }
 
-    getDataForCurrentPage(): any[] {
+    getDataForCurrentPage(): Array<T> {
         this.pagesCount = this.getNbOfPages();
         if (this.pagesCount < this.currentPage) {
             this.currentPage = 1;
         }
 
-        let data: any[];
+        let data: Array<T>;
         if (!this.withPagination) {
             data = this.getData();
         } else {

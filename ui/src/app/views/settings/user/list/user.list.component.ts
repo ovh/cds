@@ -12,7 +12,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     templateUrl: './user.list.html',
     styleUrls: ['./user.list.scss']
 })
-export class UserListComponent extends Table {
+export class UserListComponent extends Table<User> {
     currentUser: User;
     filter: string;
     users: Array<User>;
@@ -50,7 +50,7 @@ export class UserListComponent extends Table {
         }];
     }
 
-    getData(): any[] {
+    getData(): Array<User> {
         if (!this.filter) {
             return this.users;
         }

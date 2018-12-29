@@ -1,5 +1,7 @@
-import { AuditWorkflowTemplate } from './audit.model';
+import { AuditWorkflowTemplate, AuditWorkflowTemplateInstance } from './audit.model';
 import { Group } from './group.model';
+import { Project } from './project.model';
+import { Workflow } from './workflow.model';
 
 export class WorkflowTemplate {
     id: number;
@@ -52,4 +54,34 @@ export class WorkflowTemplateApplyResult {
 export class WorkflowTemplateInstance {
     workflow_template_version: number;
     request: WorkflowTemplateRequest;
+    project: Project;
+    workflow: Workflow;
+    first_audit: AuditWorkflowTemplateInstance;
+    last_audit: AuditWorkflowTemplateInstance;
+    workflow_name: string;
+
+    constructor(wti?: any) {
+        if (wti) {
+            this.workflow_template_version = wti.workflow_template_version;
+            this.request = wti.request;
+            this.project = wti.project;
+            this.workflow = wti.workflow;
+            this.first_audit = wti.first_audit;
+            this.last_audit = wti.last_audit;
+            this.workflow_name = wti.workflow_name;
+        }
+    }
+
+    status(wt: WorkflowTemplate): InstanceStatus {
+        if (!this.workflow) {
+            return InstanceStatus.NOT_IMPORTED;
+        }
+        return this.workflow_template_version === wt.version ? InstanceStatus.UP_TO_DATE : InstanceStatus.NOT_UP_TO_DATE;
+    }
+}
+
+export enum InstanceStatus {
+    NOT_IMPORTED = 'workflow_template_not_imported_yet',
+    UP_TO_DATE = 'common_up_to_date',
+    NOT_UP_TO_DATE = 'common_not_up_to_date'
 }

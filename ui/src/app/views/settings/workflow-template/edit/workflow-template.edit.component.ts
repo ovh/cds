@@ -5,7 +5,7 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 import { first } from 'rxjs/operators';
 import { AuditWorkflowTemplate } from '../../../../model/audit.model';
 import { Group } from '../../../../model/group.model';
-import { WorkflowTemplate } from '../../../../model/workflow-template.model';
+import { InstanceStatus, WorkflowTemplate, WorkflowTemplateInstance } from '../../../../model/workflow-template.model';
 import { Workflow } from '../../../../model/workflow.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
@@ -26,6 +26,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     workflowTemplate: WorkflowTemplate;
     groups: Array<Group>;
     audits: Array<AuditWorkflowTemplate>;
+    instances: Array<WorkflowTemplateInstance>;
     workflowsLinked: Array<Workflow>;
     loading: boolean;
     loadingAudits: boolean;
@@ -33,7 +34,8 @@ export class WorkflowTemplateEditComponent implements OnInit {
     path: Array<PathItem>;
     tabs: Array<Tab>;
     selectedTab: Tab;
-    columns: Array<Column>;
+    columnsAudits: Array<Column>;
+    columnsInstances: Array<Column>;
     diffItems: Array<Item>;
     groupName: string;
     templateSlug: string;
@@ -54,6 +56,10 @@ export class WorkflowTemplateEditComponent implements OnInit {
             key: 'workflow_template',
             default: true
         }, <Tab>{
+            translate: 'workflow_template_instances',
+            icon: 'file outline',
+            key: 'instances'
+        }, <Tab>{
             translate: 'common_audit',
             icon: 'history',
             key: 'audits'
@@ -63,28 +69,66 @@ export class WorkflowTemplateEditComponent implements OnInit {
             key: 'usage'
         }];
 
-        this.columns = [
+        this.columnsAudits = [
             <Column>{
                 name: 'audit_modification_type',
                 class: 'two',
-                selector: a => a.event_type
+                selector: (a: AuditWorkflowTemplate) => a.event_type
             },
             <Column>{
                 type: ColumnType.DATE,
-                class: 'two',
                 name: 'audit_time_author',
-                selector: a => a.created
+                class: 'two',
+                selector: (a: AuditWorkflowTemplate) => a.created
             },
             <Column>{
                 name: 'audit_username',
                 class: 'two',
-                selector: a => a.triggered_by
+                selector: (a: AuditWorkflowTemplate) => a.triggered_by
             },
             <Column>{
                 type: ColumnType.MARKDOWN,
                 class: 'eight',
                 name: 'common_description',
-                selector: a => a.change_message
+                selector: (a: AuditWorkflowTemplate) => a.change_message
+            }
+        ];
+
+        this.columnsInstances = [
+            <Column>{
+                type: ColumnType.DATE,
+                name: 'common_created',
+                selector: (i: WorkflowTemplateInstance) => i.first_audit.created
+            }, <Column>{
+                name: 'common_created_by',
+                selector: (i: WorkflowTemplateInstance) => i.first_audit.triggered_by
+            }, <Column>{
+                name: 'common_workflow',
+                selector: (i: WorkflowTemplateInstance) => i.project.key + '/' + (i.workflow ? i.workflow.name : i.workflow_name)
+            }, <Column>{
+                type: ColumnType.LABEL,
+                name: 'common_status',
+                class: 'right aligned',
+                selector: (i: WorkflowTemplateInstance) => {
+                    let status = i.status(this.workflowTemplate);
+                    let color: string;
+
+                    switch (status) {
+                        case InstanceStatus.UP_TO_DATE:
+                            color = 'green';
+                            break;
+                        case InstanceStatus.NOT_UP_TO_DATE:
+                            color = 'red';
+                            break;
+                        case InstanceStatus.NOT_IMPORTED:
+                            color = 'orange';
+                    }
+
+                    return {
+                        class: color,
+                        value: status
+                    };
+                }
             }
         ];
 
@@ -92,7 +136,6 @@ export class WorkflowTemplateEditComponent implements OnInit {
             this.groupName = params['groupName'];
             this.templateSlug = params['templateSlug'];
             this.getTemplate(this.groupName, this.templateSlug);
-            this.getAudits(this.groupName, this.templateSlug);
         });
 
         this.getGroups();
@@ -100,7 +143,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
 
     getTemplate(groupName: string, templateSlug: string) {
         this.loading = true;
-        this._workflowTemplateService.getWorkflowTemplate(groupName, templateSlug)
+        this._workflowTemplateService.get(groupName, templateSlug)
             .pipe(finalize(() => {
                 this.loading = false
             }))
@@ -109,11 +152,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 this.workflowTemplate = wt;
 
                 if (this.workflowTemplate.editable) {
-                    this.columns.push(<Column>{
+                    this.columnsAudits.push(<Column>{
                         type: ColumnType.CONFIRM_BUTTON,
                         name: 'common_action',
                         class: 'two right aligned',
-                        selector: a => {
+                        selector: (a: AuditWorkflowTemplate) => {
                             return {
                                 title: 'common_rollback',
                                 click: _ => { this.clickRollback(a) }
@@ -135,9 +178,9 @@ export class WorkflowTemplateEditComponent implements OnInit {
             });
     }
 
-    getAudits(groupName: string, templateSlug: string) {
+    getAudits() {
         this.loadingAudits = true;
-        this._workflowTemplateService.getAudits(groupName, templateSlug)
+        this._workflowTemplateService.getAudits(this.groupName, this.templateSlug)
             .pipe(finalize(() => this.loadingAudits = false))
             .subscribe(as => {
                 this.audits = as;
@@ -146,12 +189,9 @@ export class WorkflowTemplateEditComponent implements OnInit {
 
     saveWorkflowTemplate() {
         this.loading = true;
-        this._workflowTemplateService.updateWorkflowTemplate(this.oldWorkflowTemplate, this.workflowTemplate)
+        this._workflowTemplateService.update(this.oldWorkflowTemplate, this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wt => {
-                if (this.oldWorkflowTemplate.group.name === wt.group.name && this.oldWorkflowTemplate.slug === wt.slug) {
-                    this.getAudits(wt.group.name, wt.slug);
-                }
                 this.oldWorkflowTemplate = { ...wt };
                 this.workflowTemplate = wt;
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
@@ -161,7 +201,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
 
     deleteWorkflowTemplate() {
         this.loading = true;
-        this._workflowTemplateService.deleteWorkflowTemplate(this.workflowTemplate)
+        this._workflowTemplateService.delete(this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
             .subscribe(_ => {
                 this._toast.success('', this._translate.instant('workflow_template_deleted'));
@@ -170,8 +210,16 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     selectTab(tab: Tab): void {
-        if (tab.key === 'usage') {
-            this.getUsage();
+        switch (tab.key) {
+            case 'instances':
+                this.getInstances();
+                break;
+            case 'audits':
+                this.getAudits();
+                break;
+            case 'usage':
+                this.getUsage();
+                break;
         }
         this.selectedTab = tab;
     }
@@ -211,9 +259,14 @@ export class WorkflowTemplateEditComponent implements OnInit {
             return;
         }
         this.loadingUsage = true;
-        this._workflowTemplateService.getWorkflowTemplateUsage(this.groupName, this.templateSlug)
+        this._workflowTemplateService.getUsage(this.groupName, this.templateSlug)
             .pipe(first())
             .pipe(finalize(() => this.loadingUsage = false))
             .subscribe((workflows) => this.workflowsLinked = workflows);
+    }
+
+    getInstances() {
+        this._workflowTemplateService.getInstances(this.groupName, this.templateSlug)
+            .subscribe(is => { this.instances = is; });
     }
 }

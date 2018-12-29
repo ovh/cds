@@ -1089,6 +1089,7 @@
   "workflow_template_deleted": "Workflow template deleted",
   "workflow_template": "Workflow template",
   "workflow_templates": "Workflow templates",
+  "workflow_template_instances": "Instances",
   "workflow_template_help_line_1": "Your workflow was not generated from a template.",
   "workflow_template_help_line_2": "A workflow template allows you to quickly create then update a workflow and its components.",
   "workflow_template_update_title": "Update workflow from template",
@@ -1100,6 +1101,7 @@
   "workflow_template_diff_environment": "Environment {{number}}",
   "workflow_template_change_message": "Add an optional description of your changes...",
   "workflow_template_no_usage": "This template isn't used on one of your workflow",
+  "workflow_template_not_imported_yet": "Not imported yet",
 
   "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."

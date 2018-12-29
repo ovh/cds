@@ -1089,6 +1089,7 @@
   "workflow_template_deleted": "Modèle de workflow supprimé",
   "workflow_template": "Modèle de workflow",
   "workflow_templates": "Modèles de workflow",
+  "workflow_template_instances": "Instances",
   "workflow_template_help_line_1": "Votre workflow n'a pas été généré depuis un modèle de workflow.",
   "workflow_template_help_line_2": "Un modèle de workflow vous permet d'initialiser et de mettre à jour un workflow et ses composants rapidement.",
   "workflow_template_update_title": "Mise à jour du workflow à partir du modèle",
@@ -1100,6 +1101,7 @@
   "workflow_template_diff_environment": "Environnement {{number}}",
   "workflow_template_change_message": "Ajoutez une description optionelle de vos changements...",
   "workflow_template_no_usage": "Ce modèle de workflow n'est pas utilisé sur l'un de vos workflows",
+  "workflow_template_not_imported_yet": "Pas encore importé",
 
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."

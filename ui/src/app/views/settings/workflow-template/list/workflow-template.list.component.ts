@@ -24,7 +24,7 @@ export class WorkflowTemplateListComponent {
             <Column>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
-                selector: wt => {
+                selector: (wt: WorkflowTemplate) => {
                     return {
                         link: '/settings/workflow-template/' + wt.group.name + '/' + wt.slug,
                         value: wt.name
@@ -34,11 +34,11 @@ export class WorkflowTemplateListComponent {
             <Column>{
                 type: ColumnType.MARKDOWN,
                 name: 'common_description',
-                selector: wt => wt.description
+                selector: (wt: WorkflowTemplate) => wt.description
             },
             <Column>{
                 name: 'common_group',
-                selector: wt => wt.group.name
+                selector: (wt: WorkflowTemplate) => wt.group.name
             }
         ];
         this.getTemplates();
@@ -53,7 +53,7 @@ export class WorkflowTemplateListComponent {
 
     getTemplates() {
         this.loading = true;
-        this._workflowTemplateService.getWorkflowTemplates()
+        this._workflowTemplateService.getAll()
             .pipe(finalize(() => this.loading = false))
             .subscribe(wts => { this.workflowTemplates = wts; });
     }

@@ -14,7 +14,7 @@ export const OSArchitecture = 'os-architecture';
     templateUrl: './requirements.list.html',
     styleUrls: ['./requirements.list.scss']
 })
-export class RequirementsListComponent extends Table  implements OnInit {
+export class RequirementsListComponent extends Table<Requirement> implements OnInit {
     @Input() requirements: Requirement[];
     @Input() edit: boolean;
 
@@ -55,32 +55,32 @@ export class RequirementsListComponent extends Table  implements OnInit {
         this.nbElementsByPage = 5;
 
         this._requirementStore.getAvailableRequirements()
-        .subscribe(r => {
-            this.availableRequirements = new Array<string>();
-            this.availableRequirements.push(...r.toArray());
-        });
+            .subscribe(r => {
+                this.availableRequirements = new Array<string>();
+                this.availableRequirements.push(...r.toArray());
+            });
     }
 
     ngOnInit() {
         this._workerModelService.getWorkerModels(null)
-        .pipe(finalize(() => this.loading = false), first())
-        .subscribe(wms => {
-            this.workerModels = wms;
-            if (Array.isArray(this.workerModels)) {
-                this._suggestWithWorkerModel = [];
-                this.workerModels.forEach(wm => {
-                    this._suggestWithWorkerModel.push(wm.name);
-                })
-                this._suggestWithWorkerModel = this._suggestWithWorkerModel.concat(this._suggest);
-            }
-        });
+            .pipe(finalize(() => this.loading = false), first())
+            .subscribe(wms => {
+                this.workerModels = wms;
+                if (Array.isArray(this.workerModels)) {
+                    this._suggestWithWorkerModel = [];
+                    this.workerModels.forEach(wm => {
+                        this._suggestWithWorkerModel.push(wm.name);
+                    })
+                    this._suggestWithWorkerModel = this._suggestWithWorkerModel.concat(this._suggest);
+                }
+            });
 
-        this._requirementStore.getRequirementsTypeValues('os-architecture').pipe(first()).subscribe( values => {
+        this._requirementStore.getRequirementsTypeValues('os-architecture').pipe(first()).subscribe(values => {
             this._suggestWithOSArch = values.concat(this.suggest);
         });
     }
 
-    getData(): any[] {
+    getData(): Array<Requirement> {
         return this.requirements;
     }
 

@@ -53,7 +53,7 @@ export class WorkflowTemplateAddComponent {
 
     saveWorkflowTemplate() {
         this.loading = true;
-        this._workflowTemplateService.addWorkflowTemplate(this.workflowTemplate)
+        this._workflowTemplateService.add(this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
             .subscribe(wt => {
                 this.workflowTemplate = wt;

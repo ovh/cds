@@ -17,3 +17,7 @@ export class AuditWorkflowTemplate extends Audit {
     workflow_template_id: string;
     change_message: string;
 }
+
+export class AuditWorkflowTemplateInstance extends Audit {
+    workflow_template_instance_id: string;
+}

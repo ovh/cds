@@ -255,7 +255,7 @@ require (
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	google.golang.org/api v0.0.0-20180517000435-aedc137bffca // indirect
 	google.golang.org/grpc v1.16.0
-	gopkg.in/AlecAivazis/survey.v1 v1.7.1 // indirect
+	gopkg.in/AlecAivazis/survey.v1 v1.7.1
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175 // indirect
 	gopkg.in/bsm/sarama-cluster.v2 v2.1.4

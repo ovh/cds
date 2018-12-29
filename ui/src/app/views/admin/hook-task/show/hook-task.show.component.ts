@@ -39,7 +39,7 @@ export class HookTaskShowComponent {
         this.columns = [
             <Column>{
                 type: ColumnType.ICON,
-                selector: d => {
+                selector: (d: TaskExecution) => {
                     if (d.status === HookStatus.DONE) {
                         return ['check', 'green', 'icon'];
                     } else if (d.status === HookStatus.FAIL) {
@@ -51,11 +51,11 @@ export class HookTaskShowComponent {
             },
             <Column>{
                 name: 'created at',
-                selector: d => formatDate(new Date(d.timestamp / 1000000), 'short', this._translate.currentLang)
+                selector: (d: TaskExecution) => formatDate(new Date(d.timestamp / 1000000), 'short', this._translate.currentLang)
             },
             <Column>{
                 name: 'proceed at',
-                selector: d => {
+                selector: (d: TaskExecution) => {
                     return d.processing_timestamp ?
                         formatDate(new Date(d.processing_timestamp / 1000000), 'short', this._translate.currentLang) : '-';
                 }
@@ -63,7 +63,7 @@ export class HookTaskShowComponent {
             <Column>{
                 type: ColumnType.LINK,
                 name: 'action',
-                selector: d => {
+                selector: (d: TaskExecution) => {
                     return {
                         callback: this.selectExecution(d),
                         value: 'open'

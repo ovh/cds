@@ -639,8 +639,8 @@ google.golang.org/grpc/tap
 google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/balancer/base
 # gopkg.in/AlecAivazis/survey.v1 v1.7.1
-gopkg.in/AlecAivazis/survey.v1/core
 gopkg.in/AlecAivazis/survey.v1/terminal
+gopkg.in/AlecAivazis/survey.v1/core
 # gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175
 gopkg.in/asn1-ber.v1
 # gopkg.in/bsm/sarama-cluster.v2 v2.1.4

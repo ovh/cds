@@ -48,7 +48,8 @@
                     <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
                     <app-confirm-button *ngSwitchCase="'confirm-button'" (event)="c.selector.click()" [title]="c.selector.title">
                     </app-confirm-button>
-                    <ng-container *ngSwitchDefault>{{c.selector}}</ng-container>
+                    <span class="ui label {{c.selector.class}}" *ngSwitchCase="'label'">{{c.selector.value | translate}}</span>
+                    <ng-container *ngSwitchDefault>{{c.selector | translate}}</ng-container>
                 </td>
             </ng-container>
         </tr>

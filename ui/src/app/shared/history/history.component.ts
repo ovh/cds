@@ -1,17 +1,17 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {PipelineBuild} from '../../model/pipeline.model';
-import {Project} from '../../model/project.model';
-import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
-import {Table} from '../table/table';
-import {ToastService} from '../toast/ToastService';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { PipelineBuild } from '../../model/pipeline.model';
+import { Project } from '../../model/project.model';
+import { ApplicationPipelineService } from '../../service/application/pipeline/application.pipeline.service';
+import { Table } from '../table/table';
+import { ToastService } from '../toast/ToastService';
 
 @Component({
     selector: 'app-history',
     templateUrl: './history.html',
     styleUrls: ['./history.scss']
 })
-export class HistoryComponent extends Table {
+export class HistoryComponent extends Table<PipelineBuild> {
 
     @Input() project: Project;
     @Input() history: Array<PipelineBuild>;
@@ -24,7 +24,7 @@ export class HistoryComponent extends Table {
         super();
     }
 
-    getData(): any[] {
+    getData(): Array<PipelineBuild> {
         return this.history;
     }
 
@@ -36,12 +36,12 @@ export class HistoryComponent extends Table {
         this.loading = true;
         this._appBuildSerivce.deleteBuild(
             this.project.key, pb.application.name, pb.pipeline.name, pb.environment.name, pb.build_number).subscribe(() => {
-           this._toast.success('', this._translate.instant('pipeline_build_deleted'));
-           this.loading = false;
-           this.buildDeletedEvent.emit(true);
-        }, () => {
-            this.loading = false;
-        });
+                this._toast.success('', this._translate.instant('pipeline_build_deleted'));
+                this.loading = false;
+                this.buildDeletedEvent.emit(true);
+            }, () => {
+                this.loading = false;
+            });
     }
 }
 

@@ -1,19 +1,18 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {AllKeys} from '../../../model/keys.model';
-import {Parameter} from '../../../model/parameter.model';
-import {Project} from '../../../model/project.model';
-import {ParameterService} from '../../../service/parameter/parameter.service';
-import {SharedService} from '../../shared.service';
-import {Table} from '../../table/table';
-import {ParameterEvent} from '../parameter.event.model';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AllKeys } from '../../../model/keys.model';
+import { Parameter } from '../../../model/parameter.model';
+import { Project } from '../../../model/project.model';
+import { ParameterService } from '../../../service/parameter/parameter.service';
+import { SharedService } from '../../shared.service';
+import { Table } from '../../table/table';
+import { ParameterEvent } from '../parameter.event.model';
 
 @Component({
     selector: 'app-parameter-list',
     templateUrl: './parameter.html',
     styleUrls: ['./parameter.scss']
 })
-export class ParameterListComponent extends Table implements OnInit {
-
+export class ParameterListComponent extends Table<Parameter> implements OnInit {
     @Input('parameters')
     set parameters(newP: Array<Parameter>) {
         if (Array.isArray(newP)) {
@@ -76,7 +75,7 @@ export class ParameterListComponent extends Table implements OnInit {
         return this.data;
     }
 
-    getData(): any[] {
+    getData(): Array<Parameter> {
         if (!this.parameters) {
             return [];
         }

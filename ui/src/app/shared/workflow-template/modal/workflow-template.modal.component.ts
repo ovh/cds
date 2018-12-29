@@ -41,8 +41,8 @@ export class WorkflowTemplateModalComponent {
     load() {
         let s = this.workflow.from_template.split('/');
 
-        forkJoin(this._templateService.getWorkflowTemplate(s[0], s.splice(1, s.length - 1).join('/')),
-            this._templateService.getWorkflowTemplateInstance(this.project.key, this.workflow.name)).subscribe(res => {
+        forkJoin(this._templateService.get(s[0], s.splice(1, s.length - 1).join('/')),
+            this._templateService.getInstance(this.project.key, this.workflow.name)).subscribe(res => {
                 this.workflowTemplate = res[0];
                 this.workflowTemplateInstance = res[1];
 

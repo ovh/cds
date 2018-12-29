@@ -1,23 +1,23 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {Application} from '../../../model/application.model';
-import {Environment} from '../../../model/environment.model';
-import {Project} from '../../../model/project.model';
-import {Variable, VariableAudit} from '../../../model/variable.model';
-import {Warning} from '../../../model/warning.model';
-import {ApplicationAuditService} from '../../../service/application/application.audit.service';
-import {EnvironmentAuditService} from '../../../service/environment/environment.audit.service';
-import {ProjectAuditService} from '../../../service/project/project.audit.service';
-import {VariableService} from '../../../service/variable/variable.service';
-import {Table} from '../../table/table';
-import {VariableEvent} from '../variable.event.model';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { Application } from '../../../model/application.model';
+import { Environment } from '../../../model/environment.model';
+import { Project } from '../../../model/project.model';
+import { Variable, VariableAudit } from '../../../model/variable.model';
+import { Warning } from '../../../model/warning.model';
+import { ApplicationAuditService } from '../../../service/application/application.audit.service';
+import { EnvironmentAuditService } from '../../../service/environment/environment.audit.service';
+import { ProjectAuditService } from '../../../service/project/project.audit.service';
+import { VariableService } from '../../../service/variable/variable.service';
+import { Table } from '../../table/table';
+import { VariableEvent } from '../variable.event.model';
 
 @Component({
     selector: 'app-variable',
     templateUrl: './variable.html',
     styleUrls: ['./variable.scss']
 })
-export class VariableComponent extends Table {
+export class VariableComponent extends Table<Variable> {
 
     @Input('variables')
     set variables(data: Variable[]) {
@@ -25,7 +25,7 @@ export class VariableComponent extends Table {
         this.goTopage(1);
     }
     get variables() {
-      return this._variables;
+        return this._variables;
     }
     @Input('maxPerPage')
     set maxPerPage(data: number) {
@@ -66,7 +66,7 @@ export class VariableComponent extends Table {
         }
     }
 
-    getData(): any[] {
+    getData(): Array<Variable> {
         if (!this.filter || this.filter === '') {
             return this.variables;
         } else {
@@ -95,7 +95,7 @@ export class VariableComponent extends Table {
                     this._projAudit.getVariableAudit(this.project.key, v.name).subscribe(audits => {
                         this.currentVariableAudits = audits;
                         setTimeout(() => {
-                            this.auditModal.show({observeChanges: true});
+                            this.auditModal.show({ observeChanges: true });
                         }, 100);
                     });
                     break;
@@ -103,7 +103,7 @@ export class VariableComponent extends Table {
                     this._envAudit.getVariableAudit(this.project.key, this.environment.name, v.name).subscribe(audits => {
                         this.currentVariableAudits = audits;
                         setTimeout(() => {
-                            this.auditModal.show({observeChanges: true});
+                            this.auditModal.show({ observeChanges: true });
                         }, 100);
                     });
                     break;
@@ -111,7 +111,7 @@ export class VariableComponent extends Table {
                     this._appAudit.getVariableAudit(this.project.key, this.application.name, v.name).subscribe(audits => {
                         this.currentVariableAudits = audits;
                         setTimeout(() => {
-                            this.auditModal.show({observeChanges: true});
+                            this.auditModal.show({ observeChanges: true });
                         }, 100);
                     });
                     break;
