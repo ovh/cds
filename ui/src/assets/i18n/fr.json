@@ -158,8 +158,6 @@
   "btn_add": "Ajouter",
   "btn_back": "Retour",
 
-  "cdsctl_content": "#Download CDSCTL\n foo \n bar",
-
   "commit_author": "Auteur",
   "commit_id": "ID",
   "commit_message": "Message",

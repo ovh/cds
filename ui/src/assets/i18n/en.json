@@ -157,8 +157,6 @@
   "btn_edit": "Edit",
   "btn_add": "Add",
   "btn_back": "Back",
-
-  "cdsctl_content": "#Download CDSCTL\n foo \n bar",
   
   "commit_author": "Author",
   "commit_id": "ID",
