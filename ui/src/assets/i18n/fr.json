@@ -158,6 +158,8 @@
   "btn_add": "Ajouter",
   "btn_back": "Retour",
 
+  "cdsctl_content": "#Download CDSCTL\n foo \n bar",
+
   "commit_author": "Auteur",
   "commit_id": "ID",
   "commit_message": "Message",
@@ -445,6 +447,7 @@
   "navbar_groups": "Groupes",
   "navbar_home": "Accueil",
   "navbar_profile": "Votre Compte",
+  "navbar_cdsctl": "Cdsctl - Ligne de commande",
   "navbar_projects_placeholder": "Tous les projets",
   "navbar_projects": "Projets",
   "navbar_favorites": "Favoris",
