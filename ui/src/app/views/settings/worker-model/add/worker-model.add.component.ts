@@ -39,6 +39,7 @@ export class WorkerModelAddComponent implements OnInit {
     workerModelPatternError = false;
     path: Array<PathItem>;
     paramsSub: Subscription;
+    workerModelAsCode: string;
 
     constructor(
         private _workerModelService: WorkerModelService,
@@ -69,6 +70,15 @@ export class WorkerModelAddComponent implements OnInit {
         }, <PathItem>{
             translate: 'common_create'
         }];
+
+        this.workerModelAsCode = `# Example of worker model as code of type Docker
+name: myWorkerModel
+group: mygrouptest
+communication: http
+image: myImage
+description: ""
+type: docker
+pattern_name: basic_linux`;
     }
 
     ngOnInit() {

@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { omit } from 'lodash';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Group } from '../../../../model/group.model';
@@ -23,7 +24,13 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 })
 @AutoUnsubscribe()
 export class WorkerModelEditComponent implements OnInit {
+    @ViewChild('codeMirror')
+    codemirror: CodemirrorComponent;
+
+    codeMirrorConfig: any;
+
     loading = false;
+    loadingAsCode = false;
     loadingUsage = false;
     deleteLoading = false;
     workerModel: WorkerModel;
@@ -43,6 +50,8 @@ export class WorkerModelEditComponent implements OnInit {
     workerModelPatternError = false;
     path: Array<PathItem>;
     paramsSub: Subscription;
+    asCode = false;
+    workerModelAsCode: string;
 
     constructor(
         private sharedService: SharedService,
@@ -54,6 +63,13 @@ export class WorkerModelEditComponent implements OnInit {
         private _router: Router,
         private _authentificationStore: AuthentificationStore
     ) {
+        this.codeMirrorConfig = {
+            mode: 'text/x-yaml',
+            lineWrapping: true,
+            lineNumbers: true,
+            autoRefresh: true,
+        };
+
         this.currentUser = this._authentificationStore.getUser();
         this._groupService.getGroups(true).subscribe(groups => {
             this.workerModelGroups = groups;
@@ -87,6 +103,20 @@ export class WorkerModelEditComponent implements OnInit {
                 this.updatePath();
             }
         });
+    }
+
+    loadAsCode() {
+        if (this.asCode) {
+            return;
+        }
+        this.asCode = true;
+        if (!this.workerModel.id) {
+            return;
+        }
+        this.loadingAsCode = true
+        this._workerModelService.exportWorkerModel(this.workerModel.id)
+            .pipe(finalize(() => this.loadingAsCode = false))
+            .subscribe((wmStr) => this.workerModelAsCode = wmStr);
     }
 
     reloadData(workerModelName: string): void {
@@ -131,7 +161,7 @@ export class WorkerModelEditComponent implements OnInit {
         });
     }
 
-    clickSaveButton(): void {
+    clickSaveUIButton(): void {
         if (!this.workerModel.name) {
             return;
         }
@@ -180,6 +210,16 @@ export class WorkerModelEditComponent implements OnInit {
                     this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
                 });
         }
+    }
+
+    clickSaveAsCodeButton(): void {
+        if (!this.workerModelAsCode) {
+            return;
+        }
+        this.loading = true;
+        this._workerModelService.importWorkerModel(this.workerModelAsCode, true)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe((wm) => this.workerModel = wm);
     }
 
     getDescriptionHeight(): number {

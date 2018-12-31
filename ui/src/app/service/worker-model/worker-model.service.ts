@@ -1,5 +1,5 @@
 
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -21,6 +21,33 @@ export class WorkerModelService {
      */
     createWorkerModel(workerModel: WorkerModel): Observable<WorkerModel> {
         return this._http.post<WorkerModel>('/worker/model', workerModel);
+    }
+
+    /**
+     * Import a worker model
+     * @returns {Observable<WorkerModel>}
+     */
+    importWorkerModel(workerModelStr: string, force = false): Observable<WorkerModel> {
+        let params = new HttpParams();
+        params = params.append('format', 'yaml');
+        let headers = new HttpHeaders();
+        headers = headers.append('Content-Type', 'application/x-yaml');
+        if (force) {
+            params = params.append('force', 'true');
+        }
+
+        return this._http.post<WorkerModel>('/worker/model/import', workerModelStr, {params, headers});
+    }
+
+    /**
+     * Import a worker model
+     * @returns {Observable<WorkerModel>}
+     */
+    exportWorkerModel(workerModelId: number): Observable<string> {
+        let params = new HttpParams();
+        params = params.append('format', 'yaml');
+
+        return this._http.get<string>('/worker/model/' + workerModelId + '/export',  { params, responseType: <any>'text' });
     }
 
     /**
