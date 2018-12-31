@@ -177,7 +177,7 @@
   "cdsctl_info_list_3": "Monitore & operate your CDS platform",
   "cdsctl_info_list_4": "Script everything",
 
-  "cdsctl_title_1": "1 - Download CDSCTL",
+   "cdsctl_title_1": "1 - Download cdsctl",
   "cdsctl_title_2": "2 - Login",
   "cdsctl_title_3": "3 - Play with cdsctl",
   "cdsctl_title_4": "4 - Run a workflow",
