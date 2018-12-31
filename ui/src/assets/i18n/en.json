@@ -195,7 +195,7 @@
 
   "cdsctl_notice_6_1": "By setting this new alias in your gitconfig file, you can now use: git push && git track",
 
-  "cdsctl_title_6_info_1": "Imagine now that you develop something and you have a CDS Wortkflow triggered on each git push",
+   "cdsctl_title_6_info_1": "Imagine now that you develop something and you have a CDS Workflow triggered on each git push",
   "cdsctl_title_6_info_2": "The `git track` alias allows you to see the workflow status without opening a browser.",
   
   "cdsctl_notice": "Notice:",
