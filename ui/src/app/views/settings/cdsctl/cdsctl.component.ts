@@ -56,6 +56,7 @@ export class CdsctlComponent {
         this.tutorials['part5'] = this._translate.instant('cdsctl_part_5');
         this.tutorials['part6'] = this._translate.instant('cdsctl_part_6');
         this.tutorials['part7'] = this._translate.instant('cdsctl_part_7');
+        this.tutorials['part8'] = this._translate.instant('cdsctl_part_8');
 
         this.path = [<PathItem>{
             translate: 'common_settings'
