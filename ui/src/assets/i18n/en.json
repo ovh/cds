@@ -172,7 +172,7 @@
 
   "cdsctl_info_title": "is the CDS Command Line tool. It has the same features, and even more than the web ui. It allows you to do everything:",
 
-  "cdsctl_info_list_1": "Administrate users, groups, actions, workers models, workflow templates, ...",
+   "cdsctl_info_list_1": "Administrate users, groups, actions, worker models, workflow templates, ...",
   "cdsctl_info_list_2": "Manage your projects, workflows, applications, environments, ...",
   "cdsctl_info_list_3": "Monitore & operate your CDS platform",
   "cdsctl_info_list_4": "Script everything",
