@@ -16,6 +16,7 @@ import {CanActivateAuthRoute} from './auth/authenRouteActivate';
 import {AuthentificationStore} from './auth/authentification.store';
 import {BroadcastService} from './broadcast/broadcast.service';
 import {BroadcastStore} from './broadcast/broadcast.store';
+import {ConfigService} from './config/config.service';
 import {DownloadService} from './download/download.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {EnvironmentService} from './environment/environment.service';
@@ -83,6 +84,7 @@ export class ServicesModule {
                 ApplicationMigrateService,
                 ApplicationStore,
                 AuthentificationStore,
+                ConfigService,
                 DownloadService,
                 CanActivateAuthRoute,
                 CanActivateAuthAdminRoute,
@@ -162,6 +164,7 @@ export {
     AuthentificationStore,
     CanActivateAuthRoute,
     CanActivateAuthAdminRoute,
+    ConfigService,
     DownloadService,
     EnvironmentAuditService,
     GroupService,

@@ -14,6 +14,9 @@ type DefaultValues struct {
 // ConfigURLUIKey is the configuration key for UI URL
 var ConfigURLUIKey = "url.ui"
 
+// ConfigURLAPIKey is the configuration key for API URL
+var ConfigURLAPIKey = "url.api"
+
 // GetConfigUser retrieve 'common' configuration CDS
 func GetConfigUser() (map[string]string, error) {
 	data, code, err := Request("GET", "/config/user", nil)
