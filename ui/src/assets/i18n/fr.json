@@ -188,7 +188,7 @@
   "cdsctl_notice_1_2": "Par défaut, cdsctl utilise le trousseau disponible sur votre système d'exploitation. Vous pouvez ne pas l'utiliser en utilisant la version '386' au lieu de la version 'amd64'",
 
   "cdsctl_notice_2_1": "Si vous avez plusieurs instances de CDS, vous pouvez utiliser le flag -f, exemple: `./cdsctl -f .cds/anotherInstance login --api-url http://another-instance:8081 -u ",
-  "cdsctl_notice_2_2": "Ne pas utiliser les credentiels en provenance du trousseau ou d'un fichier de configuration:",
+  "cdsctl_notice_2_2": "Ne pas utiliser le secret en provenance du trousseau ou d'un fichier de configuration:",
   "cdsctl_notice_2_3": "Vous souhaitez débugger quelque chose ? Vous pouvez utiliser la variable d'environnement CDS_VERBOSE:",
 
   "cdsctl_notice_6_1": "Après avoir ajouté cet alias dans votre fichier gitconfig, vous pouvez maintenant utiliser: git push && git track",
