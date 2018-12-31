@@ -161,7 +161,7 @@
   "cdsctl_choice_os": "Choose your OS",
   "cdsctl_choice_arch": "Choose your architecture",
 
-  "cdsctl_part_1": "curl {{apiURL}}/download/cdsctl/{{osChoice}}/{{archChoice}} -o cdsctl\n\n# add execution rights on cdsctl\nchmod +x cdsctl\n\n# check if binary is ok, this command will display cdsctl version\n./cdsctl version';",
+  "cdsctl_part_1": "curl {{apiURL}}/download/cdsctl/{{osChoice}}/{{archChoice}} -o cdsctl\n\n# add execution rights on cdsctl\nchmod +x cdsctl\n\n# check if binary is ok, this command will display cdsctl version\n./cdsctl version",
   "cdsctl_part_2": "# The cdsctl login command will store credentials in your keychain\n./cdsctl login --api-url {{apiURL}} -u {{username}}\n\n# this command will display your username, fullname, email\n# if you see them, cdsctl is well configured\n./cdsctl user me",
   "cdsctl_part_3": "# The cdsctl shell to browse your projects and workflows without the need to open a browser.\n# see https://ovh.github.io/cds/cli/cdsctl/shell/\ncdsctl shell\n\n# Display monitoring view\ncdsctl ui\n\n# help is available on each cdsctl command\ncdsctl --help",
   "cdsctl_part_4": "# Launch a workflow, consider running cdsctl from a directory containing a git repository known from cds\ncdsctl workflow run\n\n# You can explicitely set a projet and workflow\ncdsctl workflow run PRJ_KEY WORKFLOW_NAME\n\n# flags --interactive or --open-web-browser may interest you, help for all details\ncdsctl workflow run --help",

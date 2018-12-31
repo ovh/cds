@@ -18,26 +18,26 @@
             <div class="ui grid">
                 <div class="four wide column">
                     <div class="grouped fields">
-                        <label for="arch">{{ 'cdsctl_choice_arch' | translate }}</label>
-                        <ng-container *ngFor="let a of arch">
-                            <div class="field">
-                                <div class="ui radio checkbox">
-                                    <sui-radio-button type="radio" id="arch-{{a}}" name="arch" [value]="a" [(ngModel)]="archChoice" (ngModelChange)="buildData()">
-                                        {{a}}
-                                    </sui-radio-button>
-                                </div>
-                            </div>
-                        </ng-container>
-                    </div>
-                </div>
-                <div class="eight wide column">
-                    <div class="grouped fields">
                         <label for="os">{{ 'cdsctl_choice_os' | translate }}</label>
                         <ng-container *ngFor="let o of os">
                             <div class="field">
                                 <div class="ui radio checkbox">
                                     <sui-radio-button type="radio" id="os-{{a}}" name="os" [value]="o" [(ngModel)]="osChoice" (ngModelChange)="buildData()">
                                         {{o}}
+                                    </sui-radio-button>
+                                </div>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+                <div class="four wide column">
+                    <div class="grouped fields">
+                        <label for="arch">{{ 'cdsctl_choice_arch' | translate }}</label>
+                        <ng-container *ngFor="let a of arch">
+                            <div class="field">
+                                <div class="ui radio checkbox">
+                                    <sui-radio-button type="radio" id="arch-{{a}}" name="arch" [value]="a" [(ngModel)]="archChoice" (ngModelChange)="buildData()">
+                                        {{a}}
                                     </sui-radio-button>
                                 </div>
                             </div>
