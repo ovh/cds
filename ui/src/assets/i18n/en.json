@@ -168,7 +168,7 @@
   "cdsctl_part_5": "# Check status of a run\ncdsctl workflow status\n\n# --track command will wait the end of the workflow run\ncdsctl workflow status --track",
   "cdsctl_part_6": "# Add a git alias in your gitconfig file\n$ cat ~/.gitconfig\n[alias]\n   track = !cdsctl workflow status --track",
   "cdsctl_part_7": "# Update from current CDS Platform\ncdsctl update\n\n# Update from latest release on github\ncdsctl update --from-github",
-  "cdsctl_part_8": "# All commands have the flag --format. This is useful for use cdsctl in your script\n# Formats disponibles: table, json, yaml\ncdsctl user list --format json",
+   "cdsctl_part_8": "# All commands have the flag --format. This is useful for use cdsctl in your script\n# Formats available: table, json, yaml\ncdsctl user list --format json",
 
   "cdsctl_info_title": "is the CDS Command Line tool. It has the same features, and even more than the web ui. It allows you to do everything:",
 
