@@ -1,6 +1,5 @@
 import { Component,  } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { environment } from '../../../../environments/environment';
 import { User } from '../../../model/user.model';
 import { AuthentificationStore } from '../../../service/auth/authentification.store';
 import { ConfigService } from '../../../service/config/config.service';
@@ -31,7 +30,7 @@ export class CdsctlComponent {
     ) {
         this.loading = true;
         this._configService.getConfig().subscribe(r => {
-            this.apiURL = r.url_api;
+            this.apiURL = r['url.api'];
             this.loading = false;
             this.codeMirrorConfig = {
                 matchBrackets: true,
@@ -48,7 +47,6 @@ export class CdsctlComponent {
             this.osChoice = 'linux';
             this.archChoice = 'amd64'
             this.currentUser = this._authentificationStore.getUser();
-            this.apiURL = environment.apiURL;
             this.buildData();
         });
     }
