@@ -11,7 +11,7 @@ import (
 )
 
 // MigrateToWorkflowData migrates all workflow from WorkflowNode to Node
-func MigrateToWorkflowData(DBFunc func() *gorp.DbMap, store cache.Store) {
+func MigrateToWorkflowData(DBFunc func() *gorp.DbMap, store cache.Store) error {
 	log.Info("Start migrate MigrateToWorkflowData")
 	defer func() {
 		log.Info("End migrate MigrateToWorkflowData")
@@ -23,10 +23,10 @@ func MigrateToWorkflowData(DBFunc func() *gorp.DbMap, store cache.Store) {
 		query := "SELECT id FROM workflow WHERE workflow_data IS NULL AND to_delete = false AND root_node_id is not null LIMIT 100"
 		if _, err := db.Select(&IDs, query); err != nil {
 			log.Error("MigrateToWorkflowData> Unable to select workflows id: %v", err)
-			return
+			return err
 		}
 		if len(IDs) == 0 {
-			return
+			return nil
 		}
 
 		jobs := make(chan int64, 100)

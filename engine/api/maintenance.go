@@ -5,15 +5,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-const (
-	maintenanceQueueName = "cds_maintenance"
-)
-
 func (a *API) listenMaintenance(c context.Context) {
-	pubSub := a.Cache.Subscribe(maintenanceQueueName)
+	pubSub := a.Cache.Subscribe(sdk.MaintenanceQueueName)
 	tick := time.NewTicker(50 * time.Millisecond)
 	defer tick.Stop()
 	for {

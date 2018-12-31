@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -40,7 +42,13 @@ func applicationCreateKeyRun(v cli.Values) error {
 			Type: v["key-type"],
 		},
 	}
-	return client.ApplicationKeyCreate(v[_ProjectKey], v[_ApplicationName], key)
+	if err := client.ApplicationKeyCreate(v[_ProjectKey], v[_ApplicationName], key); err != nil {
+		return err
+	}
+
+	fmt.Printf("Application key %s of type %s created with success in application %s\n", key.Name, key.Type, v[_ApplicationName])
+	fmt.Println(key.Public)
+	return nil
 }
 
 var applicationKeyListCmd = cli.Command{

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -39,7 +41,13 @@ func projectCreateKeyRun(v cli.Values) error {
 			Type: v["key-type"],
 		},
 	}
-	return client.ProjectKeyCreate(v[_ProjectKey], key)
+	if err := client.ProjectKeyCreate(v[_ProjectKey], key); err != nil {
+		return err
+	}
+
+	fmt.Printf("Project key %s of type %s created with success in project %s\n", key.Name, key.Type, v[_ProjectKey])
+	fmt.Println(key.Public)
+	return nil
 }
 
 var projectKeyListCmd = cli.Command{
