@@ -158,6 +158,48 @@
   "btn_add": "Ajouter",
   "btn_back": "Retour",
 
+  "cdsctl_choice_os": "Choisissez votre système d'exploitation",
+  "cdsctl_choice_arch": "Choisissez votre architecture",
+
+  "cdsctl_part_1": "curl {{apiURL}}/download/cdsctl/{{osChoice}}/{{archChoice}} -o cdsctl\n\n# ajoutez les droits EXEC sur cdsctl\nchmod +x cdsctl\n\n# vérifiez que le binaire est ok, cette commande affiche la version du binaire\n./cdsctl version",
+  "cdsctl_part_2": "# La commande cdsctl login enregistre dans votre trousseau votre mot de passe\n./cdsctl login --api-url {{apiURL}} -u {{username}}\n\n# cette command affiche votre nom d'utilisateur, nom complet, adresse mail\n# si vous les voyez, c'est que cdsctl est bien configuré\n./cdsctl user me",
+  "cdsctl_part_3": "# La commande cdsctl shell permet de naviguer dans vos projets et vos workflows sans avoir besoin d'ouvrir un navigateur.\n# voir https://ovh.github.io/cds/cli/cdsctl/shell/\ncdsctl shell\n\n# Affiche la vue de monitoring\ncdsctl ui\n\n# l'aide est disponible sur chaque commande cdsctl\ncdsctl --help",
+  "cdsctl_part_4": "# Démarre un workflow, en considérant que cette commande est lancée à partir d'un dépôt git connu de CDS\ncdsctl workflow run\n\n# Vous pouvez explicitement renseigner le projet et le workflow\ncdsctl workflow run PRJ_KEY WORKFLOW_NAME\n\n# flags --interactive ou --open-web-browser peuvdent vous intéresser, l'aide contient tous les détails\ncdsctl workflow run --help",
+  "cdsctl_part_5": "# Vérifiez le statut d'un run\ncdsctl workflow status\n\n# le flag --track permet d'attendre la fin de l'exécution du workflow\ncdsctl workflow status --track",
+  "cdsctl_part_6": "# Ajoutez un alias git dans votre fichier gitconfig\n$ cat ~/.gitconfig\n[alias]\n   track = !cdsctl workflow status --track",
+  "cdsctl_part_7": "# Mettez à jour votre binaire cdsctl depuis votre plateforme CDS\ncdsctl update\n\n# Mettez à jour depuis la dernière release disponible sur github\ncdsctl update --from-github",
+  "cdsctl_part_8": "# Toutes les commandes ont un flag --format. Ceci facilite l'usage de cdsctl dans vos scripts\n# Formats disponibles: table, json, yaml\ncdsctl user list --format json",
+
+  "cdsctl_info_title": "est l'outil de Ligne de Commande CDS. Cet outil contient toutes les fonctionnalités disponibles dans l'interface web, et même plus. Il vous permet par exemple de:",
+
+  "cdsctl_info_list_1": "Gérer vos utilisateurs, vos groupes, vos actions, vos worker models, vos templates de workflow, ...",
+  "cdsctl_info_list_2": "Gérer vos projets, vos workflows, vos applications, vos environnements, ...",
+  "cdsctl_info_list_3": "Monitorer & administrer votre plateforme CDS",
+  "cdsctl_info_list_4": "Automatiser n'importe quelle tâche (administation, utilisation...)",
+
+  "cdsctl_title_1": "1 - Télécharger CDSCTL",
+  "cdsctl_title_2": "2 - Login",
+  "cdsctl_title_3": "3 - Premiers pas avec cdsctl",
+  "cdsctl_title_4": "4 - Lancer un workflow",
+  "cdsctl_title_5": "5 - Vérifier le statut d'un workflow",
+  "cdsctl_title_6": "6 - Git Track",
+  "cdsctl_title_7": "7 - Mettre à jour cdsctl",
+  "cdsctl_title_8": "8 - Automatisation",
+
+  "cdsctl_notice_1_1": "Binaires disponibles sur cette instance de CDS: ",
+  "cdsctl_notice_1_2": "Par défaut, cdsctl utilise le trousseau disponible sur votre système d'exploitation. Vous pouvez ne pas l'utiliser en utilisant la version '386' au lieu de la version 'amd64'",
+
+  "cdsctl_notice_2_1": "Si vous avez plusieurs instances de CDS, vous pouvez utiliser le flag -f, exemple: `./cdsctl -f .cds/anotherInstance login --api-url http://another-instance:8081 -u ",
+  "cdsctl_notice_2_2": "Ne pas utiliser le secret en provenance du trousseau ou d'un fichier de configuration:",
+  "cdsctl_notice_2_3": "Vous souhaitez débugger quelque chose ? Vous pouvez utiliser la variable d'environnement CDS_VERBOSE:",
+
+  "cdsctl_notice_6_1": "Après avoir ajouté cet alias dans votre fichier gitconfig, vous pouvez maintenant utiliser: git push && git track",
+
+  "cdsctl_title_6_info_1": "Imaginez maintenant que vous développiez quelque chose et que vous avez un workflow CDS lancé à chaque git push",
+  "cdsctl_title_6_info_2": "La commande `git track` permet de voir dans votre console le statut du workflow en cours, sans voir besoin d'ouvrir un navigateur web.",
+
+  "cdsctl_notice": "À noter:",
+
   "commit_author": "Auteur",
   "commit_id": "ID",
   "commit_message": "Message",
@@ -232,7 +274,7 @@
   "common_platform": "Plateforme",
   "common_project_title": "Projet : ",
   "common_requirements": "Pré-requis",
-  "common_status": "Status",
+  "common_status": "Statut",
   "common_test": "Test",
   "common_tests": "Tests",
   "common_trigger_by": "Déclenché par",
@@ -445,6 +487,7 @@
   "navbar_groups": "Groupes",
   "navbar_home": "Accueil",
   "navbar_profile": "Votre Compte",
+  "navbar_cdsctl": "Ligne de commande cdsctl",
   "navbar_projects_placeholder": "Tous les projets",
   "navbar_projects": "Projets",
   "navbar_favorites": "Favoris",
@@ -704,8 +747,8 @@
   "service_view_details": "Voir les details",
   "service_details": "Service",
   "service_group": "Groupe",
-  "service_alert": "Status Alert - vérifier le status ci-dessous",
-  "service_warning": "Status Warning - vérifier le status ci-dessous",
+  "service_alert": "Status Alert - vérifier le statut ci-dessous",
+  "service_warning": "Status Warning - vérifier le statut ci-dessous",
   "service_ok": "Status OK - tout est ok",
 
   "stage_add_label": "Ajouter un stage",
