@@ -3,6 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../../environments/environment';
 import { User } from '../../../model/user.model';
 import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { ConfigService } from '../../../service/config/config.service';
 import { PathItem } from '../../../shared/breadcrumb/breadcrumb.component';
 
 
@@ -21,29 +22,35 @@ export class CdsctlComponent {
     tutorials: Array<string> = new Array();
     osChoice: string;
     archChoice: string;
+    loading = true;
 
     constructor(
         private _authentificationStore: AuthentificationStore,
+        private _configService: ConfigService,
         private _translate: TranslateService
     ) {
-        this.codeMirrorConfig = {
-            matchBrackets: true,
-            autoCloseBrackets: true,
-            mode: 'shell',
-            lineWrapping: true,
-            autoRefresh: true,
-            readOnly: true,
-            lineNumbers: true
-        };
+        this.loading = true;
+        this._configService.getConfig().subscribe(r => {
+            this.apiURL = r.url_api;
+            this.loading = false;
+            this.codeMirrorConfig = {
+                matchBrackets: true,
+                autoCloseBrackets: true,
+                mode: 'shell',
+                lineWrapping: true,
+                autoRefresh: true,
+                readOnly: true,
+                lineNumbers: true
+            };
 
-        this.os = new Array<string>('windows', 'linux', 'darwin', 'freebsd');
-        this.arch = new Array<string>('amd64', '386');
-        this.osChoice = 'linux';
-        this.archChoice = 'amd64'
-        this.currentUser = this._authentificationStore.getUser();
-        this.apiURL = environment.apiURL;
-
-        this.buildData();
+            this.os = new Array<string>('windows', 'linux', 'darwin', 'freebsd');
+            this.arch = new Array<string>('amd64', '386');
+            this.osChoice = 'linux';
+            this.archChoice = 'amd64'
+            this.currentUser = this._authentificationStore.getUser();
+            this.apiURL = environment.apiURL;
+            this.buildData();
+        });
     }
 
     buildData(): void {
