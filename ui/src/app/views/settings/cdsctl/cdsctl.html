@@ -3,17 +3,49 @@
     <app-scrollview class="scrollview">
 
         <div class="ui info message">
-            <b>cdsctl</b> is the CDS Command Line tool. It has the same features, and even more than the web ui.
-            It allows you to do everything:
+            <b>cdsctl</b> {{ 'cdsctl_info_title' | translate }}
             <ul>
-                <li>Administrate users, groups, actions, workers models, workflow templates, ...</li>
-                <li>Manage your projects, workflows, applications, environments, ...</li>
-                <li>Monitore & operate your CDS platform</li>
-                <li>Script everything</li>
+                <li>{{ 'cdsctl_info_list_1' | translate }}</li>
+                <li>{{ 'cdsctl_info_list_2' | translate }}</li>
+                <li>{{ 'cdsctl_info_list_3' | translate }}</li>
+                <li>{{ 'cdsctl_info_list_4' | translate }}</li>
             </ul>
         </div>
         
-        <h1>1 - Download CDSCTL</h1>
+        <h1>{{ 'cdsctl_title_1' | translate }}</h1>
+        
+        <div class="ui form">
+            <div class="ui grid">
+                <div class="four wide column">
+                    <div class="grouped fields">
+                        <label for="arch">{{ 'cdsctl_choice_arch' | translate }}</label>
+                        <ng-container *ngFor="let a of arch">
+                            <div class="field">
+                                <div class="ui radio checkbox">
+                                    <sui-radio-button type="radio" id="arch-{{a}}" name="arch" [value]="a" [(ngModel)]="archChoice" (ngModelChange)="buildData()">
+                                        {{a}}
+                                    </sui-radio-button>
+                                </div>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+                <div class="eight wide column">
+                    <div class="grouped fields">
+                        <label for="os">{{ 'cdsctl_choice_os' | translate }}</label>
+                        <ng-container *ngFor="let o of os">
+                            <div class="field">
+                                <div class="ui radio checkbox">
+                                    <sui-radio-button type="radio" id="os-{{a}}" name="os" [value]="o" [(ngModel)]="osChoice" (ngModelChange)="buildData()">
+                                        {{o}}
+                                    </sui-radio-button>
+                                </div>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <codemirror
             [(ngModel)]="tutorials['part1']"
@@ -22,14 +54,14 @@
         </codemirror>
         
         <div class="ui info message">
-            Notice:
+            {{ 'cdsctl_notice' | translate }}
             <ul>
-                <li>Binaries available on current installation:  <a href="" [routerLink]="['/settings', 'downloads']">Download Page</a>
-                <li>Per default, the command line cdsctl uses your keychain on your os, you can bypass it by using '386' instead of 'amd64'</li>
+                <li>{{ 'cdsctl_notice_1_1' | translate }}<a href="" [routerLink]="['/settings', 'downloads']">{{ 'downloads_title' | translate }}</a>
+                <li>{{ 'cdsctl_notice_1_2' | translate }}</li>
             </ul>
         </div>
 
-        <h1>2 - Login</h1>
+        <h1>{{ 'cdsctl_title_2' | translate }}</h1>
 
         <codemirror
             [(ngModel)]="tutorials['part2']"
@@ -38,15 +70,15 @@
         </codemirror>
 
         <div class="ui info message">
-            Notice:
+            {{ 'cdsctl_notice' | translate }}
             <ul>
-                <li>If you use many instances of CDS, you can use the -f flag, example: `./cdsctl -f .cds/anotherInstance login --api-url http://another-instance:8081 -u {{currentUser.username}}`</li>
-                <li>ByPass Keychain or file configuration: `CDS_API_URL="{{apiURL}}" CDS_USER="{{currentUser.username}}" CDS_TOKEN="yourtoken" cdsctl [command]`</li>
-                <li>Want to debug something? You can use CDS_VERBOSE environment variable: `CDS_VERBOSE=true ./cdsctl [command]`</li>
+                <li>{{ 'cdsctl_notice_2_1' | translate }} {{currentUser.username}}`</li>
+                <li>{{ 'cdsctl_notice_2_2' | translate }} `CDS_API_URL="{{apiURL}}" CDS_USER="{{currentUser.username}}" CDS_TOKEN="yourtoken" cdsctl [command]`</li>
+                <li>{{ 'cdsctl_notice_2_3' | translate }} `CDS_VERBOSE=true ./cdsctl [command]`</li>
             </ul>
         </div>
 
-        <h1>3 - Play with cdsctl</h1>
+        <h1>{{ 'cdsctl_title_3' | translate }}</h1>
 
         <codemirror
             [(ngModel)]="tutorials['part3']"
@@ -54,7 +86,7 @@
             #textareaCodeMirror>
         </codemirror>
 
-        <h1>4 - Run Workflows</h1>
+        <h1>{{ 'cdsctl_title_4' | translate }}</h1>
 
         <codemirror
             [(ngModel)]="tutorials['part4']"
@@ -62,7 +94,7 @@
             #textareaCodeMirror>
         </codemirror>
 
-        <h1>5 - Check the workflow status</h1>
+        <h1>{{ 'cdsctl_title_5' | translate }}</h1>
 
         <codemirror
             [(ngModel)]="tutorials['part5']"
@@ -70,11 +102,11 @@
             #textareaCodeMirror>
         </codemirror>
 
-        <h1>6 - Git Track</h1>
+        <h1>{{ 'cdsctl_title_6' | translate }}</h1>
 
-        Imagine now that you develop something and you have a CDS Wortkflow triggered on
-        each git push (with a <a href="https://ovh.github.io/cds/workflows/design/hooks/git-repo-webhook/">Git Repository Webhook</a>).
-        The `git track` alias allows you to see the workflow status without opening a browser.
+        {{ 'cdsctl_title_6_info_1' | translate }}
+        (<a href="https://ovh.github.io/cds/workflows/design/hooks/git-repo-webhook/">Git Repository Webhook</a>).
+        {{ 'cdsctl_title_6_info_2' | translate }}
 
         <codemirror
             [(ngModel)]="tutorials['part6']"
@@ -83,11 +115,19 @@
         </codemirror>
 
         <div class="ui info message">
-            Notice:
+            {{ 'cdsctl_notice' | translate }}
             <ul>
-                <li>By setting this new alias in your gitconfig file, you can now use: git push && git track</li>
+                <li>{{ 'cdsctl_notice_6_1' | translate }}</li>
             </ul>
         </div>
+
+        <h1>{{ 'cdsctl_title_7' | translate }}</h1>
+
+        <codemirror
+            [(ngModel)]="tutorials['part7']"
+            [config]="codeMirrorConfig"
+            #textareaCodeMirror>
+        </codemirror>
 
     </app-scrollview>
 </div>
