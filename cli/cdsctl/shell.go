@@ -85,7 +85,6 @@ func shellRun(v cli.Values) error {
 		EOFPrompt:         "exit",
 		HistorySearchFold: true,
 	})
-
 	if err != nil {
 		fmt.Printf("Error: %s\n", err)
 	}
@@ -93,13 +92,15 @@ func shellRun(v cli.Values) error {
 	defer l.Close()
 
 	home := "/"
-	// auto-discover current project with .git
-	if _, err := discoverConf([]cli.Arg{
-		{Name: _ProjectKey},
-		{Name: _ApplicationName, AllowEmpty: true},
-		{Name: _WorkflowName, AllowEmpty: true},
-	}); err == nil {
-		if r, err := repo.New("."); err == nil {
+
+	// try to discover conf for existing .git repository
+	r, errR := repo.New(".")
+	if errR == nil {
+		if _, err := discoverConf([]cli.Arg{
+			{Name: _ProjectKey},
+			{Name: _ApplicationName, AllowEmpty: true},
+			{Name: _WorkflowName, AllowEmpty: true},
+		}); err == nil {
 			if proj, _ := r.LocalConfigGet("cds", "project"); proj != "" {
 				home = "/project/" + proj
 				if wf, _ := r.LocalConfigGet("cds", "workflow"); wf != "" {
@@ -110,8 +111,8 @@ func shellRun(v cli.Values) error {
 			}
 		}
 	}
-	current.home = home
 
+	current.home = home
 	current.path = home
 
 	for {

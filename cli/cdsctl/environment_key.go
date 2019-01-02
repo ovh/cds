@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -40,7 +42,13 @@ func environmentCreateKeyRun(v cli.Values) error {
 			Type: v["key-type"],
 		},
 	}
-	return client.EnvironmentKeyCreate(v[_ProjectKey], v["env-name"], key)
+	if err := client.EnvironmentKeyCreate(v[_ProjectKey], v["env-name"], key); err != nil {
+		return err
+	}
+
+	fmt.Printf("Environment key %s of type %s created with success in environment %s\n", key.Name, key.Type, v["env-name"])
+	fmt.Println(key.Public)
+	return nil
 }
 
 var environmentKeyListCmd = cli.Command{

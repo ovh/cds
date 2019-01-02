@@ -3,8 +3,9 @@ package workflow_test
 import (
 	"context"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -84,7 +85,7 @@ func TestParseAndImport(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, tt.input, u, workflow.ImportOptions{DryRun: false, Force: true})
+			_, _, err := workflow.ParseAndImport(context.TODO(), db, cache, proj, nil, tt.input, u, workflow.ImportOptions{DryRun: false, Force: true})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseAndImport() error = %v, wantErr %v", err, tt.wantErr)
 				return

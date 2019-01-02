@@ -1,0 +1,142 @@
+<div class="wrapper">
+    <app-breadcrumb [path]="path"></app-breadcrumb>
+    <app-scrollview class="scrollview">
+        <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
+        <div *ngIf="!loading">
+            <div class="ui info message">
+                <b>cdsctl</b> {{ 'cdsctl_info_title' | translate }}
+                <ul>
+                    <li>{{ 'cdsctl_info_list_1' | translate }}</li>
+                    <li>{{ 'cdsctl_info_list_2' | translate }}</li>
+                    <li>{{ 'cdsctl_info_list_3' | translate }}</li>
+                    <li>{{ 'cdsctl_info_list_4' | translate }}</li>
+                </ul>
+            </div>
+            
+            <h1>{{ 'cdsctl_title_1' | translate }}</h1>
+            
+            <div class="ui form">
+                <div class="ui grid">
+                    <div class="four wide column">
+                        <div class="grouped fields">
+                            <label for="os">{{ 'cdsctl_choice_os' | translate }}</label>
+                            <ng-container *ngFor="let o of os">
+                                <div class="field">
+                                    <div class="ui radio checkbox">
+                                        <sui-radio-button type="radio" id="os-{{a}}" name="os" [value]="o" [(ngModel)]="osChoice" (ngModelChange)="buildData()">
+                                            {{o}}
+                                        </sui-radio-button>
+                                    </div>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+                    <div class="four wide column">
+                        <div class="grouped fields">
+                            <label for="arch">{{ 'cdsctl_choice_arch' | translate }}</label>
+                            <ng-container *ngFor="let a of arch">
+                                <div class="field">
+                                    <div class="ui radio checkbox">
+                                        <sui-radio-button type="radio" id="arch-{{a}}" name="arch" [value]="a" [(ngModel)]="archChoice" (ngModelChange)="buildData()">
+                                            {{a}}
+                                        </sui-radio-button>
+                                    </div>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <codemirror
+                [(ngModel)]="tutorials['part1']"
+                [config]="codeMirrorConfig"
+                #textareaCodeMirror>
+            </codemirror>
+            
+            <div class="ui info message">
+                {{ 'cdsctl_notice' | translate }}
+                <ul>
+                    <li>{{ 'cdsctl_notice_1_1' | translate }}<a href="" [routerLink]="['/settings', 'downloads']">{{ 'downloads_title' | translate }}</a>
+                    <li>{{ 'cdsctl_notice_1_2' | translate }}</li>
+                </ul>
+            </div>
+    
+            <h1>{{ 'cdsctl_title_2' | translate }}</h1>
+    
+            <codemirror
+                [(ngModel)]="tutorials['part2']"
+                [config]="codeMirrorConfig"
+                #textareaCodeMirror>
+            </codemirror>
+    
+            <div class="ui info message">
+                {{ 'cdsctl_notice' | translate }}
+                <ul>
+                    <li>{{ 'cdsctl_notice_2_1' | translate }} {{currentUser.username}}`</li>
+                    <li>{{ 'cdsctl_notice_2_2' | translate }} `CDS_API_URL="{{apiURL}}" CDS_USER="{{currentUser.username}}" CDS_TOKEN="yourtoken" cdsctl [command]`</li>
+                    <li>{{ 'cdsctl_notice_2_3' | translate }} `CDS_VERBOSE=true ./cdsctl [command]`</li>
+                </ul>
+            </div>
+    
+            <h1>{{ 'cdsctl_title_3' | translate }}</h1>
+    
+            <codemirror
+                [(ngModel)]="tutorials['part3']"
+                [config]="codeMirrorConfig"
+                #textareaCodeMirror>
+            </codemirror>
+    
+            <h1>{{ 'cdsctl_title_4' | translate }}</h1>
+    
+            <codemirror
+                [(ngModel)]="tutorials['part4']"
+                [config]="codeMirrorConfig"
+                #textareaCodeMirror>
+            </codemirror>
+    
+            <h1>{{ 'cdsctl_title_5' | translate }}</h1>
+    
+            <codemirror
+                [(ngModel)]="tutorials['part5']"
+                [config]="codeMirrorConfig"
+                #textareaCodeMirror>
+            </codemirror>
+    
+            <h1>{{ 'cdsctl_title_6' | translate }}</h1>
+    
+            {{ 'cdsctl_title_6_info_1' | translate }}
+            (<a href="https://ovh.github.io/cds/workflows/design/hooks/git-repo-webhook/">Git Repository Webhook</a>).
+            {{ 'cdsctl_title_6_info_2' | translate }}
+    
+            <codemirror
+                [(ngModel)]="tutorials['part6']"
+                [config]="codeMirrorConfig"
+                #textareaCodeMirror>
+            </codemirror>
+    
+            <div class="ui info message">
+                {{ 'cdsctl_notice' | translate }}
+                <ul>
+                    <li>{{ 'cdsctl_notice_6_1' | translate }}</li>
+                </ul>
+            </div>
+    
+            <h1>{{ 'cdsctl_title_7' | translate }}</h1>
+    
+            <codemirror
+                [(ngModel)]="tutorials['part7']"
+                [config]="codeMirrorConfig"
+                #textareaCodeMirror>
+            </codemirror>
+    
+            <h1>{{ 'cdsctl_title_8' | translate }}</h1>
+    
+            <codemirror
+                [(ngModel)]="tutorials['part8']"
+                [config]="codeMirrorConfig"
+                #textareaCodeMirror>
+            </codemirror>
+        </div>
+    </app-scrollview>
+</div>

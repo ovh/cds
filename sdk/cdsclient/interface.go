@@ -28,6 +28,9 @@ type TemplateClient interface {
 // AdminService expose all function to CDS services
 type AdminService interface {
 	AdminDatabaseMigrationUnlock(id string) error
+	AdminCDSMigrationList() ([]sdk.Migration, error)
+	AdminCDSMigrationCancel(id int64) error
+	AdminCDSMigrationReset(id int64) error
 	Services() ([]sdk.Service, error)
 	ServicesByName(name string) (*sdk.Service, error)
 	ServiceDelete(name string) error
@@ -48,6 +51,8 @@ type ExportImportInterface interface {
 	WorkflowExport(projectKey, name string, mods ...RequestModifier) ([]byte, error)
 	WorkflowPull(projectKey, name string, mods ...RequestModifier) (*tar.Reader, error)
 	WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
+	WorkerModelExport(id int64, format string) ([]byte, error)
+	WorkerModelImport(content io.Reader, format string, force bool) (*sdk.Model, error)
 	WorkflowPush(projectKey string, tarContent io.Reader, mods ...RequestModifier) ([]string, *tar.Reader, error)
 	WorkflowAsCodeInterface
 }

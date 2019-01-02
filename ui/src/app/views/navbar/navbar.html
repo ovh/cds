@@ -175,6 +175,7 @@
         </sm-select>
         <sm-dropdown icon="settings" *ngIf="currentUser">
             <a sm-item href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
+            <a sm-item href="#" [routerLink]="['settings', 'cdsctl']">{{ 'navbar_cdsctl' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>
             <a sm-item *ngIf="currentUser.admin" href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>

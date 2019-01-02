@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/permission"
@@ -409,6 +410,57 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 	return res, nil
 }
 
+// LoadByWorkflowTemplateID load all workflows linked to a workflow template but without loading workflow details
+func LoadByWorkflowTemplateID(ctx context.Context, db gorp.SqlExecutor, templateID int64, u *sdk.User) ([]sdk.Workflow, error) {
+	var dbRes []Workflow
+	query := `
+	SELECT workflow.*
+		FROM workflow
+			JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
+		WHERE workflow_template_instance.workflow_template_id = $1 AND workflow.to_delete = false
+	`
+	args := []interface{}{templateID}
+
+	if !u.Admin {
+		query = `
+			SELECT workflow.*
+				FROM workflow
+					JOIN workflow_template_instance ON workflow_template_instance.workflow_id = workflow.id
+					JOIN project ON workflow.project_id = project.id
+				WHERE workflow_template_instance.workflow_template_id = $1
+				AND workflow.to_delete = false
+				AND project.id IN (
+					SELECT project_group.project_id
+						FROM project_group
+					WHERE
+						project_group.group_id = ANY(string_to_array($2, ',')::int[])
+						OR
+						$3 = ANY(string_to_array($2, ',')::int[])
+				)
+			`
+		args = append(args, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
+	}
+
+	if _, err := db.Select(&dbRes, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	workflows := make([]sdk.Workflow, len(dbRes))
+	for i, wf := range dbRes {
+		var err error
+		wf.ProjectKey, err = db.SelectStr("SELECT projectkey FROM project WHERE id = $1", wf.ProjectID)
+		if err != nil {
+			return nil, sdk.WrapError(err, "cannot load project key for workflow %s and project_id %d", wf.Name, wf.ProjectID)
+		}
+		workflows[i] = sdk.Workflow(wf)
+	}
+
+	return workflows, nil
+}
+
 func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, opts LoadOptions, u *sdk.User, query string, args ...interface{}) (*sdk.Workflow, error) {
 	t0 := time.Now()
 	dbRes := Workflow{}
@@ -539,7 +591,7 @@ func loadFavorite(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, erro
 // Insert inserts a new workflow
 func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
 	if err := IsValid(context.TODO(), store, db, w, p, u); err != nil {
-		return sdk.WrapError(err, "Unable to valid workflow")
+		return sdk.WrapError(err, "Unable to validate workflow")
 	}
 
 	if w.HistoryLength == 0 {
@@ -833,7 +885,7 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 	w.ResetIDs()
 
 	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
-		return sdk.WrapError(err, "unable to update root node on workflow(%d)", w.ID)
+		return sdk.WrapError(sdk.ErrWorkflowNodeRootUpdate, "unable to update root node on workflow(%d) : %v", w.ID, err)
 	}
 	w.RootID = w.Root.ID
 
@@ -1285,7 +1337,7 @@ func checkPipeline(ctx context.Context, db gorp.SqlExecutor, proj *sdk.Project, 
 				}
 			}
 			if !found {
-				return sdk.WithStack(sdk.ErrPipelineNotFound)
+				return sdk.NewErrorFrom(sdk.ErrPipelineNotFound, "Can not found a pipeline with id %d", n.Context.PipelineID)
 			}
 
 			// Load pipeline from db to get stage/jobs
@@ -1387,6 +1439,19 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 	// because transaction may have to be aborted
 	if !mError.IsEmpty() {
 		return nil, nil, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
+	}
+
+	// load the workflow from database if exists
+	workflowExists, err := Exists(db, proj.Key, wrkflw.Name)
+	if err != nil {
+		return nil, nil, sdk.WrapError(err, "Cannot check if workflow exists")
+	}
+	var wf *sdk.Workflow
+	if workflowExists {
+		wf, err = Load(ctx, db, store, proj, wrkflw.Name, u, LoadOptions{WithIcon: true})
+		if err != nil {
+			return nil, nil, sdk.WrapError(err, "Unable to load existing workflow")
+		}
 	}
 
 	tx, err := db.Begin()
@@ -1492,7 +1557,7 @@ func Push(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *sdk.Proj
 		}
 	}
 
-	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
+	wf, msgList, err := ParseAndImport(ctx, tx, store, proj, wf, &wrkflw, u, ImportOptions{DryRun: dryRun, Force: true})
 	if err != nil {
 		log.Error("Push> Unable to import workflow: %v", err)
 		return nil, nil, sdk.WrapError(err, "unable to import workflow %s", wrkflw.Name)

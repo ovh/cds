@@ -4,7 +4,12 @@
     <ng-template #workflowsDisplay>
         <div class="ui stackable four column grid">
             <div class="center aligned column" *ngFor="let workflow of workflows">
-                <a [routerLink]="['/project', project.key, 'workflow', workflow.name]">{{workflow.name}}</a>
+                <ng-container *ngIf="project">
+                    <a [routerLink]="['/project', project.key, 'workflow', workflow.name]">{{workflow.name}}</a>
+                </ng-container>
+                <ng-container *ngIf="!project">
+                    <a [routerLink]="['/project', workflow.project_key, 'workflow', workflow.name]">{{workflow.name}}</a>
+                </ng-container>
             </div>
         </div>
     </ng-template>
