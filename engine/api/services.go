@@ -78,11 +78,6 @@ func (api *API) postServiceRegisterHandler() service.Handler {
 			srv.Hash = oldSrv.Hash
 			srv.ID = oldSrv.ID
 		} else if sdk.ErrorIs(errOldSrv, sdk.ErrNotFound) {
-			//Generate a hash
-			hash, errsession := sessionstore.NewSessionKey()
-			if errsession != nil {
-				return sdk.WrapError(errsession, "Unable to create session")
-			}
 			srv.Hash = sdk.UUID()
 		} else {
 			return sdk.WithStack(errOldSrv)

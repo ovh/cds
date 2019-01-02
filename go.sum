@@ -104,6 +104,7 @@ github.com/docker/distribution v2.7.0-rc.0+incompatible h1:Nw9tozLpkMnG3IA1zLzsC
 github.com/docker/distribution v2.7.0-rc.0+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker v1.13.1 h1:5VBhsO6ckUxB0A8CE5LlUJdXzik9cbEbBTQ/ggeml7M=
 github.com/docker/docker v1.13.1/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
+github.com/docker/engine v0.0.0-20180816081446-320063a2ad06 h1:7dNp3Uy9WPejW7wy26j3UCz9VP0Hk46uH97DTU0+iX0=
 github.com/docker/engine v0.0.0-20180816081446-320063a2ad06/go.mod h1:3CPr2caMgTHxxIAZgEMd3uLYPDlRvPqCpyeRf6ncPcY=
 github.com/docker/go-connections v0.3.0 h1:3lOnM9cSzgGwx8VfK/NGOW5fLQ0GjIlCkaktF+n1M6o=
 github.com/docker/go-connections v0.3.0/go.mod h1:Gbd7IOopHjR8Iph03tsViu4nIes5XhDvyHbTtUxmeec=
@@ -511,6 +512,7 @@ github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b h1:mvFk4C4VehqptP
 github.com/yesnault/go-imap v0.0.0-20160710142244-eb9bbb66bd7b/go.mod h1:LH8s5iF2nb4JFQ1A9fAcvsdqzUGZttifagNxO5TOiPQ=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277 h1:5wm+TddKWEVUnNGFEYYThIVBAdJkZjNCnco5SJYo99Q=
 github.com/yesnault/go-toml v0.0.0-20170920144045-9a5282f85277/go.mod h1:SsMrIuedaKvK8GekjwjVv8gMnHNAuvoINpKCARzdsEQ=
+github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f h1:ndiJ8+QzOQ/QPOPBVt3D7JgkXeYtd7VZFHcR0uziFE8=
 github.com/yesnault/gorp v0.0.0-20180831150006-1ce9606c8d2f/go.mod h1:7nhqtxBPZoPXx86SqUzP/OFLd8prnhkydPk51uJthQc=
 github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed h1:I1vcLHWU9m30rA90rMrKPu0eD3NDA4FBlkB8WMaDyUw=
 github.com/yuin/gluare v0.0.0-20170607022532-d7c94f1a80ed/go.mod h1:9w6KSdZh23UWqOywWsRLUcJUrUNjRh4Ql3z9uVgnSP4=
