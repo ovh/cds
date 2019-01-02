@@ -19,24 +19,30 @@ import (
 	"github.com/ovh/cds/sdk/tracingutils"
 )
 
+// MultiPartData represents the data to send
+type MultiPartData struct {
+	Reader      io.Reader
+	ContentType string
+}
+
 // HTTPClient will be set to a default httpclient if not set
 var HTTPClient sdk.HTTPClient
 
 // DoMultiPartRequest performs an http request on a service with multipart  tar file + json field
-func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path string, buf *bytes.Buffer, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
 	// Create tar part
-	tarPartMH := make(textproto.MIMEHeader)
-	tarPartMH.Set("Content-Type", "application/tar")
-	tarPartMH.Set("Content-Disposition", "form-data; name=\"dataFiles\"; filename=\"data.tar\"")
-	dataPart, err := writer.CreatePart(tarPartMH)
+	dataFileHeader := make(textproto.MIMEHeader)
+	dataFileHeader.Set("Content-Type", multiPartData.ContentType)
+	dataFileHeader.Set("Content-Disposition", "form-data; name=\"dataFiles\"; filename=\"data\"")
+	dataPart, err := writer.CreatePart(dataFileHeader)
 	if err != nil {
 		return 0, sdk.WrapError(err, "unable to create data part")
 	}
-	if _, err := io.Copy(dataPart, buf); err != nil {
+	if _, err := io.Copy(dataPart, multiPartData.Reader); err != nil {
 		return 0, sdk.WrapError(err, "unable to write into data part")
 	}
 

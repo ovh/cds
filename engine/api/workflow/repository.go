@@ -53,7 +53,7 @@ func CreateFromRepository(ctx context.Context, db *gorp.DbMap, store cache.Store
 		}
 	}
 
-	if err := PostRepositoryOperation(ctx, db, store, *p, &ope, nil); err != nil {
+	if err := PostRepositoryOperation(ctx, db, *p, &ope, nil); err != nil {
 		return nil, sdk.WrapError(err, "Unable to post repository operation")
 	}
 
@@ -215,7 +215,7 @@ func createOperationRequest(w sdk.Workflow, opts sdk.WorkflowRunPostHandlerOptio
 }
 
 // PostRepositoryOperation creates a new repository operation
-func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, prj sdk.Project, ope *sdk.Operation, buf *bytes.Buffer) error {
+func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, prj sdk.Project, ope *sdk.Operation, multipartData *services.MultiPartData) error {
 	srvs, err := services.FindByType(db, services.TypeRepositories)
 	if err != nil {
 		return sdk.WrapError(err, "Unable to found repositories service")
@@ -230,16 +230,15 @@ func PostRepositoryOperation(ctx context.Context, db gorp.SqlExecutor, cache cac
 		}
 	}
 
-	if buf == nil {
+	if multipartData == nil {
 		if _, err := services.DoJSONRequest(ctx, srvs, http.MethodPost, "/operations", ope, ope); err != nil {
 			return sdk.WrapError(err, "Unable to perform operation")
 		}
-	} else {
-		if _, err := services.DoMultiPartRequest(ctx, srvs, http.MethodPost, "/operations", buf, ope, ope); err != nil {
-			return sdk.WrapError(err, "Unable to perform multipart operation")
-		}
+		return nil
 	}
-
+	if _, err := services.DoMultiPartRequest(ctx, srvs, http.MethodPost, "/operations", multipartData, ope, ope); err != nil {
+		return sdk.WrapError(err, "Unable to perform multipart operation")
+	}
 	return nil
 }
 

@@ -69,7 +69,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			}
 		}
 
-		if err := workflow.PostRepositoryOperation(ctx, api.mustDB(), api.Cache, *p, ope, nil); err != nil {
+		if err := workflow.PostRepositoryOperation(ctx, api.mustDB(), *p, ope, nil); err != nil {
 			return sdk.WrapError(err, "Cannot create repository operation")
 		}
 		ope.RepositoryStrategy.SSHKeyContent = ""

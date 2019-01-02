@@ -54,8 +54,8 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.WrapError(errW, "unable to migrate workflow as code")
 		}
 
-		sdk.GoRoutine(ctx, fmt.Sprintf("UpdateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
-			workflow.UpdateWorkflowAsCodeResult(context.Background(), api.mustDB(), api.Cache, proj, ope, wf, u)
+		sdk.GoRoutine(context.Background(), fmt.Sprintf("UpdateWorkflowAsCodeResult-%s", ope.UUID), func(ctx context.Context) {
+			workflow.UpdateWorkflowAsCodeResult(ctx, api.mustDB(), api.Cache, proj, ope, wf, u)
 		}, api.PanicDump())
 
 		return service.WriteJSON(w, ope, http.StatusOK)

@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 	"github.com/ovh/cds/sdk/log"
@@ -78,7 +79,11 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 		ope.Setup.Push.Message = fmt.Sprintf("chore: Update workflow [@%s]", u.Username)
 	}
 
-	if err := PostRepositoryOperation(ctx, db, store, *proj, &ope, buf); err != nil {
+	multipartData := &services.MultiPartData{
+		Reader:      buf,
+		ContentType: "application/tar",
+	}
+	if err := PostRepositoryOperation(ctx, db, *proj, &ope, multipartData); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
 
