@@ -12,7 +12,7 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 })
 export class WorkflowTemplateListComponent {
     loading: boolean;
-    columns: Array<Column>;
+    columns: Array<Column<WorkflowTemplate>>;
     workflowTemplates: Array<WorkflowTemplate>;
 
     path: Array<PathItem>
@@ -21,7 +21,7 @@ export class WorkflowTemplateListComponent {
         private _workflowTemplateService: WorkflowTemplateService
     ) {
         this.columns = [
-            <Column>{
+            <Column<WorkflowTemplate>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
                 selector: (wt: WorkflowTemplate) => {
@@ -31,12 +31,12 @@ export class WorkflowTemplateListComponent {
                     };
                 }
             },
-            <Column>{
+            <Column<WorkflowTemplate>>{
                 type: ColumnType.MARKDOWN,
                 name: 'common_description',
                 selector: (wt: WorkflowTemplate) => wt.description
             },
-            <Column>{
+            <Column<WorkflowTemplate>>{
                 name: 'common_group',
                 selector: (wt: WorkflowTemplate) => wt.group.name
             }

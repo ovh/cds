@@ -3,6 +3,30 @@
         {{'workflow_template_bulk_create_title' | translate}}
     </div>
     <div class="content">
-        empty
+        <div class="ui grid">
+            <div class="sixteen wide column">
+                <div class="ui three ordered steps">
+                    <div class="completed step">
+                        <div class="content">
+                            <div class="title">Select instances</div>
+                        </div>
+                    </div>
+                    <div class="active step">
+                        <div class="content">
+                            <div class="title">Fill parameters</div>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="content">
+                            <div class="title">Run</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="sixteen wide column">
+                <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)" [withPagination]="10"
+                    [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
+            </div>
+        </div>
     </div>
 </ng-template>

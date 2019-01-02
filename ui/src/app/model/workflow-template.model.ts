@@ -1,3 +1,4 @@
+import { WithKey } from '../shared/table/data-table.component';
 import { AuditWorkflowTemplate, AuditWorkflowTemplateInstance } from './audit.model';
 import { Group } from './group.model';
 import { Project } from './project.model';
@@ -51,7 +52,7 @@ export class WorkflowTemplateApplyResult {
     workflow_name: string;
 }
 
-export class WorkflowTemplateInstance {
+export class WorkflowTemplateInstance implements WithKey {
     workflow_template_version: number;
     request: WorkflowTemplateRequest;
     project: Project;
@@ -72,6 +73,10 @@ export class WorkflowTemplateInstance {
         }
     }
 
+    key(): string {
+        return this.project.key + '/' + (this.workflow ? this.workflow.name : this.workflow_name);
+    }
+
     status(wt: WorkflowTemplate): InstanceStatus {
         if (!this.workflow) {
             return InstanceStatus.NOT_IMPORTED;
@@ -84,4 +89,18 @@ export enum InstanceStatus {
     NOT_IMPORTED = 'workflow_template_not_imported_yet',
     UP_TO_DATE = 'common_up_to_date',
     NOT_UP_TO_DATE = 'common_not_up_to_date'
+}
+
+export class InstanceStatusUtil {
+    public static color(status: InstanceStatus): string {
+        switch (status) {
+            case InstanceStatus.UP_TO_DATE:
+                return 'green';
+            case InstanceStatus.NOT_UP_TO_DATE:
+                return 'red';
+            case InstanceStatus.NOT_IMPORTED:
+                return 'orange';
+        }
+        return 'blue';
+    }
 }

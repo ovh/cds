@@ -16,27 +16,28 @@ export enum ColumnType {
     LABEL = 'label',
 }
 
-export type SelectorType = <T>(d: T) => ColumnType;
-export type Selector = <T>(d: T) => any;
-export type Filter = (f: string) => (d: any) => any;
+export type SelectorType<T> = (d: T) => ColumnType;
+export type Selector<T> = (d: T) => any;
+export type Filter<T> = (f: string) => (d: T) => boolean;
+export type Select<T> = (d: T) => boolean;
 
-export class Column {
-    type: ColumnType | SelectorType;
+export class Column<T> {
+    type: ColumnType | SelectorType<T>;
     name: string;
     class: string;
-    selector: Selector;
+    selector: Selector<T>;
     sortable: boolean;
     sortKey: string;
 }
 
 @Pipe({ name: 'selector' })
 export class SelectorPipe<T> implements PipeTransform {
-    transform(columns: Array<Column>, data: T): Array<any> {
+    transform(columns: Array<Column<T>>, data: T): Array<any> {
         return columns.map(c => {
             let type: ColumnType;
             switch (typeof c.type) {
                 case 'function':
-                    type = <ColumnType>(c.type)(data);
+                    type = (<SelectorType<T>>c.type)(data);
                     break;
                 default:
                     type = c.type;
@@ -51,41 +52,61 @@ export class SelectorPipe<T> implements PipeTransform {
     }
 }
 
+@Pipe({ name: 'select' })
+export class SelectPipe<T extends WithKey> implements PipeTransform {
+    transform(selected: Array<string>, data: T): boolean {
+        return !!selected.find(s => s === data.key());
+    }
+}
+
+export interface WithKey {
+    key(): string;
+}
+
 @Component({
     selector: 'app-data-table',
     templateUrl: './data-table.html',
     styleUrls: ['./data-table.scss']
 })
-export class DataTableComponent<T> extends Table<T> implements OnChanges {
-    @Input() columns: Array<Column>;
+export class DataTableComponent<T extends WithKey> extends Table<T> implements OnChanges {
+    @Input() columns: Array<Column<T>>;
     @Output() sortChange = new EventEmitter<string>();
     @Output() dataChange = new EventEmitter<number>();
     @Input() loading: boolean;
     @Input() withLineClick: boolean;
-    @Output() clickLine = new EventEmitter<any>();
-
+    @Output() clickLine = new EventEmitter<T>();
+    @Output() selectChange = new EventEmitter<Array<string>>();
+    @Input() withSelect: boolean | Select<T>;
+    selected: Object = {};
     @Input() data: Array<T>;
     @Input() withPagination: number;
-    @Input() withFilter: Filter;
-
-    sortedColumn: Column;
+    @Input() withFilter: Filter<T>;
+    sortedColumn: Column<T>;
     sortedColumnDirection: direction;
     allData: Array<T>;
     dataForCurrentPage: any;
     pagesCount: number;
-    filterFunc: Filter;
+    filterFunc: Filter<T>;
     filter: string;
     filteredData: Array<T>;
     indexSelected: number;
 
     ngOnChanges() {
         this.allData = this.data;
+
+        if (this.withSelect && this.allData) {
+            this.allData.forEach(d => { this.selected[d.key()] = false });
+            if (typeof this.withSelect === 'function') {
+                this.allData.filter(<Select<T>>this.withSelect).forEach(d => this.selected[d.key()] = true);
+            }
+        }
+
         this.nbElementsByPage = this.withPagination;
         this.filterFunc = this.withFilter;
         this.getDataForCurrentPage();
     }
 
-    columnClick(event: Event, c: Column) {
+    columnClick(event: Event, c: Column<T>) {
         if (!c.sortable) {
             return;
         }
@@ -142,10 +163,15 @@ export class DataTableComponent<T> extends Table<T> implements OnChanges {
         this.goTopage(n);
     }
 
-    lineClick(i: number, d: any) {
+    lineClick(i: number, d: T) {
         if (this.withLineClick) {
             this.indexSelected = i;
             this.clickLine.emit(d);
         }
+    }
+
+    onSelectChange(e: any, key: string) {
+        this.selected[key] = e;
+        this.selectChange.emit(Object.keys(this.selected).filter(k => this.selected[k]));
     }
 }

@@ -60,7 +60,7 @@ import { RequirementsListComponent } from './requirements/list/requirements.list
 import { ScrollviewComponent } from './scrollview/scrollview.component';
 import { SharedService } from './shared.service';
 import { StatusIconComponent } from './status/status.component';
-import { DataTableComponent, SelectorPipe } from './table/data-table.component';
+import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastService } from './toast/ToastService';
 import { TokenListComponent } from './token/list/token.list.component';
@@ -210,6 +210,7 @@ import { ZoneComponent } from './zone/zone.component';
         VCSStrategyComponent,
         FavoriteCardsComponent,
         SelectorPipe,
+        SelectPipe,
         DataTableComponent,
         WorkflowTemplateApplyFormComponent,
         WorkflowTemplateApplyModalComponent,
@@ -317,6 +318,7 @@ import { ZoneComponent } from './zone/zone.component';
         VCSStrategyComponent,
         FavoriteCardsComponent,
         SelectorPipe,
+        SelectPipe,
         DataTableComponent,
         WorkflowTemplateApplyFormComponent,
         WorkflowTemplateApplyModalComponent,

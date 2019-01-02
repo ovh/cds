@@ -5,7 +5,7 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 import { first } from 'rxjs/operators';
 import { AuditWorkflowTemplate } from '../../../../model/audit.model';
 import { Group } from '../../../../model/group.model';
-import { InstanceStatus, WorkflowTemplate, WorkflowTemplateInstance } from '../../../../model/workflow-template.model';
+import { InstanceStatus, InstanceStatusUtil, WorkflowTemplate, WorkflowTemplateInstance } from '../../../../model/workflow-template.model';
 import { Workflow } from '../../../../model/workflow.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
@@ -32,13 +32,14 @@ export class WorkflowTemplateEditComponent implements OnInit {
     instances: Array<WorkflowTemplateInstance>;
     workflowsLinked: Array<Workflow>;
     loading: boolean;
+    loadingInstances: boolean;
     loadingAudits: boolean;
     loadingUsage: boolean;
     path: Array<PathItem>;
     tabs: Array<Tab>;
     selectedTab: Tab;
-    columnsAudits: Array<Column>;
-    columnsInstances: Array<Column>;
+    columnsAudits: Array<Column<AuditWorkflowTemplate>>;
+    columnsInstances: Array<Column<WorkflowTemplateInstance>>;
     diffItems: Array<Item>;
     groupName: string;
     templateSlug: string;
@@ -73,23 +74,23 @@ export class WorkflowTemplateEditComponent implements OnInit {
         }];
 
         this.columnsAudits = [
-            <Column>{
+            <Column<AuditWorkflowTemplate>>{
                 name: 'audit_modification_type',
                 class: 'two',
                 selector: (a: AuditWorkflowTemplate) => a.event_type
             },
-            <Column>{
+            <Column<AuditWorkflowTemplate>>{
                 type: ColumnType.DATE,
                 name: 'audit_time_author',
                 class: 'two',
                 selector: (a: AuditWorkflowTemplate) => a.created
             },
-            <Column>{
+            <Column<AuditWorkflowTemplate>>{
                 name: 'audit_username',
                 class: 'two',
                 selector: (a: AuditWorkflowTemplate) => a.triggered_by
             },
-            <Column>{
+            <Column<AuditWorkflowTemplate>>{
                 type: ColumnType.MARKDOWN,
                 class: 'eight',
                 name: 'common_description',
@@ -98,14 +99,14 @@ export class WorkflowTemplateEditComponent implements OnInit {
         ];
 
         this.columnsInstances = [
-            <Column>{
+            <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.DATE,
                 name: 'common_created',
                 selector: (i: WorkflowTemplateInstance) => i.first_audit.created
-            }, <Column>{
+            }, <Column<WorkflowTemplateInstance>>{
                 name: 'common_created_by',
                 selector: (i: WorkflowTemplateInstance) => i.first_audit.triggered_by
-            }, <Column>{
+            }, <Column<WorkflowTemplateInstance>>{
                 type: (i: WorkflowTemplateInstance) => {
                     let status = i.status(this.workflowTemplate);
                     if (status === InstanceStatus.NOT_IMPORTED) {
@@ -128,27 +129,14 @@ export class WorkflowTemplateEditComponent implements OnInit {
                         value
                     };
                 }
-            }, <Column>{
+            }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.LABEL,
                 name: 'common_status',
                 class: 'right aligned',
                 selector: (i: WorkflowTemplateInstance) => {
                     let status = i.status(this.workflowTemplate);
-                    let color: string;
-
-                    switch (status) {
-                        case InstanceStatus.UP_TO_DATE:
-                            color = 'green';
-                            break;
-                        case InstanceStatus.NOT_UP_TO_DATE:
-                            color = 'red';
-                            break;
-                        case InstanceStatus.NOT_IMPORTED:
-                            color = 'orange';
-                    }
-
                     return {
-                        class: color,
+                        class: InstanceStatusUtil.color(status),
                         value: status
                     };
                 }
@@ -175,7 +163,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 this.workflowTemplate = wt;
 
                 if (this.workflowTemplate.editable) {
-                    this.columnsAudits.push(<Column>{
+                    this.columnsAudits.push(<Column<AuditWorkflowTemplate>>{
                         type: ColumnType.CONFIRM_BUTTON,
                         name: 'common_action',
                         class: 'two right aligned',
@@ -289,7 +277,9 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     getInstances() {
+        this.loadingInstances = true;
         this._workflowTemplateService.getInstances(this.groupName, this.templateSlug)
+            .pipe(finalize(() => this.loadingInstances = false))
             .subscribe(is => { this.instances = is; });
     }
 

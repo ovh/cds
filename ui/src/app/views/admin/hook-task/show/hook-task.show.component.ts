@@ -14,7 +14,7 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 })
 export class HookTaskShowComponent {
     codeMirrorConfig: any;
-    columns: Array<Column>;
+    columns: Array<Column<TaskExecution>>;
     task: WorkflowHookTask;
     executions: Array<TaskExecution>;
     selectedExecution: TaskExecution;
@@ -37,7 +37,7 @@ export class HookTaskShowComponent {
         };
 
         this.columns = [
-            <Column>{
+            <Column<TaskExecution>>{
                 type: ColumnType.ICON,
                 selector: (d: TaskExecution) => {
                     if (d.status === HookStatus.DONE) {
@@ -49,18 +49,18 @@ export class HookTaskShowComponent {
                     }
                 }
             },
-            <Column>{
+            <Column<TaskExecution>>{
                 name: 'created at',
                 selector: (d: TaskExecution) => formatDate(new Date(d.timestamp / 1000000), 'short', this._translate.currentLang)
             },
-            <Column>{
+            <Column<TaskExecution>>{
                 name: 'proceed at',
                 selector: (d: TaskExecution) => {
                     return d.processing_timestamp ?
                         formatDate(new Date(d.processing_timestamp / 1000000), 'short', this._translate.currentLang) : '-';
                 }
             },
-            <Column>{
+            <Column<TaskExecution>>{
                 type: ColumnType.LINK,
                 name: 'action',
                 selector: (d: TaskExecution) => {

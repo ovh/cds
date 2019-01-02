@@ -11,9 +11,9 @@ import { Column, ColumnType, Filter } from '../../../../shared/table/data-table.
 })
 export class HookTaskListComponent {
     loading = false;
-    columns: Array<Column>;
+    columns: Array<Column<WorkflowHookTask>>;
     tasks: Array<WorkflowHookTask>;
-    filter: Filter;
+    filter: Filter<WorkflowHookTask>;
     dataCount: number;
     path: Array<PathItem>;
 
@@ -34,11 +34,11 @@ export class HookTaskListComponent {
         };
 
         this.columns = [
-            <Column>{
+            <Column<WorkflowHookTask>>{
                 type: ColumnType.ICON,
                 selector: (d: WorkflowHookTask) => d.stopped ? ['stop', 'red', 'icon'] : ['play', 'green', 'icon']
             },
-            <Column>{
+            <Column<WorkflowHookTask>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'UUID',
                 selector: (d: WorkflowHookTask) => {
@@ -48,11 +48,11 @@ export class HookTaskListComponent {
                     };
                 }
             },
-            <Column>{
+            <Column<WorkflowHookTask>>{
                 name: 'common_type',
                 selector: (d: WorkflowHookTask) => d.type
             },
-            <Column>{
+            <Column<WorkflowHookTask>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_workflow',
                 selector: (d: WorkflowHookTask) => {
@@ -68,13 +68,13 @@ export class HookTaskListComponent {
                     };
                 },
             },
-            <Column>{
+            <Column<WorkflowHookTask>>{
                 name: 'hook_task_execs_todo',
                 selector: (d: WorkflowHookTask) => d.nb_executions_todo,
                 sortable: true,
                 sortKey: 'nb_executions_todo'
             },
-            <Column>{
+            <Column<WorkflowHookTask>>{
                 name: 'hook_task_execs_total',
                 selector: (d: WorkflowHookTask) => d.nb_executions_total,
                 sortable: true,
