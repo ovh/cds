@@ -129,34 +129,41 @@ test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
 	done; \
 	for XML in `find .. -name "tests.log.xml"`; do \
 		if [ "$$XML" =  "./tests.log.xml" ]; then \
-      PWD=`pwd`; \
+      		PWD=`pwd`; \
 		 	mv $$XML $(TARGET_DIR)/`basename $(PWD)`.xml; \
 		else \
-			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
+			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|../||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
 	done; \
-	for XML in `find .. -name "*.xml"`; do \
+	for XML in `find .. -name "*.xml" -not -path "../ui/*"`; do \
 		if [ -s $$XML ]; then \
-			echo "`xmllint --xpath "/testsuite/@name" $$XML | sed 's/name=//' | sed 's/"//g'`" \
-			"`xmllint --xpath "/testsuite/@tests" $$XML | sed 's/tests=//' | sed 's/"//g'` Tests :" \
-			"`xmllint --xpath "/testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'` Errors "\
-			"`xmllint --xpath "/testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'` Failures" \
-			"`xmllint --xpath "/testsuite/@skip" $$XML | sed 's/skip=//' | sed 's/"//g'` Skipped" \
-			>> $(TARGET_DIR)/report; \
+			if grep -q 'name' $$XML; then \
+				echo "Generating report: " $$XML; \
+				echo "`xmllint --xpath "//testsuite/@name" $$XML | sed 's/name=//' | sed 's/"//g'`" \
+				"`xmllint --xpath "//testsuite/@tests" $$XML | sed 's/tests=//' | sed 's/"//g'` Tests :" \
+				"`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'` Errors ;"\
+				"`xmllint --xpath "//testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'` Failures;" \
+				"`xmllint --xpath "//testsuite/@skip" $$XML | sed 's/skip=//' | sed 's/"//g'` Skipped;" \
+				>> $(TARGET_DIR)/report; \
+			fi; \
 		fi; \
 	done; \
 	if [ -e $(TARGET_DIR)/report ]; then \
 		cat $(TARGET_DIR)/report; \
 	fi; \
-	for XML in `find .. -name "*.xml"`; do \
+	for XML in `find .. -name "*.xml" -not -path "../ui/*"`; do \
 		if [ -s $$XML ]; then \
-			if [ "`xmllint --xpath "/testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
-				echo "Tests failed";  \
-				exit 1;  \
+			if grep -q 'errors' $$XML; then \
+				if [ "`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
+					echo "	$$XML : Tests failed";  \
+					exit 1;  \
+				fi; \
 			fi; \
-			if [ "`xmllint --xpath "/testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'`" -gt "0" ]; then  \
-				echo "Tests failed";  \
-				exit 1;  \
+			if grep -q 'failures' $$XML; then \
+				if [ "`xmllint --xpath "//testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'`" -gt "0" ]; then  \
+					echo "	$$XML : Tests failed";  \
+					exit 1;  \
+				fi; \
 			fi; \
 		fi; \
 	done; \
