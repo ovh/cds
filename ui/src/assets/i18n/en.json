@@ -149,7 +149,7 @@
   "btn_edit": "Edit",
   "btn_add": "Add",
   "btn_back": "Back",
-  
+
   "cdsctl_choice_os": "Choose your OS",
   "cdsctl_choice_arch": "Choose your architecture",
 
@@ -189,7 +189,7 @@
 
    "cdsctl_title_6_info_1": "Imagine now that you develop something and you have a CDS Workflow triggered on each git push",
   "cdsctl_title_6_info_2": "The `git track` alias allows you to see the workflow status without opening a browser.",
-  
+
   "cdsctl_notice": "Notice:",
 
   "commit_author": "Author",
@@ -1102,6 +1102,8 @@
   "workflow_template_change_message": "Add an optional description of your changes...",
   "workflow_template_no_usage": "This template isn't used on one of your workflow",
   "workflow_template_not_imported_yet": "Not imported yet",
+  "workflow_template_bulk_create_title": "Workflow template apply bulk request",
+  "workflow_template_btn_create_bulk": "Update bulk",
 
   "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."

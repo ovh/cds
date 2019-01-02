@@ -6,16 +6,16 @@ import { Project } from '../../../model/project.model';
 import { WorkflowTemplate, WorkflowTemplateInstance } from '../../../model/workflow-template.model';
 import { Workflow } from '../../../model/workflow.model';
 import { WorkflowTemplateService } from '../../../service/services.module';
-import { calculateWorkflowTemplateDiff } from '../../../shared/diff/diff';
-import { Item } from '../../../shared/diff/list/diff.list.component';
+import { calculateWorkflowTemplateDiff } from '../../diff/diff';
+import { Item } from '../../diff/list/diff.list.component';
 
 @Component({
-    selector: 'app-workflow-template-modal',
-    templateUrl: './workflow-template.modal.html',
-    styleUrls: ['./workflow-template.modal.scss']
+    selector: 'app-workflow-template-apply-modal',
+    templateUrl: './workflow-template.apply-modal.html',
+    styleUrls: ['./workflow-template.apply-modal.scss']
 })
-export class WorkflowTemplateModalComponent {
-    @ViewChild('workflowTemplateModal') workflowTemplateModal: ModalTemplate<boolean, boolean, void>;
+export class WorkflowTemplateApplyModalComponent {
+    @ViewChild('workflowTemplateApplyModal') workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
     @Input() project: Project;
     @Input() workflow: Workflow;
     modal: ActiveModal<boolean, boolean, void>;
@@ -31,7 +31,7 @@ export class WorkflowTemplateModalComponent {
     ) { }
 
     show() {
-        const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateModal);
+        const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateApplyModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
 

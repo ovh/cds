@@ -16,7 +16,7 @@ import { WorkflowSidebarMode, WorkflowSidebarStore } from '../../service/workflo
 import { WorkflowStore } from '../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../shared/toast/ToastService';
-import { WorkflowTemplateModalComponent } from '../../shared/workflow-template/modal/workflow-template.modal.component';
+import { WorkflowTemplateApplyModalComponent } from '../../shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
 
 @Component({
     selector: 'app-workflow',
@@ -26,7 +26,7 @@ import { WorkflowTemplateModalComponent } from '../../shared/workflow-template/m
 @AutoUnsubscribe(['onScroll'])
 export class WorkflowComponent implements OnInit {
     @ViewChild('templateForm')
-    templateFormComponent: WorkflowTemplateModalComponent;
+    templateFormComponent: WorkflowTemplateApplyModalComponent;
 
     project: Project;
     workflow: Workflow;

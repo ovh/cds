@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { finalize } from 'rxjs/internal/operators/finalize';
@@ -15,6 +15,7 @@ import { Item } from '../../../../shared/diff/list/diff.list.component';
 import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 import { Tab } from '../../../../shared/tabs/tabs.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
+import { WorkflowTemplateBulkModalComponent } from '../../../../shared/workflow-template/bulk-modal/workflow-template.bulk-modal.component';
 
 @Component({
     selector: 'app-workflow-template-edit',
@@ -22,6 +23,8 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     styleUrls: ['./workflow-template.edit.scss']
 })
 export class WorkflowTemplateEditComponent implements OnInit {
+    @ViewChild('templateBulkModal')
+    templateBulkModal: WorkflowTemplateBulkModalComponent;
     oldWorkflowTemplate: WorkflowTemplate;
     workflowTemplate: WorkflowTemplate;
     groups: Array<Group>;
@@ -103,8 +106,28 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 name: 'common_created_by',
                 selector: (i: WorkflowTemplateInstance) => i.first_audit.triggered_by
             }, <Column>{
+                type: (i: WorkflowTemplateInstance) => {
+                    let status = i.status(this.workflowTemplate);
+                    if (status === InstanceStatus.NOT_IMPORTED) {
+                        return ColumnType.TEXT;
+                    }
+
+                    return ColumnType.ROUTER_LINK;
+                },
                 name: 'common_workflow',
-                selector: (i: WorkflowTemplateInstance) => i.project.key + '/' + (i.workflow ? i.workflow.name : i.workflow_name)
+                selector: (i: WorkflowTemplateInstance) => {
+                    let value = i.project.key + '/' + (i.workflow ? i.workflow.name : i.workflow_name);
+
+                    let status = i.status(this.workflowTemplate);
+                    if (status === InstanceStatus.NOT_IMPORTED) {
+                        return value;
+                    }
+
+                    return {
+                        link: '/project/' + i.project.key + '/workflow/' + i.workflow.name,
+                        value
+                    };
+                }
             }, <Column>{
                 type: ColumnType.LABEL,
                 name: 'common_status',
@@ -268,5 +291,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
     getInstances() {
         this._workflowTemplateService.getInstances(this.groupName, this.templateSlug)
             .subscribe(is => { this.instances = is; });
+    }
+
+    clickCreateBulk() {
+        if (this.templateBulkModal) {
+            this.templateBulkModal.show();
+        }
     }
 }

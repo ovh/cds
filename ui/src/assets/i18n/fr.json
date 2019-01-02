@@ -1102,6 +1102,8 @@
   "workflow_template_change_message": "Ajoutez une description optionelle de vos changements...",
   "workflow_template_no_usage": "Ce modèle de workflow n'est pas utilisé sur l'un de vos workflows",
   "workflow_template_not_imported_yet": "Pas encore importé",
+  "workflow_template_bulk_create_title": "Applicaton d'un modèle de workflow en masse",
+  "workflow_template_btn_create_bulk": "Mettre à jour en masse",
 
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."

@@ -34,6 +34,11 @@
         </div>
         <div *ngSwitchCase="'instances'" class="ui grid">
             <div class="sixteen wide column">
+                <button class="ui button" (click)="clickCreateBulk()">
+                    <i class="save icon"></i>{{ 'workflow_template_btn_create_bulk' | translate }}
+                </button>
+            </div>
+            <div class="sixteen wide column">
                 <app-data-table [withPagination]="10" [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
             </div>
         </div>
@@ -49,3 +54,4 @@
         </div>
     </app-scrollview>
 </div>
+<app-workflow-template-bulk-modal #templateBulkModal></app-workflow-template-bulk-modal>

@@ -16,11 +16,12 @@ export enum ColumnType {
     LABEL = 'label',
 }
 
+export type SelectorType = <T>(d: T) => ColumnType;
 export type Selector = <T>(d: T) => any;
 export type Filter = (f: string) => (d: any) => any;
 
 export class Column {
-    type: ColumnType;
+    type: ColumnType | SelectorType;
     name: string;
     class: string;
     selector: Selector;
@@ -29,11 +30,21 @@ export class Column {
 }
 
 @Pipe({ name: 'selector' })
-export class SelectorPipe implements PipeTransform {
-    transform(columns: Array<Column>, data: any): Array<any> {
+export class SelectorPipe<T> implements PipeTransform {
+    transform(columns: Array<Column>, data: T): Array<any> {
         return columns.map(c => {
+            let type: ColumnType;
+            switch (typeof c.type) {
+                case 'function':
+                    type = <ColumnType>(c.type)(data);
+                    break;
+                default:
+                    type = c.type;
+                    break;
+            }
             return {
                 ...c,
+                type,
                 selector: c.selector(data)
             };
         });

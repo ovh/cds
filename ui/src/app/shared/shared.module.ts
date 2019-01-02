@@ -81,7 +81,8 @@ import { WarningMarkListComponent } from './warning/mark-list/warning.mark.list.
 import { WarningMarkComponent } from './warning/mark-single/warning.mark.component';
 import { WarningTabComponent } from './warning/tab/warning.tab.component';
 import { WorkflowTemplateApplyFormComponent } from './workflow-template/apply-form/workflow-template.apply-form.component';
-import { WorkflowTemplateModalComponent } from './workflow-template/modal/workflow-template.modal.component';
+import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-modal/workflow-template.apply-modal.component';
+import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
 import { WorkflowNodeConditionFormComponent } from './workflow/modal/conditions/condition-form/condition.component';
 import { WorkflowNodeConditionListComponent } from './workflow/modal/conditions/condition-list/condition.list.component';
 import { WorkflowNodeConditionsComponent } from './workflow/modal/conditions/node.conditions.component';
@@ -211,7 +212,8 @@ import { ZoneComponent } from './zone/zone.component';
         SelectorPipe,
         DataTableComponent,
         WorkflowTemplateApplyFormComponent,
-        WorkflowTemplateModalComponent,
+        WorkflowTemplateApplyModalComponent,
+        WorkflowTemplateBulkModalComponent,
         TabsComponent,
         ScrollviewComponent
     ],
@@ -317,7 +319,8 @@ import { ZoneComponent } from './zone/zone.component';
         SelectorPipe,
         DataTableComponent,
         WorkflowTemplateApplyFormComponent,
-        WorkflowTemplateModalComponent,
+        WorkflowTemplateApplyModalComponent,
+        WorkflowTemplateBulkModalComponent,
         TabsComponent,
         ScrollviewComponent
     ]
