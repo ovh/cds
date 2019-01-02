@@ -25,6 +25,7 @@ import { WorkflowTemplateBulkModalComponent } from '../../../../shared/workflow-
 export class WorkflowTemplateEditComponent implements OnInit {
     @ViewChild('templateBulkModal')
     templateBulkModal: WorkflowTemplateBulkModalComponent;
+
     oldWorkflowTemplate: WorkflowTemplate;
     workflowTemplate: WorkflowTemplate;
     groups: Array<Group>;

@@ -16,9 +16,11 @@ import { Item } from '../../diff/list/diff.list.component';
 })
 export class WorkflowTemplateApplyModalComponent {
     @ViewChild('workflowTemplateApplyModal') workflowTemplateApplyModal: ModalTemplate<boolean, boolean, void>;
+    modal: ActiveModal<boolean, boolean, void>;
+    open: boolean;
+
     @Input() project: Project;
     @Input() workflow: Workflow;
-    modal: ActiveModal<boolean, boolean, void>;
     workflowTemplate: WorkflowTemplate;
     workflowTemplateInstance: WorkflowTemplateInstance;
     diffVisible: boolean;
@@ -31,9 +33,17 @@ export class WorkflowTemplateApplyModalComponent {
     ) { }
 
     show() {
+        if (this.open) {
+            return;
+        }
+
+        this.open = true;
+
         const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateApplyModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
+        this.modal.onApprove(() => { this.open = false; });
+        this.modal.onDeny(() => { this.open = false; });
 
         this.load();
     }

@@ -25,8 +25,8 @@ import { WorkflowTemplateApplyModalComponent } from '../../shared/workflow-templ
 })
 @AutoUnsubscribe(['onScroll'])
 export class WorkflowComponent implements OnInit {
-    @ViewChild('templateForm')
-    templateFormComponent: WorkflowTemplateApplyModalComponent;
+    @ViewChild('templateApplyModal')
+    templateApplyModal: WorkflowTemplateApplyModalComponent;
 
     project: Project;
     workflow: Workflow;
@@ -202,8 +202,8 @@ export class WorkflowComponent implements OnInit {
     }
 
     showTemplateFrom(): void {
-        if (this.templateFormComponent) {
-            this.templateFormComponent.show();
+        if (this.templateApplyModal) {
+            this.templateApplyModal.show();
         }
     }
 }
