@@ -44,6 +44,9 @@ func (api *API) InitRouter() {
 	// Admin
 	r.Handle("/admin/maintenance", r.POST(api.postMaintenanceHandler, NeedAdmin(true)))
 	r.Handle("/admin/warning", r.DELETE(api.adminTruncateWarningsHandler, NeedAdmin(true)))
+	r.Handle("/admin/cds/migration", r.GET(api.getAdminMigrationsHandler, NeedAdmin(true)))
+	r.Handle("/admin/cds/migration/{id}/cancel", r.POST(api.postAdminMigrationCancelHandler, NeedAdmin(true)))
+	r.Handle("/admin/cds/migration/{id}/todo", r.POST(api.postAdminMigrationTodoHandler, NeedAdmin(true)))
 	r.Handle("/admin/database/migration/unlock/{id}", r.POST(api.postMigrationUnlockedHandler, NeedAdmin(true)))
 	r.Handle("/admin/debug", r.GET(api.getProfileIndexHandler, Auth(false)))
 	r.Handle("/admin/debug/trace", r.POST(api.getTraceHandler, NeedAdmin(true)), r.GET(api.getTraceHandler, NeedAdmin(true)))
@@ -106,6 +109,9 @@ func (api *API) InitRouter() {
 	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))
 	r.Handle("/import/{permProjectKey}/{uuid}", r.GET(api.getImportAsCodeHandler))
 	r.Handle("/import/{permProjectKey}/{uuid}/perform", r.POST(api.postPerformImportAsCodeHandler))
+
+	// Bookmarks
+	r.Handle("/bookmarks", r.GET(api.getBookmarksHandler))
 
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler, AllowProvider(true), EnableTracing()), r.POST(api.addProjectHandler))
@@ -415,6 +421,7 @@ func (api *API) InitRouter() {
 
 	// Worker models
 	r.Handle("/worker/model", r.POST(api.addWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
+	r.Handle("/worker/model/import", r.POST(api.postWorkerModelImportHandler))
 	r.Handle("/worker/model/pattern", r.POST(api.postAddWorkerModelPatternHandler, NeedAdmin(true)), r.GET(api.getWorkerModelPatternsHandler))
 	r.Handle("/worker/model/pattern/{type}/{name}", r.GET(api.getWorkerModelPatternHandler), r.PUT(api.putWorkerModelPatternHandler, NeedAdmin(true)), r.DELETE(api.deleteWorkerModelPatternHandler, NeedAdmin(true)))
 	r.Handle("/worker/model/book/{permModelID}", r.PUT(api.bookWorkerModelHandler, NeedHatchery()))
@@ -423,7 +430,8 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/type", r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/{permModelID}", r.PUT(api.updateWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
-	r.Handle("/worker/model/{permModelID}/usage", r.GET(api.getWorkerModelUsageHandler))
+	r.Handle("/worker/model/{permModelID}/export", r.GET(api.getWorkerModelExportHandler))
+	r.Handle("/worker/model/{modelID}/usage", r.GET(api.getWorkerModelUsageHandler))
 	r.Handle("/worker/model/capability/type", r.GET(api.getRequirementTypesHandler))
 
 	// Workflows
@@ -449,6 +457,7 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/apply", r.POST(api.applyTemplateHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/instance", r.GET(api.getTemplateInstancesHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/audit", r.GET(api.getTemplateAuditsHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/usage", r.GET(api.getTemplateUsageHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/templateInstance", r.GET(api.getTemplateInstanceHandler))
 
 	//Not Found handler

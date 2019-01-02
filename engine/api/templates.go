@@ -583,3 +583,20 @@ func (api *API) getTemplateAuditsHandler() service.Handler {
 		return service.WriteJSON(w, as, http.StatusOK)
 	}
 }
+
+func (api *API) getTemplateUsageHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+		wfTmpl := getWorkflowTemplate(ctx)
+
+		wfs, err := workflow.LoadByWorkflowTemplateID(ctx, api.mustDB(), wfTmpl.ID, getUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "Cannot load templates")
+		}
+
+		return service.WriteJSON(w, wfs, http.StatusOK)
+	}
+}

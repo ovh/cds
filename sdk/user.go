@@ -17,6 +17,7 @@ type User struct {
 	Origin      string          `json:"origin" yaml:"origin,omitempty"`
 	Favorites   []Favorite      `json:"favorites" yaml:"favorites"`
 	Permissions UserPermissions `json:"permissions,omitempty" yaml:"-" cli:"-"`
+	GroupAdmin  bool            `json:"-" yaml:"-" cli:"group_admin"`
 }
 
 // Favorite represent the favorites workflow or project of the user

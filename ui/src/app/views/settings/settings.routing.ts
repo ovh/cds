@@ -4,6 +4,7 @@ import { CanActivateAuthRoute } from '../../service/auth/authenRouteActivate';
 import { ActionAddComponent } from './action/add/action.add.component';
 import { ActionEditComponent } from './action/edit/action.edit.component';
 import { ActionListComponent } from './action/list/action.list.component';
+import { CdsctlComponent } from './cdsctl/cdsctl.component';
 import { DownloadComponent } from './download/download.component';
 import { GroupEditComponent } from './group/edit/group.edit.component';
 import { GroupListComponent } from './group/list/group.list.component';
@@ -26,6 +27,7 @@ const routes: Routes = [
         canActivate: [CanActivateAuthRoute],
         children: [
             { path: 'profile/:username', component: UserEditComponent, data: { title: 'Profile' } },
+            { path: 'cdsctl', component: CdsctlComponent, data: { title: 'Cdsctl' } },
             { path: 'worker-model', component: WorkerModelListComponent, data: { title: 'Worker model' } },
             { path: 'worker-model/add', component: WorkerModelAddComponent, data: { title: 'Add • Worker model' } },
             {

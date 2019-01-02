@@ -9,7 +9,9 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -95,7 +97,7 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 }
 
 // LoadByWorkerModelName loads pipelines from database for a given worker model name
-func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string) ([]sdk.Pipeline, error) {
+func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string, u *sdk.User) ([]sdk.Pipeline, error) {
 	var pips []sdk.Pipeline
 	query := `
 	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey 
@@ -105,8 +107,30 @@ func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string) ([]sdk.P
 			JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
 			JOIN project ON project.id = pipeline.project_id
 		WHERE action_requirement.type = 'model' AND action_requirement.value = $1`
+	args := []interface{}{workerModelName}
 
-	if _, err := db.Select(&pips, query, workerModelName); err != nil {
+	if !u.Admin {
+		query = `
+	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey 
+		FROM action_requirement
+			JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
+			JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
+			JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
+			JOIN project ON project.id = pipeline.project_id
+		WHERE action_requirement.type = 'model'
+			AND action_requirement.value = $1
+			AND project.id IN (
+				SELECT project_group.project_id
+					FROM project_group
+				WHERE
+					project_group.group_id = ANY(string_to_array($2, ',')::int[])
+					OR
+					$3 = ANY(string_to_array($2, ',')::int[])
+			)`
+		args = append(args, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
+	}
+
+	if _, err := db.Select(&pips, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}

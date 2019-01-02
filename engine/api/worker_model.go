@@ -40,13 +40,13 @@ func (api *API) addWorkerModelHandler() service.Handler {
 
 		currentUser := getUser(ctx)
 		//User must be admin of the group set in the model
-		var ok bool
+		var isGroupAdmin bool
 	currentUGroup:
 		for _, g := range currentUser.Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
 					if a.ID == currentUser.ID {
-						ok = true
+						isGroupAdmin = true
 						break currentUGroup
 					}
 				}
@@ -54,7 +54,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !currentUser.Admin && !ok {
+		if !currentUser.Admin && !isGroupAdmin {
 			return sdk.ErrWorkerModelNoAdmin
 		}
 
@@ -418,9 +418,9 @@ func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name stri
 
 func (api *API) getWorkerModelUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		workerModelID, errr := requestVarInt(r, "permModelID")
+		workerModelID, errr := requestVarInt(r, "modelID")
 		if errr != nil {
-			return sdk.WrapError(errr, "Invalid permModelID")
+			return sdk.WrapError(errr, "Invalid modelID")
 		}
 		db := api.mustDB()
 
@@ -429,7 +429,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load worker model for id %d", workerModelID)
 		}
 
-		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name)
+		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load pipelines linked to worker model")
 		}

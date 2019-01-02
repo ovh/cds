@@ -138,10 +138,24 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: force})
+		u := getUser(ctx)
+
+		// load the workflow from database if exists
+		workflowExists, err := workflow.Exists(tx, proj.Key, ew.Name)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot check if workflow exists")
+		}
+		var wf *sdk.Workflow
+		if workflowExists {
+			wf, err = workflow.Load(ctx, tx, api.Cache, proj, ew.Name, u, workflow.LoadOptions{WithIcon: true})
+			if err != nil {
+				return sdk.WrapError(err, "Unable to load existing workflow")
+			}
+		}
+
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: force})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
-
 			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.Name)
 		}
 
@@ -178,6 +192,13 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(errp, "Unable load project")
 		}
 
+		u := getUser(ctx)
+
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, u, workflow.LoadOptions{WithIcon: true})
+		if err != nil {
+			return sdk.WrapError(err, "Unable to load workflow")
+		}
+
 		body, errr := ioutil.ReadAll(r.Body)
 		if errr != nil {
 			return sdk.NewError(sdk.ErrWrongRequest, errr)
@@ -212,7 +233,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			_ = tx.Rollback()
 		}()
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 

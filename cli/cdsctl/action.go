@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path"
 	"reflect"
 	"strings"
@@ -156,18 +155,14 @@ cdsctl action import myAction.yml`,
 
 func actionImportRun(v cli.Values) error {
 	path := v.GetString("path")
-	f, err := os.Open(path)
+	contentFile, format, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer contentFile.Close() //nolint
+	formatStr, _ := exportentities.GetFormatStr(format)
 
-	var format = "yaml"
-	if strings.HasSuffix(path, ".json") {
-		format = "json"
-	}
-
-	if errImport := client.ActionImport(f, format); errImport != nil {
+	if errImport := client.ActionImport(contentFile, formatStr); errImport != nil {
 		return errImport
 	}
 

@@ -1,8 +1,9 @@
-import {Component, Input} from '@angular/core';
-import {finalize} from 'rxjs/operators';
-import {NavbarProjectData} from '../../model/navbar.model';
-import {ProjectStore} from '../../service/project/project.store';
-import {WorkflowStore} from '../../service/workflow/workflow.store';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { finalize } from 'rxjs/operators';
+import { Bookmark } from '../../model/bookmark.model';
+import { NavbarProjectData } from '../../model/navbar.model';
+import { ProjectStore } from '../../service/project/project.store';
+import { WorkflowStore } from '../../service/workflow/workflow.store';
 
 @Component({
     selector: 'app-favorite-cards',
@@ -11,7 +12,7 @@ import {WorkflowStore} from '../../service/workflow/workflow.store';
 })
 export class FavoriteCardsComponent {
 
-    @Input() favorites: Array<NavbarProjectData>;
+    @Input() favorites: Array<Bookmark>;
     @Input() centered = true;
     @Input('projects')
     set projects(projects: Array<NavbarProjectData>) {
@@ -24,6 +25,8 @@ export class FavoriteCardsComponent {
         return this._projects;
     }
     @Input() workflows: Array<NavbarProjectData>;
+
+    @Output() updated: EventEmitter<NavbarProjectData> = new EventEmitter<NavbarProjectData>();
 
     loading = {};
     newFav = new NavbarProjectData();
@@ -61,7 +64,7 @@ export class FavoriteCardsComponent {
                         this.newFav = new NavbarProjectData();
                         this.projectKeySelected = null;
                     }))
-                    .subscribe();
+                    .subscribe(() => this.updated.emit(fav));
             break;
             case 'workflow':
                 this._workflowStore.updateFavorite(fav.key, fav.workflow_name)
@@ -70,7 +73,7 @@ export class FavoriteCardsComponent {
                         this.newFav = new NavbarProjectData();
                         this.projectKeySelected = null;
                     }))
-                    .subscribe();
+                    .subscribe(() => this.updated.emit(fav));
             break;
             default:
                 this.newFav = new NavbarProjectData();

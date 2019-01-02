@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
 import {SuiPopup, SuiPopupController, SuiPopupTemplateController} from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
-import { debounceTime, finalize } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 import { Project } from '../../model/project.model';
 import { Workflow } from '../../model/workflow.model';
 import { WorkflowRun } from '../../model/workflow.run.model';
@@ -172,8 +172,7 @@ export class WorkflowComponent implements OnInit {
     initSidebar(): void {
         // Mode of sidebar
         this.sideBarModeSubscription = this._sidebarStore.sidebarMode()
-            .pipe(debounceTime(150))
-            .subscribe(m => setTimeout(() => this.sidebarMode = m, 0));
+            .subscribe(m => this.sidebarMode = m);
     }
 
     ngOnInit() {

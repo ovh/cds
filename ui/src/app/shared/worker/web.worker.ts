@@ -1,5 +1,5 @@
-import {BehaviorSubject, Observable} from 'rxjs';
-import {CDSWorker} from './worker';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { CDSWorker } from './worker';
 export class CDSWebWorker implements CDSWorker {
 
     // Webworker

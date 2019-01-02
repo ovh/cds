@@ -465,7 +465,20 @@ func TestImport(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			(tt.args.w).RetroMigrate()
-			if err := workflow.Import(context.TODO(), db, cache, proj, tt.args.w, u, tt.args.force, nil, false); err != nil {
+
+			workflowExists, err := workflow.Exists(db, proj.Key, tt.args.w.Name)
+			if err != nil {
+				t.Errorf("%s", err)
+			}
+			var wf *sdk.Workflow
+			if workflowExists {
+				wf, err = workflow.Load(context.TODO(), db, cache, proj, tt.args.w.Name, u, workflow.LoadOptions{WithIcon: true})
+				if err != nil {
+					t.Errorf("%s", err)
+				}
+			}
+
+			if err := workflow.Import(context.TODO(), db, cache, proj, wf, tt.args.w, u, tt.args.force, nil, false); err != nil {
 				if !tt.wantErr {
 					t.Errorf("Import() error = %v, wantErr %v", err, tt.wantErr)
 				} else {

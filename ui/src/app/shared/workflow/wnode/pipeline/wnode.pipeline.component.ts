@@ -1,11 +1,11 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {Subscription} from 'rxjs';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {WNode, Workflow} from '../../../../model/workflow.model';
-import {WorkflowNodeRun} from '../../../../model/workflow.run.model';
-import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import { Component, Input, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { PipelineStatus } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { WNode, Workflow } from '../../../../model/workflow.model';
+import { WorkflowNodeRun } from '../../../../model/workflow.run.model';
+import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-wnode-pipeline',

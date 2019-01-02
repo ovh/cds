@@ -1,28 +1,22 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {Subscription} from 'rxjs';
-import {PermissionValue} from '../../../../model/permission.model';
-import {Project} from '../../../../model/project.model';
-import {
-    WNode,
-    WNodeJoin,
-    WNodeTrigger,
-    WNodeType,
-    Workflow,
-    WorkflowPipelineNameImpact
-} from '../../../../model/workflow.model';
-import {PipelineStore, WorkflowCoreService, WorkflowEventStore, WorkflowStore} from '../../../../service/services.module';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {ToastService} from '../../../toast/ToastService';
-import {WorkflowNodeConditionsComponent} from '../../modal/conditions/node.conditions.component';
-import {WorkflowNodeContextComponent} from '../../modal/context/workflow.node.context.component';
-import {WorkflowDeleteNodeComponent} from '../../modal/delete/workflow.node.delete.component';
-import {WorkflowHookModalComponent} from '../../modal/hook-modal/hook.modal.component';
-import {WorkflowNodeOutGoingHookEditComponent} from '../../modal/outgoinghook-edit/outgoinghook.edit.component';
-import {WorkflowTriggerComponent} from '../../modal/trigger/workflow.trigger.component';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { cloneDeep } from 'lodash';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { Subscription } from 'rxjs';
+import { first } from 'rxjs/operators';
+import { PermissionValue } from '../../../../model/permission.model';
+import { Project } from '../../../../model/project.model';
+import { WNode, WNodeJoin, WNodeTrigger, WNodeType, Workflow, WorkflowPipelineNameImpact } from '../../../../model/workflow.model';
+import { PipelineStore, WorkflowCoreService, WorkflowEventStore, WorkflowStore } from '../../../../service/services.module';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import { ToastService } from '../../../toast/ToastService';
+import { WorkflowNodeConditionsComponent } from '../../modal/conditions/node.conditions.component';
+import { WorkflowNodeContextComponent } from '../../modal/context/workflow.node.context.component';
+import { WorkflowDeleteNodeComponent } from '../../modal/delete/workflow.node.delete.component';
+import { WorkflowHookModalComponent } from '../../modal/hook-modal/hook.modal.component';
+import { WorkflowNodeOutGoingHookEditComponent } from '../../modal/outgoinghook-edit/outgoinghook.edit.component';
+import { WorkflowTriggerComponent } from '../../modal/trigger/workflow.trigger.component';
 
 @Component({
     selector: 'app-workflow-sidebar-wnode-edit',
@@ -137,7 +131,9 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
     openEditContextModal(): void {
        this.pipelineSubscription =
             this._pipelineStore.getPipelines(this.project.key,
-                this.workflow.pipelines[this.node.context.pipeline_id].name).subscribe(pips => {
+                this.workflow.pipelines[this.node.context.pipeline_id].name)
+                .pipe(first())
+                .subscribe(pips => {
                 if (pips.get(this.project.key + '-' + this.workflow.pipelines[this.node.context.pipeline_id].name)) {
                     setTimeout(() => {
                         this.workflowContext.show();

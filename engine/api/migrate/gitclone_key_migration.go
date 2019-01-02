@@ -23,15 +23,23 @@ var badKey int64
 
 // GitClonePrivateKey is temporary code
 func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
+	store.Publish(sdk.MaintenanceQueueName, "true")
+	defer store.Publish(sdk.MaintenanceQueueName, "false")
+
+	return migrateGitClonePrivateKey(DBFunc, store)
+}
+
+func migrateGitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
+	db := DBFunc()
 	log.Info("GitClonePrivateKey> Begin")
 	defer log.Info("GitClonePrivateKey> End with key errors %d", badKey)
 
-	pipelines, err := action.GetPipelineUsingAction(DBFunc(), sdk.GitCloneAction)
+	pipelines, err := action.GetPipelineUsingAction(db, sdk.GitCloneAction)
 	if err != nil {
 		return err
 	}
-	db := DBFunc()
 
+	log.Info("GitClonePrivateKey> Found %d pipelines", len(pipelines))
 	for _, p := range pipelines {
 		log.Debug("GitClonePrivateKey> Migrate %s/%s", p.ProjKey, p.PipName)
 
@@ -77,7 +85,7 @@ func GitClonePrivateKey(DBFunc func() *gorp.DbMap, store cache.Store) error {
 func migrateActionGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p action.PipelineUsingAction) error {
 	pip, err := pipeline.LoadPipeline(db, p.ProjKey, p.PipName, true)
 	if err != nil {
-		return sdk.WrapError(err, "unable to load pipeline")
+		return sdk.WrapError(err, "unable to load pipeline project %s and pipeline name %s: %+v", p.ProjKey, p.PipName, p)
 	}
 
 	//Override the appname with the application in workflow node context if needed

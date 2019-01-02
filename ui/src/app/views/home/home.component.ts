@@ -1,12 +1,12 @@
-import {Component} from '@angular/core';
-import {Broadcast} from 'app/model/broadcast.model';
-import {NavbarProjectData} from 'app/model/navbar.model';
-import {Subscription} from 'rxjs';
-import {User} from '../../model/user.model';
-import {AuthentificationStore} from '../../service/auth/authentification.store';
-import {BroadcastStore} from '../../service/broadcast/broadcast.store';
-import {NavbarService} from '../../service/navbar/navbar.service';
-import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
+import { Component } from '@angular/core';
+import { Broadcast } from 'app/model/broadcast.model';
+import { NavbarProjectData } from 'app/model/navbar.model';
+import { Subscription } from 'rxjs';
+import { User } from '../../model/user.model';
+import { AuthentificationStore } from '../../service/auth/authentification.store';
+import { BroadcastStore } from '../../service/broadcast/broadcast.store';
+import { NavbarService } from '../../service/navbar/navbar.service';
+import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-home',
@@ -26,8 +26,8 @@ export class HomeComponent {
     _broadcastSub: Subscription;
 
     constructor(
-      private _navbarService: NavbarService,
-      private _broadcastService: BroadcastStore,
+        private _navbarService: NavbarService,
+        private _broadcastService: BroadcastStore,
         private _authStore: AuthentificationStore
     ) {
         this.user = this._authStore.getUser();
