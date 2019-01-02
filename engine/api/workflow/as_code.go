@@ -65,6 +65,10 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 				Message:    "",
 			},
 		},
+		User: sdk.User{
+			Username: u.Username,
+			Email:    u.Email,
+		},
 	}
 
 	if app.RepositoryStrategy.ConnectionType == "ssh" {

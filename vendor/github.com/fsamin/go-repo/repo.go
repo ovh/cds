@@ -28,9 +28,8 @@ func Clone(path, url string, opts ...Option) (Repo, error) {
 	if r.verbose {
 		r.log("Cloning %s\n", r.url)
 	}
-	stdout, err := r.runCmd("git", "clone", r.url, ".")
+	_, err := r.runCmd("git", "clone", r.url, ".")
 	if err != nil {
-	  r.log("%s", stdout)
 		return r, err
 	}
 	return r, nil
@@ -335,7 +334,12 @@ func (r Repo) Remove(s ...string) error {
 }
 
 // Commit the index
-func (r Repo) Commit(m string) error {
+func (r Repo) Commit(m string, opts ...Option) error {
+	for _, f := range opts {
+		if err := f(&r); err != nil {
+			return err
+		}
+	}
 	out, err := r.runCmd("git", "commit", "-m", strconv.Quote(m))
 	if err != nil {
 		return fmt.Errorf("command 'git commit' failed: %v (%s)", err, out)

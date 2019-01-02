@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/fsamin/go-repo"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -69,7 +71,7 @@ func (s *Service) processPush(op *sdk.Operation) error {
 
 		if _, err := io.Copy(fi, bytes.NewReader(v)); err != nil {
 			log.Error("Repositories> processPush> Writing file %s> [%s] error %v", fname, op.UUID, err)
-			fi.Close()
+			fi.Close() // nolint
 			return err
 		}
 		if err := fi.Close(); err != nil {
@@ -83,7 +85,11 @@ func (s *Service) processPush(op *sdk.Operation) error {
 	}
 
 	// Commit files
-	if err := gitRepo.Commit(op.Setup.Push.Message); err != nil {
+	opts := make([]repo.Option, 0, 1)
+	if op.User.Username != "" && op.User.Email != "" {
+		opts = append(opts, repo.WithUser(op.User.Email, op.User.Username))
+	}
+	if err := gitRepo.Commit(op.Setup.Push.Message, opts...); err != nil {
 		log.Error("Repositories> processPush> Commit> [%s] error %v", op.UUID, err)
 		return err
 	}
