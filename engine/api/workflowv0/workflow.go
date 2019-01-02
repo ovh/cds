@@ -7,48 +7,36 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/sdk"
 )
 
 // GetWorkflowStatus Get workflow updated builds status + scheduler  executions
-func GetWorkflowStatus(db gorp.SqlExecutor, store cache.Store, projectkey, appName string, user *sdk.User, branchName, remote string, version int64) ([]sdk.PipelineBuild, []sdk.PipelineScheduler, []sdk.Hook, error) {
+func GetWorkflowStatus(db gorp.SqlExecutor, store cache.Store, projectkey, appName string, user *sdk.User, branchName, remote string, version int64) ([]sdk.PipelineBuild, error) {
 	cdPipelines, err := LoadCDTree(db, store, projectkey, appName, user, branchName, remote, version)
 	if err != nil {
-		return nil, nil, nil, sdk.WrapError(err, "Cannot load workflow")
+		return nil, sdk.WrapError(err, "Cannot load workflow")
 	}
 
 	var pbs []sdk.PipelineBuild
-	var schedulers []sdk.PipelineScheduler
-	var hooks []sdk.Hook
-
 	for _, cdp := range cdPipelines {
-		getWorkflowStatus(&pbs, &schedulers, &hooks, cdp)
+		getWorkflowStatus(&pbs, cdp)
 	}
 
-	return pbs, schedulers, hooks, nil
+	return pbs, nil
 }
 
-func getWorkflowStatus(pbs *[]sdk.PipelineBuild, schedulers *[]sdk.PipelineScheduler, hooks *[]sdk.Hook, cdPip sdk.CDPipeline) {
+func getWorkflowStatus(pbs *[]sdk.PipelineBuild, cdPip sdk.CDPipeline) {
 	if len(cdPip.Application.PipelinesBuild) > 0 {
 		*pbs = append(*pbs, cdPip.Application.PipelinesBuild...)
 	} else if cdPip.Pipeline.LastPipelineBuild != nil {
 		*pbs = append(*pbs, *cdPip.Pipeline.LastPipelineBuild)
 	}
 
-	if cdPip.Schedulers != nil {
-		*schedulers = append(*schedulers, cdPip.Schedulers...)
-	}
-
-	if cdPip.Hooks != nil {
-		*hooks = append(*hooks, cdPip.Hooks...)
-	}
 	for _, sub := range cdPip.SubPipelines {
-		getWorkflowStatus(pbs, schedulers, hooks, sub)
+		getWorkflowStatus(pbs, sub)
 	}
 }
 
@@ -64,94 +52,6 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 			envID, envName,
 			hasHook, hasScheduler, hasPoller, hasChild
 		FROM
-		      -- SELECT FROM scheduler
-		      (
-			SELECT project.id as projID, project.name as projName,
-			     s.application_id as appID, application.name as appName, application.repo_fullname as appRepoName,
-			     s.pipeline_id as pipID, pipeline.name as pipName, pipeline.type as pipType,
-			     s.environment_id as envID, environment.name as envName,
-			     false as hasHook, true as hasScheduler, false as hasPoller, true as hasChild
-			FROM pipeline_scheduler s
-			JOIN application ON s.application_id = application.id
-			JOIN pipeline ON s.pipeline_id = pipeline.id
-			JOIN project ON project.id = application.project_id
-			JOIN environment ON environment.id = s.environment_id
-			WHERE application.name = $2 and project.projectkey = $1
-			-- AND NOT TRIGGERED
-			AND s.pipeline_id || '-' || s.environment_id  NOT IN (
-				SELECT pipID || '-' || envID
-				FROM
-				(
-					SELECT src_pipeline_id as pipID, src_environment_id as envID
-					FROM pipeline_trigger
-					WHERE src_pipeline_id = s.pipeline_id AND src_environment_id = s.environment_id AND src_application_id = s.application_id
-				UNION
-					SELECT dest_pipeline_id as pipID, dest_environment_id as envID
-					FROM pipeline_trigger
-					WHERE dest_pipeline_id = s.pipeline_id AND dest_environment_id = s.environment_id AND src_application_id = s.application_id
-				) a
-			)
-		     ) withScheduler
-
-		     UNION
-		     -- SELECT FROM HOOK
-		     (
-			SELECT project.id as projID, project.name as projName,
-			     h.application_id as appID, application.name as appName, application.repo_fullname as appRepoName,
-			     h.pipeline_id as pipID, pipeline.name as pipName, pipeline.type as pipType,
-			     environment.id as envID, environment.name as envName,
-			     true as hasHook, false as hasScheduler, false as hasPoller, true as hasChild
-			FROM hook h
-			JOIN application ON h.application_id = application.id
-			JOIN pipeline ON h.pipeline_id = pipeline.id
-			JOIN project ON project.id = application.project_id
-			JOIN environment ON environment.id = 1
-			WHERE application.name = $2 and project.projectkey = $1
-			-- AND NOT TRIGGERED
-			AND h.pipeline_id || '-' || environment.id  NOT IN (
-				SELECT pipID || '-' || envID
-				FROM
-				(
-					SELECT src_pipeline_id as pipID, src_environment_id as envID
-					FROM pipeline_trigger
-					WHERE src_pipeline_id = h.pipeline_id AND src_environment_id = environment.id AND src_application_id = h.application_id
-				UNION
-					SELECT dest_pipeline_id as pipID, dest_environment_id as envID
-					FROM pipeline_trigger
-					WHERE dest_pipeline_id = h.pipeline_id AND dest_environment_id = environment.id AND src_application_id = h.application_id
-				) a
-			)
-		     )
-		     UNION
-		     -- SELECT FROM POLLER
-		     (
-			SELECT project.id as projID, project.name as projName,
-			     p.application_id as appID, application.name as appName, application.repo_fullname as appRepoName,
-			     p.pipeline_id as pipID, pipeline.name as pipName, pipeline.type as pipType,
-			     environment.id as envID, environment.name as envName,
-			     false as hasHook, false as hasScheduler, true as hasPoller, true as hasChild
-			FROM poller p
-			JOIN application ON p.application_id = application.id
-			JOIN pipeline ON p.pipeline_id = pipeline.id
-			JOIN project ON project.id = application.project_id
-			JOIN environment ON environment.id = 1
-			WHERE application.name = $2 and project.projectkey = $1
-			-- AND NOT TRIGGERED
-			AND p.pipeline_id || '-' || environment.id  NOT IN (
-				SELECT pipID || '-' || envID
-				FROM
-				(
-					SELECT src_pipeline_id as pipID, src_environment_id as envID
-					FROM pipeline_trigger
-					WHERE src_pipeline_id = p.pipeline_id AND src_environment_id = environment.id AND src_application_id = p.application_id
-				UNION
-					SELECT dest_pipeline_id as pipID, dest_environment_id as envID
-					FROM pipeline_trigger
-					WHERE dest_pipeline_id = p.pipeline_id AND dest_environment_id = environment.id AND src_application_id = p.application_id
-				) a
-			)
-		     )
-		     UNION
 		     -- ROOT PIPELINE WITH NO TRIGGER
 		     (
 			SELECT project.id as projID, project.name as projName,
@@ -167,9 +67,6 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 			JOIN application ON application.id = application_pipeline.application_id
 			JOIN project ON project.id = application.project_id
 			JOIN environment ON environment.id = 1
-			LEFT JOIN pipeline_scheduler sc ON sc.application_id = application.id AND sc.pipeline_id = pipeline.id AND sc.environment_id = 1
-			LEFT JOIN hook h ON h.application_id = application.id AND h.pipeline_id = pipeline.id
-			LEFT JOIN poller p ON p.application_id = application.id AND p.pipeline_id = pipeline.id
 			WHERE application.name = $2 and project.projectkey = $1 AND pipeline.id NOT IN (
 				select src_pipeline_id
 				FROM pipeline_trigger
@@ -214,9 +111,6 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 					WHERE project.projectkey = $1 AND application.name = $2
 				)
 			) roots
-			LEFT JOIN pipeline_scheduler sc ON sc.application_id = appID AND sc.pipeline_id = pipID AND sc.environment_id = envID
-			LEFT JOIN hook h ON h.application_id = appID AND h.pipeline_id = pipID
-			LEFT JOIN poller p ON p.application_id = appID AND p.pipeline_id = pipID
 			WHERE (
 				dis not in (
 					select
@@ -359,12 +253,6 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 				lastTree = &cdTrees[len(cdTrees)-1]
 			}
 		}
-
-		if lastTree != nil {
-			if err := fetchTriggers(db, lastTree, hasScheduler, hasPoller, hasHook); err != nil {
-				return nil, sdk.WrapError(err, "Cannot fetch triggers")
-			}
-		}
 	}
 	return cdTrees, nil
 }
@@ -437,9 +325,6 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 		CASE WHEN COALESCE (count(h.id), 0)>0 THEN true ELSE false END as hasHooks,
 		CASE WHEN COALESCE (count(p.application_id), 0)>0 THEN true ELSE false END as hasPoller
 	FROM parent
-	LEFT JOIN pipeline_scheduler sc ON sc.application_id = dest_application_id AND sc.pipeline_id = dest_pipeline_id AND sc.environment_id = dest_environment_id
-	LEFT JOIN hook h ON h.application_id = dest_application_id AND h.pipeline_id = dest_pipeline_id
-	LEFT JOIN poller p ON p.application_id = dest_application_id AND p.pipeline_id = dest_pipeline_id
 	GROUP BY
 		parent.id,
 		src_application_id, dest_application_id, srcAppName, destAppName,
@@ -530,10 +415,6 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 				return sdk.WrapError(err, "Cannot unmarshal trigger prerequisite")
 			}
 
-			if err := fetchTriggers(db, &child, hasSchedulers, hasPoller, hasHooks); err != nil {
-				return sdk.WrapError(err, "Cannot fetch trigger")
-			}
-
 			listTrigger = append(listTrigger, child)
 		}
 	}
@@ -569,22 +450,4 @@ func buildTreeOrder(parent *sdk.CDPipeline, listChild []sdk.CDPipeline, user *sd
 		}
 	}
 	return *parent
-}
-
-func fetchTriggers(db gorp.SqlExecutor, workflowItem *sdk.CDPipeline, hasSchedulers, hasPoller, hasHooks bool) error {
-	if hasHooks {
-		hooks, errH := hook.LoadPipelineHooks(db, workflowItem.Pipeline.ID, workflowItem.Application.ID)
-		if errH != nil {
-			return sdk.WrapError(errH, "fetchTriggers> Cannot load hooks for application %s [%d] and pipeline %s [%d]: %s", workflowItem.Application.Name, workflowItem.Application.ID, workflowItem.Pipeline.Name, workflowItem.Pipeline.ID, errH)
-		}
-		workflowItem.Hooks = hooks
-	}
-	if hasSchedulers {
-		schedulers, errS := scheduler.GetByApplicationPipeline(db, &workflowItem.Application, &workflowItem.Pipeline)
-		if errS != nil {
-			return sdk.WrapError(errS, "fetchTriggers> Cannot load schedulers for application %s [%d] and pipeline %s [%d]: %s", workflowItem.Application.Name, workflowItem.Application.ID, workflowItem.Pipeline.Name, workflowItem.Pipeline.ID, errS)
-		}
-		workflowItem.Schedulers = schedulers
-	}
-	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -13,14 +12,10 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/hook"
-	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -80,9 +75,9 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"project_key":          proj.Key,
 			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
 			"repositories_manager": rmName,
-			"url":           url,
-			"request_token": token,
-			"username":      getUser(ctx).Username,
+			"url":                  url,
+			"request_token":        token,
+			"username":             getUser(ctx).Username,
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
@@ -463,25 +458,12 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
-		rmName := vars["name"]
 		db := api.mustDB()
 		u := getUser(ctx)
 
-		app, errl := application.LoadByName(db, api.Cache, projectKey, appName, u, application.LoadOptions.WithHooks)
+		app, errl := application.LoadByName(db, api.Cache, projectKey, appName, u)
 		if errl != nil {
 			return sdk.WrapError(errl, "detachRepositoriesManager> error on load project %s", projectKey)
-		}
-
-		//Load the repositoriesManager for the project
-		rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s: %s", projectKey, rmName, err)
-		}
-
-		//Get an authorized Client
-		client, err := repositoriesmanager.AuthorizedClient(ctx, db, api.Cache, rm)
-		if err != nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
 
 		//Remove all the things in a transaction
@@ -493,28 +475,6 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 
 		if err := repositoriesmanager.DeleteForApplication(tx, app); err != nil {
 			return sdk.WrapError(err, "Cannot delete for application")
-		}
-
-		//TODO: to delete after DEPRECATED workflows are deleted
-		for _, h := range app.Hooks {
-			s := api.Config.URL.API + hook.HookLink
-			link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
-
-			vcsHook := sdk.VCSHook{
-				Name:     rm.Name,
-				URL:      link,
-				Method:   "GET",
-				Workflow: false,
-			}
-
-			if err := client.DeleteHook(ctx, rm.Name, vcsHook); err != nil {
-				log.Warning("detachRepositoriesManager> Cannot delete hook on stash: %s", err)
-				//do no return, try to delete the hook in database
-			}
-
-			if err := hook.DeleteHook(tx, h.ID); err != nil {
-				return sdk.WrapError(err, "Cannot get hook")
-			}
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -573,157 +533,6 @@ func (api *API) detachRepositoriesManagerHandler() service.Handler {
 		}
 
 		event.PublishApplicationRepositoryDelete(projectKey, appName, app.VCSServer, app.RepositoryFullname, u)
-
-		return service.WriteJSON(w, app, http.StatusOK)
-	}
-}
-
-func (api *API) addHookOnRepositoriesManagerHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		appName := vars["permApplicationName"]
-		rmName := vars["name"]
-
-		var data map[string]string
-		if err := service.UnmarshalBody(r, &data); err != nil {
-			return err
-		}
-
-		repoFullname := data["repository_fullname"]
-		pipelineName := data["pipeline_name"]
-
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
-		if errproj != nil {
-			return errproj
-		}
-
-		app, errla := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
-		if errla != nil {
-			return sdk.ErrApplicationNotFound
-		}
-
-		pipeline, errl := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
-		if errl != nil {
-			return sdk.ErrPipelineNotFound
-		}
-
-		if !permission.AccessToPipeline(projectKey, sdk.DefaultEnv.Name, pipeline.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
-			return sdk.WrapError(sdk.ErrForbidden, "You don't have enough right on this pipeline %s", pipeline.Name)
-		}
-
-		//Load the repositoriesManager for the project
-		rm := repositoriesmanager.GetProjectVCSServer(proj, rmName)
-		if rm == nil {
-			return sdk.WrapError(sdk.ErrNoReposManager, "Error loading %s-%s", projectKey, rmName)
-		}
-
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "Cannot start transaction")
-		}
-		defer tx.Rollback()
-
-		if _, err := hook.CreateHook(tx, api.Cache, proj, rmName, repoFullname, app, pipeline); err != nil {
-			return sdk.WrapError(err, "Cannot create hook")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
-		}
-
-		var errlah error
-		app.Hooks, errlah = hook.LoadApplicationHooks(api.mustDB(), app.ID)
-		if errlah != nil {
-			return sdk.WrapError(errlah, "addHookOnRepositoriesManagerHandler> cannot load application hooks")
-		}
-
-		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
-		if errW != nil {
-			return sdk.WrapError(errW, "addHookOnRepositoriesManagerHandler> Cannot load workflow")
-		}
-
-		return service.WriteJSON(w, app, http.StatusCreated)
-	}
-}
-
-func (api *API) deleteHookOnRepositoriesManagerHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		appName := vars["permApplicationName"]
-		hookIDString := vars["hookId"]
-
-		hookID, errparse := strconv.ParseInt(hookIDString, 10, 64)
-		if errparse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "deleteHookOnRepositoriesManagerHandler> Unable to parse hook id")
-		}
-
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "deleteHookOnRepositoriesManagerHandler> unable to load project")
-		}
-
-		app, errload := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
-		if errload != nil {
-			return sdk.WrapError(errload, "deleteHookOnRepositoriesManagerHandler> Application %s/%s not found ", projectKey, appName)
-		}
-
-		h, errhook := hook.LoadHook(api.mustDB(), hookID)
-		if errhook != nil {
-			return sdk.WrapError(errhook, "deleteHookOnRepositoriesManagerHandler> Unable to load hook %d ", hookID)
-		}
-
-		tx, errtx := api.mustDB().Begin()
-		if errtx != nil {
-			return sdk.WrapError(errtx, "deleteHookOnRepositoriesManagerHandler> Unable to start transaction")
-		}
-		defer tx.Rollback()
-
-		if errdelete := hook.DeleteHook(tx, h.ID); errdelete != nil {
-			return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Unable to delete hook %d", h.ID)
-		}
-
-		if errtx := tx.Commit(); errtx != nil {
-			return sdk.WrapError(errtx, "deleteHookOnRepositoriesManagerHandler> Unable to commit transaction")
-		}
-
-		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
-		if errW != nil {
-			return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
-		}
-
-		rm := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-		if rm == nil {
-			return sdk.ErrNoReposManager
-		}
-
-		client, errauth := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, rm)
-		if errauth != nil {
-			return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, app.VCSServer)
-		}
-
-		t := strings.Split(app.RepositoryFullname, "/")
-		if len(t) != 2 {
-			return sdk.WrapError(sdk.ErrRepoNotFound, "deleteHookOnRepositoriesManagerHandler> Application %s repository fullname is not valid %s", app.Name, app.RepositoryFullname)
-		}
-
-		s := api.Config.URL.API + hook.HookLink
-		log.Info("Will delete hook %s", h.UID)
-		link := fmt.Sprintf(s, h.UID, t[0], t[1])
-
-		vcsHook := sdk.VCSHook{
-			Name:     rm.Name,
-			URL:      link,
-			Method:   "GET",
-			Workflow: false,
-		}
-
-		if errdelete := client.DeleteHook(ctx, app.RepositoryFullname, vcsHook); errdelete != nil {
-			return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash")
-		}
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}

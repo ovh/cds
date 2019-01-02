@@ -17,7 +17,7 @@ import (
 
 const appRows = `
 application.id,
-application.name,
+application.name, 
 application.project_id,
 application.repo_fullname,
 application.repositories_manager_id,
@@ -40,7 +40,6 @@ var LoadOptions = struct {
 	WithPipelines                  LoadOptionFunc
 	WithTriggers                   LoadOptionFunc
 	WithGroups                     LoadOptionFunc
-	WithHooks                      LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithClearKeys                  LoadOptionFunc
 	WithDeploymentStrategies       LoadOptionFunc
@@ -54,7 +53,6 @@ var LoadOptions = struct {
 	WithPipelines:                  &loadPipelines,
 	WithTriggers:                   &loadTriggers,
 	WithGroups:                     &loadGroups,
-	WithHooks:                      &loadHooks,
 	WithKeys:                       &loadKeys,
 	WithClearKeys:                  &loadClearKeys,
 	WithDeploymentStrategies:       &loadDeploymentStrategies,

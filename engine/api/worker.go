@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -195,12 +194,6 @@ func DisableWorker(db *gorp.DbMap, id string) error {
 		// Worker is awol while building !
 		// We need to restart this action
 		switch jobType.String {
-		case sdk.JobTypePipeline:
-			if err := pipeline.RestartPipelineBuildJob(tx, jobID.Int64); err != nil {
-				log.Error("DisableWorker[%s]> Cannot restart pipeline build job: %v", name, err)
-			} else {
-				log.Info("DisableWorker[%s]> PipelineBuildJob %d restarted after crash", name, jobID.Int64)
-			}
 		case sdk.JobTypeWorkflowNode:
 			wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)
 			if errL == nil && wNodeJob.Retry < 3 {

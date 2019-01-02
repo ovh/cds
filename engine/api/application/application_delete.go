@@ -69,18 +69,6 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 		return sdk.WrapError(err, "Cannot delete hook")
 	}
 
-	// Delete poller execution
-	query = `DELETE FROM poller_execution WHERE application_id = $1`
-	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "Cannot delete poller execution")
-	}
-
-	// Delete poller
-	query = `DELETE FROM poller WHERE application_id = $1`
-	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "Cannot delete poller")
-	}
-
 	// Delete triggers
 	if err := trigger.DeleteApplicationTriggers(db, applicationID); err != nil {
 		return err

@@ -44,7 +44,6 @@ func grpcInit(dbConnectionFactory *database.DBConnectionFactory, addr string, po
 
 	grpcServer := grpc.NewServer(opts...)
 
-	cdsgrpc.RegisterBuildLogServer(grpcServer, grpcHandlers)
 	cdsgrpc.RegisterWorkflowQueueServer(grpcServer, grpcHandlers)
 
 	return grpcServer.Serve(lis)
