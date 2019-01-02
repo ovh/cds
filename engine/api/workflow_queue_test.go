@@ -908,12 +908,8 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	// Call post coverage report handler
 	// Prepare request
-
-	t.Logf("%+v", w.WorkflowData.Node.ID)
-	t.Logf("%+v", w.Root.ID)
-	t.Logf("%+v", wrDB.WorkflowNodeRuns)
 	vars := map[string]string{
-		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.Root.ID][0].Stages[0].RunJobs[0].ID),
+		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID),
 	}
 
 	ctx := testRunWorkflowCtx{
@@ -924,8 +920,8 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		run:      wrDB,
 	}
 	testRegisterWorker(t, api, router, &ctx)
-	ctx.worker.ActionBuildID = wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
+	ctx.worker.ActionBuildID = wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
+	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
 
 	request := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: []sdk.Vulnerability{
