@@ -693,7 +693,7 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	wg.Wait()
 
 	// Update stages from node run
-	stopWorkflowNodeRunStages(nodeRun)
+	stopWorkflowNodeRunStages(dbFunc(), nodeRun)
 
 	nodeRun.Status = sdk.StatusStopped.String()
 	nodeRun.Done = time.Now()
@@ -761,12 +761,19 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 }
 
 // stopWorkflowNodeRunStages mark to stop all stages and step status in struct
-func stopWorkflowNodeRunStages(nodeRun *sdk.WorkflowNodeRun) {
+func stopWorkflowNodeRunStages(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun) {
 	// Update stages from node run
 	for iS := range nodeRun.Stages {
 		stag := &nodeRun.Stages[iS]
 		for iR := range stag.RunJobs {
 			runj := &stag.RunJobs[iR]
+			spawnInfos, err := LoadNodeRunJobInfo(db, runj.ID)
+			if err != nil {
+				log.Warning("unable to load spawn infos for runj ID: %d", runj.ID)
+			} else {
+				runj.SpawnInfos = spawnInfos
+			}
+
 			if !sdk.StatusIsTerminated(runj.Status) {
 				runj.Status = sdk.StatusStopped.String()
 				runj.Done = time.Now()
