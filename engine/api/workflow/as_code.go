@@ -99,14 +99,14 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 // UpdateWorkflowAsCodeResult pulls repositories operation and the create pullrequest + update workflow
 func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, ope *sdk.Operation, wf *sdk.Workflow, u *sdk.User) {
 	counter := 0
+	defer func() {
+		store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
+	}()
 	for {
 		counter++
 		if err := GetRepositoryOperation(ctx, db, ope); err != nil {
 			log.Error("unable to get repository operation %s: %v", ope.UUID, err)
 			continue
-		}
-		if ope.Status == sdk.OperationStatusError || ope.Status == sdk.OperationStatusDone {
-			store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 		}
 
 		if ope.Status == sdk.OperationStatusDone {
@@ -114,11 +114,15 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
 			if vcsServer == nil {
 				log.Error("postWorkflowAsCodeHandler> No vcsServer found")
+				ope.Status = sdk.OperationStatusError
+				ope.Error = "No vcsServer found"
 				return
 			}
 			client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
 			if errclient != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to create repositories manager client: %v", errclient)
+				ope.Status = sdk.OperationStatusError
+				ope.Error = "unable to create repositories manager client"
 				return
 			}
 			request := sdk.VCSPullRequest{
@@ -138,7 +142,9 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			}
 			pr, err := client.PullRequestCreate(ctx, app.RepositoryFullname, request)
 			if err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to create pull request")
+				log.Error("postWorkflowAsCodeHandler> unable to create pull request: %v", err)
+				ope.Status = sdk.OperationStatusError
+				ope.Error = "unable to create pull request"
 				return
 			}
 			ope.Setup.Push.PRLink = pr.URL
@@ -165,37 +171,45 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			oldW, err := LoadByID(db, store, p, wf.ID, u, LoadOptions{})
 			if err != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to load workflow %s: %v", wf.Name, err)
+				ope.Status = sdk.OperationStatusError
+				ope.Error = "unable to load workflow"
 				return
 			}
 
 			tx, err := db.Begin()
 			if err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to start transaction")
+				log.Error("postWorkflowAsCodeHandler> unable to start transaction: %v", err)
+				ope.Status = sdk.OperationStatusError
+				ope.Error = "unable to start transaction"
 				return
 			}
 			defer tx.Rollback() // nolint
 			if err := Update(ctx, tx, store, wf, oldW, p, u); err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to update workflow")
+				log.Error("postWorkflowAsCodeHandler> unable to update workflow: %v", err)
+				ope.Status = sdk.OperationStatusError
+				ope.Error = "unable to update workflow"
 				return
 			}
 
 			if errHr := HookRegistration(ctx, tx, store, oldW, *wf, p); errHr != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to update hook registration: %v", errHr)
+				ope.Status = sdk.OperationStatusError
+				ope.Error = "unable to update hook"
 				return
 			}
 
 			if err := tx.Commit(); err != nil {
-				log.Error("postWorkflowAsCodeHandler> unable to commit workflow")
+				log.Error("postWorkflowAsCodeHandler> unable to commit workflow: %v", err)
+				ope.Status = sdk.OperationStatusError
+				ope.Error = "unable to commit transaction"
 				return
 			}
-			store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 			return
 		}
 
 		if counter == 30 {
 			ope.Status = sdk.OperationStatusError
 			ope.Error = "Unable to enable workflow as code"
-			store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 			break
 		}
 		time.Sleep(2 * time.Second)
