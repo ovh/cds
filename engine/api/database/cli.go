@@ -2,9 +2,16 @@ package database
 
 import (
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/mholt/archiver"
 	"github.com/olekukonko/tablewriter"
 	"github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
@@ -23,8 +30,17 @@ var DBCmd = &cobra.Command{
 var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade schema",
-	Long:  "Migrates the database to the most recent version available.",
-	Run:   upgradeCmdFunc,
+	Long: `Migrates the database to the most recent version available.
+
+	Example of usage:
+
+	engine database upgrade --db-password=your-password --db-sslmode=disable --db-name=cds --migrate-dir=./sql
+
+	If the directory --migrate-dir is not up to date with the current version, this
+	directory will be automatically updated with the release from https://github.com/ovh/cds/releases
+
+	`,
+	Run: upgradeCmdFunc,
 }
 
 var downgradeCmd = &cobra.Command{
@@ -85,8 +101,92 @@ type statusRow struct {
 }
 
 func upgradeCmdFunc(cmd *cobra.Command, args []string) {
+	source := migrate.FileMigrationSource{
+		Dir: sqlMigrateDir,
+	}
+
+	migrations, err := source.FindMigrations()
+	if err != nil {
+		sdk.Exit("Error: %s\n", err)
+	}
+
+	if sdk.VERSION != "snapshot" {
+		nbMigrateOnThisVersion, err := strconv.Atoi(sdk.DBMIGRATE)
+		if err == nil { // no err -> it's a real release
+			fmt.Printf("There is %d migrate files locally. Current engine needs %d files\n", len(migrations), nbMigrateOnThisVersion)
+			if nbMigrateOnThisVersion > len(migrations) {
+				fmt.Printf("This version %s should contains %d migrate files.\n", sdk.VERSION, nbMigrateOnThisVersion)
+				downloadSQLTarGz()
+				migrations, err := source.FindMigrations()
+				if err != nil {
+					sdk.Exit("Error: %s\n", err)
+				}
+				fmt.Printf("sql.tar.gz downloaded, there is now %d migrate files locally\n", len(migrations))
+			}
+		} else {
+			sdk.Exit("Invalid compilation flag DBMIGRATE")
+		}
+	}
+
 	if err := ApplyMigrations(migrate.Up, sqlMigrateDryRun, sqlMigrateLimitUp); err != nil {
 		sdk.Exit("Error: %s\n", err)
+	}
+}
+
+// downloadSQLTarGz downloads sql.tar.gz from github release corresponding to the current engine version
+// check status 200 on download
+// then write sql.tar.gz file in tmpdir
+// then unzip sql.tar.gz file
+// then move all sql file to sqlMigrateDir directory
+func downloadSQLTarGz() {
+	currentTag := sdk.VERSION[:strings.LastIndex(sdk.VERSION, "+")]
+	urlTarGZ := fmt.Sprintf("https://github.com/ovh/cds/releases/download/%s/sql.tar.gz", currentTag)
+	fmt.Printf("Getting sql.tar.gz from github on %s...\n", urlTarGZ)
+
+	resp, err := http.Get(urlTarGZ)
+	if err != nil {
+		sdk.Exit("Error while getting sql.tar.gz from Github: %s\n", err)
+	}
+	defer resp.Body.Close()
+
+	if err := sdk.CheckContentTypeBinary(resp); err != nil {
+		sdk.Exit(err.Error())
+	}
+
+	if resp.StatusCode != 200 {
+		sdk.Exit("Error http code: %d, url called: %s\n", resp.StatusCode, urlTarGZ)
+	}
+
+	tmpfile, err := ioutil.TempFile(os.TempDir(), "sql.tar.gz")
+	if err != nil {
+		sdk.Exit(err.Error())
+	}
+	defer tmpfile.Close()
+
+	if _, err = io.Copy(tmpfile, resp.Body); err != nil {
+		sdk.Exit("Error on creating file: %v", err.Error())
+	}
+
+	dest := tmpfile.Name() + "extract"
+	if err := archiver.TarGz.Open(tmpfile.Name(), dest); err != nil {
+		sdk.Exit("Unarchive sql.tar.gz failed: %v", err)
+	}
+	// the directory dest/sql/ -> contains all sql files
+	fmt.Printf("Unarchive to %s\n", dest)
+
+	dirFiles := dest + "/sql"
+	files, err := ioutil.ReadDir(dirFiles)
+	if err != nil {
+		sdk.Exit("Error on readDir %s", dirFiles)
+	}
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), ".sql") {
+			src := dirFiles + "/" + f.Name()
+			dest := sqlMigrateDir + "/" + filepath.Base(f.Name())
+			if err := os.Rename(src, dest); err != nil {
+				sdk.Exit("Error on move %s to %s err:%v", src, dest, err)
+			}
+		}
 	}
 }
 
