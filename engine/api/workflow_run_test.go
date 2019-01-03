@@ -118,7 +118,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		test.NoError(t, errMR)
 	}
 
-	_, _, errMR2 := workflow.ManualRunFromNode(context.TODO(), db, api.Cache, proj, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.RootID)
+	_, _, errMR2 := workflow.ManualRunFromNode(context.TODO(), db, api.Cache, proj, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.WorkflowData.Node.ID)
 	if errMR2 != nil {
 		test.NoError(t, errMR2)
 	}
@@ -128,7 +128,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
 		"number":           fmt.Sprintf("%d", wr.Number),
-		"nodeID":           fmt.Sprintf("%d", wr.Workflow.RootID),
+		"nodeID":           fmt.Sprintf("%d", wr.Workflow.WorkflowData.Node.ID),
 	}
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunHistoryHandler, vars)
 	test.NotEmpty(t, uri)
@@ -773,7 +773,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	report := sdk.WorkflowNodeRunVulnerabilityReport{
 		ApplicationID:     app.ID,
 		WorkflowRunID:     lastrun.ID,
-		WorkflowNodeRunID: lastrun.WorkflowNodeRuns[w1.RootID][0].ID,
+		WorkflowNodeRunID: lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID,
 		Num:               lastrun.Number,
 		Report: sdk.WorkflowNodeRunVulnerability{
 			Vulnerabilities: []sdk.Vulnerability{vuln},
@@ -786,7 +786,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
 		"number":           fmt.Sprintf("%d", lastrun.Number),
-		"nodeRunID":        fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"nodeRunID":        fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
 	}
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1391,7 +1391,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	// Update step status
-	jobRun := &lastrun.WorkflowNodeRuns[w1.RootID][0].Stages[0].RunJobs[0]
+	jobRun := &lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].Stages[0].RunJobs[0]
 	log := &sdk.Log{
 		StepOrder: 1,
 		Val:       "My Log",
@@ -1404,7 +1404,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	}
 
 	// Update node job run
-	errUJ := workflow.UpdateNodeRun(api.mustDB(), &lastrun.WorkflowNodeRuns[w1.RootID][0])
+	errUJ := workflow.UpdateNodeRun(api.mustDB(), &lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0])
 	test.NoError(t, errUJ)
 
 	// Add log
@@ -1416,7 +1416,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
 		"number":           fmt.Sprintf("%d", lastrun.Number),
-		"nodeRunID":        fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"nodeRunID":        fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
 		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
 		"stepOrder":        "1",
 	}

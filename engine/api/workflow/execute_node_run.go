@@ -228,7 +228,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	//Delete jobs only when node is over
 	if sdk.StatusIsTerminated(nr.Status) {
 		if nr.Status != sdk.StatusStopped.String() {
-			r1, _, err := processWorkflowRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
+			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
 			if err != nil {
 				return nil, sdk.WrapError(err, "Unable to reprocess workflow !")
 			}
@@ -243,18 +243,11 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 		var hasMutex bool
 		var nodeName string
-		if updatedWorkflowRun.Version < 2 {
-			node := updatedWorkflowRun.Workflow.GetNode(nr.WorkflowNodeID)
-			if node != nil && node.Context != nil && node.Context.Mutex {
-				hasMutex = node.Context.Mutex
-				nodeName = node.Name
-			}
-		} else {
-			node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
-			if node != nil && node.Context != nil && node.Context.Mutex {
-				hasMutex = node.Context.Mutex
-				nodeName = node.Name
-			}
+
+		node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
+		if node != nil && node.Context != nil && node.Context.Mutex {
+			hasMutex = node.Context.Mutex
+			nodeName = node.Name
 		}
 
 		//Do we release a mutex ?

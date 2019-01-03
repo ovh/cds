@@ -157,17 +157,9 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 
 	var payload []string
 	var payloadString interface{}
-	if run.Version < 2 {
-		if v, ok := run.WorkflowNodeRuns[run.Workflow.RootID]; ok {
-			if len(v) > 0 {
-				payloadString = v[0].Payload
-			}
-		}
-	} else {
-		if v, ok := run.WorkflowNodeRuns[run.Workflow.WorkflowData.Node.ID]; ok {
-			if len(v) > 0 {
-				payloadString = v[0].Payload
-			}
+	if v, ok := run.WorkflowNodeRuns[run.Workflow.WorkflowData.Node.ID]; ok {
+		if len(v) > 0 {
+			payloadString = v[0].Payload
 		}
 	}
 

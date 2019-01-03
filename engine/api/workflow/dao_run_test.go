@@ -17,12 +17,13 @@ import (
 
 func TestCanBeRun(t *testing.T) {
 	wnrs := map[int64][]sdk.WorkflowNodeRun{}
-	node1 := sdk.WorkflowNode{ID: 25}
-	nodeRoot := &sdk.WorkflowNode{
-		ID: 10,
-		Triggers: []sdk.WorkflowNodeTrigger{
+	node1 := sdk.Node{ID: 25}
+	nodeRoot := sdk.Node{
+		ID:   10,
+		Type: sdk.NodeTypePipeline,
+		Triggers: []sdk.NodeTrigger{
 			{
-				WorkflowDestNode: node1,
+				ChildNode: node1,
 			},
 		},
 	}
@@ -37,8 +38,10 @@ func TestCanBeRun(t *testing.T) {
 			Name:       "test_1",
 			ProjectID:  1,
 			ProjectKey: "key",
-			Root:       nodeRoot,
 			RootID:     10,
+			WorkflowData: &sdk.WorkflowData{
+				Node: nodeRoot,
+			},
 		},
 		WorkflowID:       2,
 		WorkflowNodeRuns: wnrs,

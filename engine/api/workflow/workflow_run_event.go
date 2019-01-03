@@ -88,21 +88,13 @@ func ResyncCommitStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 
 		var vcsServerName string
 		var repoFullName string
-		if wr.Version > 1 {
-			node := wr.Workflow.WorkflowData.NodeByID(nodeID)
-			if !node.IsLinkedToRepo(&wr.Workflow) {
-				return nil
-			}
-			vcsServerName = wr.Workflow.Applications[node.Context.ApplicationID].VCSServer
-			repoFullName = wr.Workflow.Applications[node.Context.ApplicationID].RepositoryFullname
-		} else {
-			node := wr.Workflow.GetNode(nodeID)
-			if !node.IsLinkedToRepo() {
-				return nil
-			}
-			vcsServerName = node.Context.Application.VCSServer
-			repoFullName = node.Context.Application.RepositoryFullname
+
+		node := wr.Workflow.WorkflowData.NodeByID(nodeID)
+		if !node.IsLinkedToRepo(&wr.Workflow) {
+			return nil
 		}
+		vcsServerName = wr.Workflow.Applications[node.Context.ApplicationID].VCSServer
+		repoFullName = wr.Workflow.Applications[node.Context.ApplicationID].RepositoryFullname
 
 		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, vcsServerName)
 		if vcsServer == nil {
@@ -203,30 +195,16 @@ func sendVCSEventStatus(ctx context.Context, db gorp.SqlExecutor, store cache.St
 	var app sdk.Application
 	var pip sdk.Pipeline
 	var env sdk.Environment
-	if wr.Version > 1 {
-		node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
-		if !node.IsLinkedToRepo(&wr.Workflow) {
-			return nil
-		}
-		app = wr.Workflow.Applications[node.Context.ApplicationID]
-		if node.Context.PipelineID > 0 {
-			pip = wr.Workflow.Pipelines[node.Context.PipelineID]
-		}
-		if node.Context.EnvironmentID > 0 {
-			env = wr.Workflow.Environments[node.Context.EnvironmentID]
-		}
-	} else {
-		node := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
-		if !node.IsLinkedToRepo() {
-			return nil
-		}
-		app = *node.Context.Application
-		if node.PipelineID > 0 {
-			pip = wr.Workflow.Pipelines[node.PipelineID]
-		}
-		if node.Context.EnvironmentID > 0 {
-			env = *node.Context.Environment
-		}
+	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+	if !node.IsLinkedToRepo(&wr.Workflow) {
+		return nil
+	}
+	app = wr.Workflow.Applications[node.Context.ApplicationID]
+	if node.Context.PipelineID > 0 {
+		pip = wr.Workflow.Pipelines[node.Context.PipelineID]
+	}
+	if node.Context.EnvironmentID > 0 {
+		env = wr.Workflow.Environments[node.Context.EnvironmentID]
 	}
 
 	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)

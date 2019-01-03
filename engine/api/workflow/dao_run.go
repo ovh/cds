@@ -27,8 +27,7 @@ workflow_run.last_modified,
 workflow_run.status,
 workflow_run.last_sub_num,
 workflow_run.last_execution,
-workflow_run.to_delete,
-workflow_run.version
+workflow_run.to_delete
 `
 
 // LoadRunOptions are options for loading a run (node or workflow)
@@ -441,20 +440,11 @@ func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun
 		return false
 	}
 
-	var ancestorsID []int64
-	if workflowRun.Version < 2 {
-		node := workflowRun.Workflow.GetNode(workflowNodeRun.WorkflowNodeID)
-		if node == nil {
-			return true
-		}
-		ancestorsID = node.Ancestors(&workflowRun.Workflow, true)
-	} else {
-		node := workflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
-		if node == nil {
-			return true
-		}
-		ancestorsID = node.Ancestors(workflowRun.Workflow.WorkflowData)
+	node := workflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
+	if node == nil {
+		return true
 	}
+	ancestorsID := node.Ancestors(workflowRun.Workflow.WorkflowData)
 
 	if ancestorsID == nil || len(ancestorsID) == 0 {
 		return true
