@@ -861,7 +861,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 			return sdk.WrapError(err, "cannot unmarshal stages")
 		}
 
-		stopWorkflowNodeRunStages(&nr)
+		stopWorkflowNodeRunStages(db, &nr)
 		if !sdk.StatusIsTerminated(resp[i].Status) {
 			nr.Status = sdk.StatusStopped.String()
 			nr.Done = now
