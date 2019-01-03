@@ -19,6 +19,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 @AutoUnsubscribe()
 export class ActionEditComponent implements OnInit {
     action: Action;
+    actionDoc: string;
     isAdmin: boolean;
     pipelinesUsingAction: Array<PipelineUsingAction>;
     path: Array<PathItem>;
@@ -39,6 +40,7 @@ export class ActionEditComponent implements OnInit {
         this.paramsSub = this._route.params.subscribe(params => {
             this._actionService.getAction(params['name']).subscribe(u => {
                 this.action = u;
+                this.actionDoc = u.name.toLowerCase().replace(' ', '-');
                 if (this.isAdmin) {
                     this._actionService.getPipelinesUsingAction(params['name']).pipe(first()).subscribe(p => {
                         this.pipelinesUsingAction = p;

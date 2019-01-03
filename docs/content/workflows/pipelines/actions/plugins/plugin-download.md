@@ -12,8 +12,4 @@ This is a plugin to download file from URL
 * **headers**: Specific headers to add to your request ("headerName"="value" newline separated list)
 
 
-## More
-
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/download/README.md)
-
 

@@ -24,7 +24,7 @@
   "action_deleted": "Action supprimée",
   "action_edit_title": "Édition de l'action",
   "action_name": "Nom de l'action",
-  "action_edit_builtin": "C'est une action de type Builtin, vous ne pouvez pas la modifier",
+  "action_edit_builtin": "C'est une action de type Builtin, vous ne pouvez pas la modifier.",
   "action_edit_plugin": "C'est une action de type Plugin, vous ne pouvez pas la modifier sans la ré-importer",
   "action_none": "Aucune action",
   "action_saved": "Action sauvegardée",
@@ -769,6 +769,7 @@
   "step_nonfinal_no": "Il n'y a aucune étape.",
   "step_updated": "Etape mise à jour",
   "step_title_duration": "Début: {{start}}, Fin: {{end}}",
+  "step_edit_title": "Éditer le titre",
 
   "timeline_loading": "Chargement du fil d'actualité...",
   "timeline_no": "Le fil d'actualité est vide",
