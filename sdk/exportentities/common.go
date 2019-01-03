@@ -17,6 +17,11 @@ import (
 
 var rxURL = regexp.MustCompile(`http[s]?:\/\/(.*)`)
 
+// IsURL returns if given path is a url according to the URL regex.
+func IsURL(path string) bool {
+	return rxURL.MatchString(path)
+}
+
 //GetFormat return a format
 func GetFormat(f string) (Format, error) {
 	s := strings.ToLower(f)

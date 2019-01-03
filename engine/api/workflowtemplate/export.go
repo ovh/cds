@@ -63,7 +63,7 @@ func Pull(wt *sdk.WorkflowTemplate, f exportentities.Format, w io.Writer) error 
 	}
 	buffw := bytes.NewBuffer(data)
 	hdr = &tar.Header{
-		Name: fmt.Sprintf("workflow.yml"),
+		Name: fmt.Sprintf(exportentities.TemplateWorkflowName),
 		Mode: 0644,
 		Size: int64(buffw.Len()),
 	}
@@ -81,7 +81,7 @@ func Pull(wt *sdk.WorkflowTemplate, f exportentities.Format, w io.Writer) error 
 		}
 		buff := bytes.NewBuffer(data)
 		hdr := &tar.Header{
-			Name: fmt.Sprintf("%d.pipeline.yml", i+1),
+			Name: fmt.Sprintf(exportentities.TemplatePipelineName, i+1),
 			Mode: 0644,
 			Size: int64(buff.Len()),
 		}
@@ -100,7 +100,7 @@ func Pull(wt *sdk.WorkflowTemplate, f exportentities.Format, w io.Writer) error 
 		}
 		buff := bytes.NewBuffer(data)
 		hdr := &tar.Header{
-			Name: fmt.Sprintf("%d.application.yml", i+1),
+			Name: fmt.Sprintf(exportentities.TemplateApplicationName, i+1),
 			Mode: 0644,
 			Size: int64(buff.Len()),
 		}
@@ -119,7 +119,7 @@ func Pull(wt *sdk.WorkflowTemplate, f exportentities.Format, w io.Writer) error 
 		}
 		buff := bytes.NewBuffer(data)
 		hdr := &tar.Header{
-			Name: fmt.Sprintf("%d.environment.yml", i+1),
+			Name: fmt.Sprintf(exportentities.TemplateEnvironmentName, i+1),
 			Mode: 0644,
 			Size: int64(buff.Len()),
 		}

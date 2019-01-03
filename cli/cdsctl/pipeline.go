@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"reflect"
-	"regexp"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -130,8 +129,7 @@ func pipelineImportRun(v cli.Values) error {
 		format = "json"
 	}
 
-	isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, v["path"])
-	if isURL {
+	if exportentities.IsURL(v["path"]) {
 		var err error
 		reader, _, err = exportentities.OpenURL(v["path"], format)
 		if err != nil {

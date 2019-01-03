@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var templateCmd = cli.Command{
@@ -89,7 +91,7 @@ func templatePullRun(v cli.Values) error {
 var templatePushCmd = cli.Command{
 	Name:    "push",
 	Short:   "Push CDS workflow template",
-	Example: "cdsctl template push my-template.yml workflow.yml 0.pipeline.yml",
+	Example: "cdsctl template push my-template.yml workflow.yml 1.pipeline.yml",
 	VariadicArgs: cli.Arg{
 		Name: "yaml-file",
 	},
@@ -105,43 +107,79 @@ var templatePushCmd = cli.Command{
 func templatePushRun(v cli.Values) error {
 	files := strings.Split(v.GetString("yaml-file"), ",")
 
-	buf := new(bytes.Buffer)
+	// create a new tar archive
 	var dir string
+	tar := new(bytes.Buffer)
 
-	// Create a new tar archive.
-	filesToRead := []string{}
-	for _, file := range files {
-		fi, err := os.Lstat(file)
+	// if the first args is an url, try to download all files
+	readFromLink := len(files) > 0 && exportentities.IsURL(files[0]) && strings.HasSuffix(files[0], ".yml")
+	if readFromLink {
+		manifestURL := files[0]
+		baseURL := manifestURL[0:strings.LastIndex(manifestURL, "/")]
+
+		// get the manifest file
+		contentFile, _, err := exportentities.OpenPath(manifestURL)
 		if err != nil {
-			fmt.Printf("Skipping file %s: %v\n", file, err)
-			continue
+			return err
+		}
+		buf := new(bytes.Buffer)
+		if _, err := buf.ReadFrom(contentFile); err != nil {
+			return fmt.Errorf("Cannot read from given remote file: %v", err)
+		}
+		var t exportentities.Template
+		if err := yaml.Unmarshal(buf.Bytes(), &t); err != nil {
+			return fmt.Errorf("Cannot unmarshal given remote yaml file: %v", err)
 		}
 
-		//Skip the directory
-		if fi.IsDir() {
-			continue
+		// get all components of the template
+		paths := []string{t.Workflow}
+		paths = append(paths, t.Pipelines...)
+		paths = append(paths, t.Applications...)
+		paths = append(paths, t.Environments...)
+
+		links := make([]string, len(paths))
+		for i := range paths {
+			links[i] = fmt.Sprintf("%s/%s", baseURL, paths[i])
 		}
 
-		fmt.Println("Reading file ", cli.Magenta(file))
-		if dir == "" {
-			dir = filepath.Dir(file)
+		if err := workflowLinksToTarWriter(append(links, manifestURL), tar); err != nil {
+			return err
 		}
-		if dir != filepath.Dir(file) {
-			return fmt.Errorf("files must be ine the same directory")
+	} else {
+		filesToRead := []string{}
+		for _, file := range files {
+			fi, err := os.Lstat(file)
+			if err != nil {
+				fmt.Printf("Skipping file %s: %v\n", file, err)
+				continue
+			}
+
+			//Skip the directory
+			if fi.IsDir() {
+				continue
+			}
+
+			fmt.Println("Reading file ", cli.Magenta(file))
+			if dir == "" {
+				dir = filepath.Dir(file)
+			}
+			if dir != filepath.Dir(file) {
+				return fmt.Errorf("files must be ine the same directory")
+			}
+
+			filesToRead = append(filesToRead, file)
 		}
 
-		filesToRead = append(filesToRead, file)
+		if len(filesToRead) == 0 {
+			return fmt.Errorf("wrong usage: you should specify your workflow template YAML files. See %s template push --help for more details", os.Args[0])
+		}
+
+		if err := workflowFilesToTarWriter(filesToRead, tar); err != nil {
+			return err
+		}
 	}
 
-	if len(filesToRead) == 0 {
-		return fmt.Errorf("wrong usage: you should specify your workflow template YAML files. See %s template push --help for more details", os.Args[0])
-	}
-
-	if err := workflowFilesToTarWriter(filesToRead, buf); err != nil {
-		return err
-	}
-
-	btes := buf.Bytes()
+	btes := tar.Bytes()
 	r := bytes.NewBuffer(btes)
 	msgList, tr, err := client.TemplatePush(r)
 	for _, msg := range msgList {
@@ -153,7 +191,7 @@ func templatePushRun(v cli.Values) error {
 
 	fmt.Println("Template successfully pushed !")
 
-	if v.GetBool("skip-update-files") {
+	if readFromLink || v.GetBool("skip-update-files") {
 		return nil
 	}
 
