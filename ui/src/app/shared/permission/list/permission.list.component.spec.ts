@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
 import { GroupPermission } from '../../../model/group.model';
 import { SharedModule } from '../../shared.module';
@@ -17,7 +17,6 @@ describe('CDS: Permission List Component', () => {
             declarations: [
             ],
             providers: [
-                Router,
                 PermissionService,
                 SharedService,
                 TranslateService,
@@ -26,6 +25,7 @@ describe('CDS: Permission List Component', () => {
             ],
             imports : [
                 SharedModule,
+                RouterTestingModule.withRoutes([]),
                 TranslateModule.forRoot()
             ]
         });
