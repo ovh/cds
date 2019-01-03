@@ -542,10 +542,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/api/build/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/cli/worker/cache/</loc>
   </url>
   
