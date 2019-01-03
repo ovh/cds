@@ -97,10 +97,12 @@ test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@$(GO_COV_MERGE) `find ../ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
 	@$(GO_COBERTURA) < $(TARGET_DIR)/cover.out > $(TARGET_DIR)/coverage.xml
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
-ifneq ($(VERSION), snapshot)
-	echo "Pushing results to coveralls"
-	@$(GO_GOVERALLS) -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}
-endif
+	if [ ! -z "${CDS_VERSION}" ]; then \
+		echo "Sending coverage report to CDS"; \
+		worker upload --tag "${CDS_VERSION}" $(TARGET_DIR)/cover.html; \
+		echo "Pushing results to coveralls"; \
+		$(GO_GOVERALLS) -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}; \
+	fi
 
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
 test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
