@@ -6,26 +6,60 @@
         <div class="ui grid">
             <div class="sixteen wide column">
                 <div class="ui three ordered steps">
-                    <div class="completed step">
+                    <div class="step" [class.completed]="currentStep > 0" [class.active]="currentStep === 0">
                         <div class="content">
                             <div class="title">Select instances</div>
                         </div>
                     </div>
-                    <div class="active step">
+                    <div class="step" [class.completed]="currentStep > 1" [class.active]="currentStep === 1">
                         <div class="content">
                             <div class="title">Fill parameters</div>
                         </div>
                     </div>
-                    <div class="step">
+                    <div class="step" [class.completed]="currentStep > 2" [class.active]="currentStep === 2">
                         <div class="content">
                             <div class="title">Run</div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="sixteen wide column">
+            <div *ngIf="currentStep === 0" class="sixteen wide column centered">
                 <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)" [withPagination]="10"
                     [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
+                <button class="ui positive button" [class.disabled]="selectedInstanceKeys.length === 0" (click)="clickGoToStep1()">
+                    {{ 'btn_next' | translate }}
+                </button>
+            </div>
+            <div *ngIf="currentStep === 1" class="sixteen wide column">
+                <div class="ui grid">
+                    <div class="eight wide column left floated">
+                        <button class="ui primary button" (click)="clickGoToStep0()">
+                            {{ 'btn_back' | translate }}
+                        </button>
+                    </div>
+                    <div class="eight wide column right floated">
+                        <button class="ui positive button" (click)="clickGoToStep2()">
+                            {{ 'btn_next' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div *ngIf="currentStep === 2" class="sixteen wide column">
+                <div class="ui grid">
+                    <div class="eight wide column left floated">
+                        <button class="ui primary button" (click)="clickGoToStep0()">
+                            {{ 'btn_back' | translate }}
+                        </button>
+                    </div>
+                    <div class="eight wide column right floated">
+                        <button class="ui positive button" (click)="clickGoToStep2()">
+                            {{ 'btn_run' | translate }}
+                        </button>
+                        <button class="ui secondary button" (click)="clickGoToStep2()">
+                            {{ 'btn_close' | translate }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -10,12 +10,12 @@
                         {{'workflow_template_update_info_line_1' | translate}}
                     </div>
                 </div>
-                <div class="sixteen wide column loading" *ngIf="!workflowTemplate || !workflowTemplateInstance">
+                <div class="sixteen wide column loading" *ngIf="!project || !workflowTemplate || !workflowTemplateInstance">
                     <div class="ui active inverted dimmer">
                         <div class="ui text loader">{{ 'common_loading' | translate }}</div>
                     </div>
                 </div>
-                <div class="sixteen wide column" *ngIf="workflowTemplate && workflowTemplateInstance">
+                <div class="sixteen wide column" *ngIf="project && workflowTemplate && workflowTemplateInstance">
                     <div class="ui wide sixteen field">
                         <div class="fields">
                             <div class="six wide field">

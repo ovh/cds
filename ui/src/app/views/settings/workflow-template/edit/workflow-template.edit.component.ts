@@ -15,6 +15,9 @@ import { Item } from '../../../../shared/diff/list/diff.list.component';
 import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 import { Tab } from '../../../../shared/tabs/tabs.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
+import {
+    WorkflowTemplateApplyModalComponent
+} from '../../../../shared/workflow-template/apply-modal/workflow-template.apply-modal.component';
 import { WorkflowTemplateBulkModalComponent } from '../../../../shared/workflow-template/bulk-modal/workflow-template.bulk-modal.component';
 
 @Component({
@@ -23,6 +26,8 @@ import { WorkflowTemplateBulkModalComponent } from '../../../../shared/workflow-
     styleUrls: ['./workflow-template.edit.scss']
 })
 export class WorkflowTemplateEditComponent implements OnInit {
+    @ViewChild('templateApplyModal')
+    templateApplyModal: WorkflowTemplateApplyModalComponent;
     @ViewChild('templateBulkModal')
     templateBulkModal: WorkflowTemplateBulkModalComponent;
 
@@ -44,6 +49,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     diffItems: Array<Item>;
     groupName: string;
     templateSlug: string;
+    selectedWorkflowTemplateInstance: WorkflowTemplateInstance;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -103,9 +109,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
             <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.DATE,
                 name: 'common_created',
+                class: 'two',
                 selector: (i: WorkflowTemplateInstance) => i.first_audit.created
             }, <Column<WorkflowTemplateInstance>>{
                 name: 'common_created_by',
+                class: 'two',
                 selector: (i: WorkflowTemplateInstance) => i.first_audit.triggered_by
             }, <Column<WorkflowTemplateInstance>>{
                 type: (i: WorkflowTemplateInstance) => {
@@ -117,6 +125,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                     return ColumnType.ROUTER_LINK;
                 },
                 name: 'common_workflow',
+                class: 'seven',
                 selector: (i: WorkflowTemplateInstance) => {
                     let value = i.project.key + '/' + (i.workflow ? i.workflow.name : i.workflow_name);
 
@@ -133,12 +142,22 @@ export class WorkflowTemplateEditComponent implements OnInit {
             }, <Column<WorkflowTemplateInstance>>{
                 type: ColumnType.LABEL,
                 name: 'common_status',
-                class: 'right aligned',
+                class: 'three',
                 selector: (i: WorkflowTemplateInstance) => {
                     let status = i.status(this.workflowTemplate);
                     return {
                         class: InstanceStatusUtil.color(status),
                         value: status
+                    };
+                }
+            }, <Column<WorkflowTemplateInstance>>{
+                type: ColumnType.BUTTON,
+                name: 'common_action',
+                class: 'two right aligned',
+                selector: (i: WorkflowTemplateInstance) => {
+                    return {
+                        title: 'common_update',
+                        click: () => { this.clickUpdate(i) }
                     };
                 }
             }
@@ -171,7 +190,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                         selector: (a: AuditWorkflowTemplate) => {
                             return {
                                 title: 'common_rollback',
-                                click: _ => { this.clickRollback(a) }
+                                click: () => { this.clickRollback(a) }
                             };
                         }
                     });
@@ -285,8 +304,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     clickCreateBulk() {
-        if (this.templateBulkModal) {
-            this.templateBulkModal.show();
-        }
+        this.templateBulkModal.show();
+    }
+
+    clickUpdate(i: WorkflowTemplateInstance) {
+        this.selectedWorkflowTemplateInstance = i;
+        this.templateApplyModal.show();
     }
 }

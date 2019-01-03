@@ -37,7 +37,7 @@
                         </sui-select>
                     </div>
                     <div class="four wide field">
-                        <button class="ui blue button resync" name="resync" type="button" [class.loading]="loading"
+                        <button class="ui primary button resync" name="resync" type="button" [class.loading]="loading"
                             [disabled]="loading" (click)="resyncRepos(parameter.key)">
                             {{'btn_resync_repo' | translate }}
                         </button>
@@ -57,10 +57,10 @@
                         'btn_apply' |
                         translate }}
                     </button>
-                    <button class="ui blue button" type="button" (click)="goToWorkflow()" *ngIf="result && !withClose">{{
+                    <button class="ui primary button" type="button" (click)="goToWorkflow()" *ngIf="result && !withClose">{{
                         'btn_goto_workflow' | translate}}</button>
-                    <button class="ui grey button" [disabled]="loading" (click)="clickClose()" *ngIf="withClose">{{
-                        'common_close' | translate }}</button>
+                    <button class="ui secondary button" [disabled]="loading" (click)="clickClose()" *ngIf="withClose">{{
+                        'btn_close' | translate }}</button>
                 </div>
             </div>
         </div>

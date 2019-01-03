@@ -35,7 +35,7 @@
         <div *ngSwitchCase="'instances'" class="ui grid">
             <div class="sixteen wide column centered">
                 <button class="ui primary button" (click)="clickCreateBulk()">
-                    <i class="save icon"></i>{{ 'workflow_template_btn_create_bulk' | translate }}
+                    <i class="folder icon"></i>{{ 'workflow_template_btn_create_bulk' | translate }}
                 </button>
             </div>
             <div class="sixteen wide column">
@@ -54,4 +54,6 @@
         </div>
     </app-scrollview>
 </div>
+<app-workflow-template-apply-modal #templateApplyModal [workflowTemplate]="workflowTemplate" [workflowTemplateInstance]="selectedWorkflowTemplateInstance">
+</app-workflow-template-apply-modal>
 <app-workflow-template-bulk-modal #templateBulkModal [workflowTemplate]="workflowTemplate"></app-workflow-template-bulk-modal>

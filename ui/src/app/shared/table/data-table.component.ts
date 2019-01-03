@@ -12,6 +12,7 @@ export enum ColumnType {
     ROUTER_LINK = 'router-link',
     MARKDOWN = 'markdown',
     DATE = 'date',
+    BUTTON = 'button',
     CONFIRM_BUTTON = 'confirm-button',
     LABEL = 'label',
 }
@@ -98,6 +99,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
             this.allData.forEach(d => { this.selected[d.key()] = false });
             if (typeof this.withSelect === 'function') {
                 this.allData.filter(<Select<T>>this.withSelect).forEach(d => this.selected[d.key()] = true);
+                this.emitSelectChange();
             }
         }
 
@@ -172,6 +174,10 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
 
     onSelectChange(e: any, key: string) {
         this.selected[key] = e;
+        this.emitSelectChange();
+    }
+
+    emitSelectChange() {
         this.selectChange.emit(Object.keys(this.selected).filter(k => this.selected[k]));
     }
 }
