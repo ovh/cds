@@ -347,7 +347,7 @@
   "keys_removed": "La clé a été supprimée",
   "keys_type": "Type de clé",
   "keys_no": "Il n'y a aucune clé",
-  "keys_ssh_key_help": "Une clé SSH est généralement utile lorsque vous souhaitez cloner un dépôt Git. CDS peut générer une paire de clé, il ne vous restera qu'à copier / coller la clé publique fournie par CDS dans les clés autorisées sur vos dépôts.  Si vous souhaitez utiliser cette clé manuellement, consulter la documentation:",
+   "keys_ssh_key_help": "Une clé SSH est généralement utile lorsque vous souhaitez cloner un dépôt Git. CDS peut générer une paire de clé, il ne vous restera qu'à copier / coller la clé publique fournie par CDS dans les clés autorisées sur vos dépôts.  Si vous souhaitez utiliser cette clé manuellement, consultez la documentation:",
   "keys_pgp_key_help": "Une clé PGP est généralement utile lorsque vous souhaitez tagguer un dépôt Git. Si vous souhaitez utiliser cette clé manuellement, consultez la documentation:",
 
   "usage_application_list": "Applications utilisées",
