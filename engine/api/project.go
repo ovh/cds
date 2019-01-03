@@ -452,20 +452,27 @@ func (api *API) addProjectHandler() service.Handler {
 			}
 		}
 
-		// create GPG & SSH key per default
-		p.Keys = []sdk.ProjectKey{
-			{
-				Key: sdk.Key{
-					Type: sdk.KeyTypeSSH,
-					Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypeSSH, strings.ToLower(p.Key)),
-				},
-			},
-			{
-				Key: sdk.Key{
-					Type: sdk.KeyTypePGP,
-					Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypePGP, strings.ToLower(p.Key)),
-				},
-			},
+		var sshExists, gpgExists bool
+		for _, k := range p.Keys {
+			switch k.Type {
+			case sdk.KeyTypeSSH:
+				sshExists = true
+			case sdk.KeyTypePGP:
+				gpgExists = true
+			}
+		}
+
+		if !sshExists {
+			p.Keys = append(p.Keys, sdk.ProjectKey{Key: sdk.Key{
+				Type: sdk.KeyTypeSSH,
+				Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypeSSH, strings.ToLower(p.Key))},
+			})
+		}
+		if !gpgExists {
+			p.Keys = append(p.Keys, sdk.ProjectKey{Key: sdk.Key{
+				Type: sdk.KeyTypePGP,
+				Name: fmt.Sprintf("proj-%s-%s", sdk.KeyTypePGP, strings.ToLower(p.Key))},
+			})
 		}
 		for _, k := range p.Keys {
 			k.ProjectID = p.ID
