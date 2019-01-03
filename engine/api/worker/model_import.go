@@ -57,36 +57,47 @@ currentUGroup:
 	switch sdkWm.Type {
 	case sdk.Docker:
 		if sdkWm.ModelDocker.Image == "" {
-			return nil, sdk.WrapError(sdk.ErrWrongRequest, "Invalid worker image")
+			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker image")
 		}
 		if !u.Admin && !sdkWm.Restricted {
 			if modelPattern == nil {
 				return nil, sdk.ErrWorkerModelNoPattern
 			}
 		}
+		if modelPattern != nil {
+			sdkWm.ModelDocker.Cmd = modelPattern.Model.Cmd
+			sdkWm.ModelDocker.Shell = modelPattern.Model.Shell
+			sdkWm.ModelDocker.Envs = modelPattern.Model.Envs
+		}
 		if sdkWm.ModelDocker.Cmd == "" || sdkWm.ModelDocker.Shell == "" {
-			return nil, sdk.WrapError(sdk.ErrWrongRequest, "Invalid worker command or invalid shell command")
+			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker command or invalid shell command")
 		}
 	default:
 		if sdkWm.ModelVirtualMachine.Image == "" {
-			return nil, sdk.WrapError(sdk.ErrWrongRequest, "Invalid worker command or invalid image")
+			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker image: cannot be empty")
 		}
 		if !u.Admin && !sdkWm.Restricted {
 			if modelPattern == nil {
 				return nil, sdk.ErrWorkerModelNoPattern
 			}
+		}
+		if modelPattern != nil {
 			sdkWm.ModelVirtualMachine.PreCmd = modelPattern.Model.PreCmd
 			sdkWm.ModelVirtualMachine.Cmd = modelPattern.Model.Cmd
 			sdkWm.ModelVirtualMachine.PostCmd = modelPattern.Model.PostCmd
 		}
+
+		if sdkWm.ModelVirtualMachine.Cmd == "" {
+			return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "Invalid worker command: Cannot be empty")
+		}
 	}
 
 	if sdkWm.GroupID == 0 {
-		return nil, sdk.WrapError(sdk.ErrWrongRequest, "groupID should be set")
+		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "groupID should be set")
 	}
 
 	if group.IsDefaultGroupID(sdkWm.GroupID) {
-		return nil, sdk.WrapError(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
+		return nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "this group can't be owner of a worker model")
 	}
 
 	// provision is allowed only for CDS Admin

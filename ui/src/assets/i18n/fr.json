@@ -331,6 +331,10 @@
   "common_split": "Séparé",
   "common_unified": "Unifié",
   "common_rollback": "Effectuer un rollback",
+  "common_edit_as_code": "Editer en code",
+  "common_create_as_code": "Créer en code",
+  "common_edit_ui": "Editer avec l'interface",
+  "common_create_ui": "Créer avec l'interface",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
