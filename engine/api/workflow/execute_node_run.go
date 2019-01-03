@@ -692,13 +692,22 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	}
 	wg.Wait()
 
+	tx, errTx := dbFunc().Begin()
+	if errTx != nil {
+		return nil, sdk.WrapError(errTx, "stopWorkflowNodePipeline> Unable to create transaction")
+	}
+	defer tx.Rollback() //nolint
+
 	// Update stages from node run
-	stopWorkflowNodeRunStages(dbFunc(), nodeRun)
+	stopWorkflowNodeRunStages(tx, nodeRun)
 
 	nodeRun.Status = sdk.StatusStopped.String()
 	nodeRun.Done = time.Now()
-	if errU := UpdateNodeRun(dbFunc(), nodeRun); errU != nil {
+	if errU := UpdateNodeRun(tx, nodeRun); errU != nil {
 		return report, sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WrapError(err, "stopWorkflowNodePipeline> Cannot commit transaction")
 	}
 	return report, nil
 }
