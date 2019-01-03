@@ -290,7 +290,9 @@
   "common_unified": "Unified",
   "common_rollback": "Rollback",
   "common_edit_as_code": "Edit as code",
+  "common_create_as_code": "Create as code",
   "common_edit_ui": "Edit with UI",
+  "common_create_ui": "Create with UI",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",

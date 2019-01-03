@@ -69,6 +69,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 				}
 				model.ModelDocker.Cmd = modelPattern.Model.Cmd
 				model.ModelDocker.Shell = modelPattern.Model.Shell
+				model.ModelDocker.Envs = modelPattern.Model.Envs
 			}
 			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")

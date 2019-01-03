@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { omit } from 'lodash';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Group } from '../../../../model/group.model';
@@ -21,6 +22,11 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 })
 @AutoUnsubscribe()
 export class WorkerModelAddComponent implements OnInit {
+    @ViewChild('codeMirror')
+    codemirror: CodemirrorComponent;
+
+    codeMirrorConfig: any;
+
     loading = false;
     deleteLoading = false;
     workerModel: WorkerModel;
@@ -71,6 +77,13 @@ export class WorkerModelAddComponent implements OnInit {
             translate: 'common_create'
         }];
 
+        this.codeMirrorConfig = {
+            mode: 'text/x-yaml',
+            lineWrapping: true,
+            lineNumbers: true,
+            autoRefresh: true,
+        };
+
         this.workerModelAsCode = `# Example of worker model as code of type Docker
 name: myWorkerModel
 group: mygrouptest
@@ -93,7 +106,7 @@ pattern_name: basic_linux`;
         });
     }
 
-    clickSaveButton(): void {
+    clickSaveUIButton(): void {
         if (!this.workerModel.name) {
             return;
         }
@@ -119,6 +132,19 @@ pattern_name: basic_linux`;
         }, () => {
             this.loading = false;
         });
+    }
+
+    clickSaveAsCodeButton(): void {
+        if (!this.workerModelAsCode) {
+            return;
+        }
+        this.loading = true;
+        this._workerModelService.importWorkerModel(this.workerModelAsCode, false)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe((wm) => {
+                this.workerModel = wm;
+                this._router.navigate(['settings', 'worker-model', this.workerModel.name]);
+            });
     }
 
     filterPatterns(type: string) {
