@@ -165,15 +165,6 @@ func cleanApplicationPipelineBuild(db *gorp.DbMap, wg *sync.WaitGroup, chErr cha
 			break
 		}
 
-		// Delete build job
-		queryJob := `DELETE FROM pipeline_build_job WHERE pipeline_build_id IN (SELECT id FROM pipeline_build WHERE application_id = $1 ORDER BY id ASC LIMIT $2)`
-		if _, err := db.Exec(queryJob, app.ID, pipBuildMax); err != nil {
-			err := fmt.Errorf("cleanApplicationPipelineBuild> Cannot delete pipeline-build-job for application %d: %s", app.ID, err)
-			log.Warning("%s", err)
-			chErr <- err
-			break
-		}
-
 		result, err := db.Exec("DELETE FROM pipeline_build where id IN (SELECT id FROM pipeline_build WHERE application_id = $1 ORDER BY id ASC LIMIT $2)", app.ID, pipBuildMax)
 		if err != nil {
 			err := fmt.Errorf("cleanApplicationPipelineBuild> Cannot delete pipeline-build for application %d: %s", app.ID, err)

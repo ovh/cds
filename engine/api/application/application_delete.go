@@ -63,12 +63,6 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 		return sdk.WrapError(err, "Cannot delete old artifacts")
 	}
 
-	// Delete hook
-	query = `DELETE FROM hook WHERE application_id = $1`
-	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "Cannot delete hook")
-	}
-
 	// Delete triggers
 	if err := trigger.DeleteApplicationTriggers(db, applicationID); err != nil {
 		return err
