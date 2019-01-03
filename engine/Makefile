@@ -100,7 +100,7 @@ test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 	@if [ ! -z "${CDS_VERSION}" ]; then \
 		echo "Sending coverage report to CDS"; \
-		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR) cover.html); \
+		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR)/cover.html); \
 		echo "Pushing results to coveralls"; \
 		$(GO_GOVERALLS) -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}; \
 	fi;
