@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"os/user"
@@ -341,21 +340,16 @@ func teardownBuildDirectory(wd string) error {
 	return os.RemoveAll(wd)
 }
 
-func generateWorkingDirectory() (string, error) {
-	size := 16
-	bs := make([]byte, size)
-	if _, err := rand.Read(bs); err != nil {
-		return "", err
+func workingDirectory(basedir string, jobInfo *sdk.WorkflowNodeJobRunData, suffixes ...string) string {
+	var encodedName = base64.StdEncoding.EncodeToString([]byte(jobInfo.NodeJobRun.Job.Job.Action.Name))
+	paths := append([]string{basedir, encodedName}, suffixes...)
+	dir := path.Join(paths...)
+
+	if _, err := os.Stat(dir); os.IsExist(err) {
+		log.Info("workingDirectory> cleaning directory %s", dir)
+		_ = os.RemoveAll(dir)
 	}
-	str := hex.EncodeToString(bs)
-	token := []byte(str)[0:size]
-
-	return string(token), nil
-}
-
-func workingDirectory(basedir, jobPath string) string {
-	gen, _ := generateWorkingDirectory()
-	return path.Join(basedir, jobPath, gen)
+	return dir
 }
 
 func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNodeJobRunData) sdk.Result {
@@ -367,11 +361,7 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNod
 	defer w.drainLogsAndCloseLogger(ctx)
 
 	// Setup working directory
-	pbJobPath := path.Join(fmt.Sprintf("%d", jobInfo.Number),
-		fmt.Sprintf("%d", jobInfo.SubNumber),
-		fmt.Sprintf("%d", jobInfo.NodeJobRun.ID),
-		fmt.Sprintf("%d", jobInfo.NodeJobRun.Job.PipelineActionID))
-	wd := workingDirectory(w.basedir, pbJobPath)
+	wd := workingDirectory(w.basedir, jobInfo, "run")
 
 	if err := setupBuildDirectory(wd); err != nil {
 		log.Debug("processJob> setupBuildDirectory error:%s", err)
@@ -418,7 +408,7 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *sdk.WorkflowNod
 	}
 
 	// Setup user ssh keys
-	keysDirectory = workingDirectory(w.basedir, pbJobPath)
+	keysDirectory = workingDirectory(w.basedir, jobInfo, "keys")
 	log.Debug("processJob> Setup user ssh keys - mkdir %s", keysDirectory)
 	if err := os.MkdirAll(keysDirectory, 0755); err != nil {
 		log.Debug("processJob> call os.MkdirAll error:%s", err)
