@@ -6,7 +6,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -93,15 +92,6 @@ var (
 	//LoadPermission loads the permission on an application
 	LoadPermission = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		app.Permission = permission.ApplicationPermission(app.ProjectKey, app.Name, u)
-		return nil
-	}
-
-	loadHooks = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
-		h, err := hook.LoadApplicationHooks(db, app.ID)
-		if err != nil && sdk.Cause(err) != sql.ErrNoRows {
-			return sdk.WrapError(err, "Unable to load hooks for application %d", app.ID)
-		}
-		app.Hooks = h
 		return nil
 	}
 

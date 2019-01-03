@@ -81,7 +81,6 @@ func (api *API) InitRouter() {
 	r.Handle("/hatchery/count/{workflowNodeRunID}", r.GET(api.hatcheryCountHandler))
 
 	// Hooks
-	r.Handle("/hook", r.POST(api.receiveHookHandler, Auth(false) /* Public handler called by third parties */))
 	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", r.GET(api.getHookPollingVCSEvents))
 
 	// Platform
@@ -153,17 +152,14 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/group", r.POST(api.addGroupInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/group/import", r.POST(api.importGroupsInApplicationHandler, DEPRECATED))
 	r.Handle("/project/{key}/application/{permApplicationName}/group/{group}", r.PUT(api.updateGroupRoleOnApplicationHandler), r.DELETE(api.deleteGroupFromApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/history/branch", r.GET(api.getPipelineBuildBranchHistoryHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/history/env/deploy", r.GET(api.getApplicationDeployHistoryHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/notifications", r.POST(api.addNotificationsHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline", r.GET(api.getPipelinesInApplicationHandler), r.PUT(api.updatePipelinesToApplicationHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/history/branch", r.GET(api.getPipelineBuildBranchHistoryHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/history/env/deploy", r.GET(api.getApplicationDeployHistoryHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline", r.GET(api.getPipelinesInApplicationHandler, DEPRECATED), r.PUT(api.updatePipelinesToApplicationHandler, DEPRECATED))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/attach", r.POST(api.attachPipelinesToApplicationHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}", r.POST(api.attachPipelineToApplicationHandler, DEPRECATED), r.PUT(api.updatePipelineToApplicationHandler, DEPRECATED), r.DELETE(api.removePipelineFromApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification", r.GET(api.getUserNotificationApplicationPipelineHandler, DEPRECATED), r.PUT(api.updateUserNotificationApplicationPipelineHandler, DEPRECATED), r.DELETE(api.deleteUserNotificationApplicationPipelineHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/scheduler", r.GET(api.getSchedulerApplicationPipelineHandler), r.POST(api.addSchedulerApplicationPipelineHandler), r.PUT(api.updateSchedulerApplicationPipelineHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/scheduler/{id}", r.DELETE(api.deleteSchedulerApplicationPipelineHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/tree", r.GET(api.getApplicationTreeHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/tree/status", r.GET(api.getApplicationTreeStatusHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}", r.POST(api.attachPipelineToApplicationHandler, DEPRECATED), r.PUT(api.updatePipelineToApplicationHandler, DEPRECATED), r.DELETE(api.removePipelineFromApplicationHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/scheduler", r.GET(api.getSchedulerApplicationPipelineHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/tree", r.GET(api.getApplicationTreeHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/tree/status", r.GET(api.getApplicationTreeStatusHandler, DEPRECATED))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable", r.GET(api.getVariablesInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/audit", r.GET(api.getVariablesAuditInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
@@ -179,26 +175,20 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/workflow/clean", r.POST(api.migrationApplicationWorkflowCleanHandler))
 
 	// Pipeline Build
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/history", r.GET(api.getPipelineHistoryHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/log", r.GET(api.getBuildLogsHandler))
-	r.Handle("/project/{key}/application/{app}/pipeline/{permPipelineKey}/build/{build}/test", r.POSTEXECUTE(api.addBuildTestResultsHandler), r.GET(api.getBuildTestResultsHandler))
-	r.Handle("/project/{key}/application/{app}/pipeline/{permPipelineKey}/build/{build}/variable", r.POSTEXECUTE(api.addBuildVariableHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/action/{actionID}/step/{stepOrder}/log", r.GET(api.getStepBuildLogsHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/action/{actionID}/log", r.GET(api.getPipelineBuildJobLogsHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}", r.GET(api.getBuildStateHandler), r.DELETE(api.deleteBuildHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/triggered", r.GET(api.getPipelineBuildTriggeredHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/stop", r.POSTEXECUTE(api.stopPipelineBuildHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/restart", r.POSTEXECUTE(api.restartPipelineBuildHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/commits", r.GET(api.getPipelineBuildCommitsHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/commits", r.GET(api.getPipelineCommitsHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/run", r.POSTEXECUTE(api.runPipelineHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/runwithlastparent", r.POSTEXECUTE(api.runPipelineWithLastParentHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/history", r.GET(api.getPipelineHistoryHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/log", r.GET(api.getBuildLogsHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/action/{actionID}/step/{stepOrder}/log", r.GET(api.getStepBuildLogsHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/action/{actionID}/log", r.GET(api.getPipelineBuildJobLogsHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}", r.GET(api.getBuildStateHandler), r.DELETE(api.deleteBuildHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/triggered", r.GET(api.getPipelineBuildTriggeredHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/commits", r.GET(api.getPipelineBuildCommitsHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/commits", r.GET(api.getPipelineCommitsHandler, DEPRECATED))
 
 	// Pipeline
 	r.Handle("/project/{permProjectKey}/pipeline", r.GET(api.getPipelinesHandler), r.POST(api.addPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/application", r.GET(api.getApplicationUsingPipelineHandler))
+	r.Handle("/project/{key}/pipeline/{permPipelineKey}/application", r.GET(api.getApplicationUsingPipelineHandler, DEPRECATED))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group", r.POST(api.addGroupInPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/import", r.POST(api.importGroupsInPipelineHandler, DEPRECATED))
+	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/import", r.POST(api.importGroupsInPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/{group}", r.PUT(api.updateGroupRoleOnPipelineHandler), r.DELETE(api.deleteGroupFromPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter", r.GET(api.getParametersInPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter/{name}", r.POST(api.addParameterInPipelineHandler), r.PUT(api.updateParameterInPipelineHandler), r.DELETE(api.deleteParameterFromPipelineHandler))
@@ -317,19 +307,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/cache/{tag}/url", r.POSTEXECUTE(api.postPushCacheWithTempURLHandler, NeedWorker()), r.GET(api.getPullCacheWithTempURLHandler, NeedWorker()))
 
 	// Hooks
-	r.Handle("/project/{key}/application/{permApplicationName}/hook", r.GET(api.getApplicationHooksHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/hook", r.POST(api.addHookHandler), r.GET(api.getHooksHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/hook/{id}", r.PUT(api.updateHookHandler), r.DELETE(api.deleteHookHandler))
-
-	// Build queue
-	r.Handle("/queue", r.GET(api.getQueueHandler))
-	r.Handle("/queue/{id}/take", r.POST(api.takePipelineBuildJobHandler))
-	r.Handle("/queue/{id}/book", r.POST(api.bookPipelineBuildJobHandler, NeedHatchery()))
-	r.Handle("/queue/{id}/spawn/infos", r.POST(api.addSpawnInfosPipelineBuildJobHandler, NeedWorker(), NeedHatchery()))
-	r.Handle("/queue/{id}/result", r.POST(api.addQueueResultHandler))
-	r.Handle("/queue/{id}/infos", r.GET(api.getPipelineBuildJobHandler))
-	r.Handle("/build/{id}/log", r.POST(api.addBuildLogHandler))
-	r.Handle("/build/{id}/step", r.POST(api.updateStepStatusHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/hook", r.GET(api.getApplicationHooksHandler, DEPRECATED))
 
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
@@ -375,8 +353,6 @@ func (api *API) InitRouter() {
 	// RepositoriesManager for applications
 	r.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/attach", r.POST(api.attachRepositoriesManagerHandler))
 	r.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/detach", r.POST(api.detachRepositoriesManagerHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/{name}/hook", r.POST(api.addHookOnRepositoriesManagerHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/repositories_manager/hook/{hookId}", r.DELETE(api.deleteHookOnRepositoriesManagerHandler))
 
 	// Suggest
 	r.Handle("/suggest/variable/{permProjectKey}", r.GET(api.getVariablesHandler))

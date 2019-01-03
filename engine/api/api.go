@@ -23,18 +23,14 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/purge"
-	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -139,9 +135,6 @@ type Configuration struct {
 			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
 		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami" json:"izanami"`
 	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################" json:"features"`
-	Schedulers struct {
-		Disabled bool `toml:"disabled" default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it" json:"disabled"`
-	} `toml:"schedulers" comment:"###########################\n CDS Schedulers Settings \n##########################" json:"schedulers"`
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey" json:"-"`
 	} `toml:"vault" json:"vault"`
@@ -591,9 +584,6 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("unable to init api metrics: %v", err)
 	}
 
-	//Initiliaze hook package
-	hook.Init(a.Config.URL.API)
-
 	//Intialize notification package
 	notification.Init(a.Config.URL.UI)
 
@@ -666,12 +656,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "warning.Start", func(ctx context.Context) {
 		warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "queue.Pipelines", func(ctx context.Context) {
-		queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "pipeline.AWOLPipelineKiller", func(ctx context.Context) {
-		pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	})
@@ -680,9 +664,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "action.RequirementsCacheLoader", func(ctx context.Context) {
 		action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "hookRecoverer(ctx", func(ctx context.Context) {
-		hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
@@ -780,12 +761,6 @@ func (a *API) Serve(ctx context.Context) error {
 				log.Error("Bootstrap Error: %v", err)
 			}
 		}()
-	}
-
-	if !a.Config.Schedulers.Disabled {
-		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
-	} else {
-		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 
 	sdk.GoRoutine(ctx, "workflow.Initialize",

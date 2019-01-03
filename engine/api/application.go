@@ -21,7 +21,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
@@ -188,6 +187,7 @@ func (api *API) getApplicationBranchVersionHandler() service.Handler {
 	}
 }
 
+// DEPRECATED
 func (api *API) getApplicationTreeStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -211,21 +211,21 @@ func (api *API) getApplicationTreeStatusHandler() service.Handler {
 			return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
 		}
 
-		pbs, schedulers, hooks, errPB := workflowv0.GetWorkflowStatus(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, remote, version)
+		pbs, errPB := workflowv0.GetWorkflowStatus(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, remote, version)
 		if errPB != nil {
 			return sdk.WrapError(errPB, "getApplicationHandler> Cannot load CD Tree status %s", app.Name)
 		}
 
 		response := struct {
-			Builds     []sdk.PipelineBuild     `json:"builds"`
-			Schedulers []sdk.PipelineScheduler `json:"schedulers"`
-			Pollers    []struct{}              `json:"pollers"`
-			Hooks      []sdk.Hook              `json:"hooks"`
+			Builds     []sdk.PipelineBuild `json:"builds"`
+			Schedulers []struct{}          `json:"schedulers"`
+			Pollers    []struct{}          `json:"pollers"`
+			Hooks      []struct{}          `json:"hooks"`
 		}{
 			pbs,
-			schedulers,
 			nil,
-			hooks,
+			nil,
+			nil,
 		}
 
 		return service.WriteJSON(w, response, http.StatusOK)
@@ -239,10 +239,8 @@ func (api *API) getApplicationHandler() service.Handler {
 		applicationName := vars["permApplicationName"]
 
 		applicationStatus := FormBool(r, "applicationStatus")
-		withHooks := FormBool(r, "withHooks")
 		withWorkflow := FormBool(r, "withWorkflow")
 		withTriggers := FormBool(r, "withTriggers")
-		withSchedulers := FormBool(r, "withSchedulers")
 		withKeys := FormBool(r, "withKeys")
 		withUsage := FormBool(r, "withUsage")
 		withIcon := FormBool(r, "withIcon")
@@ -255,9 +253,6 @@ func (api *API) getApplicationHandler() service.Handler {
 		loadOptions := []application.LoadOptionFunc{
 			application.LoadOptions.WithVariables,
 			application.LoadOptions.WithPipelines,
-		}
-		if withHooks {
-			loadOptions = append(loadOptions, application.LoadOptions.WithHooks)
 		}
 		if withTriggers {
 			loadOptions = append(loadOptions, application.LoadOptions.WithTriggers)
@@ -282,14 +277,6 @@ func (api *API) getApplicationHandler() service.Handler {
 
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "Unable to load groups by application")
-		}
-
-		if withSchedulers {
-			var errScheduler error
-			app.Schedulers, errScheduler = scheduler.GetByApplication(api.mustDB(), app)
-			if errScheduler != nil {
-				return sdk.WrapError(errScheduler, "getApplicationHandler> Cannot load schedulers for application %s", applicationName)
-			}
 		}
 
 		if withWorkflow {

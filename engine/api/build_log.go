@@ -255,18 +255,3 @@ func (api *API) getPipelineBuildJobLogsHandler() service.Handler {
 		return service.WriteJSON(w, pipelinelogs, http.StatusOK)
 	}
 }
-
-func (api *API) addBuildLogHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var logs sdk.Log
-		if err := service.UnmarshalBody(r, &logs); err != nil {
-			return sdk.WrapError(err, "Unable to parse body")
-		}
-
-		if err := pipeline.AddBuildLog(api.mustDB(), &logs); err != nil {
-			return sdk.WithStack(err)
-		}
-
-		return nil
-	}
-}

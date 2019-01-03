@@ -286,15 +286,6 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 		return err
 	}
 
-	// Delete application_pipeline_notif
-	query = `
-		DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (
-			SELECT id FROM application_pipeline WHERE pipeline_id = $1
-		)`
-	if _, err := db.Exec(query, pipelineID); err != nil {
-		return err
-	}
-
 	// Delete pipeline
 	query = `DELETE FROM pipeline WHERE id = $1`
 	if _, err := db.Exec(query, pipelineID); err != nil {

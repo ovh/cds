@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/grpc"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -22,26 +21,6 @@ import (
 type grpcHandlers struct {
 	dbConnectionFactory *database.DBConnectionFactory
 	store               cache.Store
-}
-
-//AddBuildLog is the BuildLogServer implementation
-func (h *grpcHandlers) AddBuildLog(stream grpc.BuildLog_AddBuildLogServer) error {
-	log.Debug("grpc.AddBuildLog> started stream")
-	for {
-		in, err := stream.Recv()
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		log.Debug("grpc.AddBuildLog> Got %+v", in)
-
-		db := h.dbConnectionFactory.GetDBMap()
-		if err := pipeline.AddBuildLog(db, in); err != nil {
-			return sdk.WrapError(err, "Unable to insert log ")
-		}
-	}
 }
 
 //SendLog is the WorkflowQueueServer implementation

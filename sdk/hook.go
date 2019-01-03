@@ -244,20 +244,6 @@ var (
 	}
 )
 
-// Hook used to link a git repository to a given pipeline
-type Hook struct {
-	ID            int64    `json:"id"`
-	UID           string   `json:"uid"`
-	Pipeline      Pipeline `json:"pipeline"`
-	ApplicationID int64    `json:"application_id"`
-	Kind          string   `json:"kind"`
-	Host          string   `json:"host"`
-	Project       string   `json:"project"`
-	Repository    string   `json:"repository"`
-	Enabled       bool     `json:"enabled"`
-	Link          string   `json:"link"`
-}
-
 // GetDefaultHookModel return the workflow hook model by its name
 func GetDefaultHookModel(modelName string) WorkflowHookModel {
 	switch modelName {
