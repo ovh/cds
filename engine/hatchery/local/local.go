@@ -3,10 +3,13 @@ package local
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"html/template"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -227,10 +230,22 @@ func (h *HatcheryLocal) SpawnWorker(ctx context.Context, spawnArgs hatchery.Spaw
 			spawnArgs.Model.ModelVirtualMachine.Image, spawnArgs.LogInfo)
 	}
 
+	// Generate a random string 16 chars length
+	bs := make([]byte, 16)
+	if _, err := rand.Read(bs); err != nil {
+		return "", err
+	}
+	rndstr := hex.EncodeToString(bs)[0:16]
+	basedir := path.Join(h.Config.Basedir, rndstr)
+	// Create the directory
+	if err := os.MkdirAll(basedir, os.FileMode(0755)); err != nil {
+		return "", err
+	}
+
 	udataParam := sdk.WorkerArgs{
 		API:               h.Configuration().API.HTTP.URL,
 		Token:             h.Configuration().API.Token,
-		BaseDir:           h.Config.Basedir,
+		BaseDir:           basedir,
 		HTTPInsecure:      h.Config.API.HTTP.Insecure,
 		Name:              wName,
 		Model:             spawnArgs.Model.ID,
