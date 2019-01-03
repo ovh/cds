@@ -347,6 +347,8 @@
   "keys_removed": "Key has been removed",
   "keys_type": "Key type",
   "keys_no": "There is no keys",
+  "keys_ssh_key_help": "A SSH Key is useful when you want to git clone some code from a Git Repository. CDS can generate a key pair and you can copy / paste the public key to your access keys on your repositories. If you want to use manually the key, please read:",
+  "keys_pgp_key_help": "A PGP Key is useful when you want to git tag a repository. If you want to use manually the key, please read:",
 
   "usage_application_list": "Applications used",
   "usage_workflow_list": "Workflows used",
@@ -631,8 +633,6 @@
   "project_list_card_updated": "Updated the {{date}}",
   "project_advanced_title": "Project administration",
   "project_added": "Project has just been created",
-  "project_add_ssh_key": "Generate a ssh key",
-  "project_add_ssh_key_help": "A SSK Key is useful when you want to git clone some code from a Git Repository. CDS can generate a key pair and you can copy / paste the public key to your access keys on your repositories.",
   "project_add_group_help": "Read / Write / Execute permissions have to be set on this new project. You can choose an existing users group or let empty to automatically create a new group, you will be administrator of this group.",
   "project_applications_list": "List of applications in the project: ",
   "project_create": "Create a new project",
