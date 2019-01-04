@@ -157,8 +157,9 @@ func downloadSQLTarGz() {
 
 	if resp.StatusCode != 200 {
 		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		fmt.Printf("body returned from github: \n%s\n", buf.String())
+		if _, err := buf.ReadFrom(resp.Body); err == nil {
+			fmt.Printf("body returned from github: \n%s\n", buf.String())
+		}
 		sdk.Exit("Error http code: %d, url called: %s\n", resp.StatusCode, urlTarGZ)
 	}
 
