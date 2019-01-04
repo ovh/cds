@@ -58,9 +58,7 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 			       application.id as appID, application.name as appName, application.repo_fullname as appRepoName,
 			       pipeline.id as pipID, pipeline.name as pipName, pipeline.type as pipType,
 			       environment.id as envID, environment.name as EnvName,
-			       CASE WHEN COALESCE (count(h.id), 0)>0 THEN true ELSE false END as hasHook,
-			       CASE WHEN COALESCE (count(sc.id), 0)>0 THEN true ELSE false END as hasScheduler,
-			       CASE WHEN COALESCE (count(p.application_id), 0)>0 THEN true ELSE false END as hasPoller,
+				   false as hasHook, false as hasScheduler,false as hasPoller,
 			       false as hasChild
 			FROM pipeline
 			JOIN application_pipeline ON application_pipeline.pipeline_id = pipeline.id
@@ -80,7 +78,7 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 				AND src_application_id = application.id
 			)
 			GROUP by project.id, application.id, pipeline.id, environment.id
-		     )
+		     ) aa
 		     UNION
 		     (
 		     -- ROOT PIPELINE WITH TRIGGER
@@ -88,9 +86,7 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 			       appID, appName, appRepoName,
 			       pipID, pipName, pipType,
 			       envID, envName,
-			       CASE WHEN COALESCE (count(h.id), 0)>0 THEN true ELSE false END as hasHook,
-			       CASE WHEN COALESCE (count(sc.id), 0)>0 THEN true ELSE false END as hasScheduler,
-			       CASE WHEN COALESCE (count(p.application_id), 0)>0 THEN true ELSE false END as hasPoller,
+				   false as hasHook, false as hasScheduler,false as hasPoller,
 			       true as hasChild
 			FROM (
 				-- SELECT ALL SRC APP/PIP/ENV
