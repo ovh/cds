@@ -1,10 +1,10 @@
 package database
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -18,6 +18,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 //DBCmd is the root command for database management
@@ -107,21 +108,21 @@ func upgradeCmdFunc(cmd *cobra.Command, args []string) {
 
 	migrations, err := source.FindMigrations()
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	if sdk.VERSION != "snapshot" {
 		nbMigrateOnThisVersion, err := strconv.Atoi(sdk.DBMIGRATE)
 		if err == nil { // no err -> it's a real release
-			fmt.Printf("There is %d migrate files locally. Current engine needs %d files\n", len(migrations), nbMigrateOnThisVersion)
+			fmt.Printf("There are %d migrate files locally. Current engine needs %d files\n", len(migrations), nbMigrateOnThisVersion)
 			if nbMigrateOnThisVersion > len(migrations) {
 				fmt.Printf("This version %s should contains %d migrate files.\n", sdk.VERSION, nbMigrateOnThisVersion)
 				downloadSQLTarGz()
 				migrations, err := source.FindMigrations()
 				if err != nil {
-					sdk.Exit("Error: %s\n", err)
+					sdk.Exit("Error: %v\n", err)
 				}
-				fmt.Printf("sql.tar.gz downloaded, there is now %d migrate files locally\n", len(migrations))
+				fmt.Printf("sql.tar.gz downloaded, there are now %d migrate files locally\n", len(migrations))
 			}
 		} else {
 			sdk.Exit("Invalid compilation flag DBMIGRATE")
@@ -129,7 +130,7 @@ func upgradeCmdFunc(cmd *cobra.Command, args []string) {
 	}
 
 	if err := ApplyMigrations(migrate.Up, sqlMigrateDryRun, sqlMigrateLimitUp); err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 }
 
@@ -143,9 +144,10 @@ func downloadSQLTarGz() {
 	urlTarGZ := fmt.Sprintf("https://github.com/ovh/cds/releases/download/%s/sql.tar.gz", currentTag)
 	fmt.Printf("Getting sql.tar.gz from github on %s...\n", urlTarGZ)
 
-	resp, err := http.Get(urlTarGZ)
+	httpClient := cdsclient.NewHTTPClient(60*time.Second, false)
+	resp, err := httpClient.Get(urlTarGZ)
 	if err != nil {
-		sdk.Exit("Error while getting sql.tar.gz from Github: %s\n", err)
+		sdk.Exit("Error while getting sql.tar.gz from Github: %v\n", err)
 	}
 	defer resp.Body.Close()
 
@@ -154,6 +156,9 @@ func downloadSQLTarGz() {
 	}
 
 	if resp.StatusCode != 200 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		fmt.Printf("body returned from github: \n%s\n", buf.String())
 		sdk.Exit("Error http code: %d, url called: %s\n", resp.StatusCode, urlTarGZ)
 	}
 
@@ -192,7 +197,7 @@ func downloadSQLTarGz() {
 
 func downgradeCmdFunc(cmd *cobra.Command, args []string) {
 	if err := ApplyMigrations(migrate.Down, sqlMigrateDryRun, sqlMigrateLimitDown); err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 }
 
@@ -200,7 +205,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 	var err error
 	connFactory, err = Init(connFactory.dbUser, connFactory.dbRole, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	source := migrate.FileMigrationSource{
@@ -209,12 +214,12 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 
 	migrations, err := source.FindMigrations()
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	records, err := migrate.GetMigrationRecords(connFactory.DB(), "postgres")
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
@@ -263,12 +268,12 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 	var err error
 	connFactory, err = Init(connFactory.dbUser, connFactory.dbRole, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	migrations, err := dbmigrate.Do(connFactory.DB, sqlMigrateDir, dir, dryrun, limit)
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	if dryrun {
