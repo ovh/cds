@@ -58,19 +58,19 @@ func environmentGroupImportRun(v cli.Values) error {
 	}()
 	var format = "yaml"
 
-	if strings.HasSuffix(v["path"], ".json") {
+	if strings.HasSuffix(v.GetString("path"), ".json") {
 		format = "json"
 	}
 
-	if exportentities.IsURL(v["path"]) {
+	if exportentities.IsURL(v.GetString("path")) {
 		var err error
-		reader, _, err = exportentities.OpenURL(v["path"], format)
+		reader, _, err = exportentities.OpenURL(v.GetString("path"), format)
 		if err != nil {
 			return err
 		}
 	} else {
 		var err error
-		reader, _, err = exportentities.OpenFile(v["path"])
+		reader, _, err = exportentities.OpenFile(v.GetString("path"))
 		if err != nil {
 			return err
 		}

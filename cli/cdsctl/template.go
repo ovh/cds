@@ -150,7 +150,7 @@ func templatePushRun(v cli.Values) error {
 		for _, file := range files {
 			fi, err := os.Lstat(file)
 			if err != nil {
-				fmt.Printf("Skipping file %s: %v\n", file, err)
+				fmt.Printf("skipping file %s: %v\n", file, err)
 				continue
 			}
 
