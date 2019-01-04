@@ -24,7 +24,7 @@
   "action_deleted": "Action deleted",
   "action_edit_title": "Edit action",
   "action_name": "Action name",
-  "action_edit_builtin": "It's a Builtin action, you can not modify it",
+  "action_edit_builtin": "It's a Builtin action, you can not modify it.",
   "action_edit_plugin": "It's a Plugin action, you can not modify it without re-import it",
   "action_none": "No action",
   "action_saved": "Action saved",
@@ -773,6 +773,7 @@
   "step_nonfinal_no": "There is no step.",
   "step_updated": "Step updated",
   "step_title_duration": "Start: {{start}}, End: {{end}}",
+  "step_edit_title": "Edit title",
 
   "timeline_loading": "Loading timeline...",
   "timeline_no": "Timeline is empty",

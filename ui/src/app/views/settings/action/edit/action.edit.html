@@ -6,6 +6,8 @@
             <div id="ActionEdit">
                 <div class="ui info message" *ngIf="action.type === 'Builtin'">
                     {{ 'action_edit_builtin' | translate }}
+                    <a class="item" href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/{{actionDoc}}">
+                        <i class="book icon"></i> {{ 'common_documentation' | translate }} {{action.name}}</a>
                 </div>
                 <div class="ui info message" *ngIf="action.type === 'Plugin'">
                     {{ 'action_edit_plugin' | translate }}

@@ -15,8 +15,4 @@ Check documentation on text/template for more information https://golang.org/pkg
 * **params**: Parameters to pass on the template file (key=value newline separated list)
 
 
-## More
-
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/tmpl/README.md)
-
 
