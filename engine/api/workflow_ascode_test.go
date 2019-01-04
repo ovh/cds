@@ -142,6 +142,9 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 	assert.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
 	assert.NoError(t, repositoriesmanager.InsertForApplication(db, &app, proj.Key))
 
+	repoModel, err := workflow.LoadHookModelByName(db, sdk.RepositoryWebHookModelName)
+	assert.NoError(t, err)
+
 	// Create Workflow
 	w := sdk.Workflow{
 		ProjectID:  proj.ID,
@@ -154,6 +157,14 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 				Context: &sdk.NodeContext{
 					PipelineID:    pip.ID,
 					ApplicationID: app.ID,
+				},
+				Hooks: []sdk.NodeHook{
+					{
+						HookModelName: sdk.RepositoryWebHookModelName,
+						UUID:          "123",
+						Config:        sdk.RepositoryWebHookModel.DefaultConfig,
+						HookModelID:   repoModel.ID,
+					},
 				},
 			},
 		},
