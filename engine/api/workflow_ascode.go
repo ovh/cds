@@ -55,6 +55,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		for _, h := range wf.WorkflowData.Node.Hooks {
 			if h.HookModelName == sdk.RepositoryWebHookModel.Name {
 				found = true
+				break
 			}
 		}
 		if !found {

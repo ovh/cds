@@ -23,7 +23,7 @@ func LoadAsCodeEvent(db gorp.SqlExecutor, workflowID int64) ([]sdk.AsCodeEvent, 
 	return asCodeEvents, nil
 }
 
-func inserAsCodeEvent(db gorp.SqlExecutor, asCodeEvent sdk.AsCodeEvent) error {
+func insertAsCodeEvent(db gorp.SqlExecutor, asCodeEvent sdk.AsCodeEvent) error {
 	dbEvent := dbAsCodeEvents(asCodeEvent)
 	if err := db.Insert(&dbEvent); err != nil {
 		return sdk.WrapError(err, "unable to insert as code event")

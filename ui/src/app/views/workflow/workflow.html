@@ -7,7 +7,7 @@
     <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
         <a class="ui label small basic"
            [class.green]="workflow && workflow.from_repository"
-           [class.orange]="workflow && !workflow.from_repository && workflow.as_code_events.length > 0"
+           [class.orange]="workflow && !workflow.from_repository && workflow.as_code_events && workflow.as_code_events.length > 0"
            [class.inactiveFeature]="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)"
            [ngClass]="workflow && workflow.from_repository ? 'green' : 'inactiveFeature'"
             suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"

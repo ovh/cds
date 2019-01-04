@@ -248,7 +248,7 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			}
 			defer tx.Rollback() // nolint
 
-			if err := inserAsCodeEvent(tx, asCodeEvent); err != nil {
+			if err := insertAsCodeEvent(tx, asCodeEvent); err != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to insert as code event: %v", err)
 				ope.Status = sdk.OperationStatusError
 				ope.Error = "unable to insert as code event"
