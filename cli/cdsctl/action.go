@@ -114,19 +114,19 @@ var actionDocCmd = cli.Command{
 }
 
 func actionDocRun(v cli.Values) error {
-	btes, errRead := ioutil.ReadFile(v["path"])
+	btes, errRead := ioutil.ReadFile(v.GetString("path"))
 	if errRead != nil {
 		return fmt.Errorf("Error while reading file: %s", errRead)
 	}
 
 	var ea = new(exportentities.Action)
 	var errapp error
-	if strings.HasSuffix(path.Base(v["path"]), ".json") {
+	if strings.HasSuffix(path.Base(v.GetString("path")), ".json") {
 		errapp = json.Unmarshal(btes, ea)
-	} else if strings.HasSuffix(path.Base(v["path"]), ".yml") || strings.HasSuffix(path.Base(v["path"]), ".yaml") {
+	} else if strings.HasSuffix(path.Base(v.GetString("path")), ".yml") || strings.HasSuffix(path.Base(v.GetString("path")), ".yaml") {
 		errapp = yaml.Unmarshal(btes, ea)
 	} else {
-		return fmt.Errorf("unsupported extension on %s", path.Base(v["path"]))
+		return fmt.Errorf("unsupported extension on %s", path.Base(v.GetString("path")))
 	}
 
 	if errapp != nil {
@@ -138,7 +138,7 @@ func actionDocRun(v cli.Values) error {
 		return errapp
 	}
 
-	fmt.Println(sdk.ActionInfoMarkdown(act, path.Base(v["path"])))
+	fmt.Println(sdk.ActionInfoMarkdown(act, path.Base(v.GetString("path"))))
 	return nil
 }
 

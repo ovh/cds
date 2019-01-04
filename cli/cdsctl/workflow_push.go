@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var workflowPushCmd = cli.Command{
@@ -107,7 +108,7 @@ func workflowPushRun(c cli.Values) error {
 func workflowFilesToTarWriter(files []string, buf io.Writer) error {
 	tw := tar.NewWriter(buf)
 
-	// Add some files to the archive.
+	// add some files to the archive
 	for _, file := range files {
 		filBuf, err := ioutil.ReadFile(file)
 		if err != nil {
@@ -128,6 +129,40 @@ func workflowFilesToTarWriter(files []string, buf io.Writer) error {
 			return fmt.Errorf("nothing to write")
 		}
 	}
-	// Make sure to check the error on Close.
+
+	// make sure to check the error on Close
+	return tw.Close()
+}
+
+func workflowLinksToTarWriter(links []string, buf io.Writer) error {
+	tw := tar.NewWriter(buf)
+
+	// download and add some files to the archive
+	for _, link := range links {
+		contentFile, _, err := exportentities.OpenPath(link)
+		if err != nil {
+			return err
+		}
+		buf := new(bytes.Buffer)
+		if _, err := buf.ReadFrom(contentFile); err != nil {
+			return err
+		}
+
+		hdr := &tar.Header{
+			Name: filepath.Base(link),
+			Mode: 0600,
+			Size: int64(buf.Len()),
+		}
+		if err := tw.WriteHeader(hdr); err != nil {
+			return err
+		}
+		if n, err := tw.Write(buf.Bytes()); err != nil {
+			return err
+		} else if n == 0 {
+			return fmt.Errorf("nothing to write")
+		}
+	}
+
+	// make sure to check the error on Close
 	return tw.Close()
 }
