@@ -17,6 +17,7 @@ const (
 	HookConfigWorkflowID          = "workflow_id"
 	HookConfigModelType           = "model_type"
 	HookConfigModelName           = "model_name"
+	HookConfigIcon                = "hookIcon"
 	WebHookModelConfigMethod      = "method"
 	RepositoryWebHookModelMethod  = "method"
 	SchedulerModelCron            = "cron"

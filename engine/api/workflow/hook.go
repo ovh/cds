@@ -241,6 +241,11 @@ func createVCSConfiguration(ctx context.Context, db gorp.SqlExecutor, store cach
 		Configurable: false,
 		Type:         sdk.HookConfigTypeString,
 	}
+	h.Config[sdk.HookConfigIcon] = sdk.WorkflowNodeHookConfigValue{
+		Value:        webHookInfo.Icon,
+		Configurable: false,
+		Type:         sdk.HookConfigTypeString,
+	}
 
 	return nil
 }
