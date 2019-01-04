@@ -957,6 +957,7 @@
   "workflow_description": "Description du workflow",
   "workflow_from_repository": "Workflow importé depuis {{repo}}",
   "workflow_from_repository_btn": "Import du workflow depuis un gestionnaire de dépôt",
+  "workflow_from_repository_pending": "Acceptez la pullrequest suivante pour passer votre workflow as-code",
   "workflow_from_template": "Workflow importé depuis le modèle",
   "workflow_from_template_btn": "Génération du workflow depuis un modèle",
   "workflow_join_delete": "Suppression de la jointure",

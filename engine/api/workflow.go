@@ -53,6 +53,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		withLabels := FormBool(r, "withLabels")
 		withDeepPipelines := FormBool(r, "withDeepPipelines")
 		withTemplate := FormBool(r, "withTemplate")
+		withAsCodeEvents := FormBool(r, "withAsCodeEvents")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
@@ -60,10 +61,11 @@ func (api *API) getWorkflowHandler() service.Handler {
 		}
 
 		opts := workflow.LoadOptions{
-			WithFavorites: true,
-			DeepPipeline:  withDeepPipelines,
-			WithIcon:      true,
-			WithLabels:    withLabels,
+			WithFavorites:         true,
+			DeepPipeline:          withDeepPipelines,
+			WithIcon:              true,
+			WithLabels:            withLabels,
+			WithAsCodeUpdateEvent: withAsCodeEvents,
 		}
 		w1, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), opts)
 		if err != nil {

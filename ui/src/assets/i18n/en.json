@@ -956,6 +956,7 @@
   "workflow_description": "Workflow description",
   "workflow_from_repository": "Workflow imported from {{repo}}",
   "workflow_from_repository_btn": "Import workflow from repository",
+  "workflow_from_repository_pending": "Accept the following pullrequest to use workflow as-code",
   "workflow_from_template": "Workflow generated from template",
   "workflow_from_template_btn": "Generate workflow from template",
   "workflow_join_delete": "Delete this join",

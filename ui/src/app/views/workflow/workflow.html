@@ -5,20 +5,23 @@
             [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
     </div>
     <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
-        <a class="ui label small basic" [ngClass]="workflow && workflow.from_repository ? 'green' : 'inactiveFeature'"
+        <a class="ui label small basic"
+           [class.green]="workflow && workflow.from_repository"
+           [class.orange]="workflow && !workflow.from_repository && workflow.as_code_events.length > 0"
+           [class.inactiveFeature]="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)"
+           [ngClass]="workflow && workflow.from_repository ? 'green' : 'inactiveFeature'"
             suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
             #popup="suiPopup">
             <i class="code icon"></i>as code
         </a>
         <ng-template let-popup #popupFromRepository>
             <div class="content infoPopup">
-                <div *ngIf="workflow && workflow.from_repository;then fromRepositoryInfo;else fromRepositoryHelp"></div>
-                <ng-template #fromRepositoryInfo>
+                <ng-container *ngIf="workflow && workflow.from_repository">
                     <p>
                         {{ 'workflow_from_repository' | translate: {repo: workflow.from_repository} }}
                     </p>
-                </ng-template>
-                <ng-template #fromRepositoryHelp>
+                </ng-container>
+                <ng-container *ngIf="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)">
                     <p>{{'workflow_repository_help_line_1' | translate}}</p>
                     <p>{{'workflow_repository_help_line_2' | translate}}</p>
                     <div class="footer">
@@ -37,7 +40,15 @@
                             </div>
                         </div>
                     </div>
-                </ng-template>
+                </ng-container>
+                <ng-container *ngIf="workflow && !workflow.from_repository && (workflow.as_code_events && workflow.as_code_events.length > 0)">
+                    <p>{{ 'workflow_from_repository_pending' | translate}}</p>
+                    <ul>
+                        <li *ngFor="let p of workflow.as_code_events">
+                            <a href="{{p.pullrequest_url}}" target="_blank">{{p.pullrequest_url}}</a>
+                        </li>
+                    </ul>
+                </ng-container>
             </div>
         </ng-template>
     </div>

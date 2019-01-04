@@ -25,7 +25,7 @@ export class WorkflowService {
         params = params.append('withUsage', 'true');
         params = params.append('withAudits', 'true');
         params = params.append('withTemplate', 'true');
-
+        params = params.append('withAsCodeEvents', 'true');
         return this._http.get<Workflow>('/project/' + key + '/workflows/' + workflowName, {params});
     }
 

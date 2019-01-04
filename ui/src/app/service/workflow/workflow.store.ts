@@ -1,4 +1,3 @@
-
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
 import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
