@@ -3,7 +3,6 @@ import {ModuleWithProviders, NgModule, Optional, SkipSelf} from '@angular/core';
 import {ActionService} from './action/action.service';
 import {ActionStore} from './action/action.store';
 import {ApplicationAuditService} from './application/application.audit.service';
-import {ApplicationMigrateService} from './application/application.migration.service';
 import {ApplicationNoCacheService} from './application/application.nocache.service';
 import {ApplicationQueryParamResolver, ApplicationResolver} from './application/application.resolver';
 import {ApplicationService} from './application/application.service';
@@ -81,7 +80,6 @@ export class ServicesModule {
                 ApplicationNoCacheService,
                 ApplicationWorkflowService,
                 ApplicationPipelineService,
-                ApplicationMigrateService,
                 ApplicationStore,
                 AuthentificationStore,
                 ConfigService,
@@ -160,7 +158,6 @@ export {
     ApplicationStore,
     ApplicationPipelineService,
     ApplicationWorkflowService,
-    ApplicationMigrateService,
     AuthentificationStore,
     CanActivateAuthRoute,
     CanActivateAuthAdminRoute,

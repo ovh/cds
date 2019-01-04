@@ -104,9 +104,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 version: queryParams['version'] || ' '
             };
 
-            if (this.project && this.application &&
-                (this.application.workflow_migration !== 'CLEANING' && this.application.workflow_migration !== 'DONE')
-            ) {
+            if (this.project && this.application) {
                 this.startWorker(this.project.key);
             }
         });
@@ -136,11 +134,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                             if (updatedApplication && !updatedApplication.externalChange) {
                                 this.readyApp = true;
                                 this.application = updatedApplication;
-                                if ((this.application.workflow_migration === 'CLEANING' || this.application.workflow_migration === 'DONE')
-                                    && this.selectedTab === 'workflow') {
-                                    this.selectedTab = 'variables';
-                                }
-
                                 this.workflows = updatedApplication.usage.workflows || [];
                                 this.environments = updatedApplication.usage.environments || [];
                                 this.pipelines = updatedApplication.usage.pipelines || [];
@@ -238,10 +231,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     }
 
     showTab(tab: string): void {
-        if ((this.application.workflow_migration === 'DONE' || this.application.workflow_migration === 'CLEANING') && tab === 'workflow') {
-            tab = 'variables';
-        }
-
         this._router.navigateByUrl('/project/' + this.project.key + '/application/' + this.application.name + '?tab=' + tab);
     }
 

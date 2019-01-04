@@ -1,15 +1,11 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {FormControl} from '@angular/forms';
 import {Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {finalize, first} from 'rxjs/operators';
+import {first} from 'rxjs/operators';
 import {Application} from '../../../../model/application.model';
 import {Project} from '../../../../model/project.model';
 import {User} from '../../../../model/user.model';
-import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
 import {ApplicationStore} from '../../../../service/application/application.store';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
@@ -27,24 +23,14 @@ export class ApplicationAdminComponent implements OnInit {
     @ViewChild('updateWarning')
         private updateWarningModal: WarningModalComponent;
 
-    @ViewChild('doneMigrationTmpl')
-    doneMigrationTmpl: ModalTemplate<boolean, boolean, void>;
-    migrationModal: ActiveModal<boolean, boolean, void>;
-    migrationText: string;
-
-    disablePrefix: FormControl
-    withRepositoryWebHook: FormControl
-    withCurrentVersion: FormControl
-
     user: User;
 
     newName: string;
     fileTooLarge = false;
     public loading = false;
 
-    constructor(private _applicationStore: ApplicationStore, private _toast: ToastService, private _modalService: SuiModalService,
-                public _translate: TranslateService, private _router: Router, private _appMigrateSerivce: ApplicationMigrateService,
-                private _authStore: AuthentificationStore) {
+    constructor(private _applicationStore: ApplicationStore, private _toast: ToastService,
+                public _translate: TranslateService, private _router: Router, private _authStore: AuthentificationStore) {
     }
 
     ngOnInit() {
@@ -54,24 +40,6 @@ export class ApplicationAdminComponent implements OnInit {
             this._router.navigate(['/project', this.project.key, 'application', this.application.name],
                 { queryParams: {tab: 'workflow'}});
         }
-        this.migrationText = this._translate.instant('application_workflow_migration_modal_content');
-
-        this.disablePrefix = new FormControl(false);
-        this.withRepositoryWebHook = new FormControl(false);
-        this.withCurrentVersion = new FormControl(true);
-    }
-
-    generateWorkflow(force: boolean): void {
-        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name,
-            force, this.disablePrefix.value, this.withRepositoryWebHook.value, this.withCurrentVersion.value)
-            .pipe(
-              first(),
-              finalize(() => this.loading = true)
-            )
-            .subscribe(() => {
-            this._toast.success('', this._translate.instant('application_workflow_migration_success'));
-            this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows'} });
-        });
     }
 
     onSubmitApplicationUpdate(skip?: boolean): void {
@@ -90,21 +58,6 @@ export class ApplicationAdminComponent implements OnInit {
                 this.loading = false;
             });
         }
-    }
-
-    openDoneMigrationPopup(): void {
-        let tmpl = new TemplateModalConfig<boolean, boolean, void>(this.doneMigrationTmpl);
-        this.migrationModal = this._modalService.open(tmpl);
-    }
-
-    migrationClean(): void {
-        this.loading = true;
-        this._appMigrateSerivce.cleanWorkflow(this.project.key, this.application.name).pipe(finalize(() => {
-            this.loading = false;
-        })).subscribe(() => {
-           this._toast.success('', this._translate.instant('application_workflow_migration_ok'));
-           this.migrationModal.approve(true);
-        });
     }
 
     deleteApplication(): void {

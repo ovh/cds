@@ -12,31 +12,30 @@ import (
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID                int64              `json:"-" yaml:"-" db:"id" cli:"-"`
-	Key               string             `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
-	Name              string             `json:"name" yaml:"name" db:"name" cli:"name"`
-	Description       string             `json:"description" yaml:"description" db:"description" cli:"description"`
-	Icon              string             `json:"icon" yaml:"icon" db:"icon" cli:"-"`
-	Workflows         []Workflow         `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
-	WorkflowNames     []IDName           `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
-	Pipelines         []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
-	PipelineNames     []IDName           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
-	Applications      []Application      `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
-	ApplicationNames  []IDName           `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
-	ProjectGroups     []GroupPermission  `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
-	Variable          []Variable         `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
-	Environments      []Environment      `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
-	Labels            []Label            `json:"labels,omitempty"  yaml:"labels,omitempty" db:"-"  cli:"-"`
-	Permission        int                `json:"permission"  yaml:"-" db:"-"  cli:"-"`
-	Created           time.Time          `json:"created"  yaml:"created" db:"created" `
-	LastModified      time.Time          `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
-	Metadata          Metadata           `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
-	WorkflowMigration string             `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
-	Keys              []ProjectKey       `json:"keys" yaml:"keys" db:"-" cli:"-"`
-	VCSServers        []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
-	Platforms         []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
-	Features          map[string]bool    `json:"features" yaml:"features" db:"-" cli:"-"`
-	Favorite          bool               `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
+	ID               int64              `json:"-" yaml:"-" db:"id" cli:"-"`
+	Key              string             `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
+	Name             string             `json:"name" yaml:"name" db:"name" cli:"name"`
+	Description      string             `json:"description" yaml:"description" db:"description" cli:"description"`
+	Icon             string             `json:"icon" yaml:"icon" db:"icon" cli:"-"`
+	Workflows        []Workflow         `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
+	WorkflowNames    []IDName           `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
+	Pipelines        []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	PipelineNames    []IDName           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
+	Applications     []Application      `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ApplicationNames []IDName           `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
+	ProjectGroups    []GroupPermission  `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	Variable         []Variable         `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Environments     []Environment      `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
+	Labels           []Label            `json:"labels,omitempty"  yaml:"labels,omitempty" db:"-"  cli:"-"`
+	Permission       int                `json:"permission"  yaml:"-" db:"-"  cli:"-"`
+	Created          time.Time          `json:"created"  yaml:"created" db:"created" `
+	LastModified     time.Time          `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
+	Metadata         Metadata           `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
+	Keys             []ProjectKey       `json:"keys" yaml:"keys" db:"-" cli:"-"`
+	VCSServers       []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
+	Platforms        []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
+	Features         map[string]bool    `json:"features" yaml:"features" db:"-" cli:"-"`
+	Favorite         bool               `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
 }
 
 // IsValid returns error if the project is not valid

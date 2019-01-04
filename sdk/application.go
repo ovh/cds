@@ -32,7 +32,6 @@ type Application struct {
 	RepositoryStrategy   RepositoryStrategy        `json:"vcs_strategy,omitempty" db:"-"`
 	Workflows            []CDPipeline              `json:"workflows,omitempty" db:"-"`
 	Metadata             Metadata                  `json:"metadata" yaml:"metadata" db:"-"`
-	WorkflowMigration    string                    `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
 	Keys                 []ApplicationKey          `json:"keys" yaml:"keys" db:"-"`
 	Usage                *Usage                    `json:"usage,omitempty" db:"-" cli:"-"`
 	DeploymentStrategies map[string]PlatformConfig `json:"deployment_strategies,omitempty" db:"-" cli:"-"`

@@ -678,11 +678,6 @@ func (a *API) Serve(ctx context.Context) error {
 	//Temporary migration code
 	//DEPRECATED Migrations
 	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
-		migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
-	}, a.PanicDump())
-
-	//DEPRECATED Migrations
-	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
 		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	}, a.PanicDump())
 

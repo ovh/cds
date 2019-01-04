@@ -15,7 +15,7 @@
 
     <div class="CDSmenu">
         <sm-menu title="" class="pointing stackable secondary">
-            <a *ngIf="currentUser.admin || project.workflow_migration !== 'NOT_BEGUN'" sm-item [class.active]="selectedTab === 'workflows'" id="ProjectWorkflowTab" (click)="showTab('workflows')"><i class="share alternate icon"></i>{{
+            <a sm-item [class.active]="selectedTab === 'workflows'" id="ProjectWorkflowTab" (click)="showTab('workflows')"><i class="share alternate icon"></i>{{
                 'common_workflows' | translate }}
                 <app-warning-tab [warnings]="warnWorkflow"></app-warning-tab>
             </a>

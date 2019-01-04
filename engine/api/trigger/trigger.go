@@ -728,37 +728,6 @@ func DeletePipelineTriggers(db gorp.SqlExecutor, pipelineID int64) error {
 	return nil
 }
 
-// DeleteApplicationTriggers removes from database all triggers where given application is present
-func DeleteApplicationTriggers(db gorp.SqlExecutor, appID int64) error {
-
-	// Delete parameters
-	query := `DELETE FROM pipeline_trigger_parameter WHERE pipeline_trigger_id IN (
-					SELECT id FROM pipeline_trigger WHERE src_application_id = $1 OR dest_application_id = $1
-				)`
-	_, err := db.Exec(query, appID)
-	if err != nil {
-		return err
-	}
-
-	// Delete prerequisites
-	query = `DELETE FROM pipeline_trigger_prerequisite WHERE pipeline_trigger_id IN (
-					SELECT id FROM pipeline_trigger WHERE src_application_id = $1 OR dest_application_id = $1
-				)`
-	_, err = db.Exec(query, appID)
-	if err != nil {
-		return err
-	}
-
-	// Delete triggers
-	query = `DELETE FROM pipeline_trigger WHERE src_application_id = $1 OR dest_application_id = $1`
-	_, err = db.Exec(query, appID)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // DeleteTrigger removes from database given trigger
 func DeleteTrigger(db gorp.SqlExecutor, triggerID int64) error {
 
