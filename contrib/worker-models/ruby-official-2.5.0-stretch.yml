@@ -1,0 +1,7 @@
+name: ruby-official-2.5.0-stretch
+group: shared.infra
+communication: http
+image: ruby:2.5.0-stretch
+type: docker
+shell: sh -c
+cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker

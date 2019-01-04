@@ -1,0 +1,8 @@
+name: maven3-jdk9-official
+group: shared.infra
+communication: http
+image: maven:3.5.3-jdk-9
+type: docker
+shell: sh -c
+cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
+

@@ -1,0 +1,9 @@
+name: python-official-3.6.5-jessie
+group: shared.infra
+communication: http
+image: python:3.6.5-jessie
+description: image from https://hub.docker.com/_/python/
+type: docker
+shell: sh -c
+cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
+
