@@ -77,7 +77,7 @@ func templatePullRun(v cli.Values) error {
 		dir = "."
 	}
 	if err := os.MkdirAll(dir, os.FileMode(0744)); err != nil {
-		return fmt.Errorf("Unable to create directory %s: %v", v.GetString("output-dir"), err)
+		return fmt.Errorf("unable to create directory %s: %v", v.GetString("output-dir"), err)
 	}
 
 	t, err := client.TemplatePull(wt.Group.Name, wt.Slug)
@@ -124,11 +124,11 @@ func templatePushRun(v cli.Values) error {
 		}
 		buf := new(bytes.Buffer)
 		if _, err := buf.ReadFrom(contentFile); err != nil {
-			return fmt.Errorf("Cannot read from given remote file: %v", err)
+			return fmt.Errorf("cannot read from given remote file: %v", err)
 		}
 		var t exportentities.Template
 		if err := yaml.Unmarshal(buf.Bytes(), &t); err != nil {
-			return fmt.Errorf("Cannot unmarshal given remote yaml file: %v", err)
+			return fmt.Errorf("cannot unmarshal given remote yaml file: %v", err)
 		}
 
 		// get all components of the template
