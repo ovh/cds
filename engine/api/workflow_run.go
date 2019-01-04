@@ -861,9 +861,10 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		} else {
 			// Test workflow as code or not
 			options := workflow.LoadOptions{
-				OnlyRootNode: true,
-				DeepPipeline: false,
-				Base64Keys:   true,
+				OnlyRootNode:          true,
+				DeepPipeline:          false,
+				Base64Keys:            true,
+				WithAsCodeUpdateEvent: true,
 			}
 			var errW error
 			wf, errW = workflow.Load(ctx, api.mustDB(), api.Cache, p, name, u, options)
@@ -872,6 +873,22 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			}
 
 			enabled, has := p.Features[feature.FeatWorkflowAsCode]
+
+			// Check if workflow has to become as code
+			if wf.FromRepository == "" && len(wf.AsCodeEvent) > 0 {
+				tx, err := api.mustDB().Begin()
+				if err != nil {
+					return sdk.WrapError(err, "unable to start transaction")
+				}
+				if err := workflow.SyncAsCodeEvent(ctx, tx, api.Cache, p, wf); err != nil {
+					tx.Rollback() // nolint
+					return err
+				}
+				if err := tx.Commit(); err != nil {
+					return sdk.WrapError(err, "unable to commit transaction")
+				}
+			}
+
 			if wf.FromRepository != "" {
 				if has && !enabled {
 					return sdk.WrapError(sdk.ErrForbidden, "postWorkflowRunHandler> %s not allowed for project %s", feature.FeatWorkflowAsCode, p.Key)

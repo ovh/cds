@@ -54,11 +54,22 @@ type Workflow struct {
 	ToDelete                bool                        `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
+	AsCodeEvent             []AsCodeEvent               `json:"as_code_update_status" db:"-" cli:"-"`
 	// aggregates
 	Template         *WorkflowTemplate         `json:"-" db:"-" cli:"-"`
 	TemplateInstance *WorkflowTemplateInstance `json:"-" db:"-" cli:"-"`
 	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
+}
+
+// AsCodeUpdateEvent represents all pending modifications on a workflow
+type AsCodeEvent struct {
+	ID             int64     `json:"id" db:"id" cli:"-"`
+	WorkflowID     int64     `json:"workflow_id" db:"workflow_id" cli:"-"`
+	PullRequestID  int64     `json:"pullrequest_id" db:"pullrequest_id" cli:"-"`
+	PullRequestURL string    `json:"pullrequest_url" db:"pullrequest_url" cli:"-"`
+	Username       string    `json:"username" db:"username" cli:"-"`
+	CreationDate   time.Time `json:"creation_date" db:"creation_date" cli:"-"`
 }
 
 // GetApplication retrieve application from workflow

@@ -37,6 +37,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}/statuses", r.GET(s.getCommitStatusHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/grant", r.POST(s.postRepoGrantHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests", r.GET(s.getPullRequestsHandler, api.EnableTracing()), r.POST(s.postPullRequestsHandler, api.EnableTracing()))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests/{id}", r.GET(s.getPullRequestHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests/{id}/comments", r.POST(s.postPullRequestCommentHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/events", r.GET(s.getEventsHandler, api.EnableTracing()), r.POST(s.postFilterEventsHandler, api.EnableTracing()))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/hooks", r.GET(s.getHookHandler, api.EnableTracing()), r.POST(s.postHookHandler, api.EnableTracing()), r.DELETE(s.deleteHookHandler, api.EnableTracing()))

@@ -43,10 +43,41 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			return sdk.WrapError(errP, "unable to load project")
 		}
 		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, u, workflow.LoadOptions{
-			DeepPipeline: true,
+			DeepPipeline:          true,
+			WithAsCodeUpdateEvent: true,
 		})
 		if errW != nil {
 			return sdk.WrapError(errW, "unable to load workflow")
+		}
+
+		// Workflow must have a repository webhook on root node
+		found := false
+		for _, h := range wf.WorkflowData.Node.Hooks {
+			if h.HookModelName == sdk.RepositoryWebHookModel.Name {
+				found = true
+			}
+		}
+		if !found {
+			return sdk.NewErrorFrom(sdk.ErrWrongRequest, "Root node must have a repository web hook")
+		}
+
+		// Sync as code event
+		if len(wf.AsCodeEvent) > 0 {
+			tx, err := api.mustDB().Begin()
+			if err != nil {
+				return sdk.WrapError(err, "unable to start transaction")
+			}
+			if err := workflow.SyncAsCodeEvent(ctx, tx, api.Cache, proj, wf); err != nil {
+				tx.Rollback() // nolint
+				return err
+			}
+			if err := tx.Commit(); err != nil {
+				return sdk.WrapError(err, "unable to commit transaction")
+			}
+		}
+
+		if wf.FromRepository != "" || (wf.FromRepository == "" && len(wf.AsCodeEvent) > 0) {
+			return sdk.WithStack(sdk.ErrWorkflowAlreadAsCode)
 		}
 
 		ope, err := workflow.UpdateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, project.EncryptWithBuiltinKey, u)

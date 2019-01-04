@@ -7,6 +7,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *gitlabClient) PullRequest(ctx context.Context, repo string, id int) (sdk.VCSPullRequest, error) {
+	return sdk.VCSPullRequest{}, nil
+}
+
 // PullRequests fetch all the pull request for a repository
 func (c *gitlabClient) PullRequests(context.Context, string) ([]sdk.VCSPullRequest, error) {
 	return []sdk.VCSPullRequest{}, nil

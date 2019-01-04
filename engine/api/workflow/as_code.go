@@ -31,11 +31,9 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 		return nil, sdk.WithStack(sdk.ErrRepoNotFound)
 	}
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(ctx, db, store, vcsServer)
+	client, errclient := createVCSClientFromRootNode(ctx, db, store, proj, wf)
 	if errclient != nil {
-		return nil, sdk.WrapError(errclient, "Cannot get client")
+		return nil, errclient
 	}
 
 	repo, errR := client.RepoByFullname(ctx, app.RepositoryFullname)
@@ -90,10 +88,69 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	if err := PostRepositoryOperation(ctx, db, *proj, &ope, multipartData); err != nil {
 		return nil, sdk.WrapError(err, "unable to post repository operation")
 	}
-
 	store.SetWithTTL(cache.Key(CacheOperationKey, ope.UUID), ope, 300)
 
 	return &ope, nil
+}
+
+// CheckPullRequestStatus checks the status of the pull request
+func CheckPullRequestStatus(ctx context.Context, client sdk.VCSAuthorizedClient, repoFullName string, prID int64) (bool, bool, error) {
+	pr, err := client.PullRequest(ctx, repoFullName, int(prID))
+	if err != nil {
+		if err == sdk.ErrNotFound {
+			return false, true, nil
+		}
+		return false, false, sdk.WrapError(err, "unable to check pull request status")
+	}
+	return pr.Merged, pr.Closed, nil
+}
+
+// CheckAsCodeEvent checks if workflow as to become ascode
+func SyncAsCodeEvent(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow) error {
+	if len(wf.AsCodeEvent) == 0 {
+		return nil
+	}
+
+	client, errclient := createVCSClientFromRootNode(ctx, db, store, proj, wf)
+	if errclient != nil {
+		return errclient
+	}
+	app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
+
+	eventLeft := make([]sdk.AsCodeEvent, 0)
+	for _, event := range wf.AsCodeEvent {
+		merged, closed, err := CheckPullRequestStatus(ctx, client, app.RepositoryFullname, event.PullRequestID)
+		if err != nil {
+			return err
+		}
+		// Event merged and workflow not as code yet:  change it to as code workflow
+		if merged && wf.FromRepository == "" {
+			repo, errR := client.RepoByFullname(ctx, app.RepositoryFullname)
+			if errR != nil {
+				return sdk.WrapError(errR, "cannot get repo %s", app.RepositoryFullname)
+			}
+			if app.RepositoryStrategy.ConnectionType == "ssh" {
+				wf.FromRepository = repo.SSHCloneURL
+			} else {
+				wf.FromRepository = repo.HTTPCloneURL
+			}
+			wf.LastModified = time.Now()
+			dbw := Workflow(*wf)
+			if _, err := db.Update(&dbw); err != nil {
+				return sdk.WrapError(err, "Unable to update workflow")
+			}
+		}
+		// If event ended, delete it from db
+		if merged || closed {
+			if err := deleteAsCodeEvent(db, event); err != nil {
+				return err
+			}
+		} else {
+			eventLeft = append(eventLeft, event)
+		}
+	}
+	wf.AsCodeEvent = eventLeft
+	return nil
 }
 
 // UpdateWorkflowAsCodeResult pulls repositories operation and the create pullrequest + update workflow
@@ -108,7 +165,6 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 			log.Error("unable to get repository operation %s: %v", ope.UUID, err)
 			continue
 		}
-
 		if ope.Status == sdk.OperationStatusDone {
 			app := wf.Applications[wf.WorkflowData.Node.Context.ApplicationID]
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
@@ -148,7 +204,14 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				return
 			}
 			ope.Setup.Push.PRLink = pr.URL
-			wf.FromRepository = ope.URL
+
+			asCodeEvent := sdk.AsCodeEvent{
+				PullRequestID:  int64(pr.ID),
+				WorkflowID:     wf.ID,
+				PullRequestURL: pr.URL,
+				Username:       u.Username,
+				CreationDate:   time.Now(),
+			}
 
 			// add repo webhook
 			found := false
@@ -184,6 +247,14 @@ func UpdateWorkflowAsCodeResult(ctx context.Context, db *gorp.DbMap, store cache
 				return
 			}
 			defer tx.Rollback() // nolint
+
+			if err := inserAsCodeEvent(tx, asCodeEvent); err != nil {
+				log.Error("postWorkflowAsCodeHandler> unable to insert as code event: %v", err)
+				ope.Status = sdk.OperationStatusError
+				ope.Error = "unable to insert as code event"
+				return
+			}
+
 			if err := Update(ctx, tx, store, wf, oldW, p, u); err != nil {
 				log.Error("postWorkflowAsCodeHandler> unable to update workflow: %v", err)
 				ope.Status = sdk.OperationStatusError

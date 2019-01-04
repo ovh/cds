@@ -10,6 +10,28 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (b *bitbucketClient) PullRequest(ctx context.Context, repo string, id int) (sdk.VCSPullRequest, error) {
+	project, slug, err := getRepo(repo)
+	if err != nil {
+		return sdk.VCSPullRequest{}, sdk.WithStack(err)
+	}
+
+	path := fmt.Sprintf("/projects/%s/repos/%s/pull-requests/%d", project, slug, id)
+	params := url.Values{}
+
+	var response PullRequest
+	if err := b.do(ctx, "GET", "core", path, params, nil, &response, nil); err != nil {
+		return sdk.VCSPullRequest{}, sdk.WrapError(err, "Unable to get pullrequest")
+	}
+
+	pr, err := b.ToVCSPullRequest(ctx, repo, response)
+	if err != nil {
+		return sdk.VCSPullRequest{}, err
+	}
+
+	return pr, nil
+}
+
 func (b *bitbucketClient) PullRequests(ctx context.Context, repo string) ([]sdk.VCSPullRequest, error) {
 	project, slug, err := getRepo(repo)
 	if err != nil {
@@ -151,5 +173,8 @@ func (b *bitbucketClient) ToVCSPullRequest(ctx context.Context, repo string, pul
 		return pr, sdk.WrapError(err, "unable to get branch %v", headBranch)
 	}
 	pr.Head.Branch = *headBranch
+
+	pr.Closed = pullRequest.Closed
+	pr.Merged = pullRequest.State == "MERGED"
 	return pr, nil
 }

@@ -13,6 +13,47 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func (g *githubClient) PullRequest(ctx context.Context, fullname string, id int) (sdk.VCSPullRequest, error) {
+	cachePullRequestKey := cache.Key("vcs", "github", "pullrequests", g.OAuthToken, fmt.Sprintf("/repos/%s/pulls/%d"+fullname, id))
+
+	url := fmt.Sprintf("/repos/%s/pulls/%d"+fullname, id)
+	status, body, _, err := g.get(url)
+	if err != nil {
+		g.Cache.Delete(cachePullRequestKey)
+		return sdk.VCSPullRequest{}, err
+	}
+	if status >= 400 {
+		g.Cache.Delete(cachePullRequestKey)
+		return sdk.VCSPullRequest{}, sdk.NewError(sdk.ErrUnknownError, errorAPI(body))
+	}
+
+	//Github may return 304 status because we are using conditional request with ETag based headers
+	var pr PullRequest
+	if status == http.StatusNotModified {
+		//If repos aren't updated, lets get them from cache
+		if !g.Cache.Get(cachePullRequestKey, &pr) {
+			log.Error("Unable to get pullrequest (%s) from the cache", cachePullRequestKey)
+		}
+
+	} else {
+		if err := json.Unmarshal(body, &pr); err != nil {
+			log.Warning("githubClient.PullRequest> Unable to parse github pullrequest: %s", err)
+			return sdk.VCSPullRequest{}, err
+		}
+	}
+
+	if pr.ID != id {
+		log.Warning("githubClient.PullRequest> Cannot find pullrequest %d", id)
+		g.Cache.Delete(cachePullRequestKey)
+		return sdk.VCSPullRequest{}, fmt.Errorf("githubClient.PullRequest > Cannot find pullrequest %d", id)
+	}
+
+	//Put the body on cache for one hour and one minute
+	g.Cache.SetWithTTL(cachePullRequestKey, pr, 61*60)
+
+	return pr.ToVCSPullRequest(), nil
+}
+
 // PullRequests fetch all the pull request for a repository
 func (g *githubClient) PullRequests(ctx context.Context, fullname string) ([]sdk.VCSPullRequest, error) {
 	var pullRequests = []PullRequest{}
@@ -169,5 +210,7 @@ func (pullr PullRequest) ToVCSPullRequest() sdk.VCSPullRequest {
 			DisplayName: pullr.User.Login,
 			Name:        pullr.User.Name,
 		},
+		Closed: pullr.State == "closed",
+		Merged: pullr.Merged,
 	}
 }
