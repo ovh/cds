@@ -286,9 +286,14 @@
           <span>Artifact Upload</span>
         </a>
     </li>
-      <li data-nav-id="/workflows/pipelines/actions/builtin/checkout-application/" class="dd-item">
-        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/checkout-application/">
+      <li data-nav-id="/workflows/pipelines/actions/builtin/checkoutapplication/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/checkoutapplication/">
           <span>CheckoutApplication</span>
+        </a>
+    </li>
+      <li data-nav-id="/workflows/pipelines/actions/builtin/deployapplication/" class="dd-item">
+        <a href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/deployapplication/">
+          <span>DeployApplication</span>
         </a>
     </li>
       <li data-nav-id="/workflows/pipelines/actions/builtin/gitclone/" class="dd-item">
@@ -2259,21 +2264,23 @@
 
 <p>This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka. CDS can also wait for an acknowledgement coming from the consumer side. To send the acknowledgement, you can again use the plugin binary. For more details, see readme file of the plugin.</p>
 
+<p>How to use: <a href="https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish">https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/kafka-publish</a></p>
+
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><strong>kafkaUser</strong>: Kafka user</li>
+<li><strong>kafkaPassword</strong>: Kafka password</li>
+<li><strong>topic</strong>: Kafka Topic</li>
+<li><strong>waitForAckTopic</strong>: Wait for ACK topic</li>
+<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
+<li><strong>message</strong>: Kafka Message</li>
+<li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
+<li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
 <li><strong>artifacts</strong>: Artifacts list (comma separated)&rdquo;</li>
 <li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
 <li><strong>key</strong>: Key used by AES Encryption. It have to be the same value as &ndash;key on plugin binary</li>
 <li><strong>waitForAck</strong>: Wait for ACK</li>
-<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
-<li><strong>kafkaPassword</strong>: Kafka password</li>
-<li><strong>kafkaUser</strong>: Kafka user</li>
-<li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
-<li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
-<li><strong>topic</strong>: Kafka Topic</li>
-<li><strong>waitForAckTopic</strong>: Wait for ACK topic</li>
-<li><strong>message</strong>: Kafka Message</li>
 </ul>
 
 

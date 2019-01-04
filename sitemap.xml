@@ -401,7 +401,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/checkout-application/</loc>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/checkoutapplication/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/deployapplication/</loc>
   </url>
   
   <url>
