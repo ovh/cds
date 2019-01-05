@@ -1,0 +1,19 @@
+version: v1.0
+name: demo-service-postgresql
+jobs:
+- job: JobDemoServicePostgreSQL
+  steps:
+  - script:
+    - '#!/bin/bash'
+    - set -ex
+    - apt-get update
+    - apt-get install -y postgresql-client
+    - PGPASSWORD=mypassword psql -U myuser -h mypg <<EOF
+    - \x
+    - SELECT version();
+    - EOF
+  requirements:
+  - binary: apt-get
+  - service:
+      name: mypg
+      value: postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword
