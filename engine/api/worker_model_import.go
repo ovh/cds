@@ -44,7 +44,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "Unsupported content-type: %s", contentType)
 		}
 		if errUnMarshall != nil {
- 			return sdk.NewError(sdk.ErrWrongRequest, errUnMarshall)
+			return sdk.NewError(sdk.ErrWrongRequest, errUnMarshall)
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -53,7 +53,7 @@ func (api *API) postWorkerModelImportHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
-		wm, err := worker.ParseAndImport(tx, &eWorkerModel, force, getUser(ctx))
+		wm, err := worker.ParseAndImport(tx, api.Cache, &eWorkerModel, force, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "cannot parse and import worker model")
 		}

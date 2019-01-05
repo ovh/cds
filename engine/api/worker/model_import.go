@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
@@ -13,7 +14,7 @@ import (
 )
 
 // ParseAndImport parse and import an exportentities.WorkerModel
-func ParseAndImport(db gorp.SqlExecutor, eWorkerModel *exportentities.WorkerModel, force bool, u *sdk.User) (*sdk.Model, error) {
+func ParseAndImport(db gorp.SqlExecutor, store cache.Store, eWorkerModel *exportentities.WorkerModel, force bool, u *sdk.User) (*sdk.Model, error) {
 	sdkWm, err := eWorkerModel.GetWorkerModel()
 	if err != nil {
 		return nil, err
@@ -131,5 +132,7 @@ currentUGroup:
 		return nil, sdk.WrapError(errAdd, "cannot add worker model %s", sdkWm.Name)
 	}
 
+	// delete current cache of worker model after import
+	store.DeleteAll(cache.Key("api:workermodels:*"))
 	return &sdkWm, nil
 }
