@@ -3,7 +3,6 @@ package sdk
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -811,7 +810,7 @@ func (n WorkflowNode) migrate(withID bool) Node {
 			Conditions:                n.Context.Conditions,
 			DefaultPayload:            n.Context.DefaultPayload,
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
-			Mutex:                     n.Context.Mutex,
+			Mutex: n.Context.Mutex,
 		},
 		Hooks:    make([]NodeHook, 0, len(n.Hooks)),
 		Triggers: make([]NodeTrigger, 0, len(n.Triggers)+len(n.Forks)+len(n.OutgoingHooks)),
@@ -1580,45 +1579,6 @@ checkGitKey:
 		hasKey("git.hash.before") &&
 		hasKey("git.repository") &&
 		hasKey("git.message")
-}
-
-//WorkflowList return the list of the workflows for a project
-func WorkflowList(projectkey string) ([]Workflow, error) {
-	path := fmt.Sprintf("/project/%s/workflows", projectkey)
-	body, _, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var ws = []Workflow{}
-	if err := json.Unmarshal(body, &ws); err != nil {
-		return nil, err
-	}
-
-	return ws, nil
-}
-
-//WorkflowGet returns a workflow given its name
-func WorkflowGet(projectkey, name string) (*Workflow, error) {
-	path := fmt.Sprintf("/project/%s/workflows/%s", projectkey, name)
-	body, _, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var w = Workflow{}
-	if err := json.Unmarshal(body, &w); err != nil {
-		return nil, err
-	}
-
-	return &w, nil
-}
-
-// WorkflowDelete Call API to delete a workflow
-func WorkflowDelete(projectkey, name string) error {
-	path := fmt.Sprintf("/project/%s/workflows/%s", projectkey, name)
-	_, _, err := Request("DELETE", path, nil)
-	return err
 }
 
 // WorkflowNodeJobRunCount return nb workflow run job since 'since'
