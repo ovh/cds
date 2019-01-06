@@ -1,8 +1,6 @@
 package sdk
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -44,32 +42,6 @@ type ActionAudit struct {
 	Change     string    `json:"change"`
 	Versionned time.Time `json:"versionned"`
 	Action     Action    `json:"action"`
-}
-
-// ActionPlugin  is the Action Plugin representation from Engine side
-type ActionPlugin struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Author      string `json:"author"`
-	Filename    string `json:"filename"`
-	Path        string `json:"path"`
-
-	Size       int64  `json:"size,omitempty"`
-	Perm       uint32 `json:"perm,omitempty"`
-	MD5sum     string `json:"md5sum,omitempty"`
-	SHA512sum  string `json:"sha512sum,omitempty"`
-	ObjectPath string `json:"object_path,omitempty"`
-}
-
-//GetName returns the name the action plugin
-func (a *ActionPlugin) GetName() string {
-	return a.Name
-}
-
-//GetPath returns the storage path of the action plugin
-func (a *ActionPlugin) GetPath() string {
-	return fmt.Sprintf("plugins")
 }
 
 // Action type
@@ -115,23 +87,6 @@ func (a *Action) Add(child Action) *Action {
 	return a
 }
 
-// GetAction retrieve action definition
-func GetAction(name string) (Action, error) {
-	var a Action
-
-	path := fmt.Sprintf("/action/%s", name)
-	data, _, err := Request("GET", path, nil)
-	if err != nil {
-		return a, err
-	}
-
-	if err := json.Unmarshal(data, &a); err != nil {
-		return a, err
-	}
-
-	return a, nil
-}
-
 // NewScriptAction setup a new Action object with all attribute ok for script action
 func NewScriptAction(content string) Action {
 	var a Action
@@ -141,46 +96,4 @@ func NewScriptAction(content string) Action {
 	a.Enabled = true
 	a.Parameters = append(a.Parameters, Parameter{Name: "script", Value: content})
 	return a
-}
-
-// AddJob creates a joined action in given pipeline
-func AddJob(projectKey, pipelineName string, j *Job) error {
-	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/job", projectKey, pipelineName, j.PipelineStageID)
-
-	data, err := json.Marshal(j)
-	if err != nil {
-		return err
-	}
-
-	_, code, err := Request("POST", uri, data)
-	if err != nil {
-		return err
-	}
-
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
-}
-
-// UpdateJoinedAction update given joined action in given pipeline stage
-func UpdateJoinedAction(projectKey, pipelineName string, stage int64, j *Job) error {
-	uri := fmt.Sprintf("/project/%s/pipeline/%s/stage/%d/job/%d", projectKey, pipelineName, stage, j.PipelineActionID)
-
-	data, err := json.Marshal(j)
-	if err != nil {
-		return err
-	}
-
-	_, code, err := Request("PUT", uri, data)
-	if err != nil {
-		return err
-	}
-
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
 }
