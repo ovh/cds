@@ -78,7 +78,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		}
 
 		if wf.FromRepository != "" || (wf.FromRepository == "" && len(wf.AsCodeEvent) > 0) {
-			return sdk.WithStack(sdk.ErrWorkflowAlreadAsCode)
+			return sdk.WithStack(sdk.ErrWorkflowAlreadyAsCode)
 		}
 
 		ope, err := workflow.UpdateAsCode(ctx, api.mustDB(), api.Cache, proj, wf, project.EncryptWithBuiltinKey, u)

@@ -8,9 +8,7 @@ import (
 
 // LoadAsCodeEvent Load as code events for the given workflow
 func LoadAsCodeEvent(db gorp.SqlExecutor, workflowID int64) ([]sdk.AsCodeEvent, error) {
-	query := `
-		SELECT * FROM workflow_as_code_events WHERE workflow_id = $1
-	`
+	query := "SELECT * FROM workflow_as_code_events WHERE workflow_id = $1"
 	var events []dbAsCodeEvents
 	if _, err := db.Select(&events, query, workflowID); err != nil {
 		return nil, sdk.WrapError(err, "Unable to load as code events")

@@ -11,30 +11,30 @@ import (
 var workflowTransformAsCodeCmd = cli.Command{
 	Name:  "ascode",
 	Short: "Transform an existing workflow to an as code workflow",
-	Args: []cli.Arg{
+	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 		{Name: _WorkflowName},
 	},
 }
 
 func workflowTransformAsCodeRun(v cli.Values) error {
-	w, err := client.WorkflowGet(v[_ProjectKey], v[_WorkflowName])
+	w, err := client.WorkflowGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
 	if err != nil {
 		return err
 	}
 	if w.FromRepository != "" {
-		fmt.Printf("Workflow is already as code. \n")
+		fmt.Println("Workflow is already as code.")
 		return nil
 	}
 
-	ope, err := client.WorkflowTransformAsCode(v[_ProjectKey], v[_WorkflowName])
+	ope, err := client.WorkflowTransformAsCode(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
 	if err != nil {
 		return err
 	}
 
 	fmt.Printf("CDS is pushing files on your repository. A pull request will be created, please wait...\n")
 	for {
-		if err := client.WorkflowTransformAsCodeFollow(v[_ProjectKey], v[_WorkflowName], ope); err != nil {
+		if err := client.WorkflowTransformAsCodeFollow(v.GetString(_ProjectKey), v.GetString(_WorkflowName), ope); err != nil {
 			return err
 		}
 		if ope.Status > sdk.OperationStatusProcessing {
@@ -46,7 +46,7 @@ func workflowTransformAsCodeRun(v cli.Values) error {
 	case sdk.OperationStatusDone:
 		fmt.Println(cli.Blue("%s", ope.Setup.Push.PRLink))
 	case sdk.OperationStatusError:
-		sdk.Exit("An error occured: %s\n", ope.Error)
+		return fmt.Errorf("cannot perform operation: %s", ope.Error)
 	}
 	return nil
 }
