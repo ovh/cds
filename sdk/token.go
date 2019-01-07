@@ -1,8 +1,6 @@
 package sdk
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -17,23 +15,4 @@ type Token struct {
 	Creator     string     `json:"creator" cli:"creator"`
 	Expiration  Expiration `json:"expiration" cli:"expiration"`
 	Created     time.Time  `json:"created" cli:"created"`
-}
-
-// GenerateWorkerToken creates a key tied to calling user that allow registering workers
-func GenerateWorkerToken(group string, e Expiration) (*Token, error) {
-	path := fmt.Sprintf("/group/%s/token/%s", group, e)
-	data, code, err := Request("POST", path, nil)
-	if err != nil {
-		return nil, err
-	}
-	if code > 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	tk := &Token{}
-	if err = json.Unmarshal(data, &tk); err != nil {
-		return nil, err
-	}
-
-	return tk, nil
 }
