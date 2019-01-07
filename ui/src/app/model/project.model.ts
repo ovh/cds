@@ -24,7 +24,6 @@ export class Project {
     environments: Array<Environment>;
     permission: number;
     last_modified: string;
-    workflow_migration: string;
     vcs_servers: Array<RepositoriesManager>;
     keys: Array<Key>;
     platforms: Array<ProjectPlatform>;

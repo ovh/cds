@@ -6,7 +6,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -61,11 +60,6 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	query = `DELETE FROM artifact WHERE application_id = $1`
 	if _, err = db.Exec(query, applicationID); err != nil {
 		return sdk.WrapError(err, "Cannot delete old artifacts")
-	}
-
-	// Delete triggers
-	if err := trigger.DeleteApplicationTriggers(db, applicationID); err != nil {
-		return err
 	}
 
 	query = `DELETE FROM application WHERE id=$1`
