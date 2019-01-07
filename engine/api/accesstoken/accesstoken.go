@@ -58,7 +58,7 @@ func New(u sdk.User, groups []sdk.Group, origin, desc string, expiration *time.T
 // Regen regenerate the signed token value
 func Regen(token *sdk.AccessToken) (string, error) {
 	claims := sdk.AccessTokenJWTClaims{
-		ID:     sdk.UUID(),
+		ID:     token.ID,
 		Groups: sdk.GroupsToIDs(token.Groups),
 		StandardClaims: jwt.StandardClaims{
 			Issuer:   localIssuer,
@@ -84,17 +84,28 @@ func Regen(token *sdk.AccessToken) (string, error) {
 // IsValid checks a jwt token against all access_token
 func IsValid(db gorp.SqlExecutor, jwtToken string) (bool, error) {
 	token, err := verifyToken(jwtToken)
+	if err != nil {
+		return false, sdk.WrapError(err, "invalid token")
+	}
 
 	claims := token.Claims.(*sdk.AccessTokenJWTClaims)
 	id := claims.StandardClaims.Id
 
+	// Load the access token from the id read in the claim
 	accessToken, err := FindByID(db, id)
 	if err != nil {
-		log.Error("accesstoken.IsValid> unable find access token: %v", err)
+		log.Error("accesstoken.IsValid> unable find access token %s: %v", id, err)
 		return false, sdk.ErrUnauthorized
 	}
 
+	// Check groups from the claims againts the groups in the database
 	ids := sdk.GroupsToIDs(accessToken.Groups)
+	for _, groupID := range claims.Groups {
+		if !sdk.IsInInt64Array(groupID, ids) {
+			log.Error("accesstoken.IsValid> token %s is invalid (group mismatch): %v", id, err)
+			return false, nil
+		}
+	}
 
 	return token != nil, err
 }
@@ -117,8 +128,6 @@ func verifyToken(jwtToken string) (*jwt.Token, error) {
 	} else {
 		return nil, sdk.ErrUnauthorized
 	}
-
-	//Checks token validity
 
 	return token, nil
 }
