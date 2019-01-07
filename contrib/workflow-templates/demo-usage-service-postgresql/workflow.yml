@@ -1,0 +1,3 @@
+name: templates-service-postgresql
+version: v1.0
+pipeline: demo-service-postgresql
