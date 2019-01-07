@@ -3,6 +3,4 @@ group: shared.infra
 communication: http
 image: maven:3.5.3-jdk-10
 type: docker
-shell: sh -c
-cmd: curl {{.API}}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker
-
+pattern_name: basic_linux
