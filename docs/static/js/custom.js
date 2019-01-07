@@ -4,9 +4,9 @@ $("#top-bar").stick_in_parent({spacer: false});
 function GetLatestReleaseInfo() {
     $.getJSON("https://api.github.com/repos/ovh/cds/releases/latest").done(function(release) {
       for (var i = 0; i < release.assets.length; i++) {
-        $("."+release.assets[i].name).text(release.assets[i].name);
-        $("."+release.assets[i].name).fadeIn("slow");
-        $(".download-"+release.assets[i].name).attr("href", release.assets[i].browser_download_url);
+        $("."+release.assets[i].name.replace('.', '-')).text(release.assets[i].name);
+        $("."+release.assets[i].name.replace('.', '-')).fadeIn("slow");
+        $(".download-"+release.assets[i].name.replace('.', '-')).attr("href", release.assets[i].browser_download_url);
       }
     });
   }
