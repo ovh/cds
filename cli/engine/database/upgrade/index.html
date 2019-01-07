@@ -2232,6 +2232,7 @@
 <li><a href="#engine-database-upgrade">engine database upgrade</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
+<li><a href="#examples">Examples</a></li>
 <li><a href="#options">Options</a></li>
 <li><a href="#see-also">SEE ALSO</a></li>
 </ul></li>
@@ -2266,6 +2267,15 @@
 <p>Migrates the database to the most recent version available.</p>
 
 <pre><code>engine database upgrade [flags]
+</code></pre>
+
+<h3 id="examples">Examples</h3>
+
+<pre><code>engine database upgrade --db-password=your-password --db-sslmode=disable --db-name=cds --migrate-dir=./sql
+
+# If the directory --migrate-dir is not up to date with the current version, this
+# directory will be automatically updated with the release from https://github.com/ovh/cds/releases
+	
 </code></pre>
 
 <h3 id="options">Options</h3>
