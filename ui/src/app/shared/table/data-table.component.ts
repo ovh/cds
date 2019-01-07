@@ -78,6 +78,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
     @Output() clickLine = new EventEmitter<T>();
     @Output() selectChange = new EventEmitter<Array<string>>();
     @Input() withSelect: boolean | Select<T>;
+    selectedAll: boolean;
     selected: Object = {};
     @Input() data: Array<T>;
     @Input() withPagination: number;
@@ -170,6 +171,12 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
             this.indexSelected = i;
             this.clickLine.emit(d);
         }
+    }
+
+    onSelectAllChange(e: any) {
+        this.selectedAll = !this.selectedAll;
+        this.allData.forEach(d => { this.selected[d.key()] = this.selectedAll });
+        this.emitSelectChange();
     }
 
     onSelectChange(e: any, key: string) {

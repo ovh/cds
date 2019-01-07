@@ -8,8 +8,8 @@ import (
 
 	"github.com/AlecAivazis/survey"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var templateBulkCmd = cli.Command{
@@ -219,9 +219,9 @@ func templateBulkRun(v cli.Values) error {
 					var status string
 					switch o.Status {
 					case sdk.OperationStatusPending:
-						status = "pending"
+						status = cli.Blue("pending")
 					case sdk.OperationStatusProcessing:
-						status = cli.Blue("processing")
+						status = cli.Yellow("processing")
 					case sdk.OperationStatusDone:
 						status = cli.Green("done")
 					case sdk.OperationStatusError:

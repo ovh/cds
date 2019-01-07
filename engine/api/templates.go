@@ -506,6 +506,18 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						return
 					}
 
+					errorDefer := func(err error) error {
+						if err != nil {
+							bulk.Operations[i].Status = sdk.OperationStatusError
+							bulk.Operations[i].Error = fmt.Sprintf("%s", sdk.Cause(err))
+							if err := workflowtemplate.UpdateBulk(api.mustDB(), &bulk); err != nil {
+								return err
+							}
+						}
+
+						return nil
+					}
+
 					// load project with key
 					p, err := project.Load(api.mustDB(), api.Cache, bulk.Operations[i].Request.ProjectKey, u,
 						project.LoadOptions.WithGroups,
@@ -515,20 +527,29 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						project.LoadOptions.WithApplicationWithDeploymentStrategies,
 						project.LoadOptions.WithPlatforms)
 					if err != nil {
-						log.Error("%v", err)
+						if errD := errorDefer(err); errD != nil {
+							log.Error("%v", errD)
+							return
+						}
 						continue
 					}
 
 					// apply and import workflow
 					res, err := api.applyTemplate(ctx, u, p, wt, bulk.Operations[i].Request)
 					if err != nil {
-						log.Error("%v", err)
+						if errD := errorDefer(err); errD != nil {
+							log.Error("%v", errD)
+							return
+						}
 						continue
 					}
 
 					buf := new(bytes.Buffer)
 					if err := workflowtemplate.Tar(wt, res, buf); err != nil {
-						log.Error("%v", err)
+						if errD := errorDefer(err); errD != nil {
+							log.Error("%v", errD)
+							return
+						}
 						continue
 					}
 
@@ -536,7 +557,10 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 
 					_, _, err = workflow.Push(ctx, api.mustDB(), api.Cache, p, tr, nil, u, project.DecryptWithBuiltinKey)
 					if err != nil {
-						log.Error("%v", sdk.WrapError(err, "Cannot push generated workflow"))
+						if errD := errorDefer(sdk.WrapError(err, "Cannot push generated workflow")); errD != nil {
+							log.Error("%v", errD)
+							return
+						}
 						continue
 					}
 

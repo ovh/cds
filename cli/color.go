@@ -4,6 +4,7 @@ import "github.com/fatih/color"
 
 // Colors... colors everywhere
 var (
+	Yellow       = color.New(color.FgYellow).SprintfFunc()
 	Red          = color.New(color.FgRed).SprintfFunc()
 	Blue         = color.New(color.FgBlue).SprintfFunc()
 	Magenta      = color.New(color.FgMagenta).SprintfFunc()

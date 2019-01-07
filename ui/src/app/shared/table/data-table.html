@@ -10,7 +10,12 @@
 <table class="ui striped fixed table" [class.selectable]="withLineClick">
     <thead>
         <tr>
-            <th *ngIf="withSelect" class="wide one"></th>
+            <th *ngIf="withSelect" class="wide one">
+                <div class="ui checked checkbox">
+                    <input type="checkbox" [ngModel]="selectedAll" (ngModelChange)="onSelectAllChange($event)">
+                    <label></label>
+                </div>
+            </th>
             <th *ngFor="let c of columns" class="wide {{c.class}}" [class.sortable]="c.sortable && c !== sortedColumn"
                 [class.ascending]="c === sortedColumn && sortedColumnDirection === 'asc'" [class.descending]="c === sortedColumn && sortedColumnDirection === 'desc'"
                 (click)="columnClick($event, c)">

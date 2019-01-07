@@ -41,10 +41,14 @@ export class EnvironmentTemplate {
     value: string;
 }
 
+export class ParamData {
+    [key: string]: string;
+}
+
 export class WorkflowTemplateRequest {
     project_key: string
     workflow_name: string
-    parameters: { [key: string]: string; }
+    parameters: ParamData
 }
 
 export class WorkflowTemplateApplyResult {
@@ -53,6 +57,7 @@ export class WorkflowTemplateApplyResult {
 }
 
 export class WorkflowTemplateInstance implements WithKey {
+    id: number;
     workflow_template_version: number;
     request: WorkflowTemplateRequest;
     project: Project;
@@ -63,6 +68,7 @@ export class WorkflowTemplateInstance implements WithKey {
 
     constructor(wti?: any) {
         if (wti) {
+            this.id = wti.id;
             this.workflow_template_version = wti.workflow_template_version;
             this.request = wti.request;
             this.project = wti.project;
@@ -102,5 +108,53 @@ export class InstanceStatusUtil {
                 return 'orange';
         }
         return 'blue';
+    }
+}
+
+export class WorkflowTemplateBulk {
+    id: number;
+    operations: Array<WorkflowTemplateBulkOperation>;
+}
+
+export class WorkflowTemplateBulkOperation {
+    status: OperationStatus;
+    error: string;
+    request: WorkflowTemplateRequest;
+}
+
+export enum OperationStatus {
+    PENDING = 0,
+    PROCESSING = 1,
+    DONE = 2,
+    ERROR = 3
+}
+
+export class OperationStatusUtil {
+    public static color(status: OperationStatus): string {
+        switch (status) {
+            case OperationStatus.PENDING:
+                return 'blue';
+            case OperationStatus.PROCESSING:
+                return 'orange';
+            case OperationStatus.DONE:
+                return 'green';
+            case OperationStatus.ERROR:
+                return 'red';
+        }
+        return '';
+    }
+
+    public static translate(status: OperationStatus): string {
+        switch (status) {
+            case OperationStatus.PENDING:
+                return 'common_pending';
+            case OperationStatus.PROCESSING:
+                return 'common_processing';
+            case OperationStatus.DONE:
+                return 'common_done';
+            case OperationStatus.ERROR:
+                return 'common_error';
+        }
+        return '';
     }
 }

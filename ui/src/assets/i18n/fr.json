@@ -303,6 +303,9 @@
   "common_hide_all": "Cacher tout",
   "common_begin": "Début",
   "common_end": "Fin",
+  "common_pending": "En attente",
+  "common_processing": "En cours",
+  "common_done": "Terminé",
   "common_error": "Erreur",
   "common_loading_projects": "Chargement des projets...",
   "common_favorites_updated": "Favoris mis à jour avec succès",
@@ -1104,6 +1107,7 @@
   "workflow_template_not_imported_yet": "Pas encore importé",
   "workflow_template_bulk_create_title": "Applicaton d'un modèle de workflow en masse",
   "workflow_template_btn_create_bulk": "Mettre à jour en masse",
+  "workflow_template_btn_run_bulk": "Lancer la mise à jour en masse",
 
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."

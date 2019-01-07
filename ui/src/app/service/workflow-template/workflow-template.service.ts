@@ -6,6 +6,7 @@ import { AuditWorkflowTemplate } from '../../model/audit.model';
 import {
     WorkflowTemplate,
     WorkflowTemplateApplyResult,
+    WorkflowTemplateBulk,
     WorkflowTemplateInstance,
     WorkflowTemplateRequest
 } from '../../model/workflow-template.model';
@@ -63,5 +64,13 @@ export class WorkflowTemplateService {
         let url = '/template/' + groupName + '/' + templateSlug + '/instance';
         return this._http.get<Array<WorkflowTemplateInstance>>(url)
             .map(wtis => wtis.map(wti => new WorkflowTemplateInstance(wti)));
+    }
+
+    bulk(groupName: string, templateSlug: string, req: WorkflowTemplateBulk): Observable<WorkflowTemplateBulk> {
+        return this._http.post<WorkflowTemplateBulk>('/template/' + groupName + '/' + templateSlug + '/bulk', req);
+    }
+
+    getBulk(groupName: string, templateSlug: string, id: number): Observable<WorkflowTemplateBulk> {
+        return this._http.get<WorkflowTemplateBulk>('/template/' + groupName + '/' + templateSlug + '/bulk/' + id);
     }
 }

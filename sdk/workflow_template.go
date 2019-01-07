@@ -374,6 +374,7 @@ func (w WorkflowTemplateBulk) IsDone() bool {
 // WorkflowTemplateBulkOperation contains one operation of a template bulk task.
 type WorkflowTemplateBulkOperation struct {
 	Status  OperationStatus         `json:"status"`
+	Error   string                  `json:"error,omitempty"`
 	Request WorkflowTemplateRequest `json:"request"`
 }
 

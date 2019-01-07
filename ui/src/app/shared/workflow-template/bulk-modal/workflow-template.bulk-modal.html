@@ -26,36 +26,51 @@
             <div *ngIf="currentStep === 0" class="sixteen wide column centered">
                 <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)" [withPagination]="10"
                     [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
-                <button class="ui positive button" [class.disabled]="selectedInstanceKeys.length === 0" (click)="clickGoToStep1()">
+                <button class="ui positive button" [class.disabled]="selectedInstanceKeys.length === 0" (click)="clickGoToParam()">
                     {{ 'btn_next' | translate }}
                 </button>
             </div>
             <div *ngIf="currentStep === 1" class="sixteen wide column">
                 <div class="ui grid">
-                    <div class="eight wide column left floated">
-                        <button class="ui primary button" (click)="clickGoToStep0()">
+                    <div class="sixteen wide column">
+                        <div class="ui styled fluid accordion">
+                            <ng-container *ngFor="let instance of selectedInstances;let i = index">
+                                <div class="title" [class.active]="accordionOpenedIndex === i" (click)="accordionOpen($event, i)">
+                                    <i class="dropdown icon"></i>{{instance.request.workflow_name}}{{instance.id}}
+                                </div>
+                                <div class="content" [class.active]="accordionOpenedIndex === i">
+                                    <app-workflow-template-param-form *ngIf="accordionOpenedIndex === i" [project]="instance.project"
+                                        [workflowTemplate]="workflowTemplate" [workflowTemplateInstance]="instance"
+                                        (paramChange)="changeParam(instance.id, $event)"></app-workflow-template-param-form>
+                                </div>
+                            </ng-container>
+                        </div>
+                    </div>
+                    <div class="four wide column left floated">
+                        <button class="ui primary button" (click)="clickGoToInstance()">
                             {{ 'btn_back' | translate }}
                         </button>
                     </div>
-                    <div class="eight wide column right floated">
-                        <button class="ui positive button" (click)="clickGoToStep2()">
-                            {{ 'btn_next' | translate }}
+                    <div class="eight wide column centered">
+                        <button class="ui positive button" (click)="clickRunBulk()">
+                            {{ 'workflow_template_btn_run_bulk' | translate }}
                         </button>
                     </div>
+                    <div class="four wide column"></div>
                 </div>
             </div>
             <div *ngIf="currentStep === 2" class="sixteen wide column">
                 <div class="ui grid">
-                    <div class="eight wide column left floated">
-                        <button class="ui primary button" (click)="clickGoToStep0()">
+                    <div class="sixteen wide column">
+                        <app-data-table *ngIf="response" [columns]="columnsOperations" [data]="response.operations"></app-data-table>
+                    </div>
+                    <div class="four wide column left floated">
+                        <button class="ui primary button" (click)="clickGoToInstanceReset()">
                             {{ 'btn_back' | translate }}
                         </button>
                     </div>
-                    <div class="eight wide column right floated">
-                        <button class="ui positive button" (click)="clickGoToStep2()">
-                            {{ 'btn_run' | translate }}
-                        </button>
-                        <button class="ui secondary button" (click)="clickGoToStep2()">
+                    <div class="four wide column right aligned">
+                        <button class="ui secondary button" (click)="close()">
                             {{ 'btn_close' | translate }}
                         </button>
                     </div>
