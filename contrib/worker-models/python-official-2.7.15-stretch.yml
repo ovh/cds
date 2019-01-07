@@ -4,4 +4,4 @@ communication: http
 image: python:2.7.15-stretch
 description: official from https://hub.docker.com/_/python/
 type: docker
-pattern_name: basic_linux
+pattern_name: basic_unix

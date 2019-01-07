@@ -3,4 +3,4 @@ group: shared.infra
 communication: http
 image: maven:3.5.3-jdk-9
 type: docker
-pattern_name: basic_linux
+pattern_name: basic_unix
