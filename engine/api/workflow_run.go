@@ -901,7 +901,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWorkflowInvalid, "workflow %s asked, but workflow %s found", name, wf.Name)
 		}
 
-		report, errS := startWorkflowRunV2(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, u, asCodeInfosMsg)
+		report, errS := startWorkflowRun(ctx, api.mustDB(), api.Cache, p, wf, lastRun, opts, u, asCodeInfosMsg)
 
 		if errS != nil {
 			return sdk.WrapError(errS, "postWorkflowRunHandler> Unable to start workflow %s/%s", key, name)
@@ -925,7 +925,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 	}
 }
 
-func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) (*workflow.ProcessorReport, error) {
+func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User, asCodeInfos []sdk.Message) (*workflow.ProcessorReport, error) {
 	ctx, end := observability.Span(ctx, "api.startWorkflowRunV2")
 	defer end()
 
@@ -937,7 +937,7 @@ func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	}
 	defer tx.Rollback() // nolint
 
-	//Run from hook
+	// Run from HOOK
 	if opts.Hook != nil {
 		_, r1, err := workflow.RunFromHook(ctx, tx, store, p, wf, opts.Hook, asCodeInfos)
 		if err != nil {
@@ -952,7 +952,7 @@ func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		return report.Merge(r1, nil)
 	}
 
-	//Default manual run
+	// Manual RUN
 	if opts.Manual == nil {
 		opts.Manual = &sdk.WorkflowNodeRunManual{}
 	}
@@ -964,62 +964,28 @@ func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 		EnvironmentsPerm: opts.Manual.User.Permissions.EnvironmentsPerm,
 	}
 
-	//Load the node from which we launch the workflow run
-	fromNodes := make([]*sdk.Node, 0, len(opts.FromNodeIDs))
-	if len(opts.FromNodeIDs) > 0 {
-		for _, fromNodeID := range opts.FromNodeIDs {
-			fromNode := lastRun.Workflow.WorkflowData.NodeByID(fromNodeID)
-			if fromNode == nil {
-				return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "Payload: Unable to get node %d", fromNodeID)
-			}
-			fromNodes = append(fromNodes, fromNode)
+	if len(opts.FromNodeIDs) > 0 && lastRun != nil {
+		fromNode := wf.WorkflowData.NodeByID(opts.FromNodeIDs[0])
+		if fromNode == nil {
+			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
 		}
+
+		// Check Env Permission
+		if fromNode.Context.EnvironmentID != 0 {
+			if !permission.AccessToEnvironment(p.Key, lastRun.Workflow.Environments[fromNode.Context.EnvironmentID].Name, u, permission.PermissionReadExecute) {
+				return nil, sdk.WrapError(sdk.ErrNoEnvExecution, "runFromNode> Not enough right to run on environment %s", lastRun.Workflow.Environments[fromNode.Context.EnvironmentID].Name)
+			}
+		}
+
+		// Continue  the current workflow run
+		_, r1, errmr := workflow.ManualRunFromNode(ctx, tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID)
+		if errmr != nil {
+			return nil, sdk.WrapError(errmr, "Unable to run workflow")
+		}
+		_, _ = report.Merge(r1, nil)
+
 	} else {
-		fromNodes = append(fromNodes, &wf.WorkflowData.Node)
-	}
-
-	//Run all the node asynchronously in a goroutines
-	var wg = &sync.WaitGroup{}
-	wg.Add(len(fromNodes))
-	for i := 0; i < len(fromNodes); i++ {
-		optsCopy := sdk.WorkflowRunPostHandlerOption{
-			FromNodeIDs: opts.FromNodeIDs,
-			Number:      opts.Number,
-		}
-		if opts.Manual != nil {
-			optsCopy.Manual = &sdk.WorkflowNodeRunManual{
-				User:    opts.Manual.User,
-				Payload: opts.Manual.Payload,
-			}
-			optsCopy.Manual.PipelineParameters = make([]sdk.Parameter, len(opts.Manual.PipelineParameters))
-			copy(optsCopy.Manual.PipelineParameters, opts.Manual.PipelineParameters)
-		}
-		if opts.Hook != nil {
-			optsCopy.Hook = &sdk.WorkflowNodeRunHookEvent{
-				Payload:              opts.Hook.Payload,
-				WorkflowNodeHookUUID: opts.Hook.WorkflowNodeHookUUID,
-			}
-		}
-		go func(fromNode *sdk.Node) {
-			r1, err := runFromNodeV2(ctx, db, store, optsCopy, p, wf, lastRun, u, fromNode)
-			if err != nil {
-				log.Error("error: %v", err)
-				report.Add(err)
-			}
-			//since report is mutable and is a pointer and in this case we can't have any error, we can skip returned values
-			_, _ = report.Merge(r1, nil)
-			wg.Done()
-		}(fromNodes[i])
-	}
-
-	wg.Wait()
-
-	if report.Errors() != nil {
-		//Just return the first error
-		return nil, report.Errors()[0]
-	}
-
-	if lastRun == nil {
+		// Start new workflow
 		_, r1, errmr := workflow.ManualRun(ctx, tx, store, p, wf, opts.Manual, asCodeInfos)
 		if errmr != nil {
 			return nil, sdk.WrapError(errmr, "Unable to run workflow")
@@ -1030,56 +996,6 @@ func startWorkflowRunV2(ctx context.Context, db *gorp.DbMap, store cache.Store, 
 	//Commit and return success
 	if err := tx.Commit(); err != nil {
 		return nil, sdk.WrapError(err, "Unable to commit transaction")
-	}
-
-	return report, nil
-
-}
-
-func runFromNodeV2(ctx context.Context, db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHandlerOption, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, u *sdk.User, fromNode *sdk.Node) (*workflow.ProcessorReport, error) {
-	var end func()
-	ctx, end = observability.Span(ctx, "runFromNode")
-	defer end()
-
-	tx, errb := db.Begin()
-	if errb != nil {
-		return nil, errb
-	}
-
-	defer tx.Rollback() // nolint
-
-	report := new(workflow.ProcessorReport)
-
-	// Check Env Permission
-	if fromNode.Context.EnvironmentID != 0 {
-		if !permission.AccessToEnvironment(p.Key, lastRun.Workflow.Environments[fromNode.Context.EnvironmentID].Name, u, permission.PermissionReadExecute) {
-			return nil, sdk.WrapError(sdk.ErrNoEnvExecution, "runFromNode> Not enough right to run on environment %s", lastRun.Workflow.Environments[fromNode.Context.EnvironmentID].Name)
-		}
-	}
-
-	//If payload is not set, keep the default payload
-	if opts.Manual.Payload == interface{}(nil) {
-		opts.Manual.Payload = fromNode.Context.DefaultPayload
-	}
-
-	//If PipelineParameters are not set, keep the default PipelineParameters
-	if len(opts.Manual.PipelineParameters) == 0 {
-		opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
-	}
-
-	//Manual run
-	if lastRun != nil {
-		_, r1, errmr := workflow.ManualRunFromNode(ctx, tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID)
-		if errmr != nil {
-			return nil, sdk.WrapError(errmr, "runFromNode> Unable to run workflow from node")
-		}
-		//since report is mutable and is a pointer and in this case we can't have any error, we can skip returned values
-		_, _ = report.Merge(r1, nil)
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, sdk.WrapError(err, "runFromNode> Unable to commit transaction")
-
 	}
 	return report, nil
 }
