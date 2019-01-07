@@ -85,15 +85,12 @@ export class WorkflowTemplateFormComponent {
 
     pipelineValues: any;
     pipelineKeys: Array<number>;
-    pipelineValueAdd: string;
 
     applicationValues: any;
     applicationKeys: Array<number>;
-    applicationValueAdd: string;
 
     environmentValues: any;
     environmentKeys: Array<number>;
-    environmentValueAdd: string;
 
     user: User;
 
@@ -162,9 +159,7 @@ export class WorkflowTemplateFormComponent {
 
     clickAddPipeline() {
         let k = this.pipelineKeys.length;
-        this.pipelineKeys.push(k)
-        this.pipelineValues[k] = this.pipelineValueAdd;
-        this.pipelineValueAdd = '';
+        this.pipelineKeys.push(k);
     }
 
     clickRemovePipeline(key: number) {
@@ -174,9 +169,7 @@ export class WorkflowTemplateFormComponent {
 
     clickAddApplication() {
         let k = this.applicationKeys.length;
-        this.applicationKeys.push(k)
-        this.applicationValues[k] = this.applicationValueAdd;
-        this.applicationValueAdd = '';
+        this.applicationKeys.push(k);
     }
 
     clickRemoveApplication(key: number) {
@@ -186,9 +179,7 @@ export class WorkflowTemplateFormComponent {
 
     clickAddEnvironment() {
         let k = this.environmentKeys.length;
-        this.environmentKeys.push(k)
-        this.environmentValues[k] = this.environmentValueAdd;
-        this.environmentValueAdd = '';
+        this.environmentKeys.push(k);
     }
 
     clickRemoveEnvironment(key: number) {
