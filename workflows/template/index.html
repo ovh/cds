@@ -2275,11 +2275,16 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 
 <p><asciinema-player src="https://ovh.github.io/cds/images/workflow_template_apply.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player></p>
 
+<p>You can also create a workflow from a template with the web UI.
+<img src="https://ovh.github.io/cds/images/workflow_template_apply_ui.gif" alt="Apply" /></p>
+
 <h2 id="import-create-export">Import/Create/Export</h2>
 
 <p>With cdsctl you can import/export a template from/to yaml files with cdsctl, you can also create a template in the ui from <strong>settings</strong> menu:</p>
 
-<pre><code class="language-sh">cdsctl template push ./my-template/*.yml
+<pre><code class="language-sh">cdsctl template push ./my-template/*.yml #from local files
+cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/tests/fixtures/template/simple/example-simple.yml #from remote files
+
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
 </code></pre>
 
