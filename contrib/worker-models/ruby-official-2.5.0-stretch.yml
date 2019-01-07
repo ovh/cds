@@ -1,0 +1,6 @@
+name: ruby-official-2.5.0-stretch
+group: shared.infra
+communication: http
+image: ruby:2.5.0-stretch
+type: docker
+pattern_name: basic_unix
