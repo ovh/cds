@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { finalize, first } from 'rxjs/operators';
 import { Project } from '../../../model/project.model';
 import {
+    ParamData,
     WorkflowTemplate,
     WorkflowTemplateApplyResult,
     WorkflowTemplateInstance,
@@ -26,7 +27,7 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
     loading: boolean;
     result: WorkflowTemplateApplyResult;
     parameterName: string;
-    parameterValues: { [key: string]: string; };
+    parameterValues: ParamData;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -34,7 +35,7 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
     ) { }
 
     ngOnChanges() {
-        this.parameterName = this.workflowTemplateInstance.request.workflow_name;
+        this.parameterName = this.workflowTemplateInstance ? this.workflowTemplateInstance.request.workflow_name : '';
     }
 
     applyTemplate() {

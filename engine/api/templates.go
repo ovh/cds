@@ -655,10 +655,12 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
+
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load projet")
 		}
+
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, workflowName, getUser(ctx), workflow.LoadOptions{})
 		if err != nil {
 			if sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
@@ -666,6 +668,7 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 			}
 			return sdk.WithStack(err)
 		}
+
 		// return the template instance if workflow is a generated one
 		wti, err := workflowtemplate.GetInstanceByWorkflowID(api.mustDB(), wf.ID)
 		if err != nil {
@@ -674,6 +677,9 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		if wti == nil {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "No workflow template instance found")
 		}
+
+		wti.Project = proj
+
 		return service.WriteJSON(w, wti, http.StatusOK)
 	}
 }

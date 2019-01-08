@@ -69,6 +69,9 @@ export class WorkflowTemplateBulkModalComponent {
                 name: 'common_workflow',
                 selector: (i: WorkflowTemplateBulkOperation) => i.request.project_key + '/' + i.request.workflow_name
             }, <Column<WorkflowTemplateBulkOperation>>{
+                name: '',
+                selector: (i: WorkflowTemplateBulkOperation) => i.error
+            }, <Column<WorkflowTemplateBulkOperation>>{
                 type: ColumnType.LABEL,
                 name: 'common_status',
                 class: 'right aligned',
@@ -106,7 +109,10 @@ export class WorkflowTemplateBulkModalComponent {
     }
 
     selectFunc: Select<WorkflowTemplateInstance> = (d: WorkflowTemplateInstance): boolean => {
-        return d.status(this.workflowTemplate) === InstanceStatus.NOT_UP_TO_DATE;
+        if (!this.selectedInstanceKeys || this.selectedInstanceKeys.length === 0) {
+            return d.status(this.workflowTemplate) === InstanceStatus.NOT_UP_TO_DATE;
+        }
+        return !!this.selectedInstanceKeys.find(k => k === d.key());
     }
 
     selectChange(e: Array<string>) {
@@ -129,6 +135,8 @@ export class WorkflowTemplateBulkModalComponent {
         this._workflowTemplateService.getInstances(this.workflowTemplate.group.name, this.workflowTemplate.slug)
             .pipe(finalize(() => this.loadingInstances = false))
             .subscribe(is => { this.instances = is; });
+
+        this.selectedInstanceKeys = [];
 
         this.clickGoToInstance();
     }
