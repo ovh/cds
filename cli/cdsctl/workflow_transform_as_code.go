@@ -44,7 +44,7 @@ func workflowTransformAsCodeRun(v cli.Values) error {
 	}
 	switch ope.Status {
 	case sdk.OperationStatusDone:
-		fmt.Println(cli.Blue("%s", ope.Setup.Push.PRLink))
+		fmt.Println(cli.Blue(ope.Setup.Push.PRLink))
 	case sdk.OperationStatusError:
 		return fmt.Errorf("cannot perform operation: %s", ope.Error)
 	}
