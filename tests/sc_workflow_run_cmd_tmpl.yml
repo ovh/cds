@@ -1,0 +1,34 @@
+name: Create a simple workflow (ITSCWRKFLW9)
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW9/worker-tmpl.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW9/ITSCWRKFLW9.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW9"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW9 "
+  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW9 ITSCWRKFLW9"
+
+- name: push workflow
+  steps:
+  - script: {{.cds.build.cdsctl}} workflow push ITSCWRKFLW9 ./tests/fixtures/ITSCWRKFLW9/*.yml --skip-update-files
+    assertions:
+    - result.code ShouldEqual 0
+
+- name: run workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW9 ITSCWRKFLW9-WORKFLOW'
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW9-WORKFLOW #1 has been launched"
+
+- name: the workflow should be successful
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow status ITSCWRKFLW9 ITSCWRKFLW9-WORKFLOW 1 --format json
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.status ShouldEqual Success
+    retry: 30
+    delay: 10
