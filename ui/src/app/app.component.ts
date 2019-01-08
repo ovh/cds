@@ -166,7 +166,7 @@ export class AppComponent  implements OnInit {
                     // If no ping in the last 11s restart SSE
                     this.startSSE();
                 }
-            });
+            }, 2000);
         } else {
             this.sseWorker = new CDSWebWorker('./assets/worker/webWorker.js');
         }
