@@ -71,6 +71,16 @@ i.star {
     margin-left: 10px;
 }
 
+
 .infoPopup {
-    width: 250px;
+    width: 450px;
+    word-break: break-word;
+
+    .footer {
+        display: flex;
+        div {
+            flex-grow: 1;
+            flex-basis: 0;
+        }
+    }
 }
