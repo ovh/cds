@@ -227,7 +227,7 @@ func templateBulkRun(v cli.Values) error {
 					case sdk.OperationStatusError:
 						status = cli.Red("error")
 					}
-					out += fmt.Sprintf("%s/%s -> %s\n", o.Request.ProjectKey, o.Request.WorkflowName, status)
+					out += fmt.Sprintf("%s/%s -> %s %s\n", o.Request.ProjectKey, o.Request.WorkflowName, status, o.Error)
 				}
 
 				currentDisplay.Printf(out)

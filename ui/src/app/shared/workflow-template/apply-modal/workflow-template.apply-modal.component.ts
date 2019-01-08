@@ -90,6 +90,13 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
         }
     }
 
+    apply() {
+        this._templateService.getInstance(this._workflowTemplateInstance.project.key,
+            this._workflowTemplateInstance.workflow_name).subscribe(i => {
+                this._workflowTemplateInstance = i;
+            });
+    }
+
     loadAudits() {
         // load audits since instance version if not latest
         if (this.workflowTemplateInstance.workflow_template_version !== this.workflowTemplate.version) {
