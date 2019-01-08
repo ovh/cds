@@ -19,7 +19,7 @@ testcases:
 
 - name: run workflow
   steps:
-  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW9 ITSCWRKFLW9-WORKFLOW'
+  - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW9 ITSCWRKFLW9-WORKFLOW
     assertions:
     - result.code ShouldEqual 0
     - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW9-WORKFLOW #1 has been launched"
