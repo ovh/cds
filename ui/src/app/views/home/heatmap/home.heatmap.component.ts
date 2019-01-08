@@ -1,10 +1,13 @@
-import {Component, OnInit} from '@angular/core';
-import {Subscription} from 'rxjs/Subscription';
-import {Event} from '../../../model/event.model';
-import {PipelineStatus} from '../../../model/pipeline.model';
-import {ProjectFilter, TimelineFilter} from '../../../model/timeline.model';
-import {TimelineStore} from '../../../service/timeline/timeline.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import { Component, OnInit } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs/Subscription';
+import { Event } from '../../../model/event.model';
+import { PipelineStatus } from '../../../model/pipeline.model';
+import { ProjectFilter, TimelineFilter } from '../../../model/timeline.model';
+import { TimelineStore } from '../../../service/timeline/timeline.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { ToastService } from '../../../shared/toast/ToastService';
+
 
 @Component({
     selector: 'app-home-heatmap',
@@ -16,6 +19,9 @@ export class HomeHeatmapComponent implements OnInit {
 
     loading = true;
     events: Array<Event>;
+    projects: Array<string>;
+    workflows = new Object();
+    properties = new Array<string>();
 
     eventsIds = new Array();
     groupedEvents = new Object();
@@ -29,7 +35,8 @@ export class HomeHeatmapComponent implements OnInit {
     filter: TimelineFilter;
     filterSub: Subscription;
 
-    constructor(private _timelineStore: TimelineStore) {
+    constructor(private _timelineStore: TimelineStore, private _toast: ToastService,
+        public _translate: TranslateService) {
         this.filter = new TimelineFilter();
     }
 
@@ -50,6 +57,9 @@ export class HomeHeatmapComponent implements OnInit {
                     this.events = es.toArray().filter((el, i, a) => i === a.indexOf(el));
 
                     this.events.forEach((event) => {
+                        const allowed = ['workflow_name', 'status'];
+                        this.properties = Object.keys(event).filter(p => allowed.indexOf(p) !== -1);
+
                         if (!this.groupedEvents[event.project_key]) {
                             this.groupedEvents[event.project_key] = new Object();
                         }
@@ -79,9 +89,17 @@ export class HomeHeatmapComponent implements OnInit {
                         }
                         eventsWorkflow = eventsWorkflow.filter((el, i, a) => i === a.indexOf(el));
                         this.groupedEvents[event.project_key][event.workflow_name] = eventsWorkflow;
+                        if (!this.workflows[event.project_key]) {
+                            this.workflows[event.project_key] = new Array<string>();
+                        }
+                        if (this.workflows[event.project_key].lastIndexOf(event.workflow_name) === -1) {
+                            this.workflows[event.project_key].push(event.workflow_name);
+                        }
                     });
 
                     this.currentItem = this.events.length;
+
+                    this.projects = Object.keys(this.groupedEvents).sort();
                 });
             }
         });
@@ -91,31 +109,10 @@ export class HomeHeatmapComponent implements OnInit {
         this.selectedTab = t;
     }
 
-    getProjects() {
-        return Object.keys(this.groupedEvents);
-    }
-
-    getRuns(workflows: Array<any>) {
-        const runs = new Array<Event>();
-        Object.keys(workflows).forEach((workflow_name) => {
-            let workflow = workflows[workflow_name];
-            workflow.forEach((run) => {
-                runs.push(run);
-            });
-        });
-        return runs;
-    }
-
-    getProperties(e: Event) {
-        const allowed = ['workflow_name', 'status'];
-        return Object.keys(e).filter(p => allowed.indexOf(p) !== -1);
-    }
-
     addFilter(project_key: string): void {
         if (!this.filter.projects) {
             this.filter.projects = new Array<ProjectFilter>();
         }
-        console.log(this.filter);
 
         let pFilter = this.filter.projects.find(p => p.key === project_key);
         if (!pFilter) {
@@ -123,10 +120,9 @@ export class HomeHeatmapComponent implements OnInit {
             pFilter.key = project_key;
             this.filter.projects.push(pFilter);
         }
-        console.log(this.filter);
-        /*this._timelineStore.saveFilter(this.filter).subscribe(() => {
+        this._timelineStore.saveFilter(this.filter).subscribe(() => {
             this._toast.success('', this._translate.instant('timeline_filter_updated'));
-        });*/
+        });
         delete this.groupedEvents[project_key];
     }
 }
