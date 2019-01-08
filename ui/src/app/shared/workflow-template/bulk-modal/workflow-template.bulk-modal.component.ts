@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
 import { Observable, Subscription } from 'rxjs';
@@ -30,6 +30,7 @@ export class WorkflowTemplateBulkModalComponent {
     open: boolean;
 
     @Input() workflowTemplate: WorkflowTemplate;
+    @Output() close = new EventEmitter();
     columnsInstances: Array<Column<WorkflowTemplateInstance>>;
     columnsOperations: Array<Column<WorkflowTemplateBulkOperation>>;
     instances: Array<WorkflowTemplateInstance>;
@@ -98,13 +99,19 @@ export class WorkflowTemplateBulkModalComponent {
 
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => { this.open = false; });
-        this.modal.onDeny(() => { this.open = false; });
+        this.modal.onApprove(() => {
+            this.open = false;
+            this.close.emit();
+        });
+        this.modal.onDeny(() => {
+            this.open = false;
+            this.close.emit();
+        });
 
         this.clickGoToInstanceReset();
     }
 
-    close() {
+    clickClose() {
         this.modal.approve(true);
     }
 
@@ -134,7 +141,7 @@ export class WorkflowTemplateBulkModalComponent {
         this.loadingInstances = true;
         this._workflowTemplateService.getInstances(this.workflowTemplate.group.name, this.workflowTemplate.slug)
             .pipe(finalize(() => this.loadingInstances = false))
-            .subscribe(is => { this.instances = is; });
+            .subscribe(is => { this.instances = is.sort((a, b) => { return a.key() < b.key() ? -1 : 1; }); });
 
         this.selectedInstanceKeys = [];
 

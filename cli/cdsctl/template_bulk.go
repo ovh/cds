@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"sort"
 	"time"
 
 	"github.com/AlecAivazis/survey"
@@ -63,43 +64,45 @@ func templateBulkRun(v cli.Values) error {
 			return err
 		}
 
+		sort.Slice(wtis, func(i, j int) bool { return wtis[i].Key() < wtis[j].Key() })
+
 		opts := []cli.CustomMultiSelectOption{}
 		values := make(map[string]sdk.WorkflowTemplateInstance, len(wtis))
 		for i := range wtis {
-			if wtis[i].Workflow != nil {
-				notUpToDate := wtis[i].WorkflowTemplateVersion < wt.Version
+			notUpToDate := wtis[i].WorkflowTemplateVersion < wt.Version
 
-				var info string
-				if notUpToDate {
-					info = cli.Red("not up to date")
-				} else {
-					info = cli.Green("up to date")
-				}
-
-				var paramMissing bool
-				for _, p := range wt.Parameters {
-					if _, ok := wtis[i].Request.Parameters[p.Key]; !ok {
-						paramMissing = true
-						break
-					}
-				}
-
-				if notUpToDate {
-					if paramMissing {
-						info = fmt.Sprintf("%s - %s", info, cli.Red("needs parameters to apply"))
-					} else {
-						info = fmt.Sprintf("%s - %s", info, cli.Green("can apply automatically"))
-					}
-				}
-
-				key := fmt.Sprintf("%s/%s", wtis[i].Project.Key, wtis[i].Workflow.Name)
-				opts = append(opts, cli.CustomMultiSelectOption{
-					Value:   key,
-					Info:    info,
-					Default: true,
-				})
-				values[key] = wtis[i]
+			var info string
+			if wtis[i].Workflow == nil {
+				info = cli.Yellow("not imported")
+			} else if notUpToDate {
+				info = cli.Red("not up to date")
+			} else {
+				info = cli.Green("up to date")
 			}
+
+			var paramMissing bool
+			for _, p := range wt.Parameters {
+				if _, ok := wtis[i].Request.Parameters[p.Key]; !ok {
+					paramMissing = true
+					break
+				}
+			}
+
+			if notUpToDate {
+				if paramMissing {
+					info = fmt.Sprintf("%s - %s", info, cli.Red("needs parameters to apply"))
+				} else {
+					info = fmt.Sprintf("%s - %s", info, cli.Green("can apply automatically"))
+				}
+			}
+
+			key := wtis[i].Key()
+			opts = append(opts, cli.CustomMultiSelectOption{
+				Value:   key,
+				Info:    info,
+				Default: wtis[i].Workflow != nil && notUpToDate,
+			})
+			values[key] = wtis[i]
 		}
 
 		results := []string{}

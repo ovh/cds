@@ -3,6 +3,7 @@ package sdk
 import (
 	"database/sql/driver"
 	json "encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/ovh/cds/sdk/slug"
@@ -322,6 +323,15 @@ type WorkflowTemplateInstance struct {
 	Template   *WorkflowTemplate              `json:"template,omitempty" db:"-"`
 	Project    *Project                       `json:"project,omitempty" db:"-"`
 	Workflow   *Workflow                      `json:"workflow,omitempty" db:"-"`
+}
+
+// Key returns unique key for instance.
+func (w WorkflowTemplateInstance) Key() string {
+	workflowName := w.WorkflowName
+	if w.Workflow != nil {
+		workflowName = w.Workflow.Name
+	}
+	return fmt.Sprintf("%s/%s", w.Project.Key, workflowName)
 }
 
 // WorkflowTemplateInstancesToIDs returns ids of given workflow template instances.
