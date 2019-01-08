@@ -3,7 +3,7 @@
         <div class="wide column">
             <div class="field">
                 <label>{{'workflow_name' | translate}}*</label>
-                <input class="ui input" type="text" name="workflow_name" [(ngModel)]="parameterName" [disabled]="_workflowTemplateInstance">
+                <input class="ui input" type="text" name="workflow_name" [(ngModel)]="parameterName" [disabled]="workflowTemplateInstance">
             </div>
             <app-workflow-template-param-form [project]="project" [workflowTemplate]="workflowTemplate"
                 [workflowTemplateInstance]="workflowTemplateInstance" (paramChange)="changeParam($event)"></app-workflow-template-param-form>
