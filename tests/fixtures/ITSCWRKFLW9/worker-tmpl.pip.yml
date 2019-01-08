@@ -20,5 +20,3 @@ jobs:
     - cat outputfile
     - echo "grep bar in outputfile :"
     - cat outputfile | grep bar
-permissions:
-  000AAA: 7
