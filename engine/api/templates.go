@@ -607,7 +607,7 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 
 func (api *API) getTemplateInstancesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		ctx, err := api.middlewareTemplate(true)(ctx, w, r)
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
 		if err != nil {
 			return err
 		}
