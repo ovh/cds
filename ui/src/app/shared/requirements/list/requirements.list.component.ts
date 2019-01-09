@@ -67,11 +67,7 @@ export class RequirementsListComponent extends Table<Requirement> implements OnI
             .subscribe(wms => {
                 this.workerModels = wms;
                 if (Array.isArray(this.workerModels)) {
-                    this._suggestWithWorkerModel = [];
-                    this.workerModels.forEach(wm => {
-                        this._suggestWithWorkerModel.push(wm.name);
-                    })
-                    this._suggestWithWorkerModel = this._suggestWithWorkerModel.concat(this._suggest);
+                    this._suggestWithWorkerModel = this.workerModels.map(wm => wm.name).concat(this._suggest);
                 }
             });
 

@@ -67,7 +67,7 @@ type CustomMultiSelect struct {
 
 // Init survey multi select from options.
 func (c *CustomMultiSelect) Init() {
-	c.optionsMap = make(map[string]CustomMultiSelectOption)
+	c.optionsMap = make(map[string]CustomMultiSelectOption, len(c.Options))
 
 	allOptions := make([]string, len(c.Options))
 	var defaultOptions []string

@@ -300,7 +300,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.loadingInstances = true;
         this._workflowTemplateService.getInstances(this.groupName, this.templateSlug)
             .pipe(finalize(() => this.loadingInstances = false))
-            .subscribe(is => { this.instances = is.sort((a, b) => { return a.key() < b.key() ? -1 : 1; }); });
+            .subscribe(is => this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1));
     }
 
     clickCreateBulk() {

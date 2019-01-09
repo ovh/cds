@@ -20,21 +20,10 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     modal: ActiveModal<boolean, boolean, void>;
     open: boolean;
 
-    _project: Project;
-    @Input() set project(p: Project) { this._project = p; }
-    get project(): Project { return this._project; }
-
-    _workflow: Workflow;
-    @Input() set workflow(w: Workflow) { this._workflow = w; }
-    get workflow(): Workflow { return this._workflow; }
-
-    _workflowTemplate: WorkflowTemplate;
-    @Input() set workflowTemplate(wt: WorkflowTemplate) { this._workflowTemplate = wt; }
-    get workflowTemplate(): WorkflowTemplate { return this._workflowTemplate; }
-
-    _workflowTemplateInstance: WorkflowTemplateInstance;
-    @Input() set workflowTemplateInstance(i: WorkflowTemplateInstance) { this._workflowTemplateInstance = i; }
-    get workflowTemplateInstance(): WorkflowTemplateInstance { return this._workflowTemplateInstance; }
+    @Input() project: Project;
+    @Input() workflow: Workflow;
+    @Input() workflowTemplate: WorkflowTemplate;
+    @Input() workflowTemplateInstance: WorkflowTemplateInstance;
 
     diffVisible: boolean;
     diffItems: Array<Item>;
@@ -62,8 +51,8 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateApplyModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => { this.open = false; });
-        this.modal.onDeny(() => { this.open = false; });
+        this.modal.onApprove(() => this.open = false);
+        this.modal.onDeny(() => this.open = false);
 
         this.load();
     }
@@ -71,7 +60,7 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     load() {
         if (this.workflowTemplate && this.workflowTemplateInstance) {
             this._projectService.getProject(this.workflowTemplateInstance.project.key, null).subscribe(p => {
-                this._project = p;
+                this.project = p;
                 this.loadAudits()
             });
             return
@@ -83,17 +72,17 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
                 this._templateService.get(s[0], s.splice(1, s.length - 1).join('/')),
                 this._templateService.getInstance(this.workflow.project_key, this.workflow.name)
             ).subscribe(res => {
-                this._workflowTemplate = res[0];
-                this._workflowTemplateInstance = res[1];
+                this.workflowTemplate = res[0];
+                this.workflowTemplateInstance = res[1];
                 this.loadAudits();
             });
         }
     }
 
     apply() {
-        this._templateService.getInstance(this._workflowTemplateInstance.project.key,
-            this._workflowTemplateInstance.workflow_name).subscribe(i => {
-                this._workflowTemplateInstance = i;
+        this._templateService.getInstance(this.workflowTemplateInstance.project.key,
+            this.workflowTemplateInstance.workflow_name).subscribe(i => {
+                this.workflowTemplateInstance = i;
             });
     }
 

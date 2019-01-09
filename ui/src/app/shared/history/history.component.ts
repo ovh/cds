@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { finalize } from 'rxjs/internal/operators/finalize';
 import { PipelineBuild } from '../../model/pipeline.model';
 import { Project } from '../../model/project.model';
 import { ApplicationPipelineService } from '../../service/application/pipeline/application.pipeline.service';
@@ -12,7 +13,6 @@ import { ToastService } from '../toast/ToastService';
     styleUrls: ['./history.scss']
 })
 export class HistoryComponent extends Table<PipelineBuild> {
-
     @Input() project: Project;
     @Input() history: Array<PipelineBuild>;
     @Input() currentBuild: PipelineBuild;
@@ -20,7 +20,11 @@ export class HistoryComponent extends Table<PipelineBuild> {
 
     loading: boolean;
 
-    constructor(private _appBuildSerivce: ApplicationPipelineService, private _translate: TranslateService, private _toast: ToastService) {
+    constructor(
+        private _appBuildSerivce: ApplicationPipelineService,
+        private _translate: TranslateService,
+        private _toast: ToastService
+    ) {
         super();
     }
 
@@ -34,13 +38,12 @@ export class HistoryComponent extends Table<PipelineBuild> {
 
     deleteBuild(pb: PipelineBuild): void {
         this.loading = true;
-        this._appBuildSerivce.deleteBuild(
-            this.project.key, pb.application.name, pb.pipeline.name, pb.environment.name, pb.build_number).subscribe(() => {
-                this._toast.success('', this._translate.instant('pipeline_build_deleted'));
-                this.loading = false;
+        this._appBuildSerivce.deleteBuild(this.project.key, pb.application.name, pb.pipeline.name,
+            pb.environment.name, pb.build_number)
+            .pipe(finalize(() => this.loading = false))
+            .subscribe(() => {
                 this.buildDeletedEvent.emit(true);
-            }, () => {
-                this.loading = false;
+                this._toast.success('', this._translate.instant('pipeline_build_deleted'));
             });
     }
 }

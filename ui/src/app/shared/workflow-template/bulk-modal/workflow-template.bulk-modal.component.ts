@@ -141,7 +141,7 @@ export class WorkflowTemplateBulkModalComponent {
         this.loadingInstances = true;
         this._workflowTemplateService.getInstances(this.workflowTemplate.group.name, this.workflowTemplate.slug)
             .pipe(finalize(() => this.loadingInstances = false))
-            .subscribe(is => { this.instances = is.sort((a, b) => { return a.key() < b.key() ? -1 : 1; }); });
+            .subscribe(is => this.instances = is.sort((a, b) => a.key() < b.key() ? -1 : 1));
 
         this.selectedInstanceKeys = [];
 

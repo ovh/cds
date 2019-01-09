@@ -146,11 +146,6 @@ func UpdateInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) erro
 	return sdk.WrapError(gorpmapping.Update(db, wti), "Unable to update workflow template instance %d", wti.ID)
 }
 
-// DeleteInstance for workflow template in database.
-func DeleteInstance(db gorp.SqlExecutor, wti *sdk.WorkflowTemplateInstance) error {
-	return sdk.WrapError(gorpmapping.Delete(db, wti), "Unable to delete workflow template instance %d", wti.ID)
-}
-
 // DeleteInstanceNotIDAndWorkflowID removes all instances of a template where not id and workflow id equal in database.
 func DeleteInstanceNotIDAndWorkflowID(db gorp.SqlExecutor, id, workflowID int64) error {
 	_, err := db.Exec("DELETE FROM workflow_template_instance WHERE id != $1 AND workflow_id = $2", id, workflowID)

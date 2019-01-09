@@ -297,14 +297,8 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, 
 
 		for _, res := range wtis {
 			if res.Request.WorkflowName == req.WorkflowName {
-				if wti == nil {
-					wti = &res
-				} else {
-					// if there are more than one instance found, delete others
-					if err := workflowtemplate.DeleteInstance(tx, &res); err != nil {
-						return sdk.WorkflowTemplateResult{}, err
-					}
-				}
+				wti = &res
+				break
 			}
 		}
 	}

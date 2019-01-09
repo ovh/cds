@@ -175,7 +175,7 @@ export class DataTableComponent<T extends WithKey> extends Table<T> implements O
 
     onSelectAllChange(e: any) {
         this.selectedAll = !this.selectedAll;
-        this.allData.forEach(d => { this.selected[d.key()] = this.selectedAll });
+        this.allData.forEach(d => this.selected[d.key()] = this.selectedAll);
         this.emitSelectChange();
     }
 

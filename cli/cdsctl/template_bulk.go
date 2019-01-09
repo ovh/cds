@@ -37,7 +37,7 @@ var templateBulkCmd = cli.Command{
 			Kind:      reflect.Slice,
 			Name:      "params",
 			ShortHand: "p",
-			Usage:     "Specify params for template",
+			Usage:     "Specify parameters for template",
 			Default:   "",
 		},
 		{
@@ -269,7 +269,7 @@ func templateInitOperationFromParams(mwtis map[string]sdk.WorkflowTemplateInstan
 
 func templateAskForInstances(wt *sdk.WorkflowTemplate, mwtis map[string]sdk.WorkflowTemplateInstance, minstances map[string]templateBulkInstancePath,
 	moperations map[string]sdk.WorkflowTemplateBulkOperation) error {
-	opts := []cli.CustomMultiSelectOption{}
+	opts := make([]cli.CustomMultiSelectOption, len(mwtis))
 	values := make(map[string]sdk.WorkflowTemplateInstance, len(mwtis))
 	for key, instance := range mwtis {
 		notUpToDate := instance.WorkflowTemplateVersion < wt.Version

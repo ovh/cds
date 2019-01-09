@@ -8,17 +8,17 @@
                 <div class="ui three ordered steps">
                     <div class="step" [class.completed]="currentStep > 0" [class.active]="currentStep === 0">
                         <div class="content">
-                            <div class="title">Select instances</div>
+                            <div class="title">{{ 'workflow_template_bulk_select_instances' | translate }}</div>
                         </div>
                     </div>
                     <div class="step" [class.completed]="currentStep > 1" [class.active]="currentStep === 1">
                         <div class="content">
-                            <div class="title">Fill parameters</div>
+                            <div class="title">{{ 'workflow_template_bulk_fill_parameters' | translate }}</div>
                         </div>
                     </div>
                     <div class="step" [class.completed]="currentStep > 2" [class.active]="currentStep === 2">
                         <div class="content">
-                            <div class="title">Run</div>
+                            <div class="title">{{ 'workflow_template_bulk_fill_run' | translate }}</div>
                         </div>
                     </div>
                 </div>
