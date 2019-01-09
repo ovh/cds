@@ -78,21 +78,26 @@ func templateApplyCmd(name string) cli.Command {
 	}
 }
 
+func templateParsePath(path string) (string, string, error) {
+	pathSplitted := strings.Split(path, "/")
+	if len(pathSplitted) != 2 {
+		return "", "", fmt.Errorf("jnvalid given template path")
+	}
+	return pathSplitted[0], pathSplitted[1], nil
+}
+
 func getTemplateFromCLI(v cli.Values) (*sdk.WorkflowTemplate, error) {
 	var template *sdk.WorkflowTemplate
 
 	// search template path from params or suggest one
 	templatePath := v.GetString("template-path")
 	if templatePath != "" {
-		templatePathSplitted := strings.Split(templatePath, "/")
-		if len(templatePathSplitted) != 2 {
-			return nil, fmt.Errorf("Invalid given template path")
+		groupName, templateSlug, err := templateParsePath(templatePath)
+		if err != nil {
+			return nil, err
 		}
 
-		groupName, templateSlug := templatePathSplitted[0], templatePathSplitted[1]
-
 		// try to get the template from cds
-		var err error
 		template, err = client.TemplateGet(groupName, templateSlug)
 		if err != nil {
 			return nil, err
@@ -144,6 +149,9 @@ func templateApplyRun(v cli.Values) error {
 
 	// if no template found for workflow or no instance, suggest one
 	if wt == nil {
+		if v.GetBool("no-interactive") {
+			return fmt.Errorf("you should give a template path")
+		}
 		wt, err = suggestTemplate()
 		if err != nil {
 			return err
