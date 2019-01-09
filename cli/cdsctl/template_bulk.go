@@ -137,7 +137,7 @@ func templateExtractAndValidateParams(rawParams []string) ([]templateBulkParamet
 	return params, nil
 }
 
-func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplate, []templateBulkParameter, error) {
+func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplate, []sdk.WorkflowTemplateBulkOperation, error) {
 	if filePath == "" {
 		return nil, nil, nil
 	}
@@ -178,36 +178,39 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 		return nil, nil, err
 	}
 
-	params := []templateBulkParameter{}
-	for _, i := range f.Instances {
+	operations := make([]sdk.WorkflowTemplateBulkOperation, len(f.Instances))
+	for i, instance := range f.Instances {
 		// instance path should be formatted like MYPROJ/myWorkflow
-		instancePath := strings.Split(i.WorkflowPath, "/")
+		instancePath := strings.Split(instance.WorkflowPath, "/")
 		if len(instancePath) != 2 {
-			return nil, nil, fmt.Errorf("invalid given instance path %s", i.WorkflowPath)
+			return nil, nil, fmt.Errorf("invalid given instance path %s", instance.WorkflowPath)
 		}
 
-		for _, value := range i.Parameters {
+		operation := sdk.WorkflowTemplateBulkOperation{
+			Request: sdk.WorkflowTemplateRequest{
+				ProjectKey:   instancePath[0],
+				WorkflowName: instancePath[1],
+				Parameters:   map[string]string{},
+			},
+		}
+
+		for _, value := range instance.Parameters {
 			// instance path should be formatted like myParameterKey=myValue
 			param := strings.Split(value, "=")
 			if len(param) != 2 {
-				return nil, nil, err
+				return nil, nil, fmt.Errorf("invalid given parameter value")
 			}
-			params = append(params, templateBulkParameter{
-				InstancePath: templateBulkInstancePath{
-					ProjectKey:   instancePath[0],
-					WorkflowName: instancePath[1],
-				},
-				Key:   param[0],
-				Value: param[1],
-			})
+			operation.Request.Parameters[param[0]] = param[1]
 		}
+
+		operations[i] = operation
 	}
 
-	return template, params, nil
+	return template, operations, nil
 }
 
-func templateInitOperationFromParams(mwtis map[string]sdk.WorkflowTemplateInstance, minstances map[string]templateBulkInstancePath,
-	params, fileParams []templateBulkParameter) map[string]sdk.WorkflowTemplateBulkOperation {
+func templateInitOperationFromParams(mwtis map[string]sdk.WorkflowTemplateInstance, fileOperations []sdk.WorkflowTemplateBulkOperation,
+	minstances map[string]templateBulkInstancePath, params []templateBulkParameter) map[string]sdk.WorkflowTemplateBulkOperation {
 	// for all given instances, create an operation and reuse request if instance already exists
 	moperations := map[string]sdk.WorkflowTemplateBulkOperation{}
 	for key, i := range minstances {
@@ -226,18 +229,9 @@ func templateInitOperationFromParams(mwtis map[string]sdk.WorkflowTemplateInstan
 	}
 
 	// for all given file params, create or enrich existing operation but do not use existing instance
-	for _, param := range fileParams {
-		key := param.InstancePath.Key()
-		if _, ok := moperations[key]; !ok {
-			moperations[key] = sdk.WorkflowTemplateBulkOperation{
-				Request: sdk.WorkflowTemplateRequest{
-					ProjectKey:   param.InstancePath.ProjectKey,
-					WorkflowName: param.InstancePath.WorkflowName,
-					Parameters:   map[string]string{},
-				},
-			}
-		}
-		moperations[key].Request.Parameters[param.Key] = param.Value
+	for _, operation := range fileOperations {
+		key := fmt.Sprintf("%s/%s", operation.Request.ProjectKey, operation.Request.WorkflowName)
+		moperations[key] = operation
 	}
 
 	// for all given params, create an operation and reuse request if instance already exists
@@ -332,7 +326,7 @@ func templateBulkRun(v cli.Values) error {
 
 	// validate data from file
 	filePath := v.GetString("file")
-	wtFromFile, fileParams, err := templateExtractAndValidateFileParams(filePath)
+	wtFromFile, fileOperations, err := templateExtractAndValidateFileParams(filePath)
 	if err != nil {
 		return err
 	}
@@ -375,7 +369,7 @@ func templateBulkRun(v cli.Values) error {
 		mwtis[i.Key()] = i
 	}
 
-	moperations := templateInitOperationFromParams(mwtis, minstances, params, fileParams)
+	moperations := templateInitOperationFromParams(mwtis, fileOperations, minstances, params)
 
 	// ask interactively for params if prompt not disabled
 	if !v.GetBool("no-interactive") {
