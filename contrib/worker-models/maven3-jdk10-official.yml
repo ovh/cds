@@ -1,0 +1,6 @@
+name: maven3-jdk10-official
+group: shared.infra
+communication: http
+image: maven:3.5.3-jdk-10
+type: docker
+pattern_name: basic_unix

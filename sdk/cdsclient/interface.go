@@ -298,6 +298,8 @@ type WorkflowClient interface {
 	WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error
 	WorkflowCachePull(projectKey, ref string) (io.Reader, error)
 	WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error)
+	WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error)
+	WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error
 }
 
 // MonitoringClient exposes monitoring functions

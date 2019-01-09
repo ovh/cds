@@ -247,6 +247,7 @@
   "common_loading_project": "Chargement du projet...",
   "common_loading_environments": "Chargement des environnements",
   "common_loading_workflow": "Chargement du workflow...",
+  "common_see": "voir",
   "common_name": "Nom",
   "common_slug": "Slug",
   "common_group": "Groupe",
@@ -932,6 +933,11 @@
   "worker_model_shell_cmd": "Commande principale du shell",
   "worker_model_no_usage": "Ce modèle de worker n'est pas utilisé explicitement dans un pipeline",
 
+
+  "workflow_save_as_code_title": "Sauvegarde du workflow as code",
+  "workflow_save_as_code_pending": "Envoie des modifications",
+  "workflow_as_code_pr_success": "Une demande de revue a été créée :",
+
   "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
   "workflow_resync_vcs": "Resynchroniser les statuts VCS",
   "workflow_resync_vcs_tooltip": "Cette action va renvoyer les statuts de vos pipelines à votre gestionnaire de dépots distants",
@@ -951,6 +957,7 @@
   "workflow_description": "Description du workflow",
   "workflow_from_repository": "Workflow importé depuis {{repo}}",
   "workflow_from_repository_btn": "Import du workflow depuis un gestionnaire de dépôt",
+  "workflow_from_repository_pending": "Acceptez la pullrequest suivante pour passer votre workflow as-code",
   "workflow_from_template": "Workflow importé depuis le modèle",
   "workflow_from_template_btn": "Génération du workflow depuis un modèle",
   "workflow_join_delete": "Suppression de la jointure",

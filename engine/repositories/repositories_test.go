@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -81,6 +85,51 @@ func newRequest(t *testing.T, s *Service, method, uri string, i interface{}) *ht
 	if err != nil {
 		t.FailNow()
 	}
+
+	assets.AuthentifyRequestFromService(t, req, s.Hash)
+
+	return req
+}
+
+func newMultiPartTarRequest(t *testing.T, s *Service, method, uri string, in interface{}, buffer *bytes.Buffer) *http.Request {
+	t.Logf("Request: %s %s", method, uri)
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	// Create tar part
+	tarPartMH := make(textproto.MIMEHeader)
+	tarPartMH.Set("Content-Type", "application/tar")
+	tarPartMH.Set("Content-Disposition", "form-data; name=\"dataFiles\"; filename=\"data.tar\"")
+	dataPart, err := writer.CreatePart(tarPartMH)
+	if err != nil {
+		t.Errorf("Unable to create data part: %v", err)
+		return nil
+	}
+	if _, err := io.Copy(dataPart, buffer); err != nil {
+		t.Errorf("unable to write into data part: %v", err)
+		return nil
+	}
+
+	// Create json part
+	jsonData, errM := json.Marshal(in)
+	if errM != nil {
+		t.Errorf("unable to marshal data: %v", errM)
+		t.FailNow()
+	}
+	assert.NoError(t, writer.WriteField("dataJSON", string(jsonData)))
+
+	// Close writer
+	if err := writer.Close(); err != nil {
+		t.Errorf("unable to close writer: %v", err)
+		t.FailNow()
+	}
+
+	req, err := http.NewRequest(method, uri, body)
+	if err != nil {
+		t.FailNow()
+	}
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	assets.AuthentifyRequestFromService(t, req, s.Hash)
 

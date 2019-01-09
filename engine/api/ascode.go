@@ -69,7 +69,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			}
 		}
 
-		if err := workflow.PostRepositoryOperation(ctx, api.mustDB(), api.Cache, *p, ope); err != nil {
+		if err := workflow.PostRepositoryOperation(ctx, api.mustDB(), *p, ope, nil); err != nil {
 			return sdk.WrapError(err, "Cannot create repository operation")
 		}
 		ope.RepositoryStrategy.SSHKeyContent = ""
@@ -90,7 +90,7 @@ func (api *API) getImportAsCodeHandler() service.Handler {
 
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
-		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), api.Cache, ope); err != nil {
+		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), ope); err != nil {
 			return sdk.WrapError(err, "Cannot get repository operation status")
 		}
 		return service.WriteJSON(w, ope, http.StatusOK)
@@ -128,7 +128,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		var ope = new(sdk.Operation)
 		ope.UUID = uuid
 
-		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), api.Cache, ope); err != nil {
+		if err := workflow.GetRepositoryOperation(ctx, api.mustDB(), ope); err != nil {
 			return sdk.WrapError(err, "Unable to get repository operation")
 		}
 

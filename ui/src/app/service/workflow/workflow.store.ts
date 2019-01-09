@@ -1,4 +1,3 @@
-
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
 import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
@@ -11,6 +10,7 @@ import {ProjectStore} from '../project/project.store';
 import {WorkflowService} from './workflow.service';
 
 import {map, mergeMap} from 'rxjs/operators';
+import {Operation} from '../../model/operation.model';
 
 @Injectable()
 export class WorkflowStore {
@@ -339,5 +339,9 @@ export class WorkflowStore {
     removeFromStore(wfKey: string) {
         let cache = this._workflows.getValue();
         this._workflows.next(cache.delete(wfKey));
+    }
+
+    migrateAsCode(key: string, workflowName: string): Observable<Operation> {
+        return this._workflowService.migrateAsCode(key, workflowName);
     }
 }

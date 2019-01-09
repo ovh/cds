@@ -30,7 +30,7 @@ func (s *Service) processor(ctx context.Context) error {
 }
 
 func (s *Service) do(op sdk.Operation) error {
-	log.Info("repositories > processing > %v", op.UUID)
+	log.Debug("repositories > processing > %v", op.UUID)
 
 	r := s.Repo(op)
 	if s.dao.lock(r.ID()) == errLockUnavailable {
@@ -39,8 +39,31 @@ func (s *Service) do(op sdk.Operation) error {
 	defer s.dao.unlock(r.ID(), 24*time.Hour*time.Duration(s.Cfg.RepositoriesRentention))
 
 	switch {
+	// Load workflow as code file
 	case op.Setup.Checkout.Branch != "":
 		if err := s.processCheckout(&op); err != nil {
+			op.Error = err.Error()
+			op.Status = sdk.OperationStatusError
+		} else {
+			op.Error = ""
+			op.Status = sdk.OperationStatusDone
+			switch {
+			case op.LoadFiles.Pattern != "":
+				if err := s.processLoadFiles(&op); err != nil {
+					op.Error = err.Error()
+					op.Status = sdk.OperationStatusError
+				} else {
+					op.Error = ""
+					op.Status = sdk.OperationStatusDone
+				}
+			default:
+				op.Error = "unrecognized operation"
+				op.Status = sdk.OperationStatusError
+			}
+		}
+	// Push workflow as code file
+	case op.Setup.Push.FromBranch != "":
+		if err := s.processPush(&op); err != nil {
 			op.Error = err.Error()
 			op.Status = sdk.OperationStatusError
 		} else {
@@ -49,24 +72,6 @@ func (s *Service) do(op sdk.Operation) error {
 		}
 	default:
 		op.Error = "unrecognized setup"
-		op.Status = sdk.OperationStatusError
-	}
-
-	if op.Error != "" {
-		return s.dao.saveOperation(&op)
-	}
-
-	switch {
-	case op.LoadFiles.Pattern != "":
-		if err := s.processLoadFiles(&op); err != nil {
-			op.Error = err.Error()
-			op.Status = sdk.OperationStatusError
-		} else {
-			op.Error = ""
-			op.Status = sdk.OperationStatusDone
-		}
-	default:
-		op.Error = "unrecognized operation"
 		op.Status = sdk.OperationStatusError
 	}
 

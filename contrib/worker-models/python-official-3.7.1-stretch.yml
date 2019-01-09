@@ -1,0 +1,7 @@
+name: python-official-3.7.1-stretch
+group: shared.infra
+communication: http
+image: python:3.7.1-stretch
+description: official from https://hub.docker.com/_/python/
+type: docker
+pattern_name: basic_unix

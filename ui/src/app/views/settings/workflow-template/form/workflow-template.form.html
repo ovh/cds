@@ -98,10 +98,7 @@
                                     <i class="trash icon"></i>
                                 </button>
                             </div>
-                        </div>
-                        <div *ngIf="_workflowTemplate.editable" class="wide field codeContainer">
-                            <codemirror class="code" name="pipeline-value-add" [(ngModel)]="pipelineValueAdd" [config]="codeMirrorConfig"></codemirror>
-                            <button class="codeButton ui icon green button" (click)="clickAddPipeline()">
+                            <button *ngIf="_workflowTemplate.editable" class="ui icon green button" (click)="clickAddPipeline()">
                                 <i class="plus icon"></i>
                             </button>
                         </div>
@@ -116,11 +113,7 @@
                                     <i class="trash icon"></i>
                                 </button>
                             </div>
-                        </div>
-                        <div *ngIf="_workflowTemplate.editable" class="wide field codeContainer">
-                            <codemirror class="code" name="application-value-add" [(ngModel)]="applicationValueAdd"
-                                [config]="codeMirrorConfig"></codemirror>
-                            <button class="codeButton ui icon green button" (click)="clickAddApplication()">
+                            <button *ngIf="_workflowTemplate.editable" class="ui icon green button" (click)="clickAddApplication()">
                                 <i class="plus icon"></i>
                             </button>
                         </div>
@@ -135,11 +128,7 @@
                                     <i class="trash icon"></i>
                                 </button>
                             </div>
-                        </div>
-                        <div *ngIf="_workflowTemplate.editable" class="wide field codeContainer">
-                            <codemirror class="code" name="environment-value-add" [(ngModel)]="environmentValueAdd"
-                                [config]="codeMirrorConfig"></codemirror>
-                            <button class="codeButton ui icon green button" (click)="clickAddEnvironment()">
+                            <button *ngIf="_workflowTemplate.editable" class="ui icon green button" (click)="clickAddEnvironment()">
                                 <i class="plus icon"></i>
                             </button>
                         </div>
