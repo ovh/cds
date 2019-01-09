@@ -14,7 +14,7 @@ You have 2 types of conditions:
 
 ## Basic run conditions
 
-With this type of conditions you can add multiple comparisons with a basic operators (`=`, `!=`, `match` for a regular expression, `>=`, `>`, `<=`, `<`). The variables syntax here are dotted syntax (example: `cds.dest.application`).
+With this type of conditions you can add multiple comparisons with a basic operators (`=`, `!=`, `match` for a regular expression, `>=`, `>`, `<=`, `<`). The variables syntax here are dotted syntax (example: `cds.dest.application`). Under the hood, if you use match operator it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.
 
 If you add multiple basic run conditions, all of these must be satisfied to run the pipeline. So with basic conditions you can't make an `OR` between multiple conditions, it's always an `AND`. If you want to make more specific or advanced run conditions you have to use the second type of conditions (`advanced`).
 
@@ -54,4 +54,4 @@ local re = require("re")
 return re.match(cds_application, "abc.*") == cds_application
 ```
 
-Functions `re.find`, `re.gsub`, `re.match`, `re.gmatch` are available. These functions have the same API as Lua pattern match. Under the hood, it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.
+Functions `re.find`, `re.gsub`, `re.match`, `re.gmatch` are available. These functions have the same API as Lua pattern match.
