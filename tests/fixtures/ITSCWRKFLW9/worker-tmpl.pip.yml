@@ -1,0 +1,22 @@
+version: v1.0
+name: worker-tmpl
+jobs:
+- job: New Job
+  steps:
+  - script:
+    - worker export foo "bar"
+  - script:
+    - '#!/bin/bash'
+    - echo "cds.build.foo = {{.cds.build.foo}}"
+    - echo -n "{" > inputfile
+    - echo -n "{.cds.build" >> inputfile
+    - echo -n ".foo}}" >> inputfile
+    - echo "" >> inputfile
+    - echo "input file is:"
+    - cat inputfile
+    - echo "running worker tmpl..."
+    - worker tmpl inputfile outputfile
+    - echo "output file is:"
+    - cat outputfile
+    - echo "grep bar in outputfile :"
+    - cat outputfile | grep bar

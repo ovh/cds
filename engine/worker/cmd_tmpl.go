@@ -121,9 +121,15 @@ func (wk *currentWorker) tmplHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	vars := sdk.ParametersToMap(wk.currentJob.params)
+	tmpvars := map[string]string{}
+	for _, v := range wk.currentJob.buildVariables {
+		tmpvars[v.Name] = v.Value
+	}
+	for _, v := range wk.currentJob.params {
+		tmpvars[v.Name] = v.Value
+	}
 
-	res, err := interpolate.Do(string(btes), vars)
+	res, err := interpolate.Do(string(btes), tmpvars)
 	if err != nil {
 		log.Error("Unable to interpolate: %v", err)
 		newError := sdk.NewError(sdk.ErrWrongRequest, err)
