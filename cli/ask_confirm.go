@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/AlecAivazis/survey"
+	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 // AskForConfirmation ask for yes/no confirmation on command line.

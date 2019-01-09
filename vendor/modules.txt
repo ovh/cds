@@ -1,7 +1,5 @@
 # git.apache.org/thrift.git v0.0.0-20180514124809-e59b73d3c2bf
 git.apache.org/thrift.git/lib/go/thrift
-# github.com/AlecAivazis/survey v1.7.1
-github.com/AlecAivazis/survey
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 github.com/Azure/go-ansiterm/winterm
 github.com/Azure/go-ansiterm
@@ -639,6 +637,7 @@ google.golang.org/grpc/tap
 google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/balancer/base
 # gopkg.in/AlecAivazis/survey.v1 v1.7.1
+gopkg.in/AlecAivazis/survey.v1
 gopkg.in/AlecAivazis/survey.v1/terminal
 gopkg.in/AlecAivazis/survey.v1/core
 # gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175

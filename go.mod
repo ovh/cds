@@ -3,7 +3,6 @@ module github.com/ovh/cds
 require (
 	cloud.google.com/go v0.30.0 // indirect
 	git.apache.org/thrift.git v0.0.0-20180514124809-e59b73d3c2bf // indirect
-	github.com/AlecAivazis/survey v1.7.1
 	github.com/Azure/azure-sdk-for-go v21.2.0+incompatible // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Azure/go-autorest v11.1.1+incompatible // indirect
