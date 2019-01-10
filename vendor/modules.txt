@@ -65,6 +65,8 @@ github.com/cpuguy83/go-md2man/md2man
 github.com/danieljoos/wincred
 # github.com/davecgh/go-spew v1.1.1
 github.com/davecgh/go-spew/spew
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+github.com/dgrijalva/jwt-go
 # github.com/docker/distribution v2.7.0-rc.0+incompatible
 github.com/docker/distribution
 github.com/docker/distribution/reference
