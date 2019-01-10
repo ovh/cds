@@ -452,11 +452,11 @@
   "token_group_name": "Groupe",
   "token_generated": "Voici votre token généré",
 
-  "heatmap": "Carte des évènements",
-   "heatmap_empty": "Aucun évènement déclenché",
+  "heatmap": "Heatmap",
+  "heatmap_empty": "Aucun évènement déclenché",
   "heatmap_filter_mute": "Masquer les évènements de ce projet",
   "heatmap_status": "Statut",
-   "heatmap_timestamp": "Date d'évènement",
+  "heatmap_timestamp": "Date d'évènement",
   "heatmap_workflow_name": "Nom du workflow",
 
   "hook_create_label": "Créer un hook",
