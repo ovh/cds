@@ -12,7 +12,7 @@
                         [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING" [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
                         [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT">
 
-                        <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name]">{{ e.workflow_run_num }}</a>
+                        <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name, 'run', e.workflow_run_num]">{{ e.workflow_run_num }}</a>
 
                         <table class="ui compact table detail">
                             <tbody>
