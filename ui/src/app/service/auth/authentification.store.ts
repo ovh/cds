@@ -42,7 +42,7 @@ export class AuthentificationStore {
      * Get the connected User
      * @returns {User}
      */
-    deprecatedGetUser(): User {
+    getUser(): User {
         return this._connectedUser.getValue();
     }
 
