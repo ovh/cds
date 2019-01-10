@@ -160,13 +160,13 @@ export class AppComponent  implements OnInit {
                 clearInterval(this.heartbeatToken);
             }
 
-            this.heartbeatToken = setInterval(() => {
+            this.heartbeatToken = window.setInterval(() => {
                 let d = (new Date()).getTime();
                 if (this.lastPing !== 0 && (d - this.lastPing) > 11000) {
                     // If no ping in the last 11s restart SSE
                     this.startSSE();
                 }
-            });
+            }, 2000);
         } else {
             this.sseWorker = new CDSWebWorker('./assets/worker/webWorker.js');
         }

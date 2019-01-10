@@ -1,8 +1,6 @@
 package sdk
 
 import (
-	"encoding/json"
-	"fmt"
 	"strings"
 )
 
@@ -72,105 +70,4 @@ func NewStage(name string) *Stage {
 		Name: name,
 	}
 	return s
-}
-
-// AddStage creates a new stage
-func AddStage(projectKey, pipelineName, name string) error {
-	s := NewStage(name)
-	data, err := json.Marshal(s)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("/project/%s/pipeline/%s/stage", projectKey, pipelineName)
-	data, _, err = Request("POST", url, data)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
-}
-
-// GetStage Get stage by ID
-func GetStage(projectKey, pipelineName, pipelineStageID string) (*Stage, error) {
-	s := &Stage{}
-	url := fmt.Sprintf("/project/%s/pipeline/%s/stage/%s", projectKey, pipelineName, pipelineStageID)
-	data, _, err := Request("GET", url, nil)
-	if err != nil {
-		return s, err
-	}
-	if e := DecodeError(data); e != nil {
-		return s, e
-	}
-	err = json.Unmarshal(data, s)
-	return s, err
-}
-
-func updateStage(projectKey, pipelineName, pipelineStageID string, stageData *Stage) error {
-	data, err := json.Marshal(stageData)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("/project/%s/pipeline/%s/stage/%s", projectKey, pipelineName, pipelineStageID)
-	data, _, err = Request("PUT", url, data)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
-}
-
-// RenameStage Rename a stage
-func RenameStage(projectKey, pipelineName, pipelineStageID, newName string) error {
-
-	s, err := GetStage(projectKey, pipelineName, pipelineStageID)
-	if err != nil {
-		return err
-	}
-	s.Name = newName
-	return updateStage(projectKey, pipelineName, pipelineStageID, s)
-}
-
-// ChangeStageState Enabled/Disabled a stage
-func ChangeStageState(projectKey, pipelineName, pipelineStageID string, enabled bool) error {
-
-	s, err := GetStage(projectKey, pipelineName, pipelineStageID)
-	if err != nil {
-		return err
-	}
-	s.Enabled = enabled
-	return updateStage(projectKey, pipelineName, pipelineStageID, s)
-}
-
-// MoveStage Change stage buildOrder
-func MoveStage(projectKey, pipelineName string, pipelineStageID int64, buildOrder int) error {
-	s := &Stage{
-		ID:         pipelineStageID,
-		BuildOrder: buildOrder,
-	}
-
-	data, err := json.Marshal(s)
-	if err != nil {
-		return err
-	}
-
-	url := fmt.Sprintf("/project/%s/pipeline/%s/stage/move", projectKey, pipelineName)
-	data, _, err = Request("POST", url, data)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
-}
-
-// DeleteStage Call API to delete the given stage from the given pipeline
-func DeleteStage(projectKey, pipelineName, pipelineStageID string) error {
-	url := fmt.Sprintf("/project/%s/pipeline/%s/stage/%s", projectKey, pipelineName, pipelineStageID)
-	data, _, err := Request("DELETE", url, nil)
-	if err != nil {
-		return err
-	}
-
-	return DecodeError(data)
 }

@@ -1,20 +1,15 @@
 importScripts('../common.js');
 
-var key = '';
-var uuid = '';
-
+var path = '';
 
 onmessage = function (e) {
-    key = e.data.key;
-    uuid = e.data.uuid;
+    path = e.data.path;
     getOperation(e.data.user, e.data.session, e.data.api);
 };
 
 function getOperation (user, session, api) {
     loop(5, function () {
-        var url = '/import/' + key + '/'+ uuid;
-
-        var xhr = httpCall(url, api, user, session);
+        var xhr = httpCall(path, api, user, session);
         if (xhr.status >= 400) {
             return true;
         }

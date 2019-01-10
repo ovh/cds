@@ -33,7 +33,6 @@ export class Application {
     hooks: Array<Hook>;
     workflows: Array<WorkflowItem>;
     schedulers: Array<Scheduler>;
-    workflow_migration: string;
     usage: Usage;
     keys: Array<Key>;
     vcs_strategy: VCSStrategy;

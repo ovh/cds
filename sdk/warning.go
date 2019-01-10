@@ -2,8 +2,6 @@ package sdk
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
 	"text/template"
 	"time"
 
@@ -130,25 +128,4 @@ func (w *Warning) ComputeMessage(language string) {
 	}
 	// Set message value
 	w.Message = buffer.String()
-}
-
-// GetWarnings retrieves warnings related to Action accessible to caller
-func GetWarnings(key string) ([]Warning, error) {
-	uri := "/warning/" + key
-
-	data, code, err := Request("GET", uri, nil)
-	if err != nil {
-		return nil, err
-	}
-	if code > 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	var warnings []Warning
-	err = json.Unmarshal(data, &warnings)
-	if err != nil {
-		return nil, err
-	}
-
-	return warnings, nil
 }

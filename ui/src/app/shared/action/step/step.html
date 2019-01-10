@@ -16,8 +16,11 @@
                 {{step.step_name}}
                 <i class="stepname" *ngIf="step.step_name !== step.name">({{step.name}})</i>
             </span>
-            <a class="inline pointing ml5" (click)="editStepName = true" *ngIf="!editStepName">
+            <a class="inline pointing ml5" title="{{ 'step_edit_title' | translate }}" (click)="editStepName = true" *ngIf="!editStepName">
                 <i class="pencil icon float"></i>
+            </a>
+            <a class="inline pointing ml5" title="{{ 'common_documentation' | translate }}" [routerLink]="['/settings/action', step.name]">
+                <i class="book icon float"></i>
             </a>
         </div>
         <div class="{{edit ? 'four' : 'eight'}} wide inline field">

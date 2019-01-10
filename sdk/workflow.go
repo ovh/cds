@@ -3,7 +3,6 @@ package sdk
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -54,11 +53,22 @@ type Workflow struct {
 	ToDelete                bool                        `json:"to_delete" db:"to_delete" cli:"-"`
 	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
 	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
+	AsCodeEvent             []AsCodeEvent               `json:"as_code_events" db:"-" cli:"-"`
 	// aggregates
 	Template         *WorkflowTemplate         `json:"-" db:"-" cli:"-"`
 	TemplateInstance *WorkflowTemplateInstance `json:"-" db:"-" cli:"-"`
 	FromTemplate     string                    `json:"from_template,omitempty" db:"-" cli:"-"`
 	TemplateUpToDate bool                      `json:"template_up_to_date,omitempty" db:"-" cli:"-"`
+}
+
+// AsCodeUpdateEvent represents all pending modifications on a workflow
+type AsCodeEvent struct {
+	ID             int64     `json:"id" db:"id" cli:"-"`
+	WorkflowID     int64     `json:"workflow_id" db:"workflow_id" cli:"-"`
+	PullRequestID  int64     `json:"pullrequest_id" db:"pullrequest_id" cli:"-"`
+	PullRequestURL string    `json:"pullrequest_url" db:"pullrequest_url" cli:"-"`
+	Username       string    `json:"username" db:"username" cli:"-"`
+	CreationDate   time.Time `json:"creation_date" db:"creation_date" cli:"-"`
 }
 
 // GetApplication retrieve application from workflow
@@ -811,7 +821,7 @@ func (n WorkflowNode) migrate(withID bool) Node {
 			Conditions:                n.Context.Conditions,
 			DefaultPayload:            n.Context.DefaultPayload,
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
-			Mutex:                     n.Context.Mutex,
+			Mutex: n.Context.Mutex,
 		},
 		Hooks:    make([]NodeHook, 0, len(n.Hooks)),
 		Triggers: make([]NodeTrigger, 0, len(n.Triggers)+len(n.Forks)+len(n.OutgoingHooks)),
@@ -1580,45 +1590,6 @@ checkGitKey:
 		hasKey("git.hash.before") &&
 		hasKey("git.repository") &&
 		hasKey("git.message")
-}
-
-//WorkflowList return the list of the workflows for a project
-func WorkflowList(projectkey string) ([]Workflow, error) {
-	path := fmt.Sprintf("/project/%s/workflows", projectkey)
-	body, _, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var ws = []Workflow{}
-	if err := json.Unmarshal(body, &ws); err != nil {
-		return nil, err
-	}
-
-	return ws, nil
-}
-
-//WorkflowGet returns a workflow given its name
-func WorkflowGet(projectkey, name string) (*Workflow, error) {
-	path := fmt.Sprintf("/project/%s/workflows/%s", projectkey, name)
-	body, _, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var w = Workflow{}
-	if err := json.Unmarshal(body, &w); err != nil {
-		return nil, err
-	}
-
-	return &w, nil
-}
-
-// WorkflowDelete Call API to delete a workflow
-func WorkflowDelete(projectkey, name string) error {
-	path := fmt.Sprintf("/project/%s/workflows/%s", projectkey, name)
-	_, _, err := Request("DELETE", path, nil)
-	return err
 }
 
 // WorkflowNodeJobRunCount return nb workflow run job since 'since'

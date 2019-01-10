@@ -9,7 +9,7 @@ import (
 )
 
 // LoadVulnerabilitiesSummary compute vulnerabilities summary
-func LoadVulnerabilitiesSummary(db gorp.SqlExecutor, appID int64) (map[string]int64, error) {
+func LoadVulnerabilitiesSummary(db gorp.SqlExecutor, appID int64) (map[string]float64, error) {
 	query := `
     SELECT json_object_agg(severity, nb)::TEXT 
     FROM (
@@ -20,7 +20,7 @@ func LoadVulnerabilitiesSummary(db gorp.SqlExecutor, appID int64) (map[string]in
     ) tmp;
   `
 
-	var summary map[string]int64
+	var summary map[string]float64
 	var result sql.NullString
 	if err := db.QueryRow(query, appID).Scan(&result); err != nil {
 		return nil, sdk.WrapError(err, "LoadVulnerabilitiesSummary")

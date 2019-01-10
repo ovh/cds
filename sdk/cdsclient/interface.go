@@ -296,6 +296,8 @@ type WorkflowClient interface {
 	WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error
 	WorkflowCachePull(projectKey, ref string) (io.Reader, error)
 	WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error)
+	WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error)
+	WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error
 }
 
 // MonitoringClient exposes monitoring functions
@@ -354,8 +356,6 @@ type InterfaceDeprecated interface {
 	ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error
 	ApplicationPipelineTriggersGet(projectKey string, appName string, pipelineName string, envName string) ([]sdk.PipelineTrigger, error)
 	AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error
-	ApplicationDoMigrationWorkflow(projectKey, appName string, force, disablePrefixW, withCurrentVersion, withRepositoryWebHook bool) error
-	ApplicationCleanOldWorkflow(projectKey, appName string) error
 }
 
 // Raw is a low-level interface exposing HTTP functions

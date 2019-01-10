@@ -46,6 +46,7 @@ export class Workflow {
     outgoing_hook_models: {[key: number]: WorkflowHookModel; };
     labels: Label[];
     workflow_data: WorkflowData;
+    as_code_events: Array<AsCodeEvents>;
 
     // UI params
     externalChange: boolean;
@@ -339,6 +340,15 @@ export class Workflow {
     constructor() {
         this.workflow_data = new WorkflowData();
     }
+}
+
+export class AsCodeEvents {
+    id: number;
+    workflow_id: number;
+    pullrequest_id: number;
+    pullrequest_url: string;
+    username: string;
+    creation_date: string;
 }
 
 export class WorkflowPipelineNameImpact {

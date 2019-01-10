@@ -341,11 +341,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             request.number = this.nodeRun.num;
             request.from_nodes = [this.nodeRun.workflow_node_id];
         } else if (this.nodeToRun && this.num != null) {
-            if (this.nodeToRun.type !== 'join' || (this.workflowRun && this.workflowRun.version === 2)) {
-                request.from_nodes = [this.nodeToRun.id];
-            } else if (this.nodeToRun.type === 'join') {
-                request.from_nodes = this.nodeToRun.triggers.map(t => t.child_node.id);
-            }
+            request.from_nodes = [this.nodeToRun.id];
             request.number = this.num;
         }
 

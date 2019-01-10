@@ -15,8 +15,4 @@ This plugin helps you to run cmd on remote server over ssh.
 * **commandTimeout**: Command Timeout (seconds)
 
 
-## More
-
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/ssh-cmd/README.md)
-
 

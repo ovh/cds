@@ -5,6 +5,7 @@ import {deepClone} from 'fast-json-patch/lib/core';
 import {Observable} from 'rxjs';
 import {map} from 'rxjs/operators';
 import {GroupPermission} from '../../model/group.model';
+import {Operation} from '../../model/operation.model';
 import {Label} from '../../model/project.model';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 
@@ -24,7 +25,7 @@ export class WorkflowService {
         params = params.append('withUsage', 'true');
         params = params.append('withAudits', 'true');
         params = params.append('withTemplate', 'true');
-
+        params = params.append('withAsCodeEvents', 'true');
         return this._http.get<Workflow>('/project/' + key + '/workflows/' + workflowName, {params});
     }
 
@@ -186,5 +187,14 @@ export class WorkflowService {
      */
     unlinkLabel(key: string, workflowName: string, labelId: number): Observable<null> {
         return this._http.delete<null>(`/project/${key}/workflows/${workflowName}/label/${labelId}`);
+    }
+
+    /**
+     * Transform the workflow as  workflow as code
+     * @param key
+     * @param workflowName
+     */
+    migrateAsCode(key: string, workflowName: string): Observable<Operation> {
+        return this._http.post<Operation>(`/project/${key}/workflows/${workflowName}/ascode`, null);
     }
 }

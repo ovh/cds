@@ -19,6 +19,7 @@ func TestNewTemplateAndGetTemplate(t *testing.T) {
 			{Key: "my-string", Type: "string", Required: true},
 			{Key: "my-repository", Type: "repository", Required: true},
 		},
+		Workflow: "workflow.yml",
 	}
 	templateYaml, err := yaml.Marshal(template)
 	assert.Nil(t, err)

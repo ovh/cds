@@ -43,8 +43,10 @@ type VCSAuthorizedClient interface {
 	CommitsBetweenRefs(ctx context.Context, repo, base, head string) ([]VCSCommit, error)
 
 	// PullRequests
+	PullRequest(context.Context, string, int) (VCSPullRequest, error)
 	PullRequests(context.Context, string) ([]VCSPullRequest, error)
 	PullRequestComment(context.Context, string, int, string) error
+	PullRequestCreate(context.Context, string, VCSPullRequest) (VCSPullRequest, error)
 
 	//Hooks
 	CreateHook(ctx context.Context, repo string, hook *VCSHook) error

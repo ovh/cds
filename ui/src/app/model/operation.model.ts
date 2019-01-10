@@ -41,11 +41,19 @@ export class OperationLoadFiles {
 // from hook
 export class OperationSetup {
     checkout: OperationCheckout;
+    push: OperationPush;
 }
 
 // from hook
 export class OperationCheckout {
     branch: string;
     commit: string;
+}
+
+export class OperationPush {
+    from_branch: string;
+    to_branch: string;
+    message: string;
+    pr_link: string;
 }
 

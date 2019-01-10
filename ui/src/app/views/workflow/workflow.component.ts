@@ -1,7 +1,8 @@
-import { Component, EventEmitter, OnInit, ViewChild } from '@angular/core';
+import {Component, EventEmitter, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
 import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
+import {SuiPopup, SuiPopupController, SuiPopupTemplateController} from 'ng2-semantic-ui/dist';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { Project } from '../../model/project.model';
@@ -17,6 +18,7 @@ import { WorkflowStore } from '../../service/workflow/workflow.store';
 import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../shared/toast/ToastService';
 import { WorkflowTemplateModalComponent } from '../../shared/workflow-template/modal/workflow-template.modal.component';
+import {WorkflowSaveAsCodeComponent} from '../../shared/workflow/modal/save-as-code/save.as.code.component';
 
 @Component({
     selector: 'app-workflow',
@@ -46,6 +48,12 @@ export class WorkflowComponent implements OnInit {
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
+    @ViewChild('saveAsCode')
+    saveAsCode: WorkflowSaveAsCodeComponent;
+    @ViewChild('popup')
+    popupFromlRepository: SuiPopup;
+    @ViewChildren(SuiPopupController) popups: QueryList<SuiPopupController>;
+    @ViewChildren(SuiPopupTemplateController) popups2: QueryList<SuiPopupTemplateController<SuiPopup>>;
 
     onScroll = new EventEmitter<boolean>();
     selectedNodeID: number;
@@ -54,6 +62,9 @@ export class WorkflowComponent implements OnInit {
 
     runSubscription: Subscription;
     workflowRun: WorkflowRun;
+
+    showButtons = false;
+    loadingPopupButton = false;
 
     constructor(private _activatedRoute: ActivatedRoute,
         private _workflowStore: WorkflowStore,
@@ -205,5 +216,16 @@ export class WorkflowComponent implements OnInit {
         if (this.templateFormComponent) {
             this.templateFormComponent.show();
         }
+    }
+
+    migrateAsCode(): void {
+        this.loadingPopupButton = true;
+        this._workflowStore.migrateAsCode(this.project.key, this.workflow.name)
+            .pipe(finalize(() => this.loadingPopupButton = false ))
+            .subscribe((ope) => {
+            this.showButtons = false;
+            this.popupFromlRepository.close();
+            this.saveAsCode.show(ope);
+        });
     }
 }
