@@ -2262,7 +2262,7 @@
 
 <h2 id="basic-run-conditions">Basic run conditions</h2>
 
-<p>With this type of conditions you can add multiple comparisons with a basic operators (<code>=</code>, <code>!=</code>, <code>match</code> for a regular expression, <code>&gt;=</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&lt;</code>). The variables syntax here are dotted syntax (example: <code>cds.dest.application</code>).</p>
+<p>With this type of conditions you can add multiple comparisons with a basic operators (<code>=</code>, <code>!=</code>, <code>match</code> for a regular expression, <code>&gt;=</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&lt;</code>). The variables syntax here are dotted syntax (example: <code>cds.dest.application</code>). Under the hood, if you use match operator it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.</p>
 
 <p>If you add multiple basic run conditions, all of these must be satisfied to run the pipeline. So with basic conditions you can&rsquo;t make an <code>OR</code> between multiple conditions, it&rsquo;s always an <code>AND</code>. If you want to make more specific or advanced run conditions you have to use the second type of conditions (<code>advanced</code>).</p>
 
@@ -2301,7 +2301,7 @@ local re = require(&quot;re&quot;)
 return re.match(cds_application, &quot;abc.*&quot;) == cds_application
 </code></pre>
 
-<p>Functions <code>re.find</code>, <code>re.gsub</code>, <code>re.match</code>, <code>re.gmatch</code> are available. These functions have the same API as Lua pattern match. Under the hood, it uses the Go regexp package, so you can use regular expressions that are supported in the Go regexp package.</p>
+<p>Functions <code>re.find</code>, <code>re.gsub</code>, <code>re.match</code>, <code>re.gmatch</code> are available. These functions have the same API as Lua pattern match.</p>
 
 
 <footer class=" footline" >
