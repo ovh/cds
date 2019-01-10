@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { AppService } from 'app/app.service';
+import { AuthentificationStore } from 'app/service/services.module';
+import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Event } from '../../../model/event.model';
 import { PipelineStatus } from '../../../model/pipeline.model';
@@ -35,72 +38,83 @@ export class HomeHeatmapComponent implements OnInit {
     filter: TimelineFilter;
     filterSub: Subscription;
 
-    constructor(private _timelineStore: TimelineStore, private _toast: ToastService,
-        public _translate: TranslateService) {
+    constructor(
+        private _timelineStore: TimelineStore,
+        private _toast: ToastService,
+        public _translate: TranslateService,
+        private _appService: AppService,
+        private _authStore: AuthentificationStore
+    ) {
         this.filter = new TimelineFilter();
     }
 
     ngOnInit(): void {
+        if (!this._authStore.isConnected) {
+            return;
+        }
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {
             this.filter = f;
+            this._appService.initFilter(this.filter);
 
             if (this.timelineSub) {
                 this.timelineSub.unsubscribe();
             }
             if (f) {
 
-                this.timelineSub = this._timelineStore.alltimeline().subscribe(es => {
-                    if (!es) {
-                        return;
-                    }
-                    this.loading = false;
-                    this.events = es.toArray().filter((el, i, a) => i === a.indexOf(el));
-
-                    this.events.forEach((event) => {
-                        const allowed = ['workflow_name', 'status'];
-                        this.properties = Object.keys(event).filter(p => allowed.indexOf(p) !== -1);
-
-                        if (!this.groupedEvents[event.project_key]) {
-                            this.groupedEvents[event.project_key] = new Object();
+                this.timelineSub = this._timelineStore.alltimeline()
+                    .pipe(finalize(() => this.loading = false))
+                    .subscribe(es => {
+                        if (!es) {
+                            return;
                         }
-                        if (!this.groupedEvents[event.project_key][event.workflow_name]) {
-                            this.groupedEvents[event.project_key][event.workflow_name] = new Array();
-                        }
+                        this.loading = false;
+                        this.events = es.toArray().filter((el, i, a) => i === a.indexOf(el));
 
-                        let eventsWorkflow = this.groupedEvents[event.project_key][event.workflow_name];
-                        eventsWorkflow = eventsWorkflow.filter((pendingEvent: Event) => {
-                            if (event.workflow_name === pendingEvent.workflow_name
-                                && event.workflow_run_num === pendingEvent.workflow_run_num) {
-                                return event.timestamp < pendingEvent.timestamp;
+                        this.events.forEach((event) => {
+                            const allowed = ['workflow_name', 'status'];
+                            this.properties = Object.keys(event).filter(p => allowed.indexOf(p) !== -1);
+
+                            if (!this.groupedEvents[event.project_key]) {
+                                this.groupedEvents[event.project_key] = new Object();
                             }
-                            return true;
-                        });
-                        if (eventsWorkflow.length > 0 && event.timestamp > eventsWorkflow[0].timestamp) {
+                            if (!this.groupedEvents[event.project_key][event.workflow_name]) {
+                                this.groupedEvents[event.project_key][event.workflow_name] = new Array();
+                            }
+
+                            let eventsWorkflow = this.groupedEvents[event.project_key][event.workflow_name];
                             eventsWorkflow = eventsWorkflow.filter((pendingEvent: Event) => {
                                 if (event.workflow_name === pendingEvent.workflow_name
                                     && event.workflow_run_num === pendingEvent.workflow_run_num) {
-                                    return false;
+                                    return event.timestamp < pendingEvent.timestamp;
                                 }
                                 return true;
                             });
-                            eventsWorkflow.push(event);
-                        } else if (eventsWorkflow.length === 0) {
-                            eventsWorkflow.push(event);
-                        }
-                        eventsWorkflow = eventsWorkflow.filter((el, i, a) => i === a.indexOf(el));
-                        this.groupedEvents[event.project_key][event.workflow_name] = eventsWorkflow;
-                        if (!this.workflows[event.project_key]) {
-                            this.workflows[event.project_key] = new Array<string>();
-                        }
-                        if (this.workflows[event.project_key].lastIndexOf(event.workflow_name) === -1) {
-                            this.workflows[event.project_key].push(event.workflow_name);
-                        }
+                            if (eventsWorkflow.length > 0 && event.timestamp > eventsWorkflow[0].timestamp) {
+                                eventsWorkflow = eventsWorkflow.filter((pendingEvent: Event) => {
+                                    if (event.workflow_name === pendingEvent.workflow_name
+                                        && event.workflow_run_num === pendingEvent.workflow_run_num) {
+                                        return false;
+                                    }
+                                    return true;
+                                });
+                                eventsWorkflow.push(event);
+                            } else if (eventsWorkflow.length === 0) {
+                                eventsWorkflow.push(event);
+                            }
+                            eventsWorkflow = eventsWorkflow.filter((el, i, a) => i === a.indexOf(el));
+                            this.groupedEvents[event.project_key][event.workflow_name] = eventsWorkflow;
+                            if (!this.workflows[event.project_key]) {
+                                this.workflows[event.project_key] = new Array<string>();
+                            }
+                            if (this.workflows[event.project_key].lastIndexOf(event.workflow_name) === -1) {
+                                this.workflows[event.project_key].push(event.workflow_name);
+                            }
+                        });
+
+                        this.currentItem = this.events.length;
+
+                        this.projects = Object.keys(this.groupedEvents).sort();
                     });
-
-                    this.currentItem = this.events.length;
-
-                    this.projects = Object.keys(this.groupedEvents).sort();
-                });
             }
         });
     }

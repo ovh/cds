@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
 import { AuthentificationStore } from 'app/service/services.module';
+import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Event } from '../../../model/event.model';
 import { PipelineStatus } from '../../../model/pipeline.model';
@@ -31,10 +32,10 @@ export class HomeTimelineComponent implements OnInit {
     filterSub: Subscription;
 
     constructor(private _timelineStore: TimelineStore,
-                private _translate: TranslateService,
-                private _toast: ToastService,
-                private _appService: AppService,
-                private _authStore: AuthentificationStore) {
+        private _translate: TranslateService,
+        private _toast: ToastService,
+        private _appService: AppService,
+        private _authStore: AuthentificationStore) {
     }
 
     ngOnInit(): void {
@@ -48,14 +49,16 @@ export class HomeTimelineComponent implements OnInit {
                 this.timelineSub.unsubscribe();
             }
             if (f) {
-                this.timelineSub = this._timelineStore.alltimeline().subscribe(es => {
-                    if (!es) {
-                        return;
-                    }
-                    this.loading = false;
-                    this.events = es.toArray();
-                    this.currentItem = this.events.length;
-                });
+                this.timelineSub = this._timelineStore.alltimeline()
+                    .pipe(finalize(() => this.loading = false))
+                    .subscribe(es => {
+                        if (!es) {
+                            return;
+                        }
+                        this.loading = false;
+                        this.events = es.toArray();
+                        this.currentItem = this.events.length;
+                    });
             }
         });
     }
