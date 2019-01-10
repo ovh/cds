@@ -6,7 +6,7 @@
             [infiniteScrollThrottle]="50"
             [scrollWindow]="false"
             (scrolled)="onScroll()">
-        <div class="item" *ngFor="let e of events" (mouseenter) ="e.bell = true"  (mouseleave) ="e.bell = false">
+         <div class="item" *ngFor="let e of events" (mouseenter)="e.bell = true"  (mouseleave)="e.bell = false">
             <div class="content">
                 <div class="header">
                     <div class="right floated content">
