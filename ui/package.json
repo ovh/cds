@@ -24,9 +24,10 @@
   },
   "lint-staged": {
     "linters": {
-      "*.ts": "ng lint ui-ng2 --files"
+      "*.ts": "ng lint ui-ng2"
     },
     "relative": true,
+    "fileFlag": "--files",
     "ignore": [
       "**/*.spec.ts"
     ]
@@ -92,6 +93,7 @@
     "@angular/compiler-cli": "7.0.2",
     "@compodoc/compodoc": "^1.0.0-beta.8",
     "@sentry/cli": "^1.36.4",
+    "@types/d3": "4.11.0",
     "@types/dagre": "^0.7.35",
     "@types/jasmine": "2.8.6",
     "@types/jasminewd2": "~2.0.3",
@@ -108,8 +110,8 @@
     "karma-jasmine": "~1.1.1",
     "karma-jasmine-html-reporter": "^0.2.2",
     "karma-junit-reporter": "^1.1.0",
-    "lint-staged": "^8.1.0",
-    "node-sass": "4.8.3",
+    "lint-staged": "git+https://github.com/bnjjj/lint-staged.git#master",
+    "node-sass": "4.11.0",
     "ts-node": "~4.1.0",
     "tslint": "~5.9.1",
     "typescript": "3.1.6",

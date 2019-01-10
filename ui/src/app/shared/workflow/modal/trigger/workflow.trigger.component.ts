@@ -41,6 +41,7 @@ export class WorkflowTriggerComponent {
         this.selectedType = t;
         this.isParent = isP;
         const config = new TemplateModalConfig<boolean, boolean, void>(this.triggerModal);
+        config.mustScroll = true;
         this.modal = this._modalService.open(config);
     }
 

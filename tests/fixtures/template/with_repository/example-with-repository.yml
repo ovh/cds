@@ -8,7 +8,15 @@ parameters:
   required: true
 - key: deployWhen
   type: string
-  required: true
+  required: false
 - key: repo
   type: repository
   required: true
+workflow: workflow.yml
+pipelines:
+- 1.pipeline.yml
+- 2.pipeline.yml
+applications:
+- 1.application.yml
+environments:
+- 1.environment.yml

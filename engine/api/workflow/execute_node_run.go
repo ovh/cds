@@ -228,7 +228,7 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 	//Delete jobs only when node is over
 	if sdk.StatusIsTerminated(nr.Status) {
 		if nr.Status != sdk.StatusStopped.String() {
-			r1, _, err := processWorkflowRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
+			r1, _, err := processWorkflowDataRun(ctx, db, store, proj, updatedWorkflowRun, nil, nil, nil)
 			if err != nil {
 				return nil, sdk.WrapError(err, "Unable to reprocess workflow !")
 			}
@@ -243,18 +243,11 @@ func execute(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *
 
 		var hasMutex bool
 		var nodeName string
-		if updatedWorkflowRun.Version < 2 {
-			node := updatedWorkflowRun.Workflow.GetNode(nr.WorkflowNodeID)
-			if node != nil && node.Context != nil && node.Context.Mutex {
-				hasMutex = node.Context.Mutex
-				nodeName = node.Name
-			}
-		} else {
-			node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
-			if node != nil && node.Context != nil && node.Context.Mutex {
-				hasMutex = node.Context.Mutex
-				nodeName = node.Name
-			}
+
+		node := updatedWorkflowRun.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
+		if node != nil && node.Context != nil && node.Context.Mutex {
+			hasMutex = node.Context.Mutex
+			nodeName = node.Name
 		}
 
 		//Do we release a mutex ?
@@ -625,7 +618,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 
 	// Process ancestor
 	for _, aID := range ancestorsIds {
-		ancestor := wf.GetNode(aID)
+		ancestor := wf.WorkflowData.NodeByID(aID)
 		if ancestor == nil {
 			continue
 		}
@@ -692,13 +685,22 @@ func stopWorkflowNodePipeline(ctx context.Context, dbFunc func() *gorp.DbMap, st
 	}
 	wg.Wait()
 
+	tx, errTx := dbFunc().Begin()
+	if errTx != nil {
+		return nil, sdk.WrapError(errTx, "stopWorkflowNodePipeline> Unable to create transaction")
+	}
+	defer tx.Rollback() //nolint
+
 	// Update stages from node run
-	stopWorkflowNodeRunStages(nodeRun)
+	stopWorkflowNodeRunStages(tx, nodeRun)
 
 	nodeRun.Status = sdk.StatusStopped.String()
 	nodeRun.Done = time.Now()
-	if errU := UpdateNodeRun(dbFunc(), nodeRun); errU != nil {
+	if errU := UpdateNodeRun(tx, nodeRun); errU != nil {
 		return report, sdk.WrapError(errU, "stopWorkflowNodePipeline> Cannot update node run")
+	}
+	if err := tx.Commit(); err != nil {
+		return nil, sdk.WrapError(err, "stopWorkflowNodePipeline> Cannot commit transaction")
 	}
 	return report, nil
 }
@@ -761,12 +763,19 @@ func StopWorkflowNodeRun(ctx context.Context, dbFunc func() *gorp.DbMap, store c
 }
 
 // stopWorkflowNodeRunStages mark to stop all stages and step status in struct
-func stopWorkflowNodeRunStages(nodeRun *sdk.WorkflowNodeRun) {
+func stopWorkflowNodeRunStages(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun) {
 	// Update stages from node run
 	for iS := range nodeRun.Stages {
 		stag := &nodeRun.Stages[iS]
 		for iR := range stag.RunJobs {
 			runj := &stag.RunJobs[iR]
+			spawnInfos, err := LoadNodeRunJobInfo(db, runj.ID)
+			if err != nil {
+				log.Warning("unable to load spawn infos for runj ID: %d", runj.ID)
+			} else {
+				runj.SpawnInfos = spawnInfos
+			}
+
 			if !sdk.StatusIsTerminated(runj.Status) {
 				runj.Status = sdk.StatusStopped.String()
 				runj.Done = time.Now()

@@ -908,12 +908,8 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 
 	// Call post coverage report handler
 	// Prepare request
-
-	t.Logf("%+v", w.WorkflowData.Node.ID)
-	t.Logf("%+v", w.Root.ID)
-	t.Logf("%+v", wrDB.WorkflowNodeRuns)
 	vars := map[string]string{
-		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.Root.ID][0].Stages[0].RunJobs[0].ID),
+		"permID": fmt.Sprintf("%d", wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID),
 	}
 
 	ctx := testRunWorkflowCtx{
@@ -924,8 +920,8 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 		run:      wrDB,
 	}
 	testRegisterWorker(t, api, router, &ctx)
-	ctx.worker.ActionBuildID = wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, wrDB.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
+	ctx.worker.ActionBuildID = wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
+	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
 
 	request := sdk.VulnerabilityWorkerReport{
 		Vulnerabilities: []sdk.Vulnerability{
@@ -1144,11 +1140,11 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	coverateReportDefaultBranch := sdk.WorkflowNodeRunCoverage{
 		WorkflowID:        w.ID,
 		WorkflowRunID:     wrDB.ID,
-		WorkflowNodeRunID: wrDB.WorkflowNodeRuns[w.RootID][0].ID,
+		WorkflowNodeRunID: wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].ID,
 		ApplicationID:     app.ID,
 		Num:               wrDB.Number,
-		Branch:            wrDB.WorkflowNodeRuns[w.RootID][0].VCSBranch,
-		Repository:        wrDB.WorkflowNodeRuns[w.RootID][0].VCSRepository,
+		Branch:            wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSBranch,
+		Repository:        wrDB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSRepository,
 		Report: coverage.Report{
 			CoveredBranches:  20,
 			TotalBranches:    30,
@@ -1164,11 +1160,11 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	coverateReportCurrentBranch := sdk.WorkflowNodeRunCoverage{
 		WorkflowID:        w.ID,
 		WorkflowRunID:     wrCB.ID,
-		WorkflowNodeRunID: wrCB.WorkflowNodeRuns[w.RootID][0].ID,
+		WorkflowNodeRunID: wrCB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].ID,
 		ApplicationID:     app.ID,
 		Num:               wrCB.Number,
-		Branch:            wrCB.WorkflowNodeRuns[w.RootID][0].VCSBranch,
-		Repository:        wrCB.WorkflowNodeRuns[w.RootID][0].VCSRepository,
+		Branch:            wrCB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSBranch,
+		Repository:        wrCB.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].VCSRepository,
 		Report: coverage.Report{
 			CoveredBranches:  0,
 			TotalBranches:    30,
@@ -1198,7 +1194,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	// Call post coverage report handler
 	// Prepare request
 	vars := map[string]string{
-		"permID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.Root.ID][0].Stages[0].RunJobs[0].ID),
+		"permID": fmt.Sprintf("%d", wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID),
 	}
 
 	request := coverage.Report{
@@ -1218,8 +1214,8 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 		run:      wrr,
 	}
 	testRegisterWorker(t, api, router, &ctx)
-	ctx.worker.ActionBuildID = wrr.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID
-	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, wrr.WorkflowNodeRuns[w.RootID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
+	ctx.worker.ActionBuildID = wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID
+	assert.NoError(t, worker.SetToBuilding(db, ctx.worker.ID, wrr.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].Stages[0].RunJobs[0].ID, sdk.JobTypeWorkflowNode))
 
 	uri := router.GetRoute("POST", api.postWorkflowJobCoverageResultsHandler, vars)
 	test.NotEmpty(t, uri)
@@ -1228,7 +1224,7 @@ func TestInsertNewCodeCoverageReport(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 204, rec.Code)
 
-	covDB, errL := workflow.LoadCoverageReport(db, wrToTest.WorkflowNodeRuns[w.RootID][0].ID)
+	covDB, errL := workflow.LoadCoverageReport(db, wrToTest.WorkflowNodeRuns[w.WorkflowData.Node.ID][0].ID)
 	assert.NoError(t, errL)
 
 	assert.Equal(t, coverateReportDefaultBranch.Report.CoveredBranches, covDB.Trend.DefaultBranch.CoveredBranches)

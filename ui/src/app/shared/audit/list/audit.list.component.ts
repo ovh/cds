@@ -1,6 +1,7 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {AuditWorkflow} from '../../../model/audit.model';
-import {Table} from '../../table/table';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { AuditWorkflow } from '../../../model/audit.model';
+import { Item } from '../../diff/list/diff.list.component';
+import { Table } from '../../table/table';
 
 @Component({
     selector: 'app-audit-list',
@@ -8,12 +9,11 @@ import {Table} from '../../table/table';
     styleUrls: ['./audit.list.scss']
 })
 export class AuditListComponent extends Table {
-
     @Input() audits: Array<AuditWorkflow>;
     @Output() rollback: EventEmitter<number> = new EventEmitter();
-
-    codeMirrorConfig: any;
     selectedAudit: AuditWorkflow;
+    diffType: string;
+    items: Array<Item>;
 
     getData(): any[] {
         return this.audits;
@@ -21,26 +21,26 @@ export class AuditListComponent extends Table {
 
     constructor() {
         super();
-        this.codeMirrorConfig = {
-            matchBrackets: true,
-            autoCloseBrackets: true,
-            mode: 'text/x-yaml',
-            lineWrapping: true,
-            autoRefresh: true,
-            readOnly: 'nocursor'
-        };
     }
 
     updateSelectedAudit(a: AuditWorkflow): void {
         this.selectedAudit = a;
+
         switch (a.data_type) {
             case 'yaml':
-                this.codeMirrorConfig.mode = 'text/x-yaml';
+                this.diffType = 'text/x-yaml';
                 break;
             case 'json':
-                this.codeMirrorConfig.mode = 'application/json';
+                this.diffType = 'application/json';
                 break;
+            default:
+                this.diffType = 'text/plain';
         }
-    }
 
+        this.items = [<Item>{
+            before: this.selectedAudit.data_before,
+            after: this.selectedAudit.data_after,
+            type: this.diffType,
+        }]
+    }
 }

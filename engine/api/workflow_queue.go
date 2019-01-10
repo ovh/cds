@@ -500,6 +500,19 @@ func postJobResult(ctx context.Context, dbFunc func(context.Context) *gorp.DbMap
 		if err := updateParentWorkflowRun(ctx, newDBFunc, store, run); err != nil {
 			return nil, sdk.WrapError(err, "postJobResult")
 		}
+
+		if sdk.StatusIsTerminated(run.Status) {
+			//Start a goroutine to update commit statuses in repositories manager
+			go func(wRun *sdk.WorkflowRun) {
+				//The function could be called with nil project so we need to test if project is not nil
+				if sdk.StatusIsTerminated(wRun.Status) && proj != nil {
+					wRun.LastExecution = time.Now()
+					if err := workflow.ResyncCommitStatus(context.Background(), dbFunc(context.Background()), store, proj, wRun); err != nil {
+						log.Error("workflow.UpdateNodeJobRunStatus> %v", err)
+					}
+				}
+			}(run)
+		}
 	}
 
 	return report, nil
@@ -580,16 +593,9 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 			}
 
 			var pip sdk.Pipeline
-			if wr.Version < 2 {
-				n := wr.Workflow.GetNode(nr.WorkflowNodeID)
-				if n != nil {
-					pip = wr.Workflow.Pipelines[n.PipelineID]
-				}
-			} else {
-				n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
-				if n != nil && n.Context != nil && n.Context.PipelineID != 0 {
-					pip = wr.Workflow.Pipelines[n.Context.PipelineID]
-				}
+			n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
+			if n != nil && n.Context != nil && n.Context.PipelineID != 0 {
+				pip = wr.Workflow.Pipelines[n.Context.PipelineID]
 			}
 
 			if pip.ID == 0 {

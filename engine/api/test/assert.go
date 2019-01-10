@@ -45,12 +45,12 @@ func ArrayContains(array interface{}, s interface{}) bool {
 }
 
 // Equal checks 2 element Equality using github.com/fsamin/go-dump
-func Equal(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
-	e := DeepEquals(a, b)
+func Equal(t *testing.T, expected, actual interface{}, msgAndArgs ...interface{}) {
+	e := DeepEquals(expected, actual)
 
 	if !e {
-		t.Log("Expected:" + dump.MustSdump(a))
-		t.Log("Actual:" + dump.MustSdump(b))
+		t.Log("Expected:" + dump.MustSdump(expected))
+		t.Log("Actual:" + dump.MustSdump(actual))
 		assert.FailNow(t, "Equal failed", msgAndArgs...)
 	}
 }

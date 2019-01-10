@@ -25,6 +25,12 @@ func fillPayload(pushEvent sdk.VCSPushEvent) map[string]string {
 	payload["cds.triggered_by.email"] = pushEvent.Commit.Author.Email
 	payload["git.message"] = pushEvent.Commit.Message
 
+	payloadStr, err := json.Marshal(pushEvent)
+	if err != nil {
+		log.Error("Unable to marshal payload: %v", err)
+	}
+	payload["payload"] = string(payloadStr)
+
 	if strings.HasPrefix(pushEvent.Branch.DisplayID, "refs/tags/") {
 		payload["git.tag"] = strings.TrimPrefix(pushEvent.Branch.DisplayID, "refs/tags/")
 	}
@@ -78,6 +84,7 @@ func (s *Service) doPollerTaskExecution(task *sdk.Task, taskExec *sdk.TaskExecut
 		} else {
 			log.Error("Hooks> doPollerTaskExecution> Cannot unmarshall payload %s", err)
 		}
+		payloadValues["payload"] = string(payload.Value)
 	}
 
 	var hookEvents []sdk.WorkflowNodeRunHookEvent

@@ -5,13 +5,13 @@ import { AdminComponent } from './admin.component';
 import { BroadcastAddComponent } from './broadcast/add/broadcast.add.component';
 import { BroadcastEditComponent } from './broadcast/edit/broadcast.edit.component';
 import { BroadcastListComponent } from './broadcast/list/broadcast.list.component';
-import { HooksTaskComponent } from './hooks-tasks/details/hooks-task.component';
-import { HooksTasksComponent } from './hooks-tasks/hooks-tasks.component';
-import { ServiceComponent } from './services/service/service.component';
-import { ServicesComponent } from './services/services.component';
+import { HookTaskListComponent } from './hook-task/list/hook-task.list.component';
+import { HookTaskShowComponent } from './hook-task/show/hook-task.show.component';
+import { ServiceListComponent } from './service/list/service.list.component';
+import { ServiceShowComponent } from './service/show/service.show.component';
 import { WorkerModelPatternAddComponent } from './worker-model-pattern/add/worker-model-pattern.add.component';
 import { WorkerModelPatternEditComponent } from './worker-model-pattern/edit/worker-model-pattern.edit.component';
-import { WorkerModelPatternComponent } from './worker-model-pattern/worker-model-pattern.component';
+import { WorkerModelPatternListComponent } from './worker-model-pattern/list/worker-model-pattern.list.component';
 
 const routes: Routes = [
     {
@@ -22,7 +22,7 @@ const routes: Routes = [
         children: [
             {
                 path: 'worker-model-pattern',
-                component: WorkerModelPatternComponent,
+                component: WorkerModelPatternListComponent,
                 data: { title: 'List • Worker Model Pattern' }
             },
             {
@@ -52,22 +52,22 @@ const routes: Routes = [
             },
             {
                 path: 'hooks-tasks',
-                component: HooksTasksComponent,
-                data: { title: 'Hooks tasks summary' }
+                component: HookTaskListComponent,
+                data: { title: 'List • Hook task' }
             },
             {
                 path: 'hooks-tasks/:id',
-                component: HooksTaskComponent,
-                data: { title: 'Hooks task details' }
+                component: HookTaskShowComponent,
+                data: { title: 'Show • Hook task' }
             },
             {
                 path: 'services',
-                component: ServicesComponent,
+                component: ServiceListComponent,
                 data: { title: 'Services' }
             },
             {
                 path: 'services/:name',
-                component: ServiceComponent,
+                component: ServiceShowComponent,
                 data: { title: 'Service' }
             }
         ]

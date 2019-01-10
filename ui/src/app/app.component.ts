@@ -6,7 +6,7 @@ import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, ResolveEnd, ResolveStart, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
-import { filter, map, mergeMap } from 'rxjs/operators';
+import { bufferTime, filter, map, mergeMap } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import * as format from 'string-format-obj';
 import { environment } from '../environments/environment';
@@ -45,6 +45,7 @@ export class AppComponent  implements OnInit {
     versionWorkerSubscription: Subscription;
     _routerSubscription: Subscription;
     _routerNavEndSubscription: Subscription;
+    _sseSubscription: Subscription;
 
     displayResolver = false;
     toasterConfig: any;
@@ -159,13 +160,13 @@ export class AppComponent  implements OnInit {
                 clearInterval(this.heartbeatToken);
             }
 
-            this.heartbeatToken = setInterval(() => {
+            this.heartbeatToken = window.setInterval(() => {
                 let d = (new Date()).getTime();
                 if (this.lastPing !== 0 && (d - this.lastPing) > 11000) {
                     // If no ping in the last 11s restart SSE
                     this.startSSE();
                 }
-            });
+            }, 2000);
         } else {
             this.sseWorker = new CDSWebWorker('./assets/worker/webWorker.js');
         }
@@ -178,23 +179,28 @@ export class AppComponent  implements OnInit {
             sseURL: environment.apiURL + '/events',
             pingURL: environment.apiURL + '/user/logged'
         });
-        this.sseWorker.response().subscribe(e => {
-            if (e == null) {
-                return;
-            }
-            this.zone.run(() => {
-                if (e.healthCheck != null) {
-                    this.lastPing = (new Date()).getTime();
-                    // 0 = CONNECTING, 1 = OPEN, 2 = CLOSED
-                    if (e.healthCheck > 1) {
-                        // Reopen SSE
-                        this.startSSE();
+        this._sseSubscription = this.sseWorker.response()
+            .pipe(
+                filter((e) => e != null),
+                bufferTime(2000),
+                filter((events) => events.length !== 0)
+            )
+            .subscribe((events) => {
+                this.zone.run(() => {
+                    for (let e of events) {
+                        if (e.healthCheck != null) {
+                            this.lastPing = (new Date()).getTime();
+                            // 0 = CONNECTING, 1 = OPEN, 2 = CLOSED
+                            if (e.healthCheck > 1) {
+                                // Reopen SSE
+                                this.startSSE();
+                            }
+                        } else {
+                            this._appService.manageEvent(<Event>e);
+                        }
                     }
-                } else {
-                    this._appService.manageEvent(<Event>e);
-                }
+                });
             });
-        });
     }
 
 

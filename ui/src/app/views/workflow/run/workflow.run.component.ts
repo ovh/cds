@@ -25,6 +25,9 @@ export class WorkflowRunComponent implements OnInit {
     @ViewChild('workflowRunParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
 
+    workflow: Workflow;
+    subWorkflow: Subscription;
+
     project: Project;
     workflowRun: WorkflowRun;
     subRun: Subscription;
@@ -71,7 +74,9 @@ export class WorkflowRunComponent implements OnInit {
         this.parentParamsSubs = this._activatedRoute.parent.params.subscribe(params => {
             this.workflowName = params['workflowName'];
         });
-
+        this.subWorkflow = this._workflowStore.getWorkflows(this.project.key, this.workflowName).subscribe(ws => {
+            this.workflow = ws.get(this.project.key + '-' + this.workflowName);
+        });
 
         // Get workflow run
         this.subRun = this._workflowEventStore.selectedRun().subscribe(wr => {
@@ -196,7 +201,7 @@ export class WorkflowRunComponent implements OnInit {
                 this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.manual.pipeline_parameter;
             }
 
-            setTimeout(() => this.runWithParamComponent.show());
+            setTimeout(() => this.runWithParamComponent.show(), 100);
         }
     }
 

@@ -2,12 +2,14 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { AuditWorkflowTemplate } from '../../model/audit.model';
 import {
     WorkflowTemplate,
     WorkflowTemplateApplyResult,
     WorkflowTemplateInstance,
     WorkflowTemplateRequest
 } from '../../model/workflow-template.model';
+import { Workflow } from '../../model/workflow.model';
 
 @Injectable()
 export class WorkflowTemplateService {
@@ -47,5 +49,14 @@ export class WorkflowTemplateService {
 
     getWorkflowTemplateInstance(projectKey: string, workflowName: string): Observable<WorkflowTemplateInstance> {
         return this._http.get<WorkflowTemplateInstance>('/project/' + projectKey + '/workflow/' + workflowName + '/templateInstance');
+    }
+
+    getAudits(groupName: string, templateSlug: string, version?: number): Observable<Array<AuditWorkflowTemplate>> {
+        let url = '/template/' + groupName + '/' + templateSlug + '/audit' + (version ? '?sinceVersion=' + version : '');
+        return this._http.get<Array<AuditWorkflowTemplate>>(url);
+    }
+
+    getWorkflowTemplateUsage(groupName: string, templateSlug: string): Observable<Array<Workflow>> {
+        return this._http.get<Array<Workflow>>('/template/' + groupName + '/' + templateSlug + '/usage');
     }
 }

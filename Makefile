@@ -15,6 +15,11 @@ mod:
 	@echo "running go mod vendor..." && GO111MODULE=on go mod vendor
 	@echo "running go mod tidy... SKIPPED "# && GO111MODULE=on go mod tidy
 	@echo "doing some clean in vendor directory..." && find vendor -type f ! \( -name 'modules.txt' -o -name '*.sum' -o -name '*.mod' -o -name '*.rst' -o -name '*.go' -o -name '*.y' -o -name '*.h' -o -name '*.c' -o -name '*.proto' -o -name '*.tmpl' -o -name '*.s' -o -name '*.pl' \) -exec rm {} \;
+	# two calls to RegisterManifestSchema(ocispec.MediaTypeImageIndex -> panic
+	# file oci.go is in conflict with file /vendor/github.com/docker/distribution/manifest/manifestlist/manifestlist.go
+	# when docker update their vendor, it will be possible to remove this line.
+	# this will fix the plugin-clair for the moment
+	@echo "removing file /vendor/github.com/docker/docker/distribution/oci.go..." && rm -f vendor/github.com/docker/docker/distribution/oci.go
 
 install:
 	go install -v $$(go list ./... | grep -v vendor)

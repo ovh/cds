@@ -30,3 +30,12 @@ testcases:
     - result.systemoutjson.status ShouldEqual Success
     retry: 30
     delay: 10
+- name: download artifact with cdsctl
+  steps:
+  - script: rm -f tata.txt
+  - script:  {{.cds.build.cdsctl}} workflow artifact download ITSCWRKFLW4 ITSCWRKFLW4 1 --exclude tata.txt
+  - script: ls tata.txt
+    assertions:
+    - result.code ShouldNotEqual 0
+  - script: {{.cds.build.cdsctl}} workflow artifact download ITSCWRKFLW4 ITSCWRKFLW4 1
+  - script: ls tata.txt

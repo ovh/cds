@@ -199,68 +199,37 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 	}
 
 	runContext := nodeRunContext{}
-	if wr.Version < 2 {
-		n := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
-		if n != nil {
-			if n.PipelineID != 0 {
-				pip, has := wr.Workflow.Pipelines[n.PipelineID]
-				if has {
-					runContext.Pipeline = pip
-				}
-			}
-			if app, has := n.Application(); has {
-				runContext.Application = app
-			}
-			if env, has := n.Environment(); has {
-				runContext.Environment = env
-			}
-			if pp, has := n.ProjectPlatform(); has {
-				runContext.ProjectPlatform = pp
+
+	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.ID)
+	if node != nil && node.Context != nil {
+		if node.Context.PipelineID != 0 {
+			pip, has := wr.Workflow.Pipelines[node.Context.PipelineID]
+			if has {
+				runContext.Pipeline = pip
 			}
 		}
-	} else {
-		node := wr.Workflow.WorkflowData.NodeByID(nodeRun.ID)
-		if node != nil && node.Context != nil {
-			if node.Context.PipelineID != 0 {
-				pip, has := wr.Workflow.Pipelines[node.Context.PipelineID]
-				if has {
-					runContext.Pipeline = pip
-				}
+		if node.Context.ApplicationID != 0 {
+			app, has := wr.Workflow.Applications[node.Context.ApplicationID]
+			if has {
+				runContext.Application = app
 			}
-			if node.Context.ApplicationID != 0 {
-				app, has := wr.Workflow.Applications[node.Context.ApplicationID]
-				if has {
-					runContext.Application = app
-				}
+		}
+		if node.Context.EnvironmentID != 0 {
+			env, has := wr.Workflow.Environments[node.Context.EnvironmentID]
+			if has {
+				runContext.Environment = env
 			}
-			if node.Context.EnvironmentID != 0 {
-				env, has := wr.Workflow.Environments[node.Context.EnvironmentID]
-				if has {
-					runContext.Environment = env
-				}
-			}
-			if node.Context.ProjectPlatformID != 0 {
-				pp, has := wr.Workflow.ProjectPlatforms[node.Context.ProjectPlatformID]
-				if has {
-					runContext.ProjectPlatform = pp
-				}
+		}
+		if node.Context.ProjectPlatformID != 0 {
+			pp, has := wr.Workflow.ProjectPlatforms[node.Context.ProjectPlatformID]
+			if has {
+				runContext.ProjectPlatform = pp
 			}
 		}
 	}
 
 	var errReport error
 	report, errReport = report.Merge(execute(ctx, db, store, proj, nodeRun, runContext))
-
-	//Start a goroutine to update commit statuses in repositories manager
-	go func(wfRun *sdk.WorkflowRun) {
-		//The function could be called with nil project so we need to test if project is not nil
-		if sdk.StatusIsTerminated(wfRun.Status) && proj != nil {
-			wr.LastExecution = time.Now()
-			if err := ResyncCommitStatus(context.Background(), dbFunc(), store, proj, wfRun); err != nil {
-				log.Error("workflow.UpdateNodeJobRunStatus> %v", err)
-			}
-		}
-	}(wr)
 
 	return report, errReport
 }
@@ -361,30 +330,18 @@ func checkStatusWaiting(store cache.Store, jobID int64, status string) error {
 func LoadNodeJobRunKeys(p *sdk.Project, wr *sdk.WorkflowRun, nodeRun *sdk.WorkflowNodeRun) ([]sdk.Parameter, []sdk.Variable, error) {
 	var app *sdk.Application
 	var env *sdk.Environment
-	if wr.Version < 2 {
-		n := wr.Workflow.GetNode(nodeRun.WorkflowNodeID)
-		if n == nil {
-			return nil, nil, sdk.WrapError(fmt.Errorf("LoadNodeJobRunKeys> Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+
+	n := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+	if n.Context.ApplicationID != 0 {
+		appMap, has := wr.Workflow.Applications[n.Context.ApplicationID]
+		if has {
+			app = &appMap
 		}
-		if n.Context.Application != nil {
-			app = n.Context.Application
-		}
-		if n.Context.Environment != nil {
-			env = n.Context.Environment
-		}
-	} else {
-		n := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
-		if n.Context.ApplicationID != 0 {
-			appMap, has := wr.Workflow.Applications[n.Context.ApplicationID]
-			if has {
-				app = &appMap
-			}
-		}
-		if n.Context.EnvironmentID != 0 {
-			envMap, has := wr.Workflow.Environments[n.Context.EnvironmentID]
-			if has {
-				env = &envMap
-			}
+	}
+	if n.Context.EnvironmentID != 0 {
+		envMap, has := wr.Workflow.Environments[n.Context.EnvironmentID]
+		if has {
+			env = &envMap
 		}
 	}
 
@@ -485,37 +442,19 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 
 	// Load node definition
 	if nodeRun != nil {
-		if w.Version == 2 {
-			node := w.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
-			if node != nil && node.Context != nil {
-				if node.Context.ApplicationID != 0 {
-					a := w.Workflow.Applications[node.Context.ApplicationID]
-					app = &a
-				}
-				if node.Context.EnvironmentID != 0 {
-					e := w.Workflow.Environments[node.Context.EnvironmentID]
-					env = &e
-				}
-				if node.Context.ProjectPlatformID != 0 {
-					p := w.Workflow.ProjectPlatforms[node.Context.ProjectPlatformID]
-					pp = &p
-				}
+		node := w.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+		if node != nil && node.Context != nil {
+			if node.Context.ApplicationID != 0 {
+				a := w.Workflow.Applications[node.Context.ApplicationID]
+				app = &a
 			}
-		} else {
-			n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
-			if n == nil {
-				return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadSecrets>")
+			if node.Context.EnvironmentID != 0 {
+				e := w.Workflow.Environments[node.Context.EnvironmentID]
+				env = &e
 			}
-			if n.Context != nil {
-				if n.Context.Application != nil {
-					app = n.Context.Application
-				}
-				if n.Context.Environment != nil {
-					env = n.Context.Environment
-				}
-				if n.Context.ProjectPlatform != nil {
-					pp = n.Context.ProjectPlatform
-				}
+			if node.Context.ProjectPlatformID != 0 {
+				p := w.Workflow.ProjectPlatforms[node.Context.ProjectPlatformID]
+				pp = &p
 			}
 		}
 

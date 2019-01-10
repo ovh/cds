@@ -8,7 +8,8 @@ import (
 
 // AggregateAuditsOnWorkflowTemplate set audits for each workflow template.
 func AggregateAuditsOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.WorkflowTemplate) error {
-	as, err := GetAuditsByTemplateIDsAndEventTypes(db, sdk.WorkflowTemplatesToIDs(wts), []string{"WorkflowTemplateAdd", "WorkflowTemplateUpdate"})
+	as, err := GetAuditsByTemplateIDsAndEventTypesAndVersionGTE(db, sdk.WorkflowTemplatesToIDs(wts),
+		[]string{"WorkflowTemplateAdd", "WorkflowTemplateUpdate"}, 0)
 	if err != nil {
 		return err
 	}
@@ -21,11 +22,11 @@ func AggregateAuditsOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.Workflow
 		m[a.WorkflowTemplateID] = append(m[a.WorkflowTemplateID], a)
 	}
 
-	// assume that audits are sorted by creation date with GetAudits
+	// assume that audits are sorted by creation date desc by GetAudits
 	for _, wt := range wts {
 		if as, ok := m[wt.ID]; ok {
-			wt.FirstAudit = &as[0]
-			wt.LastAudit = &as[len(as)-1]
+			wt.FirstAudit = &as[len(as)-1]
+			wt.LastAudit = &as[0]
 		}
 	}
 

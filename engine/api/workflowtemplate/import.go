@@ -112,7 +112,7 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 		return nil, nil, err
 	}
 
-	event.PublishWorkflowTemplateUpdate(*old, new, u)
+	event.PublishWorkflowTemplateUpdate(*old, new, "", u)
 
 	return []sdk.Message{sdk.NewMessage(sdk.MsgWorkflowTemplateImportedUpdated, grp.Name, new.Slug)}, &new, nil
 }

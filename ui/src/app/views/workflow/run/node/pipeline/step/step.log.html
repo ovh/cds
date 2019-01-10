@@ -14,7 +14,7 @@
         </div>
     </div>
     <div class="logs" *ngIf="showLog">
-        <div class="right floated">
+        <div class="right floated toolbar" *ngIf="splittedLogsToDisplay && splittedLogsToDisplay.length > 2">
           <div class="mini ui icon buttons">
               <button class="ui button"
                   [title]="'workflow_logs_pretty_ansi' | translate"

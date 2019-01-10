@@ -40,21 +40,13 @@ func UpdateOutgoingHookRunStatus(ctx context.Context, db gorp.SqlExecutor, store
 
 	report.Add(nodeRun)
 
-	if wr.Version < 2 {
-		report1, _, err := processWorkflowRun(ctx, db, store, proj, wr, nil, nil, nil)
-		report.Merge(report1, err) //nolint
-		if err != nil {
-			return nil, sdk.WrapError(err, "Unable to process workflow run")
-		}
-	} else {
-		mapNodes := wr.Workflow.WorkflowData.Maps()
-		node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
+	mapNodes := wr.Workflow.WorkflowData.Maps()
+	node := wr.Workflow.WorkflowData.NodeByID(nodeRun.WorkflowNodeID)
 
-		report1, err := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, nil, node, int(nodeRun.SubNumber))
-		report.Merge(report1, err) //nolint
-		if err != nil {
-			return nil, sdk.WrapError(err, "Unable to processNodeOutGoingHook")
-		}
+	report1, _, err := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, nil, node, int(nodeRun.SubNumber))
+	report.Merge(report1, err) //nolint
+	if err != nil {
+		return nil, sdk.WrapError(err, "Unable to processNodeOutGoingHook")
 	}
 
 	oldStatus := wr.Status

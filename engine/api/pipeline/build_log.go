@@ -9,25 +9,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// UpdateLog Update a pipeline build step log
-func UpdateLog(db gorp.SqlExecutor, l *sdk.Log) error {
-	dbmodel := Log(*l)
-	if _, err := db.Update(&dbmodel); err != nil {
-		return err
-	}
-	return nil
-}
-
-// InsertLog insert build log into database
-func InsertLog(db gorp.SqlExecutor, l *sdk.Log) error {
-	dbmodel := Log(*l)
-	if err := db.Insert(&dbmodel); err != nil {
-		return err
-	}
-	*l = sdk.Log(dbmodel)
-	return nil
-}
-
 // LoadStepLogs load log for the given pipeline build job at the given step
 func LoadStepLogs(db gorp.SqlExecutor, pipJobID int64, stepOrder int64) (*sdk.Log, error) {
 	var logGorp Log

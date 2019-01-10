@@ -148,10 +148,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return sdk.WrapError(err, "project is not valid")
 	}
 
-	if proj.WorkflowMigration == "" {
-		proj.WorkflowMigration = "DONE"
-	}
-
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	if err := db.Insert(&dbProj); err != nil {

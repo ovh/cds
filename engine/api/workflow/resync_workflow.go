@@ -21,6 +21,7 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 		return sdk.WrapError(errW, "Resync> Cannot load workflow")
 	}
 
+	// Resync old model
 	if err := resyncNode(wr.Workflow.Root, *wf); err != nil {
 		return err
 	}
@@ -35,8 +36,25 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 		}
 	}
 
-	//Resync pipelines
+	// Resync new model
+	oldNode := wr.Workflow.WorkflowData.Array()
+	for i := range oldNode {
+		nodeToUpdate := oldNode[i]
+		for _, n := range wf.WorkflowData.Array() {
+			if nodeToUpdate.Name == n.Name {
+				nodeToUpdate.Context = n.Context
+				break
+			}
+		}
+	}
+
+	//Resync map
 	wr.Workflow.Pipelines = wf.Pipelines
+	wr.Workflow.Applications = wf.Applications
+	wr.Workflow.Environments = wf.Environments
+	wr.Workflow.ProjectPlatforms = wf.ProjectPlatforms
+	wr.Workflow.HookModels = wf.HookModels
+	wr.Workflow.OutGoingHookModels = wf.OutGoingHookModels
 
 	return UpdateWorkflowRun(nil, db, wr)
 }
@@ -120,37 +138,19 @@ func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk
 			var app sdk.Application
 			var env *sdk.Environment
 
-			if wr.Version < 2 {
-				n := wr.Workflow.GetNode(nr.WorkflowNodeID)
-				if n == nil {
-					log.Error("ResyncNodeRuns> Unable to find node by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
-					return
-				}
-
-				if n.Context == nil || n.Context.Application == nil {
-					return
-				}
-				nodeName = n.Name
-				app = *n.Context.Application
-
-				if n.Context.Environment != nil {
-					env = n.Context.Environment
-				}
-			} else {
-				n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
-				if n == nil {
-					log.Error("ResyncNodeRuns> Unable to find node data by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
-					return
-				}
-				nodeName = n.Name
-				if n.Context == nil || n.Context.ApplicationID == 0 {
-					return
-				}
-				app = wr.Workflow.Applications[n.Context.ApplicationID]
-				if n.Context.EnvironmentID != 0 {
-					e := wr.Workflow.Environments[n.Context.EnvironmentID]
-					env = &e
-				}
+			n := wr.Workflow.WorkflowData.NodeByID(nr.WorkflowNodeID)
+			if n == nil {
+				log.Error("ResyncNodeRuns> Unable to find node data by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
+				return
+			}
+			nodeName = n.Name
+			if n.Context == nil || n.Context.ApplicationID == 0 {
+				return
+			}
+			app = wr.Workflow.Applications[n.Context.ApplicationID]
+			if n.Context.EnvironmentID != 0 {
+				e := wr.Workflow.Environments[n.Context.EnvironmentID]
+				env = &e
 			}
 
 			//New context because we are in goroutine

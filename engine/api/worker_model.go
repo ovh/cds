@@ -40,13 +40,13 @@ func (api *API) addWorkerModelHandler() service.Handler {
 
 		currentUser := getUser(ctx)
 		//User must be admin of the group set in the model
-		var ok bool
+		var isGroupAdmin bool
 	currentUGroup:
 		for _, g := range currentUser.Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
 					if a.ID == currentUser.ID {
-						ok = true
+						isGroupAdmin = true
 						break currentUGroup
 					}
 				}
@@ -54,7 +54,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !currentUser.Admin && !ok {
+		if !currentUser.Admin && !isGroupAdmin {
 			return sdk.ErrWorkerModelNoAdmin
 		}
 
@@ -69,6 +69,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 				}
 				model.ModelDocker.Cmd = modelPattern.Model.Cmd
 				model.ModelDocker.Shell = modelPattern.Model.Shell
+				model.ModelDocker.Envs = modelPattern.Model.Envs
 			}
 			if model.ModelDocker.Cmd == "" || model.ModelDocker.Shell == "" {
 				return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModel> Invalid worker command or invalid shell command")
@@ -416,6 +417,28 @@ func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name stri
 	return service.WriteJSON(w, m, http.StatusOK)
 }
 
+func (api *API) getWorkerModelUsageHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		workerModelID, errr := requestVarInt(r, "modelID")
+		if errr != nil {
+			return sdk.WrapError(errr, "Invalid modelID")
+		}
+		db := api.mustDB()
+
+		wm, err := worker.LoadWorkerModelByID(db, workerModelID)
+		if err != nil {
+			return sdk.WrapError(err, "cannot load worker model for id %d", workerModelID)
+		}
+
+		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "Cannot load pipelines linked to worker model")
+		}
+
+		return service.WriteJSON(w, pips, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkerModelsEnabledHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		h := getHatchery(ctx)
@@ -445,7 +468,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		state := r.FormValue("state")
 		var opt *worker.StateLoadOption
 		switch state {
-		case "", worker.StateDisabled.String(), worker.StateError.String(), worker.StateRegister.String(), worker.StateDeprecated.String():
+		case "", worker.StateDisabled.String(), worker.StateOfficial.String(), worker.StateError.String(), worker.StateRegister.String(), worker.StateDeprecated.String(), worker.StateActive.String():
 			opt = new(worker.StateLoadOption)
 			*opt = worker.StateLoadOption(state)
 			break

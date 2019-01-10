@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
 import { finalize } from 'rxjs/internal/operators/finalize';
 import { WorkflowTemplate } from '../../../../model/workflow-template.model';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
+import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
 import { Column, ColumnType } from '../../../../shared/table/data-table.component';
 
 @Component({
@@ -15,14 +15,15 @@ export class WorkflowTemplateListComponent {
     columns: Array<Column>;
     workflowTemplates: Array<WorkflowTemplate>;
 
+    path: Array<PathItem>
+
     constructor(
-        private _workflowTemplateService: WorkflowTemplateService,
-        private _translate: TranslateService
+        private _workflowTemplateService: WorkflowTemplateService
     ) {
         this.columns = [
             <Column>{
                 type: ColumnType.ROUTER_LINK,
-                name: this._translate.instant('common_name'),
+                name: 'common_name',
                 selector: wt => {
                     return {
                         link: '/settings/workflow-template/' + wt.group.name + '/' + wt.slug,
@@ -32,15 +33,22 @@ export class WorkflowTemplateListComponent {
             },
             <Column>{
                 type: ColumnType.MARKDOWN,
-                name: this._translate.instant('common_description'),
+                name: 'common_description',
                 selector: wt => wt.description
             },
             <Column>{
-                name: this._translate.instant('common_group'),
+                name: 'common_group',
                 selector: wt => wt.group.name
             }
         ];
         this.getTemplates();
+
+        this.path = [<PathItem>{
+            translate: 'common_settings'
+        }, <PathItem>{
+            translate: 'workflow_templates',
+            routerLink: ['/', 'settings', 'workflow-template']
+        }];
     }
 
     getTemplates() {

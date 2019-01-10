@@ -15,8 +15,4 @@ Check documentation on text/template for more information https://golang.org/pkg
 * **applications**: Applications file variables
 
 
-## More
-
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/group-tmpl/README.md)
-
 

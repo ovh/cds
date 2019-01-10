@@ -9,7 +9,9 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -92,6 +94,50 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 	}
 
 	return &p, nil
+}
+
+// LoadByWorkerModelName loads pipelines from database for a given worker model name
+func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string, u *sdk.User) ([]sdk.Pipeline, error) {
+	var pips []sdk.Pipeline
+	query := `
+	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey 
+		FROM action_requirement
+			JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
+			JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
+			JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
+			JOIN project ON project.id = pipeline.project_id
+		WHERE action_requirement.type = 'model' AND action_requirement.value = $1`
+	args := []interface{}{workerModelName}
+
+	if !u.Admin {
+		query = `
+	SELECT DISTINCT pipeline.*, project.projectkey AS projectKey 
+		FROM action_requirement
+			JOIN pipeline_action ON action_requirement.action_id = pipeline_action.action_id
+			JOIN pipeline_stage ON pipeline_action.pipeline_stage_id = pipeline_stage.id
+			JOIN pipeline ON pipeline.id = pipeline_stage.pipeline_id
+			JOIN project ON project.id = pipeline.project_id
+		WHERE action_requirement.type = 'model'
+			AND action_requirement.value = $1
+			AND project.id IN (
+				SELECT project_group.project_id
+					FROM project_group
+				WHERE
+					project_group.group_id = ANY(string_to_array($2, ',')::int[])
+					OR
+					$3 = ANY(string_to_array($2, ',')::int[])
+			)`
+		args = append(args, gorpmapping.IDsToQueryString(sdk.GroupsToIDs(u.Groups)), group.SharedInfraGroup.ID)
+	}
+
+	if _, err := db.Select(&pips, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "Unable to load pipelines linked to worker model name %s", workerModelName)
+	}
+
+	return pips, nil
 }
 
 // LoadByWorkflowID loads pipelines from database for a given workflow id
@@ -237,15 +283,6 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 	query = `DELETE FROM artifact WHERE pipeline_id = $1`
 	_, err = db.Exec(query, pipelineID)
 	if err != nil {
-		return err
-	}
-
-	// Delete application_pipeline_notif
-	query = `
-		DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (
-			SELECT id FROM application_pipeline WHERE pipeline_id = $1
-		)`
-	if _, err := db.Exec(query, pipelineID); err != nil {
 		return err
 	}
 

@@ -1,5 +1,11 @@
 <div class="KeyForm">
     <div class="ui form">
+        <div class="ui info message" *ngIf="newKey.type == 'ssh'">
+            {{ 'keys_ssh_key_help' | translate }} <a href="https://ovh.github.io/cds/cli/worker/key/install/">Worker Install Key</a>
+        </div>
+        <div class="ui info message" *ngIf="newKey.type == 'pgp'">
+            {{ 'keys_pgp_key_help' | translate }} <a href="https://ovh.github.io/cds/cli/worker/key/install/">Worker Install Key</a>
+        </div>
         <div class="fields">
             <div class="seven wide field">
                 <label>{{ 'keys_name' | translate}}</label>
@@ -16,8 +22,7 @@
                             [options]="keyTypes"
                             [isSearchable]="true"
                             #selectKeyType>
-                    <sui-select-option *ngFor="let t of selectKeyType.filteredOptions"
-                                       [value]="t">
+                    <sui-select-option *ngFor="let t of selectKeyType.filteredOptions" [value]="t">
                     </sui-select-option>
                 </sui-select>
             </div>

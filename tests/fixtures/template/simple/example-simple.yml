@@ -9,4 +9,10 @@ parameters:
   required: true
 - key: deployWhen
   type: string
-  required: true
+  required: false
+workflow: workflow.yml
+pipelines:
+- 1.pipeline.yml
+- 2.pipeline.yml
+environments:
+- 1.environment.yml

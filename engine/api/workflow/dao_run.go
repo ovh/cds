@@ -27,8 +27,7 @@ workflow_run.last_modified,
 workflow_run.status,
 workflow_run.last_sub_num,
 workflow_run.last_execution,
-workflow_run.to_delete,
-workflow_run.version
+workflow_run.to_delete
 `
 
 // LoadRunOptions are options for loading a run (node or workflow)
@@ -431,7 +430,7 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 	return &wr, nil
 }
 
-// CanBeRun return boolean to know if a wokrflow node run can be run or not
+// CanBeRun return boolean to know if a workflow node run can be run or not
 //TODO: if no bugs are found, it could be used to refactor process.go
 func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun) bool {
 	if !sdk.StatusIsTerminated(workflowNodeRun.Status) {
@@ -440,16 +439,16 @@ func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun
 	if workflowRun == nil {
 		return false
 	}
-	node := workflowRun.Workflow.GetNode(workflowNodeRun.WorkflowNodeID)
+
+	node := workflowRun.Workflow.WorkflowData.NodeByID(workflowNodeRun.WorkflowNodeID)
 	if node == nil {
 		return true
 	}
+	ancestorsID := node.Ancestors(workflowRun.Workflow.WorkflowData)
 
-	ancestorsID := node.Ancestors(&workflowRun.Workflow, true)
 	if ancestorsID == nil || len(ancestorsID) == 0 {
 		return true
 	}
-
 	for _, ancestorID := range ancestorsID {
 		nodeRuns, ok := workflowRun.WorkflowNodeRuns[ancestorID]
 		if ok && (len(nodeRuns) == 0 || !sdk.StatusIsTerminated(nodeRuns[0].Status) ||
@@ -457,7 +456,6 @@ func CanBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -693,7 +691,7 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 					idsStr = append(idsStr, id)
 				}
 			}
-			idsToUpdate = append(idsToUpdate, strings.Join(idsStr, ","))
+			idsToUpdate = append(idsToUpdate, idsStr...)
 		}
 	}
 
@@ -863,7 +861,7 @@ func stopRunsBlocked(db *gorp.DbMap) error {
 			return sdk.WrapError(err, "cannot unmarshal stages")
 		}
 
-		stopWorkflowNodeRunStages(&nr)
+		stopWorkflowNodeRunStages(db, &nr)
 		if !sdk.StatusIsTerminated(resp[i].Status) {
 			nr.Status = sdk.StatusStopped.String()
 			nr.Done = now

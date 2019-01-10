@@ -6,32 +6,32 @@ import { AdminRouting } from './admin.routing';
 import { BroadcastAddComponent } from './broadcast/add/broadcast.add.component';
 import { BroadcastEditComponent } from './broadcast/edit/broadcast.edit.component';
 import { BroadcastListComponent } from './broadcast/list/broadcast.list.component';
-import { HooksTaskComponent } from './hooks-tasks/details/hooks-task.component';
-import { HooksTasksComponent } from './hooks-tasks/hooks-tasks.component';
-import { ServiceComponent } from './services/service/service.component';
-import { ServicesComponent } from './services/services.component';
+import { HookTaskListComponent } from './hook-task/list/hook-task.list.component';
+import { HookTaskShowComponent } from './hook-task/show/hook-task.show.component';
+import { ServiceListComponent } from './service/list/service.list.component';
+import { ServiceShowComponent } from './service/show/service.show.component';
 import { WorkerModelPatternAddComponent } from './worker-model-pattern/add/worker-model-pattern.add.component';
 import { WorkerModelPatternEditComponent } from './worker-model-pattern/edit/worker-model-pattern.edit.component';
-import { WorkerModelPatternComponent } from './worker-model-pattern/worker-model-pattern.component';
+import { WorkerModelPatternListComponent } from './worker-model-pattern/list/worker-model-pattern.list.component';
 
 @NgModule({
     declarations: [
         AdminComponent,
-        WorkerModelPatternComponent,
+        WorkerModelPatternListComponent,
         WorkerModelPatternAddComponent,
         WorkerModelPatternEditComponent,
         BroadcastAddComponent,
         BroadcastEditComponent,
         BroadcastListComponent,
-        HooksTasksComponent,
-        HooksTaskComponent,
-        ServicesComponent,
-        ServiceComponent
+        HookTaskListComponent,
+        HookTaskShowComponent,
+        ServiceListComponent,
+        ServiceShowComponent
     ],
     imports: [
-      SharedModule,
-      RouterModule,
-      AdminRouting
+        SharedModule,
+        RouterModule,
+        AdminRouting
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA

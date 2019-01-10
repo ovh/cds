@@ -6,8 +6,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"go.opencensus.io/stats"
@@ -21,21 +23,18 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/metrics"
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/purge"
-	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/version"
 	"github.com/ovh/cds/engine/api/warning"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -136,9 +135,6 @@ type Configuration struct {
 			Token        string `toml:"token" comment:"Token shared between Izanami and CDS to be able to send webhooks from izanami" json:"-"`
 		} `toml:"izanami" comment:"Feature flipping provider: https://maif.github.io/izanami" json:"izanami"`
 	} `toml:"features" comment:"###########################\n CDS Features flipping Settings \n##########################" json:"features"`
-	Schedulers struct {
-		Disabled bool `toml:"disabled" default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it" json:"disabled"`
-	} `toml:"schedulers" comment:"###########################\n CDS Schedulers Settings \n##########################" json:"schedulers"`
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey" json:"-"`
 	} `toml:"vault" json:"vault"`
@@ -588,9 +584,6 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("unable to init api metrics: %v", err)
 	}
 
-	//Initiliaze hook package
-	hook.Init(a.Config.URL.API)
-
 	//Intialize notification package
 	notification.Init(a.Config.URL.UI)
 
@@ -663,12 +656,6 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "warning.Start", func(ctx context.Context) {
 		warning.Start(ctx, a.DBConnectionFactory.GetDBMap, a.warnChan)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "queue.Pipelines", func(ctx context.Context) {
-		queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "pipeline.AWOLPipelineKiller", func(ctx context.Context) {
-		pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "auditCleanerRoutine(ctx", func(ctx context.Context) {
 		auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	})
@@ -678,17 +665,8 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "action.RequirementsCacheLoader", func(ctx context.Context) {
 		action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "hookRecoverer(ctx", func(ctx context.Context) {
-		hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "services.KillDeadServices", func(ctx context.Context) {
 		services.KillDeadServices(ctx, a.mustDB)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "migrate.CleanOldWorkflow", func(ctx context.Context) {
-		migrate.CleanOldWorkflow(ctx, a.Cache, a.DBConnectionFactory.GetDBMap, a.Config.URL.API)
-	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
-		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
 	}, a.PanicDump())
 	sdk.GoRoutine(ctx, "broadcast.Initialize", func(ctx context.Context) {
 		broadcast.Initialize(ctx, a.DBConnectionFactory.GetDBMap)
@@ -696,18 +674,50 @@ func (a *API) Serve(ctx context.Context) error {
 	sdk.GoRoutine(ctx, "api.serviceAPIHeartbeat", func(ctx context.Context) {
 		a.serviceAPIHeartbeat(ctx)
 	}, a.PanicDump())
-	sdk.GoRoutine(ctx, "migrate.WorkflowData", func(ctx context.Context) {
-		migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache)
-	}, a.PanicDump())
 
 	//Temporary migration code
-	go migrate.WorkflowNodeRunArtifacts(a.Cache, a.DBConnectionFactory.GetDBMap)
+	//DEPRECATED Migrations
+	sdk.GoRoutine(ctx, "migrate.KeyMigration", func(ctx context.Context) {
+		migrate.KeyMigration(a.Cache, a.DBConnectionFactory.GetDBMap, &sdk.User{Admin: true})
+	}, a.PanicDump())
+
+	migrate.Add(sdk.Migration{Name: "WorkflowData", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+		return migrate.MigrateToWorkflowData(a.DBConnectionFactory.GetDBMap, a.Cache)
+	}})
 	if os.Getenv("CDS_MIGRATE_ENABLE") == "true" {
-		go func() {
-			if err := migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache); err != nil {
-				log.Error("Bootstrap Error: %v", err)
+		migrate.Add(sdk.Migration{Name: "MigrateActionDEPRECATEDGitClone", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+			return migrate.MigrateActionDEPRECATEDGitClone(a.mustDB, a.Cache)
+		}})
+	}
+	// migrate.Add(sdk.Migration{Name: "GitClonePrivateKey", Release: "0.37.0", Mandatory: true, ExecFunc: func(ctx context.Context) error {
+	// 	return migrate.GitClonePrivateKey(a.mustDB, a.Cache)
+	// }})
+
+	isFreshInstall, errF := version.IsFreshInstall(a.mustDB())
+	if errF != nil {
+		return sdk.WrapError(errF, "Unable to check if it's a fresh installation of CDS")
+	}
+
+	if isFreshInstall {
+		if err := migrate.SaveAllMigrations(a.mustDB()); err != nil {
+			return sdk.WrapError(err, "Cannot save all migrations to done")
+		}
+	} else {
+		if sdk.VersionCurrent().Version != "" && !strings.HasPrefix(sdk.VersionCurrent().Version, "snapshot") {
+			major, minor, _, errV := version.MaxVersion(a.mustDB())
+			if errV != nil {
+				return sdk.WrapError(errV, "Cannot fetch max version of CDS already started")
 			}
-		}()
+			if major != 0 || minor != 0 {
+				minSemverCompatible, _ := semver.Parse(migrate.MinCompatibleRelease)
+				if major < minSemverCompatible.Major || (major == minSemverCompatible.Major && minor < minSemverCompatible.Minor) {
+					return fmt.Errorf("there are some mandatory migrations which aren't done. Please check each changelog of CDS. Maybe you have skipped a release migration. The minimum compatible release is %s, please update to this release before", migrate.MinCompatibleRelease)
+				}
+			}
+		}
+
+		// Run all migrations in several goroutines
+		migrate.Run(ctx, a.mustDB(), a.PanicDump())
 	}
 
 	// Init Services
@@ -748,12 +758,6 @@ func (a *API) Serve(ctx context.Context) error {
 		}()
 	}
 
-	if !a.Config.Schedulers.Disabled {
-		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
-	} else {
-		log.Warning("⚠ Cron Scheduler is disabled")
-	}
-
 	sdk.GoRoutine(ctx, "workflow.Initialize",
 		func(ctx context.Context) {
 			workflow.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache, a.Config.URL.UI, a.Config.DefaultOS, a.Config.DefaultArch)
@@ -789,6 +793,10 @@ func (a *API) Serve(ctx context.Context) error {
 			log.Error("Cannot start GRPC server: %v", err)
 		}
 	}()
+
+	if err := version.Upsert(a.mustDB()); err != nil {
+		return sdk.WrapError(err, "Cannot upsert cds version")
+	}
 
 	log.Info("Starting CDS API HTTP Server on %s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {

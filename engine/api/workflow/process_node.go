@@ -3,6 +3,7 @@ package workflow
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -88,12 +89,12 @@ func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		report.Merge(r1, nil) // nolint
 		return report, conditionOK, nil
 	case sdk.NodeTypeOutGoingHook:
-		r1, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber)
+		r1, conditionOK, errO := processNodeOutGoingHook(ctx, db, store, proj, wr, mapNodes, parentNodeRuns, n, subNumber)
 		if errO != nil {
 			return nil, false, sdk.WrapError(errO, "Unable to processNodeOutGoingHook")
 		}
 		report.Merge(r1, nil) // nolint
-		return report, true, nil
+		return report, conditionOK, nil
 	}
 	return nil, false, nil
 }
@@ -231,6 +232,16 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 
 	run.Manual = manual
 	if manual != nil {
+		payloadStr, err := json.Marshal(manual.Payload)
+		if err != nil {
+			log.Error("processNode> Unable to marshal payload: %v", err)
+		}
+		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
+			Name:  "payload",
+			Type:  sdk.TextParameter,
+			Value: string(payloadStr),
+		})
+
 		e := dump.NewDefaultEncoder(new(bytes.Buffer))
 		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 		e.ExtraFields.DetailedMap = false
@@ -239,7 +250,7 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 		e.ExtraFields.Type = false
 		m1, errm1 := e.ToStringMap(manual.Payload)
 		if errm1 != nil {
-			return report, false, sdk.WrapError(errm1, "r> Unable to compute payload")
+			return report, false, sdk.WrapError(errm1, "processNode> Unable to compute payload")
 		}
 		runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		run.Payload = runPayload

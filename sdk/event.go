@@ -80,6 +80,7 @@ type EventRunWorkflowNode struct {
 	HookLog               string                    `json:"log,omitempty"`
 }
 
+// EventRunWorkflowOutgoingHook contains event data for a workflow outgoing hook run
 type EventRunWorkflowOutgoingHook struct {
 	HookID            int64  `json:"hook_id"`
 	ID                string `json:"id"`

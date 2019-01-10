@@ -1,7 +1,7 @@
 <div *ngIf="_workflowTemplate;then showWorkflowTemplate;else loadWorkflowTemplate"></div>
 <ng-template #showWorkflowTemplate>
     <div class="ui grid">
-        <div class="thirteen wide column">
+        <div class="sixteen wide column">
             <form class="ui form">
                 <div class="ui grid">
                     <div class="sixteen wide column">
@@ -94,10 +94,7 @@
                                     <i class="trash icon"></i>
                                 </button>
                             </div>
-                        </div>
-                        <div *ngIf="_workflowTemplate.editable" class="wide field codeContainer">
-                            <codemirror class="code" name="pipeline-value-add" [(ngModel)]="pipelineValueAdd" [config]="codeMirrorConfig"></codemirror>
-                            <button class="codeButton ui icon green button" (click)="clickAddPipeline()">
+                            <button *ngIf="_workflowTemplate.editable" class="ui icon green button" (click)="clickAddPipeline()">
                                 <i class="plus icon"></i>
                             </button>
                         </div>
@@ -112,11 +109,7 @@
                                     <i class="trash icon"></i>
                                 </button>
                             </div>
-                        </div>
-                        <div *ngIf="_workflowTemplate.editable" class="wide field codeContainer">
-                            <codemirror class="code" name="application-value-add" [(ngModel)]="applicationValueAdd"
-                                [config]="codeMirrorConfig"></codemirror>
-                            <button class="codeButton ui icon green button" (click)="clickAddApplication()">
+                            <button *ngIf="_workflowTemplate.editable" class="ui icon green button" (click)="clickAddApplication()">
                                 <i class="plus icon"></i>
                             </button>
                         </div>
@@ -131,13 +124,13 @@
                                     <i class="trash icon"></i>
                                 </button>
                             </div>
-                        </div>
-                        <div *ngIf="_workflowTemplate.editable" class="wide field codeContainer">
-                            <codemirror class="code" name="environment-value-add" [(ngModel)]="environmentValueAdd"
-                                [config]="codeMirrorConfig"></codemirror>
-                            <button class="codeButton ui icon green button" (click)="clickAddEnvironment()">
+                            <button *ngIf="_workflowTemplate.editable" class="ui icon green button" (click)="clickAddEnvironment()">
                                 <i class="plus icon"></i>
                             </button>
+                        </div>
+                        <div *ngIf="_workflowTemplate.editable && mode === 'edit'" class="wide field">
+                            <textarea name="changeMessage" [(ngModel)]="changeMessage" [placeholder]="'workflow_template_change_message' | translate"
+                                [rows]="3"></textarea>
                         </div>
                         <div *ngIf="_workflowTemplate.editable" class="wide field">
                             <app-delete-button *ngIf="mode === 'edit'" class="left floated" (event)="clickDelete()"
@@ -149,29 +142,6 @@
                     </div>
                 </div>
             </form>
-        </div>
-        <div class="three wide column">
-            <div class="ui segment">
-                <h2 class="ui header"><i class="fa fa-book"></i> {{ 'settings_tips' | translate }}</h2>
-                <p>{{'workflow_template_help_line_1' | translate}}</p>
-
-                <div class="ui list">
-                    <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/template">{{'common_read_more'
-                        | translate}}</a>
-                </div>
-            </div>
-            <ng-container *ngIf="mode === 'edit'">
-                <br />
-                <div class="field" *ngIf="_workflowTemplate.first_audit">
-                    <h3>{{'common_created_by' | translate}}</h3>
-                    {{_workflowTemplate.first_audit.triggered_by}}
-                </div>
-                <br />
-                <div class="field" *ngIf="_workflowTemplate.last_audit">
-                    <h3>{{'common_last_modified' | translate}}</h3>
-                    {{_workflowTemplate.last_audit.created}}
-                </div>
-            </ng-container>
         </div>
     </div>
 </ng-template>

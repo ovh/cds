@@ -1,10 +1,10 @@
-import {Component, Input, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {Project} from '../../../model/project.model';
-import {ProjectStore} from '../../../service/project/project.store';
-import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
-import {WarningModalComponent} from '../../modal/warning/warning.component';
-import {ToastService} from '../../toast/ToastService';
+import { Component, Input, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { Project } from '../../../model/project.model';
+import { ProjectStore } from '../../../service/project/project.store';
+import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
+import { WarningModalComponent } from '../../modal/warning/warning.component';
+import { ToastService } from '../../toast/ToastService';
 
 @Component({
     selector: 'app-repomanager-form',

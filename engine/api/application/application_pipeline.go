@@ -8,13 +8,10 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // IsAttached checks if an application is attach to a pipeline given its name
@@ -30,18 +27,6 @@ func IsAttached(db gorp.SqlExecutor, projectID, appID int64, pipelineName string
 		return false, err
 	}
 	return n == 1, nil
-}
-
-// AttachPipeline Attach a pipeline to an application
-func AttachPipeline(db gorp.SqlExecutor, appID, pipelineID int64) (int64, error) {
-	query := `INSERT INTO application_pipeline(application_id, pipeline_id, args) VALUES($1, $2, $3) RETURNING id`
-	var id int64
-	if err := db.QueryRow(query, appID, pipelineID, "[]").Scan(&id); err != nil {
-		if errPG, ok := err.(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
-			return 0, sdk.ErrPipelineAlreadyAttached
-		}
-	}
-	return id, nil
 }
 
 // GetAllPipelines Get all pipelines for the given application
@@ -122,24 +107,10 @@ func GetAllPipelinesByID(db gorp.SqlExecutor, applicationID int64) ([]sdk.Applic
 
 // DeleteAllApplicationPipeline Detach all pipeline
 func DeleteAllApplicationPipeline(db gorp.SqlExecutor, applicationID int64) error {
-	query := `
-		DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (
-			SELECT id FROM application_pipeline WHERE application_id = $1
-		)`
+	query := `DELETE FROM application_pipeline WHERE application_id= $1`
 	if _, err := db.Exec(query, applicationID); err != nil {
 		return err
 	}
-
-	query = `DELETE FROM application_pipeline WHERE application_id= $1`
-	if _, err := db.Exec(query, applicationID); err != nil {
-		return err
-	}
-
-	query = `DELETE FROM hook WHERE application_id = $1`
-	if _, err := db.Exec(query, applicationID); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -179,88 +150,10 @@ func RemovePipeline(db gorp.SqlExecutor, key, appName, pipelineName string) erro
 		}
 	}
 
-	// Delete hook
-	query = `DELETE FROM hook
-		WHERE
-		pipeline_id = (select pipeline.id from pipeline JOIN project ON project.id = pipeline.project_id WHERE pipeline.name = $1 AND projectkey = $3)
-		AND
-		application_id = (SELECT application.id FROM application JOIN project ON project.id = application.project_id WHERE application.name = $2 AND projectkey = $3)`
-	_, err = db.Exec(query, pipelineName, appName, key)
-	if err != nil {
-		return err
-	}
-
 	err = trigger.DeleteApplicationPipelineTriggers(db, key, appName, pipelineName)
 	if err != nil {
 		return fmt.Errorf("RemovePipeline> cannot delete app trigger> %s", err)
 	}
-
-	// Delete application_pipeline_notif
-	query = `
-		DELETE	FROM application_pipeline_notif
-		USING 	application_pipeline, application, project, pipeline
-		WHERE 	application_pipeline_notif.application_pipeline_id = application_pipeline.id
-		AND 	application.project_id = project.id
-		AND 	application.id = application_pipeline.application_id
-		AND 	pipeline.id = application_pipeline.pipeline_id
-	    AND 	application.name = $1
-		AND 	project.projectKey = $2
-		AND  	pipeline.name = $3`
-	_, err = db.Exec(query, appName, key, pipelineName)
-	if err != nil {
-		return err
-	}
-
-	// Delete scheduler
-	query = `
-		DELETE 	FROM pipeline_scheduler
-		USING	application, project, pipeline
-		WHERE 	pipeline_scheduler.application_id = application.id
-		AND 	pipeline_scheduler.pipeline_id = pipeline.id
-		AND 	application.project_id = project.id
-	    AND 	application.name = $1
-		AND 	project.projectKey = $2
-		AND  	pipeline.name = $3`
-	res, err := db.Exec(query, appName, key, pipelineName)
-	if err != nil {
-		return err
-	}
-	n, _ := res.RowsAffected()
-	log.Debug("RemovePipeline> removed %d pipeline_scheduler", n)
-
-	// Delete poller
-	query = `
-		DELETE 	FROM poller
-		USING	application, project, pipeline
-		WHERE 	poller.application_id = application.id
-		AND 	poller.pipeline_id = pipeline.id
-		AND 	application.project_id = project.id
-	    AND 	application.name = $1
-		AND 	project.projectKey = $2
-		AND  	pipeline.name = $3`
-	res, err = db.Exec(query, appName, key, pipelineName)
-	if err != nil {
-		return err
-	}
-	n, _ = res.RowsAffected()
-	log.Debug("RemovePipeline> removed %d poller", n)
-
-	// Delete poller_execution
-	query = `
-		DELETE 	FROM poller_execution
-		USING	application, project, pipeline
-		WHERE 	poller_execution.application_id = application.id
-		AND 	poller_execution.pipeline_id = pipeline.id
-		AND 	application.project_id = project.id
-	    AND 	application.name = $1
-		AND 	project.projectKey = $2
-		AND  	pipeline.name = $3`
-	res, err = db.Exec(query, appName, key, pipelineName)
-	if err != nil {
-		return err
-	}
-	n, _ = res.RowsAffected()
-	log.Debug("RemovePipeline> removed %d poller_execution", n)
 
 	// Delete application_pipeline link
 	query = `DELETE FROM application_pipeline

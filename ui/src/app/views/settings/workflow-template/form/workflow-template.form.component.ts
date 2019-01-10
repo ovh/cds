@@ -23,6 +23,7 @@ export class WorkflowTemplateFormComponent {
         }
 
         this._workflowTemplate = wt;
+        this.changeMessage = null;
 
         this.parameterKeys = [];
         this.parameterValues = {};
@@ -84,17 +85,16 @@ export class WorkflowTemplateFormComponent {
 
     pipelineValues: any;
     pipelineKeys: Array<number>;
-    pipelineValueAdd: string;
 
     applicationValues: any;
     applicationKeys: Array<number>;
-    applicationValueAdd: string;
 
     environmentValues: any;
     environmentKeys: Array<number>;
-    environmentValueAdd: string;
 
     user: User;
+
+    changeMessage: string;
 
     constructor(private _sharedService: SharedService) {
         this.templateParameterTypes = ['boolean', 'string', 'repository'];
@@ -146,6 +146,10 @@ export class WorkflowTemplateFormComponent {
         }
         this.workflowTemplate.group_id = Number(this.workflowTemplate.group_id);
 
+        if (this.changeMessage) {
+            this.workflowTemplate.change_message = this.changeMessage;
+        }
+
         this.save.emit();
     }
 
@@ -155,9 +159,7 @@ export class WorkflowTemplateFormComponent {
 
     clickAddPipeline() {
         let k = this.pipelineKeys.length;
-        this.pipelineKeys.push(k)
-        this.pipelineValues[k] = this.pipelineValueAdd;
-        this.pipelineValueAdd = '';
+        this.pipelineKeys.push(k);
     }
 
     clickRemovePipeline(key: number) {
@@ -167,9 +169,7 @@ export class WorkflowTemplateFormComponent {
 
     clickAddApplication() {
         let k = this.applicationKeys.length;
-        this.applicationKeys.push(k)
-        this.applicationValues[k] = this.applicationValueAdd;
-        this.applicationValueAdd = '';
+        this.applicationKeys.push(k);
     }
 
     clickRemoveApplication(key: number) {
@@ -179,9 +179,7 @@ export class WorkflowTemplateFormComponent {
 
     clickAddEnvironment() {
         let k = this.environmentKeys.length;
-        this.environmentKeys.push(k)
-        this.environmentValues[k] = this.environmentValueAdd;
-        this.environmentValueAdd = '';
+        this.environmentKeys.push(k);
     }
 
     clickRemoveEnvironment(key: number) {

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -13,6 +14,13 @@ import (
 
 	"github.com/ovh/cds/sdk"
 )
+
+var rxURL = regexp.MustCompile(`http[s]?:\/\/(.*)`)
+
+// IsURL returns if given path is a url according to the URL regex.
+func IsURL(path string) bool {
+	return rxURL.MatchString(path)
+}
 
 //GetFormat return a format
 func GetFormat(f string) (Format, error) {
@@ -27,6 +35,20 @@ func GetFormat(f string) (Format, error) {
 		return FormatTOML, nil
 	default:
 		return UnknownFormat, sdk.WithStack(ErrUnsupportedFormat)
+	}
+}
+
+//GetFormatStr return a format in string
+func GetFormatStr(f Format) (string, error) {
+	switch f {
+	case FormatJSON:
+		return "json", nil
+	case FormatTOML:
+		return "toml", nil
+	case FormatYAML:
+		return "yaml", nil
+	default:
+		return "", sdk.WithStack(ErrUnsupportedFormat)
 	}
 }
 
@@ -120,10 +142,40 @@ func OpenURL(u string, f string) (io.ReadCloser, Format, error) {
 	if err != nil {
 		return nil, format, err
 	}
-	var netClient = &http.Client{
+
+	netClient := &http.Client{
 		Timeout: time.Second * 10,
 	}
-
 	response, err := netClient.Get(u)
+	if err != nil {
+		return nil, format, err
+	}
+
 	return response.Body, format, err
+}
+
+// OpenPath opens an URL or a file
+func OpenPath(path string) (io.ReadCloser, Format, error) {
+	var contentFile io.ReadCloser
+	formatStr := "yaml"
+	if strings.HasSuffix(path, ".json") {
+		formatStr = "json"
+	}
+	format, _ := GetFormat(formatStr)
+
+	if rxURL.MatchString(path) {
+		var err error
+		contentFile, format, err = OpenURL(path, formatStr)
+		if err != nil {
+			return nil, format, err
+		}
+	} else {
+		f, err := os.Open(path)
+		if err != nil {
+			return nil, format, err
+		}
+		contentFile = f
+	}
+
+	return contentFile, format, nil
 }

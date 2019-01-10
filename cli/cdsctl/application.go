@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var applicationCmd = cli.Command{
@@ -101,12 +101,12 @@ func applicationDeleteRun(v cli.Values) error {
 
 var applicationImportCmd = cli.Command{
 	Name:  "import",
-	Short: "Import an application",
+	Short: "Import an application with a local filepath or an URL",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
 	Args: []cli.Arg{
-		{Name: "filename"},
+		{Name: "path"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -119,19 +119,15 @@ var applicationImportCmd = cli.Command{
 }
 
 func applicationImportRun(c cli.Values) error {
-	path := c.GetString("filename")
-	f, err := os.Open(path)
+	path := c.GetString("path")
+	contentFile, format, err := exportentities.OpenPath(path)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer contentFile.Close() //nolint
+	formatStr, _ := exportentities.GetFormatStr(format)
 
-	var format = "yaml"
-	if strings.HasSuffix(path, ".json") {
-		format = "json"
-	}
-
-	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), f, format, c.GetBool("force"))
+	msgs, err := client.ApplicationImport(c.GetString(_ProjectKey), contentFile, formatStr, c.GetBool("force"))
 	if err != nil {
 		if msgs != nil {
 			for _, msg := range msgs {

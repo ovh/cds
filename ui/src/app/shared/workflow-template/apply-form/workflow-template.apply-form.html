@@ -31,7 +31,7 @@
                     <div class="four wide field">
                         <sui-select class="selection" name="parameter-{{parameter.key}}-repo" [(ngModel)]="parameterValues[parameter.key + '-repository']"
                             [options]="parameterValues[parameter.key + '-repositories']" [isSearchable]="true"
-                            #repositorySelect>
+                            [optionsFilter]="filterRepo" #repositorySelect>
                             <sui-select-option *ngFor="let repository of repositorySelect.filteredOptions" [value]="repository">
                             </sui-select-option>
                         </sui-select>

@@ -93,25 +93,46 @@ func Test_putWorkflowImportHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(db)
 	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
-	pip := sdk.Pipeline{
+
+	pip := &sdk.Pipeline{
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
 	sdk.AddParameter(&pip.Parameter, "name", sdk.StringParameter, "value")
-	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, pip, u))
 
-	//Prepare request
-	vars := map[string]string{
-		"key":              proj.Key,
-		"permWorkflowName": "testtest",
-	}
-	uri := api.Router.GetRoute("PUT", api.putWorkflowImportHandler, vars)
+	// create the workflow
+	uri := api.Router.GetRoute("POST", api.postWorkflowHandler, map[string]string{
+		"permProjectKey": proj.Key,
+	})
 	test.NotEmpty(t, uri)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, nil)
+	var wf = &sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Type: sdk.NodeTypePipeline,
+				Name: "pip1",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf))
+	assert.Equal(t, 201, rec.Code)
 
-	body := `name: test_1
+	// update the workflow
+	uri = api.Router.GetRoute("PUT", api.putWorkflowImportHandler, map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": "test_1",
+	})
+	test.NotEmpty(t, uri)
+	body := `name: test_renamed
 version: v1.0
 workflow:
   pip1:
@@ -122,11 +143,10 @@ workflow:
     depends_on:
       - pip1
     pipeline: pip1`
+	req := assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, nil)
 	req.Body = ioutil.NopCloser(strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/x-yaml")
-
-	//Do the request
-	rec := httptest.NewRecorder()
+	rec = httptest.NewRecorder()
 	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 400, rec.Code)
 }

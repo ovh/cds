@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	coverage "github.com/sguiheux/go-coverage"
+	"github.com/sguiheux/go-coverage"
 	"gopkg.in/olivere/elastic.v5"
 
 	"github.com/ovh/cds/engine/api/services"
@@ -67,15 +67,15 @@ func GetMetrics(db gorp.SqlExecutor, key string, appID int64, metricName string)
 		return nil, sdk.WrapError(err, "Unable to get metrics")
 	}
 
-	events := make([]json.RawMessage, 0, len(esMetrics))
-	for _, h := range esMetrics {
-		events = append(events, *h.Source)
+	events := make([]json.RawMessage, len(esMetrics))
+	for i := range esMetrics {
+		events[len(esMetrics)-1-i] = *esMetrics[i].Source
 	}
 	return events, nil
 }
 
 // PushVulnerabilities Create metrics from vulnerabilities and send them
-func PushVulnerabilities(projKey string, appID int64, workflowID int64, num int64, summary map[string]int64) {
+func PushVulnerabilities(projKey string, appID int64, workflowID int64, num int64, summary map[string]float64) {
 	m := sdk.Metric{
 		Date:          time.Now(),
 		ProjectKey:    projKey,
@@ -99,11 +99,11 @@ func PushUnitTests(projKey string, appID int64, workflowID int64, num int64, tes
 		Num:           num,
 	}
 
-	summary := make(map[string]int, 3)
-	summary["total"] = tests.Total
-	summary["ko"] = tests.TotalKO
-	summary["ok"] = tests.TotalOK
-	summary["skip"] = tests.TotalSkipped
+	summary := make(map[string]float64, 3)
+	summary["total"] = float64(tests.Total)
+	summary["ko"] = float64(tests.TotalKO)
+	summary["ok"] = float64(tests.TotalOK)
+	summary["skip"] = float64(tests.TotalSkipped)
 
 	m.Value = summary
 

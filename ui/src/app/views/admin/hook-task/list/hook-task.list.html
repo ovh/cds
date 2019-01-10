@@ -1,0 +1,8 @@
+<div class="wrapper">
+  <app-breadcrumb [path]="path"></app-breadcrumb>
+  <app-scrollview class="scrollview">
+    <h2>{{dataCount}}</h2>
+    <app-data-table [withFilter]="filter" [withPagination]="20" [columns]="columns" [data]="tasks" (sortChange)="getAdminTasks($event)"
+      (dataChange)="dataChange($event)" [loading]="loading"></app-data-table>
+  </app-scrollview>
+</div>

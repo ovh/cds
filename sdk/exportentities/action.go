@@ -94,6 +94,10 @@ func newSteps(a sdk.Action) []Step {
 				if format != nil {
 					coverageArgs["format"] = format.Value
 				}
+				minimum := sdk.ParameterFind(&act.Parameters, "minimum")
+				if minimum != nil {
+					coverageArgs["minimum"] = minimum.Value
+				}
 				s["coverage"] = coverageArgs
 			case sdk.ArtifactDownload:
 				artifactDownloadArgs := map[string]string{}

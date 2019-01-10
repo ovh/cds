@@ -1,16 +1,24 @@
 package database
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/mholt/archiver"
 	"github.com/olekukonko/tablewriter"
 	"github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 //DBCmd is the root command for database management
@@ -23,8 +31,13 @@ var DBCmd = &cobra.Command{
 var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade schema",
-	Long:  "Migrates the database to the most recent version available.",
-	Run:   upgradeCmdFunc,
+	Long:  `Migrates the database to the most recent version available.`,
+	Example: `engine database upgrade --db-password=your-password --db-sslmode=disable --db-name=cds --migrate-dir=./sql
+
+# If the directory --migrate-dir is not up to date with the current version, this
+# directory will be automatically updated with the release from https://github.com/ovh/cds/releases
+	`,
+	Run: upgradeCmdFunc,
 }
 
 var downgradeCmd = &cobra.Command{
@@ -85,14 +98,112 @@ type statusRow struct {
 }
 
 func upgradeCmdFunc(cmd *cobra.Command, args []string) {
-	if err := ApplyMigrations(migrate.Up, sqlMigrateDryRun, sqlMigrateLimitUp); err != nil {
-		sdk.Exit("Error: %s\n", err)
+	source := migrate.FileMigrationSource{
+		Dir: sqlMigrateDir,
 	}
+
+	migrations, err := source.FindMigrations()
+	if err != nil {
+		sdk.Exit("Error: %v\n", err)
+	}
+
+	if sdk.VERSION != "snapshot" {
+		nbMigrateOnThisVersion, err := strconv.Atoi(sdk.DBMIGRATE)
+		if err == nil { // no err -> it's a real release
+			fmt.Printf("There are %d migrate files locally. Current engine needs %d files\n", len(migrations), nbMigrateOnThisVersion)
+			if nbMigrateOnThisVersion > len(migrations) {
+				fmt.Printf("This version %s should contains %d migrate files.\n", sdk.VERSION, nbMigrateOnThisVersion)
+				if err := downloadSQLTarGz(sdk.VERSION, "sql.tar.gz", sqlMigrateDir); err != nil {
+					sdk.Exit("Error on download sql.tar.gz: %v\n", err)
+				}
+				migrations, err := source.FindMigrations()
+				if err != nil {
+					sdk.Exit("Error: %v\n", err)
+				}
+				fmt.Printf("sql.tar.gz downloaded, there are now %d migrate files locally\n", len(migrations))
+			}
+		} else {
+			sdk.Exit("Invalid compilation flag DBMIGRATE")
+		}
+	}
+
+	if err := ApplyMigrations(migrate.Up, sqlMigrateDryRun, sqlMigrateLimitUp); err != nil {
+		sdk.Exit("Error: %v\n", err)
+	}
+}
+
+// downloadSQLTarGz downloads sql.tar.gz from github release corresponding to the current engine version
+// check status 200 on download
+// then write sql.tar.gz file in tmpdir
+// then unzip sql.tar.gz file
+// then move all sql file to sqlMigrateDir directory
+func downloadSQLTarGz(currentVersion string, artifactName string, migrateDir string) error {
+	if !strings.Contains(currentVersion, "+") {
+		return fmt.Errorf("invalid current version: %s, ersion must contains a '+'", currentVersion)
+	}
+	if _, err := os.Stat(migrateDir); os.IsNotExist(err) {
+		return fmt.Errorf("--migrate-dir does not exist: %s", migrateDir)
+	}
+	currentTag := currentVersion[:strings.LastIndex(currentVersion, "+")]
+	urlTarGZ := fmt.Sprintf("https://github.com/ovh/cds/releases/download/%s/%s", currentTag, artifactName)
+	fmt.Printf("Getting %s from github on %s...\n", artifactName, urlTarGZ)
+
+	httpClient := cdsclient.NewHTTPClient(60*time.Second, false)
+	resp, err := httpClient.Get(urlTarGZ)
+	if err != nil {
+		return fmt.Errorf("error while getting %s from Github: %v", artifactName, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		buf := new(bytes.Buffer)
+		if _, err := buf.ReadFrom(resp.Body); err == nil {
+			fmt.Printf("body returned from github: \n%s\n", buf.String())
+		}
+		return fmt.Errorf("error http code: %d, url called: %s", resp.StatusCode, urlTarGZ)
+	}
+
+	if err := sdk.CheckContentTypeBinary(resp); err != nil {
+		return fmt.Errorf("invalid content type: %s", err.Error())
+	}
+
+	tmpfile, err := ioutil.TempFile(os.TempDir(), artifactName)
+	if err != nil {
+		sdk.Exit(err.Error())
+	}
+	defer tmpfile.Close()
+
+	if _, err = io.Copy(tmpfile, resp.Body); err != nil {
+		return fmt.Errorf("error on creating file: %v", err.Error())
+	}
+
+	dest := tmpfile.Name() + "extract"
+	if err := archiver.TarGz.Open(tmpfile.Name(), dest); err != nil {
+		return fmt.Errorf("Unarchive %s failed: %v", artifactName, err)
+	}
+	// the directory dest/sql/ -> contains all sql files
+	fmt.Printf("Unarchive to %s\n", dest)
+
+	dirFiles := dest + "/sql"
+	files, err := ioutil.ReadDir(dirFiles)
+	if err != nil {
+		return fmt.Errorf("error on readDir %s", dirFiles)
+	}
+	for _, f := range files {
+		if strings.HasSuffix(f.Name(), ".sql") {
+			src := dirFiles + "/" + f.Name()
+			dest := migrateDir + "/" + filepath.Base(f.Name())
+			if err := os.Rename(src, dest); err != nil {
+				return fmt.Errorf("error on move %s to %s err:%v", src, dest, err)
+			}
+		}
+	}
+	return nil
 }
 
 func downgradeCmdFunc(cmd *cobra.Command, args []string) {
 	if err := ApplyMigrations(migrate.Down, sqlMigrateDryRun, sqlMigrateLimitDown); err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 }
 
@@ -100,7 +211,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 	var err error
 	connFactory, err = Init(connFactory.dbUser, connFactory.dbRole, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	source := migrate.FileMigrationSource{
@@ -109,12 +220,12 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 
 	migrations, err := source.FindMigrations()
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	records, err := migrate.GetMigrationRecords(connFactory.DB(), "postgres")
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
@@ -163,12 +274,12 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 	var err error
 	connFactory, err = Init(connFactory.dbUser, connFactory.dbRole, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	migrations, err := dbmigrate.Do(connFactory.DB, sqlMigrateDir, dir, dryrun, limit)
 	if err != nil {
-		sdk.Exit("Error: %s\n", err)
+		sdk.Exit("Error: %v\n", err)
 	}
 
 	if dryrun {

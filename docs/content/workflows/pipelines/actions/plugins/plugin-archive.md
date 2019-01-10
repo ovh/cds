@@ -12,8 +12,4 @@ This is a plugin to compress or uncompress an archive. Supported formats: .zip, 
 * **action**: "compress" or "uncompress" an archive
 
 
-## More
-
-More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/grpcplugins/action/archive/README.md)
-
 

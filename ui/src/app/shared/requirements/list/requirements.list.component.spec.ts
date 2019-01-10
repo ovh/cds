@@ -1,17 +1,17 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {RouterTestingModule} from '@angular/router/testing';
-import {SharedModule} from '../../shared.module';
-import {RequirementsListComponent} from './requirements.list.component';
-import {Requirement} from '../../../model/requirement.model';
-import {RequirementEvent} from '../requirement.event.model';
-import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {RequirementStore} from '../../../service/requirement/requirement.store';
-import {RequirementService} from '../../../service/requirement/requirement.service';
-import {APP_BASE_HREF} from '@angular/common';
+import { APP_BASE_HREF } from '@angular/common';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Requirement } from '../../../model/requirement.model';
+import { RequirementService } from '../../../service/requirement/requirement.service';
+import { RequirementStore } from '../../../service/requirement/requirement.store';
+import { WorkerModelService } from '../../../service/worker-model/worker-model.service';
+import { SharedModule } from '../../shared.module';
+import { RequirementEvent } from '../requirement.event.model';
+import { RequirementsListComponent } from './requirements.list.component';
 
 describe('CDS: Requirement List Component', () => {
 

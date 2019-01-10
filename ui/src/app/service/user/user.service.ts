@@ -1,12 +1,13 @@
 
-import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
-import {Groups} from '../../model/group.model';
-import {Token} from '../../model/token.model';
-import {User} from '../../model/user.model';
-import {AuthentificationStore} from '../auth/authentification.store';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Bookmark } from '../../model/bookmark.model';
+import { Groups } from '../../model/group.model';
+import { Token } from '../../model/token.model';
+import { User } from '../../model/user.model';
+import { AuthentificationStore } from '../auth/authentification.store';
 
 @Injectable()
 export class UserService {
@@ -133,5 +134,13 @@ export class UserService {
      */
     deleteUser(username: string): Observable<Response> {
         return this._http.delete<Response>('/user/' + username);
+    }
+
+    /**
+     * Get bookmarks for current user
+     * @returns {Observable<Bookmark>}
+     */
+    getBookmarks(): Observable<Bookmark[]> {
+        return this._http.get<Bookmark[]>('/bookmarks');
     }
 }

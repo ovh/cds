@@ -1,22 +1,22 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {debounceTime, finalize, first} from 'rxjs/operators';
-import {Parameter} from '../../../../model/parameter.model';
-import {Pipeline} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {Commit} from '../../../../model/repositories.model';
-import {WNode, WNodeContext, WNodeType, Workflow} from '../../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest} from '../../../../model/workflow.run.model';
-import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {WorkflowEventStore} from '../../../../service/workflow/workflow.event.store';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {ToastService} from '../../../toast/ToastService';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { cloneDeep } from 'lodash';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { ModalTemplate, SuiModalService, TemplateModalConfig } from 'ng2-semantic-ui';
+import { ActiveModal } from 'ng2-semantic-ui/dist';
+import { debounceTime, finalize, first } from 'rxjs/operators';
+import { Parameter } from '../../../../model/parameter.model';
+import { Pipeline } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { Commit } from '../../../../model/repositories.model';
+import { WNode, WNodeContext, WNodeType, Workflow } from '../../../../model/workflow.model';
+import { WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRun, WorkflowRunRequest } from '../../../../model/workflow.run.model';
+import { ApplicationWorkflowService } from '../../../../service/application/application.workflow.service';
+import { WorkflowRunService } from '../../../../service/workflow/run/workflow.run.service';
+import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.store';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import { ToastService } from '../../../toast/ToastService';
 declare var CodeMirror: any;
 
 @Component({
@@ -175,6 +175,9 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         let currentPayload = payload;
         if (!currentPayload) {
             currentPayload = this.getCurrentPayload();
+            if (this.readOnly) {
+                delete currentPayload['payload'];
+            }
             this.payloadString = JSON.stringify(currentPayload, undefined, 4);
         }
 
@@ -338,11 +341,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             request.number = this.nodeRun.num;
             request.from_nodes = [this.nodeRun.workflow_node_id];
         } else if (this.nodeToRun && this.num != null) {
-            if (this.nodeToRun.type !== 'join' || (this.workflowRun && this.workflowRun.version === 2)) {
-                request.from_nodes = [this.nodeToRun.id];
-            } else if (this.nodeToRun.type === 'join') {
-                request.from_nodes = this.nodeToRun.triggers.map(t => t.child_node.id);
-            }
+            request.from_nodes = [this.nodeToRun.id];
             request.number = this.num;
         }
 

@@ -159,7 +159,7 @@ func workflowRunManualRun(v cli.Values) error {
 		}
 		for _, wnrs := range wr.WorkflowNodeRuns {
 			for _, wnr := range wnrs {
-				wn := wr.Workflow.GetNode(wnr.WorkflowNodeID)
+				wn := wr.Workflow.WorkflowData.NodeByID(wnr.WorkflowNodeID)
 				if wn.Name == v.GetString("node-name") {
 					fromNodeID = wnr.WorkflowNodeID
 					break

@@ -27,15 +27,20 @@ To generate a new workflow from a template you should use the cdsctl. Then use t
 ```sh
 cdsctl template apply
 ```
-![Apply](/images/workflow_template_apply.gif)
+<asciinema-player src="/images/workflow_template_apply.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+
+You can also create a workflow from a template with the web UI.
+![Apply](/images/workflow_template_apply_ui.gif)
 
 ## Import/Create/Export
 With cdsctl you can import/export a template from/to yaml files with cdsctl, you can also create a template in the ui from **settings** menu:
 ```sh
-cdsctl template push ./my-template/*.yml
+cdsctl template push ./my-template/*.yml #from local files
+cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/tests/fixtures/template/simple/example-simple.yml #from remote files
+
 cdsctl template pull shared.infra/my-template --output-dir ./my-template
 ```
-![PullPush](/images/workflow_template_pull_push.gif)
+<asciinema-player src="/images/workflow_template_pull_push.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
 
 ## Delete/Change template group
 When removing a template, all info about the template and its instances are removed but all generated stuff will not be deleted.

@@ -6,7 +6,8 @@ BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 
 TARGET_DIR = ./dist
 TARGET_ENGINE = cds-engine
-TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_ENGINE)"
+DBMIGRATE = $(words $(wildcard sql/*.sql))
+TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.GOOS=$$GOOS -X github.com/ovh/cds/sdk.GOARCH=$$GOARCH -X github.com/ovh/cds/sdk.GITHASH=$(GITHASH) -X github.com/ovh/cds/sdk.BUILDTIME=$(BUILDTIME) -X github.com/ovh/cds/sdk.BINARY=$(TARGET_ENGINE) -X github.com/ovh/cds/sdk.DBMIGRATE=$(DBMIGRATE)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 
@@ -14,7 +15,7 @@ GO_BUILD = go build -v
 GO_LINT = ${GOPATH}/bin/gometalinter
 GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOVERALLS = ${GOPATH}/bin/goveralls
-GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
+GO_GOJUNIT = ${GOPATH}/bin/go-junit-report
 GO_COBERTURA = ${GOPATH}/bin/gocover-cobertura
 
 TEST_PKGS = $(shell go list ../... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
@@ -42,8 +43,8 @@ $(GO_COV_MERGE):
 $(GO_GOVERALLS):
 	go get -u github.com/mattn/goveralls
 
-$(GO_GO2XUNIT):
-	go get -u github.com/tebeka/go2xunit
+$(GO_GOJUNIT):
+	go get -u github.com/jstemmer/go-junit-report
 
 $(GO_COBERTURA):
 	go get -u github.com/t-yuki/gocover-cobertura
@@ -94,16 +95,20 @@ test: test-config clean
 	$(MAKE) test-xunit-report
 
 test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR) $(GO_COBERTURA)
-	@$(GO_COV_MERGE) ./**/*.coverprofile > $(TARGET_DIR)/cover.out
+	@echo "Generating unit tests coverage..."
+	@$(GO_COV_MERGE) `find ../ -name "*.coverprofile"` > $(TARGET_DIR)/cover.out
 	@$(GO_COBERTURA) < $(TARGET_DIR)/cover.out > $(TARGET_DIR)/coverage.xml
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
-ifneq ($(VERSION), snapshot)
-	echo "Pushing results to coveralls"
-	@$(GO_GOVERALLS) -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}
-endif
+	@if [ ! -z "${CDS_VERSION}" ]; then \
+		echo "Sending coverage report to CDS"; \
+		worker upload --tag "${CDS_VERSION}" $(abspath $(TARGET_DIR)/cover.html); \
+		echo "Pushing results to coveralls"; \
+		$(GO_GOVERALLS) -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}; \
+	fi;
 
 #  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
-test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
+test-xunit-report: $(GO_GOJUNIT) $(TARGET_DIR)
+	@echo "Generating xUnit Report..."
 	@for TST in `find .. -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
 			FAILED=`grep -E '(FAIL)+\s([a-z\.\/]*)\s\[build failed\]' $$TST | wc -l`; \
@@ -120,7 +125,7 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 						worker upload --tag `echo $$TST | sed 's|../||' | sed 's|./||' | sed 's|/|_|g') | sed 's|_tests.log||'` $(abspath $$TST); \
 					fi; \
 					echo "Generating xUnit report \t$$TST.xml"; \
-					$(GO_GO2XUNIT) -input $$TST -output $$TST.xml; \
+					cat $$TST | $(GO_GOJUNIT) > $$TST.xml; \
 				fi; \
 			fi; \
 		else \
@@ -129,38 +134,45 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	done; \
 	for XML in `find .. -name "tests.log.xml"`; do \
 		if [ "$$XML" =  "./tests.log.xml" ]; then \
-      PWD=`pwd`; \
+      		PWD=`pwd`; \
 		 	mv $$XML $(TARGET_DIR)/`basename $(PWD)`.xml; \
 		else \
-			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
+			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|../||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
 	done; \
-	for XML in `find .. -name "*.xml"`; do \
+	for XML in `find .. -name "*.xml" -not -path "../ui/*"`; do \
 		if [ -s $$XML ]; then \
-			echo "`xmllint --xpath "/testsuite/@name" $$XML | sed 's/name=//' | sed 's/"//g'`" \
-			"`xmllint --xpath "/testsuite/@tests" $$XML | sed 's/tests=//' | sed 's/"//g'` Tests :" \
-			"`xmllint --xpath "/testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'` Errors "\
-			"`xmllint --xpath "/testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'` Failures" \
-			"`xmllint --xpath "/testsuite/@skip" dist/api.xml | sed 's/skip=//' | sed 's/"//g'` Skipped" \
-			>> $(TARGET_DIR)/report; \
+			if grep -q 'name' $$XML; then \
+				echo "Generating report: " $$XML; \
+				echo "`xmllint --xpath "//testsuite/@name" $$XML | sed 's/name=//' | sed 's/"//g'`" \
+				"`xmllint --xpath "//testsuite/@tests" $$XML | sed 's/tests=//' | sed 's/"//g'` Tests :" \
+				"`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'` Errors ;"\
+				"`xmllint --xpath "//testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'` Failures;" \
+				"`xmllint --xpath "//testsuite/@skip" $$XML | sed 's/skip=//' | sed 's/"//g'` Skipped;" \
+				>> $(TARGET_DIR)/report; \
+			fi; \
 		fi; \
 	done; \
 	if [ -e $(TARGET_DIR)/report ]; then \
 		cat $(TARGET_DIR)/report; \
 	fi; \
-	for XML in `find .. -name "*.xml"`; do \
+	echo "#########################"; \
+	for XML in `find .. -name "*.xml" -not -path "../ui/*"`; do \
 		if [ -s $$XML ]; then \
-			if [ "`xmllint --xpath "/testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
-				echo "Tests failed";  \
-				exit 1;  \
+			if grep -q 'errors' $$XML; then \
+				if [ "`xmllint --xpath "//testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
+					echo "	$$XML : Tests failed";  \
+				fi; \
 			fi; \
-			if [ "`xmllint --xpath "/testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'`" -gt "0" ]; then  \
-				echo "Tests failed";  \
-				exit 1;  \
+			if grep -q 'failures' $$XML; then \
+				if [ "`xmllint --xpath "//testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'`" -gt "0" ]; then  \
+					echo "	$$XML : Tests failed";  \
+				fi; \
 			fi; \
 		fi; \
 	done; \
 	if [ -e $(TARGET_DIR)/fail ]; then \
+		echo "#########################"; \
 		echo "ERROR: Test compilation failure"; \
 		cat $(TARGET_DIR)/fail; \
 		exit 1; \

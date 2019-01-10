@@ -217,11 +217,11 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Info("events.Http: context done")
+				log.Debug("events.Http: context done")
 				b.chanRemoveClient <- client.UUID
 				break leave
 			case <-r.Context().Done():
-				log.Info("events.Http: client disconnected")
+				log.Debug("events.Http: client disconnected")
 				b.chanRemoveClient <- client.UUID
 				break leave
 			case <-tick.C:

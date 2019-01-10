@@ -13,10 +13,12 @@ var adminCmd = cli.Command{
 
 func adminCommands() []*cobra.Command {
 	return []*cobra.Command{
+		adminDatabase(),
 		adminServices(),
 		adminHooks(),
 		adminPlatformModels(),
 		adminMaintenance(),
+		adminMigrations(),
 		adminPlugins(),
 		adminBroadcasts(),
 		adminErrors(),

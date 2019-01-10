@@ -10,7 +10,7 @@
         <tbody>
         <tr *ngFor="let gp of getDataForCurrentPage()">
             <td class="middle-aligned">
-                {{ gp.group.name }}
+                <a [routerLink]="['/settings/group', gp.group.name]">{{ gp.group.name }}</a>
             </td>
             <td>
                 <div *ngIf="edit;then wPermission;else rPermission"></div>

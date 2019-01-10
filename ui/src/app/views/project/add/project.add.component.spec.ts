@@ -109,26 +109,14 @@ describe('CDS: Project Show Component', () => {
         expect(router.navigate).toHaveBeenCalled();
     });
 
-    it('it should generate an project key', () => {
-        let fixture = TestBed.createComponent(ProjectAddComponent);
-        fixture.componentInstance.generateKey('^r%t*$f#|m');
-        expect(fixture.componentInstance.project.key).toBe('RTFM');
-
-    });
-
     it('it should generate errors', () => {
         let fixture = TestBed.createComponent(ProjectAddComponent);
-        fixture.componentInstance.addSshKey = true;
         fixture.componentInstance.createProject();
 
         expect(fixture.componentInstance.nameError).toBeTruthy();
-        expect(fixture.componentInstance.keyError).toBeTruthy();
-        expect(fixture.componentInstance.sshError).toBeTruthy();
 
         // pattern error
-        fixture.componentInstance.project.key = 'aze';
         fixture.componentInstance.createProject();
-        expect(fixture.componentInstance.keyError).toBeTruthy();
     });
 });
 

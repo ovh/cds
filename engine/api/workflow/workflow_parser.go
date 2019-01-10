@@ -51,7 +51,7 @@ func Parse(proj *sdk.Project, ew *exportentities.Workflow, u *sdk.User) (*sdk.Wo
 }
 
 // ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
-func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, u *sdk.User, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
+func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, oldW *sdk.Workflow, ew *exportentities.Workflow, u *sdk.User, opts ImportOptions) (*sdk.Workflow, []sdk.Message, error) {
 	ctx, end := observability.Span(ctx, "workflow.ParseAndImport")
 	defer end()
 
@@ -94,7 +94,7 @@ func ParseAndImport(ctx context.Context, db gorp.SqlExecutor, store cache.Store,
 		}
 	}(&msgList)
 
-	globalError := Import(ctx, db, store, proj, w, u, opts.Force, msgChan, opts.DryRun)
+	globalError := Import(ctx, db, store, proj, oldW, w, u, opts.Force, msgChan, opts.DryRun)
 	close(msgChan)
 	done.Wait()
 

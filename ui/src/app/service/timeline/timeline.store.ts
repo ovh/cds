@@ -1,10 +1,10 @@
-import {Injectable} from '@angular/core';
-import {List} from 'immutable';
-import {BehaviorSubject, Observable} from 'rxjs/index';
-import {map} from 'rxjs/operators';
-import {Event} from '../../model/event.model';
-import {TimelineFilter} from '../../model/timeline.model';
-import {TimelineService} from './timeline.service';
+import { Injectable } from '@angular/core';
+import { List } from 'immutable';
+import { BehaviorSubject, Observable } from 'rxjs/index';
+import { map } from 'rxjs/operators';
+import { Event } from '../../model/event.model';
+import { TimelineFilter } from '../../model/timeline.model';
+import { TimelineService } from './timeline.service';
 
 @Injectable()
 export class TimelineStore {

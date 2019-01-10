@@ -3,57 +3,69 @@
 [![Join the chat at https://gitter.im/ovh-cds/Lobby](https://badges.gitter.im/ovh-cds/Lobby.svg)](https://gitter.im/ovh-cds/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ovh/cds)](https://goreportcard.com/report/github.com/ovh/cds)
 [![Coverage Status](https://coveralls.io/repos/github/ovh/cds/badge.svg?branch=master)](https://coveralls.io/github/ovh/cds?branch=master)
+[![GoDoc](https://godoc.org/github.com/ovh/cds/sdk/cdsclient?status.svg)](https://godoc.org/github.com/ovh/cds/sdk/cdsclient)
 
 <img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo-background.png" width="25%">
 
-CDS is a pipeline based Continuous Delivery Service written in Go(lang).
+CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Platform written in Go(lang).
 
 **This project is under active development**
 
-## Documentation
+**[Documentation](https://ovh.github.io/cds/)**
 
-Documentation is available [here](https://ovh.github.io/cds/)
 
-## Overview
+## Super intuitive UI
+CDS provides a super intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
 
-CDS is composed of several components
+<img src="./docs/static/images/capture-start.gif" alt="CDS Demonstration" width="80%">
 
-### Engine
 
-The core component of CDS: [read more](/engine/README.md)
+## The most powerful Command Line for a CI/CD Platform
 
-### WebUI
+cdsctl is the CDS Command Line - you can script everything with it, cdsctl also provide some cool commands as `cdsctl shell` to browse your projects and workflows without the need to open a browser.
 
-CDS Web UI: [read more](ui/README.md)
+[![cdsctl shell](https://asciinema.org/a/fTFpJ5uqClJ0Oq2EsiejGSeBk.svg)](https://asciinema.org/a/fTFpJ5uqClJ0Oq2EsiejGSeBk)
 
-### CLI
+[See all cdsctl commands](https://ovh.github.io/cds/cli/cdsctl/#see-also)
 
-CDS Command line interface: [read more](https://ovh.github.io/cds/cli/cdsctl/)
 
-### Worker
+## Want a try?
 
-In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](https://ovh.github.io/cds/worker/)
+Docker-Compose or Helm are your friends, see [Ready To Run Tutorials](https://ovh.github.io/cds/hosting/ready-to-run/)
 
-### Hatchery
+## FAQ
 
-In CDS, a hatchery is an agent which spawn workers: [read more](https://ovh.github.io/cds/hatchery/)
+### Why CDS? Discover the Origins
 
-### Contrib
+- [Self-Service](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#1-self-service)
+- [Horizontal Scalability](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#2-horizontal-scalability)
+- [High Availability](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#3-high-availability)
+- [Pipeline Reutilisability](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#4-pipeline-reutilisability)
+- [Rest API](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#5-rest-api)
+- [Customizable](https://ovh.github.io/cds/gettingstarted/concepts/why_cds/#6-customizable)
 
-Actions, Plugins, uServices are under: [read more](contrib)
+### What is a CDS workflow?
 
-### SDK
+Most of the CI/CD Tools play with jobs inside a pipeline. CDS introduce a new concept named `CDS Workflows`.
+A [CDS Workflow](https://ovh.github.io/cds/gettingstarted/concepts/workflow/) allows you to chain pipelines with triggers.
+A [pipeline](https://ovh.github.io/cds/gettingstarted/concepts/pipeline/) is structured in sequential [stages](https://ovh.github.io/cds/gettingstarted/concepts/stage/) containing one or multiple concurrent [jobs](https://ovh.github.io/cds/gettingstarted/concepts/job/).
 
-A Go(lang) SDK is available at [github.com/ovh/cds/sdk](https://github.com/ovh/cds/tree/master/sdk). It provides helper functions for all API handlers, with embedded authentication mechanism.
 
-[![GoDoc](https://godoc.org/github.com/ovh/cds/sdk?status.svg)](https://godoc.org/github.com/ovh/cds/sdk)
+### Can I use it in production?
 
-## Links
+Yes! CDS is used in production since 3y @OVH and launch more than 7M CDS workers per year. You can install the official release available on https://github.com/ovh/cds/releases
 
-* OVH home (us): https://www.ovh.com/us/
-* OVH home (fr): https://www.ovh.com/fr/
-* OVH community: https://community.ovh.com/c/open-source/continuous-delivery-service
+CDS provides everything needed to monitor and measure production activity (logs, metrics, monitoring)
+
+### How to backup?
+
+All data are stored in the database - nothing on filesystem. Just backup your database regularly and you will be safe.
+
+### Need some help?
+
+Core Team is available on [Gitter](https://gitter.im/ovh-cds/Lobby)
+
 
 ## License
 
-3-clause BSD
+[3-clause BSD](./LICENCE)

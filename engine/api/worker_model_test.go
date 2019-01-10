@@ -10,9 +10,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -106,6 +109,128 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 
 	test.Equal(t, "worker --api={{.API}}", newModel.ModelDocker.Cmd, "Main worker command is not good")
 	test.Equal(t, "THIS IS A TEST", newModel.ModelDocker.Envs["CDS_TEST"], "Worker model envs are not good")
+}
+
+func Test_WorkerModelUsage(t *testing.T) {
+	Test_DeleteAllWorkerModel(t)
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	u, pass := assets.InsertAdminUser(db)
+	assert.NotZero(t, u)
+
+	grName := sdk.RandomString(10)
+	gr := assets.InsertTestGroup(t, db, grName)
+	test.NotNil(t, gr)
+
+	model := sdk.Model{
+		Name:    "Test1" + grName,
+		GroupID: gr.ID,
+		Type:    sdk.Docker,
+		ModelDocker: sdk.ModelDocker{
+			Image: "buildpack-deps:jessie",
+			Shell: "sh -c",
+			Cmd:   "worker --api={{.API}}",
+			Envs: map[string]string{
+				"CDS_TEST": "THIS IS A TEST",
+			},
+		},
+		RegisteredCapabilities: sdk.RequirementList{
+			{
+				Name:  "capa1",
+				Type:  sdk.BinaryRequirement,
+				Value: "1",
+			},
+		},
+	}
+	test.NoError(t, worker.InsertWorkerModel(db, &model))
+
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
+	test.NoError(t, group.InsertUserInGroup(db, proj.ProjectGroups[0].Group.ID, u.ID, true))
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
+
+	//Insert Stage
+	stage := &sdk.Stage{
+		Name:          "stage_Test_0",
+		PipelineID:    pip.ID,
+		BuildOrder:    1,
+		Enabled:       true,
+		Prerequisites: []sdk.Prerequisite{},
+	}
+	pip.Stages = append(pip.Stages, *stage)
+
+	t.Logf("Insert Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
+	test.NoError(t, pipeline.InsertStage(db, stage))
+
+	//Insert Action
+	t.Logf("Insert Action script on Stage %s for Pipeline %s of Project %s", stage.Name, pip.Name, proj.Name)
+
+	job := &sdk.Job{
+		Action: sdk.Action{
+			Name:    "NewAction",
+			Enabled: true,
+			Requirements: []sdk.Requirement{
+				sdk.Requirement{
+					Name:  "Test1" + grName,
+					Type:  sdk.ModelRequirement,
+					Value: "Test1" + grName,
+				},
+			},
+		},
+		Enabled: true,
+	}
+	errJob := pipeline.InsertJob(db, job, stage.ID, &pip)
+	test.NoError(t, errJob)
+	assert.NotZero(t, job.PipelineActionID)
+	assert.NotZero(t, job.Action.ID)
+
+	proj, _ = project.LoadByID(db, api.Cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	wf := sdk.Workflow{
+		Name:       "workflow1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+	}
+	(&wf).RetroMigrate()
+
+	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u))
+
+	//Prepare request
+	vars := map[string]string{
+		"modelID": fmt.Sprintf("%d", model.ID),
+	}
+	uri := router.GetRoute("GET", api.getWorkerModelUsageHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	var pipelines []sdk.Pipeline
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &pipelines))
+
+	test.NotNil(t, pipelines)
+	test.Equal(t, 1, len(pipelines))
+	test.Equal(t, "pip1", pipelines[0].Name)
+	test.Equal(t, proj.Key, pipelines[0].ProjectKey)
 }
 
 func Test_addWorkerModelWithWrongRequest(t *testing.T) {

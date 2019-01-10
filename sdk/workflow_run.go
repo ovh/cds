@@ -54,7 +54,6 @@ type WorkflowRun struct {
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 	Header           WorkflowRunHeaders               `json:"header,omitempty" db:"-"`
-	Version          int                              `json:"version" db:"version" cli:"version"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
@@ -146,19 +145,9 @@ func (r *WorkflowRun) TagExists(tag string) bool {
 
 // TODO remove old struct
 func (r *WorkflowRun) RootRun() *WorkflowNodeRun {
-	var rootNodeRuns []WorkflowNodeRun
-	if r.Version == 2 {
-		var has bool
-		rootNodeRuns, has = r.WorkflowNodeRuns[r.Workflow.WorkflowData.Node.ID]
-		if !has || len(rootNodeRuns) < 1 {
-			return nil
-		}
-	} else {
-		var has bool
-		rootNodeRuns, has = r.WorkflowNodeRuns[r.Workflow.Root.ID]
-		if !has || len(rootNodeRuns) < 1 {
-			return nil
-		}
+	rootNodeRuns, has := r.WorkflowNodeRuns[r.Workflow.WorkflowData.Node.ID]
+	if !has || len(rootNodeRuns) < 1 {
+		return nil
 	}
 	rootRun := rootNodeRuns[0]
 	return &rootRun
@@ -465,12 +454,12 @@ func (w *WorkflowNodeRunArtifact) GetPath() string {
 }
 
 const workflowNodeRunReport = `{{- if .Stages }}
-CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+CDS Report {{.WorkflowNodeName}}#{{.Number}}.{{.SubNumber}} {{ if eq .Status "Success" -}} ✔ {{ else }}{{ if eq .Status "Fail" -}} ✘ {{ else }}{{ if eq .Status "Stopped" -}} ■ {{ else }}- {{ end }} {{ end }} {{ end }}
 {{- range $s := .Stages}}
 {{- if $s.RunJobs }}
 * {{$s.Name}}
 {{- range $j := $s.RunJobs}}
-  * {{$j.Job.Action.Name}} {{ if eq $j.Status "Success" -}} ✔ {{ else }}{{ if eq $j.Status "Fail" -}} ✘ {{ else }}- {{ end }} {{ end }}
+  * {{$j.Job.Action.Name}} {{ if eq $j.Status "Success" -}} ✔ {{ else }}{{ if eq $j.Status "Fail" -}} ✘ {{ else }}{{ if eq $j.Status "Stopped" -}} ■ {{ else }}- {{ end }} {{ end }} {{ end }}
 {{- end}}
 {{- end}}
 {{- end}}

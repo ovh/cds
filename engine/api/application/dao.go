@@ -17,13 +17,12 @@ import (
 
 const appRows = `
 application.id,
-application.name,
+application.name, 
 application.project_id,
 application.repo_fullname,
 application.repositories_manager_id,
 application.last_modified,
 application.metadata,
-application.workflow_migration,
 application.vcs_server,
 application.vcs_strategy,
 application.description
@@ -40,7 +39,6 @@ var LoadOptions = struct {
 	WithPipelines                  LoadOptionFunc
 	WithTriggers                   LoadOptionFunc
 	WithGroups                     LoadOptionFunc
-	WithHooks                      LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithClearKeys                  LoadOptionFunc
 	WithDeploymentStrategies       LoadOptionFunc
@@ -54,26 +52,12 @@ var LoadOptions = struct {
 	WithPipelines:                  &loadPipelines,
 	WithTriggers:                   &loadTriggers,
 	WithGroups:                     &loadGroups,
-	WithHooks:                      &loadHooks,
 	WithKeys:                       &loadKeys,
 	WithClearKeys:                  &loadClearKeys,
 	WithDeploymentStrategies:       &loadDeploymentStrategies,
 	WithClearDeploymentStrategies:  &loadDeploymentStrategiesWithClearPassword,
 	WithVulnerabilities:            &loadVulnerabilities,
 	WithIcon:                       &loadIcon,
-}
-
-// LoadOldApplicationWorkflowToClean load application to clean
-func LoadOldApplicationWorkflowToClean(db gorp.SqlExecutor) ([]sdk.Application, error) {
-	apps := []sdk.Application{}
-	query := fmt.Sprintf(`SELECT %s FROM application where workflow_migration = 'CLEANING'`, appRows)
-	if _, err := db.Select(&apps, query); err != nil {
-		if err == sql.ErrNoRows {
-			return apps, nil
-		}
-		return nil, sdk.WrapError(err, "Cannot load application to clean")
-	}
-	return apps, nil
 }
 
 // Exists checks if an application given its name exists
@@ -266,12 +250,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		return sdk.WrapError(err, "application is not valid")
 	}
 
-	switch proj.WorkflowMigration {
-	case "NOT_BEGUN":
-		app.WorkflowMigration = "NOT_BEGUN"
-	default:
-		app.WorkflowMigration = "DONE"
-	}
 	app.ProjectID = proj.ID
 	app.ProjectKey = proj.Key
 	app.LastModified = time.Now()
