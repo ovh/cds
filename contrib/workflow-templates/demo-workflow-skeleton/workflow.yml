@@ -1,0 +1,38 @@
+name: [[.name]]
+version: v1.0
+workflow:
+  build:
+    pipeline: build-[[.id]]
+    application: [[.name]]
+  deploy-dev:
+    pipeline: deploy-[[.id]]
+    application: [[.name]]
+    environment: [[.name]]-dev
+    depends_on:
+    - build
+  it-dev:
+    pipeline: it-[[.id]]
+    application: [[.name]]
+    environment: [[.name]]-dev
+    depends_on:
+    - deploy-dev
+  fork:
+    depends_on:
+    - it-dev
+  deploy-preprod:
+    pipeline: deploy-[[.id]]
+    application: [[.name]]
+    environment: [[.name]]-preprod
+    when:
+    - success
+    depends_on:
+    - fork
+  deploy-prod:   
+    pipeline: deploy-[[.id]]
+    application: [[.name]]
+    environment: [[.name]]-prod 
+    when:
+    - manual
+    - success
+    depends_on:
+    - fork
