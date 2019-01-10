@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/vcs/bitbucket"
+	"github.com/ovh/cds/engine/vcs/gerrit"
 	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/engine/vcs/gitlab"
 	"github.com/ovh/cds/sdk"
@@ -112,6 +113,14 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			serverCfg.Gitlab.Status.Disable,
 			serverCfg.Gitlab.Status.ShowDetail,
 		), nil
+	}
+	if serverCfg.Gerrit != nil {
+		return gerrit.New(
+			serverCfg.URL,
+			serverCfg.Gerrit.ProxyWebhook,
+			s.Cache,
+			serverCfg.Gerrit.Status.Disable,
+			serverCfg.Gerrit.Status.ShowDetail), nil
 	}
 	return nil, sdk.ErrNotFound
 }

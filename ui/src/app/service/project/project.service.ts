@@ -180,6 +180,22 @@ export class ProjectService {
     }
 
     /**
+     * Connect a project to a repo manager using basic auth
+     * @param key Project unique key
+     * @param repoName Reposytory name
+     * @param username Username to connect to the repo manager
+     * @param password Password user password
+     */
+    repoBasicAuth(key: string, repoName: string, username: string, password: string): Observable<Project> {
+        let request = {
+            'username': username,
+            'secret': password
+        };
+        let url = '/project/' + key + '/repositories_manager/' + repoName + '/authorize/basicauth';
+        return this._http.post<Project>(url, request);
+    }
+
+    /**
      * Send verifier code to link repomanager to project.
      * @param key Project unique key
      * @param repoName Repository manager name

@@ -394,6 +394,26 @@ export class ProjectStore {
     }
 
     /**
+     * Connect a projet to a repo manager using basic auth
+     * @param key
+     * @param repoName
+     * @param username
+     * @param password
+     */
+    verificationBasicAuthRepoManager(key: string, repoName: string, username: string, password: string): Observable<Project> {
+        return this._projectService.repoBasicAuth(key, repoName, username, password).pipe(map( res => {
+            let cache = this._projectCache.getValue();
+            let projectToUpdate = cache.get(key);
+            if (projectToUpdate) {
+                projectToUpdate.last_modified = res.last_modified;
+                projectToUpdate.vcs_servers = res.vcs_servers;
+                this._projectCache.next(cache.set(key, projectToUpdate));
+            }
+            return res;
+        }));
+    }
+
+    /**
      * Send verification code to connect repomanager on project
      * @param key Project unique key
      * @param repoName Repository name

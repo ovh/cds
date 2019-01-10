@@ -69,7 +69,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerAuth, "repositoriesManagerAuthorize> error with AuthorizeRedirect %s", err)
 		}
-		log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s", proj.Key, token, url)
+		log.Debug("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s", proj.Key, token, url)
 
 		data := map[string]string{
 			"project_key":          proj.Key,
@@ -78,6 +78,12 @@ func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 			"url":                  url,
 			"request_token":        token,
 			"username":             getUser(ctx).Username,
+		}
+
+		if token != "" {
+			data["auth_type"] = "oauth"
+		} else {
+			data["auth_type"] = "basic"
 		}
 
 		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
@@ -163,6 +169,74 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 
 		return nil
+	}
+}
+
+func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		rmName := vars["name"]
+
+		var tv map[string]interface{}
+		if err := service.UnmarshalBody(r, &tv); err != nil {
+			return err
+		}
+
+		var username, secret string
+		if tv["username"] != nil {
+			username = tv["username"].(string)
+		}
+		if tv["secret"] != nil {
+			secret = tv["secret"].(string)
+		}
+
+		if username == "" || secret == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "Cannot get token nor verifier from data")
+		}
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "Cannot load project")
+		}
+
+		tx, errT := api.mustDB().Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		vcsServerForProject := &sdk.ProjectVCSServer{
+			Name:     rmName,
+			Username: getUser(ctx).Username,
+			Data: map[string]string{
+				"token":  username,
+				"secret": secret,
+			},
+		}
+
+		if err := repositoriesmanager.InsertForProject(tx, proj, vcsServerForProject); err != nil {
+			return sdk.WrapError(err, "Error with SaveDataForProject")
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(ctx, tx, api.Cache, vcsServerForProject)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "Cannot get client: %s project:%s", err, proj.Key)
+		}
+
+		_, err = client.Repos(ctx)
+		if err != nil {
+			return sdk.WrapError(err, "unable to connect %s to %s: %v", proj.Key, rmName, err)
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(errT, "Cannot commit transaction")
+		}
+
+		event.PublishAddVCSServer(proj, vcsServerForProject.Name, getUser(ctx))
+
+		return service.WriteJSON(w, proj, http.StatusOK)
+
 	}
 }
 

@@ -33,6 +33,9 @@ export class RepoManagerFormComponent  {
     validationToken: string;
     private modalInstance: any;
 
+    basicUser: string;
+    basicPassword: string;
+
     constructor(private _repoManService: RepoManagerService, private _projectStore: ProjectStore,
                 private _toast: ToastService, public _translate: TranslateService) {
         this._repoManService.getAll().subscribe( res => {
@@ -61,6 +64,19 @@ export class RepoManagerFormComponent  {
                   });
             }
         }
+    }
+
+    sendBasicAuth(): void {
+        this.verificationLoading = true;
+        this._projectStore.verificationBasicAuthRepoManager(
+            this.project.key, this.reposManagerList[this.selectedRepoId], this.basicUser, this.basicPassword
+        ).subscribe( () => {
+            this.verificationLoading = false;
+            this.modalInstance.hide();
+            this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
+        }, () => {
+            this.verificationLoading = false;
+        });
     }
 
     sendVerificationCode(): void {

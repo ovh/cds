@@ -9,6 +9,8 @@ github.com/Microsoft/go-winio
 github.com/Nvveen/Gotty
 # github.com/Shopify/sarama v1.17.0
 github.com/Shopify/sarama
+# github.com/andygrunwald/go-gerrit v0.0.0-20181207071854-19ef3e9332a4
+github.com/andygrunwald/go-gerrit
 # github.com/aokoli/goutils v1.0.1
 github.com/aokoli/goutils
 # github.com/araddon/gou v0.0.0-20180315155215-820e9f87cd05

@@ -49,6 +49,7 @@ type ServerConfiguration struct {
 	Github    *GithubServerConfiguration    `toml:"github" json:"github,omitempty" json:"github"`
 	Gitlab    *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty" json:"gitlab"`
 	Bitbucket *BitbucketServerConfiguration `toml:"bitbucket" json:"bitbucket,omitempty" json:"bitbucket"`
+	Gerrit    *GerritServerConfiguration    `toml:"gerrit" json:"gerrit,omitempty" json:"gerrit"`
 }
 
 // GithubServerConfiguration represents the github configuration
@@ -166,4 +167,15 @@ func (s ServerConfiguration) check() error {
 	}
 
 	return nil
+}
+
+// GerritServerConfiguration represents the gerrit configuration
+type GerritServerConfiguration struct {
+	Status struct {
+		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
+		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
+	}
+	DisableWebHooks bool   `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisablePolling  bool   `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	ProxyWebhook    string `toml:"proxyWebhook" default:"https://myproxy.com" commented:"true" comment:"If you want to have a reverse proxy url for your repository webhook, for example if you put https://myproxy.com it will generate a webhook URL like this https://myproxy.com/UUID_OF_YOUR_WEBHOOK" json:"proxy_webhook"`
 }
