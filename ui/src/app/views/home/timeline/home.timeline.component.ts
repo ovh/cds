@@ -30,8 +30,11 @@ export class HomeTimelineComponent implements OnInit {
     filter: TimelineFilter
     filterSub: Subscription;
 
-    constructor(private _timelineStore: TimelineStore, private _translate: TranslateService,
-                private _toast: ToastService) {
+    constructor(private _timelineStore: TimelineStore,
+                private _translate: TranslateService,
+                private _toast: ToastService,
+                private _appService: AppService,
+                private _authStore: AuthentificationStore) {
     }
 
     ngOnInit(): void {
