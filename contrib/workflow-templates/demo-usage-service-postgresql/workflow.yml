@@ -1,3 +1,3 @@
-name: templates-service-postgresql
+name: [[.name]]
 version: v1.0
 pipeline: demo-service-postgresql

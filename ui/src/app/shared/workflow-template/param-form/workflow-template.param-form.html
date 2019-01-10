@@ -1,7 +1,7 @@
 <form class="ui form">
     <div class="ui grid">
         <div class="wide column">
-            <div *ngIf="workflowTemplate.parameters.length > 0" class="wide field">
+            <div *ngIf="workflowTemplate.parameters && workflowTemplate.parameters.length > 0" class="wide field">
                 <label>{{'common_parameters' | translate}}</label>
             </div>
             <ng-container *ngFor="let parameter of workflowTemplate.parameters; let index = index">

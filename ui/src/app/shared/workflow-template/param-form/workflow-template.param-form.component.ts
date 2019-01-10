@@ -31,11 +31,13 @@ export class WorkflowTemplateParamFormComponent implements OnChanges {
         }
 
         this.parameterValues = {};
-        this.workflowTemplate.parameters.forEach(parameter => {
-            if (parameter.type === 'boolean') {
-                this.parameterValues[parameter.key] = new FormControl();
-            }
-        });
+        if (this.workflowTemplate.parameters) {
+            this.workflowTemplate.parameters.forEach(parameter => {
+                if (parameter.type === 'boolean') {
+                    this.parameterValues[parameter.key] = new FormControl();
+                }
+            });
+        }
         this.fillFormWithInstanceData();
     }
 
