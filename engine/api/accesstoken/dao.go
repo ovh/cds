@@ -5,6 +5,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -58,6 +59,14 @@ func Delete(db gorp.SqlExecutor, token *sdk.AccessToken) error {
 
 // PostGet load all the groups for an access token
 func (a *accessToken) PostGet(db gorp.SqlExecutor) error {
+	// Load the user
+	u, err := user.LoadUserWithoutAuthByID(db, a.UserID)
+	if err != nil {
+		return err
+	}
+	a.User = *u
+
+	// Load the groups
 	var groupIDs []int64
 	if _, err := db.Select(&groupIDs, "select group_id from access_token_group where access_token_id = $1", a.ID); err != nil {
 		return sdk.WrapError(err, "unable to load group id for token %s", a.ID)

@@ -41,7 +41,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot unmarshal request")
 		}
 
-		user := getUser(ctx)
+		user := deprecatedGetUser(ctx)
 		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, user, project.LoadOptions.WithVariables, project.LoadOptions.WithClearKeys)
 		if errP != nil {
 			var username string
@@ -72,7 +72,7 @@ func (api *API) postTakeWorkflowJobHandler() service.Handler {
 			observability.Tag(observability.TagJob, pbj.Job.Action.Name))
 
 		// a worker can have only one group
-		groups := getUser(ctx).Groups
+		groups := deprecatedGetUser(ctx).Groups
 		if len(groups) != 1 {
 			return sdk.WrapError(errl, "Too many groups detected on worker:%d", len(groups))
 		}
@@ -325,7 +325,7 @@ func (api *API) postVulnerabilityReportHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to read body")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getUser(ctx))
+		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project by nodeJobRunID:%d", id)
 		}
@@ -392,7 +392,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 		dbWithCtx := api.mustDBWithCtx(customCtx)
 
 		_, next := observability.Span(ctx, "project.LoadProjectByNodeJobRunID")
-		proj, errP := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errP := project.LoadProjectByNodeJobRunID(ctx, dbWithCtx, api.Cache, id, deprecatedGetUser(ctx), project.LoadOptions.WithVariables)
 		next()
 		if errP != nil {
 			if sdk.ErrorIs(errP, sdk.ErrNoProject) {
@@ -550,7 +550,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 			return sdk.WrapError(err, "Unable to parse body")
 		}
 		db := api.mustDB()
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		if len(u.Groups) == 0 || u.Groups[0].ID == 0 {
 			return sdk.ErrForbidden
@@ -727,7 +727,7 @@ func (api *API) countWorkflowJobQueueHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		since, until, _ := getSinceUntilLimitHeader(ctx, w, r)
 		groupsID := []int64{}
-		usr := getUser(ctx)
+		usr := deprecatedGetUser(ctx)
 		for _, g := range usr.Groups {
 			groupsID = append(groupsID, g.ID)
 		}
@@ -774,8 +774,8 @@ func (api *API) getWorkflowJobQueueHandler() service.Handler {
 			return errM
 		}
 
-		groupsID := make([]int64, len(getUser(ctx).Groups))
-		usr := getUser(ctx)
+		groupsID := make([]int64, len(deprecatedGetUser(ctx).Groups))
+		usr := deprecatedGetUser(ctx)
 		for i, g := range usr.Groups {
 			groupsID[i] = g.ID
 		}
@@ -872,7 +872,7 @@ func (api *API) postWorkflowJobCoverageResultsHandler() service.Handler {
 			return sdk.WrapError(errLoad, "Unable to load coverage report")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getUser(ctx))
+		p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project by nodeJobRunID:%d", id)
 		}
@@ -965,7 +965,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() service.Handler {
 
 		// If we are on default branch, push metrics
 		if nr.VCSServer != "" && nr.VCSBranch != "" {
-			p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, getUser(ctx))
+			p, errP := project.LoadProjectByNodeJobRunID(ctx, api.mustDB(), api.Cache, id, deprecatedGetUser(ctx))
 			if errP != nil {
 				log.Error("postWorkflowJobTestsResultsHandler> Cannot load project by nodeJobRunID %d: %v", id, errP)
 				return nil

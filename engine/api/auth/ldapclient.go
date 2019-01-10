@@ -160,6 +160,10 @@ func (c *LDAPClient) Store() sessionstore.Store {
 	return c.store
 }
 
+func (c *LDAPClient) DeprecatedSession(ctx context.Context, sessionToken, username string) (context.Context, error) {
+	return c.local.DeprecatedSession(ctx, sessionToken, username)
+}
+
 func (c *LDAPClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error) {
 
 	//Check if its coming from CLI

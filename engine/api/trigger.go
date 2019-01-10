@@ -30,13 +30,13 @@ func (api *API) addTriggerHandler() service.Handler {
 
 		// load source ids
 		if t.SrcApplication.ID == 0 {
-			a, errSrcApp := application.LoadByName(api.mustDB(), api.Cache, key, t.SrcApplication.Name, getUser(ctx))
+			a, errSrcApp := application.LoadByName(api.mustDB(), api.Cache, key, t.SrcApplication.Name, deprecatedGetUser(ctx))
 			if errSrcApp != nil {
 				return sdk.WrapError(errSrcApp, "Cannot load src application")
 			}
 			t.SrcApplication.ID = a.ID
 		}
-		if !permission.AccessToApplication(key, t.SrcApplication.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToApplication(key, t.SrcApplication.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "You don't have enough right on this application %s", t.SrcApplication.Name)
 		}
 
@@ -47,7 +47,7 @@ func (api *API) addTriggerHandler() service.Handler {
 			}
 			t.SrcPipeline.ID = p.ID
 		}
-		if !permission.AccessToPipeline(key, sdk.DefaultEnv.Name, t.SrcPipeline.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToPipeline(key, sdk.DefaultEnv.Name, t.SrcPipeline.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "You don't have enough right on this pipeline %s", t.SrcPipeline.Name)
 		}
 
@@ -60,19 +60,19 @@ func (api *API) addTriggerHandler() service.Handler {
 		} else if t.SrcEnvironment.ID == 0 {
 			t.SrcEnvironment = sdk.DefaultEnv
 		}
-		if !permission.AccessToEnvironment(key, t.SrcEnvironment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(key, t.SrcEnvironment.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s: ", t.SrcEnvironment.Name)
 		}
 
 		// load destination ids
 		if t.DestApplication.ID == 0 {
-			a, errDestApp := application.LoadByName(api.mustDB(), api.Cache, key, t.DestApplication.Name, getUser(ctx))
+			a, errDestApp := application.LoadByName(api.mustDB(), api.Cache, key, t.DestApplication.Name, deprecatedGetUser(ctx))
 			if errDestApp != nil {
 				return sdk.WrapError(errDestApp, "Cannot load dst application")
 			}
 			t.DestApplication.ID = a.ID
 		}
-		if !permission.AccessToApplication(key, t.DestApplication.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToApplication(key, t.DestApplication.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "You don't have enough right on this application %s", t.DestApplication.Name)
 		}
 
@@ -83,7 +83,7 @@ func (api *API) addTriggerHandler() service.Handler {
 			}
 			t.DestPipeline.ID = p.ID
 		}
-		if !permission.AccessToPipeline(key, sdk.DefaultEnv.Name, t.DestPipeline.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToPipeline(key, sdk.DefaultEnv.Name, t.DestPipeline.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "You don't have enough right on this pipeline %s", t.DestPipeline.Name)
 		}
 
@@ -97,7 +97,7 @@ func (api *API) addTriggerHandler() service.Handler {
 			t.DestEnvironment = sdk.DefaultEnv
 		}
 
-		if !permission.AccessToEnvironment(key, t.DestEnvironment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(key, t.DestEnvironment.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", t.DestEnvironment.Name)
 		}
 
@@ -116,7 +116,7 @@ func (api *API) addTriggerHandler() service.Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, t.SrcApplication.Name, getUser(ctx), "", "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, t.SrcApplication.Name, deprecatedGetUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			return sdk.WrapError(errWorkflow, "Cannot load updated workflow")
 		}
@@ -156,7 +156,7 @@ func (api *API) getTriggersHandler() service.Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(api.mustDB(), api.Cache, key, app, getUser(ctx))
+		a, errApp := application.LoadByName(api.mustDB(), api.Cache, key, app, deprecatedGetUser(ctx))
 		if errApp != nil {
 			return sdk.WrapError(errApp, "Cannot load application")
 		}
@@ -174,7 +174,7 @@ func (api *API) getTriggersHandler() service.Handler {
 			}
 			envID = e.ID
 
-			if !permission.AccessToEnvironment(key, e.Name, getUser(ctx), permission.PermissionRead) {
+			if !permission.AccessToEnvironment(key, e.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
 				return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", e.Name)
 			}
 		}
@@ -219,7 +219,7 @@ func (api *API) deleteTriggerHandler() service.Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, deprecatedGetUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			return sdk.WrapError(errWorkflow, "Cannot load updated workflow")
 		}
@@ -265,7 +265,7 @@ func (api *API) updateTriggerHandler() service.Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, deprecatedGetUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			return sdk.WrapError(errWorkflow, "Cannot load updated workflow")
 		}
@@ -286,7 +286,7 @@ func (api *API) getTriggersAsSourceHandler() service.Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(api.mustDB(), api.Cache, key, app, getUser(ctx))
+		a, errApp := application.LoadByName(api.mustDB(), api.Cache, key, app, deprecatedGetUser(ctx))
 		if errApp != nil {
 			return sdk.WrapError(errApp, "Cannot load application")
 		}
@@ -304,7 +304,7 @@ func (api *API) getTriggersAsSourceHandler() service.Handler {
 			}
 			envID = e.ID
 
-			if !permission.AccessToEnvironment(key, e.Name, getUser(ctx), permission.PermissionRead) {
+			if !permission.AccessToEnvironment(key, e.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
 				return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s: ", e.Name)
 			}
 		}

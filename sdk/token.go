@@ -11,6 +11,32 @@ const (
 	AccessTokenStatusDisabled = "disabled"
 )
 
+// AccessTokenRequest a the type used by clients to ask a new access_token
+type AccessTokenRequest struct {
+	GroupsIDs             []int64 `json:"scope"`
+	Description           string  `json:"description"`
+	Origin                string  `json:"origin"`
+	ExpirationDelaySecond float64 `json:"expiration_delay_second"`
+}
+
+// GrantedUser is a user granted from a JWT token. It can be a service, a worker, a hatchery or a user
+type GrantedUser struct {
+	Fullname   string
+	Groups     []Group
+	OnBehalfOf User
+}
+
+func (g *GrantedUser) IsGranted() bool {
+	return g != nil
+}
+
+func (g *GrantedUser) IsRealUser() bool {
+	if !g.IsGranted() {
+		return false
+	}
+	return g.OnBehalfOf.Fullname == g.Fullname
+}
+
 // AccessToken is either a Personnal Access Token or a Group Access Token
 type AccessToken struct {
 	ID          string     `json:"id" cli:"-" db:"id"`

@@ -52,7 +52,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -69,7 +69,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineUpdate(key, p.Name, oldName, getUser(ctx))
+		event.PublishPipelineUpdate(key, p.Name, oldName, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, pipelineDB, http.StatusOK)
 	}
@@ -87,7 +87,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		}
 
 		db := api.mustDB()
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		proj, errP := project.Load(db, api.Cache, key, u)
 		if errP != nil {
@@ -150,7 +150,7 @@ func (api *API) getApplicationUsingPipelineHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load pipeline %s", name)
 		}
-		applications, err := application.LoadByPipeline(api.mustDB(), api.Cache, pipelineData.ID, getUser(ctx))
+		applications, err := application.LoadByPipeline(api.mustDB(), api.Cache, pipelineData.ID, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load applications using pipeline %s", name)
 		}
@@ -165,7 +165,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		proj, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		proj, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errl != nil {
 			return sdk.WrapError(errl, "AddPipeline: Cannot load %s", key)
 		}
@@ -196,7 +196,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		defer tx.Rollback()
 
 		p.ProjectID = proj.ID
-		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p, getUser(ctx)); err != nil {
+		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
@@ -216,7 +216,7 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineAdd(key, p, getUser(ctx))
+		event.PublishPipelineAdd(key, p, deprecatedGetUser(ctx))
 
 		p.Permission = permission.PermissionReadWriteExecute
 
@@ -253,14 +253,14 @@ func (api *API) getPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}
 
-		p.Permission = permission.PipelinePermission(projectKey, p.Name, getUser(ctx))
+		p.Permission = permission.PipelinePermission(projectKey, p.Name, deprecatedGetUser(ctx))
 
 		if withApp || withWorkflows || withEnvironments {
 			p.Usage = &sdk.Usage{}
 		}
 
 		if withApp {
-			apps, errA := application.LoadByPipeline(api.mustDB(), api.Cache, p.ID, getUser(ctx))
+			apps, errA := application.LoadByPipeline(api.mustDB(), api.Cache, p.ID, deprecatedGetUser(ctx))
 			if errA != nil {
 				return sdk.WrapError(errA, "getPipelineHandler> Cannot load applications using pipeline %s", p.Name)
 			}
@@ -299,7 +299,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		project, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		project, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
 				log.Warning("getPipelinesHandler: Cannot load %s: %s\n", key, err)
@@ -307,7 +307,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 			return err
 		}
 
-		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true, getUser(ctx))
+		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true, deprecatedGetUser(ctx))
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 				log.Warning("getPipelinesHandler>Cannot load pipelines: %s\n", err)
@@ -348,7 +348,7 @@ func (api *API) getPipelineHistoryHandler() service.Handler {
 			limit = 20
 		}
 
-		a, errln := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithPipelines)
+		a, errln := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, deprecatedGetUser(ctx), application.LoadOptions.WithPipelines)
 		if errln != nil {
 			return sdk.WrapError(errln, "getPipelineHistoryHandler> Cannot load application %s", appName)
 		}
@@ -376,7 +376,7 @@ func (api *API) getPipelineHistoryHandler() service.Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", envName)
 		}
 
@@ -414,7 +414,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project")
 		}
@@ -452,7 +452,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot delete pipeline audit")
 		}
 
-		if err := pipeline.DeletePipeline(tx, p.ID, getUser(ctx).ID); err != nil {
+		if err := pipeline.DeletePipeline(tx, p.ID, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete pipeline %s", pipelineName)
 		}
 
@@ -460,7 +460,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineDelete(key, *p, getUser(ctx))
+		event.PublishPipelineDelete(key, *p, deprecatedGetUser(ctx))
 		return nil
 	}
 }
@@ -480,7 +480,7 @@ func (api *API) getPipelineCommitsHandler() service.Handler {
 		hash := r.Form.Get("hash")
 
 		// Load project
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getPipelineCommitsHandler> Cannot load project")
 		}
@@ -503,12 +503,12 @@ func (api *API) getPipelineCommitsHandler() service.Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getPipelineCommitsHandler> No enough right on this environment %s (user=%s)", envName, getUser(ctx).Username)
+		if !permission.AccessToEnvironment(projectKey, env.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
+			return sdk.WrapError(sdk.ErrForbidden, "getPipelineCommitsHandler> No enough right on this environment %s (user=%s)", envName, deprecatedGetUser(ctx).Username)
 		}
 
 		//Load the application
-		app, errapp := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
+		app, errapp := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, deprecatedGetUser(ctx))
 		if errapp != nil {
 			return sdk.WrapError(errapp, "getPipelineCommitsHandler> Unable to load application %s", appName)
 		}

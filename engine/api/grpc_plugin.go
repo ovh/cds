@@ -22,7 +22,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 		db := api.mustDB()
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WithStack(err)
@@ -114,7 +114,7 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		defer tx.Rollback() //nolint
 
 		if p.Type == sdk.GRPCPluginAction {
-			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, getUser(ctx).ID); err != nil {
+			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, deprecatedGetUser(ctx).ID); err != nil {
 				return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
 			}
 		}

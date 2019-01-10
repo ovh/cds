@@ -38,7 +38,7 @@ func (api *API) getPipelineBuildTriggeredHandler() service.Handler {
 		}
 
 		// Load Application
-		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
@@ -81,7 +81,7 @@ func (api *API) deleteBuildHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}
 
-		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
@@ -96,7 +96,7 @@ func (api *API) deleteBuildHandler() service.Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", envName)
 		}
 
@@ -141,7 +141,7 @@ func (api *API) getBuildStateHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}
 
-		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
@@ -156,7 +156,7 @@ func (api *API) getBuildStateHandler() service.Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s: ", envName)
 		}
 
@@ -178,7 +178,7 @@ func (api *API) getBuildStateHandler() service.Handler {
 		// load pipeline_build.id
 		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.mustDB(), a.ID, p.ID, env.ID, buildNumber)
 		if err != nil {
-			return sdk.WrapError(err, "%s! Cannot load last pipeline build for %s-%s-%s[%s] (buildNUmber:%d)", getUser(ctx).Username, projectKey, appName, pipelineName, env.Name, buildNumber)
+			return sdk.WrapError(err, "%s! Cannot load last pipeline build for %s-%s-%s[%s] (buildNUmber:%d)", deprecatedGetUser(ctx).Username, projectKey, appName, pipelineName, env.Name, buildNumber)
 		}
 
 		if withArtifacts == "true" {
@@ -224,7 +224,7 @@ func (api *API) getBuildTestResultsHandler() service.Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s: ", envName)
 		}
 
@@ -235,7 +235,7 @@ func (api *API) getBuildTestResultsHandler() service.Handler {
 		}
 
 		// Check that application exists
-		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}

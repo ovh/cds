@@ -119,7 +119,11 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 
 // UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.
 func UnmarshalBody(r *http.Request, i interface{}) error {
-	data, err := ioutil.ReadAll(r.Body)
+	body, err := r.GetBody()
+	if err != nil {
+		return sdk.NewError(sdk.ErrWrongRequest, err)
+	}
+	data, err := ioutil.ReadAll(body)
 	if err != nil {
 		return sdk.NewError(sdk.ErrWrongRequest, err)
 	}

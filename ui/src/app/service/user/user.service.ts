@@ -113,7 +113,7 @@ export class UserService {
      * @param username username of the user to get
      * @returns {Observable<User>}
      */
-    getUser(username: string): Observable<User> {
+    deprecatedGetUser(username: string): Observable<User> {
         return this._http.get<User>('/user/' + username);
     }
 

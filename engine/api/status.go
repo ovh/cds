@@ -75,12 +75,12 @@ func (api *API) statusHandler() service.Handler {
 
 func (api *API) smtpPingHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if getUser(ctx) == nil {
+		if deprecatedGetUser(ctx) == nil {
 			return sdk.ErrForbidden
 		}
 
 		message := "mail sent"
-		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), getUser(ctx).Email, false); err != nil {
+		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), deprecatedGetUser(ctx).Email, false); err != nil {
 			message = err.Error()
 		}
 

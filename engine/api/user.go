@@ -27,7 +27,7 @@ func (api *API) deleteUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !getUser(ctx).Admin && username != getUser(ctx).Username {
+		if !deprecatedGetUser(ctx).Admin && username != deprecatedGetUser(ctx).Username {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
@@ -60,7 +60,7 @@ func (api *API) getUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !getUser(ctx).Admin && username != getUser(ctx).Username {
+		if !deprecatedGetUser(ctx).Admin && username != deprecatedGetUser(ctx).Username {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
@@ -83,7 +83,7 @@ func (api *API) getUserGroupsHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !getUser(ctx).Admin && username != getUser(ctx).Username {
+		if !deprecatedGetUser(ctx).Admin && username != deprecatedGetUser(ctx).Username {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
@@ -119,7 +119,7 @@ func (api *API) updateUserHandler() service.Handler {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !getUser(ctx).Admin && username != getUser(ctx).Username {
+		if !deprecatedGetUser(ctx).Admin && username != deprecatedGetUser(ctx).Username {
 			return service.WriteJSON(w, nil, http.StatusForbidden)
 		}
 
@@ -178,7 +178,7 @@ func (api *API) getUserLoggedHandler() service.Handler {
 
 func (api *API) getTimelineFilterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 		filter, err := user.LoadTimelineFilter(api.mustDB(), u)
 		if err != nil {
 			return sdk.WrapError(err, "getTimelineFilterHandler")
@@ -189,7 +189,7 @@ func (api *API) getTimelineFilterHandler() service.Handler {
 
 func (api *API) postTimelineFilterHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 		var timelineFilter sdk.TimelineFilter
 		if err := service.UnmarshalBody(r, &timelineFilter); err != nil {
 			return sdk.WrapError(err, "Unable to read body")
@@ -221,26 +221,26 @@ func (api *API) postUserFavoriteHandler() service.Handler {
 			return err
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, params.ProjectKey, getUser(ctx), project.LoadOptions.WithPlatforms, project.LoadOptions.WithFavorites)
+		p, err := project.Load(api.mustDB(), api.Cache, params.ProjectKey, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms, project.LoadOptions.WithFavorites)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
 		switch params.Type {
 		case "workflow":
-			wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, params.WorkflowName, getUser(ctx), workflow.LoadOptions{WithFavorites: true})
+			wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, p, params.WorkflowName, deprecatedGetUser(ctx), workflow.LoadOptions{WithFavorites: true})
 			if errW != nil {
 				return sdk.WrapError(errW, "postUserFavoriteHandler> Cannot load workflow %s/%s", params.ProjectKey, params.WorkflowName)
 			}
 
-			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, getUser(ctx), !wf.Favorite); err != nil {
+			if err := workflow.UpdateFavorite(api.mustDB(), wf.ID, deprecatedGetUser(ctx), !wf.Favorite); err != nil {
 				return sdk.WrapError(err, "Cannot change workflow %s/%s favorite", params.ProjectKey, params.WorkflowName)
 			}
 			wf.Favorite = !wf.Favorite
 
 			return service.WriteJSON(w, wf, http.StatusOK)
 		case "project":
-			if err := project.UpdateFavorite(api.mustDB(), p.ID, getUser(ctx), !p.Favorite); err != nil {
+			if err := project.UpdateFavorite(api.mustDB(), p.ID, deprecatedGetUser(ctx), !p.Favorite); err != nil {
 				return sdk.WrapError(err, "Cannot change workflow %s favorite", p.Key)
 			}
 			p.Favorite = !p.Favorite
@@ -562,9 +562,9 @@ func (api *API) importUsersHandler() service.Handler {
 
 func (api *API) getUserTokenListHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		tokens, err := token.LoadTokens(api.mustDB(), getUser(ctx))
+		tokens, err := token.LoadTokens(api.mustDB(), deprecatedGetUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load group for user %s", getUser(ctx).Username)
+			return sdk.WrapError(err, "Cannot load group for user %s", deprecatedGetUser(ctx).Username)
 		}
 
 		return service.WriteJSON(w, tokens, http.StatusOK)
@@ -579,7 +579,7 @@ func (api *API) getUserTokenHandler() service.Handler {
 			return sdk.ErrTokenNotFound
 		}
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load token for user %s", getUser(ctx).Username)
+			return sdk.WrapError(err, "Cannot load token for user %s", deprecatedGetUser(ctx).Username)
 		}
 		tok.Token = ""
 

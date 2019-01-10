@@ -17,8 +17,8 @@ import (
 )
 
 func (api *API) deleteUserPermissionCache(ctx context.Context, store cache.Store) {
-	if getUser(ctx) != nil {
-		username := getUser(ctx).Username
+	if deprecatedGetUser(ctx) != nil {
+		username := deprecatedGetUser(ctx).Username
 		kp := cache.Key("users", username, "perms")
 		kg := cache.Key("users", username, "groups")
 		store.Delete(kp)

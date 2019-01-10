@@ -13,7 +13,7 @@ import (
 )
 
 func Test_verifyToken(t *testing.T) {
-	test.NoError(t, Init("cds_test", TestKey))
+	test.NoError(t, Init("cds_test", test.TestKey))
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -32,7 +32,7 @@ func Test_verifyToken(t *testing.T) {
 }
 
 func TestIsValid(t *testing.T) {
-	Init("cds_test", TestKey)
+	Init("cds_test", test.TestKey)
 	db, _, end := test.SetupPG(t, bootstrap.InitiliazeDB)
 	defer end()
 
@@ -44,7 +44,7 @@ func TestIsValid(t *testing.T) {
 	test.NoError(t, err)
 
 	test.NoError(t, Insert(db, &token))
-	isValid, err := IsValid(db, jwtToken)
+	_, isValid, err := IsValid(db, jwtToken)
 	test.NoError(t, err)
 	assert.True(t, isValid)
 
@@ -53,7 +53,27 @@ func TestIsValid(t *testing.T) {
 	jwtToken2, err := Regen(&token)
 	test.NoError(t, err)
 
-	isValid, err = IsValid(db, jwtToken2)
+	_, isValid, err = IsValid(db, jwtToken2)
 	test.NoError(t, err)
+	assert.False(t, isValid)
+}
+
+func TestXSRFToken(t *testing.T) {
+	Init("cds_test", test.TestKey)
+	db, cache, end := test.SetupPG(t, bootstrap.InitiliazeDB)
+	defer end()
+
+	usr1, _ := assets.InsertLambdaUser(db)
+	grp1 := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+
+	exp := time.Now().Add(5 * time.Minute)
+	token, _, err := New(*usr1, []sdk.Group{*grp1}, "cds_test", "cds test", &exp)
+	test.NoError(t, err)
+
+	x := StoreXSRFToken(cache, token)
+	isValid := CheckXSRFToken(cache, token, x)
+	assert.True(t, isValid)
+
+	isValid = CheckXSRFToken(cache, token, sdk.UUID())
 	assert.False(t, isValid)
 }

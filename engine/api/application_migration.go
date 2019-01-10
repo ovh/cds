@@ -20,7 +20,7 @@ func (api *API) migrationApplicationWorkflowCleanHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications, project.LoadOptions.WithEnvironments)
 		if errP != nil {
@@ -80,7 +80,7 @@ func getApplicationFromCDPipeline(tree sdk.CDPipeline, appIDs *map[int64]bool) {
 
 func (api *API) migrationApplicationWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]

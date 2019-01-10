@@ -83,7 +83,7 @@ func (api *API) deleteActionHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := action.DeleteAction(tx, a.ID, getUser(ctx).ID); err != nil {
+		if err := action.DeleteAction(tx, a.ID, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete action %s", name)
 		}
 
@@ -91,7 +91,7 @@ func (api *API) deleteActionHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishActionDelete(*a, getUser(ctx))
+		event.PublishActionDelete(*a, deprecatedGetUser(ctx))
 
 		return nil
 	}
@@ -123,7 +123,7 @@ func (api *API) updateActionHandler() service.Handler {
 
 		a.ID = actionDB.ID
 
-		if err = action.UpdateActionDB(tx, &a, getUser(ctx).ID); err != nil {
+		if err = action.UpdateActionDB(tx, &a, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "updateAction: Cannot update action")
 		}
 
@@ -131,7 +131,7 @@ func (api *API) updateActionHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishActionUpdate(*actionDB, a, getUser(ctx))
+		event.PublishActionUpdate(*actionDB, a, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, a, http.StatusOK)
 	}
@@ -169,7 +169,7 @@ func (api *API) addActionHandler() service.Handler {
 			return err
 		}
 
-		event.PublishActionAdd(a, getUser(ctx))
+		event.PublishActionAdd(a, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, a, http.StatusOK)
 	}
@@ -287,7 +287,7 @@ func (api *API) importActionHandler() service.Handler {
 
 		//Update or Insert the action
 		if exist {
-			if err := action.UpdateActionDB(tx, a, getUser(ctx).ID); err != nil {
+			if err := action.UpdateActionDB(tx, a, deprecatedGetUser(ctx).ID); err != nil {
 				return err
 			}
 			code = 200
@@ -304,9 +304,9 @@ func (api *API) importActionHandler() service.Handler {
 		}
 
 		if exist {
-			event.PublishActionUpdate(*existingAction, *a, getUser(ctx))
+			event.PublishActionUpdate(*existingAction, *a, deprecatedGetUser(ctx))
 		} else {
-			event.PublishActionAdd(*a, getUser(ctx))
+			event.PublishActionAdd(*a, deprecatedGetUser(ctx))
 		}
 
 		return service.WriteJSON(w, a, code)

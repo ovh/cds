@@ -50,12 +50,12 @@ func (api *API) getVariablesHandler() service.Handler {
 		appVar := []string{}
 		if appName != "" {
 			// Check permission on application
-			app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithVariables)
+			app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, deprecatedGetUser(ctx), application.LoadOptions.WithVariables)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot Load application")
 			}
 
-			if !permission.AccessToApplication(projectKey, app.Name, getUser(ctx), permission.PermissionRead) {
+			if !permission.AccessToApplication(projectKey, app.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
 				return sdk.WrapError(sdk.ErrForbidden, "getVariablesHandler> Not allow to access to this application: %s", appName)
 			}
 

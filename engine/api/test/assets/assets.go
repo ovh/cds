@@ -11,9 +11,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -277,4 +279,81 @@ func NewAuthentifiedRequest(t *testing.T, u *sdk.User, pass, method, uri string,
 	AuthentifyRequest(t, req, u, pass)
 
 	return req
+}
+
+// NewJWTAuthentifiedRequest prepare a request
+func NewJWTAuthentifiedRequest(t *testing.T, jwt string, method, uri string, i interface{}) *http.Request {
+	var btes []byte
+	var err error
+	if i != nil {
+		btes, err = json.Marshal(i)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+	}
+
+	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	auth := "Bearer " + jwt
+	req.Header.Add("Authorization", auth)
+
+	return req
+}
+
+// NewXSRFJWTAuthentifiedRequest prepare a request
+func NewXSRFJWTAuthentifiedRequest(t *testing.T, jwt, xsrf string, method, uri string, i interface{}) *http.Request {
+	var btes []byte
+	var err error
+	if i != nil {
+		btes, err = json.Marshal(i)
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+	}
+
+	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
+
+	req.Header.Add("X-XSRF-TOKEN", xsrf)
+	c := http.Cookie{
+		Name:  "jwt",
+		Value: jwt,
+	}
+
+	req.AddCookie(&c)
+	return req
+}
+
+func NewJWTToken(t *testing.T, db gorp.SqlExecutor, u sdk.User, groups ...sdk.Group) (string, error) {
+	expiration := time.Now().Add(5 * time.Minute)
+	token, jwt, err := accesstoken.New(u, groups, "test", "test", &expiration)
+	if err != nil {
+		return "", err
+	}
+	err = accesstoken.Insert(db, &token)
+	return jwt, err
+}
+
+func NewJWTTokenWithXSRF(t *testing.T, db gorp.SqlExecutor, store cache.Store, u sdk.User, groups ...sdk.Group) (string, string, error) {
+	expiration := time.Now().Add(5 * time.Minute)
+	token, jwt, err := accesstoken.New(u, groups, "test", "test", &expiration)
+	if err != nil {
+		return "", "", err
+	}
+	err = accesstoken.Insert(db, &token)
+	if err != nil {
+		return "", "", err
+	}
+
+	xsrf := accesstoken.StoreXSRFToken(store, token)
+	return jwt, xsrf, err
 }

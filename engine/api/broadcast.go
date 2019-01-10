@@ -27,7 +27,7 @@ func (api *API) addBroadcastHandler() service.Handler {
 		bc.Updated = now
 
 		if bc.ProjectKey != "" {
-			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, getUser(ctx))
+			proj, errProj := project.Load(api.mustDB(), api.Cache, bc.ProjectKey, deprecatedGetUser(ctx))
 			if errProj != nil {
 				return sdk.WrapError(sdk.ErrNoProject, "Cannot load %s", bc.ProjectKey)
 			}
@@ -38,7 +38,7 @@ func (api *API) addBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot add broadcast")
 		}
 
-		event.PublishBroadcastAdd(bc, getUser(ctx))
+		event.PublishBroadcastAdd(bc, deprecatedGetUser(ctx))
 		return service.WriteJSON(w, bc, http.StatusCreated)
 	}
 }
@@ -50,7 +50,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 			return sdk.WrapError(errr, "Invalid id")
 		}
 
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 		oldBC, err := broadcast.LoadByID(api.mustDB(), broadcastID, u)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcast by id")
@@ -90,7 +90,7 @@ func (api *API) updateBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to commit transaction")
 		}
 
-		event.PublishBroadcastUpdate(*oldBC, bc, getUser(ctx))
+		event.PublishBroadcastUpdate(*oldBC, bc, deprecatedGetUser(ctx))
 		return service.WriteJSON(w, bc, http.StatusOK)
 	}
 }
@@ -102,7 +102,7 @@ func (api *API) postMarkAsReadBroadcastHandler() service.Handler {
 			return sdk.WrapError(errr, "Invalid id")
 		}
 
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 		br, errL := broadcast.LoadByID(api.mustDB(), broadcastID, u)
 		if errL != nil {
 			return sdk.WrapError(errL, "Cannot load broadcast by id")
@@ -138,7 +138,7 @@ func (api *API) deleteBroadcastHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishBroadcastDelete(broadcastID, getUser(ctx))
+		event.PublishBroadcastDelete(broadcastID, deprecatedGetUser(ctx))
 		return nil
 	}
 }
@@ -150,7 +150,7 @@ func (api *API) getBroadcastHandler() service.Handler {
 			return sdk.WrapError(errr, "Invalid id")
 		}
 
-		broadcast, err := broadcast.LoadByID(api.mustDB(), id, getUser(ctx))
+		broadcast, err := broadcast.LoadByID(api.mustDB(), id, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcasts")
 		}
@@ -161,7 +161,7 @@ func (api *API) getBroadcastHandler() service.Handler {
 
 func (api *API) getBroadcastsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		broadcasts, err := broadcast.LoadAll(api.mustDB(), getUser(ctx))
+		broadcasts, err := broadcast.LoadAll(api.mustDB(), deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load broadcasts")
 		}

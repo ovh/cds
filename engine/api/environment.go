@@ -32,7 +32,7 @@ func (api *API) getEnvironmentsHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		environments, errEnv := environment.LoadEnvironments(tx, projectKey, true, getUser(ctx))
+		environments, errEnv := environment.LoadEnvironments(tx, projectKey, true, deprecatedGetUser(ctx))
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "getEnvironmentsHandler> Cannot load environments from db")
 		}
@@ -89,7 +89,7 @@ func (api *API) getEnvironmentHandler() service.Handler {
 			env.Usage.Pipelines = pips
 		}
 
-		env.Permission = permission.EnvironmentPermission(projectKey, env.Name, getUser(ctx))
+		env.Permission = permission.EnvironmentPermission(projectKey, env.Name, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, env, http.StatusOK)
 	}
@@ -139,7 +139,7 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addEnvironmentHandler> Cannot load %s", key)
 		}
@@ -174,12 +174,12 @@ func (api *API) addEnvironmentHandler() service.Handler {
 		}
 
 		var errEnvs error
-		proj.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), proj.Key, true, getUser(ctx))
+		proj.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), proj.Key, true, deprecatedGetUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
 
-		event.PublishEnvironmentAdd(key, env, getUser(ctx))
+		event.PublishEnvironmentAdd(key, env, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, proj, http.StatusOK)
 	}
@@ -192,7 +192,7 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 		projectKey := vars["key"]
 		environmentName := vars["permEnvironmentName"]
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -219,10 +219,10 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentDelete(p.Key, *env, getUser(ctx))
+		event.PublishEnvironmentDelete(p.Key, *env, deprecatedGetUser(ctx))
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, deprecatedGetUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteEnvironmentHandler> Cannot load environments")
 		}
@@ -242,7 +242,7 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnv, "updateEnvironmentHandler> Cannot load environment %s", environmentName)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateEnvironmentHandler> Cannot load project %s", projectKey)
 		}
@@ -269,10 +269,10 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, getUser(ctx))
+		event.PublishEnvironmentUpdate(p.Key, *env, *oldEnv, deprecatedGetUser(ctx))
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, deprecatedGetUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "updateEnvironmentHandler> Cannot load environments")
 		}
@@ -293,13 +293,13 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errEnv, "cloneEnvironmentHandler> Cannot load environment %s: %s", environmentName, errEnv)
 		}
 
-		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "cloneEnvironmentHandler> Cannot load project %s: %s", projectKey, errProj)
 		}
 
 		//Load all environments to check if there is another environment with the same name
-		envs, err := environment.LoadEnvironments(api.mustDB(), projectKey, false, getUser(ctx))
+		envs, err := environment.LoadEnvironments(api.mustDB(), projectKey, false, deprecatedGetUser(ctx))
 		if err != nil {
 			return err
 		}
@@ -334,7 +334,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//Insert variables
 		for _, v := range envPost.Variable {
-			if environment.InsertVariable(tx, envPost.ID, &v, getUser(ctx)); err != nil {
+			if environment.InsertVariable(tx, envPost.ID, &v, deprecatedGetUser(ctx)); err != nil {
 				return sdk.WrapError(err, "Unable to insert variable")
 			}
 		}
@@ -352,12 +352,12 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//return the project with all environments
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
+		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, deprecatedGetUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "cloneEnvironmentHandler> Cannot load environments: %s", errEnvs)
 		}
 
-		event.PublishEnvironmentAdd(p.Key, envPost, getUser(ctx))
+		event.PublishEnvironmentAdd(p.Key, envPost, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}

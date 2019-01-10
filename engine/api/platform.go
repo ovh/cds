@@ -79,7 +79,7 @@ func (api *API) postPlatformModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicPlatformModel(api.mustDB(), api.Cache, *m, getUser(ctx))
+			go propagatePublicPlatformModel(api.mustDB(), api.Cache, *m, deprecatedGetUser(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusCreated)
@@ -139,7 +139,7 @@ func (api *API) putPlatformModelHandler() service.Handler {
 		}
 
 		if m.Public {
-			go propagatePublicPlatformModel(api.mustDB(), api.Cache, *m, getUser(ctx))
+			go propagatePublicPlatformModel(api.mustDB(), api.Cache, *m, deprecatedGetUser(ctx))
 		}
 
 		return service.WriteJSON(w, m, http.StatusOK)
