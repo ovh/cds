@@ -30,9 +30,11 @@ func (g *gerritConsumer) GetAuthorizedClient(ctx context.Context, username, pass
 
 	c := &gerritClient{
 		client:              client,
-		uiURL:               g.uiURL,
+		url:                 g.URL,
 		disableStatus:       g.disableStatus,
 		disableStatusDetail: g.disableStatusDetail,
+		proxyURL:            g.proxyURL,
+		sshPort:             g.sshPort,
 	}
 	return c, nil
 }

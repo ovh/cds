@@ -64,6 +64,10 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Gitlab.DisableWebHooks
 			res.WebhooksIcon = sdk.GitlabIcon
+		case cfg.Gerrit != nil:
+			res.WebhooksSupported = true
+			res.WebhooksDisabled = cfg.Gerrit.DisableWebHooks
+			res.WebhooksIcon = sdk.GerritIcon
 		}
 
 		return service.WriteJSON(w, res, http.StatusOK)

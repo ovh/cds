@@ -5,6 +5,7 @@ const (
 	GitlabIcon    = "Gitlab"
 	GitHubIcon    = "Github"
 	BitbucketIcon = "Bitbucket"
+	GerritIcon    = "git"
 )
 
 // FilterHooksConfig filter all hooks configuration and remove some configuration key

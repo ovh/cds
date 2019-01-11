@@ -105,6 +105,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 		}
 
 		models := []sdk.WorkflowHookModel{}
+
 		for i := range m {
 			switch m[i].Name {
 			case sdk.RepositoryWebHookModelName:

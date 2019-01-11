@@ -120,7 +120,8 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			serverCfg.Gerrit.ProxyWebhook,
 			s.Cache,
 			serverCfg.Gerrit.Status.Disable,
-			serverCfg.Gerrit.Status.ShowDetail), nil
+			serverCfg.Gerrit.Status.ShowDetail,
+			serverCfg.Gerrit.SSHPort), nil
 	}
 	return nil, sdk.ErrNotFound
 }
