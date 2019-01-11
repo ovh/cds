@@ -4,11 +4,6 @@
   }
 }
 
-.ui.relaxed.divided.list {
-  height: 590px;
-  overflow-y: auto;
-}
-
 .right.floated.content {
   padding-right: 10px;
 }
@@ -16,7 +11,6 @@
 .tiles-container {
   display: table-row-group;
   table-layout: fixed;
-  box-shadow: 1px 0px 0px rgba(0,0,0,0.5);
   
   label {
     display: table-cell;
@@ -42,15 +36,15 @@
     
     .tile {
       display: inline-block;
-      width: 50px;
-      height: 50px;
+      width: 60px;
+      height: 60px;
       margin: 2px;
-      overflow: hidden;
       text-overflow: ellipsis;
       text-align: center;
       vertical-align: bottom;
-      line-height: 50px;
+      line-height: 60px;
       border-radius: 5px;
+      position: relative;
 
       .detail {
         line-height: 10px;
@@ -61,12 +55,13 @@
         border-top-right-radius: 5px;
         border-bottom-left-radius: 5px;
         border-bottom-right-radius: 5px;
-        border-top-left-radius: 0px;
-        box-shadow: 0px 5px 5px rgba(0,0,0,0.5);
+        border-top-left-radius: 5px;
+        box-shadow: 0px -2px 5px rgba(180,180,180,0.5);
         border: 1px solid #BEBEBE;
         z-index: 1;
         white-space: nowrap;
         max-width: 450px;
+        top: calc(-100% - 50px);
 
         &:after {
           width: 0;
@@ -75,9 +70,9 @@
           position: absolute;
           border-right: 18px solid transparent;
           border-left: 18px solid transparent;
-          border-bottom: 17px solid white;
-          left: 1px;
-          top: -16px;
+          border-top: 17px solid white;
+          left: 13px;
+          bottom: -15px;
           display: block;
         }
         
@@ -88,9 +83,9 @@
           position: absolute;
           border-right: 19px solid transparent;
           border-left: 19px solid transparent;
-          border-bottom: 19px solid #BEBEBE;
-          left: 0px;
-          top: -18px;
+          border-top: 19px solid #BEBEBE;
+          left: 12px;
+          bottom: -18px;
           display: block;
         }
         
