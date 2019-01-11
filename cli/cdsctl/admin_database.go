@@ -33,7 +33,7 @@ func adminDatabaseUnlockFunc(v cli.Values) error {
 
 var adminDatabaseDeleteMigrationCmd = cli.Command{
 	Name:  "delete",
-	Short: "Delete a database migration from table gorp_migration",
+	Short: "Delete a database migration from table gorp_migration (use with caution)",
 	Args: []cli.Arg{
 		{Name: "id"},
 	},

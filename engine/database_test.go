@@ -1,4 +1,4 @@
-package database
+package main
 
 import (
 	"os"

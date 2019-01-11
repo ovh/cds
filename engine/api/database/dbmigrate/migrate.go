@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
+
 	migrate "github.com/rubenv/sql-migrate"
 	gorp "gopkg.in/gorp.v1"
 )
@@ -29,11 +30,11 @@ func Do(DBFunc func() *sql.DB, sqlMigrateDir string, dir migrate.MigrationDirect
 
 	hostname, err := os.Hostname()
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
 	if err := lockMigrate(DBFunc(), hostname); err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	_, errExec := migrate.ExecMax(DBFunc(), "postgres", source, dir, limit)
@@ -64,19 +65,19 @@ func lockMigrate(db *sql.DB, id string) error {
 	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")
 	// create table if not exist
 	if err := dbmap.CreateTablesIfNotExists(); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	tx, err := dbmap.Begin()
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	defer tx.Rollback() // nolint
 
 	var pendingMigration []MigrationLock
 	if _, err := tx.Select(&pendingMigration, "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if len(pendingMigration) > 0 {
@@ -90,11 +91,11 @@ func lockMigrate(db *sql.DB, id string) error {
 	}
 
 	if err := tx.Insert(&m); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return nil
@@ -108,7 +109,7 @@ func DeleteMigrate(db *sql.DB, id string) error {
 
 	tx, err := dbmap.Begin()
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	defer tx.Rollback() // nolint
@@ -116,17 +117,17 @@ func DeleteMigrate(db *sql.DB, id string) error {
 	m := sdk.DatabaseMigrationStatus{}
 	if err := tx.SelectOne(&m, "SELECT * FROM gorp_migrations WHERE id = $1", id); err != nil {
 		if err == sql.ErrNoRows {
-			return sdk.ErrNoDBMigrationID
+			return sdk.WithStack(sdk.ErrNoDBMigrationID)
 		}
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if _, err := tx.Delete(&m); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return nil
@@ -140,14 +141,14 @@ func List(db *sql.DB) ([]sdk.DatabaseMigrationStatus, error) {
 
 	tx, err := dbmap.Begin()
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	defer tx.Rollback() // nolint
 
 	var migrationsApplied []sdk.DatabaseMigrationStatus
 	if _, err := tx.Select(&migrationsApplied, "SELECT * FROM gorp_migrations"); err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	for i := range migrationsApplied {
@@ -165,14 +166,14 @@ func UnlockMigrate(db *sql.DB, id string) error {
 
 	tx, err := dbmap.Begin()
 	if err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	defer tx.Rollback() // nolint
 
 	var pendingMigration []MigrationLock
 	if _, err := tx.Select(&pendingMigration, "SELECT * FROM gorp_migrations_lock WHERE unlocked IS NULL FOR UPDATE OF gorp_migrations_lock NOWAIT"); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if len(pendingMigration) == 0 {
@@ -181,18 +182,18 @@ func UnlockMigrate(db *sql.DB, id string) error {
 
 	m := MigrationLock{}
 	if err := tx.SelectOne(&m, "SELECT * FROM gorp_migrations_lock WHERE id = $1", id); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	t := time.Now()
 	m.Unlocked = &t
 
 	if _, err := tx.Update(&m); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
+		return sdk.WithStack(err)
 	}
 
 	return nil
@@ -206,12 +207,12 @@ func Get(DBFunc func() *sql.DB, dir string) ([]sdk.DatabaseMigrationStatus, erro
 
 	migrations, err := source.FindMigrations()
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	records, err := migrate.GetMigrationRecords(DBFunc(), "postgres")
 	if err != nil {
-		return nil, err
+		return nil, sdk.WithStack(err)
 	}
 
 	rows := make(map[string]sdk.DatabaseMigrationStatus)

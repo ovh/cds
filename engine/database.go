@@ -1,4 +1,4 @@
-package database
+package main
 
 import (
 	"bytes"
@@ -16,19 +16,20 @@ import (
 	"github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
 
+	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
-//DBCmd is the root command for database management
-var DBCmd = &cobra.Command{
+//databaseCmd is the root command for database management
+var databaseCmd = &cobra.Command{
 	Use:   "database",
 	Short: "Manage CDS database",
 	Long:  "Manage CDS database",
 }
 
-var upgradeCmd = &cobra.Command{
+var databaseUpgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade schema",
 	Long:  `Migrates the database to the most recent version available.`,
@@ -37,20 +38,20 @@ var upgradeCmd = &cobra.Command{
 # If the directory --migrate-dir is not up to date with the current version, this
 # directory will be automatically updated with the release from https://github.com/ovh/cds/releases
 	`,
-	Run: upgradeCmdFunc,
+	Run: databaseUpgradeCmdFunc,
 }
 
-var downgradeCmd = &cobra.Command{
+var databaseDowngradeCmd = &cobra.Command{
 	Use:   "downgrade",
 	Short: "Downgrade schema",
 	Long:  "Undo a database migration.",
-	Run:   downgradeCmdFunc,
+	Run:   databaseDowngradeCmdFunc,
 }
 
-var statusCmd = &cobra.Command{
+var databaseStatusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show current migration status",
-	Run:   statusCmdFunc,
+	Run:   databaseStatusCmdFunc,
 }
 
 var (
@@ -58,37 +59,37 @@ var (
 	sqlMigrateDryRun    bool
 	sqlMigrateLimitUp   int
 	sqlMigrateLimitDown int
-	connFactory         = &DBConnectionFactory{}
+	connFactory         = &database.DBConnectionFactory{}
 )
 
 func setFlags(cmd *cobra.Command) {
 	pflags := cmd.Flags()
-	pflags.StringVarP(&connFactory.dbUser, "db-user", "", "cds", "DB User")
-	pflags.StringVarP(&connFactory.dbRole, "db-role", "", "", "DB Role")
-	pflags.StringVarP(&connFactory.dbPassword, "db-password", "", "", "DB Password")
-	pflags.StringVarP(&connFactory.dbName, "db-name", "", "cds", "DB Name")
-	pflags.StringVarP(&connFactory.dbHost, "db-host", "", "localhost", "DB Host")
-	pflags.IntVarP(&connFactory.dbPort, "db-port", "", 5432, "DB Port")
+	pflags.StringVarP(&connFactory.DBUser, "db-user", "", "cds", "DB User")
+	pflags.StringVarP(&connFactory.DBRole, "db-role", "", "", "DB Role")
+	pflags.StringVarP(&connFactory.DBPassword, "db-password", "", "", "DB Password")
+	pflags.StringVarP(&connFactory.DBName, "db-name", "", "cds", "DB Name")
+	pflags.StringVarP(&connFactory.DBHost, "db-host", "", "localhost", "DB Host")
+	pflags.IntVarP(&connFactory.DBPort, "db-port", "", 5432, "DB Port")
 	pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
-	pflags.StringVarP(&connFactory.dbSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
-	pflags.IntVarP(&connFactory.dbMaxConn, "db-maxconn", "", 20, "DB Max connection")
-	pflags.IntVarP(&connFactory.dbTimeout, "db-timeout", "", 3000, "Statement timeout value in milliseconds")
-	pflags.IntVarP(&connFactory.dbConnectTimeout, "db-connect-timeout", "", 10, "Maximum wait for connection, in seconds")
+	pflags.StringVarP(&connFactory.DBSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
+	pflags.IntVarP(&connFactory.DBMaxConn, "db-maxconn", "", 20, "DB Max connection")
+	pflags.IntVarP(&connFactory.DBTimeout, "db-timeout", "", 3000, "Statement timeout value in milliseconds")
+	pflags.IntVarP(&connFactory.DBConnectTimeout, "db-connect-timeout", "", 10, "Maximum wait for connection, in seconds")
 }
 
 func init() {
-	setFlags(upgradeCmd)
-	setFlags(downgradeCmd)
-	setFlags(statusCmd)
-	DBCmd.AddCommand(upgradeCmd)
-	DBCmd.AddCommand(downgradeCmd)
-	DBCmd.AddCommand(statusCmd)
+	setFlags(databaseUpgradeCmd)
+	setFlags(databaseDowngradeCmd)
+	setFlags(databaseStatusCmd)
+	databaseCmd.AddCommand(databaseUpgradeCmd)
+	databaseCmd.AddCommand(databaseDowngradeCmd)
+	databaseCmd.AddCommand(databaseStatusCmd)
 
-	upgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run upgrade")
-	upgradeCmd.Flags().IntVarP(&sqlMigrateLimitUp, "limit", "", 0, "Max number of migrations to apply (0 = unlimited)")
+	databaseUpgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run upgrade")
+	databaseUpgradeCmd.Flags().IntVarP(&sqlMigrateLimitUp, "limit", "", 0, "Max number of migrations to apply (0 = unlimited)")
 
-	downgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run downgrade")
-	downgradeCmd.Flags().IntVarP(&sqlMigrateLimitDown, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
+	databaseDowngradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run downgrade")
+	databaseDowngradeCmd.Flags().IntVarP(&sqlMigrateLimitDown, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
 }
 
 type statusRow struct {
@@ -97,7 +98,7 @@ type statusRow struct {
 	AppliedAt *time.Time
 }
 
-func upgradeCmdFunc(cmd *cobra.Command, args []string) {
+func databaseUpgradeCmdFunc(cmd *cobra.Command, args []string) {
 	source := migrate.FileMigrationSource{
 		Dir: sqlMigrateDir,
 	}
@@ -113,7 +114,7 @@ func upgradeCmdFunc(cmd *cobra.Command, args []string) {
 			fmt.Printf("There are %d migrate files locally. Current engine needs %d files\n", len(migrations), nbMigrateOnThisVersion)
 			if nbMigrateOnThisVersion > len(migrations) {
 				fmt.Printf("This version %s should contains %d migrate files.\n", sdk.VERSION, nbMigrateOnThisVersion)
-				if err := downloadSQLTarGz(sdk.VERSION, "sql.tar.gz", sqlMigrateDir); err != nil {
+				if err := databaseDownloadSQLTarGz(sdk.VERSION, "sql.tar.gz", sqlMigrateDir); err != nil {
 					sdk.Exit("Error on download sql.tar.gz: %v\n", err)
 				}
 				migrations, err := source.FindMigrations()
@@ -132,12 +133,12 @@ func upgradeCmdFunc(cmd *cobra.Command, args []string) {
 	}
 }
 
-// downloadSQLTarGz downloads sql.tar.gz from github release corresponding to the current engine version
+// databaseDownloadSQLTarGz downloads sql.tar.gz from github release corresponding to the current engine version
 // check status 200 on download
 // then write sql.tar.gz file in tmpdir
 // then unzip sql.tar.gz file
 // then move all sql file to sqlMigrateDir directory
-func downloadSQLTarGz(currentVersion string, artifactName string, migrateDir string) error {
+func databaseDownloadSQLTarGz(currentVersion string, artifactName string, migrateDir string) error {
 	if !strings.Contains(currentVersion, "+") {
 		return fmt.Errorf("invalid current version: %s, ersion must contains a '+'", currentVersion)
 	}
@@ -201,15 +202,15 @@ func downloadSQLTarGz(currentVersion string, artifactName string, migrateDir str
 	return nil
 }
 
-func downgradeCmdFunc(cmd *cobra.Command, args []string) {
+func databaseDowngradeCmdFunc(cmd *cobra.Command, args []string) {
 	if err := ApplyMigrations(migrate.Down, sqlMigrateDryRun, sqlMigrateLimitDown); err != nil {
 		sdk.Exit("Error: %v\n", err)
 	}
 }
 
-func statusCmdFunc(cmd *cobra.Command, args []string) {
+func databaseStatusCmdFunc(cmd *cobra.Command, args []string) {
 	var err error
-	connFactory, err = Init(connFactory.dbUser, connFactory.dbRole, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
+	connFactory, err = database.Init(connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %v\n", err)
 	}
@@ -276,7 +277,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
 	var err error
-	connFactory, err = Init(connFactory.dbUser, connFactory.dbRole, connFactory.dbPassword, connFactory.dbName, connFactory.dbHost, connFactory.dbPort, connFactory.dbSSLMode, connFactory.dbConnectTimeout, connFactory.dbTimeout, connFactory.dbMaxConn)
+	connFactory, err = database.Init(connFactory.DBUser, connFactory.DBRole, connFactory.DBPassword, connFactory.DBName, connFactory.DBHost, connFactory.DBPort, connFactory.DBSSLMode, connFactory.DBConnectTimeout, connFactory.DBTimeout, connFactory.DBMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %v\n", err)
 	}
