@@ -9,6 +9,19 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) AdminDatabaseMigrationDelete(id string) error {
+	_, _, _, err := c.Request(context.Background(), "DELETE", "/admin/database/migration/delete/"+id, nil)
+	return err
+}
+
+func (c *client) AdminDatabaseMigrationsList() ([]sdk.DatabaseMigrationStatus, error) {
+	dlist := []sdk.DatabaseMigrationStatus{}
+	if _, err := c.GetJSON(context.Background(), "/admin/database/migration", &dlist); err != nil {
+		return nil, err
+	}
+	return dlist, nil
+}
+
 func (c *client) AdminDatabaseMigrationUnlock(id string) error {
 	_, _, _, err := c.Request(context.Background(), "POST", "/admin/database/migration/unlock/"+id, nil)
 	return err

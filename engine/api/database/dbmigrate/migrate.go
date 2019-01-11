@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ovh/cds/sdk"
 	migrate "github.com/rubenv/sql-migrate"
 	gorp "gopkg.in/gorp.v1"
 )
@@ -51,11 +52,10 @@ type MigrationLock struct {
 	Unlocked *time.Time `db:"unlocked"`
 }
 
-// MigrationStatus represents on migration script status
-type MigrationStatus struct {
-	ID        string
-	Migrated  bool
-	AppliedAt time.Time
+// DatabaseMigration represents an entry in table gorp_migrations
+type DatabaseMigration struct {
+	ID        string     `db:"id"`
+	AppliedAt *time.Time `db:"applied_at"`
 }
 
 func lockMigrate(db *sql.DB, id string) error {
@@ -100,6 +100,63 @@ func lockMigrate(db *sql.DB, id string) error {
 	return nil
 }
 
+// DeleteMigrate delete an ID from table gorp_migrations
+func DeleteMigrate(db *sql.DB, id string) error {
+	// construct a gorp DbMap
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
+	dbmap.AddTableWithName(sdk.DatabaseMigrationStatus{}, "gorp_migrations").SetKeys(false, "ID")
+
+	tx, err := dbmap.Begin()
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback() // nolint
+
+	m := sdk.DatabaseMigrationStatus{}
+	if err := tx.SelectOne(&m, "SELECT * FROM gorp_migrations WHERE id = $1", id); err != nil {
+		if err == sql.ErrNoRows {
+			return sdk.ErrNoDBMigrationID
+		}
+		return err
+	}
+
+	if _, err := tx.Delete(&m); err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// List list current entrie from gorp_migration only
+func List(db *sql.DB) ([]sdk.DatabaseMigrationStatus, error) {
+	// construct a gorp DbMap
+	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
+	dbmap.AddTableWithName(sdk.DatabaseMigrationStatus{}, "gorp_migrations").SetKeys(false, "ID")
+
+	tx, err := dbmap.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	defer tx.Rollback() // nolint
+
+	var migrationsApplied []sdk.DatabaseMigrationStatus
+	if _, err := tx.Select(&migrationsApplied, "SELECT * FROM gorp_migrations"); err != nil {
+		return nil, err
+	}
+
+	for i := range migrationsApplied {
+		// line is in table, it's applied
+		migrationsApplied[i].Migrated = true
+	}
+	return migrationsApplied, nil
+}
+
 // UnlockMigrate unlocks an ID from table gorp_migrations_lock
 func UnlockMigrate(db *sql.DB, id string) error {
 	// construct a gorp DbMap
@@ -142,7 +199,7 @@ func UnlockMigrate(db *sql.DB, id string) error {
 }
 
 // Get the status of all migration scripts
-func Get(DBFunc func() *sql.DB, dir string) ([]MigrationStatus, error) {
+func Get(DBFunc func() *sql.DB, dir string) ([]sdk.DatabaseMigrationStatus, error) {
 	source := migrate.FileMigrationSource{
 		Dir: dir,
 	}
@@ -157,9 +214,9 @@ func Get(DBFunc func() *sql.DB, dir string) ([]MigrationStatus, error) {
 		return nil, err
 	}
 
-	rows := make(map[string]MigrationStatus)
+	rows := make(map[string]sdk.DatabaseMigrationStatus)
 	for _, m := range migrations {
-		rows[m.Id] = MigrationStatus{
+		rows[m.Id] = sdk.DatabaseMigrationStatus{
 			ID:       m.Id,
 			Migrated: false,
 		}
@@ -171,11 +228,11 @@ func Get(DBFunc func() *sql.DB, dir string) ([]MigrationStatus, error) {
 		}
 		s := rows[r.Id]
 		s.Migrated = true
-		s.AppliedAt = r.AppliedAt
+		s.AppliedAt = &r.AppliedAt
 		rows[r.Id] = s
 	}
 
-	res := make([]MigrationStatus, len(rows))
+	res := make([]sdk.DatabaseMigrationStatus, len(rows))
 	var i int
 	for _, r := range rows {
 		res[i] = r

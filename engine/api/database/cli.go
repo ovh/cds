@@ -94,7 +94,7 @@ func init() {
 type statusRow struct {
 	ID        string
 	Migrated  bool
-	AppliedAt time.Time
+	AppliedAt *time.Time
 }
 
 func upgradeCmdFunc(cmd *cobra.Command, args []string) {
@@ -249,14 +249,18 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 			continue
 		}
 		rows[r.Id].Migrated = true
-		rows[r.Id].AppliedAt = r.AppliedAt
+		rows[r.Id].AppliedAt = &r.AppliedAt
 	}
 
 	for _, m := range migrations {
 		if rows[m.Id].Migrated {
+			var applied string
+			if rows[m.Id].AppliedAt != nil {
+				applied = rows[m.Id].AppliedAt.String()
+			}
 			table.Append([]string{
 				m.Id,
-				rows[m.Id].AppliedAt.String(),
+				applied,
 			})
 		} else {
 			table.Append([]string{
