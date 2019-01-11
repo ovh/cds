@@ -194,10 +194,12 @@ func (api *API) authJWTMiddleware(ctx context.Context, w http.ResponseWriter, re
 	// Try to load the token from the cookie or from the authorisation bearer header
 	jwtCookie, _ := req.Cookie("jwt_token")
 	if jwtCookie != nil {
+		log.Debug("api.authJWTMiddleware> reading jwt token cookie")
 		jwt = jwtCookie.Value
 		// Checking X-XSRF-TOKEN header if the token is used from a cookie
 		xsrfToken = req.Header.Get("X-XSRF-TOKEN")
 	} else {
+		log.Debug("api.authJWTMiddleware> reading Authorization Bearer header")
 		if strings.HasPrefix(req.Header.Get("Authorization"), "Bearer ") {
 			jwt = strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
 		}

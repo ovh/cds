@@ -29,6 +29,7 @@ func Init(issuer string, k []byte) error {
 	return nil
 }
 
+// OriginUI aims to distriminate JWT token associated with XSRF token or not
 const OriginUI = "UI"
 
 // New returns a new access token for a user
@@ -88,7 +89,7 @@ func Regen(token *sdk.AccessToken) (string, error) {
 func IsValid(db gorp.SqlExecutor, jwtToken string) (sdk.AccessToken, bool, error) {
 	var accessToken sdk.AccessToken
 
-	token, err := verifyToken(jwtToken)
+	token, err := VerifyToken(jwtToken)
 	if err != nil {
 		return accessToken, false, sdk.WrapError(err, "invalid token")
 	}
@@ -137,7 +138,8 @@ func CheckXSRFToken(store cache.Store, accessToken sdk.AccessToken, xsrfToken st
 	return false
 }
 
-func verifyToken(jwtToken string) (*jwt.Token, error) {
+// VerifyToken checks token technical validity
+func VerifyToken(jwtToken string) (*jwt.Token, error) {
 	token, err := jwt.ParseWithClaims(jwtToken, &sdk.AccessTokenJWTClaims{},
 		func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {

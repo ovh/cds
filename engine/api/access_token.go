@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/group"
@@ -85,6 +86,7 @@ func (api *API) postNewAccessTokenHandler() service.Handler {
 		}
 
 		// Set the JWT token as a header
+		log.Debug("token.postNewAccessTokenHandler> X-CDS-JWT:%s", jwttoken[:12])
 		w.Header().Add("X-CDS-JWT", jwttoken)
 
 		return service.WriteJSON(w, token, http.StatusCreated)
@@ -129,5 +131,35 @@ func (api *API) putRegenAccessTokenHandler() service.Handler {
 		w.Header().Add("X-CDS-JWT", jwttoken)
 
 		return service.WriteJSON(w, t, http.StatusOK)
+	}
+}
+
+func (api *API) getAccessTokenByUserHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		id, err := requestVarInt(r, "id")
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		tokens, err := accesstoken.FindAllByUser(api.mustDB(), id)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		return service.WriteJSON(w, tokens, http.StatusOK)
+	}
+}
+
+func (api *API) getAccessTokenByGroupHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		id, err := requestVarInt(r, "id")
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+
+		tokens, err := accesstoken.FindAllByGroup(api.mustDB(), id)
+		if err != nil {
+			return sdk.WithStack(err)
+		}
+		return service.WriteJSON(w, tokens, http.StatusOK)
 	}
 }

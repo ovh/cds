@@ -1,6 +1,8 @@
 package accesstoken
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
@@ -20,13 +22,53 @@ func FindByID(db gorp.SqlExecutor, id string) (sdk.AccessToken, error) {
 	return sdk.AccessToken(token), nil
 }
 
+// FindAllByUser returns all tokens created by a user
+func FindAllByUser(db gorp.SqlExecutor, userID int64) ([]sdk.AccessToken, error) {
+	var dbTokens []accessToken
+	if _, err := db.Select(&dbTokens, "select * from access_token where user_id = $1 order by created asc", userID); err != nil {
+		return nil, sdk.WithStack(err)
+	}
+
+	var tokens = make([]sdk.AccessToken, len(dbTokens))
+	for i := range dbTokens {
+		t := &dbTokens[i]
+		if err := t.PostGet(db); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		tokens[i] = sdk.AccessToken(*t)
+	}
+
+	return tokens, nil
+}
+
+// FindAllByGroup returns all tokens associated to a group
+func FindAllByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.AccessToken, error) {
+	var dbTokens []accessToken
+	if _, err := db.Select(&dbTokens, "select access_token.* from access_token, access_token_group where access_token_group.group_id = $1 and access_token.id = access_token_group.access_token_id order by created asc", groupID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WithStack(err)
+	}
+
+	var tokens = make([]sdk.AccessToken, len(dbTokens))
+	for i := range dbTokens {
+		t := &dbTokens[i]
+		if err := t.PostGet(db); err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		tokens[i] = sdk.AccessToken(*t)
+	}
+
+	return tokens, nil
+}
+
 // Insert a new token in database
 func Insert(db gorp.SqlExecutor, token *sdk.AccessToken) error {
 	dbToken := accessToken(*token)
 	if err := db.Insert(&dbToken); err != nil {
 		return sdk.WithStack(err)
 	}
-	log.Debug("access token %s inserted", token.ID)
 	return nil
 }
 
@@ -40,7 +82,6 @@ func Update(db gorp.SqlExecutor, token *sdk.AccessToken) error {
 	if n < 1 {
 		return sdk.WithStack(sdk.ErrNotFound)
 	}
-	log.Debug("access token %s updated", token.ID)
 	return nil
 }
 

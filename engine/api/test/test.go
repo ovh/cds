@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/accesstoken"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -91,6 +93,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	RedisPassword = cfg["redisPassword"]
 
 	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
+	accesstoken.Init("cds_test", TestKey)
 
 	if DBDriver == "" {
 		t.Fatalf("This should be run with a database")
