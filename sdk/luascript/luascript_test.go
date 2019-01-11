@@ -33,7 +33,7 @@ func TestLuaCheckStringsFind(t *testing.T) {
 	l, err := NewCheck()
 	test.NoError(t, err)
 	l.SetVariables(map[string]string{
-		"git_branch": "^release/",
+		"git_branch": "release/foo",
 	})
 	test.NoError(t, l.Perform(`return git_branch:find("^release/") ~= nil`))
 	assert.False(t, l.IsError)
