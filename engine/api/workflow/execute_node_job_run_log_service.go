@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -69,6 +70,25 @@ func insertServiceLog(db gorp.SqlExecutor, log *sdk.ServiceLog) error {
 	}
 
 	return db.QueryRow(query, log.WorkflowNodeJobRunID, log.WorkflowNodeRunID, log.ServiceRequirementName, start, lastModified, log.Val).Scan(&log.Id)
+}
+
+// ExistsServiceLog returns the size of service log if exists.
+func ExistsServiceLog(db gorp.SqlExecutor, nodeRunJobID int64, serviceName string) (bool, int64, error) {
+	query := `
+    SELECT octet_length(value) as size
+    FROM requirement_service_logs
+    WHERE workflow_node_run_job_id = $1 AND requirement_service_name = $2
+  `
+
+	var size int64
+	if err := db.QueryRow(query, nodeRunJobID, serviceName).Scan(&size); err != nil {
+		if sdk.Cause(err) != sql.ErrNoRows {
+			return false, 0, sdk.WithStack(err)
+		}
+		return false, 0, nil
+	}
+
+	return true, size, nil
 }
 
 // LoadServiceLog load logs for the given job and service name

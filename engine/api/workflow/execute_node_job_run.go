@@ -600,26 +600,33 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 		logs.PipelineBuildID = job.WorkflowNodeRunID
 	}
 
-	existingLogs, errLog := LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
-	if errLog != nil && sdk.Cause(errLog) != sql.ErrNoRows {
-		return sdk.WrapError(errLog, "AddLog> Cannot load existing logs")
+	// check if log exists without loading data but with log size
+	exists, size, err := ExistsStepLog(db, logs.PipelineBuildJobID, logs.StepOrder)
+	if err != nil {
+		return sdk.WrapError(err, "cannot check if log exists")
 	}
 
-	if existingLogs == nil {
-		if err := insertLog(db, logs); err != nil {
-			return sdk.WrapError(err, "Cannot insert log")
-		}
-	} else {
-		logbuf := bytes.NewBufferString(existingLogs.Val)
-		logbuf.WriteString(logs.Val)
-		existingLogs.Val = logbuf.String()
-		existingLogs.LastModified = logs.LastModified
-		existingLogs.Done = logs.Done
-		if err := updateLog(db, existingLogs); err != nil {
-			return sdk.WrapError(err, "Cannot update log")
-		}
+	// ignore the log if max size already reached
+	if maxReached := truncateLogs(maxLogSize, size, logs); maxReached {
+		return nil
 	}
-	return nil
+
+	if !exists {
+		return sdk.WrapError(insertLog(db, logs), "cannot insert log")
+	}
+
+	existingLogs, err := LoadStepLogs(db, logs.PipelineBuildJobID, logs.StepOrder)
+	if err != nil {
+		return sdk.WrapError(err, "cannot load existing logs")
+	}
+
+	logbuf := bytes.NewBufferString(existingLogs.Val)
+	logbuf.WriteString(logs.Val)
+	existingLogs.Val = logbuf.String()
+	existingLogs.LastModified = logs.LastModified
+	existingLogs.Done = logs.Done
+
+	return sdk.WrapError(updateLog(db, existingLogs), "cannot update log")
 }
 
 //AddServiceLog adds a service log
@@ -629,25 +636,32 @@ func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.S
 		logs.WorkflowNodeRunID = job.WorkflowNodeRunID
 	}
 
-	existingLogs, errLog := LoadServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
-	if errLog != nil && sdk.Cause(errLog) != sql.ErrNoRows {
-		return sdk.WrapError(errLog, "AddServiceLog> Cannot load existing logs")
+	// check if log exists without loading data but with log size
+	exists, size, err := ExistsServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
+	if err != nil {
+		return sdk.WrapError(err, "cannot check if log exists")
 	}
 
-	if existingLogs == nil {
-		if err := insertServiceLog(db, logs); err != nil {
-			return sdk.WrapError(err, "Cannot insert log")
-		}
-	} else {
-		logbuf := bytes.NewBufferString(existingLogs.Val)
-		logbuf.WriteString(logs.Val)
-		existingLogs.Val = logbuf.String()
-		existingLogs.LastModified = logs.LastModified
-		if err := updateServiceLog(db, existingLogs); err != nil {
-			return sdk.WrapError(err, "Cannot update log")
-		}
+	// ignore the log if max size already reached
+	if maxReached := truncateServiceLogs(maxLogSize, size, logs); maxReached {
+		return nil
 	}
-	return nil
+
+	if !exists {
+		return sdk.WrapError(insertServiceLog(db, logs), "Cannot insert log")
+	}
+
+	existingLogs, err := LoadServiceLog(db, logs.WorkflowNodeJobRunID, logs.ServiceRequirementName)
+	if err != nil {
+		return sdk.WrapError(err, "cannot load existing logs")
+	}
+
+	logbuf := bytes.NewBufferString(existingLogs.Val)
+	logbuf.WriteString(logs.Val)
+	existingLogs.Val = logbuf.String()
+	existingLogs.LastModified = logs.LastModified
+
+	return sdk.WrapError(updateServiceLog(db, existingLogs), "Cannot update log")
 }
 
 // RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
