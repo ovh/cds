@@ -133,7 +133,7 @@ func DeleteMigrate(db *sql.DB, id string) error {
 	return nil
 }
 
-// List list current entrie from gorp_migration only
+// List list current entries from gorp_migration only
 func List(db *sql.DB) ([]sdk.DatabaseMigrationStatus, error) {
 	// construct a gorp DbMap
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
