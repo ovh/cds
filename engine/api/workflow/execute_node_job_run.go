@@ -594,7 +594,7 @@ func AddNodeJobAttempt(db gorp.SqlExecutor, id, hatcheryID int64) ([]int64, erro
 }
 
 //AddLog adds a build log
-func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) error {
+func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log, maxLogSize int64) error {
 	if job != nil {
 		logs.PipelineBuildJobID = job.ID
 		logs.PipelineBuildID = job.WorkflowNodeRunID
@@ -630,7 +630,7 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 }
 
 //AddServiceLog adds a service log
-func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.ServiceLog) error {
+func AddServiceLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.ServiceLog, maxLogSize int64) error {
 	if job != nil {
 		logs.WorkflowNodeJobRunID = job.ID
 		logs.WorkflowNodeRunID = job.WorkflowNodeRunID

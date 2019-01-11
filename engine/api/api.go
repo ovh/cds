@@ -169,7 +169,11 @@ type Configuration struct {
 		AccessToken string `toml:"accessToken" json:"-"`
 		Stream      string `toml:"stream" json:"-"`
 		URL         string `toml:"url" comment:"Example: http://localhost:9000" json:"url"`
-	} `toml:"graylog"  json:"graylog" comment:"###########################\n Graylog Search. \n When CDS API generates errors, you can fetch them with cdsctl. \n Examples: \n $ cdsctl admin errors get <error-id> \n $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007 \n##########################"`
+	} `toml:"graylog" json:"graylog" comment:"###########################\n Graylog Search. \n When CDS API generates errors, you can fetch them with cdsctl. \n Examples: \n $ cdsctl admin errors get <error-id> \n $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007 \n##########################"`
+	Log struct {
+		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes" json:"stepMaxSize"`
+		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes" json:"serviceMaxSize"`
+	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
@@ -789,7 +793,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
-		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Addr, a.Config.GRPC.Port, false, "", ""); err != nil {
+		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Addr, a.Config.GRPC.Port, false, "", "", a.Config.Log.StepMaxSize); err != nil {
 			log.Error("Cannot start GRPC server: %v", err)
 		}
 	}()

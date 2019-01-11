@@ -1392,10 +1392,6 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 
 	// Update step status
 	jobRun := &lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].Stages[0].RunJobs[0]
-	log := &sdk.Log{
-		StepOrder: 1,
-		Val:       "My Log",
-	}
 	jobRun.Job.StepStatus = []sdk.StepStatus{
 		{
 			StepOrder: 1,
@@ -1408,8 +1404,28 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	test.NoError(t, errUJ)
 
 	// Add log
-	errAL := workflow.AddLog(api.mustDB(), jobRun, log)
-	test.NoError(t, errAL)
+	test.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
+		StepOrder: 1,
+		Val:       "1234567890",
+	}, 15))
+
+	// Add truncated log
+	test.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
+		StepOrder: 1,
+		Val:       "1234567890",
+	}, 15))
+
+	// Add log
+	test.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
+		StepOrder: 1,
+		Val:       "1234567890",
+	}, 15))
+
+	// Add truncated log
+	test.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
+		StepOrder: 1,
+		Val:       "1234567890",
+	}, 15))
 
 	//Prepare request
 	vars := map[string]string{
@@ -1431,6 +1447,6 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	stepState := &sdk.BuildState{}
 	json.Unmarshal(rec.Body.Bytes(), stepState)
 	assert.Equal(t, 200, rec.Code)
-	assert.Equal(t, "My Log", stepState.StepLogs.Val)
+	assert.Equal(t, "123456789012345... truncated", stepState.StepLogs.Val)
 	assert.Equal(t, sdk.StatusBuilding, stepState.Status)
 }

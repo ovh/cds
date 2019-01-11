@@ -535,7 +535,7 @@ func (api *API) postWorkflowJobLogsHandler() service.AsynchronousHandler {
 			return sdk.WrapError(err, "Unable to parse body")
 		}
 
-		if err := workflow.AddLog(api.mustDB(), pbJob, &logs); err != nil {
+		if err := workflow.AddLog(api.mustDB(), pbJob, &logs, api.Config.Log.StepMaxSize); err != nil {
 			return sdk.WithStack(err)
 		}
 
@@ -619,7 +619,7 @@ func (api *API) postWorkflowJobServiceLogsHandler() service.AsynchronousHandler 
 				}
 			}
 
-			if err := workflow.AddServiceLog(db, nodeRunJob, &log); err != nil {
+			if err := workflow.AddServiceLog(db, nodeRunJob, &log, api.Config.Log.ServiceMaxSize); err != nil {
 				errorOccured = true
 				globalErr.Append(fmt.Errorf("postWorkflowJobServiceLogsHandler> %v", err))
 			}
