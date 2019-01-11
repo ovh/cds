@@ -39,7 +39,7 @@ func (api *API) postNewAccessTokenHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		allGroups, err := group.LoadGroupByAdmin(tx, grantedUser.OnBehalfOf.ID)
 		if err != nil {

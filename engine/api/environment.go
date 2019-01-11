@@ -334,7 +334,7 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//Insert variables
 		for _, v := range envPost.Variable {
-			if environment.InsertVariable(tx, envPost.ID, &v, deprecatedGetUser(ctx)); err != nil {
+			if err := environment.InsertVariable(tx, envPost.ID, &v, deprecatedGetUser(ctx)); err != nil {
 				return sdk.WrapError(err, "Unable to insert variable")
 			}
 		}

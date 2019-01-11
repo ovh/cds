@@ -93,7 +93,7 @@ func SetupPG(t log.Logger, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	RedisPassword = cfg["redisPassword"]
 
 	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
-	accesstoken.Init("cds_test", TestKey)
+	accesstoken.Init("cds_test", TestKey) // nolint
 
 	if DBDriver == "" {
 		t.Fatalf("This should be run with a database")
