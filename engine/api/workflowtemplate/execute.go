@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -38,85 +39,143 @@ func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) inte
 	return m
 }
 
-func executeTemplate(id, t string, data map[string]interface{}) (string, error) {
+func parseTemplate(id, t string) (*template.Template, error) {
 	tmpl, err := template.New(id).Delims("[[", "]]").Parse(t)
 	if err != nil {
-		return "", sdk.NewError(sdk.ErrWrongRequest, err)
+		reg := regexp.MustCompile(`template: ([0-9a-zA-Z.]+):([0-9]+): (.*)$`)
+		submatch := reg.FindStringSubmatch(err.Error())
+		if len(submatch) != 4 {
+			return nil, sdk.WithStack(err)
+		}
+		return nil, sdk.WithStack(sdk.WorkflowTemplateError{
+			File:    submatch[1],
+			Line:    submatch[2],
+			Message: submatch[3],
+		})
 	}
+	return tmpl, nil
+}
 
+func executeTemplate(tmpl *template.Template, data map[string]interface{}) (string, error) {
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, data); err != nil {
-		return "", sdk.NewError(sdk.ErrWrongRequest, err)
+		return "", sdk.WithStack(err)
 	}
-
 	return buffer.String(), nil
 }
 
+func decodeTemplateValue(value string) (string, error) {
+	v, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return "", sdk.NewError(sdk.ErrWrongRequest, err)
+	}
+	return string(v), nil
+}
+
 // Execute returns yaml file from template.
-func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.WorkflowTemplateResult, error) {
-	data := map[string]interface{}{
-		"id":     i.ID,
-		"name":   i.Request.WorkflowName,
-		"params": prepareParams(wt, i.Request),
-	}
-
-	v, err := base64.StdEncoding.DecodeString(wt.Value)
-	if err != nil {
-		return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse workflow template")
-	}
-
-	out, err := executeTemplate("workflow.yml", string(v), data)
-	if err != nil {
-		return sdk.WorkflowTemplateResult{}, err
-	}
-
-	res := sdk.WorkflowTemplateResult{
-		Workflow:     out,
+func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (sdk.WorkflowTemplateResult, error) {
+	result := sdk.WorkflowTemplateResult{
 		Pipelines:    make([]string, len(wt.Pipelines)),
 		Applications: make([]string, len(wt.Applications)),
 		Environments: make([]string, len(wt.Environments)),
 	}
 
+	var data map[string]interface{}
+	if instance != nil {
+		data = map[string]interface{}{
+			"id":     instance.ID,
+			"name":   instance.Request.WorkflowName,
+			"params": prepareParams(wt, instance.Request),
+		}
+	}
+
+	var parsingErrs []error
+
+	v, err := decodeTemplateValue(wt.Value)
+	if err != nil {
+		return result, err
+	}
+	if tmpl, err := parseTemplate("workflow.yml", v); err != nil {
+		parsingErrs = append(parsingErrs, err)
+	} else {
+		if data != nil {
+			result.Workflow, err = executeTemplate(tmpl, data)
+			if err != nil {
+				return result, err
+			}
+		}
+	}
+
 	for i, p := range wt.Pipelines {
-		v, err := base64.StdEncoding.DecodeString(p.Value)
+		v, err := decodeTemplateValue(p.Value)
 		if err != nil {
-			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse pipeline template")
+			return result, err
 		}
 
-		out, err := executeTemplate(fmt.Sprintf("%d.pipeline.yml", i), string(v), data)
-		if err != nil {
-			return sdk.WorkflowTemplateResult{}, err
+		if tmpl, err := parseTemplate(fmt.Sprintf("%d.pipeline.yml", i), v); err != nil {
+			parsingErrs = append(parsingErrs, err)
+		} else {
+			result.Pipelines[i], err = executeTemplate(tmpl, data)
+			if err != nil {
+				return result, err
+			}
 		}
-		res.Pipelines[i] = out
 	}
 
 	for i, a := range wt.Applications {
-		v, err := base64.StdEncoding.DecodeString(a.Value)
+		v, err := decodeTemplateValue(a.Value)
 		if err != nil {
-			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse application template")
+			return result, err
 		}
 
-		out, err := executeTemplate(fmt.Sprintf("%d.application.yml", i), string(v), data)
-		if err != nil {
-			return sdk.WorkflowTemplateResult{}, err
+		if tmpl, err := parseTemplate(fmt.Sprintf("%d.application.yml", i), v); err != nil {
+			parsingErrs = append(parsingErrs, err)
+		} else {
+			if data != nil {
+				result.Applications[i], err = executeTemplate(tmpl, data)
+				if err != nil {
+					return result, err
+				}
+			}
 		}
-		res.Applications[i] = out
 	}
 
 	for i, e := range wt.Environments {
-		v, err := base64.StdEncoding.DecodeString(e.Value)
+		v, err := decodeTemplateValue(e.Value)
 		if err != nil {
-			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse environment template")
+			return result, err
 		}
 
-		out, err := executeTemplate(fmt.Sprintf("%d.environment.yml", i), string(v), data)
-		if err != nil {
-			return sdk.WorkflowTemplateResult{}, err
+		if tmpl, err := parseTemplate(fmt.Sprintf("%d.environment.yml", i), v); err != nil {
+			parsingErrs = append(parsingErrs, err)
+		} else {
+			if data != nil {
+				result.Environments[i], err = executeTemplate(tmpl, data)
+				if err != nil {
+					return result, err
+				}
+			}
 		}
-		res.Environments[i] = out
 	}
 
-	return res, nil
+	if len(parsingErrs) > 0 {
+		var errs []sdk.WorkflowTemplateError
+		var causes []string
+		for _, err := range parsingErrs {
+			cause := sdk.Cause(err)
+			if e, ok := cause.(sdk.WorkflowTemplateError); ok {
+				errs = append(errs, e)
+			}
+			causes = append(causes, cause.Error())
+		}
+		return result, sdk.NewErrorFrom(sdk.Error{
+			ID:     sdk.ErrCannotParseTemplate.ID,
+			Status: sdk.ErrCannotParseTemplate.Status,
+			Data:   errs,
+		}, strings.Join(causes, ", "))
+	}
+
+	return result, nil
 }
 
 // Tar returns in buffer the a tar file that contains all generated stuff in template result.

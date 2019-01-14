@@ -37,6 +37,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     diffItems: Array<Item>;
     groupName: string;
     templateSlug: string;
+    errorData: Array<any>;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -116,7 +117,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                         selector: a => {
                             return {
                                 title: 'common_rollback',
-                                click: _ => { this.clickRollback(a) }
+                                click: () => { this.clickRollback(a) }
                             };
                         }
                     });
@@ -156,6 +157,10 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 this.workflowTemplate = wt;
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
                 this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);
+            }, e => {
+                if (e.error) {
+                    this.errorData = e.error.data;
+                }
             });
     }
 
@@ -163,7 +168,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.loading = true;
         this._workflowTemplateService.deleteWorkflowTemplate(this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(_ => {
+            .subscribe(() => {
                 this._toast.success('', this._translate.instant('workflow_template_deleted'));
                 this._router.navigate(['settings', 'workflow-template']);
             });

@@ -135,7 +135,7 @@
                         <div *ngIf="_workflowTemplate.editable" class="wide field">
                             <app-delete-button *ngIf="mode === 'edit'" class="left floated" (event)="clickDelete()"
                                 [loading]="loading"></app-delete-button>
-                            <button class="ui green right floated button" [class.loading]="loading" (click)="clickSave()">
+                            <button class="ui positive right floated button" [class.loading]="loading" (click)="clickSave()">
                                 <i class="save icon"></i>{{ 'btn_save' | translate }}
                             </button>
                         </div>

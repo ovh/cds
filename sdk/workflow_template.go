@@ -3,6 +3,7 @@ package sdk
 import (
 	"database/sql/driver"
 	json "encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/ovh/cds/sdk/slug"
@@ -351,4 +352,15 @@ func WorkflowTemplateInstancesToWorkflowTemplateIDs(wtis []*WorkflowTemplateInst
 		ids[i] = wtis[i].WorkflowTemplateID
 	}
 	return ids
+}
+
+// WorkflowTemplateError contains info about template parsing error.
+type WorkflowTemplateError struct {
+	File    string `json:"file"`
+	Line    string `json:"line"`
+	Message string `json:"message"`
+}
+
+func (w WorkflowTemplateError) Error() string {
+	return fmt.Sprintf("error '%s' in %s at line %s", w.Message, w.File, w.Line)
 }
