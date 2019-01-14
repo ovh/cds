@@ -38,15 +38,15 @@ func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) inte
 	return m
 }
 
-func executeTemplate(t string, data map[string]interface{}) (string, error) {
-	tmpl, err := template.New(fmt.Sprintf("template")).Delims("[[", "]]").Parse(t)
+func executeTemplate(id, t string, data map[string]interface{}) (string, error) {
+	tmpl, err := template.New(id).Delims("[[", "]]").Parse(t)
 	if err != nil {
-		return "", sdk.WrapError(err, "cannot parse workflow template")
+		return "", sdk.NewError(sdk.ErrWrongRequest, err)
 	}
 
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, data); err != nil {
-		return "", sdk.WrapError(err, "cannot execute workflow template")
+		return "", sdk.NewError(sdk.ErrWrongRequest, err)
 	}
 
 	return buffer.String(), nil
@@ -65,7 +65,7 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 		return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse workflow template")
 	}
 
-	out, err := executeTemplate(string(v), data)
+	out, err := executeTemplate("workflow.yml", string(v), data)
 	if err != nil {
 		return sdk.WorkflowTemplateResult{}, err
 	}
@@ -83,7 +83,7 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse pipeline template")
 		}
 
-		out, err := executeTemplate(string(v), data)
+		out, err := executeTemplate(fmt.Sprintf("%d.pipeline.yml", i), string(v), data)
 		if err != nil {
 			return sdk.WorkflowTemplateResult{}, err
 		}
@@ -96,7 +96,7 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse application template")
 		}
 
-		out, err := executeTemplate(string(v), data)
+		out, err := executeTemplate(fmt.Sprintf("%d.application.yml", i), string(v), data)
 		if err != nil {
 			return sdk.WorkflowTemplateResult{}, err
 		}
@@ -109,7 +109,7 @@ func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.Wor
 			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse environment template")
 		}
 
-		out, err := executeTemplate(string(v), data)
+		out, err := executeTemplate(fmt.Sprintf("%d.environment.yml", i), string(v), data)
 		if err != nil {
 			return sdk.WorkflowTemplateResult{}, err
 		}
