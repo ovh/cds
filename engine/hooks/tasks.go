@@ -43,7 +43,7 @@ var (
 
 // runTasks should run as a long-running goroutine
 func (s *Service) runTasks(ctx context.Context) error {
-	if err := s.synchronizeTasks(); err != nil {
+	if err := s.synchronizeTasks(ctx); err != nil {
 		log.Error("Hook> Unable to synchronize tasks: %v", err)
 	}
 
@@ -55,7 +55,7 @@ func (s *Service) runTasks(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *Service) synchronizeTasks() error {
+func (s *Service) synchronizeTasks(ctx context.Context) error {
 	t0 := time.Now()
 	defer func() {
 		log.Info("Hooks> All tasks has been resynchronized (%.3fs)", time.Since(t0).Seconds())
@@ -103,6 +103,21 @@ func (s *Service) synchronizeTasks() error {
 			continue
 		}
 		s.Dao.SaveTask(t)
+	}
+
+	// Start listening to gerrit event stream
+	vcsConfig, err := s.Client.VCSConfiguration()
+	if err != nil {
+		return sdk.WrapError(err, "unable to get vcs configuration")
+	}
+	for k, v := range vcsConfig {
+		if v.Type == "gerrit" && v.Username != "" && v.Password != "" && v.SSHPort != 0 {
+			// open event stream
+			vcsName := k
+			sdk.GoRoutine(ctx, "gerrit.EventStream."+vcsName, func(ctx context.Context) {
+				ListenGerritStreamEvent(ctx, vcsConfig[vcsName])
+			})
+		}
 	}
 
 	return nil

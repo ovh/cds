@@ -23,21 +23,17 @@ import (
 )
 
 //LoadAll Load all RepositoriesManager from the database
-func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) ([]string, error) {
+func LoadAll(ctx context.Context, db *gorp.DbMap, store cache.Store) (map[string]sdk.VCSConfiguration, error) {
 	srvs, err := services.FindByType(db, services.TypeVCS)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load services")
 	}
 
-	vcsServers := map[string]interface{}{}
+	vcsServers := make(map[string]sdk.VCSConfiguration)
 	if _, err := services.DoJSONRequest(ctx, srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
 		return nil, err
 	}
-	servers := []string{}
-	for k := range vcsServers {
-		servers = append(servers, k)
-	}
-	return servers, nil
+	return vcsServers, nil
 }
 
 type vcsConsumer struct {

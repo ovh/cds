@@ -23,7 +23,32 @@ func muxVar(r *http.Request, s string) string {
 
 func (s *Service) getAllVCSServersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, s.Cfg.Servers, http.StatusOK)
+		servers := make(map[string]sdk.VCSConfiguration)
+		for k, v := range s.Cfg.Servers {
+			var vcsType, user, privateKey string
+			var sshPort int
+			if v.Gerrit != nil {
+				vcsType = "gerrit"
+				user = v.Gerrit.EventStream.User
+				privateKey = v.Gerrit.EventStream.PrivateKey
+				sshPort = v.Gerrit.SSHPort
+			} else if v.Bitbucket != nil {
+				vcsType = "bitbucket"
+			} else if v.Github != nil {
+				vcsType = "github"
+			} else if v.Gitlab != nil {
+				vcsType = "gitlab"
+			}
+
+			servers[k] = sdk.VCSConfiguration{
+				Type:     vcsType,
+				Username: user,
+				Password: privateKey,
+				URL:      v.URL,
+				SSHPort:  sshPort,
+			}
+		}
+		return service.WriteJSON(w, servers, http.StatusOK)
 	}
 }
 

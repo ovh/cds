@@ -23,9 +23,13 @@ import (
 
 func (api *API) getRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		rms, err := repositoriesmanager.LoadAll(ctx, api.mustDB(), api.Cache)
+		vcsServers, err := repositoriesmanager.LoadAll(ctx, api.mustDB(), api.Cache)
 		if err != nil {
 			return sdk.WrapError(err, "error")
+		}
+		rms := []string{}
+		for k := range vcsServers {
+			rms = append(rms, k)
 		}
 		return service.WriteJSON(w, rms, http.StatusOK)
 	}
