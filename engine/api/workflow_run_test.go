@@ -1452,7 +1452,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 
 	stepState := &sdk.BuildState{}
-	json.Unmarshal(rec.Body.Bytes(), stepState)
+	test.NoError(json.Unmarshal(rec.Body.Bytes(), stepState))
 	assert.Equal(t, 200, rec.Code)
 	assert.Equal(t, "123456789012345... truncated\n", stepState.StepLogs.Val)
 	assert.Equal(t, sdk.StatusBuilding, stepState.Status)
@@ -1481,7 +1481,7 @@ func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 
 	var logs []sdk.ServiceLog
-	json.Unmarshal(rec.Body.Bytes(), &logs)
+	test.NoError(json.Unmarshal(rec.Body.Bytes(), &logs))
 	assert.Equal(t, 200, rec.Code)
 	assert.Equal(t, "098765432109876... truncated\n", logs[0].Val)
 }
