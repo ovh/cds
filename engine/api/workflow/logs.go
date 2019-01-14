@@ -6,13 +6,13 @@ import (
 
 // max size of a log in database in bytes
 const (
-	defaultMaxLogSize = 15*1024 ^ 2 // 15MB
+	DefaultMaxLogSize = 15*1024 ^ 2 // 15MB
 	maxLogMarker      = "... truncated\n"
 )
 
 func truncateLogs(maxSize, existingSize int64, logs *sdk.Log) bool {
 	if maxSize == 0 {
-		maxSize = defaultMaxLogSize
+		maxSize = DefaultMaxLogSize
 	}
 	if existingSize >= maxSize {
 		return true
@@ -31,7 +31,7 @@ func truncateLogs(maxSize, existingSize int64, logs *sdk.Log) bool {
 
 func truncateServiceLogs(maxSize, existingSize int64, logs *sdk.ServiceLog) bool {
 	if maxSize == 0 {
-		maxSize = defaultMaxLogSize
+		maxSize = DefaultMaxLogSize
 	}
 	if existingSize >= maxSize {
 		return true
