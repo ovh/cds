@@ -898,6 +898,16 @@
         <span>database</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
+      <li data-nav-id="/cli/cdsctl/admin/database/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/database/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/database/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/database/list/">
+          <span>list</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/admin/database/unlock/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/admin/database/unlock/">
           <span>unlock</span>
@@ -2270,7 +2280,11 @@
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p><code>Manage CDS Migrations</code></p>
+<p>Theses commands manage CDS Migration and DO NOT concern database migrations.</p>
+
+<p>A CDS Migration is an internal routine. This helps manage a complex data migration with code included
+in CDS Engine. It&rsquo;s totally transpartent to CDS Users &amp; Administrators - but these commands can help
+CDS Administrators and core CDS Developers to debug something if needed.</p>
 
 <h3 id="options">Options</h3>
 
