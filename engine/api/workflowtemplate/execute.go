@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -39,7 +40,15 @@ func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) inte
 	return m
 }
 
-func parseTemplate(id, t string) (*template.Template, error) {
+func parseTemplate(templateType string, number int, t string) (*template.Template, error) {
+	var id string
+	switch templateType {
+	case "workflow":
+		id = templateType
+	default:
+		id = fmt.Sprintf("%s.%d", templateType, number)
+	}
+
 	tmpl, err := template.New(id).Delims("[[", "]]").Parse(t)
 	if err != nil {
 		reg := regexp.MustCompile(`template: ([0-9a-zA-Z.]+):([0-9]+): (.*)$`)
@@ -47,9 +56,14 @@ func parseTemplate(id, t string) (*template.Template, error) {
 		if len(submatch) != 4 {
 			return nil, sdk.WithStack(err)
 		}
+		line, err := strconv.Atoi(submatch[2])
+		if err != nil {
+			return nil, sdk.WithStack(err)
+		}
 		return nil, sdk.WithStack(sdk.WorkflowTemplateError{
-			File:    submatch[1],
-			Line:    submatch[2],
+			Type:    templateType,
+			Number:  number,
+			Line:    line,
 			Message: submatch[3],
 		})
 	}
@@ -95,7 +109,7 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 	if err != nil {
 		return result, err
 	}
-	if tmpl, err := parseTemplate("workflow.yml", v); err != nil {
+	if tmpl, err := parseTemplate("workflow", 0, v); err != nil {
 		parsingErrs = append(parsingErrs, err)
 	} else {
 		if data != nil {
@@ -112,7 +126,7 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 			return result, err
 		}
 
-		if tmpl, err := parseTemplate(fmt.Sprintf("%d.pipeline.yml", i), v); err != nil {
+		if tmpl, err := parseTemplate("pipeline", i, v); err != nil {
 			parsingErrs = append(parsingErrs, err)
 		} else {
 			result.Pipelines[i], err = executeTemplate(tmpl, data)
@@ -128,7 +142,7 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 			return result, err
 		}
 
-		if tmpl, err := parseTemplate(fmt.Sprintf("%d.application.yml", i), v); err != nil {
+		if tmpl, err := parseTemplate("application", i, v); err != nil {
 			parsingErrs = append(parsingErrs, err)
 		} else {
 			if data != nil {
@@ -146,7 +160,7 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 			return result, err
 		}
 
-		if tmpl, err := parseTemplate(fmt.Sprintf("%d.environment.yml", i), v); err != nil {
+		if tmpl, err := parseTemplate("environment", i, v); err != nil {
 			parsingErrs = append(parsingErrs, err)
 		} else {
 			if data != nil {

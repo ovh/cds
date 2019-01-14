@@ -160,20 +160,20 @@ name: Environment-[[if .id]]`)),
 	e := sdk.ExtractHTTPError(err, "")
 	assert.Equal(t, sdk.ErrCannotParseTemplate.ID, e.ID)
 	errs := []sdk.WorkflowTemplateError{{
-		File:    "workflow.yml",
-		Line:    "2",
+		Type:    "workflow",
+		Line:    2,
 		Message: "unexpected \"]\" in operand",
 	}, {
-		File:    "0.pipeline.yml",
-		Line:    "3",
+		Type:    "pipeline",
+		Line:    3,
 		Message: "function \"error\" not defined",
 	}, {
-		File:    "0.application.yml",
-		Line:    "3",
+		Type:    "application",
+		Line:    3,
 		Message: "unexpected unclosed action in command",
 	}, {
-		File:    "0.environment.yml",
-		Line:    "2",
+		Type:    "environment",
+		Line:    2,
 		Message: "unexpected EOF",
 	}}
 	assert.Equal(t, errs, e.Data)

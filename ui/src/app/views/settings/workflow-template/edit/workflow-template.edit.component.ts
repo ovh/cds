@@ -5,7 +5,7 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 import { first } from 'rxjs/operators';
 import { AuditWorkflowTemplate } from '../../../../model/audit.model';
 import { Group } from '../../../../model/group.model';
-import { WorkflowTemplate } from '../../../../model/workflow-template.model';
+import { WorkflowTemplate, WorkflowTemplateError } from '../../../../model/workflow-template.model';
 import { Workflow } from '../../../../model/workflow.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
@@ -37,7 +37,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     diffItems: Array<Item>;
     groupName: string;
     templateSlug: string;
-    errorData: Array<any>;
+    errors: Array<WorkflowTemplateError>;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -155,11 +155,12 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 }
                 this.oldWorkflowTemplate = { ...wt };
                 this.workflowTemplate = wt;
+                this.errors = [];
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
                 this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);
             }, e => {
                 if (e.error) {
-                    this.errorData = e.error.data;
+                    this.errors = e.error.data;
                 }
             });
     }
