@@ -610,7 +610,7 @@ func GetNodeRunBuildCommits(ctx context.Context, db gorp.SqlExecutor, store cach
 		}
 		if br != nil {
 			if br.LatestCommit == "" {
-				return nil, cur, sdk.WrapError(sdk.ErrNoBranch, "GetNodeRunBuildCommits> Branch or lastest commit not found")
+				return nil, cur, sdk.WrapError(sdk.ErrNoBranch, "GetNodeRunBuildCommits> Branch %s or lastest commit not found", cur.Branch)
 			}
 
 			//and return the last commit of the branch

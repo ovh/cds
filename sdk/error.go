@@ -172,6 +172,7 @@ var (
 	ErrInvalidApplicationRepoStrategy         = Error{ID: 155, Status: http.StatusBadRequest}
 	ErrWorkflowNodeRootUpdate                 = Error{ID: 156, Status: http.StatusBadRequest}
 	ErrWorkflowAlreadyAsCode                  = Error{ID: 157, Status: http.StatusBadRequest}
+	ErrNoDBMigrationID                        = Error{ID: 158, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -326,6 +327,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidApplicationRepoStrategy.ID:         "The repository strategy for your application is not correct",
 	ErrWorkflowNodeRootUpdate.ID:                 "Unable to update/delete the root node of your workflow",
 	ErrWorkflowAlreadyAsCode.ID:                  "Workflow is already as-code or there is already a pull-request to transform it",
+	ErrNoDBMigrationID.ID:                        "ID does not exist in table gorp_migration",
 }
 
 var errorsFrench = map[int]string{
@@ -480,6 +482,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidApplicationRepoStrategy.ID:         "La stratégie de dépôt (vcs) de l'application n'est pas correcte",
 	ErrWorkflowNodeRootUpdate.ID:                 "Impossible de mettre à jour ou supprimer le noeud racine du workflow",
 	ErrWorkflowAlreadyAsCode.ID:                  "Le workflow est déjà as-code ou il y a déjà une pull-request pour le transformer",
+	ErrNoDBMigrationID.ID:                        "Cet id n'existe pas dans la table gorp_migrations",
 }
 
 var errorsLanguages = []map[int]string{
