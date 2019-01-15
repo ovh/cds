@@ -159,7 +159,7 @@ func templateApplyRun(v cli.Values) error {
 	}
 
 	// init params map from previous template instance if exists
-	params := map[string]string{}
+	params := make(map[string]string)
 	if wti != nil {
 		for _, p := range wt.Parameters {
 			if v, ok := wti.Request.Parameters[p.Key]; ok {

@@ -84,7 +84,7 @@ type templateBulkFileInstance struct {
 }
 
 func templateExtractAndValidateInstances(instanceKeys []string) (map[string]templateBulkInstancePath, error) {
-	minstances := map[string]templateBulkInstancePath{}
+	minstances := make(map[string]templateBulkInstancePath)
 	for i := range instanceKeys {
 		if instanceKeys[i] != "" { // when no params given GetStringSlice returns one empty string
 			// instance path should be formatted like MYPROJ/myWorkflow
@@ -190,7 +190,7 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 			Request: sdk.WorkflowTemplateRequest{
 				ProjectKey:   instancePath[0],
 				WorkflowName: instancePath[1],
-				Parameters:   map[string]string{},
+				Parameters:   make(map[string]string),
 			},
 		}
 
@@ -212,7 +212,7 @@ func templateExtractAndValidateFileParams(filePath string) (*sdk.WorkflowTemplat
 func templateInitOperationFromParams(mwtis map[string]sdk.WorkflowTemplateInstance, fileOperations []sdk.WorkflowTemplateBulkOperation,
 	minstances map[string]templateBulkInstancePath, params []templateBulkParameter) map[string]sdk.WorkflowTemplateBulkOperation {
 	// for all given instances, create an operation and reuse request if instance already exists
-	moperations := map[string]sdk.WorkflowTemplateBulkOperation{}
+	moperations := make(map[string]sdk.WorkflowTemplateBulkOperation, len(minstances))
 	for key, i := range minstances {
 		if instance, ok := mwtis[key]; ok {
 			moperations[key] = sdk.WorkflowTemplateBulkOperation{
@@ -258,7 +258,7 @@ func templateInitOperationFromParams(mwtis map[string]sdk.WorkflowTemplateInstan
 		key := p.InstancePath.Key()
 		if moperations[key].Request.Parameters == nil {
 			o := moperations[key]
-			o.Request.Parameters = map[string]string{}
+			o.Request.Parameters = make(map[string]string)
 			moperations[key] = o
 		}
 		moperations[key].Request.Parameters[p.Key] = p.Value
@@ -295,7 +295,7 @@ func templateAskForInstances(wt *sdk.WorkflowTemplate, mwtis map[string]sdk.Work
 		values[key] = instance
 	}
 
-	results := []string{}
+	var results []string
 	prompt := &cli.CustomMultiSelect{
 		Message: "Select template's instances that you want to update",
 		Options: opts,
@@ -379,11 +379,11 @@ func templateBulkRun(v cli.Values) error {
 		}
 
 		// init map of projects and project repositories to prevent multiple api calls
-		mprojects := map[string]*sdk.Project{}
+		mprojects := make(map[string]*sdk.Project, len(mwtis))
 		for _, wti := range mwtis {
 			mprojects[wti.Project.Key] = wti.Project
 		}
-		projectRepositories := map[string][]string{}
+		projectRepositories := make(map[string][]string)
 
 		for operationKey, operation := range moperations {
 			// check if some params are missing for current operation
