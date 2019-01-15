@@ -10,6 +10,7 @@ export class WorkflowTemplateEditorComponent implements OnChanges {
   @ViewChild('code') code: any;
 
   @Input() editable: boolean;
+  @Input() removable: boolean;
   @Input() value: string;
   @Input() error: WorkflowTemplateError;
   @Output() changeValue = new EventEmitter<string>();

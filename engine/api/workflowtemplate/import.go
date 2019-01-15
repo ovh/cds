@@ -108,6 +108,11 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 	new := sdk.WorkflowTemplate(*old)
 	new.Update(wt)
 
+	// execute template with no instance only to check if parsing is ok
+	if _, err := Execute(&new, nil); err != nil {
+		return nil, nil, err
+	}
+
 	if err := Update(db, &new); err != nil {
 		return nil, nil, err
 	}
