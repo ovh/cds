@@ -93,7 +93,7 @@ func (api *API) postNewAccessTokenHandler() service.Handler {
 }
 
 // putRegenAccessTokenHandler create a new specific accesstoken with a specific scope (list of groups)
-// the JWT token is send through a header X-CDS-JWTTOKEN
+// the JWT token is send through a header X-CDS-JWT
 func (api *API) putRegenAccessTokenHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
