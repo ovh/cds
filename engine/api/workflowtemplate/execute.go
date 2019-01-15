@@ -103,14 +103,14 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 		}
 	}
 
-	var mutliErr sdk.MultiError
+	var multiErr sdk.MultiError
 
 	v, err := decodeTemplateValue(wt.Value)
 	if err != nil {
 		return result, err
 	}
 	if tmpl, err := parseTemplate("workflow", 0, v); err != nil {
-		mutliErr.Append(err)
+		multiErr.Append(err)
 	} else {
 		if data != nil {
 			result.Workflow, err = executeTemplate(tmpl, data)
@@ -127,7 +127,7 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 		}
 
 		if tmpl, err := parseTemplate("pipeline", i, v); err != nil {
-			mutliErr.Append(err)
+			multiErr.Append(err)
 		} else {
 			result.Pipelines[i], err = executeTemplate(tmpl, data)
 			if err != nil {
@@ -143,7 +143,7 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 		}
 
 		if tmpl, err := parseTemplate("application", i, v); err != nil {
-			mutliErr.Append(err)
+			multiErr.Append(err)
 		} else {
 			if data != nil {
 				result.Applications[i], err = executeTemplate(tmpl, data)
@@ -161,7 +161,7 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 		}
 
 		if tmpl, err := parseTemplate("environment", i, v); err != nil {
-			mutliErr.Append(err)
+			multiErr.Append(err)
 		} else {
 			if data != nil {
 				result.Environments[i], err = executeTemplate(tmpl, data)
@@ -172,10 +172,10 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 		}
 	}
 
-	if !mutliErr.IsEmpty() {
+	if !multiErr.IsEmpty() {
 		var errs []sdk.WorkflowTemplateError
 		var causes []string
-		for _, err := range mutliErr {
+		for _, err := range multiErr {
 			cause := sdk.Cause(err)
 			if e, ok := cause.(sdk.WorkflowTemplateError); ok {
 				errs = append(errs, e)
