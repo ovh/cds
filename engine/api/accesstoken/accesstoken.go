@@ -100,20 +100,19 @@ func IsValid(db gorp.SqlExecutor, jwtToken string) (sdk.AccessToken, bool, error
 	// Load the access token from the id read in the claim
 	accessToken, err = FindByID(db, id)
 	if err != nil {
-		log.Error("accesstoken.IsValid> unable find access token %s: %v", id, err)
-		return accessToken, false, sdk.ErrUnauthorized
+		return accessToken, false, sdk.WrapError(sdk.ErrUnauthorized, "unable find access token %s: %v", id, err)
 	}
 
 	// Check groups from the claims againts the groups in the database
 	ids := sdk.GroupsToIDs(accessToken.Groups)
 	for _, groupID := range claims.Groups {
 		if !sdk.IsInInt64Array(groupID, ids) {
-			log.Error("accesstoken.IsValid> token %s is invalid (group mismatch): %v", id, err)
+			log.Debug("accesstoken.IsValid> token %s is invalid (group mismatch): %v", id, err)
 			return accessToken, false, nil
 		}
 	}
 
-	return accessToken, token != nil, err
+	return accessToken, token != nil, nil
 }
 
 var _XSRFTokenDuration = 60 * 60 * 24 * 7 // 1 Week

@@ -44,7 +44,12 @@ func FindAllByUser(db gorp.SqlExecutor, userID int64) ([]sdk.AccessToken, error)
 // FindAllByGroup returns all tokens associated to a group
 func FindAllByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.AccessToken, error) {
 	var dbTokens []accessToken
-	if _, err := db.Select(&dbTokens, "select access_token.* from access_token, access_token_group where access_token_group.group_id = $1 and access_token.id = access_token_group.access_token_id order by created asc", groupID); err != nil {
+	query := `SELECT access_token.* 
+	FROM access_token
+	JOIN access_token_group ON access_token.id = access_token_group.access_token_id
+	WHERE access_token_group.group_id = $1 
+	ORDER BY created asc`
+	if _, err := db.Select(&dbTokens, query, groupID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}

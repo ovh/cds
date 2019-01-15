@@ -6,19 +6,18 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/engine/api/accesstoken"
 	"github.com/ovh/cds/engine/api/group"
-
 	"github.com/ovh/cds/engine/service"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Manage access token handlers
 
 // postNewAccessTokenHandler create a new specific accesstoken with a specific scope (list of groups)
-// the JWT token is send through a header X-CDS-JWTTOKEN
+// the JWT token is send through a header X-CDS-JWT
 func (api *API) postNewAccessTokenHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// the groupIDs are the scope of the requested token
