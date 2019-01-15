@@ -6,8 +6,28 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
+
 	"github.com/ovh/cds/sdk"
 )
+
+// ExistsStepLog returns the size of step log if exists.
+func ExistsStepLog(db gorp.SqlExecutor, id int64, order int64) (bool, int64, error) {
+	query := `
+    SELECT octet_length(value) as size
+    FROM workflow_node_run_job_logs
+    WHERE workflow_node_run_job_id = $1 AND step_order = $2
+  `
+
+	var size int64
+	if err := db.QueryRow(query, id, order).Scan(&size); err != nil {
+		if sdk.Cause(err) != sql.ErrNoRows {
+			return false, 0, sdk.WithStack(err)
+		}
+		return false, 0, nil
+	}
+
+	return true, size, nil
+}
 
 //LoadStepLogs load logs (workflow_node_run_job_logs) for a job (workflow_node_run_job) for a specific step_order
 func LoadStepLogs(db gorp.SqlExecutor, id int64, order int64) (*sdk.Log, error) {
@@ -120,7 +140,7 @@ func updateLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 	}
 
 	query := `
-		UPDATE workflow_node_run_job_logs set 
+		UPDATE workflow_node_run_job_logs set
 			workflow_node_run_job_id = $1,
 			workflow_node_run_id = $2,
 			start = $3,

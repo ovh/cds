@@ -1,9 +1,6 @@
 package api
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -28,23 +25,20 @@ func TestAddUpdateAndDeleteProjectPlatform(t *testing.T) {
 		models, _ = platform.LoadModels(db)
 	}
 
+	platformModel, err := platform.LoadModelByName(db, sdk.KafkaPlatform.Name, false)
+	test.NoError(t, err)
+
 	pp := sdk.ProjectPlatform{
 		Name:            "kafkaTest",
 		Config:          sdk.KafkaPlatform.DefaultConfig,
-		PlatformModelID: models[0].ID,
+		PlatformModelID: platformModel.ID,
 	}
 
 	// ADD project platform
-	jsonBody, _ := json.Marshal(pp)
-	body := bytes.NewBuffer(jsonBody)
-
 	vars := map[string]string{}
 	vars["permProjectKey"] = proj.Key
 	uri := router.GetRoute("POST", api.postProjectPlatformHandler, vars)
-	req, err := http.NewRequest("POST", uri, body)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
-
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, pp)
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
@@ -52,16 +46,12 @@ func TestAddUpdateAndDeleteProjectPlatform(t *testing.T) {
 	// UPDATE project platform
 	pp.Name = "kafkaTest2"
 	pp.ProjectID = proj.ID
-	jsonBody, _ = json.Marshal(pp)
-	body = bytes.NewBuffer(jsonBody)
 
 	vars = map[string]string{}
 	vars["permProjectKey"] = proj.Key
 	vars["platformName"] = "kafkaTest"
 	uri = router.GetRoute("PUT", api.putProjectPlatformHandler, vars)
-	req, err = http.NewRequest("PUT", uri, body)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, pp)
 
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
@@ -72,9 +62,8 @@ func TestAddUpdateAndDeleteProjectPlatform(t *testing.T) {
 	vars["permProjectKey"] = proj.Key
 	vars["platformName"] = pp.Name
 	uri = router.GetRoute("GET", api.getProjectPlatformHandler, vars)
-	req, err = http.NewRequest("GET", uri, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
+
+	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
@@ -85,9 +74,7 @@ func TestAddUpdateAndDeleteProjectPlatform(t *testing.T) {
 	vars["permProjectKey"] = proj.Key
 	vars["platformName"] = pp.Name
 	uri = router.GetRoute("DELETE", api.deleteProjectPlatformHandler, vars)
-	req, err = http.NewRequest("DELETE", uri, nil)
-	test.NoError(t, err)
-	assets.AuthentifyRequest(t, req, u, pass)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
 
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
