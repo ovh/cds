@@ -313,12 +313,6 @@ func (api *API) applyTemplateHandler() service.Handler {
 			return err
 		}
 
-		// check if a workflow exists with given slug
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, req.WorkflowName, u, workflow.LoadOptions{})
-		if err != nil && !sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
-			return err
-		}
-
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
@@ -326,30 +320,18 @@ func (api *API) applyTemplateHandler() service.Handler {
 		defer func() { _ = tx.Rollback() }()
 
 		var wti *sdk.WorkflowTemplateInstance
-		if wf != nil {
-			// check if workflow is a generated one for the current template
-			wti, err = workflowtemplate.GetInstanceByWorkflowIDAndTemplateID(tx, wf.ID, wt.ID)
-			if err != nil {
-				return err
-			}
+		// try to get a instance not assign to a workflow but with the same slug
+		wtis, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(tx, wt.ID, p.ID, req.WorkflowName)
+		if err != nil {
+			return err
 		}
-		if wti == nil {
-			// try to get a instance not assign to a workflow but with the same slug
-			wtis, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDAndWorkflowIDNull(tx, wt.ID, p.ID)
-			if err != nil {
-				return err
-			}
-
-			for _, res := range wtis {
-				if res.Request.WorkflowName == req.WorkflowName {
-					if wti == nil {
-						wti = &res
-					} else {
-						// if there are more than one instance found, delete others
-						if err := workflowtemplate.DeleteInstance(tx, &res); err != nil {
-							return err
-						}
-					}
+		for _, res := range wtis {
+			if wti == nil {
+				wti = &res
+			} else {
+				// if there are more than one instance found, delete others
+				if err := workflowtemplate.DeleteInstance(tx, &res); err != nil {
+					return err
 				}
 			}
 		}

@@ -9,6 +9,7 @@ import {
     WorkflowTemplateInstance,
     WorkflowTemplateRequest
 } from '../../../model/workflow-template.model';
+import { Workflow } from '../../../model/workflow.model';
 import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
 import { WorkflowTemplateService } from '../../../service/workflow-template/workflow-template.service';
 
@@ -28,17 +29,21 @@ export class WorkflowTemplateApplyFormComponent {
     }
     get project() { return this._project; }
 
+    @Input() workflow: Workflow;
+
     _workflowTemplate: WorkflowTemplate;
     @Input() set workflowTemplate(wt: WorkflowTemplate) {
         this._workflowTemplate = wt;
 
         this.parameterValues = {};
 
-        this._workflowTemplate.parameters.forEach(parameter => {
-            if (parameter.type === 'boolean') {
-                this.parameterValues[parameter.key] = new FormControl();
-            }
-        });
+        if (this._workflowTemplate.parameters) {
+            this._workflowTemplate.parameters.forEach(parameter => {
+                if (parameter.type === 'boolean') {
+                    this.parameterValues[parameter.key] = new FormControl();
+                }
+            });
+        }
 
         this.fillFormWithInstanceData();
     }
@@ -75,33 +80,42 @@ export class WorkflowTemplateApplyFormComponent {
         req.workflow_name = this.parameterName;
         req.parameters = {};
 
-        this._workflowTemplate.parameters.forEach(parameter => {
-            if (this.parameterValues[parameter.key]) {
-                switch (parameter.type) {
-                    case 'boolean':
-                        req.parameters[parameter.key] = this.parameterValues[parameter.key] &&
-                            !!this.parameterValues[parameter.key].value ? 'true' : 'false';
-                        break;
-                    case 'repository':
-                        if (this.parameterValues[parameter.key + '-repository']) {
-                            req.parameters[parameter.key] = this.parameterValues[parameter.key] + '/' +
-                                this.parameterValues[parameter.key + '-repository'];
-                        }
-                        break;
-                    default:
-                        req.parameters[parameter.key] = this.parameterValues[parameter.key];
-                        break;
+        if (this._workflowTemplate.parameters) {
+            this._workflowTemplate.parameters.forEach(parameter => {
+                if (this.parameterValues[parameter.key]) {
+                    switch (parameter.type) {
+                        case 'boolean':
+                            req.parameters[parameter.key] = this.parameterValues[parameter.key] &&
+                                !!this.parameterValues[parameter.key].value ? 'true' : 'false';
+                            break;
+                        case 'repository':
+                            if (this.parameterValues[parameter.key + '-repository']) {
+                                req.parameters[parameter.key] = this.parameterValues[parameter.key] + '/' +
+                                    this.parameterValues[parameter.key + '-repository'];
+                            }
+                            break;
+                        default:
+                            req.parameters[parameter.key] = this.parameterValues[parameter.key];
+                            break;
+                    }
                 }
-            }
-        });
+            });
+        }
 
         this.result = null;
         this.loading = true;
         this._workflowTemplateService.applyWorkflowTemplate(this._workflowTemplate.group.name, this._workflowTemplate.slug, req)
             .pipe(first(), finalize(() => this.loading = false))
             .subscribe(res => {
+                // if the workflow name changed move to new workflow page
                 this.result = res;
-                this.apply.emit();
+
+                // specific check for case where workflow name change in template
+                if (res.workflow_name !== this.workflow.name) {
+                    this._router.navigate(['/project', this.project.key, 'workflow', res.workflow_name]);
+                } else {
+                    this.apply.emit();
+                }
             });
     }
 
@@ -143,30 +157,32 @@ export class WorkflowTemplateApplyFormComponent {
     fillFormWithInstanceData(): void {
         if (this._workflowTemplate && this._workflowTemplateInstance) {
             this.parameterName = this._workflowTemplateInstance.request.workflow_name;
-            this._workflowTemplate.parameters.forEach(parameter => {
+            if (this._workflowTemplate.parameters) {
+                this._workflowTemplate.parameters.forEach(parameter => {
 
-                let v = this._workflowTemplateInstance.request.parameters[parameter.key];
-                if (v) {
-                    switch (parameter.type) {
-                        case 'boolean':
-                            this.parameterValues[parameter.key].setValue(v === 'true');
-                            break;
-                        case 'repository':
-                            let s = v.split('/');
-                            if (s.length > 1) {
-                                let existingVcs = this.vcsNames.find(vcs => vcs === s[0]);
-                                if (existingVcs) {
-                                    this.parameterValues[parameter.key] = existingVcs;
-                                    this.fetchRepos(parameter.key, existingVcs);
+                    let v = this._workflowTemplateInstance.request.parameters[parameter.key];
+                    if (v) {
+                        switch (parameter.type) {
+                            case 'boolean':
+                                this.parameterValues[parameter.key].setValue(v === 'true');
+                                break;
+                            case 'repository':
+                                let s = v.split('/');
+                                if (s.length > 1) {
+                                    let existingVcs = this.vcsNames.find(vcs => vcs === s[0]);
+                                    if (existingVcs) {
+                                        this.parameterValues[parameter.key] = existingVcs;
+                                        this.fetchRepos(parameter.key, existingVcs);
+                                    }
                                 }
-                            }
-                            break;
-                        default:
-                            this.parameterValues[parameter.key] = v;
-                            break;
+                                break;
+                            default:
+                                this.parameterValues[parameter.key] = v;
+                                break;
+                        }
                     }
-                }
-            });
+                });
+            }
         }
     }
 
