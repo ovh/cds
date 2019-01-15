@@ -1168,7 +1168,7 @@ func (api *API) getWorkflowNodeRunJobServiceLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		runJobID, errJ := requestVarInt(r, "runJobId")
 		if errJ != nil {
-			return sdk.WrapError(errJ, "getWorkflowNodeRunJobServiceLogsHandler> runJobId: invalid number")
+			return sdk.WrapError(errJ, "runJobId: invalid number")
 		}
 		db := api.mustDB()
 

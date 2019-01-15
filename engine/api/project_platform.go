@@ -47,7 +47,7 @@ func (api *API) putProjectPlatformHandler() service.Handler {
 
 		ppDB, errP := platform.LoadPlatformsByName(api.mustDB(), projectKey, platformName, true)
 		if errP != nil {
-			return sdk.WrapError(errP, "putProjectPlatformHandler> Cannot load project platform")
+			return sdk.WrapError(errP, "putProjectPlatformHandler> Cannot load platform %s for project %s", platformName, projectKey)
 		}
 
 		//If the platform model is public, it's forbidden to update the project platform

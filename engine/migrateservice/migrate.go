@@ -34,7 +34,7 @@ func (s *dbmigservice) doMigrate() error {
 	return nil
 }
 
-func (s *dbmigservice) getMigrate() ([]dbmigrate.MigrationStatus, error) {
+func (s *dbmigservice) getMigrate() ([]sdk.DatabaseMigrationStatus, error) {
 	dbConn, err := database.Init(
 		s.cfg.DB.User,
 		s.cfg.DB.Role,

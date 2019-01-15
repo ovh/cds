@@ -12,6 +12,12 @@ import (
 var adminMigrationsCmd = cli.Command{
 	Name:  "migration",
 	Short: "Manage CDS Migrations",
+	Long: `Theses commands manage CDS Migration and DO NOT concern database migrations.
+	
+A CDS Migration is an internal routine. This helps manage a complex data migration with code included
+in CDS Engine. It's totally transpartent to CDS Users & Administrators - but these commands can help
+CDS Administrators and core CDS Developers to debug something if needed.
+	`,
 }
 
 func adminMigrations() *cobra.Command {
