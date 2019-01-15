@@ -155,6 +155,11 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
+		// execute template with no instance only to check if parsing is ok
+		if _, err := workflowtemplate.Execute(&t, nil); err != nil {
+			return err
+		}
+
 		// duplicate couple of group id and slug will failed with sql constraint
 		if err := workflowtemplate.Insert(api.mustDB(), &t); err != nil {
 			return err
@@ -231,6 +236,11 @@ func (api *API) putTemplateHandler() service.Handler {
 		// update fields from request data
 		new := sdk.WorkflowTemplate(*old)
 		new.Update(data)
+
+		// execute template with no instance only to check if parsing is ok
+		if _, err := workflowtemplate.Execute(&new, nil); err != nil {
+			return err
+		}
 
 		if err := workflowtemplate.Update(api.mustDB(), &new); err != nil {
 			return err

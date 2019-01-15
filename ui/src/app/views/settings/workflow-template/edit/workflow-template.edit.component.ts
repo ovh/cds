@@ -5,7 +5,7 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 import { first } from 'rxjs/operators';
 import { AuditWorkflowTemplate } from '../../../../model/audit.model';
 import { Group } from '../../../../model/group.model';
-import { WorkflowTemplate } from '../../../../model/workflow-template.model';
+import { WorkflowTemplate, WorkflowTemplateError } from '../../../../model/workflow-template.model';
 import { Workflow } from '../../../../model/workflow.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
@@ -37,6 +37,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     diffItems: Array<Item>;
     groupName: string;
     templateSlug: string;
+    errors: Array<WorkflowTemplateError>;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -116,7 +117,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
                         selector: a => {
                             return {
                                 title: 'common_rollback',
-                                click: _ => { this.clickRollback(a) }
+                                click: () => { this.clickRollback(a) }
                             };
                         }
                     });
@@ -154,8 +155,13 @@ export class WorkflowTemplateEditComponent implements OnInit {
                 }
                 this.oldWorkflowTemplate = { ...wt };
                 this.workflowTemplate = wt;
+                this.errors = [];
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
                 this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);
+            }, e => {
+                if (e.error) {
+                    this.errors = e.error.data;
+                }
             });
     }
 
@@ -163,7 +169,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.loading = true;
         this._workflowTemplateService.deleteWorkflowTemplate(this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(_ => {
+            .subscribe(() => {
                 this._toast.success('', this._translate.instant('workflow_template_deleted'));
                 this._router.navigate(['settings', 'workflow-template']);
             });

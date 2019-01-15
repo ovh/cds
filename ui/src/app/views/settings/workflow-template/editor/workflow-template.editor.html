@@ -1,0 +1,6 @@
+<codemirror #code class="code" [ngModel]="value" [config]="codeMirrorConfig" (change)="valueChange($event)">
+</codemirror>
+<button *ngIf="editable && removable" class="codeButton ui icon red button" (click)="clickRemove()">
+  <i class="trash icon"></i>
+</button>
+<div *ngIf="this.error" class="ui red message">{{this.error.message}}</div>

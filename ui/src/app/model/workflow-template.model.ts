@@ -53,3 +53,10 @@ export class WorkflowTemplateInstance {
     workflow_template_version: number;
     request: WorkflowTemplateRequest;
 }
+
+export class WorkflowTemplateError {
+    type: string;
+    number: number;
+    line: number;
+    message: string;
+}
