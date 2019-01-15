@@ -71,10 +71,11 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			return sdk.ErrNotFound
 		}
 		res := struct {
-			WebhooksSupported  bool   `json:"webhooks_supported"`
-			WebhooksDisabled   bool   `json:"webhooks_disabled"`
-			WebhooksIcon       string `json:"webhooks_icon"`
-			GerritHookDisabled bool   `json:"gerrithook_supported"`
+			WebhooksSupported  bool     `json:"webhooks_supported"`
+			WebhooksDisabled   bool     `json:"webhooks_disabled"`
+			WebhooksIcon       string   `json:"webhooks_icon"`
+			GerritHookDisabled bool     `json:"gerrithook_disabled"`
+			Events             []string `json:"events"`
 		}{}
 
 		switch {
@@ -82,18 +83,111 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Bitbucket.DisableWebHooks
 			res.WebhooksIcon = sdk.BitbucketIcon
+			// https://confluence.atlassian.com/bitbucketserver/event-payload-938025882.html
+			res.Events = []string{
+				"refs_changed",
+				"repo:forked",
+				"comment:added",
+				"comment:edited",
+				"comment:deleted",
+				"pr:opened",
+				"pr:modified",
+				"pr:merged",
+				"pr:declined",
+				"pr:deleted",
+				"pr:reviewer:updated",
+				"pr:reviewer:approved",
+				"pr:reviewer:unapproved",
+				"pr:reviewer:needs_work",
+				"pr:comment:added",
+				"pr:comment:edited",
+				"pr:comment:deleted",
+			}
 		case cfg.Github != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Github.DisableWebHooks
 			res.WebhooksIcon = sdk.GitHubIcon
+			// https://developer.github.com/v3/activity/events/types/
+			res.Events = []string{
+				"push",
+				"check_run",
+				"check_suite",
+				"commit_comment",
+				"create",
+				"delete",
+				"deployment",
+				"deployment_status",
+				"fork",
+				"github_app_authorization",
+				"gollum",
+				"installation",
+				"installation_repositories",
+				"issue_comment",
+				"issues",
+				"label",
+				"marketplace_purchase",
+				"member",
+				"membership",
+				"milestone",
+				"organization",
+				"org_block",
+				"page_build",
+				"project_card",
+				"project_column",
+				"project",
+				"public",
+				"pull-request_review_comment",
+				"pull-request_review",
+				"pull_request",
+				"repository",
+				"repository_import",
+				"repository_vulnerability_alert",
+				"release",
+				"security_advisory",
+				"status",
+				"team",
+				"team_add",
+				"watch",
+			}
 		case cfg.Gitlab != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Gitlab.DisableWebHooks
 			res.WebhooksIcon = sdk.GitlabIcon
+			// https://docs.gitlab.com/ee/user/project/integrations/webhooks.html
+			res.Events = []string{
+				"Push Hook",
+				"Tag Push Hook",
+				"Issue Hook",
+				"Note Hook",
+				"Merge Request Hook",
+				"Wiki Page Hook",
+				"Pipeline Hook",
+				"Build Hook",
+			}
 		case cfg.Gerrit != nil:
-			res.WebhooksSupported = true
+			res.WebhooksSupported = false
 			res.GerritHookDisabled = cfg.Gerrit.DisableGerritEvent
 			res.WebhooksIcon = sdk.GerritIcon
+			// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events
+			res.Events = []string{
+				"ref-updated",
+				"assignee-changed",
+				"change-abandoned",
+				"change-deleted",
+				"change-merged",
+				"change-restored",
+				"comment-added",
+				"dropped-output",
+				"hashtags-changed",
+				"project-created",
+				"patchset-created",
+				"reviewer-added",
+				"reviewer-deleted",
+				"topic-changed",
+				"wip-state-changed",
+				"private-state-changed",
+				"vote-deleted",
+			}
 		}
 
 		return service.WriteJSON(w, res, http.StatusOK)

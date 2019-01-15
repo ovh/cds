@@ -529,9 +529,11 @@ func (c *vcsClient) GrantReadPermission(ctx context.Context, repo string) error 
 
 // WebhooksInfos is a set of info about webhooks
 type WebhooksInfos struct {
-	WebhooksSupported bool   `json:"webhooks_supported"`
-	WebhooksDisabled  bool   `json:"webhooks_disabled"`
-	Icon              string `json:"webhooks_icon"`
+	WebhooksSupported  bool     `json:"webhooks_supported"`
+	WebhooksDisabled   bool     `json:"webhooks_disabled"`
+	GerritHookDisabled bool     `json:"gerrithook_disabled"`
+	Icon               string   `json:"webhooks_icon"`
+	Events             []string `json:"events"`
 }
 
 // GetWebhooksInfos returns webhooks_supported, webhooks_disabled, webhooks_creation_supported, webhooks_creation_disabled for a vcs server

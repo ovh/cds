@@ -209,9 +209,10 @@ func (cfg WorkflowNodeHookConfig) Clone() WorkflowNodeHookConfig {
 
 // WorkflowNodeHookConfigValue represents the value of a node hook config
 type WorkflowNodeHookConfigValue struct {
-	Value        string `json:"value"`
-	Configurable bool   `json:"configurable"`
-	Type         string `json:"type"`
+	Value              string   `json:"value"`
+	Configurable       bool     `json:"configurable"`
+	Type               string   `json:"type"`
+	MultipleChoiceList []string `json:"multiple_choice_list"`
 }
 
 const (
@@ -225,6 +226,8 @@ const (
 	HookConfigTypeWorkflow = "workflow"
 	// HookConfigTypeHook type hook
 	HookConfigTypeHook = "hook"
+	// HookConfigTypeMultiChoice
+	HookConfigTypeMultiChoice = "multiple"
 )
 
 //WorkflowHookModel represents a hook which can be used in workflows.

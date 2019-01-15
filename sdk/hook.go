@@ -47,6 +47,7 @@ var (
 		&KafkaHookModel,
 		&RabbitMQHookModel,
 		&WorkflowModel,
+		&GerritHookModel,
 	}
 
 	BuiltinOutgoingHookModels = []*WorkflowHookModel{
@@ -185,6 +186,21 @@ var (
 				Value:        "{}",
 				Configurable: true,
 				Type:         HookConfigTypeString,
+			},
+		},
+	}
+
+	GerritHookModel = WorkflowHookModel{
+		Author:     "CDS",
+		Type:       WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/gerrit",
+		Name:       GerritHookModelName,
+		Icon:       "git",
+		DefaultConfig: WorkflowNodeHookConfig{
+			HookConfigEventFilter: {
+				Value:        "",
+				Configurable: false,
+				Type:         HookConfigTypeMultiChoice,
 			},
 		},
 	}
