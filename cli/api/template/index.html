@@ -2242,8 +2242,8 @@
 <ul>
 <li><a href="#post-template">POST <code>/template</code></a></li>
 <li><a href="#get-template">GET <code>/template</code></a></li>
-<li><a href="#get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
 <li><a href="#delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
+<li><a href="#get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
 <li><a href="#put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
 <li><a href="#post-template-group-name-templateslug-apply">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply</code></a></li>
 <li><a href="#get-template-group-name-templateslug-audit">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit</code></a></li>
@@ -2330,34 +2330,6 @@
 </tbody>
 </table>
 
-<h3 id="get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
-
-<table>
-<thead>
-<tr>
-<th>URL</th>
-<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></strong></th>
-</tr>
-</thead>
-
-<tbody>
-<tr>
-<td>Method</td>
-<td>GET</td>
-</tr>
-
-<tr>
-<td>Permissions</td>
-<td>Auth: true</td>
-</tr>
-
-<tr>
-<td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateHandler%22">getTemplateHandler</a></td>
-</tr>
-</tbody>
-</table>
-
 <h3 id="delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
 
 <table>
@@ -2382,6 +2354,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateHandler%22">deleteTemplateHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateHandler%22">getTemplateHandler</a></td>
 </tr>
 </tbody>
 </table>
