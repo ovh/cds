@@ -42,7 +42,7 @@
                         <div *ngIf="diffVisible" class="ui wide sixteen field">
                             <app-diff-list [items]="diffItems"></app-diff-list>
                         </div>
-                        <app-workflow-template-apply-form [project]="project" [workflowTemplate]="workflowTemplate"
+                        <app-workflow-template-apply-form [project]="project" [workflow]="workflow" [workflowTemplate]="workflowTemplate"
                             [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true" (close)="close()"
                             (apply)="load()"></app-workflow-template-apply-form>
                     </div>

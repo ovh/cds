@@ -171,13 +171,13 @@ func GetInstancesByTemplateIDAndProjectIDs(db gorp.SqlExecutor, templateID int64
 	return wtis, nil
 }
 
-// GetInstancesByTemplateIDAndProjectIDAndWorkflowIDNull returns all workflow template instances by template id, project id and workflow id null.
-func GetInstancesByTemplateIDAndProjectIDAndWorkflowIDNull(db gorp.SqlExecutor, templateID, projectID int64) ([]sdk.WorkflowTemplateInstance, error) {
+// GetInstancesByTemplateIDAndProjectIDAndRequestWorkflowName returns all workflow template instances by template id, project id and request workflow name.
+func GetInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(db gorp.SqlExecutor, templateID, projectID int64, workflowName string) ([]sdk.WorkflowTemplateInstance, error) {
 	wtis := []sdk.WorkflowTemplateInstance{}
 
 	if _, err := db.Select(&wtis,
-		"SELECT * FROM workflow_template_instance WHERE workflow_id IS NULL AND workflow_template_id = $1 AND project_id = $2",
-		templateID, projectID,
+		"SELECT * FROM workflow_template_instance WHERE workflow_template_id = $1 AND project_id = $2 AND (request->>'workflow_name')::text = $3",
+		templateID, projectID, workflowName,
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflow template instances")
 	}
@@ -197,23 +197,6 @@ func GetInstancesByWorkflowIDs(db gorp.SqlExecutor, workflowIDs []int64) ([]sdk.
 	}
 
 	return wtis, nil
-}
-
-// GetInstanceByWorkflowIDAndTemplateID returns a workflow template instance by workflow and template ids.
-func GetInstanceByWorkflowIDAndTemplateID(db gorp.SqlExecutor, workflowID, templateID int64) (*sdk.WorkflowTemplateInstance, error) {
-	wti := sdk.WorkflowTemplateInstance{}
-
-	if err := db.SelectOne(&wti,
-		"SELECT * FROM workflow_template_instance WHERE workflow_id = $1 AND workflow_template_id = $2",
-		workflowID, templateID,
-	); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil
-		}
-		return nil, sdk.WrapError(err, "Cannot get workflow template instance")
-	}
-
-	return &wti, nil
 }
 
 // GetInstanceByWorkflowID returns a workflow template instance by workflow id.
