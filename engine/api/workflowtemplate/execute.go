@@ -174,13 +174,13 @@ func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (
 
 	if !multiErr.IsEmpty() {
 		var errs []sdk.WorkflowTemplateError
-		var causes []string
-		for _, err := range multiErr {
+		causes := make([]string, len(multiErr))
+		for i, err := range multiErr {
 			cause := sdk.Cause(err)
 			if e, ok := cause.(sdk.WorkflowTemplateError); ok {
 				errs = append(errs, e)
 			}
-			causes = append(causes, cause.Error())
+			causes[i] = cause.Error()
 		}
 		return result, sdk.NewErrorFrom(sdk.Error{
 			ID:     sdk.ErrCannotParseTemplate.ID,
