@@ -236,10 +236,8 @@ var configNewCmd = &cobra.Command{
 				},
 			}
 			conf.VCS.Servers["Gerrit"] = vcs.ServerConfiguration{
-				URL: "http://localhost:8080",
-				Gerrit: &vcs.GerritServerConfiguration{
-					DisablePolling: false,
-				},
+				URL:    "http://localhost:8080",
+				Gerrit: &vcs.GerritServerConfiguration{},
 			}
 		}
 

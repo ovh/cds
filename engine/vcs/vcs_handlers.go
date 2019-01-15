@@ -71,9 +71,10 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			return sdk.ErrNotFound
 		}
 		res := struct {
-			WebhooksSupported bool   `json:"webhooks_supported"`
-			WebhooksDisabled  bool   `json:"webhooks_disabled"`
-			WebhooksIcon      string `json:"webhooks_icon"`
+			WebhooksSupported  bool   `json:"webhooks_supported"`
+			WebhooksDisabled   bool   `json:"webhooks_disabled"`
+			WebhooksIcon       string `json:"webhooks_icon"`
+			GerritHookDisabled bool   `json:"gerrithook_supported"`
 		}{}
 
 		switch {
@@ -91,7 +92,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksIcon = sdk.GitlabIcon
 		case cfg.Gerrit != nil:
 			res.WebhooksSupported = true
-			res.WebhooksDisabled = cfg.Gerrit.DisableWebHooks
+			res.GerritHookDisabled = cfg.Gerrit.DisableGerritEvent
 			res.WebhooksIcon = sdk.GerritIcon
 		}
 

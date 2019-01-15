@@ -117,7 +117,6 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 	if serverCfg.Gerrit != nil {
 		return gerrit.New(
 			serverCfg.URL,
-			serverCfg.Gerrit.ProxyWebhook,
 			s.Cache,
 			serverCfg.Gerrit.Status.Disable,
 			serverCfg.Gerrit.Status.ShowDetail,

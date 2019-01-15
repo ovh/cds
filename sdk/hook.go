@@ -4,6 +4,7 @@ package sdk
 const (
 	WebHookModelName              = "WebHook"
 	RepositoryWebHookModelName    = "RepositoryWebHook"
+	GerritHookModelName           = "GerritHook"
 	SchedulerModelName            = "Scheduler"
 	GitPollerModelName            = "Git Repository Poller"
 	KafkaHookModelName            = "Kafka hook"
@@ -15,6 +16,9 @@ const (
 	HookConfigTargetWorkflow      = "target_workflow"
 	HookConfigTargetHook          = "target_hook"
 	HookConfigWorkflowID          = "workflow_id"
+	HookConfigVCSServer           = "vcsServer"
+	HookConfigEventFilter         = "eventFilter"
+	HookConfigRepoFullName        = "repoFullName"
 	HookConfigModelType           = "model_type"
 	HookConfigModelName           = "model_name"
 	HookConfigIcon                = "hookIcon"

@@ -29,36 +29,54 @@ const (
 	GerritLabelStatusImpossible = "IMPOSSIBLE"
 
 	GerritEmptyRef = "0000000000000000000000000000000000000000"
+
+	GerritEventTypeAssignedChanged     = "assignee-changed"
+	GerritEventTypeChangeAbandoned     = "change-abandoned"
+	GerritEventTypeChangeDeleted       = "change-deleted"
+	GerritEventTypeChangeMerged        = "change-merged"
+	GerritEventTypeChangeRestored      = "change-restored"
+	GerritEventTypeCommentAdded        = "comment-added"
+	GerritEventTypeDroppedOutput       = "dropped-output"
+	GerritEventTypeHashTagsChanged     = "hashtags-changed"
+	GerritEventTypeProjectCreated      = "project-created"
+	GerritEventTypePatchsetCreated     = "patchset-created"
+	GerritEventTypeRefUpdated          = "ref-updated"
+	GerritEventTypeReviewerAdded       = "reviewer-added"
+	GerritEventTypeReviewerDelete      = "reviewer-deleted"
+	GerritEventTypeTopicChanged        = "topic-changed"
+	GerritEventTypeWIPStateChanged     = "wip-state-changed"
+	GerritEventTypePrivateStateChanged = "private-state-changed"
+	GerritEventTypeVoteDeleted         = "vote-deleted"
 )
 
 // GerritEvent rerpesents the events send by gerrit
 // https://gerrit-review.googlesource.com/Documentation/cmd-stream-events.html
 type GerritEvent struct {
 	Type           string           `json:"type,omitempty"`
-	Change         GerritChange     `json:"change,omitempty"`
-	Changer        GerritAccount    `json:"changer,omitempty"`
+	Change         *GerritChange    `json:"change,omitempty"`
+	Changer        *GerritAccount   `json:"changer,omitempty"`
 	OldAssignee    string           `json:"oldAssignee,omitempty"`
 	EventCreatedOn int64            `json:"eventCreatedOn,omitempty"`
-	PatchSet       GerritPatchSet   `json:"patchSet,omitempty"`
-	Abandoner      GerritAccount    `json:"abandoner,omitempty"`
+	PatchSet       *GerritPatchSet  `json:"patchSet,omitempty"`
+	Abandoner      *GerritAccount   `json:"abandoner,omitempty"`
 	Reason         string           `json:"reason,omitempty"`
-	Deleter        GerritAccount    `json:"deleted,omitempty"`
-	Submitter      GerritAccount    `json:"submitter,omitempty"`
+	Deleter        *GerritAccount   `json:"deleted,omitempty"`
+	Submitter      *GerritAccount   `json:"submitter,omitempty"`
 	NewRev         string           `json:"newRev,omitempty"`
 	Restorer       string           `json:"restorer,omitempty"`
-	Author         GerritAccount    `json:"author,omitempty"`
+	Author         *GerritAccount   `json:"author,omitempty"`
 	Approvals      []GerritApproval `json:"approvals,omitempty"`
 	Comment        string           `json:"comment,omitempty"`
-	Editor         GerritAccount    `json:"editor,omitempty"`
+	Editor         *GerritAccount   `json:"editor,omitempty"`
 	Added          []string         `json:"added,omitempty"`
 	Removed        []string         `json:"removed,omitempty"`
 	HashTags       []string         `json:"hashtags,omitempty"`
 	ProjectName    string           `json:"projectName,omitempty"`
 	ProjectHead    string           `json:"projectHead,omitempty"`
-	Uploader       GerritAccount    `json:"updaloed,omitempty"`
-	RefUpdate      GerritRefUpdate  `json:"refUpdate,omitempty"`
-	Reviewer       GerritAccount    `json:"reviewer,omitempty"`
-	Remover        GerritAccount    `json:"remover,omitempty"`
+	Uploader       *GerritAccount   `json:"updaloed,omitempty"`
+	RefUpdate      *GerritRefUpdate `json:"refUpdate,omitempty"`
+	Reviewer       *GerritAccount   `json:"reviewer,omitempty"`
+	Remover        *GerritAccount   `json:"remover,omitempty"`
 	OldTopic       string           `json:"oldTopic,omitempty"`
 }
 
@@ -70,7 +88,7 @@ type GerritChange struct {
 	Topic           string               `json:"topic,omitempty"`
 	ID              string               `json:"id,omitempty"`
 	Subject         string               `json:"subject,omitempty"`
-	Owner           GerritAccount        `json:"owner,omitempty"`
+	Owner           *GerritAccount       `json:"owner,omitempty"`
 	URL             string               `json:"url,omitempty"`
 	CommitMessage   string               `json:"commitMessage,omitempty"`
 	HashTags        []string             `json:"hashtags,omitempty"`
@@ -82,7 +100,7 @@ type GerritChange struct {
 	Wip             bool                 `json:"wip,omitempty"`
 	Comments        []GerritMessage      `json:"comments,omitempty"`
 	TrackingIDs     []GerritTrackingID   `json:"trackingIds,omitempty"`
-	CurrentPatchSet GerritPatchSet       `json:"currentPatchSet,omitempty"`
+	CurrentPatchSet *GerritPatchSet      `json:"currentPatchSet,omitempty"`
 	PatchSets       []GerritPatchSet     `json:"patchSets,omitempty"`
 	DependsOn       []GerritDependency   `json:"dependsOn,omitempty"`
 	NeededBy        []GerritDependency   `json:"neededBy,omitempty"`
@@ -99,9 +117,9 @@ type GerritAccount struct {
 
 // GerritMessage https://gerrit-review.googlesource.com/Documentation/json.html#message
 type GerritMessage struct {
-	Timestamp int64         `json:"timestamp,omitempty"`
-	Reviewer  GerritAccount `json:"reviewer,omitempty"`
-	Message   string        `json:"message,omitempty"`
+	Timestamp int64          `json:"timestamp,omitempty"`
+	Reviewer  *GerritAccount `json:"reviewer,omitempty"`
+	Message   string         `json:"message,omitempty"`
 }
 
 // GerritTrackingID https://gerrit-review.googlesource.com/Documentation/json.html#trackingid
@@ -112,12 +130,12 @@ type GerritTrackingID struct {
 
 // GerritPatchSet https://gerrit-review.googlesource.com/Documentation/json.html#patchSet
 type GerritPatchSet struct {
-	Number         string                  `json:"number,omitempty"`
+	Number         int64                   `json:"number,omitempty"`
 	Revision       string                  `json:"revision,omitempty"`
 	Parents        []string                `json:"parents,omitempty"`
 	Ref            string                  `json:"ref,omitempty"`
-	Uploader       GerritAccount           `json:"uploader,omitempty"`
-	Author         GerritAccount           `json:"author,omitempty"`
+	Uploader       *GerritAccount          `json:"uploader,omitempty"`
+	Author         *GerritAccount          `json:"author,omitempty"`
 	CreatedOn      int                     `json:"createdOn,omitempty"`
 	IsDraft        bool                    `json:"isDraft,omitempty"`
 	Kind           string                  `json:"kind,omitempty"`
@@ -130,20 +148,20 @@ type GerritPatchSet struct {
 
 // GerritApproval https://gerrit-review.googlesource.com/Documentation/json.html#approval
 type GerritApproval struct {
-	Type        string        `json:"type,omitempty"`
-	Description string        `json:"description,omitempty"`
-	Value       string        `json:"value,omitempty"`
-	OldValue    string        `json:"oldValue,omitempty"`
-	GrantedOn   int           `json:"grantedOn,omitempty"`
-	By          GerritAccount `json:"by,omitempty"`
+	Type        string         `json:"type,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Value       string         `json:"value,omitempty"`
+	OldValue    string         `json:"oldValue,omitempty"`
+	GrantedOn   int            `json:"grantedOn,omitempty"`
+	By          *GerritAccount `json:"by,omitempty"`
 }
 
 // GerritPatchSetComment https://gerrit-review.googlesource.com/Documentation/json.html#patchsetcomment
 type GerritPatchSetComment struct {
-	File     string        `json:"file,omitempty"`
-	Line     int           `json:"line,omitempty"`
-	Reviewer GerritAccount `json:"reviewer,omitempty"`
-	Message  string        `json:"message,omitempty"`
+	File     string         `json:"file,omitempty"`
+	Line     int            `json:"line,omitempty"`
+	Reviewer *GerritAccount `json:"reviewer,omitempty"`
+	Message  string         `json:"message,omitempty"`
 }
 
 // GerritFile https://gerrit-review.googlesource.com/Documentation/json.html#file
@@ -166,19 +184,16 @@ type GerritDependency struct {
 
 // GerritSubmitRecord https://gerrit-review.googlesource.com/Documentation/json.html#submitRecord
 type GerritSubmitRecord struct {
-	Status string `json:"status,omitempty"`
-	// OK - The change is ready for submission or already submitted.
-	// NOT_READY - The change is missing a required label.
-	// RULE_ERROR - An internal server error occurred preventing computation.
+	Status       string              `json:"status,omitempty"`
 	Labels       []GerritLabel       `json:"labels,omitempty"`
 	Requirements []GerritRequirement `json:"requirements,omitempty"`
 }
 
 // GerritLabel https://gerrit-review.googlesource.com/Documentation/json.html#label
 type GerritLabel struct {
-	Label  string        `json:"label,omitempty"`
-	Status string        `json:"status,omitempty"`
-	By     GerritAccount `json:"by,omitempty"`
+	Label  string         `json:"label,omitempty"`
+	Status string         `json:"status,omitempty"`
+	By     *GerritAccount `json:"by,omitempty"`
 }
 
 // GerritRequirement https://gerrit-review.googlesource.com/Documentation/json.html#requirement

@@ -20,6 +20,7 @@ const (
 	TypeScheduler          = "Scheduler"
 	TypeRepoPoller         = "RepoPoller"
 	TypeKafka              = "Kafka"
+	TypeGerrit             = "Gerrit"
 	TypeRabbitMQ           = "RabbitMQ"
 	TypeWorkflowHook       = "Workflow"
 	TypeOutgoingWebHook    = "OutgoingWebhook"
@@ -39,6 +40,7 @@ var (
 	rootKey           = cache.Key("hooks", "tasks")
 	executionRootKey  = cache.Key("hooks", "tasks", "executions")
 	schedulerQueueKey = cache.Key("hooks", "scheduler", "queue")
+	gerritRepoKey     = cache.Key("hooks", "gerrit", "repo")
 )
 
 // runTasks should run as a long-running goroutine
@@ -110,12 +112,23 @@ func (s *Service) synchronizeTasks(ctx context.Context) error {
 	if err != nil {
 		return sdk.WrapError(err, "unable to get vcs configuration")
 	}
+
 	for k, v := range vcsConfig {
 		if v.Type == "gerrit" && v.Username != "" && v.Password != "" && v.SSHPort != 0 {
 			// open event stream
 			vcsName := k
+
+			// Create channel to store gerrit event
+			gerritEventChan := make(chan GerritEvent, 20)
+
+			// Listen to gerrit event stream
 			sdk.GoRoutine(ctx, "gerrit.EventStream."+vcsName, func(ctx context.Context) {
-				ListenGerritStreamEvent(ctx, vcsConfig[vcsName])
+				ListenGerritStreamEvent(ctx, vcsConfig[vcsName], gerritEventChan)
+			})
+
+			// Listen to gerrit event stream
+			sdk.GoRoutine(ctx, "gerrit.EventStreamCompute."+vcsName, func(ctx context.Context) {
+				s.ComputeGerritStreamEvent(ctx, vcsName, gerritEventChan)
 			})
 		}
 	}
@@ -129,6 +142,12 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*sdk.Task, error) {
 	}
 
 	switch h.WorkflowHookModel.Name {
+	case sdk.GerritHookModelName:
+		return &sdk.Task{
+			UUID:   h.UUID,
+			Type:   TypeGerrit,
+			Config: h.Config,
+		}, nil
 	case sdk.KafkaHookModelName:
 		return &sdk.Task{
 			UUID:   h.UUID,
@@ -242,6 +261,8 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 		return s.startOutgoingWebHookTask(t)
 	case TypeOutgoingWorkflow:
 		return s.startOutgoingWorkflowTask(t)
+	case TypeGerrit:
+		return s.startGerritHookTask(t)
 	default:
 		return nil, fmt.Errorf("Unsupported task type %s", t.Type)
 	}
@@ -343,6 +364,8 @@ func (s *Service) doTask(ctx context.Context, t *sdk.Task, e *sdk.TaskExecution)
 
 	var doRestart = false
 	switch {
+	case e.GerritEvent != nil:
+		h, err = s.doGerritExecution(e)
 	case e.WebHook != nil && e.Type == TypeOutgoingWebHook:
 		err = s.doOutgoingWebHookExecution(e)
 	case e.Type == TypeOutgoingWorkflow:
