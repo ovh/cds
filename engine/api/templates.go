@@ -464,7 +464,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 			}
 		}
 
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		// non admin user should have read/write access to all given project
 		if !u.Admin {
@@ -584,7 +584,7 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 		}
 		wt := getWorkflowTemplate(ctx)
 
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		b, err := workflowtemplate.GetBulkByIDAndTemplateID(api.mustDB(), id, wt.ID)
 		if err != nil {
