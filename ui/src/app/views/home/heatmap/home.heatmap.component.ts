@@ -71,9 +71,13 @@ export class HomeHeatmapComponent implements OnInit {
                         this.events = es.toArray().filter((el, i, a) => i === a.indexOf(el));
 
                         this.events.forEach((event) => {
-                            const allowed = ['workflow_name', 'status'];
+                            const allowed = ['workflow_name', 'status', 'tag'];
                             this.properties = Object.keys(event).filter(p => allowed.indexOf(p) !== -1);
-
+                            if (event['tag']) {
+                                event['tag'] = event['tag'].map((tag) => {
+                                    return tag.value ? tag.value : tag;
+                                });
+                            }
                             if (!this.groupedEvents[event.project_key]) {
                                 this.groupedEvents[event.project_key] = new Object();
                             }

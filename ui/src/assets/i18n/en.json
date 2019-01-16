@@ -456,6 +456,7 @@
   "heatmap_empty": "No events triggered yet",
   "heatmap_filter_mute": "Hide events on this project",
   "heatmap_status": "Status",
+  "heatmap_tag": "Tags",
   "heatmap_timestamp": "Event date",
   "heatmap_workflow_name": "Workflow name",
 

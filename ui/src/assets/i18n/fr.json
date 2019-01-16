@@ -456,6 +456,7 @@
   "heatmap_empty": "Aucun évènement déclenché",
   "heatmap_filter_mute": "Masquer les évènements de ce projet",
   "heatmap_status": "Statut",
+  "heatmap_tag": "Tags",
   "heatmap_timestamp": "Date d'évènement",
   "heatmap_workflow_name": "Nom du workflow",
 

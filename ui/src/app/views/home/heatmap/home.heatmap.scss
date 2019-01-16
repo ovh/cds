@@ -46,22 +46,44 @@
       border-radius: 5px;
       position: relative;
 
+      > .tags {
+        position: absolute;
+        bottom: 0px;
+        left: 0;
+        right: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 60px;
+        line-height: normal;
+        z-index: 1;
+
+        .tag {
+          vertical-align: bottom;
+          color: white;
+          font-size: 0.6em;
+        }
+      }
+
       .detail {
         line-height: 10px;
         display: none;
         position: absolute;
-        z-index: 99;
+        z-index: 999;
         background-color: white;
         border-top-right-radius: 5px;
         border-bottom-left-radius: 5px;
         border-bottom-right-radius: 5px;
         border-top-left-radius: 5px;
+        border: 1px solid rgba(180,180,180,0.5);
         box-shadow: 0px -2px 5px rgba(180,180,180,0.5);
-        border: 1px solid #BEBEBE;
-        z-index: 1;
         white-space: nowrap;
-        max-width: 450px;
-        top: calc(-100% - 50px);
+        bottom: calc(100% + 10px);
+        border: 6px solid transparent;
+        text-align: left;
+        
+        td {
+          padding: 3px 10px;
+        }
 
         &:after {
           width: 0;
@@ -72,7 +94,7 @@
           border-left: 18px solid transparent;
           border-top: 17px solid white;
           left: 13px;
-          bottom: -15px;
+          bottom: -16px;
           display: block;
         }
         
@@ -85,7 +107,7 @@
           border-left: 19px solid transparent;
           border-top: 19px solid #BEBEBE;
           left: 12px;
-          bottom: -18px;
+          bottom: -19px;
           display: block;
         }
         
@@ -93,6 +115,24 @@
           font-weight: bold;
         }
 
+        .tags {
+          width: 100%;
+          max-width: 400px;
+          .tag {
+            background-color: #343856;
+            color: white;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-radius: 2px;
+            padding: 4px;
+            margin-right: 3px;
+            margin-bottom: 3px;
+            display: inline-block;
+            white-space: nowrap;
+            float: left;
+          }
+        }
       }
 
       &:hover > .detail {

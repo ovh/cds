@@ -12,13 +12,20 @@
                         [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING" [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
                         [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT">
 
-                        <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name, 'run', e.workflow_run_num]">{{ e.workflow_run_num }}</a>
-
-                        <table class="ui compact table detail">
+                        <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name, 'run', e.workflow_run_num]">#{{ e.workflow_run_num }}</a>
+                        <div class="tags" *ngIf="e.tag !== undefined">
+                            <div class="tag">{{e.tag[0]}}</div>
+                        </div>
+                        <table class="detail" border="0">
                             <tbody>
                                 <tr *ngFor="let property of properties" class="row">
                                     <td class="property">{{ 'heatmap_'.concat(property) | translate }}</td>
-                                    <td class="value">{{ e[property] }}</td>
+                                    <td class="value" *ngIf="property !== 'tag'">{{ e[property] }}</td>
+                                    <td class="value" *ngIf="property === 'tag'">
+                                        <div class="tags">
+                                            <div class="tag" *ngFor="let tag of e.tag" title="{{tag}}" >{{ tag }}</div>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="property">{{ 'heatmap_timestamp' | translate }}</td>
