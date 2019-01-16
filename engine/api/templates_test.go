@@ -17,10 +17,6 @@ import (
 	"github.com/ovh/cds/sdk/slug"
 )
 
-func initTemplateTestCase() {
-
-}
-
 func Test_postTemplateApplyHandler(t *testing.T) {
 	api, db, _, end := newTestAPI(t, bootstrap.InitiliazeDB)
 	defer end()

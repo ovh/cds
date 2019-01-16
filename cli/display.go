@@ -39,12 +39,12 @@ func (d *Display) Do(ctx context.Context) {
 			}
 
 			for i := 0; i < count-1; i++ {
-				fmt.Printf(clear)
+				fmt.Print(clear)
 				cursor.PreviousLine(1)
 			}
 			count = len(strings.Split(string(*d), "\n"))
 
-			fmt.Printf(clear + "\r" + string(*d))
+			fmt.Printf("%s\r%s", clear, string(*d))
 			*d = ""
 		}
 	}(d)
