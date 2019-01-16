@@ -2,20 +2,20 @@ import {Component, Input} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {finalize, first} from 'rxjs/operators';
-import {IdName, LoadOpts, Project} from '../../../../model/project.model';
-import {ProjectFilter, TimelineFilter} from '../../../../model/timeline.model';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {TimelineStore} from '../../../../service/timeline/timeline.store';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import {IdName, LoadOpts, Project} from '../../../model/project.model';
+import {ProjectFilter, TimelineFilter} from '../../../model/timeline.model';
+import {ProjectStore} from '../../../service/project/project.store';
+import {TimelineStore} from '../../../service/timeline/timeline.store';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {ToastService} from '../../../shared/toast/ToastService';
 
 @Component({
-    selector: 'app-home-timeline-filter',
-    templateUrl: './home.timeline.filter.html',
-    styleUrls: ['./home.timeline.filter.scss']
+    selector: 'app-home-filter',
+    templateUrl: './home.filter.html',
+    styleUrls: ['./home.filter.scss']
 })
 @AutoUnsubscribe()
-export class HomeTimelineFilterComponent {
+export class HomeFilterComponent {
 
     _filter: TimelineFilter;
     filterToEdit: TimelineFilter;
@@ -53,7 +53,7 @@ export class HomeTimelineFilterComponent {
             return;
         }
         if (this.filter.projects) {
-            let exist = this.filter.projects.find(p => p.key === this.selectedProjectKey);
+            let exist = this._filter.projects.find(p => p.key === this.selectedProjectKey);
             if (exist) {
                 return;
             }
@@ -71,7 +71,7 @@ export class HomeTimelineFilterComponent {
     }
 
     removeProject(pf: ProjectFilter): void {
-        this.filter.projects = this.filter.projects.filter(p => p.key !== pf.key);
+       this.filter.projects = this._filter.projects.filter(p => p.key !== pf.key);
     }
 
     // load workflow when opening dropdown
