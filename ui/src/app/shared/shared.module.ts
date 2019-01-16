@@ -60,7 +60,7 @@ import { RequirementsListComponent } from './requirements/list/requirements.list
 import { ScrollviewComponent } from './scrollview/scrollview.component';
 import { SharedService } from './shared.service';
 import { StatusIconComponent } from './status/status.component';
-import { DataTableComponent, SelectorPipe } from './table/data-table.component';
+import { DataTableComponent, SelectorPipe, SelectPipe } from './table/data-table.component';
 import { TabsComponent } from './tabs/tabs.component';
 import { ToastService } from './toast/ToastService';
 import { TokenListComponent } from './token/list/token.list.component';
@@ -81,7 +81,9 @@ import { WarningMarkListComponent } from './warning/mark-list/warning.mark.list.
 import { WarningMarkComponent } from './warning/mark-single/warning.mark.component';
 import { WarningTabComponent } from './warning/tab/warning.tab.component';
 import { WorkflowTemplateApplyFormComponent } from './workflow-template/apply-form/workflow-template.apply-form.component';
-import { WorkflowTemplateModalComponent } from './workflow-template/modal/workflow-template.modal.component';
+import { WorkflowTemplateApplyModalComponent } from './workflow-template/apply-modal/workflow-template.apply-modal.component';
+import { WorkflowTemplateBulkModalComponent } from './workflow-template/bulk-modal/workflow-template.bulk-modal.component';
+import { WorkflowTemplateParamFormComponent } from './workflow-template/param-form/workflow-template.param-form.component';
 import { WorkflowNodeConditionFormComponent } from './workflow/modal/conditions/condition-form/condition.component';
 import { WorkflowNodeConditionListComponent } from './workflow/modal/conditions/condition-list/condition.list.component';
 import { WorkflowNodeConditionsComponent } from './workflow/modal/conditions/node.conditions.component';
@@ -211,9 +213,12 @@ import { ZoneComponent } from './zone/zone.component';
         VCSStrategyComponent,
         FavoriteCardsComponent,
         SelectorPipe,
+        SelectPipe,
         DataTableComponent,
         WorkflowTemplateApplyFormComponent,
-        WorkflowTemplateModalComponent,
+        WorkflowTemplateApplyModalComponent,
+        WorkflowTemplateBulkModalComponent,
+        WorkflowTemplateParamFormComponent,
         TabsComponent,
         ScrollviewComponent
     ],
@@ -318,9 +323,12 @@ import { ZoneComponent } from './zone/zone.component';
         VCSStrategyComponent,
         FavoriteCardsComponent,
         SelectorPipe,
+        SelectPipe,
         DataTableComponent,
         WorkflowTemplateApplyFormComponent,
-        WorkflowTemplateModalComponent,
+        WorkflowTemplateApplyModalComponent,
+        WorkflowTemplateBulkModalComponent,
+        WorkflowTemplateParamFormComponent,
         TabsComponent,
         ScrollviewComponent
     ]

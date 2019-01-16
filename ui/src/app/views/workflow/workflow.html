@@ -117,7 +117,7 @@
     <app-workflow-sidebar-code [project]="project" [workflow]="workflow" [open]="asCodeEditorOpen">
     </app-workflow-sidebar-code>
     <ng-container>
-        <app-workflow-template-modal #templateForm [project]="project" [workflow]="workflow"></app-workflow-template-modal>
+        <app-workflow-template-apply-modal #templateApplyModal [project]="project" [workflow]="workflow"></app-workflow-template-apply-modal>
     </ng-container>
 </section>
 <app-workflow-save-as-code-modal [project]="project" [workflow]="workflow" #saveAsCode></app-workflow-save-as-code-modal>

@@ -1,15 +1,15 @@
 
-export abstract class Table {
+export abstract class Table<T> {
     protected currentPage = 1;
     public nbElementsByPage = 10;
 
-    abstract getData(): any[];
+    abstract getData(): Array<T>;
 
     /**
      * Get the data for the current page.
      * @returns {any[]}
      */
-    getDataForCurrentPage(): any[] {
+    getDataForCurrentPage(): Array<T> {
         let indexStart = 0;
         if (this.currentPage > 1) {
             indexStart = (this.currentPage - 1) * this.nbElementsByPage;

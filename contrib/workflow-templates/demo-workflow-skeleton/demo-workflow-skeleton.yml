@@ -1,0 +1,19 @@
+slug: demo-workflow-skeleton
+name: Demo workflow skeleton
+group: shared.infra
+description: A template that generates a skeleton of workflow, made with ❤️ by CDS team.
+parameters:
+- key: repo
+  type: repository
+  required: true
+workflow: workflow.yml
+pipelines:
+- 1.pipeline.yml
+- 2.pipeline.yml
+- 3.pipeline.yml
+applications:
+- 1.application.yml
+environments:
+- 1.environment.yml
+- 2.environment.yml
+- 3.environment.yml

@@ -50,9 +50,11 @@
                                     [ngModel]="parameterValues[k].type" [readonly]="true">
                             </div>
                             <div class="two wide field">
-                                <label>{{'common_required' | translate}}</label>
-                                <input type="checkbox" name="parameter-required-{{index}}" [(ngModel)]="parameterValues[k].required"
-                                    [disabled]="!_workflowTemplate.editable">
+                                <div class="ui checked checkbox">
+                                    <input type="checkbox" name="parameter-required-{{index}}" [(ngModel)]="parameterValues[k].required"
+                                        [disabled]="!_workflowTemplate.editable">
+                                    <label>{{'common_required' | translate}}</label>
+                                </div>
                             </div>
                             <button *ngIf="_workflowTemplate.editable" class="ui icon red button" (click)="clickRemoveParameter(k)">
                                 <i class="trash icon"></i>
@@ -72,8 +74,10 @@
                                 </sui-select>
                             </div>
                             <div class="two wide field">
-                                <label>{{'common_required' | translate}}</label>
-                                <input type="checkbox" name="parameter-required-add" [(ngModel)]="parameterValueAdd.required">
+                                <div class="ui checked checkbox">
+                                    <input type="checkbox" name="parameter-required-add" [(ngModel)]="parameterValueAdd.required">
+                                    <label>{{'common_required' | translate}}</label>
+                                </div>
                             </div>
                             <button class="ui icon green button" (click)="clickAddParameter()">
                                 <i class="plus icon"></i>

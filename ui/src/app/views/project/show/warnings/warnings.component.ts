@@ -1,19 +1,19 @@
-import {Component, Input} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {finalize} from 'rxjs/operators';
-import {Project} from '../../../../model/project.model';
-import {Warning} from '../../../../model/warning.model';
-import {WarningStore} from '../../../../service/warning/warning.store';
-import {Table} from '../../../../shared/table/table';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, Input } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { cloneDeep } from 'lodash';
+import { finalize } from 'rxjs/operators';
+import { Project } from '../../../../model/project.model';
+import { Warning } from '../../../../model/warning.model';
+import { WarningStore } from '../../../../service/warning/warning.store';
+import { Table } from '../../../../shared/table/table';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-warnings',
     templateUrl: './project.warnings.html',
     styleUrls: ['./project.warnings.scss']
 })
-export class ProjectWarningsComponent extends Table {
+export class ProjectWarningsComponent extends Table<Warning> {
 
     @Input() project: Project;
     @Input() warnings: Array<Warning>;
@@ -22,7 +22,7 @@ export class ProjectWarningsComponent extends Table {
         super();
     }
 
-    getData(): any[] {
+    getData(): Array<Warning> {
         if (this.warnings) {
             let warningsDisplayed = this.warnings.filter(w => !w.ignored);
             warningsDisplayed.push(...this.warnings.filter(w => w.ignored));

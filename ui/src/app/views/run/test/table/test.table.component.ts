@@ -1,14 +1,14 @@
-import {Component, Input} from '@angular/core';
+import { Component, Input } from '@angular/core';
 import * as AU from 'ansi_up';
-import {TestCase, TestSuite} from '../../../../model/pipeline.model';
-import {Table} from '../../../../shared/table/table';
+import { TestCase, TestSuite } from '../../../../model/pipeline.model';
+import { Table } from '../../../../shared/table/table';
 
 @Component({
     selector: 'app-test-table',
     templateUrl: './test.table.html',
     styleUrls: ['./test.table.scss']
 })
-export class TestTableComponent extends Table {
+export class TestTableComponent extends Table<TestCase> {
 
     filteredTests: Array<TestCase>;
     filter: string;
@@ -26,7 +26,7 @@ export class TestTableComponent extends Table {
         this.nbElementsByPage = 20;
     }
 
-    getData(): any[] {
+    getData(): Array<TestCase> {
         if (!this.filteredTests) {
             this.updateFilteredTests();
         }
@@ -43,11 +43,11 @@ export class TestTableComponent extends Table {
                 for (let ts of this.tests) {
                     if (ts.errors > 0 || ts.failures > 0) {
                         let testCases = ts.tests
-                        .filter(tc => (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0))
-                        .map(tc => {
-                            tc.fullname = ts.name + ' / ' + tc.name;
-                            return tc;
-                        });
+                            .filter(tc => (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0))
+                            .map(tc => {
+                                tc.fullname = ts.name + ' / ' + tc.name;
+                                return tc;
+                            });
                         this.filteredTests.push(...testCases);
                     }
                 };
@@ -56,11 +56,11 @@ export class TestTableComponent extends Table {
                 for (let ts of this.tests) {
                     if (ts.skipped > 0) {
                         let testCases = ts.tests
-                        .filter(tc => (tc.skipped && tc.skipped.length > 0))
-                        .map(tc => {
-                            tc.fullname = ts.name + ' / ' + tc.name;
-                            return tc;
-                        });
+                            .filter(tc => (tc.skipped && tc.skipped.length > 0))
+                            .map(tc => {
+                                tc.fullname = ts.name + ' / ' + tc.name;
+                                return tc;
+                            });
                         this.filteredTests.push(...testCases);
                     }
                 };

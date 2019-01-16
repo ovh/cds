@@ -19,7 +19,7 @@ import (
 )
 
 func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) interface{} {
-	m := map[string]interface{}{}
+	m := make(map[string]interface{}, len(wt.Parameters))
 	for _, p := range wt.Parameters {
 		v, ok := r.Parameters[p.Key]
 		if ok {

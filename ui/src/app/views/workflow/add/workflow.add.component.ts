@@ -237,7 +237,7 @@ workflow:
     }
 
     fetchTemplates() {
-        this._workflowTemplateService.getWorkflowTemplates().subscribe(ts => {
+        this._workflowTemplateService.getAll().subscribe(ts => {
             this.templates = ts;
         });
     }

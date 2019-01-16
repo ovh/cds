@@ -25,11 +25,21 @@
         </div>
         <div *ngSwitchCase="'audits'" class="ui grid">
             <div class="sixteen wide column">
-                <app-data-table [withPagination]="10" [columns]="columns" [data]="audits" [loading]="loadingAudits"
+                <app-data-table [withPagination]="10" [columns]="columnsAudits" [data]="audits" [loading]="loadingAudits"
                     [withLineClick]="true" (clickLine)="clickAudit($event)"></app-data-table>
             </div>
             <div class="sixteen wide column">
                 <app-diff-list *ngIf="diffItems" [items]="diffItems"></app-diff-list>
+            </div>
+        </div>
+        <div *ngSwitchCase="'instances'" class="ui grid">
+            <div class="sixteen wide column centered">
+                <button class="ui primary button" (click)="clickCreateBulk()">
+                    <i class="folder icon"></i>{{ 'workflow_template_btn_create_bulk' | translate }}
+                </button>
+            </div>
+            <div class="sixteen wide column">
+                <app-data-table [withPagination]="10" [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
             </div>
         </div>
         <div *ngSwitchCase="'usage'" class="ui grid">
@@ -44,3 +54,6 @@
         </div>
     </app-scrollview>
 </div>
+<app-workflow-template-apply-modal #templateApplyModal [workflowTemplate]="workflowTemplate" [workflowTemplateInstance]="selectedWorkflowTemplateInstance">
+</app-workflow-template-apply-modal>
+<app-workflow-template-bulk-modal #templateBulkModal [workflowTemplate]="workflowTemplate" (close)="bulkModalClose()"></app-workflow-template-bulk-modal>

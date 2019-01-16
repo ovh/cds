@@ -1,14 +1,14 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {Prerequisite} from '../../../model/prerequisite.model';
-import {Table} from '../../table/table';
-import {PrerequisiteEvent} from '../prerequisite.event.model';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Prerequisite } from '../../../model/prerequisite.model';
+import { Table } from '../../table/table';
+import { PrerequisiteEvent } from '../prerequisite.event.model';
 
 @Component({
     selector: 'app-prerequisites-list',
     templateUrl: './prerequisites.html',
     styleUrls: ['./prerequisites.scss']
 })
-export class PrerequisiteComponent extends Table {
+export class PrerequisiteComponent extends Table<Prerequisite> {
 
     @Input() prerequisites: Prerequisite[];
     @Input() edit = false;
@@ -19,7 +19,7 @@ export class PrerequisiteComponent extends Table {
         this.nbElementsByPage = 5;
     }
 
-    getData(): any[] {
+    getData(): Array<Prerequisite> {
         return this.prerequisites;
     }
 

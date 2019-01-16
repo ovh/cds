@@ -423,11 +423,13 @@ func (api *API) InitRouter() {
 
 	// Templates
 	r.Handle("/template", r.GET(api.getTemplatesHandler), r.POST(api.postTemplateHandler))
-	r.Handle("/template/push", r.POST(api.pushTemplateHandler))
+	r.Handle("/template/push", r.POST(api.postTemplatePushHandler))
 	r.Handle("/template/{id}", r.GET(api.getTemplateHandler))
 	r.Handle("/template/{groupName}/{templateSlug}", r.GET(api.getTemplateHandler), r.PUT(api.putTemplateHandler), r.DELETE(api.deleteTemplateHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/pull", r.POST(api.pullTemplateHandler))
-	r.Handle("/template/{groupName}/{templateSlug}/apply", r.POST(api.applyTemplateHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/pull", r.POST(api.postTemplatePullHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/apply", r.POST(api.postTemplateApplyHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/bulk", r.POST(api.postTemplateBulkHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/bulk/{bulkID}", r.GET(api.getTemplateBulkHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/instance", r.GET(api.getTemplateInstancesHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/audit", r.GET(api.getTemplateAuditsHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", r.GET(api.getTemplateUsageHandler))

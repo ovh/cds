@@ -24,6 +24,7 @@ var templateCmd = cli.Command{
 func template() *cobra.Command {
 	return cli.NewCommand(templateCmd, nil, []*cobra.Command{
 		cli.NewCommand(templateApplyCmd("apply"), templateApplyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(templateBulkCmd, templateBulkRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePushCmd, templatePushRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, nil, withAllCommandModifiers()...),

@@ -1,14 +1,14 @@
-import {Component, Input, NgZone} from '@angular/core';
-import {environment} from '../../../../../../environments/environment';
-import {WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles} from '../../../../../model/workflow.run.model';
-import {Table} from '../../../../../shared/table/table';
+import { Component, Input, NgZone } from '@angular/core';
+import { environment } from '../../../../../../environments/environment';
+import { WorkflowNodeRunArtifact, WorkflowNodeRunStaticFiles } from '../../../../../model/workflow.run.model';
+import { Table } from '../../../../../shared/table/table';
 
 @Component({
     selector: 'app-workflow-artifact-list',
     templateUrl: './artifact.list.html',
     styleUrls: ['./artifact.list.scss']
 })
-export class WorkflowRunArtifactListComponent extends Table {
+export class WorkflowRunArtifactListComponent extends Table<WorkflowNodeRunArtifact> {
 
     @Input() artifacts: Array<WorkflowNodeRunArtifact>;
     @Input() staticFiles: Array<WorkflowNodeRunStaticFiles>;
@@ -19,10 +19,10 @@ export class WorkflowRunArtifactListComponent extends Table {
 
     constructor() {
         super();
-        this.zone = new NgZone({enableLongStackTrace: false});
+        this.zone = new NgZone({ enableLongStackTrace: false });
     }
 
-    getData(): any[] {
+    getData(): Array<WorkflowNodeRunArtifact> {
         if (!this.filter) {
             return this.artifacts;
         }
