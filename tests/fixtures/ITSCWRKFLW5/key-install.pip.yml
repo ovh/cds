@@ -8,5 +8,6 @@ jobs:
     - PKEY=`worker key install proj-testkey`
     - ls -la $PKEY
     - worker key install proj-testkeypgp
+    - worker key install --env-git proj-testkey2 | grep GIT_SSH
   requirements:
   - binary: gpg

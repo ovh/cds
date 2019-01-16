@@ -6,6 +6,7 @@ import { AuditWorkflowTemplate } from '../../model/audit.model';
 import {
     WorkflowTemplate,
     WorkflowTemplateApplyResult,
+    WorkflowTemplateBulk,
     WorkflowTemplateInstance,
     WorkflowTemplateRequest
 } from '../../model/workflow-template.model';
@@ -13,30 +14,29 @@ import { Workflow } from '../../model/workflow.model';
 
 @Injectable()
 export class WorkflowTemplateService {
-    constructor(private _http: HttpClient) {
-    }
+    constructor(private _http: HttpClient) { }
 
-    getWorkflowTemplates(): Observable<Array<WorkflowTemplate>> {
+    getAll(): Observable<Array<WorkflowTemplate>> {
         return this._http.get<Array<WorkflowTemplate>>('/template');
     }
 
-    getWorkflowTemplate(groupName: string, templateSlug: string): Observable<WorkflowTemplate> {
+    get(groupName: string, templateSlug: string): Observable<WorkflowTemplate> {
         return this._http.get<WorkflowTemplate>('/template/' + groupName + '/' + templateSlug);
     }
 
-    addWorkflowTemplate(wt: WorkflowTemplate): Observable<WorkflowTemplate> {
+    add(wt: WorkflowTemplate): Observable<WorkflowTemplate> {
         return this._http.post<WorkflowTemplate>('/template', wt);
     }
 
-    updateWorkflowTemplate(old: WorkflowTemplate, wt: WorkflowTemplate): Observable<WorkflowTemplate> {
+    update(old: WorkflowTemplate, wt: WorkflowTemplate): Observable<WorkflowTemplate> {
         return this._http.put<WorkflowTemplate>('/template/' + old.group.name + '/' + old.slug, wt);
     }
 
-    deleteWorkflowTemplate(wt: WorkflowTemplate): Observable<any> {
+    delete(wt: WorkflowTemplate): Observable<any> {
         return this._http.delete<any>('/template/' + wt.group.name + '/' + wt.slug);
     }
 
-    applyWorkflowTemplate(groupName: string, templateSlug: string, req: WorkflowTemplateRequest): Observable<WorkflowTemplateApplyResult> {
+    apply(groupName: string, templateSlug: string, req: WorkflowTemplateRequest): Observable<WorkflowTemplateApplyResult> {
         return this._http.post<Array<string>>('/template/' + groupName + '/' + templateSlug + '/apply?import=true',
             req, { observe: 'response' }).pipe().map(res => {
                 let headers: HttpHeaders = res.headers;
@@ -47,7 +47,7 @@ export class WorkflowTemplateService {
             });
     }
 
-    getWorkflowTemplateInstance(projectKey: string, workflowName: string): Observable<WorkflowTemplateInstance> {
+    getInstance(projectKey: string, workflowName: string): Observable<WorkflowTemplateInstance> {
         return this._http.get<WorkflowTemplateInstance>('/project/' + projectKey + '/workflow/' + workflowName + '/templateInstance');
     }
 
@@ -56,7 +56,21 @@ export class WorkflowTemplateService {
         return this._http.get<Array<AuditWorkflowTemplate>>(url);
     }
 
-    getWorkflowTemplateUsage(groupName: string, templateSlug: string): Observable<Array<Workflow>> {
+    getUsage(groupName: string, templateSlug: string): Observable<Array<Workflow>> {
         return this._http.get<Array<Workflow>>('/template/' + groupName + '/' + templateSlug + '/usage');
+    }
+
+    getInstances(groupName: string, templateSlug: string): Observable<Array<WorkflowTemplateInstance>> {
+        let url = '/template/' + groupName + '/' + templateSlug + '/instance';
+        return this._http.get<Array<WorkflowTemplateInstance>>(url)
+            .map(wtis => wtis.map(wti => new WorkflowTemplateInstance(wti)));
+    }
+
+    bulk(groupName: string, templateSlug: string, req: WorkflowTemplateBulk): Observable<WorkflowTemplateBulk> {
+        return this._http.post<WorkflowTemplateBulk>('/template/' + groupName + '/' + templateSlug + '/bulk', req);
+    }
+
+    getBulk(groupName: string, templateSlug: string, id: number): Observable<WorkflowTemplateBulk> {
+        return this._http.get<WorkflowTemplateBulk>('/template/' + groupName + '/' + templateSlug + '/bulk/' + id);
     }
 }

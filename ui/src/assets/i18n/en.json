@@ -149,7 +149,7 @@
   "btn_edit": "Edit",
   "btn_add": "Add",
   "btn_back": "Back",
-  
+
   "cdsctl_choice_os": "Choose your OS",
   "cdsctl_choice_arch": "Choose your architecture",
 
@@ -189,7 +189,7 @@
 
    "cdsctl_title_6_info_1": "Imagine now that you develop something and you have a CDS Workflow triggered on each git push",
   "cdsctl_title_6_info_2": "The `git track` alias allows you to see the workflow status without opening a browser.",
-  
+
   "cdsctl_notice": "Notice:",
 
   "commit_author": "Author",
@@ -304,6 +304,9 @@
   "common_hide_all": "Hide all",
   "common_begin": "Begin",
   "common_end": "End",
+  "common_pending": "Pending",
+  "common_processing": "Processing",
+  "common_done": "Done",
   "common_error": "Error",
   "common_loading_projects": "Loading projects...",
   "common_favorites_updated": "Bookmarks updated with success",
@@ -1095,6 +1098,7 @@
   "workflow_template_deleted": "Workflow template deleted",
   "workflow_template": "Workflow template",
   "workflow_templates": "Workflow templates",
+  "workflow_template_instances": "Instances",
   "workflow_template_help_line_1": "Your workflow was not generated from a template.",
   "workflow_template_help_line_2": "A workflow template allows you to quickly create then update a workflow and its components.",
   "workflow_template_update_title": "Update workflow from template",
@@ -1106,6 +1110,13 @@
   "workflow_template_diff_environment": "Environment {{number}}",
   "workflow_template_change_message": "Add an optional description of your changes...",
   "workflow_template_no_usage": "This template isn't used on one of your workflow",
+  "workflow_template_not_imported_yet": "Not imported yet",
+  "workflow_template_bulk_create_title": "Workflow template apply bulk request",
+  "workflow_template_btn_create_bulk": "Update bulk",
+  "workflow_template_btn_run_bulk": "Run bulk update",
+  "workflow_template_bulk_select_instances": "Select instances",
+  "workflow_template_bulk_fill_parameters": "Fill parameters",
+  "workflow_template_bulk_fill_run": "Run",
 
   "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."

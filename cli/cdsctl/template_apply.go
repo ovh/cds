@@ -78,21 +78,26 @@ func templateApplyCmd(name string) cli.Command {
 	}
 }
 
+func templateParsePath(path string) (string, string, error) {
+	pathSplitted := strings.Split(path, "/")
+	if len(pathSplitted) != 2 {
+		return "", "", fmt.Errorf("jnvalid given template path")
+	}
+	return pathSplitted[0], pathSplitted[1], nil
+}
+
 func getTemplateFromCLI(v cli.Values) (*sdk.WorkflowTemplate, error) {
 	var template *sdk.WorkflowTemplate
 
 	// search template path from params or suggest one
 	templatePath := v.GetString("template-path")
 	if templatePath != "" {
-		templatePathSplitted := strings.Split(templatePath, "/")
-		if len(templatePathSplitted) != 2 {
-			return nil, fmt.Errorf("Invalid given template path")
+		groupName, templateSlug, err := templateParsePath(templatePath)
+		if err != nil {
+			return nil, err
 		}
 
-		groupName, templateSlug := templatePathSplitted[0], templatePathSplitted[1]
-
 		// try to get the template from cds
-		var err error
 		template, err = client.TemplateGet(groupName, templateSlug)
 		if err != nil {
 			return nil, err
@@ -109,7 +114,7 @@ func suggestTemplate() (*sdk.WorkflowTemplate, error) {
 	}
 	opts := make([]string, len(wts))
 	for i := range wts {
-		opts[i] = fmt.Sprintf("%s (%s/%s) - %s", wts[i].Name, wts[i].Group.Name, wts[i].Slug, wts[i].Description)
+		opts[i] = fmt.Sprintf("%s (%s/%s)", wts[i].Name, wts[i].Group.Name, wts[i].Slug)
 	}
 	selected := cli.MultiChoice("Choose the CDS template to apply:", opts...)
 	return &wts[selected], nil
@@ -144,6 +149,9 @@ func templateApplyRun(v cli.Values) error {
 
 	// if no template found for workflow or no instance, suggest one
 	if wt == nil {
+		if v.GetBool("no-interactive") {
+			return fmt.Errorf("you should give a template path")
+		}
 		wt, err = suggestTemplate()
 		if err != nil {
 			return err
@@ -151,7 +159,7 @@ func templateApplyRun(v cli.Values) error {
 	}
 
 	// init params map from previous template instance if exists
-	params := map[string]string{}
+	params := make(map[string]string)
 	if wti != nil {
 		for _, p := range wt.Parameters {
 			if v, ok := wti.Request.Parameters[p.Key]; ok {
@@ -195,13 +203,13 @@ func templateApplyRun(v cli.Values) error {
 		if workflowName == "" {
 			if localRepoName != "" {
 				ss := strings.Split(localRepoName, "/")
-				if len(ss) == 2 && cli.AskForConfirmation(fmt.Sprintf("Use the current repository name '%s' as workflow name?", ss[1])) {
+				if len(ss) == 2 && cli.AskForConfirmation(fmt.Sprintf("Use the current repository name '%s' as workflow name", ss[1])) {
 					workflowName = ss[1]
 				}
 			}
 			// if no repo or current repo name not used
 			if workflowName == "" {
-				workflowName = cli.AskValueChoice("Give a valid name for the new generated workflow: ")
+				workflowName = cli.AskValueChoice("Give a valid name for the new generated workflow")
 			}
 		}
 
@@ -232,7 +240,7 @@ func templateApplyRun(v cli.Values) error {
 					return err
 				}
 				for _, r := range rs {
-					path := fmt.Sprintf("%s/%s", vcs.Name, r.Slug)
+					path := fmt.Sprintf("%s/%s", vcs.Name, r.Fullname)
 					if localRepoURL != "" && (localRepoURL == r.HTTPCloneURL || localRepoURL == r.SSHCloneURL) {
 						localRepoPath = path
 					}
@@ -244,19 +252,19 @@ func templateApplyRun(v cli.Values) error {
 		// for each param not already fill ask for the value
 		for _, p := range wt.Parameters {
 			if _, ok := params[p.Key]; !ok {
-				label := fmt.Sprintf("Value for param '%s' (type: %s, required: %t): ", p.Key, p.Type, p.Required)
+				label := fmt.Sprintf("Value for param '%s' (type: %s, required: %t)", p.Key, p.Type, p.Required)
 
 				var choice string
 				switch p.Type {
 				case sdk.ParameterTypeRepository:
-					if localRepoPath != "" && cli.AskForConfirmation(fmt.Sprintf("Detected repository as %s. Use it for param '%s'?", localRepoPath, p.Key)) {
+					if localRepoPath != "" && cli.AskForConfirmation(fmt.Sprintf("Use detected repository '%s' for param '%s'", localRepoPath, p.Key)) {
 						choice = localRepoPath
 					} else if len(listRepositories) > 0 {
 						selected := cli.MultiChoice(label, listRepositories...)
 						choice = listRepositories[selected]
 					}
 				case sdk.ParameterTypeBoolean:
-					choice = fmt.Sprintf("%t", cli.AskForConfirmation(fmt.Sprintf("Set value to true for param '%s'?", p.Key)))
+					choice = fmt.Sprintf("%t", cli.AskForConfirmation(fmt.Sprintf("Set value to 'true' for param '%s'", p.Key)))
 				}
 				if choice == "" {
 					choice = cli.AskValueChoice(label)
@@ -268,10 +276,10 @@ func templateApplyRun(v cli.Values) error {
 
 		if !importAsCode && !importPush {
 			if localRepoURL != "" {
-				importAsCode = cli.AskForConfirmation(fmt.Sprintf("Import the generated workflow as code to the %s project?", projectKey))
+				importAsCode = cli.AskForConfirmation(fmt.Sprintf("Import the generated workflow as code to the %s project", projectKey))
 			}
 			if !importAsCode {
-				importPush = cli.AskForConfirmation(fmt.Sprintf("Push the generated workflow to the %s project?", projectKey))
+				importPush = cli.AskForConfirmation(fmt.Sprintf("Push the generated workflow to the %s project", projectKey))
 			}
 		}
 	}

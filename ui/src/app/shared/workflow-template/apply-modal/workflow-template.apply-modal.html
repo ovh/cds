@@ -1,4 +1,4 @@
-<ng-template let-context let-modal="modal" #workflowTemplateModal>
+<ng-template let-context let-modal="modal" #workflowTemplateApplyModal>
     <div class="header">
         {{'workflow_template_update_title' | translate}}
     </div>
@@ -10,12 +10,12 @@
                         {{'workflow_template_update_info_line_1' | translate}}
                     </div>
                 </div>
-                <div class="sixteen wide column loading" *ngIf="!workflowTemplate || !workflowTemplateInstance">
+                <div class="sixteen wide column loading" *ngIf="!project || !workflowTemplate || !workflowTemplateInstance">
                     <div class="ui active inverted dimmer">
                         <div class="ui text loader">{{ 'common_loading' | translate }}</div>
                     </div>
                 </div>
-                <div class="sixteen wide column" *ngIf="workflowTemplate && workflowTemplateInstance">
+                <div class="sixteen wide column" *ngIf="project && workflowTemplate && workflowTemplateInstance">
                     <div class="ui wide sixteen field">
                         <div class="fields">
                             <div class="six wide field">
@@ -42,9 +42,9 @@
                         <div *ngIf="diffVisible" class="ui wide sixteen field">
                             <app-diff-list [items]="diffItems"></app-diff-list>
                         </div>
-                        <app-workflow-template-apply-form [project]="project" [workflowTemplate]="workflowTemplate"
+                        <app-workflow-template-apply-form [project]="project" [workflow]="workflow" [workflowTemplate]="workflowTemplate"
                             [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true" (close)="close()"
-                            (apply)="load()"></app-workflow-template-apply-form>
+                            (apply)="apply()"></app-workflow-template-apply-form>
                     </div>
                 </div>
             </div>

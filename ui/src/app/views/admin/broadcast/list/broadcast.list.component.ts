@@ -9,7 +9,7 @@ import { Table } from '../../../../shared/table/table';
     templateUrl: './broadcast.list.html',
     styleUrls: ['./broadcast.list.scss']
 })
-export class BroadcastListComponent extends Table {
+export class BroadcastListComponent extends Table<Broadcast> {
     filter: string;
     broadcasts: Array<Broadcast>;
 
@@ -35,7 +35,7 @@ export class BroadcastListComponent extends Table {
         }];
     }
 
-    getData(): any[] {
+    getData(): Array<Broadcast> {
         if (!this.filter) {
             return this.broadcasts;
         }

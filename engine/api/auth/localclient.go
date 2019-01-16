@@ -40,7 +40,7 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 		if ok {
 			return ctx, nil
 		}
-		return ctx, fmt.Errorf("invalid session")
+		return ctx, sdk.WithStack(fmt.Errorf("invalid session"))
 	}
 
 	//Check other session
@@ -50,7 +50,7 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 		sessionToken = req.FormValue("session")
 	}
 	if sessionToken == "" {
-		return ctx, fmt.Errorf("no session header")
+		return ctx, sdk.WithStack(fmt.Errorf("no session header"))
 	}
 
 	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
@@ -65,11 +65,11 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 
 	ctx, err = c.DeprecatedSession(ctx, sessionToken, username)
 	if err != nil {
-		return ctx, sdk.WithStack(err)
+		return ctx, sdk.WithStack(fmt.Errorf("authorization failed for %s: %v", username, err))
 	}
 
 	if !exists {
-		return ctx, fmt.Errorf("invalid session")
+		return ctx, sdk.WithStack(fmt.Errorf("invalid session"))
 	}
 
 	return ctx, nil

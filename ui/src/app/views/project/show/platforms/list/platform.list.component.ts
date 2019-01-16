@@ -1,19 +1,19 @@
-import {Component, Input} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {finalize, first} from 'rxjs/operators';
-import {PermissionValue} from '../../../../../model/permission.model';
-import {ProjectPlatform} from '../../../../../model/platform.model';
-import {Project} from '../../../../../model/project.model';
-import {ProjectStore} from '../../../../../service/project/project.store';
-import {Table} from '../../../../../shared/table/table';
-import {ToastService} from '../../../../../shared/toast/ToastService';
+import { Component, Input } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { finalize, first } from 'rxjs/operators';
+import { PermissionValue } from '../../../../../model/permission.model';
+import { ProjectPlatform } from '../../../../../model/platform.model';
+import { Project } from '../../../../../model/project.model';
+import { ProjectStore } from '../../../../../service/project/project.store';
+import { Table } from '../../../../../shared/table/table';
+import { ToastService } from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-platform-list',
     templateUrl: './project.platform.list.html',
     styleUrls: ['./project.platform.list.scss']
 })
-export class ProjectPlatformListComponent extends Table {
+export class ProjectPlatformListComponent extends Table<ProjectPlatform> {
 
     @Input() project: Project;
     permissionEnum = PermissionValue;
@@ -23,7 +23,7 @@ export class ProjectPlatformListComponent extends Table {
         super();
     }
 
-    getData(): any[] {
+    getData(): Array<ProjectPlatform> {
         return this.project.platforms;
     }
 
@@ -31,8 +31,8 @@ export class ProjectPlatformListComponent extends Table {
         this.loading = true;
         this._projectStore.deleteProjectPlatform(this.project.key, p.name).pipe(first(), finalize(() => this.loading = false))
             .subscribe(() => {
-            this._toast.success('', this._translate.instant('project_updated'));
-        });
+                this._toast.success('', this._translate.instant('project_updated'));
+            });
     }
 
     updatePlatform(p: ProjectPlatform): void {

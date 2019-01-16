@@ -36,7 +36,7 @@ func GetAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Workflow, error) {
 	ws := []sdk.Workflow{}
 
 	if _, err := db.Select(&ws,
-		`SELECT * FROM workflow WHERE id = ANY(string_to_array($1, ',')::int[])`,
+		`SELECT id, name FROM workflow WHERE id = ANY(string_to_array($1, ',')::int[])`,
 		gorpmapping.IDsToQueryString(ids),
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflows")

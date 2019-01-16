@@ -10,7 +10,7 @@ import { Table } from '../../../../shared/table/table';
     templateUrl: './worker-model-pattern.list.html',
     styleUrls: ['./worker-model-pattern.list.scss']
 })
-export class WorkerModelPatternListComponent extends Table {
+export class WorkerModelPatternListComponent extends Table<ModelPattern> {
     workerModelPatterns: Array<ModelPattern> = [];
     filter: string;
     loading = false;
@@ -32,7 +32,7 @@ export class WorkerModelPatternListComponent extends Table {
         }];
     }
 
-    getData(): any[] {
+    getData(): Array<ModelPattern> {
         if (!this.filter) {
             return this.workerModelPatterns;
         }

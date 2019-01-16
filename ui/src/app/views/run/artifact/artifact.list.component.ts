@@ -1,14 +1,14 @@
-import {Component, Input, NgZone} from '@angular/core';
-import {environment} from '../../../../environments/environment';
-import {Artifact} from '../../../model/artifact.model';
-import {Table} from '../../../shared/table/table';
+import { Component, Input, NgZone } from '@angular/core';
+import { environment } from '../../../../environments/environment';
+import { Artifact } from '../../../model/artifact.model';
+import { Table } from '../../../shared/table/table';
 
 @Component({
     selector: 'app-artifact-list',
     templateUrl: './artifact.list.html',
     styleUrls: ['./artifact.list.scss']
 })
-export class ArtifactListComponent extends Table {
+export class ArtifactListComponent extends Table<Artifact> {
 
     @Input() artifacts: Array<Artifact>;
 
@@ -17,10 +17,10 @@ export class ArtifactListComponent extends Table {
 
     constructor() {
         super();
-        this.zone = new NgZone({enableLongStackTrace: false});
+        this.zone = new NgZone({ enableLongStackTrace: false });
     }
 
-    getData(): any[] {
+    getData(): Array<Artifact> {
         return this.artifacts;
     }
 

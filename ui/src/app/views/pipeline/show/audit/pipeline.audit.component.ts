@@ -19,7 +19,7 @@ import { ToastService } from '../../../../shared/toast/ToastService';
     templateUrl: './pipeline.audit.html',
     styleUrls: ['./pipeline.audit.scss']
 })
-export class PipelineAuditComponent extends Table implements OnInit {
+export class PipelineAuditComponent extends Table<PipelineAudit> implements OnInit {
     @Input() project: Project;
     @Input() pipeline: Pipeline;
 
@@ -48,7 +48,7 @@ export class PipelineAuditComponent extends Table implements OnInit {
         };
     }
 
-    getData(): any[] {
+    getData(): Array<PipelineAudit> {
         return this.audits;
     }
 

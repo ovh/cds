@@ -4,7 +4,7 @@
         <div class="ui grid">
             <div class="thirteen wide column">
                 <app-workflow-template-form mode="add" [loading]="loading" [workflowTemplate]="workflowTemplate"
-                    [groups]="groups" (save)="saveWorkflowTemplate()"></app-workflow-template-form>
+                    [groups]="groups" [errors]="errors" (save)="saveWorkflowTemplate()"></app-workflow-template-form>
             </div>
             <div class="three wide column">
                 <app-workflow-template-help></app-workflow-template-help>

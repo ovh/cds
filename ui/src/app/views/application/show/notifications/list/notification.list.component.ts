@@ -1,19 +1,19 @@
-import {AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, ViewChild} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {Subscription} from 'rxjs';
-import {Application} from '../../../../../model/application.model';
-import {Notification} from '../../../../../model/notification.model';
-import {Project} from '../../../../../model/project.model';
-import {Table} from '../../../../../shared/table/table';
-import {ApplicationNotificationFormModalComponent} from '../form/notification.form.component';
-import {NotificationEvent} from '../notification.event';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { cloneDeep } from 'lodash';
+import { Subscription } from 'rxjs';
+import { Application } from '../../../../../model/application.model';
+import { Notification } from '../../../../../model/notification.model';
+import { Project } from '../../../../../model/project.model';
+import { Table } from '../../../../../shared/table/table';
+import { ApplicationNotificationFormModalComponent } from '../form/notification.form.component';
+import { NotificationEvent } from '../notification.event';
 
 @Component({
     selector: 'app-notification-list',
     templateUrl: './notification.list.html',
     styleUrls: ['./notification.list.scss']
 })
-export class ApplicationNotificationListComponent extends Table implements AfterViewInit, OnDestroy {
+export class ApplicationNotificationListComponent extends Table<Notification> implements AfterViewInit, OnDestroy {
 
     @Input() notifications: Array<Notification>;
     @Input() edit = false;
@@ -40,14 +40,14 @@ export class ApplicationNotificationListComponent extends Table implements After
     }
 
     ngAfterViewInit(): void {
-        this.modalSubscription = this.editNotifModal.modal.onModalHide.subscribe( b => {
+        this.modalSubscription = this.editNotifModal.modal.onModalHide.subscribe(b => {
             if (b) {
                 delete this.selectedNotification;
             }
         });
     }
 
-    getData(): any[] {
+    getData(): Array<Notification> {
         return this.notifications;
     }
 
@@ -72,7 +72,7 @@ export class ApplicationNotificationListComponent extends Table implements After
             this.selectedNotification.notifications[key] = cloneDeep(n.notifications[key]);
         }
         setTimeout(() => {
-            this.editNotifModal.show({autofocus: false, closable: false, observeChanges: false});
+            this.editNotifModal.show({ autofocus: false, closable: false, observeChanges: false });
         }, 100);
     }
 

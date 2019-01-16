@@ -6,6 +6,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"regexp"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -17,7 +19,7 @@ import (
 )
 
 func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) interface{} {
-	m := map[string]interface{}{}
+	m := make(map[string]interface{}, len(wt.Parameters))
 	for _, p := range wt.Parameters {
 		v, ok := r.Parameters[p.Key]
 		if ok {
@@ -38,85 +40,156 @@ func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) inte
 	return m
 }
 
-func executeTemplate(t string, data map[string]interface{}) (string, error) {
-	tmpl, err := template.New(fmt.Sprintf("template")).Delims("[[", "]]").Parse(t)
-	if err != nil {
-		return "", sdk.WrapError(err, "cannot parse workflow template")
+func parseTemplate(templateType string, number int, t string) (*template.Template, error) {
+	var id string
+	switch templateType {
+	case "workflow":
+		id = templateType
+	default:
+		id = fmt.Sprintf("%s.%d", templateType, number)
 	}
 
+	tmpl, err := template.New(id).Delims("[[", "]]").Parse(t)
+	if err != nil {
+		reg := regexp.MustCompile(`template: ([0-9a-zA-Z.]+):([0-9]+): (.*)$`)
+		submatch := reg.FindStringSubmatch(err.Error())
+		if len(submatch) != 4 {
+			return nil, sdk.WithStack(err)
+		}
+		line, err := strconv.Atoi(submatch[2])
+		if err != nil {
+			return nil, sdk.WithStack(err)
+		}
+		return nil, sdk.WithStack(sdk.WorkflowTemplateError{
+			Type:    templateType,
+			Number:  number,
+			Line:    line,
+			Message: submatch[3],
+		})
+	}
+	return tmpl, nil
+}
+
+func executeTemplate(tmpl *template.Template, data map[string]interface{}) (string, error) {
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, data); err != nil {
-		return "", sdk.WrapError(err, "cannot execute workflow template")
+		return "", sdk.WithStack(err)
 	}
-
 	return buffer.String(), nil
 }
 
+func decodeTemplateValue(value string) (string, error) {
+	v, err := base64.StdEncoding.DecodeString(value)
+	if err != nil {
+		return "", sdk.NewError(sdk.ErrWrongRequest, err)
+	}
+	return string(v), nil
+}
+
 // Execute returns yaml file from template.
-func Execute(wt *sdk.WorkflowTemplate, i *sdk.WorkflowTemplateInstance) (sdk.WorkflowTemplateResult, error) {
-	data := map[string]interface{}{
-		"id":     i.ID,
-		"name":   i.Request.WorkflowName,
-		"params": prepareParams(wt, i.Request),
-	}
-
-	v, err := base64.StdEncoding.DecodeString(wt.Value)
-	if err != nil {
-		return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse workflow template")
-	}
-
-	out, err := executeTemplate(string(v), data)
-	if err != nil {
-		return sdk.WorkflowTemplateResult{}, err
-	}
-
-	res := sdk.WorkflowTemplateResult{
-		Workflow:     out,
+func Execute(wt *sdk.WorkflowTemplate, instance *sdk.WorkflowTemplateInstance) (sdk.WorkflowTemplateResult, error) {
+	result := sdk.WorkflowTemplateResult{
 		Pipelines:    make([]string, len(wt.Pipelines)),
 		Applications: make([]string, len(wt.Applications)),
 		Environments: make([]string, len(wt.Environments)),
 	}
 
+	var data map[string]interface{}
+	if instance != nil {
+		data = map[string]interface{}{
+			"id":     instance.ID,
+			"name":   instance.Request.WorkflowName,
+			"params": prepareParams(wt, instance.Request),
+		}
+	}
+
+	var multiErr sdk.MultiError
+
+	v, err := decodeTemplateValue(wt.Value)
+	if err != nil {
+		return result, err
+	}
+	if tmpl, err := parseTemplate("workflow", 0, v); err != nil {
+		multiErr.Append(err)
+	} else {
+		if data != nil {
+			result.Workflow, err = executeTemplate(tmpl, data)
+			if err != nil {
+				return result, err
+			}
+		}
+	}
+
 	for i, p := range wt.Pipelines {
-		v, err := base64.StdEncoding.DecodeString(p.Value)
+		v, err := decodeTemplateValue(p.Value)
 		if err != nil {
-			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse pipeline template")
+			return result, err
 		}
 
-		out, err := executeTemplate(string(v), data)
-		if err != nil {
-			return sdk.WorkflowTemplateResult{}, err
+		if tmpl, err := parseTemplate("pipeline", i, v); err != nil {
+			multiErr.Append(err)
+		} else {
+			result.Pipelines[i], err = executeTemplate(tmpl, data)
+			if err != nil {
+				return result, err
+			}
 		}
-		res.Pipelines[i] = out
 	}
 
 	for i, a := range wt.Applications {
-		v, err := base64.StdEncoding.DecodeString(a.Value)
+		v, err := decodeTemplateValue(a.Value)
 		if err != nil {
-			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse application template")
+			return result, err
 		}
 
-		out, err := executeTemplate(string(v), data)
-		if err != nil {
-			return sdk.WorkflowTemplateResult{}, err
+		if tmpl, err := parseTemplate("application", i, v); err != nil {
+			multiErr.Append(err)
+		} else {
+			if data != nil {
+				result.Applications[i], err = executeTemplate(tmpl, data)
+				if err != nil {
+					return result, err
+				}
+			}
 		}
-		res.Applications[i] = out
 	}
 
 	for i, e := range wt.Environments {
-		v, err := base64.StdEncoding.DecodeString(e.Value)
+		v, err := decodeTemplateValue(e.Value)
 		if err != nil {
-			return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "cannot parse environment template")
+			return result, err
 		}
 
-		out, err := executeTemplate(string(v), data)
-		if err != nil {
-			return sdk.WorkflowTemplateResult{}, err
+		if tmpl, err := parseTemplate("environment", i, v); err != nil {
+			multiErr.Append(err)
+		} else {
+			if data != nil {
+				result.Environments[i], err = executeTemplate(tmpl, data)
+				if err != nil {
+					return result, err
+				}
+			}
 		}
-		res.Environments[i] = out
 	}
 
-	return res, nil
+	if !multiErr.IsEmpty() {
+		var errs []sdk.WorkflowTemplateError
+		causes := make([]string, len(multiErr))
+		for i, err := range multiErr {
+			cause := sdk.Cause(err)
+			if e, ok := cause.(sdk.WorkflowTemplateError); ok {
+				errs = append(errs, e)
+			}
+			causes[i] = cause.Error()
+		}
+		return result, sdk.NewErrorFrom(sdk.Error{
+			ID:     sdk.ErrCannotParseTemplate.ID,
+			Status: sdk.ErrCannotParseTemplate.Status,
+			Data:   errs,
+		}, strings.Join(causes, ", "))
+	}
+
+	return result, nil
 }
 
 // Tar returns in buffer the a tar file that contains all generated stuff in template result.

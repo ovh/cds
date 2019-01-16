@@ -1,0 +1,4 @@
+version: v1.0
+name: [[.name]]
+vcs_server: [[.params.repo.vcs]]
+repo: [[.params.repo.repository]]
