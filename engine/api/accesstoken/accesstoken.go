@@ -18,7 +18,7 @@ var (
 	verifyKey   *rsa.PublicKey
 )
 
-// Init the package y passing the signing key
+// Init the package by passing the signing key
 func Init(issuer string, k []byte) error {
 	localIssuer = issuer
 	var err error
