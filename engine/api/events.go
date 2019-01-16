@@ -183,7 +183,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
-		user := getUser(ctx)
+		user := deprecatedGetUser(ctx)
 		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
 			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
 		}

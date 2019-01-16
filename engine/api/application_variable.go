@@ -36,7 +36,7 @@ func (api *API) getVariableAuditInApplicationHandler() service.Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load application %s on project %s", appName, key)
 		}
@@ -61,7 +61,7 @@ func (api *API) getVariableInApplicationHandler() service.Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
@@ -97,7 +97,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application: %s", appName)
 		}
@@ -114,7 +114,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 			return sdk.WrapError(errV, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
 		}
 
-		if err := application.DeleteVariable(tx, api.Cache, app, varToDelete, getUser(ctx)); err != nil {
+		if err := application.DeleteVariable(tx, api.Cache, app, varToDelete, deprecatedGetUser(ctx)); err != nil {
 			log.Warning("deleteVariableFromApplicationHandler: Cannot delete %s: %s\n", varName, err)
 			return sdk.WrapError(err, "Cannot delete %s", varName)
 		}
@@ -128,7 +128,7 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load variables")
 		}
 
-		event.PublishDeleteVariableApplication(key, *app, *varToDelete, getUser(ctx))
+		event.PublishDeleteVariableApplication(key, *app, *varToDelete, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -149,7 +149,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application: %s", appName)
 		}
@@ -165,7 +165,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := application.UpdateVariable(tx, api.Cache, app, &newVar, variableBefore, getUser(ctx)); err != nil {
+		if err := application.UpdateVariable(tx, api.Cache, app, &newVar, variableBefore, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot update variable %s for application %s", varName, appName)
 		}
 
@@ -178,7 +178,7 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load variables")
 		}
 
-		event.PublishUpdateVariableApplication(key, *app, newVar, *variableBefore, getUser(ctx))
+		event.PublishUpdateVariableApplication(key, *app, newVar, *variableBefore, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -200,7 +200,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s ", appName)
 		}
@@ -213,10 +213,10 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			err = application.AddKeyPairToApplication(tx, api.Cache, app, newVar.Name, getUser(ctx))
+			err = application.AddKeyPairToApplication(tx, api.Cache, app, newVar.Name, deprecatedGetUser(ctx))
 			break
 		default:
-			err = application.InsertVariable(tx, api.Cache, app, newVar, getUser(ctx))
+			err = application.InsertVariable(tx, api.Cache, app, newVar, deprecatedGetUser(ctx))
 			break
 		}
 		if err != nil {
@@ -232,7 +232,7 @@ func (api *API) addVariableInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot get variables")
 		}
 
-		event.PublishAddVariableApplication(key, *app, newVar, getUser(ctx))
+		event.PublishAddVariableApplication(key, *app, newVar, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}

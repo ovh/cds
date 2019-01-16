@@ -22,7 +22,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		name := vars["permWorkflowName"]
 		groupName := vars["groupName"]
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -30,7 +30,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
 		}
@@ -63,7 +63,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishWorkflowPermissionDelete(key, *wf, oldGp, getUser(ctx))
+		event.PublishWorkflowPermissionDelete(key, *wf, oldGp, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}
@@ -86,7 +86,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidName, "putWorkflowGroupHandler")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -94,7 +94,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler")
 		}
@@ -125,7 +125,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishWorkflowPermissionUpdate(key, *wf, gp, oldGp, getUser(ctx))
+		event.PublishWorkflowPermissionUpdate(key, *wf, gp, oldGp, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}
@@ -143,7 +143,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -151,7 +151,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}
@@ -184,7 +184,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishWorkflowPermissionAdd(key, *wf, gp, getUser(ctx))
+		event.PublishWorkflowPermissionAdd(key, *wf, gp, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, wf, http.StatusOK)
 	}

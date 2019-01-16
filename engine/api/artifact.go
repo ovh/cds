@@ -72,7 +72,7 @@ func (api *API) listArtifactsBuildHandler() service.Handler {
 		}
 
 		// Load application
-		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "Cannot load application %s", appName)
 		}
@@ -88,7 +88,7 @@ func (api *API) listArtifactsBuildHandler() service.Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(key, env.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", envName)
 		}
 
@@ -122,7 +122,7 @@ func (api *API) listArtifactsHandler() service.Handler {
 		}
 
 		// Load application
-		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "Cannot load application %s", appName)
 		}
@@ -138,7 +138,7 @@ func (api *API) listArtifactsHandler() service.Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(key, env.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", envName)
 		}
 
@@ -223,7 +223,7 @@ func (api *API) postArtifactWithTempURLHandler() service.Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(proj, env.Name, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(proj, env.Name, deprecatedGetUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", env.Name)
 		}
 
@@ -303,7 +303,7 @@ func (api *API) postArtifactWithTempURLCallbackHandler() service.Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(projKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(projKey, env.Name, deprecatedGetUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", env.Name)
 		}
 
@@ -312,7 +312,7 @@ func (api *API) postArtifactWithTempURLCallbackHandler() service.Handler {
 			return sdk.WrapError(errpip, "Unable to load pipeline %s/%s", projKey, pipName)
 		}
 
-		app, errapp := application.LoadByName(api.mustDB(), api.Cache, projKey, appName, getUser(ctx))
+		app, errapp := application.LoadByName(api.mustDB(), api.Cache, projKey, appName, deprecatedGetUser(ctx))
 		if errapp != nil {
 			return sdk.WrapError(errapp, "Unable to load application %s/%s", projKey, appName)
 		}

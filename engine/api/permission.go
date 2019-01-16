@@ -48,13 +48,13 @@ func getPermissionByMethod(method string, isExecution bool) int {
 	}
 }
 
-func (api *API) setGroupsAndPermissionsFromGroupID(ctx context.Context, groupID int64) error {
+func (api *API) deprecatedSetGroupsAndPermissionsFromGroupID(ctx context.Context, groupID int64) error {
 	g, perm, err := loadPermissionsByGroupID(api.mustDB(), api.Cache, groupID)
 	if err != nil {
-		return sdk.WrapError(sdk.ErrUnauthorized, "setGroupsAndPermissionsFromGroupID> cannot load permissions: %s", err)
+		return sdk.WrapError(sdk.ErrUnauthorized, "deprecatedSetGroupsAndPermissionsFromGroupID> cannot load permissions: %s", err)
 	}
-	getUser(ctx).Permissions = perm
-	getUser(ctx).Groups = append(getUser(ctx).Groups, g)
+	deprecatedGetUser(ctx).Permissions = perm
+	deprecatedGetUser(ctx).Groups = append(deprecatedGetUser(ctx).Groups, g)
 	return err
 }
 
@@ -97,7 +97,7 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 }
 
 func (api *API) checkPermission(ctx context.Context, routeVar map[string]string, permission int) bool {
-	for _, g := range getUser(ctx).Groups {
+	for _, g := range deprecatedGetUser(ctx).Groups {
 		if group.SharedInfraGroup != nil && g.Name == group.SharedInfraGroup.Name {
 			return true
 		}
@@ -119,7 +119,7 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	if permission.PermissionReadExecute == perm && getService(ctx) != nil {
 		return true
 	}
-	return getUser(ctx).Permissions.ProjectsPerm[projectKey] >= perm
+	return deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= perm
 }
 
 func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName string, perm int, routeVar map[string]string) bool {
@@ -129,7 +129,7 @@ func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName strin
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.PipelinesPerm[sdk.UserPermissionKey(projectKey, pipelineName)] >= perm
+			return deprecatedGetUser(ctx).Permissions.PipelinesPerm[sdk.UserPermissionKey(projectKey, pipelineName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -144,7 +144,7 @@ func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string,
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.EnvironmentsPerm[sdk.UserPermissionKey(projectKey, envName)] >= perm
+			return deprecatedGetUser(ctx).Permissions.EnvironmentsPerm[sdk.UserPermissionKey(projectKey, envName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -159,7 +159,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)] >= perm
+			return deprecatedGetUser(ctx).Permissions.WorkflowsPerm[sdk.UserPermissionKey(projectKey, workflowName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -168,7 +168,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 }
 
 func checkProjectReadPermission(ctx context.Context, projectKey string) bool {
-	return getUser(ctx).Permissions.ProjectsPerm[projectKey] >= permission.PermissionRead
+	return deprecatedGetUser(ctx).Permissions.ProjectsPerm[projectKey] >= permission.PermissionRead
 }
 
 func (api *API) checkApplicationPermissions(ctx context.Context, applicationName string, perm int, routeVar map[string]string) bool {
@@ -178,7 +178,7 @@ func (api *API) checkApplicationPermissions(ctx context.Context, applicationName
 		case permission.PermissionRead:
 			return checkProjectReadPermission(ctx, projectKey)
 		default:
-			return getUser(ctx).Permissions.ApplicationsPerm[sdk.UserPermissionKey(projectKey, applicationName)] >= perm
+			return deprecatedGetUser(ctx).Permissions.ApplicationsPerm[sdk.UserPermissionKey(projectKey, applicationName)] >= perm
 		}
 	} else {
 		log.Warning("Wrong route configuration. need key parameter")
@@ -187,7 +187,7 @@ func (api *API) checkApplicationPermissions(ctx context.Context, applicationName
 }
 
 func (api *API) checkGroupPermissions(ctx context.Context, groupName string, permissionValue int, routeVar map[string]string) bool {
-	for _, g := range getUser(ctx).Groups {
+	for _, g := range deprecatedGetUser(ctx).Groups {
 		if g.Name == groupName {
 
 			if permissionValue == permission.PermissionRead {
@@ -195,7 +195,7 @@ func (api *API) checkGroupPermissions(ctx context.Context, groupName string, per
 			}
 
 			for i := range g.Admins {
-				if g.Admins[i].ID == getUser(ctx).ID {
+				if g.Admins[i].ID == deprecatedGetUser(ctx).ID {
 					return true
 				}
 			}
@@ -210,7 +210,7 @@ func (api *API) checkActionPermissions(ctx context.Context, groupName string, pe
 		return true
 	}
 
-	if permissionValue != permission.PermissionRead && getUser(ctx).Admin {
+	if permissionValue != permission.PermissionRead && deprecatedGetUser(ctx).Admin {
 		return true
 	}
 
@@ -234,7 +234,7 @@ func (api *API) checkWorkerModelPermissions(ctx context.Context, modelID string,
 	if h != nil && h.GroupID != nil {
 		return *h.GroupID == group.SharedInfraGroup.ID || m.GroupID == *h.GroupID
 	}
-	return api.checkWorkerModelPermissionsByUser(m, getUser(ctx), permissionValue)
+	return api.checkWorkerModelPermissionsByUser(m, deprecatedGetUser(ctx), permissionValue)
 }
 
 func (api *API) checkWorkerModelPermissionsByUser(m *sdk.Model, u *sdk.User, permissionValue int) bool {

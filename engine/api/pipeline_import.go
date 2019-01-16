@@ -63,7 +63,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable to load project %s", key)
 		}
@@ -129,7 +129,7 @@ func (api *API) importPipelineHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx),
+		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, deprecatedGetUser(ctx),
 			pipeline.ImportOptions{Force: forceUpdate})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
@@ -158,7 +158,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 		format := r.FormValue("format")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable to load project %s", key)
 		}
@@ -231,7 +231,7 @@ func (api *API) putImportPipelineHandler() service.Handler {
 			_ = tx.Rollback()
 		}()
 
-		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, getUser(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
+		_, allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, deprecatedGetUser(ctx), pipeline.ImportOptions{Force: true, PipelineName: pipelineName})
 		msgListString := translate(r, allMsg)
 		if globalError != nil {
 			return sdk.WrapError(sdk.NewError(sdk.ErrInvalidPipeline, globalError), "unable to parse and import pipeline")

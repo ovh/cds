@@ -55,23 +55,34 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 
 	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
 	if err != nil {
-		return ctx, err
+		return ctx, sdk.WithStack(err)
 	}
+
 	username, err := GetUsername(c.store, sessionToken)
 	if err != nil {
-		return ctx, err
+		return ctx, sdk.WithStack(err)
 	}
-	u, err := user.LoadUserAndAuth(c.dbFunc(), username)
+
+	ctx, err = c.DeprecatedSession(ctx, sessionToken, username)
 	if err != nil {
-		return ctx, sdk.WithStack(fmt.Errorf("authorization failed for %s: %s", username, err))
+		return ctx, sdk.WithStack(fmt.Errorf("authorization failed for %s: %v", username, err))
 	}
-	ctx = context.WithValue(ctx, ContextUser, u)
-	ctx = context.WithValue(ctx, ContextUserSession, sessionToken)
 
 	if !exists {
 		return ctx, sdk.WithStack(fmt.Errorf("invalid session"))
 	}
 
+	return ctx, nil
+}
+
+// DeprecatedSession have to be deprecated
+func (c *LocalClient) DeprecatedSession(ctx context.Context, sessionToken, username string) (context.Context, error) {
+	u, err := user.LoadUserAndAuth(c.dbFunc(), username)
+	if err != nil {
+		return ctx, fmt.Errorf("authorization failed for %s: %s", username, err)
+	}
+	ctx = context.WithValue(ctx, ContextUser, u)
+	ctx = context.WithValue(ctx, ContextUserSession, sessionToken)
 	return ctx, nil
 }
 

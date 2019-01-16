@@ -60,7 +60,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -92,7 +92,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, getUser(ctx))
+		event.PublishPipelineJobAdd(projectKey, pipelineName, stage, job, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, pip, http.StatusOK)
 	}
@@ -159,7 +159,7 @@ func (api *API) updateJobHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -168,7 +168,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(errlb, "updateJobHandler> cannot load all binary requirements")
 		}
 
-		if err := pipeline.UpdateJob(tx, &job, getUser(ctx).ID); err != nil {
+		if err := pipeline.UpdateJob(tx, &job, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot update in database")
 		}
 
@@ -188,7 +188,7 @@ func (api *API) updateJobHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, getUser(ctx))
+		event.PublishPipelineJobUpdate(key, pipName, stage, oldJob, job, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
@@ -241,11 +241,11 @@ func (api *API) deleteJobHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
-		if err := pipeline.DeleteJob(tx, jobToDelete, getUser(ctx).ID); err != nil {
+		if err := pipeline.DeleteJob(tx, jobToDelete, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete pipeline action")
 		}
 
@@ -261,7 +261,7 @@ func (api *API) deleteJobHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, getUser(ctx))
+		event.PublishPipelineJobDelete(key, pipName, stage, jobToDelete, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}

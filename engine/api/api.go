@@ -366,7 +366,19 @@ func getUserSession(c context.Context) string {
 	return u
 }
 
-func getUser(c context.Context) *sdk.User {
+func getGrantedUser(c context.Context) *sdk.GrantedUser {
+	i := c.Value(ContextGrantedUser)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(*sdk.GrantedUser)
+	if !ok {
+		return nil
+	}
+	return u
+}
+
+func deprecatedGetUser(c context.Context) *sdk.User {
 	i := c.Value(auth.ContextUser)
 	if i == nil {
 		return nil

@@ -43,7 +43,7 @@ func (api *API) postImportAsCodeHandler() service.Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithFeatures, project.LoadOptions.WithClearKeys)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithFeatures, project.LoadOptions.WithClearKeys)
 		if errP != nil {
 			sdk.WrapError(errP, "postImportAsCodeHandler> Cannot load project")
 		}
@@ -109,7 +109,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
@@ -153,7 +153,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			IsDefaultBranch:    ope.Setup.Checkout.Branch == ope.RepositoryInfo.DefaultBranch,
 		}
 
-		allMsg, wrkflw, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, opt, getUser(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, err := workflow.Push(ctx, api.mustDB(), api.Cache, proj, tr, opt, deprecatedGetUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to push workflow")
 		}

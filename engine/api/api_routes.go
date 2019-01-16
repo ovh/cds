@@ -31,6 +31,12 @@ func (api *API) InitRouter() {
 	}
 	api.eventsBroker.Init(context.Background(), api.PanicDump())
 
+	// Access token
+	r.Handle("/accesstoken", r.POST(api.postNewAccessTokenHandler))
+	r.Handle("/accesstoken/{id}", r.PUT(api.putRegenAccessTokenHandler))
+	r.Handle("/accesstoken/user/{id}", r.GET(api.getAccessTokenByUserHandler))
+	r.Handle("/accesstoken/group/{id}", r.GET(api.getAccessTokenByGroupHandler))
+
 	// Action
 	r.Handle("/action", r.GET(api.getActionsHandler))
 	r.Handle("/action/import", r.POST(api.importActionHandler, NeedAdmin(true)))

@@ -21,7 +21,7 @@ func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handle
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationDeploymentStrategiesConfigHandler")
 		}
@@ -48,7 +48,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		}
 		defer tx.Rollback()
 
-		proj, err := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
@@ -69,7 +69,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 			return sdk.WrapError(sdk.ErrForbidden, "postApplicationDeploymentStrategyConfigHandler> platform doesn't support deployment")
 		}
 
-		app, err := application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithClearDeploymentStrategies)
+		app, err := application.LoadByName(tx, api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithClearDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -88,7 +88,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")
 		}
 
-		app, err = application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithDeploymentStrategies)
+		app, err = application.LoadByName(tx, api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -119,7 +119,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		}
 		defer tx.Rollback()
 
-		proj, err := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
@@ -140,7 +140,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 			return sdk.WrapError(sdk.ErrForbidden, "deleteApplicationDeploymentStrategyConfigHandler> platform doesn't support deployment")
 		}
 
-		app, err := application.LoadByName(tx, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithDeploymentStrategies)
+		app, err := application.LoadByName(tx, api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load application")
 		}
@@ -186,7 +186,7 @@ func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler 
 			opts = []application.LoadOptionFunc{application.LoadOptions.WithClearDeploymentStrategies}
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), opts...)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx), opts...)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationDeploymentStrategyConfigHandler")
 		}

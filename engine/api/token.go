@@ -49,7 +49,7 @@ func (api *API) generateTokenHandler() service.Handler {
 			return sdk.WrapError(err, "generateTokenHandler: cannot generate key")
 		}
 		now := time.Now()
-		if err := token.InsertToken(api.mustDB(), g.ID, tk, exp, tokenPostInfos.Description, getUser(ctx).Fullname); err != nil {
+		if err := token.InsertToken(api.mustDB(), g.ID, tk, exp, tokenPostInfos.Description, deprecatedGetUser(ctx).Fullname); err != nil {
 			return sdk.WrapError(err, "cannot insert new key")
 		}
 		token := sdk.Token{
@@ -58,7 +58,7 @@ func (api *API) generateTokenHandler() service.Handler {
 			Expiration:  exp,
 			Created:     now,
 			Description: tokenPostInfos.Description,
-			Creator:     getUser(ctx).Fullname,
+			Creator:     deprecatedGetUser(ctx).Fullname,
 			GroupName:   groupName,
 		}
 		return service.WriteJSON(w, token, http.StatusOK)
@@ -70,7 +70,7 @@ func (api *API) getGroupTokenListHandler() service.Handler {
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
 
-		isAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, getUser(ctx).ID)
+		isAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, deprecatedGetUser(ctx).ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getGroupTokenListHandler> cannot load group admin information '%s'", groupName)
 		}
@@ -97,9 +97,9 @@ func (api *API) deleteTokenHandler() service.Handler {
 			return sdk.WrapError(errT, "deleteTokenHandler> token id is not a number '%s'", vars["tokenid"])
 		}
 
-		isGroupAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, getUser(ctx).ID)
+		isGroupAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, deprecatedGetUser(ctx).ID)
 		if errA != nil {
-			return sdk.WrapError(errT, "deleteTokenHandler> cannot load group admin for user %s", getUser(ctx).Username)
+			return sdk.WrapError(errT, "deleteTokenHandler> cannot load group admin for user %s", deprecatedGetUser(ctx).Username)
 		}
 
 		if !isGroupAdmin {
