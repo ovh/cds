@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/fatih/structs"
-	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -81,56 +80,4 @@ func Publish(payload interface{}, u *sdk.User) {
 		event.UserMail = u.Email
 	}
 	publishEvent(event)
-}
-
-// PublishActionBuild sends a actionBuild event
-func PublishActionBuild(pb *sdk.PipelineBuild, pbJob *sdk.PipelineBuildJob) {
-	e := sdk.EventJob{
-		Version:         pb.Version,
-		JobName:         pbJob.Job.Action.Name,
-		JobID:           pbJob.Job.PipelineActionID,
-		Status:          sdk.StatusFromString(pbJob.Status),
-		Queued:          pbJob.Queued.Unix(),
-		Start:           pbJob.Start.Unix(),
-		Done:            pbJob.Done.Unix(),
-		ModelName:       pbJob.Model,
-		PipelineName:    pb.Pipeline.Name,
-		PipelineType:    pb.Pipeline.Type,
-		ProjectKey:      pb.Pipeline.ProjectKey,
-		ApplicationName: pb.Application.Name,
-		EnvironmentName: pb.Environment.Name,
-		BranchName:      pb.Trigger.VCSChangesBranch,
-		Hash:            pb.Trigger.VCSChangesHash,
-	}
-
-	Publish(e, nil)
-}
-
-// PublishPipelineBuild sends a pipelineBuild event
-func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.PipelineBuild) {
-	rmn := ""
-	rfn := ""
-	if pb.Application.VCSServer != "" {
-		rmn = pb.Application.VCSServer
-		rfn = pb.Application.RepositoryFullname
-	}
-
-	e := sdk.EventPipelineBuild{
-		Version:               pb.Version,
-		BuildNumber:           pb.BuildNumber,
-		Status:                pb.Status,
-		Start:                 pb.Start.Unix(),
-		Done:                  pb.Done.Unix(),
-		RepositoryManagerName: rmn,
-		RepositoryFullname:    rfn,
-		PipelineName:          pb.Pipeline.Name,
-		PipelineType:          pb.Pipeline.Type,
-		ProjectKey:            pb.Pipeline.ProjectKey,
-		ApplicationName:       pb.Application.Name,
-		EnvironmentName:       pb.Environment.Name,
-		BranchName:            pb.Trigger.VCSChangesBranch,
-		Hash:                  pb.Trigger.VCSChangesHash,
-	}
-
-	Publish(e, nil)
 }

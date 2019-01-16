@@ -405,3 +405,15 @@ func (w *WorkflowTemplateBulkOperations) Scan(src interface{}) error {
 	}
 	return WrapError(json.Unmarshal(source, w), "cannot unmarshal WorkflowTemplateBulkOperations")
 }
+
+// WorkflowTemplateError contains info about template parsing error.
+type WorkflowTemplateError struct {
+	Type    string `json:"type"`
+	Number  int    `json:"number"`
+	Line    int    `json:"line"`
+	Message string `json:"message"`
+}
+
+func (w WorkflowTemplateError) Error() string {
+	return fmt.Sprintf("error '%s' in %s.%d at line %d", w.Message, w.Type, w.Number, w.Line)
+}

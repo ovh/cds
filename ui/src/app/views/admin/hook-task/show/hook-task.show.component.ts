@@ -90,7 +90,7 @@ export class HookTaskShowComponent {
     }
 
     selectExecution(e: TaskExecution) {
-        return _ => {
+        return () => {
             this.selectedExecution = e
             this.selectedExecutionBody = null;
             if (e.webhook) {

@@ -22,15 +22,7 @@ func TestPostAdminMigrationCancelHandler(t *testing.T) {
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
-	mig := sdk.Migration{
-		Name:   "TestMigration",
-		Status: sdk.MigrationStatusInProgress,
-	}
-	test.NoError(t, migrate.Insert(db, &mig))
-	defer func() {
-		_ = migrate.Delete(db, &mig)
-	}()
-
+	//Load all migration
 	uri := router.GetRoute("GET", api.getAdminMigrationsHandler, nil)
 	req, err := http.NewRequest("GET", uri, nil)
 	test.NoError(t, err)
@@ -43,9 +35,31 @@ func TestPostAdminMigrationCancelHandler(t *testing.T) {
 
 	var migrations []sdk.Migration
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &migrations))
+	numberOfMigrations := len(migrations)
+
+	mig := sdk.Migration{
+		Name:   "TestMigration",
+		Status: sdk.MigrationStatusInProgress,
+	}
+	test.NoError(t, migrate.Insert(db, &mig))
+	defer func() {
+		_ = migrate.Delete(db, &mig)
+	}()
+
+	uri = router.GetRoute("GET", api.getAdminMigrationsHandler, nil)
+	req, err = http.NewRequest("GET", uri, nil)
+	test.NoError(t, err)
+	assets.AuthentifyRequest(t, req, u, pass)
+
+	// Do the request
+	w = httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &migrations))
 
 	assert.NotNil(t, migrations)
-	assert.Equal(t, 1, len(migrations))
+	assert.Equal(t, numberOfMigrations+1, len(migrations))
 
 	//Prepare post request
 	uri = router.GetRoute("POST", api.postAdminMigrationCancelHandler, map[string]string{"id": fmt.Sprintf("%d", migrations[0].ID)})

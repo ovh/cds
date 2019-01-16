@@ -5,7 +5,13 @@ import { finalize } from 'rxjs/internal/operators/finalize';
 import { first } from 'rxjs/operators';
 import { AuditWorkflowTemplate } from '../../../../model/audit.model';
 import { Group } from '../../../../model/group.model';
-import { InstanceStatus, InstanceStatusUtil, WorkflowTemplate, WorkflowTemplateInstance } from '../../../../model/workflow-template.model';
+import {
+    InstanceStatus,
+    InstanceStatusUtil,
+    WorkflowTemplate,
+    WorkflowTemplateError,
+    WorkflowTemplateInstance
+} from '../../../../model/workflow-template.model';
 import { Workflow } from '../../../../model/workflow.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
@@ -50,6 +56,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     groupName: string;
     templateSlug: string;
     selectedWorkflowTemplateInstance: WorkflowTemplateInstance;
+    errors: Array<WorkflowTemplateError>;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -225,8 +232,13 @@ export class WorkflowTemplateEditComponent implements OnInit {
             .subscribe(wt => {
                 this.oldWorkflowTemplate = { ...wt };
                 this.workflowTemplate = wt;
+                this.errors = [];
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
                 this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);
+            }, e => {
+                if (e.error) {
+                    this.errors = e.error.data;
+                }
             });
     }
 
@@ -234,7 +246,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.loading = true;
         this._workflowTemplateService.delete(this.workflowTemplate)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(_ => {
+            .subscribe(() => {
                 this._toast.success('', this._translate.instant('workflow_template_deleted'));
                 this._router.navigate(['settings', 'workflow-template']);
             });

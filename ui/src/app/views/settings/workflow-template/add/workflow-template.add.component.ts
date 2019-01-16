@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { finalize } from 'rxjs/internal/operators/finalize';
 import { Group } from '../../../../model/group.model';
-import { WorkflowTemplate } from '../../../../model/workflow-template.model';
+import { WorkflowTemplate, WorkflowTemplateError } from '../../../../model/workflow-template.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
@@ -19,6 +19,7 @@ export class WorkflowTemplateAddComponent {
     groups: Array<Group>;
     loading: boolean;
     path: Array<PathItem>;
+    errors: Array<WorkflowTemplateError>;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -57,8 +58,13 @@ export class WorkflowTemplateAddComponent {
             .pipe(finalize(() => this.loading = false))
             .subscribe(wt => {
                 this.workflowTemplate = wt;
+                this.errors = [];
                 this._toast.success('', this._translate.instant('workflow_template_created'));
                 this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);
+            }, e => {
+                if (e.error) {
+                    this.errors = e.error.data;
+                }
             });
     }
 }

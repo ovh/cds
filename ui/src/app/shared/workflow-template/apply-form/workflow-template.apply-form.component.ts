@@ -9,6 +9,7 @@ import {
     WorkflowTemplateInstance,
     WorkflowTemplateRequest
 } from '../../../model/workflow-template.model';
+import { Workflow } from '../../../model/workflow.model';
 import { WorkflowTemplateService } from '../../../service/workflow-template/workflow-template.service';
 
 @Component({
@@ -18,6 +19,7 @@ import { WorkflowTemplateService } from '../../../service/workflow-template/work
 })
 export class WorkflowTemplateApplyFormComponent implements OnChanges {
     @Input() project: Project;
+    @Input() workflow: Workflow;
     @Input() workflowTemplate: WorkflowTemplate;
     @Input() workflowTemplateInstance: WorkflowTemplateInstance;
     @Input() withClose: boolean;
@@ -50,8 +52,15 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
         this._workflowTemplateService.apply(this.workflowTemplate.group.name, this.workflowTemplate.slug, req)
             .pipe(first(), finalize(() => this.loading = false))
             .subscribe(res => {
+                // if the workflow name changed move to new workflow page
                 this.result = res;
-                this.apply.emit();
+
+                // specific check for case where workflow name change in template
+                if (this.workflow && res.workflow_name !== this.workflow.name) {
+                    this._router.navigate(['/project', this.project.key, 'workflow', res.workflow_name]);
+                } else {
+                    this.apply.emit();
+                }
             });
     }
 

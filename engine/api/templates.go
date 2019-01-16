@@ -155,6 +155,11 @@ func (api *API) postTemplateHandler() service.Handler {
 			return err
 		}
 
+		// execute template with no instance only to check if parsing is ok
+		if _, err := workflowtemplate.Execute(&t, nil); err != nil {
+			return err
+		}
+
 		// duplicate couple of group id and slug will failed with sql constraint
 		if err := workflowtemplate.Insert(api.mustDB(), &t); err != nil {
 			return err
@@ -232,6 +237,11 @@ func (api *API) putTemplateHandler() service.Handler {
 		new := sdk.WorkflowTemplate(*old)
 		new.Update(data)
 
+		// execute template with no instance only to check if parsing is ok
+		if _, err := workflowtemplate.Execute(&new, nil); err != nil {
+			return err
+		}
+
 		if err := workflowtemplate.Update(api.mustDB(), &new); err != nil {
 			return err
 		}
@@ -268,37 +278,28 @@ func (api *API) deleteTemplateHandler() service.Handler {
 }
 
 func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, wt *sdk.WorkflowTemplate, req sdk.WorkflowTemplateRequest) (sdk.WorkflowTemplateResult, error) {
-	// check if a workflow exists with given slug
-	wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, p, req.WorkflowName, u, workflow.LoadOptions{})
-	if err != nil && !sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
-		return sdk.WorkflowTemplateResult{}, err
-	}
+	var result sdk.WorkflowTemplateResult
 
 	tx, err := api.mustDB().Begin()
 	if err != nil {
-		return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "Cannot start transaction")
+		return result, sdk.WrapError(err, "Cannot start transaction")
 	}
 	defer func() { _ = tx.Rollback() }()
 
 	var wti *sdk.WorkflowTemplateInstance
-	if wf != nil {
-		// check if workflow is a generated one for the current template
-		wti, err = workflowtemplate.GetInstanceByWorkflowIDAndTemplateID(tx, wf.ID, wt.ID)
-		if err != nil {
-			return sdk.WorkflowTemplateResult{}, err
-		}
+	// try to get a instance not assign to a workflow but with the same slug
+	wtis, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDAndRequestWorkflowName(tx, wt.ID, p.ID, req.WorkflowName)
+	if err != nil {
+		return result, err
 	}
-	if wti == nil {
-		// try to get a instance not assign to a workflow but with the same slug
-		wtis, err := workflowtemplate.GetInstancesByTemplateIDAndProjectIDAndWorkflowIDNull(tx, wt.ID, p.ID)
-		if err != nil {
-			return sdk.WorkflowTemplateResult{}, err
-		}
 
-		for _, res := range wtis {
-			if res.Request.WorkflowName == req.WorkflowName {
-				wti = &res
-				break
+	for _, res := range wtis {
+		if wti == nil {
+			wti = &res
+		} else {
+			// if there are more than one instance found, delete others
+			if err := workflowtemplate.DeleteInstance(tx, &res); err != nil {
+				return result, err
 			}
 		}
 	}
@@ -311,7 +312,7 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, 
 		wti.WorkflowTemplateVersion = wt.Version
 		wti.Request = req
 		if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
-			return sdk.WorkflowTemplateResult{}, err
+			return result, err
 		}
 	} else {
 		wti = &sdk.WorkflowTemplateInstance{
@@ -321,31 +322,31 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, 
 			Request:                 req,
 		}
 		if err := workflowtemplate.InsertInstance(tx, wti); err != nil {
-			return sdk.WorkflowTemplateResult{}, err
+			return result, err
 		}
 	}
 
 	// execute template with request
-	res, err := workflowtemplate.Execute(wt, wti)
+	result, err = workflowtemplate.Execute(wt, wti)
 	if err != nil {
-		return sdk.WorkflowTemplateResult{}, err
+		return result, err
 	}
 
 	// parse the generated workflow to find its name
 	var wor exportentities.Workflow
-	if err := yaml.Unmarshal([]byte(res.Workflow), &wor); err != nil {
-		return sdk.WorkflowTemplateResult{}, sdk.NewError(sdk.Error{
+	if err := yaml.Unmarshal([]byte(result.Workflow), &wor); err != nil {
+		return result, sdk.NewError(sdk.Error{
 			ID:      sdk.ErrWrongRequest.ID,
 			Message: "Cannot parse generated workflow",
 		}, err)
 	}
 	wti.WorkflowName = wor.Name
 	if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
-		return sdk.WorkflowTemplateResult{}, err
+		return result, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return sdk.WorkflowTemplateResult{}, sdk.WrapError(err, "Cannot commit transaction")
+		return result, sdk.WrapError(err, "Cannot commit transaction")
 	}
 
 	if old != nil {
@@ -354,7 +355,7 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, 
 		event.PublishWorkflowTemplateInstanceAdd(*wti, u)
 	}
 
-	return res, nil
+	return result, nil
 }
 
 func (api *API) postTemplateApplyHandler() service.Handler {

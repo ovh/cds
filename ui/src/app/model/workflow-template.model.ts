@@ -158,3 +158,10 @@ export class OperationStatusUtil {
         return '';
     }
 }
+
+export class WorkflowTemplateError {
+    type: string;
+    number: number;
+    line: number;
+    message: string;
+}
