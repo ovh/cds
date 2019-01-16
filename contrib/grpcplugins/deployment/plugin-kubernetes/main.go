@@ -250,8 +250,7 @@ func executeK8s(q *platformplugin.DeployQuery) error {
 		}
 	}
 
-	// TODO INTERPOLATE ?
-	// Global all files matching filePath
+	// All files matching filePath
 	filesPath, err := filepath.Glob(deploymentFilepath)
 	if err != nil {
 		return fmt.Errorf("Could not find paths : %v", err)
