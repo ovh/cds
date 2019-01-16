@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -32,6 +33,11 @@ func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) inte
 					"vcs":        sp[0],
 					"repository": strings.Join(sp[1:], "/"),
 				}
+			case sdk.ParameterTypeJSON:
+				var res interface{}
+				// safely ignore the error because the value of v has been validated on apply submit
+				_ = json.Unmarshal([]byte(v), &res)
+				m[p.Key] = res
 			default:
 				m[p.Key] = v
 			}

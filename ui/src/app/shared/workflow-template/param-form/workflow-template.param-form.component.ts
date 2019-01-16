@@ -20,10 +20,20 @@ export class WorkflowTemplateParamFormComponent implements OnChanges {
     parameterValues: any;
     loading: boolean;
     result: WorkflowTemplateApplyResult;
+    codeMirrorConfig: any;
 
     constructor(
         private _repoManagerService: RepoManagerService
-    ) { }
+    ) {
+        this.codeMirrorConfig = this.codeMirrorConfig = {
+            matchBrackets: true,
+            autoCloseBrackets: true,
+            mode: 'application/json',
+            lineWrapping: true,
+            autoRefresh: true,
+            lineNumbers: true,
+        };
+    }
 
     ngOnChanges() {
         if (this.project && this.project.vcs_servers) {
@@ -38,6 +48,7 @@ export class WorkflowTemplateParamFormComponent implements OnChanges {
                 }
             });
         }
+
         this.fillFormWithInstanceData();
     }
 
@@ -76,7 +87,6 @@ export class WorkflowTemplateParamFormComponent implements OnChanges {
     fillFormWithInstanceData(): void {
         if (this.workflowTemplate && this.workflowTemplateInstance) {
             this.workflowTemplate.parameters.forEach(parameter => {
-
                 let v = this.workflowTemplateInstance.request.parameters[parameter.key];
                 if (v) {
                     switch (parameter.type) {
@@ -99,7 +109,9 @@ export class WorkflowTemplateParamFormComponent implements OnChanges {
                     }
                 }
             });
+        }
 
+        if (this.workflowTemplate) {
             this.changeParam();
         }
     }
