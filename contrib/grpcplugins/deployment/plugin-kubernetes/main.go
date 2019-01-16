@@ -47,6 +47,9 @@ Build the present binaries and import in CDS:
 
 $ cdsctl admin plugins binary-add kubernetes-deployment-plugin kubernetes-deployment-plugin-bin.yml <path-to-binary-file>
 */
+const (
+	kubectlLink = "https://storage.googleapis.com/kubernetes-release/release/v1.13.0/bin/"
+)
 
 type kubernetesDeploymentPlugin struct {
 	platformplugin.Common
@@ -89,12 +92,8 @@ func (k8sPlugin *kubernetesDeploymentPlugin) Deploy(ctx context.Context, q *plat
 	k8sAPIURL := q.GetOptions()["cds.platform.api_url"]
 	k8sToken := q.GetOptions()["cds.platform.token"]
 	k8sCaCertificate := q.GetOptions()["cds.platform.ca_certificate"]
-	namespace := q.GetOptions()["cds.platform.namespace"]
 	deploymentFilepath := q.GetOptions()["cds.platform.deployment_files"]
 	helmChart := q.GetOptions()["cds.platform.helm_chart"]
-	if namespace == "" {
-		namespace = "default"
-	}
 
 	if k8sToken == "" {
 		return fail("Kubernetes token should not be empty")
@@ -119,7 +118,7 @@ contexts:
   name: default-context
 current-context: default-context`, k8sToken, certb64, k8sAPIURL)
 
-	if err := os.Mkdir(".kube", 0777); err != nil {
+	if err := os.Mkdir(".kube", 0755); err != nil {
 		return fail("Cannot create directory .kube : %v", err)
 	}
 	defer func() {
@@ -128,7 +127,7 @@ current-context: default-context`, k8sToken, certb64, k8sAPIURL)
 		}
 	}()
 
-	if err := ioutil.WriteFile(".kube/config", []byte(kubecfg), 0777); err != nil {
+	if err := ioutil.WriteFile(".kube/config", []byte(kubecfg), 0755); err != nil {
 		return fail("Cannot write kubeconfig : %v", err)
 	}
 
@@ -161,8 +160,6 @@ func main() {
 	if err := platformplugin.Start(context.Background(), &e); err != nil {
 		panic(err)
 	}
-	return
-
 }
 
 func fail(format string, args ...interface{}) (*platformplugin.DeployResult, error) {
@@ -198,7 +195,7 @@ func executeK8s(q *platformplugin.DeployQuery) error {
 		netClient := &http.Client{
 			Timeout: time.Second * 600,
 		}
-		response, err := netClient.Get("https://storage.googleapis.com/kubernetes-release/release/v1.13.0/bin/" + sdk.GOOS + "/" + sdk.GOARCH + "/kubectl")
+		response, err := netClient.Get(kubectlLink + sdk.GOOS + "/" + sdk.GOARCH + "/kubectl")
 		if err != nil {
 			return fmt.Errorf("Cannot download kubectl : %v", err)
 		}
@@ -215,7 +212,7 @@ func executeK8s(q *platformplugin.DeployQuery) error {
 		fmt.Println("Download kubectl done...")
 
 		binaryName = project + "-" + workflow + "-kubectl"
-		if err := ioutil.WriteFile(binaryName, body, 0777); err != nil {
+		if err := ioutil.WriteFile(binaryName, body, 0755); err != nil {
 			return fmt.Errorf("Cannot write file %s for kubectl : %v", binaryName, err)
 		}
 		defer func(binName string) {
@@ -317,7 +314,7 @@ func executeHelm(q *platformplugin.DeployQuery) error {
 		defer response.Body.Close()
 
 		binaryName = project + "-" + workflow + "-helm"
-		if err := os.Mkdir(binaryName, 0777); err != nil {
+		if err := os.Mkdir(binaryName, 0755); err != nil {
 			return fmt.Errorf("Cannot write directory for helm : %v", err)
 		}
 		if err := writeHelmBinary(binaryName, response.Body); err != nil {
@@ -445,7 +442,7 @@ func writeHelmBinary(pathname string, gzipStream io.Reader) error {
 		path := filepath.Join(pathname, header.Name)
 		switch header.Typeflag {
 		case tar.TypeDir:
-			if err := os.Mkdir(path, 0777); err != nil {
+			if err := os.Mkdir(path, 0755); err != nil {
 				return fmt.Errorf("writeHelmBinary: Mkdir() failed: %s", err.Error())
 			}
 		case tar.TypeReg:
@@ -453,7 +450,7 @@ func writeHelmBinary(pathname string, gzipStream io.Reader) error {
 			if err != nil {
 				return fmt.Errorf("writeHelmBinary: Create() failed: %s", err.Error())
 			}
-			if err := outFile.Chmod(0777); err != nil {
+			if err := outFile.Chmod(0755); err != nil {
 				return fmt.Errorf("Cannot change permission of file : %v", err)
 			}
 			defer outFile.Close()
@@ -462,7 +459,7 @@ func writeHelmBinary(pathname string, gzipStream io.Reader) error {
 			}
 		default:
 			return fmt.Errorf(
-				"writeHelmBinary: uknown type: %s in %s",
+				"writeHelmBinary: uknown type: %v in %s",
 				header.Typeflag,
 				path)
 		}
