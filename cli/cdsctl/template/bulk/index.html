@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>apply :: CDS - Continuous Delivery Service</title>
+    <title>bulk :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -32,7 +32,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/template/apply/">
+  <body class="" data-url="/cli/cdsctl/template/bulk/">
     <nav id="sidebar" class="">
 
 
@@ -1582,12 +1582,12 @@
             <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-      <li data-nav-id="/cli/cdsctl/template/apply/" class="dd-item active">
+      <li data-nav-id="/cli/cdsctl/template/apply/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/template/apply/">
           <span>apply</span>
         </a>
     </li>
-      <li data-nav-id="/cli/cdsctl/template/bulk/" class="dd-item">
+      <li data-nav-id="/cli/cdsctl/template/bulk/" class="dd-item active">
         <a href="https://ovh.github.io/cds/cli/cdsctl/template/bulk/">
           <span>bulk</span>
         </a>
@@ -2204,7 +2204,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/template/apply.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/template/bulk.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -2230,7 +2230,7 @@
 
 
 
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/template/'>template</a> > apply
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/template/'>template</a> > bulk
 
  
 
@@ -2249,7 +2249,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-template-apply">cdsctl template apply</a>
+<li><a href="#cdsctl-template-bulk">cdsctl template bulk</a>
 <ul>
 <li><a href="#synopsis">Synopsis</a></li>
 <li><a href="#examples">Examples</a></li>
@@ -2269,7 +2269,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>apply</h1>
+                <h1>bulk</h1>
                 <p></p>
             </div>
           
@@ -2279,32 +2279,29 @@
 
 
 
-<h2 id="cdsctl-template-apply">cdsctl template apply</h2>
+<h2 id="cdsctl-template-bulk">cdsctl template bulk</h2>
 
-<p><code>Apply CDS workflow template</code></p>
+<p><code>Bulk apply CDS workflow template and push all given workflows</code></p>
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p><code>Apply CDS workflow template</code></p>
+<p><code>Bulk apply CDS workflow template and push all given workflows</code></p>
 
-<pre><code>cdsctl template apply [ PROJECT-KEY WORKFLOW-NAME ] [TEMPLATE-PATH] [flags]
+<pre><code>cdsctl template bulk [TEMPLATE-PATH] [flags]
 </code></pre>
 
 <h3 id="examples">Examples</h3>
 
-<pre><code>cdsctl template apply project-key workflow-name group-name/template-slug
+<pre><code>cdsctl template bulk group-name/template-slug -i PROJ1/workflow1 -i PROJ1/workflow2 -p PROJ1/workflow1:repo=github.com/ovh/cds
 </code></pre>
 
 <h3 id="options">Options</h3>
 
-<pre><code>      --force               Force, may override files
-  -h, --help                help for apply
-      --import-as-code      If true, will import the generated workflow as code on given project
-      --import-push         If true, will push the generated workflow on given project
+<pre><code>  -h, --help                help for bulk
+  -i, --instances strings   Specify instances path
   -n, --no-interactive      Set to not ask interactively for params
-  -d, --output-dir string   Output directory (default &quot;.cds&quot;)
-  -p, --params strings      Specify params for template
-      --quiet               If true, do not output filename created
+  -p, --params strings      Specify parameters for template
+      --track               Wait the bulk to be over
 </code></pre>
 
 <h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
@@ -2339,8 +2336,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/template/" title="template"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/template/bulk/" title="bulk" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/template/apply/" title="apply"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/template/instances/" title="instances" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

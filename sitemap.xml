@@ -550,6 +550,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/template/bulk/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/worker/cache/</loc>
   </url>
   

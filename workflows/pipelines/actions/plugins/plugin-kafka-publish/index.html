@@ -1588,6 +1588,11 @@
           <span>apply</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/template/bulk/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/bulk/">
+          <span>bulk</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/template/instances/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/template/instances/">
           <span>instances</span>
@@ -2284,18 +2289,18 @@
 <h2 id="parameters">Parameters</h2>
 
 <ul>
+<li><strong>message</strong>: Kafka Message</li>
+<li><strong>kafkaUser</strong>: Kafka user</li>
+<li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
 <li><strong>kafkaAddresses</strong>: Kafka Addresses</li>
 <li><strong>topic</strong>: Kafka Topic</li>
-<li><strong>artifacts</strong>: Artifacts list (comma separated)&rdquo;</li>
 <li><strong>publicKey</strong>: GPG Public Key (ASCII armored format)</li>
 <li><strong>waitForAck</strong>: Wait for ACK</li>
 <li><strong>waitForAckTopic</strong>: Wait for ACK topic</li>
-<li><strong>kafkaUser</strong>: Kafka user</li>
-<li><strong>kafkaGroup</strong>: Kafka Consumer Group (used for acknowledgment)</li>
-<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
-<li><strong>key</strong>: Key used by AES Encryption. It have to be the same value as &ndash;key on plugin binary</li>
-<li><strong>message</strong>: Kafka Message</li>
 <li><strong>kafkaPassword</strong>: Kafka password</li>
+<li><strong>artifacts</strong>: Artifacts list (comma separated)&rdquo;</li>
+<li><strong>key</strong>: Key used by AES Encryption. It have to be the same value as &ndash;key on plugin binary</li>
+<li><strong>waitForAckTimeout</strong>: Ack timeout (seconds). Used only if &ldquo;waitForAck&rdquo; is true.</li>
 </ul>
 
 

@@ -1586,6 +1586,11 @@
           <span>apply</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/template/bulk/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/bulk/">
+          <span>bulk</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/template/instances/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/template/instances/">
           <span>instances</span>
@@ -2242,11 +2247,13 @@
 <ul>
 <li><a href="#get-template">GET <code>/template</code></a></li>
 <li><a href="#post-template">POST <code>/template</code></a></li>
-<li><a href="#delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
-<li><a href="#get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
 <li><a href="#put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
+<li><a href="#get-template-group-name-templateslug">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
+<li><a href="#delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></a></li>
 <li><a href="#post-template-group-name-templateslug-apply">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/apply</code></a></li>
 <li><a href="#get-template-group-name-templateslug-audit">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/audit</code></a></li>
+<li><a href="#post-template-group-name-templateslug-bulk">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk</code></a></li>
+<li><a href="#get-template-group-name-templateslug-bulk-bulkid">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;</code></a></li>
 <li><a href="#get-template-group-name-templateslug-instance">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance</code></a></li>
 <li><a href="#post-template-group-name-templateslug-pull">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull</code></a></li>
 <li><a href="#get-template-group-name-templateslug-usage">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage</code></a></li>
@@ -2330,7 +2337,7 @@
 </tbody>
 </table>
 
-<h3 id="delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
+<h3 id="put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
 
 <table>
 <thead>
@@ -2343,7 +2350,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>DELETE</td>
+<td>PUT</td>
 </tr>
 
 <tr>
@@ -2353,7 +2360,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateHandler%22">deleteTemplateHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putTemplateHandler%22">putTemplateHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2386,7 +2393,7 @@
 </tbody>
 </table>
 
-<h3 id="put-template-group-name-templateslug">PUT <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
+<h3 id="delete-template-group-name-templateslug">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;</code></h3>
 
 <table>
 <thead>
@@ -2399,7 +2406,7 @@
 <tbody>
 <tr>
 <td>Method</td>
-<td>PUT</td>
+<td>DELETE</td>
 </tr>
 
 <tr>
@@ -2409,7 +2416,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putTemplateHandler%22">putTemplateHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateHandler%22">deleteTemplateHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2437,7 +2444,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+applyTemplateHandler%22">applyTemplateHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateApplyHandler%22">postTemplateApplyHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2466,6 +2473,62 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateAuditsHandler%22">getTemplateAuditsHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="post-template-group-name-templateslug-bulk">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplateBulkHandler%22">postTemplateBulkHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-template-group-name-templateslug-bulk-bulkid">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateBulkHandler%22">getTemplateBulkHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2521,7 +2584,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+pullTemplateHandler%22">pullTemplateHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplatePullHandler%22">postTemplatePullHandler</a></td>
 </tr>
 </tbody>
 </table>
@@ -2577,7 +2640,7 @@
 
 <tr>
 <td>Code</td>
-<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+pushTemplateHandler%22">pushTemplateHandler</a></td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postTemplatePushHandler%22">postTemplatePushHandler</a></td>
 </tr>
 </tbody>
 </table>
