@@ -30,7 +30,7 @@ func Init(issuer string, k []byte) error {
 	return nil
 }
 
-// OriginUI aims to distriminate JWT token associated with XSRF token or not
+// OriginUI aims to discriminate JWT token associated with XSRF token or not
 const OriginUI = "UI"
 
 // New returns a new access token for a user
