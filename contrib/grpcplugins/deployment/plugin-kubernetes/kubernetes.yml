@@ -1,0 +1,4 @@
+name: kubernetes-deployment-plugin
+type: platform
+author: "Benjamin Coenen"
+description: "Kubernetes Deployment Plugin"

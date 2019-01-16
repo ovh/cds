@@ -25,6 +25,7 @@
                         </div>
                         <div class="twelve wide field">
                             <input type="text" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'string'" (keydown)="p.hasChanged = true" [readonly]="p.model.public">
+                            <textarea type="text" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'text'"></textarea>
                             <input type="password" name="platformpassword" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'password'" (keydown)="p.hasChanged = true">
                         </div>
                     </div>

@@ -34,6 +34,7 @@
                         <div class="four wide field"><label>{{k}}</label></div>
                         <div class="twelve wide field">
                             <input type="text" [(ngModel)]="newPlatform.config[k].value" *ngIf="newPlatform.config[k].type === 'string'">
+                            <textarea type="text" [(ngModel)]="newPlatform.config[k].value" *ngIf="newPlatform.config[k].type === 'text'"></textarea>
                             <input type="password" [(ngModel)]="newPlatform.config[k].value" *ngIf="newPlatform.config[k].type === 'password'">
                         </div>
                     </div>
