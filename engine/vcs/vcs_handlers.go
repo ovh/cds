@@ -177,6 +177,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 				"change-merged",
 				"change-restored",
 				"comment-added",
+				"draft-published",
 				"dropped-output",
 				"hashtags-changed",
 				"project-created",

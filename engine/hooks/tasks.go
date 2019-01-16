@@ -262,7 +262,8 @@ func (s *Service) startTask(ctx context.Context, t *sdk.Task) (*sdk.TaskExecutio
 	case TypeOutgoingWorkflow:
 		return s.startOutgoingWorkflowTask(t)
 	case TypeGerrit:
-		return s.startGerritHookTask(t)
+		s.startGerritHookTask(t)
+		return nil, nil
 	default:
 		return nil, fmt.Errorf("Unsupported task type %s", t.Type)
 	}

@@ -36,6 +36,7 @@ const (
 	GerritEventTypeChangeMerged        = "change-merged"
 	GerritEventTypeChangeRestored      = "change-restored"
 	GerritEventTypeCommentAdded        = "comment-added"
+	GerritEventTypeDrafPublished       = "draft-published"
 	GerritEventTypeDroppedOutput       = "dropped-output"
 	GerritEventTypeHashTagsChanged     = "hashtags-changed"
 	GerritEventTypeProjectCreated      = "project-created"

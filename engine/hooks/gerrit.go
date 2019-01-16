@@ -1,10 +1,12 @@
 package hooks
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	url2 "net/url"
 	"strings"
 	"time"
@@ -24,13 +26,8 @@ type gerritTaskInfo struct {
 }
 
 // RegisterGerritRepoHook register hook on gerrit repository
-func (d *dao) RegisterGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) error {
-	m, err := json.Marshal(g)
-	if err != nil {
-		return sdk.WrapError(err, "unable to marshal task")
-	}
-	d.store.SetAdd(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, string(m))
-	return nil
+func (d *dao) RegisterGerritRepoHook(vcsServer string, repo string, g gerritTaskInfo) {
+	d.store.SetAdd(cache.Key(gerritRepoKey, vcsServer, repo), g.UUID, g)
 }
 
 // FindGerritTasksByRepo get all gerrit hooks on the given repository
@@ -42,8 +39,8 @@ func (d *dao) FindGerritTasksByRepo(vcsServer string, repo string) ([]gerritTask
 	for i := 0; i < nbGerritHooks; i++ {
 		hooks[i] = &gerritTaskInfo{}
 	}
-	if err := d.store.SetScan(rootKey, sdk.InterfaceSlice(hooks)...); err != nil {
-		return nil, sdk.WrapError(err, "Unable to scan %s", rootKey)
+	if err := d.store.SetScan(key, sdk.InterfaceSlice(hooks)...); err != nil {
+		return nil, sdk.WrapError(err, "Unable to scan %s", key)
 	}
 
 	allHooks := make([]gerritTaskInfo, nbGerritHooks)
@@ -54,12 +51,12 @@ func (d *dao) FindGerritTasksByRepo(vcsServer string, repo string) ([]gerritTask
 	return allHooks, nil
 }
 
-func (s *Service) startGerritHookTask(t *sdk.Task) (*sdk.TaskExecution, error) {
+func (s *Service) startGerritHookTask(t *sdk.Task) {
 	g := gerritTaskInfo{
 		UUID:   t.UUID,
 		Events: strings.Split(t.Config[sdk.HookConfigEventFilter].Value, ";"),
 	}
-	return nil, s.Dao.RegisterGerritRepoHook(t.Config[sdk.HookConfigVCSServer].Value, t.Config[sdk.HookConfigRepoFullName].Value, g)
+	s.Dao.RegisterGerritRepoHook(t.Config[sdk.HookConfigVCSServer].Value, t.Config[sdk.HookConfigRepoFullName].Value, g)
 }
 
 func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
@@ -76,6 +73,7 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 	}
 
 	payload := make(map[string]interface{})
+	// assignee-* / change-* / comment-* / draft-* / hashtags-* / patchset-* / reviewer-* / topic-* / vote-*
 	if gerritEvent.Change != nil {
 		payload["git.author"] = gerritEvent.Change.Owner.Username
 		payload["git.author.email"] = gerritEvent.Change.Owner.Email
@@ -87,11 +85,36 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 		payload["cds.triggered_by.email"] = gerritEvent.Change.Owner.Email
 
 		payload["git.message"] = gerritEvent.Change.CommitMessage
+		payload["gerrit.change.id"] = gerritEvent.Change.ID
+		payload["gerrit.change.url"] = gerritEvent.Change.URL
+		payload["gerrit.change.status"] = gerritEvent.Change.Status
 	}
-	payload["payload"] = string(e.GerritEvent.Message)
+	// ref-updated
+	if gerritEvent.RefUpdate != nil {
+		payload["git.hash.before"] = gerritEvent.RefUpdate.OldRev
+		payload["git.hash"] = gerritEvent.RefUpdate.NewRev
+		payload["gerrit.ref.name"] = gerritEvent.RefUpdate.RefName
+	}
+	// change-merged / ref-updated
+	if gerritEvent.Submitter != nil {
+		payload["git.author"] = gerritEvent.Submitter.Username
+		payload["git.author.email"] = gerritEvent.Submitter.Email
+	}
+	// change-* / comment-* / draft-* / patchset-* / reviewer-* / vote-*
+	if gerritEvent.PatchSet != nil {
+		payload["git.hash"] = gerritEvent.PatchSet.Revision
+		if len(gerritEvent.PatchSet.Parents) == 1 {
+			payload["git.hash.before"] = gerritEvent.PatchSet.Parents[0]
+		}
+		payload["gerrit.change.ref"] = gerritEvent.PatchSet.Ref
+	}
+	// change-merged
+	if gerritEvent.NewRev != "" {
+		payload["git.hash"] = gerritEvent.NewRev
+	}
+	payload["gerrit.type"] = gerritEvent.Type
 
-	//payload["git.hash.before"] = pushEvent.Before
-	//payload["git.hash"] = pushEvent.After
+	payload["payload"] = string(e.GerritEvent.Message)
 
 	d := dump.NewDefaultEncoder(&bytes.Buffer{})
 	d.ExtraFields.Type = false
@@ -184,27 +207,27 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 	// Dial TCP
 	conn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", url.Hostname(), v.SSHPort), config)
 	if err != nil {
-		log.Error("unable to open ssh connection to gerrit: %v", err)
+		log.Error("ListenGerritStreamEvent> unable to open ssh connection to gerrit: %v", err)
 		return
 	}
 	defer conn.Close()
 
 	session, err := conn.NewSession()
 	if err != nil {
-		log.Error("unable to create new session: %v", err)
+		log.Error("ListenGerritStreamEvent> unable to create new session: %v", err)
 		return
 	}
 
-	bufferOut := &bytes.Buffer{}
-	bufferErr := &bytes.Buffer{}
-	session.Stdout = bufferOut
-	session.Stderr = bufferErr
+	r, w := io.Pipe()
+	session.Stdout = w
+
+	stdoutreader := bufio.NewReader(r)
 
 	go func() {
 		// Run command
 		log.Debug("Listening to gerrit event stream %s", v.URL)
 		if err := session.Run("gerrit stream-events"); err != nil {
-			log.Error("unable to run gerrit stream-events command: %v", err)
+			log.Error("ListenGerritStreamEvent> unable to run gerrit stream-events command: %v", err)
 		}
 	}()
 
@@ -215,21 +238,24 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 			session.Close()
 			conn.Close()
 		case <-tick.C:
-			if bufferOut.Len() != 0 {
-				events := strings.Split(string(bufferOut.Bytes()), "\n")
-				for _, e := range events {
-					if e == "" {
-						continue
-					}
-					var event GerritEvent
-					if err := json.Unmarshal([]byte(e), &event); err != nil {
-						log.Error("unable to read gerrit event %v: %s", err, e)
-						continue
-					}
-					gerritEventChan <- event
-				}
-				bufferOut.Reset()
+			line, errs := stdoutreader.ReadString('\n')
+			if errs == io.EOF {
+				continue
 			}
+			if errs != nil {
+				log.Warning("ListenGerritStreamEvent> unable to read string")
+				continue
+			}
+			if line == "" {
+				continue
+			}
+			var event GerritEvent
+			if err := json.Unmarshal([]byte(line), &event); err != nil {
+				log.Error("unable to read gerrit event %v: %s", err, line)
+				continue
+			}
+			gerritEventChan <- event
+
 		default:
 		}
 	}
