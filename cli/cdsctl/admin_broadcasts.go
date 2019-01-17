@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"reflect"
 
 	"github.com/spf13/cobra"
 
@@ -34,7 +33,6 @@ var adminBroadcastCreateCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:      reflect.String,
 			Name:      "level",
 			ShortHand: "l",
 			Usage:     "Level of broadcast: info or warning",
@@ -66,7 +64,7 @@ func adminBroadcastCreateRun(v cli.Values) error {
 
 	bc := &sdk.Broadcast{
 		Level:   v.GetString("level"),
-		Title:   v["title"],
+		Title:   v.GetString("title"),
 		Content: string(content),
 	}
 	return client.BroadcastCreate(bc)
@@ -81,7 +79,7 @@ var adminBroadcastShowCmd = cli.Command{
 }
 
 func adminBroadcastShowRun(v cli.Values) (interface{}, error) {
-	bc, err := client.BroadcastGet(v["id"])
+	bc, err := client.BroadcastGet(v.GetString("id"))
 	if err != nil {
 		return nil, err
 	}
@@ -105,13 +103,13 @@ var adminBroadcastDeleteCmd = cli.Command{
 				return true
 			},
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
 
 func adminBroadcastDeleteRun(v cli.Values) error {
-	err := client.BroadcastDelete(v["id"])
+	err := client.BroadcastDelete(v.GetString("id"))
 	if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoBroadcast) {
 		fmt.Println(err)
 		return nil

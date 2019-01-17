@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	"github.com/ovh/cds/cli"
@@ -23,26 +22,25 @@ var workflowPullCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:      reflect.String,
 			Name:      "output-dir",
 			ShortHand: "d",
 			Usage:     "Output directory",
 			Default:   ".cds",
 		},
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "with-permissions",
 			Usage:   "Export permissions",
 			Default: "false",
 		},
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "force",
 			Usage:   "Force, may override files",
 			Default: "false",
 		},
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "quiet",
 			Usage:   "If true, do not output filename created",
 			Default: "false",

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -38,7 +37,7 @@ var pipelineListCmd = cli.Command{
 }
 
 func pipelineListRun(v cli.Values) (cli.ListResult, error) {
-	pipelines, err := client.PipelineList(v[_ProjectKey])
+	pipelines, err := client.PipelineList(v.GetString(_ProjectKey))
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +63,6 @@ var pipelineExportCmd = cli.Command{
 				}
 				return true
 			},
-			Kind:    reflect.String,
 			Default: "yml",
 		},
 		{
@@ -76,13 +74,13 @@ var pipelineExportCmd = cli.Command{
 				}
 				return true
 			},
-			Kind: reflect.Bool,
+			Type: cli.FlagBool,
 		},
 	},
 }
 
 func pipelineExportRun(v cli.Values) error {
-	btes, err := client.PipelineExport(v[_ProjectKey], v["pipeline-name"], v.GetBool("with-permission"), v["format"])
+	btes, err := client.PipelineExport(v.GetString(_ProjectKey), v.GetString("pipeline-name"), v.GetBool("with-permission"), v.GetString("format"))
 	if err != nil {
 		return err
 	}
@@ -111,7 +109,7 @@ var pipelineImportCmd = cli.Command{
 				return true
 			},
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
@@ -143,7 +141,7 @@ func pipelineImportRun(v cli.Values) error {
 		}
 	}
 
-	msgs, err := client.PipelineImport(v[_ProjectKey], reader, format, v.GetBool("force"))
+	msgs, err := client.PipelineImport(v.GetString(_ProjectKey), reader, format, v.GetBool("force"))
 	if err != nil {
 		return err
 	}
@@ -165,7 +163,7 @@ var pipelineDeleteCmd = cli.Command{
 }
 
 func pipelineDeleteRun(v cli.Values) error {
-	err := client.PipelineDelete(v[_ProjectKey], v["pipeline-name"])
+	err := client.PipelineDelete(v.GetString(_ProjectKey), v.GetString("pipeline-name"))
 	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 		fmt.Println(err.Error())
 		os.Exit(0)

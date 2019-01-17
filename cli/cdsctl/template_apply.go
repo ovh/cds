@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"reflect"
 	"strings"
 
 	repo "github.com/fsamin/go-repo"
@@ -31,45 +30,44 @@ func templateApplyCmd(name string) cli.Command {
 		},
 		Flags: []cli.Flag{
 			{
-				Kind:      reflect.Slice,
+				Type:      cli.FlagArray,
 				Name:      "params",
 				ShortHand: "p",
 				Usage:     "Specify params for template",
 				Default:   "",
 			},
 			{
-				Kind:      reflect.Bool,
+				Type:      cli.FlagBool,
 				Name:      "no-interactive",
 				ShortHand: "n",
 				Usage:     "Set to not ask interactively for params",
 			},
 			{
-				Kind:      reflect.String,
 				Name:      "output-dir",
 				ShortHand: "d",
 				Usage:     "Output directory",
 				Default:   ".cds",
 			},
 			{
-				Kind:    reflect.Bool,
+				Type:    cli.FlagBool,
 				Name:    "force",
 				Usage:   "Force, may override files",
 				Default: "false",
 			},
 			{
-				Kind:    reflect.Bool,
+				Type:    cli.FlagBool,
 				Name:    "quiet",
 				Usage:   "If true, do not output filename created",
 				Default: "false",
 			},
 			{
-				Kind:    reflect.Bool,
+				Type:    cli.FlagBool,
 				Name:    "import-as-code",
 				Usage:   "If true, will import the generated workflow as code on given project",
 				Default: "false",
 			},
 			{
-				Kind:    reflect.Bool,
+				Type:    cli.FlagBool,
 				Name:    "import-push",
 				Usage:   "If true, will push the generated workflow on given project",
 				Default: "false",
@@ -169,7 +167,7 @@ func templateApplyRun(v cli.Values) error {
 	}
 
 	// set params from cli flags
-	paramPairs := v.GetStringSlice("params")
+	paramPairs := v.GetStringArray("params")
 	for _, p := range paramPairs {
 		if p != "" { // when no params given GetStringSlice returns one empty string
 			ps := strings.Split(p, "=")

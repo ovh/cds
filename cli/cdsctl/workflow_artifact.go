@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"regexp"
 	"strconv"
 
@@ -38,11 +37,11 @@ var workflowArtifactListCmd = cli.Command{
 }
 
 func workflowArtifactListRun(v cli.Values) (cli.ListResult, error) {
-	number, err := strconv.ParseInt(v["number"], 10, 64)
+	number, err := strconv.ParseInt(v.GetString("number"), 10, 64)
 	if err != nil {
 		return nil, fmt.Errorf("number parameter have to be an integer")
 	}
-	workflowArtifacts, err := client.WorkflowRunArtifacts(v[_ProjectKey], v[_WorkflowName], number)
+	workflowArtifacts, err := client.WorkflowRunArtifacts(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +63,6 @@ var workflowArtifactDownloadCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.String,
 			Name:    "exclude",
 			Usage:   "exclude files from download - could be a regex: *.log",
 			Default: "",
@@ -73,20 +71,20 @@ var workflowArtifactDownloadCmd = cli.Command{
 }
 
 func workflowArtifactDownloadRun(v cli.Values) error {
-	number, err := strconv.ParseInt(v["number"], 10, 64)
+	number, err := strconv.ParseInt(v.GetString("number"), 10, 64)
 	if err != nil {
 		return fmt.Errorf("number parameter have to be an integer")
 	}
 
-	artifacts, err := client.WorkflowRunArtifacts(v[_ProjectKey], v[_WorkflowName], number)
+	artifacts, err := client.WorkflowRunArtifacts(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
 	if err != nil {
 		return err
 	}
 
 	var reg *regexp.Regexp
-	if len(v["exclude"]) > 0 {
+	if len(v.GetString("exclude")) > 0 {
 		var err error
-		reg, err = regexp.Compile(v["exclude"])
+		reg, err = regexp.Compile(v.GetString("exclude"))
 		if err != nil {
 			return fmt.Errorf("exclude parameter is not valid: %v", err)
 		}
@@ -94,10 +92,10 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 
 	var ok bool
 	for _, a := range artifacts {
-		if v["artefact-name"] != "" && v["artefact-name"] != a.Name {
+		if v.GetString("artefact-name") != "" && v.GetString("artefact-name") != a.Name {
 			continue
 		}
-		if v["exclude"] != "" && reg.MatchString(a.Name) {
+		if v.GetString("exclude") != "" && reg.MatchString(a.Name) {
 			fmt.Printf("File %s is excluded from download\n", a.Name)
 			continue
 		}
@@ -106,7 +104,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			return err
 		}
 		fmt.Printf("Downloading %s...\n", a.Name)
-		if err := client.WorkflowNodeRunArtifactDownload(v[_ProjectKey], v[_WorkflowName], a, f); err != nil {
+		if err := client.WorkflowNodeRunArtifactDownload(v.GetString(_ProjectKey), v.GetString(_WorkflowName), a, f); err != nil {
 			return err
 		}
 

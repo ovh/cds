@@ -11,7 +11,7 @@ var workflowListCmd = cli.Command{
 }
 
 func workflowListRun(v cli.Values) (cli.ListResult, error) {
-	w, err := client.WorkflowList(v[_ProjectKey])
+	w, err := client.WorkflowList(v.GetString(_ProjectKey))
 	if err != nil {
 		return nil, err
 	}

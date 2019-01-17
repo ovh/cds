@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path"
-	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -60,7 +59,7 @@ cdsctl action show myAction`,
 }
 
 func actionShowRun(v cli.Values) (interface{}, error) {
-	action, err := client.ActionGet(v["action-name"])
+	action, err := client.ActionGet(v.GetString("action-name"))
 	if err != nil {
 		return nil, err
 	}
@@ -91,13 +90,13 @@ var actionDeleteCmd = cli.Command{
 				return true
 			},
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
 
 func actionDeleteRun(v cli.Values) error {
-	err := client.ActionDelete(v["action-name"])
+	err := client.ActionDelete(v.GetString("action-name"))
 	if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoAction) {
 		fmt.Println(err)
 		return nil
@@ -181,7 +180,6 @@ cdsctl action export myAction`,
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.String,
 			Name:    "format",
 			Usage:   "Specify export format (json or yaml)",
 			Default: "yaml",

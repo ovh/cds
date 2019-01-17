@@ -34,7 +34,7 @@ func workflowStopRun(v cli.Values) error {
 	// If no run number, get the latest
 	runNumber, errRunNumber := v.GetInt64("run-number")
 	if runNumber == 0 {
-		runNumber, errRunNumber = workflowNodeForCurrentRepo(v[_ProjectKey], v.GetString(_WorkflowName))
+		runNumber, errRunNumber = workflowNodeForCurrentRepo(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
 	}
 	if errRunNumber != nil {
 		return errRunNumber
@@ -45,7 +45,7 @@ func workflowStopRun(v cli.Values) error {
 		if runNumber <= 0 {
 			return fmt.Errorf("You can use flag node-name without flag run-number")
 		}
-		wr, err := client.WorkflowRunGet(v[_ProjectKey], v[_WorkflowName], runNumber)
+		wr, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 		if err != nil {
 			return err
 		}
@@ -61,17 +61,17 @@ func workflowStopRun(v cli.Values) error {
 	}
 
 	if fromNodeID != 0 {
-		wNodeRun, err := client.WorkflowNodeStop(v[_ProjectKey], v[_WorkflowName], runNumber, fromNodeID)
+		wNodeRun, err := client.WorkflowNodeStop(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber, fromNodeID)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Workflow node %s from workflow %s #%d has been stopped\n", v.GetString("node-name"), v[_WorkflowName], wNodeRun.Number)
+		fmt.Printf("Workflow node %s from workflow %s #%d has been stopped\n", v.GetString("node-name"), v.GetString(_WorkflowName), wNodeRun.Number)
 	} else {
-		w, err := client.WorkflowStop(v[_ProjectKey], v[_WorkflowName], runNumber)
+		w, err := client.WorkflowStop(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Workflow %s #%d has been stopped\n", v[_WorkflowName], w.Number)
+		fmt.Printf("Workflow %s #%d has been stopped\n", v.GetString(_WorkflowName), w.Number)
 	}
 
 	return nil

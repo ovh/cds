@@ -19,8 +19,8 @@ var workflowFavoriteCmd = cli.Command{
 func workflowFavoriteRun(c cli.Values) error {
 	params := sdk.FavoriteParams{
 		Type:         "workflow",
-		ProjectKey:   c[_ProjectKey],
-		WorkflowName: c[_WorkflowName],
+		ProjectKey:   c.GetString(_ProjectKey),
+		WorkflowName: c.GetString(_WorkflowName),
 	}
 
 	res, err := client.UpdateFavorite(params)

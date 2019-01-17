@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	repo "github.com/fsamin/go-repo"
@@ -35,7 +34,7 @@ Documentation: https://ovh.github.io/cds/gettingstarted/firstworkflow/
 			Name:      "from-remote",
 			ShortHand: "r",
 			Usage:     "Initialize a workflow from your git origin",
-			Kind:      reflect.Bool,
+			Type:      cli.FlagBool,
 		},
 	},
 }

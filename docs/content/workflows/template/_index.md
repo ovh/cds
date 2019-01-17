@@ -14,7 +14,7 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
 Each yaml file of a template is evaluated as a Golang template (with [[ and ]] delimiters) so loop or condition can be used in templates.
 
 ## Template parameters
-There are three types of custom parameters available in a template (string, boolean, repository).
+There are four types of custom parameters available in a template (string, boolean, repository, json).
 ![Parameters](/images/workflow_template_parameters.png)
 
 There are some others parameters that are automatically added by CDS:

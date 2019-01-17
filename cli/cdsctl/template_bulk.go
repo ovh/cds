@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -27,33 +26,32 @@ var templateBulkCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:      reflect.Slice,
+			Type:      cli.FlagArray,
 			Name:      "instances",
 			ShortHand: "i",
 			Usage:     "Specify instances path",
 			Default:   "",
 		},
 		{
-			Kind:      reflect.Slice,
+			Type:      cli.FlagArray,
 			Name:      "params",
 			ShortHand: "p",
 			Usage:     "Specify parameters for template",
 			Default:   "",
 		},
 		{
-			Kind:      reflect.String,
 			Name:      "file",
 			ShortHand: "f",
 			Usage:     "Specify path|url of a json|yaml file that contains instances with params",
 		},
 		{
-			Kind:      reflect.Bool,
+			Type:      cli.FlagBool,
 			Name:      "no-interactive",
 			ShortHand: "n",
 			Usage:     "Set to not ask interactively for params",
 		},
 		{
-			Kind:  reflect.Bool,
+			Type:  cli.FlagBool,
 			Name:  "track",
 			Usage: "Wait the bulk to be over",
 		},

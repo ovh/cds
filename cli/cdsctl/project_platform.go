@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -64,7 +63,7 @@ var projectPlatformImportCmd = cli.Command{
 		{Name: "filename"},
 	},
 	Flags: []cli.Flag{
-		{Name: "force", Kind: reflect.Bool},
+		{Name: "force", Type: cli.FlagBool},
 	},
 }
 

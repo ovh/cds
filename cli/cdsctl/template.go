@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
 
@@ -40,20 +39,19 @@ var templatePullCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:      reflect.String,
 			Name:      "output-dir",
 			ShortHand: "d",
 			Usage:     "Output directory",
 			Default:   ".cds",
 		},
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "force",
 			Usage:   "Force, may override files",
 			Default: "false",
 		},
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "quiet",
 			Usage:   "If true, do not output filename created",
 			Default: "false",
@@ -98,7 +96,7 @@ var templatePushCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:  reflect.Bool,
+			Type:  cli.FlagBool,
 			Name:  "skip-update-files",
 			Usage: "Useful if you don't want to update yaml files after pushing the template.",
 		},
