@@ -232,7 +232,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
 
     createEdge(from: string, to: string, options: {}): void {
-        options['arrowhead'] = 'customArrow';
+        options['arrowhead'] = 'undirected';
         this.g.setEdge(from, to, options);
     }
 
