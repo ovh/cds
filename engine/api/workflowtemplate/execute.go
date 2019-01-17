@@ -78,9 +78,12 @@ func parseTemplate(templateType string, number int, t string) (*template.Templat
 }
 
 func executeTemplate(tmpl *template.Template, data map[string]interface{}) (string, error) {
+	if data == nil {
+		return "", nil
+	}
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, data); err != nil {
-		return "", sdk.WithStack(err)
+		return "", sdk.NewError(sdk.ErrWrongRequest, sdk.WithStack(err))
 	}
 	return buffer.String(), nil
 }
