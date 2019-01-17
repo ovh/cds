@@ -16,6 +16,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -55,7 +56,7 @@ func parseTemplate(templateType string, number int, t string) (*template.Templat
 		id = fmt.Sprintf("%s.%d", templateType, number)
 	}
 
-	tmpl, err := template.New(id).Delims("[[", "]]").Parse(t)
+	tmpl, err := template.New(id).Delims("[[", "]]").Funcs(interpolate.InterpolateHelperFuncs).Parse(t)
 	if err != nil {
 		reg := regexp.MustCompile(`template: ([0-9a-zA-Z.]+):([0-9]+): (.*)$`)
 		submatch := reg.FindStringSubmatch(err.Error())

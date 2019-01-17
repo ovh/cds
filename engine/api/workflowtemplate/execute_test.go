@@ -47,6 +47,7 @@ jobs:
 	steps:
 	- script:
 		- echo "Hello World!"
+		- echo "[[ "Hello World Lower!" | lower ]]"
 		- echo "[[.params.object.key1]]"
 		- echo "[[range .params.list]][[.]][[end]]"
 	- script:
@@ -112,6 +113,7 @@ jobs:
 	steps:
 	- script:
 		- echo "Hello World!"
+		- echo "hello world lower!"
 		- echo "value1"
 		- echo "value1value2"
 	- script:
