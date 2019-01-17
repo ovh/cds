@@ -443,19 +443,19 @@ func writeHelmBinary(pathname string, gzipStream io.Reader) error {
 		switch header.Typeflag {
 		case tar.TypeDir:
 			if err := os.Mkdir(path, 0755); err != nil {
-				return fmt.Errorf("writeHelmBinary: Mkdir() failed: %s", err.Error())
+				return fmt.Errorf("writeHelmBinary: mkdir %s failed: %v", path, err)
 			}
 		case tar.TypeReg:
 			outFile, err := os.Create(path)
 			if err != nil {
-				return fmt.Errorf("writeHelmBinary: Create() failed: %s", err.Error())
+				return fmt.Errorf("writeHelmBinary: file %s creation failed: %v", path, err)
 			}
 			if err := outFile.Chmod(0755); err != nil {
-				return fmt.Errorf("Cannot change permission of file : %v", err)
+				return fmt.Errorf("cannot change permission of file : %v", err)
 			}
 			defer outFile.Close()
 			if _, err := io.Copy(outFile, tarReader); err != nil {
-				return fmt.Errorf("writeHelmBinary: Copy() failed: %s", err.Error())
+				return fmt.Errorf("writeHelmBinary: copy() failed: %v", err)
 			}
 		default:
 			return fmt.Errorf(
