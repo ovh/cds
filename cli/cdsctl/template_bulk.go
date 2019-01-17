@@ -84,17 +84,15 @@ type templateBulkFileInstance struct {
 func templateExtractAndValidateInstances(instanceKeys []string) (map[string]templateBulkInstancePath, error) {
 	minstances := make(map[string]templateBulkInstancePath)
 	for i := range instanceKeys {
-		if instanceKeys[i] != "" { // when no params given GetStringSlice returns one empty string
-			// instance path should be formatted like MYPROJ/myWorkflow
-			instancePath := strings.Split(instanceKeys[i], "/")
-			if len(instancePath) != 2 {
-				return nil, fmt.Errorf("invalid given instance path %s", instanceKeys[i])
-			}
+		// instance path should be formatted like MYPROJ/myWorkflow
+		instancePath := strings.Split(instanceKeys[i], "/")
+		if len(instancePath) != 2 {
+			return nil, fmt.Errorf("invalid given instance path %s", instanceKeys[i])
+		}
 
-			minstances[instanceKeys[i]] = templateBulkInstancePath{
-				ProjectKey:   instancePath[0],
-				WorkflowName: instancePath[1],
-			}
+		minstances[instanceKeys[i]] = templateBulkInstancePath{
+			ProjectKey:   instancePath[0],
+			WorkflowName: instancePath[1],
 		}
 	}
 
@@ -104,32 +102,30 @@ func templateExtractAndValidateInstances(instanceKeys []string) (map[string]temp
 func templateExtractAndValidateParams(rawParams []string) ([]templateBulkParameter, error) {
 	var params []templateBulkParameter
 	for i := range rawParams {
-		if rawParams[i] != "" { // when no params given GetStringSlice returns one empty string
-			err := fmt.Errorf("invalid given parameter %s", rawParams[i])
+		err := fmt.Errorf("invalid given parameter %s", rawParams[i])
 
-			// instance path should be formatted like MYPROJ/myWorkflow:myParameterKey=myValue
-			param := strings.Split(rawParams[i], "=")
-			if len(param) != 2 {
-				return nil, err
-			}
-			paramKey := strings.Split(param[0], ":")
-			if len(paramKey) != 2 {
-				return nil, err
-			}
-			instancePath := strings.Split(paramKey[0], "/")
-			if len(paramKey) != 2 {
-				return nil, err
-			}
-
-			params = append(params, templateBulkParameter{
-				InstancePath: templateBulkInstancePath{
-					ProjectKey:   instancePath[0],
-					WorkflowName: instancePath[1],
-				},
-				Key:   paramKey[1],
-				Value: param[1],
-			})
+		// instance path should be formatted like MYPROJ/myWorkflow:myParameterKey=myValue
+		param := strings.Split(rawParams[i], "=")
+		if len(param) != 2 {
+			return nil, err
 		}
+		paramKey := strings.Split(param[0], ":")
+		if len(paramKey) != 2 {
+			return nil, err
+		}
+		instancePath := strings.Split(paramKey[0], "/")
+		if len(paramKey) != 2 {
+			return nil, err
+		}
+
+		params = append(params, templateBulkParameter{
+			InstancePath: templateBulkInstancePath{
+				ProjectKey:   instancePath[0],
+				WorkflowName: instancePath[1],
+			},
+			Key:   paramKey[1],
+			Value: param[1],
+		})
 	}
 
 	return params, nil
@@ -221,6 +217,7 @@ func templateInitOperationFromParams(mwtis map[string]sdk.WorkflowTemplateInstan
 				Request: sdk.WorkflowTemplateRequest{
 					ProjectKey:   i.ProjectKey,
 					WorkflowName: i.WorkflowName,
+					Parameters:   make(map[string]string),
 				},
 			}
 		}
@@ -245,6 +242,7 @@ func templateInitOperationFromParams(mwtis map[string]sdk.WorkflowTemplateInstan
 					Request: sdk.WorkflowTemplateRequest{
 						ProjectKey:   param.InstancePath.ProjectKey,
 						WorkflowName: param.InstancePath.WorkflowName,
+						Parameters:   make(map[string]string),
 					},
 				}
 			}
@@ -269,6 +267,7 @@ func templateAskForInstances(wt *sdk.WorkflowTemplate, mwtis map[string]sdk.Work
 	moperations map[string]sdk.WorkflowTemplateBulkOperation) error {
 	opts := make([]cli.CustomMultiSelectOption, len(mwtis))
 	values := make(map[string]sdk.WorkflowTemplateInstance, len(mwtis))
+	i := 0
 	for key, instance := range mwtis {
 		notUpToDate := instance.WorkflowTemplateVersion < wt.Version
 
@@ -285,22 +284,25 @@ func templateAskForInstances(wt *sdk.WorkflowTemplate, mwtis map[string]sdk.Work
 		// selected by default if given as param or if no instances given as param an not up to date
 		defaultSelected := instanceGivenAsParam || (instance.Workflow != nil && notUpToDate && len(moperations) == 0)
 
-		opts = append(opts, cli.CustomMultiSelectOption{
+		opts[i] = cli.CustomMultiSelectOption{
 			Value:   key,
 			Info:    info,
 			Default: defaultSelected,
-		})
+		}
 		values[key] = instance
+		i++
 	}
 
 	var results []string
-	prompt := &cli.CustomMultiSelect{
-		Message: "Select template's instances that you want to update",
-		Options: opts,
-	}
-	prompt.Init()
-	if err := survey.AskOne(prompt, &results, nil); err != nil {
-		return err
+	if len(opts) > 0 {
+		prompt := &cli.CustomMultiSelect{
+			Message: "Select template's instances that you want to update",
+			Options: opts,
+		}
+		prompt.Init()
+		if err := survey.AskOne(prompt, &results, nil); err != nil {
+			return err
+		}
 	}
 
 	// for all selected instances, add it to operations map
@@ -344,14 +346,14 @@ func templateBulkRun(v cli.Values) error {
 	}
 
 	// validate instances format
-	instanceKeys := v.GetStringSlice("instances")
+	instanceKeys := v.GetStringArray("instances")
 	minstances, err := templateExtractAndValidateInstances(instanceKeys)
 	if err != nil {
 		return err
 	}
 
 	// validate params format
-	rawParams := v.GetStringSlice("params")
+	rawParams := v.GetStringArray("params")
 	params, err := templateExtractAndValidateParams(rawParams)
 	if err != nil {
 		return err

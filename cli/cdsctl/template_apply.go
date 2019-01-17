@@ -169,13 +169,11 @@ func templateApplyRun(v cli.Values) error {
 	// set params from cli flags
 	paramPairs := v.GetStringArray("params")
 	for _, p := range paramPairs {
-		if p != "" { // when no params given GetStringSlice returns one empty string
-			ps := strings.Split(p, "=")
-			if len(ps) < 2 {
-				return fmt.Errorf("Invalid given param %s", ps[0])
-			}
-			params[ps[0]] = strings.Join(ps[1:], "=")
+		ps := strings.Split(p, "=")
+		if len(ps) < 2 {
+			return fmt.Errorf("Invalid given param %s", ps[0])
 		}
+		params[ps[0]] = strings.Join(ps[1:], "=")
 	}
 
 	importPush := v.GetBool("import-push")

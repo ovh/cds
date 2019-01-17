@@ -125,9 +125,11 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 					return NewErrorFrom(ErrInvalidData, "Given value don't match vcs/repository pattern for %s", p.Key)
 				}
 			case ParameterTypeJSON:
-				var res interface{}
-				if err := json.Unmarshal([]byte(v), &res); err != nil {
-					return NewErrorFrom(ErrInvalidData, "Given value it's not json for %s", p.Key)
+				if v != "" {
+					var res interface{}
+					if err := json.Unmarshal([]byte(v), &res); err != nil {
+						return NewErrorFrom(ErrInvalidData, "Given value it's not json for %s", p.Key)
+					}
 				}
 			}
 		}
