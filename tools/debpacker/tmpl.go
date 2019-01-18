@@ -43,12 +43,10 @@ adduser --system --group {{.SystemdServiceConfig.User}}
 mkdir -p /var/lib/{{.PackageName}}
 chown -R {{.SystemdServiceConfig.User}}:{{.SystemdServiceConfig.User}} /var/lib/{{.PackageName}}
 chmod 770 /var/lib/{{.PackageName}}
-
 {{if .SystemdServiceConfig.PostInstallCmd -}}
 echo "Service initialization"
 {{.SystemdServiceConfig.PostInstallCmd}}
 {{end -}}
-
 chmod +x {{.SystemdServiceConfig.ExecStart}}
 
 echo "Service installed"

@@ -66,7 +66,7 @@ type Config struct {
 	PackageName          string               `yaml:"package-name"`
 	Architecture         string               `yaml:"architecture"`
 	BinaryFile           string               `yaml:"binary-file"`
-	Command              string               `yaml:"command"`
+	Command              string               `yaml:"command,omitempty"`
 	ConfigurationFiles   []string             `yaml:"configuration-files,omitempty"`
 	CopyFiles            []string             `yaml:"copy-files,omitempty"`
 	Mkdirs               []string             `yaml:"mkdirs,omitempty"`
