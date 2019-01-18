@@ -2421,7 +2421,7 @@ Then, in the workflow, you can set the value for pipeline parameter in the <code
 <li>trunc</li>
 <li>trim</li>
 <li>upper: <code>{{.cds.application | upper}}</code></li>
-<li>lower</li>
+<li>lower: <code>{{.cds.application | lower}}</code></li>
 <li>title</li>
 <li>untitle</li>
 <li>substr</li>
@@ -2444,7 +2444,7 @@ Then, in the workflow, you can set the value for pipeline parameter in the <code
 <li>squote</li>
 <li>indent</li>
 <li>nindent</li>
-<li>replace</li>
+<li>replace: <code>{{.cds.application | replace &quot;_&quot; &quot;.&quot;}}</code></li>
 <li>plural</li>
 <li>toString</li>
 <li>default: <code>{{.cds.application | default &quot;&quot;}}</code>, <code>{{.cds.application | default &quot;defaultValue&quot;}}</code>, <code>{{.cds.app.foo | default .cds.app.bar .cds.app.biz }}</code></li>

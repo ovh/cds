@@ -2245,6 +2245,7 @@
 <li><a href="#what-is-a-workflow-template">What is a workflow template?</a></li>
 <li><a href="#template-parameters">Template parameters</a></li>
 <li><a href="#apply-a-template">Apply a template</a></li>
+<li><a href="#bulk-apply-a-template">Bulk apply a template</a></li>
 <li><a href="#import-create-export">Import/Create/Export</a></li>
 <li><a href="#delete-change-template-group">Delete/Change template group</a></li>
 </ul></li>
@@ -2281,7 +2282,7 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 
 <h2 id="template-parameters">Template parameters</h2>
 
-<p>There are three types of custom parameters available in a template (string, boolean, repository).
+<p>There are four types of custom parameters available in a template (string, boolean, repository, json).
 <img src="https://ovh.github.io/cds/images/workflow_template_parameters.png" alt="Parameters" /></p>
 
 <p>There are some others parameters that are automatically added by CDS:</p>
@@ -2302,6 +2303,17 @@ Each yaml file of a template is evaluated as a Golang template (with [[ and ]] d
 
 <p>You can also create a workflow from a template with the web UI.
 <img src="https://ovh.github.io/cds/images/workflow_template_apply_ui.gif" alt="Apply" /></p>
+
+<h2 id="bulk-apply-a-template">Bulk apply a template</h2>
+
+<p>To generate or update multiple workflows from a same template in one time you can use the bulk feature. This works both in cdsctl and cds ui:</p>
+
+<pre><code class="language-sh">cdsctl template bulk
+</code></pre>
+
+<p><asciinema-player src="https://ovh.github.io/cds/images/workflow_template_bulk.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player></p>
+
+<p><img src="https://ovh.github.io/cds/images/workflow_template_bulk_ui.gif" alt="Bulk" /></p>
 
 <h2 id="import-create-export">Import/Create/Export</h2>
 
