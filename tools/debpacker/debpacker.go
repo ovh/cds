@@ -35,7 +35,13 @@ func New(w Writer, c Config, out string) *Packer {
 	}
 
 	if c.SystemdServiceConfig.ExecStart == "" {
-		c.SystemdServiceConfig.ExecStart = "/usr/bin/" + filepath.Base(c.BinaryFile)
+		if c.BinaryFile != "" {
+			c.SystemdServiceConfig.ExecStart = "/usr/bin/" + filepath.Base(c.BinaryFile)
+		}
+		if c.Command != "" {
+			c.SystemdServiceConfig.ExecStart = c.Command
+		}
+
 	}
 
 	return &Packer{
@@ -60,6 +66,7 @@ type Config struct {
 	PackageName          string               `yaml:"package-name"`
 	Architecture         string               `yaml:"architecture"`
 	BinaryFile           string               `yaml:"binary-file"`
+	Command              string               `yaml:"command"`
 	ConfigurationFiles   []string             `yaml:"configuration-files,omitempty"`
 	CopyFiles            []string             `yaml:"copy-files,omitempty"`
 	Mkdirs               []string             `yaml:"mkdirs,omitempty"`
@@ -81,6 +88,7 @@ type SystemdServiceConfig struct {
 	WantedBy         string            `yaml:"wanted-by,omitempty"`    //default multi-user.target
 	Environments     map[string]string `yaml:"environments"`
 	WorkingDirectory string            `yaml:"working-directory,omitempty"`
+	PostInstallCmd   string            `yaml:"post-install-cmd,omitempty"`
 }
 
 // Prepare the debian package config file.
@@ -94,8 +102,10 @@ func (p Packer) Prepare() error {
 		return err
 	}
 
-	if err := p.copyBinaryFile(); err != nil {
-		return err
+	if p.config.BinaryFile != "" {
+		if err := p.copyBinaryFile(); err != nil {
+			return err
+		}
 	}
 
 	if err := p.copyConfigurationFiles(); err != nil {
