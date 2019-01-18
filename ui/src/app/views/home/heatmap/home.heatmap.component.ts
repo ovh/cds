@@ -160,20 +160,20 @@ export class HomeHeatmapComponent implements OnInit {
             }
 
             if (this.heatmapSearch.searchCriteria) {
+                const searchingCriteriaLowerCase = this.heatmapSearch.searchCriteria.toLowerCase();
+
                 const projectsToFilter = new Array<string>();
                 // filter events non matched
                 Object.keys(this.groupedEvents).forEach((project) => {
                     let projectLength = 0;
                     if (this.groupedEvents[project]) {
                         Object.keys(this.groupedEvents[project]).forEach((workflow) => {
+                            const workflowName = workflow.toLowerCase();
                             if (this.groupedEvents[project][workflow]) {
                                 this.groupedEvents[project][workflow] = this.groupedEvents[project][workflow].filter(event => {
-                                    return event.workflow_name
-                                        .toLowerCase()
-                                        .indexOf(this.heatmapSearch.searchCriteria.toLowerCase()) !== -1 ||
-                                        JSON.stringify(event.tag)
-                                            .toLowerCase()
-                                            .indexOf(this.heatmapSearch.searchCriteria.toLowerCase()) !== -1;
+                                    const tags = JSON.stringify(event.tag).toLowerCase();
+                                    return workflowName.indexOf(searchingCriteriaLowerCase) !== -1 ||
+                                        tags.indexOf(searchingCriteriaLowerCase) !== -1;
                                 });
                                 projectLength += this.groupedEvents[project][workflow].length;
                             }

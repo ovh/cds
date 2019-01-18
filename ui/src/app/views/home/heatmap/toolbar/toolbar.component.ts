@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Subject } from 'rxjs';
+import { finalize } from 'rxjs/operators';
 import { HeatmapSearchCriterion } from '../../../../model/heatmap.model';
 import { Project } from '../../../../model/project.model';
 import { ProjectStore } from '../../../../service/project/project.store';
@@ -23,11 +24,12 @@ export class ToolbarComponent implements OnInit {
 
   constructor(private _projectStore: ProjectStore) {
     this.loading = true;
-    this._projectStore.getProjectsList().subscribe(ps => {
+    this._projectStore.getProjectsList()
+      .pipe(finalize(() => this.loading = false))
+      .subscribe(ps => {
         if (ps) {
             this.projects = ps.toArray();
         }
-        this.loading = false;
     });
   }
 
