@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -13,7 +12,7 @@ var workflowImportCmd = cli.Command{
 	Short: "Import a workflow",
 	Long: `
 In case you want to import just your workflow. Instead of use a local file you can also use an URL to your yaml file.
-		
+
 If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
 
 	`,
@@ -25,7 +24,7 @@ If you want to update also dependencies likes pipelines, applications or environ
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "force",
 			Usage:   "Override workflow if exists",
 			Default: "false",

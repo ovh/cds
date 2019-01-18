@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -44,7 +43,7 @@ var environmentGroupImportCmd = cli.Command{
 				return true
 			},
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
@@ -76,10 +75,10 @@ func environmentGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.EnvironmentGroupsImport(v[_ProjectKey], v["environment-name"], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.EnvironmentGroupsImport(v.GetString(_ProjectKey), v.GetString("environment-name"), reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
-	fmt.Printf("Groups imported in environment %s with success\n", v["environment-name"])
+	fmt.Printf("Groups imported in environment %s with success\n", v.GetString("environment-name"))
 
 	return nil
 }

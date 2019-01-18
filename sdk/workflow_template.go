@@ -124,6 +124,13 @@ func (w *WorkflowTemplate) CheckParams(r WorkflowTemplateRequest) error {
 				if len(sp) != 3 {
 					return NewErrorFrom(ErrInvalidData, "Given value don't match vcs/repository pattern for %s", p.Key)
 				}
+			case ParameterTypeJSON:
+				if v != "" {
+					var res interface{}
+					if err := json.Unmarshal([]byte(v), &res); err != nil {
+						return NewErrorFrom(ErrInvalidData, "Given value it's not json for %s", p.Key)
+					}
+				}
 			}
 		}
 	}
@@ -210,12 +217,13 @@ const (
 	ParameterTypeString     TemplateParameterType = "string"
 	ParameterTypeBoolean    TemplateParameterType = "boolean"
 	ParameterTypeRepository TemplateParameterType = "repository"
+	ParameterTypeJSON       TemplateParameterType = "json"
 )
 
 // IsValid returns paramter type validity.
 func (t TemplateParameterType) IsValid() bool {
 	switch t {
-	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository:
+	case ParameterTypeString, ParameterTypeBoolean, ParameterTypeRepository, ParameterTypeJSON:
 		return true
 	}
 	return false

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -43,7 +42,7 @@ var projectGroupImportCmd = cli.Command{
 				return true
 			},
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
@@ -75,10 +74,10 @@ func projectGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.ProjectGroupsImport(v[_ProjectKey], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.ProjectGroupsImport(v.GetString(_ProjectKey), reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
-	fmt.Printf("Groups imported in project %s with success\n", v[_ProjectKey])
+	fmt.Printf("Groups imported in project %s with success\n", v.GetString(_ProjectKey))
 
 	return nil
 }

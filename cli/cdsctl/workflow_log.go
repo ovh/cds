@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -204,7 +203,6 @@ var workflowLogDownloadCmd = cli.Command{
 		{
 			Name:  "pattern",
 			Usage: "Filter on log filename",
-			Kind:  reflect.String,
 		},
 	},
 }

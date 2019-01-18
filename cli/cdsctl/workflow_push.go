@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	"github.com/ovh/cds/cli"
@@ -34,7 +33,7 @@ For example if you have a workflow with pipelines build and tests you can push y
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:  reflect.Bool,
+			Type:  cli.FlagBool,
 			Name:  "skip-update-files",
 			Usage: "Useful if you don't want to update yaml files after pushing the workflow.",
 		},

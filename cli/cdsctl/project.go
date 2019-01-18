@@ -64,7 +64,7 @@ var projectShowCmd = cli.Command{
 
 func projectShowRun(v cli.Values) (interface{}, error) {
 	mods := []cdsclient.RequestModifier{}
-	if v["verbose"] == "true" {
+	if v.GetString("verbose") == "true" {
 		mods = append(mods, func(r *http.Request) {
 			q := r.URL.Query()
 			q.Set("withApplications", "true")
@@ -73,7 +73,7 @@ func projectShowRun(v cli.Values) (interface{}, error) {
 			r.URL.RawQuery = q.Encode()
 		})
 	}
-	proj, err := client.ProjectGet(v[_ProjectKey], mods...)
+	proj, err := client.ProjectGet(v.GetString(_ProjectKey), mods...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,8 +94,8 @@ var projectCreateCmd = cli.Command{
 }
 
 func projectCreateRun(v cli.Values) error {
-	proj := &sdk.Project{Name: v["project-name"], Key: v[_ProjectKey]}
-	return client.ProjectCreate(proj, v["group-name"])
+	proj := &sdk.Project{Name: v.GetString("project-name"), Key: v.GetString(_ProjectKey)}
+	return client.ProjectCreate(proj, v.GetString("group-name"))
 }
 
 var projectDeleteCmd = cli.Command{
@@ -107,7 +107,7 @@ var projectDeleteCmd = cli.Command{
 }
 
 func projectDeleteRun(v cli.Values) error {
-	projKey := v[_ProjectKey]
+	projKey := v.GetString(_ProjectKey)
 	if v.GetBool("force") {
 		// Delete all workflow
 		ws, errW := client.WorkflowList(projKey)

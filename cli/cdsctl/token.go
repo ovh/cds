@@ -46,7 +46,7 @@ Pay attention you must be an administrator of the group to launch this command.
 }
 
 func tokenCreateRun(v cli.Values) (interface{}, error) {
-	token, err := client.GroupGenerateToken(v["groupname"], v["expiration"], v.GetString("description"))
+	token, err := client.GroupGenerateToken(v.GetString("groupname"), v.GetString("expiration"), v.GetString("description"))
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ Find an existing token with his value to have his description, creation date and
 }
 
 func tokenFindRun(v cli.Values) (interface{}, error) {
-	token, err := client.FindToken(v["token"])
+	token, err := client.FindToken(v.GetString("token"))
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func tokenDeleteRun(v cli.Values) error {
 		return fmt.Errorf("Token id is bad formatted")
 	}
 
-	return client.GroupDeleteToken(v["groupname"], tokenID)
+	return client.GroupDeleteToken(v.GetString("groupname"), tokenID)
 }
 
 var tokenListCmd = cli.Command{

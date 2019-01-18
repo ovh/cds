@@ -47,7 +47,7 @@ var groupShowCmd = cli.Command{
 }
 
 func groupShowRun(v cli.Values) (interface{}, error) {
-	group, err := client.GroupGet(v["group-name"])
+	group, err := client.GroupGet(v.GetString("group-name"))
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ var groupCreateCmd = cli.Command{
 }
 
 func groupCreateRun(v cli.Values) error {
-	gr := &sdk.Group{Name: v["group-name"]}
+	gr := &sdk.Group{Name: v.GetString("group-name")}
 	return client.GroupCreate(gr)
 }
 
@@ -78,7 +78,7 @@ var groupRenameCmd = cli.Command{
 }
 
 func groupRenameRun(v cli.Values) error {
-	return client.GroupRename(v["old-group-name"], v["new-group-name"])
+	return client.GroupRename(v.GetString("old-group-name"), v.GetString("new-group-name"))
 }
 
 var groupDeleteCmd = cli.Command{
@@ -90,7 +90,7 @@ var groupDeleteCmd = cli.Command{
 }
 
 func groupDeleteRun(v cli.Values) error {
-	err := client.GroupDelete(v["group-name"])
+	err := client.GroupDelete(v.GetString("group-name"))
 	if err != nil {
 		if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrGroupNotFound) {
 			fmt.Println(err.Error())
