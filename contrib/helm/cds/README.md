@@ -76,7 +76,7 @@ $ helm install --name my-release -f values.yaml .
 
 > **Tip**: You can use the default [values.yaml](values.yaml)
 
-+ If you use a Kubernetes provider without LoadBalancer ability you just have to set your `ui.serviceType` to `ClusterIP` and set `ingress.enabled` to `true` with the right `ingress.hostname` and `ingress.port` (for example: `helm install --kubeconfig kubeconfig.yml --name my-release -f values.yaml --set ui.serviceType=ClusterIP --set ingress.enabled=true --set ingress.hostname=cds.MY_NODES_URL --set ingress.port=32080 .` cds.[YOUR-NODES-URL]).
++ If you use a Kubernetes provider without LoadBalancer ability you just have to set your `ui.serviceType` to `ClusterIP` and set `ingress.enabled` to `true` with the right `ingress.hostname` and `ingress.port` (for example: `helm install --kubeconfig kubeconfig.yml --name my-release -f values.yaml --set ui.serviceType=ClusterIP --set ingress.enabled=true --set ingress.hostname=cds.MY_NODES_URL --set ingress.port=32080 .`).
 
 + If you use a minikube you have to set `ui.serviceType` to `ClusterIP`.
 
