@@ -34,10 +34,7 @@ import { WorkflowWNodeComponent } from '../../../shared/workflow/wnode/wnode.com
 })
 @AutoUnsubscribe()
 export class WorkflowGraphComponent implements AfterViewInit {
-
     workflow: Workflow;
-    _workflowRun: WorkflowRun;
-
     @Input('workflowData')
     set workflowData(data: Workflow) {
         this.workflow = data;
@@ -47,6 +44,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.changeDisplay();
     }
 
+    _workflowRun: WorkflowRun;
     @Input('workflowRun')
     set workflowRun(data: WorkflowRun) {
         if (data) {
@@ -69,10 +67,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.calculateDynamicWidth();
         this.changeDisplay();
     }
-
-    get direction() {
-        return this._direction
-    }
+    get direction() { return this._direction; }
 
     @Output() deleteJoinSrcEvent = new EventEmitter<{ source, target }>();
 
@@ -103,26 +98,9 @@ export class WorkflowGraphComponent implements AfterViewInit {
         private _workflowCore: WorkflowCoreService
     ) { }
 
-    @HostListener('window:resize', ['$event'])
-    onResize() {
-        this.resize();
-    }
-
-    resize() {
-        // Resize svg
-        let svg = d3.select('svg');
-        let inner = d3.select('svg g');
-
-        let w = (<any>inner.node()).getBBox().width;
-        this.svgWidth = w + 30;
-        this.svgHeight = this.g.graph().height + 40;
-        svg.attr('height', this.svgHeight);
-    }
-
     ngAfterViewInit(): void {
         this.ready = true;
         this.changeDisplay();
-        this.resize();
         this._cd.detectChanges();
     }
 
@@ -272,10 +250,10 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
         let width: number;
         let height: number;
-        let componentRefWidth = '97%';
         let shape = 'rect';
         switch (node.type) {
             case 'pipeline':
+            case 'outgoinghook':
                 width = 180;
                 height = 60;
                 break;
@@ -283,11 +261,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 width = 30;
                 height = 30;
                 shape = 'circle';
-                break;
-            case 'outgoinghook':
-                componentRefWidth = '98%';
-                width = 210;
-                height = 68;
                 break;
             case 'fork':
                 width = 30;
@@ -298,7 +271,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.svgContainer.insert(componentRef.hostView, 0);
         this.g.setNode('node-' + node.ref, <any>{
             label: () => {
-                componentRef.location.nativeElement.style.width = componentRefWidth;
+                componentRef.location.nativeElement.style.width = '100%';
                 componentRef.location.nativeElement.style.height = '100%';
                 return componentRef.location.nativeElement;
             },
@@ -427,7 +400,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                     }
                 });
             }
-
         }
     }
 }

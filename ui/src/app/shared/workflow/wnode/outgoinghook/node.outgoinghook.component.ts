@@ -1,10 +1,10 @@
-import {Component, ElementRef, Input, OnInit} from '@angular/core';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {WorkflowHookModel} from '../../../../model/workflow.hook.model';
-import {WNode, Workflow, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import { Component, ElementRef, Input, OnInit } from '@angular/core';
+import { PipelineStatus } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { WorkflowHookModel } from '../../../../model/workflow.hook.model';
+import { WNode, Workflow, WorkflowNodeHookConfigValue } from '../../../../model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from '../../../../model/workflow.run.model';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-wnode-outgoing-hook',
@@ -13,23 +13,17 @@ import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeOutGoingHookComponent implements OnInit {
+    _node: WNode;
+    @Input('node') set node(data: WNode) { this._node = data; };
+    get node() { return this._node; }
 
-    public icon: string;
-    public _node: WNode;
-    @Input('node')
-    set node(data: WNode) {
-        this._node = data;
-    };
-    get node() {
-        return this._node;
-    }
+    @Input() project: Project;
+    @Input() workflow: Workflow;
+    @Input() noderun: WorkflowNodeRun;
+    @Input() workflowrun: WorkflowRun;
+    @Input() selected: boolean;
 
-    @Input() public project: Project;
-    @Input() public workflow: Workflow;
-    @Input() public noderun: WorkflowNodeRun;
-    @Input() public workflowrun: WorkflowRun;
-    @Input() public selected: boolean;
-
+    icon: string;
     model: WorkflowHookModel;
     elementRef: ElementRef;
     pipelineStatus = PipelineStatus;

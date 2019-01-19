@@ -1,108 +1,40 @@
-@import '../../../../../common';
+@import '../workflow.node.common';
 .workflowNode {
-    width: 100%;
-    height: 100%;
-    .nodePipeline {
-        background: white;
-        border: 1px solid grey;
-        border-radius: 5px;
-        width: 100%;
-        height: 100%;
-        color: black;
-        text-decoration: none;
-        display: flex;
-        flex-direction: column;
-        padding: 1px;
-        &:hover {
-            .details {
-                .actions-wrapper {
-                    .actions {
-                        display: flex;
-                    }
-                }
-            }
+  display: flex;
+  flex-direction: column;
+  &:hover {
+    .details {
+      .actions-wrapper {
+        .actions {
+          display: flex;
         }
-        .icon {
-            display: unset !important;
-            margin: 0 !important;
-        }
-        a {
-            color: black;
-            &:hover {
-                color: $cds_color_teal;
-            }
-        }
-        .title {
-            height: 22px;
-            display: flex;
-            flex-direction: row;
-            font-size: 1em;
-            padding: 2px 4px 0 4px;
-            .name {
-                flex: 1;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                font-weight: bold;
-            }
-            .count {
-                padding: 0 0px 0 2px;
-                text-align: right;
-            }
-        }
-        .details {
-            flex: 1;
-            display: flex;
-            flex-direction: row;
-            .context {
-                flex: 1;
-                min-width: 20px;
-                display: flex;
-                flex-direction: column;
-                padding: 2px 4px 0 4px;
-                .item {
-                    flex: 1;
-                    font-size: 0.8em;
-                    line-height: 0.9em;
-                    white-space: nowrap;
-                    overflow: hidden;
-                    text-overflow: ellipsis;
-                }
-            }
-            .actions-wrapper {
-                display: flex;
-                flex-direction: column;
-                justify-content: flex-end;
-                .actions {
-                    display: none;
-                    margin-left: 5px;
-                    flex-direction: row;
-                    padding: 0 4px 4px 0;
-                    .action {
-                        margin-left: 2px;
-                    }
-                }
-            }
-        }
+      }
     }
-    .nodePipeline.success {
-        background-color: $cds_color_light_green;
-        border-color: $cds_color_green;
+  }
+  .context {
+    flex: 1;
+    min-width: 20px;
+    display: flex;
+    flex-direction: column;
+    padding: 2px 4px 0 4px;
+    .item {
+      flex: 1;
+      font-size: 0.8em;
+      line-height: 0.9em;
     }
-    .nodePipeline.fail {
-        background-color: $cds_color_light_red;
-        border-color: $cds_color_red;
+  }
+  .actions-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    .actions {
+      display: none;
+      margin-left: 5px;
+      flex-direction: row;
+      padding: 0 4px 4px 0;
+      .action {
+        margin-left: 2px;
+      }
     }
-    .nodePipeline .inactive {
-        background-color: $cds_color_light_grey;
-        border-color: grey;
-    }
-    .nodePipeline.building {
-        background-color: $cds_color_light_teal;
-        border-color: $cds_color_teal;
-    }
-    .nodePipeline.active {
-        border: 2px solid $cds_color_teal;
-        padding: 0;
-    }
+  }
 }

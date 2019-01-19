@@ -1,53 +1,42 @@
-<div class="workflowNode">
-    <div class="nodePipeline pointing" [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
-        [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
-        [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
-        [class.active]="selected">
-        <!-- Node name + pipeline name -->
-        <div class="title">
-            <div class="name">
-                {{node.name}}
-            </div>
-            <div *ngIf="warnings > 0" suiPopup popupPlacement="right center" [popupText]="'warning_build_title' | translate: {nb: warnings}"
-                class="warn">
-                <i class="ui icon warning sign orange"></i>
-            </div>
-            <div *ngIf="noderun && noderun.subnumber" class="count">
-                {{ noderun?.subnumber }}
+<div class="node workflowNode pointing" [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
+    [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
+    [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
+    [class.active]="selected">
+    <div class="title">
+        <div class="name ellipsis" title="{{node.name}}">
+            {{node.name}}
+        </div>
+        <div *ngIf="warnings > 0" suiPopup popupPlacement="right center" [popupText]="'warning_build_title' | translate: {nb: warnings}"
+            class="warn">
+            <i class="ui icon warning sign orange"></i>
+        </div>
+        <div *ngIf="noderun && noderun.subnumber" class="count">
+            {{ noderun?.subnumber }}
+        </div>
+    </div>
+    <div class="details">
+        <div *ngIf="node.context.application_id || node.context.environment_id || node.context.project_platform_id"
+            class="context">
+            <div class="item ellipsis">
+                <a *ngIf="node.context.application_id" (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
+                    title="{{ 'common_application_title' | translate }}{{workflow.applications[node.context.application_id].name}}">
+                    {{workflow.applications[node.context.application_id].name}}
+                </a>
+                <a *ngIf="node.context.environment_id" (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]"
+                    [queryParams]="{tab: 'environments', envName: workflow.environments[node.context.environment_id].name}"
+                    title="{{ 'common_environment_title' | translate}}{{workflow.environments[node.context.environment_id].name}}">
+                    {{workflow.environments[node.context.environment_id].name}}
+                </a>
+                <a *ngIf="node.context.project_platform_id" (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]"
+                    [queryParams]="{tab: 'platforms'}" title="{{ 'common_platform_title' | translate}}{{workflow.project_platforms[node.context.project_platform_id].name}}">
+                    {{workflow.project_platforms[node.context.project_platform_id].name}}
+                </a>
             </div>
         </div>
-        <div class="details">
-            <div *ngIf="node.context.application_id || node.context.environment_id || node.context.project_platform_id"
-                class="context">
-                <!-- application name on a semantic ui ribbon -->
-                <div *ngIf="node.context.application_id" class="item">
-                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
-                        title="{{ 'common_application_title' | translate }}{{workflow.applications[node.context.application_id].name}}">
-                        {{workflow.applications[node.context.application_id].name}}
-                    </a>
-                </div>
-
-                <!-- environment name on a semantic ui ribbon -->
-                <div *ngIf="node.context.environment_id" class="item">
-                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: workflow.environments[node.context.environment_id].name}"
-                        title="{{ 'common_environment_title' | translate}}{{workflow.environments[node.context.environment_id].name}}">
-                        {{workflow.environments[node.context.environment_id].name}}
-                    </a>
-                </div>
-
-                <!-- platform name on a semantic ui ribbon -->
-                <div *ngIf="node.context.project_platform_id" class="item">
-                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'platforms'}"
-                        title="{{ 'common_platform_title' | translate}}{{workflow.project_platforms[node.context.project_platform_id].name}}">
-                        {{workflow.project_platforms[node.context.project_platform_id].name}}
-                    </a>
-                </div>
-            </div>
-            <div class="actions-wrapper">
-                <div class="actions">
-                    <div *ngIf="noderun" class="ui action">
-                        <i class="ui icon file text grey large" [title]="'btn_logs' | translate" (click)="displayLogs()"></i>
-                    </div>
+        <div class="actions-wrapper">
+            <div class="actions">
+                <div *ngIf="noderun" class="ui action">
+                    <i class="ui icon file text grey large" [title]="'btn_logs' | translate" (click)="displayLogs()"></i>
                 </div>
             </div>
         </div>
