@@ -15,7 +15,7 @@ import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import { SemanticDimmerComponent } from 'ng-semantic/ng-semantic';
 import { Project } from '../../../model/project.model';
-import { WNode, WNodeType, Workflow } from '../../../model/workflow.model';
+import { WNode, Workflow } from '../../../model/workflow.model';
 import { WorkflowRun } from '../../../model/workflow.run.model';
 import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
 import { WorkflowStore } from '../../../service/workflow/workflow.store';
@@ -132,23 +132,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         let svg = d3.select('svg');
         this.render(<any>svg.select('g'), this.g);
 
-        // Rotate fork
-        // Select nodes
-        let allnodes = d3.selectAll('g.nodes g.label');
-        let nodes = Workflow.getAllNodes(this.workflow);
-        let allForks = [];
-        // Browse nodes to identify fork
-        allnodes.each((a, b, c) => {
-            let n = nodes.find(node => 'node-' + node.name === a);
-            if (n && n.type === WNodeType.FORK) {
-                allForks.push(c[b]);
-            }
-        });
-        // Rotate
-        allForks.forEach(g => {
-            d3.select(g).attr('transform', 'rotate(45)');
-        });
-
         // Add listener on graph element
         this.svgHeight = this.g.graph().height + 40;
         this.svgWidth = this.g.graph().width;
@@ -228,9 +211,9 @@ export class WorkflowGraphComponent implements AfterViewInit {
                         componentRef.location.nativeElement.style.height = '100%';
                         return componentRef.location.nativeElement;
                     },
-                    labelStyle: 'width: 40px; height: 40px',
-                    width: 20,
-                    height: 20
+                    labelStyle: 'width: 30px; height: 30px',
+                    width: 30,
+                    height: 30
                 }
             );
 

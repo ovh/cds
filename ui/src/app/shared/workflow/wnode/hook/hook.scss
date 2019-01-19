@@ -1,16 +1,9 @@
-@import '../../../../../common';
+@import '../workflow.node.common';
 .workflowHook {
   &.active {
     color: $cds_color_teal;
   }
-  i {
-    font-size: 2em;
-    padding-left: 8px;
-  }
-
-  .ui.dropdown {
-    i {
-      font-size: 1em;
-    }
+  .icon {
+    font-size: 1.8em; //padding-left: 8px;
   }
 }

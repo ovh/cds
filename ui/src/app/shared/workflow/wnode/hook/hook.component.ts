@@ -14,7 +14,6 @@ import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.
 })
 @AutoUnsubscribe()
 export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
-
     _hook: WNodeHook;
     @Input('hook')
     set hook(data: WNodeHook) {
@@ -22,9 +21,7 @@ export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
             this._hook = data;
         }
     }
-    get hook() {
-      return this._hook;
-    }
+    get hook() { return this._hook; }
     @Input() readonly = false;
     @Input() workflow: Workflow;
     @Input() workflowRun: WorkflowRun;
@@ -38,8 +35,12 @@ export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
     subRun: Subscription;
     nodeRun: WorkflowNodeRun;
 
-    constructor(private elementRef: ElementRef, private _workflowEventStore: WorkflowEventStore,
-                private _activatedRoute: ActivatedRoute, private _router: Router) {}
+    constructor(
+        private elementRef: ElementRef,
+        private _workflowEventStore: WorkflowEventStore,
+        private _activatedRoute: ActivatedRoute,
+        private _router: Router
+    ) { }
 
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
@@ -76,10 +77,12 @@ export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
 
     openEditHookSidebar(): void {
         if (this.workflow.previewMode) {
-          return;
+            return;
         }
-        let url = this._router.createUrlTree(['./'], { relativeTo: this._activatedRoute,
-            queryParams: { 'hook_ref': this.hook.ref}});
+        let url = this._router.createUrlTree(['./'], {
+            relativeTo: this._activatedRoute,
+            queryParams: { 'hook_ref': this.hook.ref }
+        });
         this._router.navigateByUrl(url.toString()).then(() => this._workflowEventStore.setSelectedHook(this.hook));
     }
 }

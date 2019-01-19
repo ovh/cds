@@ -1,37 +1,7 @@
-@import '../../../../../common';
-
-.fork {
-    width: 50px;
-    height: 50px;
-    margin: 3px 0 0 3px;
-
-    .diamond {
-        width: 25px;
-        height: 25px;
-        border: 1px solid black;
-        border-radius: 3px;
-    }
-
-    .diamond.success {
-        border: 2px solid $cds_color_green;
-        background-color: $cds_color_light_green;
-    }
-
-    .diamond.building {
-        border: 2px solid $cds_color_teal;
-        background-color: $cds_color_light_teal;
-    }
-
-    .diamond.fail {
-        border: 2px solid $cds_color_red;
-        background-color: $cds_color_light_red;
-    }
-
-    .diamond.inactive {
-        border: 2px solid $cds_color_light_grey;
-    }
-
-    .diamond.active {
-        border: 2px solid $cds_color_teal;
-    }
+@import '../workflow.node.common';
+.workflowFork {
+  width: 25px;
+  height: 25px;
+  margin: 3px 0 0 3px;
+  transform: rotate(45deg);
 }
