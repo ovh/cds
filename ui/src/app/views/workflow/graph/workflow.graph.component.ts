@@ -13,15 +13,15 @@ import {
 } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
-import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
-import {Project} from '../../../model/project.model';
-import {WNode, WNodeType, Workflow} from '../../../model/workflow.model';
-import {WorkflowRun} from '../../../model/workflow.run.model';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {WorkflowNodeHookComponent} from '../../../shared/workflow/wnode/hook/hook.component';
-import {WorkflowWNodeComponent} from '../../../shared/workflow/wnode/wnode.component';
+import { SemanticDimmerComponent } from 'ng-semantic/ng-semantic';
+import { Project } from '../../../model/project.model';
+import { WNode, WNodeType, Workflow } from '../../../model/workflow.model';
+import { WorkflowRun } from '../../../model/workflow.run.model';
+import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
+import { WorkflowStore } from '../../../service/workflow/workflow.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { WorkflowNodeHookComponent } from '../../../shared/workflow/wnode/hook/hook.component';
+import { WorkflowWNodeComponent } from '../../../shared/workflow/wnode/wnode.component';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -41,7 +41,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
     @Input('workflowData')
     set workflowData(data: Workflow) {
         this.workflow = data;
-        this.nodeHeight = 78;
         this.nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
         this.hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
         this.calculateDynamicWidth();
@@ -53,7 +52,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (data) {
             this._workflowRun = data;
             this.workflow = data.workflow;
-            this.nodeHeight = 78;
             if (!this.previousWorkflowRunId || this.previousWorkflowRunId !== data.id) {
                 this.calculateDynamicWidth();
             }
@@ -82,7 +80,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     _direction: string;
 
     // workflow graph
-    @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer;
+    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
     svgWidth: number = window.innerWidth;
@@ -98,16 +96,12 @@ export class WorkflowGraphComponent implements AfterViewInit {
     nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
     hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
 
-    nodeWidth: number;
-    nodeHeight: number;
-
     constructor(
         private componentFactoryResolver: ComponentFactoryResolver,
         private _cd: ChangeDetectorRef,
         private _workflowStore: WorkflowStore,
         private _workflowCore: WorkflowCoreService
-    ) {
-    }
+    ) { }
 
     @HostListener('window:resize', ['$event'])
     onResize() {
@@ -141,7 +135,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     initWorkflow() {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph({align: 'UL', rankdir: this.direction, nodesep: 10});
+        this.g = new dagreD3.graphlib.Graph().setGraph({ align: 'UL', rankdir: this.direction, nodesep: 10, ranksep: 15 });
 
         // Create all nodes
         if (this.workflow.workflow_data && this.workflow.workflow_data.node) {
@@ -151,7 +145,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this.workflow.workflow_data.joins.forEach(j => {
                 this.createNode(j);
             });
-
         }
 
         // Add our custom arrow (a hollow-point)
@@ -162,18 +155,18 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.render(<any>svg.select('g'), this.g);
 
         // Rotate fork
-            // Select nodes
+        // Select nodes
         let allnodes = d3.selectAll('g.nodes g.label');
         let nodes = Workflow.getAllNodes(this.workflow);
         let allForks = [];
-            // Browse nodes to identify fork
+        // Browse nodes to identify fork
         allnodes.each((a, b, c) => {
             let n = nodes.find(node => 'node-' + node.name === a);
             if (n && n.type === WNodeType.FORK) {
                 allForks.push(c[b]);
             }
         });
-            // Rotate
+        // Rotate
         allForks.forEach(g => {
             d3.select(g).attr('transform', 'rotate(45)');
         });
@@ -222,17 +215,11 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 nbofNodes = Math.max(...Array.from(mapLevel.values()));
                 break;
         }
-
-        let windowsWidth = window.innerWidth - 250; // sidebar width
-
-        this.nodeWidth = Math.floor(windowsWidth * .75 / nbofNodes);
-        if (this.nodeWidth < 200) {
-            this.nodeWidth = 200;
-        }
     }
 
     createEdge(from: string, to: string, options: {}): void {
-        options['arrowhead'] = 'customArrow';
+        options['arrowhead'] = 'undirected';
+        options['style'] = 'stroke-width: 1px;';
         this.g.setEdge(from, to, options);
     }
 
@@ -289,12 +276,12 @@ export class WorkflowGraphComponent implements AfterViewInit {
         let shape = 'rect';
         switch (node.type) {
             case 'pipeline':
-                width = this.nodeWidth;
-                height = this.nodeHeight;
+                width = 180;
+                height = 60;
                 break;
             case 'join':
-                width = 50;
-                height = 50;
+                width = 30;
+                height = 30;
                 shape = 'circle';
                 break;
             case 'outgoinghook':
@@ -303,8 +290,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 height = 68;
                 break;
             case 'fork':
-                width = 60;
-                height = 60;
+                width = 30;
+                height = 30;
                 break;
         }
 
