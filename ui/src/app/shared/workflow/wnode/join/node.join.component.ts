@@ -46,9 +46,6 @@ export class WorkflowWNodeJoinComponent {
     }
 
     selectJoinToLink(): void {
-        if (!this.nodeToLink) {
-            return;
-        }
         let cloneWorkflow = cloneDeep(this.workflow);
         let currentJoin = Workflow.getNodeByID(this.node.id, cloneWorkflow);
         if (currentJoin.parents.findIndex(p => p.parent_name === this.nodeToLink.ref) === -1) {
