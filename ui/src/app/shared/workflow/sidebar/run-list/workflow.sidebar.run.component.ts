@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -16,11 +16,10 @@ import { DurationService } from '../../../duration/duration.service';
     templateUrl: './workflow.sidebar.run.component.html',
     styleUrls: ['./workflow.sidebar.run.component.scss']
 })
-@AutoUnsubscribe(['scrolled'])
-export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
+@AutoUnsubscribe()
+export class WorkflowSidebarRunListComponent implements OnDestroy {
     @ViewChild('tagsList') tagsList: ElementRef;
 
-    @Input() scrolled: EventEmitter<boolean>;
     @Input() project: Project;
 
     _workflow: Workflow;
@@ -80,27 +79,22 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
         this.subWorkflowRun = this._eventStore.selectedRun().subscribe(wr => {
             this.selectedWorkfowRun = wr;
         });
-
         this.listingSub = this._eventStore.isListingRuns().subscribe(b => {
             this.ready = !b;
         });
     }
 
-    ngOnInit() {
-        this.scrolled.subscribe((scrolled) => {
-            if (scrolled && (!Array.isArray(this.selectedTags) || !this.selectedTags.length)) {
-                this.offset += 50;
-                this.loadingMore = true;
-                this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())
-                    .pipe(
-                        finalize(() => this.loadingMore = false)
-                    )
-                    .subscribe((runs) => {
-                        this.workflowRuns = this.workflowRuns.concat(runs);
-                        this.refreshRun();
-                    });
-            }
-        });
+    scroll() {
+        if (!Array.isArray(this.selectedTags) || !this.selectedTags.length) {
+            this.offset += 50;
+            this.loadingMore = true;
+            this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())
+                .pipe(finalize(() => this.loadingMore = false))
+                .subscribe((runs) => {
+                    this.workflowRuns = this.workflowRuns.concat(runs);
+                    this.refreshRun();
+                });
+        }
     }
 
     initSelectableTags(): void {

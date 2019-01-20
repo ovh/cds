@@ -4,7 +4,8 @@
         <sui-select-option *ngFor="let option of multiSelect.filteredOptions" [value]="option">
         </sui-select-option>
     </sui-multi-select>
-    <div class="ui list runs scrollable" #tagsList>
+    <div class="ui list runs scrollable" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
+        [scrollWindow]="false" (scrolled)="scroll()">
         <div class="item pointing" *ngFor="let r of workflowRuns" (click)="changeRun(r.num)" [class.active]="selectedWorkfowRun?.num === r.num"
             [class.success]="r.status === pipelineStatusEnum.SUCCESS" [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
             [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
