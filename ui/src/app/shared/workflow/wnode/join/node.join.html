@@ -1,5 +1,7 @@
-<div class="node workflowJoin " [class.active]="selected" [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
+<div class="node workflowJoin pointing" [class.active]="selected" [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
     [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
     [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
-    [class.pointing]="nodeToLink" [class.animate]="nodeToLink" (click)="$event.stopPropagation(); selectJoinToLink()">
+    [class.animate]="nodeToLink">
+    <div *ngIf="nodeToLink" class="link" (click)="$event.stopPropagation(); selectJoinToLink()">
+    </div>
 </div>

@@ -241,13 +241,13 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 height = 60;
                 break;
             case 'join':
-                width = 30;
-                height = 30;
+                width = 40;
+                height = 40;
                 shape = 'circle';
                 break;
             case 'fork':
-                width = 30;
-                height = 30;
+                width = 40;
+                height = 40;
                 break;
         }
 
