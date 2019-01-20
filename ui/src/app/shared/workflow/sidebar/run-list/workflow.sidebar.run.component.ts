@@ -18,11 +18,11 @@ import { DurationService } from '../../../duration/duration.service';
 })
 @AutoUnsubscribe(['scrolled'])
 export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
+    @ViewChild('tagsList') tagsList: ElementRef;
 
-    // Project that contains the workflow
+    @Input() scrolled: EventEmitter<boolean>;
     @Input() project: Project;
 
-    // Workflow
     _workflow: Workflow;
     @Input('workflow')
     set workflow(data: Workflow) {
@@ -50,12 +50,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     }
     get workflow() { return this._workflow; }
 
-    @Input() scrolled: EventEmitter<boolean>;
-
-    @ViewChild('tagsList') tagsList: ElementRef;
-
     eventSubscription: Subscription;
-    // List of workflow run
     workflowRuns: Array<WorkflowRun>;
 
     // search part
@@ -66,7 +61,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     ready = false;
     listingSub: Subscription;
     tagsSubs: Subscription;
-    filteredTags: {[key: number]: WorkflowRunTags[]} = {};
+    filteredTags: { [key: number]: WorkflowRunTags[] } = {};
 
     durationIntervalID: number;
 
@@ -82,7 +77,6 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
         private _router: Router,
         private _eventStore: WorkflowEventStore
     ) {
-
         this.subWorkflowRun = this._eventStore.selectedRun().subscribe(wr => {
             this.selectedWorkfowRun = wr;
         });
@@ -138,8 +132,8 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
             return [];
         }
         return tags
-          .filter((tg) => this.tagToDisplay.indexOf(tg.tag) !== -1)
-          .sort((tga, tgb) => this.tagToDisplay.indexOf(tga.tag) - this.tagToDisplay.indexOf(tgb.tag));
+            .filter((tg) => this.tagToDisplay.indexOf(tg.tag) !== -1)
+            .sort((tga, tgb) => this.tagToDisplay.indexOf(tga.tag) - this.tagToDisplay.indexOf(tgb.tag));
     }
 
     getDuration(status: string, start: string, done: string): string {
@@ -158,12 +152,12 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
 
         if (Array.isArray(this.selectedTags) && this.selectedTags.length) {
             filters = this.selectedTags.reduce((prev, cur) => {
-              let splitted = cur.split(':');
-              if (splitted.length === 2) {
-                prev[splitted[0]] = splitted[1];
-              }
+                let splitted = cur.split(':');
+                if (splitted.length === 2) {
+                    prev[splitted[0]] = splitted[1];
+                }
 
-              return prev;
+                return prev;
             }, {});
         }
 

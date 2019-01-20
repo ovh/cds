@@ -1,31 +1,23 @@
 $darkBackground: #1B1C1D;
-
 $greyBackground: rgba(249, 249, 249, 1);
 $darkGreyColor: rgba(34, 36, 38, 0.15);
-
 $navbarHeight: 50px;
-$navbarColor: #343856;
-
+$navbarColor: #333333;
 $sidebarOpenWidth: 0px;
 $sidebarCloseWidth: 0px;
-
-
-$cds_color_green : #21BA45;
-$cds_color_teal : #4fa3e3;
-$cds_color_red : #FF4F60;
-$cds_color_orange : #FE9A76;
-
-$cds_color_light_green : #E5FFE5;
+$cds_color_green: #21BA45;
+$cds_color_teal: #4fa3e3;
+$cds_color_red: #FF4F60;
+$cds_color_orange: #FE9A76;
+$cds_color_light_green: #E5FFE5;
 $cds_color_light_red: #FFD2D6;
-$cds_color_light_teal : #BEDEFF;
+$cds_color_light_teal: #BEDEFF;
 $cds_color_light_grey: #EEEEEE;
-
 $cds_trigger_color: #9a9a9a;
-
 $cds_favorite_color: #f4d041;
-
+$polar_grey_3: #B5B7BD;
 .word-break-all {
-  word-break:  break-all;
+  word-break: break-all;
 }
 
 .CodeMirror-hints {
@@ -33,11 +25,21 @@ $cds_favorite_color: #f4d041;
 }
 
 pre {
-  .string { color: green; }
-  .number { color: darkorange; }
-  .boolean { color: blue; }
-  .null { color: magenta; }
-  .key { color: red; }
+  .string {
+    color: green;
+  }
+  .number {
+    color: darkorange;
+  }
+  .boolean {
+    color: blue;
+  }
+  .null {
+    color: magenta;
+  }
+  .key {
+    color: red;
+  }
 }
 
 // View style
@@ -52,13 +54,11 @@ pre {
   overflow-x: hidden;
   position: relative;
   flex: 1;
-
   .paddingContent {
     width: 100%;
     height: 100%;
     position: absolute;
     padding: 0px 100px 0px 100px;
-
     .viewContent {
       padding-top: 25px;
     }
@@ -66,7 +66,6 @@ pre {
 }
 
 // End view style
-
 // Center a field
 .field.center {
   text-align: center;
@@ -75,31 +74,26 @@ pre {
 // Table
 .table {
   border: none;
-
   thead {
-    background-color: $greyBackground;
+    background-color: white;
   }
   thead th {
     border: none;
     color: grey;
+    background-color: white;
   }
-
   tbody tr td:first-child {
     border-left: 1px solid $darkGreyColor;
   }
-
   tbody tr td:last-child {
     border-right: 1px solid $darkGreyColor;
   }
-
   tbody tr:first-child td {
     border-top: 1px solid $darkGreyColor;
   }
-
   tbody tr:last-child td {
     border-bottom: 1px solid $darkGreyColor;
   }
-
   tbody tr td {
     border: none;
     overflow: visible;
@@ -107,24 +101,24 @@ pre {
     padding-bottom: 8px;
     vertical-align: middle;
   }
-
   tbody tr td.border {
     border-top: 1px solid rgba(34, 36, 38, 0.15);
   }
-
   tbody tr:not(:hover) {
-    input, select, textarea, .ui.dropdown {
+    input,
+    select,
+    textarea,
+    .ui.dropdown {
       border-color: transparent;
     }
   }
   tbody tr.ui.form:not(:hover) {
-    input, select, textarea, .ui.dropdown {
+    input,
+    select,
+    textarea,
+    .ui.dropdown {
       border-color: transparent;
     }
-  }
-
-  tfoot {
-    background-color: $greyBackground;
   }
 }
 
@@ -140,8 +134,10 @@ pre {
   left: 50%;
   transform: translateX(-50%);
 }
+
 .ycentered {
   left: 50%;
   transform: translateX(-50%);
 }
+
 // End table

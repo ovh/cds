@@ -1,84 +1,80 @@
 @import '../../../../../common';
-#WorkflowSidebar {
-  .infoLine {
-    margin-top: 10px;
-    font-size: 0.85em;
+.workflowSidebar {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  .selection {
+    margin: 6px 0 6px 4px;
+    width: calc(100% - 4px);
+    z-index: 1001; // fix to be over loader that is z-index 1000
   }
-  .mr {
-    margin-right: 10px;
-  }
-  .no-mrt {
-    margin-top: 0px;
-  }
-  .padding {
-    padding-bottom: 4px;
-    padding-top: 4px;
-  }
-
-  .item {
-    &.active {
-      background-color: $cds_color_light_grey;
+  .runs {
+    margin: 0;
+    flex: 1;
+    &.scrollable {
+      padding-right: 10px;
+      overflow: hidden;
+      &:hover {
+        padding-right: 0;
+        overflow-y: auto;
+      }
     }
-    &:focus{
-      outline: none;
-    }
-    &:hover {
-      background-color: $cds_color_light_grey;
-    }
-    .tiny {
-      font-size: 0.90em;
-    }
-  }
-
-  i {
-    &.ribbon-state {
-      width: 5px;
+    .item {
+      height: 70px;
+      margin: 0 0 6px 4px;
+      padding: 0;
+      border-left: 6px solid grey;
+      display: flex;
+      flex-direction: column;
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: row;
+        padding: 3px 5px 0 5px;
+        .info {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          .number {
+            font-size: 1.5em;
+            line-height: 1em;
+          }
+          .line {
+            font-size: 1em;
+            line-height: 1em;
+          }
+        }
+      }
+      .foot {
+        display: flex;
+        flex-direction: row;
+        font-size: 1em;
+        line-height: 1em;
+        padding: 0px 5px 3px 5px;
+        .duration {
+          flex: 1;
+        }
+      }
+      &.active {
+        background-color: $cds_color_light_grey;
+      }
+      &:focus {
+        outline: none;
+      }
+      &:hover {
+        background-color: $cds_color_light_grey;
+      }
       &.success {
-        background-color: $cds_color_green;
+        border-color: $cds_color_green;
       }
       &.running {
-        background-color: $cds_color_teal;
+        border-color: $cds_color_teal;
       }
       &.fail {
-        background-color: $cds_color_red;
+        border-color: $cds_color_red;
       }
       &.waiting {
-        background-color: $cds_color_teal;
-      }
-      &.never {
-        background-color: grey;
-      }
-    }
-  }
-  .success {
-    color: $cds_color_green !important;
-  }
-  .running {
-    color: $cds_color_teal !important;
-  }
-  .fail {
-    color: $cds_color_red !important;
-  }
-  .never {
-    color: grey !important;
-  }
-  .active {
-    background-color: grey;
-  }
-  .waiting {
-    color: $cds_color_teal !important;
-  }
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-
-    li {
-      padding: 5px 0px 0px 5px;
-      min-height: 25px;
-
-      .ui.label {
-        padding: 0.2em 0.4em;
+        border-color: $cds_color_teal;
       }
     }
   }

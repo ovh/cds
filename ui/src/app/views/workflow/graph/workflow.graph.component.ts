@@ -180,7 +180,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     createEdge(from: string, to: string, options: {}): void {
         options['arrowhead'] = 'undirected';
-        options['style'] = 'stroke-width: 1px;';
+        options['style'] = 'stroke: #B5B7BD;stroke-width: 2px;';
         this.g.setEdge(from, to, options);
     }
 
