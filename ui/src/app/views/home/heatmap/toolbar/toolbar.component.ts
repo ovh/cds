@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { Subject } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { HeatmapSearchCriterion } from '../../../../model/heatmap.model';
@@ -12,7 +12,7 @@ import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
   styleUrls: ['./toolbar.component.scss']
 })
 @AutoUnsubscribe()
-export class ToolbarComponent implements OnInit {
+export class ToolbarComponent {
 
   projects: Array<Project>;
   searchCriterion: string;
@@ -31,9 +31,6 @@ export class ToolbarComponent implements OnInit {
             this.projects = ps.toArray();
         }
     });
-  }
-
-  ngOnInit() {
   }
 
   search() {
