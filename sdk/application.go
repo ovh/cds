@@ -22,15 +22,12 @@ type Application struct {
 	ProjectKey           string                    `json:"project_key" db:"-" cli:"project_key"`
 	ApplicationGroups    []GroupPermission         `json:"groups,omitempty" db:"-"`
 	Variable             []Variable                `json:"variables,omitempty" db:"-"`
-	Pipelines            []ApplicationPipeline     `json:"pipelines,omitempty" db:"-"`
-	PipelinesBuild       []PipelineBuild           `json:"pipelines_build,omitempty" db:"-"`
 	Permission           int                       `json:"permission" db:"-"`
 	Notifications        []UserNotification        `json:"notifications,omitempty" db:"-"`
 	LastModified         time.Time                 `json:"last_modified" db:"last_modified" mapstructure:"-"`
 	VCSServer            string                    `json:"vcs_server,omitempty" db:"vcs_server"`
 	RepositoryFullname   string                    `json:"repository_fullname,omitempty" db:"repo_fullname" cli:"repository_fullname"`
 	RepositoryStrategy   RepositoryStrategy        `json:"vcs_strategy,omitempty" db:"-"`
-	Workflows            []CDPipeline              `json:"workflows,omitempty" db:"-"`
 	Metadata             Metadata                  `json:"metadata" yaml:"metadata" db:"-"`
 	Keys                 []ApplicationKey          `json:"keys" yaml:"keys" db:"-"`
 	Usage                *Usage                    `json:"usage,omitempty" db:"-" cli:"-"`
@@ -100,15 +97,6 @@ type ApplicationVariableAudit struct {
 	VariableAfter  *Variable `json:"variable_after,omitempty" yaml:"-" db:"-"`
 	Versionned     time.Time `json:"versionned" yaml:"-" db:"versionned"`
 	Author         string    `json:"author" yaml:"-" db:"author"`
-}
-
-// ApplicationPipeline Represent the link between an application and a pipeline
-type ApplicationPipeline struct {
-	ID           int64             `json:"id"`
-	Pipeline     Pipeline          `json:"pipeline"`
-	Parameters   []Parameter       `json:"parameters"`
-	LastModified int64             `json:"last_modified"`
-	Triggers     []PipelineTrigger `json:"triggers,omitempty"`
 }
 
 // GetKey return a key by name

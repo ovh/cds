@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -82,27 +81,6 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 		return sdk.WrapError(err, "cannot insert in pipeline_parameter (pID:%d)", pipelineID)
 	}
 
-	query = `SELECT id FROM pipeline_trigger WHERE dest_pipeline_id = $1`
-	rows, err := db.Query(query, pipelineID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	var ids []int64
-	var id int64
-	for rows.Next() {
-		err = rows.Scan(&id)
-		if err != nil {
-			return sdk.WrapError(err, "cannot scan pipeline_trigger (pID:%d)", pipelineID)
-		}
-		ids = append(ids, id)
-	}
-	for _, id := range ids {
-		if err := trigger.InsertTriggerParameter(db, id, *param); err != nil {
-			return sdk.WrapError(err, "InsertTriggerParameter (tID:%d)", id)
-		}
-	}
-
 	return nil
 }
 
@@ -127,33 +105,13 @@ func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamNa
 		return err
 	}
 
-	// Update this parameter in triggers as well
-	query = `UPDATE pipeline_trigger_parameter SET type=$1, description=$2, name=$3 WHERE id IN (
-		SELECT pipeline_trigger_parameter.id FROM pipeline_trigger_parameter
-		JOIN pipeline_trigger ON pipeline_trigger.id = pipeline_trigger_parameter.pipeline_trigger_id
-		WHERE pipeline_trigger.dest_pipeline_id = $4
-		AND pipeline_trigger_parameter.name = $5
-	)`
-	_, err = db.Exec(query, string(param.Type), param.Description, param.Name, pipelineID, oldParamName)
-	return err
+	return nil
 }
 
 // DeleteParameterFromPipeline Delete a parameter from the given pipeline
 func DeleteParameterFromPipeline(db gorp.SqlExecutor, pipelineID int64, paramName string) error {
 	query := `DELETE FROM pipeline_parameter WHERE pipeline_id=$1 AND name=$2`
 	_, err := db.Exec(query, pipelineID, paramName)
-	if err != nil {
-		return err
-	}
-
-	// Delete this parameter in triggers as well
-	query = `DELETE FROM pipeline_trigger_parameter WHERE id IN (
-		SELECT pipeline_trigger_parameter.id FROM pipeline_trigger_parameter
-		JOIN pipeline_trigger ON pipeline_trigger.id = pipeline_trigger_parameter.pipeline_trigger_id
-		WHERE pipeline_trigger.dest_pipeline_id = $1
-		AND pipeline_trigger_parameter.name = $2
-	)`
-	_, err = db.Exec(query, pipelineID, paramName)
 	if err != nil {
 		return err
 	}
