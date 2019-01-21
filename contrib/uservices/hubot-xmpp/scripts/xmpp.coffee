@@ -19,7 +19,7 @@ module.exports = (robot) ->
         robot.adapter.joinRoom jid: dest
       else if /@/.test dest
         type = 'chat'
-      else if /@/.defaultDomain dest
+      else if /@/.test defaultDomain
         type = 'chat'
         dest = dest + defaultDomain
       else
