@@ -38,8 +38,24 @@
           display: flex;
           flex-direction: column;
           .number {
-            font-size: 1.5em;
+            font-size: 1.4em;
             line-height: 1em;
+            span {
+              font-size: 1.5em;
+              line-height: 1em;
+              &.success {
+                color: $cds_color_green;
+              }
+              &.running {
+                color: $cds_color_teal;
+              }
+              &.fail {
+                color: $cds_color_red;
+              }
+              &.waiting {
+                color: $cds_color_teal;
+              }
+            }
           }
           .line {
             font-size: 1em;
