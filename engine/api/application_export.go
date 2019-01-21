@@ -17,8 +17,8 @@ func (api *API) getApplicationExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 
 		format := FormString(r, "format")
 		if format == "" {

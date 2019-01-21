@@ -176,8 +176,8 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars["permProjectKey"]
+		envName := vars["environmentName"]
 		format := r.FormValue("format")
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)

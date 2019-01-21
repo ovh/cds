@@ -110,7 +110,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/panic/{uuid}", r.GET(api.getPanicDumpHandler, Auth(false)))
 
 	r.Handle("/ui/navbar", r.GET(api.getNavbarHandler))
-	r.Handle("/ui/project/{key}/application/{permApplicationName}/overview", r.GET(api.getApplicationOverviewHandler))
+	r.Handle("/ui/project/{permProjectKey}/application/{applicationName}/overview", r.GET(api.getApplicationOverviewHandler))
 
 	// Import As Code
 	r.Handle("/import/{permProjectKey}", r.POST(api.postImportAsCodeHandler))
@@ -142,41 +142,41 @@ func (api *API) InitRouter() {
 	// Import Application
 	r.Handle("/project/{permProjectKey}/import/application", r.POST(api.postApplicationImportHandler))
 	// Export Application
-	r.Handle("/project/{key}/export/application/{permApplicationName}", r.GET(api.getApplicationExportHandler))
+	r.Handle("/project/{permProjectKey}/export/application/{applicationName}", r.GET(api.getApplicationExportHandler))
 
 	r.Handle("/warning/{permProjectKey}", r.GET(api.getWarningsHandler))
 	r.Handle("/warning/{permProjectKey}/{hash}", r.PUT(api.putWarningsHandler))
 
 	// Application
-	r.Handle("/project/{key}/application/{permApplicationName}", r.GET(api.getApplicationHandler), r.PUT(api.updateApplicationHandler), r.DELETE(api.deleteApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/metrics/{metricName}", r.GET(api.getApplicationMetricHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/keys", r.GET(api.getKeysInApplicationHandler), r.POST(api.addKeyInApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/keys/{name}", r.DELETE(api.deleteKeyInApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/branches", r.GET(api.getApplicationBranchHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/vcsinfos", r.GET(api.getApplicationVCSInfosHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/remotes", r.GET(api.getApplicationRemoteHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/version", r.GET(api.getApplicationBranchVersionHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/clone", r.POST(api.cloneApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/group", r.POST(api.addGroupInApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/group/import", r.POST(api.importGroupsInApplicationHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/group/{group}", r.PUT(api.updateGroupRoleOnApplicationHandler), r.DELETE(api.deleteGroupFromApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/history/branch", r.GET(api.getPipelineBuildBranchHistoryHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/history/env/deploy", r.GET(api.getApplicationDeployHistoryHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline", r.GET(api.getPipelinesInApplicationHandler, DEPRECATED), r.PUT(api.updatePipelinesToApplicationHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/attach", r.POST(api.attachPipelinesToApplicationHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}", r.POST(api.attachPipelineToApplicationHandler, DEPRECATED), r.PUT(api.updatePipelineToApplicationHandler, DEPRECATED), r.DELETE(api.removePipelineFromApplicationHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/scheduler", r.GET(api.getSchedulerApplicationPipelineHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/tree", r.GET(api.getApplicationTreeHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/tree/status", r.GET(api.getApplicationTreeStatusHandler, DEPRECATED))
-	r.Handle("/project/{key}/application/{permApplicationName}/variable", r.GET(api.getVariablesInApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/variable/audit", r.GET(api.getVariablesAuditInApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", r.GET(api.getVariableAuditInApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/vulnerability/{id}", r.POST(api.postVulnerabilityHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}", r.GET(api.getApplicationHandler), r.PUT(api.updateApplicationHandler), r.DELETE(api.deleteApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/metrics/{metricName}", r.GET(api.getApplicationMetricHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/keys", r.GET(api.getKeysInApplicationHandler), r.POST(api.addKeyInApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/keys/{name}", r.DELETE(api.deleteKeyInApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/branches", r.GET(api.getApplicationBranchHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/vcsinfos", r.GET(api.getApplicationVCSInfosHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/remotes", r.GET(api.getApplicationRemoteHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/version", r.GET(api.getApplicationBranchVersionHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/clone", r.POST(api.cloneApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/group", r.POST(api.addGroupInApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/group/import", r.POST(api.importGroupsInApplicationHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/group/{group}", r.PUT(api.updateGroupRoleOnApplicationHandler), r.DELETE(api.deleteGroupFromApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/history/branch", r.GET(api.getPipelineBuildBranchHistoryHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/history/env/deploy", r.GET(api.getApplicationDeployHistoryHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/pipeline", r.GET(api.getPipelinesInApplicationHandler, DEPRECATED), r.PUT(api.updatePipelinesToApplicationHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/pipeline/attach", r.POST(api.attachPipelinesToApplicationHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/pipeline/{permPipelineKey}", r.POST(api.attachPipelineToApplicationHandler, DEPRECATED), r.PUT(api.updatePipelineToApplicationHandler, DEPRECATED), r.DELETE(api.removePipelineFromApplicationHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/pipeline/{permPipelineKey}/scheduler", r.GET(api.getSchedulerApplicationPipelineHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/tree", r.GET(api.getApplicationTreeHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/tree/status", r.GET(api.getApplicationTreeStatusHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/variable", r.GET(api.getVariablesInApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/variable/audit", r.GET(api.getVariablesAuditInApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/variable/{name}", r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/variable/{name}/audit", r.GET(api.getVariableAuditInApplicationHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/vulnerability/{id}", r.POST(api.postVulnerabilityHandler))
 	// Application deployment
-	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config/{platform}", r.POST(api.postApplicationDeploymentStrategyConfigHandler, AllowProvider(true)), r.GET(api.getApplicationDeploymentStrategyConfigHandler), r.DELETE(api.deleteApplicationDeploymentStrategyConfigHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config", r.GET(api.getApplicationDeploymentStrategiesConfigHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/metadata/{metadata}", r.POST(api.postApplicationMetadataHandler, AllowProvider(true)))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/deployment/config/{platform}", r.POST(api.postApplicationDeploymentStrategyConfigHandler, AllowProvider(true)), r.GET(api.getApplicationDeploymentStrategyConfigHandler), r.DELETE(api.deleteApplicationDeploymentStrategyConfigHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/deployment/config", r.GET(api.getApplicationDeploymentStrategiesConfigHandler))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/metadata/{metadata}", r.POST(api.postApplicationMetadataHandler, AllowProvider(true)))
 
 	// Pipeline Build
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/history", r.GET(api.getPipelineHistoryHandler, DEPRECATED))
@@ -188,31 +188,36 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/commits", r.GET(api.getPipelineBuildCommitsHandler, DEPRECATED))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/commits", r.GET(api.getPipelineCommitsHandler, DEPRECATED))
 
+	// Triggers
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger", r.GET(api.getTriggersHandler, DEPRECATED), r.POST(api.addTriggerHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger/source", r.GET(api.getTriggersAsSourceHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger/{id}", r.GET(api.getTriggerHandler, DEPRECATED), r.DELETE(api.deleteTriggerHandler, DEPRECATED), r.PUT(api.updateTriggerHandler, DEPRECATED))
+
 	// Pipeline
 	r.Handle("/project/{permProjectKey}/pipeline", r.GET(api.getPipelinesHandler), r.POST(api.addPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/application", r.GET(api.getApplicationUsingPipelineHandler, DEPRECATED))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group", r.POST(api.addGroupInPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/import", r.POST(api.importGroupsInPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/{group}", r.PUT(api.updateGroupRoleOnPipelineHandler), r.DELETE(api.deleteGroupFromPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter", r.GET(api.getParametersInPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter/{name}", r.POST(api.addParameterInPipelineHandler), r.PUT(api.updateParameterInPipelineHandler), r.DELETE(api.deleteParameterFromPipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}", r.GET(api.getPipelineHandler), r.PUT(api.updatePipelineHandler), r.DELETE(api.deletePipelineHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/rollback/{auditID}", r.POST(api.postPipelineRollbackHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/audits", r.GET(api.getPipelineAuditHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage", r.POST(api.addStageHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/move", r.POST(api.moveStageHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}", r.GET(api.getStageHandler), r.PUT(api.updateStageHandler), r.DELETE(api.deleteStageHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job", r.POST(api.addJobToStageHandler))
-	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job/{jobID}", r.PUT(api.updateJobHandler), r.DELETE(api.deleteJobHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/application", r.GET(api.getApplicationUsingPipelineHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/group", r.POST(api.addGroupInPipelineHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/group/import", r.POST(api.importGroupsInPipelineHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/group/{group}", r.PUT(api.updateGroupRoleOnPipelineHandler), r.DELETE(api.deleteGroupFromPipelineHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/parameter", r.GET(api.getParametersInPipelineHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/parameter/{name}", r.POST(api.addParameterInPipelineHandler), r.PUT(api.updateParameterInPipelineHandler), r.DELETE(api.deleteParameterFromPipelineHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}", r.GET(api.getPipelineHandler), r.PUT(api.updatePipelineHandler), r.DELETE(api.deletePipelineHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/rollback/{auditID}", r.POST(api.postPipelineRollbackHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/audits", r.GET(api.getPipelineAuditHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage", r.POST(api.addStageHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/move", r.POST(api.moveStageHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/{stageID}", r.GET(api.getStageHandler), r.PUT(api.updateStageHandler), r.DELETE(api.deleteStageHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/{stageID}/job", r.POST(api.addJobToStageHandler))
+	r.Handle("/project/{permProjectKey}/pipeline/{pipelineKey}/stage/{stageID}/job/{jobID}", r.PUT(api.updateJobHandler), r.DELETE(api.deleteJobHandler))
 
 	// Preview pipeline
 	r.Handle("/project/{permProjectKey}/preview/pipeline", r.POST(api.postPipelinePreviewHandler))
 	// Import pipeline
 	r.Handle("/project/{permProjectKey}/import/pipeline", r.POST(api.importPipelineHandler))
 	// Import pipeline (ONLY USE FOR UI)
-	r.Handle("/project/{key}/import/pipeline/{permPipelineKey}", r.PUT(api.putImportPipelineHandler))
+	r.Handle("/project/{permProjectKey}/import/pipeline/{pipelineKey}", r.PUT(api.putImportPipelineHandler))
 	// Export pipeline
-	r.Handle("/project/{key}/export/pipeline/{permPipelineKey}", r.GET(api.getPipelineExportHandler))
+	r.Handle("/project/{permProjectKey}/export/pipeline/{pipelineKey}", r.GET(api.getPipelineExportHandler))
 
 	// Workflows
 	r.Handle("/workflow/artifact/{hash}", r.GET(api.downloadworkflowArtifactDirectHandler, Auth(false)))
@@ -270,39 +275,35 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", r.POST(api.postWorkflowJobHookCallbackHandler, AllowServices(true)))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/details", r.GET(api.getWorkflowJobHookDetailsHandler, NeedService()))
 
-	// Triggers
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger", r.GET(api.getTriggersHandler), r.POST(api.addTriggerHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger/source", r.GET(api.getTriggersAsSourceHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/trigger/{id}", r.GET(api.getTriggerHandler), r.DELETE(api.deleteTriggerHandler), r.PUT(api.updateTriggerHandler))
-
 	// Environment
 	r.Handle("/project/{permProjectKey}/environment", r.GET(api.getEnvironmentsHandler), r.POST(api.addEnvironmentHandler))
 	r.Handle("/project/{permProjectKey}/environment/import", r.POST(api.importNewEnvironmentHandler, DEPRECATED))
-	r.Handle("/project/{key}/environment/import/{permEnvironmentName}", r.POST(api.importIntoEnvironmentHandler, DEPRECATED))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}", r.GET(api.getEnvironmentHandler), r.PUT(api.updateEnvironmentHandler), r.DELETE(api.deleteEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/usage", r.GET(api.getEnvironmentUsageHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/keys", r.GET(api.getKeysInEnvironmentHandler), r.POST(api.addKeyInEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/keys/{name}", r.DELETE(api.deleteKeyInEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/clone/{cloneName}", r.POST(api.cloneEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/group", r.POST(api.addGroupInEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/groups", r.POST(api.addGroupsInEnvironmentHandler, DEPRECATED))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/group/import", r.POST(api.importGroupsInEnvironmentHandler, DEPRECATED))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/group/{group}", r.PUT(api.updateGroupRoleOnEnvironmentHandler), r.DELETE(api.deleteGroupFromEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable", r.GET(api.getVariablesInEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}", r.GET(api.getVariableInEnvironmentHandler), r.POST(api.addVariableInEnvironmentHandler), r.PUT(api.updateVariableInEnvironmentHandler), r.DELETE(api.deleteVariableFromEnvironmentHandler))
-	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}/audit", r.GET(api.getVariableAuditInEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/import/{environmentName}", r.POST(api.importIntoEnvironmentHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}", r.GET(api.getEnvironmentHandler), r.PUT(api.updateEnvironmentHandler), r.DELETE(api.deleteEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/usage", r.GET(api.getEnvironmentUsageHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/keys", r.GET(api.getKeysInEnvironmentHandler), r.POST(api.addKeyInEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/keys/{name}", r.DELETE(api.deleteKeyInEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/clone/{cloneName}", r.POST(api.cloneEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/group", r.POST(api.addGroupInEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/groups", r.POST(api.addGroupsInEnvironmentHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/group/import", r.POST(api.importGroupsInEnvironmentHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/group/{group}", r.PUT(api.updateGroupRoleOnEnvironmentHandler), r.DELETE(api.deleteGroupFromEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/variable", r.GET(api.getVariablesInEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/variable/{name}", r.GET(api.getVariableInEnvironmentHandler), r.POST(api.addVariableInEnvironmentHandler), r.PUT(api.updateVariableInEnvironmentHandler), r.DELETE(api.deleteVariableFromEnvironmentHandler))
+	r.Handle("/project/{permProjectKey}/environment/{environmentName}/variable/{name}/audit", r.GET(api.getVariableAuditInEnvironmentHandler))
 
 	// Import Environment
 	r.Handle("/project/{permProjectKey}/import/environment", r.POST(api.postEnvironmentImportHandler))
 	// Export Environment
-	r.Handle("/project/{key}/export/environment/{permEnvironmentName}", r.GET(api.getEnvironmentExportHandler))
+	r.Handle("/project/{permProjectKey}/export/environment/{environmentName}", r.GET(api.getEnvironmentExportHandler))
 
 	// Artifacts
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/{tag}", r.GET(api.listArtifactsHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/{buildNumber}/artifact", r.GET(api.listArtifactsBuildHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/{buildNumber}/artifact/{tag}/url", r.POSTEXECUTE(api.postArtifactWithTempURLHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/{buildNumber}/artifact/{tag}/url/callback", r.POSTEXECUTE(api.postArtifactWithTempURLCallbackHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/download/{id}", r.GET(api.downloadArtifactHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/{tag}", r.GET(api.listArtifactsHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/{buildNumber}/artifact", r.GET(api.listArtifactsBuildHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/{buildNumber}/artifact/{tag}/url", r.POSTEXECUTE(api.postArtifactWithTempURLHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/{buildNumber}/artifact/{tag}/url/callback", r.POSTEXECUTE(api.postArtifactWithTempURLCallbackHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/download/{id}", r.GET(api.downloadArtifactHandler, DEPRECATED))
+
 	r.Handle("/staticfiles/store", r.GET(api.getStaticFilesStoreHandler, Auth(false)))
 	r.Handle("/artifact/store", r.GET(api.getArtifactsStoreHandler, Auth(false)))
 	r.Handle("/artifact/{hash}", r.GET(api.downloadArtifactDirectHandler, Auth(false)))
@@ -312,7 +313,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/cache/{tag}/url", r.POSTEXECUTE(api.postPushCacheWithTempURLHandler, NeedWorker()), r.GET(api.getPullCacheWithTempURLHandler, NeedWorker()))
 
 	// Hooks
-	r.Handle("/project/{key}/application/{permApplicationName}/hook", r.GET(api.getApplicationHooksHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/application/{applicationName}/hook", r.GET(api.getApplicationHooksHandler, DEPRECATED))
 
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
@@ -356,8 +357,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/repos", r.GET(api.getReposFromRepositoriesManagerHandler))
 
 	// RepositoriesManager for applications
-	r.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/attach", r.POST(api.attachRepositoriesManagerHandler))
-	r.Handle("/project/{key}/repositories_manager/{name}/application/{permApplicationName}/detach", r.POST(api.detachRepositoriesManagerHandler))
+	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application/{applicationName}/attach", r.POST(api.attachRepositoriesManagerHandler))
+	r.Handle("/project/{permProjectKey}/repositories_manager/{name}/application/{applicationName}/detach", r.POST(api.detachRepositoriesManagerHandler))
 
 	// Suggest
 	r.Handle("/suggest/variable/{permProjectKey}", r.GET(api.getVariablesHandler))

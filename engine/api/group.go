@@ -6,11 +6,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/service"
@@ -66,21 +63,6 @@ func (api *API) deleteGroupHandler() service.Handler {
 		projPerms, err := project.LoadPermissions(api.mustDB(), g.ID)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load projects for group")
-		}
-
-		appPerms, err := application.LoadPermissions(api.mustDB(), g.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load application for group")
-		}
-
-		pipPerms, err := pipeline.LoadPipelineByGroup(api.mustDB(), g.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load pipeline for group")
-		}
-
-		envPerms, err := environment.LoadEnvironmentByGroup(api.mustDB(), g.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load environment for group")
 		}
 
 		tx, errb := api.mustDB().Begin()

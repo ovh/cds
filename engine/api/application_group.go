@@ -24,8 +24,8 @@ func (api *API) updateGroupRoleOnApplicationHandler() service.Handler {
 		// Get project name in URL
 		u := deprecatedGetUser(ctx)
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		groupName := vars["group"]
 
 		var groupApplication sdk.GroupPermission
@@ -96,8 +96,8 @@ func (api *API) addGroupInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 
 		var groupPermission sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupPermission); err != nil {
@@ -151,8 +151,8 @@ func (api *API) deleteGroupFromApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		groupName := vars["group"]
 		db := api.mustDB()
 
@@ -206,8 +206,8 @@ func (api *API) importGroupsInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 

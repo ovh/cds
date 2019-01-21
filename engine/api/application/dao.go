@@ -38,7 +38,6 @@ var LoadOptions = struct {
 	WithVariablesWithClearPassword LoadOptionFunc
 	WithPipelines                  LoadOptionFunc
 	WithTriggers                   LoadOptionFunc
-	WithGroups                     LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithClearKeys                  LoadOptionFunc
 	WithDeploymentStrategies       LoadOptionFunc
@@ -51,7 +50,6 @@ var LoadOptions = struct {
 	WithVariablesWithClearPassword: &loadVariablesWithClearPassword,
 	WithPipelines:                  &loadPipelines,
 	WithTriggers:                   &loadTriggers,
-	WithGroups:                     &loadGroups,
 	WithKeys:                       &loadKeys,
 	WithClearKeys:                  &loadClearKeys,
 	WithDeploymentStrategies:       &loadDeploymentStrategies,
@@ -78,7 +76,7 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
 		query = fmt.Sprintf(`
                 SELECT %s
                 FROM application
-                JOIN project ON project.id = application.project_id
+                	JOIN project ON project.id = application.project_id
                 WHERE project.projectkey = $1
                 AND application.name = $2`, appRows)
 		args = []interface{}{projectKey, appName}
@@ -86,12 +84,12 @@ func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName stri
 		query = fmt.Sprintf(`
             SELECT distinct %s
             FROM application
-            JOIN project ON project.id = application.project_id
-            JOIN application_group on application.id = application_group.application_id
+				JOIN project ON project.id = application.project_id
+				JOIN project_group on project.id = project_group.project_id
             WHERE project.projectkey = $1
             AND application.name = $2
             AND (
-				application_group.group_id = ANY(string_to_array($3, ',')::int[])
+				project_group.group_id = ANY(string_to_array($3, ',')::int[])
 				OR
 				$4 = ANY(string_to_array($3, ',')::int[])
 			)`, appRows)
@@ -115,11 +113,12 @@ func LoadAndLockByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.Us
 	} else {
 		query = fmt.Sprintf(`
             SELECT distinct %s
-            FROM application
-            JOIN application_group on application.id = application_group.application_id
+			FROM application
+				JOIN project ON project.id = application.project_id
+				JOIN project_group ON project.id = project_group.project_id
             WHERE application.id = $1
             AND (
-				application_group.group_id = ANY(string_to_array($2, ',')::int[])
+				project_group.group_id = ANY(string_to_array($2, ',')::int[])
 				OR
 				$3 = ANY(string_to_array($2, ',')::int[])
 			) FOR UPDATE NOWAIT`, appRows)
@@ -143,11 +142,12 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opt
 	} else {
 		query = fmt.Sprintf(`
             SELECT distinct %s
-            FROM application
-            JOIN application_group on application.id = application_group.application_id
+			FROM application
+			JOIN project ON project.id = application.project_id
+            JOIN project_group on project.id = project_group.project_id
             WHERE application.id = $1
             AND (
-				application_group.group_id = ANY(string_to_array($2, ',')::int[])
+				project_group.group_id = ANY(string_to_array($2, ',')::int[])
 				OR
 				$3 = ANY(string_to_array($2, ',')::int[])
 			)`, appRows)
@@ -160,10 +160,11 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opt
 // LoadByWorkflowID loads applications from database for a given workflow id
 func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application, error) {
 	apps := []sdk.Application{}
-	query := fmt.Sprintf(`SELECT DISTINCT %s FROM application
-	JOIN workflow_node_context ON workflow_node_context.application_id = application.id
-	JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
-	JOIN workflow ON workflow.id = workflow_node.workflow_id
+	query := fmt.Sprintf(`SELECT DISTINCT %s
+	FROM application
+		JOIN workflow_node_context ON workflow_node_context.application_id = application.id
+		JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
+		JOIN workflow ON workflow.id = workflow_node.workflow_id
 	WHERE workflow.id = $1`, appRows)
 
 	if _, err := db.Select(&apps, query, workflowID); err != nil {
@@ -179,10 +180,11 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 // LoadByEnvName loads applications from database for a given project key and environment name
 func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Application, error) {
 	apps := []sdk.Application{}
-	query := fmt.Sprintf(`SELECT DISTINCT %s FROM application
-	JOIN pipeline_trigger ON application.id = pipeline_trigger.src_application_id OR application.id = pipeline_trigger.dest_application_id
-	JOIN environment ON environment.id = pipeline_trigger.src_environment_id OR environment.id = pipeline_trigger.dest_environment_id
-	JOIN project ON application.project_id = project.id
+	query := fmt.Sprintf(`SELECT DISTINCT %s
+	FROM application
+		JOIN pipeline_trigger ON application.id = pipeline_trigger.src_application_id OR application.id = pipeline_trigger.dest_application_id
+		JOIN environment ON environment.id = pipeline_trigger.src_environment_id OR environment.id = pipeline_trigger.dest_environment_id
+		JOIN project ON application.project_id = project.id
 	WHERE project.projectkey = $1 AND environment.name = $2`, appRows)
 
 	if _, err := db.Select(&apps, query, projKey, envName); err != nil {
@@ -199,7 +201,7 @@ func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Applicat
 func LoadByPipeline(db gorp.SqlExecutor, store cache.Store, pipelineID int64, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
 	query := fmt.Sprintf(`SELECT distinct %s
 		 FROM application
-		 JOIN application_pipeline ON application.id = application_pipeline.application_id
+		 	JOIN application_pipeline ON application.id = application_pipeline.application_id
 		 WHERE application_pipeline.pipeline_id = $1
 		 ORDER BY application.name`, appRows)
 	app, err := loadapplications(db, store, u, opts, query, pipelineID)
@@ -225,15 +227,11 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOpti
 	app := sdk.Application(*dbApp)
 
 	if app.ProjectKey == "" {
-		pkey, errP := db.SelectStr("select projectkey from project where id = $1", app.ProjectID)
+		pkey, errP := db.SelectStr("SELECT projectkey FROM project WHERE id = $1", app.ProjectID)
 		if errP != nil {
 			return nil, sdk.WrapError(errP, "application.unwrap")
 		}
 		app.ProjectKey = pkey
-	}
-
-	if u != nil {
-		LoadPermission(db, store, &app, u)
 	}
 
 	for _, f := range opts {
@@ -295,7 +293,7 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 		query = fmt.Sprintf(`
 		SELECT %s
 		FROM application
-		JOIN project ON project.id = application.project_id
+			JOIN project ON project.id = application.project_id
 		WHERE project.projectkey = $1
 		ORDER BY application.name ASC`, appRows)
 		args = []interface{}{key}
@@ -304,10 +302,10 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 			SELECT distinct %s
 			FROM application
 			JOIN project ON project.id = application.project_id
-			WHERE application.id IN (
-				SELECT application_group.application_id
-				FROM application_group
-				JOIN group_user ON application_group.group_id = group_user.group_id
+			WHERE project.id IN (
+				SELECT project_group.project_id
+				FROM project_group
+				JOIN group_user ON project_group.group_id = group_user.group_id
 				WHERE group_user.user_id = $2
 			)
 			AND project.projectkey = $1
@@ -333,10 +331,10 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName,
 		query = `
 			SELECT distinct(application.id) AS id, application.name, application.description, application.icon
 			FROM application
-			WHERE application.id IN (
-				SELECT application_group.application_id
-				FROM application_group
-				JOIN group_user ON application_group.group_id = group_user.group_id
+			WHERE $1 IN (
+				SELECT project_group.project_id
+				FROM project_group
+					JOIN group_user ON project_group.group_id = group_user.group_id
 				WHERE group_user.user_id = $2
 			)
 			AND application.project_id = $1

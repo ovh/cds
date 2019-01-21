@@ -16,8 +16,8 @@ import (
 func (api *API) getVariablesAuditInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 
 		audits, err := application.GetVariableAudit(api.mustDB(), key, appName)
 		if err != nil {
@@ -32,8 +32,8 @@ func (api *API) getVariableAuditInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		varName := vars["name"]
 
 		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
@@ -57,8 +57,8 @@ func (api *API) getVariableAuditInApplicationHandler() service.Handler {
 func (api *API) getVariableInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		varName := vars["name"]
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
@@ -78,8 +78,8 @@ func (api *API) getVariableInApplicationHandler() service.Handler {
 func (api *API) getVariablesInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 
 		variables, err := application.GetAllVariable(api.mustDB(), key, appName)
 		if err != nil {
@@ -93,8 +93,8 @@ func (api *API) getVariablesInApplicationHandler() service.Handler {
 func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		varName := vars["name"]
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
@@ -137,8 +137,8 @@ func (api *API) deleteVariableFromApplicationHandler() service.Handler {
 func (api *API) updateVariableInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		varName := vars["name"]
 
 		var newVar sdk.Variable
@@ -187,8 +187,8 @@ func (api *API) updateVariableInApplicationHandler() service.Handler {
 func (api *API) addVariableInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		varName := vars["name"]
 
 		var newVar sdk.Variable

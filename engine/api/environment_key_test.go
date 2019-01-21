@@ -57,9 +57,9 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
-		"name":                k.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
+		"name":            k.Name,
 	}
 
 	uri := router.GetRoute("GET", api.getKeysInEnvironmentHandler, vars)
@@ -113,9 +113,9 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
-		"name":                k.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
+		"name":            k.Name,
 	}
 
 	uri := router.GetRoute("DELETE", api.deleteKeyInEnvironmentHandler, vars)
@@ -162,8 +162,8 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
 	}
 
 	jsonBody, _ := json.Marshal(k)

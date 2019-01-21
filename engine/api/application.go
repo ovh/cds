@@ -91,8 +91,8 @@ func (api *API) getApplicationsHandler() service.Handler {
 func (api *API) getApplicationTreeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 
 		tree, err := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), "", "", 0)
 		if err != nil {
@@ -107,8 +107,8 @@ func (api *API) getPipelineBuildBranchHistoryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		appName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		appName := vars["applicationName"]
 
 		err := r.ParseForm()
 		if err != nil {
@@ -152,8 +152,8 @@ func (api *API) getApplicationDeployHistoryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		appName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		appName := vars["applicationName"]
 
 		pbs, err := pipeline.GetDeploymentHistory(api.mustDB(), projectKey, appName)
 		if err != nil {
@@ -168,8 +168,8 @@ func (api *API) getApplicationDeployHistoryHandler() service.Handler {
 func (api *API) getApplicationBranchVersionHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 		branch := r.FormValue("branch")
 		remote := r.FormValue("remote")
 
@@ -191,8 +191,8 @@ func (api *API) getApplicationBranchVersionHandler() service.Handler {
 func (api *API) getApplicationTreeStatusHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 		branchName := r.FormValue("branchName")
 		remote := r.FormValue("remote")
 		versionString := r.FormValue("version")
@@ -235,8 +235,8 @@ func (api *API) getApplicationTreeStatusHandler() service.Handler {
 func (api *API) getApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 
 		applicationStatus := FormBool(r, "applicationStatus")
 		withWorkflow := FormBool(r, "withWorkflow")
@@ -356,8 +356,8 @@ func loadApplicationUsage(db gorp.SqlExecutor, projKey, appName string) (sdk.Usa
 func (api *API) getApplicationBranchHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 		remote := r.FormValue("remote")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
@@ -409,8 +409,8 @@ func (api *API) getApplicationBranchHandler() service.Handler {
 func (api *API) getApplicationVCSInfosHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 		remote := r.FormValue("remote")
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
@@ -468,8 +468,8 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 func (api *API) getApplicationRemoteHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if err != nil {
@@ -578,8 +578,8 @@ func (api *API) deleteApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errP != nil {
@@ -628,8 +628,8 @@ func (api *API) cloneApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errProj != nil {
@@ -718,8 +718,8 @@ func (api *API) updateApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 
 		p, errload := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errload != nil {
@@ -787,8 +787,8 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
+		projectKey := vars["permProjectKey"]
+		applicationName := vars["applicationName"]
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx))
 		if err != nil {

@@ -17,12 +17,6 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 		return sdk.WrapError(err, "Cannot delete application variable")
 	}
 
-	// Delete groups
-	query := `DELETE FROM application_group WHERE application_id = $1`
-	if _, err := db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "Cannot delete application group")
-	}
-
 	// Delete application_pipeline
 	if err := DeleteAllApplicationPipeline(db, applicationID); err != nil {
 		return sdk.WrapError(err, "Cannot delete application pipeline")
@@ -31,7 +25,7 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	// Delete pipeline builds
 	//FIXME
 	var ids []int64
-	query = `SELECT id FROM pipeline_build WHERE application_id = $1`
+	query := `SELECT id FROM pipeline_build WHERE application_id = $1`
 	rows, err := db.Query(query, applicationID)
 	if err != nil {
 		return fmt.Errorf("DeleteApplication> Cannot select application pipeline build> %s", err)

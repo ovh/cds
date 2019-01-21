@@ -7,7 +7,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -45,22 +44,6 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	if exist {
 		env.ID = oldEnv.ID
-	}
-
-	//Inherit permissions from project
-	if len(eenv.Permissions) == 0 {
-		env.EnvironmentGroups = proj.ProjectGroups
-	} else {
-		//Compute permissions
-		for groupname, p := range eenv.Permissions {
-			//Load the group by name
-			g, errlg := group.LoadGroup(db, groupname)
-			if errlg != nil {
-				return env, nil, sdk.WrapError(errlg, "ParseAndImport> error on group.LoadGroup(%s): %v", groupname, errlg)
-			}
-			perm := sdk.GroupPermission{Group: sdk.Group{Name: g.Name}, Permission: p}
-			env.EnvironmentGroups = append(env.EnvironmentGroups, perm)
-		}
 	}
 
 	//Compute variables

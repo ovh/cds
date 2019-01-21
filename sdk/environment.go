@@ -6,16 +6,15 @@ import (
 
 // Environment represent a deployment environment
 type Environment struct {
-	ID                int64             `json:"id" yaml:"-"`
-	Name              string            `json:"name" yaml:"name" cli:"name,key"`
-	EnvironmentGroups []GroupPermission `json:"groups,omitempty" yaml:"groups"`
-	Variable          []Variable        `json:"variables,omitempty" yaml:"variables"`
-	ProjectID         int64             `json:"-" yaml:"-"`
-	ProjectKey        string            `json:"project_key" yaml:"-"`
-	Permission        int               `json:"permission"`
-	LastModified      int64             `json:"last_modified"`
-	Keys              []EnvironmentKey  `json:"keys"`
-	Usage             *Usage            `json:"usage,omitempty"`
+	ID           int64            `json:"id" yaml:"-"`
+	Name         string           `json:"name" yaml:"name" cli:"name,key"`
+	Variable     []Variable       `json:"variables,omitempty" yaml:"variables"`
+	ProjectID    int64            `json:"-" yaml:"-"`
+	ProjectKey   string           `json:"project_key" yaml:"-"`
+	Permission   int              `json:"permission"`
+	LastModified int64            `json:"last_modified"`
+	Keys         []EnvironmentKey `json:"keys"`
+	Usage        *Usage           `json:"usage,omitempty"`
 }
 
 // EnvironmentVariableAudit represents an audit on an environment variable

@@ -29,8 +29,8 @@ func (api *API) getNavbarHandler() service.Handler {
 func (api *API) getApplicationOverviewHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		db := api.mustDB()
 
 		p, errP := project.Load(db, api.Cache, key, deprecatedGetUser(ctx))

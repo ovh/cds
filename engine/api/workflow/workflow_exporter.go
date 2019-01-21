@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"reflect"
 
 	"github.com/go-gorp/gorp"
 
@@ -144,16 +143,9 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		return sdk.WrapError(err, "Unable to copy workflow buffer")
 	}
 
-	var withPermissions bool
-	for _, f := range opts {
-		if reflect.ValueOf(f).Pointer() == reflect.ValueOf(exportentities.WorkflowWithPermissions).Pointer() {
-			withPermissions = true
-		}
-	}
-
 	for _, a := range apps {
 		buff := new(bytes.Buffer)
-		size, err := application.ExportApplication(db, a, f, withPermissions, encryptFunc, buff)
+		size, err := application.ExportApplication(db, a, f, encryptFunc, buff)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to export app %s", a.Name)
 		}
@@ -172,7 +164,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 
 	for _, e := range envs {
 		buff := new(bytes.Buffer)
-		size, err := environment.ExportEnvironment(db, e, f, withPermissions, encryptFunc, buff)
+		size, err := environment.ExportEnvironment(db, e, f, encryptFunc, buff)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to export env %s", e.Name)
 		}
@@ -192,7 +184,7 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 
 	for _, p := range pips {
 		buff := new(bytes.Buffer)
-		size, err := pipeline.ExportPipeline(p, f, withPermissions, buff)
+		size, err := pipeline.ExportPipeline(p, f, buff)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to export pipeline %s", p.Name)
 		}

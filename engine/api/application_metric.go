@@ -15,8 +15,8 @@ import (
 func (api *API) getApplicationMetricHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		metricName := vars["metricName"]
 
 		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))

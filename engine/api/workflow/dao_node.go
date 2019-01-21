@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/ovh/cds/engine/api/permission"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -511,12 +513,6 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 			}
 		}
 
-		if u != nil {
-			if err := application.LoadPermission(db, store, app, u); err != nil {
-				return sdk.WrapError(err, "Unable to load application permission %d", ctx.ApplicationID)
-			}
-		}
-
 		ctx.Application = app
 	}
 
@@ -534,7 +530,7 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 			}
 		}
 
-		ctx.Environment.Permission = environment.Permission(env.ProjectKey, env.Name, u)
+		ctx.Environment.Permission = permission.ProjectPermission(env.ProjectKey, u)
 	}
 
 	//Load the project platform in the context

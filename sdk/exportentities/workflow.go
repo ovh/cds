@@ -31,7 +31,7 @@ type Workflow struct {
 	EnvironmentName     string                         `json:"environment,omitempty" yaml:"environment,omitempty"`
 	ProjectPlatformName string                         `json:"platform,omitempty" yaml:"platform,omitempty"`
 	PipelineHooks       []HookEntry                    `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
-	Permissions         map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+	Permissions         map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty"` // If workflow have only one node, then permissions of this node are the same
 	Metadata            map[string]string              `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 	PurgeTags           []string                       `json:"purge_tags,omitempty" yaml:"purge_tags,omitempty"`
 	HistoryLength       *int64                         `json:"history_length,omitempty" yaml:"history_length,omitempty"`
@@ -54,6 +54,7 @@ type NodeEntry struct {
 	Parameters            map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	OutgoingHookModelName string                      `json:"trigger,omitempty" yaml:"trigger,omitempty"`
 	OutgoingHookConfig    map[string]string           `json:"config,omitempty" yaml:"config,omitempty"`
+	Permissions           map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 }
 
 // HookEntry represents a hook as code
@@ -189,6 +190,24 @@ func WorkflowWithPermissions(w sdk.Workflow, exportedWorkflow *Workflow) error {
 	for _, p := range w.Groups {
 		exportedWorkflow.Permissions[p.Group.Name] = p.Permission
 	}
+
+	for _, node := range w.WorkflowData.Array() {
+		entries := exportedWorkflow.Entries()
+		if len(entries) > 1 { // Else the permissions are the same than the workflow
+			for exportedNodeName, entry := range entries {
+				if entry.Permissions == nil {
+					entry.Permissions = map[string]int{}
+				}
+				if node.Name == exportedNodeName {
+					for _, p := range node.Groups {
+						entry.Permissions[p.Group.Name] = p.Permission
+					}
+					exportedWorkflow.Workflow[exportedNodeName] = entry
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -536,6 +555,15 @@ func (e *NodeEntry) getNode(name string, w *sdk.Workflow) (*sdk.Node, error) {
 		node.JoinContext = make([]sdk.NodeJoin, 0, len(e.DependsOn))
 		for _, parent := range e.DependsOn {
 			node.JoinContext = append(node.JoinContext, sdk.NodeJoin{ParentName: parent})
+		}
+	}
+
+	if len(e.Permissions) > 0 {
+		//Compute permissions
+		node.Groups = make([]sdk.GroupPermission, 0, len(e.Permissions))
+		for g, p := range e.Permissions {
+			perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
+			node.Groups = append(node.Groups, perm)
 		}
 	}
 

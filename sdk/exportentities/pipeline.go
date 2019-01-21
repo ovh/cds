@@ -18,7 +18,6 @@ type PipelineV1 struct {
 	Stages       []string                  `json:"stages,omitempty" yaml:"stages,omitempty"` //Here Stage.Jobs will NEVER be set
 	StageOptions map[string]Stage          `json:"options,omitempty" yaml:"options,omitempty"`
 	Jobs         []Job                     `json:"jobs,omitempty" yaml:"jobs,omitempty"`
-	Permissions  map[string]int            `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 }
 
 // PipelineVersion is a version
@@ -34,7 +33,6 @@ type Pipeline struct {
 	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
 	Description  string                    `json:"description,omitempty" yaml:"description,omitempty"`
 	Type         string                    `json:"type,omitempty" yaml:"type,omitempty"`
-	Permissions  map[string]int            `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 	Parameters   map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	Stages       map[string]Stage          `json:"stages,omitempty" yaml:"stages,omitempty"`
 	Jobs         map[string]Job            `json:"jobs,omitempty" yaml:"jobs,omitempty"`
@@ -103,16 +101,10 @@ type ServiceRequirement struct {
 }
 
 //NewPipelineV1 creates an exportable pipeline from a sdk.Pipeline
-func NewPipelineV1(pip sdk.Pipeline, withPermission bool) (p PipelineV1) {
+func NewPipelineV1(pip sdk.Pipeline) (p PipelineV1) {
 	p.Name = pip.Name
 	p.Description = pip.Description
 	p.Version = PipelineVersion1
-	if withPermission {
-		p.Permissions = make(map[string]int, len(pip.GroupPermission))
-		for _, perm := range pip.GroupPermission {
-			p.Permissions[perm.Group.Name] = perm.Permission
-		}
-	}
 
 	p.Parameters = make(map[string]ParameterValue, len(pip.Parameter))
 	for _, v := range pip.Parameter {
@@ -174,7 +166,7 @@ func newStagesForPipelineV1(stages []sdk.Stage) ([]string, map[string]Stage) {
 
 //NewPipeline creates an exportable pipeline from a sdk.Pipeline
 //DEPRECATED
-func NewPipeline(pip sdk.Pipeline, withPermission bool) (p *Pipeline) {
+func NewPipeline(pip sdk.Pipeline) (p *Pipeline) {
 	p = &Pipeline{}
 
 	// Default name is like the type
@@ -189,13 +181,6 @@ func NewPipeline(pip sdk.Pipeline, withPermission bool) (p *Pipeline) {
 	// We consider build pipeline are default
 	if pip.Type != sdk.BuildPipeline {
 		p.Type = pip.Type
-	}
-
-	if len(pip.GroupPermission) > 0 && withPermission {
-		p.Permissions = make(map[string]int, len(pip.GroupPermission))
-		for _, perm := range pip.GroupPermission {
-			p.Permissions[perm.Group.Name] = perm.Permission
-		}
 	}
 
 	if len(pip.Parameter) > 0 {
@@ -324,15 +309,6 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 	pip.Name = p.Name
 	pip.Description = p.Description
 	pip.Type = p.Type
-
-	//Compute permissions
-	for g, p := range p.Permissions {
-		perm := sdk.GroupPermission{
-			Group:      sdk.Group{Name: g},
-			Permission: p,
-		}
-		pip.GroupPermission = append(pip.GroupPermission, perm)
-	}
 
 	//Compute parameters
 	for p, v := range p.Parameters {
@@ -594,15 +570,6 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 	pip.Name = p.Name
 	pip.Description = p.Description
 	pip.Type = sdk.BuildPipeline
-	pip.GroupPermission = make([]sdk.GroupPermission, 0, len(p.Permissions))
-	//Compute permissions
-	for g, p := range p.Permissions {
-		perm := sdk.GroupPermission{
-			Group:      sdk.Group{Name: g},
-			Permission: p,
-		}
-		pip.GroupPermission = append(pip.GroupPermission, perm)
-	}
 
 	pip.Parameter = make([]sdk.Parameter, 0, len(p.Parameters))
 	//Compute parameters

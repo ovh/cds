@@ -136,8 +136,8 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecrets(t *testi
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getEnvironmentExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -258,8 +258,8 @@ func Test_postEnvironmentImportHandler_NewEnvFromYAMLWithKeysAndSecretsAndReImpo
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": env.Name,
+		"permProjectKey":  proj.Key,
+		"environmentName": env.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getEnvironmentExportHandler, vars)
 	test.NotEmpty(t, uri)

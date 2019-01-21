@@ -513,8 +513,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 		// Load joins
 		if !opts.OnlyRootNode {
 			_, next = observability.Span(ctx, "workflow.load.loadJoins")
-			joins, errJ :=
-				loadJoins(ctx, db, store, proj, &res, u, opts)
+			joins, errJ := loadJoins(ctx, db, store, proj, &res, u, opts)
 			next()
 
 			if errJ != nil {
@@ -614,6 +613,13 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	if err := db.QueryRow("INSERT INTO workflow (name, description, icon, project_id, history_length, from_repository) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id", w.Name, w.Description, w.Icon, w.ProjectID, w.HistoryLength, w.FromRepository).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
+
+	// // Set default groups from workflow
+	// for _, node := range w.WorkflowData.Array() {
+	// 	if node.Groups == nil || len(node.Groups) == 0 {
+	// 		node.Groups = w.Groups
+	// 	}
+	// }
 
 	dbw := Workflow(*w)
 	if err := dbw.PostInsert(db); err != nil {
@@ -887,6 +893,18 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 			return sdk.WrapError(err, "unable to delete root node on workflow(%d)", w.ID)
 		}
 	}
+
+	// // Keep previous groups or set default groups from workflow
+	// for _, node := range w.WorkflowData.Array() {
+	// 	if node.Groups == nil || len(node.Groups) == 0 {
+	// 		oldNode := oldWorkflow.WorkflowData.NodeByName(node.Name)
+	// 		if oldNode != nil && oldNode.Groups != nil && len(oldNode.Groups) > 0 {
+	// 			node.Groups = oldNode.Groups
+	// 		} else {
+	// 			node.Groups = w.Groups
+	// 		}
+	// 	}
+	// }
 
 	// Delete workflow data
 	if err := DeleteWorkflowData(db, *oldWorkflow); err != nil {

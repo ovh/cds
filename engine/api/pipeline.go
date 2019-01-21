@@ -27,8 +27,8 @@ func (api *API) updatePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permPipelineKey"]
+		key := vars["permProjectKey"]
+		name := vars["pipelineKey"]
 
 		var p sdk.Pipeline
 		if err := service.UnmarshalBody(r, &p); err != nil {
@@ -79,8 +79,8 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permPipelineKey"]
+		key := vars["permProjectKey"]
+		name := vars["pipelineKey"]
 		auditID, errConv := strconv.ParseInt(vars["auditID"], 10, 64)
 		if errConv != nil {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postPipelineRollbackHandler> cannot convert auditID to int")
@@ -97,10 +97,6 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		audit, errA := pipeline.LoadAuditByID(db, auditID)
 		if errA != nil {
 			return sdk.WrapError(errA, "postPipelineRollbackHandler> Cannot load audit %d", auditID)
-		}
-
-		if err := pipeline.LoadGroupByPipeline(ctx, db, audit.Pipeline); err != nil {
-			return sdk.WrapError(err, "cannot load group by pipeline")
 		}
 
 		tx, errTx := db.Begin()
@@ -143,8 +139,8 @@ func (api *API) getApplicationUsingPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permPipelineKey"]
+		key := vars["permProjectKey"]
+		name := vars["pipelineKey"]
 
 		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), key, name, false)
 		if err != nil {
@@ -227,8 +223,8 @@ func (api *API) addPipelineHandler() service.Handler {
 func (api *API) getPipelineAuditHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		projectKey := vars["permProjectKey"]
+		pipelineName := vars["pipelineKey"]
 
 		audits, err := pipeline.LoadAudit(api.mustDB(), projectKey, pipelineName)
 		if err != nil {
@@ -242,8 +238,8 @@ func (api *API) getPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		projectKey := vars["permProjectKey"]
+		pipelineName := vars["pipelineKey"]
 		withApp := FormBool(r, "withApplications")
 		withWorkflows := FormBool(r, "withWorkflows")
 		withEnvironments := FormBool(r, "withEnvironments")
@@ -323,8 +319,8 @@ func (api *API) getPipelineHistoryHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		projectKey := vars["permProjectKey"]
+		pipelineName := vars["pipelineKey"]
 		appName := vars["permApplicationName"]
 
 		if err := r.ParseForm(); err != nil {
@@ -411,8 +407,8 @@ func (api *API) deletePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars["permProjectKey"]
+		pipelineName := vars["pipelineKey"]
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
@@ -468,9 +464,9 @@ func (api *API) deletePipelineHandler() service.Handler {
 func (api *API) getPipelineCommitsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
+		projectKey := vars["permProjectKey"]
 		appName := vars["permApplicationName"]
-		pipName := vars["permPipelineKey"]
+		pipName := vars["pipelineKey"]
 
 		if err := r.ParseForm(); err != nil {
 			return sdk.WrapError(sdk.ErrUnknownError, "getPipelineCommitsHandler> Cannot parse form")

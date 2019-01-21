@@ -43,8 +43,8 @@ func (api *API) updatePipelineToApplicationHandler() service.Handler {
 func (api *API) getPipelinesInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 
 		pipelines, err := application.GetAllPipelines(api.mustDB(), key, appName)
 		if err != nil {

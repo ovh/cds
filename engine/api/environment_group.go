@@ -24,8 +24,8 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars["permProjectKey"]
+		envName := vars["environmentName"]
 		groupName := vars["group"]
 
 		var groupEnvironment sdk.GroupPermission
@@ -97,8 +97,8 @@ func (api *API) addGroupsInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars["permProjectKey"]
+		envName := vars["environmentName"]
 
 		var groupPermission []sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupPermission); err != nil {
@@ -168,8 +168,8 @@ func (api *API) addGroupInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars["permProjectKey"]
+		envName := vars["environmentName"]
 
 		var groupPermission sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupPermission); err != nil {
@@ -214,8 +214,8 @@ func (api *API) deleteGroupFromEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars["permProjectKey"]
+		envName := vars["environmentName"]
 		groupName := vars["group"]
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
@@ -265,8 +265,8 @@ func (api *API) importGroupsInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		envName := vars["permEnvironmentName"]
+		key := vars["permProjectKey"]
+		envName := vars["environmentName"]
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 

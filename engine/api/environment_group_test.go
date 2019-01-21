@@ -57,8 +57,8 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 	body := bytes.NewBuffer(jsonBody)
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": envProd.Name,
+		"projectKey":      proj.Key,
+		"environmentName": envProd.Name,
 	}
 
 	//Prepare request
@@ -133,9 +133,9 @@ func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 	body := bytes.NewBuffer(jsonBody)
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": envProd.Name,
-		"group":               grp1.Name,
+		"projectKey":      proj.Key,
+		"environmentName": envProd.Name,
+		"group":           grp1.Name,
 	}
 
 	//Prepare request

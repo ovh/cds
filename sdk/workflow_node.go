@@ -27,6 +27,7 @@ type Node struct {
 	OutGoingHookContext *NodeOutGoingHook `json:"outgoing_hook" db:"-"`
 	JoinContext         []NodeJoin        `json:"parents" db:"-"`
 	Hooks               []NodeHook        `json:"hooks" db:"-"`
+	Groups              []GroupPermission `json:"groups,omitempty" db:"-"`
 }
 
 //NodeHook represents a hook which cann trigger the workflow from a given node

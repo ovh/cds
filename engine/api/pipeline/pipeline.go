@@ -27,8 +27,9 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 	var p sdk.Pipeline
 
 	var lastModified time.Time
-	query := `SELECT pipeline.id, pipeline.name, pipeline.description, pipeline.project_id, pipeline.type, pipeline.last_modified FROM pipeline
-	 		JOIN project on pipeline.project_id = project.id
+	query := `SELECT pipeline.id, pipeline.name, pipeline.description, pipeline.project_id, pipeline.type, pipeline.last_modified
+			FROM pipeline
+	 			JOIN project on pipeline.project_id = project.id
 	 		WHERE pipeline.name = $1 AND project.projectKey = $2`
 
 	err := db.QueryRow(query, name, projectKey).Scan(&p.ID, &p.Name, &p.Description, &p.ProjectID, &p.Type, &lastModified)
@@ -67,8 +68,9 @@ func LoadPipelineByID(ctx context.Context, db gorp.SqlExecutor, pipelineID int64
 
 	var lastModified time.Time
 	var p sdk.Pipeline
-	query := `SELECT pipeline.name, pipeline.description, pipeline.type, project.projectKey, pipeline.last_modified FROM pipeline
-	JOIN project on pipeline.project_id = project.id
+	query := `SELECT pipeline.name, pipeline.description, pipeline.type, project.projectKey, pipeline.last_modified
+	FROM pipeline
+		JOIN project on pipeline.project_id = project.id
 	WHERE pipeline.id = $1`
 
 	err := db.QueryRow(query, pipelineID).Scan(&p.Name, &p.Description, &p.Type, &p.ProjectKey, &lastModified)
@@ -143,9 +145,10 @@ func LoadByWorkerModelName(db gorp.SqlExecutor, workerModelName string, u *sdk.U
 // LoadByWorkflowID loads pipelines from database for a given workflow id
 func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Pipeline, error) {
 	pips := []sdk.Pipeline{}
-	query := `SELECT DISTINCT pipeline.* FROM pipeline
-	JOIN workflow_node ON pipeline.id = workflow_node.pipeline_id
-	JOIN workflow ON workflow_node.workflow_id = workflow.id
+	query := `SELECT DISTINCT pipeline.*
+	FROM pipeline
+		JOIN workflow_node ON pipeline.id = workflow_node.pipeline_id
+		JOIN workflow ON workflow_node.workflow_id = workflow.id
 	WHERE workflow.id = $1`
 
 	if _, err := db.Select(&pips, query, workflowID); err != nil {
@@ -218,9 +221,6 @@ func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.P
 	if err := LoadPipelineStage(ctx, db, p); err != nil {
 		return err
 	}
-	if err := LoadGroupByPipeline(ctx, db, p); err != nil {
-		return err
-	}
 
 	parameters, err := GetAllParametersInPipeline(ctx, db, p.ID)
 	if err != nil {
@@ -234,12 +234,6 @@ func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.P
 func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 
 	if err := DeleteAllStage(db, pipelineID, userID); err != nil {
-		return err
-	}
-
-	// Delete pipeline groups
-	query := `DELETE FROM pipeline_group WHERE pipeline_id = $1`
-	if _, err := db.Exec(query, pipelineID); err != nil {
 		return err
 	}
 
@@ -258,7 +252,7 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 	}
 
 	var pipelineBuildIDs []int64
-	query = `SELECT id FROM pipeline_build where pipeline_id = $1`
+	query := `SELECT id FROM pipeline_build where pipeline_id = $1`
 	rows, err := db.Query(query, pipelineID)
 	if err != nil {
 		return err
@@ -311,10 +305,10 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 	} else {
 		query := `SELECT distinct(pipeline.id), pipeline.name, pipeline.description, pipeline.project_id, pipeline.type, last_modified
 			  FROM pipeline
-			  JOIN pipeline_group ON pipeline.id = pipeline_group.pipeline_id
-			  JOIN group_user ON pipeline_group.group_id = group_user.group_id
+				JOIN project_group ON pipeline.project_id = project_group.project_id
+				JOIN group_user ON project_group.group_id = group_user.group_id
 			  WHERE group_user.user_id = $1
-			  AND pipeline.project_id = $2
+			  	AND pipeline.project_id = $2
 			  ORDER by pipeline.name`
 		rows, errquery = db.Query(query, user.ID, projectID)
 	}
@@ -369,10 +363,10 @@ func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.U
 	} else {
 		query = `SELECT distinct(pipeline.id) AS id, pipeline.name, pipeline.description
 			  FROM pipeline
-			  JOIN pipeline_group ON pipeline.id = pipeline_group.pipeline_id
-			  JOIN group_user ON pipeline_group.group_id = group_user.group_id
+				JOIN project_group ON pipeline.project_id = project_group.project_id
+				JOIN group_user ON project_group.group_id = group_user.group_id
 			  WHERE group_user.user_id = $1
-			  AND pipeline.project_id = $2
+			  	AND pipeline.project_id = $2
 			  ORDER by pipeline.name`
 		args = []interface{}{u.ID, projID}
 	}
@@ -388,33 +382,6 @@ func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.U
 	return res, nil
 }
 
-// LoadPipelineByGroup loads all pipelines where group has access
-func LoadPipelineByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineGroup, error) {
-	res := []sdk.PipelineGroup{}
-	query := `SELECT project.projectKey, pipeline.id, pipeline.name, pipeline_group.role FROM pipeline
-	 		  JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
-	 		  JOIN project ON pipeline.project_id = project.id
-	 		  WHERE pipeline_group.group_id = $1 ORDER BY pipeline.name ASC`
-	rows, err := db.Query(query, groupID)
-	if err != nil {
-		return res, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var pipeline sdk.Pipeline
-		var perm int
-		if err = rows.Scan(&pipeline.ProjectKey, &pipeline.ID, &pipeline.Name, &perm); err != nil {
-			return res, err
-		}
-		res = append(res, sdk.PipelineGroup{
-			Pipeline:   pipeline,
-			Permission: perm,
-		})
-	}
-	return res, nil
-}
-
 func updateParamInList(params []sdk.Parameter, paramAction sdk.Parameter) (bool, []sdk.Parameter) {
 	for i := range params {
 		p := &params[i]
@@ -424,35 +391,6 @@ func updateParamInList(params []sdk.Parameter, paramAction sdk.Parameter) (bool,
 		}
 	}
 	return false, params
-}
-
-// LoadGroupByPipeline load group permission on one pipeline
-func LoadGroupByPipeline(ctx context.Context, db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
-	_, end := observability.Span(ctx, "pipeline.LoadGroupByPipeline")
-	defer end()
-
-	query := `SELECT "group".id,"group".name,pipeline_group.role FROM "group"
-	 		  JOIN pipeline_group ON pipeline_group.group_id = "group".id
-	 		  WHERE pipeline_group.pipeline_id = $1 ORDER BY "group".name ASC`
-
-	rows, errq := db.Query(query, pipeline.ID)
-	if errq != nil {
-		return errq
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var group sdk.Group
-		var perm int
-		if err := rows.Scan(&group.ID, &group.Name, &perm); err != nil {
-			return err
-		}
-		pipeline.GroupPermission = append(pipeline.GroupPermission, sdk.GroupPermission{
-			Group:      group,
-			Permission: perm,
-		})
-	}
-	return nil
 }
 
 // UpdatePipeline update the pipeline
@@ -504,7 +442,7 @@ func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p
 
 // ExistPipeline Check if the given pipeline exist in database
 func ExistPipeline(db gorp.SqlExecutor, projectID int64, name string) (bool, error) {
-	query := `SELECT COUNT(id) FROM pipeline WHERE pipeline.project_id = $1 AND pipeline.name= $2`
+	query := `SELECT COUNT(id) FROM pipeline WHERE pipeline.project_id = $1 AND pipeline.name = $2`
 
 	var nb int64
 	err := db.QueryRow(query, projectID, name).Scan(&nb)

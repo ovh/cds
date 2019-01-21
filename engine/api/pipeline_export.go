@@ -15,8 +15,8 @@ func (api *API) getPipelineExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permPipelineKey"]
+		key := vars["permProjectKey"]
+		name := vars["pipelineKey"]
 
 		format := FormString(r, "format")
 		if format == "" {

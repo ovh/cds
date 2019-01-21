@@ -18,24 +18,6 @@ type GroupPermission struct {
 	Permission int   `json:"permission"`
 }
 
-// EnvironmentGroup represent a link with a pipeline
-type EnvironmentGroup struct {
-	Environment Environment `json:"environment"`
-	Permission  int         `json:"permission"`
-}
-
-// ApplicationGroup represent a link with a pipeline
-type ApplicationGroup struct {
-	Application Application `json:"application"`
-	Permission  int         `json:"permission"`
-}
-
-// PipelineGroup represent a link with a pipeline
-type PipelineGroup struct {
-	Pipeline   Pipeline `json:"pipeline"`
-	Permission int      `json:"permission"`
-}
-
 // ProjectGroup represent a link with a project
 type ProjectGroup struct {
 	Project    Project `json:"project"`

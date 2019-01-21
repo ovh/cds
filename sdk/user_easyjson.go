@@ -170,21 +170,9 @@ func easyjson9e1087fdDecodeGithubComOvhCdsSdk1(in *jlexer.Lexer, out *UserPermis
 				}
 				in.Delim('}')
 			}
-		case "ApplicationsPerm":
-			if data := in.Raw(); in.Ok() {
-				in.AddError((out.ApplicationsPerm).UnmarshalJSON(data))
-			}
 		case "WorkflowsPerm":
 			if data := in.Raw(); in.Ok() {
 				in.AddError((out.WorkflowsPerm).UnmarshalJSON(data))
-			}
-		case "PipelinesPerm":
-			if data := in.Raw(); in.Ok() {
-				in.AddError((out.PipelinesPerm).UnmarshalJSON(data))
-			}
-		case "EnvironmentsPerm":
-			if data := in.Raw(); in.Ok() {
-				in.AddError((out.EnvironmentsPerm).UnmarshalJSON(data))
 			}
 		default:
 			in.SkipRecursive()
@@ -262,16 +250,6 @@ func easyjson9e1087fdEncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in UserPermi
 			out.RawByte('}')
 		}
 	}
-	if len(in.ApplicationsPerm) != 0 {
-		const prefix string = ",\"ApplicationsPerm\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.Raw((in.ApplicationsPerm).MarshalJSON())
-	}
 	if len(in.WorkflowsPerm) != 0 {
 		const prefix string = ",\"WorkflowsPerm\":"
 		if first {
@@ -281,26 +259,6 @@ func easyjson9e1087fdEncodeGithubComOvhCdsSdk1(out *jwriter.Writer, in UserPermi
 			out.RawString(prefix)
 		}
 		out.Raw((in.WorkflowsPerm).MarshalJSON())
-	}
-	if len(in.PipelinesPerm) != 0 {
-		const prefix string = ",\"PipelinesPerm\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.Raw((in.PipelinesPerm).MarshalJSON())
-	}
-	if len(in.EnvironmentsPerm) != 0 {
-		const prefix string = ",\"EnvironmentsPerm\":"
-		if first {
-			first = false
-			out.RawString(prefix[1:])
-		} else {
-			out.RawString(prefix)
-		}
-		out.Raw((in.EnvironmentsPerm).MarshalJSON())
 	}
 	out.RawByte('}')
 }

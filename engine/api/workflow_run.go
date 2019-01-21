@@ -941,10 +941,14 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "unable to find node %d", opts.FromNodeIDs[0])
 		}
 
+		if !permission.AccessToWorkflowNode(fromNode, u, permission.PermissionReadExecute) {
+			return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on root node %d", wf.Root.ID)
+		}
+
 		// Check Env Permission
 		if fromNode.Context.EnvironmentID != 0 {
 			if !permission.AccessToEnvironment(p.Key, lastRun.Workflow.Environments[fromNode.Context.EnvironmentID].Name, u, permission.PermissionReadExecute) {
-				return nil, sdk.WrapError(sdk.ErrNoEnvExecution, "runFromNode> Not enough right to run on environment %s", lastRun.Workflow.Environments[fromNode.Context.EnvironmentID].Name)
+				return nil, sdk.WrapError(sdk.ErrNoPermExecution, "runFromNode> Not enough right to run on environment %s", lastRun.Workflow.Environments[fromNode.Context.EnvironmentID].Name)
 			}
 		}
 
@@ -956,6 +960,10 @@ func startWorkflowRun(ctx context.Context, db *gorp.DbMap, store cache.Store, p 
 		_, _ = report.Merge(r1, nil)
 
 	} else {
+		if !permission.AccessToWorkflowNode(&wf.WorkflowData.Node, u, permission.PermissionReadExecute) {
+			return nil, sdk.WrapError(sdk.ErrNoPermExecution, "not enough right on node %d", wf.WorkflowData.Node.ID)
+		}
+
 		// Start new workflow
 		_, r1, errmr := workflow.ManualRun(ctx, tx, store, p, wf, opts.Manual, asCodeInfos)
 		if errmr != nil {

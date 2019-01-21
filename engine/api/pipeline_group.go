@@ -23,8 +23,8 @@ import (
 func (api *API) updateGroupRoleOnPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars["permProjectKey"]
+		pipelineName := vars["pipelineKey"]
 		groupName := vars["group"]
 
 		var groupPipeline sdk.GroupPermission
@@ -95,8 +95,8 @@ func (api *API) updateGroupRoleOnPipelineHandler() service.Handler {
 func (api *API) addGroupInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars["permProjectKey"]
+		pipelineName := vars["pipelineKey"]
 
 		var groupPermission sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupPermission); err != nil {
@@ -155,8 +155,8 @@ func (api *API) importGroupsInPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars["permProjectKey"]
+		pipelineName := vars["pipelineKey"]
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 
@@ -273,8 +273,8 @@ func (api *API) importGroupsInPipelineHandler() service.Handler {
 func (api *API) deleteGroupFromPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		pipelineName := vars["permPipelineKey"]
+		key := vars["permProjectKey"]
+		pipelineName := vars["pipelineKey"]
 		groupName := vars["group"]
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)

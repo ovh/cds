@@ -465,23 +465,15 @@ func getPlatformPluginBinaries(db gorp.SqlExecutor, runContext nodeRunContext) (
 
 func getJobExecutablesGroups(wr *sdk.WorkflowRun, runContext nodeRunContext) ([]sdk.Group, error) {
 	var groups []sdk.Group
-	if runContext.Environment.ID != 0 {
-		for _, e := range runContext.Environment.EnvironmentGroups {
-			if e.Permission >= permission.PermissionReadExecute {
-				for _, gp := range wr.Workflow.Groups {
-					if gp.Group.ID == e.Group.ID && gp.Permission >= permission.PermissionReadExecute {
-						groups = append(groups, gp.Group)
-					}
-				}
-			}
-		}
-	} else {
-		for _, gp := range wr.Workflow.Groups {
-			if gp.Permission >= permission.PermissionReadExecute {
-				groups = append(groups, gp.Group)
-			}
+	// if runContext.Environment.ID != 0 {
+	// TODO add handling of node restrictions
+	// } else {
+	for _, gp := range wr.Workflow.Groups {
+		if gp.Permission >= permission.PermissionReadExecute {
+			groups = append(groups, gp.Group)
 		}
 	}
+	// }
 
 	groups = append(groups, *group.SharedInfraGroup)
 

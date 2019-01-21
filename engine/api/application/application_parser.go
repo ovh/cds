@@ -41,20 +41,6 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	app.VCSServer = eapp.VCSServer
 	app.RepositoryFullname = eapp.RepositoryName
 
-	//Inherit permissions from project
-	if len(eapp.Permissions) == 0 {
-		eapp.Permissions = make(map[string]int)
-		for _, p := range proj.ProjectGroups {
-			eapp.Permissions[p.Group.Name] = p.Permission
-		}
-	}
-
-	//Compute permissions
-	for g, p := range eapp.Permissions {
-		perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
-		app.ApplicationGroups = append(app.ApplicationGroups, perm)
-	}
-
 	//Compute variables
 	for p, v := range eapp.Variables {
 		switch v.Type {

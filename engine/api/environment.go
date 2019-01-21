@@ -59,8 +59,8 @@ func (api *API) getEnvironmentsHandler() service.Handler {
 func (api *API) getEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars["permProjectKey"]
+		environmentName := vars["environmentName"]
 		withUsage := FormBool(r, "withUsage")
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
@@ -98,8 +98,8 @@ func (api *API) getEnvironmentHandler() service.Handler {
 func (api *API) getEnvironmentUsageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars["permProjectKey"]
+		environmentName := vars["environmentName"]
 		usage, err := loadEnvironmentUsage(api.mustDB(), projectKey, environmentName)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load usage for environment %s in project %s", environmentName, projectKey)
@@ -189,8 +189,8 @@ func (api *API) deleteEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars["permProjectKey"]
+		environmentName := vars["environmentName"]
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
@@ -234,8 +234,8 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars["permProjectKey"]
+		environmentName := vars["environmentName"]
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
 		if errEnv != nil {
@@ -284,8 +284,8 @@ func (api *API) updateEnvironmentHandler() service.Handler {
 func (api *API) cloneEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		environmentName := vars["permEnvironmentName"]
+		projectKey := vars["permProjectKey"]
+		environmentName := vars["environmentName"]
 		cloneName := vars["cloneName"]
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)

@@ -31,8 +31,8 @@ func Test_getPipelineExportHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key":             proj.Key,
-		"permPipelineKey": pip.Name,
+		"permProjectKey": proj.Key,
+		"pipelineKey":    pip.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getPipelineExportHandler, vars)
 	test.NotEmpty(t, uri)
