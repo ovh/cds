@@ -33,7 +33,7 @@
                         </ng-container>
                     </div>
                 </div>
-                <div *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">
+                <div class="loader" *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">
                     <app-status-icon [status]="pipelineStatusEnum.BUILDING"></app-status-icon>
                 </div>
             </div>
