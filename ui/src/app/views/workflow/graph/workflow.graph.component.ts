@@ -40,7 +40,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         this.workflow = data;
         this.nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
         this.hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
-        this.calculateDynamicWidth();
         this.changeDisplay();
     }
 
@@ -50,9 +49,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (data) {
             this._workflowRun = data;
             this.workflow = data.workflow;
-            if (!this.previousWorkflowRunId || this.previousWorkflowRunId !== data.id) {
-                this.calculateDynamicWidth();
-            }
             this.previousWorkflowRunId = data.id;
             this.changeDisplay();
         }
@@ -64,7 +60,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
     set direction(data: string) {
         this._direction = data;
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
-        this.calculateDynamicWidth();
         this.changeDisplay();
     }
     get direction() { return this._direction; }
@@ -132,6 +127,10 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
         // Run the renderer. This is what draws the final graph.
         let svg = d3.select('svg');
+        let oldG = svg.select('g');
+        if (oldG) {
+            oldG.remove();
+        }
         let g = <any>svg.append('g');
 
         this.render(g, this.g);
@@ -165,27 +164,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 .style('stroke-dasharray', '1,0');
             dagreD3['util'].applyStyle(path, edge[type + 'Style']);
         };
-    }
-
-    private calculateDynamicWidth() {
-        let nbofNodes = 1;
-        switch (this.direction) {
-            case 'LR':
-                let mapDeep = new Map<string, number>();
-                mapDeep.set(this.workflow.workflow_data.node.ref, 1);
-                this.getWorkflowNodeDeep(this.workflow.workflow_data.node, mapDeep);
-                this.getWorkflowJoinDeep(mapDeep);
-                nbofNodes = Math.max(...Array.from(mapDeep.values()));
-                break;
-            default:
-                let mapLevel = new Map<number, number>();
-                let mapLevelNode = new Map<string, number>();
-                mapLevel.set(1, 1);
-                this.getWorkflowMaxNodeByLevel(this.workflow.workflow_data.node, mapLevel, 2, mapLevelNode);
-                this.getWorkflowJoinMaxNodeByLevel(nbofNodes, mapLevel, mapLevelNode);
-                nbofNodes = Math.max(...Array.from(mapLevel.values()));
-                break;
-        }
     }
 
     createEdge(from: string, to: string, options: {}): void {
@@ -312,83 +290,5 @@ export class WorkflowGraphComponent implements AfterViewInit {
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
         return componentRef;
-    }
-
-    private getWorkflowMaxNodeByLevel(node: WNode, levelMap: Map<number, number>, level: number, levelNode: Map<string, number>): void {
-        levelNode.set(node.ref, level - 1);
-        if (node.triggers) {
-            node.triggers.forEach(t => {
-                this.getWorkflowMaxNodeByLevel(t.child_node, levelMap, level + 1, levelNode);
-                if (levelMap.get(level)) {
-                    levelMap.set(level, levelMap.get(level) + 1);
-                } else {
-                    levelMap.set(level, 1);
-                }
-            });
-        }
-    }
-
-    private getWorkflowNodeDeep(node: WNode, maxDeep: Map<string, number>) {
-        if (node.triggers) {
-            node.triggers.forEach(t => {
-                maxDeep.set(t.child_node.ref, maxDeep.get(node.ref) + 1);
-                this.getWorkflowNodeDeep(t.child_node, maxDeep);
-            });
-        }
-    }
-
-    private getWorkflowJoinMaxNodeByLevel(maxNode: number, mapLevel: Map<number, number>, levelNode: Map<string, number>): number {
-        if (this.workflow.workflow_data && this.workflow.workflow_data.joins) {
-            this.workflow.workflow_data.joins.forEach(j => {
-                let maxLevel = 0;
-                if (j.parents) {
-                    j.parents.forEach(r => {
-                        if (levelNode.get(r.parent_name) > maxLevel) {
-                            maxLevel = levelNode.get(r.parent_name);
-                        }
-                    });
-                }
-                maxLevel++;
-                if (j.triggers) {
-                    j.triggers.forEach(t => {
-                        this.getWorkflowMaxNodeByLevel(t.child_node, mapLevel, maxLevel + 1, levelNode);
-                        if (mapLevel.get(maxLevel)) {
-                            mapLevel.set(maxLevel, mapLevel.get(maxLevel) + 1);
-                        } else {
-                            mapLevel.set(maxLevel, 1);
-                        }
-                    });
-                }
-            });
-        }
-        return maxNode;
-    }
-
-    private getWorkflowJoinDeep(maxDeep: Map<string, number>) {
-        if (this.workflow.workflow_data && this.workflow.workflow_data.joins) {
-            for (let i = 0; i < this.workflow.workflow_data.joins.length; i++) {
-                this.workflow.workflow_data.joins.forEach(j => {
-                    let canCheck = true;
-                    let joinMaxDeep = 0;
-                    j.parents.forEach(r => {
-                        let deep = maxDeep.get(r.parent_name);
-                        if (!maxDeep.get(r.parent_name)) {
-                            canCheck = false;
-                        } else {
-                            if (deep > joinMaxDeep) {
-                                joinMaxDeep = deep;
-                            }
-                        }
-                    });
-                    if (canCheck && j.triggers) {
-                        // get maxdeep
-                        j.triggers.forEach(t => {
-                            maxDeep.set(t.child_node.ref, joinMaxDeep + 1);
-                            this.getWorkflowNodeDeep(t.child_node, maxDeep);
-                        })
-                    }
-                });
-            }
-        }
     }
 }
