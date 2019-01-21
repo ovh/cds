@@ -132,7 +132,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
         // Run the renderer. This is what draws the final graph.
         let svg = d3.select('svg');
-        let g = svg.append('g');
+        let g = <any>svg.append('g');
 
         this.render(g, this.g);
 
