@@ -321,7 +321,11 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			allResult := []map[string]string{}
 
 			for _, i := range s {
-				item := listItem(i, filters, quiet, strings.Split(fields, ","), verbose, map[string]string{})
+				var fs []string
+				if fields != "" {
+					fs = strings.Split(fields, ",")
+				}
+				item := listItem(i, filters, quiet, fs, verbose, map[string]string{})
 				if len(item) == 0 {
 					continue
 				}
