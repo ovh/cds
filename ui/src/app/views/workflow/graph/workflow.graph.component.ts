@@ -91,6 +91,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
     nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
     hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
 
+    zoom: any;
+
     constructor(
         private componentFactoryResolver: ComponentFactoryResolver,
         private _cd: ChangeDetectorRef,
@@ -130,11 +132,19 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
         // Run the renderer. This is what draws the final graph.
         let svg = d3.select('svg');
-        this.render(<any>svg.select('g'), this.g);
+        let g = svg.append('g');
 
-        // Add listener on graph element
-        this.svgHeight = this.g.graph().height + 40;
-        this.svgWidth = this.g.graph().width;
+        this.render(g, this.g);
+
+        this.zoom = d3.zoom().scaleExtent([1 / 4, 2]).on('zoom', () => {
+            g.attr('transform', d3.event.transform);
+        });
+
+        svg.call(this.zoom);
+    }
+
+    clickOrigin() {
+        // TODO implement go to origin
     }
 
     private createCustomArrow() {
@@ -195,7 +205,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
             if (!componentRef) {
                 let hookComponent = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeHookComponent);
                 componentRef = hookComponent.create(this.svgContainer.parentInjector);
-
             }
             componentRef.instance.hook = h;
             componentRef.instance.workflow = this.workflow;
@@ -287,7 +296,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 this.createEdge('node-' + p.parent_name, 'node-' + node.ref, options);
             });
         }
-
     }
 
     @HostListener('document:keydown', ['$event'])
@@ -303,7 +311,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         componentRef.instance.node = node;
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
-
         return componentRef;
     }
 
@@ -361,7 +368,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (this.workflow.workflow_data && this.workflow.workflow_data.joins) {
             for (let i = 0; i < this.workflow.workflow_data.joins.length; i++) {
                 this.workflow.workflow_data.joins.forEach(j => {
-
                     let canCheck = true;
                     let joinMaxDeep = 0;
                     j.parents.forEach(r => {

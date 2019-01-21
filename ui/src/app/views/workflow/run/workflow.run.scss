@@ -1,16 +1,11 @@
 @import '../../../../common';
-
-#WorkflowRun {
+.workflowRun {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-content: stretch;
-  height: 100%;
-
-  .scrollingContent {
-    overflow-x: auto;
-  }
-  .title {
-    font-weight: 600;
+  .graph {
+    flex: 1;
   }
 }
 

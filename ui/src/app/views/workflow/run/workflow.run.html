@@ -1,34 +1,16 @@
-<div id="WorkflowRun" *ngIf="workflowRun">
-    <app-workflow-run-summary
-        [(direction)]="direction"
-        [project]="project"
-        [workflow]="workflow"
-        [workflowName]="workflowName"
+<div *ngIf="workflowRun" class="workflowRun">
+    <app-workflow-run-summary [(direction)]="direction" [project]="project" [workflow]="workflow" [workflowName]="workflowName"
         (relaunch)="relaunch()">
     </app-workflow-run-summary>
-    <div class="scrollingContent">
-        <div class="viewContent">
-            <app-workflow-graph
-                [direction]="direction"
-                [project]="project"
-                [workflowRun]="workflowRun">
-            </app-workflow-graph>
-        </div>
-    </div>
+    <app-workflow-graph class="graph" [direction]="direction" [project]="project" [workflowRun]="workflowRun">
+    </app-workflow-graph>
 </div>
 <div class="ui full segment" *ngIf="loadingRun && workflowRun">
     <sui-dimmer class="inverted" [isDimmed]="true" [isClickable]="false">
         <div class="ui text active loader">{{ 'workflow_loading' | translate }}</div>
     </sui-dimmer>
 </div>
-
 <div class="ui text active loader" *ngIf="!workflowRun">{{ 'workflow_loading' | translate }}</div>
-<app-workflow-node-run-param
-  *ngIf="workflowRun"
-  #workflowRunParam
-  [project]="project"
-  [workflow]="workflowRun.workflow"
-  [workflowRun]="workflowRun"
-  [num]="workflowRun.num"
-  [nodeToRun]="nodeToRun">
+<app-workflow-node-run-param *ngIf="workflowRun" #workflowRunParam [project]="project" [workflow]="workflowRun.workflow"
+    [workflowRun]="workflowRun" [num]="workflowRun.num" [nodeToRun]="nodeToRun">
 </app-workflow-node-run-param>

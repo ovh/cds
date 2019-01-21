@@ -1,5 +1,4 @@
-<div class="graph" [class.LR]="direction === 'LR'" [class.TB]="direction === 'TB'">
-    <svg [attr.width]="svgWidth" [attr.height]="svgHeight" #svgGraph>
-        <g></g>
-    </svg>
-</div>
+<svg class="svg" #svgGraph></svg>
+<button class="ui icon button big" (click)="clickOrigin()">
+    <i class="crosshairs icon"></i>
+</button>
