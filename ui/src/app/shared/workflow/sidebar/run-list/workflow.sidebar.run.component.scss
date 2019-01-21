@@ -33,6 +33,7 @@
         flex-direction: row;
         padding: 3px 5px 0 5px;
         .info {
+          overflow: hidden;
           flex: 1;
           display: flex;
           flex-direction: column;
@@ -43,6 +44,9 @@
           .line {
             font-size: 1em;
             line-height: 1em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
           }
         }
       }

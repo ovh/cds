@@ -4,7 +4,7 @@
         <sui-select-option *ngFor="let option of multiSelect.filteredOptions" [value]="option">
         </sui-select-option>
     </sui-multi-select>
-    <div class="ui list runs scrollable" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
+    <div class="runs scrollable" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
         [scrollWindow]="false" (scrolled)="scroll()">
         <div class="item pointing" *ngFor="let r of workflowRuns" (click)="changeRun(r.num)" [class.active]="selectedWorkfowRun?.num === r.num"
             [class.success]="r.status === pipelineStatusEnum.SUCCESS" [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
@@ -27,8 +27,7 @@
                     <div class="line" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" suiPopup [popupTemplate]="popupTemplate"
                         popupPlacement="right">
                         <ng-container *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
-                            <span class="tiny" *ngIf="i <= 1"> {{t.value}} </span><span class="tiny" *ngIf="!last && i <= 1">,</span><span
-                                *ngIf="i === 1 && !last"> ...</span>
+                            {{t.value}}<ng-container *ngIf="!last">,</ng-container>
                         </ng-container>
                     </div>
                 </div>

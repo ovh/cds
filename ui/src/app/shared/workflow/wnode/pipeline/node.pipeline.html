@@ -17,18 +17,21 @@
     <div class="details">
         <div *ngIf="node.context.application_id || node.context.environment_id || node.context.project_platform_id"
             class="context">
-            <div class="item ellipsis">
-                <a *ngIf="node.context.application_id" (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
+            <div *ngIf="node.context.application_id" class="item ellipsis">
+                <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
                     title="{{ 'common_application_title' | translate }}{{workflow.applications[node.context.application_id].name}}">
                     {{workflow.applications[node.context.application_id].name}}
                 </a>
-                <a *ngIf="node.context.environment_id" (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]"
-                    [queryParams]="{tab: 'environments', envName: workflow.environments[node.context.environment_id].name}"
+            </div>
+            <div *ngIf="node.context.environment_id" class="item ellipsis">
+                <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: workflow.environments[node.context.environment_id].name}"
                     title="{{ 'common_environment_title' | translate}}{{workflow.environments[node.context.environment_id].name}}">
                     {{workflow.environments[node.context.environment_id].name}}
                 </a>
-                <a *ngIf="node.context.project_platform_id" (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]"
-                    [queryParams]="{tab: 'platforms'}" title="{{ 'common_platform_title' | translate}}{{workflow.project_platforms[node.context.project_platform_id].name}}">
+            </div>
+            <div *ngIf="node.context.project_platform_id" class="item ellipsis">
+                <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'platforms'}"
+                    title="{{ 'common_platform_title' | translate}}{{workflow.project_platforms[node.context.project_platform_id].name}}">
                     {{workflow.project_platforms[node.context.project_platform_id].name}}
                 </a>
             </div>
