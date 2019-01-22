@@ -13,7 +13,8 @@
             <div class="content">
                 <div class="info">
                     <div class="number">
-                        #<span [class.success]="r.status === pipelineStatusEnum.SUCCESS" [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
+                        <span class="hash">#</span>
+                        <span class="count" [class.success]="r.status === pipelineStatusEnum.SUCCESS" [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
                             [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
                             [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.num}}</span>
                     </div>

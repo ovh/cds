@@ -5,7 +5,7 @@
   background: white;
   border: 2px solid $polar_grey_3;
   border-radius: 3px;
-  color: black;
+  color: $polar_grey_1;
   padding: 2px;
   .icon {
     display: unset;
@@ -17,7 +17,7 @@
     text-overflow: ellipsis;
   }
   a {
-    color: black;
+    color: $polar_grey_1;
     &:hover {
       color: $cds_color_teal;
     }

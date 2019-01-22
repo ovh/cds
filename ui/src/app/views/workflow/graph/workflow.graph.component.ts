@@ -110,7 +110,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     initWorkflow() {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction, nodesep: 10, ranksep: 15 });
+        this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction, nodesep: 10, ranksep: 15, edgesep: 5 });
 
         // Create all nodes
         if (this.workflow.workflow_data && this.workflow.workflow_data.node) {
@@ -121,9 +121,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 this.createNode(j);
             });
         }
-
-        // Add our custom arrow (a hollow-point)
-        this.createCustomArrow();
 
         // Run the renderer. This is what draws the final graph.
         let svg = d3.select('svg');
@@ -146,30 +143,12 @@ export class WorkflowGraphComponent implements AfterViewInit {
         // TODO implement go to origin
     }
 
-    private createCustomArrow() {
-        this.render.arrows()['customArrow'] = (parent, id, edge, type) => {
-            let marker = parent.append('marker')
-                .attr('id', id)
-                .attr('viewBox', '0 0 10 10')
-                .attr('refX', 7) // position of arrow
-                .attr('refY', 5) // position of arrow
-                .attr('markerUnits', 'strokeWidth')
-                .attr('markerWidth', 4)
-                .attr('markerHeight', 3)
-                .attr('orient', 'auto');
-
-            let path = marker.append('path')
-                .attr('d', 'M 0 0 L 10 5 L 0 10 z')
-                .style('stroke-width', 1)
-                .style('stroke-dasharray', '1,0');
-            dagreD3['util'].applyStyle(path, edge[type + 'Style']);
-        };
-    }
-
     createEdge(from: string, to: string, options: {}): void {
-        options['arrowhead'] = 'undirected';
-        options['style'] = 'stroke: #B5B7BD;stroke-width: 2px;';
-        this.g.setEdge(from, to, options);
+        this.g.setEdge(from, to, {
+            ...options,
+            arrowhead: 'undirected',
+            style: 'stroke: #B5B7BD;stroke-width: 2px;'
+        });
     }
 
     createHookNode(node: WNode): void {
@@ -193,21 +172,14 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this.svgContainer.insert(componentRef.hostView, 0);
             this.g.setNode(
                 'hook-' + node.ref + '-' + hookId, <any>{
-                    label: () => {
-                        componentRef.location.nativeElement.style.width = '100%';
-                        componentRef.location.nativeElement.style.height = '100%';
-                        return componentRef.location.nativeElement;
-                    },
-                    labelStyle: 'width: 30px; height: 30px',
-                    width: 30,
-                    height: 30
+                    label: () => componentRef.location.nativeElement,
+                    labelStyle: 'width: 30px;height: 30px;'
                 }
             );
 
-            let options = {
-                id: 'hook-' + node.ref + '-' + hookId
-            };
-            this.createEdge('hook-' + node.ref + '-' + hookId, 'node-' + node.ref, options);
+            this.createEdge(`hook-${node.ref}-${hookId}`, `node-${node.ref}`, {
+                id: `hook-${node.ref}-${hookId}`
+            });
         });
     }
 
@@ -240,15 +212,9 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
         this.svgContainer.insert(componentRef.hostView, 0);
         this.g.setNode('node-' + node.ref, <any>{
-            label: () => {
-                componentRef.location.nativeElement.style.width = '100%';
-                componentRef.location.nativeElement.style.height = '100%';
-                return componentRef.location.nativeElement;
-            },
+            label: () => componentRef.location.nativeElement,
             shape: shape,
-            labelStyle: 'width: ' + width + 'px; height: ' + height + 'px;',
-            width: width,
-            height: height
+            labelStyle: `width: ${width}px;height: ${height}px;`
         });
 
         this.createHookNode(node);
@@ -256,22 +222,20 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (node.triggers) {
             node.triggers.forEach(t => {
                 this.createNode(t.child_node);
-                let options = {
+                this.createEdge('node-' + node.ref, 'node-' + t.child_node.ref, {
                     id: 'trigger-' + t.id,
                     style: 'stroke: #000000;'
-                };
-                this.createEdge('node-' + node.ref, 'node-' + t.child_node.ref, options);
+                });
             });
         }
 
         // Create parent trigger
         if (node.type === 'join') {
             node.parents.forEach(p => {
-                let options = {
+                this.createEdge('node-' + p.parent_name, 'node-' + node.ref, {
                     id: 'join-trigger-' + p.parent_name,
                     style: 'stroke: #000000;'
-                };
-                this.createEdge('node-' + p.parent_name, 'node-' + node.ref, options);
+                });
             });
         }
     }

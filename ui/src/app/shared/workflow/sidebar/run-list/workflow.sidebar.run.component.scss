@@ -1,6 +1,7 @@
 @import '../../../../../common';
 .workflowSidebar {
   height: 100%;
+  width: 255px;
   display: flex;
   flex-direction: column;
   .selection {
@@ -12,14 +13,13 @@
     margin: 0;
     flex: 1;
     &.scrollable {
-      padding-right: 10px;
       overflow: hidden;
       &:hover {
-        padding-right: 0;
         overflow-y: auto;
       }
     }
     .item {
+      width: 240px;
       height: 60px;
       margin: 0 0 6px 4px;
       padding: 0;
@@ -38,10 +38,14 @@
           display: flex;
           flex-direction: column;
           .number {
-            font-size: 1.3em;
-            line-height: 1em;
-            span {
+            .hash {
               font-size: 1.2em;
+              line-height: 1em;
+              color: $polar_grey_3;
+              margin-right: 1px;
+            }
+            .count {
+              font-size: 1.3em;
               line-height: 1em;
               &.success {
                 color: $cds_color_green;
@@ -64,6 +68,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             padding: 5px 0;
+            color: $polar_grey_1;
           }
         }
         .loader {
@@ -76,6 +81,7 @@
         font-size: 0.8em;
         line-height: 0.9em;
         padding: 0px 5px 3px 5px;
+        color: $polar_grey_1;
         .duration {
           flex: 1;
         }
