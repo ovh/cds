@@ -1126,6 +1126,7 @@
   "workflow_template_bulk_select_instances": "Select instances",
   "workflow_template_bulk_fill_parameters": "Fill parameters",
   "workflow_template_bulk_fill_run": "Run",
+  "workflow_template_detach": "Detach",
 
   "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."

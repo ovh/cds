@@ -675,6 +675,42 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 	}
 }
 
+func (api *API) deleteTemplateInstanceHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+		t := getWorkflowTemplate(ctx)
+
+		u := deprecatedGetUser(ctx)
+
+		ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u)
+		if err != nil {
+			return err
+		}
+
+		instanceID, err := requestVarInt(r, "instanceID")
+		if err != nil {
+			return err
+		}
+
+		wti, err := workflowtemplate.GetInstanceByIDForTemplateIDAndProjectIDs(api.mustDB(), instanceID, t.ID, sdk.ProjectsToIDs(ps))
+		if err != nil {
+			return err
+		}
+		if wti == nil {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "No workflow template instance found")
+		}
+
+		if err := workflowtemplate.DeleteInstance(api.mustDB(), wti); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
+	}
+}
+
 func (api *API) postTemplatePullHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		ctx, err := api.middlewareTemplate(false)(ctx, w, r)

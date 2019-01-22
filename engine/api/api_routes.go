@@ -401,6 +401,7 @@ func (api *API) InitRouter() {
 	r.Handle("/template/{groupName}/{templateSlug}/bulk", r.POST(api.postTemplateBulkHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/bulk/{bulkID}", r.GET(api.getTemplateBulkHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/instance", r.GET(api.getTemplateInstancesHandler))
+	r.Handle("/template/{groupName}/{templateSlug}/instance/{instanceID}", r.DELETE(api.deleteTemplateInstanceHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/audit", r.GET(api.getTemplateAuditsHandler))
 	r.Handle("/template/{groupName}/{templateSlug}/usage", r.GET(api.getTemplateUsageHandler))
 	r.Handle("/project/{key}/workflow/{permWorkflowName}/templateInstance", r.GET(api.getTemplateInstanceHandler))

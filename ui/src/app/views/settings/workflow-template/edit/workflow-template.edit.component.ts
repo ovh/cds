@@ -324,7 +324,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.templateApplyModal.show();
     }
 
-    bulkModalClose() {
+    modalClose() {
         this.getInstances();
     }
 }

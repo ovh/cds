@@ -86,4 +86,10 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
     changeParam(values: { [key: string]: string; }) {
         this.parameterValues = values;
     }
+
+    clickDetach() {
+        this._workflowTemplateService.deleteInstance(this.workflowTemplate, this.workflowTemplateInstance).subscribe(() => {
+            this.clickClose();
+        });
+    }
 }

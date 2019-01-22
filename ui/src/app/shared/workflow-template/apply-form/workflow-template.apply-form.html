@@ -15,14 +15,14 @@
                 </div>
             </div>
             <div class="wide field">
-                <div class="ui right aligned field">
-                    <button class="ui green button" type="button" (click)="applyTemplate()" [class.loading]="loading">{{
-                        'btn_apply' |
-                        translate }}
-                    </button>
-                    <button class="ui primary button" type="button" (click)="goToWorkflow()" *ngIf="result && !withClose">{{
+                <div class="ui wide field">
+                    <app-delete-button *ngIf="workflowTemplateInstance && workflowTemplateInstance.id" class="left floated"
+                        (event)="clickDetach()" [loading]="loading" [title]="'workflow_template_detach'"></app-delete-button>
+                    <button class="ui green button right floated" type="button" (click)="applyTemplate()"
+                        [class.loading]="loading">{{ 'btn_apply' | translate }}</button>
+                    <button class="ui primary button right floated" type="button" (click)="goToWorkflow()" *ngIf="result && !withClose">{{
                         'btn_goto_workflow' | translate}}</button>
-                    <button class="ui secondary button" [disabled]="loading" (click)="clickClose()" *ngIf="withClose">{{
+                    <button class="ui secondary button right floated" [disabled]="loading" (click)="clickClose()" *ngIf="withClose">{{
                         'btn_close' | translate }}</button>
                 </div>
             </div>

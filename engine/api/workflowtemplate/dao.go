@@ -230,6 +230,23 @@ func GetInstanceByWorkflowNameAndTemplateIDAndProjectID(db gorp.SqlExecutor, wor
 	return &wti, nil
 }
 
+// GetInstanceByIDForTemplateIDAndProjectIDs returns a workflow template instance by id, template id in project ids.
+func GetInstanceByIDForTemplateIDAndProjectIDs(db gorp.SqlExecutor, id, templateID int64, projectIDs []int64) (*sdk.WorkflowTemplateInstance, error) {
+	wti := sdk.WorkflowTemplateInstance{}
+
+	if err := db.SelectOne(&wti,
+		"SELECT * FROM workflow_template_instance WHERE id = $1 AND workflow_template_id = $2 AND project_id = ANY(string_to_array($3, ',')::int[])",
+		id, templateID, gorpmapping.IDsToQueryString(projectIDs),
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "Cannot get workflow template instance")
+	}
+
+	return &wti, nil
+}
+
 // InsertInstanceAudit for workflow template instance in database.
 func InsertInstanceAudit(db gorp.SqlExecutor, awti *sdk.AuditWorkflowTemplateInstance) error {
 	return sdk.WrapError(gorpmapping.Insert(db, awti), "Unable to insert audit for workflow template instance %d", awti.WorkflowTemplateInstanceID)
