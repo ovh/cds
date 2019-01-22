@@ -1,6 +1,0 @@
-<ul>
-    <li *ngFor="let item of workflowItems; let i = index" [class.last]="i === workflowItems.length -1">
-        <app-application-workflow-item [ready]="ready" [project]="project" [remotes]="remotes" [workflowItem]="item" [orientation]="orientation" [application]="application" [applicationFilter]="applicationFilter"></app-application-workflow-item>
-        <app-application-tree-workflow *ngIf="item.subPipelines" [ready]="ready" [project]="project" [remotes]="remotes" [workflowItems]="item.subPipelines" [orientation]="orientation" [application]="application" [applicationFilter]="applicationFilter"></app-application-tree-workflow>
-    </li>
-</ul>

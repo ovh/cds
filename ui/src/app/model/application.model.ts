@@ -1,17 +1,11 @@
-import {WorkflowItem} from './application.workflow.model';
-import {GroupPermission} from './group.model';
-import {Hook} from './hook.model';
-import {Key} from './keys.model';
-import {Metric} from './metric.model';
-import {Notification} from './notification.model';
-import {Parameter} from './parameter.model';
-import {Pipeline, PipelineBuild} from './pipeline.model';
-import {RepositoryPoller} from './polling.model';
-import {Scheduler} from './scheduler.model';
-import {Usage} from './usage.model';
-import {Variable} from './variable.model';
-import {VCSStrategy} from './vcs.model';
-import {WorkflowRun} from './workflow.run.model';
+import { GroupPermission } from './group.model';
+import { Key } from './keys.model';
+import { Metric } from './metric.model';
+import { Notification } from './notification.model';
+import { Usage } from './usage.model';
+import { Variable } from './variable.model';
+import { VCSStrategy } from './vcs.model';
+import { WorkflowRun } from './workflow.run.model';
 
 export const applicationNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -22,17 +16,11 @@ export class Application {
     icon: string;
     groups: Array<GroupPermission>;
     variables: Array<Variable>;
-    pipelines: Array<ApplicationPipeline>;
-    pipelines_build: Array<PipelineBuild>;
     permission: number;
     notifications: Array<Notification>;
     last_modified: string;
     vcs_server: string;
     repository_fullname: string;
-    pollers: Array<RepositoryPoller>;
-    hooks: Array<Hook>;
-    workflows: Array<WorkflowItem>;
-    schedulers: Array<Scheduler>;
     usage: Usage;
     keys: Array<Key>;
     vcs_strategy: VCSStrategy;
@@ -57,19 +45,6 @@ export class Application {
       }
       return true;
     }
-}
-
-export class ApplicationPipeline {
-    id: number;
-    pipeline: Pipeline;
-    parameters: Array<Parameter>;
-    last_modified: number;
-}
-
-export interface ApplicationFilter {
-    remote: string;
-    branch: string;
-    version: string;
 }
 
 export class Vulnerability {
