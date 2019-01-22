@@ -331,6 +331,7 @@
   "common_create_as_code": "Create as code",
   "common_edit_ui": "Edit with UI",
   "common_create_ui": "Create with UI",
+  "common_migrate": "Migrate",
 
   "coverage_branches_title": "Covered branches: ",
   "coverage_functions_title": "Covered functions: ",
@@ -1109,6 +1110,7 @@
   "workflow_template_instances": "Instances",
   "workflow_template_help_line_1": "Your workflow was not generated from a template.",
   "workflow_template_help_line_2": "A workflow template allows you to quickly create then update a workflow and its components.",
+  "workflow_template_help_line_3": "You can init a new template from current workflow.",
   "workflow_template_update_title": "Update workflow from template",
   "workflow_template_update_info_btn": "Show differences with new version",
   "workflow_template_update_info_line_1": "Apply will override your existing workflow and components according to the latest version of selected template.",
@@ -1125,6 +1127,7 @@
   "workflow_template_bulk_select_instances": "Select instances",
   "workflow_template_bulk_fill_parameters": "Fill parameters",
   "workflow_template_bulk_fill_run": "Run",
+  "workflow_template_init_from_workflow": "Init a template",
 
   "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."

@@ -218,6 +218,14 @@ export class WorkflowComponent implements OnInit {
         }
     }
 
+    initTemplateFromWorkflow(): void {
+        this._router.navigate(['settings', 'workflow-template', 'add'], {
+            queryParams: {
+                from: this.project.name + '/' + this.workflow.name,
+            }
+        });
+    }
+
     migrateAsCode(): void {
         this.loadingPopupButton = true;
         this._workflowStore.migrateAsCode(this.project.key, this.workflow.name)

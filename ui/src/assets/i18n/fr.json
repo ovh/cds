@@ -331,6 +331,7 @@
   "common_create_as_code": "Créer en code",
   "common_edit_ui": "Editer avec l'interface",
   "common_create_ui": "Créer avec l'interface",
+  "common_migrate": "Migrer",
 
   "coverage_branches_title": "Branches couvertes : ",
   "coverage_functions_title": "Fonctions couvertes : ",
@@ -1110,6 +1111,7 @@
   "workflow_template_instances": "Instances",
   "workflow_template_help_line_1": "Votre workflow n'a pas été généré depuis un modèle de workflow.",
   "workflow_template_help_line_2": "Un modèle de workflow vous permet d'initialiser et de mettre à jour un workflow et ses composants rapidement.",
+  "workflow_template_help_line_3": "Vous pouvez initialiser un nouveau modèle depuis le workflow courant.",
   "workflow_template_update_title": "Mise à jour du workflow à partir du modèle",
   "workflow_template_update_info_btn": "Afficher les différences de la nouvelle version",
   "workflow_template_update_info_line_1": "Appliquer le template va écraser le workflow existant ainsi que ses composants avec la dernière version du modèle sélectionné.",
@@ -1126,6 +1128,7 @@
   "workflow_template_bulk_select_instances": "Sélection des instances",
   "workflow_template_bulk_fill_parameters": "Saisie des paramètres",
   "workflow_template_bulk_fill_run": "Exécution",
+  "workflow_template_init_from_workflow": "Initialiser un modèle",
 
   "workflow_repository_help_line_1": "Votre workflow n'a pas été importé depuis votre code.",
   "workflow_repository_help_line_2": "Gérez votre workflow \"as code\" depuis votre gestionnaire de dépôt pour modifier automatiquement celui-ci avec les changements sur vos branches."
