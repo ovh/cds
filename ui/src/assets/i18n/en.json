@@ -149,6 +149,7 @@
   "btn_edit": "Edit",
   "btn_add": "Add",
   "btn_back": "Back",
+  "btn_filter": "Filter",
 
   "cdsctl_choice_os": "Choose your OS",
   "cdsctl_choice_arch": "Choose your architecture",
