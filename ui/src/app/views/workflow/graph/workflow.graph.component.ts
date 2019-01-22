@@ -110,7 +110,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     initWorkflow() {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph({ align: 'UL', rankdir: this.direction, nodesep: 10, ranksep: 15 });
+        this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction, nodesep: 10, ranksep: 15 });
 
         // Create all nodes
         if (this.workflow.workflow_data && this.workflow.workflow_data.node) {
