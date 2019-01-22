@@ -1,23 +1,23 @@
-import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
-
-import {Injectable} from '@angular/core';
+import { Injectable } from '@angular/core';
 import * as immutable from 'immutable';
-import {map} from 'rxjs/operators';
-import {Application, Vulnerability} from '../../model/application.model';
-import {GroupPermission} from '../../model/group.model';
-import {Hook} from '../../model/hook.model';
-import {NavbarRecentData} from '../../model/navbar.model';
-import {Notification} from '../../model/notification.model';
-import {RepositoryPoller} from '../../model/polling.model';
-import {Project} from '../../model/project.model';
-import {Scheduler} from '../../model/scheduler.model';
-import {Trigger} from '../../model/trigger.model';
-import {Variable} from '../../model/variable.model';
-import {ProjectStore} from '../project/project.store';
-import {WorkflowStore} from '../workflow/workflow.store';
-import {ApplicationService} from './application.service';
+import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Application, Vulnerability } from '../../model/application.model';
+import { GroupPermission } from '../../model/group.model';
+import { Hook } from '../../model/hook.model';
+import { Key } from '../../model/keys.model';
+import { NavbarRecentData } from '../../model/navbar.model';
+import { Notification } from '../../model/notification.model';
+import { RepositoryPoller } from '../../model/polling.model';
+import { Project } from '../../model/project.model';
+import { Scheduler } from '../../model/scheduler.model';
+import { Trigger } from '../../model/trigger.model';
+import { Variable } from '../../model/variable.model';
+import { ProjectStore } from '../project/project.store';
+import { WorkflowStore } from '../workflow/workflow.store';
+import { ApplicationService } from './application.service';
 
-import {Key} from '../../model/keys.model';
+
 
 
 @Injectable()
@@ -60,12 +60,12 @@ export class ApplicationStore {
      * @param appName
      * @returns {Observable<Application>}
      */
-    getApplicationResolver(key: string, appName: string, filter?: {branch: string, remote: string}): Observable<Application> {
+    getApplicationResolver(key: string, appName: string): Observable<Application> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
 
         if (store.size === 0 || !store.get(appKey)) {
-            return this._applicationService.getApplication(key, appName, filter).pipe(map( res => {
+            return this._applicationService.getApplication(key, appName).pipe(map( res => {
                 this._application.next(store.set(appKey, res));
                 return res;
             }));
@@ -113,21 +113,21 @@ export class ApplicationStore {
      * Get an Application
      * @returns {Observable<Application>}
      */
-    getApplications(key: string, appName: string, filter?: {branch: string, remote: string}):
+    getApplications(key: string, appName: string):
         Observable<immutable.Map<string, Application>> {
 
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
         if (appName && !store.get(appKey)) {
-            this.resync(key, appName, filter);
+            this.resync(key, appName);
         }
         return new Observable<immutable.Map<string, Application>>(fn => this._application.subscribe(fn));
     }
 
-    resync(key: string, appName: string, filter?: {branch: string, remote: string}) {
+    resync(key: string, appName: string) {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
-        this._applicationService.getApplication(key, appName, filter).subscribe(res => {
+        this._applicationService.getApplication(key, appName).subscribe(res => {
             this._application.next(store.set(appKey, res));
         }, err => {
             this._application.error(err);
@@ -517,7 +517,6 @@ export class ApplicationStore {
         let appToUpdate = cache.get(appKey);
         if (appToUpdate) {
             appToUpdate.last_modified = application.last_modified;
-            appToUpdate.workflows = application.workflows;
             this._application.next(cache.set(appKey, appToUpdate));
             return appToUpdate;
         }
@@ -601,8 +600,6 @@ export class ApplicationStore {
         let appToUpdate = cache.get(appKey);
         if (appToUpdate) {
             appToUpdate.last_modified = application.last_modified;
-            appToUpdate.pipelines = application.pipelines;
-            appToUpdate.workflows = application.workflows;
             this._application.next(cache.set(appKey, appToUpdate));
             return appToUpdate;
         }

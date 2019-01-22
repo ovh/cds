@@ -25,9 +25,6 @@ var (
 		if err := loadApplications(db, store, proj, u); err != nil {
 			return sdk.WrapError(err, "application.loadDefault")
 		}
-		if err := loadApplicationPipelines(db, store, proj, u); err != nil {
-			return sdk.WrapError(err, "application.loadDefault")
-		}
 		if err := loadPermission(db, store, proj, u); err != nil {
 			return sdk.WrapError(err, "application.loadDefault")
 		}
@@ -63,22 +60,6 @@ var (
 			a := &proj.Applications[i]
 			if err := (*application.LoadOptions.WithDeploymentStrategies)(db, store, a, nil); err != nil {
 				return sdk.WrapError(err, "application.loadApplicationWithDeploymentStrategies")
-			}
-		}
-		return nil
-	}
-
-	loadApplicationPipelines = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		if proj.Applications == nil {
-			if err := loadApplications(db, store, proj, nil); err != nil {
-				return sdk.WrapError(err, "application.loadApplicationPipelines")
-			}
-		}
-
-		for i := range proj.Applications {
-			a := &proj.Applications[i]
-			if err := (*application.LoadOptions.WithTriggers)(db, store, a, nil); err != nil {
-				return sdk.WrapError(err, "application.loadApplicationPipelines")
 			}
 		}
 		return nil

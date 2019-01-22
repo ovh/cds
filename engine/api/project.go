@@ -186,7 +186,6 @@ func (api *API) getProjectHandler() service.Handler {
 		withVariables := FormBool(r, "withVariables")
 		withApplications := FormBool(r, "withApplications")
 		withApplicationNames := FormBool(r, "withApplicationNames")
-		withApplicationPipelines := FormBool(r, "withApplicationPipelines")
 		withPipelines := FormBool(r, "withPipelines")
 		withPipelineNames := FormBool(r, "withPipelineNames")
 		withEnvironments := FormBool(r, "withEnvironments")
@@ -211,9 +210,6 @@ func (api *API) getProjectHandler() service.Handler {
 		}
 		if withApplicationNames {
 			opts = append(opts, project.LoadOptions.WithApplicationNames)
-		}
-		if withApplicationPipelines {
-			opts = append(opts, project.LoadOptions.WithApplicationPipelines)
 		}
 		if withPipelines {
 			opts = append(opts, project.LoadOptions.WithPipelines)

@@ -237,7 +237,6 @@ var LoadOptions = struct {
 	WithEnvironments                        LoadOptionFunc
 	WithGroups                              LoadOptionFunc
 	WithPermission                          LoadOptionFunc
-	WithApplicationPipelines                LoadOptionFunc
 	WithApplicationVariables                LoadOptionFunc
 	WithApplicationWithDeploymentStrategies LoadOptionFunc
 	WithKeys                                LoadOptionFunc
@@ -263,7 +262,6 @@ var LoadOptions = struct {
 	WithApplicationNames:                    &loadApplicationNames,
 	WithVariables:                           &loadVariables,
 	WithVariablesWithClearPassword:          &loadVariablesWithClearPassword,
-	WithApplicationPipelines:                &loadApplicationPipelines,
 	WithApplicationVariables:                &loadApplicationVariables,
 	WithKeys:                                &loadKeys,
 	WithWorkflows:                           &loadWorkflows,

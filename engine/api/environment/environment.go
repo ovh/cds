@@ -9,7 +9,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
-	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
@@ -141,44 +140,6 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 	return &env, loadDependencies(db, &env)
 }
 
-// LoadByPipelineName load environments linked to a pipeline
-func LoadByPipelineName(db gorp.SqlExecutor, projectKey, pipName string) ([]sdk.Environment, error) {
-	envs := []sdk.Environment{}
-	query := `SELECT DISTINCT environment.*
-	FROM environment
-	JOIN project ON project.id = environment.project_id
-	JOIN pipeline_trigger ON pipeline_trigger.dest_environment_id = environment.id OR pipeline_trigger.src_environment_id = environment.id
-	JOIN pipeline ON pipeline.id = pipeline_trigger.src_pipeline_id OR pipeline.id = pipeline_trigger.dest_pipeline_id
-	WHERE project.projectKey = $1 AND environment.name != $2 AND pipeline.name = $3`
-
-	if _, err := db.Select(&envs, query, projectKey, sdk.DefaultEnv.Name, pipName); err != nil {
-		if err == sql.ErrNoRows {
-			return envs, nil
-		}
-		return nil, err
-	}
-	return envs, nil
-}
-
-// LoadByApplicationName load environments linked to an application
-func LoadByApplicationName(db gorp.SqlExecutor, projectKey, appName string) ([]sdk.Environment, error) {
-	envs := []sdk.Environment{}
-	query := `SELECT DISTINCT environment.*
-	FROM environment
-	JOIN project ON project.id = environment.project_id
-	JOIN pipeline_trigger ON pipeline_trigger.dest_environment_id = environment.id OR pipeline_trigger.src_environment_id = environment.id
-	JOIN application ON application.id = pipeline_trigger.src_application_id OR application.id = pipeline_trigger.dest_application_id
-	WHERE project.projectKey = $1 AND environment.name != $2 AND application.name = $3`
-
-	if _, err := db.Select(&envs, query, projectKey, sdk.DefaultEnv.Name, appName); err != nil {
-		if err == sql.ErrNoRows {
-			return envs, nil
-		}
-		return nil, err
-	}
-	return envs, nil
-}
-
 // LoadByWorkflowID loads environments from database for a given workflow id
 func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Environment, error) {
 	envs := []sdk.Environment{}
@@ -298,20 +259,6 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 		return sdk.WrapError(err, "Cannot delete environment gorup")
 	}
 
-	// Delete builds
-	query = `DELETE FROM pipeline_build_log where pipeline_build_id IN (
-			SELECT id FROM pipeline_build WHERE environment_id = $1
-		)`
-
-	if _, err := db.Exec(query, environmentID); err != nil {
-		return sdk.WrapError(err, "Cannot delete environment related builds")
-	}
-
-	query = `DELETE FROM pipeline_build where environment_id = $1`
-	if _, err := db.Exec(query, environmentID); err != nil {
-		return sdk.WrapError(err, "Cannot delete environment related builds")
-	}
-
 	// FINALLY delete environment
 	query = `DELETE FROM environment WHERE id=$1`
 	if _, err := db.Exec(query, environmentID); err != nil {
@@ -321,28 +268,6 @@ func DeleteEnvironment(db gorp.SqlExecutor, environmentID int64) error {
 			}
 		}
 		return sdk.WrapError(err, "Cannot delete environment %d", environmentID)
-	}
-
-	// Delete artifacts related to this environments
-	query = `SELECT id FROM artifact where environment_id = $1`
-	rows, errq := db.Query(query, environmentID)
-	if errq != nil {
-		return fmt.Errorf("DeleteEnvironment> Cannot load related artifacts: %s", errq)
-	}
-	defer rows.Close()
-	var ids []int64
-	var id int64
-	for rows.Next() {
-		if err := rows.Scan(&id); err != nil {
-			return fmt.Errorf("DeleteEnvironment> cannot scan artifact id: %s", err)
-		}
-		ids = append(ids, id)
-	}
-	rows.Close()
-	for _, id := range ids {
-		if err := artifact.Delete(db, id); err != nil {
-			return fmt.Errorf("DeleteEnvironment> Cannot delete artifact: %s", err)
-		}
 	}
 
 	return nil

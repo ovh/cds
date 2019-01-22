@@ -36,8 +36,6 @@ var LoadOptions = struct {
 	Default                        LoadOptionFunc
 	WithVariables                  LoadOptionFunc
 	WithVariablesWithClearPassword LoadOptionFunc
-	WithPipelines                  LoadOptionFunc
-	WithTriggers                   LoadOptionFunc
 	WithGroups                     LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithClearKeys                  LoadOptionFunc
@@ -49,8 +47,6 @@ var LoadOptions = struct {
 	Default:                        &loadDefaultDependencies,
 	WithVariables:                  &loadVariables,
 	WithVariablesWithClearPassword: &loadVariablesWithClearPassword,
-	WithPipelines:                  &loadPipelines,
-	WithTriggers:                   &loadTriggers,
 	WithGroups:                     &loadGroups,
 	WithKeys:                       &loadKeys,
 	WithClearKeys:                  &loadClearKeys,
@@ -174,39 +170,6 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 	}
 
 	return apps, nil
-}
-
-// LoadByEnvName loads applications from database for a given project key and environment name
-func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Application, error) {
-	apps := []sdk.Application{}
-	query := fmt.Sprintf(`SELECT DISTINCT %s FROM application
-	JOIN pipeline_trigger ON application.id = pipeline_trigger.src_application_id OR application.id = pipeline_trigger.dest_application_id
-	JOIN environment ON environment.id = pipeline_trigger.src_environment_id OR environment.id = pipeline_trigger.dest_environment_id
-	JOIN project ON application.project_id = project.id
-	WHERE project.projectkey = $1 AND environment.name = $2`, appRows)
-
-	if _, err := db.Select(&apps, query, projKey, envName); err != nil {
-		if err == sql.ErrNoRows {
-			return apps, nil
-		}
-		return nil, sdk.WrapError(err, "Unable to load applications linked to environment %s", envName)
-	}
-
-	return apps, nil
-}
-
-// LoadByPipeline Load application where pipeline is attached
-func LoadByPipeline(db gorp.SqlExecutor, store cache.Store, pipelineID int64, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
-	query := fmt.Sprintf(`SELECT distinct %s
-		 FROM application
-		 JOIN application_pipeline ON application.id = application_pipeline.application_id
-		 WHERE application_pipeline.pipeline_id = $1
-		 ORDER BY application.name`, appRows)
-	app, err := loadapplications(db, store, u, opts, query, pipelineID)
-	if err != nil {
-		return nil, sdk.WrapError(err, "LoadByPipeline (%d)", pipelineID)
-	}
-	return app, nil
 }
 
 func load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {

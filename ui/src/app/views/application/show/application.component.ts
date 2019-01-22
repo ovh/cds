@@ -1,28 +1,24 @@
-import {Component, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
-import {environment} from '../../../../environments/environment';
-import {Application, ApplicationFilter} from '../../../model/application.model';
-import {Environment} from '../../../model/environment.model';
-import {PermissionValue} from '../../../model/permission.model';
-import {Pipeline} from '../../../model/pipeline.model';
-import {Project} from '../../../model/project.model';
-import {User} from '../../../model/user.model';
-import {Workflow} from '../../../model/workflow.model';
-import {ApplicationStore} from '../../../service/application/application.store';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {ProjectStore} from '../../../service/project/project.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {VariableEvent} from '../../../shared/variable/variable.event.model';
-import {CDSWebWorker} from '../../../shared/worker/web.worker';
-import {ApplicationNotificationListComponent} from './notifications/list/notification.list.component';
-import {NotificationEvent} from './notifications/notification.event';
-import {ApplicationWorkflowComponent} from './workflow/application.workflow.component';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { Application } from '../../../model/application.model';
+import { Environment } from '../../../model/environment.model';
+import { PermissionValue } from '../../../model/permission.model';
+import { Pipeline } from '../../../model/pipeline.model';
+import { Project } from '../../../model/project.model';
+import { User } from '../../../model/user.model';
+import { Workflow } from '../../../model/workflow.model';
+import { ApplicationStore } from '../../../service/application/application.store';
+import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { ProjectStore } from '../../../service/project/project.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { WarningModalComponent } from '../../../shared/modal/warning/warning.component';
+import { PermissionEvent } from '../../../shared/permission/permission.event.model';
+import { ToastService } from '../../../shared/toast/ToastService';
+import { VariableEvent } from '../../../shared/variable/variable.event.model';
+import { CDSWebWorker } from '../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-application-show',
@@ -30,7 +26,7 @@ import {ApplicationWorkflowComponent} from './workflow/application.workflow.comp
     styleUrls: ['./application.scss']
 })
 @AutoUnsubscribe()
-export class ApplicationShowComponent implements OnInit, OnDestroy {
+export class ApplicationShowComponent implements OnInit {
 
     // Flag to show the page or not
     public readyApp = false;
@@ -47,30 +43,18 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     applicationSubscription: Subscription;
     projectSubscription: Subscription;
     workerSubscription: Subscription;
+    _routeParamsSub: Subscription;
+    _routeDataSub: Subscription;
+    _queryParamsSub: Subscription;
     worker: CDSWebWorker;
 
     // Selected tab
     selectedTab = 'home';
 
-    @ViewChildren(ApplicationWorkflowComponent)
-    workflowComponentList: QueryList<ApplicationWorkflowComponent>;
-
     @ViewChild('varWarning')
     private varWarningModal: WarningModalComponent;
     @ViewChild('permWarning')
     private permWarningModal: WarningModalComponent;
-    @ViewChild('notifWarning')
-    private notifWarningModal: WarningModalComponent;
-
-    @ViewChild('notificationList')
-    private notificationListComponent: ApplicationNotificationListComponent;
-
-    // Filter
-    appFilter: ApplicationFilter = {
-        remote: '',
-        branch: '',
-        version: ' '
-    };
 
     // queryparam for breadcrum
     workflowName: string;
@@ -93,20 +77,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 private _projectStore: ProjectStore) {
         this.currentUser = this._authStore.getUser();
         // Update data if route change
-        this._route.data.subscribe(datas => {
+        this._routeDataSub = this._route.data.subscribe(datas => {
             this.project = datas['project'];
-        });
-
-        this._route.queryParams.subscribe(queryParams => {
-            this.appFilter = {
-                remote: queryParams['remote'] || '',
-                branch: queryParams['branch'] || '',
-                version: queryParams['version'] || ' '
-            };
-
-            if (this.project && this.application) {
-                this.startWorker(this.project.key);
-            }
         });
 
         if (this._route.snapshot && this._route.queryParams) {
@@ -115,7 +87,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             this.workflowNodeRun = this._route.snapshot.queryParams['node'];
         }
         this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
-        this._route.params.subscribe(params => {
+        this._routeParamsSub = this._route.params.subscribe(params => {
             let key = params['key'];
             let appName = params['appName'];
             if (key && appName) {
@@ -124,11 +96,10 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 }
                 if (this.application && this.application.name !== appName) {
                     this.application = null;
-                    this.stopWorker();
                 }
                 if (!this.application) {
                     this.applicationSubscription = this._applicationStore
-                        .getApplications(key, appName, this.appFilter).subscribe(apps => {
+                        .getApplications(key, appName).subscribe(apps => {
                         if (apps) {
                             let updatedApplication = apps.get(key + '-' + appName);
                             if (updatedApplication && !updatedApplication.externalChange) {
@@ -139,16 +110,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                                 this.pipelines = updatedApplication.usage.pipelines || [];
                                 this.usageCount = this.pipelines.length + this.environments.length + this.workflows.length;
 
-                                // Start worker
-                                this.startWorker(key);
-
                                 // Update recent application viewed
                                 this._applicationStore.updateRecentApplication(key, this.application);
-
-                                // Switch workflow
-                                if (this.workflowComponentList && this.workflowComponentList.length > 0) {
-                                    this.workflowComponentList.first.switchApplication(this.application);
-                                }
                             }
                         }
                     }, () => {
@@ -159,13 +122,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy(): void {
-        this.appFilter.remote = '';
-        this.stopWorker();
-    }
-
     ngOnInit() {
-        this._route.queryParams.subscribe(params => {
+       this._queryParamsSub = this._route.queryParams.subscribe(params => {
             let tab = params['tab'];
             if (tab) {
                 this.selectedTab = tab;
@@ -179,55 +137,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 }
                 this.project = proj.get(this.project.key);
             });
-    }
-
-    stopWorker(): void {
-        if (this.worker) {
-            this.worker.stop();
-        }
-    }
-
-    /**
-     * Start workers to pull workflow.
-     */
-    startWorker(key: string): void {
-        this.stopWorker();
-
-        if (!this.appFilter.branch) {
-            this.appFilter.branch = 'master';
-        }
-        if (this.application.workflows && this.application.workflows.length > 0) {
-            let msgToSend = {
-                'user': this.currentUser,
-                'session': this._authStore.getSessionToken(),
-                'api': environment.apiURL,
-                'key': key,
-                'appName': this.application.name,
-                'branch': this.appFilter.branch,
-                'remote': this.appFilter.remote,
-                'version': this.appFilter.version
-            };
-
-            this.worker = new CDSWebWorker('assets/worker/web/workflow.js?appName=' + this.application.name);
-            this.workerSubscription = this.worker.response().subscribe(msg => {
-                if (this.application.workflows && this.workflowComponentList
-                    && this.workflowComponentList.length > 0 && msg && msg !== '') {
-                    this.workflowComponentList.first.refreshWorkflow(JSON.parse(msg));
-                }
-            });
-            this.worker.start(msgToSend);
-        }
-    }
-
-    /**
-     * Reinit worker the the current tab.
-     *
-     */
-    changeWorkerFilter(destroy: boolean): void {
-        this.stopWorker();
-        if (!destroy) {
-            this.startWorker(this.project.key);
-        }
     }
 
     showTab(tab: string): void {
@@ -265,61 +174,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                         event.variable.updating = false;
                     })).subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_deleted'));
-                    });
-                    break;
-            }
-        }
-    }
-
-    notificationEvent(event: NotificationEvent, skip?: boolean): void {
-        if (!skip && this.application.externalChange) {
-            this.notifWarningModal.show(event);
-        } else {
-            switch (event.type) {
-                case 'add':
-                    this.notifFormLoading = true;
-                    this._applicationStore.addNotifications(this.project.key, this.application.name, event.notifications).subscribe(() => {
-                        this._toast.success('', this._translate.instant('notifications_added'));
-                        if (this.notificationListComponent) {
-                            this.notificationListComponent.close();
-                        }
-                        this.notifFormLoading = false;
-                    }, () => {
-                        this.notifFormLoading = false;
-                    });
-                    break;
-                case 'update':
-                    this.notifFormLoading = true;
-                    this._applicationStore.updateNotification(
-                        this.project.key,
-                        this.application.name,
-                        event.notifications[0].pipeline.name,
-                        event.notifications[0]
-                    ).subscribe(() => {
-                        if (this.notificationListComponent) {
-                            this.notificationListComponent.close();
-                        }
-                        this.notifFormLoading = false;
-                        this._toast.success('', this._translate.instant('notification_updated'));
-                    }, () => {
-                        this.notifFormLoading = false;
-                    });
-                    break;
-                case 'delete':
-                    this.notifFormLoading = true;
-                    this._applicationStore.deleteNotification(
-                        this.project.key,
-                        this.application.name,
-                        event.notifications[0].pipeline.name,
-                        event.notifications[0].environment.name
-                    ).subscribe(() => {
-                        if (this.notificationListComponent) {
-                            this.notificationListComponent.close();
-                        }
-                        this.notifFormLoading = false;
-                        this._toast.success('', this._translate.instant('notifications_deleted'));
-                    }, () => {
-                        this.notifFormLoading = false;
                     });
                     break;
             }
