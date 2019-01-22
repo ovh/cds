@@ -149,53 +149,6 @@ func loadApplicationUsage(db gorp.SqlExecutor, projKey, appName string) (sdk.Usa
 	return usage, nil
 }
 
-func (api *API) getApplicationBranchHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
-		remote := r.FormValue("remote")
-
-		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load project %s from db", projectKey)
-		}
-
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), application.LoadOptions.Default)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load application %s for project %s from db", applicationName, projectKey)
-		}
-
-		var branches []sdk.VCSBranch
-		if app.RepositoryFullname != "" && app.VCSServer != "" {
-			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
-			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
-			}
-			if remote != "" && remote != app.RepositoryFullname {
-				brs, errB := client.Branches(ctx, remote)
-				if errB != nil {
-					return sdk.WrapError(errB, "getApplicationBranchHandler> Cannot get branches from repository %s", remote)
-				}
-				for _, br := range brs {
-					branches = append(branches, br)
-				}
-			} else {
-				var errb error
-				branches, errb = client.Branches(ctx, app.RepositoryFullname)
-				if errb != nil {
-					return sdk.WrapError(errb, "getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
-				}
-			}
-		}
-
-		//Yo analyze branch and delete pipeline_build for old branches...
-
-		return service.WriteJSON(w, branches, http.StatusOK)
-	}
-}
-
 func (api *API) getApplicationVCSInfosHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -252,50 +205,6 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		resp.Remotes = remotes
 
 		return service.WriteJSON(w, resp, http.StatusOK)
-	}
-}
-
-func (api *API) getApplicationRemoteHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
-
-		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load project %s", projectKey)
-		}
-
-		app, errL := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), application.LoadOptions.Default)
-		if errL != nil {
-			return sdk.WrapError(errL, "getApplicationRemoteHandler: Cannot load application %s for project %s", applicationName, projectKey)
-		}
-
-		remotes := []sdk.VCSRemote{}
-		var prs []sdk.VCSPullRequest
-		if app.RepositoryFullname != "" && app.VCSServer != "" {
-			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
-			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
-			}
-			var errb error
-			prs, errb = client.PullRequests(ctx, app.RepositoryFullname)
-			if errb != nil {
-				return sdk.WrapError(errb, "getApplicationRemoteHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
-			}
-
-			found := map[string]bool{app.RepositoryFullname: true}
-			remotes = append(remotes, sdk.VCSRemote{Name: app.RepositoryFullname})
-			for _, pr := range prs {
-				if _, exist := found[pr.Head.Repo]; !exist {
-					remotes = append(remotes, sdk.VCSRemote{URL: pr.Head.CloneURL, Name: pr.Head.Repo})
-				}
-				found[pr.Head.Repo] = true
-			}
-		}
-
-		return service.WriteJSON(w, remotes, http.StatusOK)
 	}
 }
 

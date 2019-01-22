@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/service"
 
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -237,22 +236,12 @@ func (api *API) getPipelineHandler() service.Handler {
 			p.Usage = &sdk.Usage{}
 		}
 
-		// TODO: add withApplication
-
 		if withWorkflows {
 			wf, errW := workflow.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
 			if errW != nil {
 				return sdk.WrapError(errW, "getPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
 			}
 			p.Usage.Workflows = wf
-		}
-
-		if withEnvironments {
-			envs, errE := environment.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
-			if errE != nil {
-				return sdk.WrapError(errE, "getPipelineHandler> Cannot load environments using pipeline %s", p.Name)
-			}
-			p.Usage.Environments = envs
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
