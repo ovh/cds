@@ -1,42 +1,38 @@
 /* tslint:disable:no-unused-variable */
 
-import {HttpRequest} from '@angular/common/http';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {Injector} from '@angular/core';
-import {fakeAsync, getTestBed, TestBed, tick} from '@angular/core/testing';
-import {ActivatedRoute, ActivatedRouteSnapshot, Router} from '@angular/router';
-import {RouterTestingModule} from '@angular/router/testing';
-import {TranslateLoader, TranslateModule, TranslateParser, TranslateService} from '@ngx-translate/core';
-import {Map} from 'immutable';
+import { HttpRequest } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { Injector } from '@angular/core';
+import { fakeAsync, getTestBed, TestBed, tick } from '@angular/core/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { Map } from 'immutable';
+import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import {of} from 'rxjs';
-import {Application} from '../../../model/application.model';
-import {Environment} from '../../../model/environment.model';
-import {GroupPermission} from '../../../model/group.model';
-import {Notification} from '../../../model/notification.model';
-import {Pipeline} from '../../../model/pipeline.model';
-import {Project} from '../../../model/project.model';
-import {Usage} from '../../../model/usage.model';
-import {Variable} from '../../../model/variable.model';
-import {ApplicationService} from '../../../service/application/application.service';
-import {ApplicationStore} from '../../../service/application/application.store';
-import {ApplicationWorkflowService} from '../../../service/application/application.workflow.service';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {EnvironmentService} from '../../../service/environment/environment.service';
-import {NavbarService} from '../../../service/navbar/navbar.service';
-import {PipelineService} from '../../../service/pipeline/pipeline.service';
-import {ProjectService} from '../../../service/project/project.service';
-import {ProjectStore} from '../../../service/project/project.store';
-import {ServicesModule, WorkflowStore} from '../../../service/services.module';
-import {VariableService} from '../../../service/variable/variable.service';
-import {WorkflowService} from '../../../service/workflow/workflow.service';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {SharedModule} from '../../../shared/shared.module';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {VariableEvent} from '../../../shared/variable/variable.event.model';
-import {ApplicationModule} from '../application.module';
-import {ApplicationShowComponent} from './application.component';
-import {NotificationEvent} from './notifications/notification.event';
+import { Application } from '../../../model/application.model';
+import { GroupPermission } from '../../../model/group.model';
+import { Project } from '../../../model/project.model';
+import { Usage } from '../../../model/usage.model';
+import { Variable } from '../../../model/variable.model';
+import { ApplicationService } from '../../../service/application/application.service';
+import { ApplicationStore } from '../../../service/application/application.store';
+import { ApplicationWorkflowService } from '../../../service/application/application.workflow.service';
+import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { EnvironmentService } from '../../../service/environment/environment.service';
+import { NavbarService } from '../../../service/navbar/navbar.service';
+import { PipelineService } from '../../../service/pipeline/pipeline.service';
+import { ProjectService } from '../../../service/project/project.service';
+import { ProjectStore } from '../../../service/project/project.store';
+import { ServicesModule, WorkflowStore } from '../../../service/services.module';
+import { VariableService } from '../../../service/variable/variable.service';
+import { WorkflowService } from '../../../service/workflow/workflow.service';
+import { PermissionEvent } from '../../../shared/permission/permission.event.model';
+import { SharedModule } from '../../../shared/shared.module';
+import { ToastService } from '../../../shared/toast/ToastService';
+import { VariableEvent } from '../../../shared/variable/variable.event.model';
+import { ApplicationModule } from '../application.module';
+import { ApplicationShowComponent } from './application.component';
 
 describe('CDS: Application', () => {
 
@@ -318,59 +314,6 @@ describe('CDS: Application', () => {
         fixture.componentInstance.groupEvent(new PermissionEvent('delete', gp));
         tick(250);
         expect(appStore.removePermission).toHaveBeenCalledWith('key1', 'app1', gp);
-    }));
-
-    it('should run add/update/delete notification', fakeAsync( () => {
-        let call = 0;
-
-        prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
-
-        spyOn(appStore, 'getApplications').and.callFake( () => {
-            let mapApp: Map<string, Application> = Map<string, Application>();
-            let app: Application = new Application();
-            app.name = 'app1';
-            app.usage = new Usage();
-            return of(mapApp.set('key1-app1', app));
-        });
-
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        fixture.componentInstance.ngOnInit();
-
-        spyOn(appStore, 'addNotifications').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
-        });
-
-        let n: Notification = new Notification();
-        n.pipeline = new Pipeline();
-        n.pipeline.name = 'pip1';
-        n.environment = new Environment();
-        n.environment.name = 'production';
-        let notifs = new Array<Notification>();
-        notifs.push(n);
-        fixture.componentInstance.notificationEvent(new NotificationEvent('add', notifs));
-        expect(appStore.addNotifications).toHaveBeenCalledWith('key1', 'app1', notifs);
-
-        spyOn(appStore, 'updateNotification').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
-        });
-
-        fixture.componentInstance.notificationEvent(new NotificationEvent('update', notifs));
-        expect(appStore.updateNotification).toHaveBeenCalledWith('key1', 'app1', 'pip1', n);
-
-        spyOn(appStore, 'deleteNotification').and.callFake(() => {
-            let app: Application = new Application();
-            return of(app);
-        });
-
-        fixture.componentInstance.notificationEvent(new NotificationEvent('delete', notifs));
-        tick(250);
-        expect(appStore.deleteNotification).toHaveBeenCalledWith('key1', 'app1', 'pip1', 'production');
     }));
 });
 
