@@ -25,6 +25,8 @@ export class WorkflowTemplateAddComponent implements OnInit {
     path: Array<PathItem>;
     errors: Array<WorkflowTemplateError>;
     queryParamsSub: Subscription;
+    projectKey: string;
+    workflowName: string;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -59,6 +61,8 @@ export class WorkflowTemplateAddComponent implements OnInit {
 
     initFromWorkflow(projectKey: string, workflowName: string) {
         this._workflowService.pullWorkflow(projectKey, workflowName).subscribe(w => {
+            this.projectKey = projectKey;
+            this.workflowName = workflowName;
             this.workflowTemplate = <WorkflowTemplate>{
                 editable: true,
                 value: w.workflow.value,
