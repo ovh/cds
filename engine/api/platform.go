@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/platform"
-	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -60,14 +59,6 @@ func (api *API) postPlatformModelHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to check if model %s exist", m.Name)
 		} else if exist {
 			return sdk.NewError(sdk.ErrConflict, fmt.Errorf("platform model %s already exist", m.Name))
-		}
-
-		if m.PluginName != "" {
-			p, err := plugin.LoadByName(tx, m.PluginName)
-			if err != nil {
-				return sdk.WrapError(err, "postPlatformModelHandler")
-			}
-			m.PluginID = &p.ID
 		}
 
 		if err := platform.InsertModel(tx, m); err != nil {
@@ -120,18 +111,8 @@ func (api *API) putPlatformModelHandler() service.Handler {
 		}
 
 		m.ID = old.ID
-		m.PluginID = old.PluginID
-
-		if m.PluginName != "" {
-			p, err := plugin.LoadByName(tx, m.PluginName)
-			if err != nil {
-				return sdk.WrapError(err, "putPlatformModelHandler")
-			}
-			m.PluginID = &p.ID
-		}
-
 		if err := platform.UpdateModel(tx, m); err != nil {
-			return sdk.WithStack(err)
+			return err
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -207,7 +188,7 @@ func propagatePublicPlatformModelOnProject(db gorp.SqlExecutor, store cache.Stor
 		}
 		oldPP.Config = m.DefaultConfig
 		if err := platform.UpdatePlatform(db, pp); err != nil {
-			return sdk.WrapError(err, "unable to update project platform %s", pp.Name)
+			return err
 		}
 		event.PublishUpdateProjectPlatform(&p, oldPP, pp, u)
 	}
@@ -227,7 +208,7 @@ func (api *API) deletePlatformModelHandler() service.Handler {
 
 		old, err := platform.LoadModelByName(tx, name, false)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to load model")
+			return err
 		}
 
 		if err := platform.DeleteModel(tx, old.ID); err != nil {

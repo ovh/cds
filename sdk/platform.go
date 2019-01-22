@@ -121,8 +121,6 @@ type PlatformModel struct {
 	Icon                    string                    `json:"icon" db:"icon" yaml:"icon"`
 	DefaultConfig           PlatformConfig            `json:"default_config" db:"-" yaml:"default_config"`
 	DeploymentDefaultConfig PlatformConfig            `json:"deployment_default_config" db:"-" yaml:"deployment_default_config"`
-	PluginID                *int64                    `json:"-" db:"grpc_plugin_id" yaml:"-"`
-	PluginName              string                    `json:"plugin_name,omitempty" db:"-" yaml:"plugin,omitempty"`
 	PublicConfigurations    map[string]PlatformConfig `json:"public_configurations,omitempty" db:"-" yaml:"public_configurations"`
 	Disabled                bool                      `json:"disabled" db:"disabled" yaml:"disabled"`
 	Hook                    bool                      `json:"hook" db:"hook" yaml:"hook" cli:"hooks_supported"`

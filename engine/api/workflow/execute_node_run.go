@@ -453,12 +453,12 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 }
 
 func getPlatformPluginBinaries(db gorp.SqlExecutor, runContext nodeRunContext) ([]sdk.GRPCPluginBinary, error) {
-	if runContext.ProjectPlatform.Model.PluginName != "" {
-		p, err := plugin.LoadByName(db, runContext.ProjectPlatform.Model.PluginName)
+	if runContext.ProjectPlatform.Model.ID > 0 {
+		plugin, err := plugin.LoadByPlatformModelIDAndType(db, runContext.ProjectPlatform.Model.ID, sdk.GRPCPluginDeploymentPlatform)
 		if err != nil {
-			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin %s, %v", runContext.ProjectPlatform.Model.PluginName, err)
+			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin for platform model id %d, %v", runContext.ProjectPlatform.Model.ID, err)
 		}
-		return p.Binaries, nil
+		return plugin.Binaries, nil
 	}
 	return nil, nil
 }

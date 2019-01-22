@@ -48,7 +48,7 @@ func runDeployApplication(w *currentWorker) BuiltInAction {
 
 		if binary == nil {
 			res := sdk.Result{
-				Reason: fmt.Sprintf("Unable to retrieve deployment platform binary named %s... Aborting", pf.Model.PluginName),
+				Reason: fmt.Sprintf("Unable to retrieve the plugin for deployment platform %s... Aborting", pf.Model.Name),
 				Status: sdk.StatusFail.String(),
 			}
 			sendLog(res.Reason)
