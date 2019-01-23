@@ -42,9 +42,14 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 	}
 
 	// Export workflow
-	buf := new(bytes.Buffer)
-	if err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, u, buf, exportentities.WorkflowSkipIfOnlyOneRepoWebhook); err != nil {
+	pull, err := Pull(ctx, db, store, proj, wf.Name, exportentities.FormatYAML, encryptFunc, u, exportentities.WorkflowSkipIfOnlyOneRepoWebhook)
+	if err != nil {
 		return nil, sdk.WrapError(err, "cannot pull workflow")
+	}
+
+	buf := new(bytes.Buffer)
+	if err := pull.Tar(buf); err != nil {
+		return nil, sdk.WrapError(err, "cannot tar pulled workflow")
 	}
 
 	var vcsStrategy = app.RepositoryStrategy

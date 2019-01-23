@@ -229,7 +229,7 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 		return err
 	}
 	if err := tw.WriteHeader(&tar.Header{
-		Name: fmt.Sprintf("%s.yml", wor.Name),
+		Name: fmt.Sprintf(exportentities.PullWorkflowName, wor.Name),
 		Mode: 0644,
 		Size: int64(len(bs)),
 	}); err != nil {
@@ -254,7 +254,7 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 			return err
 		}
 		if err := tw.WriteHeader(&tar.Header{
-			Name: fmt.Sprintf("%s.pip.yml", pip.Name),
+			Name: fmt.Sprintf(exportentities.PullPipelineName, pip.Name),
 			Mode: 0644,
 			Size: int64(len(bs)),
 		}); err != nil {
@@ -280,7 +280,7 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 			return err
 		}
 		if err := tw.WriteHeader(&tar.Header{
-			Name: fmt.Sprintf("%s.app.yml", app.Name),
+			Name: fmt.Sprintf(exportentities.PullApplicationName, app.Name),
 			Mode: 0644,
 			Size: int64(len(bs)),
 		}); err != nil {
@@ -306,7 +306,7 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 			return err
 		}
 		if err := tw.WriteHeader(&tar.Header{
-			Name: fmt.Sprintf("%s.env.yml", env.Name),
+			Name: fmt.Sprintf(exportentities.PullEnvironmentName, env.Name),
 			Mode: 0644,
 			Size: int64(len(bs)),
 		}); err != nil {
