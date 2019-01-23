@@ -36,7 +36,7 @@ func GetAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Workflow, error) {
 	ws := []sdk.Workflow{}
 
 	if _, err := db.Select(&ws,
-		`SELECT * FROM workflow WHERE id = ANY(string_to_array($1, ',')::int[])`,
+		`SELECT id, name FROM workflow WHERE id = ANY(string_to_array($1, ',')::int[])`,
 		gorpmapping.IDsToQueryString(ids),
 	); err != nil {
 		return nil, sdk.WrapError(err, "Cannot get workflows")
@@ -47,13 +47,14 @@ func GetAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Workflow, error) {
 
 // LoadOptions custom option for loading workflow
 type LoadOptions struct {
-	DeepPipeline  bool
-	WithoutNode   bool
-	Base64Keys    bool
-	OnlyRootNode  bool
-	WithFavorites bool
-	WithLabels    bool
-	WithIcon      bool
+	DeepPipeline          bool
+	WithoutNode           bool
+	Base64Keys            bool
+	OnlyRootNode          bool
+	WithFavorites         bool
+	WithLabels            bool
+	WithIcon              bool
+	WithAsCodeUpdateEvent bool
 }
 
 // CountVarInWorkflowData represents the result of CountVariableInWorkflow function
@@ -544,6 +545,17 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 			return nil, sdk.WrapError(errL, "Load> unable to load labels")
 		}
 		res.Labels = labels
+	}
+
+	if opts.WithAsCodeUpdateEvent {
+		_, next = observability.Span(ctx, "workflow.load.AddCodeUpdateEvents")
+		asCodeEvents, errAS := LoadAsCodeEvent(db, res.ID)
+		next()
+
+		if errAS != nil {
+			return nil, sdk.WrapError(errAS, "Load> unable to load as code update events")
+		}
+		res.AsCodeEvent = asCodeEvents
 	}
 
 	_, next = observability.Span(ctx, "workflow.load.loadNotifications")

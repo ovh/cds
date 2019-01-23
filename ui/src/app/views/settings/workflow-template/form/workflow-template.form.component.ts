@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Group } from '../../../../model/group.model';
 import { User } from '../../../../model/user.model';
-import { WorkflowTemplate } from '../../../../model/workflow-template.model';
+import { WorkflowTemplate, WorkflowTemplateError, WorkflowTemplateParameter } from '../../../../model/workflow-template.model';
 import { SharedService } from '../../../../shared/shared.service';
 
 @Component({
@@ -16,6 +16,7 @@ export class WorkflowTemplateFormComponent {
     @Output() save = new EventEmitter();
     @Output() delete = new EventEmitter();
 
+    _workflowTemplate: WorkflowTemplate;
     @Input() set workflowTemplate(wt: WorkflowTemplate) {
         if (!wt) {
             wt = new WorkflowTemplate();
@@ -66,56 +67,68 @@ export class WorkflowTemplateFormComponent {
         }
 
         this.descriptionChange();
-
-        this.codeMirrorConfig.readOnly = !this._workflowTemplate.editable;
     }
     get workflowTemplate() { return this._workflowTemplate; }
 
+    @Input() set errors(es: Array<WorkflowTemplateError>) {
+        this.workflowError = null;
+        this.pipelineErrors = {};
+        this.applicationErrors = {};
+        this.environmentErrors = {};
+
+        if (es) {
+            es.forEach(e => {
+                switch (e.type) {
+                    case 'workflow':
+                        this.workflowError = e;
+                        break;
+                    case 'pipeline':
+                        this.pipelineErrors[e.number] = e;
+                        break;
+                    case 'application':
+                        this.applicationErrors[e.number] = e;
+                        break;
+                    case 'environment':
+                        this.environmentErrors[e.number] = e;
+                        break;
+                    default:
+                        break;
+                }
+            });
+        }
+    }
+
     codeMirrorConfig: any;
-
-    _workflowTemplate: WorkflowTemplate;
     descriptionRows: number;
-
     templateParameterTypes: Array<string>;
     parameterKeys: Array<string>;
-    parameterValues: any;
-    parameterValueAdd: any;
 
+    parameterValues: { [key: number]: WorkflowTemplateParameter };
+    parameterValueAdd: WorkflowTemplateParameter;
     workflowValue: string;
-
-    pipelineValues: any;
+    workflowError: WorkflowTemplateError;
+    pipelineValues: { [key: number]: string; };
+    pipelineErrors: { [key: number]: WorkflowTemplateError; };
     pipelineKeys: Array<number>;
-    pipelineValueAdd: string;
-
-    applicationValues: any;
+    applicationValues: { [key: number]: string; };
+    applicationErrors: { [key: number]: WorkflowTemplateError; };
     applicationKeys: Array<number>;
-    applicationValueAdd: string;
-
-    environmentValues: any;
+    environmentValues: { [key: number]: string; };
+    environmentErrors: { [key: number]: WorkflowTemplateError; };
     environmentKeys: Array<number>;
-    environmentValueAdd: string;
-
     user: User;
-
     changeMessage: string;
 
-    constructor(private _sharedService: SharedService) {
-        this.templateParameterTypes = ['boolean', 'string', 'repository'];
+    constructor(
+        private _sharedService: SharedService
+    ) {
+        this.templateParameterTypes = ['boolean', 'string', 'repository', 'json'];
 
         this.resetParameterValue();
-
-        this.codeMirrorConfig = this.codeMirrorConfig = {
-            matchBrackets: true,
-            autoCloseBrackets: true,
-            mode: 'text/x-yaml',
-            lineWrapping: true,
-            autoRefresh: true,
-            lineNumbers: true,
-        };
     }
 
     resetParameterValue() {
-        this.parameterValueAdd = {};
+        this.parameterValueAdd = new WorkflowTemplateParameter();
     }
 
     descriptionChange() {
@@ -162,9 +175,7 @@ export class WorkflowTemplateFormComponent {
 
     clickAddPipeline() {
         let k = this.pipelineKeys.length;
-        this.pipelineKeys.push(k)
-        this.pipelineValues[k] = this.pipelineValueAdd;
-        this.pipelineValueAdd = '';
+        this.pipelineKeys.push(k);
     }
 
     clickRemovePipeline(key: number) {
@@ -174,9 +185,7 @@ export class WorkflowTemplateFormComponent {
 
     clickAddApplication() {
         let k = this.applicationKeys.length;
-        this.applicationKeys.push(k)
-        this.applicationValues[k] = this.applicationValueAdd;
-        this.applicationValueAdd = '';
+        this.applicationKeys.push(k);
     }
 
     clickRemoveApplication(key: number) {
@@ -186,9 +195,7 @@ export class WorkflowTemplateFormComponent {
 
     clickAddEnvironment() {
         let k = this.environmentKeys.length;
-        this.environmentKeys.push(k)
-        this.environmentValues[k] = this.environmentValueAdd;
-        this.environmentValueAdd = '';
+        this.environmentKeys.push(k);
     }
 
     clickRemoveEnvironment(key: number) {
@@ -206,5 +213,21 @@ export class WorkflowTemplateFormComponent {
     clickRemoveParameter(key: string) {
         this.parameterKeys = this.parameterKeys.filter(k => k !== key);
         delete (this.parameterValues[key]);
+    }
+
+    workflowValueChange(value: string) {
+        this.workflowValue = value;
+    }
+
+    pipelineValueChange(key: number, value: string) {
+        this.pipelineValues[key] = value;
+    }
+
+    applicationValueChange(key: number, value: string) {
+        this.applicationValues[key] = value;
+    }
+
+    environmentValueChange(key: number, value: string) {
+        this.environmentValues[key] = value;
     }
 }

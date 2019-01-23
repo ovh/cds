@@ -33,7 +33,7 @@ func (api *API) getGroupHandler() service.Handler {
 		}
 
 		isGroupAdmin := false
-		currentUser := getUser(ctx)
+		currentUser := deprecatedGetUser(ctx)
 		for _, grAdmin := range g.Admins {
 			if currentUser.ID == grAdmin.ID {
 				isGroupAdmin = true
@@ -56,7 +56,7 @@ func (api *API) deleteGroupHandler() service.Handler {
 		// Get group name in URL
 		vars := mux.Vars(r)
 		name := vars["permGroupName"]
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		g, errl := group.LoadGroup(api.mustDB(), name)
 		if errl != nil {
@@ -190,10 +190,10 @@ func (api *API) getGroupsHandler() service.Handler {
 
 		public := FormBool(r, "withPublic")
 		withoutDefault := FormBool(r, "withoutDefault")
-		if getUser(ctx).Admin {
+		if deprecatedGetUser(ctx).Admin {
 			groups, err = group.LoadGroups(api.mustDB())
 		} else {
-			groups, err = group.LoadGroupByUser(api.mustDB(), getUser(ctx).ID)
+			groups, err = group.LoadGroupByUser(api.mustDB(), deprecatedGetUser(ctx).ID)
 			if public {
 				publicGroups, errl := group.LoadPublicGroups(api.mustDB())
 				if errl != nil {
@@ -252,11 +252,11 @@ func (api *API) addGroupHandler() service.Handler {
 		}
 
 		// Add caller into group
-		if err := group.InsertUserInGroup(tx, g.ID, getUser(ctx).ID, false); err != nil {
-			return sdk.WrapError(err, "Cannot add user %s in group %s", getUser(ctx).Username, g.Name)
+		if err := group.InsertUserInGroup(tx, g.ID, deprecatedGetUser(ctx).ID, false); err != nil {
+			return sdk.WrapError(err, "Cannot add user %s in group %s", deprecatedGetUser(ctx).Username, g.Name)
 		}
 		// and set it admin
-		if err := group.SetUserGroupAdmin(tx, g.ID, getUser(ctx).ID); err != nil {
+		if err := group.SetUserGroupAdmin(tx, g.ID, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot set user group admin")
 		}
 

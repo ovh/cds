@@ -93,7 +93,7 @@ func Do(input string, vars map[string]string) (string, error) {
 				processedExpression[expression] = void{}
 
 				var usedVariables = make(map[string]void, len(vars))
-				var usedHelpers = make(map[string]void, len(interpolateHelperFuncs))
+				var usedHelpers = make(map[string]void, len(InterpolateHelperFuncs))
 				var quotedStuff = []string{}
 				var trimmedExpression = strings.TrimPrefix(expression, "{{")
 				trimmedExpression = strings.TrimSuffix(trimmedExpression, "}}")
@@ -132,7 +132,7 @@ func Do(input string, vars map[string]string) (string, error) {
 
 				unknownHelpers := make([]string, 0, 1000)
 				for h := range usedHelpers {
-					if _, is := interpolateHelperFuncs[h]; !is {
+					if _, is := InterpolateHelperFuncs[h]; !is {
 						unknownHelpers = append(unknownHelpers, h)
 					}
 				}
@@ -155,7 +155,7 @@ func Do(input string, vars map[string]string) (string, error) {
 		}
 	}
 
-	t, err := template.New("input").Funcs(interpolateHelperFuncs).Parse(input)
+	t, err := template.New("input").Funcs(InterpolateHelperFuncs).Parse(input)
 	if err != nil {
 		return "", fmt.Errorf("Invalid template format: %s", err.Error())
 	}

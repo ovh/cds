@@ -1,0 +1,48 @@
+<app-heatmap-toolbar #toolbar></app-heatmap-toolbar>
+<ng-container *ngIf="!loading && events.length > 0">
+    <div class="ui relaxed divided list">
+        <div *ngFor="let project of projects" class="tiles-container">
+            <label>
+                {{ project }}
+                <i class="bell slash icon" title="{{ 'heatmap_filter_mute' | translate }}" (click)="addFilter(project)"></i>
+            </label>
+
+            <div class="tiles">
+                <ng-container *ngFor="let workflow_name of workflows[project]">
+                    <div *ngFor="let e of groupedEvents[project][workflow_name]" class="tile" [class.green]="e.status === pipelineStatus.SUCCESS"
+                        [class.blue]="e.status === pipelineStatus.BUILDING || e.status === pipelineStatus.WAITING" [class.red]="e.status === pipelineStatus.FAIL || e.status === pipelineStatus.STOPPED"
+                        [class.grey]="e.status === pipelineStatus.DISABLED || e.status === pipelineStatus.SKIPPED || e.status === pipelineStatus.NEVER_BUILT">
+
+                        <a [routerLink]="['/project', e.project_key, 'workflow', e.workflow_name, 'run', e.workflow_run_num]">#{{ e.workflow_run_num }}</a>
+                        <div class="tags" *ngIf="e.tag !== undefined">
+                            <div class="tag">{{e.tag[0]}}</div>
+                        </div>
+                        <table class="detail" border="0">
+                            <tbody>
+                                <tr *ngFor="let property of properties" class="row">
+                                    <td class="property">{{ 'heatmap_'.concat(property) | translate }}</td>
+                                    <td class="value" *ngIf="property !== 'tag'">{{ e[property] }}</td>
+                                    <td class="value" *ngIf="property === 'tag'">
+                                        <div class="tags">
+                                            <div class="tag" *ngFor="let tag of e.tag" title="{{tag}}" >{{ tag }}</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="property">{{ 'heatmap_timestamp' | translate }}</td>
+                                    <td class="value">{{ e.timestamp | date:'medium' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </ng-container>
+            </div>
+        </div>
+    </div>
+</ng-container>
+<div class="ui info message" *ngIf="!loading && events.length === 0">
+    {{ 'heatmap_empty' | translate }}
+</div>
+
+
+<div class="ui text active loader" *ngIf="loading">{{ 'timeline_loading' | translate }}</div>

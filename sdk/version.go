@@ -23,6 +23,10 @@ var (
 
 	//BINARY is set with -ldflags "-X github.com/ovh/cds/sdk.BINARY=$(BINARY)"
 	BINARY = ""
+
+	//DBMIGRATE is set with -ldflags "-X github.com/ovh/cds/sdk.DBMIGRATE=$(DBMIGRATE)"
+	// this flag contains the number of sql files to migrate for this version
+	DBMIGRATE = ""
 )
 
 func init() {
@@ -41,6 +45,7 @@ type Version struct {
 	OS           string `json:"os"`
 	GitHash      string `json:"git_hash"`
 	BuildTime    string `json:"build_time"`
+	DBMigrate    string `json:"db_migrate"`
 }
 
 // VersionCurrent returns the current version
@@ -51,10 +56,11 @@ func VersionCurrent() Version {
 		OS:           GOOS,
 		GitHash:      GITHASH,
 		BuildTime:    BUILDTIME,
+		DBMigrate:    DBMIGRATE,
 	}
 }
 
 // VersionString returns a string contains all about current version
 func VersionString() string {
-	return fmt.Sprintf("CDS %s version:%s os:%s architecture:%s git.hash:%s build.time:%s", BINARY, VERSION, GOOS, GOARCH, GITHASH, BUILDTIME)
+	return fmt.Sprintf("CDS %s version:%s os:%s architecture:%s git.hash:%s build.time:%s db.migrate:%s", BINARY, VERSION, GOOS, GOARCH, GITHASH, BUILDTIME, DBMIGRATE)
 }

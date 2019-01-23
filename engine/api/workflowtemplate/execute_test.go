@@ -17,6 +17,8 @@ func TestExecuteTemplate(t *testing.T) {
 			{Key: "withDeploy", Type: sdk.ParameterTypeBoolean, Required: true},
 			{Key: "deployWhen", Type: sdk.ParameterTypeString},
 			{Key: "repo", Type: sdk.ParameterTypeRepository},
+			{Key: "object", Type: sdk.ParameterTypeJSON},
+			{Key: "list", Type: sdk.ParameterTypeJSON},
 		},
 		Value: base64.StdEncoding.EncodeToString([]byte(`
 name: [[.name]]
@@ -45,6 +47,9 @@ jobs:
 	steps:
 	- script:
 		- echo "Hello World!"
+		- echo "[[ "Hello World Lower!" | lower ]]"
+		- echo "[[.params.object.key1]]"
+		- echo "[[range .params.list]][[.]][[end]]"
 	- script:
 		- echo "{{.cds.run.number}}"`)),
 		}},
@@ -73,6 +78,8 @@ values:
 				"withDeploy": "true",
 				"deployWhen": "failure",
 				"repo":       "github/ovh/cds",
+				"object":     "{\"key1\":\"value1\"}",
+				"list":       "[\"value1\",\"value2\"]",
 			},
 		},
 	}
@@ -106,6 +113,9 @@ jobs:
 	steps:
 	- script:
 		- echo "Hello World!"
+		- echo "hello world lower!"
+		- echo "value1"
+		- echo "value1value2"
 	- script:
 		- echo "{{.cds.run.number}}"`, res.Pipelines[0])
 
@@ -123,4 +133,58 @@ values:
 	key1:
 		type: string
 		value: value1`, res.Environments[0])
+}
+
+func TestExecuteTemplateWithError(t *testing.T) {
+	tmpl := &sdk.WorkflowTemplate{
+		ID: 42,
+		Parameters: []sdk.WorkflowTemplateParameter{
+			{Key: "withDeploy", Type: sdk.ParameterTypeBoolean, Required: true},
+			{Key: "deployWhen", Type: sdk.ParameterTypeString},
+			{Key: "repo", Type: sdk.ParameterTypeRepository},
+		},
+		Value: base64.StdEncoding.EncodeToString([]byte(`
+name: [[.name]
+description: Test simple workflow with error
+version: v1.0`)),
+		Pipelines: []sdk.PipelineTemplate{{
+			Value: base64.StdEncoding.EncodeToString([]byte(`
+version: v1.0
+name: Pipeline-[[error .id]]
+stages:
+- Stage 1`)),
+		}},
+		Applications: []sdk.ApplicationTemplate{{
+			Value: base64.StdEncoding.EncodeToString([]byte(`
+version: v1.0
+name: [[`)),
+		}},
+		Environments: []sdk.EnvironmentTemplate{{
+			Value: base64.StdEncoding.EncodeToString([]byte(`
+name: Environment-[[if .id]]`)),
+		}},
+	}
+
+	_, err := workflowtemplate.Execute(tmpl, nil)
+	assert.NotNil(t, err)
+	e := sdk.ExtractHTTPError(err, "")
+	assert.Equal(t, sdk.ErrCannotParseTemplate.ID, e.ID)
+	errs := []sdk.WorkflowTemplateError{{
+		Type:    "workflow",
+		Line:    2,
+		Message: "unexpected \"]\" in operand",
+	}, {
+		Type:    "pipeline",
+		Line:    3,
+		Message: "function \"error\" not defined",
+	}, {
+		Type:    "application",
+		Line:    3,
+		Message: "unexpected unclosed action in command",
+	}, {
+		Type:    "environment",
+		Line:    2,
+		Message: "unexpected EOF",
+	}}
+	assert.Equal(t, errs, e.Data)
 }

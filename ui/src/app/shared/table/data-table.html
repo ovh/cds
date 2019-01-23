@@ -7,9 +7,15 @@
         </div>
     </div>
 </div>
-<table class="ui striped fixed celled table" [class.selectable]="withLineClick">
+<table class="ui striped fixed table" [class.selectable]="withLineClick">
     <thead>
         <tr>
+            <th *ngIf="withSelect" class="wide one">
+                <div class="ui checked checkbox">
+                    <input type="checkbox" [ngModel]="selectedAll" (ngModelChange)="onSelectAllChange($event)">
+                    <label></label>
+                </div>
+            </th>
             <th *ngFor="let c of columns" class="wide {{c.class}}" [class.sortable]="c.sortable && c !== sortedColumn"
                 [class.ascending]="c === sortedColumn && sortedColumnDirection === 'asc'" [class.descending]="c === sortedColumn && sortedColumnDirection === 'desc'"
                 (click)="columnClick($event, c)">
@@ -19,7 +25,7 @@
     </thead>
     <tbody *ngIf="loading">
         <tr>
-            <td class="center aligned" [colSpan]="columns.length">
+            <td class="center aligned" [colSpan]="columns.length + (withSelect ? 1 : 0)">
                 <div class="ui active small inline loader"></div>
                 <div>{{ 'common_loading' | translate }}</div>
             </td>
@@ -27,7 +33,7 @@
     </tbody>
     <tbody *ngIf="!loading && dataForCurrentPage.length === 0">
         <tr>
-            <td class="center" [colSpan]="columns.length">
+            <td class="center" [colSpan]="columns.length + (withSelect ? 1 : 0)">
                 <div>{{ 'common_no_data' | translate }}</div>
             </td>
         </tr>
@@ -35,6 +41,12 @@
     <tbody *ngIf="!loading && dataForCurrentPage.length > 0">
         <tr *ngFor="let d of dataForCurrentPage; let i = index" (click)="lineClick(i, d)" [class.pointing]="withLineClick"
             [class.active]="withLineClick && indexSelected === i">
+            <td *ngIf="withSelect" class="wide one">
+                <div class="ui checked checkbox">
+                    <input type="checkbox" [ngModel]="selected[d.key()]" (ngModelChange)="onSelectChange($event, d.key())">
+                    <label></label>
+                </div>
+            </td>
             <ng-container *ngFor="let c of (columns | selector:d)">
                 <td [ngSwitch]="c.type" class="wide {{c.class}}">
                     <i *ngSwitchCase="'icon'" [ngClass]="c.selector"></i>
@@ -46,16 +58,21 @@
                     </a>
                     <markdown *ngSwitchCase="'markdown'" [data]="c.selector"></markdown>
                     <ng-container *ngSwitchCase="'date'"> {{c.selector | amCalendar}} </ng-container>
-                    <app-confirm-button *ngSwitchCase="'confirm-button'" (event)="c.selector.click()" [title]="c.selector.title">
+                    <button class="ui primary button small" *ngSwitchCase="'button'" (click)="c.selector.click()">{{c.selector.title
+                        | translate}}</button>
+                    <app-confirm-button *ngSwitchCase="'confirm-button'" [class]="'small'" (event)="c.selector.click()"
+                        [title]="c.selector.title">
                     </app-confirm-button>
-                    <ng-container *ngSwitchDefault>{{c.selector}}</ng-container>
+                    <span class="ui label {{c.selector.class}}" *ngSwitchCase="'label'">{{c.selector.value |
+                        translate}}</span>
+                    <ng-container *ngSwitchDefault>{{c.selector | translate}}</ng-container>
                 </td>
             </ng-container>
         </tr>
     </tbody>
     <tfoot tfoot *ngIf="nbElementsByPage && pagesCount > 1">
         <tr>
-            <td [colSpan]="columns.length">
+            <td [colSpan]="columns.length + (withSelect ? 1 : 0)">
                 <sui-pagination class="ui right floated" [collectionSize]="filteredData.length" [pageSize]="nbElementsByPage"
                     [maxSize]="20" [hasEllipses]="true" (pageChange)="pageChange($event)" [page]="currentPage">
                 </sui-pagination>

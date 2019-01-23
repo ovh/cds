@@ -1,0 +1,14 @@
+template_path: shared.infra/example-simple
+instances:
+- workflow_path: ITCLIPRJ/one
+  parameters:
+  - withDeploy=true
+  - deployWhen=success
+- workflow_path: ITCLIPRJ/two
+  parameters:
+  - withDeploy=false
+  - data=["one", "two"]
+- workflow_path: ITCLIPRJ/three
+  parameters:
+  - withDeploy=true
+  - deployWhen=ok

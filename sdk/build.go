@@ -4,24 +4,6 @@ import (
 	"time"
 )
 
-// PipelineBuildJob represents an action to be run
-type PipelineBuildJob struct {
-	ID              int64                  `json:"id" db:"id"`
-	Job             ExecutedJob            `json:"job" db:"-"`
-	Parameters      []Parameter            `json:"parameters,omitempty" db:"-"`
-	Status          string                 `json:"status"  db:"status"`
-	Warnings        []PipelineBuildWarning `json:"warnings"  db:"-"`
-	Queued          time.Time              `json:"queued,omitempty" db:"queued"`
-	QueuedSeconds   int64                  `json:"queued_seconds,omitempty" db:"-"`
-	Start           time.Time              `json:"start,omitempty" db:"start"`
-	Done            time.Time              `json:"done,omitempty" db:"done"`
-	Model           string                 `json:"model,omitempty" db:"model"`
-	PipelineBuildID int64                  `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
-	BookedBy        Service                `json:"bookedby" db:"-"`
-	SpawnInfos      []SpawnInfo            `json:"spawninfos" db:"-"`
-	ExecGroups      []Group                `json:"exec_groups" db:"-"`
-}
-
 // SpawnInfo contains an information about spawning
 type SpawnInfo struct {
 	APITime    time.Time `json:"api_time,omitempty" db:"-" mapstructure:"-"`
@@ -173,14 +155,6 @@ const (
 	StatusWorkerPending     Status = "Pending"
 	StatusWorkerRegistering Status = "Registering"
 )
-
-// Translate translates messages in pipelineBuildJob
-func (p *PipelineBuildJob) Translate(lang string) {
-	for ki, info := range p.SpawnInfos {
-		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
-		p.SpawnInfos[ki].UserMessage = m.String(lang)
-	}
-}
 
 // StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)
 func StatusIsTerminated(status string) bool {

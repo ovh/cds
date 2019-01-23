@@ -10,7 +10,7 @@ import (
 
 func (api *API) getBookmarksHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		data, err := bookmark.LoadAll(api.mustDB(), getUser(ctx))
+		data, err := bookmark.LoadAll(api.mustDB(), deprecatedGetUser(ctx))
 		if err != nil {
 			return err
 		}

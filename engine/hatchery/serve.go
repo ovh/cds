@@ -63,7 +63,7 @@ func init() {
 			files, err := ioutil.ReadDir(path)
 			if err != nil {
 				log.Warning("unable to list files in %s: %v", path, err)
-				continue
+				break
 			}
 
 			for _, f := range files {

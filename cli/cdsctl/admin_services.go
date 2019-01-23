@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -30,7 +29,6 @@ var adminServiceListCmd = cli.Command{
 	Short: "List CDS services",
 	Flags: []cli.Flag{
 		{
-			Kind:      reflect.String,
 			Name:      "type",
 			ShortHand: "t",
 			Usage:     "Filter service by type: api, hatchery, hook, repository, vcs",
@@ -52,14 +50,12 @@ var adminServiceStatusCmd = cli.Command{
 	Short: "Status CDS services",
 	Flags: []cli.Flag{
 		{
-			Kind:      reflect.String,
 			Name:      "type",
 			ShortHand: "t",
 			Usage:     "Filter service by type: api, hatchery, hook, repository, vcs",
 			Default:   "",
 		},
 		{
-			Kind:    reflect.String,
 			Name:    "name",
 			Usage:   "Filter service by name",
 			Default: "",
@@ -79,13 +75,11 @@ cdsctl admin services request --name hatcheryLocal --query /debug/pprof/goroutin
 `,
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.String,
 			Name:    "name",
 			Usage:   "service name",
 			Default: "",
 		},
 		{
-			Kind:    reflect.String,
 			Name:    "query",
 			Usage:   "http query, example: '/debug/pprof/goroutine?debug=2'",
 			Default: "",

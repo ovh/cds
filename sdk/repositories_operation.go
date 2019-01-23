@@ -18,11 +18,13 @@ type Operation struct {
 	Error              string                   `json:"error,omitempty"`
 	RepositoryInfo     *OperationRepositoryInfo `json:"repository_info,omitempty"`
 	Date               *time.Time               `json:"date,omitempty"`
+	User               User                     `json:"user,omitempty"`
 }
 
 // OperationSetup is the setup for an operation basically its a checkout
 type OperationSetup struct {
 	Checkout OperationCheckout `json:"checkout,omitempty"`
+	Push     OperationPush     `json:"push,omitempty"`
 }
 
 // OperationRepositoryInfo represents global information about the repository
@@ -42,6 +44,14 @@ type OperationLoadFiles struct {
 type OperationCheckout struct {
 	Branch string `json:"branch,omitempty"`
 	Commit string `json:"commit,omitempty"`
+}
+
+// OperationPush represents information about push operation
+type OperationPush struct {
+	FromBranch string `json:"from_branch,omitempty"`
+	ToBranch   string `json:"to_branch,omitempty"`
+	Message    string `json:"message,omitempty"`
+	PRLink     string `json:"pr_link,omitempty"`
 }
 
 // OperationStatus is the status of an operation

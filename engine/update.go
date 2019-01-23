@@ -45,7 +45,7 @@ var updateCmd = &cobra.Command{
 
 		resp, err := http.Get(urlBinary)
 		if err != nil {
-			sdk.Exit("Error while getting binary from CDS API: %s\n", err)
+			sdk.Exit("Error while getting binary from: %s err:%s\n", urlBinary, err)
 		}
 		defer resp.Body.Close()
 

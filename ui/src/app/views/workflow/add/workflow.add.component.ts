@@ -179,13 +179,12 @@ workflow:
     startOperationWorker(uuid: string): void {
         // poll operation
         let zone = new NgZone({ enableLongStackTrace: false });
-        let webworker = new CDSWebWorker('./assets/worker/web/import-as-code.js')
+        let webworker = new CDSWebWorker('./assets/worker/web/operation.js')
         webworker.start({
             'user': this._authStore.getUser(),
             'session': this._authStore.getSessionToken(),
             'api': environment.apiURL,
-            key: this.project.key,
-            uuid: uuid,
+            'path': '/import/' + this.project.key + '/' + uuid
         });
         this.webworkerSub = webworker.response().subscribe(ope => {
             if (ope) {
@@ -238,7 +237,7 @@ workflow:
     }
 
     fetchTemplates() {
-        this._workflowTemplateService.getWorkflowTemplates().subscribe(ts => {
+        this._workflowTemplateService.getAll().subscribe(ts => {
             this.templates = ts;
         });
     }

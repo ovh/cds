@@ -12,7 +12,6 @@ import {Application} from '../../../../model/application.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {RepositoriesManager} from '../../../../model/repositories.model';
-import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
 import {ApplicationService} from '../../../../service/application/application.service';
 import {ApplicationStore} from '../../../../service/application/application.store';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
@@ -62,7 +61,6 @@ describe('CDS: Application Admin Component', () => {
                 TranslateService,
                 TranslateParser,
                 RepoManagerService,
-                ApplicationMigrateService,
                 AuthentificationStore,
                 WorkflowStore,
                 WorkflowService,

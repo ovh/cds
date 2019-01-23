@@ -9,7 +9,7 @@ import { Table } from '../../../../shared/table/table';
     templateUrl: './group.list.html',
     styleUrls: ['./group.list.scss']
 })
-export class GroupListComponent extends Table {
+export class GroupListComponent extends Table<Group> {
     @Input('maxPerPage')
     set maxPerPage(data: number) {
         this.nbElementsByPage = data;
@@ -34,7 +34,7 @@ export class GroupListComponent extends Table {
         }];
     }
 
-    getData(): any[] {
+    getData(): Array<Group> {
         if (!this.filter) {
             return this.groups;
         }

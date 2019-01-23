@@ -230,6 +230,8 @@ type dbNodeOutGoingHookData sdk.NodeOutGoingHook
 type dbNodeJoinData sdk.NodeJoin
 type dbNodeHookData sdk.NodeHook
 
+type dbAsCodeEvents sdk.AsCodeEvent
+
 func init() {
 	gorpmapping.Register(gorpmapping.New(Workflow{}, "workflow", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Node{}, "workflow_node", true, "id"))
@@ -261,4 +263,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(dbNodeTriggerData{}, "w_node_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeOutGoingHookData{}, "w_node_outgoing_hook", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbNodeJoinData{}, "w_node_join", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbAsCodeEvents{}, "workflow_as_code_events", true, "id"))
 }

@@ -6,9 +6,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/textproto"
 	"net/url"
 	"time"
 
@@ -17,8 +19,75 @@ import (
 	"github.com/ovh/cds/sdk/tracingutils"
 )
 
+// MultiPartData represents the data to send
+type MultiPartData struct {
+	Reader      io.Reader
+	ContentType string
+}
+
 // HTTPClient will be set to a default httpclient if not set
 var HTTPClient sdk.HTTPClient
+
+// DoMultiPartRequest performs an http request on a service with multipart  tar file + json field
+func DoMultiPartRequest(ctx context.Context, srvs []sdk.Service, method, path string, multiPartData *MultiPartData, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+
+	// Create tar part
+	dataFileHeader := make(textproto.MIMEHeader)
+	dataFileHeader.Set("Content-Type", multiPartData.ContentType)
+	dataFileHeader.Set("Content-Disposition", "form-data; name=\"dataFiles\"; filename=\"data\"")
+	dataPart, err := writer.CreatePart(dataFileHeader)
+	if err != nil {
+		return 0, sdk.WrapError(err, "unable to create data part")
+	}
+	if _, err := io.Copy(dataPart, multiPartData.Reader); err != nil {
+		return 0, sdk.WrapError(err, "unable to write into data part")
+	}
+
+	jsonData, errM := json.Marshal(in)
+	if errM != nil {
+		return 0, sdk.WrapError(errM, "unable to marshal data")
+	}
+	if err := writer.WriteField("dataJSON", string(jsonData)); err != nil {
+		return 0, sdk.WrapError(err, "unable to add field dataJSON")
+	}
+
+	// Close writer
+	if err := writer.Close(); err != nil {
+		return 0, sdk.WrapError(err, "unable to close writer")
+	}
+
+	mods = append(mods, sdk.SetHeader("Content-Type", writer.FormDataContentType()))
+	var lastErr error
+	var lastCode int
+	var attempt int
+	for {
+		attempt++
+		for i := range srvs {
+			srv := &srvs[i]
+			res, code, err := doRequest(ctx, srv.HTTPURL, srv.Hash, method, path, body.Bytes(), mods...)
+			if err != nil {
+				return code, sdk.WrapError(err, "Unable to perform request on service %s (%s)", srv.Name, srv.Type)
+			}
+			if out != nil {
+				if err := json.Unmarshal(res, out); err != nil {
+					return code, sdk.WrapError(err, "Unable to marshal output")
+				}
+			}
+			if err == nil {
+				return code, nil
+			}
+			lastErr = err
+			lastCode = code
+		}
+		if lastErr != nil || attempt > 5 {
+			break
+		}
+	}
+	return lastCode, lastErr
+}
 
 // DoJSONRequest performs an http request on a service
 func DoJSONRequest(ctx context.Context, srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {

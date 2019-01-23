@@ -54,7 +54,7 @@ func (api *API) putWarningsHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to update warning")
 		}
 
-		event.PublishUpdateWarning(warn, getUser(ctx))
+		event.PublishUpdateWarning(warn, deprecatedGetUser(ctx))
 		warn.Message = wa.Message
 		return service.WriteJSON(w, warn, http.StatusOK)
 	}

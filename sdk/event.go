@@ -31,6 +31,7 @@ type Event struct {
 	WorkflowRunNum    int64                  `json:"workflow_run_num,omitempty"`
 	WorkflowRunNumSub int64                  `json:"workflow_run_num_sub,omitempty"`
 	Status            string                 `json:"status,omitempty"`
+	Tags              []WorkflowRunTag       `json:"tag,omitempty"`
 }
 
 // EventFilter represents filters when getting events
@@ -80,6 +81,7 @@ type EventRunWorkflowNode struct {
 	HookLog               string                    `json:"log,omitempty"`
 }
 
+// EventRunWorkflowOutgoingHook contains event data for a workflow outgoing hook run
 type EventRunWorkflowOutgoingHook struct {
 	HookID            int64  `json:"hook_id"`
 	ID                string `json:"id"`

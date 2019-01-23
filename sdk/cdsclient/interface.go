@@ -20,6 +20,8 @@ type TemplateClient interface {
 	TemplateGetByID(id int64) (*sdk.WorkflowTemplate, error)
 	TemplateGetAll() ([]sdk.WorkflowTemplate, error)
 	TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
+	TemplateBulk(groupName, templateSlug string, req sdk.WorkflowTemplateBulk) (*sdk.WorkflowTemplateBulk, error)
+	TemplateGetBulk(groupName, templateSlug string, id int64) (*sdk.WorkflowTemplateBulk, error)
 	TemplatePull(groupName, templateSlug string) (*tar.Reader, error)
 	TemplatePush(tarContent io.Reader) ([]string, *tar.Reader, error)
 	TemplateGetInstances(groupName, templateSlug string) ([]sdk.WorkflowTemplateInstance, error)
@@ -27,7 +29,9 @@ type TemplateClient interface {
 
 // AdminService expose all function to CDS services
 type AdminService interface {
+	AdminDatabaseMigrationDelete(id string) error
 	AdminDatabaseMigrationUnlock(id string) error
+	AdminDatabaseMigrationsList() ([]sdk.DatabaseMigrationStatus, error)
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
@@ -296,6 +300,8 @@ type WorkflowClient interface {
 	WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error
 	WorkflowCachePull(projectKey, ref string) (io.Reader, error)
 	WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error)
+	WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error)
+	WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error
 }
 
 // MonitoringClient exposes monitoring functions
@@ -346,16 +352,6 @@ type Interface interface {
 	HookClient
 	Version() (*sdk.Version, error)
 	TemplateClient
-}
-
-// InterfaceDeprecated is the interface for using deprecated routes with cdsclient package
-type InterfaceDeprecated interface {
-	ApplicationPipelinesAttach(projectKey string, appName string, pipelineNames ...string) error
-	ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error
-	ApplicationPipelineTriggersGet(projectKey string, appName string, pipelineName string, envName string) ([]sdk.PipelineTrigger, error)
-	AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error
-	ApplicationDoMigrationWorkflow(projectKey, appName string, force, disablePrefixW, withCurrentVersion, withRepositoryWebHook bool) error
-	ApplicationCleanOldWorkflow(projectKey, appName string) error
 }
 
 // Raw is a low-level interface exposing HTTP functions

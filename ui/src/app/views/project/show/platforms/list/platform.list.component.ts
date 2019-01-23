@@ -14,7 +14,7 @@ import { ToastService } from '../../../../../shared/toast/ToastService';
     templateUrl: './project.platform.list.html',
     styleUrls: ['./project.platform.list.scss']
 })
-export class ProjectPlatformListComponent extends Table {
+export class ProjectPlatformListComponent extends Table<ProjectPlatform> {
 
     @Input() project: Project;
     @ViewChild('codeMirror')
@@ -33,7 +33,7 @@ export class ProjectPlatformListComponent extends Table {
         };
     }
 
-    getData(): any[] {
+    getData(): Array<ProjectPlatform> {
         return this.project.platforms;
     }
 
@@ -41,8 +41,8 @@ export class ProjectPlatformListComponent extends Table {
         this.loading = true;
         this._projectStore.deleteProjectPlatform(this.project.key, p.name).pipe(first(), finalize(() => this.loading = false))
             .subscribe(() => {
-            this._toast.success('', this._translate.instant('project_updated'));
-        });
+                this._toast.success('', this._translate.instant('project_updated'));
+            });
     }
 
     updatePlatform(p: ProjectPlatform): void {

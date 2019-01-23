@@ -1,0 +1,5 @@
+name: [[.name]]-prod
+values:
+  url:
+    type: string
+    value: http://prod.[[.name]]

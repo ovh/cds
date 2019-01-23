@@ -10,6 +10,7 @@ require (
 	github.com/DataDog/datadog-go v0.0.0-20180822151419-281ae9f2d895 // indirect
 	github.com/Jeffail/gabs v1.1.1 // indirect
 	github.com/Microsoft/go-winio v0.4.7 // indirect
+	github.com/Netflix/go-expect v0.0.0-20180928190340-9d1f4485533b // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/SermoDigital/jose v0.9.1 // indirect
 	github.com/Shopify/sarama v1.17.0
@@ -47,7 +48,7 @@ require (
 	github.com/dancannon/gorethink v4.0.0+incompatible // indirect
 	github.com/danieljoos/wincred v1.0.1 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20181014144952-4e0d7dc8888f // indirect
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dnaeon/go-vcr v0.0.0-20180920040454-5637cf3d8a31 // indirect
 	github.com/docker/distribution v2.7.0-rc.0+incompatible
 	github.com/docker/docker v1.13.1
@@ -72,7 +73,7 @@ require (
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/fsamin/go-dump v0.0.0-20180223131834-7ae1b0fe42eb
-	github.com/fsamin/go-repo v0.0.0-20180816144714-4e5b13febf0a
+	github.com/fsamin/go-repo v0.0.0-20190121184737-9644d36a55f4
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect
@@ -122,6 +123,7 @@ require (
 	github.com/hashicorp/serf v0.8.1 // indirect
 	github.com/hashicorp/vault v0.0.0-20170114041158-f1c8b772fdec
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
+	github.com/hinshun/vt10x v0.0.0-20180809195222-d55458df857c // indirect
 	github.com/howeyc/gopass v0.0.0-20160303200116-66487b23f288
 	github.com/huandu/xstrings v0.0.0-20170908061042-d6590c0c31d1
 	github.com/imdario/mergo v0.0.0-20180119215619-163f41321a19 // indirect
@@ -137,6 +139,7 @@ require (
 	github.com/juju/ratelimit v1.0.1 // indirect
 	github.com/julienschmidt/httprouter v0.0.0-20150421170007-8c199fb6259f // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1
+	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/keybase/go-crypto v0.0.0-20181017165231-e696c8039bba // indirect
 	github.com/kr/fs v0.0.0-20131111012553-2788f0dbd169 // indirect
 	github.com/lib/pq v0.0.0-20161014011634-ae8357db35d7
@@ -251,6 +254,7 @@ require (
 	golang.org/x/time v0.0.0-20180412165947-fbb02b2291d2 // indirect
 	google.golang.org/api v0.0.0-20180517000435-aedc137bffca // indirect
 	google.golang.org/grpc v1.16.0
+	gopkg.in/AlecAivazis/survey.v1 v1.7.1
 	gopkg.in/airbrake/gobrake.v2 v2.0.9 // indirect
 	gopkg.in/asn1-ber.v1 v1.0.0-20150924051756-4e86f4367175 // indirect
 	gopkg.in/bsm/sarama-cluster.v2 v2.1.4

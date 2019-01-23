@@ -118,12 +118,6 @@ export class ProjectShowComponent implements OnInit {
                       });
                     }
                     this.project = proj;
-                    if (goToDefaultTab) {
-                        if (this.project.workflow_migration !== 'NOT_BEGUN' && this.selectedTab === 'applications') {
-                            this.selectedTab = 'workflows';
-                            goToDefaultTab = false;
-                        }
-                    }
                 }
             }
         }, () => {

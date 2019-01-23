@@ -87,12 +87,13 @@ func RunFromHook(ctx context.Context, db gorp.SqlExecutor, store cache.Store, p 
 		if errWR != nil {
 			return nil, nil, sdk.WrapError(errWR, "RunFromHook> Unable to process workflow run")
 		}
-		_, _ = report.Merge(r1, nil)
 		if !hasRun {
 			wr.Status = sdk.StatusNeverBuilt.String()
 			wr.LastExecution = time.Now()
+			report.Add(wr)
 			return wr, report, UpdateWorkflowRun(ctx, db, wr)
 		}
+		_, _ = report.Merge(r1, nil)
 	} else {
 
 		//Load the last workflow run

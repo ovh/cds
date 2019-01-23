@@ -49,7 +49,7 @@ func LoadPlatformsByName(db gorp.SqlExecutor, key string, name string, clearPwd 
 		WHERE project.projectkey = $1 AND project_platform.name = $2
 	`
 	if err := db.SelectOne(&pp, query, key, name); err != nil {
-		return sdk.ProjectPlatform{}, sdk.WrapError(err, "Cannot load platform")
+		return sdk.ProjectPlatform{}, sdk.WithStack(err)
 	}
 	p := sdk.ProjectPlatform(pp)
 	for k, v := range p.Config {

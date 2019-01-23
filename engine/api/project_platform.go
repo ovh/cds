@@ -40,14 +40,14 @@ func (api *API) putProjectPlatformHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot read body")
 		}
 
-		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		p, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load project")
 		}
 
 		ppDB, errP := platform.LoadPlatformsByName(api.mustDB(), projectKey, platformName, true)
 		if errP != nil {
-			return sdk.WrapError(errP, "putProjectPlatformHandler> Cannot load project platform")
+			return sdk.WrapError(errP, "putProjectPlatformHandler> Cannot load platform %s for project %s", platformName, projectKey)
 		}
 
 		//If the platform model is public, it's forbidden to update the project platform
@@ -84,7 +84,7 @@ func (api *API) putProjectPlatformHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishUpdateProjectPlatform(p, ppBody, ppDB, getUser(ctx))
+		event.PublishUpdateProjectPlatform(p, ppBody, ppDB, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, ppBody, http.StatusOK)
 	}
@@ -96,7 +96,7 @@ func (api *API) deleteProjectPlatformHandler() service.Handler {
 		projectKey := vars["permProjectKey"]
 		platformName := vars["platformName"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
+		p, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load project")
 		}
@@ -126,7 +126,7 @@ func (api *API) deleteProjectPlatformHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectPlatform(p, deletedPlatform, getUser(ctx))
+		event.PublishDeleteProjectPlatform(p, deletedPlatform, deprecatedGetUser(ctx))
 		return nil
 	}
 }
@@ -136,7 +136,7 @@ func (api *API) getProjectPlatformsHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
+		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
 		if errP != nil {
 			return sdk.WrapError(errP, "getProjectPlatformsHandler> Cannot load project")
 		}
@@ -149,7 +149,7 @@ func (api *API) postProjectPlatformHandler() service.Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithPlatforms)
+		p, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load project")
 		}
@@ -200,7 +200,7 @@ func (api *API) postProjectPlatformHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishAddProjectPlatform(p, pp, getUser(ctx))
+		event.PublishAddProjectPlatform(p, pp, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, pp, http.StatusOK)
 	}

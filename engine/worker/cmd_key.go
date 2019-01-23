@@ -83,8 +83,8 @@ So that, you can use custom git commands the the previous installed SSH key.
 		Example: "worker key install proj-test",
 		Run:     keyInstallCmd(w),
 	}
-	c.Flags().BoolVar(&cmdInstallEnvGIT, "env", false, "display shell command for export $PKEY variable. See documentation.")
-	c.Flags().BoolVar(&cmdInstallEnv, "env-git", false, "display shell command for advanced usage with git. See documentation.")
+	c.Flags().BoolVar(&cmdInstallEnv, "env", false, "display shell command for export $PKEY variable. See documentation.")
+	c.Flags().BoolVar(&cmdInstallEnvGIT, "env-git", false, "display shell command for advanced usage with git. See documentation.")
 	c.Flags().StringVar(&cmdInstallToFile, "file", "", "write key to destination file. See documentation.")
 
 	return c

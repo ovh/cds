@@ -91,7 +91,7 @@ communication: http
 image: myImage
 description: ""
 type: docker
-pattern_name: basic_linux`;
+pattern_name: basic_unix`;
     }
 
     ngOnInit() {

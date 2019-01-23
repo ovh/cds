@@ -38,11 +38,11 @@ var applicationVariableCreateCmd = cli.Command{
 
 func applicationCreateVariableRun(v cli.Values) error {
 	variable := &sdk.Variable{
-		Name:  v["variable-name"],
-		Type:  v["variable-type"],
-		Value: v["variable-value"],
+		Name:  v.GetString("variable-name"),
+		Type:  v.GetString("variable-type"),
+		Value: v.GetString("variable-value"),
 	}
-	return client.ApplicationVariableCreate(v[_ProjectKey], v[_ApplicationName], variable)
+	return client.ApplicationVariableCreate(v.GetString(_ProjectKey), v.GetString(_ApplicationName), variable)
 }
 
 var applicationVariableListCmd = cli.Command{
@@ -55,7 +55,7 @@ var applicationVariableListCmd = cli.Command{
 }
 
 func applicationListVariableRun(v cli.Values) (cli.ListResult, error) {
-	variables, err := client.ApplicationVariablesList(v[_ProjectKey], v[_ApplicationName])
+	variables, err := client.ApplicationVariablesList(v.GetString(_ProjectKey), v.GetString(_ApplicationName))
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ var applicationVariableDeleteCmd = cli.Command{
 }
 
 func applicationDeleteVariableRun(v cli.Values) error {
-	return client.ApplicationVariableDelete(v[_ProjectKey], v[_ApplicationName], v["variable-name"])
+	return client.ApplicationVariableDelete(v.GetString(_ProjectKey), v.GetString(_ApplicationName), v.GetString("variable-name"))
 }
 
 var applicationVariableShowCmd = cli.Command{
@@ -91,7 +91,7 @@ var applicationVariableShowCmd = cli.Command{
 }
 
 func applicationVariableShowRun(v cli.Values) (interface{}, error) {
-	return client.ApplicationVariableGet(v[_ProjectKey], v[_ApplicationName], v["variable-name"])
+	return client.ApplicationVariableGet(v.GetString(_ProjectKey), v.GetString(_ApplicationName), v.GetString("variable-name"))
 }
 
 var applicationVariableUpdateCmd = cli.Command{
@@ -110,12 +110,12 @@ var applicationVariableUpdateCmd = cli.Command{
 }
 
 func applicationUpdateVariableRun(v cli.Values) error {
-	variable, err := client.ApplicationVariableGet(v[_ProjectKey], v[_ApplicationName], v["variable-oldname"])
+	variable, err := client.ApplicationVariableGet(v.GetString(_ProjectKey), v.GetString(_ApplicationName), v.GetString("variable-oldname"))
 	if err != nil {
 		return err
 	}
-	variable.Name = v["variable-name"]
-	variable.Value = v["variable-value"]
-	variable.Type = v["variable-type"]
-	return client.ApplicationVariableUpdate(v[_ProjectKey], v[_ApplicationName], variable)
+	variable.Name = v.GetString("variable-name")
+	variable.Value = v.GetString("variable-value")
+	variable.Type = v.GetString("variable-type")
+	return client.ApplicationVariableUpdate(v.GetString(_ProjectKey), v.GetString(_ApplicationName), variable)
 }

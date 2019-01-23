@@ -57,14 +57,14 @@ var workflowRunNumberSetCmd = cli.Command{
 }
 
 func workflowRunNumberShowRun(v cli.Values) (interface{}, error) {
-	return client.WorkflowRunNumberGet(v[_ProjectKey], v[_WorkflowName])
+	return client.WorkflowRunNumberGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
 }
 
 func workflowRunNumberSetRun(v cli.Values) error {
-	number, err := strconv.ParseInt(v["number"], 10, 64)
+	number, err := strconv.ParseInt(v.GetString("number"), 10, 64)
 	if err != nil {
 		return fmt.Errorf("number parameter have to be an integer")
 	}
 
-	return client.WorkflowRunNumberSet(v[_ProjectKey], v[_WorkflowName], number)
+	return client.WorkflowRunNumberSet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), number)
 }

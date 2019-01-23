@@ -1,18 +1,18 @@
-import {Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as AU from 'ansi_up';
-import {cloneDeep} from 'lodash';
-import {Subscription} from 'rxjs';
-import {environment} from '../../../../../../../environments/environment';
-import {Action} from '../../../../../../model/action.model';
-import {Job, StepStatus} from '../../../../../../model/job.model';
-import {BuildResult, Log, PipelineStatus} from '../../../../../../model/pipeline.model';
-import {Project} from '../../../../../../model/project.model';
-import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
-import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
-import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
-import {DurationService} from '../../../../../../shared/duration/duration.service';
-import {CDSWebWorker} from '../../../../../../shared/worker/web.worker';
+import { cloneDeep } from 'lodash';
+import { Subscription } from 'rxjs';
+import { environment } from '../../../../../../../environments/environment';
+import { Action } from '../../../../../../model/action.model';
+import { Job, StepStatus } from '../../../../../../model/job.model';
+import { BuildResult, Log, PipelineStatus } from '../../../../../../model/pipeline.model';
+import { Project } from '../../../../../../model/project.model';
+import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../../model/workflow.run.model';
+import { AuthentificationStore } from '../../../../../../service/auth/authentification.store';
+import { AutoUnsubscribe } from '../../../../../../shared/decorator/autoUnsubscribe';
+import { DurationService } from '../../../../../../shared/duration/duration.service';
+import { CDSWebWorker } from '../../../../../../shared/worker/web.worker';
 
 @Component({
     selector: 'app-workflow-step-log',

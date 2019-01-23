@@ -50,9 +50,11 @@
                                     [ngModel]="parameterValues[k].type" [readonly]="true">
                             </div>
                             <div class="two wide field">
-                                <label>{{'common_required' | translate}}</label>
-                                <input type="checkbox" name="parameter-required-{{index}}" [(ngModel)]="parameterValues[k].required"
-                                    [disabled]="!_workflowTemplate.editable">
+                                <div class="ui checked checkbox">
+                                    <input type="checkbox" name="parameter-required-{{index}}" [(ngModel)]="parameterValues[k].required"
+                                        [disabled]="!_workflowTemplate.editable">
+                                    <label>{{'common_required' | translate}}</label>
+                                </div>
                             </div>
                             <button *ngIf="_workflowTemplate.editable" class="ui icon red button" (click)="clickRemoveParameter(k)">
                                 <i class="trash icon"></i>
@@ -72,8 +74,10 @@
                                 </sui-select>
                             </div>
                             <div class="two wide field">
-                                <label>{{'common_required' | translate}}</label>
-                                <input type="checkbox" name="parameter-required-add" [(ngModel)]="parameterValueAdd.required">
+                                <div class="ui checked checkbox">
+                                    <input type="checkbox" name="parameter-required-add" [(ngModel)]="parameterValueAdd.required">
+                                    <label>{{'common_required' | translate}}</label>
+                                </div>
                             </div>
                             <button class="ui icon green button" (click)="clickAddParameter()">
                                 <i class="plus icon"></i>
@@ -81,61 +85,43 @@
                         </div>
                         <div class="wide field">
                             <label>{{ 'common_workflow' | translate }}</label>
-                            <codemirror name="workflow-value" [(ngModel)]="workflowValue" [config]="codeMirrorConfig"></codemirror>
+                            <app-workflow-template-editor name="workflow-value" [editable]="_workflowTemplate.editable"
+                                [value]="workflowValue" (changeValue)="workflowValueChange($event)" [error]="workflowError">
+                            </app-workflow-template-editor>
                         </div>
                         <div class="wide field">
                             <label>{{ 'common_pipelines' | translate }}</label>
                             <div class="codeContainer field" *ngFor="let k of pipelineKeys">
-                                <codemirror class="code" name="pipeline-value-{{k}}" [(ngModel)]="pipelineValues[k]"
-                                    [config]="codeMirrorConfig">
-                                </codemirror>
-                                <button *ngIf="_workflowTemplate.editable" class="codeButton ui icon red button"
-                                    (click)="clickRemovePipeline(k)">
-                                    <i class="trash icon"></i>
-                                </button>
+                                <app-workflow-template-editor name="pipeline-value-{{k}}" [editable]="_workflowTemplate.editable"
+                                    [removable]="true" [value]="pipelineValues[k]" (changeValue)="pipelineValueChange(k, $event)"
+                                    (remove)="clickRemovePipeline(k)" [error]="pipelineErrors[k]">
+                                </app-workflow-template-editor>
                             </div>
-                        </div>
-                        <div *ngIf="_workflowTemplate.editable" class="wide field codeContainer">
-                            <codemirror class="code" name="pipeline-value-add" [(ngModel)]="pipelineValueAdd" [config]="codeMirrorConfig"></codemirror>
-                            <button class="codeButton ui icon green button" (click)="clickAddPipeline()">
+                            <button *ngIf="_workflowTemplate.editable" class="ui icon green button" (click)="clickAddPipeline()">
                                 <i class="plus icon"></i>
                             </button>
                         </div>
                         <div class="wide field">
                             <label>{{ 'common_applications' | translate }}</label>
                             <div class="codeContainer field" *ngFor="let k of applicationKeys">
-                                <codemirror class="code" name="application-value-{{k}}" [(ngModel)]="applicationValues[k]"
-                                    [config]="codeMirrorConfig">
-                                </codemirror>
-                                <button *ngIf="_workflowTemplate.editable" class="codeButton ui icon red button"
-                                    (click)="clickRemoveApplication(k)">
-                                    <i class="trash icon"></i>
-                                </button>
+                                <app-workflow-template-editor name="application-value-{{k}}" [editable]="_workflowTemplate.editable"
+                                    [removable]="true" [value]="applicationValues[k]" (changeValue)="applicationValueChange(k, $event)"
+                                    (remove)="clickRemoveApplication(k)" [error]="applicationErrors[k]">
+                                </app-workflow-template-editor>
                             </div>
-                        </div>
-                        <div *ngIf="_workflowTemplate.editable" class="wide field codeContainer">
-                            <codemirror class="code" name="application-value-add" [(ngModel)]="applicationValueAdd"
-                                [config]="codeMirrorConfig"></codemirror>
-                            <button class="codeButton ui icon green button" (click)="clickAddApplication()">
+                            <button *ngIf="_workflowTemplate.editable" class="ui icon green button" (click)="clickAddApplication()">
                                 <i class="plus icon"></i>
                             </button>
                         </div>
                         <div class="wide field">
                             <label>{{ 'common_environments' | translate }}</label>
                             <div class="codeContainer field" *ngFor="let k of environmentKeys">
-                                <codemirror class="code" name="environment-value-{{k}}" [(ngModel)]="environmentValues[k]"
-                                    [config]="codeMirrorConfig">
-                                </codemirror>
-                                <button *ngIf="_workflowTemplate.editable" class="codeButton ui icon red button"
-                                    (click)="clickRemoveEnvironment(k)">
-                                    <i class="trash icon"></i>
-                                </button>
+                                <app-workflow-template-editor name="environment-value-{{k}}" [editable]="_workflowTemplate.editable"
+                                    [removable]="true" [value]="environmentValues[k]" (changeValue)="environmentValueChange(k, $event)"
+                                    (remove)="clickRemoveEnvironment(k)" [error]="environmentErrors[k]">
+                                </app-workflow-template-editor>
                             </div>
-                        </div>
-                        <div *ngIf="_workflowTemplate.editable" class="wide field codeContainer">
-                            <codemirror class="code" name="environment-value-add" [(ngModel)]="environmentValueAdd"
-                                [config]="codeMirrorConfig"></codemirror>
-                            <button class="codeButton ui icon green button" (click)="clickAddEnvironment()">
+                            <button *ngIf="_workflowTemplate.editable" class="ui icon green button" (click)="clickAddEnvironment()">
                                 <i class="plus icon"></i>
                             </button>
                         </div>
@@ -146,7 +132,7 @@
                         <div *ngIf="_workflowTemplate.editable" class="wide field">
                             <app-delete-button *ngIf="mode === 'edit'" class="left floated" (event)="clickDelete()"
                                 [loading]="loading"></app-delete-button>
-                            <button class="ui green right floated button" [class.loading]="loading" (click)="clickSave()">
+                            <button class="ui positive right floated button" [class.loading]="loading" (click)="clickSave()">
                                 <i class="save icon"></i>{{ 'btn_save' | translate }}
                             </button>
                         </div>

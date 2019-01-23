@@ -10,7 +10,7 @@ import { Table } from '../../../../shared/table/table';
     templateUrl: './worker-model.list.html',
     styleUrls: ['./worker-model.list.scss']
 })
-export class WorkerModelListComponent extends Table {
+export class WorkerModelListComponent extends Table<WorkerModel> {
     filter: string;
     binaryValue: string;
     loading = true;
@@ -56,7 +56,7 @@ export class WorkerModelListComponent extends Table {
             });
     }
 
-    getData(): any[] {
+    getData(): Array<WorkerModel> {
         if (!this.filter) {
             return this.filteredWorkerModels;
         }

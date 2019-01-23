@@ -503,14 +503,14 @@ func TestManualRun3(t *testing.T) {
 		//TestAddLog
 		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
 			Val: "This is a log",
-		}))
+		}, workflow.DefaultMaxLogSize))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
 		}
 		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
 			Val: "This is another log",
-		}))
+		}, workflow.DefaultMaxLogSize))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()

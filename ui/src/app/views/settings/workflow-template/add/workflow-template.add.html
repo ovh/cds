@@ -3,8 +3,12 @@
     <app-scrollview class="scrollview">
         <div class="ui grid">
             <div class="thirteen wide column">
+                <div *ngIf="projectKey && workflowName" class="ui blue message">
+                    {{'workflow_template_help_add_from' | translate: {projectKey: projectKey, workflowName:
+                    workflowName} }}
+                </div>
                 <app-workflow-template-form mode="add" [loading]="loading" [workflowTemplate]="workflowTemplate"
-                    [groups]="groups" (save)="saveWorkflowTemplate()"></app-workflow-template-form>
+                    [groups]="groups" [errors]="errors" (save)="saveWorkflowTemplate()"></app-workflow-template-form>
             </div>
             <div class="three wide column">
                 <app-workflow-template-help></app-workflow-template-help>

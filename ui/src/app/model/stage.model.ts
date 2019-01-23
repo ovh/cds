@@ -1,8 +1,7 @@
-import {ActionWarning} from './action.model';
-import {Job} from './job.model';
-import {PipelineBuildJob} from './pipeline.model';
-import {Prerequisite} from './prerequisite.model';
-import {WorkflowNodeJobRun} from './workflow.run.model';
+import { ActionWarning } from './action.model';
+import { Job } from './job.model';
+import { Prerequisite } from './prerequisite.model';
+import { WorkflowNodeJobRun } from './workflow.run.model';
 
 export class Stage {
   id: number;
@@ -11,7 +10,6 @@ export class Stage {
   build_order: number;
   enabled: boolean;
   jobs: Array<Job>;
-  builds: Array<PipelineBuildJob>;
   run_jobs: Array<WorkflowNodeJobRun>;
   prerequisites: Array<Prerequisite>;
   last_modified: number;

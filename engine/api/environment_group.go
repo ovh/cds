@@ -83,11 +83,11 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() service.Handler {
 		if errE != nil {
 			return sdk.WrapError(errE, "Cannot load updated environment")
 		}
-		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
+		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, deprecatedGetUser(ctx))
 		envUpdated.ProjectKey = key
 
 		groupEnvironment.Group = *g
-		event.PublishEnvironmentPermissionUpdate(key, *envUpdated, groupEnvironment, gpOld, getUser(ctx))
+		event.PublishEnvironmentPermissionUpdate(key, *envUpdated, groupEnvironment, gpOld, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, envUpdated, http.StatusOK)
 	}
@@ -153,11 +153,11 @@ func (api *API) addGroupsInEnvironmentHandler() service.Handler {
 		if errL != nil {
 			return sdk.WrapError(errL, "Cannot load updated environment")
 		}
-		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
+		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, deprecatedGetUser(ctx))
 		envUpdated.ProjectKey = key
 
 		for _, gp := range groupPermission {
-			event.PublishEnvironmentPermissionAdd(key, *envUpdated, gp, getUser(ctx))
+			event.PublishEnvironmentPermissionAdd(key, *envUpdated, gp, deprecatedGetUser(ctx))
 		}
 
 		return service.WriteJSON(w, envUpdated, http.StatusOK)
@@ -204,7 +204,7 @@ func (api *API) addGroupInEnvironmentHandler() service.Handler {
 		}
 
 		groupPermission.Group = *g
-		event.PublishEnvironmentPermissionAdd(key, *env, groupPermission, getUser(ctx))
+		event.PublishEnvironmentPermissionAdd(key, *env, groupPermission, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusCreated)
 	}
@@ -218,7 +218,7 @@ func (api *API) deleteGroupFromEnvironmentHandler() service.Handler {
 		envName := vars["permEnvironmentName"]
 		groupName := vars["group"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project")
 		}
@@ -255,7 +255,7 @@ func (api *API) deleteGroupFromEnvironmentHandler() service.Handler {
 			return sdk.WrapError(errT, "Cannot commit transaction")
 		}
 
-		event.PublishEnvironmentPermissionDelete(key, *env, gp, getUser(ctx))
+		event.PublishEnvironmentPermissionDelete(key, *env, gp, deprecatedGetUser(ctx))
 
 		return nil
 	}
@@ -276,7 +276,7 @@ func (api *API) importGroupsInEnvironmentHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		proj, errProj := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		proj, errProj := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "Cannot load project %s", key)
 		}

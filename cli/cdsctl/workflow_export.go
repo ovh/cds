@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -18,13 +17,12 @@ var workflowExportCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "with-permissions",
 			Usage:   "Export permissions",
 			Default: "false",
 		},
 		{
-			Kind:    reflect.String,
 			Name:    "format",
 			Usage:   "Specify export format (json or yaml)",
 			Default: "yaml",

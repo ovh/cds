@@ -122,12 +122,14 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	cmd.Aliases = c.Aliases
 
 	for _, f := range c.Flags {
-		switch f.Kind {
-		case reflect.Bool:
+		switch f.Type {
+		case FlagBool:
 			b, _ := strconv.ParseBool(f.Default)
 			_ = cmd.Flags().BoolP(f.Name, f.ShortHand, b, f.Usage)
-		case reflect.Slice:
+		case FlagSlice:
 			_ = cmd.Flags().StringSliceP(f.Name, f.ShortHand, nil, f.Usage)
+		case FlagArray:
+			_ = cmd.Flags().StringArrayP(f.Name, f.ShortHand, nil, f.Usage)
 		default:
 			_ = cmd.Flags().StringP(f.Name, f.ShortHand, f.Default, f.Usage)
 		}
@@ -163,32 +165,40 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 					fmt.Printf("%s is invalid\n", s)
 					ExitOnError(ErrWrongUsage, cmd.Help)
 				}
-				vals[s] = args[i]
+				vals[s] = append(vals[s], args[i])
 			} else {
-				vals[c.VariadicArgs.Name] = strings.Join(args[i:], ",")
+				vals[c.VariadicArgs.Name] = append(vals[c.VariadicArgs.Name], strings.Join(args[i:], ","))
 				break
 			}
 		}
 
 		for i := range c.Flags {
 			s := c.Flags[i].Name
-			switch c.Flags[i].Kind {
-			case reflect.String:
-				var err error
-				vals[s], err = cmd.Flags().GetString(s)
-				ExitOnError(err)
-			case reflect.Bool:
+			switch c.Flags[i].Type {
+			case FlagBool:
 				b, err := cmd.Flags().GetBool(s)
 				ExitOnError(err)
-				vals[s] = fmt.Sprintf("%v", b)
-			case reflect.Slice:
+				vals[s] = append(vals[s], fmt.Sprintf("%v", b))
+			case FlagSlice:
 				slice, err := cmd.Flags().GetStringSlice(s)
 				ExitOnError(err)
-				vals[s] = strings.Join(slice, "||")
+				vals[s] = append(vals[s], strings.Join(slice, "||"))
+			case FlagArray:
+				array, err := cmd.Flags().GetStringArray(s)
+				ExitOnError(err)
+				vals[s] = array
+			default:
+				val, err := cmd.Flags().GetString(s)
+				ExitOnError(err)
+				vals[s] = append(vals[s], val)
 			}
-			if c.Flags[i].IsValid != nil && !c.Flags[i].IsValid(vals[s]) {
-				fmt.Printf("%s is invalid\n", s)
-				ExitOnError(ErrWrongUsage, cmd.Help)
+			if c.Flags[i].IsValid != nil {
+				for _, v := range vals[s] {
+					if !c.Flags[i].IsValid(v) {
+						fmt.Printf("%s is invalid\n", s)
+						ExitOnError(ErrWrongUsage, cmd.Help)
+					}
+				}
 			}
 		}
 		return vals
@@ -289,6 +299,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			quiet, _ := cmd.Flags().GetBool("quiet")
 			verbose, _ := cmd.Flags().GetBool("verbose")
 			filter, _ := cmd.Flags().GetString("filter")
+			fields, _ := cmd.Flags().GetString("fields")
 			var filters = make(map[string]string)
 			if filter != "" {
 				t := strings.Split(filter, " ")
@@ -310,7 +321,11 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			allResult := []map[string]string{}
 
 			for _, i := range s {
-				item := listItem(i, filters, quiet, nil, verbose, map[string]string{})
+				var fs []string
+				if fields != "" {
+					fs = strings.Split(fields, ",")
+				}
+				item := listItem(i, filters, quiet, fs, verbose, map[string]string{})
 				if len(item) == 0 {
 					continue
 				}
@@ -481,7 +496,7 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 
 					if len(fields) > 0 {
 						for _, ff := range fields {
-							if ff == tag {
+							if ff == tag || strings.ToUpper(ff) == tag || strings.ToLower(ff) == tag {
 								res[tag] = fmt.Sprintf("%v", f.Interface())
 								continue
 							}

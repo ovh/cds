@@ -341,7 +341,7 @@ func teardownBuildDirectory(wd string) error {
 }
 
 func workingDirectory(basedir string, jobInfo *sdk.WorkflowNodeJobRunData, suffixes ...string) string {
-	var encodedName = base64.StdEncoding.EncodeToString([]byte(jobInfo.NodeJobRun.Job.Job.Action.Name))
+	var encodedName = base64.RawStdEncoding.EncodeToString([]byte(jobInfo.NodeJobRun.Job.Job.Action.Name))
 	paths := append([]string{basedir, encodedName}, suffixes...)
 	dir := path.Join(paths...)
 

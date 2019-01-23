@@ -9,9 +9,6 @@
                 <a sm-item [class.active]="selectedTab === 'home'" (click)="showTab('home')">
                     <i class=""></i>{{ 'common_home' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')" *ngIf="application.workflow_migration !== 'DONE' && application.workflow_migration !== 'CLEANING'">
-                  <i class="rocket icon"></i>{{ 'common_workflow' | translate }}
-                </a>
                 <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')">
                   <i class="font icon"></i>{{ 'common_variables' | translate }}
                 </a>
@@ -20,9 +17,6 @@
                 </a>
                 <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')">
                   <i class="users icon"></i>{{ 'common_permissions' | translate }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'notifications'" (click)="showTab('notifications')">
-                  <i class="alarm icon"></i>{{ 'common_notifications' | translate }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
                     <i class="map signs icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
@@ -39,9 +33,6 @@
         <div class="scrollingContent">
             <div class="paddingContent">
                 <div class="viewContent">
-                    <div [hidden]="selectedTab !== 'workflow'" class="workflow" *ngIf="application.workflow_migration !== 'DONE' && application.workflow_migration !== 'CLEANING'">
-                        <app-application-workflow [tab]="selectedTab" [project]="project" [application]="application" [(applicationFilter)]="appFilter" (changeWorkerEvent)="changeWorkerFilter($event)" #workflow></app-application-workflow>
-                    </div>
                     <div [ngSwitch]="selectedTab">
                         <div *ngSwitchCase="'home'">
                             <app-home [project]="project" [application]="application"></app-home>
@@ -66,12 +57,6 @@
                                 <app-permission-form [loading]="permFormLoading" (createGroupPermissionEvent)="groupEvent($event)"></app-permission-form>
                             </ng-container>
                             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
-                        </div>
-
-                        <div *ngSwitchCase="'notifications'">
-                            <h3>{{ 'application_notifications_list_title' | translate }}</h3>
-                            <app-notification-list (event)="notificationEvent($event)" [project]="project" [application]="application" [loading]="notifFormLoading" [notifications]="application.notifications" [edit]="application.permission === perm.READ_WRITE_EXECUTE" #notificationList></app-notification-list>
-                            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="notificationEvent($event, true)" #notifWarning></app-warning-modal>
                         </div>
 
                         <div *ngSwitchCase="'usage'">

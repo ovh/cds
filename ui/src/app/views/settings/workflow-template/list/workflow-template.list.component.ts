@@ -12,7 +12,7 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 })
 export class WorkflowTemplateListComponent {
     loading: boolean;
-    columns: Array<Column>;
+    columns: Array<Column<WorkflowTemplate>>;
     workflowTemplates: Array<WorkflowTemplate>;
 
     path: Array<PathItem>
@@ -21,24 +21,24 @@ export class WorkflowTemplateListComponent {
         private _workflowTemplateService: WorkflowTemplateService
     ) {
         this.columns = [
-            <Column>{
+            <Column<WorkflowTemplate>>{
                 type: ColumnType.ROUTER_LINK,
                 name: 'common_name',
-                selector: wt => {
+                selector: (wt: WorkflowTemplate) => {
                     return {
                         link: '/settings/workflow-template/' + wt.group.name + '/' + wt.slug,
                         value: wt.name
                     };
                 }
             },
-            <Column>{
+            <Column<WorkflowTemplate>>{
                 type: ColumnType.MARKDOWN,
                 name: 'common_description',
-                selector: wt => wt.description
+                selector: (wt: WorkflowTemplate) => wt.description
             },
-            <Column>{
+            <Column<WorkflowTemplate>>{
                 name: 'common_group',
-                selector: wt => wt.group.name
+                selector: (wt: WorkflowTemplate) => wt.group.name
             }
         ];
         this.getTemplates();
@@ -53,7 +53,7 @@ export class WorkflowTemplateListComponent {
 
     getTemplates() {
         this.loading = true;
-        this._workflowTemplateService.getWorkflowTemplates()
+        this._workflowTemplateService.getAll()
             .pipe(finalize(() => this.loading = false))
             .subscribe(wts => { this.workflowTemplates = wts; });
     }

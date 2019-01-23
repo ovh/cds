@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"reflect"
 
 	"github.com/spf13/cobra"
 
@@ -40,7 +39,7 @@ var applicationListCmd = cli.Command{
 }
 
 func applicationListRun(v cli.Values) (cli.ListResult, error) {
-	apps, err := client.ApplicationList(v[_ProjectKey])
+	apps, err := client.ApplicationList(v.GetString(_ProjectKey))
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +56,7 @@ var applicationShowCmd = cli.Command{
 }
 
 func applicationShowRun(v cli.Values) (interface{}, error) {
-	app, err := client.ApplicationGet(v[_ProjectKey], v[_ApplicationName])
+	app, err := client.ApplicationGet(v.GetString(_ProjectKey), v.GetString(_ApplicationName))
 	if err != nil {
 		return nil, err
 	}
@@ -77,8 +76,8 @@ var applicationCreateCmd = cli.Command{
 }
 
 func applicationCreateRun(v cli.Values) error {
-	a := &sdk.Application{Name: v[_ApplicationName]}
-	return client.ApplicationCreate(v[_ProjectKey], a)
+	a := &sdk.Application{Name: v.GetString(_ApplicationName)}
+	return client.ApplicationCreate(v.GetString(_ProjectKey), a)
 }
 
 var applicationDeleteCmd = cli.Command{
@@ -91,7 +90,7 @@ var applicationDeleteCmd = cli.Command{
 }
 
 func applicationDeleteRun(v cli.Values) error {
-	err := client.ApplicationDelete(v[_ProjectKey], v[_ApplicationName])
+	err := client.ApplicationDelete(v.GetString(_ProjectKey), v.GetString(_ApplicationName))
 	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 		fmt.Println(err.Error())
 		os.Exit(0)
@@ -110,7 +109,7 @@ var applicationImportCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "force",
 			Usage:   "Override application if exists",
 			Default: "false",
@@ -153,13 +152,13 @@ var applicationExportCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "with-permissions",
 			Usage:   "Export permissions",
 			Default: "false",
 		},
 		{
-			Kind:    reflect.String,
+			Type:    cli.FlagString,
 			Name:    "format",
 			Usage:   "Specify export format (json or yaml)",
 			Default: "yaml",

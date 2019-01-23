@@ -83,7 +83,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() service.Handler {
 		}
 
 		groupPipeline.Group = g.Group
-		event.PublishPipelinePermissionUpdate(key, pipelineName, g, groupPipeline, getUser(ctx))
+		event.PublishPipelinePermissionUpdate(key, pipelineName, g, groupPipeline, deprecatedGetUser(ctx))
 
 		if err := pipeline.LoadGroupByPipeline(context.TODO(), api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnPipelineHandler: Cannot load groups for pipeline %s", p.Name)
@@ -145,7 +145,7 @@ func (api *API) addGroupInPipelineHandler() service.Handler {
 		}
 
 		groupPermission.Group = *g
-		event.PublishPipelinePermissionAdd(key, p.Name, groupPermission, getUser(ctx))
+		event.PublishPipelinePermissionAdd(key, p.Name, groupPermission, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, p, http.StatusOK)
 	}
@@ -166,7 +166,7 @@ func (api *API) importGroupsInPipelineHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		proj, errProj := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		proj, errProj := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "importGroupsInPipelineHandler> Cannot load %s", key)
 		}
@@ -306,7 +306,7 @@ func (api *API) deleteGroupFromPipelineHandler() service.Handler {
 				Name: groupName,
 			},
 		}
-		event.PublishPipelinePermissionDelete(key, pipelineName, gp, getUser(ctx))
+		event.PublishPipelinePermissionDelete(key, pipelineName, gp, deprecatedGetUser(ctx))
 
 		if err := pipeline.LoadGroupByPipeline(context.TODO(), api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot load groups")

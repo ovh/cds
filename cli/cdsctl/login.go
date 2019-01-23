@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -28,21 +27,18 @@ var loginCmd = cli.Command{
 				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
 				return match
 			},
-			Kind: reflect.String,
 		}, {
 			Name:      "username",
 			ShortHand: "u",
 			Usage:     "CDS Username",
-			Kind:      reflect.String,
 		}, {
 			Name:      "password",
 			ShortHand: "p",
 			Usage:     "CDS Password",
-			Kind:      reflect.String,
 		}, {
 			Name:  "env",
 			Usage: "Display the commands to set up the environment for the cds client",
-			Kind:  reflect.Bool,
+			Type:  cli.FlagBool,
 		},
 	},
 }
@@ -150,10 +146,10 @@ func doLogin(url, username, password string, env bool) error {
 	}
 
 	tomlConf := config{
-		Host: url,
+		Host:                  url,
 		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
-		User:  username,
-		Token: token,
+		User:                  username,
+		Token:                 token,
 	}
 
 	defer fi.Close()

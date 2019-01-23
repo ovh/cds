@@ -30,6 +30,7 @@ const (
 	TagPipelineID         = "pipeline_id"
 	TagPipelineDeep       = "pipeline_deep"
 	TagWorker             = "worker"
+	TagToken              = "token"
 )
 
 // LinkTo a traceID

@@ -171,6 +171,9 @@ var (
 	ErrInvalidNodeDefaultPayload              = Error{ID: 154, Status: http.StatusBadRequest}
 	ErrInvalidApplicationRepoStrategy         = Error{ID: 155, Status: http.StatusBadRequest}
 	ErrWorkflowNodeRootUpdate                 = Error{ID: 156, Status: http.StatusBadRequest}
+	ErrWorkflowAlreadyAsCode                  = Error{ID: 157, Status: http.StatusBadRequest}
+	ErrNoDBMigrationID                        = Error{ID: 158, Status: http.StatusNotFound}
+	ErrCannotParseTemplate                    = Error{ID: 159, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -324,6 +327,9 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidNodeDefaultPayload.ID:              "Workflow node which isn't a root node cannot have a default payload",
 	ErrInvalidApplicationRepoStrategy.ID:         "The repository strategy for your application is not correct",
 	ErrWorkflowNodeRootUpdate.ID:                 "Unable to update/delete the root node of your workflow",
+	ErrWorkflowAlreadyAsCode.ID:                  "Workflow is already as-code or there is already a pull-request to transform it",
+	ErrNoDBMigrationID.ID:                        "ID does not exist in table gorp_migration",
+	ErrCannotParseTemplate.ID:                    "Cannot parse workflow template",
 }
 
 var errorsFrench = map[int]string{
@@ -477,6 +483,9 @@ var errorsFrench = map[int]string{
 	ErrInvalidNodeDefaultPayload.ID:              "Le workflow est incorrect. Un payload par défaut ne peut pas être sur un pipeline autre que le premier du workflow",
 	ErrInvalidApplicationRepoStrategy.ID:         "La stratégie de dépôt (vcs) de l'application n'est pas correcte",
 	ErrWorkflowNodeRootUpdate.ID:                 "Impossible de mettre à jour ou supprimer le noeud racine du workflow",
+	ErrWorkflowAlreadyAsCode.ID:                  "Le workflow est déjà as-code ou il y a déjà une pull-request pour le transformer",
+	ErrNoDBMigrationID.ID:                        "Cet id n'existe pas dans la table gorp_migrations",
+	ErrCannotParseTemplate.ID:                    "Impossible de parser le modèle de workflow",
 }
 
 var errorsLanguages = []map[int]string{
@@ -486,11 +495,12 @@ var errorsLanguages = []map[int]string{
 
 // Error type.
 type Error struct {
-	ID         int    `json:"id"`
-	Status     int    `json:"-"`
-	Message    string `json:"message"`
-	UUID       string `json:"uuid,omitempty"`
-	StackTrace string `json:"stack_trace,omitempty"`
+	ID         int         `json:"id"`
+	Status     int         `json:"-"`
+	Message    string      `json:"message"`
+	Data       interface{} `json:"data"`
+	UUID       string      `json:"uuid,omitempty"`
+	StackTrace string      `json:"stack_trace,omitempty"`
 	from       string
 }
 
