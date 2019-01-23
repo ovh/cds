@@ -1,5 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { finalize, first } from 'rxjs/operators';
 import { PermissionValue } from '../../../../../model/permission.model';
 import { ProjectPlatform } from '../../../../../model/platform.model';
@@ -16,11 +17,20 @@ import { ToastService } from '../../../../../shared/toast/ToastService';
 export class ProjectPlatformListComponent extends Table<ProjectPlatform> {
 
     @Input() project: Project;
+    @ViewChild('codeMirror')
+    codemirror: CodemirrorComponent;
     permissionEnum = PermissionValue;
     loading = false;
+    codeMirrorConfig: {};
 
     constructor(private _projectStore: ProjectStore, private _translate: TranslateService, private _toast: ToastService) {
         super();
+        this.codeMirrorConfig = {
+            mode: 'shell',
+            lineWrapping: true,
+            lineNumbers: true,
+            autoRefresh: true
+        };
     }
 
     getData(): Array<ProjectPlatform> {
