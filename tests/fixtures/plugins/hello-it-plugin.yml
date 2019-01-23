@@ -1,4 +1,5 @@
 name: test-plugin
 type: platform
+integration: HelloIT
 author: "me"
 description: "this is a test plugin"

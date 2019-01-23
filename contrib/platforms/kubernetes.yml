@@ -26,4 +26,3 @@ deployment_default_config:
   helm_values:
     type: string
     description: specify helm values in a YAML file or a URL to configure/override your helm chart
-plugin: kubernetes-deployment-plugin

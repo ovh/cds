@@ -38,7 +38,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 
 		platformModel, err := platform.LoadModelByName(api.mustDB(), p.Integration, false)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot get platform model")
+			return err
 		}
 		p.PlatformModelID = &platformModel.ID
 

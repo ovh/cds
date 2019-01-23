@@ -6,6 +6,7 @@ import "github.com/ovh/cds/sdk"
 type GRPCPlugin struct {
 	Name        string                    `json:"name" yaml:"name" cli:"name,key"`
 	Type        string                    `json:"type" yaml:"type" cli:"type"`
+	Integration string                    `json:"integration" yaml:"integration" cli:"integration"`
 	Author      string                    `json:"author" yaml:"author" cli:"author"`
 	Description string                    `json:"description" yaml:"description" cli:"description"`
 	Parameters  map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
@@ -15,6 +16,7 @@ type GRPCPlugin struct {
 func NewGRPCPlugin(p sdk.GRPCPlugin) (plg GRPCPlugin) {
 	plg.Name = p.Name
 	plg.Type = p.Type
+	plg.Integration = p.Integration
 	plg.Author = p.Author
 	plg.Description = p.Description
 	plg.Parameters = make(map[string]ParameterValue, len(p.Parameters))
@@ -38,6 +40,7 @@ func (plg *GRPCPlugin) GRPCPlugin() *sdk.GRPCPlugin {
 	p := new(sdk.GRPCPlugin)
 	p.Name = plg.Name
 	p.Type = plg.Type
+	p.Integration = plg.Integration
 	p.Author = plg.Author
 	p.Description = plg.Description
 
