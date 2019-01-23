@@ -42,7 +42,9 @@
                         </div>
                         <div class="ten wide field">
                             <input type="text" [(ngModel)]="newPlatform.config[k].value" *ngIf="newPlatform.config[k].type === 'string'">
-                            <textarea type="text" [(ngModel)]="newPlatform.config[k].value" *ngIf="newPlatform.config[k].type === 'text'"></textarea>
+                            <ng-container *ngIf="newPlatform.config[k].type === 'text'">
+                                <codemirror [(ngModel)]="newPlatform.config[k].value" [config]="codeMirrorConfig" #codeMirror></codemirror>
+                            </ng-container>
                             <input type="password" [(ngModel)]="newPlatform.config[k].value" *ngIf="newPlatform.config[k].type === 'password'">
                         </div>
                     </div>

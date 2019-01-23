@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/golang/protobuf/ptypes/empty"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -24,7 +25,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
-	"github.com/golang/protobuf/ptypes/empty"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
 )
@@ -150,6 +150,7 @@ current-context: default-context`, k8sToken, certb64, k8sAPIURL)
 }
 
 func (k8sPlugin *kubernetesDeploymentPlugin) DeployStatus(ctx context.Context, q *platformplugin.DeployStatusQuery) (*platformplugin.DeployResult, error) {
+	// I use the flag --wait to let kubectl wait until all deployments are done. Then it's not required
 	return &platformplugin.DeployResult{
 		Status: sdk.StatusSuccess.String(),
 	}, nil
