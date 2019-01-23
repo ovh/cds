@@ -1,14 +1,14 @@
-import {notificationTypes, UserNotificationSettings} from 'app/model/notification.model';
-import {Application} from './application.model';
-import {Environment} from './environment.model';
-import {GroupPermission} from './group.model';
-import {Parameter} from './parameter.model';
-import {Pipeline} from './pipeline.model';
+import { notificationTypes, UserNotificationSettings } from 'app/model/notification.model';
+import { Application } from './application.model';
+import { Environment } from './environment.model';
+import { GroupPermission } from './group.model';
+import { Parameter } from './parameter.model';
+import { Pipeline } from './pipeline.model';
 import { ProjectPlatform } from './platform.model';
 import { Label } from './project.model';
-import {Usage} from './usage.model';
-import {WorkflowHookModel} from './workflow.hook.model';
-import {WorkflowRun} from './workflow.run.model';
+import { Usage } from './usage.model';
+import { WorkflowHookModel } from './workflow.hook.model';
+import { WorkflowRun } from './workflow.run.model';
 
 // Node type enum
 export class WNodeType {
@@ -414,6 +414,7 @@ export class WNode {
     outgoing_hook: WNodeOutgoingHook;
     parents: Array<WNodeJoin>;
     hooks: Array<WNodeHook>;
+    groups: Array<GroupPermission>;
 
     static getMapNodes(nodes: Map<number, WNode>, node: WNode): Map<number, WNode> {
         nodes.set(node.id, node);

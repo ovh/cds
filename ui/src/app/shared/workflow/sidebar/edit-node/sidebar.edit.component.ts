@@ -16,6 +16,7 @@ import { WorkflowNodeContextComponent } from '../../modal/context/workflow.node.
 import { WorkflowDeleteNodeComponent } from '../../modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from '../../modal/hook-modal/hook.modal.component';
 import { WorkflowNodeOutGoingHookEditComponent } from '../../modal/outgoinghook-edit/outgoinghook.edit.component';
+import { WorkflowNodePermissionsComponent } from '../../modal/permissions/node.permissions.component';
 import { WorkflowTriggerComponent } from '../../modal/trigger/workflow.trigger.component';
 
 @Component({
@@ -52,6 +53,8 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
     workflowEditOutgoingHook: WorkflowNodeOutGoingHookEditComponent;
     @ViewChild('workflowAddHook')
     workflowAddHook: WorkflowHookModalComponent;
+    @ViewChild('workflowNodePermissions')
+    workflowNodePermissions: WorkflowNodePermissionsComponent;
     @ViewChild('nodeNameWarningModal')
     nodeNameWarningModal: ModalTemplate<boolean, boolean, void>;
 
@@ -145,6 +148,10 @@ export class WorkflowWNodeSidebarEditComponent implements OnInit {
 
     openEditRunConditions(): void {
         this.workflowConditions.show();
+    }
+
+    openNodePermissions(): void {
+        this.workflowNodePermissions.show();
     }
 
     openTriggerModal(t: string, parent: boolean): void {

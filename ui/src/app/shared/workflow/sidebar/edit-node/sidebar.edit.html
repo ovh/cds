@@ -65,6 +65,11 @@
                 <span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_condition_show' | translate }}</span>
                 <i class="angle right icon"></i>
             </a>
+            <a class="item noborder" (click)="openNodePermissions()">
+                <span *ngIf="workflow.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_permissions_edit' | translate }}</span>
+                <span *ngIf="workflow.permission < permissionEnum.READ_WRITE_EXECUTE">{{ 'workflow_node_permissions_show' | translate }}</span>
+                <i class="angle right icon"></i>
+            </a>
         </ng-container>
 
         <!-- Pipeline ONLY -->
@@ -161,6 +166,9 @@
     <app-hook-modal [loading]="loading" [project]="project" [workflow]="workflow" [node]="node"
                                  (hookEvent)="updateWorkflow($event, workflowAddHook.modal)"
                                  #workflowAddHook></app-hook-modal>
+    <!-- Add node permissions -->
+    <app-workflow-node-permissions [loading]="loading" [workflow]="workflow" [node]="node"
+                                 #workflowNodePermissions></app-workflow-node-permissions>
 </ng-container>
 
 
