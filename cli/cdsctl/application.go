@@ -152,12 +152,6 @@ var applicationExportCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Type:    cli.FlagBool,
-			Name:    "with-permissions",
-			Usage:   "Export permissions",
-			Default: "false",
-		},
-		{
 			Type:    cli.FlagString,
 			Name:    "format",
 			Usage:   "Specify export format (json or yaml)",
@@ -167,7 +161,7 @@ var applicationExportCmd = cli.Command{
 }
 
 func applicationExportRun(c cli.Values) error {
-	btes, err := client.ApplicationExport(c.GetString(_ProjectKey), c.GetString(_ApplicationName), c.GetBool("with-permissions"), c.GetString("format"))
+	btes, err := client.ApplicationExport(c.GetString(_ProjectKey), c.GetString(_ApplicationName), c.GetString("format"))
 	if err != nil {
 		return err
 	}

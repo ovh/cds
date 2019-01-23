@@ -137,12 +137,6 @@ var environmentExportCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Type:    cli.FlagBool,
-			Name:    "with-permissions",
-			Usage:   "Export permissions",
-			Default: "false",
-		},
-		{
 			Type:    cli.FlagString,
 			Name:    "format",
 			Usage:   "Specify export format (json or yaml)",
@@ -152,7 +146,7 @@ var environmentExportCmd = cli.Command{
 }
 
 func environmentExportRun(c cli.Values) error {
-	btes, err := client.EnvironmentExport(c.GetString(_ProjectKey), c.GetString("environment-name"), c.GetBool("with-permissions"), c.GetString("format"))
+	btes, err := client.EnvironmentExport(c.GetString(_ProjectKey), c.GetString("environment-name"), c.GetString("format"))
 	if err != nil {
 		return err
 	}
