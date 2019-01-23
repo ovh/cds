@@ -1,19 +1,18 @@
 /* tslint:disable:no-unused-variable */
-import {async, TestBed} from '@angular/core/testing';
-import {APP_BASE_HREF} from '@angular/common';
-import {AppModule} from '../../app.module';
-import {RouterModule} from '@angular/router';
-import {PipelineStore} from './pipeline.store';
-import {Pipeline} from '../../model/pipeline.model';
-import {Stage} from '../../model/stage.model';
-import {Action} from '../../model/action.model';
-import {Job} from '../../model/job.model';
-import {Project} from '../../model/project.model';
-import {Group, GroupPermission} from '../../model/group.model';
-import {Parameter} from '../../model/parameter.model';
-import {first} from 'rxjs/operators';
-import {PipelineService} from './pipeline.service';
-import {Observable} from 'rxjs/Observable';
+import { APP_BASE_HREF } from '@angular/common';
+import { async, TestBed } from '@angular/core/testing';
+import { RouterModule } from '@angular/router';
+import { Observable } from 'rxjs/Observable';
+import { first } from 'rxjs/operators';
+import { AppModule } from '../../app.module';
+import { Action } from '../../model/action.model';
+import { Job } from '../../model/job.model';
+import { Parameter } from '../../model/parameter.model';
+import { Pipeline } from '../../model/pipeline.model';
+import { Project } from '../../model/project.model';
+import { Stage } from '../../model/stage.model';
+import { PipelineService } from './pipeline.service';
+import { PipelineStore } from './pipeline.store';
 
 describe('CDS: pipeline Store', () => {
 
@@ -285,88 +284,6 @@ describe('CDS: pipeline Store', () => {
         expect(checkJobDelete).toBeTruthy();
     }));
 
-    it('should add/update/delete a permission', async(() => {
-        const pipelineStore = TestBed.get(PipelineStore);
-
-        let grp1 = new Group();
-        grp1.name = 'grp';
-
-        let pip = new Pipeline();
-        pip.name = 'myPipeline';
-        pip.last_modified = 0;
-
-        let pipAddGroup = new Pipeline();
-        pipAddGroup.name = 'myPipeline';
-        pipAddGroup.last_modified = 123;
-        pipAddGroup.groups = new Array<GroupPermission>();
-        let gpAdd = new GroupPermission();
-        gpAdd.group = grp1;
-        gpAdd.permission = 7;
-        pipAddGroup.groups.push(gpAdd);
-
-        let pipUpGroup = new Pipeline();
-        pipUpGroup.name = 'myPipeline';
-        pipUpGroup.last_modified = 456;
-        pipUpGroup.groups = new Array<GroupPermission>();
-        let gpUp = new GroupPermission();
-        gpUp.group = grp1;
-        gpUp.permission = 4;
-        pipUpGroup.groups.push(gpUp);
-
-        let pipDelGroup = new Pipeline();
-        pipDelGroup.name = 'myPipeline';
-        pipDelGroup.last_modified = 789;
-        pipDelGroup.groups = new Array<GroupPermission>();
-
-        let proj: Project = new Project();
-        proj.key = 'key1';
-
-        // Create pipeline
-        let pipeline = createPipeline('myPipeline');
-        pipelineStore.createPipeline(proj.key, pipeline).subscribe(() => {
-        });
-
-        let gp: GroupPermission = new GroupPermission();
-        gp.permission = 7;
-        gp.group = new Group();
-        gp.group.name = 'grp';
-
-        pipelineStore.addPermission(proj.key, pip.name, gp).subscribe(() => {
-        });
-
-        // check get pipeline
-        let checkedAddPermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
-            expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'A group must have been added');
-            expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(7, 'Permission must be 7');
-            checkedAddPermission = true;
-        });
-        expect(checkedAddPermission).toBeTruthy('Need pipeline to be updated');
-
-        gp.permission = 4;
-        pipelineStore.updatePermission(proj.key, pip.name, gp).subscribe(() => {
-        });
-
-        // check get pipeline
-        let checkedUpdatePermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
-            expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'Pip must have 1 group');
-            expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(4, 'Group permission must be 4');
-            checkedUpdatePermission = true;
-        });
-        expect(checkedUpdatePermission).toBeTruthy('Need pipeline to be updated');
-
-        pipelineStore.removePermission(proj.key, pip.name, gp).subscribe(() => {
-        });
-
-        // check get pipeline
-        let checkedDeletePermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
-            expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(0, 'Ouo must have 0 group');
-            checkedDeletePermission = true;
-        });
-        expect(checkedDeletePermission).toBeTruthy('Need pipeline to be updated');
-    }));
 
     it('should add/update/delete a parameter', async(() => {
         const pipelineStore = TestBed.get(PipelineStore);
@@ -507,29 +424,6 @@ describe('CDS: pipeline Store', () => {
             s.id = stageID;
             s.jobs = new Array<Job>();
             pip.stages.push(s);
-            return Observable.of(pip);
-        }
-
-        addPermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-            let pip = new Pipeline();
-            pip.name = pipName;
-            pip.groups = new Array<GroupPermission>();
-            pip.groups.push(gp);
-            return Observable.of(pip);
-        }
-
-        updatePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-            let pip = new Pipeline();
-            pip.name = pipName;
-            pip.groups = new Array<GroupPermission>();
-            pip.groups.push(gp);
-            return Observable.of(pip);
-        }
-
-        removePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-            let pip = new Pipeline();
-            pip.name = pipName;
-            pip.groups = new Array<GroupPermission>();
             return Observable.of(pip);
         }
 

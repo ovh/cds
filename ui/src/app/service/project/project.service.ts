@@ -1,16 +1,16 @@
 
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
-import {Application} from '../../model/application.model';
-import {Environment} from '../../model/environment.model';
-import {GroupPermission} from '../../model/group.model';
-import {Key} from '../../model/keys.model';
-import {Notification} from '../../model/notification.model';
-import {ProjectPlatform} from '../../model/platform.model';
-import {Label, LoadOpts, Project} from '../../model/project.model';
-import {Variable} from '../../model/variable.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Application } from '../../model/application.model';
+import { Environment } from '../../model/environment.model';
+import { GroupPermission } from '../../model/group.model';
+import { Key } from '../../model/keys.model';
+import { Notification } from '../../model/notification.model';
+import { ProjectPlatform } from '../../model/platform.model';
+import { Label, LoadOpts, Project } from '../../model/project.model';
+import { Variable } from '../../model/variable.model';
 
 /**
  * Service to access Project from API.
@@ -281,39 +281,6 @@ export class ProjectService {
      */
     removeEnvironmentVariable(key: string, envName: string, v: Variable): Observable<Project> {
         return this._http.delete<Project>('/project/' + key + '/environment/' + envName + '/variable/' + v.name);
-    }
-
-    /**
-     * Add permission on environments
-     * @param key Project unique key
-     * @param envName environment name
-     * @param gps New group permission to add
-     * @returns {Observable<Environment>}
-     */
-    addEnvironmentPermission(key: string, envName: string, gps: Array<GroupPermission>): Observable<Environment> {
-        return this._http.post<Environment>('/project/' + key + '/environment/' + envName + '/groups', gps);
-    }
-
-    /**
-     * Update a permission on an environment
-     * @param key Project unique key
-     * @param envName Environmenet name
-     * @param gp Group Permission to update
-     * @returns {Observable<Environment>}
-     */
-    updateEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<Environment> {
-        return this._http.put<Environment>('/project/' + key + '/environment/' + envName + '/group/' + gp.group.name, gp);
-    }
-
-    /**
-     * Remove a permission on an environment
-     * @param key Project unique key
-     * @param envName Environmenet name
-     * @param gp Group Permission to update
-     * @returns {Observable<boolean>}
-     */
-    removeEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<boolean> {
-        return this._http.delete('/project/' + key + '/environment/' + envName + '/group/' + gp.group.name).pipe(map(res => true));
     }
 
     /**

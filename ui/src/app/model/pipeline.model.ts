@@ -1,5 +1,4 @@
 import { Environment } from './environment.model';
-import { GroupPermission } from './group.model';
 import { Parameter } from './parameter.model';
 import { Stage } from './stage.model';
 import { Usage } from './usage.model';
@@ -64,7 +63,6 @@ export class Pipeline {
     icon: string;
     type: string;
     stages: Array<Stage>;
-    groups: Array<GroupPermission>;
     parameters: Array<Parameter>;
     permission: number;
     last_modified: number;

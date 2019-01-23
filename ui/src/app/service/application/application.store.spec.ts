@@ -1,17 +1,16 @@
 /* tslint:disable:no-unused-variable */
 
-import {async, fakeAsync, TestBed} from '@angular/core/testing';
-import {APP_BASE_HREF} from '@angular/common';
-import {AppModule} from '../../app.module';
-import {RouterModule} from '@angular/router';
-import {ApplicationStore} from './application.store';
-import {Application} from '../../model/application.model';
-import {Project} from '../../model/project.model';
-import {Variable} from '../../model/variable.model';
-import {Group, GroupPermission} from '../../model/group.model';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {ApplicationService} from './application.service';
-import {Observable} from 'rxjs/Observable';
+import { APP_BASE_HREF } from '@angular/common';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { async, fakeAsync, TestBed } from '@angular/core/testing';
+import { RouterModule } from '@angular/router';
+import { Observable } from 'rxjs/Observable';
+import { AppModule } from '../../app.module';
+import { Application } from '../../model/application.model';
+import { Project } from '../../model/project.model';
+import { Variable } from '../../model/variable.model';
+import { ApplicationService } from './application.service';
+import { ApplicationStore } from './application.store';
 
 describe('CDS: application Store', () => {
 
@@ -234,91 +233,6 @@ describe('CDS: application Store', () => {
         expect(checkedDeleteVariable).toBeTruthy('Need application to be updated');
     }));
 
-    it('should add/update/delete a permission', async(() => {
-        const applicationStore = TestBed.get(ApplicationStore);
-        const http = TestBed.get(HttpTestingController);
-
-        let app = new Application();
-        app.name = 'myApplication';
-        app.last_modified = '0';
-
-        let appAddPerm = new Application();
-        appAddPerm.name = 'myApplication';
-        appAddPerm.last_modified = '123';
-        appAddPerm.groups = new Array<GroupPermission>();
-        let gp1 = new GroupPermission();
-        gp1.permission = 7;
-        gp1.group = new Group();
-        gp1.group.name = 'grp';
-        appAddPerm.groups.push(gp1);
-
-        let appUpPerm = new Application();
-        appUpPerm.name = 'myApplication';
-        appUpPerm.last_modified = '456';
-        appUpPerm.groups = new Array<GroupPermission>();
-        let gp2 = new GroupPermission();
-        gp2.permission = 4;
-        gp2.group = new Group();
-        gp2.group.name = 'grp';
-        appUpPerm.groups.push(gp2);
-
-        let appDelPerm = new Application();
-        appDelPerm.name = 'myApplication';
-        appDelPerm.last_modified = '789';
-        appDelPerm.groups = new Array<GroupPermission>();
-
-        let proj: Project = new Project();
-        proj.key = 'key1';
-
-        // Create application
-        let a = createApplication('myApplication');
-        applicationStore.getApplicationResolver(proj.key, a.name).subscribe(() => {
-        });
-
-        let gp: GroupPermission = new GroupPermission();
-        gp.group = new Group();
-        gp.group.name = 'grp';
-        gp.permission = 7;
-
-        applicationStore.addPermission(proj.key, a.name, gp).subscribe(() => {
-        });
-
-        // check get application
-        let checkedAddPermission = false;
-        applicationStore.getApplications(proj.key, 'myApplication').subscribe(apps => {
-            expect(apps.get(proj.key + '-myApplication').groups.length).toBe(1, 'A group must have been added');
-            expect(apps.get(proj.key + '-myApplication').groups[0].permission).toBe(7, 'Permission must be 7');
-            checkedAddPermission = true;
-        }).unsubscribe();
-        expect(checkedAddPermission).toBeTruthy('Need application to be updated');
-
-        gp.permission = 4;
-        applicationStore.updatePermission(proj.key, a.name, gp).subscribe(() => {
-        });
-
-        // check get application
-        let checkedUpdatePermission = false;
-        applicationStore.getApplications(proj.key, 'myApplication').subscribe(apps => {
-            expect(apps.get(proj.key + '-myApplication').groups.length).toBe(1, 'App must have 1 group');
-            expect(apps.get(proj.key + '-myApplication').groups[0].permission).toBe(4, 'Group permission must be 4');
-            checkedUpdatePermission = true;
-        }).unsubscribe();
-        expect(checkedUpdatePermission).toBeTruthy('Need application to be updated');
-
-        applicationStore.removePermission(proj.key, a.name, gp).subscribe(() => {
-        });
-
-        // check get application
-        let checkedDeletePermission = false;
-        applicationStore.getApplications(proj.key, 'myApplication').subscribe(apps => {
-            expect(apps.get(proj.key + '-myApplication').groups.length).toBe(0, 'App must have 0 group');
-            checkedDeletePermission = true;
-        }).unsubscribe();
-        expect(checkedDeletePermission).toBeTruthy('Need application to be updated');
-
-        http.verify();
-    }));
-
     function createApplication(name: string): Application {
         let app: Application = new Application();
         app.name = name;
@@ -341,7 +255,7 @@ describe('CDS: application Store', () => {
             return Observable.of(appli);
         }
 
-        connectRepository(key: string, currentName: string, repoManName: string, repoFullname: string): Observable<Application>{
+        connectRepository(key: string, currentName: string, repoManName: string, repoFullname: string): Observable<Application> {
             let app = new Application();
             app.name = currentName;
             app.repository_fullname = repoFullname;
@@ -369,29 +283,6 @@ describe('CDS: application Store', () => {
             let app = new Application();
             app.name = appName;
             app.variables = new Array<Variable>();
-            return Observable.of(app);
-        }
-
-        addPermission(key: string, appName: string, gp: GroupPermission): Observable<Application> {
-            let app = new Application();
-            app.name = appName;
-            app.groups = new Array<GroupPermission>();
-            app.groups.push(gp);
-            return Observable.of(app);
-        }
-
-        updatePermission(key: string, appName: string, gp: GroupPermission): Observable<Application> {
-            let app = new Application();
-            app.name = appName;
-            app.groups = new Array<GroupPermission>();
-            app.groups.push(gp);
-            return Observable.of(app);
-        }
-
-        removePermission(key: string, appName: string, gp: GroupPermission): Observable<Application> {
-            let app = new Application();
-            app.name = appName;
-            app.groups = new Array<GroupPermission>();
             return Observable.of(app);
         }
 

@@ -1,14 +1,13 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {finalize, first} from 'rxjs/operators';
-import {Environment} from '../../../../model/environment.model';
-import {PermissionValue} from '../../../../model/permission.model';
-import {Project} from '../../../../model/project.model';
-import {Warning} from '../../../../model/warning.model';
-import {ProjectStore} from '../../../../service/project/project.store';
-import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
-import {EnvironmentPermissionEvent, PermissionEvent} from '../../../../shared/permission/permission.event.model';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { finalize, first } from 'rxjs/operators';
+import { PermissionValue } from '../../../../model/permission.model';
+import { Project } from '../../../../model/project.model';
+import { Warning } from '../../../../model/warning.model';
+import { ProjectStore } from '../../../../service/project/project.store';
+import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
+import { PermissionEvent } from '../../../../shared/permission/permission.event.model';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-permissions',
@@ -21,15 +20,10 @@ export class ProjectPermissionsComponent implements OnInit {
 
     @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;
-    @ViewChild('permEnvWarning')
-    permEnvWarningModal: WarningModalComponent;
-    @ViewChild('permEnvGroupWarning')
-    permEnvGroupWarningModal: WarningModalComponent;
 
     permissionEnum = PermissionValue;
     loading = true;
     permFormLoading = false;
-    permEnvFormLoading = false;
 
     constructor(private _projectStore: ProjectStore,
                 public _translate: TranslateService,
@@ -47,44 +41,6 @@ export class ProjectPermissionsComponent implements OnInit {
             .subscribe((proj) => {
                 this.project = proj;
             });
-    }
-
-    addEnvPermEvent(event: EnvironmentPermissionEvent, skip?: boolean): void {
-        if (!skip && this.project.externalChange) {
-            this.permEnvWarningModal.show(event);
-        } else {
-            this.permEnvFormLoading = true;
-            this._projectStore.addEnvironmentPermission(this.project.key, event.env.name, event.gp).subscribe((proj) => {
-                this._toast.success('', this._translate.instant('permission_added'));
-                this.project = proj;
-                this.permEnvFormLoading = false;
-            }, () => {
-                this.permEnvFormLoading = false;
-            });
-        }
-    }
-
-    envGroupEvent(event: PermissionEvent, env: Environment, skip?: boolean): void {
-        if (!skip && this.project.externalChange) {
-            event.env = env;
-            this.permEnvGroupWarningModal.show(event);
-        } else {
-            if (!env) {
-                env = event.env;
-            }
-            switch (event.type) {
-                case 'update':
-                    this._projectStore.updateEnvironmentPermission(this.project.key, env.name, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_updated'));
-                    });
-                    break;
-                case 'delete':
-                    this._projectStore.removeEnvironmentPermission(this.project.key, env.name, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_deleted'));
-                    });
-                    break;
-            }
-        }
     }
 
     groupEvent(event: PermissionEvent, skip?: boolean): void {

@@ -1,14 +1,13 @@
 
-import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
-import {Application} from '../../model/application.model';
-import {GroupPermission} from '../../model/group.model';
-import {Job} from '../../model/job.model';
-import {Parameter} from '../../model/parameter.model';
-import {Pipeline} from '../../model/pipeline.model';
-import {Stage} from '../../model/stage.model';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Application } from '../../model/application.model';
+import { Job } from '../../model/job.model';
+import { Parameter } from '../../model/parameter.model';
+import { Pipeline } from '../../model/pipeline.model';
+import { Stage } from '../../model/stage.model';
 
 /**
  * Service to access Pipeline from API.
@@ -188,39 +187,6 @@ export class PipelineService {
     removeJob(key: string, pipName: string, stageID: number, job: Job): Observable<Pipeline> {
         let url = '/project/' + key + '/pipeline/' + pipName + '/stage/' + stageID + '/job/' + job.pipeline_action_id;
         return this._http.delete<Pipeline>(url);
-    }
-
-    /**
-     * Add a permission on the pipeline.
-     * @param key Project unique key
-     * @param pipName Pipeline name
-     * @param gp Permission to add
-     * @returns {Observable<Pipeline>}
-     */
-    addPermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._http.post<Pipeline>('/project/' + key + '/pipeline/' + pipName + '/group', gp);
-    }
-
-    /**
-     * Update a permission.
-     * @param key Project unique key
-     * @param pipName Pipeline name
-     * @param gp Permission to update
-     * @returns {Observable<Pipeline>}
-     */
-    updatePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._http.put<Pipeline>('/project/' + key + '/pipeline/' + pipName + '/group/' + gp.group.name, gp);
-    }
-
-    /**
-     * Delete a permission.
-     * @param key Project unique key
-     * @param pipName Pipeline name
-     * @param gp Permission to delete
-     * @returns {Observable<Pipeline>}
-     */
-    removePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._http.delete<Pipeline>('/project/' + key + '/pipeline/' + pipName + '/group/' + gp.group.name);
     }
 
     /**

@@ -1,4 +1,3 @@
-import { GroupPermission } from './group.model';
 import { Key } from './keys.model';
 import { Metric } from './metric.model';
 import { Notification } from './notification.model';
@@ -14,7 +13,6 @@ export class Application {
     name: string;
     description: string;
     icon: string;
-    groups: Array<GroupPermission>;
     variables: Array<Variable>;
     permission: number;
     notifications: Array<Notification>;

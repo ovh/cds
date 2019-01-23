@@ -15,9 +15,6 @@
                 <a sm-item [class.active]="selectedTab === 'vuln'" (click)="showTab('vuln')">
                     {{ 'common_vulnerabilities' | translate}}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')">
-                  <i class="users icon"></i>{{ 'common_permissions' | translate }}
-                </a>
                 <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
                     <i class="map signs icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
@@ -48,15 +45,6 @@
                         </div>
                         <div *ngSwitchCase="'vuln'">
                             <app-vulnerabilities [project]="project" [application]="application" [vulnerabilities]="application.vulnerabilities" [edit]="application.permission === perm.READ_WRITE_EXECUTE"></app-vulnerabilities>
-                        </div>
-                        <div *ngSwitchCase="'permissions'">
-                            <h3>{{ 'application_permission_list_title' | translate }}</h3>
-                            <app-permission-list [permissions]="application.groups" [edit]="application.permission === perm.READ_WRITE_EXECUTE" (event)="groupEvent($event)"></app-permission-list>
-                            <ng-container *ngIf="application.permission === perm.READ_WRITE_EXECUTE">
-                                <h3>{{ 'application_permission_form_title' | translate }}</h3>
-                                <app-permission-form [loading]="permFormLoading" (createGroupPermissionEvent)="groupEvent($event)"></app-permission-form>
-                            </ng-container>
-                            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                         </div>
 
                         <div *ngSwitchCase="'usage'">

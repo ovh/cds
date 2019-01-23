@@ -1,17 +1,15 @@
 
-import {Injectable} from '@angular/core';
-import {List, Map} from 'immutable';
-import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { List, Map } from 'immutable';
+import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+import { Application } from '../../model/application.model';
+import { Job } from '../../model/job.model';
+import { Parameter } from '../../model/parameter.model';
+import { Pipeline } from '../../model/pipeline.model';
+import { Stage } from '../../model/stage.model';
+import { PipelineService } from './pipeline.service';
 
-import {Application} from '../../model/application.model';
-import {GroupPermission} from '../../model/group.model';
-import {Job} from '../../model/job.model';
-import {Parameter} from '../../model/parameter.model';
-import {Pipeline} from '../../model/pipeline.model';
-import {Stage} from '../../model/stage.model';
-import {PipelineService} from './pipeline.service';
-
-import {map, mergeMap} from 'rxjs/operators';
 
 
 @Injectable()
@@ -297,65 +295,6 @@ export class PipelineStore {
         return this._pipelineService.removeJob(key, pipName, stageID, job).pipe(map(res => {
             return this.refreshPipelineStageCache(key, pipName, res);
         }));
-    }
-
-    /**
-     * Add a permission on the given pipeline
-     * @param key Project unique key
-     * @param pipName Pipeline name
-     * @param gp Permission to add
-     * @returns {Observable<Pipeline>}
-     */
-    addPermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._pipelineService.addPermission(key, pipName, gp).pipe(map(pip => {
-            return this.refreshPipelinePermissionsCache(key, pipName, pip);
-        }));
-    }
-
-    /**
-     * Update a permission on the given pipeline
-     * @param key Project unique key
-     * @param pipName Pipeline name
-     * @param gp Permission to update
-     * @returns {Observable<Pipeline>}
-     */
-    updatePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._pipelineService.updatePermission(key, pipName, gp).pipe(map(pip => {
-            return this.refreshPipelinePermissionsCache(key, pipName, pip);
-        }));
-    }
-
-    /**
-     * Remove a permission from the given pipeline
-     * @param key Project unique key
-     * @param pipName Pipeline name
-     * @param gp Permission to remove
-     * @returns {Observable<Pipeline>}
-     */
-    removePermission(key: string, pipName: string, gp: GroupPermission): Observable<Pipeline> {
-        return this._pipelineService.removePermission(key, pipName, gp).pipe(map(pip => {
-            return this.refreshPipelinePermissionsCache(key, pipName, pip);
-        }));
-    }
-
-    /**
-     * Refresh pipeline cache
-     * @param key Project unique key
-     * @param pipName Pipeline Name
-     * @param pipeline updated permissions pipeline
-     * @returns {Pipeline}
-     */
-    refreshPipelinePermissionsCache(key: string, pipName: string, pipeline: Pipeline): Pipeline {
-        let cache = this._pipeline.getValue();
-        let pipKey = key + '-' + pipName;
-        let pipelineToUpdate = cache.get(pipKey);
-        if (pipelineToUpdate) {
-            pipelineToUpdate.last_modified = pipeline.last_modified;
-            pipelineToUpdate.groups = pipeline.groups;
-            this._pipeline.next(cache.set(pipKey, pipelineToUpdate));
-            return pipelineToUpdate;
-        }
-        return pipeline;
     }
 
     /**

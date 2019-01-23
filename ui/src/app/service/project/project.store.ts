@@ -1,20 +1,20 @@
 
-import {BehaviorSubject, Observable, of as observableOf} from 'rxjs';
+import { Injectable } from '@angular/core';
+import { List, Map } from 'immutable';
+import { BehaviorSubject, Observable, of as observableOf } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Environment } from '../../model/environment.model';
+import { GroupPermission } from '../../model/group.model';
+import { Key } from '../../model/keys.model';
+import { ProjectPlatform } from '../../model/platform.model';
+import { Label, LoadOpts, Project } from '../../model/project.model';
+import { Variable } from '../../model/variable.model';
+import { EnvironmentService } from '../environment/environment.service';
+import { NavbarService } from '../navbar/navbar.service';
+import { VariableService } from '../variable/variable.service';
+import { ProjectService } from './project.service';
 
-import {Injectable} from '@angular/core';
-import {List, Map} from 'immutable';
-import {map} from 'rxjs/operators';
-import {Environment} from '../../model/environment.model';
-import {GroupPermission} from '../../model/group.model';
-import {Label, LoadOpts, Project} from '../../model/project.model';
-import {Variable} from '../../model/variable.model';
-import {EnvironmentService} from '../environment/environment.service';
-import {NavbarService} from '../navbar/navbar.service';
-import {VariableService} from '../variable/variable.service';
-import {ProjectService} from './project.service';
 
-import {Key} from '../../model/keys.model';
-import {ProjectPlatform} from '../../model/platform.model';
 
 
 @Injectable()
@@ -693,65 +693,6 @@ export class ProjectStore {
         return project;
     }
 
-    /**
-     * Add environment permission
-     * @param key project unique key
-     * @param envName Environment name
-     * @param gps Group permission to add
-     * @returns {Observable<Environment>}
-     */
-    addEnvironmentPermission(key: string, envName: string, gps: Array<GroupPermission>): Observable<Project> {
-        return this._projectService.addEnvironmentPermission(key, envName, gps).pipe(map(res => {
-            let cache = this._projectCache.getValue();
-            let projectUpdate = cache.get(key);
-            if (projectUpdate) {
-                let index = projectUpdate.environments.findIndex(env => env.id === res.id);
-                projectUpdate.environments[index] = res;
-                this._projectCache.next(cache.set(key, projectUpdate));
-            }
-            return projectUpdate;
-        }));
-    }
-
-    /**
-     * Update environment permission
-     * @param key Project unique key
-     * @param envName Environment Name
-     * @param gp Group permission to update
-     * @returns {Observable<Environmenet>}
-     */
-    updateEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<Environment> {
-        return this._projectService.updateEnvironmentPermission(key, envName, gp).pipe(map(res => {
-            let cache = this._projectCache.getValue();
-            let projectUpdate = cache.get(key);
-            if (projectUpdate) {
-                let index = projectUpdate.environments.findIndex(env => env.id === res.id);
-                projectUpdate.environments[index] = res;
-                this._projectCache.next(cache.set(key, projectUpdate));
-            }
-            return res;
-        }));
-    }
-
-    /**
-     * Remove a permission from an environment
-     * @param key Project unique key
-     * @param envName Environment name
-     * @param gp Permission to remove
-     * @returns {Observable<boolean>}
-     */
-    removeEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<boolean> {
-        return this._projectService.removeEnvironmentPermission(key, envName, gp).pipe(map(res => {
-            let cache = this._projectCache.getValue();
-            let projectUpdate = cache.get(key);
-            if (projectUpdate) {
-                let e = projectUpdate.environments.find(env => env.name === envName);
-                e.groups = e.groups.filter(groupPermission => groupPermission.group.id !== gp.group.id);
-                this._projectCache.next(cache.set(key, projectUpdate));
-            }
-            return res;
-        }));
-    }
 
     /**
      * Ad a key on the project
