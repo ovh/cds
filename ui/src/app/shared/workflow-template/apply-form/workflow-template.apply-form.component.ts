@@ -30,6 +30,7 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
     result: WorkflowTemplateApplyResult;
     parameterName: string;
     parameterValues: ParamData;
+    detached: boolean;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -41,11 +42,12 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
     }
 
     applyTemplate() {
-        let req = new WorkflowTemplateRequest();
-
-        req.project_key = this.project.key;
-        req.workflow_name = this.parameterName;
-        req.parameters = this.parameterValues;
+        let req = <WorkflowTemplateRequest>{
+            project_key: this.project.key,
+            workflow_name: this.parameterName,
+            parameters: this.parameterValues,
+            detached: !!this.detached
+        };
 
         this.result = null;
         this.loading = true;
@@ -91,5 +93,9 @@ export class WorkflowTemplateApplyFormComponent implements OnChanges {
         this._workflowTemplateService.deleteInstance(this.workflowTemplate, this.workflowTemplateInstance).subscribe(() => {
             this.clickClose();
         });
+    }
+
+    onSelectDetachChange(e: any) {
+        this.detached = !this.detached;
     }
 }
