@@ -26,7 +26,9 @@ func template() *cobra.Command {
 		cli.NewCommand(templateBulkCmd, templateBulkRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePushCmd, templatePushRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(templateDeleteCmd, templateDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(templateDetachCmd, templateDetachRun, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -197,6 +199,36 @@ func templatePushRun(v cli.Values) error {
 	return workflowTarReaderToFiles(dir, tr, false, false)
 }
 
+var templateDeleteCmd = cli.Command{
+	Name:    "delete",
+	Short:   "Delete a workflow template",
+	Example: "cdsctl template delete group-name/template-slug",
+	OptionalArgs: []cli.Arg{
+		{Name: "template-path"},
+	},
+}
+
+func templateDeleteRun(v cli.Values) error {
+	wt, err := getTemplateFromCLI(v)
+	if err != nil {
+		return err
+	}
+	if wt == nil {
+		wt, err = suggestTemplate()
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := client.TemplateDelete(wt.Group.Name, wt.Slug); err != nil {
+		return err
+	}
+
+	fmt.Println("Template successfully deleted")
+
+	return nil
+}
+
 var templateInstancesCmd = cli.Command{
 	Name:    "instances",
 	Short:   "Get instances for a CDS workflow template",
@@ -248,4 +280,38 @@ func templateInstancesRun(v cli.Values) (cli.ListResult, error) {
 	}
 
 	return cli.AsListResult(tids), nil
+}
+
+var templateDetachCmd = cli.Command{
+	Name:    "detach",
+	Short:   "Detach a workflow from template",
+	Example: "cdsctl template detach project-key workflow-name",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName, AllowEmpty: true},
+	},
+}
+
+func templateDetachRun(v cli.Values) error {
+	projectKey := v.GetString(_ProjectKey)
+	workflowName := v.GetString(_WorkflowName)
+
+	// try to get an existing template instance for current workflow
+	wti, err := client.WorkflowTemplateInstanceGet(projectKey, workflowName)
+	if err != nil {
+		return err
+	}
+
+	wt, err := client.TemplateGetByID(wti.WorkflowTemplateID)
+	if err != nil {
+		return err
+	}
+
+	if err := client.TemplateDeleteInstance(wt.Group.Name, wt.Slug, wti.ID); err != nil {
+		return err
+	}
+
+	fmt.Printf("Template instance successfully detached for workflow %s/%s\n", projectKey, workflowName)
+
+	return nil
 }
