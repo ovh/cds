@@ -86,7 +86,7 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 			}
 			var e sdk.Event
 			if err := json.Unmarshal([]byte(msg), &e); err != nil {
-				log.Warning("events.cacheSubscribe> Cannot unmarshal event %s: %s", msg, err)
+				// don't print the error as we doesn't care
 				continue
 			}
 

@@ -1,0 +1,26 @@
+<div class="ui segment">
+  <div class="ui grid">
+    <div class="ten wide column">
+      <sui-multi-select class="selection"
+          name="project"
+          placeholder="{{'timeline_filter_project_select' | translate}}"
+          labelField="name"
+          valueField="key"
+          [options]="projects"
+          [isSearchable]="true"
+          [(ngModel)]="selectedProjectKeys" #selectProj>
+          <sui-select-option *ngFor="let option of selectProj.filteredOptions"
+              [value]="option"></sui-select-option>
+      </sui-multi-select>
+    </div>
+    <div class="four wide column">
+      <div class="ui fluid icon input">
+        <input type="text" placeholder="{{'common_search' | translate}}..." [(ngModel)]="searchCriterion">
+        <i class="search icon"></i>
+      </div>
+    </div>
+    <div class="two wide column">
+      <button class="ui blue button fluid" type="button" (click)="search()">{{'btn_filter' | translate}}</button>
+    </div>
+  </div>
+</div>

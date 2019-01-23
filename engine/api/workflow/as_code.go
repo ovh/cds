@@ -52,8 +52,19 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 		return nil, sdk.WrapError(err, "cannot tar pulled workflow")
 	}
 
-	if err := application.DecryptVCSStrategyPassword(&app); err != nil {
-		return nil, sdk.WrapError(err, "unable to decrypt vcs strategy")
+	var vcsStrategy = app.RepositoryStrategy
+
+	if vcsStrategy.SSHKey != "" {
+		key := proj.GetSSHKey(vcsStrategy.SSHKey)
+		if key == nil {
+			return nil, fmt.Errorf("unable to find key %s on project %s", vcsStrategy.SSHKey, proj.Key)
+		}
+		vcsStrategy.SSHKeyContent = key.Private
+	} else {
+		if err := application.DecryptVCSStrategyPassword(&app); err != nil {
+			return nil, sdk.WrapError(err, "unable to decrypt vcs strategy")
+		}
+		vcsStrategy = app.RepositoryStrategy
 	}
 
 	// Create VCS Operation
@@ -61,7 +72,7 @@ func UpdateAsCode(ctx context.Context, db *gorp.DbMap, store cache.Store, proj *
 		VCSServer:          app.VCSServer,
 		RepoFullName:       app.RepositoryFullname,
 		URL:                "",
-		RepositoryStrategy: app.RepositoryStrategy,
+		RepositoryStrategy: vcsStrategy,
 		Setup: sdk.OperationSetup{
 			Push: sdk.OperationPush{
 				FromBranch: fmt.Sprintf("cdsAsCode-%d", time.Now().Unix()),

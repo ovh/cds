@@ -299,6 +299,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			quiet, _ := cmd.Flags().GetBool("quiet")
 			verbose, _ := cmd.Flags().GetBool("verbose")
 			filter, _ := cmd.Flags().GetString("filter")
+			fields, _ := cmd.Flags().GetString("fields")
 			var filters = make(map[string]string)
 			if filter != "" {
 				t := strings.Split(filter, " ")
@@ -320,7 +321,11 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			allResult := []map[string]string{}
 
 			for _, i := range s {
-				item := listItem(i, filters, quiet, nil, verbose, map[string]string{})
+				var fs []string
+				if fields != "" {
+					fs = strings.Split(fields, ",")
+				}
+				item := listItem(i, filters, quiet, fs, verbose, map[string]string{})
 				if len(item) == 0 {
 					continue
 				}
@@ -491,7 +496,7 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 
 					if len(fields) > 0 {
 						for _, ff := range fields {
-							if ff == tag {
+							if ff == tag || strings.ToUpper(ff) == tag || strings.ToLower(ff) == tag {
 								res[tag] = fmt.Sprintf("%v", f.Interface())
 								continue
 							}

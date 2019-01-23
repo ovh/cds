@@ -23,7 +23,7 @@ type pgpKey struct {
 	id      string
 }
 
-func (r Repo) setuoSSHKey() ([]string, error) {
+func (r Repo) setupSSHKey() ([]string, error) {
 	if r.sshKey == nil {
 		return nil, fmt.Errorf("no ssh keys to setup")
 	}
@@ -51,6 +51,6 @@ func (r Repo) setuoSSHKey() ([]string, error) {
 	return []string{"GIT_SSH=" + wrapperPath, "PKEY=" + r.sshKey.filename}, nil
 }
 
-func (r Repo) instalGPGKey() error {
+func (r Repo) installGPGKey() error {
 	return nil
 }

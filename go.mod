@@ -73,7 +73,7 @@ require (
 	github.com/fernet/fernet-go v0.0.0-20151007213151-1b2437bc582b // indirect
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/fsamin/go-dump v0.0.0-20180223131834-7ae1b0fe42eb
-	github.com/fsamin/go-repo v0.0.0-20190102095150-61c9aedab5a8
+	github.com/fsamin/go-repo v0.0.0-20190121184737-9644d36a55f4
 	github.com/fsamin/go-shredder v0.0.0-20180118184739-b2488aedb5be
 	github.com/gambol99/go-marathon v0.0.0-20170922093320-ec4a50170df7
 	github.com/garyburd/redigo v1.6.0 // indirect

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { compare } from 'fast-json-patch'
+import { compare } from 'fast-json-patch';
 import { cloneDeep } from 'lodash';
 import { finalize, first } from 'rxjs/operators';
 import { Action } from '../../../../model/action.model';
@@ -151,7 +151,6 @@ export class PipelineAuditComponent extends Table<PipelineAudit> implements OnIn
     cleanStage(s: Stage): Stage {
         delete s.id;
         delete s.build_order;
-        delete s.builds;
         delete s.run_jobs;
         delete s.last_modified;
         delete s.status;

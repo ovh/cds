@@ -22,6 +22,7 @@ func adminCommands() []*cobra.Command {
 		adminPlugins(),
 		adminBroadcasts(),
 		adminErrors(),
+		adminCurl(),
 	}
 }
 
