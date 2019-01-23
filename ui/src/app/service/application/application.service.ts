@@ -1,17 +1,17 @@
 
-import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {map} from 'rxjs/operators';
-import {Application, Vulnerability} from '../../model/application.model';
-import {GroupPermission} from '../../model/group.model';
-import {Hook} from '../../model/hook.model';
-import {Key} from '../../model/keys.model';
-import {Notification, UserNotificationSettings} from '../../model/notification.model';
-import {RepositoryPoller} from '../../model/polling.model';
-import {Scheduler} from '../../model/scheduler.model';
-import {Trigger} from '../../model/trigger.model';
-import {Variable} from '../../model/variable.model';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { Application, Vulnerability } from '../../model/application.model';
+import { GroupPermission } from '../../model/group.model';
+import { Hook } from '../../model/hook.model';
+import { Key } from '../../model/keys.model';
+import { Notification, UserNotificationSettings } from '../../model/notification.model';
+import { RepositoryPoller } from '../../model/polling.model';
+import { Scheduler } from '../../model/scheduler.model';
+import { Trigger } from '../../model/trigger.model';
+import { Variable } from '../../model/variable.model';
 
 @Injectable()
 export class ApplicationService {
@@ -24,11 +24,8 @@ export class ApplicationService {
      * @param key Project unique key
      * @param appName Application Name
      */
-    getApplication(key: string, appName: string, filter?: {branch: string, remote: string}): Observable<Application> {
+    getApplication(key: string, appName: string): Observable<Application> {
         let params = new HttpParams();
-        params = params.append('withPollers', 'true');
-        params = params.append('withHooks', 'true');
-        params = params.append('withWorkflow', 'true');
         params = params.append('withNotifs', 'true');
         params = params.append('withUsage', 'true');
         params = params.append('withIcon', 'true');
@@ -36,15 +33,6 @@ export class ApplicationService {
         params = params.append('withDeploymentStrategies', 'true');
         params = params.append('withVulnerabilities', 'true');
 
-
-        if (filter) {
-            if (filter.branch) {
-                params = params.append('branchName', filter.branch);
-            }
-            if (filter.remote) {
-                params = params.append('remote', filter.remote);
-            }
-        }
         return this._http.get<Application>('/project/' + key + '/application/' + appName, {params: params}).pipe(map(a => {
             a.vcs_strategy.password = '**********';
             return a;

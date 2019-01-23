@@ -113,3 +113,14 @@ func CheckGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (bool, e
 	}
 	return false, nil
 }
+
+// LoadRoleGroupInProject load role from group linked to the project
+func LoadRoleGroupInProject(db gorp.SqlExecutor, projectID, groupID int64) (int, error) {
+	query := `SELECT role FROM project_group WHERE project_id = $1 AND group_id = $2`
+	role, err := db.SelectInt(query, projectID, groupID)
+	if err != nil {
+		return int(role), err
+	}
+
+	return int(role), nil
+}

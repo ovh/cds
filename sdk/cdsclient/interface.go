@@ -354,14 +354,6 @@ type Interface interface {
 	TemplateClient
 }
 
-// InterfaceDeprecated is the interface for using deprecated routes with cdsclient package
-type InterfaceDeprecated interface {
-	ApplicationPipelinesAttach(projectKey string, appName string, pipelineNames ...string) error
-	ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error
-	ApplicationPipelineTriggersGet(projectKey string, appName string, pipelineName string, envName string) ([]sdk.PipelineTrigger, error)
-	AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error
-}
-
 // Raw is a low-level interface exposing HTTP functions
 type Raw interface {
 	PostJSON(ctx context.Context, path string, in interface{}, out interface{}, mods ...RequestModifier) (int, error)

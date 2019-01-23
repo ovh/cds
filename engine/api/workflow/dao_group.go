@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"database/sql"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 
@@ -43,13 +44,16 @@ func LoadWorkflowByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.WorkflowGrou
 
 // AddGroup Add permission on the given workflow for the given group
 func AddGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
-	query := `INSERT INTO workflow_perm (group_id, workflow_id, role)
+	query := `INSERT INTO workflow_perm (project_group_id, workflow_id, role)
 	VALUES (
-		SELECT id FROM project_group WHERE project_group.project_id = $1 AND project_group.group_id = $2,
+		(SELECT id FROM project_group WHERE project_group.project_id = $1 AND project_group.group_id = $2),
 		$3,
 		$4
 	)`
 	if _, err := db.Exec(query, w.ProjectID, gp.Group.ID, w.ID, gp.Permission); err != nil {
+		if strings.Contains(err.Error(), `null value in column "project_group_id"`) {
+			return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "cannot add this group on workflow because there isn't in the project groups : %v", err)
+		}
 		return sdk.WrapError(err, "AddGroup")
 	}
 	w.Groups = append(w.Groups, gp)
@@ -87,11 +91,14 @@ func upsertAllGroups(db gorp.SqlExecutor, w *sdk.Workflow, gps []sdk.GroupPermis
 	for _, gp := range gps {
 		query := `INSERT INTO workflow_perm (project_group_id, workflow_id, role) 
 			VALUES (
-				SELECT id FROM project_group WHERE project_group.project_id = $1 AND project_group.group_id = $2,
-				$2,
-				$3
+				(SELECT id FROM project_group WHERE project_group.project_id = $1 AND project_group.group_id = $2),
+				$3,
+				$4
 			) ON CONFLICT DO NOTHING`
 		if _, err := db.Exec(query, w.ProjectID, gp.Group.ID, w.ID, gp.Permission); err != nil {
+			if strings.Contains(err.Error(), `null value in column "project_group_id"`) {
+				return sdk.WrapError(sdk.ErrGroupNotFoundInProject, "cannot add this group on workflow because there isn't in the project groups : %v", err)
+			}
 			return sdk.WrapError(err, "unable to insert group_id=%d workflow_id=%d role=%d", gp.Group.ID, w.ID, gp.Permission)
 		}
 	}

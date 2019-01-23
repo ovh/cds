@@ -1,14 +1,9 @@
-import {ActionWarning} from './action.model';
-import {Application} from './application.model';
-import {Artifact} from './artifact.model';
-import {Environment} from './environment.model';
-import {GroupPermission} from './group.model';
-import {Job} from './job.model';
-import {Parameter} from './parameter.model';
-import {Commit} from './repositories.model';
-import {Stage} from './stage.model';
-import {Usage} from './usage.model';
-import {User} from './user.model';
+import { Environment } from './environment.model';
+import { GroupPermission } from './group.model';
+import { Parameter } from './parameter.model';
+import { Stage } from './stage.model';
+import { Usage } from './usage.model';
+import { User } from './user.model';
 
 export const pipelineNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
 
@@ -68,7 +63,6 @@ export class Pipeline {
     description: string;
     icon: string;
     type: string;
-    last_pipeline_build: PipelineBuild;
     stages: Array<Stage>;
     groups: Array<GroupPermission>;
     parameters: Array<Parameter>;
@@ -166,60 +160,11 @@ export class PipelineRunRequest {
     }
 }
 
-export class PipelineBuild {
-    id: number;
-    build_number: number;
-    version: number;
-    parameters: Array<Parameter>;
-    status: string;
-    start: string;
-    done: string;
-    stages: Array<Stage>;
-    pipeline: Pipeline;
-    application: Application;
-    environment: Environment;
-    trigger: PipelineBuildTrigger;
-    artifacts: Array<Artifact>;
-    tests: Tests;
-    commits: Array<Commit>;
-    warnings: Array<ActionWarning>;
-
-    public static GetTriggerSource(pb: PipelineBuild): string {
-        if (pb.trigger.scheduled_trigger) {
-            return 'CDS scheduler';
-        }
-        if (pb.trigger.triggered_by && pb.trigger.triggered_by.username) {
-            return pb.trigger.triggered_by.username;
-        }
-        if (pb.trigger.vcs_author) {
-            return pb.trigger.vcs_author;
-        }
-        return '';
-    }
-}
-
-
-
-export class PipelineBuildJob {
-    id: number;
-    job: Job;
-    parameters: Array<Parameter>;
-    status: string;
-    queued: number;
-    start: number;
-    done: number;
-    model: number;
-    pipeline_build_id: number;
-    spawninfos: Array<SpawnInfo>;
-    warnings: Array<ActionWarning>;
-}
-
 export class SpawnInfo {
     api_time: Date;
     remote_time: Date;
     user_message: string;
 }
-
 
 export class BuildResult {
     status: string;
@@ -254,18 +199,6 @@ export interface ServiceLog {
 
 export class LogDate {
     seconds: number;
-}
-
-export class PipelineBuildTrigger {
-    manual_trigger: boolean;
-    scheduled_trigger: boolean;
-    triggered_by: User;
-    parent_pipeline_build: PipelineBuild;
-    vcs_branch: string;
-    vcs_hash: string;
-    vcs_author: string;
-    vcs_remote: string;
-    vcs_remote_url: string;
 }
 
 export enum PipelineType {

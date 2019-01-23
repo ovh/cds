@@ -38,11 +38,11 @@ var environmentVariableCreateCmd = cli.Command{
 
 func environmentCreateVariableRun(v cli.Values) error {
 	variable := &sdk.Variable{
-		Name:  v["variable-name"],
-		Type:  v["variable-type"],
-		Value: v["variable-value"],
+		Name:  v.GetString("variable-name"),
+		Type:  v.GetString("variable-type"),
+		Value: v.GetString("variable-value"),
 	}
-	return client.EnvironmentVariableCreate(v[_ProjectKey], v["env-name"], variable)
+	return client.EnvironmentVariableCreate(v.GetString(_ProjectKey), v.GetString("env-name"), variable)
 }
 
 var environmentVariableListCmd = cli.Command{
@@ -57,7 +57,7 @@ var environmentVariableListCmd = cli.Command{
 }
 
 func environmentListVariableRun(v cli.Values) (cli.ListResult, error) {
-	variables, err := client.EnvironmentVariablesList(v[_ProjectKey], v["env-name"])
+	variables, err := client.EnvironmentVariablesList(v.GetString(_ProjectKey), v.GetString("env-name"))
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ var environmentVariableDeleteCmd = cli.Command{
 }
 
 func environmentDeleteVariableRun(v cli.Values) error {
-	return client.EnvironmentVariableDelete(v[_ProjectKey], v["env-name"], v["variable-name"])
+	return client.EnvironmentVariableDelete(v.GetString(_ProjectKey), v.GetString("env-name"), v.GetString("variable-name"))
 }
 
 var environmentVariableShowCmd = cli.Command{
@@ -93,7 +93,7 @@ var environmentVariableShowCmd = cli.Command{
 }
 
 func environmentVariableShowRun(v cli.Values) (interface{}, error) {
-	return client.EnvironmentVariableGet(v[_ProjectKey], v["env-name"], v["variable-name"])
+	return client.EnvironmentVariableGet(v.GetString(_ProjectKey), v.GetString("env-name"), v.GetString("variable-name"))
 }
 
 var environmentVariableUpdateCmd = cli.Command{
@@ -112,12 +112,12 @@ var environmentVariableUpdateCmd = cli.Command{
 }
 
 func environmentUpdateVariableRun(v cli.Values) error {
-	variable, err := client.EnvironmentVariableGet(v[_ProjectKey], v["env-name"], v["variable-oldname"])
+	variable, err := client.EnvironmentVariableGet(v.GetString(_ProjectKey), v.GetString("env-name"), v.GetString("variable-oldname"))
 	if err != nil {
 		return err
 	}
-	variable.Name = v["variable-name"]
-	variable.Value = v["variable-value"]
-	variable.Type = v["variable-type"]
-	return client.EnvironmentVariableUpdate(v[_ProjectKey], v["env-name"], variable)
+	variable.Name = v.GetString("variable-name")
+	variable.Value = v.GetString("variable-value")
+	variable.Type = v.GetString("variable-type")
+	return client.EnvironmentVariableUpdate(v.GetString(_ProjectKey), v.GetString("env-name"), variable)
 }

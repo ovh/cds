@@ -2,6 +2,7 @@ package group
 
 import (
 	"database/sql"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk"
@@ -60,14 +61,17 @@ func insertGroupInNode(db gorp.SqlExecutor, nodeID, groupID int64, role int) err
 	query := `INSERT INTO workflow_node_group (workflow_node_id, workflow_group_id, role)
 		VALUES(
 			$1,
-			SELECT id
+			(SELECT workflow_perm.id
 			FROM workflow_perm
 				JOIN project_group ON project_group.id = workflow_perm.project_group_id
 				JOIN w_node ON w_node.workflow_id = workflow_perm.workflow_id
-			WHERE w_node.id = $1 AND project_group.group_id = $2,
+			WHERE w_node.id = $1 AND project_group.group_id = $2),
 			$3
 		)`
 	if _, err := db.Exec(query, nodeID, groupID, role); err != nil {
+		if strings.Contains(err.Error(), `null value in column "workflow_group_id"`) {
+			return sdk.WrapError(sdk.ErrGroupNotFoundInWorkflow, "cannot add this group on workflow node because there isn't in the workflow groups : %v", err)
+		}
 		return sdk.WithStack(err)
 	}
 

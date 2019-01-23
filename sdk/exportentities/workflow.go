@@ -168,6 +168,13 @@ func craftNodeEntry(w sdk.Workflow, n sdk.Node) (NodeEntry, error) {
 		}
 	}
 
+	if len(n.Groups) > 0 {
+		entry.Permissions = map[string]int{}
+		for _, gr := range n.Groups {
+			entry.Permissions[gr.Group.Name] = gr.Permission
+		}
+	}
+
 	if n.OutGoingHookContext != nil {
 		entry.OutgoingHookModelName = n.OutGoingHookContext.HookModelName
 

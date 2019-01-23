@@ -174,6 +174,8 @@ var (
 	ErrWorkflowAlreadyAsCode                  = Error{ID: 157, Status: http.StatusBadRequest}
 	ErrNoDBMigrationID                        = Error{ID: 158, Status: http.StatusNotFound}
 	ErrCannotParseTemplate                    = Error{ID: 159, Status: http.StatusBadRequest}
+	ErrGroupNotFoundInProject                 = Error{ID: 160, Status: http.StatusBadRequest}
+	ErrGroupNotFoundInWorkflow                = Error{ID: 161, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -330,6 +332,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowAlreadyAsCode.ID:                  "Workflow is already as-code or there is already a pull-request to transform it",
 	ErrNoDBMigrationID.ID:                        "ID does not exist in table gorp_migration",
 	ErrCannotParseTemplate.ID:                    "Cannot parse workflow template",
+	ErrGroupNotFoundInProject.ID:                 "Cannot add this permission group on your workflow because this group is not already in the project's permissions",
+	ErrGroupNotFoundInWorkflow.ID:                "Cannot add this permission group on your workflow node because this group is not already your workflow's permissions",
 }
 
 var errorsFrench = map[int]string{
@@ -486,6 +490,8 @@ var errorsFrench = map[int]string{
 	ErrWorkflowAlreadyAsCode.ID:                  "Le workflow est déjà as-code ou il y a déjà une pull-request pour le transformer",
 	ErrNoDBMigrationID.ID:                        "Cet id n'existe pas dans la table gorp_migrations",
 	ErrCannotParseTemplate.ID:                    "Impossible de parser le modèle de workflow",
+	ErrGroupNotFoundInProject.ID:                 "Impossible d'ajouter ce groupe dans vos permissions de workflow car ce groupe n'est pas présent dans les permissions de votre projet",
+	ErrGroupNotFoundInWorkflow.ID:                "Impossible d'ajouter ce groupe dans vos permissions de noeud du workflow car ce groupe n'est pas présent dans les permissions de votre workflow",
 }
 
 var errorsLanguages = []map[int]string{

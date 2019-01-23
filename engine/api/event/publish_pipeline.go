@@ -50,31 +50,6 @@ func PublishPipelineDelete(key string, pip sdk.Pipeline, u *sdk.User) {
 	publishPipelineEvent(e, key, pip.Name, u)
 }
 
-// PublishPipelinePermissionAdd publishes an event for pipeline permission adding
-func PublishPipelinePermissionAdd(key string, pipName string, gp sdk.GroupPermission, u *sdk.User) {
-	e := sdk.EventPipelinePermissionAdd{
-		Permission: gp,
-	}
-	publishPipelineEvent(e, key, pipName, u)
-}
-
-// PublishPipelinePermissionUpdate publishes an event for pipeline permission update
-func PublishPipelinePermissionUpdate(key string, pipName string, oldGp sdk.GroupPermission, gp sdk.GroupPermission, u *sdk.User) {
-	e := sdk.EventPipelinePermissionUpdate{
-		OldPermission: oldGp,
-		NewPermission: gp,
-	}
-	publishPipelineEvent(e, key, pipName, u)
-}
-
-// PublishPipelinePermissionDelete publishes an event for pipeline permission deletion
-func PublishPipelinePermissionDelete(key string, pipName string, gp sdk.GroupPermission, u *sdk.User) {
-	e := sdk.EventPipelinePermissionDelete{
-		Permission: gp,
-	}
-	publishPipelineEvent(e, key, pipName, u)
-}
-
 // PublishPipelineParameterAdd publishes an event on adding a pipeline parameter
 func PublishPipelineParameterAdd(key string, pipName string, p sdk.Parameter, u *sdk.User) {
 	e := sdk.EventPipelineParameterAdd{

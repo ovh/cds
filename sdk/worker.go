@@ -198,14 +198,6 @@ func TemplateEnvs(args WorkerArgs, envs map[string]string) (map[string]string, e
 	return envs, nil
 }
 
-// PipelineBuildJobInfo is returned to worker in answer to takePipelineBuildJobHandler
-type PipelineBuildJobInfo struct {
-	PipelineBuildJob PipelineBuildJob
-	Secrets          []Variable
-	PipelineID       int64
-	BuildNumber      int64
-}
-
 // WorkflowNodeJobRunData is returned to worker in answer to postTakeWorkflowJobHandler
 type WorkflowNodeJobRunData struct {
 	NodeJobRun WorkflowNodeJobRun

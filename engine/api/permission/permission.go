@@ -71,7 +71,7 @@ func AccessToWorkflow(key, name string, u *sdk.User, access int) bool {
 }
 
 // AccessToWorkflowNode check rights on the given workflow node
-func AccessToWorkflowNode(wn *sdk.Node, u *sdk.User, access int) bool {
+func AccessToWorkflowNode(wf *sdk.Workflow, wn *sdk.Node, u *sdk.User, access int) bool {
 	if wn == nil {
 		return false
 	}
@@ -80,16 +80,19 @@ func AccessToWorkflowNode(wn *sdk.Node, u *sdk.User, access int) bool {
 		return true
 	}
 
-	for _, g := range u.Groups {
-		if g.ID == SharedInfraGroupID {
-			return true
-		}
-		for _, grp := range wn.Groups {
-			if g.ID == grp.Group.ID && grp.Permission >= access {
+	if len(wn.Groups) > 0 {
+		for _, g := range u.Groups {
+			if g.ID == SharedInfraGroupID {
 				return true
 			}
+			for _, grp := range wn.Groups {
+				if g.ID == grp.Group.ID && grp.Permission >= access {
+					return true
+				}
+			}
 		}
+		return false
 	}
 
-	return false
+	return AccessToWorkflow(wf.ProjectKey, wf.Name, u, PermissionReadExecute)
 }

@@ -161,6 +161,10 @@ ingress:
 
 
 
+# hatchery kubernetes
+hatchery:
+  k8s_namespace: default
+
 # Ui
 ui:
   image:

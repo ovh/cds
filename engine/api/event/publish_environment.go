@@ -78,31 +78,6 @@ func PublishEnvironmentVariableDelete(projKey string, env sdk.Environment, v sdk
 	publishEnvironmentEvent(e, projKey, env.Name, u)
 }
 
-// PublishEnvironmentPermissionAdd publishes an event when adding a permission on the given environment
-func PublishEnvironmentPermissionAdd(projKey string, env sdk.Environment, gp sdk.GroupPermission, u *sdk.User) {
-	e := sdk.EventEnvironmentPermissionAdd{
-		Permission: gp,
-	}
-	publishEnvironmentEvent(e, projKey, env.Name, u)
-}
-
-// PublishEnvironmentPermissionUpdate publishes an event when updating a permission on the given environment
-func PublishEnvironmentPermissionUpdate(projKey string, env sdk.Environment, gp sdk.GroupPermission, gpOld sdk.GroupPermission, u *sdk.User) {
-	e := sdk.EventEnvironmentPermissionUpdate{
-		NewPermission: gp,
-		OldPermission: gpOld,
-	}
-	publishEnvironmentEvent(e, projKey, env.Name, u)
-}
-
-// PublishEnvironmentPermissionDelete publishes an event when deleting a permission on the given environment
-func PublishEnvironmentPermissionDelete(projKey string, env sdk.Environment, gp sdk.GroupPermission, u *sdk.User) {
-	e := sdk.EventEnvironmentPermissionDelete{
-		Permission: gp,
-	}
-	publishEnvironmentEvent(e, projKey, env.Name, u)
-}
-
 // PublishEnvironmentKeyAdd publishes an event when adding a key on the given environment
 func PublishEnvironmentKeyAdd(projKey string, env sdk.Environment, k sdk.EnvironmentKey, u *sdk.User) {
 	e := sdk.EventEnvironmentKeyAdd{

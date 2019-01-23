@@ -15,7 +15,7 @@ func (r Repo) runCmd(name string, args ...string) (stdOut string, err error) {
 	cmd.Stdout = buffOut
 
 	if r.sshKey != nil {
-		envs, err := r.setuoSSHKey()
+		envs, err := r.setupSSHKey()
 		if err != nil {
 			return "", err
 		}
@@ -29,18 +29,20 @@ func (r Repo) runCmd(name string, args ...string) (stdOut string, err error) {
 		r.log("Running command %+v\n", cmd)
 	}
 
-	if err := cmd.Run(); err != nil {
-		return "", err
-	}
+	runErr := cmd.Run()
 
 	stdOut = buffOut.String()
 	stdErr := buffErr.String()
 
 	if !cmd.ProcessState.Success() {
 		if len(stdErr) > 0 {
-			return stdOut, fmt.Errorf(stdErr)
+			return stdOut, fmt.Errorf("%s (%v)", stdErr, runErr)
 		}
-		return stdOut, fmt.Errorf("exited with error")
+		return stdOut, fmt.Errorf("exited with error: %v", runErr)
+	}
+
+	if runErr != nil {
+		return stdOut, fmt.Errorf("%s (%v)", stdErr, runErr)
 	}
 
 	return stdOut, nil

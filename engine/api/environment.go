@@ -7,12 +7,9 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
@@ -75,21 +72,9 @@ func (api *API) getEnvironmentHandler() service.Handler {
 				return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environment %s in project %s", environmentName, projectKey)
 			}
 			env.Usage.Workflows = wf
-
-			apps, errApps := application.LoadByEnvName(api.mustDB(), projectKey, environmentName)
-			if errApps != nil {
-				return sdk.WrapError(errApps, "getEnvironmentHandler> Cannot load applications linked to environment %s in project %s", environmentName, projectKey)
-			}
-			env.Usage.Applications = apps
-
-			pips, errPips := pipeline.LoadByEnvName(api.mustDB(), projectKey, environmentName)
-			if errPips != nil {
-				return sdk.WrapError(errApps, "getEnvironmentHandler> Cannot load pipelines linked to environment %s in project %s", environmentName, projectKey)
-			}
-			env.Usage.Pipelines = pips
 		}
 
-		env.Permission = permission.EnvironmentPermission(projectKey, env.Name, deprecatedGetUser(ctx))
+		env.Permission = permission.ProjectPermission(projectKey, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, env, http.StatusOK)
 	}
@@ -118,17 +103,7 @@ func loadEnvironmentUsage(db gorp.SqlExecutor, projectKey, envName string) (sdk.
 	}
 	usage.Workflows = wf
 
-	apps, errApps := application.LoadByEnvName(db, projectKey, envName)
-	if errApps != nil {
-		return usage, sdk.WrapError(errApps, "loadEnvironmentUsage> Cannot load applications linked to environment %s in project %s", envName, projectKey)
-	}
-	usage.Applications = apps
-
-	pips, errPips := pipeline.LoadByEnvName(db, projectKey, envName)
-	if errPips != nil {
-		return usage, sdk.WrapError(errApps, "loadEnvironmentUsage> Cannot load pipelines linked to environment %s in project %s", envName, projectKey)
-	}
-	usage.Pipelines = pips
+	// TODO: add usage for envs, apps, pips
 
 	return usage, nil
 }
@@ -159,14 +134,6 @@ func (api *API) addEnvironmentHandler() service.Handler {
 
 		if err := environment.InsertEnvironment(tx, &env); err != nil {
 			return sdk.WrapError(err, "Cannot insert environment")
-		}
-		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			return sdk.WrapError(err, "Cannot load group from project")
-		}
-		for _, g := range proj.ProjectGroups {
-			if err := group.InsertGroupInEnvironment(tx, env.ID, g.Group.ID, g.Permission); err != nil {
-				return sdk.WrapError(err, "Cannot add group on environment")
-			}
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -312,12 +279,11 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 
 		//Set all the data of the environment we want to clone
 		envPost := sdk.Environment{
-			Name:              cloneName,
-			ProjectID:         p.ID,
-			ProjectKey:        p.Key,
-			Variable:          env.Variable,
-			EnvironmentGroups: env.EnvironmentGroups,
-			Permission:        env.Permission,
+			Name:       cloneName,
+			ProjectID:  p.ID,
+			ProjectKey: p.Key,
+			Variable:   env.Variable,
+			Permission: env.Permission,
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -336,13 +302,6 @@ func (api *API) cloneEnvironmentHandler() service.Handler {
 		for _, v := range envPost.Variable {
 			if err := environment.InsertVariable(tx, envPost.ID, &v, deprecatedGetUser(ctx)); err != nil {
 				return sdk.WrapError(err, "Unable to insert variable")
-			}
-		}
-
-		//Insert environment
-		for _, e := range envPost.EnvironmentGroups {
-			if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
-				return sdk.WrapError(err, "Unable to insert group in environment")
 			}
 		}
 

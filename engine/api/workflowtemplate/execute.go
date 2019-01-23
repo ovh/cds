@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"regexp"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -32,6 +34,11 @@ func prepareParams(wt *sdk.WorkflowTemplate, r sdk.WorkflowTemplateRequest) inte
 					"vcs":        sp[0],
 					"repository": strings.Join(sp[1:], "/"),
 				}
+			case sdk.ParameterTypeJSON:
+				var res interface{}
+				// safely ignore the error because the value of v has been validated on apply submit
+				_ = json.Unmarshal([]byte(v), &res)
+				m[p.Key] = res
 			default:
 				m[p.Key] = v
 			}
@@ -49,7 +56,7 @@ func parseTemplate(templateType string, number int, t string) (*template.Templat
 		id = fmt.Sprintf("%s.%d", templateType, number)
 	}
 
-	tmpl, err := template.New(id).Delims("[[", "]]").Parse(t)
+	tmpl, err := template.New(id).Delims("[[", "]]").Funcs(interpolate.InterpolateHelperFuncs).Parse(t)
 	if err != nil {
 		reg := regexp.MustCompile(`template: ([0-9a-zA-Z.]+):([0-9]+): (.*)$`)
 		submatch := reg.FindStringSubmatch(err.Error())
@@ -71,9 +78,12 @@ func parseTemplate(templateType string, number int, t string) (*template.Templat
 }
 
 func executeTemplate(tmpl *template.Template, data map[string]interface{}) (string, error) {
+	if data == nil {
+		return "", nil
+	}
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, data); err != nil {
-		return "", sdk.WithStack(err)
+		return "", sdk.NewError(sdk.ErrWrongRequest, sdk.WithStack(err))
 	}
 	return buffer.String(), nil
 }

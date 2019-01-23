@@ -56,7 +56,7 @@ var groupUserAdd = cli.Command{
 }
 
 func groupUserAddRun(v cli.Values) error {
-	return client.GroupUserAdd(v["groupname"], []string{v["username"]})
+	return client.GroupUserAdd(v.GetString("groupname"), []string{v.GetString("username")})
 }
 
 var groupUserRemove = cli.Command{
@@ -69,7 +69,7 @@ var groupUserRemove = cli.Command{
 }
 
 func groupUserRemoveRun(v cli.Values) error {
-	return client.GroupUserRemove(v["groupname"], v["username"])
+	return client.GroupUserRemove(v.GetString("groupname"), v.GetString("username"))
 }
 
 var groupUserSetAdmin = cli.Command{
@@ -82,7 +82,7 @@ var groupUserSetAdmin = cli.Command{
 }
 
 func groupUserSetAdminRun(v cli.Values) error {
-	return client.GroupUserAdminSet(v["groupname"], v["username"])
+	return client.GroupUserAdminSet(v.GetString("groupname"), v.GetString("username"))
 }
 
 var groupUserAdminRemove = cli.Command{
@@ -95,5 +95,5 @@ var groupUserAdminRemove = cli.Command{
 }
 
 func groupUserAdminRemoveRun(v cli.Values) error {
-	return client.GroupUserAdminRemove(v["groupname"], v["username"])
+	return client.GroupUserAdminRemove(v.GetString("groupname"), v.GetString("username"))
 }

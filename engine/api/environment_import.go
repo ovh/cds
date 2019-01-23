@@ -10,7 +10,6 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -124,15 +123,6 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		}
 
 		env := payload.Environment()
-		for i := range env.EnvironmentGroups {
-			eg := &env.EnvironmentGroups[i]
-			g, err := group.LoadGroup(api.mustDB(), eg.Group.Name)
-			if err != nil {
-				return sdk.WrapError(err, "Error on import")
-			}
-			eg.Group = *g
-		}
-
 		allMsg := []sdk.Message{}
 		msgChan := make(chan sdk.Message, 10)
 		done := make(chan bool)
@@ -226,15 +216,6 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		}
 
 		newEnv := payload.Environment()
-
-		for i := range newEnv.EnvironmentGroups {
-			eg := &newEnv.EnvironmentGroups[i]
-			g, err := group.LoadGroup(tx, eg.Group.Name)
-			if err != nil {
-				return sdk.WrapError(err, "Error on import")
-			}
-			eg.Group = *g
-		}
 		allMsg := []sdk.Message{}
 		msgChan := make(chan sdk.Message, 10)
 		done := make(chan bool)

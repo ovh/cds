@@ -37,7 +37,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		app.ID = oldApp.ID
 
 		//Save app in database
-		if err := Update(db, store, app, u); err != nil {
+		if err := Update(db, store, app); err != nil {
 			return sdk.WrapError(err, "Unable to update application")
 		}
 

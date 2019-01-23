@@ -8,3 +8,4 @@ jobs:
   steps:
   - script:
     - echo "Hello World!"
+    - echo "onetwo"

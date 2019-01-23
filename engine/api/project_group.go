@@ -9,12 +9,9 @@ import (
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -57,42 +54,6 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 
 		if err := group.DeleteGroupFromProject(tx, p.ID, g.ID); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from project %s", g.Name, p.Name)
-		}
-
-		// delete from application
-		applications, errla := application.LoadAll(tx, api.Cache, p.Key, deprecatedGetUser(ctx))
-		if errla != nil {
-			return sdk.WrapError(errla, "deleteGroupFromProjectHandler: Cannot load applications for project %s", p.Name)
-		}
-
-		for _, app := range applications {
-			if err := group.DeleteGroupFromApplication(tx, app.ID, g.ID); err != nil {
-				return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from application %s", groupName, app.Name)
-			}
-		}
-
-		// delete from pipelines
-		pipelines, errlp := pipeline.LoadPipelines(tx, p.ID, false, deprecatedGetUser(ctx))
-		if errlp != nil {
-			return sdk.WrapError(errlp, "deleteGroupFromProjectHandler: Cannot load pipelines for project %s", p.Name)
-		}
-
-		for _, pip := range pipelines {
-			if err := group.DeleteGroupFromPipeline(tx, pip.ID, g.ID); err != nil {
-				return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from pipeline %s", groupName, pip.Name)
-			}
-		}
-
-		// delete from environments
-		envs, errle := environment.LoadEnvironments(tx, p.Key, false, deprecatedGetUser(ctx))
-		if errle != nil {
-			return sdk.WrapError(errle, "deleteGroupFromProjectHandler: Cannot load environments for project %s", p.Name)
-		}
-
-		for _, env := range envs {
-			if err := group.DeleteGroupFromEnvironment(tx, env.ID, g.ID); err != nil {
-				return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from environment %s", groupName, env.Name)
-			}
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -222,72 +183,6 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 
 		if err := group.InsertGroupInProject(tx, p.ID, g.ID, groupProject.Permission); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot add group %s in project %s", g.Name, p.Name)
-		}
-
-		// apply on application
-		applications, errla := application.LoadAll(tx, api.Cache, p.Key, deprecatedGetUser(ctx))
-		if errla != nil {
-			return sdk.WrapError(errla, "AddGroupInProject: Cannot load applications for project %s", p.Name)
-		}
-
-		for _, app := range applications {
-			if permission.AccessToApplication(key, app.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
-				inApp, err := group.CheckGroupInApplication(tx, app.ID, g.ID)
-				if err != nil {
-					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the application %s", g.Name, app.Name)
-				}
-				if inApp {
-					if err := group.UpdateGroupRoleInApplication(tx, app.ID, g.ID, groupProject.Permission); err != nil {
-						return sdk.WrapError(err, "AddGroupInProject: Cannot update group %s on application %s", g.Name, app.Name)
-					}
-				} else if err := application.AddGroup(tx, api.Cache, p, &app, deprecatedGetUser(ctx), groupProject); err != nil {
-					return sdk.WrapError(err, "AddGroupInProject: Cannot insert group %s on application %s", g.Name, app.Name)
-				}
-			}
-		}
-
-		// apply on pipeline
-		pipelines, errlp := pipeline.LoadPipelines(tx, p.ID, false, deprecatedGetUser(ctx))
-		if errlp != nil {
-			return sdk.WrapError(errlp, "AddGroupInProject: Cannot load pipelines for project %s", p.Name)
-		}
-
-		for _, pip := range pipelines {
-			if permission.AccessToPipeline(key, sdk.DefaultEnv.Name, pip.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
-				inPip, err := group.CheckGroupInPipeline(tx, pip.ID, g.ID)
-				if err != nil {
-					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the pipeline %s", g.Name, pip.Name)
-				}
-				if inPip {
-					if err := group.UpdateGroupRoleInPipeline(tx, pip.ID, g.ID, groupProject.Permission); err != nil {
-						return sdk.WrapError(err, "AddGroupInProject: Cannot update group %s on pipeline %s", g.Name, pip.Name)
-					}
-				} else if err := group.InsertGroupInPipeline(tx, pip.ID, g.ID, groupProject.Permission); err != nil {
-					return sdk.WrapError(err, "AddGroupInProject: Cannot insert group %s on pipeline %s", g.Name, pip.Name)
-				}
-			}
-		}
-
-		// apply on environment
-		envs, errle := environment.LoadEnvironments(tx, p.Key, false, deprecatedGetUser(ctx))
-		if errle != nil {
-			return sdk.WrapError(errle, "AddGroupInProject: Cannot load environments for project %s", p.Name)
-		}
-
-		for _, env := range envs {
-			if permission.AccessToEnvironment(key, env.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
-				inEnv, err := group.IsInEnvironment(tx, env.ID, g.ID)
-				if err != nil {
-					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the environment %s", g.Name, env.Name)
-				}
-				if inEnv {
-					if err := group.UpdateGroupRoleInEnvironment(tx, env.ID, g.ID, groupProject.Permission); err != nil {
-						return sdk.WrapError(err, "AddGroupInProject: Cannot update group %s on environment %s", g.Name, env.Name)
-					}
-				} else if err := group.InsertGroupInEnvironment(tx, env.ID, g.ID, groupProject.Permission); err != nil {
-					return sdk.WrapError(err, "AddGroupInProject: Cannot insert group %s on environment %s", g.Name, env.Name)
-				}
-			}
 		}
 
 		if err := tx.Commit(); err != nil {

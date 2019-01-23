@@ -84,18 +84,6 @@ func (api *API) deleteGroupHandler() service.Handler {
 			event.PublishDeleteProjectPermission(&pg.Project, groupPerm, u)
 		}
 
-		for _, pg := range appPerms {
-			event.PublishApplicationPermissionDelete(pg.Application.ProjectKey, pg.Application, groupPerm, u)
-		}
-
-		for _, pg := range pipPerms {
-			event.PublishPipelinePermissionDelete(pg.Pipeline.ProjectKey, pg.Pipeline.Name, groupPerm, u)
-		}
-
-		for _, pg := range envPerms {
-			event.PublishEnvironmentPermissionDelete(pg.Environment.ProjectKey, pg.Environment, groupPerm, u)
-		}
-
 		return nil
 	}
 }

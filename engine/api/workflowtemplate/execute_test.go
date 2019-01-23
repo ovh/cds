@@ -17,6 +17,8 @@ func TestExecuteTemplate(t *testing.T) {
 			{Key: "withDeploy", Type: sdk.ParameterTypeBoolean, Required: true},
 			{Key: "deployWhen", Type: sdk.ParameterTypeString},
 			{Key: "repo", Type: sdk.ParameterTypeRepository},
+			{Key: "object", Type: sdk.ParameterTypeJSON},
+			{Key: "list", Type: sdk.ParameterTypeJSON},
 		},
 		Value: base64.StdEncoding.EncodeToString([]byte(`
 name: [[.name]]
@@ -45,6 +47,9 @@ jobs:
 	steps:
 	- script:
 		- echo "Hello World!"
+		- echo "[[ "Hello World Lower!" | lower ]]"
+		- echo "[[.params.object.key1]]"
+		- echo "[[range .params.list]][[.]][[end]]"
 	- script:
 		- echo "{{.cds.run.number}}"`)),
 		}},
@@ -73,6 +78,8 @@ values:
 				"withDeploy": "true",
 				"deployWhen": "failure",
 				"repo":       "github/ovh/cds",
+				"object":     "{\"key1\":\"value1\"}",
+				"list":       "[\"value1\",\"value2\"]",
 			},
 		},
 	}
@@ -106,6 +113,9 @@ jobs:
 	steps:
 	- script:
 		- echo "Hello World!"
+		- echo "hello world lower!"
+		- echo "value1"
+		- echo "value1value2"
 	- script:
 		- echo "{{.cds.run.number}}"`, res.Pipelines[0])
 

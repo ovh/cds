@@ -134,7 +134,7 @@ Helpers available and some examples:
 - trunc
 - trim
 - upper: `{{.cds.application | upper}}`
-- lower
+- lower: `{{.cds.application | lower}}`
 - title
 - untitle
 - substr
@@ -157,7 +157,7 @@ Helpers available and some examples:
 - squote
 - indent
 - nindent
-- replace
+- replace: `{{.cds.application | replace "_" "."}}`
 - plural
 - toString
 - default: `{{.cds.application | default ""}}`, `{{.cds.application | default "defaultValue"}}`, `{{.cds.app.foo | default .cds.app.bar .cds.app.biz }}`

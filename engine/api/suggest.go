@@ -55,7 +55,7 @@ func (api *API) getVariablesHandler() service.Handler {
 				return sdk.WrapError(err, "Cannot Load application")
 			}
 
-			if !permission.AccessToApplication(projectKey, app.Name, deprecatedGetUser(ctx), permission.PermissionRead) {
+			if !permission.AccessToProject(projectKey, deprecatedGetUser(ctx), permission.PermissionRead) {
 				return sdk.WrapError(sdk.ErrForbidden, "getVariablesHandler> Not allow to access to this application: %s", appName)
 			}
 

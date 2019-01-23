@@ -24,14 +24,13 @@ func (api *API) getApplicationExportHandler() service.Handler {
 		if format == "" {
 			format = "yaml"
 		}
-		withPermissions := FormBool(r, "withPermissions")
 
 		// Export
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
 			return sdk.WrapError(err, "Format invalid")
 		}
-		if _, err := application.Export(api.mustDB(), api.Cache, key, appName, f, withPermissions, deprecatedGetUser(ctx), project.EncryptWithBuiltinKey, w); err != nil {
+		if _, err := application.Export(api.mustDB(), api.Cache, key, appName, f, deprecatedGetUser(ctx), project.EncryptWithBuiltinKey, w); err != nil {
 			return sdk.WrapError(err, "getApplicationExportHandler")
 		}
 

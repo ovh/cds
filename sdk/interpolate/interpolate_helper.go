@@ -16,10 +16,11 @@ import (
 	"github.com/huandu/xstrings"
 )
 
-var interpolateHelperFuncs template.FuncMap
+// InterpolateHelperFuncs is a list of funcs that can be used in go templates.
+var InterpolateHelperFuncs template.FuncMap
 
 func init() {
-	interpolateHelperFuncs = template.FuncMap{
+	InterpolateHelperFuncs = template.FuncMap{
 		"abbrev":     abbrev,
 		"abbrevboth": abbrevboth,
 		"trunc":      trunc,

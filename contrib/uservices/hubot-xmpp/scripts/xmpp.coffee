@@ -3,6 +3,7 @@ module.exports = (robot) ->
   robot.router.post '/cds/notifications/xmpp', (req, res) ->
     robot.logger.info "data IN"
     event = req.body
+    defaultDomain = process.env.HUBOT_XMPP_DEFAULT_DOMAIN
 
     send = (event, dest) -> 
       robot.logger.info "recipient:#{dest} #{event.subject} #{event.body}"
@@ -18,6 +19,9 @@ module.exports = (robot) ->
         robot.adapter.joinRoom jid: dest
       else if /@/.test dest
         type = 'chat'
+      else if /@/.test defaultDomain
+        type = 'chat'
+        dest = dest + defaultDomain
       else
         robot.logger.info "ignore recipient:#{dest}"
         return

@@ -21,6 +21,9 @@
                             <sui-select-option *ngFor="let vcs of select.filteredOptions" [value]="vcs">
                             </sui-select-option>
                         </sui-select>
+                        <codemirror *ngSwitchCase="'json'" name="parameter-{{parameter.key}}" [(ngModel)]="parameterValues[parameter.key]"
+                            [config]="codeMirrorConfig" (change)="changeParam()">
+                        </codemirror>
                     </div>
                 </div>
                 <div class="wide fields" *ngIf="parameter.type === 'repository'">

@@ -38,15 +38,15 @@ var environmentKeyCreateCmd = cli.Command{
 func environmentCreateKeyRun(v cli.Values) error {
 	key := &sdk.EnvironmentKey{
 		Key: sdk.Key{
-			Name: v["key-name"],
-			Type: v["key-type"],
+			Name: v.GetString("key-name"),
+			Type: v.GetString("key-type"),
 		},
 	}
-	if err := client.EnvironmentKeyCreate(v[_ProjectKey], v["env-name"], key); err != nil {
+	if err := client.EnvironmentKeyCreate(v.GetString(_ProjectKey), v.GetString("env-name"), key); err != nil {
 		return err
 	}
 
-	fmt.Printf("Environment key %s of type %s created with success in environment %s\n", key.Name, key.Type, v["env-name"])
+	fmt.Printf("Environment key %s of type %s created with success in environment %s\n", key.Name, key.Type, v.GetString("env-name"))
 	fmt.Println(key.Public)
 	return nil
 }
@@ -63,7 +63,7 @@ var environmentKeyListCmd = cli.Command{
 }
 
 func environmentListKeyRun(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.EnvironmentKeysList(v[_ProjectKey], v["env-name"])
+	keys, err := client.EnvironmentKeysList(v.GetString(_ProjectKey), v.GetString("env-name"))
 	if err != nil {
 		return nil, err
 	}
@@ -83,5 +83,5 @@ var environmentKeyDeleteCmd = cli.Command{
 }
 
 func environmentDeleteKeyRun(v cli.Values) error {
-	return client.EnvironmentKeysDelete(v[_ProjectKey], v["env-name"], v["key-name"])
+	return client.EnvironmentKeysDelete(v.GetString(_ProjectKey), v.GetString("env-name"), v.GetString("key-name"))
 }

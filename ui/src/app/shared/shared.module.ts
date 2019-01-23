@@ -30,7 +30,6 @@ import { DiffListComponent } from './diff/list/diff.list.component';
 import { DurationService } from './duration/duration.service';
 import { FavoriteCardsComponent } from './favorite-cards/favorite-cards.component';
 import { GroupFormComponent } from './group/form/group.form.component';
-import { HistoryComponent } from './history/history.component';
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
@@ -44,7 +43,6 @@ import { PermissionEnvironmentFormComponent } from './permission/environment/for
 import { PermissionFormComponent } from './permission/form/permission.form.component';
 import { PermissionListComponent } from './permission/list/permission.list.component';
 import { PermissionService } from './permission/permission.service';
-import { PipelineLaunchModalComponent } from './pipeline/launch/pipeline.launch.modal.component';
 import { CutPipe } from './pipes/cut.pipe';
 import { KeysPipe } from './pipes/keys.pipe';
 import { ForMapPipe } from './pipes/map.pipe';
@@ -91,7 +89,7 @@ import { WorkflowNodeContextComponent } from './workflow/modal/context/workflow.
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-modal/hook.modal.component';
 import { WorkflowNodeOutGoingHookEditComponent } from './workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
-import {WorkflowSaveAsCodeComponent} from './workflow/modal/save-as-code/save.as.code.component';
+import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
 import { WorkflowTriggerComponent } from './workflow/modal/trigger/workflow.trigger.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeHookFormComponent } from './workflow/node/hook/form/hook.form.component';
@@ -135,7 +133,6 @@ import { ZoneComponent } from './zone/zone.component';
         UploadButtonComponent,
         ForMapPipe,
         GroupFormComponent,
-        HistoryComponent,
         KeysPipe,
         KeysFormComponent,
         KeysListComponent,
@@ -149,7 +146,6 @@ import { ZoneComponent } from './zone/zone.component';
         PermissionListComponent,
         PermissionEnvironmentFormComponent,
         PrerequisiteComponent,
-        PipelineLaunchModalComponent,
         PrerequisitesFormComponent,
         RequirementsListComponent,
         RequirementsFormComponent,
@@ -251,7 +247,6 @@ import { ZoneComponent } from './zone/zone.component';
         ForMapPipe,
         FormsModule,
         GroupFormComponent,
-        HistoryComponent,
         KeysPipe,
         KeysFormComponent,
         KeysListComponent,
@@ -273,7 +268,6 @@ import { ZoneComponent } from './zone/zone.component';
         PrerequisitesFormComponent,
         PrerequisiteComponent,
         PrerequisitesFormComponent,
-        PipelineLaunchModalComponent,
         ReactiveFormsModule,
         RepoManagerFormComponent,
         StatusIconComponent,

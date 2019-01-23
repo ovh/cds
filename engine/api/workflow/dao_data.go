@@ -130,5 +130,6 @@ func (node *dbNodeData) PostInsert(db gorp.SqlExecutor) error {
 			node.Groups[i].Group = *grDB
 		}
 	}
+
 	return group.InsertGroupsInNode(db, node.Groups, node.ID)
 }

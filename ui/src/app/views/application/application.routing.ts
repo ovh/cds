@@ -1,9 +1,9 @@
-import {ModuleWithProviders} from '@angular/core';
-import {RouterModule, Routes} from '@angular/router';
-import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
-import {ProjectForApplicationResolver, ProjectForWorkflowResolver} from '../../service/project/project.resolver';
-import {ApplicationAddComponent} from './add/application.add.component';
-import {ApplicationShowComponent} from './show/application.component';
+import { ModuleWithProviders } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { CanActivateAuthRoute } from '../../service/auth/authenRouteActivate';
+import { ProjectForApplicationResolver, ProjectForWorkflowResolver } from '../../service/project/project.resolver';
+import { ApplicationAddComponent } from './add/application.add.component';
+import { ApplicationShowComponent } from './show/application.component';
 
 const applicationRoutes: Routes = [
     {
@@ -23,11 +23,6 @@ const applicationRoutes: Routes = [
                 resolve: {
                     project: ProjectForApplicationResolver
                 }
-            },
-            {
-                path: ':appName/pipeline/:pipName/build',
-                loadChildren: 'app/views/run/application.run.module#ApplicationRunModule',
-                data: { title: 'Pipeline {pipName} • Application {appName}' }
             }
         ]
     }
