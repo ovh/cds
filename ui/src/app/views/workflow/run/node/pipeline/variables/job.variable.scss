@@ -1,0 +1,14 @@
+::ng-deep .ui.modal.variables-modal,::ng-deep .modals.dimmer .ui.scrolling.modal.variables-modal {
+    > .content {
+        position: relative;
+        height: calc(100% - 7rem);
+        overflow: auto;
+        padding-bottom: 1rem;
+    }
+    position: absolute !important;
+    margin-top: auto !important;
+    margin-bottom: auto !important;
+    margin-left: -25% !important;
+    top: 3.5rem !important;
+    bottom: 3.5rem;
+}
