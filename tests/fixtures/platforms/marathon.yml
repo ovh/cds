@@ -13,4 +13,3 @@ deployment_default_config:
   marathon_config:
     value: ""
     type: string
-plugin: test-plugin

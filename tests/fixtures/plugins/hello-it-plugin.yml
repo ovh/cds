@@ -1,4 +1,4 @@
-name: test-plugin
+name: hello-it-plugin
 type: platform
 integration: HelloIT
 author: "me"

@@ -69,7 +69,7 @@ func LoadByName(db gorp.SqlExecutor, name string) (*sdk.GRPCPlugin, error) {
 	m := grpcPlugin{}
 	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin WHERE NAME = $1", name); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WithStack(sdk.ErrNotFound)
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin %s not found", name)
 		}
 		return nil, sdk.WrapError(err, "plugin.LoadByName")
 	}
@@ -85,7 +85,7 @@ func LoadByPlatformModelIDAndType(db gorp.SqlExecutor, platformModelID int64, ty
 	m := grpcPlugin{}
 	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin where platform_model_id = $1 and type = $2", platformModelID, typePlugin); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WithStack(sdk.ErrNotFound)
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin not found (type: %s) for platform %d", typePlugin, platformModelID)
 		}
 		return nil, sdk.WrapError(err, "plugin.LoadByPlatformModelIDAndType")
 	}
