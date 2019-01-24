@@ -8,7 +8,7 @@
                     workflowName} }}
                 </div>
                 <app-workflow-template-form mode="add" [loading]="loading" [workflowTemplate]="workflowTemplate"
-                    [groups]="groups" [errors]="errors" (save)="saveWorkflowTemplate()"></app-workflow-template-form>
+                    [groups]="groups" [errors]="errors" (save)="saveWorkflowTemplate($event)"></app-workflow-template-form>
             </div>
             <div class="three wide column">
                 <app-workflow-template-help></app-workflow-template-help>

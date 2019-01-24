@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { Group } from '../../../../model/group.model';
 import { User } from '../../../../model/user.model';
 import { WorkflowTemplate, WorkflowTemplateError, WorkflowTemplateParameter } from '../../../../model/workflow-template.model';
@@ -18,31 +19,34 @@ export class WorkflowTemplateFormComponent {
 
     _workflowTemplate: WorkflowTemplate;
     @Input() set workflowTemplate(wt: WorkflowTemplate) {
-        if (!wt) {
-            wt = new WorkflowTemplate();
-            wt.editable = true;
+        this._workflowTemplate = { ...wt }
+
+        if (!this._workflowTemplate) {
+            this._workflowTemplate = <WorkflowTemplate>{ editable: true };
         }
 
-        this._workflowTemplate = wt;
+        this.importFromURLControl.setValue(!!this._workflowTemplate.import_url)
+        this.importFromURL = this.importFromURLControl.value;
+
         this.changeMessage = null;
 
         this.parameterKeys = [];
         this.parameterValues = {};
-        if (wt.parameters) {
-            wt.parameters.forEach((p, i) => {
+        if (this._workflowTemplate.parameters) {
+            this._workflowTemplate.parameters.forEach((p, i) => {
                 this.parameterValues[p.key] = p;
                 this.parameterKeys.push(p.key);
             });
         }
 
-        if (wt.value) {
-            this.workflowValue = atob(wt.value);
+        if (this._workflowTemplate.value) {
+            this.workflowValue = atob(this._workflowTemplate.value);
         }
 
         this.pipelineValues = {};
         this.pipelineKeys = [];
-        if (wt.pipelines) {
-            wt.pipelines.forEach((p, i) => {
+        if (this._workflowTemplate.pipelines) {
+            this._workflowTemplate.pipelines.forEach((p, i) => {
                 this.pipelineValues[i] = atob(p.value);
                 this.pipelineKeys.push(i);
             });
@@ -50,8 +54,8 @@ export class WorkflowTemplateFormComponent {
 
         this.applicationValues = {};
         this.applicationKeys = [];
-        if (wt.applications) {
-            wt.applications.forEach((a, i) => {
+        if (this._workflowTemplate.applications) {
+            this._workflowTemplate.applications.forEach((a, i) => {
                 this.applicationValues[i] = atob(a.value);
                 this.applicationKeys.push(i);
             });
@@ -59,8 +63,8 @@ export class WorkflowTemplateFormComponent {
 
         this.environmentValues = {};
         this.environmentKeys = [];
-        if (wt.environments) {
-            wt.environments.forEach((e, i) => {
+        if (this._workflowTemplate.environments) {
+            this._workflowTemplate.environments.forEach((e, i) => {
                 this.environmentValues[i] = atob(e.value);
                 this.environmentKeys.push(i);
             });
@@ -118,6 +122,8 @@ export class WorkflowTemplateFormComponent {
     environmentKeys: Array<number>;
     user: User;
     changeMessage: string;
+    importFromURLControl = new FormControl();
+    importFromURL: boolean;
 
     constructor(
         private _sharedService: SharedService
@@ -136,37 +142,38 @@ export class WorkflowTemplateFormComponent {
     }
 
     getDescriptionHeight(): number {
-        return this._sharedService.getTextAreaheight(this._workflowTemplate.description);
+        return this._sharedService.getTextAreaheight(this.workflowTemplate.description);
     }
 
     clickSave() {
-        this._workflowTemplate.pipelines = Object.keys(this.pipelineValues).map(k => {
-            return { value: this.pipelineValues[k] ? btoa(this.pipelineValues[k]) : '' };
-        });
-        this._workflowTemplate.applications = Object.keys(this.applicationValues).map(k => {
-            return { value: this.applicationValues[k] ? btoa(this.applicationValues[k]) : '' };
-        });
-        this._workflowTemplate.environments = Object.keys(this.environmentValues).map(k => {
-            return { value: this.environmentValues[k] ? btoa(this.environmentValues[k]) : '' };
-        });
-        this._workflowTemplate.parameters = Object.keys(this.parameterValues).map(k => {
-            return this.parameterValues[k];
-        });
-
-        if (!this._workflowTemplate.name || !this._workflowTemplate.group_id) {
+        if (this.importFromURL) {
+            this.save.emit({ import_url: this.workflowTemplate.import_url })
             return;
         }
 
-        if (this.workflowValue) {
-            this._workflowTemplate.value = btoa(this.workflowValue);
-        }
-        this.workflowTemplate.group_id = Number(this.workflowTemplate.group_id);
-
-        if (this.changeMessage) {
-            this.workflowTemplate.change_message = this.changeMessage;
+        if (!this.workflowTemplate.name || !this.workflowTemplate.group_id) {
+            return;
         }
 
-        this.save.emit();
+        this.save.emit({
+            ...this.workflowTemplate,
+            import_url: null,
+            group_id: Number(this.workflowTemplate.group_id),
+            value: this.workflowValue ? btoa(this.workflowValue) : '',
+            pipelines: Object.keys(this.pipelineValues).map(k => {
+                return { value: this.pipelineValues[k] ? btoa(this.pipelineValues[k]) : '' };
+            }),
+            applications: Object.keys(this.applicationValues).map(k => {
+                return { value: this.applicationValues[k] ? btoa(this.applicationValues[k]) : '' };
+            }),
+            environments: Object.keys(this.environmentValues).map(k => {
+                return { value: this.environmentValues[k] ? btoa(this.environmentValues[k]) : '' };
+            }),
+            parameters: Object.keys(this.parameterValues).map(k => {
+                return this.parameterValues[k];
+            }),
+            change_message: this.changeMessage
+        });
     }
 
     clickDelete() {
@@ -174,8 +181,7 @@ export class WorkflowTemplateFormComponent {
     }
 
     clickAddPipeline() {
-        let k = this.pipelineKeys.length;
-        this.pipelineKeys.push(k);
+        this.pipelineKeys.push(this.pipelineKeys.length);
     }
 
     clickRemovePipeline(key: number) {
@@ -184,8 +190,7 @@ export class WorkflowTemplateFormComponent {
     }
 
     clickAddApplication() {
-        let k = this.applicationKeys.length;
-        this.applicationKeys.push(k);
+        this.applicationKeys.push(this.applicationKeys.length);
     }
 
     clickRemoveApplication(key: number) {
@@ -194,8 +199,7 @@ export class WorkflowTemplateFormComponent {
     }
 
     clickAddEnvironment() {
-        let k = this.environmentKeys.length;
-        this.environmentKeys.push(k);
+        this.environmentKeys.push(this.environmentKeys.length);
     }
 
     clickRemoveEnvironment(key: number) {
@@ -229,5 +233,9 @@ export class WorkflowTemplateFormComponent {
 
     environmentValueChange(key: number, value: string) {
         this.environmentValues[key] = value;
+    }
+
+    changeFromURL() {
+        this.importFromURL = this.importFromURLControl.value;
     }
 }

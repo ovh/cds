@@ -220,13 +220,13 @@ export class WorkflowTemplateEditComponent implements OnInit {
             });
     }
 
-    saveWorkflowTemplate() {
+    saveWorkflowTemplate(wt: WorkflowTemplate) {
         this.loading = true;
-        this._workflowTemplateService.update(this.oldWorkflowTemplate, this.workflowTemplate)
+        this._workflowTemplateService.update(this.oldWorkflowTemplate, wt)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(wt => {
-                this.oldWorkflowTemplate = { ...wt };
-                this.workflowTemplate = wt;
+            .subscribe(res => {
+                this.oldWorkflowTemplate = { ...res };
+                this.workflowTemplate = res;
                 this.errors = [];
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
                 this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);

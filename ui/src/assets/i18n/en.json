@@ -125,6 +125,7 @@
   "btn_add": "Add",
   "btn_back": "Back",
   "btn_filter": "Filter",
+  "btn_synchronize": "Synchronize",
 
   "cdsctl_choice_os": "Choose your OS",
   "cdsctl_choice_arch": "Choose your architecture",
@@ -1107,6 +1108,9 @@
   "workflow_template_apply_detach": "Detach the generated workflow from the template.",
   "workflow_template_init_from_workflow": "Init a template",
   "workflow_template_help_add_from": "Current workflow template was initialized with data from {{workflowName}} workflow in {{projectKey}} project. The data will not be stored until you save the template.",
+  "workflow_template_help_edit_from": "Current workflow template is synchronized from URL. You can't edit it.",
+  "workflow_template_import_from_url": "Import from URL",
+  "workflow_template_imported_from_url": "Imported from URL",
 
   "workflow_repository_help_line_1": "Your workflow was not imported from your code.",
   "workflow_repository_help_line_2": "Manage your workflow as code from your repository to automatically update it with changes on your branches."

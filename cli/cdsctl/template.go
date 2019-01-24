@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -113,37 +113,9 @@ func templatePushRun(v cli.Values) error {
 	tar := new(bytes.Buffer)
 
 	// if the first args is an url, try to download all files
-	readFromLink := len(files) > 0 && exportentities.IsURL(files[0]) && strings.HasSuffix(files[0], ".yml")
+	readFromLink := len(files) > 0 && sdk.IsURL(files[0]) && strings.HasSuffix(files[0], ".yml")
 	if readFromLink {
-		manifestURL := files[0]
-		baseURL := manifestURL[0:strings.LastIndex(manifestURL, "/")]
-
-		// get the manifest file
-		contentFile, _, err := exportentities.OpenPath(manifestURL)
-		if err != nil {
-			return err
-		}
-		buf := new(bytes.Buffer)
-		if _, err := buf.ReadFrom(contentFile); err != nil {
-			return fmt.Errorf("cannot read from given remote file: %v", err)
-		}
-		var t exportentities.Template
-		if err := yaml.Unmarshal(buf.Bytes(), &t); err != nil {
-			return fmt.Errorf("cannot unmarshal given remote yaml file: %v", err)
-		}
-
-		// get all components of the template
-		paths := []string{t.Workflow}
-		paths = append(paths, t.Pipelines...)
-		paths = append(paths, t.Applications...)
-		paths = append(paths, t.Environments...)
-
-		links := make([]string, len(paths))
-		for i := range paths {
-			links[i] = fmt.Sprintf("%s/%s", baseURL, paths[i])
-		}
-
-		if err := workflowLinksToTarWriter(append(links, manifestURL), tar); err != nil {
+		if err := exportentities.DownloadTemplate(files[0], tar); err != nil {
 			return err
 		}
 	} else {
