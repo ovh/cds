@@ -31,6 +31,8 @@ UPDATE grpc_plugin set integration_model_id = platform_model_id;
 
 ALTER TABLE application_deployment_strategy ADD COLUMN project_integration_id BIGINT;
 UPDATE application_deployment_strategy set project_integration_id = project_platform_id;
+ALTER TABLE application_deployment_strategy DROP CONSTRAINT "application_deployment_strategy_pkey";
+SELECT create_primary_key('application_deployment_strategy', 'application_id,project_integration_id');
 SELECT create_foreign_key_idx_cascade('fk_application_deployment_strategy_integration', 'application_deployment_strategy', 'project_integration', 'project_integration_id', 'id');
 ALTER TABLE application_deployment_strategy ALTER COLUMN project_platform_id DROP NOT NULL;
 ALTER TABLE application_deployment_strategy DROP CONSTRAINT "fk_application_deployment_strategy_platform";
@@ -52,9 +54,7 @@ UPDATE workflow_node_run_job set integration_plugin_binaries = platform_plugin_b
 
 -- +migrate Down
 
-DROP TABLE integration_model;
-DROP TABLE project_integration;
-
+ALTER TABLE application_deployment_strategy DROP CONSTRAINT "application_deployment_strategy_pkey";
 ALTER TABLE grpc_plugin DROP COLUMN integration_model_id;
 ALTER TABLE application_deployment_strategy DROP COLUMN project_integration_id;
 ALTER TABLE workflow_node_context DROP COLUMN project_integration_id;
@@ -62,4 +62,7 @@ ALTER TABLE w_node_context DROP COLUMN project_integration_id;
 ALTER TABLE workflow_node_run_job DROP COLUMN integration_plugin_binaries;
 SELECT create_foreign_key('FK_WORKFLOW_NODE_PROJECT_PLATFORM', 'workflow_node_context', 'project_platform', 'project_platform_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_W_NODE_CONTEXT_PLATFORM', 'w_node_context', 'project_platform', 'project_platform_id', 'id');
+SELECT create_primary_key('application_deployment_strategy', 'application_id,project_platform_id');
 SELECT create_foreign_key_idx_cascade('fk_application_deployment_strategy_platform', 'application_deployment_strategy', 'project_platform', 'project_platform_id', 'id');
+DROP TABLE integration_model;
+DROP TABLE project_integration;
