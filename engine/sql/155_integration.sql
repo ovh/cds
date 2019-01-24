@@ -32,6 +32,8 @@ UPDATE grpc_plugin set integration_model_id = platform_model_id;
 ALTER TABLE application_deployment_strategy ADD COLUMN project_integration_id BIGINT;
 UPDATE application_deployment_strategy set project_integration_id = project_platform_id;
 SELECT create_foreign_key_idx_cascade('fk_application_deployment_strategy_integration', 'application_deployment_strategy', 'project_integration', 'project_integration_id', 'id');
+ALTER TABLE application_deployment_strategy ALTER COLUMN project_platform_id DROP NOT NULL;
+ALTER TABLE application_deployment_strategy DROP CONSTRAINT "fk_application_deployment_strategy_platform";
 
 ALTER TABLE workflow_node_context ADD COLUMN project_integration_id BIGINT;
 UPDATE workflow_node_context set project_integration_id = project_platform_id;
@@ -60,3 +62,4 @@ ALTER TABLE w_node_context DROP COLUMN project_integration_id;
 ALTER TABLE workflow_node_run_job DROP COLUMN integration_plugin_binaries;
 SELECT create_foreign_key('FK_WORKFLOW_NODE_PROJECT_PLATFORM', 'workflow_node_context', 'project_platform', 'project_platform_id', 'id');
 SELECT create_foreign_key_idx_cascade('FK_W_NODE_CONTEXT_PLATFORM', 'w_node_context', 'project_platform', 'project_platform_id', 'id');
+SELECT create_foreign_key_idx_cascade('fk_application_deployment_strategy_platform', 'application_deployment_strategy', 'project_platform', 'project_platform_id', 'id');
