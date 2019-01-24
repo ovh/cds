@@ -31,7 +31,7 @@ func LoadModel(db gorp.SqlExecutor, modelID int64, clearPassword bool) (sdk.Plat
 	var pm platformModel
 	if err := db.SelectOne(&pm, "SELECT * from platform_model where id = $1", modelID); err != nil {
 		if err == sql.ErrNoRows {
-			return sdk.PlatformModel{}, sdk.WrapError(sdk.ErrNotFound, "LoadModel> Cannot select platform model %d", modelID)
+			return sdk.PlatformModel{}, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot select platform model %d", modelID)
 		}
 		return sdk.PlatformModel{}, sdk.WrapError(err, "Cannot select platform model %d", modelID)
 	}
@@ -58,7 +58,7 @@ func LoadModelByName(db gorp.SqlExecutor, name string, clearPassword bool) (sdk.
 	var pm platformModel
 	if err := db.SelectOne(&pm, "SELECT * from platform_model where name = $1", name); err != nil {
 		if err == sql.ErrNoRows {
-			return sdk.PlatformModel{}, sdk.WrapError(sdk.ErrNotFound, "LoadModel> platform model %s not found", name)
+			return sdk.PlatformModel{}, sdk.NewErrorFrom(sdk.ErrNotFound, "platform model %s not found", name)
 		}
 		return sdk.PlatformModel{}, sdk.WrapError(err, "Cannot select platform model %s", name)
 	}
@@ -108,7 +108,7 @@ func UpdateModel(db gorp.SqlExecutor, m *sdk.PlatformModel) error {
 	if n, err := db.Update(&dbm); err != nil {
 		return sdk.WrapError(err, "Unable to update platform model %s", m.Name)
 	} else if n == 0 {
-		return sdk.WrapError(sdk.ErrNotFound, "UpdateModel> Unable to update platform model %s", m.Name)
+		return sdk.NewErrorFrom(sdk.ErrNotFound, "Unable to update platform model %s", m.Name)
 	}
 	return nil
 }
@@ -139,7 +139,7 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 
 	query := `SELECT default_config, grpc_plugin.name as "plugin_name", deployment_default_config, public_configurations
 	FROM platform_model 
-	LEFT OUTER JOIN grpc_plugin ON grpc_plugin.id = platform_model.grpc_plugin_id
+	LEFT OUTER JOIN grpc_plugin ON grpc_plugin.platform_model_id = platform_model.id
 	WHERE platform_model.id = $1`
 	if err := db.SelectOne(&res, query, pm.ID); err != nil {
 		return sdk.WrapError(err, "Cannot get default_config, platform_model_plugin, deployment_default_config")
@@ -156,11 +156,6 @@ func (pm *platformModel) PostGet(db gorp.SqlExecutor) error {
 	if err := gorpmapping.JSONNullString(res.PublicConfigurations, &pm.PublicConfigurations); err != nil {
 		return sdk.WrapError(err, "Unable to load public_configurations")
 	}
-
-	if res.PluginName.Valid {
-		pm.PluginName = res.PluginName.String
-	}
-
 	return nil
 }
 

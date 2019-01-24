@@ -64,18 +64,39 @@ func Delete(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	return nil
 }
 
+// LoadByName loads a plugin by name
 func LoadByName(db gorp.SqlExecutor, name string) (*sdk.GRPCPlugin, error) {
 	m := grpcPlugin{}
 	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin WHERE NAME = $1", name); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNotFound
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin %s not found", name)
 		}
+		return nil, sdk.WrapError(err, "plugin.LoadByName")
+	}
+	if err := m.PostGet(db); err != nil {
 		return nil, sdk.WrapError(err, "plugin.LoadByName")
 	}
 	p := sdk.GRPCPlugin(m)
 	return &p, nil
 }
 
+// LoadByPlatformModelIDAndType loads all plugins associated to a platform model id
+func LoadByPlatformModelIDAndType(db gorp.SqlExecutor, platformModelID int64, typePlugin string) (*sdk.GRPCPlugin, error) {
+	m := grpcPlugin{}
+	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin where platform_model_id = $1 and type = $2", platformModelID, typePlugin); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin not found (type: %s) for platform %d", typePlugin, platformModelID)
+		}
+		return nil, sdk.WrapError(err, "plugin.LoadByPlatformModelIDAndType")
+	}
+	if err := m.PostGet(db); err != nil {
+		return nil, sdk.WrapError(err, "plugin.LoadByName")
+	}
+	p := sdk.GRPCPlugin(m)
+	return &p, nil
+}
+
+// LoadAll loads all GRPC Plugins
 func LoadAll(db gorp.SqlExecutor) ([]sdk.GRPCPlugin, error) {
 	m := []grpcPlugin{}
 	if _, err := db.Select(&m, "SELECT * FROM grpc_plugin"); err != nil {
@@ -101,6 +122,13 @@ func (p *grpcPlugin) PostGet(db gorp.SqlExecutor) error {
 	}
 	if err := gorpmapping.JSONNullString(s, &p.Binaries); err != nil {
 		return sdk.WrapError(err, "plugin.PostGet")
+	}
+	if p.PlatformModelID != nil {
+		var err error
+		p.Integration, err = db.SelectStr("SELECT name FROM platform_model WHERE ID = $1", p.PlatformModelID)
+		if err != nil {
+			return sdk.WrapError(err, "unable to get integration name for ID=%d", p.PlatformModelID)
+		}
 	}
 	return nil
 }

@@ -78,7 +78,7 @@ func findAll(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.Serv
 	sdbs := []service{}
 	if _, err := db.Select(&sdbs, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNotFound
+			return nil, sdk.WithStack(sdk.ErrNotFound)
 		}
 		return nil, sdk.WithStack(err)
 	}

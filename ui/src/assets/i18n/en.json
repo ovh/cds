@@ -433,7 +433,7 @@
   "token_generated": "Here is your generated token",
 
   "heatmap": "Event heatmap",
-  "heatmap_empty": "No events triggered yet",
+  "heatmap_empty": "No event triggered yet",
   "heatmap_filter_mute": "Hide events on this project",
   "heatmap_status": "Status",
   "heatmap_tag": "Tags",

@@ -235,7 +235,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					}
 
 					var errPlugins error
-					pluginsOK, errPlugins = checkPlugins(w, j)
+					pluginsOK, errPlugins = checkPluginDeployment(w, j)
 					if !pluginsOK {
 						log.Error("Plugins doesn't match: %v", errPlugins)
 					}
@@ -320,7 +320,7 @@ func (w *currentWorker) processBookedWJob(ctx context.Context, wjobs chan<- sdk.
 		return fmt.Errorf("processBookedWJob> the worker have no all requirements")
 	}
 
-	pluginsOK, errPlugins := checkPlugins(w, *wjob)
+	pluginsOK, errPlugins := checkPluginDeployment(w, *wjob)
 	if !pluginsOK {
 		var details = errPlugins.Error()
 
