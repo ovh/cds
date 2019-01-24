@@ -33,8 +33,14 @@ func templateApplyCmd(name string) cli.Command {
 				Type:      cli.FlagArray,
 				Name:      "params",
 				ShortHand: "p",
-				Usage:     "Specify params for template",
+				Usage:     "Specify params for template like --params paramKey:paramValue",
 				Default:   "",
+			},
+			{
+				Type:    cli.FlagBool,
+				Name:    "detach",
+				Usage:   "Set to generate a workflow detached from the template",
+				Default: "",
 			},
 			{
 				Type:      cli.FlagBool,
@@ -297,6 +303,7 @@ func templateApplyRun(v cli.Values) error {
 		ProjectKey:   projectKey,
 		WorkflowName: workflowName,
 		Parameters:   params,
+		Detached:     v.GetBool("detach"),
 	}
 	if err := wt.CheckParams(req); err != nil {
 		return err

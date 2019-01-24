@@ -36,8 +36,14 @@ var templateBulkCmd = cli.Command{
 			Type:      cli.FlagArray,
 			Name:      "params",
 			ShortHand: "p",
-			Usage:     "Specify parameters for template",
+			Usage:     "Specify parameters for template like --params PROJ1/workflow1:paramKey=paramValue",
 			Default:   "",
+		},
+		{
+			Type:    cli.FlagArray,
+			Name:    "detach",
+			Usage:   "Set to generate a workflow detached from the template like --detach PROJ1/workflow1",
+			Default: "",
 		},
 		{
 			Name:      "file",
@@ -370,6 +376,16 @@ func templateBulkRun(v cli.Values) error {
 	}
 
 	moperations := templateInitOperationFromParams(mwtis, fileOperations, minstances, params)
+
+	// set detach for existing operations
+	rawDetach := v.GetStringArray("detach")
+	for _, d := range rawDetach {
+		if _, ok := moperations[d]; ok {
+			o := moperations[d]
+			o.Request.Detached = true
+			moperations[d] = o
+		}
+	}
 
 	// ask interactively for params if prompt not disabled
 	if !v.GetBool("no-interactive") {

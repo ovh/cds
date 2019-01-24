@@ -46,9 +46,10 @@ export class ParamData {
 }
 
 export class WorkflowTemplateRequest {
-    project_key: string
-    workflow_name: string
-    parameters: ParamData
+    project_key: string;
+    workflow_name: string;
+    parameters: ParamData;
+    detached: boolean;
 }
 
 export class WorkflowTemplateApplyResult {

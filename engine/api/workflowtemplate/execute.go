@@ -219,11 +219,6 @@ func Tar(wt *sdk.WorkflowTemplate, res sdk.WorkflowTemplateResult, w io.Writer) 
 			Message: "Cannot parse generated workflow",
 		}, err)
 	}
-
-	// set the workflow template instance path on export
-	templatePath := fmt.Sprintf("%s/%s", wt.Group.Name, wt.Slug)
-	wor.Template = &templatePath
-
 	bs, err := exportentities.Marshal(wor, exportentities.FormatYAML)
 	if err != nil {
 		return err

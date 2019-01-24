@@ -15,6 +15,7 @@ type WorkflowTemplateRequest struct {
 	ProjectKey   string            `json:"project_key"`
 	WorkflowName string            `json:"workflow_name"`
 	Parameters   map[string]string `json:"parameters"`
+	Detached     bool              `json:"detached,omitempty"`
 }
 
 // Value returns driver.Value from workflow template request.

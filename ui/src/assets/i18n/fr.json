@@ -1104,6 +1104,8 @@
   "workflow_template_bulk_select_instances": "Sélection des instances",
   "workflow_template_bulk_fill_parameters": "Saisie des paramètres",
   "workflow_template_bulk_fill_run": "Exécution",
+  "workflow_template_detach": "Détacher",
+  "workflow_template_apply_detach": "Détacher le workflow généré du template.",
   "workflow_template_init_from_workflow": "Initialiser un modèle",
   "workflow_template_help_add_from": "Le modèle de workflow courant a été initialisé à partir des données du workflow {{workflowName}} dans le projet {{projectKey}}. Ces données ne seront pas enregistrées tant que le modèle n'aura pas été sauvegardé.",
 

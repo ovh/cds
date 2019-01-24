@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
@@ -302,6 +303,14 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, 
 		}
 	}
 
+	// if the request is for a detached workflow and there is an existing instance, remove it
+	if wti != nil && req.Detached {
+		if err := workflowtemplate.DeleteInstance(tx, wti); err != nil {
+			return result, err
+		}
+		wti = nil
+	}
+
 	// if a previous instance exist for the same workflow update it, else create a new one
 	var old *sdk.WorkflowTemplateInstance
 	if wti != nil {
@@ -319,8 +328,15 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, 
 			WorkflowTemplateVersion: wt.Version,
 			Request:                 req,
 		}
-		if err := workflowtemplate.InsertInstance(tx, wti); err != nil {
-			return result, err
+
+		// only store the new instance if request is not for a detached workflow
+		if !req.Detached {
+			if err := workflowtemplate.InsertInstance(tx, wti); err != nil {
+				return result, err
+			}
+		} else {
+			// if is a detached apply set an id based on time
+			wti.ID = time.Now().Unix()
 		}
 	}
 
@@ -330,17 +346,32 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, 
 		return result, err
 	}
 
-	// parse the generated workflow to find its name
-	var wor exportentities.Workflow
-	if err := yaml.Unmarshal([]byte(result.Workflow), &wor); err != nil {
-		return result, sdk.NewError(sdk.Error{
-			ID:      sdk.ErrWrongRequest.ID,
-			Message: "Cannot parse generated workflow",
-		}, err)
-	}
-	wti.WorkflowName = wor.Name
-	if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
-		return result, err
+	// parse the generated workflow to find its name an update it in instance if not detached
+	// also set the template path in generated workflow if not detached
+	if !req.Detached {
+		var wor exportentities.Workflow
+		if err := yaml.Unmarshal([]byte(result.Workflow), &wor); err != nil {
+			return result, sdk.NewError(sdk.Error{
+				ID:      sdk.ErrWrongRequest.ID,
+				Message: "Cannot parse generated workflow",
+			}, err)
+		}
+
+		wti.WorkflowName = wor.Name
+		if err := workflowtemplate.UpdateInstance(tx, wti); err != nil {
+			return result, err
+		}
+
+		templatePath := fmt.Sprintf("%s/%s", wt.Group.Name, wt.Slug)
+		wor.Template = &templatePath
+		b, err := yaml.Marshal(wor)
+		if err != nil {
+			return result, sdk.NewError(sdk.Error{
+				ID:      sdk.ErrWrongRequest.ID,
+				Message: "Cannot add template info to generated workflow",
+			}, err)
+		}
+		result.Workflow = string(b)
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -349,7 +380,7 @@ func (api *API) applyTemplate(ctx context.Context, u *sdk.User, p *sdk.Project, 
 
 	if old != nil {
 		event.PublishWorkflowTemplateInstanceUpdate(*old, *wti, u)
-	} else {
+	} else if !req.Detached {
 		event.PublishWorkflowTemplateInstanceAdd(*wti, u)
 	}
 
@@ -672,6 +703,42 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		wti.Project = proj
 
 		return service.WriteJSON(w, wti, http.StatusOK)
+	}
+}
+
+func (api *API) deleteTemplateInstanceHandler() service.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ctx, err := api.middlewareTemplate(false)(ctx, w, r)
+		if err != nil {
+			return err
+		}
+		t := getWorkflowTemplate(ctx)
+
+		u := deprecatedGetUser(ctx)
+
+		ps, err := project.LoadAll(ctx, api.mustDB(), api.Cache, u)
+		if err != nil {
+			return err
+		}
+
+		instanceID, err := requestVarInt(r, "instanceID")
+		if err != nil {
+			return err
+		}
+
+		wti, err := workflowtemplate.GetInstanceByIDForTemplateIDAndProjectIDs(api.mustDB(), instanceID, t.ID, sdk.ProjectsToIDs(ps))
+		if err != nil {
+			return err
+		}
+		if wti == nil {
+			return sdk.NewErrorFrom(sdk.ErrNotFound, "No workflow template instance found")
+		}
+
+		if err := workflowtemplate.DeleteInstance(api.mustDB(), wti); err != nil {
+			return err
+		}
+
+		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }
 

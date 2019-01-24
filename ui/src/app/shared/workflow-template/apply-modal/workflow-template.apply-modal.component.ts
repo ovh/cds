@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
 import { ModalTemplate, TemplateModalConfig } from 'ng2-semantic-ui';
 import { ActiveModal, SuiModalService } from 'ng2-semantic-ui/dist';
 import { forkJoin } from 'rxjs';
@@ -24,6 +24,7 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
     @Input() workflow: Workflow;
     @Input() workflowTemplate: WorkflowTemplate;
     @Input() workflowTemplateInstance: WorkflowTemplateInstance;
+    @Output() close = new EventEmitter();
 
     diffVisible: boolean;
     diffItems: Array<Item>;
@@ -51,8 +52,16 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.workflowTemplateApplyModal);
         config.mustScroll = true;
         this.modal = this._modalService.open(config);
-        this.modal.onApprove(() => this.open = false);
-        this.modal.onDeny(() => this.open = false);
+        this.modal.onApprove(() => {
+            this.diffVisible = false;
+            this.open = false;
+            this.close.emit();
+        });
+        this.modal.onDeny(() => {
+            this.diffVisible = false;
+            this.open = false;
+            this.close.emit();
+        });
 
         this.load();
     }
@@ -101,8 +110,7 @@ export class WorkflowTemplateApplyModalComponent implements OnChanges {
         }
     }
 
-    close() {
-        this.diffVisible = false;
+    clickClose() {
         this.modal.approve(true);
     }
 
