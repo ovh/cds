@@ -74,20 +74,20 @@ type EventProjectVCSServerDelete struct {
 	VCSServerName string `json:"vcs_server"`
 }
 
-// EventProjectPlatformAdd represents the event when adding a project platform
-type EventProjectPlatformAdd struct {
-	Platform ProjectPlatform `json:"platform"`
+// EventProjectIntegrationAdd represents the event when adding a project integration
+type EventProjectIntegrationAdd struct {
+	Integration ProjectIntegration `json:"integration"`
 }
 
-// EventProjectPlatformUpdate represents the event when updating a project platform
-type EventProjectPlatformUpdate struct {
-	OldPlatform  ProjectPlatform `json:"old_platform"`
-	NewsPlatform ProjectPlatform `json:"new_platform"`
+// EventProjectIntegrationUpdate represents the event when updating a project integration
+type EventProjectIntegrationUpdate struct {
+	OldIntegration  ProjectIntegration `json:"old_integration"`
+	NewsIntegration ProjectIntegration `json:"new_integration"`
 }
 
-// EventProjectPlatformDelete represents the event when deleting a project platform
-type EventProjectPlatformDelete struct {
-	Platform ProjectPlatform `json:"platform"`
+// EventProjectIntegrationDelete represents the event when deleting a project integration
+type EventProjectIntegrationDelete struct {
+	Integration ProjectIntegration `json:"integration"`
 }
 
 // ToEventProjectVariableAdd get the payload as EventProjectVariableAdd

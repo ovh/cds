@@ -46,7 +46,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			return sdk.WrapError(errN, "getWorkflowHookModelsHandler")
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
 		}
@@ -97,8 +97,8 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 		}
 
 		hasKafka := false
-		for _, platform := range p.Platforms {
-			if platform.Model.Hook {
+		for _, integration := range p.Integrations {
+			if integration.Model.Hook {
 				hasKafka = true
 				break
 			}
@@ -219,7 +219,7 @@ func (api *API) postWorkflowJobHookCallbackHandler() service.Handler {
 		proj, errP := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx),
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationVariables,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		)

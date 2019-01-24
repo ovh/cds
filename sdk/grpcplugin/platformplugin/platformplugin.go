@@ -1,4 +1,4 @@
-package platformplugin
+package integrationplugin
 
 import (
 	"context"
@@ -15,7 +15,7 @@ type Common struct {
 	conn *grpc.ClientConn
 }
 
-func Start(ctx context.Context, srv PlatformPluginServer) error {
+func Start(ctx context.Context, srv IntegrationPluginServer) error {
 	p, ok := srv.(grpcplugin.Plugin)
 	if !ok {
 		return fmt.Errorf("bad implementation")
@@ -23,11 +23,11 @@ func Start(ctx context.Context, srv PlatformPluginServer) error {
 
 	c := p.Instance()
 	c.Srv = srv
-	c.Desc = &_PlatformPlugin_serviceDesc
+	c.Desc = &_IntegrationPlugin_serviceDesc
 	return p.Start(ctx)
 }
 
-func Client(ctx context.Context, socket string) (PlatformPluginClient, error) {
+func Client(ctx context.Context, socket string) (IntegrationPluginClient, error) {
 	conn, err := grpc.DialContext(ctx,
 		socket,
 		grpc.WithInsecure(),
@@ -40,6 +40,6 @@ func Client(ctx context.Context, socket string) (PlatformPluginClient, error) {
 		return nil, err
 	}
 
-	c := NewPlatformPluginClient(conn)
+	c := NewIntegrationPluginClient(conn)
 	return c, nil
 }

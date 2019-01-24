@@ -33,21 +33,21 @@ func (s *Service) saveKafkaExecution(t *sdk.Task, error string, nbError int64) {
 }
 
 func (s *Service) startKafkaHook(t *sdk.Task) error {
-	var kafkaPlatform, kafkaUser, projectKey, topic string
+	var kafkaIntegration, kafkaUser, projectKey, topic string
 	for k, v := range t.Config {
 		switch k {
-		case sdk.HookModelPlatform:
-			kafkaPlatform = v.Value
+		case sdk.HookModelIntegration:
+			kafkaIntegration = v.Value
 		case sdk.KafkaHookModelTopic:
 			topic = v.Value
 		case sdk.HookConfigProject:
 			projectKey = v.Value
 		}
 	}
-	pf, err := s.Client.ProjectPlatformGet(projectKey, kafkaPlatform, true)
+	pf, err := s.Client.ProjectIntegrationGet(projectKey, kafkaIntegration, true)
 	if err != nil {
 		s.stopTask(t)
-		return sdk.WrapError(err, "Cannot get kafka configuration for %s/%s", projectKey, kafkaPlatform)
+		return sdk.WrapError(err, "Cannot get kafka configuration for %s/%s", projectKey, kafkaIntegration)
 	}
 
 	var password, broker string

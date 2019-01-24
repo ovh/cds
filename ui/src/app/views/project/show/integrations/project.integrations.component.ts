@@ -4,11 +4,11 @@ import {Project} from '../../../../model/project.model';
 import {ProjectStore} from '../../../../service/project/project.store';
 
 @Component({
-    selector: 'app-project-platforms',
-    templateUrl: './project.platforms.html',
-    styleUrls: ['./project.platforms.scss']
+    selector: 'app-project-integrations',
+    templateUrl: './project.integrations.html',
+    styleUrls: ['./project.integrations.scss']
 })
-export class ProjectPlatformsComponent implements OnInit {
+export class ProjectIntegrationsComponent implements OnInit {
 
     @Input() project: Project;
     loading = true;
@@ -16,11 +16,11 @@ export class ProjectPlatformsComponent implements OnInit {
     constructor(private _projectStore: ProjectStore) { }
 
     ngOnInit(): void {
-        if (this.project.platforms && this.project.platforms.length === 0) {
+        if (this.project.integrations && this.project.integrations.length === 0) {
             this.loading = false;
             return;
         }
-        this._projectStore.getProjectPlatformsResolver(this.project.key)
+        this._projectStore.getProjectIntegrationsResolver(this.project.key)
             .pipe(first(), finalize(() => this.loading = false))
             .subscribe((proj) => {
                 this.project = proj;

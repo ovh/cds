@@ -1,10 +1,10 @@
-<div class="ProjectPlatformList">
+<div class="ProjectIntegrationList">
     <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
-            <th class="four wide">{{ 'platform_name' | translate }}</th>
-            <th class="four wide">{{ 'platform_model' | translate }}</th>
-            <th class="six wide">{{ 'platform_configuration' | translate }}</th>
+            <th class="four wide">{{ 'integration_name' | translate }}</th>
+            <th class="four wide">{{ 'integration_model' | translate }}</th>
+            <th class="six wide">{{ 'integration_configuration' | translate }}</th>
             <th class="two wide"></th>
         </tr>
         </thead>
@@ -12,7 +12,7 @@
         <tr *ngFor="let p of getDataForCurrentPage()">
             <td class="border">
                 {{ p.name }}
-                <span *ngIf="p.model.public" [smDirTooltip]="'platform_official_tooltip' | translate" smDirPosition="top center"> <i class="check circle outline icon large green"></i> </span>
+                <span *ngIf="p.model.public" [smDirTooltip]="'integration_official_tooltip' | translate" smDirPosition="top center"> <i class="check circle outline icon large green"></i> </span>
             </td>
             <td class="border">
                 {{ p.model.name}}
@@ -33,15 +33,15 @@
                             <ng-container *ngIf="p.config[k].type === 'text'">
                                 <codemirror [(ngModel)]="p.config[k].value" [config]="codeMirrorConfig" #codeMirror (keydown)="p.hasChanged = true"></codemirror>
                             </ng-container>
-                            <input type="password" name="platformpassword" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'password'" (keydown)="p.hasChanged = true">
+                            <input type="password" name="integrationpassword" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'password'" (keydown)="p.hasChanged = true">
                         </div>
                     </div>
                 </div>
             </td>
             <td class="border">
                 <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE && !p.model.public">
-                    <app-delete-button [loading]="loading" [disabled]="loading" (event)="deletePlatform(p)" *ngIf="!p.hasChanged"></app-delete-button>
-                    <button type="button" class="ui green button" *ngIf="p.hasChanged" (click)="updatePlatform(p)">{{ 'btn_save' | translate}}</button>
+                    <app-delete-button [loading]="loading" [disabled]="loading" (event)="deleteIntegration(p)" *ngIf="!p.hasChanged"></app-delete-button>
+                    <button type="button" class="ui green button" *ngIf="p.hasChanged" (click)="updateIntegration(p)">{{ 'btn_save' | translate}}</button>
                 </ng-container>
             </td>
         </tr>
@@ -63,6 +63,6 @@
         </tfoot>
     </table>
     <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
-        {{ 'platform_no' | translate }}
+        {{ 'integration_no' | translate }}
     </div>
 </div>

@@ -12,11 +12,11 @@ import (
 )
 
 // LoadDeploymentStrategies loads the deployment strategies for an application
-func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPassword bool) (map[string]sdk.PlatformConfig, error) {
-	query := `SELECT project_platform.name, application_deployment_strategy.config
+func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPassword bool) (map[string]sdk.IntegrationConfig, error) {
+	query := `SELECT project_integration.name, application_deployment_strategy.config
 	FROM application_deployment_strategy
-	JOIN project_platform ON project_platform.id = application_deployment_strategy.project_platform_id
-	JOIN platform_model ON platform_model.id = project_platform.platform_model_id
+	JOIN project_integration ON project_integration.id = application_deployment_strategy.project_integration_id
+	JOIN integration_model ON integration_model.id = project_integration.integration_model_id
 	WHERE application_deployment_strategy.application_id = $1`
 
 	res := []struct {
@@ -28,19 +28,19 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 		return nil, sdk.WrapError(err, "unable to load deployment strategies")
 	}
 
-	deps := make(map[string]sdk.PlatformConfig, len(res))
+	deps := make(map[string]sdk.IntegrationConfig, len(res))
 	for _, r := range res {
-		cfg := sdk.PlatformConfig{}
+		cfg := sdk.IntegrationConfig{}
 		if err := gorpmapping.JSONNullString(r.Config, &cfg); err != nil {
 			return nil, sdk.WrapError(err, "unable to parse config")
 		}
 		//Parse the config and replace password values
-		newCfg := sdk.PlatformConfig{}
+		newCfg := sdk.IntegrationConfig{}
 		for k, v := range cfg {
-			if v.Type == sdk.PlatformConfigTypePassword {
+			if v.Type == sdk.IntegrationConfigTypePassword {
 				if !withClearPassword {
-					newCfg[k] = sdk.PlatformConfigValue{
-						Type:  sdk.PlatformConfigTypePassword,
+					newCfg[k] = sdk.IntegrationConfigValue{
+						Type:  sdk.IntegrationConfigTypePassword,
 						Value: sdk.PasswordPlaceholder,
 					}
 				} else {
@@ -54,8 +54,8 @@ func LoadDeploymentStrategies(db gorp.SqlExecutor, appID int64, withClearPasswor
 						return nil, sdk.WrapError(err, "unable to decrypt secret value")
 					}
 
-					newCfg[k] = sdk.PlatformConfigValue{
-						Type:  sdk.PlatformConfigTypePassword,
+					newCfg[k] = sdk.IntegrationConfigValue{
+						Type:  sdk.IntegrationConfigTypePassword,
 						Value: string(decryptedValue),
 					}
 				}
@@ -79,11 +79,11 @@ func DeleteAllDeploymentStrategies(db gorp.SqlExecutor, appID int64) error {
 func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) error {
 	query := `DELETE FROM application_deployment_strategy 
 	WHERE application_id = $1
-	AND project_platform_id IN (
-		SELECT 	project_platform.id 
-		FROM project_platform
-		WHERE project_platform.project_id = $2
-		AND project_platform.id = $3
+	AND project_integration_id IN (
+		SELECT 	project_integration.id 
+		FROM project_integration
+		WHERE project_integration.project_id = $2
+		AND project_integration.id = $3
 	)`
 
 	_, err := db.Exec(query, appID, projID, pfID)
@@ -91,23 +91,23 @@ func DeleteDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64) er
 }
 
 // SetDeploymentStrategy update the application_deployment_strategy table
-func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfName string, cfg sdk.PlatformConfig) error {
+func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfName string, cfg sdk.IntegrationConfig) error {
 	//Parse the config and encrypt password values
-	newcfg := sdk.PlatformConfig{}
+	newcfg := sdk.IntegrationConfig{}
 	for k, v := range cfg {
-		if v.Type == sdk.PlatformConfigTypePassword {
+		if v.Type == sdk.IntegrationConfigTypePassword {
 			e, err := secret.Encrypt([]byte(v.Value))
 			if err != nil {
 				return sdk.WrapError(err, "unable to encrypt data")
 			}
-			newcfg[k] = sdk.PlatformConfigValue{
-				Type:        sdk.PlatformConfigTypePassword,
+			newcfg[k] = sdk.IntegrationConfigValue{
+				Type:        sdk.IntegrationConfigTypePassword,
 				Value:       base64.StdEncoding.EncodeToString(e),
 				Description: v.Description,
 			}
 		} else {
-			newcfg[k] = sdk.PlatformConfigValue{
-				Type:        sdk.PlatformConfigTypeString,
+			newcfg[k] = sdk.IntegrationConfigValue{
+				Type:        sdk.IntegrationConfigTypeString,
 				Value:       v.Value,
 				Description: v.Description,
 			}
@@ -116,11 +116,11 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 
 	count, err := db.SelectInt(`SELECT COUNT(1)
 	FROM application_deployment_strategy 
-	JOIN project_platform ON project_platform.id = application_deployment_strategy.project_platform_id
-	WHERE project_platform.project_id = $1
-	AND project_platform.platform_model_id = $2
+	JOIN project_integration ON project_integration.id = application_deployment_strategy.project_integration_id
+	WHERE project_integration.project_id = $1
+	AND project_integration.integration_model_id = $2
 	AND application_deployment_strategy.application_id = $3
-	AND project_platform.name = $4`, projID, pfID, appID, ppfName)
+	AND project_integration.name = $4`, projID, pfID, appID, ppfName)
 
 	if err != nil {
 		return sdk.WrapError(err, "unable to check if deployment strategy exist")
@@ -134,26 +134,26 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 	if count == 1 {
 		query := `UPDATE application_deployment_strategy 
 		SET config = $1
-		FROM project_platform
-		WHERE project_platform.id = application_deployment_strategy.project_platform_id
+		FROM project_integration
+		WHERE project_integration.id = application_deployment_strategy.project_integration_id
 		AND application_deployment_strategy.application_id = $2
-		AND project_platform.project_id = $3
-		AND project_platform.platform_model_id = $4
-		AND project_platform.name = $5`
+		AND project_integration.project_id = $3
+		AND project_integration.integration_model_id = $4
+		AND project_integration.name = $5`
 		if _, err := db.Exec(query, scfg, appID, projID, pfID, ppfName); err != nil {
 			return sdk.WrapError(err, "unable to update deployment strategy")
 		}
 		return nil
 	}
 
-	query := `INSERT INTO application_deployment_strategy (config, application_id, project_platform_id) 
+	query := `INSERT INTO application_deployment_strategy (config, application_id, project_integration_id) 
 	VALUES ($1, $2, 
 		(
-			SELECT 	project_platform.id 
-			FROM project_platform
-			WHERE project_platform.project_id = $3
-			AND project_platform.platform_model_id = $4
-			AND project_platform.name = $5
+			SELECT 	project_integration.id 
+			FROM project_integration
+			WHERE project_integration.project_id = $3
+			AND project_integration.integration_model_id = $4
+			AND project_integration.name = $5
 		)
 	)`
 	if _, err := db.Exec(query, scfg, appID, projID, pfID, ppfName); err != nil {

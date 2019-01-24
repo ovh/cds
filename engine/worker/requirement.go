@@ -219,23 +219,23 @@ func checkOSArchRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 }
 
 // checkPluginDeployment returns true if current job:
-//  - is not linked to a deployment platform
-//  - is linked to a deployement platform, plugin well downloaded (in this func) and
+//  - is not linked to a deployment integration
+//  - is linked to a deployement integration, plugin well downloaded (in this func) and
 //    requirements on the plugins are OK too
 func checkPluginDeployment(w *currentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
 	var currentOS = strings.ToLower(sdk.GOOS)
 	var currentARCH = strings.ToLower(sdk.GOARCH)
 	var binary *sdk.GRPCPluginBinary
 
-	if len(job.PlatformPluginBinaries) == 0 {
-		// current job is not linked to a deployment platform (in pipeline context)
+	if len(job.IntegrationPluginBinaries) == 0 {
+		// current job is not linked to a deployment integration (in pipeline context)
 		return true, nil
 	}
 
-	log.Debug("Checking plugins...(%#v)", job.PlatformPluginBinaries)
+	log.Debug("Checking plugins...(%#v)", job.IntegrationPluginBinaries)
 
 	// first check OS and Architecture
-	for _, b := range job.PlatformPluginBinaries {
+	for _, b := range job.IntegrationPluginBinaries {
 		if b.OS == currentOS && b.Arch == currentARCH {
 			binary = &b
 			break
@@ -257,11 +257,11 @@ func checkPluginDeployment(w *currentWorker, job sdk.WorkflowNodeJobRun) (bool, 
 	}
 
 	// then try to download the plugin
-	platformPluginBinary := path.Join(w.basedir, binary.Name)
-	if _, err := os.Stat(platformPluginBinary); os.IsNotExist(err) {
+	integrationPluginBinary := path.Join(w.basedir, binary.Name)
+	if _, err := os.Stat(integrationPluginBinary); os.IsNotExist(err) {
 		log.Debug("Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
-		fi, err := os.OpenFile(platformPluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		fi, err := os.OpenFile(integrationPluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return false, err
 		}

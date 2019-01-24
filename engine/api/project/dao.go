@@ -245,8 +245,8 @@ var LoadOptions = struct {
 	WithLock                                LoadOptionFunc
 	WithLockNoWait                          LoadOptionFunc
 	WithClearKeys                           LoadOptionFunc
-	WithPlatforms                           LoadOptionFunc
-	WithClearPlatforms                      LoadOptionFunc
+	WithIntegrations                        LoadOptionFunc
+	WithClearIntegrations                   LoadOptionFunc
 	WithFavorites                           LoadOptionFunc
 	WithFeatures                            LoadOptionFunc
 	WithLabels                              LoadOptionFunc
@@ -269,8 +269,8 @@ var LoadOptions = struct {
 	WithLock:                                &lockProject,
 	WithLockNoWait:                          &lockAndWaitProject,
 	WithClearKeys:                           &loadClearKeys,
-	WithPlatforms:                           &loadPlatforms,
-	WithClearPlatforms:                      &loadClearPlatforms,
+	WithIntegrations:                        &loadIntegrations,
+	WithClearIntegrations:                   &loadClearIntegrations,
 	WithFavorites:                           &loadFavorites,
 	WithFeatures:                            &loadFeatures,
 	WithApplicationWithDeploymentStrategies: &loadApplicationWithDeploymentStrategies,

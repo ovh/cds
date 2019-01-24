@@ -1053,8 +1053,8 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 	if w.Environments == nil {
 		w.Environments = make(map[int64]sdk.Environment)
 	}
-	if w.ProjectPlatforms == nil {
-		w.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
+	if w.ProjectIntegrations == nil {
+		w.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
 	}
 	if w.HookModels == nil {
 		w.HookModels = make(map[int64]sdk.WorkflowHookModel)
@@ -1109,18 +1109,18 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 			}
 		}
 
-		//Checks platforms are in the current project
-		pfs := w.InvolvedPlatforms()
+		//Checks integrations are in the current project
+		pfs := w.InvolvedIntegrations()
 		for _, id := range pfs {
 			var found bool
-			for _, p := range proj.Platforms {
+			for _, p := range proj.Integrations {
 				if id == p.ID {
 					found = true
 					break
 				}
 			}
 			if !found {
-				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown platforms %d", id))
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown integrations %d", id))
 			}
 		}
 
@@ -1156,7 +1156,7 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 		if err := checkEnvironment(db, proj, w, n); err != nil {
 			return err
 		}
-		if err := checkProjectPlatform(proj, w, n); err != nil {
+		if err := checkProjectIntegration(proj, w, n); err != nil {
 			return err
 		}
 		if err := checkHooks(db, w, n); err != nil {
@@ -1166,7 +1166,7 @@ func IsValid(ctx context.Context, store cache.Store, db gorp.SqlExecutor, w *sdk
 			return err
 		}
 
-		if n.Context.ApplicationID != 0 && n.Context.ProjectPlatformID != 0 {
+		if n.Context.ApplicationID != 0 && n.Context.ProjectIntegrationID != 0 {
 			if err := n.CheckApplicationDeploymentStrategies(proj, w); err != nil {
 				return sdk.NewError(sdk.ErrWorkflowInvalid, err)
 			}
@@ -1233,38 +1233,38 @@ func checkHooks(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) error {
 	return nil
 }
 
-// CheckProjectPlatform checks CheckProjectPlatform data
-func checkProjectPlatform(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
-	if n.Context.ProjectPlatformID != 0 {
-		pp, ok := w.ProjectPlatforms[n.Context.ProjectPlatformID]
+// CheckProjectIntegration checks CheckProjectIntegration data
+func checkProjectIntegration(proj *sdk.Project, w *sdk.Workflow, n *sdk.Node) error {
+	if n.Context.ProjectIntegrationID != 0 {
+		pp, ok := w.ProjectIntegrations[n.Context.ProjectIntegrationID]
 		if !ok {
-			for _, pl := range proj.Platforms {
-				if pl.ID == n.Context.ProjectPlatformID {
+			for _, pl := range proj.Integrations {
+				if pl.ID == n.Context.ProjectIntegrationID {
 					pp = pl
 					break
 				}
 			}
 			if pp.ID == 0 {
-				return sdk.WrapError(sdk.ErrNotFound, "Platform %d not found", n.Context.ProjectPlatformID)
+				return sdk.WrapError(sdk.ErrNotFound, "Integration %d not found", n.Context.ProjectIntegrationID)
 			}
-			w.ProjectPlatforms[n.Context.ProjectPlatformID] = pp
+			w.ProjectIntegrations[n.Context.ProjectIntegrationID] = pp
 		}
-		n.Context.ProjectPlatformName = pp.Name
+		n.Context.ProjectIntegrationName = pp.Name
 		return nil
 	}
-	if n.Context.ProjectPlatformName != "" {
-		var ppProj sdk.ProjectPlatform
-		for _, pl := range proj.Platforms {
-			if pl.Name == n.Context.ProjectPlatformName {
+	if n.Context.ProjectIntegrationName != "" {
+		var ppProj sdk.ProjectIntegration
+		for _, pl := range proj.Integrations {
+			if pl.Name == n.Context.ProjectIntegrationName {
 				ppProj = pl
 				break
 			}
 		}
 		if ppProj.ID == 0 {
-			return sdk.WrapError(sdk.ErrNotFound, "Platform %s not found", n.Context.ProjectPlatformName)
+			return sdk.WrapError(sdk.ErrNotFound, "Integration %s not found", n.Context.ProjectIntegrationName)
 		}
-		w.ProjectPlatforms[ppProj.ID] = ppProj
-		n.Context.ProjectPlatformID = ppProj.ID
+		w.ProjectIntegrations[ppProj.ID] = ppProj
+		n.Context.ProjectIntegrationID = ppProj.ID
 	}
 	return nil
 }
@@ -1649,20 +1649,20 @@ func UpdateFavorite(db gorp.SqlExecutor, workflowID int64, u *sdk.User, add bool
 	return sdk.WithStack(err)
 }
 
-// IsDeploymentPlatformUsed checks if a deployment platform is used on any workflow
-func IsDeploymentPlatformUsed(db gorp.SqlExecutor, projectID int64, appID int64, pfName string) (bool, error) {
+// IsDeploymentIntegrationUsed checks if a deployment integration is used on any workflow
+func IsDeploymentIntegrationUsed(db gorp.SqlExecutor, projectID int64, appID int64, pfName string) (bool, error) {
 	query := `
 	SELECT count(1)
 	FROM workflow_node_context
-	JOIN project_platform ON project_platform.id = workflow_node_context.project_platform_id
+	JOIN project_integration ON project_integration.id = workflow_node_context.project_integration_id
 	WHERE workflow_node_context.application_id = $2
-	AND project_platform.project_id = $1
-	AND project_platform.name = $3
+	AND project_integration.project_id = $1
+	AND project_integration.name = $3
 	`
 
 	nb, err := db.SelectInt(query, projectID, appID, pfName)
 	if err != nil {
-		return false, sdk.WrapError(err, "IsDeploymentPlatformUsed")
+		return false, sdk.WrapError(err, "IsDeploymentIntegrationUsed")
 	}
 
 	return nb > 0, nil

@@ -2,7 +2,7 @@ import {Component, Input, ViewChild} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize, first} from 'rxjs/operators';
 import {Application} from '../../../../../model/application.model';
-import {ProjectPlatform} from '../../../../../model/platform.model';
+import {ProjectIntegration} from '../../../../../model/integration.model';
 import {Project} from '../../../../../model/project.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
@@ -15,8 +15,8 @@ import {ToastService} from '../../../../../shared/toast/ToastService';
 })
 export class ApplicationDeploymentComponent {
 
-    filteredPlatforms: Array<ProjectPlatform>;
-    selectedPlatform: ProjectPlatform;
+    filteredIntegrations: Array<ProjectIntegration>;
+    selectedIntegration: ProjectIntegration;
 
     public loadingBtn = false;
 
@@ -29,15 +29,15 @@ export class ApplicationDeploymentComponent {
     @Input('project')
     set project(project: Project) {
         this._project = project;
-        if (project.platforms) {
-            this.filteredPlatforms = project.platforms.filter(p => p.model.deployment);
+        if (project.integrations) {
+            this.filteredIntegrations = project.integrations.filter(p => p.model.deployment);
         }
     }
     get project(): Project {
         return this._project;
     }
 
-    getPlatformNames(): Array<string> {
+    getIntegrationNames(): Array<string> {
         if (this.application.deployment_strategies) {
             return Object.keys(this.application.deployment_strategies);
         }
@@ -48,7 +48,7 @@ export class ApplicationDeploymentComponent {
                 public _translate: TranslateService) {
     }
 
-    clickDeletePlatform(pfName: string) {
+    clickDeleteIntegration(pfName: string) {
         this.loadingBtn = true;
         this._appStore.deleteDeploymentStrategy(
             this._project.key,
@@ -60,12 +60,12 @@ export class ApplicationDeploymentComponent {
         ).subscribe(
             app => {
                 this.application = app;
-                this._toast.success('', this._translate.instant('application_platform_deleted'));
+                this._toast.success('', this._translate.instant('application_integration_deleted'));
             }
         );
     }
 
-    updatePlatform(pfName: string) {
+    updateIntegration(pfName: string) {
         this.loadingBtn = true;
         this._appStore.saveDeploymentStrategy(
             this._project.key,
@@ -78,27 +78,27 @@ export class ApplicationDeploymentComponent {
         ).subscribe(
             app => {
                 this.application = app;
-                this._toast.success('', this._translate.instant('application_platform_updated'));
+                this._toast.success('', this._translate.instant('application_integration_updated'));
             }
         );
     }
 
-    addPlatform() {
+    addIntegration() {
         this.loadingBtn = true;
-        if (this.selectedPlatform.model) {
+        if (this.selectedIntegration.model) {
             this._appStore.saveDeploymentStrategy(
                 this._project.key,
                 this.application.name,
-                this.selectedPlatform.name,
-                this.selectedPlatform.model.deployment_default_config)
+                this.selectedIntegration.name,
+                this.selectedIntegration.model.deployment_default_config)
             .pipe(
                 first(),
                 finalize(() => this.loadingBtn = false))
             .subscribe(
                 app => {
                     this.application = app;
-                    this.selectedPlatform = null;
-                    this._toast.success('', this._translate.instant('application_platform_added'));
+                    this.selectedIntegration = null;
+                    this._toast.success('', this._translate.instant('application_integration_added'));
                 }
             );
         }

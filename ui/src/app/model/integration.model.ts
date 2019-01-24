@@ -1,4 +1,4 @@
-export class PlatformModel {
+export class IntegrationModel {
     id: number;
     name: string;
     author: string;
@@ -15,12 +15,12 @@ export class PlatformModel {
     public: boolean;
 }
 
-export class ProjectPlatform {
+export class ProjectIntegration {
     id: number;
     name: string;
     project_id: number;
-    platform_model_id: number;
-    model: PlatformModel;
+    integration_model_id: number;
+    model: IntegrationModel;
     config: {};
 
     // UI attributes

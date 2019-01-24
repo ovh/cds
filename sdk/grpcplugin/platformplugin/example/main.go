@@ -10,15 +10,15 @@ import (
 
 	"github.com/golang/protobuf/ptypes/empty"
 
-	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
+	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
 
 type ExamplePlugin struct {
-	platformplugin.Common
+	integrationplugin.Common
 }
 
-func (e *ExamplePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*platformplugin.PlatformPluginManifest, error) {
-	return &platformplugin.PlatformPluginManifest{
+func (e *ExamplePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*integrationplugin.IntegrationPluginManifest, error) {
+	return &integrationplugin.IntegrationPluginManifest{
 		Name:        "Example Plugin",
 		Author:      "François Samin",
 		Description: "This is an example plugin",
@@ -26,16 +26,16 @@ func (e *ExamplePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*platform
 	}, nil
 }
 
-func (e *ExamplePlugin) Deploy(ctx context.Context, q *platformplugin.DeployQuery) (*platformplugin.DeployResult, error) {
+func (e *ExamplePlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
 	fmt.Println("YOLO !!!!")
-	return &platformplugin.DeployResult{
+	return &integrationplugin.DeployResult{
 		Details: "none",
 		Status:  "success",
 	}, nil
 }
 
-func (e *ExamplePlugin) DeployStatus(ctx context.Context, q *platformplugin.DeployStatusQuery) (*platformplugin.DeployResult, error) {
-	return &platformplugin.DeployResult{
+func (e *ExamplePlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
+	return &integrationplugin.DeployResult{
 		Details: "none",
 		Status:  "success",
 	}, nil
@@ -44,7 +44,7 @@ func (e *ExamplePlugin) DeployStatus(ctx context.Context, q *platformplugin.Depl
 func main() {
 	if os.Args[1:][0] == "serve" {
 		e := ExamplePlugin{}
-		if err := platformplugin.Start(context.Background(), &e); err != nil {
+		if err := integrationplugin.Start(context.Background(), &e); err != nil {
 			panic(err)
 		}
 		return
@@ -54,7 +54,7 @@ func main() {
 	var e *ExamplePlugin
 	go func() {
 		e = &ExamplePlugin{}
-		if err := platformplugin.Start(context.Background(), e); err != nil {
+		if err := integrationplugin.Start(context.Background(), e); err != nil {
 			panic(err)
 		}
 	}()
@@ -63,7 +63,7 @@ func main() {
 	time.Sleep(100 * time.Millisecond)
 
 	//Client Part - BEGIN
-	c, err := platformplugin.Client(context.Background(), e.Socket)
+	c, err := integrationplugin.Client(context.Background(), e.Socket)
 	if err != nil {
 		panic(err)
 	}

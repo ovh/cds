@@ -65,7 +65,7 @@ func MigrateActionDEPRECATEDGitClone(DBFunc func() *gorp.DbMap, store cache.Stor
 func MigrateActionDEPRECATEDGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p action.PipelineUsingAction) error {
 	//Override the appname with the application in workflow node context if needed
 	if p.AppName == "" && p.WorkflowName != "" {
-		proj, err := project.Load(db, store, p.ProjKey, nil, project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(db, store, p.ProjKey, nil, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return err
 		}

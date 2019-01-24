@@ -2,9 +2,9 @@ import { notificationTypes, UserNotificationSettings } from 'app/model/notificat
 import { Application } from './application.model';
 import { Environment } from './environment.model';
 import { GroupPermission } from './group.model';
+import { ProjectIntegration } from './integration.model';
 import { Parameter } from './parameter.model';
 import { Pipeline } from './pipeline.model';
-import { ProjectPlatform } from './platform.model';
 import { Label } from './project.model';
 import { Usage } from './usage.model';
 import { WorkflowHookModel } from './workflow.hook.model';
@@ -41,7 +41,7 @@ export class Workflow {
     pipelines: { [key: number]: Pipeline; };
     applications: { [key: number]: Application; };
     environments: { [key: number]: Environment; };
-    project_platforms: { [key: number]: ProjectPlatform; };
+    project_integrations: { [key: number]: ProjectIntegration; };
     hook_models: { [key: number]: WorkflowHookModel; };
     outgoing_hook_models: { [key: number]: WorkflowHookModel; };
     labels: Label[];
@@ -259,7 +259,7 @@ export class Workflow {
         delete workflow.applications;
         delete workflow.environments;
         delete workflow.pipelines;
-        delete workflow.project_platforms;
+        delete workflow.project_integrations;
         delete workflow.hook_models;
         delete workflow.outgoing_hook_models;
     }
@@ -639,7 +639,7 @@ export class WNodeContext {
     pipeline_id: number;
     application_id: number;
     environment_id: number;
-    project_platform_id: number;
+    project_integration_id: number;
     default_payload: {};
     default_pipeline_parameters: Array<Parameter>;
     conditions: WorkflowNodeConditions;

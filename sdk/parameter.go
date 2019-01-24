@@ -162,15 +162,15 @@ func ParametersFromPipelineParameters(pipParams []Parameter) map[string]string {
 	return ParametersToMap(res)
 }
 
-// ParametersFromPlatform returns a map of variables from a ProjectPlatform
-func ParametersFromPlatform(ppf PlatformConfig) map[string]string {
+// ParametersFromIntegration returns a map of variables from a ProjectIntegration
+func ParametersFromIntegration(ppf IntegrationConfig) map[string]string {
 	vars := make([]Variable, len(ppf))
 	i := 0
 	for k, c := range ppf {
 		vars[i] = Variable{Name: k, Type: c.Type, Value: c.Value}
 		i++
 	}
-	params := VariablesToParameters("cds.platform", vars)
+	params := VariablesToParameters("cds.integration", vars)
 	return ParametersToMap(params)
 }
 

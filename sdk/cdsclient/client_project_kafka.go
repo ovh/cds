@@ -7,10 +7,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) ProjectPlatform(projectKey string, platformName string, clearPassword bool) (sdk.ProjectPlatform, error) {
-	var platform sdk.ProjectPlatform
-	if _, err := c.GetJSON(context.Background(), fmt.Sprintf("/project/%s/platforms/%s?clearPassword=%t", projectKey, platformName, clearPassword), &platform); err != nil {
-		return platform, err
+func (c *client) ProjectIntegration(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error) {
+	var integration sdk.ProjectIntegration
+	if _, err := c.GetJSON(context.Background(), fmt.Sprintf("/project/%s/integrations/%s?clearPassword=%t", projectKey, integrationName, clearPassword), &integration); err != nil {
+		return integration, err
 	}
-	return platform, nil
+	return integration, nil
 }

@@ -13,16 +13,16 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
+	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
 /*
-This plugin have to be used as a deployment platform plugin
+This plugin have to be used as a deployment integration plugin
 
 Arsenal deployment plugin must configured as following:
 	name: arsenal-deployment-plugin
-	type: platform
+	type: integration
 	author: "François Samin"
 	description: "OVH Arsenal Deployment Plugin"
 
@@ -35,7 +35,7 @@ Build the present binaries and import in CDS:
 
 $ cdsctl admin plugins binary-add arsenal-deployment-plugin arsenal-deployment-plugin-bin.yml <path-to-binary-file>
 
-Arsenal platform must configured as following
+Arsenal integration must configured as following
 	name: Arsenal
 	default_config:
 		host:
@@ -56,11 +56,11 @@ Arsenal platform must configured as following
 */
 
 type arsenalDeploymentPlugin struct {
-	platformplugin.Common
+	integrationplugin.Common
 }
 
-func (e *arsenalDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*platformplugin.PlatformPluginManifest, error) {
-	return &platformplugin.PlatformPluginManifest{
+func (e *arsenalDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*integrationplugin.IntegrationPluginManifest, error) {
+	return &integrationplugin.IntegrationPluginManifest{
 		Name:        "OVH Arsenal Deployment Plugin",
 		Author:      "François Samin",
 		Description: "OVH Arsenal Deployment Plugin",
@@ -69,11 +69,11 @@ func (e *arsenalDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) 
 }
 
 const deployData = `{
-	"version": "{{.cds.platform.version}}",
+	"version": "{{.cds.integration.version}}",
 	"metadata": {
 		"CDS_APPLICATION": "{{.cds.application}}",
 		"CDS_RUN": "{{.cds.run}}",
-		"CDS_ENVIRONMENT": "{{.cds.platform}}",
+		"CDS_ENVIRONMENT": "{{.cds.integration}}",
 		"CDS_GIT_BRANCH": "{{.git.branch}}",
 		"CDS_WORKFLOW": "{{.cds.workflow}}",
 		"CDS_PROJECT": "{{.cds.project}}",
@@ -84,26 +84,26 @@ const deployData = `{
 	}
 }`
 
-func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.DeployQuery) (*platformplugin.DeployResult, error) {
+func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
 	var application = q.GetOptions()["cds.application"]
-	var arsenalHost = q.GetOptions()["cds.platform.host"]
-	var arsenalDeploymentToken = q.GetOptions()["cds.platform.deployment.token"]
-	var maxRetryStr = q.GetOptions()["cds.platform.retry.max"]
-	var delayRetryStr = q.GetOptions()["cds.platform.retry.delay"]
+	var arsenalHost = q.GetOptions()["cds.integration.host"]
+	var arsenalDeploymentToken = q.GetOptions()["cds.integration.deployment.token"]
+	var maxRetryStr = q.GetOptions()["cds.integration.retry.max"]
+	var delayRetryStr = q.GetOptions()["cds.integration.retry.delay"]
 	maxRetry, err := strconv.Atoi(maxRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.platform.retry.max: %v. Default value will be used\n", err)
+		fmt.Printf("Error parsing cds.integration.retry.max: %v. Default value will be used\n", err)
 		maxRetry = 10
 	}
 	delayRetry, err := strconv.Atoi(delayRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.platform.retry.max: %v. Default value will be used\n", err)
+		fmt.Printf("Error parsing cds.integration.retry.max: %v. Default value will be used\n", err)
 		delayRetry = 5
 	}
 
 	deployData, err := interpolate.Do(deployData, q.GetOptions())
 	if err != nil {
-		return fail("Error: unable to interpolate data: %v. Please check you platform configuration\n", err)
+		return fail("Error: unable to interpolate data: %v. Please check you integration configuration\n", err)
 	}
 
 	httpClient := &http.Client{
@@ -122,7 +122,7 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 	// Do the request
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return fail("Error: Post %s/deploy failed: %v. Please check you platform configuration", arsenalHost, err)
+		return fail("Error: Post %s/deploy failed: %v. Please check you integration configuration", arsenalHost, err)
 	}
 	defer res.Body.Close()
 
@@ -158,7 +158,7 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 
 		res, err := httpClient.Do(req)
 		if err != nil {
-			return fail("Deployment failed: %v. Please check you platform configuration", err)
+			return fail("Deployment failed: %v. Please check you integration configuration", err)
 		}
 		defer res.Body.Close()
 
@@ -189,30 +189,30 @@ func (e *arsenalDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.
 		return fail("deployment failed")
 	}
 
-	return &platformplugin.DeployResult{
+	return &integrationplugin.DeployResult{
 		Status: sdk.StatusSuccess.String(),
 	}, nil
 }
 
-func (e *arsenalDeploymentPlugin) DeployStatus(ctx context.Context, q *platformplugin.DeployStatusQuery) (*platformplugin.DeployResult, error) {
-	return &platformplugin.DeployResult{
+func (e *arsenalDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
+	return &integrationplugin.DeployResult{
 		Status: sdk.StatusSuccess.String(),
 	}, nil
 }
 
 func main() {
 	e := arsenalDeploymentPlugin{}
-	if err := platformplugin.Start(context.Background(), &e); err != nil {
+	if err := integrationplugin.Start(context.Background(), &e); err != nil {
 		panic(err)
 	}
 	return
 
 }
 
-func fail(format string, args ...interface{}) (*platformplugin.DeployResult, error) {
+func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, error) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Println(msg)
-	return &platformplugin.DeployResult{
+	return &integrationplugin.DeployResult{
 		Details: msg,
 		Status:  sdk.StatusFail.String(),
 	}, nil

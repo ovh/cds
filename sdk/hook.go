@@ -23,7 +23,7 @@ const (
 	SchedulerModelCron            = "cron"
 	SchedulerModelTimezone        = "timezone"
 	Payload                       = "payload"
-	HookModelPlatform             = "platform"
+	HookModelIntegration          = "integration"
 	KafkaHookModelConsumerGroup   = "consumer group"
 	KafkaHookModelTopic           = "topic"
 	RabbitMQHookModelQueue        = "queue"
@@ -57,10 +57,10 @@ var (
 		Name:       KafkaHookModelName,
 		Icon:       "Linkify",
 		DefaultConfig: WorkflowNodeHookConfig{
-			HookModelPlatform: {
+			HookModelIntegration: {
 				Value:        "",
 				Configurable: true,
-				Type:         HookConfigTypePlatform,
+				Type:         HookConfigTypeIntegration,
 			},
 			KafkaHookModelConsumerGroup: {
 				Value:        "",
@@ -82,10 +82,10 @@ var (
 		Name:       RabbitMQHookModelName,
 		Icon:       "Linkify",
 		DefaultConfig: WorkflowNodeHookConfig{
-			HookModelPlatform: {
+			HookModelIntegration: {
 				Value:        "",
 				Configurable: true,
-				Type:         HookConfigTypePlatform,
+				Type:         HookConfigTypeIntegration,
 			},
 			RabbitMQHookModelQueue: {
 				Value:        "",

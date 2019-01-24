@@ -2,19 +2,19 @@ import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
 import { finalize, first } from 'rxjs/operators';
+import { ProjectIntegration } from '../../../../../model/integration.model';
 import { PermissionValue } from '../../../../../model/permission.model';
-import { ProjectPlatform } from '../../../../../model/platform.model';
 import { Project } from '../../../../../model/project.model';
 import { ProjectStore } from '../../../../../service/project/project.store';
 import { Table } from '../../../../../shared/table/table';
 import { ToastService } from '../../../../../shared/toast/ToastService';
 
 @Component({
-    selector: 'app-project-platform-list',
-    templateUrl: './project.platform.list.html',
-    styleUrls: ['./project.platform.list.scss']
+    selector: 'app-project-integration-list',
+    templateUrl: './project.integration.list.html',
+    styleUrls: ['./project.integration.list.scss']
 })
-export class ProjectPlatformListComponent extends Table<ProjectPlatform> {
+export class ProjectIntegrationListComponent extends Table<ProjectIntegration> {
 
     @Input() project: Project;
     @ViewChild('codeMirror')
@@ -33,22 +33,23 @@ export class ProjectPlatformListComponent extends Table<ProjectPlatform> {
         };
     }
 
-    getData(): Array<ProjectPlatform> {
-        return this.project.platforms;
+    getData(): Array<ProjectIntegration> {
+        return this.project.integrations;
     }
 
-    deletePlatform(p: ProjectPlatform): void {
+    deleteIntegration(p: ProjectIntegration): void {
         this.loading = true;
-        this._projectStore.deleteProjectPlatform(this.project.key, p.name).pipe(first(), finalize(() => this.loading = false))
+        this._projectStore.deleteProjectIntegration(this.project.key, p.name).pipe(first(), finalize(() => this.loading = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('project_updated'));
             });
     }
 
-    updatePlatform(p: ProjectPlatform): void {
+    updateIntegration(p: ProjectIntegration): void {
         this.loading = true;
-        this._projectStore.updateProjectPlatform(this.project.key, p).pipe(first(), finalize(() => this.loading = false)).subscribe(() => {
-            this._toast.success('', this._translate.instant('project_updated'));
+        this._projectStore.updateProjectIntegration(this.project.key, p)
+            .pipe(first(), finalize(() => this.loading = false)).subscribe(() => {
+                this._toast.success('', this._translate.instant('project_updated'));
         });
     }
 }

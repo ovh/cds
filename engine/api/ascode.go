@@ -115,7 +115,7 @@ func (api *API) postPerformImportAsCodeHandler() service.Handler {
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithFeatures,
-			project.LoadOptions.WithClearPlatforms,
+			project.LoadOptions.WithClearIntegrations,
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "postPerformImportAsCodeHandler> Cannot load project %s", key)
