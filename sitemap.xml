@@ -738,6 +738,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/template/delete/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/token/delete/</loc>
   </url>
   
@@ -747,6 +751,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/workflow/advanced/delete/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/template/detach/</loc>
   </url>
   
   <url>

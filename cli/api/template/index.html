@@ -1601,6 +1601,16 @@
           <span>bulk</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/template/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/template/detach/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/detach/">
+          <span>detach</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/template/instances/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/template/instances/">
           <span>instances</span>
@@ -2265,6 +2275,7 @@
 <li><a href="#post-template-group-name-templateslug-bulk">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk</code></a></li>
 <li><a href="#get-template-group-name-templateslug-bulk-bulkid">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/bulk/&lt;bulkID&gt;</code></a></li>
 <li><a href="#get-template-group-name-templateslug-instance">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance</code></a></li>
+<li><a href="#delete-template-group-name-templateslug-instance-instanceid">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;</code></a></li>
 <li><a href="#post-template-group-name-templateslug-pull">POST <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/pull</code></a></li>
 <li><a href="#get-template-group-name-templateslug-usage">GET <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/usage</code></a></li>
 <li><a href="#post-template-push">POST <code>/template/push</code></a></li>
@@ -2567,6 +2578,34 @@
 <tr>
 <td>Code</td>
 <td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getTemplateInstancesHandler%22">getTemplateInstancesHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-template-group-name-templateslug-instance-instanceid">DELETE <code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/template/&lt;group-name&gt;/&lt;templateSlug&gt;/instance/&lt;instanceID&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteTemplateInstanceHandler%22">deleteTemplateInstanceHandler</a></td>
 </tr>
 </tbody>
 </table>

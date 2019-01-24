@@ -1602,6 +1602,16 @@
           <span>bulk</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/template/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/template/detach/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/template/detach/">
+          <span>detach</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/cdsctl/template/instances/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/template/instances/">
           <span>instances</span>
@@ -2307,13 +2317,14 @@
 
 <h3 id="options">Options</h3>
 
-<pre><code>      --force                Force, may override files
+<pre><code>      --detach               Set to generate a workflow detached from the template
+      --force                Force, may override files
   -h, --help                 help for apply
       --import-as-code       If true, will import the generated workflow as code on given project
       --import-push          If true, will push the generated workflow on given project
   -n, --no-interactive       Set to not ask interactively for params
   -d, --output-dir string    Output directory (default &quot;.cds&quot;)
-  -p, --params stringArray   Specify params for template
+  -p, --params stringArray   Specify params for template like --params paramKey:paramValue
       --quiet                If true, do not output filename created
 </code></pre>
 
