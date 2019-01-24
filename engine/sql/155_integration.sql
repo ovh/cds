@@ -1,10 +1,24 @@
 -- +migrate Up
 
 CREATE TABLE integration_model AS TABLE platform_model;
+
+CREATE SEQUENCE integration_model_id_seq;
+ALTER TABLE integration_model ALTER COLUMN id SET NOT NULL;
+ALTER TABLE integration_model ALTER COLUMN id SET DEFAULT nextval('integration_model_id_seq');
+ALTER SEQUENCE integration_model_id_seq OWNED BY integration_model.id;
+select setval('"integration_model_id_seq"'::regclass, (select MAX("id") FROM "integration_model"));
+
 SELECT create_unique_index('integration_model', 'IDX_INTEGRATION_MODEL_NAME', 'name');
 SELECT create_primary_key('integration_model', 'id');
 
 CREATE TABLE project_integration AS TABLE project_platform;
+
+CREATE SEQUENCE project_integration_id_seq;
+ALTER TABLE project_integration ALTER COLUMN id SET NOT NULL;
+ALTER TABLE project_integration ALTER COLUMN id SET DEFAULT nextval('project_integration_id_seq');
+ALTER SEQUENCE project_integration_id_seq OWNED BY project_integration.id;
+select setval('"project_integration_id_seq"'::regclass, (select MAX("id") FROM "project_integration"));
+
 ALTER TABLE project_integration RENAME COLUMN platform_model_id TO integration_model_id;
 SELECT create_primary_key('project_integration', 'id');
 
