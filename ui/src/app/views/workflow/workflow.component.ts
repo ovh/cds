@@ -221,7 +221,7 @@ export class WorkflowComponent implements OnInit {
     initTemplateFromWorkflow(): void {
         this._router.navigate(['settings', 'workflow-template', 'add'], {
             queryParams: {
-                from: this.project.name + '/' + this.workflow.name,
+                from: this.project.key + '/' + this.workflow.name,
             }
         });
     }
