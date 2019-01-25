@@ -58,6 +58,7 @@ update workflow set workflow_data=replace(workflow_data::TEXT, '"platform_model_
 update workflow set workflow_data=replace(workflow_data::TEXT, '"project_platform_id":', '"project_integration_id":')::jsonb;
 update workflow_run set workflow=replace(workflow::TEXT, '"platform_model_id":', '"integration_model_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
 update workflow_run set workflow=replace(workflow::TEXT, '"project_platform_id":', '"project_integration_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
+update workflow_run set workflow=replace(workflow::TEXT, '"project_platforms":', '"project_integrations":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
 
 -- +migrate Down
 
@@ -79,3 +80,4 @@ update workflow set workflow_data=replace(workflow_data::TEXT, '"integration_mod
 update workflow set workflow_data=replace(workflow_data::TEXT, '"project_integration_id":', '"project_platform_id":')::jsonb;
 update workflow_run set workflow=replace(workflow::TEXT, '"integration_model_id":', '"platform_model_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
 update workflow_run set workflow=replace(workflow::TEXT, '"project_integration_id":', '"project_platform_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
+update workflow_run set workflow=replace(workflow::TEXT, '"project_integrations":', '"project_platforms":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
