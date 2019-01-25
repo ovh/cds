@@ -52,7 +52,7 @@ ALTER TABLE w_node_context DROP CONSTRAINT "fk_w_node_context_platform";
 ALTER TABLE workflow_node_run_job ADD COLUMN integration_plugin_binaries JSONB;
 UPDATE workflow_node_run_job set integration_plugin_binaries = platform_plugin_binaries;
 
-UPDATE grpc_plugin set type = 'integration-deploy_application' where type = 'platform-deploy_application';
+UPDATE grpc_plugin set type = 'integration-deploy_application' where type = 'platform' OR type = 'platform-deploy_application';
 
 update workflow set workflow_data=replace(workflow_data::TEXT, '"platform_model_id":', '"integration_model_id":')::jsonb;
 update workflow set workflow_data=replace(workflow_data::TEXT, '"project_platform_id":', '"project_integration_id":')::jsonb;
