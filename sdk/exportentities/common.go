@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -14,13 +13,6 @@ import (
 
 	"github.com/ovh/cds/sdk"
 )
-
-var rxURL = regexp.MustCompile(`http[s]?:\/\/(.*)`)
-
-// IsURL returns if given path is a url according to the URL regex.
-func IsURL(path string) bool {
-	return rxURL.MatchString(path)
-}
 
 //GetFormat return a format
 func GetFormat(f string) (Format, error) {
@@ -148,7 +140,7 @@ func OpenURL(u string, f string) (io.ReadCloser, Format, error) {
 	}
 	response, err := netClient.Get(u)
 	if err != nil {
-		return nil, format, err
+		return nil, format, sdk.WithStack(err)
 	}
 
 	return response.Body, format, err
@@ -163,7 +155,7 @@ func OpenPath(path string) (io.ReadCloser, Format, error) {
 	}
 	format, _ := GetFormat(formatStr)
 
-	if rxURL.MatchString(path) {
+	if sdk.IsURL(path) {
 		var err error
 		contentFile, format, err = OpenURL(path, formatStr)
 		if err != nil {
@@ -172,7 +164,7 @@ func OpenPath(path string) (io.ReadCloser, Format, error) {
 	} else {
 		f, err := os.Open(path)
 		if err != nil {
-			return nil, format, err
+			return nil, format, sdk.WithStack(err)
 		}
 		contentFile = f
 	}

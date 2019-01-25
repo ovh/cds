@@ -16,8 +16,10 @@ import (
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
-// Push creates or updates a workflow template from a tar.
-func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk.WorkflowTemplate, error) {
+// ReadFromTar returns a workflow template from given tar reader.
+func ReadFromTar(tr *tar.Reader) (sdk.WorkflowTemplate, error) {
+	var wt sdk.WorkflowTemplate
+
 	// extract template data from tar
 	var apps, pips, envs [][]byte
 	var wkf []byte
@@ -31,12 +33,12 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 			break
 		}
 		if err != nil {
-			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
+			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
 		}
 
 		buff := new(bytes.Buffer)
 		if _, err := io.Copy(buff, tr); err != nil {
-			return nil, nil, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
+			return wt, sdk.NewError(sdk.ErrWrongRequest, sdk.WrapError(err, "Unable to read tar file"))
 		}
 
 		b := buff.Bytes()
@@ -69,15 +71,25 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 	}
 
 	if !mError.IsEmpty() {
-		return nil, nil, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
+		return wt, sdk.NewError(sdk.ErrWorkflowInvalid, mError)
 	}
 
 	// init workflow template struct from data
-	wt := tmpl.GetTemplate(wkf, pips, apps, envs)
+	wt = tmpl.GetTemplate(wkf, pips, apps, envs)
 
-	// check the workflow template extracted
-	if err := wt.IsValid(); err != nil {
+	return wt, nil
+}
+
+// Push creates or updates a workflow template from a tar.
+func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk.WorkflowTemplate, error) {
+	wt, err := ReadFromTar(tr)
+	if err != nil {
 		return nil, nil, err
+	}
+
+	// group name should be set
+	if wt.Group == nil {
+		return nil, nil, sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing group name")
 	}
 
 	// check that the user is admin on the given template's group
@@ -86,6 +98,11 @@ func Push(db gorp.SqlExecutor, u *sdk.User, tr *tar.Reader) ([]sdk.Message, *sdk
 		return nil, nil, sdk.NewError(sdk.ErrWrongRequest, err)
 	}
 	wt.GroupID = grp.ID
+
+	// check the workflow template extracted
+	if err := wt.IsValid(); err != nil {
+		return nil, nil, err
+	}
 
 	if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
 		return nil, nil, err

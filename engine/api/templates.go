@@ -133,48 +133,82 @@ func (api *API) getTemplatesHandler() service.Handler {
 
 func (api *API) postTemplateHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		var t sdk.WorkflowTemplate
-		if err := service.UnmarshalBody(r, &t); err != nil {
+		var data sdk.WorkflowTemplate
+		if err := service.UnmarshalBody(r, &data); err != nil {
 			return err
 		}
-		if err := t.IsValid(); err != nil {
+		if err := data.IsValid(); err != nil {
 			return err
 		}
-		t.Version = 0
+
+		var grp *sdk.Group
+		var err error
+		// if imported from url try to download files then overrides request
+		if data.ImportURL != "" {
+			t := new(bytes.Buffer)
+			if err := exportentities.DownloadTemplate(data.ImportURL, t); err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			wt, err := workflowtemplate.ReadFromTar(tar.NewReader(t))
+			if err != nil {
+				return err
+			}
+			wt.ImportURL = data.ImportURL
+			data = wt
+
+			// group name should be set
+			if data.Group == nil {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing group name")
+			}
+
+			// check that the user is admin on the given template's group
+			grp, err = group.LoadGroup(api.mustDB(), data.Group.Name)
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			data.GroupID = grp.ID
+
+			// check the workflow template extracted
+			if err := data.IsValid(); err != nil {
+				return err
+			}
+		} else {
+			// check that the group exists and user is admin for group id
+			grp, err = group.LoadGroupByID(api.mustDB(), data.GroupID)
+			if err != nil {
+				return err
+			}
+		}
+
+		data.Version = 0
 
 		u := deprecatedGetUser(ctx)
 
-		// check that group exists
-		g, err := group.LoadGroupByID(api.mustDB(), t.GroupID)
-		if err != nil {
-			return err
-		}
-
-		if err := group.CheckUserIsGroupAdmin(g, u); err != nil {
+		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
 			return err
 		}
 
 		// execute template with no instance only to check if parsing is ok
-		if _, err := workflowtemplate.Execute(&t, nil); err != nil {
+		if _, err := workflowtemplate.Execute(&data, nil); err != nil {
 			return err
 		}
 
 		// duplicate couple of group id and slug will failed with sql constraint
-		if err := workflowtemplate.Insert(api.mustDB(), &t); err != nil {
+		if err := workflowtemplate.Insert(api.mustDB(), &data); err != nil {
 			return err
 		}
 
-		event.PublishWorkflowTemplateAdd(t, u)
+		event.PublishWorkflowTemplateAdd(data, u)
 
-		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &t); err != nil {
+		if err := group.AggregateOnWorkflowTemplate(api.mustDB(), &data); err != nil {
 			return err
 		}
-		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &t); err != nil {
+		if err := workflowtemplate.AggregateAuditsOnWorkflowTemplate(api.mustDB(), &data); err != nil {
 			return err
 		}
-		t.Editable = true
+		data.Editable = true
 
-		return service.WriteJSON(w, t, http.StatusOK)
+		return service.WriteJSON(w, data, http.StatusOK)
 	}
 }
 
@@ -211,25 +245,54 @@ func (api *API) putTemplateHandler() service.Handler {
 			return err
 		}
 
+		var grp *sdk.Group
 		var err error
+		// if imported from url try to download files then overrides request
+		if data.ImportURL != "" {
+			t := new(bytes.Buffer)
+			if err := exportentities.DownloadTemplate(data.ImportURL, t); err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			wt, err := workflowtemplate.ReadFromTar(tar.NewReader(t))
+			if err != nil {
+				return err
+			}
+			wt.ImportURL = data.ImportURL
+			data = wt
+
+			// group name should be set
+			if data.Group == nil {
+				return sdk.NewErrorFrom(sdk.ErrWrongRequest, "missing group name")
+			}
+
+			// check that the user is admin on the given template's group
+			grp, err = group.LoadGroup(api.mustDB(), data.Group.Name)
+			if err != nil {
+				return sdk.NewError(sdk.ErrWrongRequest, err)
+			}
+			data.GroupID = grp.ID
+
+			// check the workflow template extracted
+			if err := data.IsValid(); err != nil {
+				return err
+			}
+		} else {
+			// check that the group exists and user is admin for group id
+			grp, err = group.LoadGroupByID(api.mustDB(), data.GroupID)
+			if err != nil {
+				return err
+			}
+		}
+
 		ctx, err = api.middlewareTemplate(true)(ctx, w, r)
 		if err != nil {
 			return err
 		}
-
 		old := getWorkflowTemplate(ctx)
 		u := deprecatedGetUser(ctx)
 
-		// if group id has changed check that the group exists and user is admin for new group id
-		if old.GroupID != data.GroupID {
-			newGroup, err := group.LoadGroupByID(api.mustDB(), data.GroupID)
-			if err != nil {
-				return err
-			}
-
-			if err := group.CheckUserIsGroupAdmin(newGroup, u); err != nil {
-				return err
-			}
+		if err := group.CheckUserIsGroupAdmin(grp, u); err != nil {
+			return err
 		}
 
 		// update fields from request data

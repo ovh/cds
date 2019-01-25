@@ -82,12 +82,12 @@ export class WorkflowTemplateAddComponent implements OnInit {
             });
     }
 
-    saveWorkflowTemplate() {
+    saveWorkflowTemplate(wt: WorkflowTemplate) {
         this.loading = true;
-        this._workflowTemplateService.add(this.workflowTemplate)
+        this._workflowTemplateService.add(wt)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(wt => {
-                this.workflowTemplate = wt;
+            .subscribe(res => {
+                this.workflowTemplate = res;
                 this.errors = [];
                 this._toast.success('', this._translate.instant('workflow_template_created'));
                 this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);
