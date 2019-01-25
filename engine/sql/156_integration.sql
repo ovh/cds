@@ -54,6 +54,11 @@ UPDATE workflow_node_run_job set integration_plugin_binaries = platform_plugin_b
 
 UPDATE grpc_plugin set type = 'integration-deploy_application' where type = 'platform-deploy_application';
 
+update workflow set workflow_data=replace(workflow_data::TEXT, '"platform_model_id":', '"integration_model_id":')::jsonb;
+update workflow set workflow_data=replace(workflow_data::TEXT, '"project_platform_id":', '"project_integration_id":')::jsonb;
+update workflow_run set workflow=replace(workflow::TEXT, '"platform_model_id":', '"integration_model_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
+update workflow_run set workflow=replace(workflow::TEXT, '"project_platform_id":', '"project_integration_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
+
 -- +migrate Down
 
 ALTER TABLE application_deployment_strategy DROP CONSTRAINT "application_deployment_strategy_pkey";
@@ -69,3 +74,8 @@ SELECT create_foreign_key_idx_cascade('fk_application_deployment_strategy_platfo
 DROP TABLE integration_model;
 DROP TABLE project_integration;
 UPDATE grpc_plugin set type = 'platform-deploy_application' where type = 'integration-deploy_application';
+
+update workflow set workflow_data=replace(workflow_data::TEXT, '"integration_model_id":', '"platform_model_id":')::jsonb;
+update workflow set workflow_data=replace(workflow_data::TEXT, '"project_integration_id":', '"project_platform_id":')::jsonb;
+update workflow_run set workflow=replace(workflow::TEXT, '"integration_model_id":', '"platform_model_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
+update workflow_run set workflow=replace(workflow::TEXT, '"project_integration_id":', '"project_platform_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
