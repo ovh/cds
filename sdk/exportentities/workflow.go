@@ -540,10 +540,10 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	wf.Description = w.Description
 	wf.WorkflowData = &sdk.WorkflowData{}
 	// Init map
-	wf.Applications = make(map[int64]sdk.Application, 0)
-	wf.Pipelines = make(map[int64]sdk.Pipeline, 0)
-	wf.Environments = make(map[int64]sdk.Environment, 0)
-	wf.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration, 0)
+	wf.Applications = make(map[int64]sdk.Application)
+	wf.Pipelines = make(map[int64]sdk.Pipeline)
+	wf.Environments = make(map[int64]sdk.Environment)
+	wf.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
 
 	if err := w.checkValidity(); err != nil {
 		return nil, sdk.WrapError(err, "Unable to check validity")

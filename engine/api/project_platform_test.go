@@ -23,6 +23,7 @@ func TestAddUpdateAndDeleteProjectIntegration(t *testing.T) {
 	if len(models) == 0 {
 		assert.NoError(t, integration.CreateBuiltinModels(db))
 		models, _ = integration.LoadModels(db)
+		assert.True(t, len(models) > 0)
 	}
 
 	integrationModel, err := integration.LoadModelByName(db, sdk.KafkaIntegration.Name, false)

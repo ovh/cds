@@ -86,7 +86,7 @@ func Test_deleteIntegrationModelHandler(t *testing.T) {
 		Name: "my-model",
 	}
 
-	integration.InsertModel(db, &model)
+	test.NoError(t, integration.InsertModel(db, &model))
 
 	vars := map[string]string{
 		"name": model.Name,

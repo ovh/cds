@@ -59,7 +59,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 		Deployment: true,
 	}
 	test.NoError(t, integration.InsertModel(db, &pf))
-	defer integration.DeleteModel(db, pf.ID)
+	defer func() { _ = integration.DeleteModel(db, pf.ID) }()
 
 	pp := sdk.ProjectIntegration{
 		Model:              pf,
@@ -182,7 +182,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentInteg
 		Deployment: true,
 	}
 	test.NoError(t, integration.InsertModel(db, &pf))
-	defer integration.DeleteModel(db, pf.ID)
+	defer func() { _ = integration.DeleteModel(db, pf.ID) }()
 
 	pp := sdk.ProjectIntegration{
 		Model:              pf,
@@ -321,7 +321,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 		},
 	}
 	test.NoError(t, integration.InsertModel(api.mustDB(), &pf))
-	defer integration.DeleteModel(api.mustDB(), pf.ID)
+	defer func() { _ = integration.DeleteModel(api.mustDB(), pf.ID) }()
 
 	pp := sdk.ProjectIntegration{
 		Model:              pf,
