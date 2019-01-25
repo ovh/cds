@@ -10,8 +10,8 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -631,7 +631,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 		},
 	}
 	test.NoError(t, integration.InsertModel(db, &pf))
-	defer integration.DeleteModel(db, pf.ID)
+	defer func() { _ = integration.DeleteModel(db, pf.ID) }()
 
 	pp := sdk.ProjectIntegration{
 		Model:              pf,
