@@ -1,7 +1,31 @@
 @import '../workflow.node.common';
 .workflowFork {
-  width: 35px;
-  height: 35px;
-  margin: 2px 0 0 2px;
-  transform: rotate(45deg);
+  width: 42px;
+  height: 42px;
+  .rect {
+    stroke-width: 2;
+    stroke: $polar_grey_3;
+    transform-origin: 21px 21px;
+    transform: rotate(45deg);
+    &.success {
+      fill: $cds_color_light_green;
+      stroke: $cds_color_green;
+    }
+    &.fail {
+      fill: $cds_color_light_red;
+      stroke: $cds_color_red;
+    }
+    &.building {
+      fill: $cds_color_light_teal;
+      stroke: $cds_color_teal;
+    }
+    &.inactive {
+      fill: $cds_color_light_grey;
+      stroke: grey;
+    }
+    &.active {
+      stroke-width: 4px;
+      stroke: $cds_color_teal;
+    }
+  }
 }

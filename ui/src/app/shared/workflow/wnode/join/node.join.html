@@ -1,7 +1,9 @@
 <div class="node workflowJoin pointing" [class.active]="selected" [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
     [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
-    [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
-    [class.animate]="nodeToLink">
-    <div *ngIf="nodeToLink" class="link" (click)="$event.stopPropagation(); selectJoinToLink()">
-    </div>
+    [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED">
+    <svg width="32" height="32" *ngIf="nodeToLink" (click)="$event.stopPropagation(); selectJoinToLink()">
+        <circle cx="16" cy="16" r="16" style="fill:grey;">
+            <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite" />
+        </circle>
+    </svg>
 </div>

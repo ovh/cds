@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { PipelineStatus } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
 import { WorkflowHookModel } from '../../../../model/workflow.hook.model';
@@ -13,10 +13,7 @@ import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeOutGoingHookComponent implements OnInit {
-    _node: WNode;
-    @Input('node') set node(data: WNode) { this._node = data; };
-    get node() { return this._node; }
-
+    @Input() node: WNode;
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() noderun: WorkflowNodeRun;
@@ -25,12 +22,9 @@ export class WorkflowWNodeOutGoingHookComponent implements OnInit {
 
     icon: string;
     model: WorkflowHookModel;
-    elementRef: ElementRef;
     pipelineStatus = PipelineStatus;
 
-    constructor(_elt: ElementRef) {
-        this.elementRef = _elt;
-    }
+    constructor() { }
 
     ngOnInit(): void {
         this.model = this.workflow.outgoing_hook_models[this.node.outgoing_hook.hook_model_id];

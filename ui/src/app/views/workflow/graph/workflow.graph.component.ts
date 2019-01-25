@@ -137,10 +137,21 @@ export class WorkflowGraphComponent implements AfterViewInit {
         });
 
         svg.call(this.zoom);
+
+        // TODO automatic center
+        // this.clickOrigin();
     }
 
     clickOrigin() {
-        // TODO implement go to origin
+        let svg = d3.select('svg');
+        let g = svg.select('g');
+
+        let width = this.svgContainer.element.nativeElement.width.baseVal.value;
+        let height = this.svgContainer.element.nativeElement.height.baseVal.value;
+        let xCenterOffset = (width - this.g.graph().width) / 2;
+        let yCenterOffset = (height - this.g.graph().height) / 2;
+
+        g.attr('transform', `translate(${xCenterOffset}, ${yCenterOffset})`);
     }
 
     createEdge(from: string, to: string, options: {}): void {
@@ -173,7 +184,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this.g.setNode(
                 'hook-' + node.ref + '-' + hookId, <any>{
                     label: () => componentRef.location.nativeElement,
-                    labelStyle: 'width: 30px;height: 30px;'
+                    labelStyle: 'width: 25px;height: 25px;'
                 }
             );
 
@@ -205,8 +216,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 shape = 'circle';
                 break;
             case 'fork':
-                width = 40;
-                height = 40;
+                width = 42;
+                height = 42;
                 break;
         }
 

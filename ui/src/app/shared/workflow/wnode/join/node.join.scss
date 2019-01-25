@@ -3,22 +3,4 @@
   width: 40px;
   height: 40px;
   border-radius: 20px;
-  &.animate {
-    animation: color_change 0.7s ease-in-out infinite alternate;
-  }
-  .link {
-    width: 100%;
-    height: 100%;
-  }
-}
-
-@keyframes color_change {
-  from {
-    background-color: white;
-    opacity: 1;
-  }
-  to {
-    background-color: grey;
-    opacity: 0.2;
-  }
 }

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { WorkflowNodeRun, WorkflowRun } from 'app/model/workflow.run.model';
 import { AutoUnsubscribe } from 'app/shared/decorator/autoUnsubscribe';
@@ -13,7 +13,7 @@ import { WorkflowEventStore } from '../../../../service/workflow/workflow.event.
     styleUrls: ['./hook.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
+export class WorkflowNodeHookComponent implements OnInit {
     _hook: WNodeHook;
     @Input('hook')
     set hook(data: WNodeHook) {
@@ -36,16 +36,10 @@ export class WorkflowNodeHookComponent implements OnInit, AfterViewInit {
     nodeRun: WorkflowNodeRun;
 
     constructor(
-        private elementRef: ElementRef,
         private _workflowEventStore: WorkflowEventStore,
         private _activatedRoute: ActivatedRoute,
         private _router: Router
     ) { }
-
-    ngAfterViewInit() {
-        this.elementRef.nativeElement.style.position = 'fixed';
-        this.elementRef.nativeElement.style.top = '5px';
-    }
 
     ngOnInit(): void {
         this.subSelect = this._workflowEventStore.selectedHook().subscribe(h => {

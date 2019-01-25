@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep } from 'lodash';
 import { Subscription } from 'rxjs';
@@ -26,20 +26,16 @@ export class WorkflowWNodeJoinComponent {
     @Input() public selected: boolean;
 
     pipelineStatus = PipelineStatus;
-    elementRef: ElementRef;
     linkJoinSubscription: Subscription;
     nodeToLink: WNode;
     loading = false;
 
     constructor(
-        elt: ElementRef,
         private _workflowCore: WorkflowCoreService,
         private _workflowStore: WorkflowStore,
         private _toast: ToastService,
         private _translate: TranslateService
     ) {
-        this.elementRef = elt;
-
         this.linkJoinSubscription = _workflowCore.getLinkJoinEvent().subscribe(n => {
             this.nodeToLink = n;
         });
