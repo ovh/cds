@@ -52,13 +52,30 @@ ALTER TABLE w_node_context DROP CONSTRAINT "fk_w_node_context_platform";
 ALTER TABLE workflow_node_run_job ADD COLUMN integration_plugin_binaries JSONB;
 UPDATE workflow_node_run_job set integration_plugin_binaries = platform_plugin_binaries;
 
-UPDATE grpc_plugin set type = 'integration-deploy_application' where type = 'platform' OR type = 'platform-deploy_application';
+UPDATE grpc_plugin set type = 'integration-deploy_application' WHERE type = 'platform' OR type = 'platform-deploy_application';
 
-update workflow set workflow_data=replace(workflow_data::TEXT, '"platform_model_id":', '"integration_model_id":')::jsonb;
-update workflow set workflow_data=replace(workflow_data::TEXT, '"project_platform_id":', '"project_integration_id":')::jsonb;
-update workflow_run set workflow=replace(workflow::TEXT, '"platform_model_id":', '"integration_model_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
-update workflow_run set workflow=replace(workflow::TEXT, '"project_platform_id":', '"project_integration_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
-update workflow_run set workflow=replace(workflow::TEXT, '"project_platforms":', '"project_integrations":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
+UPDATE workflow set workflow_data=replace(workflow_data::TEXT, '"platform_model_id":', '"integration_model_id":')::jsonb;
+UPDATE workflow set workflow_data=replace(workflow_data::TEXT, '"project_platform_id":', '"project_integration_id":')::jsonb;
+
+UPDATE workflow_run set workflow=replace(workflow::TEXT, '"platform_model_id":', '"integration_model_id":')::jsonb
+WHERE workflow_id in (
+SELECT workflow.id from workflow
+JOIN workflow_node on workflow.id = workflow_node.workflow_id
+JOIN workflow_node_context on workflow_node.id = workflow_node_context.workflow_node_id
+AND workflow_node_context.project_platform_id > 0
+GROUP BY workflow.id)
+AND last_execution>NOW()- INTERVAL '5 DAY';
+
+-- update project_platform and project_platforms attributes
+UPDATE workflow_run set workflow=replace(workflow::TEXT, '"project_platform', '"project_integration')::jsonb
+WHERE workflow_id in (
+SELECT workflow.id from workflow
+JOIN workflow_node on workflow.id = workflow_node.workflow_id
+JOIN workflow_node_context on workflow_node.id = workflow_node_context.workflow_node_id
+AND workflow_node_context.project_platform_id > 0
+GROUP BY workflow.id)
+AND last_execution>NOW()- INTERVAL '5 DAY';
+
 
 -- +migrate Down
 
@@ -74,10 +91,26 @@ SELECT create_primary_key('application_deployment_strategy', 'application_id,pro
 SELECT create_foreign_key_idx_cascade('fk_application_deployment_strategy_platform', 'application_deployment_strategy', 'project_platform', 'project_platform_id', 'id');
 DROP TABLE integration_model;
 DROP TABLE project_integration;
-UPDATE grpc_plugin set type = 'platform-deploy_application' where type = 'integration-deploy_application';
 
-update workflow set workflow_data=replace(workflow_data::TEXT, '"integration_model_id":', '"platform_model_id":')::jsonb;
-update workflow set workflow_data=replace(workflow_data::TEXT, '"project_integration_id":', '"project_platform_id":')::jsonb;
-update workflow_run set workflow=replace(workflow::TEXT, '"integration_model_id":', '"platform_model_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
-update workflow_run set workflow=replace(workflow::TEXT, '"project_integration_id":', '"project_platform_id":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
-update workflow_run set workflow=replace(workflow::TEXT, '"project_integrations":', '"project_platforms":')::jsonb WHERE last_execution>NOW()- INTERVAL '2 DAY';
+UPDATE grpc_plugin set type = 'platform-deploy_application' WHERE type = 'integration-deploy_application';
+
+UPDATE workflow set workflow_data=replace(workflow_data::TEXT, '"integration_model_id":', '"platform_model_id":')::jsonb;
+UPDATE workflow set workflow_data=replace(workflow_data::TEXT, '"project_integration_id":', '"project_platform_id":')::jsonb;
+
+UPDATE workflow_run set workflow=replace(workflow::TEXT, '"integration_model_id":', '"platform_model_id":')::jsonb
+WHERE workflow_id in (
+SELECT workflow.id from workflow
+JOIN workflow_node on workflow.id = workflow_node.workflow_id
+JOIN workflow_node_context on workflow_node.id = workflow_node_context.workflow_node_id
+AND workflow_node_context.project_platform_id > 0
+GROUP BY workflow.id)
+AND last_execution>NOW()- INTERVAL '5 DAY';
+
+UPDATE workflow_run set workflow=replace(workflow::TEXT, '"project_integration', '"project_platform')::jsonb
+WHERE workflow_id in (
+SELECT workflow.id from workflow
+JOIN workflow_node on workflow.id = workflow_node.workflow_id
+JOIN workflow_node_context on workflow_node.id = workflow_node_context.workflow_node_id
+AND workflow_node_context.project_platform_id > 0
+GROUP BY workflow.id)
+AND last_execution>NOW()- INTERVAL '5 DAY';
