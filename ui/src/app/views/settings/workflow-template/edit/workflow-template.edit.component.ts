@@ -285,11 +285,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     clickRollback(a: AuditWorkflowTemplate) {
-        this.workflowTemplate = a.data_before ? <WorkflowTemplate>JSON.parse(a.data_before) : null;
-        if (!this.workflowTemplate) {
-            this.workflowTemplate = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
+        let wt = a.data_before ? <WorkflowTemplate>JSON.parse(a.data_before) : null;
+        if (!wt) {
+            wt = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
         }
-        this.saveWorkflowTemplate();
+        this.saveWorkflowTemplate(wt);
     }
 
     getUsage() {
