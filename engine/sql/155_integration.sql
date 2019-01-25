@@ -52,6 +52,8 @@ ALTER TABLE w_node_context DROP CONSTRAINT "fk_w_node_context_platform";
 ALTER TABLE workflow_node_run_job ADD COLUMN integration_plugin_binaries JSONB;
 UPDATE workflow_node_run_job set integration_plugin_binaries = platform_plugin_binaries;
 
+UPDATE grpc_plugin set type = 'integration-deploy_application' where type = 'platform-deploy_application';
+
 -- +migrate Down
 
 ALTER TABLE application_deployment_strategy DROP CONSTRAINT "application_deployment_strategy_pkey";
@@ -66,3 +68,4 @@ SELECT create_primary_key('application_deployment_strategy', 'application_id,pro
 SELECT create_foreign_key_idx_cascade('fk_application_deployment_strategy_platform', 'application_deployment_strategy', 'project_platform', 'project_platform_id', 'id');
 DROP TABLE integration_model;
 DROP TABLE project_integration;
+UPDATE grpc_plugin set type = 'platform-deploy_application' where type = 'integration-deploy_application';
