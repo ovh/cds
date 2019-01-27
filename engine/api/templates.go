@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -687,6 +688,9 @@ func (api *API) getTemplateBulkHandler() service.Handler {
 		if b == nil || (!u.Admin && u.ID != b.UserID) {
 			return sdk.NewErrorFrom(sdk.ErrNotFound, "No workflow template bulk found for id %d", id)
 		}
+		sort.Slice(b.Operations, func(i, j int) bool {
+			return b.Operations[i].Request.WorkflowName < b.Operations[j].Request.WorkflowName
+		})
 
 		return service.WriteJSON(w, b, http.StatusOK)
 	}
