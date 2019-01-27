@@ -34,6 +34,10 @@ import { WorkflowWNodeComponent } from '../../../shared/workflow/wnode/wnode.com
 })
 @AutoUnsubscribe()
 export class WorkflowGraphComponent implements AfterViewInit {
+    static margin = 80; // let 40px on top and bottom of the graph
+    static maxScale = 2;
+    static minScale = 1 / 4;
+
     workflow: Workflow;
     @Input('workflowData')
     set workflowData(data: Workflow) {
@@ -86,7 +90,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
     nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
     hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
 
-    zoom: any;
+    zoom: d3.ZoomBehavior<Element, {}>;
+    svg: any;
 
     constructor(
         private componentFactoryResolver: ComponentFactoryResolver,
@@ -123,35 +128,41 @@ export class WorkflowGraphComponent implements AfterViewInit {
         }
 
         // Run the renderer. This is what draws the final graph.
-        let svg = d3.select('svg');
-        let oldG = svg.select('g');
+        this.svg = d3.select('svg');
+        let oldG = this.svg.select('g');
         if (oldG) {
             oldG.remove();
         }
-        let g = <any>svg.append('g');
+        let g = this.svg.append('g');
 
         this.render(g, this.g);
 
-        this.zoom = d3.zoom().scaleExtent([1 / 4, 2]).on('zoom', () => {
+        this.zoom = d3.zoom().scaleExtent([
+            WorkflowGraphComponent.minScale,
+            WorkflowGraphComponent.maxScale
+        ]).on('zoom', () => {
             g.attr('transform', d3.event.transform);
         });
 
-        svg.call(this.zoom);
+        this.svg.call(this.zoom);
 
-        // TODO automatic center
-        // this.clickOrigin();
+        this.clickOrigin();
     }
 
     clickOrigin() {
-        let svg = d3.select('svg');
-        let g = svg.select('g');
-
-        let width = this.svgContainer.element.nativeElement.width.baseVal.value;
-        let height = this.svgContainer.element.nativeElement.height.baseVal.value;
-        let xCenterOffset = (width - this.g.graph().width) / 2;
-        let yCenterOffset = (height - this.g.graph().height) / 2;
-
-        g.attr('transform', `translate(${xCenterOffset}, ${yCenterOffset})`);
+        let w = this.svgContainer.element.nativeElement.width.baseVal.value - WorkflowGraphComponent.margin;
+        let h = this.svgContainer.element.nativeElement.height.baseVal.value - WorkflowGraphComponent.margin;
+        let gw = this.g.graph().width;
+        let gh = this.g.graph().height;
+        let oScale = Math.min(w / gw, h / gh); // calculate optimal scale for current graph
+        // calculate final scale that fit min and max scale values
+        let scale = Math.min(
+            WorkflowGraphComponent.maxScale,
+            Math.max(WorkflowGraphComponent.minScale, oScale)
+        );
+        let centerX = (w - gw * scale + WorkflowGraphComponent.margin) / 2;
+        let centerY = (h - gh * scale + WorkflowGraphComponent.margin) / 2;
+        this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(centerX, centerY).scale(scale));
     }
 
     createEdge(from: string, to: string, options: {}): void {
