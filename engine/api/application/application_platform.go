@@ -101,13 +101,15 @@ func SetDeploymentStrategy(db gorp.SqlExecutor, projID, appID, pfID int64, ppfNa
 				return sdk.WrapError(err, "unable to encrypt data")
 			}
 			newcfg[k] = sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypePassword,
-				Value: base64.StdEncoding.EncodeToString(e),
+				Type:        sdk.PlatformConfigTypePassword,
+				Value:       base64.StdEncoding.EncodeToString(e),
+				Description: v.Description,
 			}
 		} else {
 			newcfg[k] = sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypeString,
-				Value: v.Value,
+				Type:        sdk.PlatformConfigTypeString,
+				Value:       v.Value,
+				Description: v.Description,
 			}
 		}
 	}

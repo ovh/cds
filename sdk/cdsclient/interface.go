@@ -24,7 +24,9 @@ type TemplateClient interface {
 	TemplateGetBulk(groupName, templateSlug string, id int64) (*sdk.WorkflowTemplateBulk, error)
 	TemplatePull(groupName, templateSlug string) (*tar.Reader, error)
 	TemplatePush(tarContent io.Reader) ([]string, *tar.Reader, error)
+	TemplateDelete(groupName, templateSlug string) error
 	TemplateGetInstances(groupName, templateSlug string) ([]sdk.WorkflowTemplateInstance, error)
+	TemplateDeleteInstance(groupName, templateSlug string, id int64) error
 }
 
 // AdminService expose all function to CDS services
@@ -352,14 +354,6 @@ type Interface interface {
 	HookClient
 	Version() (*sdk.Version, error)
 	TemplateClient
-}
-
-// InterfaceDeprecated is the interface for using deprecated routes with cdsclient package
-type InterfaceDeprecated interface {
-	ApplicationPipelinesAttach(projectKey string, appName string, pipelineNames ...string) error
-	ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error
-	ApplicationPipelineTriggersGet(projectKey string, appName string, pipelineName string, envName string) ([]sdk.PipelineTrigger, error)
-	AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error
 }
 
 // Raw is a low-level interface exposing HTTP functions

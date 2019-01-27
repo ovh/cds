@@ -67,7 +67,7 @@ func (b *bitbucketClient) Branch(ctx context.Context, fullname string, filter st
 	}
 
 	if len(branches.Values) == 0 {
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	for _, b := range branches.Values {

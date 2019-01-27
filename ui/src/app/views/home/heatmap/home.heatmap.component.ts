@@ -1,16 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { AppService } from 'app/app.service';
 import { AuthentificationStore } from 'app/service/services.module';
 import { finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs/Subscription';
 import { Event } from '../../../model/event.model';
+import { HeatmapSearchCriterion } from '../../../model/heatmap.model';
 import { PipelineStatus } from '../../../model/pipeline.model';
 import { ProjectFilter, TimelineFilter } from '../../../model/timeline.model';
 import { TimelineStore } from '../../../service/timeline/timeline.store';
 import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
 import { ToastService } from '../../../shared/toast/ToastService';
-
+import { ToolbarComponent } from './toolbar/toolbar.component';
 
 @Component({
     selector: 'app-home-heatmap',
@@ -24,19 +25,28 @@ export class HomeHeatmapComponent implements OnInit {
     events: Array<Event>;
     projects: Array<string>;
     workflows = new Object();
+    unfilteredWorkflows = new Object();
     properties = new Array<string>();
 
     eventsIds = new Array();
     groupedEvents = new Object();
+    unfilteredGroupedEvents = new Object();
 
     timelineSub: Subscription;
-    selectedTab = 'heatmap';
 
     currentItem = 0;
     pipelineStatus = PipelineStatus;
 
     filter: TimelineFilter;
     filterSub: Subscription;
+
+    heatmapSearch: HeatmapSearchCriterion;
+
+    @ViewChild('toolbar', { read: ToolbarComponent }) toolbar: ToolbarComponent;
+
+    static clone(objectToCopy) {
+        return (JSON.parse(JSON.stringify(objectToCopy)));
+    }
 
     constructor(
         private _timelineStore: TimelineStore,
@@ -55,6 +65,11 @@ export class HomeHeatmapComponent implements OnInit {
         this.filterSub = this._timelineStore.getFilter().subscribe(f => {
             this.filter = f;
             this._appService.initFilter(this.filter);
+
+            this.toolbar.getFilter().subscribe((filter) => {
+                this.heatmapSearch = filter;
+                this.filterEvents();
+            });
 
             if (this.timelineSub) {
                 this.timelineSub.unsubscribe();
@@ -78,14 +93,14 @@ export class HomeHeatmapComponent implements OnInit {
                                     return tag.value ? tag.value : tag;
                                 });
                             }
-                            if (!this.groupedEvents[event.project_key]) {
-                                this.groupedEvents[event.project_key] = new Object();
+                            if (!this.unfilteredGroupedEvents[event.project_key]) {
+                                this.unfilteredGroupedEvents[event.project_key] = new Object();
                             }
-                            if (!this.groupedEvents[event.project_key][event.workflow_name]) {
-                                this.groupedEvents[event.project_key][event.workflow_name] = new Array();
+                            if (!this.unfilteredGroupedEvents[event.project_key][event.workflow_name]) {
+                                this.unfilteredGroupedEvents[event.project_key][event.workflow_name] = new Array();
                             }
 
-                            let eventsWorkflow = this.groupedEvents[event.project_key][event.workflow_name];
+                            let eventsWorkflow = this.unfilteredGroupedEvents[event.project_key][event.workflow_name];
                             eventsWorkflow = eventsWorkflow.filter((pendingEvent: Event) => {
                                 if (event.workflow_name === pendingEvent.workflow_name
                                     && event.workflow_run_num === pendingEvent.workflow_run_num) {
@@ -106,26 +121,79 @@ export class HomeHeatmapComponent implements OnInit {
                                 eventsWorkflow.push(event);
                             }
                             eventsWorkflow = eventsWorkflow.filter((el, i, a) => i === a.indexOf(el));
-                            this.groupedEvents[event.project_key][event.workflow_name] = eventsWorkflow;
-                            if (!this.workflows[event.project_key]) {
-                                this.workflows[event.project_key] = new Array<string>();
+                            this.unfilteredGroupedEvents[event.project_key][event.workflow_name] = eventsWorkflow;
+                            if (!this.unfilteredWorkflows[event.project_key]) {
+                                this.unfilteredWorkflows[event.project_key] = new Array<string>();
                             }
-                            if (this.workflows[event.project_key].lastIndexOf(event.workflow_name) === -1) {
-                                this.workflows[event.project_key].push(event.workflow_name);
+                            if (this.unfilteredWorkflows[event.project_key].lastIndexOf(event.workflow_name) === -1) {
+                                this.unfilteredWorkflows[event.project_key].push(event.workflow_name);
                             }
                         });
 
                         this.currentItem = this.events.length;
 
-                        this.projects = Object.keys(this.groupedEvents).sort();
+                        this.projects = Object.keys(this.unfilteredGroupedEvents).sort();
+                        this.filterEvents();
                     });
             }
         });
     }
 
-    selectTab(t: string): void {
-        this.selectedTab = t;
-    }
+    /**
+     * Make a copy fetched datas and filter on it.
+     * This keep all events to let search them on demand.
+     */
+    filterEvents() {
+        this.workflows = HomeHeatmapComponent.clone(this.unfilteredWorkflows);
+        this.projects = Object.keys(this.unfilteredGroupedEvents).sort();
+        this.groupedEvents = HomeHeatmapComponent.clone(this.unfilteredGroupedEvents);
+        if (this.heatmapSearch) {
+            // filter projects list
+            if (this.heatmapSearch.projects && this.heatmapSearch.projects.length > 0) {
+                this.projects = Object.keys(this.groupedEvents).filter((p) => {
+                    return this.heatmapSearch.projects.indexOf(p) !== -1;
+                }).sort();
+                const projectsToFilter = Object.keys(this.unfilteredWorkflows).filter(proj => this.projects.indexOf(proj) === -1);
+                projectsToFilter.forEach(proj => {
+                    delete this.workflows[proj];
+                });
+            }
+
+            if (this.heatmapSearch.searchCriteria) {
+                const searchingCriteriaLowerCase = this.heatmapSearch.searchCriteria.toLowerCase();
+
+                const projectsToFilter = new Array<string>();
+                // filter events non matched
+                Object.keys(this.groupedEvents).forEach((project) => {
+                    let projectLength = 0;
+                    if (this.groupedEvents[project]) {
+                        Object.keys(this.groupedEvents[project]).forEach((workflow) => {
+                            const workflowName = workflow.toLowerCase();
+                            if (this.groupedEvents[project][workflow]) {
+                                this.groupedEvents[project][workflow] = this.groupedEvents[project][workflow].filter(event => {
+                                    const tags = JSON.stringify(event.tag).toLowerCase();
+                                    return workflowName.indexOf(searchingCriteriaLowerCase) !== -1 ||
+                                        tags.indexOf(searchingCriteriaLowerCase) !== -1;
+                                });
+                                projectLength += this.groupedEvents[project][workflow].length;
+                            }
+                        });
+                        if (projectLength === 0 && this.groupedEvents[project]) {
+                            projectsToFilter.push(project);
+                        }
+                    }
+                });
+
+                // delete empty projects
+                projectsToFilter.forEach(proj => {
+                    delete this.workflows[proj];
+                });
+                this.projects = Object.keys(this.groupedEvents).filter((p) => {
+                    return projectsToFilter.indexOf(p) === -1;
+                }).sort();
+            }
+        }
+    };
 
     addFilter(project_key: string): void {
         if (!this.filter.projects) {

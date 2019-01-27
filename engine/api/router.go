@@ -511,13 +511,8 @@ func EnableTracing() HandlerConfigParam {
 	return f
 }
 
+// NotFoundHandler is called by default by Mux is any matching handler has been found
 func NotFoundHandler(w http.ResponseWriter, req *http.Request) {
-	start := time.Now()
-	defer func() {
-		end := time.Now()
-		latency := end.Sub(start)
-		log.Warning("%-7s | %13v | %v", req.Method, latency, req.URL)
-	}()
 	service.WriteError(w, req, sdk.ErrNotFound)
 }
 

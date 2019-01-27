@@ -1,11 +1,12 @@
-import {Component, Input} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {finalize, first} from 'rxjs/operators';
-import {PlatformModel, ProjectPlatform} from '../../../../../model/platform.model';
-import {Project} from '../../../../../model/project.model';
-import {PlatformService} from '../../../../../service/platform/platform.service';
-import {ProjectStore} from '../../../../../service/project/project.store';
-import {ToastService} from '../../../../../shared/toast/ToastService';
+import { Component, Input, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { CodemirrorComponent } from 'ng2-codemirror-typescript/Codemirror';
+import { finalize, first } from 'rxjs/operators';
+import { PlatformModel, ProjectPlatform } from '../../../../../model/platform.model';
+import { Project } from '../../../../../model/project.model';
+import { PlatformService } from '../../../../../service/platform/platform.service';
+import { ProjectStore } from '../../../../../service/project/project.store';
+import { ToastService } from '../../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-platform-form',
@@ -15,10 +16,13 @@ import {ToastService} from '../../../../../shared/toast/ToastService';
 export class ProjectPlatformFormComponent {
 
     @Input() project: Project;
+    @ViewChild('codeMirror')
+    codemirror: CodemirrorComponent;
 
     models: Array<PlatformModel>;
     newPlatform: ProjectPlatform;
     loading = false;
+    codeMirrorConfig: {};
 
     constructor(private _platformService: PlatformService, private _projectStore: ProjectStore,
                 private _toast: ToastService, private _translate: TranslateService) {
@@ -28,6 +32,12 @@ export class ProjectPlatformFormComponent {
                 return !pf.public;
             });
         });
+        this.codeMirrorConfig = {
+            mode: 'shell',
+            lineWrapping: true,
+            lineNumbers: true,
+            autoRefresh: true
+        };
     }
 
     updateConfig(): void {

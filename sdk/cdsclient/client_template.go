@@ -132,6 +132,16 @@ func (c *client) TemplatePush(tarContent io.Reader) ([]string, *tar.Reader, erro
 	return messages, tarReader, nil
 }
 
+func (c *client) TemplateDelete(groupName, templateSlug string) error {
+	url := fmt.Sprintf("/template/%s/%s", groupName, templateSlug)
+
+	if _, err := c.DeleteJSON(context.Background(), url, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (c *client) TemplateGetInstances(groupName, templateSlug string) ([]sdk.WorkflowTemplateInstance, error) {
 	url := fmt.Sprintf("/template/%s/%s/instance", groupName, templateSlug)
 
@@ -141,4 +151,14 @@ func (c *client) TemplateGetInstances(groupName, templateSlug string) ([]sdk.Wor
 	}
 
 	return wtis, nil
+}
+
+func (c *client) TemplateDeleteInstance(groupName, templateSlug string, id int64) error {
+	url := fmt.Sprintf("/template/%s/%s/instance/%d", groupName, templateSlug, id)
+
+	if _, err := c.DeleteJSON(context.Background(), url, nil); err != nil {
+		return err
+	}
+
+	return nil
 }

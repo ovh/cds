@@ -2,6 +2,7 @@ package application
 
 import (
 	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
@@ -58,7 +59,7 @@ func LoadVulnerabilities(db gorp.SqlExecutor, appID int64) ([]sdk.Vulnerability,
 		if err != sql.ErrNoRows {
 			return nil, sdk.WrapError(err, "unable to load latest vulnerabilities for application %d", appID)
 		}
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 	vulnerabilities := make([]sdk.Vulnerability, len(results))
 	for i := range results {

@@ -21,6 +21,7 @@ export class WorkflowTemplate {
     last_audit: AuditWorkflowTemplate;
     editable: boolean;
     change_message: string;
+    import_url: string;
 }
 
 export class WorkflowTemplateParameter {
@@ -46,9 +47,10 @@ export class ParamData {
 }
 
 export class WorkflowTemplateRequest {
-    project_key: string
-    workflow_name: string
-    parameters: ParamData
+    project_key: string;
+    workflow_name: string;
+    parameters: ParamData;
+    detached: boolean;
 }
 
 export class WorkflowTemplateApplyResult {

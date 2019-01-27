@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -61,7 +62,7 @@ func environmentGroupImportRun(v cli.Values) error {
 		format = "json"
 	}
 
-	if exportentities.IsURL(v.GetString("path")) {
+	if sdk.IsURL(v.GetString("path")) {
 		var err error
 		reader, _, err = exportentities.OpenURL(v.GetString("path"), format)
 		if err != nil {

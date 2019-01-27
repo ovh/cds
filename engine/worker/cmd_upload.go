@@ -58,7 +58,7 @@ func uploadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		for _, arg := range args {
-			a := sdk.Artifact{
+			a := sdk.WorkflowNodeRunArtifact{
 				Name: arg,
 				Tag:  cmdUploadTag,
 			}
@@ -97,7 +97,7 @@ func (wk *currentWorker) uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var a sdk.Artifact
+	var a sdk.WorkflowNodeRunArtifact
 	if err := json.Unmarshal(data, &a); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return

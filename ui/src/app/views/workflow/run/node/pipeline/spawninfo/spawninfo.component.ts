@@ -5,12 +5,11 @@ import { CDSWebWorker } from 'app/shared/worker/web.worker';
 import { Subscription } from 'rxjs';
 import { environment } from '../../../../../../../environments/environment';
 import { Parameter } from '../../../../../../model/parameter.model';
-import { SpawnInfo } from '../../../../../../model/pipeline.model';
-import { PipelineStatus } from '../../../../../../model/pipeline.model';
+import { PipelineStatus, SpawnInfo } from '../../../../../../model/pipeline.model';
 import { Project } from '../../../../../../model/project.model';
 import { WorkflowNodeJobRun, WorkflowNodeRun } from '../../../../../../model/workflow.run.model';
 import { AuthentificationStore } from '../../../../../../service/auth/authentification.store';
-import { JobVariableComponent } from '../../../../../run/workflow/variables/job.variables.component';
+import { WorkflowRunJobVariableComponent } from '../variables/job.variables.component';
 
 @Component({
     selector: 'app-workflow-run-job-spawn-info',
@@ -53,7 +52,7 @@ export class WorkflowRunJobSpawnInfoComponent implements OnDestroy {
     @Output() displayServicesLogsChange = new EventEmitter<boolean>();
 
     @ViewChild('jobVariable')
-    jobVariable: JobVariableComponent;
+    jobVariable: WorkflowRunJobVariableComponent;
 
     _nodeJobRun: WorkflowNodeJobRun;
 

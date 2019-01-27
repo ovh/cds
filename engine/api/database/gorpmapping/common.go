@@ -46,6 +46,8 @@ func Update(db gorp.SqlExecutor, i interface{}) error {
 	_, err := db.Update(i)
 	if e, ok := err.(*pq.Error); ok {
 		switch e.Code {
+		case ViolateUniqueKeyPGCode:
+			err = sdk.NewError(sdk.ErrInvalidData, e)
 		case StringDataRightTruncation:
 			err = sdk.NewError(sdk.ErrInvalidData, e)
 		}

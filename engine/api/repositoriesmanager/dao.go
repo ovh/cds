@@ -104,7 +104,7 @@ func LoadForProject(db gorp.SqlExecutor, projectKey, rmName string) (*sdk.Projec
 	}
 
 	if len(vcsServerStr) == 0 {
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	clearVCSServer, err := secret.Decrypt(vcsServerStr)
@@ -123,7 +123,7 @@ func LoadForProject(db gorp.SqlExecutor, projectKey, rmName string) (*sdk.Projec
 		}
 	}
 
-	return nil, sdk.ErrNotFound
+	return nil, sdk.WithStack(sdk.ErrNotFound)
 }
 
 //InsertForApplication associates a repositories manager with an application

@@ -17,13 +17,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// DEPRECATED
-func (api *API) getApplicationHooksHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, nil, http.StatusOK)
-	}
-}
-
 func (api *API) getHookPollingVCSEvents() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

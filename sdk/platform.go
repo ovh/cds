@@ -99,14 +99,17 @@ func (config PlatformConfig) DecryptSecrets(decryptFunc func(string) (string, er
 const (
 	// PlatformConfigTypeString represents a string configuration value
 	PlatformConfigTypeString = "string"
+	// PlatformConfigTypeText represents a text configuration value
+	PlatformConfigTypeText = "text"
 	// PlatformConfigTypePassword represents a password configuration value
 	PlatformConfigTypePassword = "password"
 )
 
 // PlatformConfigValue represent a configuration value for a platform
 type PlatformConfigValue struct {
-	Value string `json:"value" yaml:"value"`
-	Type  string `json:"type" yaml:"type"`
+	Value       string `json:"value" yaml:"value"`
+	Type        string `json:"type" yaml:"type"`
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
 }
 
 // PlatformModel represent a platform model with its default configuration
@@ -118,8 +121,6 @@ type PlatformModel struct {
 	Icon                    string                    `json:"icon" db:"icon" yaml:"icon"`
 	DefaultConfig           PlatformConfig            `json:"default_config" db:"-" yaml:"default_config"`
 	DeploymentDefaultConfig PlatformConfig            `json:"deployment_default_config" db:"-" yaml:"deployment_default_config"`
-	PluginID                *int64                    `json:"-" db:"grpc_plugin_id" yaml:"-"`
-	PluginName              string                    `json:"plugin_name,omitempty" db:"-" yaml:"plugin,omitempty"`
 	PublicConfigurations    map[string]PlatformConfig `json:"public_configurations,omitempty" db:"-" yaml:"public_configurations"`
 	Disabled                bool                      `json:"disabled" db:"disabled" yaml:"disabled"`
 	Hook                    bool                      `json:"hook" db:"hook" yaml:"hook" cli:"hooks_supported"`
@@ -167,8 +168,6 @@ func (config PlatformConfig) MergeWith(cfg PlatformConfig) {
 		val, has := config[k]
 		if !has {
 			val.Type = v.Type
-		} else if v.Value == "" && config[k].Value != "" {
-			continue
 		}
 		if val.Type != PlatformConfigTypePassword || (val.Type == PlatformConfigTypePassword && v.Value != PasswordPlaceholder) {
 			val.Value = v.Value

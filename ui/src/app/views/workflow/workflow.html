@@ -29,13 +29,14 @@
                             </div>
                         </div>
                         <div class="migrate">
-                            <button class="ui right floated mini button" *ngIf="!showButtons" (click)="showButtons = true">Migrate</button>
+                            <button class="ui right floated mini button" *ngIf="!showButtons" (click)="showButtons = true">{{'common_migrate'
+                                | translate}}</button>
                             <div class="ui mini buttons" *ngIf="showButtons">
                                 <button class="ui button" (click)="showButtons = false" [class.loading]="loadingPopupButton"
-                                    [disabled]="loadingPopupButton">Cancel</button>
+                                    [disabled]="loadingPopupButton">{{'common_cancel' | translate}}</button>
                                 <div class="or"></div>
                                 <button class="ui positive button" (click)="migrateAsCode()" [class.loading]="loadingPopupButton"
-                                    [disabled]="loadingPopupButton">Save</button>
+                                    [disabled]="loadingPopupButton">{{'btn_save' | translate}}</button>
                             </div>
                         </div>
                     </div>
@@ -78,6 +79,12 @@
                     <div class="ui list">
                         <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/template">{{'common_read_more'
                             | translate}}</a>
+                    </div>
+                    <p>{{'workflow_template_help_line_3' | translate}}</p>
+                    <div class="ui compact menu">
+                        <a class="item small" (click)="initTemplateFromWorkflow();popup.close()">
+                            {{'workflow_template_init_from_workflow' | translate}}
+                        </a>
                     </div>
                 </ng-template>
             </div>

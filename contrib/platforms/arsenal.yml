@@ -15,4 +15,3 @@ deployment_default_config:
   retry.delay:
     type: string
     value: 5
-plugin: arsenal-deployment-plugin
