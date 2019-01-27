@@ -190,11 +190,11 @@ export class ProjectShowComponent implements OnInit {
 
     splitWarnings(warnings: immutable.Map<string, Warning>): void {
         if (warnings) {
-            this.allWarnings = warnings.toArray().sort((a, b) => {
+            this.allWarnings = warnings.valueSeq().toArray().sort((a, b) => {
                 return a.id - b.id;
             });
             this.initWarnings();
-            warnings.valueSeq().toArray().forEach(v => {
+            this.allWarnings.forEach(v => {
                 if (v.ignored) {
                     return;
                 }

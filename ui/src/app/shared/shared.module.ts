@@ -8,7 +8,7 @@ import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { MomentModule } from 'angular2-moment';
 import { NgSemanticModule } from 'ng-semantic/ng-semantic';
 import { CodemirrorModule } from 'ng2-codemirror-typescript/Codemirror';
-import { DragulaModule } from 'ng2-dragula/ng2-dragula';
+import { DragulaModule } from 'ng2-dragula';
 import { SuiModule } from 'ng2-semantic-ui';
 import { NgxAutoScroll, NgxAutoScrollModule } from 'ngx-auto-scroll';
 import { ClipboardModule } from 'ngx-clipboard';
@@ -91,7 +91,7 @@ import { WorkflowNodeContextComponent } from './workflow/modal/context/workflow.
 import { WorkflowDeleteNodeComponent } from './workflow/modal/delete/workflow.node.delete.component';
 import { WorkflowHookModalComponent } from './workflow/modal/hook-modal/hook.modal.component';
 import { WorkflowNodeOutGoingHookEditComponent } from './workflow/modal/outgoinghook-edit/outgoinghook.edit.component';
-import {WorkflowSaveAsCodeComponent} from './workflow/modal/save-as-code/save.as.code.component';
+import { WorkflowSaveAsCodeComponent } from './workflow/modal/save-as-code/save.as.code.component';
 import { WorkflowTriggerComponent } from './workflow/modal/trigger/workflow.trigger.component';
 import { WorkflowNodeHookDetailsComponent } from './workflow/node/hook/details/hook.details.component';
 import { WorkflowNodeHookFormComponent } from './workflow/node/hook/form/hook.form.component';
@@ -117,7 +117,7 @@ import { ZoneContentComponent } from './zone/zone-content/content.component';
 import { ZoneComponent } from './zone/zone.component';
 
 @NgModule({
-    imports: [CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
+    imports: [CommonModule, ClipboardModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule.forRoot(), MomentModule,
         CodemirrorModule, ReactiveFormsModule, MarkdownModule.forRoot(), NguiAutoCompleteModule, RouterModule,
         SuiModule, NgxAutoScrollModule, InfiniteScrollModule, NgxChartsModule],
     declarations: [
