@@ -42,7 +42,7 @@ type Workflow struct {
 	Parameters             map[string]string              `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	ApplicationName        string                         `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName        string                         `json:"environment,omitempty" yaml:"environment,omitempty"`
-	ProjectIntegrationName string                         `json:"platform,omitempty" yaml:"platform,omitempty"`
+	ProjectIntegrationName string                         `json:"integration,omitempty" yaml:"integration,omitempty"`
 	PipelineHooks          []HookEntry                    `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
 	Permissions            map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 	Metadata               map[string]string              `json:"metadata,omitempty" yaml:"metadata,omitempty"`
@@ -153,7 +153,7 @@ type NodeEntry struct {
 	PipelineName           string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
 	ApplicationName        string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName        string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
-	ProjectIntegrationName string                      `json:"platform,omitempty" yaml:"platform,omitempty"`
+	ProjectIntegrationName string                      `json:"integration,omitempty" yaml:"integration,omitempty"`
 	OneAtATime             *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
 	Payload                map[string]interface{}      `json:"payload,omitempty" yaml:"payload,omitempty"`
 	Parameters             map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
