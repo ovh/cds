@@ -7,7 +7,7 @@
     <meta name="description" content="Enterprise-Grade Continuous Delivery &amp; DevOps Automation Open Source Platform">
 
 
-    <title>show :: CDS - Continuous Delivery Service</title>
+    <title>integration :: CDS - Continuous Delivery Service</title>
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
@@ -32,7 +32,7 @@
     
 <link href="https://ovh.github.io/cds/css/custom-mermaid.css" rel="stylesheet">
   </head>
-  <body class="" data-url="/cli/cdsctl/admin/platform-model/show/">
+  <body class="" data-url="/cli/api/integration/">
     <nav id="sidebar" class="">
 
 
@@ -631,9 +631,10 @@
             <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
-    <li data-nav-id="/cli/api/" class="dd-item">
+    <li data-nav-id="/cli/api/" class="dd-item parent">
       <a href="https://ovh.github.io/cds/cli/api/">
-        <span>REST API</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+        <span>REST API</span>
+            <i class="fa fa-angle-down fa-lg category-icon"></i>
       </a>
         <ul>
       <li data-nav-id="/cli/api/accesstoken/" class="dd-item">
@@ -701,6 +702,11 @@
           <span>import</span>
         </a>
     </li>
+      <li data-nav-id="/cli/api/integration/" class="dd-item active">
+        <a href="https://ovh.github.io/cds/cli/api/integration/">
+          <span>integration</span>
+        </a>
+    </li>
       <li data-nav-id="/cli/api/login/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/login/">
           <span>login</span>
@@ -724,11 +730,6 @@
       <li data-nav-id="/cli/api/pipeline/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/api/pipeline/">
           <span>pipeline</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/api/platform/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/api/platform/">
-          <span>platform</span>
         </a>
     </li>
       <li data-nav-id="/cli/api/project/" class="dd-item">
@@ -822,10 +823,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/">
-        <span>cdsctl</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>cdsctl</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/action/" class="dd-item">
@@ -865,10 +865,9 @@
     </li>
         </ul>
     </li>
-    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item parent">
+    <li data-nav-id="/cli/cdsctl/admin/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/">
-        <span>admin</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
+        <span>admin</span><i class="fa fa-angle-right fa-lg category-icon"></i>
       </a>
         <ul>
     <li data-nav-id="/cli/cdsctl/admin/broadcasts/" class="dd-item">
@@ -979,6 +978,38 @@
     </li>
         </ul>
     </li>
+    <li data-nav-id="/cli/cdsctl/admin/integration-model/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/">
+        <span>integration-model</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/admin/integration-model/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/integration-model/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/export/">
+          <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/integration-model/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/integration-model/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/list/">
+          <span>list</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/admin/integration-model/show/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/show/">
+          <span>show</span>
+        </a>
+    </li>
+        </ul>
+    </li>
     <li data-nav-id="/cli/cdsctl/admin/maintenance/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/admin/maintenance/">
         <span>maintenance</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -1014,39 +1045,6 @@
       <li data-nav-id="/cli/cdsctl/admin/migration/reset/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/admin/migration/reset/">
           <span>reset</span>
-        </a>
-    </li>
-        </ul>
-    </li>
-    <li data-nav-id="/cli/cdsctl/admin/platform-model/" class="dd-item parent">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/">
-        <span>platform-model</span>
-            <i class="fa fa-angle-down fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/admin/platform-model/delete/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/delete/">
-          <span>delete</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/admin/platform-model/export/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/export/">
-          <span>export</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/admin/platform-model/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/import/">
-          <span>import</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/admin/platform-model/list/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/list/">
-          <span>list</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/admin/platform-model/show/" class="dd-item active">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/show/">
-          <span>show</span>
         </a>
     </li>
         </ul>
@@ -1485,6 +1483,33 @@
     </li>
         </ul>
     </li>
+    <li data-nav-id="/cli/cdsctl/project/integration/" class="dd-item">
+      <a href="https://ovh.github.io/cds/cli/cdsctl/project/integration/">
+        <span>integration</span><i class="fa fa-angle-right fa-lg category-icon"></i>
+      </a>
+        <ul>
+      <li data-nav-id="/cli/cdsctl/project/integration/delete/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/integration/delete/">
+          <span>delete</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/integration/export/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/integration/export/">
+          <span>export</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/integration/import/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/integration/import/">
+          <span>import</span>
+        </a>
+    </li>
+      <li data-nav-id="/cli/cdsctl/project/integration/list/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/project/integration/list/">
+          <span>list</span>
+        </a>
+    </li>
+        </ul>
+    </li>
     <li data-nav-id="/cli/cdsctl/project/keys/" class="dd-item">
       <a href="https://ovh.github.io/cds/cli/cdsctl/project/keys/">
         <span>keys</span><i class="fa fa-angle-right fa-lg category-icon"></i>
@@ -1511,33 +1536,6 @@
         <a href="https://ovh.github.io/cds/cli/cdsctl/project/list/">
           <span>list</span>
         </a>
-    </li>
-    <li data-nav-id="/cli/cdsctl/project/platform/" class="dd-item">
-      <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/">
-        <span>platform</span><i class="fa fa-angle-right fa-lg category-icon"></i>
-      </a>
-        <ul>
-      <li data-nav-id="/cli/cdsctl/project/platform/delete/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/delete/">
-          <span>delete</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/project/platform/export/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/export/">
-          <span>export</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/project/platform/import/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/import/">
-          <span>import</span>
-        </a>
-    </li>
-      <li data-nav-id="/cli/cdsctl/project/platform/list/" class="dd-item">
-        <a href="https://ovh.github.io/cds/cli/cdsctl/project/platform/list/">
-          <span>list</span>
-        </a>
-    </li>
-        </ul>
     </li>
       <li data-nav-id="/cli/cdsctl/project/show/" class="dd-item">
         <a href="https://ovh.github.io/cds/cli/cdsctl/project/show/">
@@ -2225,7 +2223,7 @@
               
               
             <div id="top-github-link">
-              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/cdsctl/admin/platform-model/show.md" target="blank">
+              <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/cli/api/integration.md" target="blank">
                 <i class="fa fa-code-fork"></i>
                 Edit page
               </a>
@@ -2248,17 +2246,7 @@
 
 
 
-
-
-
-
-
-
- <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/'>cdsctl</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/admin/'>admin</a> > <a href='https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/'>platform-model</a> > show
-
- 
-
- 
+ <a href='https://ovh.github.io/cds/'>CDS - Continuous Delivery Service</a> > <a href='https://ovh.github.io/cds/cli/'>Command Line - REST API - SDK</a> > <a href='https://ovh.github.io/cds/cli/api/'>REST API</a> > integration
 
  
 
@@ -2275,12 +2263,13 @@
 <ul>
 <li>
 <ul>
-<li><a href="#cdsctl-admin-platform-model-show">cdsctl admin platform-model show</a>
+<li>
 <ul>
-<li><a href="#synopsis">Synopsis</a></li>
-<li><a href="#options">Options</a></li>
-<li><a href="#options-inherited-from-parent-commands">Options inherited from parent commands</a></li>
-<li><a href="#see-also">SEE ALSO</a></li>
+<li><a href="#post-integration-models">POST <code>/integration/models</code></a></li>
+<li><a href="#get-integration-models">GET <code>/integration/models</code></a></li>
+<li><a href="#put-integration-models-name">PUT <code>/integration/models/&lt;name&gt;</code></a></li>
+<li><a href="#get-integration-models-name">GET <code>/integration/models/&lt;name&gt;</code></a></li>
+<li><a href="#delete-integration-models-name">DELETE <code>/integration/models/&lt;name&gt;</code></a></li>
 </ul></li>
 </ul></li>
 </ul>
@@ -2294,7 +2283,7 @@
         <div id="body-inner">
           
             <div id="page-title">
-                <h1>show</h1>
+                <h1>integration</h1>
                 <p></p>
             </div>
           
@@ -2304,36 +2293,145 @@
 
 
 
-<h2 id="cdsctl-admin-platform-model-show">cdsctl admin platform-model show</h2>
+<h3 id="post-integration-models">POST <code>/integration/models</code></h3>
 
-<p><code>Show details of a CDS Platform model</code></p>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/integration/models</code></strong></th>
+</tr>
+</thead>
 
-<h3 id="synopsis">Synopsis</h3>
+<tbody>
+<tr>
+<td>Method</td>
+<td>POST</td>
+</tr>
 
-<p><code>Show details of a CDS Platform model</code></p>
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
 
-<pre><code>cdsctl admin platform-model show NAME [flags]
-</code></pre>
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+postIntegrationModelHandler%22">postIntegrationModelHandler</a></td>
+</tr>
+</tbody>
+</table>
 
-<h3 id="options">Options</h3>
+<h3 id="get-integration-models">GET <code>/integration/models</code></h3>
 
-<pre><code>      --format string   Output format: plain|json|yaml (default &quot;plain&quot;)
-  -h, --help            help for show
-</code></pre>
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/integration/models</code></strong></th>
+</tr>
+</thead>
 
-<h3 id="options-inherited-from-parent-commands">Options inherited from parent commands</h3>
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
 
-<pre><code>  -f, --file string   set configuration file
-  -k, --insecure      (SSL) This option explicitly allows curl to perform &quot;insecure&quot; SSL connections and transfers.
-  -w, --no-warnings   do not display warnings
-  -v, --verbose       verbose output
-</code></pre>
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
 
-<h3 id="see-also">SEE ALSO</h3>
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getIntegrationModelsHandler%22">getIntegrationModelsHandler</a></td>
+</tr>
+</tbody>
+</table>
 
-<ul>
-<li><a href="https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/">cdsctl admin platform-model</a>   - <code>Manage CDS Platform models</code></li>
-</ul>
+<h3 id="put-integration-models-name">PUT <code>/integration/models/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/integration/models/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>PUT</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+putIntegrationModelHandler%22">putIntegrationModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="get-integration-models-name">GET <code>/integration/models/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/integration/models/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>GET</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+getIntegrationModelHandler%22">getIntegrationModelHandler</a></td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="delete-integration-models-name">DELETE <code>/integration/models/&lt;name&gt;</code></h3>
+
+<table>
+<thead>
+<tr>
+<th>URL</th>
+<th><strong><code>/integration/models/&lt;name&gt;</code></strong></th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>Method</td>
+<td>DELETE</td>
+</tr>
+
+<tr>
+<td>Permissions</td>
+<td>NeedAdmin: true -  Auth: true</td>
+</tr>
+
+<tr>
+<td>Code</td>
+<td><a href="https://github.com/ovh/cds/search?q=%22func+%28api+*API%29+deleteIntegrationModelHandler%22">deleteIntegrationModelHandler</a></td>
+</tr>
+</tbody>
+</table>
 
 
 <footer class=" footline" >
@@ -2353,8 +2451,8 @@
     
 
     <div id="navigation">
-        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/list/" title="list"> <i class="fa fa-chevron-left"></i></a>
-            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/cdsctl/admin/plugins/" title="plugins" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
+        <a class="nav nav-prev" href="https://ovh.github.io/cds/cli/api/import/" title="import"> <i class="fa fa-chevron-left"></i></a>
+            <a class="nav nav-next" href="https://ovh.github.io/cds/cli/api/login/" title="login" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a></div>
 
     </section>
     <div style="left: -1000px; overflow: scroll; position: absolute; top: -1000px; border: none; box-sizing: content-box; height: 200px; margin: 0px; padding: 0px; width: 200px;">

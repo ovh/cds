@@ -674,7 +674,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/delete/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/delete/</loc>
   </url>
   
   <url>
@@ -726,11 +726,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/project/keys/delete/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/project/integration/delete/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/project/platform/delete/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/project/keys/delete/</loc>
   </url>
   
   <url>
@@ -826,7 +826,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/export/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/export/</loc>
   </url>
   
   <url>
@@ -846,7 +846,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/project/platform/export/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/project/integration/export/</loc>
   </url>
   
   <url>
@@ -942,7 +942,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/import/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/import/</loc>
   </url>
   
   <url>
@@ -978,7 +978,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/project/platform/import/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/project/integration/import/</loc>
   </url>
   
   <url>
@@ -999,6 +999,18 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/template/instances/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/api/integration/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/project/integration/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/</loc>
   </url>
   
   <url>
@@ -1034,11 +1046,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/migration/list/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/list/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/list/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/migration/list/</loc>
   </url>
   
   <url>
@@ -1086,15 +1098,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/project/integration/list/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/project/keys/list/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/project/list/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/project/platform/list/</loc>
   </url>
   
   <url>
@@ -1187,18 +1199,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/cli/cdsctl/pipeline/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/cli/api/platform/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/project/platform/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/</loc>
   </url>
   
   <url>
@@ -1346,7 +1346,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/platform-model/show/</loc>
+    <loc>https://ovh.github.io/cds/cli/cdsctl/admin/integration-model/show/</loc>
   </url>
   
   <url>
