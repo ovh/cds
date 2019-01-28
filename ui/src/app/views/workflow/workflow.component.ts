@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { Component, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, NavigationStart, Params, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { SemanticSidebarComponent } from 'ng-semantic/ng-semantic';
@@ -25,7 +25,7 @@ import { WorkflowSaveAsCodeComponent } from '../../shared/workflow/modal/save-as
     templateUrl: './workflow.html',
     styleUrls: ['./workflow.scss']
 })
-@AutoUnsubscribe(['onScroll'])
+@AutoUnsubscribe()
 export class WorkflowComponent implements OnInit {
     @ViewChild('templateApplyModal')
     templateApplyModal: WorkflowTemplateApplyModalComponent;
@@ -55,7 +55,6 @@ export class WorkflowComponent implements OnInit {
     @ViewChildren(SuiPopupController) popups: QueryList<SuiPopupController>;
     @ViewChildren(SuiPopupTemplateController) popups2: QueryList<SuiPopupTemplateController<SuiPopup>>;
 
-    onScroll = new EventEmitter<boolean>();
     selectedNodeID: number;
     selectedNodeRef: string;
     selectecHookRef: string;

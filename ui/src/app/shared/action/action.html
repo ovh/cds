@@ -92,7 +92,7 @@
         </div>
     </div>
     <div class="ui segment" *ngIf="steps.length > 0 && publicActions" [class.off]="!editableAction.enabled">
-        <div class="dragula-container" [dragula]="'bag-nonfinal'" [dragulaModel]="steps" *ngIf="steps">
+        <div class="dragula-container" [dragula]="'bag-nonfinal'" [(dragulaModel)]="steps" *ngIf="steps">
             <div *ngFor="let step of steps; let idxStep = index" class="step" [class.off]="!step.enabled">
                 <app-action-step
                     [action]="editableAction"

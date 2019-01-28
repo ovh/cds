@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -16,13 +16,12 @@ import { DurationService } from '../../../duration/duration.service';
     templateUrl: './workflow.sidebar.run.component.html',
     styleUrls: ['./workflow.sidebar.run.component.scss']
 })
-@AutoUnsubscribe(['scrolled'])
-export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
+@AutoUnsubscribe()
+export class WorkflowSidebarRunListComponent implements OnDestroy {
+    @ViewChild('tagsList') tagsList: ElementRef;
 
-    // Project that contains the workflow
     @Input() project: Project;
 
-    // Workflow
     _workflow: Workflow;
     @Input('workflow')
     set workflow(data: Workflow) {
@@ -50,12 +49,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     }
     get workflow() { return this._workflow; }
 
-    @Input() scrolled: EventEmitter<boolean>;
-
-    @ViewChild('tagsList') tagsList: ElementRef;
-
     eventSubscription: Subscription;
-    // List of workflow run
     workflowRuns: Array<WorkflowRun>;
 
     // search part
@@ -66,7 +60,7 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     ready = false;
     listingSub: Subscription;
     tagsSubs: Subscription;
-    filteredTags: {[key: number]: WorkflowRunTags[]} = {};
+    filteredTags: { [key: number]: WorkflowRunTags[] } = {};
 
     durationIntervalID: number;
 
@@ -82,31 +76,25 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
         private _router: Router,
         private _eventStore: WorkflowEventStore
     ) {
-
         this.subWorkflowRun = this._eventStore.selectedRun().subscribe(wr => {
             this.selectedWorkfowRun = wr;
         });
-
         this.listingSub = this._eventStore.isListingRuns().subscribe(b => {
             this.ready = !b;
         });
     }
 
-    ngOnInit() {
-        this.scrolled.subscribe((scrolled) => {
-            if (scrolled && (!Array.isArray(this.selectedTags) || !this.selectedTags.length)) {
-                this.offset += 50;
-                this.loadingMore = true;
-                this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())
-                    .pipe(
-                        finalize(() => this.loadingMore = false)
-                    )
-                    .subscribe((runs) => {
-                        this.workflowRuns = this.workflowRuns.concat(runs);
-                        this.refreshRun();
-                    });
-            }
-        });
+    scroll() {
+        if (!Array.isArray(this.selectedTags) || !this.selectedTags.length) {
+            this.offset += 50;
+            this.loadingMore = true;
+            this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())
+                .pipe(finalize(() => this.loadingMore = false))
+                .subscribe((runs) => {
+                    this.workflowRuns = this.workflowRuns.concat(runs);
+                    this.refreshRun();
+                });
+        }
     }
 
     initSelectableTags(): void {
@@ -138,8 +126,8 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
             return [];
         }
         return tags
-          .filter((tg) => this.tagToDisplay.indexOf(tg.tag) !== -1)
-          .sort((tga, tgb) => this.tagToDisplay.indexOf(tga.tag) - this.tagToDisplay.indexOf(tgb.tag));
+            .filter((tg) => this.tagToDisplay.indexOf(tg.tag) !== -1)
+            .sort((tga, tgb) => this.tagToDisplay.indexOf(tga.tag) - this.tagToDisplay.indexOf(tgb.tag));
     }
 
     getDuration(status: string, start: string, done: string): string {
@@ -158,12 +146,12 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
 
         if (Array.isArray(this.selectedTags) && this.selectedTags.length) {
             filters = this.selectedTags.reduce((prev, cur) => {
-              let splitted = cur.split(':');
-              if (splitted.length === 2) {
-                prev[splitted[0]] = splitted[1];
-              }
+                let splitted = cur.split(':');
+                if (splitted.length === 2) {
+                    prev[splitted[0]] = splitted[1];
+                }
 
-              return prev;
+                return prev;
             }, {});
         }
 

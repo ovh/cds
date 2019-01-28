@@ -80,7 +80,7 @@ func ProjectIntegrationImportFunc(v cli.Values) error {
 var ProjectIntegrationExportCmd = cli.Command{
 	Name:    "export",
 	Short:   "Export a integration configuration from a project to stdout",
-	Example: "cdsctl integration export MY-PROJECT MY-PLATFORM-NAME > file.yaml",
+	Example: "cdsctl integration export MY-PROJECT MY-INTEGRATION-NAME > file.yaml",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},

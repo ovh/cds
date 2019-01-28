@@ -1,64 +1,46 @@
-<div class="workflowNode">
-    <div class="nodePipeline pointing" [class.running]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
-         [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
-         [class.success]="noderun?.status === pipelineStatus.SUCCESS"
-         [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
-         [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
-         [class.active]="selected">
-
-        <!-- Node name + pipeline name -->
-        <div class="node pipeline">
-            <div class="ellipsis">
-                <b>{{node.name}}</b>
-                <div *ngIf="warnings > 0"
-                     suiPopup
-                     popupPlacement="right center"
-                     [popupText]="'warning_build_title' | translate: {nb: warnings}">
-                    <i class="warning sign icon orange fixed"></i>
-                </div>
+<div class="node workflowNode pointing" [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
+    [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
+    [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
+    [class.active]="selected">
+    <div class="title">
+        <div class="name ellipsis" title="{{node.name}}">
+            {{node.name}}
+        </div>
+        <div *ngIf="warnings > 0" suiPopup popupPlacement="right center" [popupText]="'warning_build_title' | translate: {nb: warnings}"
+            class="warn">
+            <i class="ui icon warning sign orange"></i>
+        </div>
+        <div *ngIf="noderun && noderun.subnumber" class="count">
+            {{ noderun?.subnumber }}
+        </div>
+    </div>
+    <div class="details">
+        <div *ngIf="node.context.application_id || node.context.environment_id || node.context.project_integration_id"
+            class="context">
+            <div *ngIf="node.context.application_id" class="item ellipsis">
+                <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
+                    title="{{ 'common_application_title' | translate }}{{workflow.applications[node.context.application_id].name}}">
+                    {{workflow.applications[node.context.application_id].name}}
+                </a>
             </div>
-
-            <div class="node context"
-                 [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
-                 [class.success]="noderun?.status === pipelineStatus.SUCCESS"
-                 [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
-                 [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
-                 *ngIf="node.context.application_id || node.context.environment_id || node.context.project_integration_id">
-                <!-- application name on a semantic ui ribbon -->
-                <div class="node application link"
-                     [class.all]="!node.context.environment_id && !node.context.project_integration_id"
-                     [class.tier]="node.context.application_id && node.context.environment_id && node.context.project_integration_id"
-                     *ngIf="node.context.application_id">
-                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]" title="{{ 'common_application_title' | translate }}{{workflow.applications[node.context.application_id].name}}">
-                        <span class="content-link">{{workflow.applications[node.context.application_id].name}}</span>
-                    </a>
-                </div>
-
-                <!-- environment name on a semantic ui ribbon -->
-                <div class="node environment link"
-                     [class.all]="!node.context.application_id && !node.context.project_integration_id"
-                     [class.tier]="node.context.application_id && node.context.environment_id && node.context.project_integration_id"
-                     *ngIf="node.context.environment_id">
-                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: workflow.environments[node.context.environment_id].name}"
-                       title="{{ 'common_environment_title' | translate}}{{workflow.environments[node.context.environment_id].name}}">
-                        <span class="content-link">{{workflow.environments[node.context.environment_id].name}}</span>
-                    </a>
-                </div>
-
-                <!-- integration name on a semantic ui ribbon -->
-                <div class="node integration link"
-                     [class.all]="!node.context.application_id && !node.context.environment_id"
-                     [class.tier]="node.context.application_id && node.context.environment_id && node.context.project_integration_id"
-                     *ngIf="node.context.project_integration_id">
-                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'integrations'}"
-                       title="{{ 'common_integration_title' | translate}}{{workflow.project_integrations[node.context.project_integration_id].name}}">
-                        <span class="content-link">{{workflow.project_integrations[node.context.project_integration_id].name}}</span>
-                    </a>
-                </div>
+            <div *ngIf="node.context.environment_id" class="item ellipsis">
+                <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: workflow.environments[node.context.environment_id].name}"
+                    title="{{ 'common_environment_title' | translate}}{{workflow.environments[node.context.environment_id].name}}">
+                    {{workflow.environments[node.context.environment_id].name}}
+                </a>
             </div>
-            <div class="fixed node subnumber" *ngIf="noderun">
-                <i class="tag icon"></i>
-                {{ noderun?.subnumber }}
+            <div *ngIf="node.context.project_integration_id" class="item ellipsis">
+                <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'integrations'}"
+                    title="{{ 'common_integration_title' | translate}}{{workflow.project_integrations[node.context.project_integration_id].name}}">
+                    {{workflow.project_integrations[node.context.project__id].name}}
+                </a>
+            </div>
+        </div>
+        <div class="actions-wrapper">
+            <div class="actions">
+                <div *ngIf="noderun" class="ui action">
+                    <i class="ui icon file text grey large" [title]="'btn_logs' | translate" (click)="displayLogs()"></i>
+                </div>
             </div>
         </div>
     </div>

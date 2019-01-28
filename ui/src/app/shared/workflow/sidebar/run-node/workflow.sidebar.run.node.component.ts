@@ -150,7 +150,6 @@ export class WorkflowSidebarRunNodeComponent implements OnDestroy, OnInit {
                     'run', this.currentWorkflowRun.num,
                     'node', this.currentWorkflowNodeRun.id], { queryParams: { name: this.node.name } });
         }
-
     }
 
     getDuration() {

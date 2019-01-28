@@ -24,7 +24,8 @@ export class BroadcastListComponent extends Table<Broadcast> {
         super();
 
         this._broadcastStore.getBroadcasts().subscribe(broadcasts => {
-            this.broadcasts = broadcasts.toArray().sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
+            this.broadcasts = broadcasts.valueSeq().toArray()
+                .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
         });
 
         this.path = [<PathItem>{

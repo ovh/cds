@@ -7,7 +7,6 @@ import {PipelineStatus} from '../../model/pipeline.model';
     styleUrls: ['./status.icon.scss']
 })
 export class StatusIconComponent {
-
     @Input() status: string;
     @Input() value: string;
     @Input() optional: boolean;

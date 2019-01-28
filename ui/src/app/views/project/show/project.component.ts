@@ -1,19 +1,20 @@
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import * as  immutable from 'immutable';
-import {Subscription} from 'rxjs';
-import {finalize} from 'rxjs/operators';
-import {PermissionValue} from '../../../model/permission.model';
-import {LoadOpts, Project} from '../../../model/project.model';
-import {User} from '../../../model/user.model';
-import {Warning} from '../../../model/warning.model';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {HelpersService} from '../../../service/helpers/helpers.service';
-import {ProjectStore} from '../../../service/project/project.store';
-import {WarningStore} from '../../../service/warning/warning.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../shared/toast/ToastService';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { PermissionValue } from '../../../model/permission.model';
+import { LoadOpts, Project } from '../../../model/project.model';
+import { User } from '../../../model/user.model';
+import { Warning } from '../../../model/warning.model';
+import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { HelpersService } from '../../../service/helpers/helpers.service';
+import { ProjectStore } from '../../../service/project/project.store';
+import { WarningStore } from '../../../service/warning/warning.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { Tab } from '../../../shared/tabs/tabs.component';
+import { ToastService } from '../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-project-show',
@@ -27,7 +28,8 @@ export class ProjectShowComponent implements OnInit {
     project: Project;
     private projectSubscriber: Subscription;
 
-    selectedTab = 'workflows';
+    tabs: Array<Tab>;
+    selectedTab: Tab;
 
     permissionEnum = PermissionValue;
 
@@ -39,34 +41,68 @@ export class ProjectShowComponent implements OnInit {
     loadingFav = false;
 
     allWarnings: Array<Warning>;
-    warnVariable: Array<Warning>;
-    warnPerm: Array<Warning>;
-    warnKeys: Array<Warning>;
-    warnVCS: Array<Warning>;
-    warnApplications: Array<Warning>;
-    warnPipelines: Array<Warning>;
-    warnWorkflow: Array<Warning>;
-    warnEnvironment: Array<Warning>;
+    warnings: { [key: string]: Array<Warning> };
     warningsSub: Subscription;
 
-    constructor(private _projectStore: ProjectStore,
-                private _route: ActivatedRoute,
-                private _router: Router,
-                private _toast: ToastService,
-                public _translate: TranslateService,
-                private _authentificationStore: AuthentificationStore,
-                private _warningStore: WarningStore,
-                private _helpersService: HelpersService) {
+    constructor(
+        private _projectStore: ProjectStore,
+        private _route: ActivatedRoute,
+        private _router: Router,
+        private _toast: ToastService,
+        public _translate: TranslateService,
+        private _authentificationStore: AuthentificationStore,
+        private _warningStore: WarningStore,
+        private _helpersService: HelpersService
+    ) {
+        this.initWarnings();
         this.currentUser = this._authentificationStore.getUser();
     }
 
     ngOnInit() {
+        this.tabs = [<Tab>{
+            translate: 'common_workflows',
+            icon: 'share alternate',
+            key: 'workflows',
+            default: true
+        }, <Tab>{
+            translate: 'common_applications',
+            icon: 'rocket',
+            key: 'applications'
+        }, <Tab>{
+            translate: 'common_pipelines',
+            icon: 'sitemap',
+            key: 'pipelines'
+        }, <Tab>{
+            translate: 'common_environments',
+            icon: 'tree',
+            key: 'environments'
+        }, <Tab>{
+            translate: 'common_variables',
+            icon: 'font',
+            key: 'variables'
+        }, <Tab>{
+            translate: 'common_permissions',
+            icon: 'users',
+            key: 'permissions'
+        }, <Tab>{
+            translate: 'common_keys',
+            icon: 'privacy',
+            key: 'keys'
+        }, <Tab>{
+            translate: 'common_integrations',
+            icon: 'plug',
+            key: 'integrations'
+        }, <Tab>{
+            translate: 'common_warnings',
+            icon: 'bug',
+            key: 'warnings'
+        }, <Tab>{
+            translate: 'common_advanced',
+            icon: 'graduation',
+            key: 'advanced'
+        }];
+
         this._route.queryParams.subscribe((params) => {
-            let goToDefaultTab = true;
-            if (params['tab']) {
-                this.selectedTab = params['tab'];
-                goToDefaultTab = false;
-            }
             this._route.params.subscribe(routeParams => {
                 const key = routeParams['key'];
                 if (key) {
@@ -74,7 +110,7 @@ export class ProjectShowComponent implements OnInit {
                         this.project = undefined;
                     }
                     if (!this.project) {
-                        this.refreshDatas(key, goToDefaultTab);
+                        this.refreshDatas(key);
                     }
                 }
             });
@@ -88,23 +124,46 @@ export class ProjectShowComponent implements OnInit {
         }
     }
 
-    refreshDatas(key: string, goToDefaultTab: boolean): void {
+    initWarnings() {
+        this.warnings = {
+            'workflows': new Array<Warning>(),
+            'applications': new Array<Warning>(),
+            'pipelines': new Array<Warning>(),
+            'environments': new Array<Warning>(),
+            'variables': new Array<Warning>(),
+            'permissions': new Array<Warning>(),
+            'keys': new Array<Warning>(),
+            'advanced': new Array<Warning>(),
+        };
+    }
+
+    selectTab(tab: Tab): void {
+        this.selectedTab = tab;
+    }
+
+    refreshDatas(key: string): void {
         if (this.projectSubscriber) {
             this.projectSubscriber.unsubscribe();
         }
         let opts = [
-          new LoadOpts('withApplicationNames', 'application_names'),
-          new LoadOpts('withPipelineNames', 'pipeline_names'),
-          new LoadOpts('withWorkflowNames', 'workflow_names'),
-          new LoadOpts('withLabels', 'labels'),
+            new LoadOpts('withApplicationNames', 'application_names'),
+            new LoadOpts('withPipelineNames', 'pipeline_names'),
+            new LoadOpts('withWorkflowNames', 'workflow_names'),
+            new LoadOpts('withLabels', 'labels'),
         ];
 
-        if (this.selectedTab === 'variables') {
-            opts.push(new LoadOpts('withVariables', 'variables'));
-        } else if (this.selectedTab === 'environments') {
-            opts.push(new LoadOpts('withEnvironments', 'environments'));
-        } else if (this.selectedTab === 'permissions') {
-            opts.push(new LoadOpts('withEnvironments', 'environments'));
+        if (this.selectedTab) {
+            switch (this.selectedTab.key) {
+                case 'variables':
+                    opts.push(new LoadOpts('withVariables', 'variables'));
+                    break;
+                case 'environments':
+                    opts.push(new LoadOpts('withEnvironments', 'environments'));
+                    break;
+                case 'permissions':
+                    opts.push(new LoadOpts('withEnvironments', 'environments'));
+                    break;
+            }
         }
 
         this.projectSubscriber = this._projectStore.getProjects(key, opts).subscribe(prjs => {
@@ -112,10 +171,10 @@ export class ProjectShowComponent implements OnInit {
             if (proj) {
                 if (!proj.externalChange) {
                     if (proj.labels) {
-                      proj.labels = proj.labels.map((lbl) => {
-                        lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);
-                        return lbl;
-                      });
+                        proj.labels = proj.labels.map((lbl) => {
+                            lbl.font_color = this._helpersService.getBrightnessColor(lbl.color);
+                            return lbl;
+                        });
                     }
                     this.project = proj;
                 }
@@ -131,47 +190,40 @@ export class ProjectShowComponent implements OnInit {
 
     splitWarnings(warnings: immutable.Map<string, Warning>): void {
         if (warnings) {
-            this.allWarnings = warnings.toArray().sort((a, b) => {
+            this.allWarnings = warnings.valueSeq().toArray().sort((a, b) => {
                 return a.id - b.id;
             });
-            this.warnVariable = new Array<Warning>();
-            this.warnPerm = new Array<Warning>();
-            this.warnKeys = new Array<Warning>();
-            this.warnVCS = new Array<Warning>();
-            this.warnApplications = new Array<Warning>();
-            this.warnPipelines = new Array<Warning>();
-            this.warnWorkflow = new Array<Warning>();
-            this.warnEnvironment = new Array<Warning>();
-            warnings.valueSeq().toArray().forEach(v => {
+            this.initWarnings();
+            this.allWarnings.forEach(v => {
                 if (v.ignored) {
                     return;
                 }
                 if (v.application_name !== '') {
-                    this.warnApplications.push(v);
+                    this.warnings['applications'].push(v);
                 }
                 if (v.pipeline_name !== '') {
-                    this.warnPipelines.push(v);
+                    this.warnings['pipelines'].push(v);
                 }
                 if (v.environment_name !== '') {
-                    this.warnEnvironment.push(v);
+                    this.warnings['environments'].push(v);
                 }
                 if (v.workflow_name !== '') {
-                    this.warnWorkflow.push(v);
+                    this.warnings['workflows'].push(v);
                 }
                 if (v.type.indexOf('_VARIABLE') !== -1) {
-                    this.warnVariable.push(v);
+                    this.warnings['variables'].push(v);
                     return;
                 }
                 if (v.type.indexOf('_PERMISSION') !== -1) {
-                    this.warnPerm.push(v);
+                    this.warnings['permissions'].push(v);
                     return;
                 }
                 if (v.type.indexOf('_KEY') !== -1) {
-                    this.warnKeys.push(v);
+                    this.warnings['keys'].push(v);
                     return;
                 }
                 if (v.type.indexOf('PROJECT_VCS') !== -1) {
-                    this.warnVCS.push(v);
+                    this.warnings['advanced'].push(v);
                     return;
                 }
             });
@@ -179,13 +231,9 @@ export class ProjectShowComponent implements OnInit {
     }
 
     updateFav() {
-      this.loadingFav = true;
-      this._projectStore.updateFavorite(this.project.key)
-        .pipe(finalize(() => this.loadingFav = false))
-        .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
-    }
-
-    showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key + '?tab=' + tab);
+        this.loadingFav = true;
+        this._projectStore.updateFavorite(this.project.key)
+            .pipe(finalize(() => this.loadingFav = false))
+            .subscribe(() => this._toast.success('', this._translate.instant('common_favorites_updated')))
     }
 }

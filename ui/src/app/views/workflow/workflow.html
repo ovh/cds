@@ -91,8 +91,7 @@
         </ng-template>
     </div>
 </app-workflow-breadcrumb>
-<aside class="sidebar scrollable expanded" infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
-    [scrollWindow]="false" (scrolled)="onScroll.emit(true)">
+<aside class="sidebar expanded">
     <div class="floated right">
         <button class="ui large icon button transparent close-button" (click)="changeToRunsMode()" *ngIf="sidebarMode !== sidebarModes.RUNS">
             <i class="black close icon"></i>
@@ -106,7 +105,7 @@
             <app-workflow-sidebar-hook [project]="project" [workflow]="workflow"></app-workflow-sidebar-hook>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUNS">
-            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow" [scrolled]="onScroll"></app-workflow-sidebar-run-list>
+            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow"></app-workflow-sidebar-run-list>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_NODE">
             <app-workflow-sidebar-run-node [project]="project" [workflow]="workflow">

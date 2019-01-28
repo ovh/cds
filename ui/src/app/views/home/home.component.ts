@@ -51,7 +51,7 @@ export class HomeComponent implements OnInit {
             .subscribe((broadcasts) => {
                 this.loadingBroadcasts = false;
                 if (broadcasts) {
-                    this.broadcasts = broadcasts.toArray().filter((br) => !br.read && !br.archived).slice(0, 5);
+                    this.broadcasts = broadcasts.valueSeq().toArray().filter((br) => !br.read && !br.archived).slice(0, 5);
                 }
             }, () => this.loadingBroadcasts = false);
     }
