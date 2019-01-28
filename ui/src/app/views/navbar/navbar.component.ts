@@ -231,11 +231,12 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     }
 
     searchItem(list: Array<NavbarSearchItem>, query: string): boolean | Array<NavbarSearchItem> {
+        let queryLowerCase = query.toLowerCase();
         let found: Array<NavbarSearchItem> = [];
         for (let elt of list) {
             if (query === elt.projectKey) {
                 found.push(elt);
-            } else if (elt.title.toLowerCase().indexOf(query.toLowerCase()) !== -1) {
+            } else if (elt.title.toLowerCase().indexOf(queryLowerCase) !== -1) {
                 found.push(elt);
             }
         }
