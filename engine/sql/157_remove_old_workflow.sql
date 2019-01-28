@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS build_log;
 DROP TABLE IF EXISTS artifact;
 DROP TABLE IF EXISTS pipeline_build_log;
 DROP TABLE IF EXISTS pipeline_build_test;
+DROP TABLE IF EXISTS plugin;
 
 -- +migrate Down
 SELECT 1;
