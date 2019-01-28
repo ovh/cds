@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -72,6 +74,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		groupName := vars["group"]
+		onlyProject := FormBool(r, "onlyProject")
 
 		var groupProject sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupProject); err != nil {
@@ -97,6 +100,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		if errlg != nil {
 			return sdk.WrapError(errlg, "updateGroupRoleHandler: Cannot find %s", groupProject.Group.Name)
 		}
+		groupProject.Group.ID = g.ID
 
 		var gpInProject sdk.GroupPermission
 		nbGrpWrite := 0
@@ -128,6 +132,30 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot add group %s in project %s", g.Name, p.Name)
 		}
 
+		if !onlyProject {
+			wfList, err := workflow.LoadAllNames(tx, p.ID, deprecatedGetUser(ctx))
+			if err != nil {
+				return sdk.WrapError(err, "cannot load all workflow names for project id %d key %s", p.ID, p.Key)
+			}
+			for _, wf := range wfList {
+				role, errLoad := group.LoadRoleGroupInWorkflow(tx, wf.ID, groupProject.Group.ID)
+				if errLoad != nil {
+					if errLoad == sql.ErrNoRows {
+						continue
+					}
+					return sdk.WrapError(errLoad, "cannot load role for workflow %s with id %d and group id %d", wf.Name, wf.ID, groupProject.Group.ID)
+				}
+
+				if gpInProject.Permission != role { // If project role and workflow role aren't sync do not update
+					continue
+				}
+
+				if err := group.UpdateWorkflowGroup(tx, &sdk.Workflow{ID: wf.ID, ProjectID: p.ID}, groupProject); err != nil {
+					return sdk.WrapError(err, "cannot update group %d in workflow %s with id %d", groupProject.Group.ID, wf.Name, wf.ID)
+				}
+			}
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot start transaction")
 		}
@@ -147,6 +175,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
+		onlyProject := FormBool(r, "onlyProject")
 
 		var groupProject sdk.GroupPermission
 		if err := service.UnmarshalBody(r, &groupProject); err != nil {
@@ -162,6 +191,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 		if errlg != nil {
 			return sdk.WrapError(errlg, "AddGroupInProject: Cannot find %s", groupProject.Group.Name)
 		}
+		groupProject.Group.ID = g.ID
 
 		groupInProject, errc := group.CheckGroupInProject(api.mustDB(), p.ID, g.ID)
 		if errc != nil {
@@ -183,6 +213,18 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 
 		if err := group.InsertGroupInProject(tx, p.ID, g.ID, groupProject.Permission); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot add group %s in project %s", g.Name, p.Name)
+		}
+
+		if !onlyProject {
+			wfList, err := workflow.LoadAllNames(tx, p.ID, deprecatedGetUser(ctx))
+			if err != nil {
+				return sdk.WrapError(err, "cannot load all workflow names for project id %d key %s", p.ID, p.Key)
+			}
+			for _, wf := range wfList {
+				if err := group.UpsertWorkflowGroup(tx, p.ID, wf.ID, groupProject); err != nil {
+					return sdk.WrapError(err, "cannot upsert group %d in workflow %s with id %d", groupProject.Group.ID, wf.Name, wf.ID)
+				}
+			}
 		}
 
 		if err := tx.Commit(); err != nil {

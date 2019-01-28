@@ -168,7 +168,7 @@ func importWorkflowGroups(db gorp.SqlExecutor, w *sdk.Workflow) error {
 			}
 			w.Groups[i].Group = *g
 		}
-		if err := upsertAllGroups(db, w, w.Groups); err != nil {
+		if err := group.UpsertAllWorkflowGroups(db, w, w.Groups); err != nil {
 			return sdk.WrapError(err, "Unable to update workflow")
 		}
 	}

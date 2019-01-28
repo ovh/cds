@@ -13,10 +13,18 @@ There are 3 types of permissions:
 These permissions can be attached to different objects:
 
 + On project
-+ On application
-+ On environment
-+ On pipeline
 + On workflow
++ On workflow node
+
+
+|                                                                                                  | Project | Workflow | Workflow node                    |
+|--------------------------------------------------------------------------------------------------|---------|----------|----------------------------------|
+| Créer un workflow                                                                                |   RWX   |     -    |                -                 |
+| Editer un workflow  (changer run conditions, ajouter noeuds, éditer payload, notifications, ...) |    RO   |    RWX   |                -                 |
+| Créer/éditer un environment/pipeline/application                                                 |   RWX   |     -    |                -                 |
+| Gérer les droits sur un projet                                                                   |   RWX   |     -    |                -                 |
+| Gérer les droits sur un workflow                                                                 |    RO   |    RWX   |                                  |
+| Lancer un workflow                                                                               |    RO   |    RX    | / - OU RX (s'il y a des groupes) |
 
 Permissions cannot be attached directly to users, they need to be attached to groups of users. Users inherit their permissions from the groups they are belonging to.
 

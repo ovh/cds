@@ -488,7 +488,7 @@ func load(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk
 
 	// Load groups
 	_, next = observability.Span(ctx, "workflow.load.loadWorkflowGroups")
-	gps, err := loadWorkflowGroups(db, res)
+	gps, err := group.LoadWorkflowGroups(db, res.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Unable to load workflow groups")
 	}

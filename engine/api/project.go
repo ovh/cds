@@ -247,7 +247,7 @@ func (api *API) getProjectHandler() service.Handler {
 		if withLabels {
 			opts = append(opts, project.LoadOptions.WithLabels)
 		}
-		fmt.Println(deprecatedGetUser(ctx))
+
 		p, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), opts...)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)

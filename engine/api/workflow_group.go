@@ -55,7 +55,7 @@ func (api *API) deleteWorkflowGroupHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.DeleteGroup(tx, wf, oldGp.Group.ID, groupIndex); err != nil {
+		if err := group.DeleteWorkflowGroup(tx, wf, oldGp.Group.ID, groupIndex); err != nil {
 			return sdk.WrapError(err, "Cannot add group")
 		}
 
@@ -117,7 +117,7 @@ func (api *API) putWorkflowGroupHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.UpdateGroup(tx, wf, gp); err != nil {
+		if err := group.UpdateWorkflowGroup(tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "Cannot add group")
 		}
 
@@ -176,7 +176,7 @@ func (api *API) postWorkflowGroupHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.AddGroup(tx, wf, gp); err != nil {
+		if err := group.AddWorkflowGroup(tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "Cannot add group")
 		}
 

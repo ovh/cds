@@ -64,6 +64,9 @@ func UpdateGroupRoleInProject(db gorp.SqlExecutor, projectID, groupID int64, rol
 func InsertGroupInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
 	query := `INSERT INTO project_group (project_id, group_id, role) VALUES($1,$2,$3)`
 	_, err := db.Exec(query, projectID, groupID, role)
+	if err != nil {
+		return sdk.WithStack(err)
+	}
 	return err
 }
 

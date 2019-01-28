@@ -176,6 +176,7 @@ var (
 	ErrCannotParseTemplate                    = Error{ID: 159, Status: http.StatusBadRequest}
 	ErrGroupNotFoundInProject                 = Error{ID: 160, Status: http.StatusBadRequest}
 	ErrGroupNotFoundInWorkflow                = Error{ID: 161, Status: http.StatusBadRequest}
+	ErrWorkflowPermInsufficient               = Error{ID: 162, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -334,6 +335,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrCannotParseTemplate.ID:                    "Cannot parse workflow template",
 	ErrGroupNotFoundInProject.ID:                 "Cannot add this permission group on your workflow because this group is not already in the project's permissions",
 	ErrGroupNotFoundInWorkflow.ID:                "Cannot add this permission group on your workflow node because this group is not already your workflow's permissions",
+	ErrWorkflowPermInsufficient.ID:               "Cannot add this permission group on your workflow because you can't have less rights than rights in your project when you are in RWX",
 }
 
 var errorsFrench = map[int]string{
@@ -492,6 +494,7 @@ var errorsFrench = map[int]string{
 	ErrCannotParseTemplate.ID:                    "Impossible de parser le modèle de workflow",
 	ErrGroupNotFoundInProject.ID:                 "Impossible d'ajouter ce groupe dans vos permissions de workflow car ce groupe n'est pas présent dans les permissions de votre projet",
 	ErrGroupNotFoundInWorkflow.ID:                "Impossible d'ajouter ce groupe dans vos permissions de noeud du workflow car ce groupe n'est pas présent dans les permissions de votre workflow",
+	ErrWorkflowPermInsufficient.ID:               "Impossible d'ajouter ce groupe dans vos permissions du workflow car ce groupe a des droits inférieurs (< RWX) à celui du workflow",
 }
 
 var errorsLanguages = []map[int]string{
