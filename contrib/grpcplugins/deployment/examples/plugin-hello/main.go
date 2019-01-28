@@ -59,11 +59,11 @@ Hello integration must configured as following (content of hello-integration.yml
 	public_configurations:
 	hello-integration-dev:
 		host:
-		value: http://hello.your-deployment-platform.dev.local
+		value: http://hello.your-deployment-system.dev.local
 		type: string
 	hello-integration-prod:
 		host:
-		value: http://hello.your-deployment-platform.prod.local
+		value: http://hello.your-deployment-system.prod.local
 		type: string
 	deployment: true
 	public: true
