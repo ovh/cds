@@ -1,45 +1,45 @@
 <div class="AppRepository ui form">
     <div class="fields">
         <div class="four wide field">
-            <label>{{'deployment_platform_name' | translate}}</label>
+            <label>{{'deployment_integration_name' | translate}}</label>
             <sui-select class="selection"
-                        name="selectPlatform"
-                        [(ngModel)]="selectedPlatform"
-                        [options]="filteredPlatforms"
+                        name="selectIntegration"
+                        [(ngModel)]="selectedIntegration"
+                        [options]="filteredIntegrations"
                         [isSearchable]="true"
                         labelField="name"
-                        #selectPlatform>
-                <sui-select-option *ngFor="let t of selectPlatform.filteredOptions"
+                        #selectIntegration>
+                <sui-select-option *ngFor="let t of selectIntegration.filteredOptions"
                                     [value]="t">
                 </sui-select-option>
             </sui-select>
         </div>
         <div class="six wide field">
-            <ng-container *ngIf="selectedPlatform?.model">
-                <label>{{ 'platform_configuration' | translate }}</label>
-                <div class="inline fields" *ngFor="let k of selectedPlatform.model.deployment_default_config | keys">
+            <ng-container *ngIf="selectedIntegration?.model">
+                <label>{{ 'integration_configuration' | translate }}</label>
+                <div class="inline fields" *ngFor="let k of selectedIntegration.model.deployment_default_config | keys">
                     <div class="six wide field">
                         <label>
                             {{k}}
-                            <span *ngIf="selectedPlatform.model.deployment_default_config[k].description" suiPopup [popupText]="selectedPlatform.model.deployment_default_config[k].description"
+                            <span *ngIf="selectedIntegration.model.deployment_default_config[k].description" suiPopup [popupText]="selectedIntegration.model.deployment_default_config[k].description"
                                 popupPlacement="right center">
                                 <i class="info circle icon"></i>
                             </span>
                         </label>
                     </div>
                     <div class="ten wide field">
-                        <input type="text" [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value" *ngIf="selectedPlatform.model.deployment_default_config[k].type === 'string'">
-                        <input type="password" [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value" *ngIf="selectedPlatform.model.deployment_default_config[k].type === 'password'">
+                        <input type="text" [(ngModel)]="selectedIntegration.model.deployment_default_config[k].value" *ngIf="selectedIntegration.model.deployment_default_config[k].type === 'string'">
+                        <input type="password" [(ngModel)]="selectedIntegration.model.deployment_default_config[k].value" *ngIf="selectedIntegration.model.deployment_default_config[k].type === 'password'">
                         <textarea class="ui textarea" rows="3"
-                            [(ngModel)]="selectedPlatform.model.deployment_default_config[k].value"
-                            *ngIf="selectedPlatform.model.deployment_default_config[k].type === 'text'"></textarea>
+                            [(ngModel)]="selectedIntegration.model.deployment_default_config[k].value"
+                            *ngIf="selectedIntegration.model.deployment_default_config[k].type === 'text'"></textarea>
                     </div>
                 </div>
             </ng-container>
         </div>
         <div class="six wide right aligned field">
-            <button name="savebtn" class="ui green button" [class.loading]="loadingBtn" type="button" (click)="addPlatform()" [disabled]="!selectedPlatform || loadingBtn" >{{ 'btn_add' | translate }}</button>
-            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="addPlatform()" #linkWarning></app-warning-modal>
+            <button name="savebtn" class="ui green button" [class.loading]="loadingBtn" type="button" (click)="addIntegration()" [disabled]="!selectedIntegration || loadingBtn" >{{ 'btn_add' | translate }}</button>
+            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="addIntegration()" #linkWarning></app-warning-modal>
         </div>
     </div>
     <div class="fields">
@@ -49,12 +49,12 @@
                     <thead>
                     <tr>
                         <th class="four wide">{{ 'common_name' | translate }}</th>
-                        <th class="nine wide">{{ 'platform_configuration' | translate }}</th>
+                        <th class="nine wide">{{ 'integration_configuration' | translate }}</th>
                         <th class="three wide"></th>
                     </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let pf of getPlatformNames()">
+                        <tr *ngFor="let pf of getIntegrationNames()">
                             <td>
                                 {{pf}}
                             </td>
@@ -80,10 +80,10 @@
                             </td>
                             <td class="center aligned">
                                 <div>
-                                  <button class="ui green button mb5" [disabled]="loadingBtn" [class.loading]="loadingBtn" type="button" (click)="updatePlatform(pf)" >{{ 'btn_save' | translate }}</button>
+                                  <button class="ui green button mb5" [disabled]="loadingBtn" [class.loading]="loadingBtn" type="button" (click)="updateIntegration(pf)" >{{ 'btn_save' | translate }}</button>
                                 </div>
                                 <div>
-                                  <app-delete-button (event)="clickDeletePlatform(pf)" [loading]="loadingBtn"></app-delete-button>
+                                  <app-delete-button (event)="clickDeleteIntegration(pf)" [loading]="loadingBtn"></app-delete-button>
                                 </div>
                             </td>
                         </tr>

@@ -15,11 +15,11 @@ version:
   value: '{{.cds.version}}'
   type: string
 public_configurations:
-hello-platform-dev:
+hello-integration-dev:
   host:
   value: http://hello.your-deployment-platform.dev.local
   type: string
-hello-platform-prod:
+hello-integration-prod:
   host:
   value: http://hello.your-deployment-platform.prod.local
   type: string

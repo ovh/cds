@@ -6,9 +6,9 @@ import {map} from 'rxjs/operators';
 import {Application} from '../../model/application.model';
 import {Environment} from '../../model/environment.model';
 import {GroupPermission} from '../../model/group.model';
+import {ProjectIntegration} from '../../model/integration.model';
 import {Key} from '../../model/keys.model';
 import {Notification} from '../../model/notification.model';
-import {ProjectPlatform} from '../../model/platform.model';
 import {Label, LoadOpts, Project} from '../../model/project.model';
 import {Variable} from '../../model/variable.model';
 
@@ -42,7 +42,7 @@ export class ProjectService {
             ];
         }
         opts.push(new LoadOpts('withFeatures', 'features'));
-        opts.push(new LoadOpts('withPlatforms', 'platforms'));
+        opts.push(new LoadOpts('withIntegrations', 'integrations'));
         opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
 
         return this._http.get<Project>('/project/' + key, {params: params});
@@ -362,42 +362,42 @@ export class ProjectService {
     }
 
     /**
-     * Get all platforms in project
+     * Get all integrations in project
      * @param key Project unique key
      * @returns {Observable<Object>}
      */
-    getPlatforms(key: string): Observable<Array<ProjectPlatform>> {
-        return this._http.get<Array<ProjectPlatform>>('/project/' + key + '/platforms');
+    getIntegrations(key: string): Observable<Array<ProjectIntegration>> {
+        return this._http.get<Array<ProjectIntegration>>('/project/' + key + '/integrations');
     }
 
     /**
-     * Add a platform to a project
+     * Add a integration to a project
      * @param key Project unique key
-     * @param p Platform to add
-     * @returns {Observable<ProjectPlatform>}
+     * @param p Integration to add
+     * @returns {Observable<ProjectIntegration>}
      */
-    addPlatform(key: string, p: ProjectPlatform): Observable<ProjectPlatform> {
-        return this._http.post<ProjectPlatform>('/project/' + key + '/platforms', p);
+    addIntegration(key: string, p: ProjectIntegration): Observable<ProjectIntegration> {
+        return this._http.post<ProjectIntegration>('/project/' + key + '/integrations', p);
     }
 
     /**
-     * Remove a project platform
+     * Remove a project integration
      * @param key project unique key
-     * @param name platform name
+     * @param name integration name
      * @returns {Observable<Object>}
      */
-    removePlatform(key: string, name: string): Observable<any> {
-        return this._http.delete('/project/' + key + '/platforms/' + name);
+    removeIntegration(key: string, name: string): Observable<any> {
+        return this._http.delete('/project/' + key + '/integrations/' + name);
     }
 
     /**
-     * Update project platform configuration
+     * Update project integration configuration
      * @param key Project unique key
-     * @param platform Platform to update
-     * @returns {Observable<ProjectPlatform>}
+     * @param integration Integration to update
+     * @returns {Observable<ProjectIntegration>}
      */
-    updatePlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
-        return this._http.put<ProjectPlatform>('/project/' + key + '/platforms/' + platform.name, platform);
+    updateIntegration(key: string, integration: ProjectIntegration): Observable<ProjectIntegration> {
+        return this._http.put<ProjectIntegration>('/project/' + key + '/integrations/' + integration.name, integration);
     }
 
     /**

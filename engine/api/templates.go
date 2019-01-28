@@ -491,7 +491,7 @@ func (api *API) postTemplateApplyHandler() service.Handler {
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPlatforms)
+			project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return err
 		}
@@ -612,7 +612,7 @@ func (api *API) postTemplateBulkHandler() service.Handler {
 						project.LoadOptions.WithEnvironments,
 						project.LoadOptions.WithPipelines,
 						project.LoadOptions.WithApplicationWithDeploymentStrategies,
-						project.LoadOptions.WithPlatforms)
+						project.LoadOptions.WithIntegrations)
 					if err != nil {
 						if errD := errorDefer(err); errD != nil {
 							log.Error("%v", errD)
@@ -742,7 +742,7 @@ func (api *API) getTemplateInstanceHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to load projet")
 		}

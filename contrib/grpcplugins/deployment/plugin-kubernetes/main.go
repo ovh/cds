@@ -26,15 +26,15 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
+	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 )
 
 /*
-This plugin have to be used as a deployment platform plugin
+This plugin have to be used as a deployment integration plugin
 
 Kubernetes deployment plugin must configured as following:
 	name: kubernetes-deployment-plugin
-	type: platform
+	type: integration
 	author: "Benjamin Coenen"
 	description: "Kubernetes Deployment Plugin"
 
@@ -52,11 +52,11 @@ const (
 )
 
 type kubernetesDeploymentPlugin struct {
-	platformplugin.Common
+	integrationplugin.Common
 }
 
-func (k8sPlugin *kubernetesDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*platformplugin.PlatformPluginManifest, error) {
-	return &platformplugin.PlatformPluginManifest{
+func (k8sPlugin *kubernetesDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*integrationplugin.IntegrationPluginManifest, error) {
+	return &integrationplugin.IntegrationPluginManifest{
 		Name:        "Kubernetes Deployment Plugin",
 		Author:      "Benjamin Coenen",
 		Description: "Kubernetes Deployment Plugin",
@@ -88,12 +88,12 @@ func getStartingConfig(token, timeout string) clientcmd.KubeconfigGetter {
 	}
 }
 
-func (k8sPlugin *kubernetesDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.DeployQuery) (*platformplugin.DeployResult, error) {
-	k8sAPIURL := q.GetOptions()["cds.platform.api_url"]
-	k8sToken := q.GetOptions()["cds.platform.token"]
-	k8sCaCertificate := q.GetOptions()["cds.platform.ca_certificate"]
-	deploymentFilepath := q.GetOptions()["cds.platform.deployment_files"]
-	helmChart := q.GetOptions()["cds.platform.helm_chart"]
+func (k8sPlugin *kubernetesDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
+	k8sAPIURL := q.GetOptions()["cds.integration.api_url"]
+	k8sToken := q.GetOptions()["cds.integration.token"]
+	k8sCaCertificate := q.GetOptions()["cds.integration.ca_certificate"]
+	deploymentFilepath := q.GetOptions()["cds.integration.deployment_files"]
+	helmChart := q.GetOptions()["cds.integration.helm_chart"]
 
 	if k8sToken == "" {
 		return fail("Kubernetes token should not be empty")
@@ -144,41 +144,41 @@ current-context: default-context`, k8sToken, certb64, k8sAPIURL)
 		return fail("Must have deployment_files or helm_chart not empty")
 	}
 
-	return &platformplugin.DeployResult{
+	return &integrationplugin.DeployResult{
 		Status: sdk.StatusSuccess.String(),
 	}, nil
 }
 
-func (k8sPlugin *kubernetesDeploymentPlugin) DeployStatus(ctx context.Context, q *platformplugin.DeployStatusQuery) (*platformplugin.DeployResult, error) {
+func (k8sPlugin *kubernetesDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
 	// I use the flag --wait to let kubectl wait until all deployments are done. Then it's not required
-	return &platformplugin.DeployResult{
+	return &integrationplugin.DeployResult{
 		Status: sdk.StatusSuccess.String(),
 	}, nil
 }
 
 func main() {
 	e := kubernetesDeploymentPlugin{}
-	if err := platformplugin.Start(context.Background(), &e); err != nil {
+	if err := integrationplugin.Start(context.Background(), &e); err != nil {
 		panic(err)
 	}
 }
 
-func fail(format string, args ...interface{}) (*platformplugin.DeployResult, error) {
+func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, error) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Println(msg)
-	return &platformplugin.DeployResult{
+	return &integrationplugin.DeployResult{
 		Details: msg,
 		Status:  sdk.StatusFail.String(),
 	}, nil
 }
 
-func executeK8s(q *platformplugin.DeployQuery) error {
-	k8sAPIURL := q.GetOptions()["cds.platform.api_url"]
-	k8sToken := q.GetOptions()["cds.platform.token"]
-	k8sCaCertificate := q.GetOptions()["cds.platform.ca_certificate"]
-	namespace := q.GetOptions()["cds.platform.namespace"]
-	deploymentFilepath := q.GetOptions()["cds.platform.deployment_files"]
-	timeoutStr := q.GetOptions()["cds.platform.timeout"]
+func executeK8s(q *integrationplugin.DeployQuery) error {
+	k8sAPIURL := q.GetOptions()["cds.integration.api_url"]
+	k8sToken := q.GetOptions()["cds.integration.token"]
+	k8sCaCertificate := q.GetOptions()["cds.integration.ca_certificate"]
+	namespace := q.GetOptions()["cds.integration.namespace"]
+	deploymentFilepath := q.GetOptions()["cds.integration.deployment_files"]
+	timeoutStr := q.GetOptions()["cds.integration.timeout"]
 	project := q.GetOptions()["cds.project"]
 	workflow := q.GetOptions()["cds.workflow"]
 	if namespace == "" {
@@ -276,11 +276,11 @@ func executeK8s(q *platformplugin.DeployQuery) error {
 	return nil
 }
 
-func executeHelm(q *platformplugin.DeployQuery) error {
-	namespace := q.GetOptions()["cds.platform.namespace"]
-	helmChart := q.GetOptions()["cds.platform.helm_chart"]
-	helmValues := q.GetOptions()["cds.platform.helm_values"]
-	timeoutStr := q.GetOptions()["cds.platform.timeout"]
+func executeHelm(q *integrationplugin.DeployQuery) error {
+	namespace := q.GetOptions()["cds.integration.namespace"]
+	helmChart := q.GetOptions()["cds.integration.helm_chart"]
+	helmValues := q.GetOptions()["cds.integration.helm_values"]
+	timeoutStr := q.GetOptions()["cds.integration.timeout"]
 	project := q.GetOptions()["cds.project"]
 	workflow := q.GetOptions()["cds.workflow"]
 	application := q.GetOptions()["cds.application"]

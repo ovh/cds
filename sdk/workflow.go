@@ -21,39 +21,39 @@ var ColorRegexp = regexp.MustCompile(`^#\w{3,8}$`)
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID                      int64                       `json:"id" db:"id" cli:"-"`
-	Name                    string                      `json:"name" db:"name" cli:"name,key"`
-	Description             string                      `json:"description,omitempty" db:"description" cli:"description"`
-	Icon                    string                      `json:"icon,omitempty" db:"icon" cli:"-"`
-	LastModified            time.Time                   `json:"last_modified" db:"last_modified" mapstructure:"-"`
-	ProjectID               int64                       `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey              string                      `json:"project_key" db:"-" cli:"-"`
-	RootID                  int64                       `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
-	Root                    *WorkflowNode               `json:"root,omitempty" db:"-" cli:"-"`
-	Joins                   []WorkflowNodeJoin          `json:"joins,omitempty" db:"-" cli:"-"`
-	Groups                  []GroupPermission           `json:"groups,omitempty" db:"-" cli:"-"`
-	Permission              int                         `json:"permission,omitempty" db:"-" cli:"-"`
-	Metadata                Metadata                    `json:"metadata" yaml:"metadata" db:"-"`
-	Usage                   *Usage                      `json:"usage,omitempty" db:"-" cli:"-"`
-	HistoryLength           int64                       `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags               []string                    `json:"purge_tags,omitempty" db:"-" cli:"-"`
-	Notifications           []WorkflowNotification      `json:"notifications,omitempty" db:"-" cli:"-"`
-	FromRepository          string                      `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
-	DerivedFromWorkflowID   int64                       `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
-	DerivedFromWorkflowName string                      `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
-	DerivationBranch        string                      `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
-	Audits                  []AuditWorkflow             `json:"audits" db:"-"`
-	Pipelines               map[int64]Pipeline          `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
-	Applications            map[int64]Application       `json:"applications" db:"-" cli:"-"  mapstructure:"-"`
-	Environments            map[int64]Environment       `json:"environments" db:"-" cli:"-"  mapstructure:"-"`
-	ProjectPlatforms        map[int64]ProjectPlatform   `json:"project_platforms" db:"-" cli:"-"  mapstructure:"-"`
-	HookModels              map[int64]WorkflowHookModel `json:"hook_models" db:"-" cli:"-"  mapstructure:"-"`
-	OutGoingHookModels      map[int64]WorkflowHookModel `json:"outgoing_hook_models" db:"-" cli:"-"  mapstructure:"-"`
-	Labels                  []Label                     `json:"labels" db:"-" cli:"labels"`
-	ToDelete                bool                        `json:"to_delete" db:"to_delete" cli:"-"`
-	Favorite                bool                        `json:"favorite" db:"-" cli:"favorite"`
-	WorkflowData            *WorkflowData               `json:"workflow_data" db:"-" cli:"-"`
-	AsCodeEvent             []AsCodeEvent               `json:"as_code_events" db:"-" cli:"-"`
+	ID                      int64                        `json:"id" db:"id" cli:"-"`
+	Name                    string                       `json:"name" db:"name" cli:"name,key"`
+	Description             string                       `json:"description,omitempty" db:"description" cli:"description"`
+	Icon                    string                       `json:"icon,omitempty" db:"icon" cli:"-"`
+	LastModified            time.Time                    `json:"last_modified" db:"last_modified" mapstructure:"-"`
+	ProjectID               int64                        `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey              string                       `json:"project_key" db:"-" cli:"-"`
+	RootID                  int64                        `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
+	Root                    *WorkflowNode                `json:"root,omitempty" db:"-" cli:"-"`
+	Joins                   []WorkflowNodeJoin           `json:"joins,omitempty" db:"-" cli:"-"`
+	Groups                  []GroupPermission            `json:"groups,omitempty" db:"-" cli:"-"`
+	Permission              int                          `json:"permission,omitempty" db:"-" cli:"-"`
+	Metadata                Metadata                     `json:"metadata" yaml:"metadata" db:"-"`
+	Usage                   *Usage                       `json:"usage,omitempty" db:"-" cli:"-"`
+	HistoryLength           int64                        `json:"history_length" db:"history_length" cli:"-"`
+	PurgeTags               []string                     `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	Notifications           []WorkflowNotification       `json:"notifications,omitempty" db:"-" cli:"-"`
+	FromRepository          string                       `json:"from_repository,omitempty" db:"from_repository" cli:"from"`
+	DerivedFromWorkflowID   int64                        `json:"derived_from_workflow_id,omitempty" db:"derived_from_workflow_id" cli:"-"`
+	DerivedFromWorkflowName string                       `json:"derived_from_workflow_name,omitempty" db:"derived_from_workflow_name" cli:"-"`
+	DerivationBranch        string                       `json:"derivation_branch,omitempty" db:"derivation_branch" cli:"-"`
+	Audits                  []AuditWorkflow              `json:"audits" db:"-"`
+	Pipelines               map[int64]Pipeline           `json:"pipelines" db:"-" cli:"-"  mapstructure:"-"`
+	Applications            map[int64]Application        `json:"applications" db:"-" cli:"-"  mapstructure:"-"`
+	Environments            map[int64]Environment        `json:"environments" db:"-" cli:"-"  mapstructure:"-"`
+	ProjectIntegrations     map[int64]ProjectIntegration `json:"project_integrations" db:"-" cli:"-"  mapstructure:"-"`
+	HookModels              map[int64]WorkflowHookModel  `json:"hook_models" db:"-" cli:"-"  mapstructure:"-"`
+	OutGoingHookModels      map[int64]WorkflowHookModel  `json:"outgoing_hook_models" db:"-" cli:"-"  mapstructure:"-"`
+	Labels                  []Label                      `json:"labels" db:"-" cli:"labels"`
+	ToDelete                bool                         `json:"to_delete" db:"to_delete" cli:"-"`
+	Favorite                bool                         `json:"favorite" db:"-" cli:"favorite"`
+	WorkflowData            *WorkflowData                `json:"workflow_data" db:"-" cli:"-"`
+	AsCodeEvent             []AsCodeEvent                `json:"as_code_events" db:"-" cli:"-"`
 	// aggregates
 	Template         *WorkflowTemplate         `json:"-" db:"-" cli:"-"`
 	TemplateInstance *WorkflowTemplateInstance `json:"-" db:"-" cli:"-"`
@@ -108,10 +108,10 @@ func (w *Workflow) RetroMigrate() {
 				node.Context.Environment = &env
 			}
 		}
-		if node.Context.ProjectPlatformID != 0 {
-			pp, ok := w.ProjectPlatforms[node.Context.ProjectPlatformID]
+		if node.Context.ProjectIntegrationID != 0 {
+			pp, ok := w.ProjectIntegrations[node.Context.ProjectIntegrationID]
 			if ok {
-				node.Context.ProjectPlatform = &pp
+				node.Context.ProjectIntegration = &pp
 			}
 		}
 	}
@@ -475,16 +475,16 @@ func (w *Workflow) InvolvedEnvironments() []int64 {
 	return res
 }
 
-//InvolvedPlatforms returns all platforms used in the workflow
-func (w *Workflow) InvolvedPlatforms() []int64 {
+//InvolvedIntegrations returns all integrations used in the workflow
+func (w *Workflow) InvolvedIntegrations() []int64 {
 	if w.Root == nil {
 		return nil
 	}
 
-	res := w.Root.InvolvedPlatforms()
+	res := w.Root.InvolvedIntegrations()
 	for _, j := range w.Joins {
 		for _, t := range j.Triggers {
-			res = append(res, t.WorkflowDestNode.InvolvedPlatforms()...)
+			res = append(res, t.WorkflowDestNode.InvolvedIntegrations()...)
 		}
 	}
 	return res
@@ -696,7 +696,7 @@ func (n Node) retroMigrate() WorkflowNode {
 		Name:       n.Name,
 		WorkflowID: n.WorkflowID,
 		Context: &WorkflowNodeContext{
-			ProjectPlatformID:         n.Context.ProjectPlatformID,
+			ProjectIntegrationID:      n.Context.ProjectIntegrationID,
 			EnvironmentID:             n.Context.EnvironmentID,
 			ApplicationID:             n.Context.ApplicationID,
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
@@ -817,11 +817,11 @@ func (n WorkflowNode) migrate(withID bool) Node {
 			PipelineID:                n.PipelineID,
 			ApplicationID:             n.Context.ApplicationID,
 			EnvironmentID:             n.Context.EnvironmentID,
-			ProjectPlatformID:         n.Context.ProjectPlatformID,
+			ProjectIntegrationID:      n.Context.ProjectIntegrationID,
 			Conditions:                n.Context.Conditions,
 			DefaultPayload:            n.Context.DefaultPayload,
 			DefaultPipelineParameters: n.Context.DefaultPipelineParameters,
-			Mutex: n.Context.Mutex,
+			Mutex:                     n.Context.Mutex,
 		},
 		Hooks:    make([]NodeHook, 0, len(n.Hooks)),
 		Triggers: make([]NodeTrigger, 0, len(n.Triggers)+len(n.Forks)+len(n.OutgoingHooks)),
@@ -832,8 +832,8 @@ func (n WorkflowNode) migrate(withID bool) Node {
 	if n.Context.EnvironmentID == 0 && n.Context.Environment != nil {
 		newNode.Context.EnvironmentID = n.Context.Environment.ID
 	}
-	if n.Context.ProjectPlatformID == 0 && n.Context.ProjectPlatform != nil {
-		newNode.Context.ProjectPlatformID = n.Context.ProjectPlatform.ID
+	if n.Context.ProjectIntegrationID == 0 && n.Context.ProjectIntegration != nil {
+		newNode.Context.ProjectIntegrationID = n.Context.ProjectIntegration.ID
 	}
 	if withID {
 		newNode.ID = n.ID
@@ -936,18 +936,18 @@ func (n *WorkflowNode) Environment() (e Environment, b bool) {
 	return *n.Context.Environment, true
 }
 
-// ProjectPlatform return an projectPlatform and a boolean (false if no projectPlatform)
-func (n *WorkflowNode) ProjectPlatform() (p ProjectPlatform, b bool) {
+// ProjectIntegration return an ProjectIntegration and a boolean (false if no ProjectIntegration)
+func (n *WorkflowNode) ProjectIntegration() (p ProjectIntegration, b bool) {
 	if n == nil {
 		return p, false
 	}
 	if n.Context == nil {
 		return p, false
 	}
-	if n.Context.ProjectPlatform == nil {
+	if n.Context.ProjectIntegration == nil {
 		return p, false
 	}
-	return *n.Context.ProjectPlatform, true
+	return *n.Context.ProjectIntegration, true
 }
 
 // EqualsTo returns true if a node has the same pipeline and context than another
@@ -1394,28 +1394,28 @@ func (n *WorkflowNode) InvolvedEnvironments() []int64 {
 	return res
 }
 
-//InvolvedPlatforms returns all platforms used in the workflow
-func (n *WorkflowNode) InvolvedPlatforms() []int64 {
+//InvolvedIntegrations returns all integrations used in the workflow
+func (n *WorkflowNode) InvolvedIntegrations() []int64 {
 	res := []int64{}
 	if n.Context != nil {
-		if n.Context.ProjectPlatformID == 0 && n.Context.ProjectPlatform != nil {
-			n.Context.ProjectPlatformID = n.Context.ProjectPlatform.ID
+		if n.Context.ProjectIntegrationID == 0 && n.Context.ProjectIntegration != nil {
+			n.Context.ProjectIntegrationID = n.Context.ProjectIntegration.ID
 		}
-		if n.Context.ProjectPlatformID != 0 {
-			res = []int64{n.Context.ProjectPlatformID}
+		if n.Context.ProjectIntegrationID != 0 {
+			res = []int64{n.Context.ProjectIntegrationID}
 		}
 	}
 	for _, t := range n.Triggers {
-		res = append(res, t.WorkflowDestNode.InvolvedPlatforms()...)
+		res = append(res, t.WorkflowDestNode.InvolvedIntegrations()...)
 	}
 	for i := range n.OutgoingHooks {
 		for j := range n.OutgoingHooks[i].Triggers {
-			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedPlatforms()...)
+			res = append(res, n.OutgoingHooks[i].Triggers[j].WorkflowDestNode.InvolvedIntegrations()...)
 		}
 	}
 	for i := range n.Forks {
 		for j := range n.Forks[i].Triggers {
-			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.InvolvedPlatforms()...)
+			res = append(res, n.Forks[i].Triggers[j].WorkflowDestNode.InvolvedIntegrations()...)
 		}
 	}
 	return res
@@ -1430,24 +1430,24 @@ func (n *WorkflowNode) CheckApplicationDeploymentStrategies(proj *Project) error
 		return nil
 	}
 
-	var id = n.Context.ProjectPlatformID
-	if id == 0 && n.Context.ProjectPlatform != nil {
-		id = n.Context.ProjectPlatform.ID
+	var id = n.Context.ProjectIntegrationID
+	if id == 0 && n.Context.ProjectIntegration != nil {
+		id = n.Context.ProjectIntegration.ID
 	}
 
 	if id == 0 {
 		return nil
 	}
 
-	pf := proj.GetPlatformByID(id)
+	pf := proj.GetIntegrationByID(id)
 	if pf == nil {
-		return fmt.Errorf("platform unavailable")
+		return fmt.Errorf("integration unavailable")
 	}
 
 	for _, a := range proj.Applications {
 		if a.ID == n.Context.ApplicationID || (n.Context.Application != nil && n.Context.Application.ID == a.ID) {
 			if _, has := a.DeploymentStrategies[pf.Name]; !has {
-				return fmt.Errorf("platform %s unavailable", pf.Name)
+				return fmt.Errorf("integration %s unavailable", pf.Name)
 			}
 		}
 	}
@@ -1500,8 +1500,8 @@ type WorkflowNodeContext struct {
 	Application               *Application           `json:"application,omitempty" db:"-"`
 	Environment               *Environment           `json:"environment,omitempty" db:"-"`
 	EnvironmentID             int64                  `json:"environment_id" db:"environment_id"`
-	ProjectPlatform           *ProjectPlatform       `json:"project_platform" db:"-"`
-	ProjectPlatformID         int64                  `json:"project_platform_id" db:"project_platform_id"`
+	ProjectIntegration        *ProjectIntegration    `json:"project_integration" db:"-"`
+	ProjectIntegrationID      int64                  `json:"project_integration_id" db:"project_integration_id"`
 	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters,omitempty" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions,omitempty" db:"-"`

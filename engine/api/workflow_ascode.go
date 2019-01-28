@@ -42,7 +42,7 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithClearKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "unable to load project")

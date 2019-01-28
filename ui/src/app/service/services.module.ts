@@ -22,6 +22,7 @@ import { GroupService } from './group/group.service';
 import { HelpersService } from './helpers/helpers.service';
 import { HookService } from './hook/hook.service';
 import { ImportAsCodeService } from './import-as-code/import.service';
+import { IntegrationService } from './integration/integration.service';
 import { KeyService } from './keys/keys.service';
 import { LanguageStore } from './language/language.store';
 import { LogoutInterceptor } from './logout.interceptor.service';
@@ -34,7 +35,6 @@ import { PipelineCoreService } from './pipeline/pipeline.core.service';
 import { PipelineResolver } from './pipeline/pipeline.resolver';
 import { PipelineService } from './pipeline/pipeline.service';
 import { PipelineStore } from './pipeline/pipeline.store';
-import { PlatformService } from './platform/platform.service';
 import { ProjectAuditService } from './project/project.audit.service';
 import { ProjectForApplicationResolver, ProjectForWorkflowResolver, ProjectResolver } from './project/project.resolver';
 import { ProjectService } from './project/project.service';
@@ -99,7 +99,7 @@ export class ServicesModule {
                 PipelineService,
                 PipelineAuditService,
                 PipelineStore,
-                PlatformService,
+                IntegrationService,
                 ProjectResolver,
                 ProjectForApplicationResolver,
                 ProjectForWorkflowResolver,
@@ -170,7 +170,7 @@ export {
     PipelineCoreService,
     PipelineStore,
     PipelineAuditService,
-    PlatformService,
+    IntegrationService,
     ProjectResolver,
     ProjectForApplicationResolver,
     ProjectForWorkflowResolver,

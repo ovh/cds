@@ -2,7 +2,7 @@ name: Plugins Command TestSuite with cdsctl
 testcases:
 - name: cdsctl admin plugins list
   steps:
-  - script: {{.cds.build.cdsctl}} admin platform-model import ./tests/fixtures/platforms/hello-it.yml
+  - script: {{.cds.build.cdsctl}} admin integration-model import ./tests/fixtures/integrations/hello-it.yml
   
 - name: cdsctl admin plugins list
   steps:
@@ -24,17 +24,17 @@ testcases:
   steps:
   - script: {{.cds.build.cdsctl}} admin plugins export hello-it-plugin
 
-- name: cdsctl admin platform-model import
+- name: cdsctl admin integration-model import
   steps:
-  - script: {{.cds.build.cdsctl}} admin platform-model import ./tests/fixtures/platforms/marathon.yml
+  - script: {{.cds.build.cdsctl}} admin integration-model import ./tests/fixtures/integrations/marathon.yml
 
-- name: cdsctl admin platform-model export
+- name: cdsctl admin integration-model export
   steps:
-  - script: {{.cds.build.cdsctl}} admin platform-model export marathon
+  - script: {{.cds.build.cdsctl}} admin integration-model export marathon
 
-- name: cdsctl admin platform-model delete
+- name: cdsctl admin integration-model delete
   steps:
-  - script: {{.cds.build.cdsctl}} admin platform-model delete --force marathon
+  - script: {{.cds.build.cdsctl}} admin integration-model delete --force marathon
 
 - name: cdsctl admin plugins delete
   steps:

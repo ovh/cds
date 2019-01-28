@@ -202,7 +202,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowRunNumHandler> Cannot num must be > %d, got %d", num, m.Num)
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -254,7 +254,7 @@ func (api *API) resyncWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -473,7 +473,7 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 		deprecatedGetUser(ctx),
 		project.LoadOptions.WithVariables,
 		project.LoadOptions.WithFeatures,
-		project.LoadOptions.WithPlatforms,
+		project.LoadOptions.WithIntegrations,
 		project.LoadOptions.WithApplicationVariables,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 	)
@@ -542,7 +542,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			return err
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project %s", key)
 		}
@@ -760,7 +760,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationVariables,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithEnvironments,
@@ -840,7 +840,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 					project.LoadOptions.WithEnvironments,
 					project.LoadOptions.WithPipelines,
 					project.LoadOptions.WithClearKeys,
-					project.LoadOptions.WithClearPlatforms,
+					project.LoadOptions.WithClearIntegrations,
 				)
 
 				if errp != nil {
@@ -1012,7 +1012,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getDownloadArtifactHandler> Invalid node job run ID")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}

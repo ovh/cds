@@ -10,30 +10,30 @@ import (
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID               int64              `json:"-" yaml:"-" db:"id" cli:"-"`
-	Key              string             `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
-	Name             string             `json:"name" yaml:"name" db:"name" cli:"name"`
-	Description      string             `json:"description" yaml:"description" db:"description" cli:"description"`
-	Icon             string             `json:"icon" yaml:"icon" db:"icon" cli:"-"`
-	Workflows        []Workflow         `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
-	WorkflowNames    []IDName           `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
-	Pipelines        []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
-	PipelineNames    []IDName           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
-	Applications     []Application      `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
-	ApplicationNames []IDName           `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
-	ProjectGroups    []GroupPermission  `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
-	Variable         []Variable         `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
-	Environments     []Environment      `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
-	Labels           []Label            `json:"labels,omitempty"  yaml:"labels,omitempty" db:"-"  cli:"-"`
-	Permission       int                `json:"permission"  yaml:"-" db:"-"  cli:"-"`
-	Created          time.Time          `json:"created"  yaml:"created" db:"created" `
-	LastModified     time.Time          `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
-	Metadata         Metadata           `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
-	Keys             []ProjectKey       `json:"keys" yaml:"keys" db:"-" cli:"-"`
-	VCSServers       []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
-	Platforms        []ProjectPlatform  `json:"platforms" yaml:"platforms" db:"-" cli:"-"`
-	Features         map[string]bool    `json:"features" yaml:"features" db:"-" cli:"-"`
-	Favorite         bool               `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
+	ID               int64                `json:"-" yaml:"-" db:"id" cli:"-"`
+	Key              string               `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
+	Name             string               `json:"name" yaml:"name" db:"name" cli:"name"`
+	Description      string               `json:"description" yaml:"description" db:"description" cli:"description"`
+	Icon             string               `json:"icon" yaml:"icon" db:"icon" cli:"-"`
+	Workflows        []Workflow           `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
+	WorkflowNames    []IDName             `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
+	Pipelines        []Pipeline           `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	PipelineNames    []IDName             `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
+	Applications     []Application        `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ApplicationNames []IDName             `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
+	ProjectGroups    []GroupPermission    `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	Variable         []Variable           `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Environments     []Environment        `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
+	Labels           []Label              `json:"labels,omitempty"  yaml:"labels,omitempty" db:"-"  cli:"-"`
+	Permission       int                  `json:"permission"  yaml:"-" db:"-"  cli:"-"`
+	Created          time.Time            `json:"created"  yaml:"created" db:"created" `
+	LastModified     time.Time            `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
+	Metadata         Metadata             `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
+	Keys             []ProjectKey         `json:"keys" yaml:"keys" db:"-" cli:"-"`
+	VCSServers       []ProjectVCSServer   `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
+	Integrations     []ProjectIntegration `json:"integrations" yaml:"integrations" db:"-" cli:"-"`
+	Features         map[string]bool      `json:"features" yaml:"features" db:"-" cli:"-"`
+	Favorite         bool                 `json:"favorite" yaml:"favorite" db:"-" cli:"favorite"`
 }
 
 // IsValid returns error if the project is not valid
@@ -86,21 +86,21 @@ func (proj Project) PGPKeys() []ProjectKey {
 	return keys
 }
 
-// GetPlatform returns the ProjectPlatform given a name
-func (proj Project) GetPlatform(pfName string) (ProjectPlatform, bool) {
-	for i := range proj.Platforms {
-		if proj.Platforms[i].Name == pfName {
-			return proj.Platforms[i], true
+// GetIntegration returns the ProjectIntegration given a name
+func (proj Project) GetIntegration(pfName string) (ProjectIntegration, bool) {
+	for i := range proj.Integrations {
+		if proj.Integrations[i].Name == pfName {
+			return proj.Integrations[i], true
 		}
 	}
-	return ProjectPlatform{}, false
+	return ProjectIntegration{}, false
 }
 
-// GetPlatformByID returns the ProjectPlatform given a name
-func (proj Project) GetPlatformByID(id int64) *ProjectPlatform {
-	for i := range proj.Platforms {
-		if proj.Platforms[i].ID == id {
-			return &proj.Platforms[i]
+// GetIntegrationByID returns the ProjectIntegration given a name
+func (proj Project) GetIntegrationByID(id int64) *ProjectIntegration {
+	for i := range proj.Integrations {
+		if proj.Integrations[i].ID == id {
+			return &proj.Integrations[i]
 		}
 	}
 	return nil
@@ -164,8 +164,8 @@ const (
 	ProjectVariableLastModificationType = "project.variable"
 	// ProjectKeysLastModificationType represent key for last update event about project.keys (add, delete a key)
 	ProjectKeysLastModificationType = "project.keys"
-	// ProjectPlatformsLastModificationType represent key for last update event about project.platforms (add, update, delete a platform)
-	ProjectPlatformsLastModificationType = "project.platforms"
+	// ProjectIntegrationsLastModificationType represent key for last update event about project.integrations (add, update, delete a integration)
+	ProjectIntegrationsLastModificationType = "project.integrations"
 )
 
 //ProjectLastUpdates update times of project, application and pipelines

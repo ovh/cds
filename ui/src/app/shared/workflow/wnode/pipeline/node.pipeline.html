@@ -23,11 +23,11 @@
                  [class.success]="noderun?.status === pipelineStatus.SUCCESS"
                  [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
                  [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED"
-                 *ngIf="node.context.application_id || node.context.environment_id || node.context.project_platform_id">
+                 *ngIf="node.context.application_id || node.context.environment_id || node.context.project_integration_id">
                 <!-- application name on a semantic ui ribbon -->
                 <div class="node application link"
-                     [class.all]="!node.context.environment_id && !node.context.project_platform_id"
-                     [class.tier]="node.context.application_id && node.context.environment_id && node.context.project_platform_id"
+                     [class.all]="!node.context.environment_id && !node.context.project_integration_id"
+                     [class.tier]="node.context.application_id && node.context.environment_id && node.context.project_integration_id"
                      *ngIf="node.context.application_id">
                     <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]" title="{{ 'common_application_title' | translate }}{{workflow.applications[node.context.application_id].name}}">
                         <span class="content-link">{{workflow.applications[node.context.application_id].name}}</span>
@@ -36,8 +36,8 @@
 
                 <!-- environment name on a semantic ui ribbon -->
                 <div class="node environment link"
-                     [class.all]="!node.context.application_id && !node.context.project_platform_id"
-                     [class.tier]="node.context.application_id && node.context.environment_id && node.context.project_platform_id"
+                     [class.all]="!node.context.application_id && !node.context.project_integration_id"
+                     [class.tier]="node.context.application_id && node.context.environment_id && node.context.project_integration_id"
                      *ngIf="node.context.environment_id">
                     <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: workflow.environments[node.context.environment_id].name}"
                        title="{{ 'common_environment_title' | translate}}{{workflow.environments[node.context.environment_id].name}}">
@@ -45,14 +45,14 @@
                     </a>
                 </div>
 
-                <!-- platform name on a semantic ui ribbon -->
-                <div class="node platform link"
+                <!-- integration name on a semantic ui ribbon -->
+                <div class="node integration link"
                      [class.all]="!node.context.application_id && !node.context.environment_id"
-                     [class.tier]="node.context.application_id && node.context.environment_id && node.context.project_platform_id"
-                     *ngIf="node.context.project_platform_id">
-                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'platforms'}"
-                       title="{{ 'common_platform_title' | translate}}{{workflow.project_platforms[node.context.project_platform_id].name}}">
-                        <span class="content-link">{{workflow.project_platforms[node.context.project_platform_id].name}}</span>
+                     [class.tier]="node.context.application_id && node.context.environment_id && node.context.project_integration_id"
+                     *ngIf="node.context.project_integration_id">
+                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'integrations'}"
+                       title="{{ 'common_integration_title' | translate}}{{workflow.project_integrations[node.context.project_integration_id].name}}">
+                        <span class="content-link">{{workflow.project_integrations[node.context.project_integration_id].name}}</span>
                     </a>
                 </div>
             </div>

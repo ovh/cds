@@ -373,7 +373,7 @@ This is the core component of CDS.
 
 #### Hatcheries
 
-They are the components responsible for spawning workers. Supported platforms/orchestrators are:
+They are the components responsible for spawning workers. Supported integrations/orchestrators are:
 
 * Local machine
 * Openstack

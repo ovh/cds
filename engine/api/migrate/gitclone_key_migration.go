@@ -90,7 +90,7 @@ func migrateActionGitClonePipeline(db gorp.SqlExecutor, store cache.Store, p act
 
 	//Override the appname with the application in workflow node context if needed
 	if p.AppName == "" && p.WorkflowName != "" {
-		proj, err := project.Load(db, store, p.ProjKey, nil, project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(db, store, p.ProjKey, nil, project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return err
 		}

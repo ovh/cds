@@ -1,4 +1,4 @@
-name: Platform model admin
+name: Integration model admin
 testcases:
 - name: prepare test
   steps:
@@ -9,22 +9,22 @@ testcases:
 
 - name: List all the model
   steps:
-  - script: {{.cds.build.cdsctl}} admin platform-model list
+  - script: {{.cds.build.cdsctl}} admin integration-model list
 
-- name: Import a public platform should update existing project
+- name: Import a public integration should update existing project
   steps:
   - script: {{.cds.build.cdsctl}} project add ITCLIPFARSENAL1 ITCLIPFARSENAL1
-  - script: {{.cds.build.cdsctl}} admin platform-model import ./tests/fixtures/platforms/arsenal.yml
-  - script: {{.cds.build.cdsctl}} project platform list ITCLIPFARSENAL1
+  - script: {{.cds.build.cdsctl}} admin integration-model import ./tests/fixtures/integrations/arsenal.yml
+  - script: {{.cds.build.cdsctl}} project integration list ITCLIPFARSENAL1
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring "arsenal-dev"
       - result.systemout ShouldContainSubstring "arsenal-prod"
   - script: {{.cds.build.cdsctl}} project add ITCLIPFARSENAL2 ITCLIPFARSENAL2
-  - script: {{.cds.build.cdsctl}} project platform list ITCLIPFARSENAL2
+  - script: {{.cds.build.cdsctl}} project integration list ITCLIPFARSENAL2
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring "arsenal-dev"
       - result.systemout ShouldContainSubstring "arsenal-prod"
-  -- script: {{.cds.build.cdsctl}} project platform delete ITCLIPFARSENAL2 arsenal-dev
-  -- script: {{.cds.build.cdsctl}} project platform delete ITCLIPFARSENAL2 arsenal-prod
+  -- script: {{.cds.build.cdsctl}} project integration delete ITCLIPFARSENAL2 arsenal-dev
+  -- script: {{.cds.build.cdsctl}} project integration delete ITCLIPFARSENAL2 arsenal-prod

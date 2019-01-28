@@ -69,7 +69,7 @@ func migrateWorkflowData(db *gorp.DbMap, store cache.Store, ID int64) error {
 	}
 
 	p, err := project.LoadProjectByWorkflowID(tx, store, nil, ID,
-		project.LoadOptions.WithPlatforms,
+		project.LoadOptions.WithIntegrations,
 		project.LoadOptions.WithPipelines,
 		project.LoadOptions.WithEnvironments,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies)

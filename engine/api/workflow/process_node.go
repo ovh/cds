@@ -305,8 +305,8 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if n.Context.EnvironmentID != 0 {
 		runContext.Environment = wr.Workflow.Environments[n.Context.EnvironmentID]
 	}
-	if n.Context.ProjectPlatformID != 0 {
-		runContext.ProjectPlatform = wr.Workflow.ProjectPlatforms[n.Context.ProjectPlatformID]
+	if n.Context.ProjectIntegrationID != 0 {
+		runContext.ProjectIntegration = wr.Workflow.ProjectIntegrations[n.Context.ProjectIntegrationID]
 	}
 	jobParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
 	if errParam != nil {

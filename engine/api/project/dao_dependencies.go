@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -96,12 +96,12 @@ var (
 		return LoadAllDecryptedKeys(db, proj)
 	}
 
-	loadPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		pf, err := platform.LoadPlatformsByProjectID(db, proj.ID, false)
+	loadIntegrations = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID, false)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load platforms")
+			return sdk.WrapError(err, "Cannot load integrations")
 		}
-		proj.Platforms = pf
+		proj.Integrations = pf
 		return nil
 	}
 
@@ -110,12 +110,12 @@ var (
 		return nil
 	}
 
-	loadClearPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		pf, err := platform.LoadPlatformsByProjectID(db, proj.ID, true)
+	loadClearIntegrations = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID, true)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load platforms")
+			return sdk.WrapError(err, "Cannot load integrations")
 		}
-		proj.Platforms = pf
+		proj.Integrations = pf
 		return nil
 	}
 

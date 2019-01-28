@@ -33,7 +33,7 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		)
 		if errp != nil {
@@ -100,7 +100,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable load project")
@@ -186,7 +186,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable load project")
@@ -294,7 +294,7 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPlatforms)
+			project.LoadOptions.WithIntegrations)
 		if errp != nil {
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
 		}

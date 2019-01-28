@@ -1,0 +1,27 @@
+.PlatformForm {
+
+  ul {
+    list-style: none;
+    padding-left: 0;
+    margin-left: 0;
+    margin-top: 5px;
+    margin-bottom: 0;
+
+    li {
+      display: inline;
+      margin-right: 10px;
+
+      .ui.label {
+        font-size: 0.8em;
+      }
+    }
+  }
+
+  button {
+    margin-top: 24px;
+  }
+
+  codemirror{
+    width: 100%;
+  }
+}

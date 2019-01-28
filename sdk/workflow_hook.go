@@ -216,8 +216,8 @@ type WorkflowNodeHookConfigValue struct {
 const (
 	// HookConfigTypeString type string
 	HookConfigTypeString = "string"
-	// HookConfigTypePlatform type platform
-	HookConfigTypePlatform = "platform"
+	// HookConfigTypeIntegration type integration
+	HookConfigTypeIntegration = "integration"
 	// HookConfigTypeProject type project
 	HookConfigTypeProject = "project"
 	// HookConfigTypeWorkflow type workflow
