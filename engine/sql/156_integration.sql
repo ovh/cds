@@ -60,9 +60,9 @@ UPDATE workflow set workflow_data=replace(workflow_data::TEXT, '"project_platfor
 UPDATE workflow_run set workflow=replace(workflow::TEXT, '"platform_model_id":', '"integration_model_id":')::jsonb
 WHERE workflow_id in (
 SELECT workflow.id from workflow
-JOIN workflow_node on workflow.id = workflow_node.workflow_id
-JOIN workflow_node_context on workflow_node.id = workflow_node_context.workflow_node_id
-AND workflow_node_context.project_platform_id > 0
+JOIN w_node on workflow.id = w_node.workflow_id
+JOIN w_node_context on w_node.id = w_node_context.node_id
+AND w_node_context.project_platform_id > 0
 GROUP BY workflow.id)
 AND last_execution>NOW()- INTERVAL '5 DAY';
 
@@ -70,9 +70,9 @@ AND last_execution>NOW()- INTERVAL '5 DAY';
 UPDATE workflow_run set workflow=replace(workflow::TEXT, '"project_platform', '"project_integration')::jsonb
 WHERE workflow_id in (
 SELECT workflow.id from workflow
-JOIN workflow_node on workflow.id = workflow_node.workflow_id
-JOIN workflow_node_context on workflow_node.id = workflow_node_context.workflow_node_id
-AND workflow_node_context.project_platform_id > 0
+JOIN w_node on workflow.id = w_node.workflow_id
+JOIN w_node_context on w_node.id = w_node_context.node_id
+AND w_node_context.project_platform_id > 0
 GROUP BY workflow.id)
 AND last_execution>NOW()- INTERVAL '5 DAY';
 
@@ -100,17 +100,17 @@ UPDATE workflow set workflow_data=replace(workflow_data::TEXT, '"project_integra
 UPDATE workflow_run set workflow=replace(workflow::TEXT, '"integration_model_id":', '"platform_model_id":')::jsonb
 WHERE workflow_id in (
 SELECT workflow.id from workflow
-JOIN workflow_node on workflow.id = workflow_node.workflow_id
-JOIN workflow_node_context on workflow_node.id = workflow_node_context.workflow_node_id
-AND workflow_node_context.project_platform_id > 0
+JOIN w_node on workflow.id = w_node.workflow_id
+JOIN w_node_context on w_node.id = w_node_context.node_id
+AND w_node_context.project_platform_id > 0
 GROUP BY workflow.id)
 AND last_execution>NOW()- INTERVAL '5 DAY';
 
 UPDATE workflow_run set workflow=replace(workflow::TEXT, '"project_integration', '"project_platform')::jsonb
 WHERE workflow_id in (
 SELECT workflow.id from workflow
-JOIN workflow_node on workflow.id = workflow_node.workflow_id
-JOIN workflow_node_context on workflow_node.id = workflow_node_context.workflow_node_id
-AND workflow_node_context.project_platform_id > 0
+JOIN w_node on workflow.id = w_node.workflow_id
+JOIN w_node_context on w_node.id = w_node_context.node_id
+AND w_node_context.project_platform_id > 0
 GROUP BY workflow.id)
 AND last_execution>NOW()- INTERVAL '5 DAY';
