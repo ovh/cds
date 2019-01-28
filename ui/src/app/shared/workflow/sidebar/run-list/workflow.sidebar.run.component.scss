@@ -10,6 +10,7 @@
     z-index: 1001; // fix to be over loader that is z-index 1000
   }
   .runs {
+    color: $polar_grey_1;
     margin: 0;
     flex: 1;
     &.scrollable {
@@ -17,6 +18,10 @@
       &:hover {
         overflow-y: auto;
       }
+    }
+    .empty {
+      padding: 20px;
+      text-align: center;
     }
     .item {
       width: 240px;
@@ -68,7 +73,6 @@
             overflow: hidden;
             text-overflow: ellipsis;
             padding: 5px 0;
-            color: $polar_grey_1;
           }
         }
         .loader {
@@ -81,7 +85,6 @@
         font-size: 0.8em;
         line-height: 0.9em;
         padding: 0px 5px 3px 5px;
-        color: $polar_grey_1;
         .duration {
           flex: 1;
         }

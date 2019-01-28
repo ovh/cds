@@ -6,44 +6,50 @@
     </sui-multi-select>
     <div class="runs scrollable" #tagsList infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
         [scrollWindow]="false" (scrolled)="scroll()">
-        <div class="item pointing" *ngFor="let r of workflowRuns" (click)="changeRun(r.num)" [class.active]="selectedWorkfowRun?.num === r.num"
-            [class.success]="r.status === pipelineStatusEnum.SUCCESS" [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
-            [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
-            [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">
-            <div class="content">
-                <div class="info">
-                    <div class="number">
-                        <span class="hash">#</span>
-                        <span class="count" [class.success]="r.status === pipelineStatusEnum.SUCCESS" [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
-                            [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
-                            [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.num}}</span>
-                    </div>
-                    <ng-template let-popup #popupTemplate>
-                        <div class="content">
-                            <div class="ui bulleted list">
-                                <div class="item" *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
-                                    <b>{{t.tag}} : </b> {{t.value}}
+        <ng-container *ngIf="workflowRuns.length > 0">
+            <div class="item pointing" *ngFor="let r of workflowRuns" (click)="changeRun(r.num)" [class.active]="selectedWorkfowRun?.num === r.num"
+                [class.success]="r.status === pipelineStatusEnum.SUCCESS" [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
+                [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
+                [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">
+                <div class="content">
+                    <div class="info">
+                        <div class="number">
+                            <span class="hash">#</span>
+                            <span class="count" [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+                                [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
+                                [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED"
+                                [class.never]="r.status === pipelineStatusEnum.NEVER_BUILT || r.status === pipelineStatusEnum.SKIPPED || r.status === pipelineStatusEnum.DISABLED">{{r.num}}</span>
+                        </div>
+                        <ng-template let-popup #popupTemplate>
+                            <div class="content">
+                                <div class="ui bulleted list">
+                                    <div class="item" *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
+                                        <b>{{t.tag}} : </b> {{t.value}}
+                                    </div>
                                 </div>
                             </div>
+                        </ng-template>
+                        <div class="line" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" suiPopup
+                            [popupTemplate]="popupTemplate" popupPlacement="right">
+                            <ng-container *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
+                                {{t.value}}<ng-container *ngIf="!last">,</ng-container>
+                            </ng-container>
                         </div>
-                    </ng-template>
-                    <div class="line" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" suiPopup [popupTemplate]="popupTemplate"
-                        popupPlacement="right">
-                        <ng-container *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
-                            {{t.value}}<ng-container *ngIf="!last">,</ng-container>
-                        </ng-container>
+                    </div>
+                    <div class="loader" *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">
+                        <app-status-icon [status]="pipelineStatusEnum.BUILDING"></app-status-icon>
                     </div>
                 </div>
-                <div class="loader" *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">
-                    <app-status-icon [status]="pipelineStatusEnum.BUILDING"></app-status-icon>
+                <div class="foot">
+                    <div class="duration">
+                        {{r.duration}}
+                    </div>
+                    {{r.start | date:'short' }}
                 </div>
             </div>
-            <div class="foot">
-                <div class="duration">
-                    {{r.duration}}
-                </div>
-                {{r.start | date:'short' }}
-            </div>
+        </ng-container>
+        <div class="empty" *ngIf="workflowRuns.length === 0">
+            {{'workflow_run_never' | translate}}
         </div>
     </div>
 </div>

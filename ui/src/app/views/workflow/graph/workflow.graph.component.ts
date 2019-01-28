@@ -37,6 +37,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     static margin = 80; // let 40px on top and bottom of the graph
     static maxScale = 2;
     static minScale = 1 / 4;
+    static maxOriginScale = 1;
 
     workflow: Workflow;
     @Input('workflowData')
@@ -157,7 +158,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         let oScale = Math.min(w / gw, h / gh); // calculate optimal scale for current graph
         // calculate final scale that fit min and max scale values
         let scale = Math.min(
-            WorkflowGraphComponent.maxScale,
+            WorkflowGraphComponent.maxOriginScale,
             Math.max(WorkflowGraphComponent.minScale, oScale)
         );
         let centerX = (w - gw * scale + WorkflowGraphComponent.margin) / 2;
