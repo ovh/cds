@@ -152,7 +152,7 @@ func TestLoadAllAsUser(t *testing.T) {
 	actual, err := application.LoadAll(db, cache, proj.Key, u)
 	test.NoError(t, err)
 
-	assert.Equal(t, 1, len(actual))
+	assert.Equal(t, 2, len(actual))
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
