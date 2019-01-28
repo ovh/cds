@@ -214,7 +214,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
 
-	workflow.AddGroup(api.mustDB(), &w, sdk.GroupPermission{
+	group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
 		Group:      *group2,
 		Permission: 7,
 	})

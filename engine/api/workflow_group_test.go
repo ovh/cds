@@ -128,7 +128,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	_, _, errG := group.AddGroup(api.mustDB(), &gr)
 	test.NoError(t, errG)
 
-	workflow.AddGroup(api.mustDB(), &w, sdk.GroupPermission{
+	group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
 			ID:   gr.ID,
@@ -211,7 +211,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 	_, _, errG := group.AddGroup(api.mustDB(), &gr)
 	test.NoError(t, errG)
 
-	workflow.AddGroup(api.mustDB(), &w, sdk.GroupPermission{
+	group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
 			ID:   gr.ID,

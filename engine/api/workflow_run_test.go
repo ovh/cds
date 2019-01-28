@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/feature"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -1095,11 +1094,6 @@ func Test_postWorkflowRunHandlerWithoutRightOnEnvironment(t *testing.T) {
 
 	uLambda, pass := assets.InsertLambdaUser(api.mustDB(), &gr)
 
-	grs := []sdk.GroupPermission{
-		{Group: gr, Permission: permission.PermissionRead},
-	}
-	test.NoError(t, group.InsertGroupsInEnvironment(db, grs, env.ID))
-
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -1249,9 +1243,6 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	test.NoError(t, environment.InsertEnvironment(api.mustDB(), env))
-
-	group.InsertGroupInEnvironment(db, env.ID, proj.ProjectGroups[0].Group.ID, 4)
-	group.InsertGroupInEnvironment(db, env.ID, gr.ID, 4)
 
 	proj2, errp := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
 	test.NoError(t, errp)

@@ -59,22 +59,11 @@ variables:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithVariables, application.LoadOptions.WithGroups)
+	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithVariables)
 	test.NoError(t, err)
 
 	assert.NotNil(t, app)
 	assert.Equal(t, "myNewApp", app.Name)
-
-	//Check default permission which should be set to the project ones
-	for _, perm := range proj.ProjectGroups {
-		var found bool
-		for _, aperm := range app.ApplicationGroups {
-			if aperm.Group.Name == perm.Group.Name && aperm.Permission == perm.Permission {
-				found = true
-			}
-		}
-		assert.True(t, found, "Group %s - %d not found", perm.Group.Name, perm.Permission)
-	}
 
 	//Check variables
 	for _, v := range app.Variable {

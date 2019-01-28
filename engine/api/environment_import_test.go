@@ -61,17 +61,6 @@ variables:
 	assert.NotNil(t, env)
 	assert.Equal(t, "myNewEnv", env.Name)
 
-	//Check default permission which should be set to the project ones
-	for _, perm := range proj.ProjectGroups {
-		var found bool
-		for _, aperm := range env.EnvironmentGroups {
-			if aperm.Group.Name == perm.Group.Name && aperm.Permission == perm.Permission {
-				found = true
-			}
-		}
-		assert.True(t, found, "Group %s - %d not found", perm.Group.Name, perm.Permission)
-	}
-
 	//Check variables
 	for _, v := range env.Variable {
 		switch v.Name {
