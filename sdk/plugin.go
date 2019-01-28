@@ -2,21 +2,21 @@ package sdk
 
 // These are type of plugins
 const (
-	GRPCPluginDeploymentPlatform = "platform-deploy_application"
-	GRPCPluginAction             = "action"
+	GRPCPluginDeploymentIntegration = "integration-deploy_application"
+	GRPCPluginAction                = "action"
 )
 
 // GRPCPlugin is the type representing a plugin over GRPC
 type GRPCPlugin struct {
-	ID              int64              `json:"id" yaml:"id" cli:"id" db:"id"`
-	Name            string             `json:"name" yaml:"name" cli:"name,key" db:"name"`
-	Type            string             `json:"type" yaml:"type" cli:"type" db:"type"`
-	Author          string             `json:"author" yaml:"author" cli:"author" db:"author"`
-	Description     string             `json:"description" yaml:"description" cli:"description" db:"description"`
-	Parameters      []Parameter        `json:"parameters,omitempty" yaml:"parameters,omitempty" cli:"parameters" db:"-"`
-	Binaries        []GRPCPluginBinary `json:"binaries" yaml:"binaries" cli:"-" db:"-"`
-	PlatformModelID *int64             `json:"-" db:"platform_model_id" yaml:"-" cli:"-"`
-	Integration     string             `json:"integration" db:"-" yaml:"integration" cli:"integration"`
+	ID                 int64              `json:"id" yaml:"id" cli:"id" db:"id"`
+	Name               string             `json:"name" yaml:"name" cli:"name,key" db:"name"`
+	Type               string             `json:"type" yaml:"type" cli:"type" db:"type"`
+	Author             string             `json:"author" yaml:"author" cli:"author" db:"author"`
+	Description        string             `json:"description" yaml:"description" cli:"description" db:"description"`
+	Parameters         []Parameter        `json:"parameters,omitempty" yaml:"parameters,omitempty" cli:"parameters" db:"-"`
+	Binaries           []GRPCPluginBinary `json:"binaries" yaml:"binaries" cli:"-" db:"-"`
+	IntegrationModelID *int64             `json:"-" db:"integration_model_id" yaml:"-" cli:"-"`
+	Integration        string             `json:"integration" db:"-" yaml:"integration" cli:"integration"`
 }
 
 // GetBinary returns the binary for a specific os and arch

@@ -10,8 +10,8 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/platform"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -139,7 +139,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
@@ -250,7 +250,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
@@ -415,7 +415,7 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
@@ -616,49 +616,49 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	test.NotNil(t, proj)
 
 	pfname := sdk.RandomString(10)
-	pf := sdk.PlatformModel{
+	pf := sdk.IntegrationModel{
 		Name:       pfname,
 		Deployment: true,
-		DeploymentDefaultConfig: sdk.PlatformConfig{
-			"token": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypePassword,
+		DeploymentDefaultConfig: sdk.IntegrationConfig{
+			"token": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypePassword,
 				Value: "my-secret-token",
 			},
-			"url": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypeString,
+			"url": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypeString,
 				Value: "my-url",
 			},
 		},
 	}
-	test.NoError(t, platform.InsertModel(db, &pf))
-	defer platform.DeleteModel(db, pf.ID)
+	test.NoError(t, integration.InsertModel(db, &pf))
+	defer func() { _ = integration.DeleteModel(db, pf.ID) }()
 
-	pp := sdk.ProjectPlatform{
-		Model:           pf,
-		Name:            pf.Name,
-		PlatformModelID: pf.ID,
-		ProjectID:       proj.ID,
+	pp := sdk.ProjectIntegration{
+		Model:              pf,
+		Name:               pf.Name,
+		IntegrationModelID: pf.ID,
+		ProjectID:          proj.ID,
 	}
-	test.NoError(t, platform.InsertPlatform(db, &pp))
+	test.NoError(t, integration.InsertIntegration(db, &pp))
 
 	app := sdk.Application{
 		Name: "myNewApp",
 	}
 	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
 
-	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.PlatformConfig{
-		"token": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypePassword,
+	test.NoError(t, application.SetDeploymentStrategy(db, proj.ID, app.ID, pf.ID, pp.Name, sdk.IntegrationConfig{
+		"token": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
 			Value: "my-secret-token-2",
 		},
-		"url": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypeString,
+		"url": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypeString,
 			Value: "my-url-2",
 		},
 	}))
 
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
@@ -697,7 +697,7 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 
 	//Prepare request
 	vars = map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
 	}
 	uri = api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)

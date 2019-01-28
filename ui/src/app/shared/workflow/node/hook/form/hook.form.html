@@ -43,11 +43,11 @@
                                     #textareaCodeMirror>
                                 </codemirror>
                             </ng-container>
-                            <ng-container *ngIf="_hook.config[k].type === 'platform'">
-                                <sui-select class="selection" placeholder="{{'platform_name' | translate}}"
-                                            [(ngModel)]="selectedPlatform"
-                                            (ngModelChange)="updatePlatform()"
-                                            [options]="availablePlatforms"
+                            <ng-container *ngIf="_hook.config[k].type === 'integration'">
+                                <sui-select class="selection" placeholder="{{'integration_name' | translate}}"
+                                            [(ngModel)]="selectedIntegration"
+                                            (ngModelChange)="updateIntegration()"
+                                            [options]="availableIntegrations"
                                             [isSearchable]="true"
                                             labelField="name" #select>
                                     <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}

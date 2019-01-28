@@ -13,7 +13,7 @@ func TestInsertUpdateLoadDelete(t *testing.T) {
 		Author:      "me",
 		Description: "desc",
 		Name:        "test_plugin",
-		Type:        sdk.GRPCPluginDeploymentPlatform,
+		Type:        sdk.GRPCPluginDeploymentIntegration,
 		Binaries: []sdk.GRPCPluginBinary{
 			{
 				OS:   "linux",

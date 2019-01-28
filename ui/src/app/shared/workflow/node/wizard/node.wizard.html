@@ -32,12 +32,12 @@
                 </div>
               </div>
               <div class="step pointing"
-                [class.disabled]="node == null || !node.context.pipeline_id || !node.context.application_id || (!loadingPlatforms && (!platforms || !platforms.length))"
-                [class.active]="pipelineSection === 'platform'"
-                (click)="pipelineSection = 'platform'">
+                [class.disabled]="node == null || !node.context.pipeline_id || !node.context.application_id || (!loadingIntegrations && (!integrations || !integrations.length))"
+                [class.active]="pipelineSection === 'integration'"
+                (click)="pipelineSection = 'integration'">
                 <i class="plug icon"></i>
                 <div class="content">
-                  <div class="title">{{'common_platform' | translate}} <i class="green check icon" *ngIf="node.context.project_platform_id && node.context.project_platform_id > 0"></i></div>
+                  <div class="title">{{'common_integration' | translate}} <i class="green check icon" *ngIf="node.context.project_integration_id && node.context.project_integration_id > 0"></i></div>
                   <div class="description">{{'common_optional' | translate}}</div>
                 </div>
               </div>
@@ -217,28 +217,28 @@
                     <button class="ui button" type="button" (click)="goToProject()" *ngIf="!hideCancel">{{ 'btn_cancel' | translate }}</button>
                     <button class="ui right floated green button" type="button" *ngIf="!hideNext" (click)="goToNextSection().subscribe()"
                             [disabled]="!node.context.pipeline_id && !newPipeline.name" [class.loading]="loadingCreateEnvironment || loading">
-                            <span *ngIf="node.context.application_id && (loadingPlatforms || (platforms && platforms.length))">{{ 'btn_next' | translate }}</span>
-                            <span *ngIf="!node.context.application_id || (!loadingPlatforms && (!platforms || !platforms.length))">{{ 'btn_finish' | translate }}</span>
+                            <span *ngIf="node.context.application_id && (loadingIntegrations || (integrations && integrations.length))">{{ 'btn_next' | translate }}</span>
+                            <span *ngIf="!node.context.application_id || (!loadingIntegrations && (!integrations || !integrations.length))">{{ 'btn_finish' | translate }}</span>
                     </button>
                   </div>
                 </div>
               </div>
               <!-- ############### PLATFORM SECTION ############## -->
-              <div *ngSwitchCase="'platform'">
+              <div *ngSwitchCase="'integration'">
                 <div class="ui row">
                   <div class="ui sixteen wide column">
                       <div class="fields">
-                        <div class="ui active centered inline loader" *ngIf="loadingPlatforms"></div>
-                        <div class="six wide field" *ngIf="!loadingPlatforms">
-                            <label>{{'common_platform' | translate}}</label>
+                        <div class="ui active centered inline loader" *ngIf="loadingIntegrations"></div>
+                        <div class="six wide field" *ngIf="!loadingIntegrations">
+                            <label>{{'common_integration' | translate}}</label>
                               <sm-select
                                   class="search"
-                                  placeholder="{{ 'common_platform' | translate }}"
-                                  [(model)]="node.context.project_platform_id"
+                                  placeholder="{{ 'common_integration' | translate }}"
+                                  [(model)]="node.context.project_integration_id"
                                   [options]="{'fullTextSearch': true}"
-                                  id="WorkflowPlatformSelect">
+                                  id="WorkflowIntegrationSelect">
                                   <option> </option>
-                                  <option *ngFor="let platform of platforms" [value]="platform.id">{{ platform.name }}</option>
+                                  <option *ngFor="let integration of integrations" [value]="integration.id">{{ integration.name }}</option>
                               </sm-select>
                         </div>
                       </div>

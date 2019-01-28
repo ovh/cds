@@ -9,23 +9,23 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/grpcplugin/platformplugin"
+	"github.com/ovh/cds/sdk/grpcplugin/integrationplugin"
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
 /*
-This plugin have to be used as a deployment platform plugin
+This plugin have to be used as a deployment integration plugin
 
 This is an example, functional and almost complete. You have to add
 some code to call you "deployment" system.
 
 You can use the Makefile to build & publish the plugin on you CDS API.
 The Makefile use the cdsctl binary, you need to be an administrator of your
-CDS API to import plugin and create the deployment platform.
+CDS API to import plugin and create the deployment integration.
 
 Hello deployment plugin must configured as following (content of hello-deployment-plugin.yml):
 	name: hello-deployment-plugin
-	type: platform
+	type: integration
 	author: "Yvonnick Esnault"
 	description: "Hello Example Deployment Plugin"
 
@@ -38,7 +38,7 @@ Build the present binaries and import in CDS (content of hello-deployment-plugin
 
 $ cdsctl admin plugins binary-add hello-deployment-plugin hello-deployment-plugin-bin.yml <path-to-binary-file>
 
-Hello platform must configured as following (content of hello-platform.yml)
+Hello integration must configured as following (content of hello-integration.yml)
 	name: Hello
 	author: "Username Lastname"
 	default_config: {}
@@ -57,27 +57,27 @@ Hello platform must configured as following (content of hello-platform.yml)
 		type: string
 	plugin: hello-deployment-plugin
 	public_configurations:
-	hello-platform-dev:
+	hello-integration-dev:
 		host:
-		value: http://hello.your-deployment-platform.dev.local
+		value: http://hello.your-deployment-system.dev.local
 		type: string
-	hello-platform-prod:
+	hello-integration-prod:
 		host:
-		value: http://hello.your-deployment-platform.prod.local
+		value: http://hello.your-deployment-system.prod.local
 		type: string
 	deployment: true
 	public: true
 
-$ cdsctl admin platform-model import hello-platform.yml
+$ cdsctl admin integration-model import hello-integration.yml
 
 */
 
 type helloDeploymentPlugin struct {
-	platformplugin.Common
+	integrationplugin.Common
 }
 
-func (e *helloDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*platformplugin.PlatformPluginManifest, error) {
-	return &platformplugin.PlatformPluginManifest{
+func (e *helloDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*integrationplugin.IntegrationPluginManifest, error) {
+	return &integrationplugin.IntegrationPluginManifest{
 		Name:        "Hello Example Deployment Plugin",
 		Author:      "Yvonnick Esnault",
 		Description: "Hello Example Deployment Plugin",
@@ -89,11 +89,11 @@ func (e *helloDeploymentPlugin) Manifest(ctx context.Context, _ *empty.Empty) (*
 // to your "deployment" system. All data will be interpolate
 // with the real values below, by calling interpolate.Do func.
 const deployData = `{
-	"version": "{{.cds.platform.version}}",
+	"version": "{{.cds.integration.version}}",
 	"metadata": {
 		"CDS_APPLICATION": "{{.cds.application}}",
 		"CDS_RUN": "{{.cds.run}}",
-		"CDS_ENVIRONMENT": "{{.cds.platform}}",
+		"CDS_ENVIRONMENT": "{{.cds.integration}}",
 		"CDS_GIT_BRANCH": "{{.git.branch}}",
 		"CDS_WORKFLOW": "{{.cds.workflow}}",
 		"CDS_PROJECT": "{{.cds.project}}",
@@ -104,25 +104,25 @@ const deployData = `{
 	}
 }`
 
-func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.DeployQuery) (*platformplugin.DeployResult, error) {
+func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *integrationplugin.DeployQuery) (*integrationplugin.DeployResult, error) {
 	var application = q.GetOptions()["cds.application"]
-	var helloHost = q.GetOptions()["cds.platform.host"]
-	var maxRetryStr = q.GetOptions()["cds.platform.retry.max"]
-	var delayRetryStr = q.GetOptions()["cds.platform.retry.delay"]
+	var helloHost = q.GetOptions()["cds.integration.host"]
+	var maxRetryStr = q.GetOptions()["cds.integration.retry.max"]
+	var delayRetryStr = q.GetOptions()["cds.integration.retry.delay"]
 	maxRetry, err := strconv.Atoi(maxRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.platform.retry.max: %v. Default value (10) will be used\n", err)
+		fmt.Printf("Error parsing cds.integration.retry.max: %v. Default value (10) will be used\n", err)
 		maxRetry = 10
 	}
 	delayRetry, err := strconv.Atoi(delayRetryStr)
 	if err != nil {
-		fmt.Printf("Error parsing cds.platform.retry.max: %v. Default value (5) will be used\n", err)
+		fmt.Printf("Error parsing cds.integration.retry.max: %v. Default value (5) will be used\n", err)
 		delayRetry = 5
 	}
 
 	deployData, err := interpolate.Do(deployData, q.GetOptions())
 	if err != nil {
-		return fail("Error: unable to interpolate data: %v. Please check you platform configuration\n", err)
+		return fail("Error: unable to interpolate data: %v. Please check you integration configuration\n", err)
 	}
 
 	fmt.Printf("Deploying %s on Hello at %s...\n", application, helloHost)
@@ -151,7 +151,7 @@ func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.De
 
 		// here, a code just to make this example working
 		if retry == 2 {
-			fmt.Println("Fake deploy on Hello platform done")
+			fmt.Println("Fake deploy on Hello integration done")
 			success = true
 			break
 		} else {
@@ -164,29 +164,29 @@ func (e *helloDeploymentPlugin) Deploy(ctx context.Context, q *platformplugin.De
 		return fail("deployment failed")
 	}
 
-	return &platformplugin.DeployResult{
+	return &integrationplugin.DeployResult{
 		Status: sdk.StatusSuccess.String(),
 	}, nil
 }
 
-func (e *helloDeploymentPlugin) DeployStatus(ctx context.Context, q *platformplugin.DeployStatusQuery) (*platformplugin.DeployResult, error) {
-	return &platformplugin.DeployResult{
+func (e *helloDeploymentPlugin) DeployStatus(ctx context.Context, q *integrationplugin.DeployStatusQuery) (*integrationplugin.DeployResult, error) {
+	return &integrationplugin.DeployResult{
 		Status: sdk.StatusSuccess.String(),
 	}, nil
 }
 
 func main() {
 	e := helloDeploymentPlugin{}
-	if err := platformplugin.Start(context.Background(), &e); err != nil {
+	if err := integrationplugin.Start(context.Background(), &e); err != nil {
 		panic(err)
 	}
 	return
 }
 
-func fail(format string, args ...interface{}) (*platformplugin.DeployResult, error) {
+func fail(format string, args ...interface{}) (*integrationplugin.DeployResult, error) {
 	msg := fmt.Sprintf(format, args...)
 	fmt.Println(msg)
-	return &platformplugin.DeployResult{
+	return &integrationplugin.DeployResult{
 		Details: msg,
 		Status:  sdk.StatusFail.String(),
 	}, nil

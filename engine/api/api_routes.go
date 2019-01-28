@@ -91,9 +91,9 @@ func (api *API) InitRouter() {
 	// Hooks
 	r.Handle("/hook/{uuid}/workflow/{workflowID}/vcsevent/{vcsServer}", r.GET(api.getHookPollingVCSEvents))
 
-	// Platform
-	r.Handle("/platform/models", r.GET(api.getPlatformModelsHandler), r.POST(api.postPlatformModelHandler, NeedAdmin(true)))
-	r.Handle("/platform/models/{name}", r.GET(api.getPlatformModelHandler), r.PUT(api.putPlatformModelHandler, NeedAdmin(true)), r.DELETE(api.deletePlatformModelHandler, NeedAdmin(true)))
+	// Integration
+	r.Handle("/integration/models", r.GET(api.getIntegrationModelsHandler), r.POST(api.postIntegrationModelHandler, NeedAdmin(true)))
+	r.Handle("/integration/models/{name}", r.GET(api.getIntegrationModelHandler), r.PUT(api.putIntegrationModelHandler, NeedAdmin(true)), r.DELETE(api.deleteIntegrationModelHandler, NeedAdmin(true)))
 
 	// Broadcast
 	r.Handle("/broadcast", r.POST(api.addBroadcastHandler, NeedAdmin(true)), r.GET(api.getBroadcastsHandler))
@@ -133,8 +133,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/variable/{name}", r.GET(api.getVariableInProjectHandler), r.POST(api.addVariableInProjectHandler), r.PUT(api.updateVariableInProjectHandler), r.DELETE(api.deleteVariableFromProjectHandler))
 	r.Handle("/project/{permProjectKey}/variable/{name}/audit", r.GET(api.getVariableAuditInProjectHandler))
 	r.Handle("/project/{permProjectKey}/applications", r.GET(api.getApplicationsHandler, AllowProvider(true)), r.POST(api.addApplicationHandler))
-	r.Handle("/project/{permProjectKey}/platforms", r.GET(api.getProjectPlatformsHandler), r.POST(api.postProjectPlatformHandler))
-	r.Handle("/project/{permProjectKey}/platforms/{platformName}", r.GET(api.getProjectPlatformHandler, AllowServices(true)), r.PUT(api.putProjectPlatformHandler), r.DELETE(api.deleteProjectPlatformHandler))
+	r.Handle("/project/{permProjectKey}/integrations", r.GET(api.getProjectIntegrationsHandler), r.POST(api.postProjectIntegrationHandler))
+	r.Handle("/project/{permProjectKey}/integrations/{integrationName}", r.GET(api.getProjectIntegrationHandler, AllowServices(true)), r.PUT(api.putProjectIntegrationHandler), r.DELETE(api.deleteProjectIntegrationHandler))
 	r.Handle("/project/{permProjectKey}/notifications", r.GET(api.getProjectNotificationsHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/all/keys", r.GET(api.getAllKeysProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys", r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
@@ -163,7 +163,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", r.GET(api.getVariableAuditInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/vulnerability/{id}", r.POST(api.postVulnerabilityHandler))
 	// Application deployment
-	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config/{platform}", r.POST(api.postApplicationDeploymentStrategyConfigHandler, AllowProvider(true)), r.GET(api.getApplicationDeploymentStrategyConfigHandler), r.DELETE(api.deleteApplicationDeploymentStrategyConfigHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config/{integration}", r.POST(api.postApplicationDeploymentStrategyConfigHandler, AllowProvider(true)), r.GET(api.getApplicationDeploymentStrategyConfigHandler), r.DELETE(api.deleteApplicationDeploymentStrategyConfigHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/deployment/config", r.GET(api.getApplicationDeploymentStrategiesConfigHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/metadata/{metadata}", r.POST(api.postApplicationMetadataHandler, AllowProvider(true)))
 

@@ -89,9 +89,9 @@ export class ProjectShowComponent implements OnInit {
             icon: 'privacy',
             key: 'keys'
         }, <Tab>{
-            translate: 'common_platforms',
+            translate: 'common_integrations',
             icon: 'plug',
-            key: 'platforms'
+            key: 'integrations'
         }, <Tab>{
             translate: 'common_warnings',
             icon: 'bug',

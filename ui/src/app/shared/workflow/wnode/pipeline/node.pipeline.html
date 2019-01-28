@@ -15,7 +15,7 @@
         </div>
     </div>
     <div class="details">
-        <div *ngIf="node.context.application_id || node.context.environment_id || node.context.project_platform_id"
+        <div *ngIf="node.context.application_id || node.context.environment_id || node.context.project_integration_id"
             class="context">
             <div *ngIf="node.context.application_id" class="item ellipsis">
                 <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', workflow.applications[node.context.application_id].name]"
@@ -29,10 +29,10 @@
                     {{workflow.environments[node.context.environment_id].name}}
                 </a>
             </div>
-            <div *ngIf="node.context.project_platform_id" class="item ellipsis">
-                <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'platforms'}"
-                    title="{{ 'common_platform_title' | translate}}{{workflow.project_platforms[node.context.project_platform_id].name}}">
-                    {{workflow.project_platforms[node.context.project_platform_id].name}}
+            <div *ngIf="node.context.project_integration_id" class="item ellipsis">
+                <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'integrations'}"
+                    title="{{ 'common_integration_title' | translate}}{{workflow.project_integrations[node.context.project_integration_id].name}}">
+                    {{workflow.project_integrations[node.context.project__id].name}}
                 </a>
             </div>
         </div>

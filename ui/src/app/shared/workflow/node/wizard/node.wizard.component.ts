@@ -55,14 +55,14 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     errorPipelineNamePattern = false;
     loadingCreatePipeline = false;
     newPipeline: Pipeline = new Pipeline();
-    set pipelineSection(data: 'pipeline'|'application'|'environment'|'platform') {
+    set pipelineSection(data: 'pipeline'|'application'|'environment'|'integration') {
         this._pipelineSection = data;
         this.pipelineSectionChanged.emit(data);
     }
     get pipelineSection() {
         return this._pipelineSection;
     }
-    _pipelineSection: 'pipeline'|'application'|'environment'|'platform' = 'pipeline';
+    _pipelineSection: 'pipeline'|'application'|'environment'|'integration' = 'pipeline';
     _createNewPipeline = false;
 
     // Application details
@@ -95,8 +95,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     loadingCreateEnvironment = false;
     newEnvironment: Environment = new Environment();
     _createNewEnvironment = false;
-    platforms: IdName[] = [];
-    loadingPlatforms = false;
+    integrations: IdName[] = [];
+    loadingIntegrations = false;
 
     constructor(private _router: Router,
                 private _translate: TranslateService,
@@ -147,8 +147,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
         if (this.node.context.environment_id) {
             this.node.context.environment_id = Number(this.node.context.environment_id);
         }
-        if (this.node.context.project_platform_id) {
-            this.node.context.project_platform_id = Number(this.node.context.project_platform_id);
+        if (this.node.context.project_integration_id) {
+            this.node.context.project_integration_id = Number(this.node.context.project_integration_id);
         }
         this.nodeCreated.emit(this.node);
     }
@@ -208,40 +208,40 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
         return this.createApplication().pipe(
           map(() => 'environment'));
       }
-      this.getPlatforms();
+      this.getIntegrations();
       this.pipelineSection = 'environment';
       return observableOf('environment');
     }
 
-    getPlatforms() {
-      this.loadingPlatforms = true;
+    getIntegrations() {
+      this.loadingIntegrations = true;
       if (!this.node.context.application_id) {
-        this.loadingPlatforms = false;
+        this.loadingIntegrations = false;
         return;
       }
       let app = this.project.application_names.find((a) => a.id === Number(this.node.context.application_id));
       if (!app) {
-        this.loadingPlatforms = false;
+        this.loadingIntegrations = false;
         return;
       }
       this._appStore.getDeploymentStrategies(this.project.key, app.name).pipe(
           first(),
-          finalize(() => this.loadingPlatforms = false)
+          finalize(() => this.loadingIntegrations = false)
       ).subscribe(
           (data) => {
-              this.platforms = [];
+              this.integrations = [];
               let pfNames = Object.keys(data);
               pfNames.forEach(s => {
-                  let pf = this.project.platforms.find(p => p.name === s);
+                  let pf = this.project.integrations.find(p => p.name === s);
                   if (pf) {
                       let idName = new IdName();
                       idName.id = pf.id;
                       idName.name = pf.name;
-                      this.platforms.push(idName);
+                      this.integrations.push(idName);
                   }
               })
-              if (this.platforms.length) {
-                  this.platforms.unshift(new IdName());
+              if (this.integrations.length) {
+                  this.integrations.unshift(new IdName());
               }
           }
       );
@@ -260,7 +260,7 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
               if (!this.node.context.application_id) {
                   this.createNode();
               } else {
-                  this.pipelineSection = 'platform';
+                  this.pipelineSection = 'integration';
               }
               return proj;
           }));
@@ -269,18 +269,18 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
     selectOrCreateEnvironment() {
       if (this.createNewEnvironment && this.newEnvironment.name) {
         return this.createEnvironment().pipe(
-          map(() => 'platform'));
+          map(() => 'integration'));
       }
-      let noPlatformsAvailable = !this.loadingPlatforms && (!this.platforms || !this.platforms.length);
-      if (!this.node.context.application_id || noPlatformsAvailable) {
+      let noIntegrationsAvailable = !this.loadingIntegrations && (!this.integrations || !this.integrations.length);
+      if (!this.node.context.application_id || noIntegrationsAvailable) {
           this.createNode();
           return observableOf('done');
       }
-      this.pipelineSection = 'platform';
-      return observableOf('platform');
+      this.pipelineSection = 'integration';
+      return observableOf('integration');
     }
 
-    selectOrCreatePlatform() {
+    selectOrCreateIntegration() {
       this.createNode();
       return observableOf('done');
     }
@@ -293,8 +293,8 @@ export class WorkflowNodeAddWizardComponent implements OnInit {
           return this.selectOrCreateApplication();
         case 'environment':
           return this.selectOrCreateEnvironment();
-        case 'platform':
-          return this.selectOrCreatePlatform();
+        case 'integration':
+          return this.selectOrCreateIntegration();
       }
     }
 }

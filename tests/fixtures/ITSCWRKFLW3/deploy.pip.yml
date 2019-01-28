@@ -7,7 +7,7 @@ jobs:
 
 - job: Deploy
   stage: Deploy
-  description: Deploy on a platform
+  description: Deploy with an integration
   steps:
   - script:
     - '#echo ''Deploy in progress...'' '

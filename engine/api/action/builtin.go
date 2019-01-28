@@ -169,7 +169,7 @@ If you want to modify theses options, you have to use gitClone action.
 	deployApplication := sdk.NewAction(sdk.DeployApplicationAction)
 	deployApplication.Type = sdk.BuiltinAction
 	deployApplication.Description = `CDS Builtin Action.
-Deploy an application of a platform.`
+Deploy an application of a integration.`
 
 	if err := checkBuiltinAction(db, deployApplication); err != nil {
 		return err

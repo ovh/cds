@@ -55,7 +55,7 @@ func (api *API) getWorkflowHandler() service.Handler {
 		withTemplate := FormBool(r, "withTemplate")
 		withAsCodeEvents := FormBool(r, "withAsCodeEvents")
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -169,7 +169,7 @@ func (api *API) postWorkflowRollbackHandler() service.Handler {
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		)
 		if errP != nil {
@@ -322,7 +322,7 @@ func (api *API) postWorkflowHandler() service.Handler {
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithGroups,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 		)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
@@ -406,7 +406,7 @@ func (api *API) putWorkflowHandler() service.Handler {
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 		)
 		if errP != nil {
 			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
@@ -501,7 +501,7 @@ func (api *API) deleteWorkflowHandler() service.Handler {
 		key := vars["key"]
 		name := vars["permWorkflowName"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
@@ -555,7 +555,7 @@ func (api *API) getWorkflowHookHandler() service.Handler {
 		uuid := vars["uuid"]
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithEnvironments)

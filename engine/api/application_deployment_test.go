@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -28,7 +28,7 @@ func Test_getApplicationDeploymentStrategiesConfigHandler(t *testing.T) {
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
 
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
 	}
 
@@ -54,45 +54,45 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	}
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
 
-	pf := sdk.PlatformModel{
+	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-2",
 		Deployment: true,
 	}
-	test.NoError(t, platform.InsertModel(db, &pf))
-	defer platform.DeleteModel(db, pf.ID)
+	test.NoError(t, integration.InsertModel(db, &pf))
+	defer func() { _ = integration.DeleteModel(db, pf.ID) }()
 
-	pp := sdk.ProjectPlatform{
-		Model:           pf,
-		Name:            pf.Name,
-		PlatformModelID: pf.ID,
-		ProjectID:       proj.ID,
-		Config: sdk.PlatformConfig{
-			"token": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypePassword,
+	pp := sdk.ProjectIntegration{
+		Model:              pf,
+		Name:               pf.Name,
+		IntegrationModelID: pf.ID,
+		ProjectID:          proj.ID,
+		Config: sdk.IntegrationConfig{
+			"token": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypePassword,
 				Value: "my-secret-token",
 			},
-			"url": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypeString,
+			"url": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypeString,
 				Value: "my-url",
 			},
 		},
 	}
-	test.NoError(t, platform.InsertPlatform(db, &pp))
+	test.NoError(t, integration.InsertIntegration(db, &pp))
 
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
-		"platform":            pf.Name,
+		"integration":         pf.Name,
 	}
 
 	uri := router.GetRoute("POST", api.postApplicationDeploymentStrategyConfigHandler, vars)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.PlatformConfig{
-		"token": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypePassword,
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.IntegrationConfig{
+		"token": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
 			Value: "my-secret-token",
 		},
-		"url": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypeString,
+		"url": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypeString,
 			Value: "my-url",
 		},
 	})
@@ -103,13 +103,13 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	assert.Equal(t, 200, w.Code)
 
 	//Then we try to update
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.PlatformConfig{
-		"token": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypePassword,
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.IntegrationConfig{
+		"token": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
 			Value: "my-secret-token-2",
 		},
-		"url": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypeString,
+		"url": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypeString,
 			Value: "my-url-2",
 		},
 	})
@@ -127,7 +127,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	cfg := sdk.PlatformConfig{}
+	cfg := sdk.IntegrationConfig{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &cfg))
 	assert.Equal(t, sdk.PasswordPlaceholder, cfg["token"].Value)
 
@@ -144,7 +144,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	cfg2 := sdk.PlatformConfig{}
+	cfg2 := sdk.IntegrationConfig{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &cfg2))
 	assert.Equal(t, "my-secret-token-2", cfg2["token"].Value)
 
@@ -166,7 +166,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler(t *testing.T) {
 	assert.Equal(t, 404, w.Code)
 }
 
-func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentPlatforms(t *testing.T) {
+func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentIntegrations(t *testing.T) {
 	api, db, router, end := newTestAPI(t)
 	defer end()
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -177,63 +177,63 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentPlatf
 	}
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
 
-	pf := sdk.PlatformModel{
+	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-2",
 		Deployment: true,
 	}
-	test.NoError(t, platform.InsertModel(db, &pf))
-	defer platform.DeleteModel(db, pf.ID)
+	test.NoError(t, integration.InsertModel(db, &pf))
+	defer func() { _ = integration.DeleteModel(db, pf.ID) }()
 
-	pp := sdk.ProjectPlatform{
-		Model:           pf,
-		Name:            pf.Name,
-		PlatformModelID: pf.ID,
-		ProjectID:       proj.ID,
-		Config: sdk.PlatformConfig{
-			"token": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypePassword,
+	pp := sdk.ProjectIntegration{
+		Model:              pf,
+		Name:               pf.Name,
+		IntegrationModelID: pf.ID,
+		ProjectID:          proj.ID,
+		Config: sdk.IntegrationConfig{
+			"token": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypePassword,
 				Value: "my-secret-token",
 			},
-			"url": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypeString,
+			"url": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypeString,
 				Value: "my-url",
 			},
 		},
 	}
-	test.NoError(t, platform.InsertPlatform(db, &pp))
+	test.NoError(t, integration.InsertIntegration(db, &pp))
 
-	pp2 := sdk.ProjectPlatform{
-		Model:           pf,
-		Name:            pf.Name + "-2",
-		PlatformModelID: pf.ID,
-		ProjectID:       proj.ID,
-		Config: sdk.PlatformConfig{
-			"token": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypePassword,
+	pp2 := sdk.ProjectIntegration{
+		Model:              pf,
+		Name:               pf.Name + "-2",
+		IntegrationModelID: pf.ID,
+		ProjectID:          proj.ID,
+		Config: sdk.IntegrationConfig{
+			"token": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypePassword,
 				Value: "my-secret-token",
 			},
-			"url": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypeString,
+			"url": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypeString,
 				Value: "my-url",
 			},
 		},
 	}
-	test.NoError(t, platform.InsertPlatform(db, &pp2))
+	test.NoError(t, integration.InsertIntegration(db, &pp2))
 
 	vars := map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
-		"platform":            pf.Name,
+		"integration":         pf.Name,
 	}
 
 	uri := router.GetRoute("POST", api.postApplicationDeploymentStrategyConfigHandler, vars)
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.PlatformConfig{
-		"token": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypePassword,
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.IntegrationConfig{
+		"token": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
 			Value: "my-secret-token",
 		},
-		"url": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypeString,
+		"url": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypeString,
 			Value: "my-url",
 		},
 	})
@@ -245,19 +245,19 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentPlatf
 
 	//Now add a new
 	vars = map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
-		"platform":            pp2.Name,
+		"integration":         pp2.Name,
 	}
 
 	uri = router.GetRoute("POST", api.postApplicationDeploymentStrategyConfigHandler, vars)
-	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.PlatformConfig{
-		"token": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypePassword,
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, sdk.IntegrationConfig{
+		"token": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
 			Value: "my-secret-token",
 		},
-		"url": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypeString,
+		"url": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypeString,
 			Value: "my-url",
 		},
 	})
@@ -268,7 +268,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentPlatf
 	assert.Equal(t, 200, w.Code)
 
 	vars = map[string]string{
-		"key": proj.Key,
+		"key":                 proj.Key,
 		"permApplicationName": app.Name,
 	}
 	uri = router.GetRoute("GET", api.getApplicationDeploymentStrategiesConfigHandler, vars)
@@ -279,7 +279,7 @@ func Test_postApplicationDeploymentStrategyConfigHandler_InsertTwoDifferentPlatf
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
-	cfg := map[string]sdk.PlatformConfig{}
+	cfg := map[string]sdk.IntegrationConfig{}
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &cfg))
 	assert.Len(t, cfg, 2)
 
@@ -306,30 +306,30 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	}
 	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, u))
 
-	pf := sdk.PlatformModel{
+	pf := sdk.IntegrationModel{
 		Name:       "test-deploy-3",
 		Deployment: true,
-		DeploymentDefaultConfig: sdk.PlatformConfig{
-			"token": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypePassword,
+		DeploymentDefaultConfig: sdk.IntegrationConfig{
+			"token": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypePassword,
 				Value: "my-secret-token",
 			},
-			"url": sdk.PlatformConfigValue{
-				Type:  sdk.PlatformConfigTypeString,
+			"url": sdk.IntegrationConfigValue{
+				Type:  sdk.IntegrationConfigTypeString,
 				Value: "my-url",
 			},
 		},
 	}
-	test.NoError(t, platform.InsertModel(api.mustDB(), &pf))
-	defer platform.DeleteModel(api.mustDB(), pf.ID)
+	test.NoError(t, integration.InsertModel(api.mustDB(), &pf))
+	defer func() { _ = integration.DeleteModel(api.mustDB(), pf.ID) }()
 
-	pp := sdk.ProjectPlatform{
-		Model:           pf,
-		Name:            pf.Name,
-		PlatformModelID: pf.ID,
-		ProjectID:       proj.ID,
+	pp := sdk.ProjectIntegration{
+		Model:              pf,
+		Name:               pf.Name,
+		IntegrationModelID: pf.ID,
+		ProjectID:          proj.ID,
 	}
-	test.NoError(t, platform.InsertPlatform(api.mustDB(), &pp))
+	test.NoError(t, integration.InsertIntegration(api.mustDB(), &pp))
 
 	sdkclient := cdsclient.NewProviderClient(cdsclient.ProviderConfig{
 		Host:  tsURL,
@@ -337,9 +337,9 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 		Token: "my-token",
 	})
 
-	err := sdkclient.ApplicationDeploymentStrategyUpdate(proj.Key, app.Name, pf.Name, sdk.PlatformConfig{
-		"token": sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypePassword,
+	err := sdkclient.ApplicationDeploymentStrategyUpdate(proj.Key, app.Name, pf.Name, sdk.IntegrationConfig{
+		"token": sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
 			Value: "my-secret-token-2",
 		},
 	})
@@ -348,7 +348,7 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	cfg, err := application.LoadDeploymentStrategies(api.mustDB(), app.ID, true)
 	test.NoError(t, err)
 
-	var assertCfg = func(key string, cfg sdk.PlatformConfig, expected sdk.PlatformConfigValue) {
+	var assertCfg = func(key string, cfg sdk.IntegrationConfig, expected sdk.IntegrationConfigValue) {
 		actual, has := cfg[key]
 		assert.True(t, has, "%s not found", key)
 		assert.Equal(t, expected.Value, actual.Value)
@@ -358,14 +358,14 @@ func Test_postApplicationDeploymentStrategyConfigHandlerAsProvider(t *testing.T)
 	pfcfg, has := cfg[pf.Name]
 	assert.True(t, has, "%s not found", pf.Name)
 	assertCfg("token", pfcfg,
-		sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypePassword,
+		sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypePassword,
 			Value: "my-secret-token-2",
 		})
 
 	assertCfg("url", pfcfg,
-		sdk.PlatformConfigValue{
-			Type:  sdk.PlatformConfigTypeString,
+		sdk.IntegrationConfigValue{
+			Type:  sdk.IntegrationConfigTypeString,
 			Value: "my-url",
 		})
 

@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -63,7 +63,7 @@ func (api *API) getProjectsHandler() service.Handler {
 			opts = append(opts, project.LoadOptions.WithApplications)
 		}
 		if withWorkflows {
-			opts = append(opts, project.LoadOptions.WithPlatforms, project.LoadOptions.WithWorkflows)
+			opts = append(opts, project.LoadOptions.WithIntegrations, project.LoadOptions.WithWorkflows)
 		}
 
 		if filterByRepo == "" {
@@ -194,7 +194,7 @@ func (api *API) getProjectHandler() service.Handler {
 		withKeys := FormBool(r, "withKeys")
 		withWorkflows := FormBool(r, "withWorkflows")
 		withWorkflowNames := FormBool(r, "withWorkflowNames")
-		withPlatforms := FormBool(r, "withPlatforms")
+		withIntegrations := FormBool(r, "withIntegrations")
 		withFeatures := FormBool(r, "withFeatures")
 		withIcon := FormBool(r, "withIcon")
 		withLabels := FormBool(r, "withLabels")
@@ -235,8 +235,8 @@ func (api *API) getProjectHandler() service.Handler {
 		if withWorkflowNames {
 			opts = append(opts, project.LoadOptions.WithWorkflowNames)
 		}
-		if withPlatforms {
-			opts = append(opts, project.LoadOptions.WithPlatforms)
+		if withIntegrations {
+			opts = append(opts, project.LoadOptions.WithIntegrations)
 		}
 		if withFeatures {
 			opts = append(opts, project.LoadOptions.WithFeatures)
@@ -491,15 +491,15 @@ func (api *API) addProjectHandler() service.Handler {
 			}
 		}
 
-		platformModels, errP := platform.LoadModels(tx)
+		integrationModels, errP := integration.LoadModels(tx)
 		if errP != nil {
-			return sdk.WrapError(errP, "addProjectHandler> Cannot load platform models")
+			return sdk.WrapError(errP, "addProjectHandler> Cannot load integration models")
 		}
 
-		for i := range platformModels {
-			pf := &platformModels[i]
-			if err := propagatePublicPlatformModelOnProject(tx, api.Cache, *pf, *p, deprecatedGetUser(ctx)); err != nil {
-				return sdk.WrapError(err, "propagatePublicPlatformModelOnProject error")
+		for i := range integrationModels {
+			pf := &integrationModels[i]
+			if err := propagatePublicIntegrationModelOnProject(tx, api.Cache, *pf, *p, deprecatedGetUser(ctx)); err != nil {
+				return sdk.WrapError(err, "propagatePublicIntegrationModelOnProject error")
 			}
 		}
 

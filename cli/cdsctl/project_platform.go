@@ -10,36 +10,36 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var projectPlatformCmd = cli.Command{
-	Name:  "platform",
-	Short: "Manage CDS project platforms",
+var ProjectIntegrationCmd = cli.Command{
+	Name:  "integration",
+	Short: "Manage CDS integration integrations",
 }
 
-func projectPlatform() *cobra.Command {
-	return cli.NewCommand(projectPlatformCmd, nil, []*cobra.Command{
-		cli.NewListCommand(projectPlatformListCmd, projectPlatformListFunc, nil, withAllCommandModifiers()...),
-		cli.NewDeleteCommand(projectPlatformDeleteCmd, projectPlatformDeleteFunc, nil, withAllCommandModifiers()...),
-		cli.NewCommand(projectPlatformImportCmd, projectPlatformImportFunc, nil, withAllCommandModifiers()...),
-		cli.NewCommand(projectPlatformExportCmd, projectPlatformExportFunc, nil, withAllCommandModifiers()...),
+func ProjectIntegration() *cobra.Command {
+	return cli.NewCommand(ProjectIntegrationCmd, nil, []*cobra.Command{
+		cli.NewListCommand(ProjectIntegrationListCmd, ProjectIntegrationListFunc, nil, withAllCommandModifiers()...),
+		cli.NewDeleteCommand(ProjectIntegrationDeleteCmd, ProjectIntegrationDeleteFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(ProjectIntegrationImportCmd, ProjectIntegrationImportFunc, nil, withAllCommandModifiers()...),
+		cli.NewCommand(ProjectIntegrationExportCmd, ProjectIntegrationExportFunc, nil, withAllCommandModifiers()...),
 	})
 }
 
-var projectPlatformListCmd = cli.Command{
+var ProjectIntegrationListCmd = cli.Command{
 	Name:  "list",
-	Short: "List platforms available on a project",
+	Short: "List integrations available on a project",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
 }
 
-func projectPlatformListFunc(v cli.Values) (cli.ListResult, error) {
-	pfs, err := client.ProjectPlatformList(v.GetString(_ProjectKey))
+func ProjectIntegrationListFunc(v cli.Values) (cli.ListResult, error) {
+	pfs, err := client.ProjectIntegrationList(v.GetString(_ProjectKey))
 	return cli.AsListResult(pfs), err
 }
 
-var projectPlatformDeleteCmd = cli.Command{
+var ProjectIntegrationDeleteCmd = cli.Command{
 	Name:  "delete",
-	Short: "Delete a platform configuration on a project",
+	Short: "Delete a integration configuration on a project",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -48,14 +48,14 @@ var projectPlatformDeleteCmd = cli.Command{
 	},
 }
 
-func projectPlatformDeleteFunc(v cli.Values) error {
-	return client.ProjectPlatformDelete(v.GetString(_ProjectKey), v.GetString("name"))
+func ProjectIntegrationDeleteFunc(v cli.Values) error {
+	return client.ProjectIntegrationDelete(v.GetString(_ProjectKey), v.GetString("name"))
 }
 
-var projectPlatformImportCmd = cli.Command{
+var ProjectIntegrationImportCmd = cli.Command{
 	Name:    "import",
-	Short:   "Import a platform configuration on a project from a yaml file",
-	Example: "cdsctl project platform import MY-PROJECT file.yml",
+	Short:   "Import a integration configuration on a project from a yaml file",
+	Example: "cdsctl integration import MY-PROJECT file.yml",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -67,20 +67,20 @@ var projectPlatformImportCmd = cli.Command{
 	},
 }
 
-func projectPlatformImportFunc(v cli.Values) error {
+func ProjectIntegrationImportFunc(v cli.Values) error {
 	f, err := os.Open(v.GetString("filename"))
 	if err != nil {
 		return fmt.Errorf("unable to open file %s: %v", v.GetString("filename"), err)
 	}
 	defer f.Close()
-	_, err = client.ProjectPlatformImport(v.GetString(_ProjectKey), f, filepath.Ext(v.GetString("filename")), v.GetBool("force"))
+	_, err = client.ProjectIntegrationImport(v.GetString(_ProjectKey), f, filepath.Ext(v.GetString("filename")), v.GetBool("force"))
 	return err
 }
 
-var projectPlatformExportCmd = cli.Command{
+var ProjectIntegrationExportCmd = cli.Command{
 	Name:    "export",
-	Short:   "Export a platform configuration from a project to stdout",
-	Example: "cdsctl project platform export MY-PROJECT MY-PLATFORM-NAME > file.yaml",
+	Short:   "Export a integration configuration from a project to stdout",
+	Example: "cdsctl integration export MY-PROJECT MY-INTEGRATION-NAME > file.yaml",
 	Ctx: []cli.Arg{
 		{Name: _ProjectKey},
 	},
@@ -89,8 +89,8 @@ var projectPlatformExportCmd = cli.Command{
 	},
 }
 
-func projectPlatformExportFunc(v cli.Values) error {
-	pf, err := client.ProjectPlatformGet(v.GetString(_ProjectKey), v.GetString("name"), false)
+func ProjectIntegrationExportFunc(v cli.Values) error {
+	pf, err := client.ProjectIntegrationGet(v.GetString(_ProjectKey), v.GetString("name"), false)
 	if err != nil {
 		return err
 	}
