@@ -94,7 +94,7 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 			case "sdk.EventJob":
 				continue
 			}
-			observability.Record(c, b.router.Stats.SSEEvents, 1)
+			observability.Record(b.router.Background, b.router.Stats.SSEEvents, 1)
 			cacheMsgChan <- e
 		}
 	}

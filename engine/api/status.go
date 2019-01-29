@@ -278,8 +278,8 @@ func (api *API) initMetrics(ctx context.Context) error {
 		observability.NewViewLast("nb_workflow_node_runs", api.Metrics.nbWorkflowNodeRuns, tags),
 		observability.NewViewLast("nb_max_workers_building", api.Metrics.nbMaxWorkersBuilding, tags),
 		observability.NewViewLast("queue", api.Metrics.queue, tagsRange),
-		observability.NewViewCount("workflow_runs_started", api.Metrics.WorkflowRunStarted),
-		observability.NewViewCount("workflow_runs_failed", api.Metrics.WorkflowRunFailed),
+		observability.NewViewCount("workflow_runs_started", api.Metrics.WorkflowRunStarted, tags),
+		observability.NewViewCount("workflow_runs_failed", api.Metrics.WorkflowRunFailed, tags),
 	)
 
 	return err

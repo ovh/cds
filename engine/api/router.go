@@ -210,7 +210,7 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		observability.Record(ctx, r.Stats.Hits, 1)
+		observability.Record(r.Background, r.Stats.Hits, 1)
 
 		//Get route configuration
 		rc := cfg.Config[req.Method]
@@ -236,14 +236,14 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 			var err error
 			ctx, err = m(ctx, w, req, rc)
 			if err != nil {
-				observability.Record(ctx, r.Stats.Errors, 1)
+				observability.Record(r.Background, r.Stats.Errors, 1)
 				service.WriteError(w, req, err)
 				return
 			}
 		}
 
 		if err := rc.Handler(ctx, w, req); err != nil {
-			observability.Record(ctx, r.Stats.Errors, 1)
+			observability.Record(r.Background, r.Stats.Errors, 1)
 			observability.End(ctx, w, req)
 			service.WriteError(w, req, err)
 			return
@@ -544,9 +544,9 @@ func (r *Router) InitMetrics(service, name string) error {
 	log.Info("api> Stats initialized")
 
 	return observability.RegisterView(
-		observability.NewViewCount("router_errors", r.Stats.Errors),
-		observability.NewViewCount("router_hits", r.Stats.Hits),
+		observability.NewViewCount("router_errors", r.Stats.Errors, tags),
+		observability.NewViewCount("router_hits", r.Stats.Hits, tags),
 		observability.NewViewLast("sse_clients", r.Stats.SSEClients, tags),
-		observability.NewViewCount("sse_events", r.Stats.SSEEvents),
+		observability.NewViewCount("sse_events", r.Stats.SSEEvents, tags),
 	)
 }
