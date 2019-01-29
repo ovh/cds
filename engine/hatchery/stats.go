@@ -50,9 +50,9 @@ func (c *Common) initMetrics(hatcheryName string) error {
 	tags := []tag.Key{tagCDSInstance, hatchery.TagHatchery, hatchery.TagHatcheryName}
 
 	return observability.RegisterView(
-		observability.NewViewCount("jobs_count", c.metrics.Jobs, tags),
-		observability.NewViewCount("jobs_sse_count", c.metrics.JobsSSE, tags),
-		observability.NewViewCount("spawned_worker_count", c.metrics.SpawnedWorkers, tags),
+		observability.NewViewCount("jobs_count", c.metrics.Jobs),
+		observability.NewViewCount("jobs_sse_count", c.metrics.JobsSSE),
+		observability.NewViewCount("spawned_worker_count", c.metrics.SpawnedWorkers),
 		observability.NewViewLast("pending_workers", c.metrics.PendingWorkers, tags),
 		observability.NewViewLast("registering_workers", c.metrics.RegisteringWorkers, tags),
 		observability.NewViewLast("waiting_workers", c.metrics.WaitingWorkers, tags),

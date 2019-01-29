@@ -544,9 +544,9 @@ func (r *Router) InitMetrics(service, name string) error {
 	log.Info("api> Stats initialized")
 
 	return observability.RegisterView(
-		observability.NewViewCount("router_errors", r.Stats.Errors, tags),
-		observability.NewViewCount("router_hits", r.Stats.Hits, tags),
+		observability.NewViewCount("router_errors", r.Stats.Errors),
+		observability.NewViewCount("router_hits", r.Stats.Hits),
 		observability.NewViewLast("sse_clients", r.Stats.SSEClients, tags),
-		observability.NewViewCount("sse_events", r.Stats.SSEEvents, tags),
+		observability.NewViewCount("sse_events", r.Stats.SSEEvents),
 	)
 }
