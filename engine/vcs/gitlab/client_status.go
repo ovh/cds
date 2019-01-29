@@ -3,7 +3,6 @@ package gitlab
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -57,8 +56,6 @@ func (c *gitlabClient) SetStatus(ctx context.Context, event sdk.Event) error {
 	var data statusData
 	var err error
 	switch event.EventType {
-	case fmt.Sprintf("%T", sdk.EventPipelineBuild{}):
-		data, err = processPipelineBuildEvent(event, c.uiURL)
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		data, err = processWorkflowNodeRunEvent(event, c.uiURL)
 	default:
@@ -145,41 +142,5 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 	data.repoFullName = eventNR.RepositoryFullName
 	data.status = eventNR.Status
 	data.branchName = eventNR.BranchName
-	return data, nil
-}
-
-func processPipelineBuildEvent(event sdk.Event, uiURL string) (statusData, error) {
-	data := statusData{}
-	var eventpb sdk.EventPipelineBuild
-	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		return data, sdk.WrapError(err, "cannot read payload")
-	}
-
-	cdsProject := eventpb.ProjectKey
-	cdsApplication := eventpb.ApplicationName
-	cdsPipelineName := eventpb.PipelineName
-	cdsBuildNumber := eventpb.BuildNumber
-	cdsEnvironmentName := eventpb.EnvironmentName
-
-	key := fmt.Sprintf("%s-%s-%s",
-		cdsProject,
-		cdsApplication,
-		cdsPipelineName,
-	)
-
-	data.url = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
-		uiURL,
-		cdsProject,
-		cdsApplication,
-		cdsPipelineName,
-		cdsBuildNumber,
-		url.QueryEscape(cdsEnvironmentName),
-	)
-
-	data.desc = fmt.Sprintf("Build #%d %s", eventpb.BuildNumber, key)
-	data.hash = eventpb.Hash
-	data.repoFullName = eventpb.RepositoryFullname
-	data.status = eventpb.Status.String()
-	data.branchName = eventpb.BranchName
 	return data, nil
 }

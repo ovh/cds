@@ -48,26 +48,7 @@ func processEvent(ctx context.Context, db *gorp.DbMap, event sdk.Event, store ca
 	var c sdk.VCSAuthorizedClient
 	var errC error
 
-	if event.EventType == fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
-		var eventpb sdk.EventPipelineBuild
-		if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-			log.Error("Error during consumption: %s", err)
-			return err
-		}
-		if eventpb.RepositoryManagerName == "" {
-			return nil
-		}
-		vcsServer, err := LoadForProject(db, eventpb.ProjectKey, eventpb.RepositoryManagerName)
-		if err != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, err)
-		}
-
-		c, errC = AuthorizedClient(ctx, db, store, vcsServer)
-		if errC != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, errC)
-		}
-
-	} else if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
+	if event.EventType == fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}) {
 		var eventWNR sdk.EventRunWorkflowNode
 
 		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
