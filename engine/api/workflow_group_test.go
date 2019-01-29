@@ -193,9 +193,18 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	_, _, errG := group.AddGroup(api.mustDB(), &gr)
 	test.NoError(t, errG)
 
-	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, gr.ID, 7))
+	tmpGr := assets.InsertTestGroup(t, db, sdk.RandomString(5))
+	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, tmpGr.ID, permission.PermissionRead))
 
-	test.NoError(t, group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
+	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, gr.ID, permission.PermissionRead))
+	test.NoError(t, group.AddWorkflowGroup(db, &w, sdk.GroupPermission{
+		Permission: 7,
+		Group: sdk.Group{
+			ID:   tmpGr.ID,
+			Name: tmpGr.Name,
+		},
+	}))
+	test.NoError(t, group.AddWorkflowGroup(db, &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
 			ID:   gr.ID,
@@ -226,8 +235,15 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	var wFromAPI sdk.Workflow
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wFromAPI))
 
-	assert.Equal(t, 1, len(wFromAPI.Groups))
-	assert.Equal(t, 4, wFromAPI.Groups[0].Permission)
+	assert.Equal(t, 2, len(wFromAPI.Groups))
+	checked := false
+	for _, grp := range wFromAPI.Groups {
+		if grp.Group.Name == reqG.Group.Name {
+			checked = true
+			assert.Equal(t, 4, grp.Permission)
+		}
+	}
+	assert.True(t, checked)
 }
 
 func Test_deleteWorkflowGroupHandler(t *testing.T) {
@@ -275,13 +291,14 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 	_, _, errG := group.AddGroup(api.mustDB(), &gr)
 	test.NoError(t, errG)
 
-	group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
+	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, gr.ID, 7))
+	test.NoError(t, group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
 			ID:   gr.ID,
 			Name: gr.Name,
 		},
-	})
+	}))
 
 	//Prepare request
 	vars := map[string]string{
