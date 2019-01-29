@@ -11,7 +11,7 @@
             <i class="ui icon warning sign orange"></i>
         </div>
         <div *ngIf="noderun && noderun.subnumber" class="count">
-            {{ noderun?.subnumber }}
+            {{noderun?.subnumber}}
         </div>
     </div>
     <div class="details">
@@ -32,7 +32,7 @@
             <div *ngIf="node.context.project_integration_id" class="item ellipsis">
                 <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'integrations'}"
                     title="{{ 'common_integration_title' | translate}}{{workflow.project_integrations[node.context.project_integration_id].name}}">
-                    {{workflow.project_integrations[node.context.project__id].name}}
+                    {{workflow.project_integrations[node.context.project_integration_id].name}}
                 </a>
             </div>
         </div>
