@@ -47,7 +47,6 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 				},
 			},
 		},
-
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
@@ -59,6 +58,10 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 
+	t.Logf("%+v\n", proj)
+
+	newGrp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, permission.PermissionReadWriteExecute))
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -66,9 +69,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 	}
 	reqG := sdk.GroupPermission{
 		Permission: 7,
-		Group: sdk.Group{
-			ID: 1,
-		},
+		Group:      *newGrp,
 	}
 
 	uri := router.GetRoute("POST", api.postWorkflowGroupHandler, vars)
