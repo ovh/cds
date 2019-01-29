@@ -43,9 +43,9 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
-		"name":                "foo",
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
+		"name":            "foo",
 	}
 
 	uri := router.GetRoute("GET", api.getVariableAuditInApplicationHandler, vars)

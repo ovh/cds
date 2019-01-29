@@ -55,9 +55,9 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
-		"name":                k.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
+		"name":            k.Name,
 	}
 
 	uri := router.GetRoute("GET", api.getKeysInApplicationHandler, vars)
@@ -109,9 +109,9 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
-		"name":                k.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
+		"name":            k.Name,
 	}
 
 	uri := router.GetRoute("DELETE", api.deleteKeyInApplicationHandler, vars)
@@ -157,8 +157,8 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	}
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 
 	jsonBody, _ := json.Marshal(k)

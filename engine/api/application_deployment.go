@@ -18,8 +18,8 @@ import (
 func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithDeploymentStrategies)
 		if err != nil {
@@ -33,8 +33,8 @@ func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handle
 func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		pfName := vars["platform"]
 
 		var pfConfig sdk.PlatformConfig
@@ -109,8 +109,8 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		pfName := vars["platform"]
 
 		tx, errtx := api.mustDB().Begin()
@@ -174,8 +174,8 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["key"]
-		appName := vars["permApplicationName"]
+		key := vars["permProjectKey"]
+		appName := vars["applicationName"]
 		pfName := vars["platform"]
 		withClearPassword := FormBool(r, "withClearPassword")
 
