@@ -369,10 +369,8 @@ func (api *API) postWorkflowHandler() service.Handler {
 
 		// Add group
 		for _, gp := range p.ProjectGroups {
-			if gp.Permission >= permission.PermissionReadExecute {
-				if err := group.AddWorkflowGroup(tx, &wf, gp); err != nil {
-					return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)
-				}
+			if err := group.AddWorkflowGroup(tx, &wf, gp); err != nil {
+				return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)
 			}
 		}
 

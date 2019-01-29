@@ -76,8 +76,8 @@ func Test_getApplicationExportHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)

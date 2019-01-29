@@ -128,8 +128,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -239,8 +239,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -404,8 +404,8 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 
 	//Export all the things
 	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -647,8 +647,8 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 	}))
 
 	vars := map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)
@@ -686,8 +686,8 @@ func Test_postApplicationImportHandler_ExistingAppWithDeploymentStrategy(t *test
 
 	//Prepare request
 	vars = map[string]string{
-		"key": proj.Key,
-		"permApplicationName": app.Name,
+		"permProjectKey":  proj.Key,
+		"applicationName": app.Name,
 	}
 	uri = api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
 	test.NotEmpty(t, uri)
