@@ -42,7 +42,6 @@ func TestMissingProjectPermissionEnvWarning(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 	test.NoError(t, environment.InsertEnvironment(db, &env))
-	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g.ID, 7))
 
 	// Create delete key event
 	ePayload := sdk.EventProjectPermissionDelete{
@@ -154,7 +153,7 @@ func TestMissingProjectPermissionWorkflowWarning(t *testing.T) {
 	projUpdate, err := project.Load(db, cache, proj.Key, u, project.LoadOptions.WithPipelines)
 	assert.NoError(t, err)
 	test.NoError(t, workflow.Insert(db, cache, &w, projUpdate, u))
-	test.NoError(t, workflow.AddGroup(db, &w, gp))
+	test.NoError(t, group.AddWorkflowGroup(db, &w, gp))
 
 	// Create delete key event
 	ePayload := sdk.EventProjectPermissionDelete{

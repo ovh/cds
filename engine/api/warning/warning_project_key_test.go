@@ -251,7 +251,7 @@ func TestMissingProjectKeyApplicationWarning(t *testing.T) {
 	app.RepositoryStrategy = sdk.RepositoryStrategy{
 		SSHKey: pKey.Name,
 	}
-	assert.NoError(t, application.Update(db, cache, &app, u))
+	assert.NoError(t, application.Update(db, cache, &app))
 
 	// Create delete key event
 	ePayload := sdk.EventProjectKeyDelete{

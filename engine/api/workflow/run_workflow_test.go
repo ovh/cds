@@ -105,7 +105,7 @@ func TestManualRun1(t *testing.T) {
 
 	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
+	test.NoError(t, group.AddWorkflowGroup(db, &w, proj.ProjectGroups[0]))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
@@ -249,7 +249,7 @@ func TestManualRun2(t *testing.T) {
 	}
 	(&w).RetroMigrate()
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
+	test.NoError(t, group.AddWorkflowGroup(db, &w, proj.ProjectGroups[0]))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
@@ -397,7 +397,7 @@ func TestManualRun3(t *testing.T) {
 	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
-	test.NoError(t, workflow.AddGroup(db, &w, proj.ProjectGroups[0]))
+	test.NoError(t, group.AddWorkflowGroup(db, &w, proj.ProjectGroups[0]))
 
 	w1, err := workflow.Load(context.TODO(), db, cache, proj, "test_1", u, workflow.LoadOptions{
 		DeepPipeline: true,
