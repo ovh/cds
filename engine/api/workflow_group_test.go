@@ -61,7 +61,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 	t.Logf("%+v\n", proj)
 
 	newGrp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, permission.PermissionRead))
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
@@ -86,6 +86,68 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 
 	assert.Equal(t, len(wFromAPI.Groups), 1)
 	assert.Equal(t, wFromAPI.Groups[0].Group.Name, reqG.Group.Name)
+}
+
+func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
+	api, db, router, end := newTestAPI(t, bootstrap.InitiliazeDB)
+	defer end()
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
+
+	w := sdk.Workflow{
+		Name: sdk.RandomString(10),
+		WorkflowData: &sdk.WorkflowData{
+			Node: sdk.Node{
+				Name: "root",
+				Type: sdk.NodeTypePipeline,
+				Context: &sdk.NodeContext{
+					PipelineID: pip.ID,
+				},
+			},
+		},
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+	}
+
+	(&w).RetroMigrate()
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+
+	t.Logf("%+v\n", proj)
+
+	newGrp := assets.InsertTestGroup(t, db, sdk.RandomString(10))
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, newGrp.ID, permission.PermissionReadWriteExecute))
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w.Name,
+	}
+	reqG := sdk.GroupPermission{
+		Permission: 4,
+		Group:      *newGrp,
+	}
+
+	uri := router.GetRoute("POST", api.postWorkflowGroupHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, reqG)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 400, rec.Code)
 }
 
 func Test_putWorkflowGroupHandler(t *testing.T) {
@@ -131,13 +193,15 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	_, _, errG := group.AddGroup(api.mustDB(), &gr)
 	test.NoError(t, errG)
 
-	group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
+	test.NoError(t, group.InsertGroupInProject(db, proj2.ID, gr.ID, 7))
+
+	test.NoError(t, group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
 		Permission: 7,
 		Group: sdk.Group{
 			ID:   gr.ID,
 			Name: gr.Name,
 		},
-	})
+	}))
 
 	//Prepare request
 	vars := map[string]string{
@@ -147,10 +211,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	}
 	reqG := sdk.GroupPermission{
 		Permission: 4,
-		Group: sdk.Group{
-			ID:   1,
-			Name: gr.Name,
-		},
+		Group:      gr,
 	}
 
 	uri := router.GetRoute("PUT", api.putWorkflowGroupHandler, vars)
@@ -165,8 +226,8 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	var wFromAPI sdk.Workflow
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wFromAPI))
 
-	assert.Equal(t, len(wFromAPI.Groups), 1)
-	assert.Equal(t, wFromAPI.Groups[0].Permission, 4)
+	assert.Equal(t, 1, len(wFromAPI.Groups))
+	assert.Equal(t, 4, wFromAPI.Groups[0].Permission)
 }
 
 func Test_deleteWorkflowGroupHandler(t *testing.T) {

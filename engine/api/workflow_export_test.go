@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ovh/cds/engine/api/permission"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/group"
@@ -214,10 +216,11 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
 
-	group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
+	test.NoError(t, group.InsertGroupInProject(db, proj.ID, group2.ID, permission.PermissionReadWriteExecute))
+	test.NoError(t, group.AddWorkflowGroup(api.mustDB(), &w, sdk.GroupPermission{
 		Group:      *group2,
 		Permission: 7,
-	})
+	}))
 
 	w1, err := workflow.Load(context.TODO(), api.mustDB(), api.Cache, proj, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
