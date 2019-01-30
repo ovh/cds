@@ -215,7 +215,7 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 		//Get route configuration
 		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
-			observability.Record(ctx, r.Stats.Errors, 1)
+			observability.Record(r.Background, r.Stats.Errors, 1)
 			service.WriteError(w, req, sdk.ErrNotFound)
 			return
 		}
