@@ -59,6 +59,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 						return
 					}
 				}
+				log.Info("Migration [%s]: begin", currentMigration.Name)
 				if err := currentMigration.ExecFunc(contex); err != nil {
 					log.Error("migration %s in ERROR : %v", currentMigration.Name, err)
 					currentMigration.Error = err.Error()
@@ -70,6 +71,7 @@ func Run(ctx context.Context, db gorp.SqlExecutor, panicDump func(s string) (io.
 				if err := Update(db, &currentMigration); err != nil {
 					log.Error("Cannot update migration %s : %v", currentMigration.Name, err)
 				}
+				log.Info("Migration [%s]: Done", currentMigration.Name)
 			}, panicDump)
 		}(migration)
 	}
