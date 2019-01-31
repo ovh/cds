@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/ovh/cds/engine/api/integration"
+
 	"github.com/ovh/cds/engine/api/permission"
 
 	"github.com/go-gorp/gorp"
@@ -535,6 +537,13 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 
 	//Load the integration in the context
 	if ctx.ProjectIntegrationID != 0 {
+		if len(proj.Integrations) == 0 {
+			integrations, err := integration.LoadIntegrationsByProjectID(db, proj.ID, false)
+			if err != nil {
+				return sdk.WrapError(err, "Unable to load integrations for this project %d", proj.ID)
+			}
+			proj.Integrations = integrations
+		}
 		for _, pf := range proj.Integrations {
 			if pf.ID == ctx.ProjectIntegrationID {
 				ctx.ProjectIntegration = &pf

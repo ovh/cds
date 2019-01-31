@@ -114,7 +114,7 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 				return sdk.WrapError(err, "cannot load workflow id %d in project %s", workflowID, projLoaded.Key)
 			}
 
-			if oldWf.ToDelete {
+			if oldWf.ToDelete || len(oldWf.Groups) > 0 {
 				continue
 			}
 			log.Info("migrate.Permissions> Workflow %s", oldWf.Name)
@@ -123,7 +123,6 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 			for _, gp := range gps {
 				node := newWf.WorkflowData.NodeByID(gp.nodeID)
 				if node == nil {
-					log.Warning("migrate.Permission> cannot find node id %d", gp.nodeID)
 					continue
 				}
 				found := false
