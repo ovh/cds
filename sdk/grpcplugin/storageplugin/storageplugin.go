@@ -12,7 +12,6 @@ import (
 
 type Common struct {
 	grpcplugin.Common
-	conn *grpc.ClientConn
 }
 
 func Start(ctx context.Context, srv StoragePluginServer) error {
