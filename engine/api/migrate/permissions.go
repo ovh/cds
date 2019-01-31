@@ -44,11 +44,11 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		for _, wf := range proj.WorkflowNames {
 			groups, err := loadPreviousWorkflowGroups(db, wf.ID)
 			if err != nil {
-				log.Error("Migrate.Permissions> cannot load workflow %s/%s groups", proj.Key, wf.Name)
+				log.Error("Migrate.Permissions> cannot load workflow %s/%s groups : %v", proj.Key, wf.Name, err)
 				continue
 			}
 			if err := group.UpsertAllWorkflowGroups(db, &sdk.Workflow{ProjectID: proj.ID, ID: wf.ID}, groups); err != nil {
-				log.Error("Migrate.Permissions> cannot upsert workflow %s/%s groups", proj.Key, wf.Name)
+				log.Error("Migrate.Permissions> cannot upsert workflow %s/%s groups : %v", proj.Key, wf.Name, err)
 			}
 		}
 
