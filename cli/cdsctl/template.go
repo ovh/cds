@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -24,9 +23,12 @@ var templateCmd = cli.Command{
 func template() *cobra.Command {
 	return cli.NewCommand(templateCmd, nil, []*cobra.Command{
 		cli.NewCommand(templateApplyCmd("apply"), templateApplyRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(templateBulkCmd, templateBulkRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePullCmd, templatePullRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(templatePushCmd, templatePushRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(templateDeleteCmd, templateDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewListCommand(templateInstancesCmd, templateInstancesRun, nil, withAllCommandModifiers()...),
+		cli.NewCommand(templateDetachCmd, templateDetachRun, nil, withAllCommandModifiers()...),
 	})
 }
 
@@ -39,20 +41,19 @@ var templatePullCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:      reflect.String,
 			Name:      "output-dir",
 			ShortHand: "d",
 			Usage:     "Output directory",
 			Default:   ".cds",
 		},
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "force",
 			Usage:   "Force, may override files",
 			Default: "false",
 		},
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "quiet",
 			Usage:   "If true, do not output filename created",
 			Default: "false",
@@ -97,7 +98,7 @@ var templatePushCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:  reflect.Bool,
+			Type:  cli.FlagBool,
 			Name:  "skip-update-files",
 			Usage: "Useful if you don't want to update yaml files after pushing the template.",
 		},
@@ -112,37 +113,9 @@ func templatePushRun(v cli.Values) error {
 	tar := new(bytes.Buffer)
 
 	// if the first args is an url, try to download all files
-	readFromLink := len(files) > 0 && exportentities.IsURL(files[0]) && strings.HasSuffix(files[0], ".yml")
+	readFromLink := len(files) > 0 && sdk.IsURL(files[0]) && strings.HasSuffix(files[0], ".yml")
 	if readFromLink {
-		manifestURL := files[0]
-		baseURL := manifestURL[0:strings.LastIndex(manifestURL, "/")]
-
-		// get the manifest file
-		contentFile, _, err := exportentities.OpenPath(manifestURL)
-		if err != nil {
-			return err
-		}
-		buf := new(bytes.Buffer)
-		if _, err := buf.ReadFrom(contentFile); err != nil {
-			return fmt.Errorf("cannot read from given remote file: %v", err)
-		}
-		var t exportentities.Template
-		if err := yaml.Unmarshal(buf.Bytes(), &t); err != nil {
-			return fmt.Errorf("cannot unmarshal given remote yaml file: %v", err)
-		}
-
-		// get all components of the template
-		paths := []string{t.Workflow}
-		paths = append(paths, t.Pipelines...)
-		paths = append(paths, t.Applications...)
-		paths = append(paths, t.Environments...)
-
-		links := make([]string, len(paths))
-		for i := range paths {
-			links[i] = fmt.Sprintf("%s/%s", baseURL, paths[i])
-		}
-
-		if err := workflowLinksToTarWriter(append(links, manifestURL), tar); err != nil {
+		if err := exportentities.DownloadTemplate(files[0], tar); err != nil {
 			return err
 		}
 	} else {
@@ -198,6 +171,36 @@ func templatePushRun(v cli.Values) error {
 	return workflowTarReaderToFiles(dir, tr, false, false)
 }
 
+var templateDeleteCmd = cli.Command{
+	Name:    "delete",
+	Short:   "Delete a workflow template",
+	Example: "cdsctl template delete group-name/template-slug",
+	OptionalArgs: []cli.Arg{
+		{Name: "template-path"},
+	},
+}
+
+func templateDeleteRun(v cli.Values) error {
+	wt, err := getTemplateFromCLI(v)
+	if err != nil {
+		return err
+	}
+	if wt == nil {
+		wt, err = suggestTemplate()
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := client.TemplateDelete(wt.Group.Name, wt.Slug); err != nil {
+		return err
+	}
+
+	fmt.Println("Template successfully deleted")
+
+	return nil
+}
+
 var templateInstancesCmd = cli.Command{
 	Name:    "instances",
 	Short:   "Get instances for a CDS workflow template",
@@ -249,4 +252,38 @@ func templateInstancesRun(v cli.Values) (cli.ListResult, error) {
 	}
 
 	return cli.AsListResult(tids), nil
+}
+
+var templateDetachCmd = cli.Command{
+	Name:    "detach",
+	Short:   "Detach a workflow from template",
+	Example: "cdsctl template detach project-key workflow-name",
+	Ctx: []cli.Arg{
+		{Name: _ProjectKey},
+		{Name: _WorkflowName, AllowEmpty: true},
+	},
+}
+
+func templateDetachRun(v cli.Values) error {
+	projectKey := v.GetString(_ProjectKey)
+	workflowName := v.GetString(_WorkflowName)
+
+	// try to get an existing template instance for current workflow
+	wti, err := client.WorkflowTemplateInstanceGet(projectKey, workflowName)
+	if err != nil {
+		return err
+	}
+
+	wt, err := client.TemplateGetByID(wti.WorkflowTemplateID)
+	if err != nil {
+		return err
+	}
+
+	if err := client.TemplateDeleteInstance(wt.Group.Name, wt.Slug, wti.ID); err != nil {
+		return err
+	}
+
+	fmt.Printf("Template instance successfully detached for workflow %s/%s\n", projectKey, workflowName)
+
+	return nil
 }

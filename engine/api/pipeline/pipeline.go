@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -176,44 +175,6 @@ func LoadByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) (*sdk.Pipeline, error
 	return &pip, nil
 }
 
-// LoadByEnvName loads pipelines from database for a given project key and environment name
-func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Pipeline, error) {
-	pips := []sdk.Pipeline{}
-	query := `SELECT DISTINCT pipeline.* FROM pipeline
-	JOIN pipeline_trigger ON pipeline.id = pipeline_trigger.src_pipeline_id OR pipeline.id = pipeline_trigger.dest_pipeline_id
-	JOIN environment ON environment.id = pipeline_trigger.src_environment_id OR environment.id = pipeline_trigger.dest_environment_id
-	JOIN project ON pipeline.project_id = project.id
-	WHERE project.projectkey = $1 AND environment.name = $2`
-
-	if _, err := db.Select(&pips, query, projKey, envName); err != nil {
-		if err == sql.ErrNoRows {
-			return pips, nil
-		}
-		return nil, sdk.WrapError(err, "Unable to load pipelines linked to environment %s", envName)
-	}
-
-	return pips, nil
-}
-
-// LoadByApplicationName loads pipelines from database for a given project key and application name
-func LoadByApplicationName(db gorp.SqlExecutor, projKey, appName string) ([]sdk.Pipeline, error) {
-	pips := []sdk.Pipeline{}
-	query := `SELECT DISTINCT pipeline.* FROM pipeline
-	JOIN pipeline_trigger ON pipeline.id = pipeline_trigger.src_pipeline_id OR pipeline.id = pipeline_trigger.dest_pipeline_id
-	JOIN application ON application.id = pipeline_trigger.src_application_id OR application.id = pipeline_trigger.dest_application_id
-	JOIN project ON pipeline.project_id = project.id
-	WHERE project.projectkey = $1 AND application.name = $2`
-
-	if _, err := db.Select(&pips, query, projKey, appName); err != nil {
-		if err == sql.ErrNoRows {
-			return pips, nil
-		}
-		return nil, sdk.WrapError(err, "Unable to load pipelines linked to application %s", appName)
-	}
-
-	return pips, nil
-}
-
 func loadPipelineDependencies(ctx context.Context, db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	if err := LoadPipelineStage(ctx, db, p); err != nil {
 		return err
@@ -244,45 +205,6 @@ func DeletePipeline(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 	}
 
 	if err := DeleteAllParameterFromPipeline(db, pipelineID); err != nil {
-		return err
-	}
-
-	// Delete triggers
-	if err := trigger.DeletePipelineTriggers(db, pipelineID); err != nil {
-		return err
-	}
-
-	// Delete test results
-	if err := DeletePipelineTestResults(db, pipelineID); err != nil {
-		return err
-	}
-
-	var pipelineBuildIDs []int64
-	query = `SELECT id FROM pipeline_build where pipeline_id = $1`
-	rows, err := db.Query(query, pipelineID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var pbID int64
-		err = rows.Scan(&pbID)
-		if err != nil {
-			return err
-		}
-		pipelineBuildIDs = append(pipelineBuildIDs, pbID)
-	}
-	for _, id := range pipelineBuildIDs {
-		err = DeletePipelineBuildByID(db, id)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Delete artifacts left
-	query = `DELETE FROM artifact WHERE pipeline_id = $1`
-	_, err = db.Exec(query, pipelineID)
-	if err != nil {
 		return err
 	}
 
@@ -515,37 +437,4 @@ func ExistPipeline(db gorp.SqlExecutor, projectID int64, name string) (bool, err
 		return true, nil
 	}
 	return false, nil
-}
-
-// AttachPipelinesWarnings add warnings about optional steps for several PipelineBuild
-func AttachPipelinesWarnings(pbs *[]sdk.PipelineBuild) {
-	for iPb := range *pbs {
-		pb := &(*pbs)[iPb]
-		attachPipelineWarnings(pb)
-	}
-}
-
-// attachPipelineWarnings add warnings about optional steps for one PipelineBuild
-func attachPipelineWarnings(pb *sdk.PipelineBuild) {
-	if pb.Status == sdk.StatusSuccess {
-		for iS := range pb.Stages {
-			stage := &pb.Stages[iS]
-			if stage.Enabled {
-				for iB := range stage.PipelineBuildJobs {
-					build := &stage.PipelineBuildJobs[iB]
-					job := &stage.Jobs[iB]
-					for iSt := range build.Job.StepStatus {
-						step := &build.Job.StepStatus[iSt]
-						if build.Job.Action.Actions[iSt].Enabled && build.Job.Action.Actions[iSt].Optional && step.Status == sdk.StatusFail.String() {
-							w := sdk.PipelineBuildWarning{Type: sdk.OptionalStepFailed, Action: build.Job.Action.Actions[iSt]}
-							pb.Warnings = append(pb.Warnings, w)
-							stage.Warnings = append(stage.Warnings, w)
-							build.Warnings = append(build.Warnings, w)
-							job.Warnings = append(job.Warnings, w)
-						}
-					}
-				}
-			}
-		}
-	}
 }

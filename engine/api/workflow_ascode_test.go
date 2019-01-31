@@ -173,7 +173,7 @@ func TestPostWorkflowAsCodeHandler(t *testing.T) {
 	(&w).RetroMigrate()
 
 	var errP error
-	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithApplicationWithDeploymentStrategies, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPlatforms)
+	proj, errP = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithApplicationWithDeploymentStrategies, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithIntegrations)
 	assert.NoError(t, errP)
 	assert.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u))
 

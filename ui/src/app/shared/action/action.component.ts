@@ -1,20 +1,20 @@
-import {Component, EventEmitter, Input, OnDestroy, OnInit, Output} from '@angular/core';
-import {cloneDeep} from 'lodash';
-import {DragulaService} from 'ng2-dragula/components/dragula.provider';
-import {Subscription} from 'rxjs/Subscription';
-import {Action} from '../../model/action.model';
-import {AllKeys} from '../../model/keys.model';
-import {Parameter} from '../../model/parameter.model';
-import {Pipeline} from '../../model/pipeline.model';
-import {Project} from '../../model/project.model';
-import {Requirement} from '../../model/requirement.model';
-import {ActionStore} from '../../service/action/action.store';
-import {AutoUnsubscribe} from '../decorator/autoUnsubscribe';
-import {ParameterEvent} from '../parameter/parameter.event.model';
-import {RequirementEvent} from '../requirements/requirement.event.model';
-import {SharedService} from '../shared.service';
-import {ActionEvent} from './action.event.model';
-import {StepEvent} from './step/step.event';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { cloneDeep } from 'lodash';
+import { DragulaService } from 'ng2-dragula';
+import { Subscription } from 'rxjs/Subscription';
+import { Action } from '../../model/action.model';
+import { AllKeys } from '../../model/keys.model';
+import { Parameter } from '../../model/parameter.model';
+import { Pipeline } from '../../model/pipeline.model';
+import { Project } from '../../model/project.model';
+import { Requirement } from '../../model/requirement.model';
+import { ActionStore } from '../../service/action/action.store';
+import { AutoUnsubscribe } from '../decorator/autoUnsubscribe';
+import { ParameterEvent } from '../parameter/parameter.event.model';
+import { RequirementEvent } from '../requirements/requirement.event.model';
+import { SharedService } from '../shared.service';
+import { ActionEvent } from './action.event.model';
+import { StepEvent } from './step/step.event';
 
 @Component({
     selector: 'app-action',
@@ -51,37 +51,41 @@ export class ActionComponent implements OnDestroy, OnInit {
     @Output() actionEvent = new EventEmitter<ActionEvent>();
 
     collapsed = true;
-    configRequirements: {disableModel?: boolean, disableHostname?: boolean} = {};
+    configRequirements: { disableModel?: boolean, disableHostname?: boolean } = {};
 
     actionSub: Subscription;
 
-    constructor(private sharedService: SharedService, private _actionStore: ActionStore, private dragulaService: DragulaService) {
-        dragulaService.setOptions('bag-nonfinal', {
+    constructor(
+        private sharedService: SharedService,
+        private _actionStore: ActionStore,
+        private dragulaService: DragulaService
+    ) {
+        dragulaService.createGroup('bag-nonfinal', {
             moves: function (el, source, handle) {
                 return handle.classList.contains('move');
             },
         });
-        dragulaService.setOptions('bag-final', {
+        dragulaService.createGroup('bag-final', {
             moves: function (el, source, handle) {
                 return handle.classList.contains('move');
             },
             direction: 'vertical'
         });
-        this.dragulaService.drop.subscribe( () => {
+        this.dragulaService.drop().subscribe(() => {
             this.editableAction.hasChanged = true;
         });
     }
 
     keyEvent(event: KeyboardEvent) {
-      if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
-          event.preventDefault();
-          setTimeout(() => this.sendActionEvent('update'));
-      }
+        if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            setTimeout(() => this.sendActionEvent('update'));
+        }
     }
 
     ngOnInit() {
         this.actionSub = this._actionStore.getActions().subscribe(mapActions => {
-            this.publicActions = mapActions.toArray().filter((action) => action.name !== this.editableAction.name);
+            this.publicActions = mapActions.valueSeq().toArray().filter((action) => action.name !== this.editableAction.name);
         });
     }
 
@@ -213,7 +217,7 @@ export class ActionComponent implements OnDestroy, OnInit {
                 break;
             case 'delete':
                 let index = this.steps.indexOf(event.step);
-                if (index >= 0 ) {
+                if (index >= 0) {
                     this.steps.splice(index, 1);
                 }
                 break;

@@ -21,6 +21,7 @@ import (
 type grpcHandlers struct {
 	dbConnectionFactory *database.DBConnectionFactory
 	store               cache.Store
+	stepMaxLogSize      int64
 }
 
 //SendLog is the WorkflowQueueServer implementation
@@ -38,7 +39,8 @@ func (h *grpcHandlers) SendLog(stream grpc.WorkflowQueue_SendLogServer) error {
 		log.Debug("grpc.SendLog> Got %+v", in)
 
 		db := h.dbConnectionFactory.GetDBMap()
-		if err := workflow.AddLog(db, nil, in); err != nil {
+
+		if err := workflow.AddLog(db, nil, in, h.stepMaxLogSize); err != nil {
 			return sdk.WrapError(err, "Unable to insert log ")
 		}
 	}

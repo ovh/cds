@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -44,7 +44,7 @@ var environmentGroupImportCmd = cli.Command{
 				return true
 			},
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
@@ -62,7 +62,7 @@ func environmentGroupImportRun(v cli.Values) error {
 		format = "json"
 	}
 
-	if exportentities.IsURL(v.GetString("path")) {
+	if sdk.IsURL(v.GetString("path")) {
 		var err error
 		reader, _, err = exportentities.OpenURL(v.GetString("path"), format)
 		if err != nil {
@@ -76,10 +76,10 @@ func environmentGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.EnvironmentGroupsImport(v[_ProjectKey], v["environment-name"], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.EnvironmentGroupsImport(v.GetString(_ProjectKey), v.GetString("environment-name"), reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
-	fmt.Printf("Groups imported in environment %s with success\n", v["environment-name"])
+	fmt.Printf("Groups imported in environment %s with success\n", v.GetString("environment-name"))
 
 	return nil
 }

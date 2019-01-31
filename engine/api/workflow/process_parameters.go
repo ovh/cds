@@ -64,18 +64,18 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, runContext nodeR
 	}
 
 	// compute parameters variables
-	if runContext.ProjectPlatform.ID != 0 {
-		vars["cds.platform"] = runContext.ProjectPlatform.Name
-		tmp := sdk.ParametersFromPlatform(runContext.ProjectPlatform.Config)
+	if runContext.ProjectIntegration.ID != 0 {
+		vars["cds.integration"] = runContext.ProjectIntegration.Name
+		tmp := sdk.ParametersFromIntegration(runContext.ProjectIntegration.Config)
 		for k, v := range tmp {
 			vars[k] = v
 		}
 
-		// Process deployment strategy of the chosen platform
+		// Process deployment strategy of the chosen integration
 		if runContext.Application.ID != 0 {
 			for pfName, pfConfig := range runContext.Application.DeploymentStrategies {
-				if pfName == runContext.ProjectPlatform.Name {
-					tmp := sdk.ParametersFromPlatform(pfConfig)
+				if pfName == runContext.ProjectIntegration.Name {
+					tmp := sdk.ParametersFromIntegration(pfConfig)
 					for k, v := range tmp {
 						vars[k] = v
 					}

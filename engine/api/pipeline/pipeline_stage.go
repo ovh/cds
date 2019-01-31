@@ -5,16 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -411,68 +408,4 @@ func moveDownStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosit
 		  AND pipeline_id = $3`
 	_, err := db.Exec(query, newPosition, oldPosition, pipelineID)
 	return err
-}
-
-// CheckPrerequisites verifies that all prerequisite are matched before scheduling
-func CheckPrerequisites(s sdk.Stage, pb *sdk.PipelineBuild) (bool, error) {
-	loopEscape := 0
-	for loopEscape < 10 {
-		replaced := false
-		// Now for each trigger parameter
-		for _, pbp := range pb.Parameters {
-			// Replace placeholders with their value
-			for i := range pb.Parameters {
-				old := pb.Parameters[i].Value
-				pb.Parameters[i].Value = strings.Replace(pb.Parameters[i].Value, "{{."+pbp.Name+"}}", pbp.Value, -1)
-				if pb.Parameters[i].Value != old {
-					replaced = true
-				}
-			}
-		}
-		// If nothing has been replace, exit
-		if !replaced {
-			break
-		}
-		loopEscape++
-	}
-
-	// Check conditions
-	for _, p := range s.Prerequisites {
-		for _, pbp := range pb.Parameters {
-			param := p.Parameter
-			//in worst case, prerequisite must begin with "cds.pip."
-			if !strings.HasPrefix(param, "git.") && !strings.HasPrefix(param, "cds.") {
-				param = "cds.pip." + param
-			}
-
-			if param == pbp.Name {
-				//Process expected value as in triggers
-				var expectedValue = trigger.ProcessTriggerExpectedValue(p.ExpectedValue, pb)
-				var not bool
-				if strings.HasPrefix(expectedValue, "not ") {
-					expectedValue = strings.Replace(expectedValue, "not ", "", 1)
-					not = true
-				}
-
-				//Checking regular expression
-				if !strings.HasPrefix(expectedValue, "^") {
-					expectedValue = "^" + expectedValue
-				}
-				if !strings.HasSuffix(expectedValue, "$") {
-					expectedValue = expectedValue + "$"
-				}
-
-				ok, err := regexp.Match(expectedValue, []byte(pbp.Value))
-				if err != nil {
-					log.Warning("CheckPrerequisites> Cannot eval regexp '%s': %s", p.ExpectedValue, err)
-					return false, fmt.Errorf("CheckPrerequisites> %s", err)
-				}
-				if (!not && !ok) || (not && ok) {
-					log.Debug("CheckPrerequisites> Expected '%s', got '%s'\n", p.ExpectedValue, pbp.Value)
-					return false, nil
-				}
-			}
-		}
-	}
-	return true, nil
 }

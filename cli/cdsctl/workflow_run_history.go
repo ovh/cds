@@ -52,7 +52,7 @@ func workflowHistoryRun(v cli.Values) (cli.ListResult, error) {
 		}
 	}
 
-	w, err := client.WorkflowRunList(v[_ProjectKey], v[_WorkflowName], offset, limit)
+	w, err := client.WorkflowRunList(v.GetString(_ProjectKey), v.GetString(_WorkflowName), offset, limit)
 	if err != nil {
 		return nil, err
 	}

@@ -1,40 +1,10 @@
-<div class="node" (click)="clickOnNode()" (dblclick)="dblClickOnNode()">
-    <ng-container [ngSwitch]="node.type">
-        <ng-container *ngSwitchCase="'pipeline'">
-            <app-workflow-wnode-pipeline
-                    [project]="project"
-                    [workflow]="workflow"
-                    [node]="node"
-                    [noderun]="currentNodeRun"
-                    [warnings]="warnings"
-                    ></app-workflow-wnode-pipeline>
-        </ng-container>
-        <ng-container *ngSwitchCase="'join'">
-            <app-workflow-wnode-join
-                    [project]="project"
-                    [workflow]="workflow"
-                    [node]="node"
-                    [noderun]="currentNodeRun"
-                    [selected]="isSelected"
-                    [workflowrun]="workflowRun"
-                ></app-workflow-wnode-join>
-        </ng-container>
-        <ng-container *ngSwitchCase="'fork'">
-            <app-workflow-wnode-fork
-                    [project]="project"
-                    [workflow]="workflow"
-                    [node]="node"
-                    [noderun]="currentNodeRun"
-                    [selected]="isSelected"></app-workflow-wnode-fork>
-        </ng-container>
-        <ng-container *ngSwitchCase="'outgoinghook'">
-            <app-workflow-wnode-outgoing-hook
-                    [project]="project"
-                    [workflow]="workflow"
-                    [node]="node"
-                    [noderun]="currentNodeRun"
-                    [workflowrun]="workflowRun"
-                    [selected]="isSelected"></app-workflow-wnode-outgoing-hook>
-        </ng-container>
-    </ng-container>
+<div class="node-wrapper" (click)="clickOnNode()" (dblclick)="dblClickOnNode()" [ngSwitch]="node.type">
+    <app-workflow-wnode-pipeline *ngSwitchCase="'pipeline'" [project]="project" [workflow]="workflow" [node]="node"
+        [noderun]="currentNodeRun" [warnings]="warnings"></app-workflow-wnode-pipeline>
+    <app-workflow-wnode-join *ngSwitchCase="'join'" [project]="project" [workflow]="workflow" [node]="node" [noderun]="currentNodeRun"
+        [selected]="isSelected" [workflowrun]="workflowRun"></app-workflow-wnode-join>
+    <app-workflow-wnode-fork *ngSwitchCase="'fork'" [project]="project" [workflow]="workflow" [node]="node" [noderun]="currentNodeRun"
+        [selected]="isSelected"></app-workflow-wnode-fork>
+    <app-workflow-wnode-outgoing-hook *ngSwitchCase="'outgoinghook'" [project]="project" [workflow]="workflow" [node]="node"
+        [noderun]="currentNodeRun" [workflowrun]="workflowRun" [selected]="isSelected"></app-workflow-wnode-outgoing-hook>
 </div>

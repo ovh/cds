@@ -407,6 +407,49 @@ func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 	return nil
 }
 
+func MigrateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
+	if run != nil && run.Workflow.WorkflowData == nil {
+		data := run.Workflow.Migrate(true)
+		run.Workflow.WorkflowData = &data
+
+		run.Workflow.Applications = make(map[int64]sdk.Application)
+		run.Workflow.Environments = make(map[int64]sdk.Environment)
+		run.Workflow.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
+		run.Workflow.HookModels = make(map[int64]sdk.WorkflowHookModel)
+		run.Workflow.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
+
+		nodes := run.Workflow.Nodes(true)
+		for _, n := range nodes {
+			if n.Context == nil {
+				continue
+			}
+			if n.Context.Application != nil && n.Context.Application.ID > 0 {
+				run.Workflow.Applications[n.Context.Application.ID] = *n.Context.Application
+			}
+			if n.Context.Environment != nil && n.Context.Environment.ID > 0 {
+				run.Workflow.Environments[n.Context.Environment.ID] = *n.Context.Environment
+			}
+			if n.Context.ProjectIntegration != nil && n.Context.ProjectIntegration.ID > 0 {
+				run.Workflow.ProjectIntegrations[n.Context.ProjectIntegration.ID] = *n.Context.ProjectIntegration
+			}
+			for _, h := range n.Hooks {
+				if h.WorkflowHookModel.ID > 0 {
+					run.Workflow.HookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
+				}
+			}
+			for _, h := range n.OutgoingHooks {
+				if h.WorkflowHookModel.ID > 0 {
+					run.Workflow.OutGoingHookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
+				}
+			}
+		}
+		if err := UpdateWorkflowRun(ctx, db, run); err != nil {
+			return sdk.WrapError(err, "unable to migrate old workflow run")
+		}
+	}
+	return nil
+}
+
 func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ...interface{}) (*sdk.WorkflowRun, error) {
 	runDB := &Run{}
 	if err := db.SelectOne(runDB, query, args...); err != nil {
@@ -417,15 +460,18 @@ func loadRun(db gorp.SqlExecutor, loadOpts LoadRunOptions, query string, args ..
 	}
 	wr := sdk.WorkflowRun(*runDB)
 
-	if err := syncNodeRuns(db, &wr, loadOpts); err != nil {
-		return nil, sdk.WrapError(err, "Unable to load workflow node run")
-	}
-
 	tags, errT := loadTagsByRunID(db, wr.ID)
 	if errT != nil {
 		return nil, sdk.WrapError(errT, "loadRun> Error loading tags for run %d", wr.ID)
 	}
 	wr.Tags = tags
+
+	// Here we can ignore error
+	_ = MigrateWorkflowRun(context.TODO(), db, &wr)
+
+	if err := syncNodeRuns(db, &wr, loadOpts); err != nil {
+		return nil, sdk.WrapError(err, "Unable to load workflow node run")
+	}
 
 	return &wr, nil
 }

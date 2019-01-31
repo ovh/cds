@@ -37,11 +37,11 @@ var projectVariableCreateCmd = cli.Command{
 
 func projectCreateVariableRun(v cli.Values) error {
 	variable := &sdk.Variable{
-		Name:  v["variable-name"],
-		Type:  v["variable-type"],
-		Value: v["variable-value"],
+		Name:  v.GetString("variable-name"),
+		Type:  v.GetString("variable-type"),
+		Value: v.GetString("variable-value"),
 	}
-	return client.ProjectVariableCreate(v[_ProjectKey], variable)
+	return client.ProjectVariableCreate(v.GetString(_ProjectKey), variable)
 }
 
 var projectVariableListCmd = cli.Command{
@@ -53,7 +53,7 @@ var projectVariableListCmd = cli.Command{
 }
 
 func projectListVariableRun(v cli.Values) (cli.ListResult, error) {
-	variables, err := client.ProjectVariablesList(v[_ProjectKey])
+	variables, err := client.ProjectVariablesList(v.GetString(_ProjectKey))
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ var projectVariableDeleteCmd = cli.Command{
 }
 
 func projectDeleteVariableRun(v cli.Values) error {
-	return client.ProjectVariableDelete(v[_ProjectKey], v["variable-name"])
+	return client.ProjectVariableDelete(v.GetString(_ProjectKey), v.GetString("variable-name"))
 }
 
 var projectVariableShowCmd = cli.Command{
@@ -87,7 +87,7 @@ var projectVariableShowCmd = cli.Command{
 }
 
 func projectVariableShowRun(v cli.Values) (interface{}, error) {
-	return client.ProjectVariableGet(v[_ProjectKey], v["variable-name"])
+	return client.ProjectVariableGet(v.GetString(_ProjectKey), v.GetString("variable-name"))
 }
 
 var projectVariableUpdateCmd = cli.Command{
@@ -105,12 +105,12 @@ var projectVariableUpdateCmd = cli.Command{
 }
 
 func projectUpdateVariableRun(v cli.Values) error {
-	variable, err := client.ProjectVariableGet(v[_ProjectKey], v["variable-oldname"])
+	variable, err := client.ProjectVariableGet(v.GetString(_ProjectKey), v.GetString("variable-oldname"))
 	if err != nil {
 		return err
 	}
-	variable.Name = v["variable-name"]
-	variable.Type = v["variable-type"]
-	variable.Value = v["variable-value"]
-	return client.ProjectVariableUpdate(v[_ProjectKey], variable)
+	variable.Name = v.GetString("variable-name")
+	variable.Type = v.GetString("variable-type")
+	variable.Value = v.GetString("variable-value")
+	return client.ProjectVariableUpdate(v.GetString(_ProjectKey), variable)
 }

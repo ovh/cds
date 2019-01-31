@@ -10,7 +10,6 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/database/dbmigrate"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -24,7 +23,7 @@ type dbmigservice struct {
 	Router        *api.Router
 	currentStatus struct {
 		err        error
-		migrations []dbmigrate.MigrationStatus
+		migrations []sdk.DatabaseMigrationStatus
 	}
 }
 

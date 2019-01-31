@@ -1,0 +1,39 @@
+name: Template apply command TestSuite with cdsctl
+testcases:
+- name: push example simple
+  steps:
+  - script: {{.cds.build.cdsctl}} template push ./tests/fixtures/template/simple/*.yml --skip-update-files
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring Template successfully pushed
+
+- name: prepare test
+  steps:
+  - script: {{.cds.build.cdsctl}} project delete --force ITCLIPRJ
+  - script: {{.cds.build.cdsctl}} project add ITCLIPRJ "Test Project"
+
+- name: apply example simple template
+  steps:
+  - script: {{.cds.build.cdsctl}} template apply ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success -p data='["one", "two"]' --import-push --output-dir ./tests/fixtures/template/simple/export --force --no-interactive
+
+- name: re-apply with cmd from workflow submenu
+  steps:
+  - script: {{.cds.build.cdsctl}} workflow applyTemplate ITCLIPRJ ITCLIWKF shared.infra/example-simple -p withDeploy=true -p deployWhen=success -p data='["one", "two"]' --import-push --output-dir ./tests/fixtures/template/simple/export --force --no-interactive
+
+- name: readWorkflowSourceFiles
+  steps:
+  - type: readfile
+    path: tests/fixtures/template/simple/workflow/*.yml
+    assertions:
+    - result.err ShouldEqual ""
+
+- name: compare generated files with source
+  steps:
+  - type: readfile
+    path: tests/fixtures/template/simple/export/*.yml
+    assertions:
+    - result.err ShouldEqual ""
+    - result.md5sum.tests_fixtures_template_simple_export_first-environment.env.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.tests_fixtures_template_simple_workflow_first-environment.env.yml}}"
+    - result.md5sum.tests_fixtures_template_simple_export_first-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.tests_fixtures_template_simple_workflow_first-pipeline.pip.yml}}"
+    - result.md5sum.tests_fixtures_template_simple_export_second-pipeline.pip.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.tests_fixtures_template_simple_workflow_second-pipeline.pip.yml}}"
+    - result.md5sum.tests_fixtures_template_simple_export_itcliwkf.yml ShouldEqual "{{.readWorkflowSourceFiles.result.md5sum.tests_fixtures_template_simple_workflow_itcliwkf.yml}}"

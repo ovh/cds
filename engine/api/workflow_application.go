@@ -37,7 +37,7 @@ func (api *API) releaseApplicationWorkflowHandler() service.Handler {
 			return errU
 		}
 
-		proj, errprod := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errprod := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errprod != nil {
 			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
 		}

@@ -1,10 +1,9 @@
 package workflow
 
 import (
-	"archive/tar"
 	"bytes"
 	"context"
-	"fmt"
+	"encoding/base64"
 	"io"
 	"reflect"
 
@@ -19,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/api/workflowtemplate"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Export a workflow
@@ -61,29 +59,32 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, w io.Writer, opts 
 }
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
-func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer, opts ...exportentities.WorkflowOptions) error {
+func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, name string, f exportentities.Format,
+	encryptFunc sdk.EncryptFunc, u *sdk.User, opts ...exportentities.WorkflowOptions) (exportentities.WorkflowPulled, error) {
 	ctx, end := observability.Span(ctx, "workflow.Pull")
 	defer end()
+
+	var wp exportentities.WorkflowPulled
 
 	options := LoadOptions{
 		DeepPipeline: true,
 	}
 	wf, errload := Load(ctx, db, cache, proj, name, u, options)
 	if errload != nil {
-		return sdk.WrapError(errload, "Cannot load workflow %s", name)
+		return wp, sdk.WrapError(errload, "cannot load workflow %s", name)
 	}
 
 	i, err := workflowtemplate.GetInstanceByWorkflowID(db, wf.ID)
 	if err != nil {
-		return err
+		return wp, err
 	}
 	if i != nil {
 		wf.Template, err = workflowtemplate.GetByID(db, i.WorkflowTemplateID)
 		if err != nil {
-			return err
+			return wp, err
 		}
 		if err := group.AggregateOnWorkflowTemplate(db, wf.Template); err != nil {
-			return err
+			return wp, err
 		}
 	}
 
@@ -96,12 +97,12 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		app := &apps[i]
 		vars, errv := application.GetAllVariable(db, proj.Key, app.Name, application.WithClearPassword())
 		if errv != nil {
-			return sdk.WrapError(errv, "Cannot load application variables %s", app.Name)
+			return wp, sdk.WrapError(errv, "cannot load application variables %s", app.Name)
 		}
 		app.Variable = vars
 
-		if errk := application.LoadAllDecryptedKeys(db, app); errk != nil {
-			return sdk.WrapError(errk, "Cannot load application keys %s", app.Name)
+		if err := application.LoadAllDecryptedKeys(db, app); err != nil {
+			return wp, sdk.WrapError(err, "cannot load application keys %s", app.Name)
 		}
 	}
 
@@ -110,39 +111,21 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		env := &envs[i]
 		vars, errv := environment.GetAllVariable(db, proj.Key, env.Name, environment.WithClearPassword())
 		if errv != nil {
-			return sdk.WrapError(errv, "Cannot load environment variables %s", env.Name)
+			return wp, sdk.WrapError(errv, "cannot load environment variables %s", env.Name)
 		}
 		env.Variable = vars
 
-		if errk := environment.LoadAllDecryptedKeys(db, env); errk != nil {
-			return sdk.WrapError(errk, "Cannot load environment keys %s", env.Name)
+		if err := environment.LoadAllDecryptedKeys(db, env); err != nil {
+			return wp, sdk.WrapError(err, "cannot load environment keys %s", env.Name)
 		}
 	}
-
-	tw := tar.NewWriter(w)
-	defer func() {
-		if err := tw.Close(); err != nil {
-			log.Error("%v", sdk.WrapError(err, "Unable to close tar writer"))
-		}
-	}()
 
 	buffw := new(bytes.Buffer)
-	size, errw := exportWorkflow(*wf, f, buffw, opts...)
-	if errw != nil {
-		return sdk.WrapError(errw, "Unable to export workflow")
+	if _, err := exportWorkflow(*wf, f, buffw, opts...); err != nil {
+		return wp, sdk.WrapError(err, "unable to export workflow")
 	}
-
-	hdr := &tar.Header{
-		Name: fmt.Sprintf("%s.yml", wf.Name),
-		Mode: 0644,
-		Size: int64(size),
-	}
-	if err := tw.WriteHeader(hdr); err != nil {
-		return sdk.WrapError(err, "Unable to write workflow header %+v", hdr)
-	}
-	if _, err := io.Copy(tw, buffw); err != nil {
-		return sdk.WrapError(err, "Unable to copy workflow buffer")
-	}
+	wp.Workflow.Name = wf.Name
+	wp.Workflow.Value = base64.StdEncoding.EncodeToString(buffw.Bytes())
 
 	var withPermissions bool
 	for _, f := range opts {
@@ -151,63 +134,35 @@ func Pull(ctx context.Context, db gorp.SqlExecutor, cache cache.Store, proj *sdk
 		}
 	}
 
-	for _, a := range apps {
+	wp.Applications = make([]exportentities.WorkflowPulledItem, len(apps))
+	for i, a := range apps {
 		buff := new(bytes.Buffer)
-		size, err := application.ExportApplication(db, a, f, withPermissions, encryptFunc, buff)
-		if err != nil {
-			return sdk.WrapError(err, "Unable to export app %s", a.Name)
+		if _, err := application.ExportApplication(db, a, f, withPermissions, encryptFunc, buff); err != nil {
+			return wp, sdk.WrapError(err, "unable to export app %s", a.Name)
 		}
-		hdr := &tar.Header{
-			Name: fmt.Sprintf("%s.app.yml", a.Name),
-			Mode: 0644,
-			Size: int64(size),
-		}
-		if err := tw.WriteHeader(hdr); err != nil {
-			return sdk.WrapError(err, "Unable to write app header %+v", hdr)
-		}
-		if _, err := io.Copy(tw, buff); err != nil {
-			return sdk.WrapError(err, "Unable to copy app buffer")
-		}
+		wp.Applications[i].Name = a.Name
+		wp.Applications[i].Value = base64.StdEncoding.EncodeToString(buff.Bytes())
 	}
 
-	for _, e := range envs {
+	wp.Environments = make([]exportentities.WorkflowPulledItem, len(envs))
+	for i, e := range envs {
 		buff := new(bytes.Buffer)
-		size, err := environment.ExportEnvironment(db, e, f, withPermissions, encryptFunc, buff)
-		if err != nil {
-			return sdk.WrapError(err, "Unable to export env %s", e.Name)
+		if _, err := environment.ExportEnvironment(db, e, f, withPermissions, encryptFunc, buff); err != nil {
+			return wp, sdk.WrapError(err, "unable to export env %s", e.Name)
 		}
-
-		hdr := &tar.Header{
-			Name: fmt.Sprintf("%s.env.yml", e.Name),
-			Mode: 0644,
-			Size: int64(size),
-		}
-		if err := tw.WriteHeader(hdr); err != nil {
-			return sdk.WrapError(err, "Unable to write env header %+v", hdr)
-		}
-		if _, err := io.Copy(tw, buff); err != nil {
-			return sdk.WrapError(err, "Unable to copy env buffer")
-		}
+		wp.Environments[i].Name = e.Name
+		wp.Environments[i].Value = base64.StdEncoding.EncodeToString(buff.Bytes())
 	}
 
-	for _, p := range pips {
+	wp.Pipelines = make([]exportentities.WorkflowPulledItem, len(pips))
+	for i, p := range pips {
 		buff := new(bytes.Buffer)
-		size, err := pipeline.ExportPipeline(p, f, withPermissions, buff)
-		if err != nil {
-			return sdk.WrapError(err, "Unable to export pipeline %s", p.Name)
+		if _, err := pipeline.ExportPipeline(p, f, withPermissions, buff); err != nil {
+			return wp, sdk.WrapError(err, "unable to export pipeline %s", p.Name)
 		}
-		hdr := &tar.Header{
-			Name: fmt.Sprintf("%s.pip.yml", p.Name),
-			Mode: 0644,
-			Size: int64(size),
-		}
-		if err := tw.WriteHeader(hdr); err != nil {
-			return sdk.WrapError(err, "Unable to write pipeline header %+v", hdr)
-		}
-		if _, err := io.Copy(tw, buff); err != nil {
-			return sdk.WrapError(err, "Unable to copy pip buffer")
-		}
+		wp.Pipelines[i].Name = p.Name
+		wp.Pipelines[i].Value = base64.StdEncoding.EncodeToString(buff.Bytes())
 	}
 
-	return nil
+	return wp, nil
 }

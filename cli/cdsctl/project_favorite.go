@@ -18,7 +18,7 @@ var projectFavoriteCmd = cli.Command{
 func projectFavoriteRun(c cli.Values) error {
 	params := sdk.FavoriteParams{
 		Type:       "project",
-		ProjectKey: c[_ProjectKey],
+		ProjectKey: c.GetString(_ProjectKey),
 	}
 
 	res, err := client.UpdateFavorite(params)

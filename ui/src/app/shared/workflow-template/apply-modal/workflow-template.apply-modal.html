@@ -1,0 +1,53 @@
+<ng-template let-context let-modal="modal" #workflowTemplateApplyModal>
+    <div class="header">
+        {{'workflow_template_update_title' | translate}}
+    </div>
+    <div class="content">
+        <div class="ui form">
+            <div class="ui grid">
+                <div class="sixteen wide column">
+                    <div class="ui blue message">
+                        {{'workflow_template_update_info_line_1' | translate}}
+                    </div>
+                </div>
+                <div class="sixteen wide column loading" *ngIf="!project || !workflowTemplate || !workflowTemplateInstance">
+                    <div class="ui active inverted dimmer">
+                        <div class="ui text loader">{{ 'common_loading' | translate }}</div>
+                    </div>
+                </div>
+                <div class="sixteen wide column" *ngIf="project && workflowTemplate && workflowTemplateInstance">
+                    <div class="ui wide sixteen field">
+                        <div class="fields">
+                            <div class="six wide field">
+                                <label>{{'common_name' | translate}}</label>
+                                <input class="ui input" type="text" name="name" [disabled]="true" [ngModel]="workflowTemplate.name">
+                            </div>
+                            <div class="six wide field">
+                                <label>{{'common_group' | translate}}</label>
+                                <input class="ui input" type="text" name="group" [disabled]="true" [ngModel]="workflowTemplate.group.name">
+                            </div>
+                            <div class="four wide field right aligned">
+                                <div *ngIf="workflowTemplateInstance.workflow_template_version === workflowTemplate.version"
+                                    class="ui label green"> {{'common_up_to_date' | translate}}</div>
+                                <a *ngIf="workflowTemplateInstance.workflow_template_version !== workflowTemplate.version"
+                                    class="ui orange label" (click)="toggleDiff()" [title]="'workflow_template_update_info_btn' | translate">
+                                    {{'common_not_up_to_date' | translate }}</a>
+                            </div>
+                        </div>
+                        <div *ngIf="workflowTemplateAuditMessages && workflowTemplateAuditMessages.length > 0" class="sixteen wide field">
+                            <div class="ui orange message">
+                                <markdown *ngFor="let m of workflowTemplateAuditMessages">{{m}}</markdown>
+                            </div>
+                        </div>
+                        <div *ngIf="diffVisible" class="ui wide sixteen field">
+                            <app-diff-list [items]="diffItems"></app-diff-list>
+                        </div>
+                        <app-workflow-template-apply-form [project]="project" [workflow]="workflow" [workflowTemplate]="workflowTemplate"
+                            [workflowTemplateInstance]="workflowTemplateInstance" [withClose]="true" (close)="clickClose()"
+                            (apply)="apply()"></app-workflow-template-apply-form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>

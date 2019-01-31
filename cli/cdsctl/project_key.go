@@ -37,15 +37,15 @@ var projectKeyCreateCmd = cli.Command{
 func projectCreateKeyRun(v cli.Values) error {
 	key := &sdk.ProjectKey{
 		Key: sdk.Key{
-			Name: v["key-name"],
-			Type: v["key-type"],
+			Name: v.GetString("key-name"),
+			Type: v.GetString("key-type"),
 		},
 	}
-	if err := client.ProjectKeyCreate(v[_ProjectKey], key); err != nil {
+	if err := client.ProjectKeyCreate(v.GetString(_ProjectKey), key); err != nil {
 		return err
 	}
 
-	fmt.Printf("Project key %s of type %s created with success in project %s\n", key.Name, key.Type, v[_ProjectKey])
+	fmt.Printf("Project key %s of type %s created with success in project %s\n", key.Name, key.Type, v.GetString(_ProjectKey))
 	fmt.Println(key.Public)
 	return nil
 }
@@ -59,7 +59,7 @@ var projectKeyListCmd = cli.Command{
 }
 
 func projectListKeyRun(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.ProjectKeysList(v[_ProjectKey])
+	keys, err := client.ProjectKeysList(v.GetString(_ProjectKey))
 	if err != nil {
 		return nil, err
 	}
@@ -78,5 +78,5 @@ var projectKeyDeleteCmd = cli.Command{
 }
 
 func projectDeleteKeyRun(v cli.Values) error {
-	return client.ProjectKeysDelete(v[_ProjectKey], v["key-name"])
+	return client.ProjectKeysDelete(v.GetString(_ProjectKey), v.GetString("key-name"))
 }

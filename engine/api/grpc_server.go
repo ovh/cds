@@ -17,7 +17,7 @@ import (
 )
 
 // grpcInit initialize all GRPC services
-func grpcInit(dbConnectionFactory *database.DBConnectionFactory, addr string, port int, tls bool, certFile, keyFile string) error {
+func grpcInit(dbConnectionFactory *database.DBConnectionFactory, addr string, port int, tls bool, certFile, keyFile string, stepMaxLogSize int64) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%d", addr, port))
 	if err != nil {
 		return err
@@ -27,6 +27,7 @@ func grpcInit(dbConnectionFactory *database.DBConnectionFactory, addr string, po
 
 	grpcHandlers := &grpcHandlers{
 		dbConnectionFactory: dbConnectionFactory,
+		stepMaxLogSize:      stepMaxLogSize,
 	}
 
 	opts := []grpc.ServerOption{

@@ -1,0 +1,8 @@
+name: Database Commands TestSuite
+testcases:
+- name: delete an invalid row from gorp_migration
+  steps:
+  - script: {{.cds.build.cdsctl}} admin database list|grep '\|*_*\.sql'
+  - script: {{.cds.build.cdsctl}} admin database delete foo
+    assertions:
+    - result.code ShouldNotEqual 0

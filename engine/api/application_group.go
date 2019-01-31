@@ -22,7 +22,7 @@ import (
 func (api *API) updateGroupRoleOnApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
@@ -104,12 +104,12 @@ func (api *API) addGroupInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot unmarshal request")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load %s", key)
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load %s", appName)
 		}
@@ -129,7 +129,7 @@ func (api *API) addGroupInApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := application.AddGroup(tx, api.Cache, proj, app, getUser(ctx), groupPermission); err != nil {
+		if err := application.AddGroup(tx, api.Cache, proj, app, deprecatedGetUser(ctx), groupPermission); err != nil {
 			return sdk.WrapError(err, "Cannot add group %s in application %s", g.Name, app.Name)
 		}
 
@@ -137,7 +137,7 @@ func (api *API) addGroupInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishApplicationPermissionAdd(key, *app, groupPermission, getUser(ctx))
+		event.PublishApplicationPermissionAdd(key, *app, groupPermission, deprecatedGetUser(ctx))
 
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "Cannot load application groups")
@@ -156,7 +156,7 @@ func (api *API) deleteGroupFromApplicationHandler() service.Handler {
 		groupName := vars["group"]
 		db := api.mustDB()
 
-		app, err := application.LoadByName(db, api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithGroups)
+		app, err := application.LoadByName(db, api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s", appName)
 		}
@@ -196,7 +196,7 @@ func (api *API) deleteGroupFromApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load application groups")
 		}
 
-		event.PublishApplicationPermissionDelete(key, *app, gp, getUser(ctx))
+		event.PublishApplicationPermissionDelete(key, *app, gp, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 	}
@@ -211,12 +211,12 @@ func (api *API) importGroupsInApplicationHandler() service.Handler {
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "Cannot load %s", key)
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithGroups)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load %s", key)
 		}

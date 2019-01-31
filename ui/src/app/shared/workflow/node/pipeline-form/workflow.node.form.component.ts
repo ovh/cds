@@ -20,7 +20,7 @@ export class WorkflowNodeFormComponent implements OnInit {
 
     environments: Environment[];
     applications: IdName[];
-    platforms: Array<IdName>;
+    integrations: Array<IdName>;
 
     constructor(private _appStore: ApplicationStore) { }
 
@@ -38,11 +38,11 @@ export class WorkflowNodeFormComponent implements OnInit {
         this.applications.unshift(voidApp);
     }
 
-    initPlatformList(): void {
+    initIntegrationList(): void {
         let voidPF = new IdName();
         voidPF.id = 0;
         voidPF.name = '';
-        this.platforms.unshift(voidPF);
+        this.integrations.unshift(voidPF);
     }
 
     change(): void {
@@ -55,26 +55,26 @@ export class WorkflowNodeFormComponent implements OnInit {
         if (appName && appName !== ' ') {
             this._appStore.getDeploymentStrategies(this.project.key, appName).pipe(
                 first(),
-                finalize(() => this.initPlatformList())
+                finalize(() => this.initIntegrationList())
             ).subscribe(
                 data => {
-                    this.platforms = [];
+                    this.integrations = [];
                     let pfNames = Object.keys(data);
                     pfNames.forEach(s => {
-                        let pf = this.project.platforms.find(p => p.name === s);
+                        let pf = this.project.integrations.find(p => p.name === s);
                         if (pf) {
                             let idName = new IdName();
                             idName.id = pf.id;
                             idName.name = pf.name;
-                            this.platforms.push(idName);
+                            this.integrations.push(idName);
                         }
                     })
                 }
             )
         } else {
-            this.platforms = [];
-            this.initPlatformList();
-            this.node.context.project_platform_id = 0;
+            this.integrations = [];
+            this.initIntegrationList();
+            this.node.context.project_integration_id = 0;
         }
     }
 }

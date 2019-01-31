@@ -1,4 +1,4 @@
-<sm-modal title="{{ 'pipeline_job_variable_title' | translate }}" #jobVariablesModal>
+<sm-modal class="variables-modal" title="{{ 'pipeline_job_variable_title' | translate }}" #jobVariablesModal>
     <modal-content>
         <h4 *ngIf="varGit.length > 0">{{ 'pipeline_job_variable_git' | translate }}</h4>
         <app-parameter-list *ngIf="varGit.length > 0" [parameters]="varGit" mode="job" ></app-parameter-list>

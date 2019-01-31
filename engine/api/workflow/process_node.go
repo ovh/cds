@@ -53,7 +53,7 @@ func processNodeTriggers(ctx context.Context, db gorp.SqlExecutor, store cache.S
 
 func processNodeRun(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.WorkflowRun, mapNodes map[int64]*sdk.Node, n *sdk.Node, subNumber int, parentNodeRuns []*sdk.WorkflowNodeRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual) (*ProcessorReport, bool, error) {
 	report := new(ProcessorReport)
-	exist, errN := nodeRunExist(db, n.ID, wr.Number, subNumber)
+	exist, errN := nodeRunExist(db, wr.ID, n.ID, wr.Number, subNumber)
 	if errN != nil {
 		return nil, false, sdk.WrapError(errN, "processNodeRun> unable to check if node run exist")
 	}
@@ -305,8 +305,8 @@ func processNode(ctx context.Context, db gorp.SqlExecutor, store cache.Store, pr
 	if n.Context.EnvironmentID != 0 {
 		runContext.Environment = wr.Workflow.Environments[n.Context.EnvironmentID]
 	}
-	if n.Context.ProjectPlatformID != 0 {
-		runContext.ProjectPlatform = wr.Workflow.ProjectPlatforms[n.Context.ProjectPlatformID]
+	if n.Context.ProjectIntegrationID != 0 {
+		runContext.ProjectIntegration = wr.Workflow.ProjectIntegrations[n.Context.ProjectIntegrationID]
 	}
 	jobParams, errParam := getNodeRunBuildParameters(ctx, proj, wr, run, runContext)
 	if errParam != nil {

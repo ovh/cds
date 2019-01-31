@@ -20,5 +20,4 @@ This template uses a pre-requisite binary `apt-get`, you need a [worker model](h
 ``` bash
 # import from github
 cdsctl template push https://raw.githubusercontent.com/ovh/cds/master/contrib/workflow-templates/demo-usage-service-postgresql/demo-usage-service-postgresql.yml
-
 ```

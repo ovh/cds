@@ -150,3 +150,10 @@ func GoRoutine(c context.Context, name string, fn func(ctx context.Context), wri
 		fn(goroutineCtx)
 	}(c)
 }
+
+var rxURL = regexp.MustCompile(`http[s]?:\/\/(.*)`)
+
+// IsURL returns if given path is a url according to the URL regex.
+func IsURL(path string) bool {
+	return rxURL.MatchString(path)
+}

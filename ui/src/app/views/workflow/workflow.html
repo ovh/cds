@@ -5,13 +5,10 @@
             [class.favorite]="workflow?.favorite" [class.unfavorite]="!workflow?.favorite" (click)="updateFav()"></i>
     </div>
     <div class="right floated labelFeature" [title]="'workflow_from_repository_btn' | translate">
-        <a class="ui label small basic"
-           [class.green]="workflow && workflow.from_repository"
-           [class.orange]="workflow && !workflow.from_repository && workflow.as_code_events && workflow.as_code_events.length > 0"
-           [class.inactiveFeature]="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)"
-           [ngClass]="workflow && workflow.from_repository ? 'green' : 'inactiveFeature'"
-            suiPopup [popupTemplate]="popupFromRepository" popupPlacement="bottom right" popupTrigger="outsideClick"
-            #popup="suiPopup">
+        <a class="ui label small basic" [class.green]="workflow && workflow.from_repository" [class.orange]="workflow && !workflow.from_repository && workflow.as_code_events && workflow.as_code_events.length > 0"
+            [class.inactiveFeature]="workflow && !workflow.from_repository && (!workflow.as_code_events || workflow.as_code_events.length === 0)"
+            [ngClass]="workflow && workflow.from_repository ? 'green' : 'inactiveFeature'" suiPopup [popupTemplate]="popupFromRepository"
+            popupPlacement="bottom right" popupTrigger="outsideClick" #popup="suiPopup">
             <i class="code icon"></i>as code
         </a>
         <ng-template let-popup #popupFromRepository>
@@ -32,11 +29,14 @@
                             </div>
                         </div>
                         <div class="migrate">
-                            <button class="ui right floated mini button" *ngIf="!showButtons" (click)="showButtons = true">Migrate</button>
+                            <button class="ui right floated mini button" *ngIf="!showButtons" (click)="showButtons = true">{{'common_migrate'
+                                | translate}}</button>
                             <div class="ui mini buttons" *ngIf="showButtons">
-                                <button class="ui button" (click)="showButtons = false" [class.loading]="loadingPopupButton" [disabled]="loadingPopupButton">Cancel</button>
+                                <button class="ui button" (click)="showButtons = false" [class.loading]="loadingPopupButton"
+                                    [disabled]="loadingPopupButton">{{'common_cancel' | translate}}</button>
                                 <div class="or"></div>
-                                <button class="ui positive button" (click)="migrateAsCode()" [class.loading]="loadingPopupButton" [disabled]="loadingPopupButton">Save</button>
+                                <button class="ui positive button" (click)="migrateAsCode()" [class.loading]="loadingPopupButton"
+                                    [disabled]="loadingPopupButton">{{'btn_save' | translate}}</button>
                             </div>
                         </div>
                     </div>
@@ -80,13 +80,18 @@
                         <a class="item" target="_blank" href="https://ovh.github.io/cds/workflows/template">{{'common_read_more'
                             | translate}}</a>
                     </div>
+                    <p>{{'workflow_template_help_line_3' | translate}}</p>
+                    <div class="ui compact menu">
+                        <a class="item small" (click)="initTemplateFromWorkflow();popup.close()">
+                            {{'workflow_template_init_from_workflow' | translate}}
+                        </a>
+                    </div>
                 </ng-template>
             </div>
         </ng-template>
     </div>
 </app-workflow-breadcrumb>
-<aside class="sidebar scrollable expanded" infiniteScroll [infiniteScrollDistance]="2" [infiniteScrollThrottle]="50"
-    [scrollWindow]="false" (scrolled)="onScroll.emit(true)">
+<aside class="sidebar expanded">
     <div class="floated right">
         <button class="ui large icon button transparent close-button" (click)="changeToRunsMode()" *ngIf="sidebarMode !== sidebarModes.RUNS">
             <i class="black close icon"></i>
@@ -100,7 +105,7 @@
             <app-workflow-sidebar-hook [project]="project" [workflow]="workflow"></app-workflow-sidebar-hook>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUNS">
-            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow" [scrolled]="onScroll"></app-workflow-sidebar-run-list>
+            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow"></app-workflow-sidebar-run-list>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && sidebarMode === sidebarModes.RUN_NODE">
             <app-workflow-sidebar-run-node [project]="project" [workflow]="workflow">
@@ -117,7 +122,7 @@
     <app-workflow-sidebar-code [project]="project" [workflow]="workflow" [open]="asCodeEditorOpen">
     </app-workflow-sidebar-code>
     <ng-container>
-        <app-workflow-template-modal #templateForm [project]="project" [workflow]="workflow"></app-workflow-template-modal>
+        <app-workflow-template-apply-modal #templateApplyModal [project]="project" [workflow]="workflow"></app-workflow-template-apply-modal>
     </ng-container>
 </section>
 <app-workflow-save-as-code-modal [project]="project" [workflow]="workflow" #saveAsCode></app-workflow-save-as-code-modal>

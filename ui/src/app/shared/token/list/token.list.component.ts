@@ -1,13 +1,13 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
-import {ExpirationToString, Token, TokenEvent} from '../../../model/token.model';
-import {Table} from '../../table/table';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ExpirationToString, Token, TokenEvent } from '../../../model/token.model';
+import { Table } from '../../table/table';
 
 @Component({
     selector: 'app-token-list',
     templateUrl: './token.list.html',
     styleUrls: ['./token.list.scss']
 })
-export class TokenListComponent extends Table {
+export class TokenListComponent extends Table<Token> {
 
     @Input('tokens')
     set tokens(data: Token[]) {
@@ -15,7 +15,7 @@ export class TokenListComponent extends Table {
         this.goTopage(1);
     }
     get tokens() {
-      return this._tokens;
+        return this._tokens;
     }
     @Input('maxPerPage')
     set maxPerPage(data: number) {
@@ -36,7 +36,7 @@ export class TokenListComponent extends Table {
         this.newToken = new Token();
     }
 
-    getData(): any[] {
+    getData(): Array<Token> {
         if (!this.filter || this.filter === '') {
             return this.tokens;
         } else {

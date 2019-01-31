@@ -17,7 +17,6 @@ import (
 	"go.opencensus.io/tag"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/elasticsearch"
 	"github.com/ovh/cds/engine/hatchery/kubernetes"
@@ -64,7 +63,7 @@ func init() {
 	uptodateCmd.Flags().StringVar(&updateURLAPI, "api", "", "Update binary from a CDS Engine API")
 
 	//Database command
-	mainCmd.AddCommand(database.DBCmd)
+	mainCmd.AddCommand(databaseCmd)
 	//Start command
 	mainCmd.AddCommand(startCmd)
 	//Config command
@@ -378,7 +377,7 @@ This is the core component of CDS.
 
 #### Hatcheries
 
-They are the components responsible for spawning workers. Supported platforms/orchestrators are:
+They are the components responsible for spawning workers. Supported integrations/orchestrators are:
 
 * Local machine
 * Openstack

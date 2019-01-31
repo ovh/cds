@@ -229,7 +229,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		}
 
 		if projects == nil {
-			ps, err := client.ProjectList(true, true)
+			ps, err := client.ProjectList(false, false)
 			if err != nil {
 				return nil, err
 			}
@@ -263,7 +263,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 			if project == nil {
 				// if the project found for current repo was not selected load all projects list
 				if repoExists && len(projects) == 1 {
-					ps, err := client.ProjectList(true, true)
+					ps, err := client.ProjectList(false, false)
 					if err != nil {
 						return nil, err
 					}
@@ -274,7 +274,7 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 				for i := range projects {
 					opts[i] = fmt.Sprintf("%s - %s", projects[i].Key, projects[i].Name)
 				}
-				selected := cli.MultiChoice("Choose the CDS project:", opts...)
+				selected := cli.MultiChoice("Choose the CDS project", opts...)
 				project = &projects[selected]
 			}
 		}
@@ -288,22 +288,27 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		}
 
 		if needApplication {
+			applications, err := client.ApplicationList(project.Key)
+			if err != nil {
+				return nil, err
+			}
+
 			var application *sdk.Application
-			if len(project.Applications) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", project.Applications[0].Name)) {
-					application = &project.Applications[0]
+			if len(applications) == 1 {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS application %s. Is it correct?", applications[0].Name)) {
+					application = &applications[0]
 				}
-			} else if len(project.Applications) > 1 {
-				opts := make([]string, len(project.Applications))
-				for i := range project.Applications {
-					opts[i] = project.Applications[i].Name
+			} else if len(applications) > 1 {
+				opts := make([]string, len(applications))
+				for i := range applications {
+					opts[i] = applications[i].Name
 				}
 				if mctx[_ApplicationName].AllowEmpty {
 					opts = append(opts, "Use a new application")
 				}
-				selected := cli.MultiChoice("Choose the CDS application:", opts...)
-				if selected < len(project.Applications) {
-					application = &project.Applications[selected]
+				selected := cli.MultiChoice("Choose the CDS application", opts...)
+				if selected < len(applications) {
+					application = &applications[selected]
 				}
 			}
 			if application == nil && !mctx[_ApplicationName].AllowEmpty {
@@ -322,22 +327,27 @@ func discoverConf(ctx []cli.Arg) ([]string, error) {
 		}
 
 		if needWorkflow {
+			workflows, err := client.WorkflowList(project.Key)
+			if err != nil {
+				return nil, err
+			}
+
 			var workflow *sdk.Workflow
-			if len(project.Workflows) == 1 {
-				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", project.Workflows[0].Name)) {
-					workflow = &project.Workflows[0]
+			if len(workflows) == 1 {
+				if cli.AskForConfirmation(fmt.Sprintf("Found one CDS workflow %s. Is it correct?", workflows[0].Name)) {
+					workflow = &workflows[0]
 				}
-			} else if len(project.Workflows) > 1 {
-				opts := make([]string, len(project.Workflows))
-				for i := range project.Workflows {
-					opts[i] = project.Workflows[i].Name
+			} else if len(workflows) > 1 {
+				opts := make([]string, len(workflows))
+				for i := range workflows {
+					opts[i] = workflows[i].Name
 				}
 				if mctx[_WorkflowName].AllowEmpty {
 					opts = append(opts, "Use a new workflow")
 				}
-				selected := cli.MultiChoice("Choose the CDS workflow:", opts...)
-				if selected < len(project.Workflows) {
-					workflow = &project.Workflows[selected]
+				selected := cli.MultiChoice("Choose the CDS workflow", opts...)
+				if selected < len(workflows) {
+					workflow = &workflows[selected]
 				}
 			}
 			if workflow == nil && !mctx[_WorkflowName].AllowEmpty {

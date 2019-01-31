@@ -1,0 +1,28 @@
+name: Kubernetes
+default_config:
+  api_url:
+    type: string
+  ca_certificate:
+    type: text
+    description: Certificate Authority bundle (PEM format)
+  token:
+    type: password
+deployment: true
+deployment_default_config:
+  timeout:
+    type: string
+    value: 180
+    description: timeout in seconds
+  namespace:
+    type: string
+    value: default
+    description: Kubernetes namespace in which you want to deploy your components (OPTIONAL)
+  deployment_files:
+    type: string
+    description: Glob to yaml filepaths
+  helm_chart:
+    type: string
+    description: "Keep empty if you don't use helm. Indicate a chart reference by chart reference himself (stable/mariadb), absolute URL (https://example.com/charts/nginx-1.2.3.tgz), path to a packaged chart (./nginx-1.2.3.tgz), path to an unpacked chart directory (./nginx) or even by your chart reference and repo URL (https://example.com/charts/ nginx)."
+  helm_values:
+    type: string
+    description: specify helm values in a YAML file or a URL to configure/override your helm chart

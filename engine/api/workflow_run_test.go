@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-gorp/gorp"
 	izanami "github.com/ovhlabs/izanami-go-client"
 	"github.com/stretchr/testify/assert"
 
@@ -104,7 +105,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	}
 
 	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
@@ -225,7 +226,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	}
 
 	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
@@ -377,7 +378,7 @@ func Test_getWorkflowRunsHandlerWithFilter(t *testing.T) {
 
 	(&w).RetroMigrate()
 
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
@@ -489,7 +490,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	}
 
 	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
@@ -621,7 +622,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	}
 
 	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
@@ -742,7 +743,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	}
 
 	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms, project.LoadOptions.WithApplications)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations, project.LoadOptions.WithApplications)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
@@ -869,7 +870,7 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	}
 
 	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
@@ -1001,7 +1002,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	}
 
 	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
@@ -1195,7 +1196,7 @@ func Test_postWorkflowAsCodeRunDisabledHandler(t *testing.T) {
 	}
 
 	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
@@ -1294,9 +1295,8 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	assert.Equal(t, 403, rec.Code)
 }
 
-func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
-	api, db, router, end := newTestAPI(t)
-	defer end()
+func initGetWorkflowNodeRunJobTest(t *testing.T, api *API, db *gorp.DbMap) (*sdk.User, string, *sdk.Project,
+	*sdk.Workflow, *sdk.WorkflowRun, *sdk.WorkflowNodeJobRun) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -1373,7 +1373,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	}
 
 	(&w).RetroMigrate()
-	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithPlatforms)
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithGroups, project.LoadOptions.WithIntegrations)
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
@@ -1387,15 +1387,11 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
-	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true})
+	lastRun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, workflow.LoadRunOptions{WithArtifacts: true})
 	test.NoError(t, err)
 
 	// Update step status
-	jobRun := &lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].Stages[0].RunJobs[0]
-	log := &sdk.Log{
-		StepOrder: 1,
-		Val:       "My Log",
-	}
+	jobRun := &lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].Stages[0].RunJobs[0]
 	jobRun.Job.StepStatus = []sdk.StepStatus{
 		{
 			StepOrder: 1,
@@ -1404,19 +1400,46 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	}
 
 	// Update node job run
-	errUJ := workflow.UpdateNodeRun(api.mustDB(), &lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0])
+	errUJ := workflow.UpdateNodeRun(api.mustDB(), &lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0])
 	test.NoError(t, errUJ)
 
 	// Add log
-	errAL := workflow.AddLog(api.mustDB(), jobRun, log)
-	test.NoError(t, errAL)
+	test.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
+		StepOrder: 1,
+		Val:       "1234567890",
+	}, 15))
+
+	// Add truncated log
+	test.NoError(t, workflow.AddLog(api.mustDB(), jobRun, &sdk.Log{
+		StepOrder: 1,
+		Val:       "1234567890",
+	}, 15))
+
+	// Add service log
+	test.NoError(t, workflow.AddServiceLog(api.mustDB(), jobRun, &sdk.ServiceLog{
+		Val: "0987654321",
+	}, 15))
+
+	// Add truncated service log
+	test.NoError(t, workflow.AddServiceLog(api.mustDB(), jobRun, &sdk.ServiceLog{
+		Val: "0987654321",
+	}, 15))
+
+	return u, pass, proj, w1, lastRun, jobRun
+}
+
+func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
 
 	//Prepare request
 	vars := map[string]string{
 		"key":              proj.Key,
 		"permWorkflowName": w1.Name,
-		"number":           fmt.Sprintf("%d", lastrun.Number),
-		"nodeRunID":        fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
+		"number":           fmt.Sprintf("%d", lastRun.Number),
+		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
 		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
 		"stepOrder":        "1",
 	}
@@ -1429,8 +1452,36 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 
 	stepState := &sdk.BuildState{}
-	json.Unmarshal(rec.Body.Bytes(), stepState)
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), stepState))
 	assert.Equal(t, 200, rec.Code)
-	assert.Equal(t, "My Log", stepState.StepLogs.Val)
+	assert.Equal(t, "123456789012345... truncated\n", stepState.StepLogs.Val)
 	assert.Equal(t, sdk.StatusBuilding, stepState.Status)
+}
+
+func Test_getWorkflowNodeRunJobServiceLogsHandler(t *testing.T) {
+	api, db, router, end := newTestAPI(t)
+	defer end()
+
+	u, pass, proj, w1, lastRun, jobRun := initGetWorkflowNodeRunJobTest(t, api, db)
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+		"number":           fmt.Sprintf("%d", lastRun.Number),
+		"nodeRunID":        fmt.Sprintf("%d", lastRun.WorkflowNodeRuns[w1.WorkflowData.Node.ID][0].ID),
+		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
+	}
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobServiceLogsHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+
+	var logs []sdk.ServiceLog
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &logs))
+	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, "098765432109876... truncated\n", logs[0].Val)
 }

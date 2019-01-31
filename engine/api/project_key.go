@@ -29,7 +29,7 @@ func (api *API) getAllKeysProjectHandler() service.Handler {
 			EnvironmentKeys []sdk.EnvironmentKey `json:"environment_key"`
 		}{}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getAllKeysProjectHandler> Cannot load project")
 		}
@@ -46,7 +46,7 @@ func (api *API) getAllKeysProjectHandler() service.Handler {
 			}
 			allkeys.ApplicationKeys = appKeys
 		} else {
-			app, errA := application.LoadByName(api.mustDB(), api.Cache, p.Key, appName, getUser(ctx))
+			app, errA := application.LoadByName(api.mustDB(), api.Cache, p.Key, appName, deprecatedGetUser(ctx))
 			if errA != nil {
 				return sdk.WrapError(errA, "getAllKeysProjectHandler> Cannot load application")
 			}
@@ -71,7 +71,7 @@ func (api *API) getKeysInProjectHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getKeysInProjectHandler> Cannot load project")
 		}
@@ -90,7 +90,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 		key := vars["permProjectKey"]
 		keyName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithKeys)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
 		}
@@ -115,7 +115,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectKey(p, deletedKey, getUser(ctx))
+		event.PublishDeleteProjectKey(p, deletedKey, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -137,7 +137,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInProjectHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "addKeyInProjectHandler> Cannot load project")
 		}
@@ -178,7 +178,7 @@ func (api *API) addKeyInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishAddProjectKey(p, newKey, getUser(ctx))
+		event.PublishAddProjectKey(p, newKey, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

@@ -50,8 +50,8 @@ type NodeContext struct {
 	ApplicationName           string                 `json:"-" db:"-"`
 	EnvironmentID             int64                  `json:"environment_id" db:"environment_id"`
 	EnvironmentName           string                 `json:"-" db:"-"`
-	ProjectPlatformID         int64                  `json:"project_platform_id" db:"project_platform_id"`
-	ProjectPlatformName       string                 `json:"-" db:"-"`
+	ProjectIntegrationID      int64                  `json:"project_integration_id" db:"project_integration_id"`
+	ProjectIntegrationName    string                 `json:"-" db:"-"`
 	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions" db:"-"`
@@ -283,18 +283,18 @@ func (n Node) CheckApplicationDeploymentStrategies(proj *Project, w *Workflow) e
 		return nil
 	}
 
-	if n.Context.ProjectPlatformID == 0 {
+	if n.Context.ProjectIntegrationID == 0 {
 		return nil
 	}
 
-	pf := proj.GetPlatformByID(n.Context.ProjectPlatformID)
+	pf := proj.GetIntegrationByID(n.Context.ProjectIntegrationID)
 	if pf == nil {
-		return WithStack(fmt.Errorf("platform unavailable"))
+		return WithStack(fmt.Errorf("integration unavailable"))
 	}
 
 	app := w.Applications[n.Context.ApplicationID]
 	if _, has := app.DeploymentStrategies[pf.Name]; !has {
-		return WithStack(fmt.Errorf("platform %s unavailable on application %s", pf.Name, app.Name))
+		return WithStack(fmt.Errorf("integration %s unavailable on application %s", pf.Name, app.Name))
 	}
 	return nil
 }

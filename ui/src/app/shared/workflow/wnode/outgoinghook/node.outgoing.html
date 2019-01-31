@@ -1,39 +1,46 @@
-<div class="workflowHook pointing"
-     [class.active]="selected"
-     [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
-     [class.success]="noderun?.status === pipelineStatus.SUCCESS"
-     [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED">
-    <div class="name">
-        <i class="{{icon}} icon"></i> <span class="hook">{{node.name}}</span>
-    </div>
-
-    <ng-container *ngIf="model.name === 'WebHook'" >
-        <div class="details">
-            {{ node.outgoing_hook.config['method']?.value }} {{ node.outgoing_hook.config['URL']?.value }}
+<div class="node workflowHook pointing" [class.active]="selected" [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
+    [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED">
+    <div class="title">
+        <div class="decoration">
+            <i class="ui icon {{icon}}"></i>
         </div>
-    </ng-container>
-
-    <ng-container *ngIf="model.name === 'Workflow'" >
-        <div class="details">
-            <ng-container *ngIf="noderun && noderun.callback  && (
+        <div class="name ellipsis" title="{{node.name}}">
+            {{node.name}}
+        </div>
+        <div *ngIf="noderun && noderun.subnumber" class="count">
+            {{ noderun?.subnumber }}
+        </div>
+    </div>
+    <div class="details">
+        <div class="info ellipsis" [ngSwitch]="model.name">
+            <ng-container *ngSwitchCase="'WebHook'">
+                <span title="{{ node.outgoing_hook.config['method']?.value }} {{ node.outgoing_hook.config['URL']?.value }}">
+                    {{ node.outgoing_hook.config['method']?.value }} {{ node.outgoing_hook.config['URL']?.value }}
+                </span>
+            </ng-container>
+            <ng-container *ngSwitchCase="'Workflow'">
+                <ng-container *ngIf="noderun && noderun.callback && (
                 noderun.callback.status === pipelineStatus.BUILDING  ||
                 noderun.callback.status === pipelineStatus.SUCCESS ||
                 noderun.callback.status === pipelineStatus.FAIL )">
-                <a [routerLink]="['/project', node.outgoing_hook.config['target_project'].value, 'workflow', node.outgoing_hook.config['target_workflow'].value, 'run', noderun.callback.workflow_run_number]"
-                   target="_blank">
-                    {{ node.outgoing_hook.config['target_project']?.value }}/{{ node.outgoing_hook.config['target_workflow']?.value }} #{{noderun.callback.workflow_run_number}}
-                </a>
-            </ng-container>
-            <ng-container *ngIf="!noderun || noderun?.status === pipelineStatus.WAITING">
-                {{ node.outgoing_hook.config['target_project']?.value }}/{{ node.outgoing_hook.config['target_workflow']?.value }}/{{ node.outgoing_hook.config['target_hook']?.value }}
+                    <a [routerLink]="['/project', node.outgoing_hook.config['target_project'].value, 'workflow', node.outgoing_hook.config['target_workflow'].value, 'run', noderun.callback.workflow_run_number]"
+                        target="_blank" title="{{ node.outgoing_hook.config['target_project']?.value }}/{{
+                            node.outgoing_hook.config['target_workflow']?.value }}
+                            #{{noderun.callback.workflow_run_number}}">
+                        {{ node.outgoing_hook.config['target_project']?.value }}/{{
+                        node.outgoing_hook.config['target_workflow']?.value }}
+                        #{{noderun.callback.workflow_run_number}}
+                    </a>
+                </ng-container>
+                <ng-container *ngIf="!noderun || noderun?.status === pipelineStatus.WAITING">
+                    <span title="{{ node.outgoing_hook.config['target_project']?.value }}/{{
+                        node.outgoing_hook.config['target_workflow']?.value }}/{{
+                        node.outgoing_hook.config['target_hook']?.value }}">{{
+                        node.outgoing_hook.config['target_project']?.value }}/{{
+                        node.outgoing_hook.config['target_workflow']?.value }}/{{
+                        node.outgoing_hook.config['target_hook']?.value }}</span>
+                </ng-container>
             </ng-container>
         </div>
-    </ng-container>
-
-    <ng-container *ngIf="noderun">
-        <div class="fixed subnumber" >
-            <i class="tag icon"></i>
-            {{ noderun?.subnumber }}
-        </div>
-    </ng-container>
+    </div>
 </div>

@@ -36,9 +36,14 @@ func (api *API) postWorkflowAsCodeHandler() service.Handler {
 		key := vars["key"]
 		workflowName := vars["permWorkflowName"]
 
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, u, project.LoadOptions.WithApplicationWithDeploymentStrategies, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithPlatforms)
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, u,
+			project.LoadOptions.WithApplicationWithDeploymentStrategies,
+			project.LoadOptions.WithPipelines,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithIntegrations,
+			project.LoadOptions.WithClearKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "unable to load project")
 		}

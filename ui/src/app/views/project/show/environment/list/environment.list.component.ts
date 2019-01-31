@@ -31,7 +31,7 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
         }
     }
 
-    @Input('project') project: Project;
+    @Input() project: Project;
     oldLastModifiedDate: number;
     selectedEnv: Environment;
     envInRoute: string;

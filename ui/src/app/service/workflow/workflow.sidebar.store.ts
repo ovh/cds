@@ -12,11 +12,9 @@ export class WorkflowSidebarMode {
 
 @Injectable()
 export class WorkflowSidebarStore {
+    private _sidebarMode: BehaviorSubject<string> = new BehaviorSubject(WorkflowSidebarMode.RUNS);
 
-    private _sidebarMode: BehaviorSubject<string> = new BehaviorSubject(null);
-
-    constructor() {
-    }
+    constructor() { }
 
     sidebarMode(): Observable<string> {
         return new Observable<string>(fn => this._sidebarMode.subscribe(fn));

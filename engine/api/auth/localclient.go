@@ -40,7 +40,7 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 		if ok {
 			return ctx, nil
 		}
-		return ctx, fmt.Errorf("invalid session")
+		return ctx, sdk.WithStack(fmt.Errorf("invalid session"))
 	}
 
 	//Check other session
@@ -50,28 +50,39 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 		sessionToken = req.FormValue("session")
 	}
 	if sessionToken == "" {
-		return ctx, fmt.Errorf("no session header")
+		return ctx, sdk.WithStack(fmt.Errorf("no session header"))
 	}
 
 	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
 	if err != nil {
-		return ctx, err
+		return ctx, sdk.WithStack(err)
 	}
+
 	username, err := GetUsername(c.store, sessionToken)
 	if err != nil {
-		return ctx, err
+		return ctx, sdk.WithStack(err)
 	}
+
+	ctx, err = c.DeprecatedSession(ctx, sessionToken, username)
+	if err != nil {
+		return ctx, sdk.WithStack(fmt.Errorf("authorization failed for %s: %v", username, err))
+	}
+
+	if !exists {
+		return ctx, sdk.WithStack(fmt.Errorf("invalid session"))
+	}
+
+	return ctx, nil
+}
+
+// DeprecatedSession have to be deprecated
+func (c *LocalClient) DeprecatedSession(ctx context.Context, sessionToken, username string) (context.Context, error) {
 	u, err := user.LoadUserAndAuth(c.dbFunc(), username)
 	if err != nil {
 		return ctx, fmt.Errorf("authorization failed for %s: %s", username, err)
 	}
 	ctx = context.WithValue(ctx, ContextUser, u)
 	ctx = context.WithValue(ctx, ContextUserSession, sessionToken)
-
-	if !exists {
-		return ctx, fmt.Errorf("invalid session")
-	}
-
 	return ctx, nil
 }
 

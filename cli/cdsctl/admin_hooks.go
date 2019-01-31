@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"reflect"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -35,7 +34,6 @@ var adminHooksTaskListCmd = cli.Command{
 	Short: "List CDS Hooks Tasks",
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.String,
 			Name:    "sort",
 			Usage:   "Sort task by nb_executions_total,nb_executions_todo",
 			Default: "",

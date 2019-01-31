@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	repo "github.com/fsamin/go-repo"
@@ -35,7 +34,7 @@ Documentation: https://ovh.github.io/cds/gettingstarted/firstworkflow/
 			Name:      "from-remote",
 			ShortHand: "r",
 			Usage:     "Initialize a workflow from your git origin",
-			Kind:      reflect.Bool,
+			Type:      cli.FlagBool,
 		},
 	},
 }
@@ -333,7 +332,7 @@ func workflowInitRun(c cli.Values) error {
 			return fmt.Errorf("Unable to write application file format: %v", err)
 		}
 
-		appFilePath := filepath.Join(dotCDS, appName+".app.yml")
+		appFilePath := filepath.Join(dotCDS, fmt.Sprintf(exportentities.PullApplicationName, appName))
 		if err := ioutil.WriteFile(appFilePath, b, os.FileMode(0644)); err != nil {
 			return fmt.Errorf("Unable to write application file: %v", err)
 		}
@@ -364,7 +363,7 @@ func workflowInitRun(c cli.Values) error {
 			return fmt.Errorf("Unable to write pipeline file format: %v", err)
 		}
 
-		pipFilePath := filepath.Join(dotCDS, pipName+".pip.yml")
+		pipFilePath := filepath.Join(dotCDS, fmt.Sprintf(exportentities.PullPipelineName, pipName))
 		if err := ioutil.WriteFile(pipFilePath, b, os.FileMode(0644)); err != nil {
 			return fmt.Errorf("Unable to write application file: %v", err)
 		}

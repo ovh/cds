@@ -29,8 +29,8 @@ func (c *client) ApplicationsList(projectKey string, opts ...RequestModifier) ([
 	return apps, nil
 }
 
-func (c *client) ApplicationDeploymentStrategyUpdate(projectKey, applicationName, platformName string, config sdk.PlatformConfig) error {
-	path := fmt.Sprintf("/project/%s/application/%s/deployment/config/%s", projectKey, applicationName, platformName)
+func (c *client) ApplicationDeploymentStrategyUpdate(projectKey, applicationName, integrationName string, config sdk.IntegrationConfig) error {
+	path := fmt.Sprintf("/project/%s/application/%s/deployment/config/%s", projectKey, applicationName, integrationName)
 	if _, err := c.PostJSON(context.Background(), path, config, nil); err != nil {
 		return err
 	}
@@ -62,35 +62,35 @@ func (c *client) WorkflowLoad(projectKey, workflowName string) (*sdk.Workflow, e
 	return w, nil
 }
 
-func (c *client) ProjectPlatformGet(projectKey string, platformName string, clearPassword bool) (sdk.ProjectPlatform, error) {
-	path := fmt.Sprintf("/project/%s/platforms/%s?clearPassword=%v", projectKey, platformName, clearPassword)
-	var pf sdk.ProjectPlatform
+func (c *client) ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error) {
+	path := fmt.Sprintf("/project/%s/integrations/%s?clearPassword=%v", projectKey, integrationName, clearPassword)
+	var pf sdk.ProjectIntegration
 	if _, err := c.GetJSON(context.Background(), path, &pf); err != nil {
 		return pf, err
 	}
 	return pf, nil
 }
 
-func (c *client) ProjectPlatformList(projectKey string) ([]sdk.ProjectPlatform, error) {
-	path := fmt.Sprintf("/project/%s/platforms", projectKey)
-	var pfs []sdk.ProjectPlatform
+func (c *client) ProjectIntegrationList(projectKey string) ([]sdk.ProjectIntegration, error) {
+	path := fmt.Sprintf("/project/%s/integrations", projectKey)
+	var pfs []sdk.ProjectIntegration
 	if _, err := c.GetJSON(context.Background(), path, &pfs); err != nil {
 		return pfs, err
 	}
 	return pfs, nil
 }
 
-func (c *client) ProjectPlatformDelete(projectKey string, platformName string) error {
-	path := fmt.Sprintf("/project/%s/platforms/%s", projectKey, platformName)
-	var pf sdk.ProjectPlatform
+func (c *client) ProjectIntegrationDelete(projectKey string, integrationName string) error {
+	path := fmt.Sprintf("/project/%s/integrations/%s", projectKey, integrationName)
+	var pf sdk.ProjectIntegration
 	if _, err := c.DeleteJSON(context.Background(), path, &pf); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *client) ProjectPlatformImport(projectKey string, content io.Reader, format string, force bool) (sdk.ProjectPlatform, error) {
-	var pf sdk.ProjectPlatform
+func (c *client) ProjectIntegrationImport(projectKey string, content io.Reader, format string, force bool) (sdk.ProjectIntegration, error) {
+	var pf sdk.ProjectIntegration
 
 	body, err := ioutil.ReadAll(content)
 	if err != nil {
@@ -106,17 +106,17 @@ func (c *client) ProjectPlatformImport(projectKey string, content io.Reader, for
 		return pf, err
 	}
 
-	//Get the platform to know if we have to POST or PUT
-	oldPF, _ := c.ProjectPlatformGet(projectKey, pf.Name, false)
+	//Get the integration to know if we have to POST or PUT
+	oldPF, _ := c.ProjectIntegrationGet(projectKey, pf.Name, false)
 	if oldPF.Name == "" {
-		path := fmt.Sprintf("/project/%s/platforms", projectKey)
+		path := fmt.Sprintf("/project/%s/integrations", projectKey)
 		if _, err := c.PostJSON(context.Background(), path, &pf, &pf); err != nil {
 			return pf, err
 		}
 		return pf, nil
 	}
 
-	path := fmt.Sprintf("/project/%s/platforms/%s", projectKey, pf.Name)
+	path := fmt.Sprintf("/project/%s/integrations/%s", projectKey, pf.Name)
 	if _, err := c.PutJSON(context.Background(), path, &pf, &pf); err != nil {
 		return pf, err
 	}

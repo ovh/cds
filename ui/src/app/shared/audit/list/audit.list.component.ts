@@ -8,14 +8,14 @@ import { Table } from '../../table/table';
     templateUrl: './audit.list.html',
     styleUrls: ['./audit.list.scss']
 })
-export class AuditListComponent extends Table {
+export class AuditListComponent extends Table<AuditWorkflow> {
     @Input() audits: Array<AuditWorkflow>;
     @Output() rollback: EventEmitter<number> = new EventEmitter();
     selectedAudit: AuditWorkflow;
     diffType: string;
     items: Array<Item>;
 
-    getData(): any[] {
+    getData(): Array<AuditWorkflow> {
         return this.audits;
     }
 

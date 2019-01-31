@@ -1,11 +1,8 @@
 package application
 
 import (
-	"fmt"
-
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -23,43 +20,9 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 		return sdk.WrapError(err, "Cannot delete application group")
 	}
 
-	// Delete application_pipeline
-	if err := DeleteAllApplicationPipeline(db, applicationID); err != nil {
-		return sdk.WrapError(err, "Cannot delete application pipeline")
-	}
-
-	// Delete pipeline builds
-	//FIXME
-	var ids []int64
-	query = `SELECT id FROM pipeline_build WHERE application_id = $1`
-	rows, err := db.Query(query, applicationID)
-	if err != nil {
-		return fmt.Errorf("DeleteApplication> Cannot select application pipeline build> %s", err)
-	}
-	var id int64
-	for rows.Next() {
-		if err := rows.Scan(&id); err != nil {
-			rows.Close()
-			return err
-		}
-		ids = append(ids, id)
-	}
-	rows.Close()
-	for _, id := range ids {
-		if err := pipeline.DeletePipelineBuildByID(db, id); err != nil {
-			return fmt.Errorf("DeleteApplication> Cannot delete pb %d> %s", id, err)
-		}
-	}
-
 	// Delete application_key
 	if err := DeleteAllApplicationKeys(db, applicationID); err != nil {
 		return sdk.WrapError(err, "DeleteApplication")
-	}
-
-	// Delete application artifact left
-	query = `DELETE FROM artifact WHERE application_id = $1`
-	if _, err = db.Exec(query, applicationID); err != nil {
-		return sdk.WrapError(err, "Cannot delete old artifacts")
 	}
 
 	query = `DELETE FROM application WHERE id=$1`

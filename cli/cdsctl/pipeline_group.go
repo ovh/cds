@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -44,7 +44,7 @@ var pipelineGroupImportCmd = cli.Command{
 				return true
 			},
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
@@ -63,7 +63,7 @@ func pipelineGroupImportRun(v cli.Values) error {
 		format = "json"
 	}
 
-	if exportentities.IsURL(v.GetString("path")) {
+	if sdk.IsURL(v.GetString("path")) {
 		var err error
 		reader, _, err = exportentities.OpenURL(v.GetString("path"), format)
 		if err != nil {
@@ -77,10 +77,10 @@ func pipelineGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.PipelineGroupsImport(v[_ProjectKey], v["pipeline-name"], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.PipelineGroupsImport(v.GetString(_ProjectKey), v.GetString("pipeline-name"), reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
-	fmt.Printf("Groups imported in pipeline %s with success\n", v["pipeline-name"])
+	fmt.Printf("Groups imported in pipeline %s with success\n", v.GetString("pipeline-name"))
 
 	return nil
 }

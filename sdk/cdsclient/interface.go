@@ -20,14 +20,20 @@ type TemplateClient interface {
 	TemplateGetByID(id int64) (*sdk.WorkflowTemplate, error)
 	TemplateGetAll() ([]sdk.WorkflowTemplate, error)
 	TemplateApply(groupName, templateSlug string, req sdk.WorkflowTemplateRequest) (*tar.Reader, error)
+	TemplateBulk(groupName, templateSlug string, req sdk.WorkflowTemplateBulk) (*sdk.WorkflowTemplateBulk, error)
+	TemplateGetBulk(groupName, templateSlug string, id int64) (*sdk.WorkflowTemplateBulk, error)
 	TemplatePull(groupName, templateSlug string) (*tar.Reader, error)
 	TemplatePush(tarContent io.Reader) ([]string, *tar.Reader, error)
+	TemplateDelete(groupName, templateSlug string) error
 	TemplateGetInstances(groupName, templateSlug string) ([]sdk.WorkflowTemplateInstance, error)
+	TemplateDeleteInstance(groupName, templateSlug string, id int64) error
 }
 
 // AdminService expose all function to CDS services
 type AdminService interface {
+	AdminDatabaseMigrationDelete(id string) error
 	AdminDatabaseMigrationUnlock(id string) error
+	AdminDatabaseMigrationsList() ([]sdk.DatabaseMigrationStatus, error)
 	AdminCDSMigrationList() ([]sdk.Migration, error)
 	AdminCDSMigrationCancel(id int64) error
 	AdminCDSMigrationReset(id int64) error
@@ -193,10 +199,10 @@ type ProjectClient interface {
 	ProjectKeysClient
 	ProjectVariablesClient
 	ProjectGroupsImport(projectKey string, content io.Reader, format string, force bool) (sdk.Project, error)
-	ProjectPlatformImport(projectKey string, content io.Reader, format string, force bool) (sdk.ProjectPlatform, error)
-	ProjectPlatformGet(projectKey string, platformName string, clearPassword bool) (sdk.ProjectPlatform, error)
-	ProjectPlatformList(projectKey string) ([]sdk.ProjectPlatform, error)
-	ProjectPlatformDelete(projectKey string, platformName string) error
+	ProjectIntegrationImport(projectKey string, content io.Reader, format string, force bool) (sdk.ProjectIntegration, error)
+	ProjectIntegrationGet(projectKey string, integrationName string, clearPassword bool) (sdk.ProjectIntegration, error)
+	ProjectIntegrationList(projectKey string) ([]sdk.ProjectIntegration, error)
+	ProjectIntegrationDelete(projectKey string, integrationName string) error
 }
 
 // ProjectKeysClient exposes project keys related functions
@@ -309,13 +315,13 @@ type MonitoringClient interface {
 	MonErrorsGet(uuid string) (*sdk.Error, error)
 }
 
-// PlatformClient exposes platform functions
-type PlatformClient interface {
-	PlatformModelList() ([]sdk.PlatformModel, error)
-	PlatformModelGet(name string) (sdk.PlatformModel, error)
-	PlatformModelAdd(m *sdk.PlatformModel) error
-	PlatformModelUpdate(m *sdk.PlatformModel) error
-	PlatformModelDelete(name string) error
+// IntegrationClient exposes integration functions
+type IntegrationClient interface {
+	IntegrationModelList() ([]sdk.IntegrationModel, error)
+	IntegrationModelGet(name string) (sdk.IntegrationModel, error)
+	IntegrationModelAdd(m *sdk.IntegrationModel) error
+	IntegrationModelUpdate(m *sdk.IntegrationModel) error
+	IntegrationModelDelete(name string) error
 }
 
 // Interface is the main interface for cdsclient package
@@ -334,7 +340,7 @@ type Interface interface {
 	BroadcastClient
 	MaintenanceClient
 	PipelineClient
-	PlatformClient
+	IntegrationClient
 	ProjectClient
 	QueueClient
 	Navbar() ([]sdk.NavbarProjectData, error)
@@ -349,14 +355,6 @@ type Interface interface {
 	HookClient
 	Version() (*sdk.Version, error)
 	TemplateClient
-}
-
-// InterfaceDeprecated is the interface for using deprecated routes with cdsclient package
-type InterfaceDeprecated interface {
-	ApplicationPipelinesAttach(projectKey string, appName string, pipelineNames ...string) error
-	ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error
-	ApplicationPipelineTriggersGet(projectKey string, appName string, pipelineName string, envName string) ([]sdk.PipelineTrigger, error)
-	AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error
 }
 
 // Raw is a low-level interface exposing HTTP functions
@@ -396,7 +394,7 @@ type GRPCPluginsClient interface {
 */
 type ProviderClient interface {
 	ApplicationsList(projectKey string, opts ...RequestModifier) ([]sdk.Application, error)
-	ApplicationDeploymentStrategyUpdate(projectKey, applicationName, platformName string, config sdk.PlatformConfig) error
+	ApplicationDeploymentStrategyUpdate(projectKey, applicationName, integrationName string, config sdk.IntegrationConfig) error
 	ApplicationMetadataUpdate(projectKey, applicationName, key, value string) error
 	ProjectsList(opts ...RequestModifier) ([]sdk.Project, error)
 	WorkflowsList(projectKey string) ([]sdk.Workflow, error)

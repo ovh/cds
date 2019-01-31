@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// Insert inserts a plugin
 func Insert(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	m := grpcPlugin(*p)
 	if err := db.Insert(&m); err != nil {
@@ -20,6 +21,7 @@ func Insert(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	return nil
 }
 
+// Update updates a plugin
 func Update(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	m := grpcPlugin(*p)
 	if _, err := db.Update(&m); err != nil {
@@ -50,6 +52,7 @@ func (p *grpcPlugin) PostUpdate(db gorp.SqlExecutor) error {
 	return nil
 }
 
+// Delete deletes a plugin
 func Delete(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	for _, b := range p.Binaries {
 		if err := objectstore.Delete(b); err != nil {
@@ -64,18 +67,39 @@ func Delete(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
 	return nil
 }
 
+// LoadByName loads a plugin by name
 func LoadByName(db gorp.SqlExecutor, name string) (*sdk.GRPCPlugin, error) {
 	m := grpcPlugin{}
 	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin WHERE NAME = $1", name); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNotFound
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin %s not found", name)
 		}
+		return nil, sdk.WrapError(err, "plugin.LoadByName")
+	}
+	if err := m.PostGet(db); err != nil {
 		return nil, sdk.WrapError(err, "plugin.LoadByName")
 	}
 	p := sdk.GRPCPlugin(m)
 	return &p, nil
 }
 
+// LoadByIntegrationModelIDAndType loads all plugins associated to a integration model id
+func LoadByIntegrationModelIDAndType(db gorp.SqlExecutor, integrationModelID int64, typePlugin string) (*sdk.GRPCPlugin, error) {
+	m := grpcPlugin{}
+	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin where integration_model_id = $1 and type = $2", integrationModelID, typePlugin); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "plugin not found (type: %s) for integration %d", typePlugin, integrationModelID)
+		}
+		return nil, sdk.WrapError(err, "plugin.LoadByIntegrationModelIDAndType")
+	}
+	if err := m.PostGet(db); err != nil {
+		return nil, sdk.WrapError(err, "plugin.LoadByName")
+	}
+	p := sdk.GRPCPlugin(m)
+	return &p, nil
+}
+
+// LoadAll loads all GRPC Plugins
 func LoadAll(db gorp.SqlExecutor) ([]sdk.GRPCPlugin, error) {
 	m := []grpcPlugin{}
 	if _, err := db.Select(&m, "SELECT * FROM grpc_plugin"); err != nil {
@@ -101,6 +125,13 @@ func (p *grpcPlugin) PostGet(db gorp.SqlExecutor) error {
 	}
 	if err := gorpmapping.JSONNullString(s, &p.Binaries); err != nil {
 		return sdk.WrapError(err, "plugin.PostGet")
+	}
+	if p.IntegrationModelID != nil {
+		var err error
+		p.Integration, err = db.SelectStr("SELECT name FROM integration_model WHERE ID = $1", p.IntegrationModelID)
+		if err != nil {
+			return sdk.WrapError(err, "unable to get integration name for ID=%d", p.IntegrationModelID)
+		}
 	}
 	return nil
 }

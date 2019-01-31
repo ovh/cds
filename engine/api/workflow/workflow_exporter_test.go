@@ -132,8 +132,11 @@ func TestPull(t *testing.T) {
 	test.Equal(t, w.Metadata, w1.Metadata)
 	test.Equal(t, w.PurgeTags, w1.PurgeTags)
 
+	pull, err := workflow.Pull(context.TODO(), db, cache, proj, w1.Name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, u)
+	test.NoError(t, err)
+
 	buff := new(bytes.Buffer)
-	test.NoError(t, workflow.Pull(context.TODO(), db, cache, proj, w1.Name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, u, buff))
+	test.NoError(t, pull.Tar(buff))
 
 	// Open the tar archive for reading.
 	r := bytes.NewReader(buff.Bytes())

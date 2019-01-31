@@ -68,8 +68,8 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		n.Context.EnvironmentID = n.Context.Environment.ID
 	}
 
-	if n.Context.ProjectPlatformID == 0 && n.Context.ProjectPlatform != nil {
-		n.Context.ProjectPlatformID = n.Context.ProjectPlatform.ID
+	if n.Context.ProjectIntegrationID == 0 && n.Context.ProjectIntegration != nil {
+		n.Context.ProjectIntegrationID = n.Context.ProjectIntegration.ID
 	}
 
 	//Checks pipeline parameters
@@ -245,7 +245,7 @@ type sqlContext struct {
 	WorkflowNodeID            int64          `db:"workflow_node_id"`
 	AppID                     sql.NullInt64  `db:"application_id"`
 	EnvID                     sql.NullInt64  `db:"environment_id"`
-	ProjectPlatformID         sql.NullInt64  `db:"project_platform_id"`
+	ProjectIntegrationID      sql.NullInt64  `db:"project_integration_id"`
 	DefaultPayload            sql.NullString `db:"default_payload"`
 	DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
 	Conditions                sql.NullString `db:"conditions"`
@@ -269,8 +269,8 @@ func UpdateNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 		sqlContext.EnvID = sql.NullInt64{Int64: c.EnvironmentID, Valid: true}
 	}
 
-	if c.ProjectPlatformID != 0 {
-		sqlContext.ProjectPlatformID = sql.NullInt64{Int64: c.ProjectPlatformID, Valid: true}
+	if c.ProjectIntegrationID != 0 {
+		sqlContext.ProjectIntegrationID = sql.NullInt64{Int64: c.ProjectIntegrationID, Valid: true}
 	}
 
 	// Set DefaultPayload in context
@@ -469,7 +469,7 @@ func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, 
 func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User, ctx *sdk.WorkflowNodeContext, opts LoadOptions) error {
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
-		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex, project_platform_id from workflow_node_context where id = $1", ctx.ID); err != nil {
+		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex, project_integration_id from workflow_node_context where id = $1", ctx.ID); err != nil {
 		return err
 	}
 	if sqlContext.AppID.Valid {
@@ -478,8 +478,8 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 	if sqlContext.EnvID.Valid {
 		ctx.EnvironmentID = sqlContext.EnvID.Int64
 	}
-	if sqlContext.ProjectPlatformID.Valid {
-		ctx.ProjectPlatformID = sqlContext.ProjectPlatformID.Int64
+	if sqlContext.ProjectIntegrationID.Valid {
+		ctx.ProjectIntegrationID = sqlContext.ProjectIntegrationID.Int64
 	}
 	if sqlContext.Mutex.Valid {
 		ctx.Mutex = sqlContext.Mutex.Bool
@@ -537,16 +537,16 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 		ctx.Environment.Permission = environment.Permission(env.ProjectKey, env.Name, u)
 	}
 
-	//Load the project platform in the context
-	if ctx.ProjectPlatformID != 0 {
-		for _, pf := range proj.Platforms {
-			if pf.ID == ctx.ProjectPlatformID {
-				ctx.ProjectPlatform = &pf
+	//Load the integration in the context
+	if ctx.ProjectIntegrationID != 0 {
+		for _, pf := range proj.Integrations {
+			if pf.ID == ctx.ProjectIntegrationID {
+				ctx.ProjectIntegration = &pf
 				break
 			}
 		}
-		if ctx.ProjectPlatform == nil {
-			return sdk.WrapError(fmt.Errorf("unable to find project platform id = %d", ctx.ProjectPlatformID), "postLoadNodeContext")
+		if ctx.ProjectIntegration == nil {
+			return sdk.WrapError(fmt.Errorf("unable to find integration id = %d", ctx.ProjectIntegrationID), "postLoadNodeContext")
 		}
 	}
 

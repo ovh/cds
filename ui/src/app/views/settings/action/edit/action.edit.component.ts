@@ -40,7 +40,8 @@ export class ActionEditComponent implements OnInit {
         this.paramsSub = this._route.params.subscribe(params => {
             this._actionService.getAction(params['name']).subscribe(u => {
                 this.action = u;
-                this.actionDoc = u.name.toLowerCase().replace(' ', '-');
+                let re = /\s/gi;
+                this.actionDoc = u.name.toLowerCase().replace(re, '-');
                 if (this.isAdmin) {
                     this._actionService.getPipelinesUsingAction(params['name']).pipe(first()).subscribe(p => {
                         this.pipelinesUsingAction = p;

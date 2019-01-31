@@ -23,7 +23,7 @@ func (api *API) getKeysInApplicationHandler() service.Handler {
 
 		log.Debug("%s %s", key, appName)
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getKeysInApplicationHandler> Cannot load application")
 		}
@@ -38,7 +38,7 @@ func (api *API) getKeysInApplicationHandler() service.Handler {
 
 func (api *API) deleteKeyInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
@@ -95,7 +95,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInApplicationHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "addKeyInApplicationHandler> Cannot load application")
 		}
@@ -136,7 +136,7 @@ func (api *API) addKeyInApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishApplicationKeyAdd(key, *app, newKey, getUser(ctx))
+		event.PublishApplicationKeyAdd(key, *app, newKey, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, newKey, http.StatusOK)
 	}

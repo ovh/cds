@@ -1,23 +1,23 @@
-import {Component, Input, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {DragulaService} from 'ng2-dragula';
-import {Subscription} from 'rxjs';
-import {first} from 'rxjs/operators';
-import {Job} from '../../../../model/job.model';
-import {AllKeys} from '../../../../model/keys.model';
-import {PermissionValue} from '../../../../model/permission.model';
-import {Pipeline} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {Stage} from '../../../../model/stage.model';
-import {KeyService} from '../../../../service/keys/keys.service';
-import {PipelineCoreService} from '../../../../service/pipeline/pipeline.core.service';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
-import {VariableService} from '../../../../service/variable/variable.service';
-import {ActionEvent} from '../../../../shared/action/action.event.model';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {ToastService} from '../../../../shared/toast/ToastService';
+import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { cloneDeep } from 'lodash';
+import { SemanticModalComponent } from 'ng-semantic/ng-semantic';
+import { DragulaService } from 'ng2-dragula';
+import { Subscription } from 'rxjs';
+import { first } from 'rxjs/operators';
+import { Job } from '../../../../model/job.model';
+import { AllKeys } from '../../../../model/keys.model';
+import { PermissionValue } from '../../../../model/permission.model';
+import { Pipeline } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { Stage } from '../../../../model/stage.model';
+import { KeyService } from '../../../../service/keys/keys.service';
+import { PipelineCoreService } from '../../../../service/pipeline/pipeline.core.service';
+import { PipelineStore } from '../../../../service/pipeline/pipeline.store';
+import { VariableService } from '../../../../service/variable/variable.service';
+import { ActionEvent } from '../../../../shared/action/action.event.model';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
+import { ToastService } from '../../../../shared/toast/ToastService';
 
 @Component({
     selector: 'app-pipeline-workflow',
@@ -29,7 +29,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
     @Input() project: Project;
     @Input('currentPipeline')
-    set currentPipeline (data: Pipeline) {
+    set currentPipeline(data: Pipeline) {
         this.pipeline = data;
 
         if (!this.pipeline) {
@@ -73,7 +73,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         private _pipCoreService: PipelineCoreService,
         private _keyService: KeyService
     ) {
-        this._dragularService.setOptions('bag-stage', {
+        this._dragularService.createGroup('bag-stage', {
             moves: function (el, source, handle) {
                 return handle.classList.contains('move');
             },
@@ -84,12 +84,9 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                 return true;
             }
         });
-        this.dragulaSubscription = this._dragularService.drop.subscribe(v => {
+        this.dragulaSubscription = this._dragularService.drop('bag-stage').subscribe(({ el, source }) => {
             setTimeout(() => {
-                if (v[0] !== 'bag-stage') {
-                    return;
-                }
-                let stageMovedBuildOrder = Number(v[1].id.replace('step', ''));
+                let stageMovedBuildOrder = Number(el.id.replace('step', ''));
                 let stageMoved: Stage;
                 for (let i = 0; i < this.pipeline.stages.length; i++) {
                     if (this.pipeline.stages[i].build_order === stageMovedBuildOrder) {
@@ -105,29 +102,29 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         });
 
         this.pipelinePreviewSubscription = this._pipCoreService.getPipelinePreview()
-          .subscribe((pipPreview) => {
-              if (pipPreview != null) {
-                  this.originalPipeline = this.pipeline;
-                  this.pipeline = null;
-                  this.pipeline = Object.assign({}, this.originalPipeline, {
-                      stages: pipPreview.stages,
-                      previewMode: pipPreview.previewMode,
-                      forceRefresh: pipPreview.forceRefresh
-                  });
-                  this.selectDefaultJob();
-                  this.previewMode = true;
-                  this._pipCoreService.toggleAsCodeEditor({open: false, save: false});
-              } else if (this.originalPipeline != null) {
-                  this.previewMode = false;
-                  this.pipeline = this.originalPipeline;
-                  this.selectDefaultJob();
-              }
-          });
+            .subscribe((pipPreview) => {
+                if (pipPreview != null) {
+                    this.originalPipeline = this.pipeline;
+                    this.pipeline = null;
+                    this.pipeline = Object.assign({}, this.originalPipeline, {
+                        stages: pipPreview.stages,
+                        previewMode: pipPreview.previewMode,
+                        forceRefresh: pipPreview.forceRefresh
+                    });
+                    this.selectDefaultJob();
+                    this.previewMode = true;
+                    this._pipCoreService.toggleAsCodeEditor({ open: false, save: false });
+                } else if (this.originalPipeline != null) {
+                    this.previewMode = false;
+                    this.pipeline = this.originalPipeline;
+                    this.selectDefaultJob();
+                }
+            });
     }
 
     selectDefaultJob() {
         if (this.pipeline.stages && this.pipeline.stages.length &&
-              this.pipeline.stages[0].jobs && this.pipeline.stages[0].jobs.length) {
+            this.pipeline.stages[0].jobs && this.pipeline.stages[0].jobs.length) {
             this.selectJob(this.pipeline.stages[0].jobs[0], this.pipeline.stages[0]);
         }
     }
@@ -197,8 +194,8 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
                     this.loadingStage = false;
                     this.editStageModal.hide();
                 }, () => {
-                this.loadingStage = false;
-            });
+                    this.loadingStage = false;
+                });
                 break;
             case 'delete':
                 this._pipelineStore.removeStage(this.project.key, this.pipeline.name, this.selectedStage).subscribe(() => {
@@ -217,7 +214,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
     openEditModal(s: Stage): void {
         this.selectedStage = cloneDeep(s);
         if (this.editStageModal) {
-            this.editStageModal.show({autofocus: false, closable: false, observeChanges: true});
+            this.editStageModal.show({ autofocus: false, closable: false, observeChanges: true });
         }
     }
 
@@ -280,10 +277,10 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
 
     savePreview() {
         this.previewMode = false;
-        this._pipCoreService.toggleAsCodeEditor({open: false, save: true});
+        this._pipCoreService.toggleAsCodeEditor({ open: false, save: true });
     }
 
     showAsCodeEditor() {
-        this._pipCoreService.toggleAsCodeEditor({open: true, save: false});
+        this._pipCoreService.toggleAsCodeEditor({ open: true, save: false });
     }
 }

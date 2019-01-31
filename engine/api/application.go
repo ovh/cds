@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -18,12 +17,10 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -37,7 +34,7 @@ func (api *API) getApplicationsHandler() service.Handler {
 		withUsage := FormBool(r, "withUsage")
 		withIcon := FormBool(r, "withIcon")
 
-		var u = getUser(ctx)
+		var u = deprecatedGetUser(ctx)
 		requestedUserName := r.Header.Get("X-Cds-Username")
 
 		//A provider can make a call for a specific user
@@ -88,174 +85,20 @@ func (api *API) getApplicationsHandler() service.Handler {
 	}
 }
 
-func (api *API) getApplicationTreeHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
-
-		tree, err := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", "", 0)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load CD Tree for applications %s", applicationName)
-		}
-
-		return service.WriteJSON(w, tree, http.StatusOK)
-	}
-}
-
-func (api *API) getPipelineBuildBranchHistoryHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get pipeline and action name in URL
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		appName := vars["permApplicationName"]
-
-		err := r.ParseForm()
-		if err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "getPipelineBranchHistoryHandler> Cannot parse form: %s", err)
-		}
-
-		pageString := r.Form.Get("page")
-		nbPerPageString := r.Form.Get("perPage")
-
-		var nbPerPage int
-		if nbPerPageString != "" {
-			nbPerPage, err = strconv.Atoi(nbPerPageString)
-			if err != nil {
-				return err
-			}
-		} else {
-			nbPerPage = 20
-		}
-
-		var page int
-		if pageString != "" {
-			page, err = strconv.Atoi(pageString)
-			if err != nil {
-				return err
-			}
-		} else {
-			nbPerPage = 0
-		}
-
-		pbs, err := pipeline.GetBranchHistory(api.mustDB(), projectKey, appName, page, nbPerPage)
-		if err != nil {
-			errL := fmt.Errorf("Cannot load pipeline branch history: %s", err)
-			return sdk.WrapError(errL, "getPipelineBranchHistoryHandler> Cannot get history by branch")
-		}
-
-		return service.WriteJSON(w, pbs, http.StatusOK)
-	}
-}
-
-func (api *API) getApplicationDeployHistoryHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get pipeline and action name in URL
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		appName := vars["permApplicationName"]
-
-		pbs, err := pipeline.GetDeploymentHistory(api.mustDB(), projectKey, appName)
-		if err != nil {
-			errL := fmt.Errorf("Cannot load pipeline deployment history: %s", err)
-			return sdk.WrapError(errL, "getPipelineDeployHistoryHandler> Cannot get history by env")
-		}
-
-		return service.WriteJSON(w, pbs, http.StatusOK)
-	}
-}
-
-func (api *API) getApplicationBranchVersionHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
-		branch := r.FormValue("branch")
-		remote := r.FormValue("remote")
-
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.WithTriggers)
-		if err != nil {
-			return sdk.WrapError(err, "getApplicationBranchVersionHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
-		}
-
-		versions, err := pipeline.GetVersions(api.mustDB(), app, branch, remote)
-		if err != nil {
-			return sdk.WrapError(err, "getApplicationBranchVersionHandler: Cannot load version for application %s on branch %s with remote %s", applicationName, branch, remote)
-		}
-
-		return service.WriteJSON(w, versions, http.StatusOK)
-	}
-}
-
-// DEPRECATED
-func (api *API) getApplicationTreeStatusHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
-		branchName := r.FormValue("branchName")
-		remote := r.FormValue("remote")
-		versionString := r.FormValue("version")
-
-		var version int64
-		var errV error
-		if versionString != "" {
-			version, errV = strconv.ParseInt(versionString, 10, 64)
-			if errV != nil {
-				return sdk.WrapError(errV, "getApplicationTreeStatusHandler>Cannot cast version %s into int", versionString)
-			}
-		}
-
-		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
-		if errApp != nil {
-			return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
-		}
-
-		pbs, errPB := workflowv0.GetWorkflowStatus(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, remote, version)
-		if errPB != nil {
-			return sdk.WrapError(errPB, "getApplicationHandler> Cannot load CD Tree status %s", app.Name)
-		}
-
-		response := struct {
-			Builds     []sdk.PipelineBuild `json:"builds"`
-			Schedulers []struct{}          `json:"schedulers"`
-			Pollers    []struct{}          `json:"pollers"`
-			Hooks      []struct{}          `json:"hooks"`
-		}{
-			pbs,
-			nil,
-			nil,
-			nil,
-		}
-
-		return service.WriteJSON(w, response, http.StatusOK)
-	}
-}
-
 func (api *API) getApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		applicationStatus := FormBool(r, "applicationStatus")
-		withWorkflow := FormBool(r, "withWorkflow")
-		withTriggers := FormBool(r, "withTriggers")
 		withKeys := FormBool(r, "withKeys")
 		withUsage := FormBool(r, "withUsage")
 		withIcon := FormBool(r, "withIcon")
 		withDeploymentStrategies := FormBool(r, "withDeploymentStrategies")
 		withVulnerabilities := FormBool(r, "withVulnerabilities")
-		branchName := r.FormValue("branchName")
-		remote := r.FormValue("remote")
-		versionString := r.FormValue("version")
 
 		loadOptions := []application.LoadOptionFunc{
 			application.LoadOptions.WithVariables,
-			application.LoadOptions.WithPipelines,
-		}
-		if withTriggers {
-			loadOptions = append(loadOptions, application.LoadOptions.WithTriggers)
 		}
 		if withKeys {
 			loadOptions = append(loadOptions, application.LoadOptions.WithKeys)
@@ -270,50 +113,13 @@ func (api *API) getApplicationHandler() service.Handler {
 			loadOptions = append(loadOptions, application.LoadOptions.WithIcon)
 		}
 
-		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), loadOptions...)
+		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), loadOptions...)
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getApplicationHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
 
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "Unable to load groups by application")
-		}
-
-		if withWorkflow {
-			brName := branchName
-			if brName == "" {
-				brName = "master"
-			}
-			var errWorflow error
-			app.Workflows, errWorflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), brName, remote, 0)
-			if errWorflow != nil {
-				return sdk.WrapError(errWorflow, "getApplicationHandler> Cannot load CD Tree for applications %s", app.Name)
-			}
-		}
-
-		if applicationStatus {
-			version := 0
-			if versionString != "" {
-				var errStatus error
-				version, errStatus = strconv.Atoi(versionString)
-				if errStatus != nil {
-					return sdk.WrapError(errStatus, "getApplicationHandler> Version %s is not an integer", versionString)
-				}
-			}
-
-			if version != 0 && branchName == "" {
-				return sdk.WrapError(sdk.ErrBranchNameNotProvided, "getApplicationHandler: branchName must be provided with version param")
-			}
-
-			pipelineBuilds, errPipBuilds := pipeline.GetAllLastBuildByApplication(api.mustDB(), app.ID, remote, branchName, version)
-			if errPipBuilds != nil {
-				return sdk.WrapError(errPipBuilds, "getApplicationHandler> Cannot load app status by version")
-			}
-			al := r.Header.Get("Accept-Language")
-			for _, p := range pipelineBuilds {
-				p.Translate(al)
-			}
-			app.PipelinesBuild = pipelineBuilds
 		}
 
 		if withUsage {
@@ -338,72 +144,9 @@ func loadApplicationUsage(db gorp.SqlExecutor, projKey, appName string) (sdk.Usa
 	}
 	usage.Workflows = wf
 
-	envs, errEnv := environment.LoadByApplicationName(db, projKey, appName)
-	if errEnv != nil {
-		return usage, sdk.WrapError(errEnv, "loadApplicationUsage> Cannot load environments linked to application %s in project %s", appName, projKey)
-	}
-	usage.Environments = envs
-
-	pips, errPips := pipeline.LoadByApplicationName(db, projKey, appName)
-	if errPips != nil {
-		return usage, sdk.WrapError(errPips, "loadApplicationUsage> Cannot load pipelines linked to application %s in project %s", appName, projKey)
-	}
-	usage.Pipelines = pips
+	// TODO: add usage of pipelines and environments
 
 	return usage, nil
-}
-
-func (api *API) getApplicationBranchHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
-		remote := r.FormValue("remote")
-
-		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load project %s from db", projectKey)
-		}
-
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load application %s for project %s from db", applicationName, projectKey)
-		}
-
-		var branches []sdk.VCSBranch
-		if app.RepositoryFullname != "" && app.VCSServer != "" {
-			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
-			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
-			}
-			if remote != "" && remote != app.RepositoryFullname {
-				brs, errB := client.Branches(ctx, remote)
-				if errB != nil {
-					return sdk.WrapError(errB, "getApplicationBranchHandler> Cannot get branches from repository %s", remote)
-				}
-				for _, br := range brs {
-					branches = append(branches, br)
-				}
-			} else {
-				var errb error
-				branches, errb = client.Branches(ctx, app.RepositoryFullname)
-				if errb != nil {
-					return sdk.WrapError(errb, "getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
-				}
-			}
-		} else {
-			var errg error
-			branches, errg = pipeline.GetBranches(api.mustDB(), app, remote)
-			if errg != nil {
-				return sdk.WrapError(errg, "getApplicationBranchHandler> Cannot get branches from builds")
-			}
-		}
-
-		//Yo analyze branch and delete pipeline_build for old branches...
-
-		return service.WriteJSON(w, branches, http.StatusOK)
-	}
 }
 
 func (api *API) getApplicationVCSInfosHandler() service.Handler {
@@ -413,12 +156,12 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 		applicationName := vars["permApplicationName"]
 		remote := r.FormValue("remote")
 
-		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load project %s from db", projectKey)
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
@@ -465,73 +208,13 @@ func (api *API) getApplicationVCSInfosHandler() service.Handler {
 	}
 }
 
-func (api *API) getApplicationRemoteHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		applicationName := vars["permApplicationName"]
-
-		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load project %s", projectKey)
-		}
-
-		app, errL := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
-		if errL != nil {
-			return sdk.WrapError(errL, "getApplicationRemoteHandler: Cannot load application %s for project %s", applicationName, projectKey)
-		}
-
-		remotes := []sdk.VCSRemote{}
-		var prs []sdk.VCSPullRequest
-		if app.RepositoryFullname != "" && app.VCSServer != "" {
-			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-			client, erra := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
-			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
-			}
-			var errb error
-			prs, errb = client.PullRequests(ctx, app.RepositoryFullname)
-			if errb != nil {
-				return sdk.WrapError(errb, "getApplicationRemoteHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
-			}
-
-			found := map[string]bool{app.RepositoryFullname: true}
-			remotes = append(remotes, sdk.VCSRemote{Name: app.RepositoryFullname})
-			for _, pr := range prs {
-				if _, exist := found[pr.Head.Repo]; !exist {
-					remotes = append(remotes, sdk.VCSRemote{URL: pr.Head.CloneURL, Name: pr.Head.Repo})
-				}
-				found[pr.Head.Repo] = true
-			}
-		}
-
-		oldRemotes, errg := pipeline.GetRemotes(api.mustDB(), app)
-		if errg != nil {
-			return sdk.WrapError(errg, "getApplicationRemoteHandler> Cannot get remotes from builds")
-		}
-		for _, oldRemote := range oldRemotes {
-			exist := false
-			for _, remote := range remotes {
-				if remote.Name == oldRemote.Name {
-					exist = true
-				}
-			}
-			if !exist {
-				remotes = append(remotes, oldRemote)
-			}
-		}
-
-		return service.WriteJSON(w, remotes, http.StatusOK)
-	}
-}
-
 func (api *API) addApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		proj, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "addApplicationHandler> Cannot load %s", key)
 		}
@@ -554,7 +237,7 @@ func (api *API) addApplicationHandler() service.Handler {
 
 		defer tx.Rollback()
 
-		if err := application.Insert(tx, api.Cache, proj, &app, getUser(ctx)); err != nil {
+		if err := application.Insert(tx, api.Cache, proj, &app, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
@@ -562,7 +245,7 @@ func (api *API) addApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load group from project")
 		}
 
-		if err := application.AddGroup(tx, api.Cache, proj, &app, getUser(ctx), proj.ProjectGroups...); err != nil {
+		if err := application.AddGroup(tx, api.Cache, proj, &app, deprecatedGetUser(ctx), proj.ProjectGroups...); err != nil {
 			return sdk.WrapError(err, "Cannot add groups on application")
 		}
 
@@ -581,26 +264,17 @@ func (api *API) deleteApplicationHandler() service.Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteApplicationHandler> Cannot laod project")
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx))
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
 				log.Warning("deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
 			}
 			return err
-		}
-
-		nb, errNb := pipeline.CountBuildingPipelineByApplication(api.mustDB(), app.ID)
-		if errNb != nil {
-			return sdk.WrapError(errNb, "deleteApplicationHandler> Cannot count pipeline build for application %d", app.ID)
-		}
-
-		if nb > 0 {
-			return sdk.WrapError(sdk.ErrAppBuildingPipelines, "deleteApplicationHandler> Cannot delete application [%d], there are building pipelines: %d", app.ID, nb)
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -618,7 +292,7 @@ func (api *API) deleteApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishDeleteApplication(proj.Key, *app, getUser(ctx))
+		event.PublishDeleteApplication(proj.Key, *app, deprecatedGetUser(ctx))
 
 		return nil
 	}
@@ -631,12 +305,12 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		proj, errProj := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(sdk.ErrNoProject, "cloneApplicationHandler> Cannot load %s", projectKey)
 		}
 
-		envs, errE := environment.LoadEnvironments(api.mustDB(), projectKey, true, getUser(ctx))
+		envs, errE := environment.LoadEnvironments(api.mustDB(), projectKey, true, deprecatedGetUser(ctx))
 		if errE != nil {
 			return sdk.WrapError(errE, "cloneApplicationHandler> Cannot load Environments %s", projectKey)
 
@@ -648,7 +322,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 			return err
 		}
 
-		appToClone, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default, application.LoadOptions.WithGroups)
+		appToClone, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), application.LoadOptions.Default, application.LoadOptions.WithGroups)
 		if errApp != nil {
 			return sdk.WrapError(errApp, "cloneApplicationHandler> Cannot load application %s", applicationName)
 		}
@@ -659,7 +333,7 @@ func (api *API) cloneApplicationHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := cloneApplication(tx, api.Cache, proj, &newApp, appToClone, getUser(ctx)); err != nil {
+		if err := cloneApplication(tx, api.Cache, proj, &newApp, appToClone, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert new application %s", newApp.Name)
 		}
 
@@ -721,12 +395,12 @@ func (api *API) updateApplicationHandler() service.Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		p, errload := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
+		p, errload := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errload != nil {
 			return sdk.WrapError(errload, "updateApplicationHandler> Cannot load project %s", projectKey)
 		}
 
-		app, errloadbyname := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
+		app, errloadbyname := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx), application.LoadOptions.Default)
 		if errloadbyname != nil {
 			return sdk.WrapError(errloadbyname, "updateApplicationHandler> Cannot load application %s", applicationName)
 		}
@@ -768,7 +442,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback()
-		if err := application.Update(tx, api.Cache, app, getUser(ctx)); err != nil {
+		if err := application.Update(tx, api.Cache, app, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot delete application %s", applicationName)
 		}
 
@@ -776,7 +450,7 @@ func (api *API) updateApplicationHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishUpdateApplication(p.Key, *app, old, getUser(ctx))
+		event.PublishUpdateApplication(p.Key, *app, old, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, app, http.StatusOK)
 
@@ -790,7 +464,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "postApplicationMetadataHandler")
 		}
@@ -810,7 +484,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 		}
 		defer tx.Rollback() // nolint
 
-		if err := application.Update(tx, api.Cache, app, getUser(ctx)); err != nil {
+		if err := application.Update(tx, api.Cache, app, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "unable to update application")
 		}
 
@@ -818,7 +492,7 @@ func (api *API) postApplicationMetadataHandler() service.Handler {
 			return sdk.WrapError(err, "unable to commit tx")
 		}
 
-		event.PublishUpdateApplication(projectKey, *app, oldApp, getUser(ctx))
+		event.PublishUpdateApplication(projectKey, *app, oldApp, deprecatedGetUser(ctx))
 
 		return nil
 	}

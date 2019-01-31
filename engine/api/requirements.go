@@ -32,7 +32,7 @@ func (api *API) getRequirementTypeValuesHandler() service.Handler {
 			return service.WriteJSON(w, req.Values(), http.StatusOK)
 
 		case sdk.ModelRequirement:
-			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getUser(ctx), nil)
+			models, err := worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, deprecatedGetUser(ctx), nil)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot load worker models")
 			}

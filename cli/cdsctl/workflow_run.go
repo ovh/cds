@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -36,7 +35,6 @@ var workflowRunManualCmd = cli.Command{
 				data := map[string]interface{}{}
 				return json.Unmarshal([]byte(s), &data) == nil
 			},
-			Kind: reflect.String,
 		},
 		{
 			Name:      "parameter",
@@ -55,7 +53,7 @@ var workflowRunManualCmd = cli.Command{
 				}
 				return true
 			},
-			Kind: reflect.Slice,
+			Type: cli.FlagSlice,
 		},
 		{
 			Name:  "run-number",
@@ -64,30 +62,28 @@ var workflowRunManualCmd = cli.Command{
 				match, _ := regexp.MatchString(`[0-9]?`, s)
 				return match
 			},
-			Kind: reflect.String,
 		},
 		{
 			Name:  "node-name",
 			Usage: "Node Name to relaunch; Flag run-number is mandatory",
-			Kind:  reflect.String,
 		},
 		{
 			Name:      "interactive",
 			ShortHand: "i",
 			Usage:     "Follow the workflow run in an interactive terminal user interface",
-			Kind:      reflect.Bool,
+			Type:      cli.FlagBool,
 		},
 		{
 			Name:      "open-web-browser",
 			ShortHand: "o",
 			Usage:     "Open web browser on the workflow run",
-			Kind:      reflect.Bool,
+			Type:      cli.FlagBool,
 		},
 		{
 			Name:      "sync",
 			ShortHand: "s",
 			Usage:     "Synchronise your pipelines with your last editions. Must be used with flag run-number",
-			Kind:      reflect.Bool,
+			Type:      cli.FlagBool,
 		},
 	},
 }
@@ -100,7 +96,7 @@ func workflowRunManualRun(v cli.Values) error {
 	manual := sdk.WorkflowNodeRunManual{}
 	if strings.TrimSpace(v.GetString("data")) != "" {
 		data := map[string]interface{}{}
-		if err := json.Unmarshal([]byte(v["data"]), &data); err != nil {
+		if err := json.Unmarshal([]byte(v.GetString("data")), &data); err != nil {
 			return fmt.Errorf("Error payload isn't a valid json")
 		}
 		manual.Payload = data
@@ -144,7 +140,7 @@ func workflowRunManualRun(v cli.Values) error {
 	}
 
 	if v.GetBool("sync") {
-		if _, err := client.WorkflowRunResync(v[_ProjectKey], v[_WorkflowName], runNumber); err != nil {
+		if _, err := client.WorkflowRunResync(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber); err != nil {
 			return fmt.Errorf("Cannot resync your workflow run %d : %v", runNumber, err)
 		}
 	}
@@ -153,7 +149,7 @@ func workflowRunManualRun(v cli.Values) error {
 		if runNumber <= 0 {
 			return fmt.Errorf("You can use flag node-name without flag run-number")
 		}
-		wr, err := client.WorkflowRunGet(v[_ProjectKey], v[_WorkflowName], runNumber)
+		wr, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 		if err != nil {
 			return err
 		}
@@ -168,12 +164,12 @@ func workflowRunManualRun(v cli.Values) error {
 		}
 	}
 
-	w, err := client.WorkflowRunFromManual(v[_ProjectKey], v[_WorkflowName], manual, runNumber, fromNodeID)
+	w, err := client.WorkflowRunFromManual(v.GetString(_ProjectKey), v.GetString(_WorkflowName), manual, runNumber, fromNodeID)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Workflow %s #%d has been launched\n", v[_WorkflowName], w.Number)
+	fmt.Printf("Workflow %s #%d has been launched\n", v.GetString(_WorkflowName), w.Number)
 
 	var baseURL string
 	configUser, err := client.ConfigUser()
@@ -191,7 +187,7 @@ func workflowRunManualRun(v cli.Values) error {
 	}
 
 	if !v.GetBool("interactive") {
-		url := fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", baseURL, v[_ProjectKey], v[_WorkflowName], w.Number)
+		url := fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", baseURL, v.GetString(_ProjectKey), v.GetString(_WorkflowName), w.Number)
 		fmt.Println(url)
 
 		if v.GetBool("open-web-browser") {

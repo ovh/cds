@@ -14,7 +14,7 @@ import { Column, ColumnType } from '../../../../shared/table/data-table.componen
 })
 export class HookTaskShowComponent {
     codeMirrorConfig: any;
-    columns: Array<Column>;
+    columns: Array<Column<TaskExecution>>;
     task: WorkflowHookTask;
     executions: Array<TaskExecution>;
     selectedExecution: TaskExecution;
@@ -37,9 +37,9 @@ export class HookTaskShowComponent {
         };
 
         this.columns = [
-            <Column>{
+            <Column<TaskExecution>>{
                 type: ColumnType.ICON,
-                selector: d => {
+                selector: (d: TaskExecution) => {
                     if (d.status === HookStatus.DONE) {
                         return ['check', 'green', 'icon'];
                     } else if (d.status === HookStatus.FAIL) {
@@ -49,21 +49,21 @@ export class HookTaskShowComponent {
                     }
                 }
             },
-            <Column>{
+            <Column<TaskExecution>>{
                 name: 'created at',
-                selector: d => formatDate(new Date(d.timestamp / 1000000), 'short', this._translate.currentLang)
+                selector: (d: TaskExecution) => formatDate(new Date(d.timestamp / 1000000), 'short', this._translate.currentLang)
             },
-            <Column>{
+            <Column<TaskExecution>>{
                 name: 'proceed at',
-                selector: d => {
+                selector: (d: TaskExecution) => {
                     return d.processing_timestamp ?
                         formatDate(new Date(d.processing_timestamp / 1000000), 'short', this._translate.currentLang) : '-';
                 }
             },
-            <Column>{
+            <Column<TaskExecution>>{
                 type: ColumnType.LINK,
                 name: 'action',
-                selector: d => {
+                selector: (d: TaskExecution) => {
                     return {
                         callback: this.selectExecution(d),
                         value: 'open'
@@ -90,7 +90,7 @@ export class HookTaskShowComponent {
     }
 
     selectExecution(e: TaskExecution) {
-        return _ => {
+        return () => {
             this.selectedExecution = e
             this.selectedExecutionBody = null;
             if (e.webhook) {

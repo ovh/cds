@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"io"
-	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -43,7 +43,7 @@ var projectGroupImportCmd = cli.Command{
 				return true
 			},
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
@@ -61,7 +61,7 @@ func projectGroupImportRun(v cli.Values) error {
 		format = "json"
 	}
 
-	if exportentities.IsURL(v.GetString("path")) {
+	if sdk.IsURL(v.GetString("path")) {
 		var err error
 		reader, _, err = exportentities.OpenURL(v.GetString("path"), format)
 		if err != nil {
@@ -75,10 +75,10 @@ func projectGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.ProjectGroupsImport(v[_ProjectKey], reader, format, v.GetBool("force")); err != nil {
+	if _, err := client.ProjectGroupsImport(v.GetString(_ProjectKey), reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
-	fmt.Printf("Groups imported in project %s with success\n", v[_ProjectKey])
+	fmt.Printf("Groups imported in project %s with success\n", v.GetString(_ProjectKey))
 
 	return nil
 }

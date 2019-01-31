@@ -11,7 +11,7 @@ import { Table } from '../../../../shared/table/table';
     templateUrl: './action.list.html',
     styleUrls: ['./action.list.scss']
 })
-export class ActionListComponent extends Table {
+export class ActionListComponent extends Table<Action> {
     @Input('maxPerPage')
     set maxPerPage(data: number) {
         this.nbElementsByPage = data;
@@ -41,7 +41,7 @@ export class ActionListComponent extends Table {
         }];
     }
 
-    getData(): any[] {
+    getData(): Array<Action> {
         if (!this.filter) {
             return this.actions;
         }

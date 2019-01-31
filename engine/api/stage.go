@@ -41,7 +41,7 @@ func (api *API) addStageHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditAddStage, getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditAddStage, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create pipeline audit")
 		}
 
@@ -61,7 +61,7 @@ func (api *API) addStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load pipeline stages")
 		}
 
-		event.PublishPipelineStageAdd(projectKey, pipelineKey, *stageData, getUser(ctx))
+		event.PublishPipelineStageAdd(projectKey, pipelineKey, *stageData, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, pipelineData, http.StatusCreated)
 	}
@@ -129,7 +129,7 @@ func (api *API) moveStageHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditMoveStage, getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditMoveStage, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create pipeline audit")
 		}
 
@@ -159,7 +159,7 @@ func (api *API) moveStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineStageMove(projectKey, pipelineKey, *stageData, oldStage.BuildOrder, getUser(ctx))
+		event.PublishPipelineStageMove(projectKey, pipelineKey, *stageData, oldStage.BuildOrder, deprecatedGetUser(ctx))
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -204,7 +204,7 @@ func (api *API) updateStageHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateStage, getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateStage, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -225,7 +225,7 @@ func (api *API) updateStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineStageUpdate(projectKey, pipelineKey, *s, *stageData, getUser(ctx))
+		event.PublishPipelineStageUpdate(projectKey, pipelineKey, *s, *stageData, deprecatedGetUser(ctx))
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }
@@ -261,11 +261,11 @@ func (api *API) deleteStageHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteStage, getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteStage, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
-		if err := pipeline.DeleteStageByID(tx, s, getUser(ctx).ID); err != nil {
+		if err := pipeline.DeleteStageByID(tx, s, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot Delete stage")
 		}
 
@@ -281,7 +281,7 @@ func (api *API) deleteStageHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load stages")
 		}
 
-		event.PublishPipelineStageDelete(projectKey, pipelineKey, *s, getUser(ctx))
+		event.PublishPipelineStageDelete(projectKey, pipelineKey, *s, deprecatedGetUser(ctx))
 		return service.WriteJSON(w, pipelineData, http.StatusOK)
 	}
 }

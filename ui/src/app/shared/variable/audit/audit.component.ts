@@ -1,13 +1,13 @@
-import {Component, Input} from '@angular/core';
-import {VariableAudit} from '../../../model/variable.model';
-import {Table} from '../../table/table';
+import { Component, Input } from '@angular/core';
+import { VariableAudit } from '../../../model/variable.model';
+import { Table } from '../../table/table';
 
 @Component({
     selector: 'app-variable-audit',
     templateUrl: './variable.audit.html',
     styleUrls: ['./variable.audit.scss']
 })
-export class VariableAuditComponent extends Table {
+export class VariableAuditComponent extends Table<VariableAudit> {
 
     @Input() audits: Array<VariableAudit>;
 
@@ -16,7 +16,7 @@ export class VariableAuditComponent extends Table {
         this.nbElementsByPage = 8;
     }
 
-    getData(): any[] {
+    getData(): Array<VariableAudit> {
         return this.audits;
     }
 }

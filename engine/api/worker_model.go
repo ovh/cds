@@ -38,7 +38,7 @@ func (api *API) addWorkerModelHandler() service.Handler {
 			}
 		}
 
-		currentUser := getUser(ctx)
+		currentUser := deprecatedGetUser(ctx)
 		//User must be admin of the group set in the model
 		var isGroupAdmin bool
 	currentUGroup:
@@ -255,14 +255,14 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 			}
 		}
 
-		user := getUser(ctx)
+		user := deprecatedGetUser(ctx)
 		//User must be admin of the group set in the model
 		var ok bool
 	currentUGroup:
-		for _, g := range getUser(ctx).Groups {
+		for _, g := range deprecatedGetUser(ctx).Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
-					if a.ID == getUser(ctx).ID {
+					if a.ID == deprecatedGetUser(ctx).ID {
 						ok = true
 						break currentUGroup
 					}
@@ -271,7 +271,7 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !getUser(ctx).Admin && !ok {
+		if !deprecatedGetUser(ctx).Admin && !ok {
 			return sdk.ErrWorkerModelNoAdmin
 		}
 
@@ -324,7 +324,7 @@ func (api *API) updateWorkerModelHandler() service.Handler {
 
 		// provision is allowed only for CDS Admin
 		// or by user with a restricted model
-		if !getUser(ctx).Admin && !model.Restricted {
+		if !deprecatedGetUser(ctx).Admin && !model.Restricted {
 			model.Provision = 0
 		}
 
@@ -430,7 +430,7 @@ func (api *API) getWorkerModelUsageHandler() service.Handler {
 			return sdk.WrapError(err, "cannot load worker model for id %d", workerModelID)
 		}
 
-		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name, getUser(ctx))
+		pips, errP := pipeline.LoadByWorkerModelName(db, wm.Name, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load pipelines linked to worker model")
 		}
@@ -476,7 +476,7 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 		if u == nil || u.ID == 0 {
 			var username string
 			if u != nil {
@@ -488,12 +488,12 @@ func (api *API) getWorkerModelsHandler() service.Handler {
 		models := []sdk.Model{}
 		var errbyuser error
 		if binary != "" {
-			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), getUser(ctx), binary)
+			models, errbyuser = worker.LoadWorkerModelsByUserAndBinary(api.mustDB(), deprecatedGetUser(ctx), binary)
 		} else {
-			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, getUser(ctx), opt)
+			models, errbyuser = worker.LoadWorkerModelsByUser(api.mustDB(), api.Cache, deprecatedGetUser(ctx), opt)
 		}
 		if errbyuser != nil {
-			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", getUser(ctx).ID)
+			return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", deprecatedGetUser(ctx).ID)
 		}
 
 		return service.WriteJSON(w, models, http.StatusOK)
@@ -577,10 +577,10 @@ func (api *API) deleteWorkerModelPatternHandler() service.Handler {
 
 func (api *API) getWorkerModelPatternHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if getUser(ctx).ID == 0 {
+		if deprecatedGetUser(ctx).ID == 0 {
 			var username string
-			if getUser(ctx) != nil {
-				username = getUser(ctx).Username
+			if deprecatedGetUser(ctx) != nil {
+				username = deprecatedGetUser(ctx).Username
 			}
 			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
 		}
@@ -640,10 +640,10 @@ func (api *API) postAddWorkerModelPatternHandler() service.Handler {
 
 func (api *API) getWorkerModelPatternsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if getUser(ctx) == nil || getUser(ctx).ID == 0 {
+		if deprecatedGetUser(ctx) == nil || deprecatedGetUser(ctx).ID == 0 {
 			var username string
-			if getUser(ctx) != nil {
-				username = getUser(ctx).Username
+			if deprecatedGetUser(ctx) != nil {
+				username = deprecatedGetUser(ctx).Username
 			}
 			return sdk.WrapError(sdk.ErrForbidden, "getWorkerModels> this route can't be called by worker or hatchery named %s", username)
 		}

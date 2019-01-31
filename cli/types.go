@@ -8,22 +8,42 @@ import (
 	"strings"
 )
 
+// FlagType for cli flag.
+type FlagType string
+
+// Flags types
+const (
+	FlagString FlagType = "string"
+	FlagBool   FlagType = "bool"
+	FlagSlice  FlagType = "slice"
+	FlagArray  FlagType = "array"
+)
+
 // Flag represents a command flag.
 type Flag struct {
 	Name      string
 	ShortHand string
 	Usage     string
 	Default   string
-	Kind      reflect.Kind
+	Type      FlagType
 	IsValid   func(string) bool
 }
 
 // Values represents commands flags and args values accessible with their name
-type Values map[string]string
+type Values map[string][]string
 
-// GetInt64 returns a int64
+// GetString returns a string.
+func (v *Values) GetString(s string) string {
+	r := (*v)[s]
+	if len(r) == 0 {
+		return ""
+	}
+	return r[0]
+}
+
+// GetInt64 returns a int64.
 func (v *Values) GetInt64(s string) (int64, error) {
-	ns := (*v)[s]
+	ns := v.GetString(s)
 	if ns == "" {
 		return 0, nil
 	}
@@ -34,23 +54,24 @@ func (v *Values) GetInt64(s string) (int64, error) {
 	return n, nil
 }
 
-// GetString returns a string
-func (v *Values) GetString(s string) string {
-	return (*v)[s]
-}
-
-// GetBool returns a string
+// GetBool returns a string.
 func (v *Values) GetBool(s string) bool {
-	return strings.ToLower((*v)[s]) == "true" || strings.ToLower((*v)[s]) == "yes" || strings.ToLower((*v)[s]) == "y" || strings.ToLower((*v)[s]) == "1"
+	r := strings.ToLower(v.GetString(s))
+	return r == "true" || r == "yes" || r == "y" || r == "1"
 }
 
-// GetStringSlice returns a string slice
+// GetStringSlice returns a string slice.
 func (v *Values) GetStringSlice(s string) []string {
-	res := strings.Split((*v)[s], "||")
+	res := strings.Split(v.GetString(s), "||")
 	if len(res) == 1 && strings.Contains(res[0], ",") {
 		return strings.Split(res[0], ",")
 	}
 	return res
+}
+
+// GetStringArray returns a string array.
+func (v *Values) GetStringArray(s string) []string {
+	return (*v)[s]
 }
 
 // Arg represent a command argument
@@ -122,12 +143,12 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 				Name:    "format",
 				Default: "plain",
 				Usage:   "Output format: plain|json|yaml",
-				Kind:    reflect.String,
+				Type:    FlagString,
 			},
 			{
 				Name:  "verbose",
 				Usage: "Display all object fields",
-				Kind:  reflect.Bool,
+				Type:  FlagBool,
 			},
 		}
 	case RunListFunc:
@@ -136,31 +157,31 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 				Name:    "filter",
 				Default: "",
 				Usage:   "Filter output based on conditions provided",
-				Kind:    reflect.String,
+				Type:    FlagString,
 			},
 			{
 				Name:    "format",
 				Default: "table",
 				Usage:   "Output format: table|json|yaml",
-				Kind:    reflect.String,
+				Type:    FlagString,
 			},
 			{
 				Name:      "quiet",
 				ShortHand: "q",
 				Default:   "",
 				Usage:     "Only display object's key",
-				Kind:      reflect.Bool,
+				Type:      FlagBool,
 			},
 			{
 				Name:    "fields",
 				Default: "",
 				Usage:   "Only display specified object fields. 'empty' will display all fields, 'all' will display all object fields, 'field1,field2' to select multiple fields",
-				Kind:    reflect.String,
+				Type:    FlagString,
 			},
 			{
 				Name:  "verbose",
 				Usage: "Display all object fields",
-				Kind:  reflect.Bool,
+				Type:  FlagBool,
 			},
 		}
 	case RunDeleteFunc:
@@ -169,7 +190,7 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 				Name:    "force",
 				Default: "false",
 				Usage:   "Force delete without confirmation and exit 0 if resource does not exist",
-				Kind:    reflect.Bool,
+				Type:    FlagBool,
 			},
 		}
 	}
@@ -179,7 +200,6 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 // CommandWithExtraAliases to add common extra alias
 func CommandWithExtraAliases(c *Command, run interface{}) {
 	var extraAliases []string
-
 	switch run.(type) {
 	case RunListFunc:
 		extraAliases = []string{"ls"}

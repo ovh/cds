@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 
 	goUpdate "github.com/inconshreveable/go-update"
 	"github.com/spf13/cobra"
@@ -20,7 +19,7 @@ var updateCmd = cli.Command{
 			Name:    "from-github",
 			Usage:   "Update binary from latest github release",
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
