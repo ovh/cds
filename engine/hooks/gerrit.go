@@ -148,6 +148,7 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 			hooks, err := s.Dao.FindGerritTasksByRepo(vcsServer, repo)
 			if err != nil {
 				log.Error("ComputeGerritStreamEvent > Unable to list task for repo %s/%s", vcsServer, repo)
+				continue
 			}
 
 			msg, err := json.Marshal(e)
@@ -186,11 +187,12 @@ func (s *Service) ComputeGerritStreamEvent(ctx context.Context, vcsServer string
 	}
 }
 
-// ListenGerritStreamEvent listent the gerrit event stream
+// ListenGerritStreamEvent listen the gerrit event stream
 func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerritEventChan chan<- GerritEvent) {
 	signer, err := ssh.ParsePrivateKey([]byte(v.Password))
 	if err != nil {
 		log.Error("unable to read ssh key: %v", err)
+		return
 	}
 
 	// Create config
@@ -255,8 +257,6 @@ func ListenGerritStreamEvent(ctx context.Context, v sdk.VCSConfiguration, gerrit
 				continue
 			}
 			gerritEventChan <- event
-
-		default:
 		}
 	}
 

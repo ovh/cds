@@ -21,9 +21,9 @@ type BuildNumberAndHash struct {
 type VCSConfiguration struct {
 	Type     string `json:"type"`
 	Username string `json:"username"`
-	Password string `json:password`
-	URL      string `json:url`
-	SSHPort  int    `json:sshport`
+	Password string `json:"password"`
+	URL      string `json:"url"`
+	SSHPort  int    `json:"sshport"`
 }
 
 // VCSServer is an interce for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient

@@ -23,7 +23,7 @@
                 </div>
                 <div class="field">
                     <label>{{ 'user_label_password' | translate }}</label>
-                    <input type="text" name="last-name" placeholder="Last Name" [(ngModel)]="basicPassword">
+                    <input type="password" name="last-name" placeholder="Last Name" [(ngModel)]="basicPassword">
                 </div>
                 <button class="ui green button" name="validationbtn" [class.loading]="verificationLoading" (click)="sendBasicAuth()">{{ 'btn_validate' | translate }}</button>
             </div>

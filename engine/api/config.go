@@ -21,7 +21,7 @@ func (api *API) ConfigVCShandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vcsServers, err := repositoriesmanager.LoadAll(ctx, api.mustDB(), api.Cache)
 		if err != nil {
-			return sdk.WrapError(err, "error")
+			return err
 		}
 		return service.WriteJSON(w, vcsServers, http.StatusOK)
 	}

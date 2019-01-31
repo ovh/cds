@@ -73,6 +73,8 @@ export class RepoManagerFormComponent  {
         ).subscribe( () => {
             this.verificationLoading = false;
             this.modalInstance.hide();
+            this.basicUser = '';
+            this.basicPassword = '';
             this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
         }, () => {
             this.verificationLoading = false;
