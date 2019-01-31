@@ -116,7 +116,7 @@ func pipelineImportRun(v cli.Values) error {
 		format = "json"
 	}
 
-	if exportentities.IsURL(v.GetString("path")) {
+	if sdk.IsURL(v.GetString("path")) {
 		var err error
 		reader, _, err = exportentities.OpenURL(v.GetString("path"), format)
 		if err != nil {

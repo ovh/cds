@@ -46,7 +46,7 @@ func Pull(wt *sdk.WorkflowTemplate, f exportentities.Format, w io.Writer) error 
 		return sdk.WrapError(errw, "Unable to export template")
 	}
 	hdr := &tar.Header{
-		Name: fmt.Sprintf("%s.yml", wt.Slug),
+		Name: fmt.Sprintf(exportentities.PullWorkflowName, wt.Slug),
 		Mode: 0644,
 		Size: int64(size),
 	}

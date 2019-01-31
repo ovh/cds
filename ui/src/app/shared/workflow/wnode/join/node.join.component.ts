@@ -1,15 +1,15 @@
-import {Component, ElementRef, Input} from '@angular/core';
-import {TranslateService} from '@ngx-translate/core';
-import {cloneDeep} from 'lodash';
-import {Subscription} from 'rxjs';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {Project} from '../../../../model/project.model';
-import {WNode, WNodeJoin, Workflow} from '../../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../../../model/workflow.run.model';
-import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
-import {WorkflowStore} from '../../../../service/workflow/workflow.store';
-import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {ToastService} from '../../../toast/ToastService';
+import { Component, Input } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
+import { cloneDeep } from 'lodash';
+import { Subscription } from 'rxjs';
+import { PipelineStatus } from '../../../../model/pipeline.model';
+import { Project } from '../../../../model/project.model';
+import { WNode, WNodeJoin, Workflow } from '../../../../model/workflow.model';
+import { WorkflowNodeRun, WorkflowRun } from '../../../../model/workflow.run.model';
+import { WorkflowCoreService } from '../../../../service/workflow/workflow.core.service';
+import { WorkflowStore } from '../../../../service/workflow/workflow.store';
+import { AutoUnsubscribe } from '../../../decorator/autoUnsubscribe';
+import { ToastService } from '../../../toast/ToastService';
 
 @Component({
     selector: 'app-workflow-wnode-join',
@@ -18,7 +18,6 @@ import {ToastService} from '../../../toast/ToastService';
 })
 @AutoUnsubscribe()
 export class WorkflowWNodeJoinComponent {
-
     @Input() public project: Project;
     @Input() public node: WNode;
     @Input() public workflow: Workflow;
@@ -27,16 +26,16 @@ export class WorkflowWNodeJoinComponent {
     @Input() public selected: boolean;
 
     pipelineStatus = PipelineStatus;
-
-    elementRef: ElementRef;
     linkJoinSubscription: Subscription;
     nodeToLink: WNode;
     loading = false;
 
-    constructor(elt: ElementRef, private _workflowCore: WorkflowCoreService, private _workflowStore: WorkflowStore,
-                private _toast: ToastService, private _translate: TranslateService) {
-        this.elementRef = elt;
-
+    constructor(
+        private _workflowCore: WorkflowCoreService,
+        private _workflowStore: WorkflowStore,
+        private _toast: ToastService,
+        private _translate: TranslateService
+    ) {
         this.linkJoinSubscription = _workflowCore.getLinkJoinEvent().subscribe(n => {
             this.nodeToLink = n;
         });

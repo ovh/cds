@@ -112,24 +112,6 @@ type EventRunWorkflow struct {
 	Tags          []WorkflowRunTag `json:"tags"`
 }
 
-// EventPipelineBuild contains event data for a pipeline build
-type EventPipelineBuild struct {
-	Version               int64  `json:"version,omitempty"`
-	BuildNumber           int64  `json:"buildNumber,omitempty"`
-	Status                Status `json:"status,omitempty"`
-	Start                 int64  `json:"start,omitempty"`
-	Done                  int64  `json:"done,omitempty"`
-	PipelineName          string `json:"pipelineName,omitempty"`
-	PipelineType          string `json:"type,omitempty"`
-	ProjectKey            string `json:"projectKey,omitempty"`
-	ApplicationName       string `json:"applicationName,omitempty"`
-	EnvironmentName       string `json:"environmentName,omitempty"`
-	BranchName            string `json:"branchName,omitempty"`
-	Hash                  string `json:"hash,omitempty"`
-	RepositoryManagerName string `json:"repositoryManagerName,omitempty"`
-	RepositoryFullname    string `json:"repositoryFullname,omitempty"`
-}
-
 // EventJob contains event data for a job
 type EventJob struct {
 	Version         int64  `json:"version,omitempty"`

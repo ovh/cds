@@ -15,6 +15,7 @@ type WorkflowTemplateRequest struct {
 	ProjectKey   string            `json:"project_key"`
 	WorkflowName string            `json:"workflow_name"`
 	Parameters   map[string]string `json:"parameters"`
+	Detached     bool              `json:"detached,omitempty"`
 }
 
 // Value returns driver.Value from workflow template request.
@@ -53,6 +54,7 @@ type WorkflowTemplate struct {
 	Applications ApplicationTemplates       `json:"applications" db:"applications"`
 	Environments EnvironmentTemplates       `json:"environments" db:"environments"`
 	Version      int64                      `json:"version" db:"version"`
+	ImportURL    string                     `json:"import_url" db:"import_url"`
 	// aggregates
 	Group         *Group                 `json:"group,omitempty" db:"-"`
 	FirstAudit    *AuditWorkflowTemplate `json:"first_audit,omitempty" db:"-"`
@@ -63,9 +65,21 @@ type WorkflowTemplate struct {
 
 // IsValid returns workflow template validity.
 func (w *WorkflowTemplate) IsValid() error {
+	// no more checks if import url is set, fields will be overrited by downloaded files
+	if w.ImportURL != "" {
+		if !IsURL(w.ImportURL) || !strings.HasSuffix(w.ImportURL, ".yml") {
+			return NewErrorFrom(ErrWrongRequest, "invalid given import url")
+		}
+		return nil
+	}
+
+	if w.GroupID == 0 {
+		return NewErrorFrom(ErrWrongRequest, "invalid group id for template")
+	}
+
 	w.Slug = slug.Convert(w.Name)
 	if !slug.Valid(w.Slug) {
-		return WrapError(ErrWrongRequest, "Invalid given name")
+		return NewErrorFrom(ErrWrongRequest, "invalid given name")
 	}
 
 	for _, p := range w.Parameters {
@@ -150,6 +164,7 @@ func (w *WorkflowTemplate) Update(data WorkflowTemplate) {
 	w.Applications = data.Applications
 	w.Environments = data.Environments
 	w.Version = w.Version + 1
+	w.ImportURL = data.ImportURL
 }
 
 // WorkflowTemplatesToIDs returns ids of given workflow templates.
@@ -178,7 +193,7 @@ type PipelineTemplate struct {
 // IsValid returns pipeline template validity.
 func (p *PipelineTemplate) IsValid() error {
 	if len(p.Value) == 0 {
-		return NewErrorFrom(ErrInvalidData, "Invalid given pipeline value")
+		return NewErrorFrom(ErrInvalidData, "invalid given pipeline value")
 	}
 	return nil
 }
@@ -191,7 +206,7 @@ type ApplicationTemplate struct {
 // IsValid returns application template validity.
 func (a *ApplicationTemplate) IsValid() error {
 	if len(a.Value) == 0 {
-		return NewErrorFrom(ErrInvalidData, "Invalid given application value")
+		return NewErrorFrom(ErrInvalidData, "invalid given application value")
 	}
 	return nil
 }
@@ -204,7 +219,7 @@ type EnvironmentTemplate struct {
 // IsValid returns environment template validity.
 func (e *EnvironmentTemplate) IsValid() error {
 	if len(e.Value) == 0 {
-		return NewErrorFrom(ErrInvalidData, "Invalid given environment value")
+		return NewErrorFrom(ErrInvalidData, "invalid given environment value")
 	}
 	return nil
 }

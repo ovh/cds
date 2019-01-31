@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
+	stdlog "log"
 	"strconv"
 	"strings"
 	"time"
@@ -47,6 +49,9 @@ func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
 			IdleCheckFrequency: 30 * time.Second,
 		})
 	}
+
+	redis.SetLogger(stdlog.New(ioutil.Discard, "", stdlog.LstdFlags|stdlog.Lshortfile))
+
 	pong, err := client.Ping().Result()
 	if err != nil {
 		return nil, err

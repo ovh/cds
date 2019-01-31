@@ -1,9 +1,8 @@
 @import '../../../../common';
-#WorkflowShow {
+.workflowShow {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-content: stretch;
-  height: 100%;
   .ml5 {
     margin-left: 5px;
   }
@@ -11,32 +10,33 @@
     z-index: 1;
     background: white;
   }
+  .workflowShowGraph {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    .winfo {
+      z-index: 1;
+    }
+    .cardinfo {
+      margin-top: 1px;
+      border-radius: 0 0 0.28571429rem 0.28571429rem;
+    }
+    .center {
+      text-align: center;
+    }
+    .graph {
+      margin-top: 10px;
+      width: 100%;
+      height: 100%;
+      overflow: hidden
+    }
+  }
   .scrollingContent {
     overflow-x: auto;
-
     .paddingContent {
       padding: 0;
       .viewContent {
-        #WorkflowShowGraph {
-          margin-top: -35px;
-
-          .winfo{
-            z-index: 1;
-          }
-
-          .cardinfo {
-            margin-top: -4px;
-            border-radius: 0 0 0.28571429rem 0.28571429rem;
-          }
-
-          .center {
-            text-align: center;
-          }
-
-          .graph {
-            margin-top: 10px;
-          }
-        }
         .padded {
           padding: 0 100px 0 100px;
         }

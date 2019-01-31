@@ -1,6 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 import { finalize } from 'rxjs/internal/operators/finalize';
 import { first } from 'rxjs/operators';
 import { AuditWorkflowTemplate } from '../../../../model/audit.model';
@@ -16,6 +17,7 @@ import { Workflow } from '../../../../model/workflow.model';
 import { GroupService } from '../../../../service/services.module';
 import { WorkflowTemplateService } from '../../../../service/workflow-template/workflow-template.service';
 import { PathItem } from '../../../../shared/breadcrumb/breadcrumb.component';
+import { AutoUnsubscribe } from '../../../../shared/decorator/autoUnsubscribe';
 import { calculateWorkflowTemplateDiff } from '../../../../shared/diff/diff';
 import { Item } from '../../../../shared/diff/list/diff.list.component';
 import { Column, ColumnType } from '../../../../shared/table/data-table.component';
@@ -31,6 +33,7 @@ import { WorkflowTemplateBulkModalComponent } from '../../../../shared/workflow-
     templateUrl: './workflow-template.edit.html',
     styleUrls: ['./workflow-template.edit.scss']
 })
+@AutoUnsubscribe()
 export class WorkflowTemplateEditComponent implements OnInit {
     @ViewChild('templateApplyModal')
     templateApplyModal: WorkflowTemplateApplyModalComponent;
@@ -57,6 +60,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
     templateSlug: string;
     selectedWorkflowTemplateInstance: WorkflowTemplateInstance;
     errors: Array<WorkflowTemplateError>;
+    paramsSub: Subscription;
 
     constructor(
         private _workflowTemplateService: WorkflowTemplateService,
@@ -125,23 +129,14 @@ export class WorkflowTemplateEditComponent implements OnInit {
             }, <Column<WorkflowTemplateInstance>>{
                 type: (i: WorkflowTemplateInstance) => {
                     let status = i.status(this.workflowTemplate);
-                    if (status === InstanceStatus.NOT_IMPORTED) {
-                        return ColumnType.TEXT;
-                    }
-
-                    return ColumnType.ROUTER_LINK;
+                    return status === InstanceStatus.NOT_IMPORTED ? ColumnType.TEXT : ColumnType.ROUTER_LINK;
                 },
                 name: 'common_workflow',
                 class: 'seven',
                 selector: (i: WorkflowTemplateInstance) => {
                     let value = i.project.key + '/' + (i.workflow ? i.workflow.name : i.workflow_name);
-
                     let status = i.status(this.workflowTemplate);
-                    if (status === InstanceStatus.NOT_IMPORTED) {
-                        return value;
-                    }
-
-                    return {
+                    return status === InstanceStatus.NOT_IMPORTED ? value : {
                         link: '/project/' + i.project.key + '/workflow/' + i.workflow.name,
                         value
                     };
@@ -170,7 +165,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
             }
         ];
 
-        this._route.params.subscribe(params => {
+        this.paramsSub = this._route.params.subscribe(params => {
             this.groupName = params['groupName'];
             this.templateSlug = params['templateSlug'];
             this.getTemplate(this.groupName, this.templateSlug);
@@ -225,13 +220,13 @@ export class WorkflowTemplateEditComponent implements OnInit {
             });
     }
 
-    saveWorkflowTemplate() {
+    saveWorkflowTemplate(wt: WorkflowTemplate) {
         this.loading = true;
-        this._workflowTemplateService.update(this.oldWorkflowTemplate, this.workflowTemplate)
+        this._workflowTemplateService.update(this.oldWorkflowTemplate, wt)
             .pipe(finalize(() => this.loading = false))
-            .subscribe(wt => {
-                this.oldWorkflowTemplate = { ...wt };
-                this.workflowTemplate = wt;
+            .subscribe(res => {
+                this.oldWorkflowTemplate = { ...res };
+                this.workflowTemplate = res;
                 this.errors = [];
                 this._toast.success('', this._translate.instant('workflow_template_saved'));
                 this._router.navigate(['settings', 'workflow-template', this.workflowTemplate.group.name, this.workflowTemplate.slug]);
@@ -290,11 +285,11 @@ export class WorkflowTemplateEditComponent implements OnInit {
     }
 
     clickRollback(a: AuditWorkflowTemplate) {
-        this.workflowTemplate = a.data_before ? <WorkflowTemplate>JSON.parse(a.data_before) : null;
-        if (!this.workflowTemplate) {
-            this.workflowTemplate = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
+        let wt = a.data_before ? <WorkflowTemplate>JSON.parse(a.data_before) : null;
+        if (!wt) {
+            wt = a.data_after ? <WorkflowTemplate>JSON.parse(a.data_after) : null;
         }
-        this.saveWorkflowTemplate();
+        this.saveWorkflowTemplate(wt);
     }
 
     getUsage() {
@@ -324,7 +319,7 @@ export class WorkflowTemplateEditComponent implements OnInit {
         this.templateApplyModal.show();
     }
 
-    bulkModalClose() {
+    modalClose() {
         this.getInstances();
     }
 }

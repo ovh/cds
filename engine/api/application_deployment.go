@@ -35,9 +35,9 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		appName := vars["applicationName"]
-		pfName := vars["platform"]
+		pfName := vars["integration"]
 
-		var pfConfig sdk.PlatformConfig
+		var pfConfig sdk.IntegrationConfig
 		if err := service.UnmarshalBody(r, &pfConfig); err != nil {
 			return err
 		}
@@ -48,25 +48,25 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 		}
 		defer tx.Rollback()
 
-		proj, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
 
-		var pf *sdk.ProjectPlatform
-		for i := range proj.Platforms {
-			if proj.Platforms[i].Name == pfName {
-				pf = &proj.Platforms[i]
+		var pf *sdk.ProjectIntegration
+		for i := range proj.Integrations {
+			if proj.Integrations[i].Name == pfName {
+				pf = &proj.Integrations[i]
 				break
 			}
 		}
 
 		if pf == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "postApplicationDeploymentStrategyConfigHandler> platform not found on project")
+			return sdk.WrapError(sdk.ErrNotFound, "postApplicationDeploymentStrategyConfigHandler> integration not found on project")
 		}
 
 		if !pf.Model.Deployment {
-			return sdk.WrapError(sdk.ErrForbidden, "postApplicationDeploymentStrategyConfigHandler> platform doesn't support deployment")
+			return sdk.WrapError(sdk.ErrForbidden, "postApplicationDeploymentStrategyConfigHandler> integration doesn't support deployment")
 		}
 
 		app, err := application.LoadByName(tx, api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithClearDeploymentStrategies)
@@ -79,7 +79,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 			oldPfConfig = pf.Model.DeploymentDefaultConfig
 		}
 		if oldPfConfig == nil {
-			oldPfConfig = sdk.PlatformConfig{}
+			oldPfConfig = sdk.IntegrationConfig{}
 		}
 		oldPfConfig.MergeWith(pfConfig)
 		pfConfig = oldPfConfig
@@ -111,7 +111,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		appName := vars["applicationName"]
-		pfName := vars["platform"]
+		pfName := vars["integration"]
 
 		tx, errtx := api.mustDB().Begin()
 		if errtx != nil {
@@ -119,25 +119,25 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 		}
 		defer tx.Rollback()
 
-		proj, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load project")
 		}
 
-		var pf *sdk.ProjectPlatform
-		for i := range proj.Platforms {
-			if proj.Platforms[i].Name == pfName {
-				pf = &proj.Platforms[i]
+		var pf *sdk.ProjectIntegration
+		for i := range proj.Integrations {
+			if proj.Integrations[i].Name == pfName {
+				pf = &proj.Integrations[i]
 				break
 			}
 		}
 
 		if pf == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "deleteApplicationDeploymentStrategyConfigHandler> platform not found on project")
+			return sdk.WrapError(sdk.ErrNotFound, "deleteApplicationDeploymentStrategyConfigHandler> integration not found on project")
 		}
 
 		if !pf.Model.Deployment {
-			return sdk.WrapError(sdk.ErrForbidden, "deleteApplicationDeploymentStrategyConfigHandler> platform doesn't support deployment")
+			return sdk.WrapError(sdk.ErrForbidden, "deleteApplicationDeploymentStrategyConfigHandler> integration doesn't support deployment")
 		}
 
 		app, err := application.LoadByName(tx, api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithDeploymentStrategies)
@@ -145,13 +145,13 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 			return sdk.WrapError(err, "unable to load application")
 		}
 
-		isUsed, err := workflow.IsDeploymentPlatformUsed(tx, proj.ID, app.ID, pfName)
+		isUsed, err := workflow.IsDeploymentIntegrationUsed(tx, proj.ID, app.ID, pfName)
 		if err != nil {
-			return sdk.WrapError(err, "unable to check if platform is used")
+			return sdk.WrapError(err, "unable to check if integration is used")
 		}
 
 		if isUsed {
-			return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("platform is still used in a workflow"))
+			return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("integration is still used in a workflow"))
 		}
 
 		if _, has := app.DeploymentStrategies[pfName]; !has {
@@ -176,7 +176,7 @@ func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler 
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		appName := vars["applicationName"]
-		pfName := vars["platform"]
+		pfName := vars["integration"]
 		withClearPassword := FormBool(r, "withClearPassword")
 
 		opts := []application.LoadOptionFunc{

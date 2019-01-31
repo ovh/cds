@@ -16,7 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/observability"
-	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -220,10 +220,10 @@ func UpdateNodeJobRunStatus(ctx context.Context, dbFunc func() *gorp.DbMap, db g
 				runContext.Environment = env
 			}
 		}
-		if node.Context.ProjectPlatformID != 0 {
-			pp, has := wr.Workflow.ProjectPlatforms[node.Context.ProjectPlatformID]
+		if node.Context.ProjectIntegrationID != 0 {
+			pp, has := wr.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
 			if has {
-				runContext.ProjectPlatform = pp
+				runContext.ProjectIntegration = pp
 			}
 		}
 	}
@@ -438,7 +438,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 
 	var app *sdk.Application
 	var env *sdk.Environment
-	var pp *sdk.ProjectPlatform
+	var pp *sdk.ProjectIntegration
 
 	// Load node definition
 	if nodeRun != nil {
@@ -452,8 +452,8 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 				e := w.Workflow.Environments[node.Context.EnvironmentID]
 				env = &e
 			}
-			if node.Context.ProjectPlatformID != 0 {
-				p := w.Workflow.ProjectPlatforms[node.Context.ProjectPlatformID]
+			if node.Context.ProjectIntegrationID != 0 {
+				p := w.Workflow.ProjectIntegrations[node.Context.ProjectIntegrationID]
 				pp = &p
 			}
 		}
@@ -492,12 +492,12 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 		secrets = append(secrets, ev...)
 
 		if pp != nil {
-			pf, err := platform.LoadByID(db, pp.ID, true)
+			pf, err := integration.LoadByID(db, pp.ID, true)
 			if err != nil {
-				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load platform %d", pp.ID)
+				return nil, sdk.WrapError(err, "LoadSecrets> Cannot load integration %d", pp.ID)
 			}
 
-			// Project platform variable
+			// Project integration variable
 			pfv := make([]sdk.Variable, 0, len(pf.Config))
 			for k, v := range pf.Config {
 				pfv = append(pfv, sdk.Variable{
@@ -506,7 +506,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 					Value: v.Value,
 				})
 			}
-			pfv = sdk.VariablesPrefix(pfv, "cds.platform.")
+			pfv = sdk.VariablesPrefix(pfv, "cds.integration.")
 			pfv = sdk.VariablesFilter(pfv, sdk.SecretVariable)
 
 			if app != nil && app.DeploymentStrategies != nil {
@@ -527,7 +527,7 @@ func LoadSecrets(db gorp.SqlExecutor, store cache.Store, nodeRun *sdk.WorkflowNo
 						})
 					}
 				}
-				apv = sdk.VariablesPrefix(apv, "cds.platform.")
+				apv = sdk.VariablesPrefix(apv, "cds.integration.")
 				apv = sdk.VariablesFilter(apv, sdk.SecretVariable)
 				secrets = append(secrets, apv...)
 			}

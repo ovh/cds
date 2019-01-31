@@ -37,7 +37,7 @@ func (api *API) getWorkflowExportHandler() service.Handler {
 			return sdk.WrapError(err, "Format invalid")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -63,19 +63,29 @@ func (api *API) getWorkflowPullHandler() service.Handler {
 			opts = append(opts, exportentities.WorkflowWithPermissions)
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
 
+		pull, err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, deprecatedGetUser(ctx), opts...)
+		if err != nil {
+			return err
+		}
+
+		// early returns as json if param set
+		if FormBool(r, "json") {
+			return service.WriteJSON(w, pull, http.StatusOK)
+		}
+
 		buf := new(bytes.Buffer)
-		if err := workflow.Pull(ctx, api.mustDB(), api.Cache, proj, name, exportentities.FormatYAML, project.EncryptWithBuiltinKey, deprecatedGetUser(ctx), buf, opts...); err != nil {
-			return sdk.WrapError(err, "getWorkflowPullHandler")
+		if err := pull.Tar(buf); err != nil {
+			return err
 		}
 
 		w.Header().Add("Content-Type", "application/tar")
 		w.WriteHeader(http.StatusOK)
-		_, errC := io.Copy(w, buf)
-		return sdk.WrapError(errC, "getWorkflowPullHandler> Unable to copy content buffer in the response writer")
+		_, err = io.Copy(w, buf)
+		return sdk.WrapError(err, "unable to copy content buffer in the response writer")
 	}
 }

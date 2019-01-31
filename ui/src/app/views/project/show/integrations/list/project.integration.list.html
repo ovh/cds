@@ -1,0 +1,68 @@
+<div class="ProjectIntegrationList">
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+        <thead>
+        <tr>
+            <th class="four wide">{{ 'integration_name' | translate }}</th>
+            <th class="four wide">{{ 'integration_model' | translate }}</th>
+            <th class="six wide">{{ 'integration_configuration' | translate }}</th>
+            <th class="two wide"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let p of getDataForCurrentPage()">
+            <td class="border">
+                {{ p.name }}
+                <span *ngIf="p.model.public" [smDirTooltip]="'integration_official_tooltip' | translate" smDirPosition="top center"> <i class="check circle outline icon large green"></i> </span>
+            </td>
+            <td class="border">
+                {{ p.model.name}}
+            </td>
+            <td class="border">
+                <div class="ui form">
+                    <div class="inline fields" *ngFor="let k of p.config | keys">
+                        <div class="six wide field">
+                            <label>
+                                <b>{{k}}</b>
+                                <span *ngIf="p.config[k].description" suiPopup [popupText]="p.config[k].description" popupPlacement="right center">
+                                    <i class="info circle icon"></i>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="ten wide field">
+                            <input type="text" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'string'" (keydown)="p.hasChanged = true" [readonly]="p.model.public">
+                            <ng-container *ngIf="p.config[k].type === 'text'">
+                                <codemirror [(ngModel)]="p.config[k].value" [config]="codeMirrorConfig" #codeMirror (keydown)="p.hasChanged = true"></codemirror>
+                            </ng-container>
+                            <input type="password" name="integrationpassword" [(ngModel)]="p.config[k].value" *ngIf="p.config[k].type === 'password'" (keydown)="p.hasChanged = true">
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td class="border">
+                <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE && !p.model.public">
+                    <app-delete-button [loading]="loading" [disabled]="loading" (event)="deleteIntegration(p)" *ngIf="!p.hasChanged"></app-delete-button>
+                    <button type="button" class="ui green button" *ngIf="p.hasChanged" (click)="updateIntegration(p)">{{ 'btn_save' | translate}}</button>
+                </ng-container>
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="4">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'integration_no' | translate }}
+    </div>
+</div>

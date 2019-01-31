@@ -28,7 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/secret"
@@ -570,8 +570,8 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
 	}
 
-	if err := platform.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
-		return fmt.Errorf("cannot setup platforms: %v", err)
+	if err := integration.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return fmt.Errorf("cannot setup integrations: %v", err)
 	}
 
 	log.Info("Initializing redis cache on %s...", a.Config.Cache.Redis.Host)

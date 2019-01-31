@@ -166,8 +166,8 @@ export class ApplicationService {
      * Save a deployment strategy
      * @param key Project unique key
      * @param appName Application name
-     * @param pfName Platform name
-     * @param pfConfig platform config
+     * @param pfName Integration name
+     * @param pfConfig integration config
      */
     saveDeploymentStrategy(key: string, appName: string, pfName: string, pfConfig: any): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/deployment/config/' + pfName;
@@ -178,7 +178,7 @@ export class ApplicationService {
      * Delete a deployment strategy
      * @param key Project unique key
      * @param appName Application name
-     * @param pfName Platform name
+     * @param pfName Integration name
      */
     deleteDeploymentStrategy(key: string, appName: string, pfName: string): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/deployment/config/' + pfName;

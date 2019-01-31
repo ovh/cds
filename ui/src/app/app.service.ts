@@ -140,8 +140,8 @@ export class AppService {
                 opts.push(new LoadOpts('withGroups', 'groups'));
             } else if (event.type_event.indexOf(EventType.PROJECT_KEY_PREFIX) === 0) {
                 opts.push(new LoadOpts('withKeys', 'keys'));
-            } else if (event.type_event.indexOf(EventType.PROJECT_PLATFORM_PREFIX) === 0) {
-                opts.push(new LoadOpts('withPlatforms', 'platforms'));
+            } else if (event.type_event.indexOf(EventType.PROJECT_INTEGRATION_PREFIX) === 0) {
+                opts.push(new LoadOpts('withIntegrations', 'integrations'));
             } else if (event.type_event.indexOf(EventType.APPLICATION_PREFIX) === 0) {
                 opts.push(new LoadOpts('withApplicationNames', 'application_names'));
             } else if (event.type_event.indexOf(EventType.PIPELINE_PREFIX) === 0) {

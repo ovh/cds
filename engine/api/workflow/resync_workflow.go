@@ -52,7 +52,7 @@ func Resync(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wr *sdk.W
 	wr.Workflow.Pipelines = wf.Pipelines
 	wr.Workflow.Applications = wf.Applications
 	wr.Workflow.Environments = wf.Environments
-	wr.Workflow.ProjectPlatforms = wf.ProjectPlatforms
+	wr.Workflow.ProjectIntegrations = wf.ProjectIntegrations
 	wr.Workflow.HookModels = wf.HookModels
 	wr.Workflow.OutGoingHookModels = wf.OutGoingHookModels
 

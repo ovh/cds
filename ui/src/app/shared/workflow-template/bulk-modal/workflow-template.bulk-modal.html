@@ -24,11 +24,17 @@
                 </div>
             </div>
             <div *ngIf="currentStep === 0" class="sixteen wide column centered">
-                <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)" [withPagination]="10"
-                    [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
-                <button class="ui positive button" [class.disabled]="selectedInstanceKeys.length === 0" (click)="clickGoToParam()">
-                    {{ 'btn_next' | translate }}
-                </button>
+                <div class="ui grid">
+                    <div class="sixteen wide column">
+                        <app-data-table [withSelect]="selectFunc" (selectChange)="selectChange($event)"
+                            [withPagination]="10" [columns]="columnsInstances" [data]="instances" [loading]="loadingInstances"></app-data-table>
+                    </div>
+                    <div class="sixteen wide column centered">
+                        <button class="ui positive button" [class.disabled]="selectedInstanceKeys.length === 0" (click)="clickGoToParam()">
+                            {{ 'btn_next' | translate }}
+                        </button>
+                    </div>
+                </div>
             </div>
             <div *ngIf="currentStep === 1" class="sixteen wide column">
                 <div class="ui grid">

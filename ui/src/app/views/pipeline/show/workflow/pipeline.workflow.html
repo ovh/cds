@@ -20,7 +20,7 @@
         </div>
         <div class="row">
             <div class="column">
-                <ul *ngIf="pipeline" class="dragula-container" [dragula]="'bag-stage'" [dragulaModel]="pipeline.stages">
+                <ul *ngIf="pipeline" class="dragula-container" [dragula]="'bag-stage'" [(dragulaModel)]="pipeline.stages">
                     <li *ngFor="let stage of pipeline.stages" class="stage" id="step{{stage.build_order}}"
                         [class.two]="pipeline.stages.length === 1"
                         [class.three]="pipeline.stages.length === 2"

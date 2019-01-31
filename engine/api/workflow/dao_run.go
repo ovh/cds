@@ -414,7 +414,7 @@ func MigrateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, run *sdk.Workf
 
 		run.Workflow.Applications = make(map[int64]sdk.Application)
 		run.Workflow.Environments = make(map[int64]sdk.Environment)
-		run.Workflow.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
+		run.Workflow.ProjectIntegrations = make(map[int64]sdk.ProjectIntegration)
 		run.Workflow.HookModels = make(map[int64]sdk.WorkflowHookModel)
 		run.Workflow.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
 
@@ -429,8 +429,8 @@ func MigrateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, run *sdk.Workf
 			if n.Context.Environment != nil && n.Context.Environment.ID > 0 {
 				run.Workflow.Environments[n.Context.Environment.ID] = *n.Context.Environment
 			}
-			if n.Context.ProjectPlatform != nil && n.Context.ProjectPlatform.ID > 0 {
-				run.Workflow.ProjectPlatforms[n.Context.ProjectPlatform.ID] = *n.Context.ProjectPlatform
+			if n.Context.ProjectIntegration != nil && n.Context.ProjectIntegration.ID > 0 {
+				run.Workflow.ProjectIntegrations[n.Context.ProjectIntegration.ID] = *n.Context.ProjectIntegration
 			}
 			for _, h := range n.Hooks {
 				if h.WorkflowHookModel.ID > 0 {

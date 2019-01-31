@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/actionplugin"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/service"
@@ -34,6 +35,12 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() //nolint
+
+		integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+		if err != nil {
+			return err
+		}
+		p.IntegrationModelID = &integrationModel.ID
 
 		if p.Type == sdk.GRPCPluginAction {
 			// Check that action does not already exists
@@ -112,6 +119,12 @@ func (api *API) putGRPCluginHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() //nolint
+
+		integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot get integration model")
+		}
+		p.IntegrationModelID = &integrationModel.ID
 
 		if p.Type == sdk.GRPCPluginAction {
 			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, deprecatedGetUser(ctx).ID); err != nil {

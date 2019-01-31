@@ -1,22 +1,22 @@
-import {AfterViewInit, ChangeDetectorRef, Component, OnInit} from '@angular/core';
-import {NavigationEnd, Router} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {NavbarProjectData, NavbarSearchItem} from 'app/model/navbar.model';
-import {List} from 'immutable';
-import {Subscription} from 'rxjs';
-import {filter} from 'rxjs/operators';
-import {Application} from '../../model/application.model';
-import {Broadcast} from '../../model/broadcast.model';
-import {NavbarRecentData} from '../../model/navbar.model';
-import {User} from '../../model/user.model';
-import {ApplicationStore} from '../../service/application/application.store';
-import {AuthentificationStore} from '../../service/auth/authentification.store';
-import {BroadcastStore} from '../../service/broadcast/broadcast.store';
-import {LanguageStore} from '../../service/language/language.store';
-import {NavbarService} from '../../service/navbar/navbar.service';
-import {RouterService} from '../../service/router/router.service';
-import {WorkflowStore} from '../../service/workflow/workflow.store';
-import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
+import { AfterViewInit, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { NavbarProjectData, NavbarSearchItem } from 'app/model/navbar.model';
+import { List } from 'immutable';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
+import { Application } from '../../model/application.model';
+import { Broadcast } from '../../model/broadcast.model';
+import { NavbarRecentData } from '../../model/navbar.model';
+import { User } from '../../model/user.model';
+import { ApplicationStore } from '../../service/application/application.store';
+import { AuthentificationStore } from '../../service/auth/authentification.store';
+import { BroadcastStore } from '../../service/broadcast/broadcast.store';
+import { LanguageStore } from '../../service/language/language.store';
+import { NavbarService } from '../../service/navbar/navbar.service';
+import { RouterService } from '../../service/router/router.service';
+import { WorkflowStore } from '../../service/workflow/workflow.store';
+import { AutoUnsubscribe } from '../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-navbar',
@@ -57,14 +57,14 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     public currentUser: User;
 
     constructor(private _navbarService: NavbarService,
-                private _authStore: AuthentificationStore,
-                private _appStore: ApplicationStore,
-                private _workflowStore: WorkflowStore,
-                private _broadcastStore: BroadcastStore,
-                private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
-                private _translate: TranslateService,
-                private _authentificationStore: AuthentificationStore,
-                private _cd: ChangeDetectorRef) {
+        private _authStore: AuthentificationStore,
+        private _appStore: ApplicationStore,
+        private _workflowStore: WorkflowStore,
+        private _broadcastStore: BroadcastStore,
+        private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
+        private _translate: TranslateService,
+        private _authentificationStore: AuthentificationStore,
+        private _cd: ChangeDetectorRef) {
         this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
             this.currentUser = u;
         });
@@ -157,38 +157,44 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 this.searchItems = new Array<NavbarSearchItem>();
                 let favProj = [];
                 this.listFavs = data.filter((p) => {
-                  if (p.favorite && p.type !== 'workflow') {
-                    if (p.type === 'project' && favProj.indexOf(p.key) === -1) {
-                      favProj.push(p.key);
-                      return true;
+                    if (p.favorite && p.type !== 'workflow') {
+                        if (p.type === 'project' && favProj.indexOf(p.key) === -1) {
+                            favProj.push(p.key);
+                            return true;
+                        }
+                        return false
                     }
-                    return false
-                  }
-                  return p.favorite;
+                    return p.favorite;
                 }).slice(0, 7);
 
                 this.navProjects.forEach(p => {
                     switch (p.type) {
-                      case 'workflow':
-                        this.searchItems.push({
-                          value: p.key + '/' + p.workflow_name,
-                          title: p.workflow_name,
-                          type: 'workflow',
-                          projectKey: p.key,
-                          favorite: p.favorite
-                        });
-                        break;
-                      case 'application':
-                        this.searchItems.push({
-                          value: p.key + '/' + p.application_name,
-                          title: p.application_name,
-                          type: 'application',
-                          projectKey: p.key,
-                          favorite: false
-                        });
-                        break;
-                      default:
-                        this.searchItems.push({value: p.key, title: p.name, type: 'project', projectKey: p.key, favorite: p.favorite});
+                        case 'workflow':
+                            this.searchItems.push({
+                                value: p.key + '/' + p.workflow_name,
+                                title: p.workflow_name,
+                                type: 'workflow',
+                                projectKey: p.key,
+                                favorite: p.favorite
+                            });
+                            break;
+                        case 'application':
+                            this.searchItems.push({
+                                value: p.key + '/' + p.application_name,
+                                title: p.application_name,
+                                type: 'application',
+                                projectKey: p.key,
+                                favorite: false
+                            });
+                            break;
+                        default:
+                            this.searchItems.push({
+                                value: p.key,
+                                title: p.name,
+                                type: 'project',
+                                projectKey: p.key,
+                                favorite: p.favorite
+                            });
                     }
                 });
             }
@@ -197,8 +203,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
         this.broadcastSubscription = this._broadcastStore.getBroadcasts()
             .subscribe((broadcasts) => {
-                let broadcastsToRead = broadcasts.toArray().filter((br) => !br.read && !br.archived);
-                let previousBroadcasts = broadcasts.toArray().filter((br) => br.read && !br.archived);
+                let broadcastsToRead = broadcasts.valueSeq().toArray().filter(br => !br.read && !br.archived);
+                let previousBroadcasts = broadcasts.valueSeq().toArray().filter(br => br.read && !br.archived);
                 this.recentBroadcastsToDisplay = broadcastsToRead
                     .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime()).slice(0, 4);
                 this.previousBroadcastsToDisplay = previousBroadcasts
@@ -209,31 +215,32 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     }
 
     navigateToResult(result: NavbarSearchItem) {
-      if (!result) {
-        return;
-      }
-      switch (result.type) {
-        case 'workflow':
-          this.navigateToWorkflow(result.projectKey, result.value.split('/', 2)[1]);
-          break;
-        case 'application':
-          this.navigateToApplication(result.projectKey, result.value.split('/', 2)[1]);
-          break;
-        default:
-          this.navigateToProject(result.projectKey);
-      }
+        if (!result) {
+            return;
+        }
+        switch (result.type) {
+            case 'workflow':
+                this.navigateToWorkflow(result.projectKey, result.value.split('/', 2)[1]);
+                break;
+            case 'application':
+                this.navigateToApplication(result.projectKey, result.value.split('/', 2)[1]);
+                break;
+            default:
+                this.navigateToProject(result.projectKey);
+        }
     }
 
-    searchItem(list: Array<NavbarSearchItem>, query: string): boolean|Array<NavbarSearchItem> {
-      let found: Array<NavbarSearchItem> = [];
-      for (let elt of list) {
-        if (query === elt.projectKey) {
-          found.push(elt);
-        } else if (elt.title.toLowerCase().indexOf(query.toLowerCase()) !== -1) {
-          found.push(elt);
+    searchItem(list: Array<NavbarSearchItem>, query: string): boolean | Array<NavbarSearchItem> {
+        let queryLowerCase = query.toLowerCase();
+        let found: Array<NavbarSearchItem> = [];
+        for (let elt of list) {
+            if (query === elt.projectKey) {
+                found.push(elt);
+            } else if (elt.title.toLowerCase().indexOf(queryLowerCase) !== -1) {
+                found.push(elt);
+            }
         }
-      }
-      return found;
+        return found;
     }
 
     /**

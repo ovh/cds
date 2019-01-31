@@ -363,8 +363,8 @@ export class ApplicationStore {
      * Delete a deployment strategy
      * @param key Project unique key
      * @param appName Application name
-     * @param pfName Platform Name
-     * @param pfConfig Platform config
+     * @param pfName Integration Name
+     * @param pfConfig Integration config
      * @returns {Observable<Application>}
      */
     saveDeploymentStrategy(key: string, appName: string, pfName: string, pfConfig: any): Observable<Application> {
@@ -377,7 +377,7 @@ export class ApplicationStore {
      * Delete a deployment strategy
      * @param key Project unique key
      * @param appName Application name
-     * @param pfName Platform Name
+     * @param pfName Integration Name
      * @returns {Observable<Application>}
      */
     deleteDeploymentStrategy(key: string, appName: string, pfName: string): Observable<Application> {

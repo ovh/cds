@@ -1,0 +1,27 @@
+name: Hello
+author: "Username Lastname"
+default_config: {}
+deployment_default_config:
+deployment.token:
+  value: ""
+  type: password
+retry.delay:
+  value: "10"
+  type: string
+retry.max:
+  value: "30"
+  type: string
+version:
+  value: '{{.cds.version}}'
+  type: string
+public_configurations:
+hello-integration-dev:
+  host:
+  value: http://hello.your-deployment-platform.dev.local
+  type: string
+hello-integration-prod:
+  host:
+  value: http://hello.your-deployment-platform.prod.local
+  type: string
+deployment: true
+public: true

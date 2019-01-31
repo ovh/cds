@@ -128,15 +128,15 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	//deployment strategies
 	for pfName, pfConfig := range eapp.DeploymentStrategies {
 		if app.DeploymentStrategies == nil {
-			app.DeploymentStrategies = make(map[string]sdk.PlatformConfig)
+			app.DeploymentStrategies = make(map[string]sdk.IntegrationConfig)
 		}
 		if app.DeploymentStrategies[pfName] == nil {
-			app.DeploymentStrategies[pfName] = make(map[string]sdk.PlatformConfigValue)
+			app.DeploymentStrategies[pfName] = make(map[string]sdk.IntegrationConfigValue)
 		}
 
-		projPF, has := proj.GetPlatform(pfName)
+		projPF, has := proj.GetIntegration(pfName)
 		if !has {
-			return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("platform not found")), "ParseAndImport> Platform %s not found", pfName)
+			return app, nil, sdk.WrapError(sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("integration not found")), "ParseAndImport> Integration %s not found", pfName)
 		}
 
 		// Inherit from existing deployment strategy or from the project
@@ -161,7 +161,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 					v.Value = clearPWD
 				}
 			}
-			app.DeploymentStrategies[pfName][k] = sdk.PlatformConfigValue{
+			app.DeploymentStrategies[pfName][k] = sdk.IntegrationConfigValue{
 				Type:  v.Type,
 				Value: v.Value,
 			}

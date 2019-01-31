@@ -210,12 +210,12 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
-		observability.Record(ctx, r.Stats.Hits, 1)
+		observability.Record(r.Background, r.Stats.Hits, 1)
 
 		//Get route configuration
 		rc := cfg.Config[req.Method]
 		if rc == nil || rc.Handler == nil {
-			observability.Record(ctx, r.Stats.Errors, 1)
+			observability.Record(r.Background, r.Stats.Errors, 1)
 			service.WriteError(w, req, sdk.ErrNotFound)
 			return
 		}
@@ -236,14 +236,14 @@ func (r *Router) Handle(uri string, handlers ...*service.HandlerConfig) {
 			var err error
 			ctx, err = m(ctx, w, req, rc)
 			if err != nil {
-				observability.Record(ctx, r.Stats.Errors, 1)
+				observability.Record(r.Background, r.Stats.Errors, 1)
 				service.WriteError(w, req, err)
 				return
 			}
 		}
 
 		if err := rc.Handler(ctx, w, req); err != nil {
-			observability.Record(ctx, r.Stats.Errors, 1)
+			observability.Record(r.Background, r.Stats.Errors, 1)
 			observability.End(ctx, w, req)
 			service.WriteError(w, req, err)
 			return

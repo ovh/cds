@@ -87,7 +87,7 @@ func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 		return false, err
 	}
 
-	//Then try to download the plugin
+	// then try to download the plugin
 	pluginBinary := path.Join(w.basedir, binary.Name)
 	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
 		log.Debug("Downloading the plugin %s", binary.Name)
@@ -111,25 +111,21 @@ func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	return true, nil
 }
 
+// checkHostnameRequirement returns true if current hostname is a requirement
 func checkHostnameRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	h, err := os.Hostname()
 	if err != nil {
 		return false, err
 	}
-
-	if h == r.Value {
-		return true, nil
-	}
-
-	return false, nil
+	return h == r.Value, nil
 }
 
+// checkBinaryRequirement returns true is binary requirement is in worker's PATH
 func checkBinaryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	if _, err := exec.LookPath(r.Value); err != nil {
 		// Return nil because the error contains 'Executable file not found', that's what we wanted
 		return false, nil
 	}
-
 	return true, nil
 }
 
@@ -222,19 +218,24 @@ func checkOSArchRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	return osarch[0] == strings.ToLower(sdk.GOOS) && osarch[1] == strings.ToLower(sdk.GOARCH), nil
 }
 
-func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
+// checkPluginDeployment returns true if current job:
+//  - is not linked to a deployment integration
+//  - is linked to a deployement integration, plugin well downloaded (in this func) and
+//    requirements on the plugins are OK too
+func checkPluginDeployment(w *currentWorker, job sdk.WorkflowNodeJobRun) (bool, error) {
 	var currentOS = strings.ToLower(sdk.GOOS)
 	var currentARCH = strings.ToLower(sdk.GOARCH)
 	var binary *sdk.GRPCPluginBinary
 
-	if len(j.PlatformPluginBinaries) == 0 {
+	if len(job.IntegrationPluginBinaries) == 0 {
+		// current job is not linked to a deployment integration (in pipeline context)
 		return true, nil
 	}
 
-	log.Debug("Checking plugins...(%#v)", j.PlatformPluginBinaries)
+	log.Debug("Checking plugins...(%#v)", job.IntegrationPluginBinaries)
 
-	//First check OS and Architecture
-	for _, b := range j.PlatformPluginBinaries {
+	// first check OS and Architecture
+	for _, b := range job.IntegrationPluginBinaries {
 		if b.OS == currentOS && b.Arch == currentARCH {
 			binary = &b
 			break
@@ -244,7 +245,7 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 		return false, fmt.Errorf("%s %s not supported by this plugin", currentOS, currentARCH)
 	}
 
-	//Then check plugin requirements
+	// then check plugin requirements
 	for _, r := range binary.Requirements {
 		ok, err := checkRequirement(w, r)
 		if err != nil {
@@ -255,12 +256,12 @@ func checkPlugins(w *currentWorker, j sdk.WorkflowNodeJobRun) (bool, error) {
 		}
 	}
 
-	//Then try to download the plugin
-	platformPluginBinary := path.Join(w.basedir, binary.Name)
-	if _, err := os.Stat(platformPluginBinary); os.IsNotExist(err) {
+	// then try to download the plugin
+	integrationPluginBinary := path.Join(w.basedir, binary.Name)
+	if _, err := os.Stat(integrationPluginBinary); os.IsNotExist(err) {
 		log.Debug("Downloading the plugin %s", binary.PluginName)
 		//If the file doesn't exist. Download it.
-		fi, err := os.OpenFile(platformPluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		fi, err := os.OpenFile(integrationPluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
 		if err != nil {
 			return false, err
 		}

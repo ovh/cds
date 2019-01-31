@@ -22,16 +22,12 @@ testcases:
 
 - name: check bulk request status
   steps:
-  - type: http
-    method: GET
-    url: {{.cds.build.api}}/template/shared.infra/example-simple/bulk/{{.sendTemplateBulkRequest.bulkID}}
-    headers:
-      Session-Token: {{.cds.build.token}}
+  - script: {{.cds.build.cdsctl}} admin curl /template/shared.infra/example-simple/bulk/{{.sendTemplateBulkRequest.bulkID}}
     retry: 10
     delay: 2
     assertions:
-    - result.statuscode ShouldEqual 200
-    - result.bodyjson.operations.operations0.status ShouldEqual 2
-    - result.bodyjson.operations.operations1.status ShouldEqual 2
-    - result.bodyjson.operations.operations2.status ShouldEqual 3
-    - result.bodyjson.operations.operations2.error ShouldEqual 'Unsupported when condition ok'
+    - result.code ShouldEqual 0
+    - result.systemoutjson.operations.operations0.status ShouldEqual 2
+    - result.systemoutjson.operations.operations1.status ShouldEqual 3
+    - result.systemoutjson.operations.operations1.error ShouldEqual 'Unsupported when condition ok'
+    - result.systemoutjson.operations.operations2.status ShouldEqual 2

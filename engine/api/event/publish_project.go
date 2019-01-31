@@ -152,30 +152,30 @@ func PublishDeleteVCSServer(p *sdk.Project, vcsServerName string, u *sdk.User) {
 	PublishProjectEvent(e, p.Key, u)
 }
 
-// PublishAddProjectPlatform publishes an event on adding a project platform
-func PublishAddProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, u *sdk.User) {
+// PublishAddProjectIntegration publishes an event on adding a integration
+func PublishAddProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, u *sdk.User) {
 	pf.HideSecrets()
-	e := sdk.EventProjectPlatformAdd{
-		Platform: pf,
+	e := sdk.EventProjectIntegrationAdd{
+		Integration: pf,
 	}
 	PublishProjectEvent(e, p.Key, u)
 }
 
-// PublishUpdateProjectPlatform publishes an event on updating a project platform
-func PublishUpdateProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, pfOld sdk.ProjectPlatform, u *sdk.User) {
+// PublishUpdateProjectIntegration publishes an event on updating a integration
+func PublishUpdateProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, pfOld sdk.ProjectIntegration, u *sdk.User) {
 	pf.HideSecrets()
 	pfOld.HideSecrets()
-	e := sdk.EventProjectPlatformUpdate{
-		NewsPlatform: pf,
-		OldPlatform:  pfOld,
+	e := sdk.EventProjectIntegrationUpdate{
+		NewsIntegration: pf,
+		OldIntegration:  pfOld,
 	}
 	PublishProjectEvent(e, p.Key, u)
 }
 
-// PublishDeleteProjectPlatform publishes an event on deleting project platform
-func PublishDeleteProjectPlatform(p *sdk.Project, pf sdk.ProjectPlatform, u *sdk.User) {
-	e := sdk.EventProjectPlatformDelete{
-		Platform: pf,
+// PublishDeleteProjectIntegration publishes an event on deleting integration
+func PublishDeleteProjectIntegration(p *sdk.Project, pf sdk.ProjectIntegration, u *sdk.User) {
+	e := sdk.EventProjectIntegrationDelete{
+		Integration: pf,
 	}
 	PublishProjectEvent(e, p.Key, u)
 }

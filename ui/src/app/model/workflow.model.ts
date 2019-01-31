@@ -2,9 +2,9 @@ import { notificationTypes, UserNotificationSettings } from 'app/model/notificat
 import { Application } from './application.model';
 import { Environment } from './environment.model';
 import { GroupPermission } from './group.model';
+import { ProjectIntegration } from './integration.model';
 import { Parameter } from './parameter.model';
 import { Pipeline } from './pipeline.model';
-import { ProjectPlatform } from './platform.model';
 import { Label } from './project.model';
 import { Usage } from './usage.model';
 import { WorkflowHookModel } from './workflow.hook.model';
@@ -38,12 +38,12 @@ export class Workflow {
     from_template: string;
     template_up_to_date: boolean;
     favorite: boolean;
-    pipelines: {[key: number]: Pipeline; };
-    applications: {[key: number]: Application; };
-    environments: {[key: number]: Environment; };
-    project_platforms: {[key: number]: ProjectPlatform; };
-    hook_models: {[key: number]: WorkflowHookModel; };
-    outgoing_hook_models: {[key: number]: WorkflowHookModel; };
+    pipelines: { [key: number]: Pipeline; };
+    applications: { [key: number]: Application; };
+    environments: { [key: number]: Environment; };
+    project_integrations: { [key: number]: ProjectIntegration; };
+    hook_models: { [key: number]: WorkflowHookModel; };
+    outgoing_hook_models: { [key: number]: WorkflowHookModel; };
     labels: Label[];
     workflow_data: WorkflowData;
     as_code_events: Array<AsCodeEvents>;
@@ -202,7 +202,7 @@ export class Workflow {
 
     static cleanJoin(workflow: Workflow, nodes: Array<WNode>) {
         if (workflow.workflow_data.joins) {
-            for (let i = 0; i < workflow.workflow_data.joins.length; i ++) {
+            for (let i = 0; i < workflow.workflow_data.joins.length; i++) {
                 if (workflow.workflow_data.joins[i].parents && workflow.workflow_data.joins[i].parents.length > 0) {
                     for (let j = 0; j < workflow.workflow_data.joins[i].parents.length; j++) {
                         if (-1 === nodes.findIndex(n => n.id === workflow.workflow_data.joins[i].parents[j].parent_id)) {
@@ -259,7 +259,7 @@ export class Workflow {
         delete workflow.applications;
         delete workflow.environments;
         delete workflow.pipelines;
-        delete workflow.project_platforms;
+        delete workflow.project_integrations;
         delete workflow.hook_models;
         delete workflow.outgoing_hook_models;
     }
@@ -374,7 +374,7 @@ export class WorkflowNodeCondition {
     value: string;
 
     constructor() {
-      this.value = '';
+        this.value = '';
     }
 }
 
@@ -430,7 +430,7 @@ export class WNode {
         nodes.set(node.ref, node);
         if (node.triggers) {
             node.triggers.forEach(t => {
-               nodes = WNode.getMapNodesRef(nodes, t.child_node);
+                nodes = WNode.getMapNodesRef(nodes, t.child_node);
             });
         }
         return nodes;
@@ -522,14 +522,14 @@ export class WNode {
                 // Check if the node is link to a join
                 if (w.workflow_data.joins) {
                     w.workflow_data.joins.forEach(j => {
-                       for (let i = 0; i < j.parents.length; i++) {
-                           let already = j.parents.findIndex( p => p.parent_id === parentNode.id);
-                           if (j.parents[i].parent_id === node.id && already === -1) {
-                               j.parents[i].parent_id = parentNode.id;
-                               j.parents[i].parent_name = parentNode.ref;
-                               break;
-                           }
-                       }
+                        for (let i = 0; i < j.parents.length; i++) {
+                            let already = j.parents.findIndex(p => p.parent_id === parentNode.id);
+                            if (j.parents[i].parent_id === node.id && already === -1) {
+                                j.parents[i].parent_id = parentNode.id;
+                                j.parents[i].parent_name = parentNode.ref;
+                                break;
+                            }
+                        }
                     });
                 }
 
@@ -555,7 +555,7 @@ export class WNode {
         nodes.push(node);
         if (node.triggers) {
             node.triggers.forEach(t => {
-               nodes.push(...WNode.getAllNodes(t.child_node));
+                nodes.push(...WNode.getAllNodes(t.child_node));
             });
         }
         return nodes;
@@ -640,7 +640,7 @@ export class WNodeContext {
     pipeline_id: number;
     application_id: number;
     environment_id: number;
-    project_platform_id: number;
+    project_integration_id: number;
     default_payload: {};
     default_pipeline_parameters: Array<Parameter>;
     conditions: WorkflowNodeConditions;
@@ -672,4 +672,16 @@ export class WNodeHook {
 
     // UI only
     model: WorkflowHookModel;
+}
+
+export class WorkflowPull {
+    workflow: WorkflowPullItem
+    pipelines: Array<WorkflowPullItem>
+    applications: Array<WorkflowPullItem>
+    environments: Array<WorkflowPullItem>
+}
+
+export class WorkflowPullItem {
+    name: string
+    value: string
 }

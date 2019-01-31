@@ -37,7 +37,7 @@ func PushInElasticSearch(c context.Context, db gorp.SqlExecutor, store cache.Sto
 			}
 
 			switch e.EventType {
-			case "sdk.EventPipelineBuild", "sdk.EventJob", "sdk.EventEngine":
+			case "sdk.EventJob", "sdk.EventEngine":
 				continue
 			}
 			e.Payload = nil
