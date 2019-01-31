@@ -13,8 +13,8 @@ import {NavbarService} from '../navbar/navbar.service';
 import {VariableService} from '../variable/variable.service';
 import {ProjectService} from './project.service';
 
+import {ProjectIntegration} from '../../model/integration.model';
 import {Key} from '../../model/keys.model';
-import {ProjectPlatform} from '../../model/platform.model';
 
 
 @Injectable()
@@ -128,9 +128,9 @@ export class ProjectStore {
                                    proj.environments = [];
                                }
                                break;
-                           case 'platforms':
-                               if (!res.platforms) {
-                                   proj.platforms = [];
+                           case 'integrations':
+                               if (!res.integrations) {
+                                   proj.integrations = [];
                                }
                                break;
                            case 'keys':
@@ -829,79 +829,82 @@ export class ProjectStore {
      * @param key
      * @returns {Observable<Project>}
      */
-    getProjectPlatformsResolver(key: string): Observable<Project> {
+    getProjectIntegrationsResolver(key: string): Observable<Project> {
         let store = this._projectCache.getValue();
-        let missingPlatforms = store.size === 0 || !store.get(key) || !store.get(key).platforms || !store.get(key).platforms.length;
+        let missingIntegrations = store.size === 0
+            || !store.get(key)
+            || !store.get(key).integrations
+            || !store.get(key).integrations.length;
 
-        if (missingPlatforms) {
-            return this.resyncPlatforms(key);
+        if (missingIntegrations) {
+            return this.resyncIntegrations(key);
         } else {
             return observableOf(store.get(key));
         }
     }
 
     /**
-     * Get project platforms
+     * Get project integrations
      * @param key
      * @returns {Observable<R>}
      */
-    resyncPlatforms(key: string): Observable<Project> {
-        return this._projectService.getPlatforms(key).pipe(
+    resyncIntegrations(key: string): Observable<Project> {
+        return this._projectService.getIntegrations(key).pipe(
             map((res) => {
                 let store = this._projectCache.getValue();
                 let proj = store.get(key);
-                proj.platforms = res;
+                proj.integrations = res;
                 this._projectCache.next(store.set(key, proj));
                 return proj;
             }));
     }
 
     /**
-     * Add a platform to a project
+     * Add a integration to a project
      * @param key Project unique key
-     * @param platform Platform to add
+     * @param integration Integration to add
      */
-    addPlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
-        return this._projectService.addPlatform(key, platform).pipe(map(res => {
+    addIntegration(key: string, integration: ProjectIntegration): Observable<ProjectIntegration> {
+        return this._projectService.addIntegration(key, integration).pipe(map(res => {
             let cache = this._projectCache.getValue();
             let projectUpdate = cache.get(key);
             if (projectUpdate) {
-                if (!projectUpdate.platforms) {
-                    projectUpdate.platforms = new Array<ProjectPlatform>();
+                if (!projectUpdate.integrations) {
+                    projectUpdate.integrations = new Array<ProjectIntegration>();
                 }
-                projectUpdate.platforms.push(res);
+                projectUpdate.integrations.push(res);
                 this._projectCache.next(cache.set(key, projectUpdate));
             }
             return res;
         }));
     }
 
-    deleteProjectPlatform(key: string, platformName: string) {
-        return this._projectService.removePlatform(key, platformName).pipe(map(res => {
+    deleteProjectIntegration(key: string, integrationName: string) {
+        return this._projectService.removeIntegration(key, integrationName).pipe(map(res => {
             let cache = this._projectCache.getValue();
             let projectUpdate = cache.get(key);
             if (projectUpdate) {
-                if (!projectUpdate.platforms) {
+                if (!projectUpdate.integrations) {
                     return res;
                 }
-                projectUpdate.platforms = projectUpdate.platforms.filter(p => p.name !== platformName);
+                projectUpdate.integrations = projectUpdate.integrations.filter(p => p.name !== integrationName);
                 this._projectCache.next(cache.set(key, projectUpdate));
             }
             return res;
         }));
     }
 
-    updateProjectPlatform(key: string, platform: ProjectPlatform): Observable<ProjectPlatform> {
-        return this._projectService.updatePlatform(key, platform).pipe(map(res => {
+    updateProjectIntegration(key: string, integration: ProjectIntegration): Observable<ProjectIntegration> {
+        return this._projectService.updateIntegration(key, integration).pipe(map(res => {
             let cache = this._projectCache.getValue();
             let projectUpdate = cache.get(key);
             if (projectUpdate) {
-                if (!projectUpdate.platforms) {
+                if (!projectUpdate.integrations) {
                     return res;
                 }
-                let index = projectUpdate.platforms.findIndex(p => p.name === platform.name);
+                let index = projectUpdate.integrations.findIndex(p => p.name === integration.name);
                 if (index !== -1) {
-                    projectUpdate.platforms[index] = res;
+                    projectUpdate.integrations[index] = res;
                 }
                 this._projectCache.next(cache.set(key, projectUpdate));
             }

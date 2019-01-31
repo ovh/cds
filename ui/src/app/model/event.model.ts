@@ -23,7 +23,7 @@ export class EventType {
     static PROJECT_VARIABLE_PREFIX = 'sdk.EventProjectVariable';
     static PROJECT_PERMISSION_PREFIX = 'sdk.EventProjectPermission';
     static PROJECT_KEY_PREFIX = 'sdk.EventProjectKey';
-    static PROJECT_PLATFORM_PREFIX = 'sdk.EventProjectPlatform';
+    static PROJECT_INTEGRATION_PREFIX = 'sdk.EventProjectIntegration';
 
     static ENVIRONMENT_PREFIX = 'sdk.EventEnvironment';
 

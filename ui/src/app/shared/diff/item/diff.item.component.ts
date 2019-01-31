@@ -12,8 +12,8 @@ export class Mode {
     styleUrls: ['./diff.item.scss']
 })
 export class DiffItemComponent implements OnChanges {
-    @ViewChild('codeLeft') codeLeft;
-    @ViewChild('codeRight') codeRight;
+    @ViewChild('codeLeft') codeLeft: any;
+    @ViewChild('codeRight') codeRight: any;
     @Input() original: string;
     @Input() updated: string;
     @Input() mode: Mode = Mode.UNIFIED;

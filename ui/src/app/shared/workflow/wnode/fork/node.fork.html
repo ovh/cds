@@ -1,9 +1,8 @@
-<div class="fork">
-    <div class="diamond"
-         [class.active]="selected"
-         [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
-         [class.success]="noderun?.status === pipelineStatus.SUCCESS"
-         [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
-         [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED">
-    </div>
+<div class="workflowFork pointing">
+    <svg width="42" height="42">
+        <rect x="8" y="8" width="26" height="26" class="rect" [class.active]="selected"
+            [class.building]="noderun?.status === pipelineStatus.BUILDING || noderun?.status === pipelineStatus.WAITING"
+            [class.success]="noderun?.status === pipelineStatus.SUCCESS" [class.fail]="noderun?.status === pipelineStatus.FAIL || noderun?.status === pipelineStatus.STOPPED"
+            [class.inactive]="noderun?.status === pipelineStatus.DISABLED || noderun?.status === pipelineStatus.SKIPPED" />
+    </svg>
 </div>

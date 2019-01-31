@@ -1,0 +1,41 @@
+name: Plugins Command TestSuite with cdsctl
+testcases:
+- name: cdsctl admin plugins list
+  steps:
+  - script: {{.cds.build.cdsctl}} admin integration-model import ./tests/fixtures/integrations/hello-it.yml
+  
+- name: cdsctl admin plugins list
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins list
+
+- name: cdsctl admin plugins import
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins import ./tests/fixtures/plugins/hello-it-plugin.yml
+
+- name: cdsctl admin plugins binary-add
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins binary-add hello-it-plugin ./tests/fixtures/plugins/hello-it-plugin-binary.yml ./tests/fixtures/plugins/hello.py 
+
+- name: cdsctl admin plugins list
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins list
+
+- name: cdsctl admin plugins export
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins export hello-it-plugin
+
+- name: cdsctl admin integration-model import
+  steps:
+  - script: {{.cds.build.cdsctl}} admin integration-model import ./tests/fixtures/integrations/marathon.yml
+
+- name: cdsctl admin integration-model export
+  steps:
+  - script: {{.cds.build.cdsctl}} admin integration-model export marathon
+
+- name: cdsctl admin integration-model delete
+  steps:
+  - script: {{.cds.build.cdsctl}} admin integration-model delete --force marathon
+
+- name: cdsctl admin plugins delete
+  steps:
+  - script: {{.cds.build.cdsctl}} admin plugins delete --force hello-it-plugin

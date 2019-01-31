@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -34,13 +33,11 @@ var workerModelListCmd = cli.Command{
 		{
 			Name:      "binary",
 			Usage:     "Use this flag to filter worker model list by its binary capabilities",
-			Kind:      reflect.String,
 			ShortHand: "b",
 		},
 		{
 			Name:      "state",
 			Usage:     "Use this flag to filter worker model by his state (disabled|error|register|deprecated)",
-			Kind:      reflect.String,
 			ShortHand: "s",
 		},
 	},
@@ -94,7 +91,7 @@ For admin:
 				return true
 			},
 			Default: "false",
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 		},
 	},
 }
@@ -134,7 +131,7 @@ var workerModelShowCmd = cli.Command{
 }
 
 func workerModelShowRun(v cli.Values) (interface{}, error) {
-	wm, err := client.WorkerModel(v["name"])
+	wm, err := client.WorkerModel(v.GetString("name"))
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +165,6 @@ var workerModelExportCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.String,
 			Name:    "format",
 			Usage:   "Specify export format (json or yaml)",
 			Default: "yaml",

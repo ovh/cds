@@ -25,11 +25,11 @@ type rabbitMQConsumer struct {
 
 func (s *Service) startRabbitMQHook(t *sdk.Task) error {
 	projectKey := t.Config[sdk.HookConfigProject].Value
-	platformName := t.Config[sdk.HookModelPlatform].Value
-	pf, err := s.Client.ProjectPlatformGet(projectKey, platformName, true)
+	integrationName := t.Config[sdk.HookModelIntegration].Value
+	pf, err := s.Client.ProjectIntegrationGet(projectKey, integrationName, true)
 	if err != nil {
 		_ = s.stopTask(t)
-		return sdk.WrapError(err, "Cannot get rabbitMQ configuration for %s/%s", projectKey, platformName)
+		return sdk.WrapError(err, "Cannot get rabbitMQ configuration for %s/%s", projectKey, integrationName)
 	}
 
 	password := pf.Config["password"].Value

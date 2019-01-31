@@ -31,7 +31,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		force := FormBool(r, "force")
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable load project")
 		}
@@ -67,7 +67,7 @@ func (api *API) postEnvironmentImportHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		_, msgList, globalError := environment.ParseAndImport(tx, api.Cache, proj, eenv, force, project.DecryptWithBuiltinKey, getUser(ctx))
+		_, msgList, globalError := environment.ParseAndImport(tx, api.Cache, proj, eenv, force, project.DecryptWithBuiltinKey, deprecatedGetUser(ctx))
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			globalError = sdk.WrapError(globalError, "Unable to import environment %s", eenv.Name)
@@ -94,7 +94,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 		key := vars["permProjectKey"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "Cannot load %s", key)
 		}
@@ -155,7 +155,7 @@ func (api *API) importNewEnvironmentHandler() service.Handler {
 
 		defer tx.Rollback()
 
-		if err := environment.Import(api.mustDB(), proj, env, msgChan, getUser(ctx)); err != nil {
+		if err := environment.Import(api.mustDB(), proj, env, msgChan, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Error on import")
 		}
 
@@ -180,7 +180,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 		envName := vars["permEnvironmentName"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "Cannot load %s", key)
 		}
@@ -250,7 +250,7 @@ func (api *API) importIntoEnvironmentHandler() service.Handler {
 			}
 		}()
 
-		if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, getUser(ctx)); err != nil {
+		if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Error on import")
 		}
 

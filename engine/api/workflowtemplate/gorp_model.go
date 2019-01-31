@@ -11,5 +11,6 @@ func init() {
 		gorpmapping.New(sdk.WorkflowTemplateInstance{}, "workflow_template_instance", true, "id"),
 		gorpmapping.New(sdk.AuditWorkflowTemplate{}, "workflow_template_audit", true, "id"),
 		gorpmapping.New(sdk.AuditWorkflowTemplateInstance{}, "workflow_template_instance_audit", true, "id"),
+		gorpmapping.New(sdk.WorkflowTemplateBulk{}, "workflow_template_bulk", true, "id"),
 	)
 }

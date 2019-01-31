@@ -18,7 +18,7 @@ import (
 
 func (api *API) getNavbarHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, getUser(ctx))
+		data, err := navbar.LoadNavbarData(api.mustDB(), api.Cache, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getNavbarHandler")
 		}
@@ -33,12 +33,12 @@ func (api *API) getApplicationOverviewHandler() service.Handler {
 		appName := vars["permApplicationName"]
 		db := api.mustDB()
 
-		p, errP := project.Load(db, api.Cache, key, getUser(ctx))
+		p, errP := project.Load(db, api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getApplicationOverviewHandler> unable to load project")
 		}
 
-		app, errA := application.LoadByName(db, api.Cache, key, appName, getUser(ctx))
+		app, errA := application.LoadByName(db, api.Cache, key, appName, deprecatedGetUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getApplicationOverviewHandler> unable to load application")
 		}

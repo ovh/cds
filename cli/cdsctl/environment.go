@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"reflect"
 
 	"github.com/spf13/cobra"
 
@@ -42,7 +41,7 @@ var environmentListCmd = cli.Command{
 }
 
 func environmentListRun(v cli.Values) (cli.ListResult, error) {
-	apps, err := client.EnvironmentList(v[_ProjectKey])
+	apps, err := client.EnvironmentList(v.GetString(_ProjectKey))
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +61,8 @@ var environmentCreateCmd = cli.Command{
 }
 
 func environmentCreateRun(v cli.Values) error {
-	env := &sdk.Environment{Name: v["environment-name"]}
-	return client.EnvironmentCreate(v[_ProjectKey], env)
+	env := &sdk.Environment{Name: v.GetString("environment-name")}
+	return client.EnvironmentCreate(v.GetString(_ProjectKey), env)
 }
 
 var environmentDeleteCmd = cli.Command{
@@ -78,7 +77,7 @@ var environmentDeleteCmd = cli.Command{
 }
 
 func environmentDeleteRun(v cli.Values) error {
-	err := client.EnvironmentDelete(v[_ProjectKey], v["environment-name"])
+	err := client.EnvironmentDelete(v.GetString(_ProjectKey), v.GetString("environment-name"))
 	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoEnvironment) {
 		fmt.Println(err.Error())
 		os.Exit(0)
@@ -98,7 +97,7 @@ var environmentImportCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "force",
 			Usage:   "Override environment if exists",
 			Default: "false",
@@ -138,13 +137,13 @@ var environmentExportCmd = cli.Command{
 	},
 	Flags: []cli.Flag{
 		{
-			Kind:    reflect.Bool,
+			Type:    cli.FlagBool,
 			Name:    "with-permissions",
 			Usage:   "Export permissions",
 			Default: "false",
 		},
 		{
-			Kind:    reflect.String,
+			Type:    cli.FlagString,
 			Name:    "format",
 			Usage:   "Specify export format (json or yaml)",
 			Default: "yaml",

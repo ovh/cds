@@ -25,6 +25,7 @@ export class Tab {
 @AutoUnsubscribe()
 export class TabsComponent implements OnInit, OnChanges {
     @Input() tabs: Array<Tab>;
+    @Input() warnings: { [key: string]: Array<Tab> };
     @Output() onSelect = new EventEmitter<Tab>();
     selected: Tab;
     queryParamsSub: Subscription;

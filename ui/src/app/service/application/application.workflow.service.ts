@@ -1,7 +1,7 @@
-import {HttpClient, HttpParams} from '@angular/common/http';
-import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
-import {Branch, Remote, VCSInfos} from '../../model/repositories.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { VCSInfos } from '../../model/repositories.model';
 
 @Injectable()
 export class ApplicationWorkflowService {
@@ -22,30 +22,6 @@ export class ApplicationWorkflowService {
             params = params.append('remote', remote);
         }
         return this._http.get<VCSInfos>('/project/' + key + '/application/' + appName + '/vcsinfos', {params});
-    }
-
-    /**
-     * Get the list of branch for the application
-     * @param key Project unique key
-     * @param appName Application Name
-     * @returns {Observable<Array<Branch>>}
-     */
-    getBranches(key: string, appName: string, remote?: string): Observable<Array<Branch>> {
-        let params = new HttpParams();
-        if (remote) {
-            params = params.append('remote', remote);
-        }
-        return this._http.get<Array<Branch>>('/project/' + key + '/application/' + appName + '/branches', {params});
-    }
-
-    /**
-     * Get the list of remotes for the application
-     * @param key Project unique key
-     * @param appName Application Name
-     * @returns {Observable<Array<Branch>>}
-     */
-    getRemotes(key: string, appName: string): Observable<Array<Remote>> {
-        return this._http.get<Array<Remote>>('/project/' + key + '/application/' + appName + '/remotes');
     }
 
     /**

@@ -58,7 +58,7 @@ func (api *API) deleteParameterFromPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterDelete(key, pipelineName, sdk.Parameter{Name: paramName}, getUser(ctx))
+		event.PublishPipelineParameterDelete(key, pipelineName, sdk.Parameter{Name: paramName}, deprecatedGetUser(ctx))
 
 		p.Parameter, err = pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
 		if err != nil {
@@ -105,7 +105,7 @@ func (api *API) updateParameterInPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterUpdate(key, pipelineName, *oldParam, newParam, getUser(ctx))
+		event.PublishPipelineParameterUpdate(key, pipelineName, *oldParam, newParam, deprecatedGetUser(ctx))
 
 		p.Parameter, err = pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
 		if err != nil {
@@ -159,7 +159,7 @@ func (api *API) addParameterInPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot commit transaction")
 		}
 
-		event.PublishPipelineParameterAdd(key, pipelineName, newParam, getUser(ctx))
+		event.PublishPipelineParameterAdd(key, pipelineName, newParam, deprecatedGetUser(ctx))
 
 		p.Parameter, err = pipeline.GetAllParametersInPipeline(ctx, api.mustDB(), p.ID)
 		if err != nil {

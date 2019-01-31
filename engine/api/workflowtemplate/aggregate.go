@@ -14,7 +14,7 @@ func AggregateAuditsOnWorkflowTemplate(db gorp.SqlExecutor, wts ...*sdk.Workflow
 		return err
 	}
 
-	m := map[int64][]sdk.AuditWorkflowTemplate{}
+	m := make(map[int64][]sdk.AuditWorkflowTemplate)
 	for _, a := range as {
 		if _, ok := m[a.WorkflowTemplateID]; !ok {
 			m[a.WorkflowTemplateID] = []sdk.AuditWorkflowTemplate{}

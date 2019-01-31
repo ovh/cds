@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -30,7 +29,7 @@ var workflowStatusCmd = cli.Command{
 	Flags: []cli.Flag{
 		{
 			Name:  "track",
-			Kind:  reflect.Bool,
+			Type:  cli.FlagBool,
 			Usage: "Wait the workflow to be over",
 		},
 	},
@@ -57,21 +56,21 @@ func workflowStatusRunWithTrack(v cli.Values) (interface{}, error) {
 		return nil, fmt.Errorf("unable to get latest commit: %v", err)
 	}
 
-	currentDisplay.Printf("Looking for %s...", cli.Magenta(latestCommit.Hash))
+	currentDisplay.Printf("Looking for %s...\n", cli.Magenta(latestCommit.Hash))
 	currentDisplay.Do(context.Background())
 
 	for runNumber == 0 {
-		runNumber, _ = workflowNodeForCurrentRepo(v[_ProjectKey], v.GetString(_WorkflowName))
+		runNumber, _ = workflowNodeForCurrentRepo(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	run, err := client.WorkflowRunGet(v[_ProjectKey], v.GetString(_WorkflowName), runNumber)
+	run, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 	if err != nil {
 		return nil, err
 	}
 
 	for {
-		run, err = client.WorkflowRunGet(v[_ProjectKey], v.GetString(_WorkflowName), runNumber)
+		run, err = client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 		if err != nil {
 			return nil, err
 		}
@@ -133,13 +132,13 @@ func workflowStatusRunWithoutTrack(v cli.Values) (interface{}, error) {
 	if runNumberStr != "" {
 		runNumber, errRunNumber = strconv.ParseInt(runNumberStr, 10, 64)
 	} else {
-		runNumber, errRunNumber = workflowNodeForCurrentRepo(v[_ProjectKey], v.GetString(_WorkflowName))
+		runNumber, errRunNumber = workflowNodeForCurrentRepo(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
 	}
 	if errRunNumber != nil {
 		return nil, errRunNumber
 	}
 
-	run, err := client.WorkflowRunGet(v[_ProjectKey], v.GetString(_WorkflowName), runNumber)
+	run, err := client.WorkflowRunGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName), runNumber)
 	if err != nil {
 		return nil, err
 	}

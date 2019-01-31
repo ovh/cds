@@ -1,12 +1,11 @@
-import {Component, EventEmitter, Input, Output} from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
     selector: 'app-delete-button',
     templateUrl: './delete.html',
     styleUrls: ['./delete.scss']
 })
-export class DeleteButtonComponent  {
-
+export class DeleteButtonComponent {
     @Input() loading = false;
 
     // normal / icon
@@ -18,7 +17,7 @@ export class DeleteButtonComponent  {
 
     showConfirmation = false;
 
-    constructor() {}
+    constructor() { }
 
     deleteEvent() {
         this.event.emit(true);

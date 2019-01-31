@@ -28,12 +28,12 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 		key := vars["permProjectKey"]
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 		)
 		if errp != nil {
@@ -66,13 +66,13 @@ func (api *API) postWorkflowPreviewHandler() service.Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errw)
 		}
 
-		wf, globalError := workflow.Parse(proj, ew, getUser(ctx))
+		wf, globalError := workflow.Parse(proj, ew, deprecatedGetUser(ctx))
 		if globalError != nil {
 			return sdk.WrapError(globalError, "postWorkflowPreviewHandler> Unable import workflow %s", ew.Name)
 		}
 
 		// Browse all node to find IDs
-		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, proj, getUser(ctx)); err != nil {
+		if err := workflow.IsValid(ctx, api.Cache, api.mustDB(), wf, proj, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Workflow is not valid")
 		}
 
@@ -94,13 +94,13 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		force := FormBool(r, "force")
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable load project")
@@ -138,7 +138,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		// load the workflow from database if exists
 		workflowExists, err := workflow.Exists(tx, proj.Key, ew.Name)
@@ -153,7 +153,7 @@ func (api *API) postWorkflowImportHandler() service.Handler {
 			}
 		}
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: force})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, deprecatedGetUser(ctx), workflow.ImportOptions{DryRun: false, Force: force})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 			return sdk.WrapError(globalError, "Unable to import workflow %s", ew.Name)
@@ -180,19 +180,19 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 		wfName := vars["permWorkflowName"]
 
 		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 		)
 		if errp != nil {
 			return sdk.WrapError(errp, "Unable load project")
 		}
 
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		wf, err := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, u, workflow.LoadOptions{WithIcon: true})
 		if err != nil {
@@ -233,7 +233,7 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			_ = tx.Rollback()
 		}()
 
-		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, getUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
+		wrkflw, msgList, globalError := workflow.ParseAndImport(ctx, tx, api.Cache, proj, wf, ew, deprecatedGetUser(ctx), workflow.ImportOptions{DryRun: false, Force: true, WorkflowName: wfName})
 		msgListString := translate(r, msgList)
 		if globalError != nil {
 
@@ -244,9 +244,9 @@ func (api *API) putWorkflowImportHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		oldW, errL := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, getUser(ctx), workflow.LoadOptions{})
+		oldW, errL := workflow.Load(ctx, api.mustDB(), api.Cache, proj, wfName, deprecatedGetUser(ctx), workflow.LoadOptions{})
 		if errL == nil {
-			event.PublishWorkflowUpdate(key, *wrkflw, *oldW, getUser(ctx))
+			event.PublishWorkflowUpdate(key, *wrkflw, *oldW, deprecatedGetUser(ctx))
 		}
 
 		if wrkflw != nil {
@@ -288,18 +288,18 @@ func (api *API) postWorkflowPushHandler() service.Handler {
 		}
 
 		//Load project
-		proj, errp := project.Load(db, api.Cache, key, getUser(ctx),
+		proj, errp := project.Load(db, api.Cache, key, deprecatedGetUser(ctx),
 			project.LoadOptions.WithGroups,
 			project.LoadOptions.WithApplications,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithPipelines,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
-			project.LoadOptions.WithPlatforms)
+			project.LoadOptions.WithIntegrations)
 		if errp != nil {
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Cannot load project %s", key)
 		}
 
-		allMsg, wrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, getUser(ctx), project.DecryptWithBuiltinKey)
+		allMsg, wrkflw, err := workflow.Push(ctx, db, api.Cache, proj, tr, pushOptions, deprecatedGetUser(ctx), project.DecryptWithBuiltinKey)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot push workflow")
 		}

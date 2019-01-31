@@ -38,15 +38,15 @@ var applicationKeyCreateCmd = cli.Command{
 func applicationCreateKeyRun(v cli.Values) error {
 	key := &sdk.ApplicationKey{
 		Key: sdk.Key{
-			Name: v["key-name"],
-			Type: v["key-type"],
+			Name: v.GetString("key-name"),
+			Type: v.GetString("key-type"),
 		},
 	}
-	if err := client.ApplicationKeyCreate(v[_ProjectKey], v[_ApplicationName], key); err != nil {
+	if err := client.ApplicationKeyCreate(v.GetString(_ProjectKey), v.GetString(_ApplicationName), key); err != nil {
 		return err
 	}
 
-	fmt.Printf("Application key %s of type %s created with success in application %s\n", key.Name, key.Type, v[_ApplicationName])
+	fmt.Printf("Application key %s of type %s created with success in application %s\n", key.Name, key.Type, v.GetString(_ApplicationName))
 	fmt.Println(key.Public)
 	return nil
 }
@@ -61,7 +61,7 @@ var applicationKeyListCmd = cli.Command{
 }
 
 func applicationListKeyRun(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.ApplicationKeysList(v[_ProjectKey], v[_ApplicationName])
+	keys, err := client.ApplicationKeysList(v.GetString(_ProjectKey), v.GetString(_ApplicationName))
 	if err != nil {
 		return nil, err
 	}
@@ -81,5 +81,5 @@ var applicationKeyDeleteCmd = cli.Command{
 }
 
 func applicationDeleteKeyRun(v cli.Values) error {
-	return client.ApplicationKeysDelete(v[_ProjectKey], v[_ApplicationName], v["key-name"])
+	return client.ApplicationKeysDelete(v.GetString(_ProjectKey), v.GetString(_ApplicationName), v.GetString("key-name"))
 }

@@ -9,7 +9,7 @@ import { Table } from '../../../../shared/table/table';
     templateUrl: './broadcast.list.html',
     styleUrls: ['./broadcast.list.scss']
 })
-export class BroadcastListComponent extends Table {
+export class BroadcastListComponent extends Table<Broadcast> {
     filter: string;
     broadcasts: Array<Broadcast>;
 
@@ -24,7 +24,8 @@ export class BroadcastListComponent extends Table {
         super();
 
         this._broadcastStore.getBroadcasts().subscribe(broadcasts => {
-            this.broadcasts = broadcasts.toArray().sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
+            this.broadcasts = broadcasts.valueSeq().toArray()
+                .sort((a, b) => (new Date(b.updated)).getTime() - (new Date(a.updated)).getTime());
         });
 
         this.path = [<PathItem>{
@@ -35,7 +36,7 @@ export class BroadcastListComponent extends Table {
         }];
     }
 
-    getData(): any[] {
+    getData(): Array<Broadcast> {
         if (!this.filter) {
             return this.broadcasts;
         }

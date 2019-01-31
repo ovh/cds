@@ -237,7 +237,6 @@ var LoadOptions = struct {
 	WithEnvironments                        LoadOptionFunc
 	WithGroups                              LoadOptionFunc
 	WithPermission                          LoadOptionFunc
-	WithApplicationPipelines                LoadOptionFunc
 	WithApplicationVariables                LoadOptionFunc
 	WithApplicationWithDeploymentStrategies LoadOptionFunc
 	WithKeys                                LoadOptionFunc
@@ -246,8 +245,8 @@ var LoadOptions = struct {
 	WithLock                                LoadOptionFunc
 	WithLockNoWait                          LoadOptionFunc
 	WithClearKeys                           LoadOptionFunc
-	WithPlatforms                           LoadOptionFunc
-	WithClearPlatforms                      LoadOptionFunc
+	WithIntegrations                        LoadOptionFunc
+	WithClearIntegrations                   LoadOptionFunc
 	WithFavorites                           LoadOptionFunc
 	WithFeatures                            LoadOptionFunc
 	WithLabels                              LoadOptionFunc
@@ -263,7 +262,6 @@ var LoadOptions = struct {
 	WithApplicationNames:                    &loadApplicationNames,
 	WithVariables:                           &loadVariables,
 	WithVariablesWithClearPassword:          &loadVariablesWithClearPassword,
-	WithApplicationPipelines:                &loadApplicationPipelines,
 	WithApplicationVariables:                &loadApplicationVariables,
 	WithKeys:                                &loadKeys,
 	WithWorkflows:                           &loadWorkflows,
@@ -271,8 +269,8 @@ var LoadOptions = struct {
 	WithLock:                                &lockProject,
 	WithLockNoWait:                          &lockAndWaitProject,
 	WithClearKeys:                           &loadClearKeys,
-	WithPlatforms:                           &loadPlatforms,
-	WithClearPlatforms:                      &loadClearPlatforms,
+	WithIntegrations:                        &loadIntegrations,
+	WithClearIntegrations:                   &loadClearIntegrations,
 	WithFavorites:                           &loadFavorites,
 	WithFeatures:                            &loadFeatures,
 	WithApplicationWithDeploymentStrategies: &loadApplicationWithDeploymentStrategies,

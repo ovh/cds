@@ -111,49 +111,6 @@ func AddGroup(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, a *sdk.
 				return sdk.WrapError(err, "Cannot add group %s in project %s", g.Name, proj.Name)
 			}
 		}
-
-		//For all attached pipelines
-		for _, p := range a.Pipelines {
-			//Check association with pipeline
-			log.Debug("application.AddGroup> proj=%s pip=%d group=%s", proj.Name, p.Pipeline.ID, g.Name)
-			groupAttachedToPipeline, errp := group.CheckGroupInPipeline(db, p.Pipeline.ID, g.ID)
-			if errp != nil {
-				return sdk.WrapError(errp, "AddGroup> Unable to check group in pipeline")
-			}
-			if !groupAttachedToPipeline {
-				if err := group.InsertGroupInPipeline(db, p.Pipeline.ID, g.ID, perm); err != nil {
-					return sdk.WrapError(err, "Cannot add group %s in pipeline %s", g.Name, p.Pipeline.Name)
-				}
-			}
-
-			//Check environments
-			for _, t := range p.Triggers {
-				if t.DestApplication.ID == a.ID {
-					groupAttachedToEnv, erre := group.IsInEnvironment(db, t.DestEnvironment.ID, g.ID)
-					if erre != nil {
-						return sdk.WrapError(erre, "AddGroup> Unable to check group in env")
-					}
-
-					if !groupAttachedToEnv && sdk.DefaultEnv.ID != t.DestEnvironment.ID {
-						if err := group.InsertGroupInEnvironment(db, t.DestEnvironment.ID, g.ID, perm); err != nil {
-							return sdk.WrapError(err, "Cannot add group %s in env %s", g.Name, t.DestEnvironment.Name)
-						}
-					}
-				}
-				if t.SrcApplication.ID == a.ID {
-					groupAttachedToEnv, erre := group.IsInEnvironment(db, t.SrcEnvironment.ID, g.ID)
-					if erre != nil {
-						return sdk.WrapError(erre, "AddGroup> Unable to check group in env")
-					}
-
-					if !groupAttachedToEnv && sdk.DefaultEnv.ID != t.SrcEnvironment.ID {
-						if err := group.InsertGroupInEnvironment(db, t.SrcEnvironment.ID, g.ID, perm); err != nil {
-							return sdk.WrapError(err, "Cannot add group %s in env %s", g.Name, t.SrcEnvironment.Name)
-						}
-					}
-				}
-			}
-		}
 	}
 	return nil
 }

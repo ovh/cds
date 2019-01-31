@@ -61,7 +61,7 @@ var userShowCmd = cli.Command{
 }
 
 func userShowRun(v cli.Values) (interface{}, error) {
-	u, err := client.UserGet(v["username"])
+	u, err := client.UserGet(v.GetString("username"))
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ var userResetCmd = cli.Command{
 }
 
 func userResetRun(v cli.Values) error {
-	username := v["username"]
+	username := v.GetString("username")
 	if username == "" {
 		username = cfg.User
 	}
@@ -89,7 +89,7 @@ func userResetRun(v cli.Values) error {
 		fmt.Println("Username:", username)
 	}
 
-	email := v["email"]
+	email := v.GetString("email")
 	if email == "" {
 		fmt.Printf("Email: ")
 		email = cli.ReadLine()
@@ -114,7 +114,7 @@ var userConfirmCmd = cli.Command{
 }
 
 func userConfirmRun(v cli.Values) error {
-	ok, password, err := client.UserConfirm(v["username"], v["token"])
+	ok, password, err := client.UserConfirm(v.GetString("username"), v.GetString("token"))
 	if err != nil {
 		return err
 	}

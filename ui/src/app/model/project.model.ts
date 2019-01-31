@@ -1,9 +1,9 @@
 import {Application} from './application.model';
 import {Environment} from './environment.model';
 import {GroupPermission} from './group.model';
+import {ProjectIntegration} from './integration.model';
 import {Key} from './keys.model';
 import {Pipeline} from './pipeline.model';
-import {ProjectPlatform} from './platform.model';
 import {RepositoriesManager} from './repositories.model';
 import {Variable} from './variable.model';
 import {Workflow} from './workflow.model';
@@ -26,7 +26,7 @@ export class Project {
     last_modified: string;
     vcs_servers: Array<RepositoriesManager>;
     keys: Array<Key>;
-    platforms: Array<ProjectPlatform>;
+    integrations: Array<ProjectIntegration>;
     features: {};
     labels: Label[];
     metadata: {};

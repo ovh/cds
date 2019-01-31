@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/actionplugin"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/service"
@@ -22,7 +23,7 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var p sdk.GRPCPlugin
 		db := api.mustDB()
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		if err := service.UnmarshalBody(r, &p); err != nil {
 			return sdk.WithStack(err)
@@ -34,6 +35,12 @@ func (api *API) postPGRPCluginHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback() //nolint
+
+		integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+		if err != nil {
+			return err
+		}
+		p.IntegrationModelID = &integrationModel.ID
 
 		if p.Type == sdk.GRPCPluginAction {
 			// Check that action does not already exists
@@ -113,8 +120,14 @@ func (api *API) putGRPCluginHandler() service.Handler {
 		}
 		defer tx.Rollback() //nolint
 
+		integrationModel, err := integration.LoadModelByName(api.mustDB(), p.Integration, false)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot get integration model")
+		}
+		p.IntegrationModelID = &integrationModel.ID
+
 		if p.Type == sdk.GRPCPluginAction {
-			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, getUser(ctx).ID); err != nil {
+			if _, err := actionplugin.UpdateGRPCPlugin(tx, &p, p.Parameters, deprecatedGetUser(ctx).ID); err != nil {
 				return sdk.WrapError(err, "Error while updating action %s in database", p.Name)
 			}
 		}

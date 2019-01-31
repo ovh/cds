@@ -906,6 +906,8 @@ func TestPostVulnerabilityReportHandler(t *testing.T) {
 	wrDB, _, errmr := workflow.ManualRun(context.Background(), db, api.Cache, p, &w, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	assert.NoError(t, errmr)
 
+	log.Debug("%+v", wrDB.WorkflowNodeRuns)
+
 	// Call post coverage report handler
 	// Prepare request
 	vars := map[string]string{

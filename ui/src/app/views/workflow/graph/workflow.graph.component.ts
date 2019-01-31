@@ -13,15 +13,15 @@ import {
 } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
-import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
-import {Project} from '../../../model/project.model';
-import {WNode, WNodeType, Workflow} from '../../../model/workflow.model';
-import {WorkflowRun} from '../../../model/workflow.run.model';
-import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {WorkflowNodeHookComponent} from '../../../shared/workflow/wnode/hook/hook.component';
-import {WorkflowWNodeComponent} from '../../../shared/workflow/wnode/wnode.component';
+import { SemanticDimmerComponent } from 'ng-semantic/ng-semantic';
+import { Project } from '../../../model/project.model';
+import { WNode, Workflow } from '../../../model/workflow.model';
+import { WorkflowRun } from '../../../model/workflow.run.model';
+import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
+import { WorkflowStore } from '../../../service/workflow/workflow.store';
+import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
+import { WorkflowNodeHookComponent } from '../../../shared/workflow/wnode/hook/hook.component';
+import { WorkflowWNodeComponent } from '../../../shared/workflow/wnode/wnode.component';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -34,29 +34,26 @@ import {WorkflowWNodeComponent} from '../../../shared/workflow/wnode/wnode.compo
 })
 @AutoUnsubscribe()
 export class WorkflowGraphComponent implements AfterViewInit {
+    static margin = 80; // let 40px on top and bottom of the graph
+    static maxScale = 2;
+    static minScale = 1 / 4;
+    static maxOriginScale = 1;
 
     workflow: Workflow;
-    _workflowRun: WorkflowRun;
-
     @Input('workflowData')
     set workflowData(data: Workflow) {
         this.workflow = data;
-        this.nodeHeight = 78;
         this.nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
         this.hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
-        this.calculateDynamicWidth();
         this.changeDisplay();
     }
 
+    _workflowRun: WorkflowRun;
     @Input('workflowRun')
     set workflowRun(data: WorkflowRun) {
         if (data) {
             this._workflowRun = data;
             this.workflow = data.workflow;
-            this.nodeHeight = 78;
-            if (!this.previousWorkflowRunId || this.previousWorkflowRunId !== data.id) {
-                this.calculateDynamicWidth();
-            }
             this.previousWorkflowRunId = data.id;
             this.changeDisplay();
         }
@@ -68,13 +65,9 @@ export class WorkflowGraphComponent implements AfterViewInit {
     set direction(data: string) {
         this._direction = data;
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
-        this.calculateDynamicWidth();
         this.changeDisplay();
     }
-
-    get direction() {
-        return this._direction
-    }
+    get direction() { return this._direction; }
 
     @Output() deleteJoinSrcEvent = new EventEmitter<{ source, target }>();
 
@@ -82,7 +75,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     _direction: string;
 
     // workflow graph
-    @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer;
+    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
     svgWidth: number = window.innerWidth;
@@ -98,37 +91,19 @@ export class WorkflowGraphComponent implements AfterViewInit {
     nodesComponent = new Map<string, ComponentRef<WorkflowWNodeComponent>>();
     hooksComponent = new Map<string, ComponentRef<WorkflowNodeHookComponent>>();
 
-    nodeWidth: number;
-    nodeHeight: number;
+    zoom: d3.ZoomBehavior<Element, {}>;
+    svg: any;
 
     constructor(
         private componentFactoryResolver: ComponentFactoryResolver,
         private _cd: ChangeDetectorRef,
         private _workflowStore: WorkflowStore,
         private _workflowCore: WorkflowCoreService
-    ) {
-    }
-
-    @HostListener('window:resize', ['$event'])
-    onResize() {
-        this.resize();
-    }
-
-    resize() {
-        // Resize svg
-        let svg = d3.select('svg');
-        let inner = d3.select('svg g');
-
-        let w = (<any>inner.node()).getBBox().width;
-        this.svgWidth = w + 30;
-        this.svgHeight = this.g.graph().height + 40;
-        svg.attr('height', this.svgHeight);
-    }
+    ) { }
 
     ngAfterViewInit(): void {
         this.ready = true;
         this.changeDisplay();
-        this.resize();
         this._cd.detectChanges();
     }
 
@@ -141,7 +116,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     initWorkflow() {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph({align: 'UL', rankdir: this.direction, nodesep: 10});
+        this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction, nodesep: 10, ranksep: 15, edgesep: 5 });
 
         // Create all nodes
         if (this.workflow.workflow_data && this.workflow.workflow_data.node) {
@@ -151,89 +126,52 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this.workflow.workflow_data.joins.forEach(j => {
                 this.createNode(j);
             });
-
         }
-
-        // Add our custom arrow (a hollow-point)
-        this.createCustomArrow();
 
         // Run the renderer. This is what draws the final graph.
-        let svg = d3.select('svg');
-        this.render(<any>svg.select('g'), this.g);
+        this.svg = d3.select('svg');
+        let oldG = this.svg.select('g');
+        if (oldG) {
+            oldG.remove();
+        }
+        let g = this.svg.append('g');
 
-        // Rotate fork
-            // Select nodes
-        let allnodes = d3.selectAll('g.nodes g.label');
-        let nodes = Workflow.getAllNodes(this.workflow);
-        let allForks = [];
-            // Browse nodes to identify fork
-        allnodes.each((a, b, c) => {
-            let n = nodes.find(node => 'node-' + node.name === a);
-            if (n && n.type === WNodeType.FORK) {
-                allForks.push(c[b]);
-            }
-        });
-            // Rotate
-        allForks.forEach(g => {
-            d3.select(g).attr('transform', 'rotate(45)');
+        this.render(g, this.g);
+
+        this.zoom = d3.zoom().scaleExtent([
+            WorkflowGraphComponent.minScale,
+            WorkflowGraphComponent.maxScale
+        ]).on('zoom', () => {
+            g.attr('transform', d3.event.transform);
         });
 
-        // Add listener on graph element
-        this.svgHeight = this.g.graph().height + 40;
-        this.svgWidth = this.g.graph().width;
+        this.svg.call(this.zoom);
+
+        this.clickOrigin();
     }
 
-    private createCustomArrow() {
-        this.render.arrows()['customArrow'] = (parent, id, edge, type) => {
-            let marker = parent.append('marker')
-                .attr('id', id)
-                .attr('viewBox', '0 0 10 10')
-                .attr('refX', 7) // position of arrow
-                .attr('refY', 5) // position of arrow
-                .attr('markerUnits', 'strokeWidth')
-                .attr('markerWidth', 4)
-                .attr('markerHeight', 3)
-                .attr('orient', 'auto');
-
-            let path = marker.append('path')
-                .attr('d', 'M 0 0 L 10 5 L 0 10 z')
-                .style('stroke-width', 1)
-                .style('stroke-dasharray', '1,0');
-            dagreD3['util'].applyStyle(path, edge[type + 'Style']);
-        };
-    }
-
-    private calculateDynamicWidth() {
-        let nbofNodes = 1;
-        switch (this.direction) {
-            case 'LR':
-                let mapDeep = new Map<string, number>();
-                mapDeep.set(this.workflow.workflow_data.node.ref, 1);
-                this.getWorkflowNodeDeep(this.workflow.workflow_data.node, mapDeep);
-                this.getWorkflowJoinDeep(mapDeep);
-                nbofNodes = Math.max(...Array.from(mapDeep.values()));
-                break;
-            default:
-                let mapLevel = new Map<number, number>();
-                let mapLevelNode = new Map<string, number>();
-                mapLevel.set(1, 1);
-                this.getWorkflowMaxNodeByLevel(this.workflow.workflow_data.node, mapLevel, 2, mapLevelNode);
-                this.getWorkflowJoinMaxNodeByLevel(nbofNodes, mapLevel, mapLevelNode);
-                nbofNodes = Math.max(...Array.from(mapLevel.values()));
-                break;
-        }
-
-        let windowsWidth = window.innerWidth - 250; // sidebar width
-
-        this.nodeWidth = Math.floor(windowsWidth * .75 / nbofNodes);
-        if (this.nodeWidth < 200) {
-            this.nodeWidth = 200;
-        }
+    clickOrigin() {
+        let w = this.svgContainer.element.nativeElement.width.baseVal.value - WorkflowGraphComponent.margin;
+        let h = this.svgContainer.element.nativeElement.height.baseVal.value - WorkflowGraphComponent.margin;
+        let gw = this.g.graph().width;
+        let gh = this.g.graph().height;
+        let oScale = Math.min(w / gw, h / gh); // calculate optimal scale for current graph
+        // calculate final scale that fit min and max scale values
+        let scale = Math.min(
+            WorkflowGraphComponent.maxOriginScale,
+            Math.max(WorkflowGraphComponent.minScale, oScale)
+        );
+        let centerX = (w - gw * scale + WorkflowGraphComponent.margin) / 2;
+        let centerY = (h - gh * scale + WorkflowGraphComponent.margin) / 2;
+        this.svg.call(this.zoom.transform, d3.zoomIdentity.translate(centerX, centerY).scale(scale));
     }
 
     createEdge(from: string, to: string, options: {}): void {
-        options['arrowhead'] = 'undirected';
-        this.g.setEdge(from, to, options);
+        this.g.setEdge(from, to, {
+            ...options,
+            arrowhead: 'undirected',
+            style: 'stroke: #B5B7BD;stroke-width: 2px;'
+        });
     }
 
     createHookNode(node: WNode): void {
@@ -247,7 +185,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
             if (!componentRef) {
                 let hookComponent = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeHookComponent);
                 componentRef = hookComponent.create(this.svgContainer.parentInjector);
-
             }
             componentRef.instance.hook = h;
             componentRef.instance.workflow = this.workflow;
@@ -258,21 +195,14 @@ export class WorkflowGraphComponent implements AfterViewInit {
             this.svgContainer.insert(componentRef.hostView, 0);
             this.g.setNode(
                 'hook-' + node.ref + '-' + hookId, <any>{
-                    label: () => {
-                        componentRef.location.nativeElement.style.width = '100%';
-                        componentRef.location.nativeElement.style.height = '100%';
-                        return componentRef.location.nativeElement;
-                    },
-                    labelStyle: 'width: 40px; height: 40px',
-                    width: 20,
-                    height: 20
+                    label: () => componentRef.location.nativeElement,
+                    labelStyle: 'width: 25px;height: 25px;'
                 }
             );
 
-            let options = {
-                id: 'hook-' + node.ref + '-' + hookId
-            };
-            this.createEdge('hook-' + node.ref + '-' + hookId, 'node-' + node.ref, options);
+            this.createEdge(`hook-${node.ref}-${hookId}`, `node-${node.ref}`, {
+                id: `hook-${node.ref}-${hookId}`
+            });
         });
     }
 
@@ -285,40 +215,29 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
         let width: number;
         let height: number;
-        let componentRefWidth = '97%';
         let shape = 'rect';
         switch (node.type) {
             case 'pipeline':
-                width = this.nodeWidth;
-                height = this.nodeHeight;
+            case 'outgoinghook':
+                width = 180;
+                height = 60;
                 break;
             case 'join':
-                width = 50;
-                height = 50;
+                width = 40;
+                height = 40;
                 shape = 'circle';
                 break;
-            case 'outgoinghook':
-                componentRefWidth = '98%';
-                width = 210;
-                height = 68;
-                break;
             case 'fork':
-                width = 60;
-                height = 60;
+                width = 42;
+                height = 42;
                 break;
         }
 
         this.svgContainer.insert(componentRef.hostView, 0);
         this.g.setNode('node-' + node.ref, <any>{
-            label: () => {
-                componentRef.location.nativeElement.style.width = componentRefWidth;
-                componentRef.location.nativeElement.style.height = '100%';
-                return componentRef.location.nativeElement;
-            },
+            label: () => componentRef.location.nativeElement,
             shape: shape,
-            labelStyle: 'width: ' + width + 'px; height: ' + height + 'px;',
-            width: width,
-            height: height
+            labelStyle: `width: ${width}px;height: ${height}px;`
         });
 
         this.createHookNode(node);
@@ -326,25 +245,22 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (node.triggers) {
             node.triggers.forEach(t => {
                 this.createNode(t.child_node);
-                let options = {
+                this.createEdge('node-' + node.ref, 'node-' + t.child_node.ref, {
                     id: 'trigger-' + t.id,
                     style: 'stroke: #000000;'
-                };
-                this.createEdge('node-' + node.ref, 'node-' + t.child_node.ref, options);
+                });
             });
         }
 
         // Create parent trigger
         if (node.type === 'join') {
             node.parents.forEach(p => {
-                let options = {
+                this.createEdge('node-' + p.parent_name, 'node-' + node.ref, {
                     id: 'join-trigger-' + p.parent_name,
                     style: 'stroke: #000000;'
-                };
-                this.createEdge('node-' + p.parent_name, 'node-' + node.ref, options);
+                });
             });
         }
-
     }
 
     @HostListener('document:keydown', ['$event'])
@@ -360,87 +276,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         componentRef.instance.node = node;
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
-
         return componentRef;
-    }
-
-    private getWorkflowMaxNodeByLevel(node: WNode, levelMap: Map<number, number>, level: number, levelNode: Map<string, number>): void {
-        levelNode.set(node.ref, level - 1);
-        if (node.triggers) {
-            node.triggers.forEach(t => {
-                this.getWorkflowMaxNodeByLevel(t.child_node, levelMap, level + 1, levelNode);
-                if (levelMap.get(level)) {
-                    levelMap.set(level, levelMap.get(level) + 1);
-                } else {
-                    levelMap.set(level, 1);
-                }
-            });
-        }
-    }
-
-    private getWorkflowNodeDeep(node: WNode, maxDeep: Map<string, number>) {
-        if (node.triggers) {
-            node.triggers.forEach(t => {
-                maxDeep.set(t.child_node.ref, maxDeep.get(node.ref) + 1);
-                this.getWorkflowNodeDeep(t.child_node, maxDeep);
-            });
-        }
-    }
-
-    private getWorkflowJoinMaxNodeByLevel(maxNode: number, mapLevel: Map<number, number>, levelNode: Map<string, number>): number {
-        if (this.workflow.workflow_data && this.workflow.workflow_data.joins) {
-            this.workflow.workflow_data.joins.forEach(j => {
-                let maxLevel = 0;
-                if (j.parents) {
-                    j.parents.forEach(r => {
-                        if (levelNode.get(r.parent_name) > maxLevel) {
-                            maxLevel = levelNode.get(r.parent_name);
-                        }
-                    });
-                }
-                maxLevel++;
-                if (j.triggers) {
-                    j.triggers.forEach(t => {
-                        this.getWorkflowMaxNodeByLevel(t.child_node, mapLevel, maxLevel + 1, levelNode);
-                        if (mapLevel.get(maxLevel)) {
-                            mapLevel.set(maxLevel, mapLevel.get(maxLevel) + 1);
-                        } else {
-                            mapLevel.set(maxLevel, 1);
-                        }
-                    });
-                }
-            });
-        }
-        return maxNode;
-    }
-
-    private getWorkflowJoinDeep(maxDeep: Map<string, number>) {
-        if (this.workflow.workflow_data && this.workflow.workflow_data.joins) {
-            for (let i = 0; i < this.workflow.workflow_data.joins.length; i++) {
-                this.workflow.workflow_data.joins.forEach(j => {
-
-                    let canCheck = true;
-                    let joinMaxDeep = 0;
-                    j.parents.forEach(r => {
-                        let deep = maxDeep.get(r.parent_name);
-                        if (!maxDeep.get(r.parent_name)) {
-                            canCheck = false;
-                        } else {
-                            if (deep > joinMaxDeep) {
-                                joinMaxDeep = deep;
-                            }
-                        }
-                    });
-                    if (canCheck && j.triggers) {
-                        // get maxdeep
-                        j.triggers.forEach(t => {
-                            maxDeep.set(t.child_node.ref, joinMaxDeep + 1);
-                            this.getWorkflowNodeDeep(t.child_node, maxDeep);
-                        })
-                    }
-                });
-            }
-
-        }
     }
 }

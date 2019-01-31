@@ -14,7 +14,7 @@ func GetAllByIDs(db gorp.SqlExecutor, ids []int64) ([]sdk.Group, error) {
 		`SELECT * FROM "group" WHERE id = ANY(string_to_array($1, ',')::int[])`,
 		gorpmapping.IDsToQueryString(ids),
 	); err != nil {
-		return nil, sdk.WrapError(err, "Cannot get groups")
+		return nil, sdk.WrapError(err, "cannot get groups")
 	}
 
 	return gs, nil

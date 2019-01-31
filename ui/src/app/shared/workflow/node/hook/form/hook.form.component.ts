@@ -1,7 +1,7 @@
 import {Component, Input, OnInit} from '@angular/core';
 import {cloneDeep} from 'lodash';
 import {finalize, first} from 'rxjs/operators';
-import {ProjectPlatform} from '../../../../../model/platform.model';
+import {ProjectIntegration} from '../../../../../model/integration.model';
 import {Project} from '../../../../../model/project.model';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {
@@ -48,8 +48,8 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     invalidJSON = false;
     updateMode = false;
     codeMirrorConfig: any;
-    selectedPlatform: ProjectPlatform;
-    availablePlatforms: Array<ProjectPlatform>;
+    selectedIntegration: ProjectIntegration;
+    availableIntegrations: Array<ProjectIntegration>;
 
     constructor(private _hookService: HookService) { }
 
@@ -87,13 +87,13 @@ export class WorkflowNodeHookFormComponent implements OnInit {
         (<WorkflowNodeHookConfigValue>this.hook.config[k]).value = finalValue.join(';');
     }
 
-    updatePlatform(): void {
+    updateIntegration(): void {
         Object.keys(this.hook.config).forEach( k => {
-            if (k === 'platform') {
-                this.hook.config[k].value = this.selectedPlatform.name;
+            if (k === 'integration') {
+                this.hook.config[k].value = this.selectedIntegration.name;
             } else {
-                if (this.selectedPlatform.config[k]) {
-                    this.hook.config[k] = cloneDeep(this.selectedPlatform.config[k])
+                if (this.selectedIntegration.config[k]) {
+                    this.hook.config[k] = cloneDeep(this.selectedIntegration.config[k])
                 }
             }
         });
@@ -111,9 +111,9 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.availablePlatforms = this.project.platforms.filter(pf =>  pf.model.hook);
-        if (this.hook && this.hook.config && this.hook.config['platform']) {
-            this.selectedPlatform = this.project.platforms.find(pf => pf.name === this.hook.config['platform'].value);
+        this.availableIntegrations = this.project.integrations.filter(pf =>  pf.model.hook);
+        if (this.hook && this.hook.config && this.hook.config['integration']) {
+            this.selectedIntegration = this.project.integrations.find(pf => pf.name === this.hook.config['integration'].value);
         }
         this.codeMirrorConfig = {
             matchBrackets: true,

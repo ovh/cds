@@ -120,11 +120,11 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 	}
 
 	for pfName, pfConfig := range app.DeploymentStrategies {
-		pf, has := proj.GetPlatform(pfName)
+		pf, has := proj.GetIntegration(pfName)
 		if !has {
-			return sdk.WrapError(sdk.NewError(sdk.ErrNotFound, fmt.Errorf("platform %s not found", pfName)), "application.Import")
+			return sdk.WrapError(sdk.NewError(sdk.ErrNotFound, fmt.Errorf("integration %s not found", pfName)), "application.Import")
 		}
-		if err := SetDeploymentStrategy(db, proj.ID, app.ID, pf.PlatformModelID, pfName, pfConfig); err != nil {
+		if err := SetDeploymentStrategy(db, proj.ID, app.ID, pf.IntegrationModelID, pfName, pfConfig); err != nil {
 			return sdk.WrapError(err, "unable to set deployment strategy %s", pfName)
 		}
 	}

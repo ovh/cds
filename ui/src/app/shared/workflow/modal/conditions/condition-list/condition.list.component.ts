@@ -1,34 +1,34 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {PermissionValue} from '../../../../../model/permission.model';
-import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {Workflow, WorkflowNodeCondition, WorkflowNodeConditions} from '../../../../../model/workflow.model';
-import {Table} from '../../../../table/table';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { PermissionValue } from '../../../../../model/permission.model';
+import { PipelineStatus } from '../../../../../model/pipeline.model';
+import { Workflow, WorkflowNodeCondition, WorkflowNodeConditions } from '../../../../../model/workflow.model';
+import { Table } from '../../../../table/table';
 
 @Component({
     selector: 'app-workflow-node-condition-list',
     templateUrl: './condition.list.html',
     styleUrls: ['./condition.list.scss']
 })
-export class WorkflowNodeConditionListComponent extends Table implements OnInit {
+export class WorkflowNodeConditionListComponent extends Table<WorkflowNodeCondition> implements OnInit {
 
     @Input('conditions')
     set conditions(data: WorkflowNodeConditions) {
-      if (!data) {
-          data = new WorkflowNodeConditions();
-      }
-      if (!data.plain) {
-          data.plain = new Array<WorkflowNodeCondition>();
-      }
-      this._conditions = data;
-      this.getDataForCurrentPage();
+        if (!data) {
+            data = new WorkflowNodeConditions();
+        }
+        if (!data.plain) {
+            data.plain = new Array<WorkflowNodeCondition>();
+        }
+        this._conditions = data;
+        this.getDataForCurrentPage();
     }
     get conditions(): WorkflowNodeConditions {
-      return this._conditions;
+        return this._conditions;
     }
     @Output() conditionChange = new EventEmitter<WorkflowNodeCondition[]>();
     @Input() workflow: Workflow;
     @Input() operators: {};
-    @Input() mode: 'advanced'|'basic';
+    @Input() mode: 'advanced' | 'basic';
 
     codeMirrorConfig: {};
     permission = PermissionValue;
@@ -58,7 +58,7 @@ export class WorkflowNodeConditionListComponent extends Table implements OnInit 
         return this.data;
     }
 
-    getData(): any[] {
+    getData(): Array<WorkflowNodeCondition> {
         if (!this.conditions || !this.conditions.plain) {
             return [];
         }

@@ -34,7 +34,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		p, err := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		p, err := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot load %s", key)
 		}
@@ -60,7 +60,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		}
 
 		// delete from application
-		applications, errla := application.LoadAll(tx, api.Cache, p.Key, getUser(ctx))
+		applications, errla := application.LoadAll(tx, api.Cache, p.Key, deprecatedGetUser(ctx))
 		if errla != nil {
 			return sdk.WrapError(errla, "deleteGroupFromProjectHandler: Cannot load applications for project %s", p.Name)
 		}
@@ -72,7 +72,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		}
 
 		// delete from pipelines
-		pipelines, errlp := pipeline.LoadPipelines(tx, p.ID, false, getUser(ctx))
+		pipelines, errlp := pipeline.LoadPipelines(tx, p.ID, false, deprecatedGetUser(ctx))
 		if errlp != nil {
 			return sdk.WrapError(errlp, "deleteGroupFromProjectHandler: Cannot load pipelines for project %s", p.Name)
 		}
@@ -84,7 +84,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 		}
 
 		// delete from environments
-		envs, errle := environment.LoadEnvironments(tx, p.Key, false, getUser(ctx))
+		envs, errle := environment.LoadEnvironments(tx, p.Key, false, deprecatedGetUser(ctx))
 		if errle != nil {
 			return sdk.WrapError(errle, "deleteGroupFromProjectHandler: Cannot load environments for project %s", p.Name)
 		}
@@ -99,7 +99,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot commit transaction")
 		}
 
-		event.PublishDeleteProjectPermission(p, gp, getUser(ctx))
+		event.PublishDeleteProjectPermission(p, gp, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, nil, http.StatusOK)
 	}
@@ -127,7 +127,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		p, errl := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		p, errl := project.Load(tx, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
 		if errl != nil {
 			return sdk.WrapError(errl, "updateGroupRoleHandler: Cannot load project %s", key)
 		}
@@ -175,7 +175,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 			Permission: groupProject.Permission,
 			Group:      gpInProject.Group,
 		}
-		event.PublishUpdateProjectPermission(p, newGP, gpInProject, getUser(ctx))
+		event.PublishUpdateProjectPermission(p, newGP, gpInProject, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, groupProject, http.StatusOK)
 	}
@@ -192,7 +192,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to unmarshal")
 		}
 
-		p, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		p, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "AddGroupInProject: Cannot load %s", key)
 		}
@@ -225,13 +225,13 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 		}
 
 		// apply on application
-		applications, errla := application.LoadAll(tx, api.Cache, p.Key, getUser(ctx))
+		applications, errla := application.LoadAll(tx, api.Cache, p.Key, deprecatedGetUser(ctx))
 		if errla != nil {
 			return sdk.WrapError(errla, "AddGroupInProject: Cannot load applications for project %s", p.Name)
 		}
 
 		for _, app := range applications {
-			if permission.AccessToApplication(key, app.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
+			if permission.AccessToApplication(key, app.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
 				inApp, err := group.CheckGroupInApplication(tx, app.ID, g.ID)
 				if err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the application %s", g.Name, app.Name)
@@ -240,20 +240,20 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 					if err := group.UpdateGroupRoleInApplication(tx, app.ID, g.ID, groupProject.Permission); err != nil {
 						return sdk.WrapError(err, "AddGroupInProject: Cannot update group %s on application %s", g.Name, app.Name)
 					}
-				} else if err := application.AddGroup(tx, api.Cache, p, &app, getUser(ctx), groupProject); err != nil {
+				} else if err := application.AddGroup(tx, api.Cache, p, &app, deprecatedGetUser(ctx), groupProject); err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot insert group %s on application %s", g.Name, app.Name)
 				}
 			}
 		}
 
 		// apply on pipeline
-		pipelines, errlp := pipeline.LoadPipelines(tx, p.ID, false, getUser(ctx))
+		pipelines, errlp := pipeline.LoadPipelines(tx, p.ID, false, deprecatedGetUser(ctx))
 		if errlp != nil {
 			return sdk.WrapError(errlp, "AddGroupInProject: Cannot load pipelines for project %s", p.Name)
 		}
 
 		for _, pip := range pipelines {
-			if permission.AccessToPipeline(key, sdk.DefaultEnv.Name, pip.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
+			if permission.AccessToPipeline(key, sdk.DefaultEnv.Name, pip.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
 				inPip, err := group.CheckGroupInPipeline(tx, pip.ID, g.ID)
 				if err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the pipeline %s", g.Name, pip.Name)
@@ -269,13 +269,13 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 		}
 
 		// apply on environment
-		envs, errle := environment.LoadEnvironments(tx, p.Key, false, getUser(ctx))
+		envs, errle := environment.LoadEnvironments(tx, p.Key, false, deprecatedGetUser(ctx))
 		if errle != nil {
 			return sdk.WrapError(errle, "AddGroupInProject: Cannot load environments for project %s", p.Name)
 		}
 
 		for _, env := range envs {
-			if permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
+			if permission.AccessToEnvironment(key, env.Name, deprecatedGetUser(ctx), permission.PermissionReadWriteExecute) {
 				inEnv, err := group.IsInEnvironment(tx, env.ID, g.ID)
 				if err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the environment %s", g.Name, env.Name)
@@ -294,7 +294,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot commit transaction")
 		}
 
-		event.PublishAddProjectPermission(p, groupProject, getUser(ctx))
+		event.PublishAddProjectPermission(p, groupProject, deprecatedGetUser(ctx))
 
 		if err := group.LoadGroupByProject(api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot load groups on project %s", p.Key)
@@ -312,7 +312,7 @@ func (api *API) importGroupsInProjectHandler() service.Handler {
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "importGroupsInProjectHandler> Cannot load %s", key)
 		}

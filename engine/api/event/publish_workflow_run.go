@@ -12,7 +12,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string) {
+func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName, envName string, num int64, sub int64, status string, tags []sdk.WorkflowRunTag) {
 	event := sdk.Event{
 		Timestamp:         time.Now(),
 		Hostname:          hostname,
@@ -27,6 +27,7 @@ func publishRunWorkflow(payload interface{}, key, workflowName, appName, pipName
 		WorkflowRunNum:    num,
 		WorkflowRunNumSub: sub,
 		Status:            status,
+		Tags:              tags,
 	}
 	publishEvent(event)
 }
@@ -42,7 +43,7 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 		LastModified:  wr.LastModified.Unix(),
 		Tags:          wr.Tags,
 	}
-	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status)
+	publishRunWorkflow(e, projectKey, wr.Workflow.Name, "", "", "", wr.Number, wr.LastSubNumber, wr.Status, wr.Tags)
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
@@ -126,7 +127,7 @@ func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, w sdk.W
 	if sdk.StatusIsTerminated(nr.Status) {
 		e.Done = nr.Done.Unix()
 	}
-	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status)
+	publishRunWorkflow(e, w.ProjectKey, w.Name, appName, pipName, envName, nr.Number, nr.SubNumber, nr.Status, nil)
 }
 
 // PublishWorkflowNodeJobRun publish a WorkflowNodeJobRun
@@ -140,5 +141,5 @@ func PublishWorkflowNodeJobRun(db gorp.SqlExecutor, pkey, wname string, jr sdk.W
 	if sdk.StatusIsTerminated(jr.Status) {
 		e.Done = jr.Done.Unix()
 	}
-	publishRunWorkflow(e, pkey, wname, "", "", "", 0, 0, jr.Status)
+	publishRunWorkflow(e, pkey, wname, "", "", "", 0, 0, jr.Status, nil)
 }

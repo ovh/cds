@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"reflect"
 	"regexp"
 
 	"github.com/howeyc/gopass"
@@ -25,19 +24,15 @@ var signupCmd = cli.Command{
 				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
 				return match
 			},
-			Kind: reflect.String,
 		}, {
 			Name:  "username",
 			Usage: "CDS Username",
-			Kind:  reflect.String,
 		}, {
 			Name:  "fullname",
 			Usage: "Fullname",
-			Kind:  reflect.String,
 		}, {
 			Name:  "email",
 			Usage: "Email",
-			Kind:  reflect.String,
 		},
 	},
 }

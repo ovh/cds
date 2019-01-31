@@ -14,7 +14,7 @@ A template contains a workflow, pipelines, applications, environments in yaml fo
 Each yaml file of a template is evaluated as a Golang template (with [[ and ]] delimiters) so loop or condition can be used in templates.
 
 ## Template parameters
-There are three types of custom parameters available in a template (string, boolean, repository).
+There are four types of custom parameters available in a template (string, boolean, repository, json).
 ![Parameters](/images/workflow_template_parameters.png)
 
 There are some others parameters that are automatically added by CDS:
@@ -31,6 +31,15 @@ cdsctl template apply
 
 You can also create a workflow from a template with the web UI.
 ![Apply](/images/workflow_template_apply_ui.gif)
+
+## Bulk apply a template
+To generate or update multiple workflows from a same template in one time you can use the bulk feature. This works both in cdsctl and cds ui:
+```sh
+cdsctl template bulk
+```
+<asciinema-player src="/images/workflow_template_bulk.cast" cols="100" rows="25" autoplay="true" loop="true"></asciinema-player>
+
+![Bulk](/images/workflow_template_bulk_ui.gif)
 
 ## Import/Create/Export
 With cdsctl you can import/export a template from/to yaml files with cdsctl, you can also create a template in the ui from **settings** menu:

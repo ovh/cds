@@ -25,7 +25,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		PipelineName        string
 		ApplicationName     string
 		EnvironmentName     string
-		ProjectPlatformName string
+		ProjectIntegrationName string
 		PipelineHooks       []HookEntry
 		Permissions         map[string]int
 		HistoryLength       int64
@@ -104,7 +104,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 				PipelineName:        tt.fields.PipelineName,
 				ApplicationName:     tt.fields.ApplicationName,
 				EnvironmentName:     tt.fields.EnvironmentName,
-				ProjectPlatformName: tt.fields.ProjectPlatformName,
+				ProjectIntegrationName: tt.fields.ProjectIntegrationName,
 				PipelineHooks:       tt.fields.PipelineHooks,
 				Permissions:         tt.fields.Permissions,
 			}
@@ -127,7 +127,7 @@ func TestWorkflow_checkValidity(t *testing.T) {
 		PipelineName        string
 		ApplicationName     string
 		EnvironmentName     string
-		ProjectPlatformName string
+		ProjectIntegrationName string
 		PipelineHooks       []HookEntry
 		Permissions         map[string]int
 	}
@@ -188,7 +188,7 @@ func TestWorkflow_checkValidity(t *testing.T) {
 				PipelineName:        tt.fields.PipelineName,
 				ApplicationName:     tt.fields.ApplicationName,
 				EnvironmentName:     tt.fields.EnvironmentName,
-				ProjectPlatformName: tt.fields.ProjectPlatformName,
+				ProjectIntegrationName: tt.fields.ProjectIntegrationName,
 				PipelineHooks:       tt.fields.PipelineHooks,
 				Permissions:         tt.fields.Permissions,
 			}
@@ -212,7 +212,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		PipelineName        string
 		ApplicationName     string
 		EnvironmentName     string
-		ProjectPlatformName string
+		ProjectIntegrationName string
 		PipelineHooks       []HookEntry
 		Permissions         map[string]int
 		HistoryLength       int64
@@ -603,10 +603,10 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			},
 		},
 		{
-			name: "Complex workflow with platform should not raise an error",
+			name: "Complex workflow with integration should not raise an error",
 			fields: fields{
 				PipelineName:        "pipeline",
-				ProjectPlatformName: "platform",
+				ProjectIntegrationName: "integration",
 			},
 			wantErr: false,
 			want: sdk.Workflow{
@@ -618,7 +618,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 						Type: "pipeline",
 						Context: &sdk.NodeContext{
 							PipelineName:        "pipeline",
-							ProjectPlatformName: "platform",
+							ProjectIntegrationName: "integration",
 						},
 					},
 				},
@@ -688,7 +688,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				PipelineName:        tt.fields.PipelineName,
 				ApplicationName:     tt.fields.ApplicationName,
 				EnvironmentName:     tt.fields.EnvironmentName,
-				ProjectPlatformName: tt.fields.ProjectPlatformName,
+				ProjectIntegrationName: tt.fields.ProjectIntegrationName,
 				PipelineHooks:       tt.fields.PipelineHooks,
 				Permissions:         tt.fields.Permissions,
 				HistoryLength:       &tt.fields.HistoryLength,
@@ -709,7 +709,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			got.Applications = nil
 			got.Pipelines = nil
 			got.Environments = nil
-			got.ProjectPlatforms = nil
+			got.ProjectIntegrations = nil
 
 			expextedValues, _ := dump.ToStringMap(tt.want)
 			actualValues, _ := dump.ToStringMap(got)

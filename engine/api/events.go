@@ -86,7 +86,7 @@ func (b *eventsBroker) cacheSubscribe(c context.Context, cacheMsgChan chan<- sdk
 			}
 			var e sdk.Event
 			if err := json.Unmarshal([]byte(msg), &e); err != nil {
-				log.Warning("events.cacheSubscribe> Cannot unmarshal event %s: %s", msg, err)
+				// don't print the error as we doesn't care
 				continue
 			}
 
@@ -183,7 +183,7 @@ func (b *eventsBroker) ServeHTTP() service.Handler {
 			return sdk.WrapError(fmt.Errorf("streaming unsupported"), "")
 		}
 
-		user := getUser(ctx)
+		user := deprecatedGetUser(ctx)
 		if err := loadUserPermissions(b.dbFunc(), b.cache, user); err != nil {
 			return sdk.WrapError(err, "eventsBroker.Serve Cannot load user permission")
 		}

@@ -1,9 +1,9 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, fakeAsync} from '@angular/core/testing';
-import {MockBackend} from '@angular/http/testing';
-import {Injector} from '@angular/core';
-import {Table} from './table';
+import { Injector } from '@angular/core';
+import { fakeAsync, TestBed } from '@angular/core/testing';
+import { MockBackend } from '@angular/http/testing';
+import { Table } from './table';
 
 describe('CDS: Table component', () => {
 
@@ -16,7 +16,7 @@ describe('CDS: Table component', () => {
             ],
             providers: [
             ],
-            imports : [
+            imports: [
             ]
         });
 
@@ -28,7 +28,7 @@ describe('CDS: Table component', () => {
     });
 
 
-    it('Table method', fakeAsync( () => {
+    it('Table method', fakeAsync(() => {
         // Create loginComponent
         let myTable = new MyTable();
         myTable.nbElementsByPage = 2;
@@ -62,16 +62,15 @@ describe('CDS: Table component', () => {
         expect(JSON.stringify(myTable.getDataForCurrentPage())).toBe(JSON.stringify(['aa', 'bb']));
     }));
 
-    it('Null Table', fakeAsync( () => {
+    it('Null Table', fakeAsync(() => {
         // Create loginComponent
         let myTable = new MyEmptyTable();
         expect(JSON.stringify(myTable.getDataForCurrentPage())).toBe(JSON.stringify([]));
         expect(myTable.getNbOfPages()).toBe(1);
     }));
 
-
-    class MyTable extends Table {
-        getData(): any[] {
+    class MyTable extends Table<string> {
+        getData(): Array<string> {
             return [
                 'aa',
                 'bb',
@@ -82,8 +81,8 @@ describe('CDS: Table component', () => {
         }
     }
 
-    class MyEmptyTable extends Table {
-        getData(): any[] {
+    class MyEmptyTable extends Table<string> {
+        getData(): Array<string> {
             return null;
         }
     }

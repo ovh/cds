@@ -15,7 +15,7 @@ type sqlNodeContextData struct {
 	PipelineID                sql.NullInt64  `db:"pipeline_id"`
 	ApplicationID             sql.NullInt64  `db:"application_id"`
 	EnvironmentID             sql.NullInt64  `db:"environment_id"`
-	ProjectPlatformID         sql.NullInt64  `db:"project_platform_id"`
+	ProjectIntegrationID      sql.NullInt64  `db:"project_integration_id"`
 	DefaultPayload            sql.NullString `db:"default_payload"`
 	DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
 	Conditions                sql.NullString `db:"conditions"`
@@ -39,8 +39,8 @@ func insertNodeContextData(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.Node) er
 	if n.Context.EnvironmentID != 0 {
 		tempContext.EnvironmentID = sql.NullInt64{Valid: true, Int64: n.Context.EnvironmentID}
 	}
-	if n.Context.ProjectPlatformID != 0 {
-		tempContext.ProjectPlatformID = sql.NullInt64{Valid: true, Int64: n.Context.ProjectPlatformID}
+	if n.Context.ProjectIntegrationID != 0 {
+		tempContext.ProjectIntegrationID = sql.NullInt64{Valid: true, Int64: n.Context.ProjectIntegrationID}
 	}
 
 	var errDP error

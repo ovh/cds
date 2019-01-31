@@ -72,7 +72,7 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 	serverCfg, has := s.Cfg.Servers[name]
 	if !has {
-		return nil, sdk.ErrNotFound
+		return nil, sdk.WithStack(sdk.ErrNotFound)
 	}
 
 	if serverCfg.Github != nil {
@@ -122,7 +122,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 			serverCfg.Gerrit.Status.ShowDetail,
 			serverCfg.Gerrit.SSHPort), nil
 	}
-	return nil, sdk.ErrNotFound
+	return nil, sdk.WithStack(sdk.ErrNotFound)
 }
 
 // Serve will start the http api server

@@ -332,10 +332,10 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 		stage.Status = sdk.StatusDisabled
 	}
 
-	_, next = observability.Span(ctx, "workflow.getPlatformPluginBinaries")
-	platformPluginBinaries, err := getPlatformPluginBinaries(db, runContext)
+	_, next = observability.Span(ctx, "workflow.getIntegrationPluginBinaries")
+	integrationPluginBinaries, err := getIntegrationPluginBinaries(db, runContext)
 	if err != nil {
-		return report, sdk.WrapError(err, "unable to get platform plugins requirement")
+		return report, sdk.WrapError(err, "unable to get integration plugins requirement")
 	}
 	next()
 
@@ -379,14 +379,14 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
-			ProjectID:              wr.ProjectID,
-			WorkflowNodeRunID:      run.ID,
-			Start:                  time.Time{},
-			Queued:                 time.Now(),
-			Status:                 sdk.StatusWaiting.String(),
-			Parameters:             jobParams,
-			ExecGroups:             groups,
-			PlatformPluginBinaries: platformPluginBinaries,
+			ProjectID:                 wr.ProjectID,
+			WorkflowNodeRunID:         run.ID,
+			Start:                     time.Time{},
+			Queued:                    time.Now(),
+			Status:                    sdk.StatusWaiting.String(),
+			Parameters:                jobParams,
+			ExecGroups:                groups,
+			IntegrationPluginBinaries: integrationPluginBinaries,
 			Job: sdk.ExecutedJob{
 				Job: *job,
 			},
@@ -452,13 +452,13 @@ func addJobsToQueue(ctx context.Context, db gorp.SqlExecutor, stage *sdk.Stage, 
 	return report, nil
 }
 
-func getPlatformPluginBinaries(db gorp.SqlExecutor, runContext nodeRunContext) ([]sdk.GRPCPluginBinary, error) {
-	if runContext.ProjectPlatform.Model.PluginName != "" {
-		p, err := plugin.LoadByName(db, runContext.ProjectPlatform.Model.PluginName)
+func getIntegrationPluginBinaries(db gorp.SqlExecutor, runContext nodeRunContext) ([]sdk.GRPCPluginBinary, error) {
+	if runContext.ProjectIntegration.Model.ID > 0 {
+		plugin, err := plugin.LoadByIntegrationModelIDAndType(db, runContext.ProjectIntegration.Model.ID, sdk.GRPCPluginDeploymentIntegration)
 		if err != nil {
-			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getPlatformPluginBinaries> Cannot find plugin %s, %v", runContext.ProjectPlatform.Model.PluginName, err)
+			return nil, sdk.NewErrorFrom(sdk.ErrNotFound, "Cannot find plugin for integration model id %d, %v", runContext.ProjectIntegration.Model.ID, err)
 		}
-		return p.Binaries, nil
+		return plugin.Binaries, nil
 	}
 	return nil, nil
 }
@@ -599,10 +599,10 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 				runContext.Environment = env
 			}
 		}
-		if refNode.Context.ProjectPlatformID != 0 && wf.ProjectPlatforms != nil {
-			pp, has := wf.ProjectPlatforms[refNode.Context.ProjectPlatformID]
+		if refNode.Context.ProjectIntegrationID != 0 && wf.ProjectIntegrations != nil {
+			pp, has := wf.ProjectIntegrations[refNode.Context.ProjectIntegrationID]
 			if has {
-				runContext.ProjectPlatform = pp
+				runContext.ProjectIntegration = pp
 			}
 		}
 	}

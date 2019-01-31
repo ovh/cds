@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -23,9 +23,6 @@ var (
 			return sdk.WrapError(err, "application.loadDefault")
 		}
 		if err := loadApplications(db, store, proj, u); err != nil {
-			return sdk.WrapError(err, "application.loadDefault")
-		}
-		if err := loadApplicationPipelines(db, store, proj, u); err != nil {
 			return sdk.WrapError(err, "application.loadDefault")
 		}
 		if err := loadPermission(db, store, proj, u); err != nil {
@@ -68,22 +65,6 @@ var (
 		return nil
 	}
 
-	loadApplicationPipelines = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		if proj.Applications == nil {
-			if err := loadApplications(db, store, proj, nil); err != nil {
-				return sdk.WrapError(err, "application.loadApplicationPipelines")
-			}
-		}
-
-		for i := range proj.Applications {
-			a := &proj.Applications[i]
-			if err := (*application.LoadOptions.WithTriggers)(db, store, a, nil); err != nil {
-				return sdk.WrapError(err, "application.loadApplicationPipelines")
-			}
-		}
-		return nil
-	}
-
 	loadVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		return loadAllVariables(db, store, proj)
 	}
@@ -115,12 +96,12 @@ var (
 		return LoadAllDecryptedKeys(db, proj)
 	}
 
-	loadPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		pf, err := platform.LoadPlatformsByProjectID(db, proj.ID, false)
+	loadIntegrations = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID, false)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load platforms")
+			return sdk.WrapError(err, "Cannot load integrations")
 		}
-		proj.Platforms = pf
+		proj.Integrations = pf
 		return nil
 	}
 
@@ -129,12 +110,12 @@ var (
 		return nil
 	}
 
-	loadClearPlatforms = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		pf, err := platform.LoadPlatformsByProjectID(db, proj.ID, true)
+	loadClearIntegrations = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		pf, err := integration.LoadIntegrationsByProjectID(db, proj.ID, true)
 		if err != nil {
-			return sdk.WrapError(err, "Cannot load platforms")
+			return sdk.WrapError(err, "Cannot load integrations")
 		}
-		proj.Platforms = pf
+		proj.Integrations = pf
 		return nil
 	}
 

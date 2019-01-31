@@ -32,5 +32,6 @@ $ docker run \
 -e HUBOT_XMPP_PASSWORD=your-password  \
 -e HUBOT_XMPP_PORT=5222  \
 -e HUBOT_XMPP_USERNAME=robot.cds@localhost.local  \
+-e HUBOT_XMPP_DEFAULT_DOMAIN=@localhost.local \
 -it cdsbot-image
 ```

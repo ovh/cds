@@ -36,6 +36,7 @@ type Driver interface {
 	Store() sessionstore.Store
 	CheckAuth(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error)
 	Authentify(username, password string) (bool, error)
+	DeprecatedSession(ctx context.Context, sessionToken, username string) (context.Context, error)
 }
 
 //GetDriver is a factory

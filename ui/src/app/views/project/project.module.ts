@@ -10,12 +10,12 @@ import {ProjectApplicationListComponent} from './show/application/application.li
 import {ProjectEnvironmentFormComponent} from './show/environment/form/environment.form.component';
 import {ProjectEnvironmentListComponent} from './show/environment/list/environment.list.component';
 import {ProjectEnvironmentComponent} from './show/environment/list/item/environment.component';
+import {ProjectIntegrationFormComponent} from './show/integrations/form/integration.form.component';
+import {ProjectIntegrationListComponent} from './show/integrations/list/integration.list.component';
+import {ProjectIntegrationsComponent} from './show/integrations/project.integrations.component';
 import {ProjectKeysComponent} from './show/keys/project.keys.component';
 import {ProjectPermissionsComponent} from './show/permission/permission.component';
 import {ProjectPipelinesComponent} from './show/pipeline/pipeline.list.component';
-import {ProjectPlatformFormComponent} from './show/platforms/form/platform.form.component';
-import {ProjectPlatformListComponent} from './show/platforms/list/platform.list.component';
-import {ProjectPlatformsComponent} from './show/platforms/project.platforms.component';
 import {ProjectShowComponent} from './show/project.component';
 import {ProjectVariablesComponent} from './show/variable/variable.list.component';
 import {ProjectWarningsComponent} from './show/warnings/warnings.component';
@@ -43,9 +43,9 @@ import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.compon
         ProjectWorkflowListLabelsComponent,
         ProjectWorkflowListLinesComponent,
         ProjectWorkflowListComponent,
-        ProjectPlatformsComponent,
-        ProjectPlatformFormComponent,
-        ProjectPlatformListComponent,
+        ProjectIntegrationsComponent,
+        ProjectIntegrationFormComponent,
+        ProjectIntegrationListComponent,
         ProjectWarningsComponent
     ],
     imports: [

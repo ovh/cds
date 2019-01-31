@@ -202,7 +202,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowRunNumHandler> Cannot num must be > %d, got %d", num, m.Num)
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -210,7 +210,7 @@ func (api *API) postWorkflowRunNumHandler() service.Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		wf, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "postWorkflowRunNumHandler > Cannot load workflow")
 		}
@@ -254,7 +254,7 @@ func (api *API) resyncWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -269,7 +269,7 @@ func (api *API) resyncWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(errT, "resyncWorkflowRunHandler> Cannot start transaction")
 		}
 
-		if err := workflow.Resync(tx, api.Cache, proj, run, getUser(ctx)); err != nil {
+		if err := workflow.Resync(tx, api.Cache, proj, run, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot resync pipelines")
 		}
 
@@ -304,54 +304,8 @@ func (api *API) getWorkflowRunHandler() service.Handler {
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
 
-		// Here we can ignore error
-		_ = migrateWorkflowRun(ctx, api.mustDB(), run)
-
 		return service.WriteJSON(w, run, http.StatusOK)
 	}
-}
-
-func migrateWorkflowRun(ctx context.Context, db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
-	if run != nil && run.Workflow.WorkflowData == nil {
-		data := run.Workflow.Migrate(true)
-		run.Workflow.WorkflowData = &data
-
-		run.Workflow.Applications = make(map[int64]sdk.Application)
-		run.Workflow.Environments = make(map[int64]sdk.Environment)
-		run.Workflow.ProjectPlatforms = make(map[int64]sdk.ProjectPlatform)
-		run.Workflow.HookModels = make(map[int64]sdk.WorkflowHookModel)
-		run.Workflow.OutGoingHookModels = make(map[int64]sdk.WorkflowHookModel)
-
-		nodes := run.Workflow.Nodes(true)
-		for _, n := range nodes {
-			if n.Context == nil {
-				continue
-			}
-			if n.Context.Application != nil && n.Context.Application.ID > 0 {
-				run.Workflow.Applications[n.Context.Application.ID] = *n.Context.Application
-			}
-			if n.Context.Environment != nil && n.Context.Environment.ID > 0 {
-				run.Workflow.Environments[n.Context.Environment.ID] = *n.Context.Environment
-			}
-			if n.Context.ProjectPlatform != nil && n.Context.ProjectPlatform.ID > 0 {
-				run.Workflow.ProjectPlatforms[n.Context.ProjectPlatform.ID] = *n.Context.ProjectPlatform
-			}
-			for _, h := range n.Hooks {
-				if h.WorkflowHookModel.ID > 0 {
-					run.Workflow.HookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
-				}
-			}
-			for _, h := range n.OutgoingHooks {
-				if h.WorkflowHookModel.ID > 0 {
-					run.Workflow.OutGoingHookModels[h.WorkflowHookModel.ID] = h.WorkflowHookModel
-				}
-			}
-		}
-		if err := workflow.UpdateWorkflowRun(ctx, db, run); err != nil {
-			return sdk.WrapError(err, "unable to migrate old workflow run")
-		}
-	}
-	return nil
 }
 
 func (api *API) stopWorkflowRunHandler() service.Handler {
@@ -369,12 +323,12 @@ func (api *API) stopWorkflowRunHandler() service.Handler {
 			return sdk.WrapError(errL, "stopWorkflowRunHandler> Unable to load last workflow run")
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "stopWorkflowRunHandler> Unable to load project")
 		}
 
-		report, err := stopWorkflowRun(ctx, api.mustDB, api.Cache, proj, run, getUser(ctx), 0)
+		report, err := stopWorkflowRun(ctx, api.mustDB, api.Cache, proj, run, deprecatedGetUser(ctx), 0)
 		if err != nil {
 			return sdk.WrapError(err, "Unable to stop workflow")
 		}
@@ -516,10 +470,10 @@ func updateParentWorkflowRun(ctx context.Context, dbFunc func() *gorp.DbMap, sto
 
 	parentProj, err := project.Load(
 		dbFunc(), store, run.RootRun().HookEvent.ParentWorkflow.Key,
-		getUser(ctx),
+		deprecatedGetUser(ctx),
 		project.LoadOptions.WithVariables,
 		project.LoadOptions.WithFeatures,
-		project.LoadOptions.WithPlatforms,
+		project.LoadOptions.WithIntegrations,
 		project.LoadOptions.WithApplicationVariables,
 		project.LoadOptions.WithApplicationWithDeploymentStrategies,
 	)
@@ -588,7 +542,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 			return err
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if errP != nil {
 			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project %s", key)
 		}
@@ -596,7 +550,7 @@ func (api *API) getWorkflowCommitsHandler() service.Handler {
 		var wf *sdk.Workflow
 		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, workflow.LoadRunOptions{DisableDetailledNodeRun: true})
 		if errW != nil {
-			wf, errW = workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), workflow.LoadOptions{})
+			wf, errW = workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), workflow.LoadOptions{})
 			if errW != nil {
 				return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow %s", name)
 			}
@@ -679,7 +633,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return err
 		}
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithVariables)
 		if errP != nil {
 			return sdk.WrapError(errP, "stopWorkflowNodeRunHandler> Cannot load project")
 		}
@@ -690,7 +644,7 @@ func (api *API) stopWorkflowNodeRunHandler() service.Handler {
 			return sdk.WrapError(err, "Unable to load last workflow run")
 		}
 
-		report, err := api.stopWorkflowNodeRun(ctx, api.mustDB, api.Cache, p, nodeRun, name, getUser(ctx))
+		report, err := api.stopWorkflowNodeRun(ctx, api.mustDB, api.Cache, p, nodeRun, name, deprecatedGetUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "Unable to stop workflow run")
 		}
@@ -794,7 +748,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		observability.Current(ctx,
 			observability.Tag(observability.TagProjectKey, key),
@@ -806,7 +760,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 		p, errP := project.Load(api.mustDB(), api.Cache, key, u,
 			project.LoadOptions.WithVariables,
 			project.LoadOptions.WithFeatures,
-			project.LoadOptions.WithPlatforms,
+			project.LoadOptions.WithIntegrations,
 			project.LoadOptions.WithApplicationVariables,
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
 			project.LoadOptions.WithEnvironments,
@@ -832,7 +786,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
 			}
-			if err := migrateWorkflowRun(ctx, api.mustDB(), lastRun); err != nil {
+			if err := workflow.MigrateWorkflowRun(ctx, api.mustDB(), lastRun); err != nil {
 				return sdk.WrapError(err, "unable to migrate workflow run")
 			}
 		}
@@ -886,7 +840,7 @@ func (api *API) postWorkflowRunHandler() service.Handler {
 					project.LoadOptions.WithEnvironments,
 					project.LoadOptions.WithPipelines,
 					project.LoadOptions.WithClearKeys,
-					project.LoadOptions.WithClearPlatforms,
+					project.LoadOptions.WithClearIntegrations,
 				)
 
 				if errp != nil {
@@ -1058,7 +1012,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getDownloadArtifactHandler> Invalid node job run ID")
 		}
 
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithPlatforms)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
 			return sdk.WrapError(err, "unable to load projet")
 		}
@@ -1066,7 +1020,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 		options := workflow.LoadOptions{
 			WithoutNode: true,
 		}
-		work, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, getUser(ctx), options)
+		work, errW := workflow.Load(ctx, api.mustDB(), api.Cache, proj, name, deprecatedGetUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "getDownloadArtifactHandler> Cannot load workflow")
 		}
@@ -1168,7 +1122,7 @@ func (api *API) getWorkflowNodeRunJobServiceLogsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		runJobID, errJ := requestVarInt(r, "runJobId")
 		if errJ != nil {
-			return sdk.WrapError(errJ, "getWorkflowNodeRunJobServiceLogsHandler> runJobId: invalid number")
+			return sdk.WrapError(errJ, "runJobId: invalid number")
 		}
 		db := api.mustDB()
 
@@ -1277,7 +1231,7 @@ func (api *API) postResyncVCSWorkflowRunHandler() service.Handler {
 			return err
 		}
 
-		proj, errP := project.Load(db, api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errP := project.Load(db, api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithVariables)
 		if errP != nil {
 			return sdk.WrapError(errP, "postResyncVCSWorkflowRunHandler> Cannot load project")
 		}

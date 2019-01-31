@@ -8,16 +8,13 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/service"
 
-	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -52,7 +49,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot create audit")
 		}
 
@@ -69,7 +66,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineUpdate(key, p.Name, oldName, getUser(ctx))
+		event.PublishPipelineUpdate(key, p.Name, oldName, deprecatedGetUser(ctx))
 
 		return service.WriteJSON(w, pipelineDB, http.StatusOK)
 	}
@@ -87,7 +84,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 		}
 
 		db := api.mustDB()
-		u := getUser(ctx)
+		u := deprecatedGetUser(ctx)
 
 		proj, errP := project.Load(db, api.Cache, key, u)
 		if errP != nil {
@@ -139,33 +136,13 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 	}
 }
 
-func (api *API) getApplicationUsingPipelineHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get project name in URL
-		vars := mux.Vars(r)
-		key := vars["key"]
-		name := vars["permPipelineKey"]
-
-		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), key, name, false)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load pipeline %s", name)
-		}
-		applications, err := application.LoadByPipeline(api.mustDB(), api.Cache, pipelineData.ID, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "Cannot load applications using pipeline %s", name)
-		}
-
-		return service.WriteJSON(w, applications, http.StatusOK)
-	}
-}
-
 func (api *API) addPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		proj, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		proj, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errl != nil {
 			return sdk.WrapError(errl, "AddPipeline: Cannot load %s", key)
 		}
@@ -196,7 +173,7 @@ func (api *API) addPipelineHandler() service.Handler {
 		defer tx.Rollback()
 
 		p.ProjectID = proj.ID
-		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p, getUser(ctx)); err != nil {
+		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p, deprecatedGetUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
@@ -216,7 +193,7 @@ func (api *API) addPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineAdd(key, p, getUser(ctx))
+		event.PublishPipelineAdd(key, p, deprecatedGetUser(ctx))
 
 		p.Permission = permission.PermissionReadWriteExecute
 
@@ -253,18 +230,10 @@ func (api *API) getPipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
 		}
 
-		p.Permission = permission.PipelinePermission(projectKey, p.Name, getUser(ctx))
+		p.Permission = permission.PipelinePermission(projectKey, p.Name, deprecatedGetUser(ctx))
 
 		if withApp || withWorkflows || withEnvironments {
 			p.Usage = &sdk.Usage{}
-		}
-
-		if withApp {
-			apps, errA := application.LoadByPipeline(api.mustDB(), api.Cache, p.ID, getUser(ctx))
-			if errA != nil {
-				return sdk.WrapError(errA, "getPipelineHandler> Cannot load applications using pipeline %s", p.Name)
-			}
-			p.Usage.Applications = apps
 		}
 
 		if withWorkflows {
@@ -273,14 +242,6 @@ func (api *API) getPipelineHandler() service.Handler {
 				return sdk.WrapError(errW, "getPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
 			}
 			p.Usage.Workflows = wf
-		}
-
-		if withEnvironments {
-			envs, errE := environment.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
-			if errE != nil {
-				return sdk.WrapError(errE, "getPipelineHandler> Cannot load environments using pipeline %s", p.Name)
-			}
-			p.Usage.Environments = envs
 		}
 
 		return service.WriteJSON(w, p, http.StatusOK)
@@ -299,7 +260,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		project, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+		project, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrNoProject) {
 				log.Warning("getPipelinesHandler: Cannot load %s: %s\n", key, err)
@@ -307,7 +268,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 			return err
 		}
 
-		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true, getUser(ctx))
+		pip, err := pipeline.LoadPipelines(api.mustDB(), project.ID, true, deprecatedGetUser(ctx))
 		if err != nil {
 			if !sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
 				log.Warning("getPipelinesHandler>Cannot load pipelines: %s\n", err)
@@ -319,94 +280,6 @@ func (api *API) getPipelinesHandler() service.Handler {
 	}
 }
 
-func (api *API) getPipelineHistoryHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get pipeline and action name in URL
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
-		appName := vars["permApplicationName"]
-
-		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(err, "Cannot parse form")
-		}
-		envName := r.Form.Get("envName")
-		limitString := r.Form.Get("limit")
-		status := r.Form.Get("status")
-		branchName := r.Form.Get("branchName")
-		remote := r.Form.Get("remote")
-		buildNumber := r.Form.Get("buildNumber")
-
-		var limit int
-		if limitString != "" {
-			var erra error
-			limit, erra = strconv.Atoi(limitString)
-			if erra != nil {
-				return erra
-			}
-		} else {
-			limit = 20
-		}
-
-		a, errln := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithPipelines)
-		if errln != nil {
-			return sdk.WrapError(errln, "getPipelineHistoryHandler> Cannot load application %s", appName)
-		}
-
-		var p *sdk.Pipeline
-		for _, apip := range a.Pipelines {
-			if apip.Pipeline.Name == pipelineName {
-				p = &apip.Pipeline
-				break
-			}
-		}
-
-		if p == nil {
-			return sdk.WrapError(sdk.ErrPipelineNotAttached, "Pipeline not found on application")
-		}
-
-		var env *sdk.Environment
-		if envName == "" || envName == sdk.DefaultEnv.Name {
-			env = &sdk.DefaultEnv
-		} else {
-			var errle error
-			env, errle = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
-			if errle != nil {
-				return sdk.WrapError(errle, "Cannot load environment %s", envName)
-			}
-		}
-
-		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "No enough right on this environment %s", envName)
-		}
-
-		opts := []pipeline.ExecOptionFunc{
-			pipeline.LoadPipelineBuildOpts.WithStatus(status),
-			pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
-		}
-
-		if a.RepositoryFullname != "" && (remote == "" || remote == a.RepositoryFullname) {
-			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(a.RepositoryFullname))
-		} else if remote == "" {
-			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(remote))
-		} else {
-			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
-		}
-
-		if buildNumber != "" {
-			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithBuildNumber(buildNumber))
-		}
-
-		pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), a.ID, p.ID, env.ID, limit, opts...)
-
-		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load pipeline %s history", p.Name)
-		}
-
-		return service.WriteJSON(w, pbs, http.StatusOK)
-	}
-}
-
 func (api *API) deletePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
@@ -414,7 +287,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load project")
 		}
@@ -422,15 +295,6 @@ func (api *API) deletePipelineHandler() service.Handler {
 		p, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load pipeline %s", pipelineName)
-		}
-
-		used, err := application.CountPipeline(api.mustDB(), p.ID)
-		if err != nil {
-			return sdk.WrapError(err, "Cannot check if pipeline is used by an application")
-		}
-
-		if used {
-			return sdk.WrapError(sdk.ErrPipelineHasApplication, "Cannot delete a pipeline used by at least 1 application")
 		}
 
 		usedW, err := workflow.CountPipeline(api.mustDB(), p.ID)
@@ -452,7 +316,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot delete pipeline audit")
 		}
 
-		if err := pipeline.DeletePipeline(tx, p.ID, getUser(ctx).ID); err != nil {
+		if err := pipeline.DeletePipeline(tx, p.ID, deprecatedGetUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "Cannot delete pipeline %s", pipelineName)
 		}
 
@@ -460,108 +324,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		event.PublishPipelineDelete(key, *p, getUser(ctx))
+		event.PublishPipelineDelete(key, *p, deprecatedGetUser(ctx))
 		return nil
-	}
-}
-
-func (api *API) getPipelineCommitsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		appName := vars["permApplicationName"]
-		pipName := vars["permPipelineKey"]
-
-		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "getPipelineCommitsHandler> Cannot parse form")
-
-		}
-		envName := r.Form.Get("envName")
-		hash := r.Form.Get("hash")
-
-		// Load project
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "getPipelineCommitsHandler> Cannot load project")
-		}
-
-		// Load pipeline
-		pip, errpip := pipeline.LoadPipeline(api.mustDB(), projectKey, pipName, false)
-		if errpip != nil {
-			return sdk.WrapError(errpip, "getPipelineCommitsHandler> Cannot load pipeline")
-		}
-
-		//Load the environment
-		var env *sdk.Environment
-		if envName == "" || envName == sdk.DefaultEnv.Name {
-			env = &sdk.DefaultEnv
-		} else {
-			var err error
-			env, err = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
-			if err != nil {
-				return sdk.WrapError(err, "Cannot load environment %s", envName)
-			}
-		}
-
-		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getPipelineCommitsHandler> No enough right on this environment %s (user=%s)", envName, getUser(ctx).Username)
-		}
-
-		//Load the application
-		app, errapp := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
-		if errapp != nil {
-			return sdk.WrapError(errapp, "getPipelineCommitsHandler> Unable to load application %s", appName)
-		}
-
-		commits := []sdk.VCSCommit{}
-
-		//Check it the application is attached to a repository
-		if app.VCSServer == "" {
-			log.Warning("getPipelineCommitsHandler> Application %s/%s not attached to a repository manager", projectKey, appName)
-			return service.WriteJSON(w, commits, http.StatusOK)
-		}
-
-		pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), app.ID, pip.ID, env.ID, 1, pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)))
-		if errpb != nil {
-			return sdk.WrapError(errpb, "getPipelineCommitsHandler> Cannot load pipeline build")
-		}
-
-		if len(pbs) != 1 {
-			log.Debug("getPipelineCommitsHandler> There is no previous build")
-			return service.WriteJSON(w, commits, http.StatusOK)
-		}
-
-		if app.RepositoryFullname == "" {
-			log.Debug("getPipelineCommitsHandler> No repository on the application %s", appName)
-			return service.WriteJSON(w, commits, http.StatusOK)
-		}
-
-		//Get the RepositoriesManager Client
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
-		client, errclient := repositoriesmanager.AuthorizedClient(ctx, api.mustDB(), api.Cache, vcsServer)
-		if errclient != nil {
-			return sdk.WrapError(errclient, "getPipelineCommitsHandler> Cannot get client")
-		}
-
-		if pbs[0].Trigger.VCSChangesHash == "" {
-			log.Debug("getPipelineCommitsHandler>No hash on the previous run %d", pbs[0].ID)
-			return service.WriteJSON(w, commits, http.StatusOK)
-		}
-
-		//If we are lucky, return a true diff
-		var errcommits error
-		commits, errcommits = client.Commits(ctx, app.RepositoryFullname, pbs[0].Trigger.VCSChangesBranch, pbs[0].Trigger.VCSChangesHash, hash)
-		if errcommits != nil {
-			return sdk.WrapError(errcommits, "getPipelineBuildCommitsHandler> Cannot get commits")
-		}
-
-		return service.WriteJSON(w, commits, http.StatusOK)
-	}
-}
-
-// DEPRECATED
-func (api *API) getPipelineBuildCommitsHandler() service.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, nil, http.StatusOK)
 	}
 }

@@ -1,31 +1,30 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, fakeAsync} from '@angular/core/testing';
-import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
-import {RouterTestingModule} from '@angular/router/testing';
-import {of} from 'rxjs';
-import {TranslateService, TranslateLoader, TranslateParser, TranslateModule} from '@ngx-translate/core';
-import {ProjectService} from '../../../service/project/project.service';
-import {ProjectStore} from '../../../service/project/project.store';
-import {PipelineService} from '../../../service/pipeline/pipeline.service';
-import {PipelineStore} from '../../../service/pipeline/pipeline.store';
-import {ToastService} from '../../../shared/toast/ToastService';
-import {PipelineModule} from '../pipeline.module';
-import {SharedModule} from '../../../shared/shared.module';
-import {PipelineShowComponent} from './pipeline.show.component';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {GroupPermission, Group} from '../../../model/group.model';
-import {Pipeline} from '../../../model/pipeline.model';
-import {Project} from '../../../model/project.model';
-import {Parameter} from '../../../model/parameter.model';
-import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
-import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
-import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
-import {HttpRequest} from '@angular/common/http';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import { HttpRequest } from '@angular/common/http';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { TranslateLoader, TranslateModule, TranslateParser, TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
 import 'rxjs/add/observable/of';
-import {NavbarService} from '../../../service/navbar/navbar.service';
-import {KeyService} from '../../../service/keys/keys.service';
-import {PipelineCoreService} from '../../../service/pipeline/pipeline.core.service';
+import { Group, GroupPermission } from '../../../model/group.model';
+import { Parameter } from '../../../model/parameter.model';
+import { Pipeline } from '../../../model/pipeline.model';
+import { Project } from '../../../model/project.model';
+import { AuthentificationStore } from '../../../service/auth/authentification.store';
+import { KeyService } from '../../../service/keys/keys.service';
+import { NavbarService } from '../../../service/navbar/navbar.service';
+import { PipelineCoreService } from '../../../service/pipeline/pipeline.core.service';
+import { PipelineService } from '../../../service/pipeline/pipeline.service';
+import { PipelineStore } from '../../../service/pipeline/pipeline.store';
+import { ProjectService } from '../../../service/project/project.service';
+import { ProjectStore } from '../../../service/project/project.store';
+import { ParameterEvent } from '../../../shared/parameter/parameter.event.model';
+import { PermissionEvent } from '../../../shared/permission/permission.event.model';
+import { SharedModule } from '../../../shared/shared.module';
+import { ToastService } from '../../../shared/toast/ToastService';
+import { PipelineModule } from '../pipeline.module';
+import { PipelineShowComponent } from './pipeline.show.component';
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {
@@ -39,7 +38,6 @@ describe('CDS: Pipeline Show', () => {
                 ProjectService,
                 ProjectStore,
                 NavbarService,
-                ApplicationPipelineService,
                 {provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 {provide: ToastService, useClass: MockToast},
                 TranslateService,

@@ -28,7 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/platform"
+	"github.com/ovh/cds/engine/api/integration"
 	"github.com/ovh/cds/engine/api/purge"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/secret"
@@ -169,7 +169,11 @@ type Configuration struct {
 		AccessToken string `toml:"accessToken" json:"-"`
 		Stream      string `toml:"stream" json:"-"`
 		URL         string `toml:"url" comment:"Example: http://localhost:9000" json:"url"`
-	} `toml:"graylog"  json:"graylog" comment:"###########################\n Graylog Search. \n When CDS API generates errors, you can fetch them with cdsctl. \n Examples: \n $ cdsctl admin errors get <error-id> \n $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007 \n##########################"`
+	} `toml:"graylog" json:"graylog" comment:"###########################\n Graylog Search. \n When CDS API generates errors, you can fetch them with cdsctl. \n Examples: \n $ cdsctl admin errors get <error-id> \n $ cdsctl admin errors get 55f6e977-d39b-11e8-8513-0242ac110007 \n##########################"`
+	Log struct {
+		StepMaxSize    int64 `toml:"stepMaxSize" default:"15728640" comment:"Max step logs size in bytes (default: 15MB)" json:"stepMaxSize"`
+		ServiceMaxSize int64 `toml:"serviceMaxSize" default:"15728640" comment:"Max service logs size in bytes (default: 15MB)" json:"serviceMaxSize"`
+	} `toml:"log" json:"log" comment:"###########################\n Log settings.\n##########################"`
 }
 
 // ProviderConfiguration is the piece of configuration for each provider authentication
@@ -362,7 +366,19 @@ func getUserSession(c context.Context) string {
 	return u
 }
 
-func getUser(c context.Context) *sdk.User {
+func getGrantedUser(c context.Context) *sdk.GrantedUser {
+	i := c.Value(ContextGrantedUser)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(*sdk.GrantedUser)
+	if !ok {
+		return nil
+	}
+	return u
+}
+
+func deprecatedGetUser(c context.Context) *sdk.User {
 	i := c.Value(auth.ContextUser)
 	if i == nil {
 		return nil
@@ -554,8 +570,8 @@ func (a *API) Serve(ctx context.Context) error {
 		return fmt.Errorf("cannot setup builtin workflow outgoing hook models: %v", err)
 	}
 
-	if err := platform.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
-		return fmt.Errorf("cannot setup platforms: %v", err)
+	if err := integration.CreateBuiltinModels(a.DBConnectionFactory.GetDBMap()); err != nil {
+		return fmt.Errorf("cannot setup integrations: %v", err)
 	}
 
 	log.Info("Initializing redis cache on %s...", a.Config.Cache.Redis.Host)
@@ -789,7 +805,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
-		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Addr, a.Config.GRPC.Port, false, "", ""); err != nil {
+		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Addr, a.Config.GRPC.Port, false, "", "", a.Config.Log.StepMaxSize); err != nil {
 			log.Error("Cannot start GRPC server: %v", err)
 		}
 	}()

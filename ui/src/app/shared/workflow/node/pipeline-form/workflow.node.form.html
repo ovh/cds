@@ -31,16 +31,16 @@
             </sm-select>
         </div>
         <div class="five wide field">
-            <label>{{ 'workflow_root_context_platform' | translate}}</label>
+            <label>{{ 'workflow_root_context_integration' | translate}}</label>
             <sui-select class="selection"
-                        name="selectPlatform"
-                        [(ngModel)]="node.context.project_platform_id"
-                        [options]="platforms"
+                        name="selectIntegration"
+                        [(ngModel)]="node.context.project_integration_id"
+                        [options]="integrations"
                         labelField="name"
                         valueField="id"
                         [isSearchable]="true"
-                        #selectPlatform>
-                <sui-select-option *ngFor="let t of selectPlatform.filteredOptions"
+                        #selectIntegration>
+                <sui-select-option *ngFor="let t of selectIntegration.filteredOptions"
                                     [value]="t">
                 </sui-select-option>
             </sui-select>

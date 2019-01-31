@@ -14,7 +14,7 @@ var workflowShowCmd = cli.Command{
 }
 
 func workflowShowRun(v cli.Values) (interface{}, error) {
-	w, err := client.WorkflowGet(v[_ProjectKey], v[_WorkflowName])
+	w, err := client.WorkflowGet(v.GetString(_ProjectKey), v.GetString(_WorkflowName))
 	if err != nil {
 		return nil, err
 	}

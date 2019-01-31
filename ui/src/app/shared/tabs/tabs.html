@@ -1,6 +1,7 @@
-<sm-menu class="pointing secondary">
+<sm-menu class="pointing secondary stackable">
     <a *ngFor="let t of tabs" sm-item [class.active]="selected.key === t.key" (click)="clickSelect(t)">
         <i *ngIf="t.icon" [ngClass]="[t.icon, 'icon']"></i>
         {{t.translate | translate}}
+        <app-warning-tab *ngIf="warnings && warnings[t.key]" [warnings]="warnings[t.key]"></app-warning-tab>
     </a>
 </sm-menu>
