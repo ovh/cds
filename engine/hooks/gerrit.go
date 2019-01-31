@@ -35,7 +35,7 @@ func (d *dao) FindGerritTasksByRepo(vcsServer string, repo string) ([]gerritTask
 	key := cache.Key(gerritRepoKey, vcsServer, repo)
 	nbGerritHooks := d.store.SetCard(key)
 
-	hooks := make([]*gerritTaskInfo, nbGerritHooks, nbGerritHooks)
+	hooks := make([]*gerritTaskInfo, nbGerritHooks)
 	for i := 0; i < nbGerritHooks; i++ {
 		hooks[i] = &gerritTaskInfo{}
 	}

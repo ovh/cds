@@ -208,7 +208,7 @@ func (api *API) repositoriesManagerAuthorizeBasicHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot start transaction")
 		}
-		defer tx.Rollback()
+		defer tx.Rollback() // nolint
 
 		vcsServerForProject := &sdk.ProjectVCSServer{
 			Name:     rmName,
