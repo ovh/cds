@@ -1,0 +1,22 @@
+name: Openstack
+author: CDS
+storage: true
+default_config:
+  "address": 
+    type: string
+    value: ""
+  "region":
+    type: string
+    value: ""
+  "domain":
+    type: string
+    value: ""
+  "tenant": 
+    type: string
+    value: ""
+  "user": 
+    type: string
+    value: ""
+  "password": 
+    type: password
+    value: xxxxxxxx

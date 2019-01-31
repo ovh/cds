@@ -8,8 +8,7 @@ export class IntegrationModel {
     deployment_default_config: {};
     disabled: boolean;
     hook: boolean;
-    file_storage: boolean;
-    block_storage: boolean;
+    storage: boolean;
     deployment: boolean;
     compute: boolean;
     public: boolean;

@@ -5,7 +5,7 @@ GITHASH := $(if ${GIT_HASH},${GIT_HASH},`git log -1 --format="%H"`)
 BUILDTIME := `date "+%m/%d/%y-%H:%M:%S"`
 
 TARGET_DIR = ./dist
-TARGET_NAME = arsenal
+TARGET_NAME = plugin-openstack-storage
 
 PLUGIN_MANIFEST=`echo plugin.yml`
 export PLUGIN_MANIFEST
@@ -56,6 +56,6 @@ publish:
 			EXTENSION=""; \
 			if test "$$GOOS" = "windows" ; then EXTENSION=".exe"; fi; \
 			echo "Updating plugin binary $(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION"; \
-			cdsctl admin plugins binary-add arsenal-deployment-plugin $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
+			cdsctl admin plugins binary-add $(TARGET_NAME) $(TARGET_DIR)/plugin-$$GOOS-$$GOARCH.yml $(TARGET_DIR)/$(TARGET_NAME)-$$GOOS-$$GOARCH$$EXTENSION; \
 		done; \
 	done

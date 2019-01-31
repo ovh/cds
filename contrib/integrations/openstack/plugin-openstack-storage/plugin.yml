@@ -1,0 +1,5 @@
+name: plugin-openstack-storage
+type: integration-storage
+integration: Openstack
+author: "OVH SAS"
+description: "OVH Openstack Artifact Plugin"

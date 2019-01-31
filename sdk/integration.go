@@ -124,8 +124,7 @@ type IntegrationModel struct {
 	PublicConfigurations    map[string]IntegrationConfig `json:"public_configurations,omitempty" db:"-" yaml:"public_configurations"`
 	Disabled                bool                         `json:"disabled" db:"disabled" yaml:"disabled"`
 	Hook                    bool                         `json:"hook" db:"hook" yaml:"hook" cli:"hooks_supported"`
-	FileStorage             bool                         `json:"file_storage" db:"file_storage" yaml:"file_storage" cli:"file_storage supported"`
-	BlockStorage            bool                         `json:"block_storage" db:"block_storage" yaml:"block_storage" cli:"block_storage supported"`
+	Storage                 bool                         `json:"storage" db:"storage" yaml:"storage" cli:"storage supported"`
 	Deployment              bool                         `json:"deployment" db:"deployment" yaml:"deployment" cli:"deployment_supported"`
 	Compute                 bool                         `json:"compute" db:"compute" yaml:"compute" cli:"compute_supported"`
 	Public                  bool                         `json:"public,omitempty" db:"public" yaml:"public,omitempty"`
