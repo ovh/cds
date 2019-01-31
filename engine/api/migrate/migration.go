@@ -15,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// MinCompatibleRelease represent the minimum release which is working with these migrations
+// MinCompatibleRelease represent the minimum release which is working with these migrations, need to update when we delete migration in our codebase
 const MinCompatibleRelease = "0.36.1"
 
 var migrations = []sdk.Migration{}

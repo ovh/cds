@@ -122,13 +122,21 @@ func (node *dbNodeData) PostInsert(db gorp.SqlExecutor) error {
 	}
 
 	for i, grp := range node.Groups {
-		if grp.Group.ID == 0 {
-			grDB, err := group.LoadGroup(db, grp.Group.Name)
-			if err != nil {
-				return sdk.WrapError(err, "cannot load group %s for node %d : %s", grp.Group.Name, node.ID, node.Name)
-			}
-			node.Groups[i].Group = *grDB
+		var grDB *sdk.Group
+		var err error
+
+		switch {
+		case grp.Group.ID == 0:
+			grDB, err = group.LoadGroup(db, grp.Group.Name)
+		case grp.Group.Name == "":
+			grDB, err = group.LoadGroupByID(db, grp.Group.ID)
+		default:
+			grDB = &grp.Group
 		}
+		if err != nil {
+			return sdk.WrapError(err, "cannot load group %s for node %d : %s", grp.Group.Name, node.ID, node.Name)
+		}
+		node.Groups[i].Group = *grDB
 	}
 
 	return group.InsertGroupsInNode(db, node.Groups, node.ID)

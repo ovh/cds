@@ -3,10 +3,9 @@ package migrate
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
-	"github.com/lib/pq"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/workflow"
+
 	"github.com/ovh/cds/engine/api/permission"
 
 	"github.com/ovh/cds/engine/api/group"
@@ -20,9 +19,15 @@ import (
 )
 
 type nodePerm struct {
-	NodeID  int64 `db:"id"`
-	GroupID int64 `db:"group_id"`
-	Role    int   `db:"role"`
+	NodeID     int64 `db:"id"`
+	WorkflowID int64 `db:"workflow_id"`
+	GroupID    int64 `db:"group_id"`
+	Role       int   `db:"role"`
+}
+
+type customGroupPermission struct {
+	nodeID int64
+	sdk.GroupPermission
 }
 
 // Permissions function to migrate all previous permissions
@@ -33,6 +38,7 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		return sdk.WrapError(err, "Cannot load all projects")
 	}
 
+	var globalError error
 	for _, proj := range projects {
 		// Add all workflow perm in new table
 		for _, wf := range proj.WorkflowNames {
@@ -75,7 +81,7 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 		// For each workflow node with environement linked add
 		// Get all workflow node id and environment id
 		//
-		querySelect := `SELECT w_node.id, environment_group.group_id, environment_group.role
+		querySelect := `SELECT w_node.id, w_node.workflow_id, environment_group.group_id, environment_group.role
 		FROM workflow
 			JOIN w_node ON workflow.id = w_node.workflow_id
 			JOIN w_node_context ON w_node_context.node_id = w_node.id
@@ -86,28 +92,74 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 			return sdk.WrapError(err, "cannot load node permissions for project %s with id %d", proj.Key, proj.ID)
 		}
 
+		gpsByWorkflow := map[int64][]customGroupPermission{}
 		for _, nodeperm := range nodePerms {
-			gp := []sdk.GroupPermission{{
-				Group:      sdk.Group{ID: nodeperm.GroupID},
-				Permission: nodeperm.Role,
-			}}
-			if err := group.InsertGroupsInNode(db, gp, nodeperm.NodeID); err != nil {
-				if errPG, ok := sdk.Cause(err).(*pq.Error); ok && errPG.Code == gorpmapping.ViolateUniqueKeyPGCode {
+			gpsByWorkflow[nodeperm.WorkflowID] = append(gpsByWorkflow[nodeperm.WorkflowID], customGroupPermission{
+				GroupPermission: sdk.GroupPermission{
+					Group:      sdk.Group{ID: nodeperm.GroupID},
+					Permission: nodeperm.Role,
+				},
+				nodeID: nodeperm.NodeID,
+			})
+		}
+		ctx := context.Background()
+		for workflowID, gps := range gpsByWorkflow {
+			projLoaded, errP := project.LoadByID(db, store, proj.ID, &sdk.User{Admin: true})
+			if errP != nil {
+				return sdk.WrapError(errP, "cannot load project %s", proj.Key)
+			}
+
+			oldWf, err := workflow.LoadByID(db, store, projLoaded, workflowID, &sdk.User{Admin: true}, workflow.LoadOptions{})
+			if err != nil {
+				return sdk.WrapError(err, "cannot load workflow id %d in project %s", workflowID, projLoaded.Key)
+			}
+
+			if oldWf.ToDelete {
+				continue
+			}
+			log.Info("migrate.Permissions> Workflow %s", oldWf.Name)
+			newWf := *oldWf
+
+			for _, gp := range gps {
+				node := newWf.WorkflowData.NodeByID(gp.nodeID)
+				if node == nil {
+					log.Warning("migrate.Permission> cannot find node id %d", gp.nodeID)
 					continue
 				}
-				errConv, ok := sdk.Cause(err).(sdk.Error)
-				fmt.Println("ici === ", errConv, ok)
-				fmt.Println(">>>>", sdk.Cause(err))
-				if sdk.ErrorIs(err, sdk.ErrGroupNotFoundInWorkflow) {
-					continue
+				found := false
+				for _, nodeGr := range node.Groups {
+					if nodeGr.Group.ID == gp.Group.ID {
+						found = true
+						break
+					}
 				}
-				return sdk.WrapError(err, "cannot insert group %d in node %d", nodeperm.GroupID, nodeperm.NodeID)
+				if !found {
+					node.Groups = append(node.Groups, gp.GroupPermission)
+				}
+			}
+
+			tx, errTx := db.Begin()
+			if errTx != nil {
+				return sdk.WrapError(errTx, "cannot begin transaction")
+			}
+
+			if err := workflow.Update(ctx, tx, store, &newWf, oldWf, projLoaded, &sdk.User{Admin: true}); err != nil {
+				_ = tx.Rollback()
+				if globalError == nil {
+					globalError = err
+				} else {
+					globalError = sdk.WrapError(globalError, err.Error())
+				}
+				log.Warning("migrate.Permissions> cannot update workflow %s/%s : %v", projLoaded.Key, newWf.Name, err)
+			} else {
+				if err := tx.Commit(); err != nil {
+					return sdk.WrapError(err, "cannot commit transaction")
+				}
 			}
 		}
-
 	}
 
-	return nil
+	return globalError
 }
 
 func loadEnvironmentsPermission(db gorp.SqlExecutor, projectID int64) ([]sdk.GroupPermission, error) {
