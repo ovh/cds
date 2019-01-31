@@ -424,7 +424,7 @@ func (api *API) postWorkflowJobResultHandler() service.Handler {
 				observability.Tag(observability.TagWorkflow, workflowRuns[0].Workflow.Name))
 
 			if workflowRuns[0].Status == sdk.StatusFail.String() {
-				observability.Record(ctx, api.Metrics.WorkflowRunFailed, 1)
+				observability.Record(api.Router.Background, api.Metrics.WorkflowRunFailed, 1)
 			}
 		}
 

@@ -32,8 +32,6 @@ func (b *bitbucketClient) SetStatus(ctx context.Context, event sdk.Event) error 
 	var statusData statusData
 	var err error
 	switch event.EventType {
-	case fmt.Sprintf("%T", sdk.EventPipelineBuild{}):
-		statusData, err = processPipelineBuildEvent(event, b.consumer.uiURL)
 	case fmt.Sprintf("%T", sdk.EventRunWorkflowNode{}):
 		statusData, err = processWorkflowNodeRunEvent(event, b.consumer.uiURL)
 	default:
@@ -144,38 +142,6 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 	data.hash = eventNR.Hash
 	data.description = sdk.VCSCommitStatusDescription(event.ProjectKey, event.WorkflowName, eventNR)
 
-	return data, nil
-}
-
-func processPipelineBuildEvent(event sdk.Event, uiURL string) (statusData, error) {
-	data := statusData{}
-	var eventpb sdk.EventPipelineBuild
-	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		return data, sdk.WrapError(err, "Error during consumption")
-	}
-	cdsProject := eventpb.ProjectKey
-	cdsApplication := eventpb.ApplicationName
-	cdsPipelineName := eventpb.PipelineName
-	cdsBuildNumber := eventpb.BuildNumber
-	cdsEnvironmentName := eventpb.EnvironmentName
-
-	data.key = fmt.Sprintf("%s-%s-%s",
-		cdsProject,
-		cdsApplication,
-		cdsPipelineName,
-	)
-
-	data.url = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
-		uiURL,
-		cdsProject,
-		cdsApplication,
-		cdsPipelineName,
-		cdsBuildNumber,
-		url.QueryEscape(cdsEnvironmentName),
-	)
-	data.buildNumber = cdsBuildNumber
-	data.status = eventpb.Status.String()
-	data.hash = eventpb.Hash
 	return data, nil
 }
 
