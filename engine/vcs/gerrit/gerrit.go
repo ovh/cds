@@ -13,6 +13,7 @@ type gerritClient struct {
 	disableStatus       bool
 	disableStatusDetail bool
 	sshPort             int
+	username            string
 }
 
 // gerritConsumer implements vcs.Server and it's used to instanciate a gerritClient

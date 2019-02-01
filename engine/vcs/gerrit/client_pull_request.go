@@ -2,8 +2,6 @@ package gerrit
 
 import (
 	"context"
-	"fmt"
-
 	"github.com/ovh/cds/sdk"
 )
 
@@ -23,5 +21,5 @@ func (c *gerritClient) PullRequestComment(context.Context, string, int, string) 
 
 // PullRequestCreate create a new pullrequest
 func (c *gerritClient) PullRequestCreate(ctx context.Context, repo string, pr sdk.VCSPullRequest) (sdk.VCSPullRequest, error) {
-	return sdk.VCSPullRequest{}, fmt.Errorf("not yet implemented")
+	return sdk.VCSPullRequest{}, nil
 }
