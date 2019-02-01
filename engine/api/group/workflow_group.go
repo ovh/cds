@@ -23,6 +23,23 @@ func LoadRoleGroupInWorkflow(db gorp.SqlExecutor, workflowID, groupID int64) (in
 	return int(role), nil
 }
 
+// ExistGroupInWorkflow return boolean to indicate if a group exist in this workflow
+func ExistGroupInWorkflow(db gorp.SqlExecutor, workflowID, groupID int64) (bool, error) {
+	query := `SELECT COUNT(workflow_perm.id)
+	FROM workflow_perm
+		JOIN project_group ON workflow_perm.project_group_id = project_group.id
+	WHERE workflow_perm.workflow_id = $1 AND project_group.group_id = $2`
+
+	count, err := db.SelectInt(query, workflowID, groupID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, nil
+		}
+		return false, err
+	}
+	return count > 0, nil
+}
+
 // LoadRoleGroupInWorkflowNode load role from group linked to the workflow node
 func LoadRoleGroupInWorkflowNode(db gorp.SqlExecutor, nodeID, groupID int64) (int, error) {
 	queryNode := `SELECT workflow_node_group.role

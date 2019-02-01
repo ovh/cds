@@ -134,8 +134,17 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 					}
 				}
 				if !found {
-					added++
-					node.Groups = append(node.Groups, gp.GroupPermission)
+					exist := false
+					for _, grWf := range newWf.Groups {
+						if grWf.Group.ID == gp.Group.ID {
+							exist = true
+							break
+						}
+					}
+					if exist {
+						added++
+						node.Groups = append(node.Groups, gp.GroupPermission)
+					}
 				}
 			}
 
