@@ -114,12 +114,13 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 				return sdk.WrapError(err, "cannot load workflow id %d in project %s", workflowID, projLoaded.Key)
 			}
 
-			if oldWf.ToDelete || len(oldWf.Groups) > 0 {
+			if oldWf.ToDelete {
 				continue
 			}
 			log.Info("migrate.Permissions> Workflow %s", oldWf.Name)
 			newWf := *oldWf
 
+			added := 0
 			for _, gp := range gps {
 				node := newWf.WorkflowData.NodeByID(gp.nodeID)
 				if node == nil {
@@ -133,10 +134,14 @@ func Permissions(DBFunc func() *gorp.DbMap, store cache.Store) error {
 					}
 				}
 				if !found {
+					added++
 					node.Groups = append(node.Groups, gp.GroupPermission)
 				}
 			}
 
+			if added == 0 {
+				continue
+			}
 			tx, errTx := db.Begin()
 			if errTx != nil {
 				return sdk.WrapError(errTx, "cannot begin transaction")
