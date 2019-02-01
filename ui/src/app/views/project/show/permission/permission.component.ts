@@ -5,6 +5,7 @@ import { PermissionValue } from '../../../../model/permission.model';
 import { Project } from '../../../../model/project.model';
 import { Warning } from '../../../../model/warning.model';
 import { ProjectStore } from '../../../../service/project/project.store';
+import { ConfirmModalComponent } from '../../../../shared/modal/confirm/confirm.component';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
 import { PermissionEvent } from '../../../../shared/permission/permission.event.model';
 import { ToastService } from '../../../../shared/toast/ToastService';
@@ -20,14 +21,17 @@ export class ProjectPermissionsComponent implements OnInit {
 
     @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;
+    @ViewChild('confirmPropagationModal')
+    confirmPropagationModal: ConfirmModalComponent;
 
     permissionEnum = PermissionValue;
     loading = true;
     permFormLoading = false;
+    currentPermEvent: PermissionEvent;
 
     constructor(private _projectStore: ProjectStore,
-                public _translate: TranslateService,
-                private _toast: ToastService) {
+        public _translate: TranslateService,
+        private _toast: ToastService) {
 
     }
 
@@ -44,18 +48,13 @@ export class ProjectPermissionsComponent implements OnInit {
     }
 
     groupEvent(event: PermissionEvent, skip?: boolean): void {
+        this.currentPermEvent = event;
         if (!skip && this.project.externalChange) {
             this.permWarningModal.show(event);
         } else {
             switch (event.type) {
                 case 'add':
-                    this.permFormLoading = true;
-                    this._projectStore.addProjectPermission(this.project.key, event.gp).subscribe(() => {
-                        this._toast.success('', this._translate.instant('permission_added'));
-                        this.permFormLoading = false;
-                    }, () => {
-                        this.permFormLoading = false;
-                    });
+                    this.confirmPropagationModal.show();
                     break;
                 case 'update':
                     this._projectStore.updateProjectPermission(this.project.key, event.gp).subscribe(() => {
@@ -69,5 +68,12 @@ export class ProjectPermissionsComponent implements OnInit {
                     break;
             }
         }
+    }
+
+    confirmPermPropagation(propagate: boolean) {
+        this.permFormLoading = true;
+        this._projectStore.addProjectPermission(this.project.key, this.currentPermEvent.gp, !propagate)
+            .pipe(finalize(() => this.permFormLoading = false))
+            .subscribe(() => this._toast.success('', this._translate.instant('permission_added')));
     }
 }

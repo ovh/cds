@@ -535,8 +535,8 @@ export class ProjectStore {
      * @param gp Permission to add
      * @returns {Observable<Project>}
      */
-    addProjectPermission(key: string, gp: GroupPermission): Observable<Array<GroupPermission>> {
-        return this._projectService.addPermission(key, gp).pipe(map(res => {
+    addProjectPermission(key: string, gp: GroupPermission, onlyForProject?: boolean): Observable<Array<GroupPermission>> {
+        return this._projectService.addPermission(key, gp, onlyForProject).pipe(map(res => {
             let cache = this._projectCache.getValue();
             let projectUpdate = cache.get(key);
             if (projectUpdate) {

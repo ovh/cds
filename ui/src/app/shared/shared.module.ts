@@ -33,6 +33,7 @@ import { GroupFormComponent } from './group/form/group.form.component';
 import { KeysFormComponent } from './keys/form/keys.form.component';
 import { KeysListComponent } from './keys/list/keys.list.component';
 import { LabelsEditComponent } from './labels/edit/labels.edit.component';
+import { ConfirmModalComponent } from './modal/confirm/confirm.component';
 import { DeleteModalComponent } from './modal/delete/delete.component';
 import { WarningModalComponent } from './modal/warning/warning.component';
 import { ParameterDescriptionComponent } from './parameter/description-popup/description.popup.component';
@@ -163,6 +164,7 @@ import { ZoneComponent } from './zone/zone.component';
         VulnerabilitiesListComponent,
         WarningModalComponent,
         DeleteModalComponent,
+        ConfirmModalComponent,
         LabelsEditComponent,
         WarningTabComponent,
         WarningMarkComponent,
@@ -287,6 +289,7 @@ import { ZoneComponent } from './zone/zone.component';
         WarningMarkListComponent,
         WarningModalComponent,
         DeleteModalComponent,
+        ConfirmModalComponent,
         LabelsEditComponent,
 
         WorkflowWNodeComponent,

@@ -135,8 +135,12 @@ export class ProjectService {
      * @param gp Permission to add
      * @returns {Observable<Project>}
      */
-    addPermission(key: string, gp: GroupPermission): Observable<Array<GroupPermission>> {
-        return this._http.post<Array<GroupPermission>>('/project/' + key + '/group', gp);
+    addPermission(key: string, gp: GroupPermission, onlyForProject?: boolean): Observable<Array<GroupPermission>> {
+        let params = new HttpParams();
+        if (onlyForProject) {
+            params = params.append('onlyProject', 'true');
+        }
+        return this._http.post<Array<GroupPermission>>('/project/' + key + '/group', gp, { params });
     }
 
     /**
