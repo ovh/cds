@@ -27,7 +27,7 @@ func (api *API) getRepositoriesManagerHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "error")
 		}
-		rms := []string{}
+		rms := make([]string, 0, len(vcsServers))
 		for k := range vcsServers {
 			rms = append(rms, k)
 		}

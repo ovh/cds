@@ -22,6 +22,7 @@ func (c *gerritClient) Branches(ctx context.Context, fullname string) ([]sdk.VCS
 	for _, b := range *branches {
 		if b.Ref == "HEAD" {
 			defaultBranch = b.Revision
+			break
 		}
 	}
 

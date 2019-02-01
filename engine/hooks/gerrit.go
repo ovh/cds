@@ -77,9 +77,7 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 	if gerritEvent.Change != nil {
 		payload["git.author"] = gerritEvent.Change.Owner.Username
 		payload["git.author.email"] = gerritEvent.Change.Owner.Email
-		payload["git.branch"] = gerritEvent.Change.Branch
 		payload["git.repository"] = gerritEvent.Change.Project
-
 		payload["cds.triggered_by.username"] = gerritEvent.Change.Owner.Username
 		payload["cds.triggered_by.fullname"] = gerritEvent.Change.Owner.Name
 		payload["cds.triggered_by.email"] = gerritEvent.Change.Owner.Email
@@ -88,6 +86,7 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 		payload["gerrit.change.id"] = gerritEvent.Change.ID
 		payload["gerrit.change.url"] = gerritEvent.Change.URL
 		payload["gerrit.change.status"] = gerritEvent.Change.Status
+		payload["gerrit.change.branch"] = gerritEvent.Change.Branch
 	}
 	// ref-updated
 	if gerritEvent.RefUpdate != nil {
@@ -97,8 +96,12 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 	}
 	// change-merged / ref-updated
 	if gerritEvent.Submitter != nil {
-		payload["git.author"] = gerritEvent.Submitter.Username
-		payload["git.author.email"] = gerritEvent.Submitter.Email
+		if gerritEvent.Submitter.Username != "" {
+			payload["git.author"] = gerritEvent.Submitter.Username
+		}
+		if gerritEvent.Submitter.Email != "" {
+			payload["git.author.email"] = gerritEvent.Submitter.Email
+		}
 	}
 	// change-* / comment-* / draft-* / patchset-* / reviewer-* / vote-*
 	if gerritEvent.PatchSet != nil {
@@ -107,6 +110,14 @@ func (s *Service) doGerritExecution(e *sdk.TaskExecution) (*sdk.WorkflowNodeRunH
 			payload["git.hash.before"] = gerritEvent.PatchSet.Parents[0]
 		}
 		payload["gerrit.change.ref"] = gerritEvent.PatchSet.Ref
+		if gerritEvent.PatchSet.Author != nil {
+			if gerritEvent.PatchSet.Author.Username != "" {
+				payload["git.author"] = gerritEvent.PatchSet.Author.Username
+			}
+			if gerritEvent.PatchSet.Author.Email != "" {
+				payload["git.author.email"] = gerritEvent.PatchSet.Author.Email
+			}
+		}
 	}
 	// change-merged
 	if gerritEvent.NewRev != "" {

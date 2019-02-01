@@ -106,7 +106,7 @@ func (api *API) getWorkflowHookModelsHandler() service.Handler {
 			}
 		}
 
-		models := []sdk.WorkflowHookModel{}
+		models := make([]sdk.WorkflowHookModel, 0, len(m))
 
 		for i := range m {
 			switch m[i].Name {

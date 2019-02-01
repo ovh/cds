@@ -23,7 +23,7 @@ func muxVar(r *http.Request, s string) string {
 
 func (s *Service) getAllVCSServersHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		servers := make(map[string]sdk.VCSConfiguration)
+		servers := make(map[string]sdk.VCSConfiguration, len(s.Cfg.Servers))
 		for k, v := range s.Cfg.Servers {
 			var vcsType, user, privateKey string
 			var sshPort int
@@ -170,7 +170,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 			res.WebhooksIcon = sdk.GerritIcon
 			// https://git.eclipse.org/r/Documentation/cmd-stream-events.html#events
 			res.Events = []string{
-				"ref-updated",
+				"patchset-created",
 				"assignee-changed",
 				"change-abandoned",
 				"change-deleted",
@@ -181,7 +181,7 @@ func (s *Service) getVCSServersHooksHandler() service.Handler {
 				"dropped-output",
 				"hashtags-changed",
 				"project-created",
-				"patchset-created",
+				"ref-updated",
 				"reviewer-added",
 				"reviewer-deleted",
 				"topic-changed",

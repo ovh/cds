@@ -1,5 +1,6 @@
 import { Component, Input, ViewChild } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
+import {finalize} from 'rxjs/operators';
 import { Project } from '../../../model/project.model';
 import { ProjectStore } from '../../../service/project/project.store';
 import { RepoManagerService } from '../../../service/repomanager/project.repomanager.service';
@@ -70,14 +71,12 @@ export class RepoManagerFormComponent  {
         this.verificationLoading = true;
         this._projectStore.verificationBasicAuthRepoManager(
             this.project.key, this.reposManagerList[this.selectedRepoId], this.basicUser, this.basicPassword
-        ).subscribe( () => {
-            this.verificationLoading = false;
+        ).pipe(finalize(() => this.verificationLoading = false))
+            .subscribe( () => {
             this.modalInstance.hide();
             this.basicUser = '';
             this.basicPassword = '';
             this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
-        }, () => {
-            this.verificationLoading = false;
         });
     }
 
@@ -85,12 +84,10 @@ export class RepoManagerFormComponent  {
         this.verificationLoading = true;
         this._projectStore.verificationCallBackRepoManager(
             this.project.key, this.reposManagerList[this.selectedRepoId], this.addRepoResponse.request_token, this.validationToken
-        ).subscribe( () => {
-            this.verificationLoading = false;
+        ).pipe(finalize( () => this.verificationLoading = false))
+            .subscribe( () => {
             this.modalInstance.hide();
             this._toast.success('', this._translate.instant('repoman_verif_msg_ok'));
-        }, () => {
-            this.verificationLoading = false;
         });
     }
 
