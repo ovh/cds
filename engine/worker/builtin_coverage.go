@@ -86,9 +86,9 @@ func runParseCoverageResultAction(w *currentWorker) BuiltInAction {
 		}
 
 		if minReq > 0 {
-			cov_percent := (float64(report.CoveredLines) / float64(report.TotalLines)) * 100
-			if cov_percent < minReq {
-				res.Reason = fmt.Sprintf("Coverage: minimum coverage failed: %.2f%% < %.2f%%", cov_percent, minReq)
+			covPercent := (float64(report.CoveredLines) / float64(report.TotalLines)) * 100
+			if covPercent < minReq {
+				res.Reason = fmt.Sprintf("Coverage: minimum coverage failed: %.2f%% < %.2f%%", covPercent, minReq)
 				res.Status = sdk.StatusFail.String()
 				sendLog(res.Reason)
 				return res

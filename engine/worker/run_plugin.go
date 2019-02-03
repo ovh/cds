@@ -85,6 +85,27 @@ func startGRPCPlugin(ctx context.Context, pluginName string, w *currentWorker, p
 		}
 	}
 
+	// then try to download the plugin
+	pluginBinary := path.Join(w.basedir, binary.Name)
+	if _, err := os.Stat(pluginBinary); os.IsNotExist(err) {
+		log.Debug("Downloading the plugin %s", binary.PluginName)
+		//If the file doesn't exist. Download it.
+		fi, err := os.OpenFile(pluginBinary, os.O_CREATE|os.O_RDWR, os.FileMode(binary.Perm))
+		if err != nil {
+			return nil, sdk.WrapError(err, "unable to create the file %s", pluginBinary)
+		}
+
+		log.Debug("Get the binary plugin %s", binary.PluginName)
+		if err := w.client.PluginGetBinary(binary.PluginName, currentOS, currentARCH, fi); err != nil {
+			_ = fi.Close()
+			return nil, sdk.WrapError(err, "unable to get the binary plugin the file %s", binary.PluginName)
+		}
+		//It's downloaded. Close the file
+		_ = fi.Close()
+	} else {
+		log.Debug("plugin binary is in cache %s", pluginBinary)
+	}
+
 	c := pluginClientSocket{}
 
 	dir := w.currentJob.workingDirectory

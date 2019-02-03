@@ -83,7 +83,7 @@ func LoadByName(db gorp.SqlExecutor, name string) (*sdk.GRPCPlugin, error) {
 	return &p, nil
 }
 
-// LoadByIntegrationModelIDAndType loads all plugins associated to a integration model id
+// LoadByIntegrationModelIDAndType loads a single plugin associated to a integration model id with a specified type
 func LoadByIntegrationModelIDAndType(db gorp.SqlExecutor, integrationModelID int64, typePlugin string) (*sdk.GRPCPlugin, error) {
 	m := grpcPlugin{}
 	if err := db.SelectOne(&m, "SELECT * FROM grpc_plugin where integration_model_id = $1 and type = $2", integrationModelID, typePlugin); err != nil {
@@ -93,10 +93,27 @@ func LoadByIntegrationModelIDAndType(db gorp.SqlExecutor, integrationModelID int
 		return nil, sdk.WrapError(err, "plugin.LoadByIntegrationModelIDAndType")
 	}
 	if err := m.PostGet(db); err != nil {
-		return nil, sdk.WrapError(err, "plugin.LoadByName")
+		return nil, sdk.WrapError(err, "plugin.LoadByIntegrationModelIDAndType")
 	}
 	p := sdk.GRPCPlugin(m)
 	return &p, nil
+}
+
+// LoadAllByIntegrationModelID loads all plugins associated to a integration model id
+func LoadAllByIntegrationModelID(db gorp.SqlExecutor, integrationModelID int64) ([]sdk.GRPCPlugin, error) {
+	m := []grpcPlugin{}
+	if _, err := db.Select(&m, "SELECT * FROM grpc_plugin where integration_model_id = $1", integrationModelID); err != nil {
+		return nil, sdk.WrapError(err, "plugin.LoadAllByIntegrationModelID")
+	}
+	res := make([]sdk.GRPCPlugin, len(m))
+	for i := range m {
+		p := m[i]
+		if err := p.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadAllByIntegrationModelID")
+		}
+		res[i] = sdk.GRPCPlugin(p)
+	}
+	return res, nil
 }
 
 // LoadAll loads all GRPC Plugins

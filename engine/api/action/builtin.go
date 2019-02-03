@@ -328,8 +328,7 @@ func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 	// Check ArtifactUpload action
 	err := db.QueryRow(query, sdk.ArtifactUpload, sdk.BuiltinAction).Scan(&name)
 	if err != nil && err == sql.ErrNoRows {
-		err = createBuiltinArtifactUploadAction(db)
-		if err != nil {
+		if err := createBuiltinArtifactUploadAction(db); err != nil {
 			return sdk.WrapError(err, "cannot create builtin artifact upload action")
 		}
 	}
@@ -337,8 +336,7 @@ func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 	// Check ArtifactDownload action
 	err = db.QueryRow(query, sdk.ArtifactDownload, sdk.BuiltinAction).Scan(&name)
 	if err != nil && err == sql.ErrNoRows {
-		err = createBuiltinArtifactDownloadAction(db)
-		if err != nil {
+		if err := createBuiltinArtifactDownloadAction(db); err != nil {
 			return sdk.WrapError(err, "cannot create builtin artifact download action")
 		}
 	}
@@ -363,6 +361,13 @@ func createBuiltinArtifactUploadAction(db *gorp.DbMap) error {
 		Type:        sdk.BooleanParameter,
 		Description: "Enable artifact upload",
 		Value:       "true"})
+	upload.Parameter(sdk.Parameter{
+		Name:        "destination",
+		Description: "Destination of this artifact. Use the name of integration attached on your project",
+		Value:       "", // empty is the default value
+		Type:        sdk.StringParameter,
+		Advanced:    true,
+	})
 
 	tx, err := db.Begin()
 	if err != nil {

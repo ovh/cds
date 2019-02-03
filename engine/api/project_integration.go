@@ -8,6 +8,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/integration"
+	"github.com/ovh/cds/engine/api/plugin"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
@@ -25,6 +26,11 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 		if err != nil {
 			return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
 		}
+		plugins, err := plugin.LoadAllByIntegrationModelID(api.mustDB(), integration.IntegrationModelID)
+		if err != nil {
+			return sdk.WrapError(err, "Cannot load integration %s/%s", projectKey, integrationName)
+		}
+		integration.GRPCPlugins = plugins
 		return service.WriteJSON(w, integration, http.StatusOK)
 	}
 }

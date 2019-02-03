@@ -148,6 +148,9 @@ type ProjectIntegration struct {
 	IntegrationModelID int64             `json:"integration_model_id" db:"integration_model_id" yaml:"-"`
 	Model              IntegrationModel  `json:"model" db:"-" yaml:"model"`
 	Config             IntegrationConfig `json:"config" db:"-" yaml:"config"`
+	// GRPCPlugin field is used to get all plugins associatied to an integration
+	// when we GET /project/{permProjectKey}/integrations/{integrationName}
+	GRPCPlugins []GRPCPlugin `json:"integration_plugins,omitempty" db:"-" yaml:"-"`
 }
 
 // HideSecrets replaces password with a placeholder
