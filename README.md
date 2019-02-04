@@ -92,7 +92,7 @@ All the features of the table are detailed below.
 | [Built-in Metrics](#built-in-metrics) | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: | :x: <sub><sup>[*14](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Extensibility Plugins](#extensibility-plugins) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [OS/Arch Compatibility](#osarch-compatibility) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*15](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :x: <sub><sup>[*16](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
+| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: <sub><sup>[*15](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :x: <sub><sup>[*16](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
 
 
 ### CDS User features
