@@ -1,6 +1,6 @@
 # CDS
 
-[CSD](https://github.com/ovh/cds) is a pipeline based Continuous Delivery Service written in Go(lang).
+[CDS](https://github.com/ovh/cds) is a pipeline based Continuous Delivery Service written in Go(lang).
 Documentation is available at https://ovh.github.io/cds/
 
 ## TL;DR;
