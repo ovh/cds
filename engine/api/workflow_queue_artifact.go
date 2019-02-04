@@ -114,7 +114,6 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			if err != nil {
 				file.Close()
 				return sdk.WrapError(err, "cannot open file")
-
 			}
 
 			if err := artifact.SaveWorkflowFile(&art, file); err != nil {

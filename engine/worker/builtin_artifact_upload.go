@@ -168,7 +168,7 @@ func runArtifactUploadIntegration(ctx context.Context, wk *currentWorker, buildI
 	sendLog(fmt.Sprintf("# Details: %s", res.Details))
 	sendLog(fmt.Sprintf("# Status: %s", res.Status))
 
-	if strings.ToUpper(res.Status) == strings.ToUpper(sdk.StatusSuccess.String()) {
+	if strings.EqualFold(res.Status, sdk.StatusSuccess.String()) {
 		storagePluginClientStop(ctx, storagePluginClient, done, stopLogs)
 		return sdk.Result{
 			Status: sdk.StatusSuccess.String(),
@@ -181,7 +181,6 @@ func runArtifactUploadIntegration(ctx context.Context, wk *currentWorker, buildI
 		Status: sdk.StatusFail.String(),
 		Reason: res.Details,
 	}
-
 }
 
 func storagePluginClientStop(ctx context.Context, storagePluginClient storageplugin.StoragePluginClient, done chan struct{}, stopLogs context.CancelFunc) {

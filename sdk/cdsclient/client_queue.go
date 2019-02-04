@@ -310,10 +310,7 @@ func (c *client) queueIndirectArtifactTempURL(ctx context.Context, id int64, art
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	if globalURLErr != nil {
-		return globalURLErr
-	}
-	return nil
+	return globalURLErr
 }
 
 func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) error {
@@ -404,12 +401,10 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, id int64, tag,
 	}
 
 	if err := c.queueIndirectArtifactTempURLPost(art.TempURL, fileContent); err != nil {
-		// If we got a 401 error from the objectstore, ask for a fresh temporary url and repost the artifact
+		// If we got a 401 error from the objectstore, probably because temporary URL is not
+		// replicated on all cluster. Wait 5s before use it
 		if strings.Contains(err.Error(), "401 Unauthorized: Temp URL invalid") {
-			if err := c.queueIndirectArtifactTempURL(ctx, id, &art); err != nil {
-				return err
-			}
-
+			time.Sleep(5 * time.Second)
 			if err := c.queueIndirectArtifactTempURLPost(art.TempURL, fileContent); err != nil {
 				return err
 			}

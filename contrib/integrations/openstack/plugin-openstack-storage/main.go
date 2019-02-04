@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 
 	"github.com/golang/protobuf/ptypes/empty"
+	"github.com/ncw/swift"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/grpcplugin/storageplugin"
@@ -13,6 +15,8 @@ import (
 type openstackStoragePlugin struct {
 	storageplugin.Common
 }
+
+const containerPrefix = "cds"
 
 func (e *openstackStoragePlugin) Manifest(ctx context.Context, _ *empty.Empty) (*storageplugin.StoragePluginManifest, error) {
 	return &storageplugin.StoragePluginManifest{
@@ -25,12 +29,50 @@ func (e *openstackStoragePlugin) Manifest(ctx context.Context, _ *empty.Empty) (
 
 // ArtifactUpload implementation
 func (e *openstackStoragePlugin) ArtifactUpload(ctx context.Context, q *storageplugin.Options) (*storageplugin.Result, error) {
-	// 	q.GetOptions()["cds.integration.address"]
-	//  q.GetOptions()["cds.integration.region"]
-	//  q.GetOptions()["cds.integration.domain"]
-	//  q.GetOptions()["cds.integration.tenant"]
-	//  q.GetOptions()["cds.integration.user"]
-	//  q.GetOptions()["cds.integration.password"]
+
+	sw := swift.Connection{
+		AuthUrl:  q.GetOptions()["cds.integration.address"],
+		Region:   q.GetOptions()["cds.integration.region"],
+		Tenant:   q.GetOptions()["cds.integration.tenant"],
+		Domain:   q.GetOptions()["cds.integration.domain"],
+		UserName: q.GetOptions()["cds.integration.user"],
+		ApiKey:   q.GetOptions()["cds.integration.password"],
+	}
+	if err := sw.Authenticate(); err != nil {
+		return fail("Unable to authenticate - region:%s username:%s err:%v", q.GetOptions()["cds.integration.region"], q.GetOptions()["cds.integration.user"], err)
+	}
+
+	container := containerPrefix + o.GetPath()
+	object := o.GetName()
+	//TODO escape(container, object)
+	fmt.Printf("Storing /%s/%s\n", container, object)
+	fmt.Printf("creating container %s\n", container)
+	if err := sw.ContainerCreate(container, nil); err != nil {
+		return fail("Unable to create container %s", container)
+	}
+
+	fmt.Printf("creating object %s/%s\n", container, object)
+
+	file, errC := sw.ObjectCreate(container, object, false, "", "application/octet-stream", nil)
+	if errC != nil {
+		return fail("Unable to create object %s - err: %v", object,errC)
+	}
+
+	fmt.Printf("copy object %s/%s", container, object)
+	if _, err := io.Copy(file, data); err != nil {
+		_ = file.Close()
+		_ = data.Close()
+		return fail("Unable to copy object buffer %s - err: %v", object,err)
+	}
+
+	if err := file.Close(); err != nil {
+		return fail("Unable to close object buffer %s - err: %v", object,err)
+	}
+
+	if err := data.Close(); err != nil {
+		return fail("Unable to close data buffer: %v", err)
+	}
+
 	return &storageplugin.Result{
 		Details: "none",
 		Status:  "success",
