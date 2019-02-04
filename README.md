@@ -70,30 +70,30 @@ All the features of the table are detailed below.
 | Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins | 
 | --- | --- | --- | --- | --- | --- |
 | [Built-in Pipeline](#built-in-pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | 
-| Built-in Workflow | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *1 |
-| Graphical configuration with UI | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: *2 | 
-| Configuration on Git Repository | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Configuration as code on UI | :white_check_mark: | :x: | :x: | :x: | :x:*3 |
-| Native Git branching | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x:*4 |
-| Multiple VCS Support in Pipeline/Job | :white_check_mark: | :x: | :white_check_mark: | :x: | :white_check_mark: |
-| Built-in Dependencies Setup | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
-| Caching Dependencies | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: *5 | 
-| Enterprise Notification (bus) & Event Bus Built-in Hooks | :white_check_mark: | :x: | :x: | :x: | :x: |
-| Continuous Deployment / Built-in Environment Support | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *6 |
-| Easy Enterprise-grade permissions, Self-Service on Rights management | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *7 |
-| Build Artifacts Cloud | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *8 |
-| Tests & Vulnerabilities Reports | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *9 | :white_check_mark: |
-| Self-Service Project Creation - ability to create a tenant | :white_check_mark: | :x: | :x:*10 | :white_check_mark: | :white_check_mark: |
-| Self-Service Job's Flavor | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: *11 |
-| Multi-Tenancy | :white_check_mark: | :x: | :x: | :x: | :x: *12 | 
-| Command Line Interface (cdsctl): 100% features supported & User Friendly | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *13| 
-| REST API & SDK | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Self-Hosting | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| High Availability & Scalability & Upgrade without User Downtime | :white_check_mark: | :x: | :x: | :white_check_mark:*14 | :x: | 
-| Built-in Metrics | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: | :x: *15 |
-| Extensibility Plugins | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| OS/Arch Compatibility | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Auto-Scale OnDemand multi-cloud | :white_check_mark: | :x: | :x: | :x:*16 | :x:*17 | 
+| [Built-in Workflow](#built-in-workflow) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *1 |
+| [Graphical configuration with UI](#graphical-configuration-with-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: *2 | 
+| [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x:*3 |
+| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x:*4 |
+| [Multiple VCS Support in Pipeline/Job](#multiple-vcs-support-in-pipelinejob) | :white_check_mark: | :x: | :white_check_mark: | :x: | :white_check_mark: |
+| [Built-in Dependencies Setup](#built-in-dependencies-setup) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
+| [Caching Dependencies](#caching-dependencies) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: *5 | 
+| [Enterprise Notification (bus)](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
+| [Continuous Deployment / Built-in Environment Support](#continuous-deployment--built-in-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *6 |
+| [Easy Enterprise-grade permissions, Self-Service on Rights management](#easy-enterprise-grade-permissions) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *7 |
+| [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *8 |
+| [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *9 | :white_check_mark: |
+| [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x:*10 | :white_check_mark: | :white_check_mark: |
+| [Self-Service Job's Flavor](#self-service-jobs-flavor) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: *11 |
+| [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :x: | :x: *12 | 
+| [Command Line Interface (cdsctl): 100% features supported & User Friendly](#command-line-interface-cdsctl-100-features-supported) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *13| 
+| [REST API & SDK](#rest-api--sdk) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| [Self-Hosting](#self-hosting) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| [High Availability & Scalability & Upgrade without User Downtime](#high-availability--scalability--upgrade-without-user-downtime) | :white_check_mark: | :x: | :x: | :white_check_mark:*14 | :x: | 
+| [Built-in Metrics](#built-in-metrics) | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: | :x: *15 |
+| [Extensibility Plugins](#extensibility-plugins) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| [OS/Arch Compatibility](#osarch-compatibility) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :x: | :x:*16 | :x:*17 | 
 
 Some explanations:
 - *1 unable to chain pipelines
@@ -171,6 +171,8 @@ In a CDS job, you have the option to start services, any service from the moment
 
 Take a simple example: you have a pipeline that builds a docker image containing your application. Your application needs a redis and a postgreSQL to work. You can in a CDS job put three prerequisites service: a redis, a postgreSQL and your application. CDS will take care of making a private network between its services so that they can communicate with each other.
 Your CDS job can thus perform integration tests on your application started without mock, but with a real database and a real cache.
+
+Please read: https://ovh.github.io/cds/workflows/pipelines/requirements/service/
 
 #### Caching Dependencies
 
