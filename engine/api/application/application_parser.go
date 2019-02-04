@@ -144,7 +144,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		// init deployment strategy from project if default exists
 		projIt, has := proj.GetIntegration(pfName)
 		if !has {
-			return app, nil, sdk.WrapError(sdk.NewErrorFrom(sdk.ErrWrongRequest, "integration not found"), "integration %s not found", pfName)
+			return app, nil, sdk.WrapError(sdk.NewErrorFrom(sdk.ErrWrongRequest, "deployment platform not found"), "deployment platform %s not found", pfName)
 		}
 		if projIt.Model.DeploymentDefaultConfig != nil {
 			deploymentStrategies[pfName] = projIt.Model.DeploymentDefaultConfig.Clone()
