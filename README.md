@@ -24,8 +24,6 @@ CDS provides a super intuitive UI that allows you to build complex workflows, ru
 
 cdsctl is the CDS Command Line - you can script everything with it, cdsctl also provide some cool commands as `cdsctl shell` to browse your projects and workflows without the need to open a browser.
 
-[![cdsctl shell](https://asciinema.org/a/fTFpJ5uqClJ0Oq2EsiejGSeBk.svg)](https://asciinema.org/a/fTFpJ5uqClJ0Oq2EsiejGSeBk)
-
 [See all cdsctl commands](https://ovh.github.io/cds/cli/cdsctl/#see-also)
 
 
