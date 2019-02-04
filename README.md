@@ -74,7 +74,7 @@ All the features of the table are detailed below.
 | [Graphical configuration with UI](#graphical-configuration-with-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: *2 | 
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x:*3 |
-| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x:*4 |
+| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark:*4 |
 | [Built-in Dependencies Setup](#built-in-dependencies-setup) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
 | [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: *5 | 
 | [Enterprise Notification (bus)](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
@@ -97,7 +97,7 @@ All the features of the table are detailed below.
 Some explanations:
 - *2 Impossible if you create your pipeline with Pipeline plugin, force usage of jenkinsfile
 - *3 There is the Pipeline plugin, but not compatible with Graphical COnfiguration with ui, Git branching, and repository manager integration.
-- *4 Depending on the plugin use to create the pipeline
+- *4 Multi-branch pipeline
 - *5 Job Cacher plugin not compatible with Blue Ocean, MultiBranch PIpeline, Pipeline plugin, but not compatible with Swift Storage
 - *6 "The current version of this plugin may not be safe to use. " https://wiki.jenkins.io/display/JENKINS/EnvInject+Plugin
 - *7 https://jenkins.io/doc/book/managing/security/#authorization
