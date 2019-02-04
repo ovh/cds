@@ -17,22 +17,22 @@ These permissions can be attached to different objects:
 + On workflow node
 
 
-|                                                                                                  | Project | Workflow | Workflow node                    |
-|--------------------------------------------------------------------------------------------------|---------|----------|----------------------------------|
-| Créer un workflow                                                                                |   RWX   |     -    |                -                 |
-| Editer un workflow  (changer run conditions, ajouter noeuds, éditer payload, notifications, ...) |    RO   |    RWX   |                -                 |
-| Créer/éditer un environment/pipeline/application                                                 |   RWX   |     -    |                -                 |
-| Gérer les droits sur un projet                                                                   |   RWX   |     -    |                -                 |
-| Gérer les droits sur un workflow                                                                 |    RO   |    RWX   |                                  |
-| Lancer un workflow                                                                               |    RO   |    RX    | / - OU RX (s'il y a des groupes) |
+|                                                                                       | Project | Workflow | Workflow node                               |
+|---------------------------------------------------------------------------------------|---------|----------|---------------------------------------------|
+| Create a workflow                                                                     |   RWX   |     -    |                      -                      |
+| Edit a workflow  (change run conditions, add nodes, edit payload, notifications, ...) |    RO   |    RWX   |                      -                      |
+| Create/edit an environment/pipeline/application                                       |   RWX   |     -    |                      -                      |
+| Manage permissions on project                                                         |   RWX   |     -    |                      -                      |
+| Manage permissions on a workflow                                                      |    RO   |    RWX   |                                             |
+| Run a workflow                                                                        |    RO   |    RX    | / - OR RX (if there is some groups on node) |
 
 Permissions cannot be attached directly to users, they need to be attached to groups of users. Users inherit their permissions from the groups they are belonging to.
 
-Example usage: Enforce a strict separation of duties by allowing a group of people to view/inspect a workflow, a second group will be able to push it to a `staging` environment and a third group will be allowed to push it to a `production` environment. You can have a fourth group responsible of editing the workflow if needed.
+Example usage: Enforce a strict separation of duties by allowing a group of people to view/inspect a workflow, a second group will be able to push it to a `deploy-to-staging` node and a third group will be allowed to push it to a `deploy-to-production` node. You can have a fourth group responsible of editing the workflow if needed.
 
-A more common scenario consists in giving `Read / Execute` permissions on the `staging` environment to everyone in your development team while restricting the `production` deployments and the pipeline edition to a smaller group of users.
+A more common scenario consists in giving `Read / Execute` permissions on the node `deploy-to-staging` to everyone in your development team while restricting the `deploy-to-production` node and the project edition to a smaller group of users.
 
-**Warning:** when you add a new group permission on a workflow scope, make sure to give the permission on all linked scopes (project, environments, applications, pipelines).
+**Warning:** when you add a new group permission on a workflow node, **only the groups linked on the node will be take in account**.
 
 # Tokens
 

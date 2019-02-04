@@ -82,7 +82,6 @@ type ApplicationClient interface {
 	ApplicationDelete(projectKey string, appName string) error
 	ApplicationGet(projectKey string, appName string, opts ...RequestModifier) (*sdk.Application, error)
 	ApplicationList(projectKey string) ([]sdk.Application, error)
-	ApplicationGroupsImport(projectKey, appName string, content io.Reader, format string, force bool) (sdk.Application, error)
 	ApplicationVariableClient
 	ApplicationKeysClient
 }
@@ -111,7 +110,6 @@ type EnvironmentClient interface {
 	EnvironmentList(projectKey string) ([]sdk.Environment, error)
 	EnvironmentExport(projectKey, name string, format string) ([]byte, error)
 	EnvironmentImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
-	EnvironmentGroupsImport(projectKey, envName string, content io.Reader, format string, force bool) (sdk.Environment, error)
 	EnvironmentVariableClient
 	EnvironmentKeysClient
 }
@@ -181,7 +179,6 @@ type BroadcastClient interface {
 type PipelineClient interface {
 	PipelineDelete(projectKey, name string) error
 	PipelineCreate(projectKey string, pip *sdk.Pipeline) error
-	PipelineGroupsImport(projectKey, pipelineName string, content io.Reader, format string, force bool) (sdk.Pipeline, error)
 	PipelineList(projectKey string) ([]sdk.Pipeline, error)
 }
 
@@ -194,6 +191,8 @@ type MaintenanceClient interface {
 type ProjectClient interface {
 	ProjectCreate(proj *sdk.Project, groupName string) error
 	ProjectDelete(projectKey string) error
+	ProjectGroupAdd(projectKey, groupName string, permission int, projectOnly bool) error
+	ProjectGroupDelete(projectKey, groupName string) error
 	ProjectGet(projectKey string, opts ...RequestModifier) (*sdk.Project, error)
 	ProjectList(withApplications, withWorkflow bool, filters ...Filter) ([]sdk.Project, error)
 	ProjectKeysClient
@@ -282,7 +281,10 @@ type HookClient interface {
 type WorkflowClient interface {
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
+	WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error
 	WorkflowDelete(projectKey string, workflowName string) error
+	WorkflowGroupAdd(projectKey, name, groupName string, permission int) error
+	WorkflowGroupDelete(projectKey, name, groupName string) error
 	WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunResync(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunSearch(projectKey string, offset, limit int64, filter ...Filter) ([]sdk.WorkflowRun, error)

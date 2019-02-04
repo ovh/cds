@@ -26,7 +26,6 @@ func environment() *cobra.Command {
 		cli.NewDeleteCommand(environmentDeleteCmd, environmentDeleteRun, nil, withAllCommandModifiers()...),
 		environmentKey(),
 		environmentVariable(),
-		environmentGroup(),
 		cli.NewCommand(environmentExportCmd, environmentExportRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(environmentImportCmd, environmentImportRun, nil, withAllCommandModifiers()...),
 	})

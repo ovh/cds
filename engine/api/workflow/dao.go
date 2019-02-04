@@ -614,13 +614,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.WrapError(err, "Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
-	// // Set default groups from workflow
-	// for _, node := range w.WorkflowData.Array() {
-	// 	if node.Groups == nil || len(node.Groups) == 0 {
-	// 		node.Groups = w.Groups
-	// 	}
-	// }
-
 	dbw := Workflow(*w)
 	if err := dbw.PostInsert(db); err != nil {
 		return sdk.WrapError(err, "Cannot post insert hook")
@@ -893,18 +886,6 @@ func Update(ctx context.Context, db gorp.SqlExecutor, store cache.Store, w *sdk.
 			return sdk.WrapError(err, "unable to delete root node on workflow(%d)", w.ID)
 		}
 	}
-
-	// // Keep previous groups or set default groups from workflow
-	// for _, node := range w.WorkflowData.Array() {
-	// 	if node.Groups == nil || len(node.Groups) == 0 {
-	// 		oldNode := oldWorkflow.WorkflowData.NodeByName(node.Name)
-	// 		if oldNode != nil && oldNode.Groups != nil && len(oldNode.Groups) > 0 {
-	// 			node.Groups = oldNode.Groups
-	// 		} else {
-	// 			node.Groups = w.Groups
-	// 		}
-	// 	}
-	// }
 
 	// Delete workflow data
 	if err := DeleteWorkflowData(db, *oldWorkflow); err != nil {

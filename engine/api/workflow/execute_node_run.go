@@ -465,16 +465,20 @@ func getIntegrationPluginBinaries(db gorp.SqlExecutor, runContext nodeRunContext
 
 func getJobExecutablesGroups(wr *sdk.WorkflowRun, runContext nodeRunContext) ([]sdk.Group, error) {
 	var groups []sdk.Group
-	// if runContext.Environment.ID != 0 {
-	// TODO add handling of node restrictions
-	// } else {
-	for _, gp := range wr.Workflow.Groups {
-		if gp.Permission >= permission.PermissionReadExecute {
-			groups = append(groups, gp.Group)
+
+	if len(runContext.NodeGroups) > 0 {
+		for _, gp := range runContext.NodeGroups {
+			if gp.Permission >= permission.PermissionReadExecute {
+				groups = append(groups, gp.Group)
+			}
+		}
+	} else {
+		for _, gp := range wr.Workflow.Groups {
+			if gp.Permission >= permission.PermissionReadExecute {
+				groups = append(groups, gp.Group)
+			}
 		}
 	}
-	// }
-
 	groups = append(groups, *group.SharedInfraGroup)
 
 	return groups, nil
@@ -597,6 +601,7 @@ func NodeBuildParametersFromWorkflow(ctx context.Context, db gorp.SqlExecutor, s
 				runContext.ProjectIntegration = pp
 			}
 		}
+		runContext.NodeGroups = refNode.Groups
 	}
 
 	res := []sdk.Parameter{}

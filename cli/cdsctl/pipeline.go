@@ -24,7 +24,6 @@ func pipeline() *cobra.Command {
 		cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil, withAllCommandModifiers()...),
-		pipelineGroup(),
 	})
 }
 

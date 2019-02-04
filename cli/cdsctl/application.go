@@ -23,7 +23,6 @@ func application() *cobra.Command {
 		cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil, withAllCommandModifiers()...),
 		cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil, withAllCommandModifiers()...),
 		applicationKey(),
-		applicationGroup(),
 		applicationVariable(),
 		cli.NewCommand(applicationExportCmd, applicationExportRun, nil, withAllCommandModifiers()...),
 		cli.NewCommand(applicationImportCmd, applicationImportRun, nil, withAllCommandModifiers()...),

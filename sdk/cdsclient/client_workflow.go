@@ -32,6 +32,34 @@ func (c *client) WorkflowGet(projectKey, workflowName string) (*sdk.Workflow, er
 	return w, nil
 }
 
+func (c *client) WorkflowUpdate(projectKey, name string, wf *sdk.Workflow) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s", projectKey, name)
+	if _, err := c.PutJSON(context.Background(), url, wf, wf); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) WorkflowGroupAdd(projectKey, name, groupName string, permission int) error {
+	gp := sdk.GroupPermission{
+		Group:      sdk.Group{Name: groupName},
+		Permission: permission,
+	}
+	url := fmt.Sprintf("/project/%s/workflows/%s/groups", projectKey, name)
+	if _, err := c.PostJSON(context.Background(), url, gp, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *client) WorkflowGroupDelete(projectKey, name, groupName string) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/groups/%s", projectKey, name, groupName)
+	if _, err := c.DeleteJSON(context.Background(), url, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *client) WorkflowRunGet(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d", projectKey, workflowName, number)
 	run := sdk.WorkflowRun{}
