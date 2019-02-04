@@ -75,7 +75,7 @@ All the features of the table are detailed below.
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x:*2 |
 | [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark:*3 |
-| [Built-in Dependencies Setup](#built-in-dependencies-setup) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
+| [Job's Services](#job-s-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
 | [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: *4 | 
 | [Enterprise Notification (bus)](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
 | [Continuous Deployment / Built-in Environment Support](#continuous-deployment--built-in-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *5 |
@@ -161,7 +161,7 @@ Through this integration, you will have the opportunity to have on your commits 
 
 CDS gives you the freedom to make clone git from several different git repositories within a single workflow. A workflow can involve several different applications - or none if you do not want to have a connection with a repo git, that will not be a problem either.
 
-#### Built-in Dependencies Setup
+#### Job's Services
 
 Need an ephemeral database, started only for the purpose of the job? This is not a problem, it's called a Service Prerequisite in CDS.
 
