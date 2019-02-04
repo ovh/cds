@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/service"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -14,7 +13,10 @@ import (
 
 func (api *API) getArtifactsStoreHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return service.WriteJSON(w, objectstore.Instance(), http.StatusOK)
+		s := sdk.ArtifactsStore{
+			TemporaryURLSupported: api.SharedStorage.TemporaryURLSupported(),
+		}
+		return service.WriteJSON(w, s, http.StatusOK)
 	}
 }
 

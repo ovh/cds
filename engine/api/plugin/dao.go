@@ -53,9 +53,9 @@ func (p *grpcPlugin) PostUpdate(db gorp.SqlExecutor) error {
 }
 
 // Delete deletes a plugin
-func Delete(db gorp.SqlExecutor, p *sdk.GRPCPlugin) error {
+func Delete(db gorp.SqlExecutor, storageDriver objectstore.Driver, p *sdk.GRPCPlugin) error {
 	for _, b := range p.Binaries {
-		if err := objectstore.Delete(b); err != nil {
+		if err := storageDriver.Delete(b); err != nil {
 			log.Error("plugin.Delete> unable to delete binary %v", b.ObjectPath)
 		}
 	}

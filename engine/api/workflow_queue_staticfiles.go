@@ -19,7 +19,7 @@ import (
 func (api *API) getStaticFilesStoreHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//TODO: to delete when swift will be available with auto-extract and temporary url middlewares
-		store := objectstore.Instance()
+		store := sdk.ArtifactsStore{}
 		store.TemporaryURLSupported = false
 		return service.WriteJSON(w, store, http.StatusOK)
 	}
@@ -84,7 +84,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 		}
 
 		if staticFile.StaticKey != "" {
-			if err := objectstore.Delete(&staticFile); err != nil {
+			if err := api.SharedStorage.Delete(&staticFile); err != nil {
 				return sdk.WrapError(err, "Cannot delete existing static files")
 			}
 		}
@@ -97,7 +97,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 			}
 			defer file.Close()
 
-			publicURL, err := objectstore.ServeStaticFiles(&staticFile, staticFile.EntryPoint, file)
+			publicURL, err := api.SharedStorage.ServeStaticFiles(&staticFile, staticFile.EntryPoint, file)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot serve static files in store")
 			}
@@ -105,7 +105,7 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 		}
 
 		if err := workflow.InsertStaticFiles(db, &staticFile); err != nil {
-			_ = objectstore.Delete(&staticFile)
+			_ = api.SharedStorage.Delete(&staticFile)
 			return sdk.WrapError(err, "Cannot insert static files in database")
 		}
 		return service.WriteJSON(w, staticFile, http.StatusOK)
@@ -114,11 +114,11 @@ func (api *API) postWorkflowJobStaticFilesHandler() service.Handler {
 
 func (api *API) postWorkflowJobStaticFilesWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !objectstore.Instance().TemporaryURLSupported {
+		if !api.SharedStorage.TemporaryURLSupported() {
 			return sdk.ErrForbidden
 		}
 
-		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		store, ok := api.SharedStorage.(objectstore.DriverWithRedirect)
 		if !ok {
 			return sdk.NewErrorFrom(sdk.ErrForbidden, "A cast error occured (seems that your objectstore doesn't support redirect)")
 		}
@@ -138,7 +138,7 @@ func (api *API) postWorkflowJobStaticFilesWithTempURLHandler() service.Handler {
 		}
 
 		if staticfile.StaticKey != "" {
-			if err := objectstore.Delete(&staticfile); err != nil {
+			if err := api.SharedStorage.Delete(&staticfile); err != nil {
 				return sdk.WrapError(err, "Cannot delete existing static files")
 			}
 		}
@@ -186,7 +186,7 @@ func (api *API) postWorkflowJobStaticFilesWithTempURLHandler() service.Handler {
 
 func (api *API) postWorkflowJobStaticFilesWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !objectstore.Instance().TemporaryURLSupported {
+		if !api.SharedStorage.TemporaryURLSupported() {
 			return sdk.ErrForbidden
 		}
 
@@ -205,7 +205,7 @@ func (api *API) postWorkflowJobStaticFilesWithTempURLCallbackHandler() service.H
 			return sdk.WrapError(sdk.ErrForbidden, "Submitted artifact doesn't match, key:%s art:%v cachedStaticFiles:%v", cacheKey, staticfile, cachedStaticFiles)
 		}
 
-		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		store, ok := api.SharedStorage.(objectstore.DriverWithRedirect)
 		if !ok {
 			return sdk.WrapError(sdk.ErrForbidden, "cast error")
 		}
@@ -217,7 +217,7 @@ func (api *API) postWorkflowJobStaticFilesWithTempURLCallbackHandler() service.H
 		staticfile.PublicURL = publicURL
 
 		if err := workflow.InsertStaticFiles(api.mustDB(), &staticfile); err != nil {
-			_ = objectstore.Delete(&staticfile)
+			_ = api.SharedStorage.Delete(&staticfile)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 

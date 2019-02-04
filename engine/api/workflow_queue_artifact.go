@@ -10,7 +10,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -21,14 +20,10 @@ import (
 
 func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Load  Existing workflow Run Job
-		id, errI := requestVarInt(r, "permID")
-		if errI != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "postWorkflowJobArtifactHandler> Invalid node job run ID")
-		}
-
 		vars := mux.Vars(r)
 		ref := vars["ref"]
+		integrationName := vars["integrationName"]
+		// TODO yesnault projectKey := vars["projectKey"]
 
 		_, params, errM := mime.ParseMediaType(r.Header.Get("Content-Disposition"))
 		if errM != nil {
@@ -45,7 +40,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		//get a ref to the parsed multipart form
 		m := r.MultipartForm
 
-		var sizeStr, permStr, md5sum, sha512sum string
+		var sizeStr, permStr, md5sum, sha512sum, nodeJobRunIDStr string
 		if len(m.Value["size"]) > 0 {
 			sizeStr = m.Value["size"][0]
 		}
@@ -58,13 +53,20 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		if len(m.Value["sha512sum"]) > 0 {
 			sha512sum = m.Value["sha512sum"][0]
 		}
+		if len(m.Value["nodeJobRunID"]) > 0 {
+			nodeJobRunIDStr = m.Value["nodeJobRunID"][0]
+		}
+		nodeJobRunID, errI := strconv.ParseInt(nodeJobRunIDStr, 10, 64)
+		if errI != nil {
+			return sdk.WrapError(sdk.ErrInvalidID, "postWorkflowJobArtifactHandler> Invalid node job run ID")
+		}
 
 		if fileName == "" {
 			log.Warning("uploadArtifactHandler> %s header is not set", "Content-Disposition")
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowJobArtifactHandler> %s header is not set", "Content-Disposition")
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, nodeJobRunID)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
@@ -94,6 +96,9 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "postWorkflowJobArtifactHandler> Cannot decode ref")
 		}
+
+		// TODO yesnault check IntegrationName on projectKey
+
 		art := sdk.WorkflowNodeRunArtifact{
 			Name:              fileName,
 			Tag:               string(tag),
@@ -106,6 +111,7 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 			WorkflowNodeRunID: nodeRun.ID,
 			WorkflowID:        nodeRun.WorkflowRunID,
 			Created:           time.Now(),
+			IntegrationName:   integrationName,
 		}
 
 		files := m.File[fileName]
@@ -116,16 +122,19 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 				return sdk.WrapError(err, "cannot open file")
 			}
 
-			if err := artifact.SaveWorkflowFile(&art, file); err != nil {
+			objectPath, err := api.SharedStorage.Store(&art, file)
+			if err != nil {
 				file.Close()
-				return sdk.WrapError(err, "Cannot save artifact in store")
+				return sdk.WrapError(err, "Cannot store artifact")
 			}
+			log.Debug("objectpath=%s\n", objectPath)
+			art.ObjectPath = objectPath
 			file.Close()
 		}
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			_ = objectstore.Delete(&art)
+			_ = api.SharedStorage.Delete(&art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 		return nil
@@ -134,23 +143,22 @@ func (api *API) postWorkflowJobArtifactHandler() service.Handler {
 
 func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !objectstore.Instance().TemporaryURLSupported {
+		if !api.SharedStorage.TemporaryURLSupported() {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler")
 		}
 
-		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		store, ok := api.SharedStorage.(objectstore.DriverWithRedirect)
 		if !ok {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler > cast error")
 		}
 
-		// Load existing workflow Run Job
-		id, errI := requestVarInt(r, "permID")
-		if errI != nil {
-			return sdk.WrapError(errI, "postWorkflowJobArtifacWithTempURLHandler> Invalid node job run ID")
-		}
-
 		vars := mux.Vars(r)
 		ref := vars["ref"]
+
+		// TODO yesnault check integrationName on projectKey
+
+		// integrationName := vars["integrationName"]
+		// projectKey := vars["projectKey"]
 
 		hash, errG := generateHash()
 		if errG != nil {
@@ -162,7 +170,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 			return sdk.WithStack(err)
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, art.WorkflowNodeJobRunID)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "postWorkflowJobArtifacWithTempURLHandler> Cannot load node job run")
 		}
@@ -214,7 +222,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLHandler() service.Handler {
 
 func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if !objectstore.Instance().TemporaryURLSupported {
+		if !api.SharedStorage.TemporaryURLSupported() {
 			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifactWithTempURLCallbackHandler")
 		}
 
@@ -240,7 +248,7 @@ func (api *API) postWorkflowJobArtifactWithTempURLCallbackHandler() service.Hand
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
 		if err := workflow.InsertArtifact(api.mustDB(), &art); err != nil {
-			_ = objectstore.Delete(&art)
+			_ = api.SharedStorage.Delete(&art)
 			return sdk.WrapError(err, "Cannot update workflow node run")
 		}
 

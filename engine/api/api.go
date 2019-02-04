@@ -227,6 +227,7 @@ type API struct {
 	Router              *Router
 	Config              Configuration
 	DBConnectionFactory *database.DBConnectionFactory
+	SharedStorage       objectstore.Driver
 	StartupTime         time.Time
 	Maintenance         bool
 	eventsBroker        *eventsBroker
@@ -535,8 +536,10 @@ func (a *API) Serve(ctx context.Context) error {
 		},
 	}
 
-	if err := objectstore.Initialize(ctx, cfg); err != nil {
-		return fmt.Errorf("cannot initialize storage: %v", err)
+	var errStorage error
+	a.SharedStorage, errStorage = objectstore.Init(ctx, cfg)
+	if errStorage != nil {
+		return fmt.Errorf("cannot initialize storage: %v", errStorage)
 	}
 
 	log.Info("Initializing database connection...")

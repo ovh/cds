@@ -281,22 +281,22 @@ func (c *client) QueueSendResult(ctx context.Context, id int64, res sdk.Result) 
 	return err
 }
 
-func (c *client) QueueArtifactUpload(ctx context.Context, id int64, tag, filePath string) (bool, time.Duration, error) {
+func (c *client) QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (bool, time.Duration, error) {
 	t0 := time.Now()
 	store := new(sdk.ArtifactsStore)
 	_, _ = c.GetJSON(ctx, "/artifact/store", store)
 	if store.TemporaryURLSupported {
-		err := c.queueIndirectArtifactUpload(ctx, id, tag, filePath)
+		err := c.queueIndirectArtifactUpload(ctx, projectKey, integrationName, nodeJobRunID, tag, filePath)
 		return true, time.Since(t0), err
 	}
-	err := c.queueDirectArtifactUpload(id, tag, filePath)
+	err := c.queueDirectArtifactUpload(projectKey, integrationName, nodeJobRunID, tag, filePath)
 	return false, time.Since(t0), err
 }
 
-func (c *client) queueIndirectArtifactTempURL(ctx context.Context, id int64, art *sdk.WorkflowNodeRunArtifact) error {
+func (c *client) queueIndirectArtifactTempURL(ctx context.Context, projectKey, integrationName string, art *sdk.WorkflowNodeRunArtifact) error {
 	var retryURL = 10
 	var globalURLErr error
-	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url", id, art.Ref)
+	uri := fmt.Sprintf("/project/%s/storage/%s/%s/url", projectKey, integrationName, art.Ref)
 
 	for i := 0; i < retryURL; i++ {
 		var code int
@@ -349,7 +349,7 @@ func (c *client) queueIndirectArtifactTempURLPost(url string, content []byte) er
 	return globalErr
 }
 
-func (c *client) queueIndirectArtifactUpload(ctx context.Context, id int64, tag, filePath string) error {
+func (c *client) queueIndirectArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) error {
 	f, errop := os.Open(filePath)
 	if errop != nil {
 		return errop
@@ -376,17 +376,18 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, id int64, tag,
 
 	ref := base64.RawURLEncoding.EncodeToString([]byte(tag))
 	art := sdk.WorkflowNodeRunArtifact{
-		Name:      name,
-		Tag:       tag,
-		Ref:       ref,
-		Size:      stat.Size(),
-		Perm:      uint32(stat.Mode().Perm()),
-		MD5sum:    md5sum,
-		SHA512sum: sha512sum,
-		Created:   time.Now(),
+		Name:              name,
+		Tag:               tag,
+		Ref:               ref,
+		Size:              stat.Size(),
+		Perm:              uint32(stat.Mode().Perm()),
+		MD5sum:            md5sum,
+		SHA512sum:         sha512sum,
+		Created:           time.Now(),
+		WorkflowNodeRunID: nodeJobRunID,
 	}
 
-	if err := c.queueIndirectArtifactTempURL(ctx, id, &art); err != nil {
+	if err := c.queueIndirectArtifactTempURL(ctx, projectKey, integrationName, &art); err != nil {
 		return err
 	}
 
@@ -416,7 +417,7 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, id int64, tag,
 	var callbackErr error
 	retry := 50
 	for i := 0; i < retry; i++ {
-		uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url/callback", id, art.Ref)
+		uri := fmt.Sprintf("/project/%s/storage/%s/%s/url/callback", projectKey, integrationName, art.Ref)
 		ctxt, cancel := context.WithTimeout(ctx, 5*time.Second)
 		_, callbackErr = c.PostJSON(ctxt, uri, &art, nil)
 		if callbackErr == nil {
@@ -429,7 +430,7 @@ func (c *client) queueIndirectArtifactUpload(ctx context.Context, id int64, tag,
 	return callbackErr
 }
 
-func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error {
+func (c *client) queueDirectArtifactUpload(projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) error {
 	f, errop := os.Open(filePath)
 	if errop != nil {
 		return errop
@@ -473,6 +474,7 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10))
 	writer.WriteField("md5sum", md5sum)
 	writer.WriteField("sha512sum", sha512sum)
+	writer.WriteField("nodeJobRunID", fmt.Sprintf("%d", nodeJobRunID))
 
 	if errclose := writer.Close(); errclose != nil {
 		return errclose
@@ -480,7 +482,7 @@ func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error
 
 	var err error
 	ref := base64.RawURLEncoding.EncodeToString([]byte(tag))
-	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s", id, ref)
+	uri := fmt.Sprintf("/project/%s/storage/%s/%s", projectKey, integrationName, ref)
 	for i := 0; i <= c.config.Retry; i++ {
 		var code int
 		_, code, err = c.UploadMultiPart("POST", uri, body,
@@ -506,7 +508,6 @@ func (c *client) QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) er
 	if status >= 400 {
 		return fmt.Errorf("Error: HTTP code %d", status)
 	}
-
 	return err
 }
 

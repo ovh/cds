@@ -260,6 +260,10 @@ func (api *API) InitRouter() {
 	// Export Environment
 	r.Handle("/project/{permProjectKey}/export/environment/{environmentName}", r.GET(api.getEnvironmentExportHandler))
 
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/{ref}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/{ref}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/{ref}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+
 	// Artifacts
 	r.Handle("/staticfiles/store", r.GET(api.getStaticFilesStoreHandler, Auth(false)))
 	r.Handle("/artifact/store", r.GET(api.getArtifactsStoreHandler, Auth(false)))
@@ -285,9 +289,6 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permID}/tag", r.POSTEXECUTE(api.postWorkflowJobTagsHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/artifact/{ref}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/artifact/{ref}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/staticfiles/{name}", r.POSTEXECUTE(api.postWorkflowJobStaticFilesHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/staticfiles/{name}/url", r.POSTEXECUTE(api.postWorkflowJobStaticFilesWithTempURLHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/staticfiles/{name}/url/callback", r.POSTEXECUTE(api.postWorkflowJobStaticFilesWithTempURLCallbackHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))

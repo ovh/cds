@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/migrate"
-	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/observability"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -43,7 +42,7 @@ func (api *API) Status() sdk.MonitoringStatus {
 	m.Lines = append(m.Lines, getStatusLine(event.Status()))
 	m.Lines = append(m.Lines, getStatusLine(api.Cache.Status()))
 	m.Lines = append(m.Lines, getStatusLine(sessionstore.Status))
-	m.Lines = append(m.Lines, getStatusLine(objectstore.Status()))
+	m.Lines = append(m.Lines, getStatusLine(api.SharedStorage.Status()))
 	m.Lines = append(m.Lines, getStatusLine(mail.Status()))
 	m.Lines = append(m.Lines, getStatusLine(api.DBConnectionFactory.Status()))
 	m.Lines = append(m.Lines, getStatusLine(worker.Status(api.mustDB())))

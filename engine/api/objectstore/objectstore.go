@@ -10,74 +10,6 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-var storage Driver
-var instance sdk.ArtifactsStore
-
-//Status is for status handler
-func Status() sdk.MonitoringStatusLine {
-	if storage == nil {
-		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Store not initialized", Status: sdk.MonitoringStatusAlert}
-	}
-	return storage.Status()
-}
-
-// Instance returns the objectstore singleton
-func Instance() sdk.ArtifactsStore {
-	return instance
-}
-
-// Storage returns the Driver singleton
-func Storage() Driver {
-	return storage
-}
-
-//Store an object with default objectstore driver
-func Store(o Object, data io.ReadCloser) (string, error) {
-	if storage != nil {
-		return storage.Store(o, data)
-	}
-	return "", fmt.Errorf("store not initialized")
-}
-
-//ServeStaticFiles send files to serve static files with the entrypoint of html page and return public URL taking a tar file
-func ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error) {
-	if storage != nil {
-		return storage.ServeStaticFiles(o, entrypoint, data)
-	}
-	return "", fmt.Errorf("store not initialized")
-}
-
-//Fetch an object with default objectstore driver
-func Fetch(o Object) (io.ReadCloser, error) {
-	if storage != nil {
-		return storage.Fetch(o)
-	}
-	return nil, fmt.Errorf("store not initialized")
-}
-
-//Delete an object with default objectstore driver
-func Delete(o Object) error {
-	if storage != nil {
-		return storage.Delete(o)
-	}
-	return fmt.Errorf("store not initialized")
-}
-
-//FetchTempURL returns a temp URL
-func FetchTempURL(o Object) (string, error) {
-	if storage == nil {
-		return "", fmt.Errorf("store not initialized")
-	}
-
-	s, ok := storage.(DriverWithRedirect)
-	if !ok {
-		return "", fmt.Errorf("temp URL not supported")
-	}
-
-	url, _, err := s.FetchURL(o)
-	return url, err
-}
-
 // Driver allows artifact to be stored and retrieve the same way to any backend
 // - Openstack / Swift
 // - Filesystem
@@ -87,6 +19,7 @@ type Driver interface {
 	ServeStaticFiles(o Object, entrypoint string, data io.ReadCloser) (string, error)
 	Fetch(o Object) (io.ReadCloser, error)
 	Delete(o Object) error
+	TemporaryURLSupported() bool
 }
 
 // DriverWithRedirect has to be implemented if your storage backend supports temp url
@@ -101,16 +34,6 @@ type DriverWithRedirect interface {
 	GetPublicURL(o Object) (url string, err error)
 }
 
-// Initialize setup wanted ObjectStore driver
-func Initialize(c context.Context, cfg Config) error {
-	var err error
-	storage, err = New(c, cfg)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // Kind will define const defining all supported objecstore drivers
 type Kind int
 
@@ -123,8 +46,10 @@ const (
 
 // Config represents all the configuration for all objecstore drivers
 type Config struct {
-	Kind    Kind
-	Options ConfigOptions
+	IntegrationName string
+	ProjectName     string
+	Kind            Kind
+	Options         ConfigOptions
 }
 
 // ConfigOptions is used by Config
@@ -150,29 +75,20 @@ type ConfigOptionsFilesystem struct {
 	Basedir string
 }
 
-// New initialise a new ArtifactStorage
-func New(c context.Context, cfg Config) (Driver, error) {
+// Init initialise a new ArtifactStorage
+func Init(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
 	case Openstack, Swift:
-		instance = sdk.ArtifactsStore{
-			Name:                  "Swift",
-			Private:               false,
-			TemporaryURLSupported: !cfg.Options.Openstack.DisableTempURL,
-		}
-		return NewSwiftStore(cfg.Options.Openstack.Address,
+		return newSwiftStore(cfg.Options.Openstack.Address,
 			cfg.Options.Openstack.Username,
 			cfg.Options.Openstack.Password,
 			cfg.Options.Openstack.Region,
 			cfg.Options.Openstack.Tenant,
 			cfg.Options.Openstack.Domain,
-			cfg.Options.Openstack.ContainerPrefix)
+			cfg.Options.Openstack.ContainerPrefix,
+			cfg.Options.Openstack.DisableTempURL)
 	case Filesystem:
-		instance = sdk.ArtifactsStore{
-			Name:                  "Local FS",
-			Private:               false,
-			TemporaryURLSupported: false,
-		}
-		return NewFilesystemStore(cfg.Options.Filesystem.Basedir)
+		return newFilesystemStore(cfg.Options.Filesystem.Basedir)
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}

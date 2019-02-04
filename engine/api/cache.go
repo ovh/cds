@@ -35,9 +35,8 @@ func (api *API) postPushCacheHandler() service.Handler {
 			Tag:     tag,
 		}
 
-		_, errO := objectstore.Store(&cacheObject, r.Body)
-		if errO != nil {
-			return sdk.WrapError(errO, "postPushCacheHandler>Cannot store cache")
+		if _, err := api.SharedStorage.Store(&cacheObject, r.Body); err != nil {
+			return sdk.WrapError(err, "postPushCacheHandler>Cannot store cache")
 		}
 
 		return nil
@@ -62,8 +61,9 @@ func (api *API) getPullCacheHandler() service.Handler {
 			Tag:     tag,
 		}
 
-		if objectstore.Instance().TemporaryURLSupported {
-			fURL, err := objectstore.FetchTempURL(&cacheObject)
+		s, temporaryURLSupported := api.SharedStorage.(objectstore.DriverWithRedirect)
+		if api.SharedStorage.TemporaryURLSupported() && temporaryURLSupported { // with temp URL
+			fURL, _, err := s.FetchURL(&cacheObject)
 			if err != nil {
 				return sdk.WrapError(err, "Cannot fetch cache object")
 			}
@@ -73,7 +73,7 @@ func (api *API) getPullCacheHandler() service.Handler {
 			return nil
 		}
 
-		ioread, err := objectstore.Fetch(&cacheObject)
+		ioread, err := api.SharedStorage.Fetch(&cacheObject)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "getPullCacheHandler> Cannot fetch artifact cache.tar : %v", err)
 		}
@@ -101,7 +101,7 @@ func (api *API) postPushCacheWithTempURLHandler() service.Handler {
 			return sdk.ErrInvalidName
 		}
 
-		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		store, ok := api.SharedStorage.(objectstore.DriverWithRedirect)
 		if !ok {
 			return sdk.WrapError(sdk.ErrNotImplemented, "postPushCacheWithTempURLHandler> cast error")
 		}
@@ -135,7 +135,7 @@ func (api *API) getPullCacheWithTempURLHandler() service.Handler {
 			return sdk.ErrInvalidName
 		}
 
-		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		store, ok := api.SharedStorage.(objectstore.DriverWithRedirect)
 		if !ok {
 			return sdk.WrapError(sdk.ErrNotImplemented, "getPullCacheWithTempURLHandler> cast error")
 		}

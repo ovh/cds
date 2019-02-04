@@ -15,8 +15,8 @@ type FilesystemStore struct {
 	basedir string
 }
 
-// NewFilesystemStore creates a new ObjectStore with filesystem driver
-func NewFilesystemStore(basedir string) (*FilesystemStore, error) {
+// newFilesystemStore creates a new ObjectStore with filesystem driver
+func newFilesystemStore(basedir string) (*FilesystemStore, error) {
 	log.Info("Objectstore> Initialize Filesystem driver on directory: %s", basedir)
 	if basedir == "" {
 		return nil, fmt.Errorf("artifact storage is filesystem, but --artifact-basedir is not provided")
@@ -24,6 +24,11 @@ func NewFilesystemStore(basedir string) (*FilesystemStore, error) {
 
 	fss := &FilesystemStore{basedir: basedir}
 	return fss, nil
+}
+
+// TemporaryURLSupported returns true is temporary URL are supported
+func (fss *FilesystemStore) TemporaryURLSupported() bool {
+	return false
 }
 
 //Status return filesystem storage status

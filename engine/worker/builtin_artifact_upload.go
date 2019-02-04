@@ -58,13 +58,16 @@ func runArtifactUpload(wk *currentWorker) BuiltInAction {
 			}
 		}()
 
+		integrationName := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination"))
+		projectKey := sdk.ParameterValue(*params, "cds.project")
+
 		wg.Add(len(filesPath))
 		for _, p := range filesPath {
 			filename := filepath.Base(p)
 			go func(path string) {
 				log.Debug("Uploading %s", path)
 				defer wg.Done()
-				throughTempURL, duration, err := wk.client.QueueArtifactUpload(ctx, wJobID, tag.Value, path)
+				throughTempURL, duration, err := wk.client.QueueArtifactUpload(ctx, projectKey, integrationName, wJobID, tag.Value, path)
 				if err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
 					wgErrors.Add(1)

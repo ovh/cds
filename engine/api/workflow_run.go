@@ -979,7 +979,7 @@ func (api *API) downloadworkflowArtifactDirectHandler() service.Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		f, err := objectstore.Fetch(art)
+		f, err := api.SharedStorage.Fetch(art)
 		if err != nil {
 			return sdk.WrapError(err, "Cannot fetch artifact")
 		}
@@ -1028,7 +1028,7 @@ func (api *API) getDownloadArtifactHandler() service.Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		f, err := objectstore.Fetch(art)
+		f, err := api.SharedStorage.Fetch(art)
 		if err != nil {
 			_ = f.Close()
 			return sdk.WrapError(err, "Cannot fetch artifact")
@@ -1077,9 +1077,14 @@ func (api *API) getWorkflowRunArtifactsHandler() service.Handler {
 				wg.Add(1)
 				go func(a *sdk.WorkflowNodeRunArtifact) {
 					defer wg.Done()
-					url, _ := objectstore.FetchTempURL(a)
-					if url != "" {
-						a.TempURL = url
+					s, temporaryURLSupported := api.SharedStorage.(objectstore.DriverWithRedirect)
+					if temporaryURLSupported { // with temp URL
+						fURL, _, err := s.FetchURL(a)
+						if err != nil {
+							log.Error("Cannot fetch cache object: %v", err)
+						} else if fURL != "" {
+							a.TempURL = fURL
+						}
 					}
 				}(&runs[0].Artifacts[i])
 			}
