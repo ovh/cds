@@ -78,7 +78,7 @@ All the features of the table are detailed below.
 | [Job's Services](#jobs-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
 | [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*4](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
 | [Enterprise Notification Bus](#enterprise-notification-bus) & [Built-in Hooks](#built-in-hooks) | :white_check_mark: | :x: | :x: | :x: | :x: |
-| [Continuous Deployment & Environment Support](#continuous-deployment-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*5](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
+| [Continuous Deployment & Environment Support](#continuous-deployment--environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*5](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Enterprise-grade permissions, Support of ACLs delegation](#enterprise-grade-permissions) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*6](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>[*7](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*8](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :white_check_mark: |
@@ -256,7 +256,16 @@ Thus, you can have hundreds of workers model and when necessary, CDS will start 
 
 A hatchery is like an incubator, it gives birth to the CDS Workers and the right of life and death over them.
 
-Several types of hatchery are available: hatchery kubernetes (start workers in pods), **hatchery openstack** (start virtual machines), **hatchery swarm** (start docker containers), **hatchery marathon** (starts docker containers), **hatchery VShpere** (start virtual machines), **hatchery local** ( starts processes on a host). So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
+Several types of hatchery are available: 
+
+ - **hatchery kubernetes** (start workers in pods)
+ - **hatchery openstack** (start virtual machines)
+ - **hatchery swarm** (start docker containers)
+ - **hatchery marathon** (starts docker containers)
+ - **hatchery VShpere** (start virtual machines)
+ - **hatchery local** ( starts processes on a host). 
+ 
+ So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
 
 #### Some explanations on the comparaison matrix
 
