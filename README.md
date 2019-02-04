@@ -97,7 +97,7 @@ All the features of the table are detailed below.
 Some explanations:
 - *2 Impossible if you create your pipeline with Pipeline plugin, force usage of jenkinsfile
 - *3 There is the Pipeline plugin, but not compatible with Graphical COnfiguration with ui, Git branching, and repository manager integration.
-- *4 Multi-branch pipeline
+- *4 [Multi-branch pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Multibranch+Plugin ) - but incompatible [Pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Plugin)
 - *5 Job Cacher plugin not compatible with Blue Ocean, MultiBranch PIpeline, Pipeline plugin, but not compatible with Swift Storage
 - *6 "The current version of this plugin may not be safe to use. " https://wiki.jenkins.io/display/JENKINS/EnvInject+Plugin
 - *7 https://jenkins.io/doc/book/managing/security/#authorization
