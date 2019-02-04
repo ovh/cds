@@ -75,7 +75,6 @@ All the features of the table are detailed below.
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x:*3 |
 | [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x:*4 |
-| [Multiple VCS Support in Pipeline/Job](#multiple-vcs-support-in-pipelinejob) | :white_check_mark: | :x: | :white_check_mark: | :x: | :white_check_mark: |
 | [Built-in Dependencies Setup](#built-in-dependencies-setup) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
 | [Caching Dependencies](#caching-dependencies) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: *5 | 
 | [Enterprise Notification (bus)](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
