@@ -69,7 +69,7 @@ All the features of the table are detailed below.
 
 | Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins | 
 | --- | --- | --- | --- | --- | --- |
-| Built-in Pipeline | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | 
+| [Built-in Pipeline](#built-in-pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | 
 | Built-in Workflow | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *1 |
 | Graphical configuration with UI | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: *2 | 
 | Configuration on Git Repository | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
@@ -113,7 +113,6 @@ Some explanations:
 - *15 it's a plugin
 - *16 K8s, Docker machine & GKE only 
 - *17 limitated to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
-
 
 
 ### CDS User features
