@@ -163,8 +163,8 @@ func (pf *ProjectIntegration) HideSecrets() {
 }
 
 // MergeWith set new values from new config and update existing values if not default.
-func (config IntegrationConfig) MergeWith(new IntegrationConfig) {
-	for k, v := range new {
+func (config IntegrationConfig) MergeWith(cfg IntegrationConfig) {
+	for k, v := range cfg {
 		val, has := config[k]
 		if !has {
 			val.Type = v.Type
