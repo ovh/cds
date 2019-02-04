@@ -254,16 +254,16 @@ Auto-Scale on Demand!
 
 Thus, you can have hundreds of workers model and when necessary, CDS will start the workers using the hatcheries.
 
-A hatchery is like an incubator, it gives birth to the CDS Workers and the right of life and death over them.
+A [hatchery](https://ovh.github.io/cds/hatchery/) is like an incubator, it gives birth to the CDS Workers and the right of life and death over them.
 
 Several types of hatchery are available: 
 
- - **hatchery kubernetes** (start workers in pods)
- - **hatchery openstack** (start virtual machines)
- - **hatchery swarm** (start docker containers)
- - **hatchery marathon** (starts docker containers)
- - **hatchery VShpere** (start virtual machines)
- - **hatchery local** ( starts processes on a host). 
+ - **[hatchery kubernetes](https://ovh.github.io/cds/hatchery/kubernetes/)** (start workers in pods)
+ - **[hatchery openstack](https://ovh.github.io/cds/hatchery/openstack/)** (start virtual machines)
+ - **[hatchery swarm](https://ovh.github.io/cds/hatchery/swarm/)** (start docker containers)
+ - **[hatchery marathon](https://ovh.github.io/cds/hatchery/marathon/)** (starts docker containers)
+ - **[hatchery VSphere](https://ovh.github.io/cds/hatchery/vsphere/)** (start virtual machines)
+ - **[hatchery local](https://ovh.github.io/cds/hatchery/local/)** ( starts processes on a host). 
  
  So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
 
