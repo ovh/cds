@@ -69,15 +69,15 @@ All the features of the table are detailed below.
 
 | Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins | 
 | --- | --- | --- | --- | --- | --- |
-| [Built-in Pipeline](#built-in-pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | 
-| [Built-in Workflow - Workflow as an entity](#built-in-workflow) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: |
-| [Graphical configuration with UI](#graphical-configuration-with-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*1](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
+| [Pipeline](#pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | 
+| [Workflow](#workflow) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: |
+| [Visual configuration with Web UI](#visual-configuration-with-web-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*1](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x: <sub><sup>[*2](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: <sub><sup>[*3](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Job's Services](#jobs-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
 | [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*4](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
-| [Enterprise Notification (bus)](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
+| [Enterprise Notification Bus](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
 | [Continuous Deployment / Built-in Environment Support](#continuous-deployment--built-in-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*5](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Easy Enterprise-grade permissions, Self-Service on Rights management](#easy-enterprise-grade-permissions) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*6](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>[*7](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
@@ -97,11 +97,11 @@ All the features of the table are detailed below.
 
 ### CDS User features
 
-#### Built-in Pipeline
+#### Pipeline
 
 A pipeline containing stages & jobs is a basic feature. This allows you to run multiple jobs simultaneously while keeping an isolation between jobs.
 
-#### Built-in Workflow
+#### Workflow
 
 A Workflow makes it possible to chain the pipelines. This is a key Feature of CDS. You can create workflows using one or more pipelines, pipelines that can be linked together with joins or forks.
 
@@ -116,7 +116,7 @@ As a company, you can offer a catalog of workflows for all users. Each team can 
 
 If you have to maintain hundreds of workflows, no need to worry , update workflow at scale :)
 
-#### Graphical configuration with UI
+#### Visual configuration with Web UI
 
 You can configure everything with the web UI. Even if you have complex use cases, it's usually easier to create your workflow graphically.
 
@@ -160,7 +160,7 @@ A remote cache is used by a team of developers and/or a continuous integration (
 
 Doc: https://ovh.github.io/cds/cli/worker/cache/
 
-#### Enterprise Notification (bus)
+#### Enterprise Notification Bus
 
 As an Enterprise-Grade platform, CDS can send all events in an event bus. You will be able to easily feed other tools in continuous as big data tool.
 
