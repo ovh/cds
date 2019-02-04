@@ -39,7 +39,7 @@
         <div class="actions-wrapper">
             <div class="actions">
                 <div *ngIf="noderun" class="ui action">
-                    <i class="ui icon file text grey large" [title]="'btn_logs' | translate" (click)="displayLogs()"></i>
+                    <i class="ui icon file text grey large" [title]="'btn_logs' | translate" (click)="$event.stopPropagation(); displayLogs()"></i>
                 </div>
             </div>
         </div>

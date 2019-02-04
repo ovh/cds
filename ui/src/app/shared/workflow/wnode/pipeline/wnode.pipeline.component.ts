@@ -1,5 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { PipelineStatus } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
@@ -26,6 +26,7 @@ export class WorkflowWNodePipelineComponent implements OnInit {
 
     constructor(
         private _workflowEventStore: WorkflowEventStore,
+        private _activatedRoute: ActivatedRoute,
         private _router: Router
     ) { }
 
@@ -36,10 +37,26 @@ export class WorkflowWNodePipelineComponent implements OnInit {
     }
 
     displayLogs() {
-        this._router.navigate([
-            '/project', this.project.key,
-            'workflow', this.workflow.name,
-            'run', this.noderun.num,
-            'node', this.noderun.id], { queryParams: { name: this.node.name } });
+        if (this._workflowEventStore.isRunSelected() && this.noderun) {
+            this._router.navigate(['node', this.noderun.id], {
+                relativeTo: this._activatedRoute,
+                queryParams: {
+                    name: this.node.name,
+                    node_id: this.node.id, node_ref: this.node.ref
+                }
+            });
+        } else {
+            this._router.navigate([
+                '/project', this.project.key,
+                'pipeline', Workflow.getPipeline(this.workflow, this.node).name
+            ], {
+                    queryParams: {
+                        workflow: this.workflow.name,
+                        node_id: this.node.id,
+                        node_ref: this.node.ref
+                    }
+                }
+            );
+        }
     }
 }

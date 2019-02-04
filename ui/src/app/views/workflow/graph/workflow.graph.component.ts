@@ -69,13 +69,13 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
     get direction() { return this._direction; }
 
-    @Output() deleteJoinSrcEvent = new EventEmitter<{ source, target }>();
+    @Output() deleteJoinSrcEvent = new EventEmitter<{ source: any, target: any }>();
 
     ready: boolean;
     _direction: string;
 
     // workflow graph
-    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer;
+    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer: any;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
     svgWidth: number = window.innerWidth;
@@ -111,7 +111,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         if (!this.ready && this.workflow) {
             return;
         }
-        this.initWorkflow();
+        setTimeout(() => { this.initWorkflow(); });
     }
 
     initWorkflow() {
