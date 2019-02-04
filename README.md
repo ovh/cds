@@ -75,7 +75,7 @@ All the features of the table are detailed below.
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x:*2 |
 | [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark:*3 |
-| [Job's Services](#job-s-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
+| [Job's Services](#jobs-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
 | [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: *4 | 
 | [Enterprise Notification (bus)](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
 | [Continuous Deployment / Built-in Environment Support](#continuous-deployment--built-in-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *5 |
