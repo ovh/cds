@@ -70,21 +70,21 @@ All the features of the table are detailed below.
 | Feature | CDS | Bamboo | Buildbot | Gitlab CI | Jenkins | 
 | --- | --- | --- | --- | --- | --- |
 | [Built-in Pipeline](#built-in-pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | 
-| [Built-in Workflow](#built-in-workflow) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *1 |
+| [Built-in Workflow - Workflow as an entity](#built-in-workflow) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: |
 | [Graphical configuration with UI](#graphical-configuration-with-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: *2 | 
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x:*3 |
 | [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x:*4 |
 | [Built-in Dependencies Setup](#built-in-dependencies-setup) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
-| [Caching Dependencies](#caching-dependencies) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: *5 | 
+| [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: *5 | 
 | [Enterprise Notification (bus)](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
 | [Continuous Deployment / Built-in Environment Support](#continuous-deployment--built-in-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *6 |
 | [Easy Enterprise-grade permissions, Self-Service on Rights management](#easy-enterprise-grade-permissions) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *7 |
 | [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *8 |
 | [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *9 | :white_check_mark: |
-| [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x:*10 | :white_check_mark: | :white_check_mark: |
+| [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x:*10 | :white_check_mark: | :x: |
 | [Self-Service Job's Flavor](#self-service-jobs-flavor) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: *11 |
-| [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :x: | :x: *12 | 
+| [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: *12 | 
 | [Command Line Interface (cdsctl): 100% features supported & User Friendly](#command-line-interface-cdsctl-100-features-supported) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *13| 
 | [REST API & SDK](#rest-api--sdk) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Self-Hosting](#self-hosting) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
@@ -95,7 +95,6 @@ All the features of the table are detailed below.
 | [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :x: | :x:*16 | :x:*17 | 
 
 Some explanations:
-- *1 unable to chain pipelines
 - *2 Impossible if you create your pipeline with Pipeline plugin, force usage of jenkinsfile
 - *3 There is the Pipeline plugin, but not compatible with Graphical COnfiguration with ui, Git branching, and repository manager integration.
 - *4 Depending on the plugin use to create the pipeline
@@ -173,7 +172,7 @@ Your CDS job can thus perform integration tests on your application started with
 
 Please read: https://ovh.github.io/cds/workflows/pipelines/requirements/service/
 
-#### Caching Dependencies
+#### Secure Remote Caching
 
 Do you find your (npm | mvn) install too slow? Use the "worker cache"! please read: https://ovh.github.io/cds/cli/worker/cache/
 
