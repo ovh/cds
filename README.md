@@ -77,7 +77,7 @@ All the features of the table are detailed below.
 | [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: <sub><sup>[*3](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Job's Services](#jobs-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
 | [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*4](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
-| [Enterprise Notification Bus](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
+| [Enterprise Notification Bus](#enterprise-notification-bus) & [Built-in Hooks](#built-in-hooks) | :white_check_mark: | :x: | :x: | :x: | :x: |
 | [Continuous Deployment / Built-in Environment Support](#continuous-deployment--built-in-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*5](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Easy Enterprise-grade permissions, Self-Service on Rights management](#easy-enterprise-grade-permissions) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*6](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>[*7](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
@@ -164,7 +164,7 @@ Doc: https://ovh.github.io/cds/cli/worker/cache/
 
 As an Enterprise-Grade platform, CDS can send all events in an event bus. You will be able to easily feed other tools in continuous as big data tool.
 
-#### Event Bus Built-in Hooks (RabbitMQ, Kafka, MQSeries etc..)
+#### Built-in Hooks
 
 Ok, you can start your workflow with each commit, manually, via a scheduler or via a webhook. CDS also offers you an event bus to trigger your workflow each time you receive a kafka or RabbitMQ message.
 
