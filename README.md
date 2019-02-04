@@ -83,7 +83,7 @@ All the features of the table are detailed below.
 | [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>[*7](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*8](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :white_check_mark: |
 | [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x: <sub><sup>[*9](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :white_check_mark: | :x: |
-| [Execution Environment Customization](#execution-environment-customization) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*10](#some-explanations-on-the-comparaison-matrix)</sub><<sub><sup>sup> |
+| [Execution Environment Customization](#execution-environment-customization) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*10](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>[*11](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
 | [Command Line Interface (cdsctl): 100% features supported & User Friendly](#command-line-interface-cdsctl-100-features-supported) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>[*12](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
 | [REST API & SDK](#rest-api--sdk) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
