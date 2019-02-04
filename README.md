@@ -83,7 +83,7 @@ All the features of the table are detailed below.
 | [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *7 |
 | [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *8 | :white_check_mark: |
 | [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x:*9 | :white_check_mark: | :x: |
-| [Self-Service Job's Flavor](#self-service-jobs-flavor) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: *10 |
+| [Execution Environment Customization](#execution-environment-customization) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: *10 |
 | [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: *11 | 
 | [Command Line Interface (cdsctl): 100% features supported & User Friendly](#command-line-interface-cdsctl-100-features-supported) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *12| 
 | [REST API & SDK](#rest-api--sdk) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
@@ -212,9 +212,8 @@ A CDS project is like a tenant. All users can create a CDS project, this project
 
 CDS projects are isolated from one another, but the same group may have access rights to multiple projects if you wish.
 
-#### Self-Service Job's Flavor
+#### Execution Environment Customization
 
-What is a Job Flavor? For this, the term CDS for is "Worker Model".
 A worker model is a worker execution context. Do you want a job that has a binary "go" in version 1.11.5? No problem, just create a Go worker model, containing a go in version 1.11.5.
 A worker model can be a docker image, an openstack image, a VSphere image. In the case of our example Go, in version 1.11.5, the worker model is neither more nor less than the official golang docker image from https://hub.docker.com/_/golang.
 Although CDS administrators can offer shared worker models, users can create their own template workers if they wish.
