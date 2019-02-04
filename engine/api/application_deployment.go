@@ -76,15 +76,15 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 
 		oldPfConfig, has := app.DeploymentStrategies[pfName]
 		if !has {
-			oldPfConfig = pf.Model.DeploymentDefaultConfig
-		}
-		if oldPfConfig == nil {
-			oldPfConfig = sdk.IntegrationConfig{}
+			if pf.Model.DeploymentDefaultConfig != nil {
+				oldPfConfig = pf.Model.DeploymentDefaultConfig
+			} else {
+				oldPfConfig = sdk.IntegrationConfig{}
+			}
 		}
 		oldPfConfig.MergeWith(pfConfig)
-		pfConfig = oldPfConfig
 
-		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfName, pfConfig); err != nil {
+		if err := application.SetDeploymentStrategy(tx, proj.ID, app.ID, pf.Model.ID, pfName, oldPfConfig); err != nil {
 			return sdk.WrapError(err, "postApplicationDeploymentStrategyConfigHandler")
 		}
 
