@@ -71,46 +71,28 @@ All the features of the table are detailed below.
 | --- | --- | --- | --- | --- | --- |
 | [Built-in Pipeline](#built-in-pipeline) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | 
 | [Built-in Workflow - Workflow as an entity](#built-in-workflow) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: |
-| [Graphical configuration with UI](#graphical-configuration-with-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: *1 | 
+| [Graphical configuration with UI](#graphical-configuration-with-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>*1</sub></sup> | 
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x:*2 |
-| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark:*3 |
+| [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x: <sub><sup>*2</sub></sup> |
+| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: <sub><sup>*3</sub></sup> |
 | [Job's Services](#jobs-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
-| [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: *4 | 
+| [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>*4</sub></sup> | 
 | [Enterprise Notification (bus)](#enterprise-notification-bus) & [Event Bus Built-in Hooks](#event-bus-built-in-hooks-rabbitmq-kafka-mqseries-etc) | :white_check_mark: | :x: | :x: | :x: | :x: |
-| [Continuous Deployment / Built-in Environment Support](#continuous-deployment--built-in-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *5 |
-| [Easy Enterprise-grade permissions, Self-Service on Rights management](#easy-enterprise-grade-permissions) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *6 |
-| [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *7 |
-| [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: *8 | :white_check_mark: |
+| [Continuous Deployment / Built-in Environment Support](#continuous-deployment--built-in-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>*5</sub></sup> |
+| [Easy Enterprise-grade permissions, Self-Service on Rights management](#easy-enterprise-grade-permissions) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>*6</sub></sup> |
+| [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>*7</sub></sup> |
+| [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>*8</sub></sup> | :white_check_mark: |
 | [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x:*9 | :white_check_mark: | :x: |
-| [Execution Environment Customization](#execution-environment-customization) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: *10 |
-| [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: *11 | 
-| [Command Line Interface (cdsctl): 100% features supported & User Friendly](#command-line-interface-cdsctl-100-features-supported) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: *12| 
+| [Execution Environment Customization](#execution-environment-customization) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>*10</sub><<sub><sup>sup> |
+| [Multi-Tenancy](#multi-tenancy) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: <sub><sup>*11</sub></sup> | 
+| [Command Line Interface (cdsctl): 100% features supported & User Friendly](#command-line-interface-cdsctl-100-features-supported) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>*12</sub></sup> | 
 | [REST API & SDK](#rest-api--sdk) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Self-Hosting](#self-hosting) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [High Availability & Scalability & Upgrade without User Downtime](#high-availability--scalability--upgrade-without-user-downtime) | :white_check_mark: | :x: | :x: | :white_check_mark:*13 | :x: | 
-| [Built-in Metrics](#built-in-metrics) | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: | :x: *14 |
+| [High Availability & Scalability & Upgrade without User Downtime](#high-availability--scalability--upgrade-without-user-downtime) | :white_check_mark: | :x: | :x: | :white_check_mark: <sub><sup>*13</sub></sup> | :x: | 
+| [Built-in Metrics](#built-in-metrics) | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: | :x: <sub><sup>*14</sub></sup> |
 | [Extensibility Plugins](#extensibility-plugins) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [OS/Arch Compatibility](#osarch-compatibility) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :x: | :x:*15 | :x:*16 | 
-
-Some explanations:
-- *1 Impossible if you create your pipeline with Pipeline plugin, force usage of jenkinsfile
-- *2 There is the Pipeline plugin, but not compatible with Graphical COnfiguration with ui, Git branching, and repository manager integration.
-- *3 [Multi-branch pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Multibranch+Plugin ) - but incompatible [Pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Plugin)
-- *4 Job Cacher plugin not compatible with Blue Ocean, MultiBranch PIpeline, Pipeline plugin, but not compatible with Swift Storage
-- *5 "The current version of this plugin may not be safe to use. " https://wiki.jenkins.io/display/JENKINS/EnvInject+Plugin
-- *6 https://jenkins.io/doc/book/managing/security/#authorization
-- *7 it's not builtin, it's JCloud plugin
-- *8 Vulnerability report not available on CE Edition
-- *9 everything is in the same bucket
-- *10 docker only
-- *11 explained on https://www.cloudbees.com/blog/multi-tenancy-jenkins
-- *12 https://jenkins.io/doc/book/managing/cli/
-- *13 Upgrade Gitlab can be on several days https://docs.gitlab.com/ee/update/ 
-- *14 it's a plugin
-- *15 K8s, Docker machine & GKE only 
-- *16 limitated to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
+| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :x: | :x: <sub><sup>*15</sub></sup> | :x: <sub><sup>*16</sub></sup> | 
 
 
 ### CDS User features
@@ -159,7 +141,7 @@ Through this integration, you will have the opportunity to have on your commits 
 
 #### Multiple VCS Support in Pipeline/Job
 
-CDS gives you the freedom to make clone git from several different git repositories within a single workflow. A workflow can involve several different applications - or none if you do not want to have a connection with a repo git, that will not be a problem either.
+CDS gives you the choice to make clone git from several different git repositories within a single workflow. A workflow can involve several different applications - or none if you do not want to have a connection with a repo git, that will not be a problem either.
 
 #### Job's Services
 
@@ -174,7 +156,9 @@ Please read: https://ovh.github.io/cds/workflows/pipelines/requirements/service/
 
 #### Secure Remote Caching
 
-Do you find your (npm | mvn) install too slow? Use the "worker cache"! please read: https://ovh.github.io/cds/cli/worker/cache/
+A remote cache is used by a team of developers and/or a continuous integration (CI) system to share build outputs. If your build is reproducible, the outputs from one machine can be safely reused on another machine, which can make builds significantly faster
+
+Doc: https://ovh.github.io/cds/cli/worker/cache/
 
 #### Enterprise Notification (bus)
 
@@ -274,7 +258,24 @@ A hatchery is like an incubator, it gives birth to the CDS Workers and the right
 
 Several types of hatchery are available: hatchery kubernetes (start workers in pods), **hatchery openstack** (start virtual machines), **hatchery swarm** (start docker containers), **hatchery marathon** (starts docker containers), **hatchery VShpere** (start virtual machines), **hatchery local** ( starts processes on a host). So yes, buzzwords or not, a multi-cloud Auto-scale OnDemand is a reality with CDS :-)
 
+#### Some explanations on the comparaison matrix
 
+- *1 Impossible if you create your pipeline with Pipeline plugin, force usage of jenkinsfile
+- *2 There is the Pipeline plugin, but not compatible with Graphical COnfiguration with ui, Git branching, and repository manager integration.
+- *3 [Multi-branch pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Multibranch+Plugin ) - but incompatible [Pipeline plugin](https://wiki.jenkins.io/display/JENKINS/Pipeline+Plugin)
+- *4 Job Cacher plugin not compatible with Blue Ocean, MultiBranch PIpeline, Pipeline plugin, but not compatible with Swift Storage
+- *5 "The current version of this plugin may not be safe to use. " https://wiki.jenkins.io/display/JENKINS/EnvInject+Plugin
+- *6 https://jenkins.io/doc/book/managing/security/#authorization
+- *7 it's not builtin, it's JCloud plugin
+- *8 Vulnerability report not available on CE Edition
+- *9 everything is in the same bucket
+- *10 docker only
+- *11 explained on https://www.cloudbees.com/blog/multi-tenancy-jenkins
+- *12 https://jenkins.io/doc/book/managing/cli/
+- *13 Upgrade Gitlab can be on several days https://docs.gitlab.com/ee/update/ 
+- *14 it's a plugin
+- *15 K8s, Docker machine & GKE only 
+- *16 limitated to about 150 executors https://www.cloudbees.com/blog/multi-tenancy-jenkins(§Scale)
 
 
 ## License
