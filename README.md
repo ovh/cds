@@ -230,7 +230,7 @@ CDS is open-source since October 2016. You can install it freely in your company
 
 High availability is a very important point for a CI / CD tool. CDS is stateless, nothing is stored on the filesystem. This makes it possible to launch several CDS APIs behind a load balancer. Thus, you can scale the API of CDS to your needs. It also allows upgrades of CDS in full day without impact for users.
 In production @OVH, CDS can be updated several times a day, without impacting users or stopping CDS workers.
-Asking your users to stop working because updating the Continuous Delivery tool would be ironic, isn't it? ;-)
+Asking your users to stop working while updating the Continuous Delivery tool would be ironic, isn't it? ;-)
 
 
 #### Built-in Metrics
