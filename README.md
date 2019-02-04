@@ -78,8 +78,8 @@ All the features of the table are detailed below.
 | [Job's Services](#jobs-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
 | [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*4](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
 | [Enterprise Notification Bus](#enterprise-notification-bus) & [Built-in Hooks](#built-in-hooks) | :white_check_mark: | :x: | :x: | :x: | :x: |
-| [Continuous Deployment / Built-in Environment Support](#continuous-deployment--built-in-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*5](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
-| [Easy Enterprise-grade permissions, Self-Service on Rights management](#easy-enterprise-grade-permissions) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*6](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
+| [Continuous Deployment & Environment Support](#continuous-deployment-environment-support) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*5](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
+| [Enterprise-grade permissions, Support of ACLs delegation](#enterprise-grade-permissions) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*6](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Build Artifacts Cloud](#build-artifacts-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: | :x: <sub><sup>[*7](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Tests & Vulnerabilities Reports](#tests--vulnerabilities-reports) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*8](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :white_check_mark: |
 | [Self-Service Project Creation - ability to create a tenant](#self-service-project-creation) | :white_check_mark: | :x: | :x: <sub><sup>[*9](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :white_check_mark: | :x: |
@@ -168,13 +168,13 @@ As an Enterprise-Grade platform, CDS can send all events in an event bus. You wi
 
 Ok, you can start your workflow with each commit, manually, via a scheduler or via a webhook. CDS also offers you an event bus to trigger your workflow each time you receive a kafka or RabbitMQ message.
 
-#### Continuous Deployment / Built-in Environment Support
+#### Continuous Deployment & Environment Support
 
 How to imagine a Continuous Delivery tool without having fully integrated environment concepts?
 
 In a CDS project, you can have applications, environments, and workflows. Each workflow can use 1 or n pipelines, 0 or n applications, 0 or n environments. You can use a deployment pipeline on your preproduction environment and use that same deployment pipeline on your production environment. So, what is an environment? An environment is a set of variables that you can use within your workflows. Simple, effective and totally integrated in CDS.
 
-#### Easy Enterprise-grade permissions
+#### Enterprise-grade permissions / Support of ACLs delegation
 
 Users are free to create groups and manage users in their groups. A group can have the rights to read, write, execute on a project (s), a workflow (s). You can also restrict the execution of some pipelines to a few groups if you wish.
 
