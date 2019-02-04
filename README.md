@@ -14,15 +14,15 @@ CDS is an Enterprise-Grade Continuous Delivery & DevOps Automation Platform writ
 **[Documentation](https://ovh.github.io/cds/)**
 
 
-## Super intuitive UI
-CDS provides a super intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
+## Intuitive UI
+CDS provides an intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed.
 
 <img src="./docs/static/images/capture-start.gif" alt="CDS Demonstration" width="80%">
 
 
 ## The most powerful Command Line for a CI/CD Platform
 
-cdsctl is the CDS Command Line - you can script everything with it, cdsctl also provide some cool commands as `cdsctl shell` to browse your projects and workflows without the need to open a browser.
+cdsctl is the CDS Command Line - you can script everything with it, cdsctl also provide some cool commands such as `cdsctl shell` to browse your projects and workflows without the need to open a browser.
 
 [See all cdsctl commands](https://ovh.github.io/cds/cli/cdsctl/#see-also)
 
@@ -51,7 +51,7 @@ A [pipeline](https://ovh.github.io/cds/gettingstarted/concepts/pipeline/) is str
 
 ### Can I use it in production?
 
-Yes! CDS is used in production since 3y @OVH and launch more than 7M CDS workers per year. You can install the official release available on https://github.com/ovh/cds/releases
+Yes! CDS is used in production since 2015 @OVH and it launches more than 7M CDS workers per year. You can install the official release available on https://github.com/ovh/cds/releases
 
 CDS provides everything needed to monitor and measure production activity (logs, metrics, monitoring)
 
@@ -74,7 +74,7 @@ All the features of the table are detailed below.
 | [Visual configuration with Web UI](#visual-configuration-with-web-ui) | :white_check_mark: | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*1](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
 | [Configuration on Git Repository](#configuration-on-git-repository) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [Configuration as code on UI](#configuration-as-code-on-ui) | :white_check_mark: | :x: | :x: | :x: | :x: <sub><sup>[*2](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
-| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: <sub><sup>[*3](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
+| [Native Git branching](#native-git-branching) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: <sub><sup>[*3](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Job's Services](#jobs-services) | :white_check_mark: | :x: | :x: | :white_check_mark: | :x: |
 | [Secure Remote Caching](#secure-remote-caching) | :white_check_mark: | :x: | :white_check_mark: | :white_check_mark: | :x: <sub><sup>[*4](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
 | [Enterprise Notification Bus](#enterprise-notification-bus) & [Built-in Hooks](#built-in-hooks) | :white_check_mark: | :x: | :x: | :x: | :x: |
@@ -92,14 +92,14 @@ All the features of the table are detailed below.
 | [Built-in Metrics](#built-in-metrics) | :white_check_mark: | :white_check_mark: | :white_check_mark: |  :white_check_mark: | :x: <sub><sup>[*14](#some-explanations-on-the-comparaison-matrix)</sub></sup> |
 | [Extensibility Plugins](#extensibility-plugins) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 | [OS/Arch Compatibility](#osarch-compatibility) | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :white_check_mark: | :x: <sub><sup>[*15](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :x: <sub><sup>[*16](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
+| [Auto-Scale OnDemand multi-cloud](#auto-scale-ondemand-multi-cloud) | :white_check_mark: | :x: | :x: | :x: <sub><sup>[*15](#some-explanations-on-the-comparaison-matrix)</sub></sup> | :x: <sub><sup>[*16](#some-explanations-on-the-comparaison-matrix)</sub></sup> | 
 
 
 ### CDS User features
 
 #### Pipeline
 
-A pipeline containing stages & jobs is a basic feature. This allows you to run multiple jobs simultaneously while keeping an isolation between jobs.
+Ability to run multiple jobs simultaneously while keeping an isolation between them.
 
 #### Workflow
 
@@ -108,13 +108,13 @@ A Workflow makes it possible to chain the pipelines. This is a key Feature of CD
 You can imagine having only one builder workflow and deploying your entire microservice stack. The same pipeline can be used several times in a workflow, you can associate an application, an environment.
 You will have only one deployment pipeline and only one build pipeline to maintain, even if you have hundreds of applications.
 
-#### Workflow ready to use
+#### Workflow templates
 
-A workflow ready to use is a Workflow Template. Eveybody can create a Workflow Template, maintains it as code or from UI, and bulk update a set of workflows in one click. 
+A workflow template allow to share and reuse workflows across multiple teams. Any user can create a Workflow Template, maintain it as code or from UI, and bulk update a set of workflows with a single action.
 
-As a company, you can offer a catalog of workflows for all users. Each team can create its own templates if needed.
+As a company, you can offer a predefined catalog of workflows allowing you to standardize test and deployment practices across all your teams.
 
-If you have to maintain hundreds of workflows, no need to worry , update workflow at scale :)
+This also reduces the maintenance efforts since templates allow a scalable centralized management.
 
 #### Visual configuration with Web UI
 
@@ -122,35 +122,42 @@ You can configure everything with the web UI. Even if you have complex use cases
 
 #### Configuration on Git Repository
 
-Pipeline as code is a well-known concept of CI / CD tools. CDS, much more than pipeline as code, makes workflow as code. What is it? You can store with your source code the yml configuration files of your workflow (+ pipeline, + applications, + environment), and thus, you can upgrade your workflow on your dev branch, before you merge the changes on the master branch.
+Pipeline as code is a well-known concept of CI / CD tools. CDS, goes a step further and offers workflow as code. This is done by git-pushing using yaml configuration files of your workflow (+ pipeline, + applications, + environment). This is partucularly useful as you can test your new workflow on a dev branch, before merging the changes on the master branch.
 
 
 #### Configuration as code on UI
 
-You can modify your workflow with the UI, you can also modify the configuration by editing the yml directly in the UI if you wish.
+You can modify your workflow with the UI, you can also modify the configuration by editing the yml directly in the UI if you wish. This is an excellent way to learn how to use the workflow-as-code feature.
 
 #### Native Git branching
 
-What is a CI tool if it does not have the possibility to launch a build on each commit of all the developers? CDS takes into account the Git branches - with each push, whatever the master branch or not, CDS will be able to trigger your workflow. You can put launch conditions on your pipelines, to deploy your application automatically on your preprod if it is the master branch for example.
+Ability to launch builds based on a branch pattern. This allows, for example, to deploy dev/* branches to "staging" and deploy the master branch to "prod".
+
+Note that CDS's default behavior is to launch the whole workflow on every git commit. This behavior can be altered using "run conditions".
 
 #### Native Github / Bitbucket Server / Gitlab / Gerrit integration
 
-Do you have a workflow and want to trigger it on each commit? It's easy, add a RepositoryWebhook to your Workflow. CDS natively supports Github, Gitlab, Bitbucket Server and Gerrit.
-The link between your repo git and CDS is via a CDS application: 1 repository Git = a CDS application.
-Through this integration, you will have the opportunity to have on your commits a status of your workflow : Building, Success or Failed.
+2-way integration with most popular git-based products.
+
+1. Ability to get notified and start a build when a change is pushed .
+2. Ability to notify the git-based tool of the success/failure of the build.
+
+CDS natively supports Github, Gitlab, Bitbucket Server and Gerrit.
+The link between your repo git and CDS is via a CDS application: 1 Git repository == a CDS application.
+Through this integration, CDS will push build status of your commits : Building, Success or Failed.
 
 #### Multiple VCS Support in Pipeline/Job
 
-CDS gives you the choice to make clone git from several different git repositories within a single workflow. A workflow can involve several different applications - or none if you do not want to have a connection with a repo git, that will not be a problem either.
+CDS gives you the possibility to clone from different git repositories within a single workflow. A CDS workflow can involve several different applications - or none if you do not want to have a connection with a git repo.
 
 #### Job's Services
 
-Need an ephemeral database, started only for the purpose of the job? This is not a problem, it's called a Service Prerequisite in CDS.
+Ability to start ephemeral services (a database, a web server, etc.) to support your job. This is particularly handy while testing your code.
 
-In a CDS job, you have the option to start services, any service from the moment it is a docker image.
+In CDS these services are called Service Prerequisites. You just need to specify the corresponding docker image and run params.
 
 Take a simple example: you have a pipeline that builds a docker image containing your application. Your application needs a redis and a postgreSQL to work. You can in a CDS job put three prerequisites service: a redis, a postgreSQL and your application. CDS will take care of making a private network between its services so that they can communicate with each other.
-Your CDS job can thus perform integration tests on your application started without mock, but with a real database and a real cache.
+Your CDS job can thus perform integration tests on your application started with a real database and a real cache.
 
 Please read: https://ovh.github.io/cds/workflows/pipelines/requirements/service/
 
@@ -162,33 +169,34 @@ Doc: https://ovh.github.io/cds/cli/worker/cache/
 
 #### Enterprise Notification Bus
 
-As an Enterprise-Grade platform, CDS can send all events in an event bus. You will be able to easily feed other tools in continuous as big data tool.
+As an Enterprise-Grade platform, CDS can send a wide range of its internal events (e.g. build finished) in an event bus. 
+This event flow can then feed other services (reporting, notifications, etc., ).
 
 #### Built-in Hooks
 
-Ok, you can start your workflow with each commit, manually, via a scheduler or via a webhook. CDS also offers you an event bus to trigger your workflow each time you receive a kafka or RabbitMQ message.
+Ability to launch a workflow manually or with git pushes or via a scheduler or via a webhook. 
+In addition to the above, CDS can also be triggered using an event bus to (kafka or RabbitMQ).
 
 #### Continuous Deployment & Environment Support
 
-How to imagine a Continuous Delivery tool without having fully integrated environment concepts?
+Ability to manage multiple environments (e.g. dev/prod/staging) in a secure way with segregated access rights.
+In practice, an environment is a just set of variables that you can use within your workflows.
 
-In a CDS project, you can have applications, environments, and workflows. Each workflow can use 1 or n pipelines, 0 or n applications, 0 or n environments. You can use a deployment pipeline on your preproduction environment and use that same deployment pipeline on your production environment. So, what is an environment? An environment is a set of variables that you can use within your workflows. Simple, effective and totally integrated in CDS.
+With CDS, You can use a deployment pipeline on your preproduction environment and use that same deployment pipeline on your production environment. The ability to deploy to production can be limited to a pre-established group of users.
 
 #### Enterprise-grade permissions / Support of ACLs delegation
 
-Users are free to create groups and manage users in their groups. A group can have the rights to read, write, execute on a project (s), a workflow (s). You can also restrict the execution of some pipelines to a few groups if you wish.
-
-A workflow allows to build all the branches of an application, you can let all the developers execute this workflow. You can also restrict production deployment to another group of users.
+Users are free to create groups and manage users in their groups. A group can have the rights to read, write, execute on their projects and their workflows. You can also restrict the execution of some pipelines to some groups if you wish.
 
 #### Build Artifacts Cloud
 
 If you use CDS as a CI / CD tool, you will probably have built artifacts. CDS jobs are isolated from each other, but you can pass artifacts from one job to another using the Artifact Upload and Artifact Download actions.
-At the end of a CDS job, all the files are deleted. Where are the artifacts stored? The artifacts are stored in the cloud :) -> Swift Storage, Storage CDS Integration, or at worst, if you do not have storage cloud, on your filesystem of course.
+At the end of a CDS job, all the files are deleted from the workers. To persist artifacts, CDS can use a Swift Storage or on a given filesystem (not recommended though).
 
 
 #### Tests & Vulnerabilities Reports
 
-This is basic, CDS clearly displays the results of unit tests and vulnerabilities detected during your builds.
+CDS clearly displays the results of unit tests and vulnerabilities detected during builds.
 
 #### Self-Service Project Creation
 
@@ -198,8 +206,8 @@ CDS projects are isolated from one another, but the same group may have access r
 
 #### Execution Environment Customization
 
-A worker model is a worker execution context. Do you want a job that has a binary "go" in version 1.11.5? No problem, just create a Go worker model, containing a go in version 1.11.5.
-A worker model can be a docker image, an openstack image, a VSphere image. In the case of our example Go, in version 1.11.5, the worker model is neither more nor less than the official golang docker image from https://hub.docker.com/_/golang.
+A worker model is a worker execution context. Let's say, you need to run a job that requires GoLang v1.11.5. In CDS, you just need to create a Go worker model, containing a go in version 1.11.5.
+A worker model can be a docker image, an openstack image, a VSphere image.
 Although CDS administrators can offer shared worker models, users can create their own template workers if they wish.
 
 #### Self Service User’s Integrations
@@ -290,3 +298,4 @@ Several types of hatchery are available:
 ## License
 
 [3-clause BSD](./LICENCE)
+
