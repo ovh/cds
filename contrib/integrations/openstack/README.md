@@ -13,9 +13,4 @@ $ cdsctl admin integration-model import openstack.yml
 $ cdsctl admin integration-model list
 $ cdsctl admin integration-model show Openstack
 
-# 3 - import plugin
-$ cd plugin-openstack-storage
-# notice that the Mafefile use the cdsctl command line
-$ make build
-$ make publish
 ```
