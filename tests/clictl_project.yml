@@ -85,31 +85,31 @@ testcases:
       - result.systemout ShouldContainSubstring false
 
 - name: application add
-    steps:
-    - script: {{.cds.build.cdsctl}} application add ITCLIAPPPRJ TestApp
+  steps:
+  - script: {{.cds.build.cdsctl}} application add ITCLIAPPPRJ TestApp
 
-    - name: application list
-    steps:
-    - script: {{.cds.build.cdsctl}} application list ITCLIAPPPRJ
+- name: application list
+  steps:
+  - script: {{.cds.build.cdsctl}} application list ITCLIAPPPRJ
 
-    - name: application show
-    steps:
-    - script: {{.cds.build.cdsctl}} application show ITCLIAPPPRJ TestApp
+- name: application show
+  steps:
+  - script: {{.cds.build.cdsctl}} application show ITCLIAPPPRJ TestApp
 
-    - name: application variable add
-    steps:
-    - script: {{.cds.build.cdsctl}} application variable add ITCLIAPPPRJ TestApp var1 string value1
+- name: application variable add
+  steps:
+  - script: {{.cds.build.cdsctl}} application variable add ITCLIAPPPRJ TestApp var1 string value1
 
-    - name: application variable show
-    steps:
-    - script: {{.cds.build.cdsctl}} application variable show ITCLIAPPPRJ TestApp var1
+- name: application variable show
+  steps:
+  - script: {{.cds.build.cdsctl}} application variable show ITCLIAPPPRJ TestApp var1
 
-    - name: application variable remove
-    steps:
-    - script: {{.cds.build.cdsctl}} application variable delete ITCLIAPPPRJ TestApp var1
+- name: application variable remove
+  steps:
+  - script: {{.cds.build.cdsctl}} application variable delete ITCLIAPPPRJ TestApp var1
 
-    - name: clean
-    steps:
-    - script: {{.cds.build.cdsctl}} project delete --force ITCLIAPPPRJ
-    - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP --force
-    - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP_EDIT_TEST --force
+- name: clean
+  steps:
+  - script: {{.cds.build.cdsctl}} project delete --force ITCLIAPPPRJ
+  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP --force
+  - script: {{.cds.build.cdsctl}} group delete ITCLIAPP_GRP_EDIT_TEST --force
