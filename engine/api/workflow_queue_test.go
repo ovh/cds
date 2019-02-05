@@ -669,8 +669,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	vars = map[string]string{
-		"ref":    base64.RawURLEncoding.EncodeToString([]byte("latest")),
-		"permID": fmt.Sprintf("%d", ctx.job.ID),
+		"ref": base64.RawURLEncoding.EncodeToString([]byte("latest")),
 	}
 
 	uri = router.GetRoute("POST", api.postWorkflowJobArtifactHandler, vars)
@@ -690,6 +689,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	params["perm"] = "7"
 	params["md5sum"] = "123"
 	params["sha512sum"] = "1234"
+	params["nodeJobRunID"] = fmt.Sprintf("%d", ctx.job.ID)
 	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
