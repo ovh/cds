@@ -15,8 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/sdk/log"
-
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/venom"
@@ -37,6 +35,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type testRunWorkflowCtx struct {
@@ -641,8 +640,9 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 		},
 	}
 
-	errO := objectstore.Initialize(context.Background(), cfg)
+	storage, errO := objectstore.Init(context.Background(), cfg)
 	test.NoError(t, errO)
+	api.SharedStorage = storage
 
 	//Prepare request
 	vars := map[string]string{
@@ -761,8 +761,9 @@ func Test_postWorkflowJobStaticFilesHandler(t *testing.T) {
 		},
 	}
 
-	errO := objectstore.Initialize(context.Background(), cfg)
+	storage, errO := objectstore.Init(context.Background(), cfg)
 	test.NoError(t, errO)
+	api.SharedStorage = storage
 
 	//Prepare request
 	vars := map[string]string{
