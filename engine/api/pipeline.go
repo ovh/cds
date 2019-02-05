@@ -24,7 +24,7 @@ func (api *API) updatePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		name := vars["pipelineKey"]
 
 		var p sdk.Pipeline
@@ -76,7 +76,7 @@ func (api *API) postPipelineRollbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		name := vars["pipelineKey"]
 		auditID, errConv := strconv.ParseInt(vars["auditID"], 10, 64)
 		if errConv != nil {
@@ -136,7 +136,7 @@ func (api *API) addPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		proj, errl := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if errl != nil {
@@ -192,7 +192,7 @@ func (api *API) addPipelineHandler() service.Handler {
 func (api *API) getPipelineAuditHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 
 		audits, err := pipeline.LoadAudit(api.mustDB(), projectKey, pipelineName)
@@ -207,7 +207,7 @@ func (api *API) getPipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 		withApp := FormBool(r, "withApplications")
 		withWorkflows := FormBool(r, "withWorkflows")
@@ -246,7 +246,7 @@ func (api *API) getPipelinesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		project, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
 		if err != nil {
@@ -272,7 +272,7 @@ func (api *API) deletePipelineHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))

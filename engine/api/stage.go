@@ -17,7 +17,7 @@ func (api *API) addStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		pipelineKey := vars["pipelineKey"]
 
 		var stageData = &sdk.Stage{}
@@ -71,7 +71,7 @@ func (api *API) getStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		pipelineKey := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 
@@ -99,7 +99,7 @@ func (api *API) moveStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		pipelineKey := vars["pipelineKey"]
 
 		var stageData = &sdk.Stage{}
@@ -168,7 +168,7 @@ func (api *API) updateStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		pipelineKey := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 
@@ -234,7 +234,7 @@ func (api *API) deleteStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		pipelineKey := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 

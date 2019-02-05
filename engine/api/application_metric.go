@@ -15,7 +15,7 @@ import (
 func (api *API) getApplicationMetricHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 		metricName := vars["metricName"]
 

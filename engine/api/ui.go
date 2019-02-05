@@ -29,7 +29,7 @@ func (api *API) getNavbarHandler() service.Handler {
 func (api *API) getApplicationOverviewHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 		db := api.mustDB()
 

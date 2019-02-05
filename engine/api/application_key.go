@@ -18,7 +18,7 @@ import (
 func (api *API) getKeysInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 
 		log.Debug("%s %s", key, appName)
@@ -40,7 +40,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		u := deprecatedGetUser(ctx)
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 		keyName := vars["name"]
 
@@ -81,7 +81,7 @@ func (api *API) deleteKeyInApplicationHandler() service.Handler {
 func (api *API) addKeyInApplicationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 
 		var newKey sdk.ApplicationKey

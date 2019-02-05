@@ -31,7 +31,7 @@ import (
 func (api *API) getWorkflowsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		ws, err := workflow.LoadAll(api.mustDB(), key)
 		if err != nil {
@@ -315,7 +315,7 @@ func (api *API) deleteWorkflowLabelHandler() service.Handler {
 func (api *API) postWorkflowHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx),
 			project.LoadOptions.WithApplicationWithDeploymentStrategies,
@@ -365,13 +365,6 @@ func (api *API) postWorkflowHandler() service.Handler {
 
 		if errHr := workflow.HookRegistration(ctx, tx, api.Cache, nil, wf, p); errHr != nil {
 			return sdk.WrapError(errHr, "postWorkflowHandler>Hook registration failed")
-		}
-
-		// Add group
-		for _, gp := range p.ProjectGroups {
-			if err := group.AddWorkflowGroup(tx, &wf, gp); err != nil {
-				return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)
-			}
 		}
 
 		if err := tx.Commit(); err != nil {

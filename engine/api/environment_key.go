@@ -17,7 +17,7 @@ import (
 func (api *API) getKeysInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		envName := vars["environmentName"]
 
 		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
@@ -36,7 +36,7 @@ func (api *API) getKeysInEnvironmentHandler() service.Handler {
 func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		envName := vars["environmentName"]
 		keyName := vars["name"]
 
@@ -73,7 +73,7 @@ func (api *API) deleteKeyInEnvironmentHandler() service.Handler {
 func (api *API) addKeyInEnvironmentHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		envName := vars["environmentName"]
 
 		var newKey sdk.EnvironmentKey

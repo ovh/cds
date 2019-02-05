@@ -18,7 +18,7 @@ import (
 func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, deprecatedGetUser(ctx), application.LoadOptions.WithDeploymentStrategies)
@@ -33,7 +33,7 @@ func (api *API) getApplicationDeploymentStrategiesConfigHandler() service.Handle
 func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 		pfName := vars["integration"]
 
@@ -109,7 +109,7 @@ func (api *API) postApplicationDeploymentStrategyConfigHandler() service.Handler
 func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 		pfName := vars["integration"]
 
@@ -174,7 +174,7 @@ func (api *API) deleteApplicationDeploymentStrategyConfigHandler() service.Handl
 func (api *API) getApplicationDeploymentStrategyConfigHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		appName := vars["applicationName"]
 		pfName := vars["integration"]
 		withClearPassword := FormBool(r, "withClearPassword")

@@ -64,7 +64,7 @@ func Import(ctx context.Context, db gorp.SqlExecutor, store cache.Store, proj *s
 			return err
 		}
 
-		return importWorkflowGroups(db, w)
+		return nil
 	}
 
 	if !force {

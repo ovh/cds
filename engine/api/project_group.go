@@ -24,7 +24,7 @@ func (api *API) deleteGroupFromProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		groupName := vars["group"]
 
 		tx, err := api.mustDB().Begin()
@@ -72,7 +72,7 @@ func (api *API) updateGroupRoleOnProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		groupName := vars["group"]
 		onlyProject := FormBool(r, "onlyProject")
 
@@ -174,7 +174,7 @@ func (api *API) addGroupInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		onlyProject := FormBool(r, "onlyProject")
 
 		var groupProject sdk.GroupPermission
@@ -245,7 +245,7 @@ func (api *API) importGroupsInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 

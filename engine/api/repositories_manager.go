@@ -34,7 +34,7 @@ func (api *API) getRepositoriesManagerHandler() service.Handler {
 func (api *API) getRepositoriesManagerForProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		proj, errproj := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errproj != nil {
@@ -48,7 +48,7 @@ func (api *API) getRepositoriesManagerForProjectHandler() service.Handler {
 func (api *API) repositoriesManagerAuthorizeHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		rmName := vars["name"]
 
 		proj, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
@@ -169,7 +169,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() service.Handler {
 func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
 
 		var tv map[string]interface{}
@@ -237,7 +237,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() service.Handler {
 func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
 
 		p, errl := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx))
@@ -274,7 +274,7 @@ func (api *API) deleteRepositoriesManagerHandler() service.Handler {
 func (api *API) getReposFromRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
 		sync := FormBool(r, "synchronize")
 
@@ -321,7 +321,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		rmName := vars["name"]
 		repoName := r.FormValue("repo")
 
@@ -357,7 +357,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() service.Handler {
 func (api *API) attachRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 		rmName := vars["name"]
 		fullname := r.FormValue("fullname")
@@ -456,7 +456,7 @@ func (api *API) attachRepositoriesManagerHandler() service.Handler {
 func (api *API) detachRepositoriesManagerHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		appName := vars["applicationName"]
 		db := api.mustDB()
 		u := deprecatedGetUser(ctx)

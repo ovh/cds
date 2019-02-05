@@ -18,7 +18,7 @@ import (
 func (api *API) addJobToStageHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		pipelineName := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 
@@ -101,7 +101,7 @@ func (api *API) addJobToStageHandler() service.Handler {
 func (api *API) updateJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		pipName := vars["pipelineKey"]
 		stageIDString := vars["stageID"]
 		jobIDString := vars["jobID"]
@@ -197,7 +197,7 @@ func (api *API) updateJobHandler() service.Handler {
 func (api *API) deleteJobHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		pipName := vars["pipelineKey"]
 		jobIDString := vars["jobID"]
 

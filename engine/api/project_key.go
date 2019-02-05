@@ -19,7 +19,7 @@ import (
 func (api *API) getAllKeysProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		appName := r.FormValue("appName")
 
@@ -69,7 +69,7 @@ func (api *API) getAllKeysProjectHandler() service.Handler {
 func (api *API) getKeysInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errP != nil {
@@ -87,7 +87,7 @@ func (api *API) getKeysInProjectHandler() service.Handler {
 func (api *API) deleteKeyInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		keyName := vars["name"]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithKeys)
@@ -124,7 +124,7 @@ func (api *API) deleteKeyInProjectHandler() service.Handler {
 func (api *API) addKeyInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		var newKey sdk.ProjectKey
 		if err := service.UnmarshalBody(r, &newKey); err != nil {

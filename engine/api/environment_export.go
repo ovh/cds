@@ -17,7 +17,7 @@ func (api *API) getEnvironmentExportHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		envName := vars["environmentName"]
 
 		format := FormString(r, "format")

@@ -619,6 +619,28 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.WrapError(err, "Cannot post insert hook")
 	}
 
+	if len(w.Groups) > 0 {
+		for i := range w.Groups {
+			if w.Groups[i].Group.ID != 0 {
+				continue
+			}
+			g, err := group.LoadGroup(db, w.Groups[i].Group.Name)
+			if err != nil {
+				return sdk.WrapError(err, "Unable to load group %s", w.Groups[i].Group.Name)
+			}
+			w.Groups[i].Group = *g
+		}
+		if err := group.UpsertAllWorkflowGroups(db, w, w.Groups); err != nil {
+			return sdk.WrapError(err, "Unable to update workflow")
+		}
+	} else {
+		for _, gp := range p.ProjectGroups {
+			if err := group.AddWorkflowGroup(db, w, gp); err != nil {
+				return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)
+			}
+		}
+	}
+
 	if w.Root == nil {
 		return sdk.WrapError(sdk.ErrWorkflowInvalidRoot, "Root node is not here")
 	}

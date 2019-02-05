@@ -1,0 +1,16 @@
+name: "ITSCWRKFLW10-WORKFLOW"
+version: v1.0
+workflow:
+  echo:
+    depends_on:
+    - root
+    when:
+    - success
+    - manual
+    pipeline: echo
+  root:
+    pipeline: echo
+    permissions:
+      ITSCWRKFLW10: 7
+permissions:
+      ITSCWRKFLW10: 7

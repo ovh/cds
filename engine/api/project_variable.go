@@ -15,7 +15,7 @@ import (
 func (api *API) postEncryptVariableHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		p, errp := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))
 		if errp != nil {
@@ -55,7 +55,7 @@ func (api *API) getVariablesInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithVariables)
 		if err != nil {
@@ -70,7 +70,7 @@ func (api *API) deleteVariableFromProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		varName := vars["name"]
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.Default)
@@ -107,7 +107,7 @@ func (api *API) updateVariableInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		varName := vars["name"]
 
 		var newVar sdk.Variable
@@ -151,7 +151,7 @@ func (api *API) addVariableInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		varName := vars["name"]
 
 		var newVar sdk.Variable
@@ -217,7 +217,7 @@ func (api *API) getVariableInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		varName := vars["name"]
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx), project.LoadOptions.WithVariables)
@@ -238,7 +238,7 @@ func (api *API) getVariableAuditInProjectHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
+		key := vars[permProjectKey]
 		varName := vars["name"]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, deprecatedGetUser(ctx))

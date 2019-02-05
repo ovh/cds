@@ -20,7 +20,7 @@ import (
 func (api *API) getVariablesHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		appName := r.FormValue("appName")
 		pipID := r.FormValue("pipId")
 

@@ -16,7 +16,7 @@ import (
 func (api *API) getProjectIntegrationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		integrationName := vars["integrationName"]
 
 		clearPassword := FormBool(r, "clearPassword")
@@ -32,7 +32,7 @@ func (api *API) getProjectIntegrationHandler() service.Handler {
 func (api *API) putProjectIntegrationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		integrationName := vars["integrationName"]
 
 		var ppBody sdk.ProjectIntegration
@@ -93,7 +93,7 @@ func (api *API) putProjectIntegrationHandler() service.Handler {
 func (api *API) deleteProjectIntegrationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 		integrationName := vars["integrationName"]
 
 		p, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
@@ -134,7 +134,7 @@ func (api *API) deleteProjectIntegrationHandler() service.Handler {
 func (api *API) getProjectIntegrationsHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if errP != nil {
@@ -147,7 +147,7 @@ func (api *API) getProjectIntegrationsHandler() service.Handler {
 func (api *API) postProjectIntegrationHandler() service.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
+		projectKey := vars[permProjectKey]
 
 		p, err := project.Load(api.mustDB(), api.Cache, projectKey, deprecatedGetUser(ctx), project.LoadOptions.WithIntegrations)
 		if err != nil {
