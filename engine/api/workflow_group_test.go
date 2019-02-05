@@ -84,8 +84,8 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 	var wFromAPI sdk.Workflow
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wFromAPI))
 
-	assert.Equal(t, len(wFromAPI.Groups), 1)
-	assert.Equal(t, wFromAPI.Groups[0].Group.Name, reqG.Group.Name)
+	assert.Equal(t, len(wFromAPI.Groups), 2)
+	assert.Equal(t, wFromAPI.Groups[1].Group.Name, reqG.Group.Name)
 }
 
 func Test_postWorkflowGroupWithLessThanRWXProjectHandler(t *testing.T) {
@@ -235,7 +235,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 	var wFromAPI sdk.Workflow
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wFromAPI))
 
-	assert.Equal(t, 2, len(wFromAPI.Groups))
+	assert.Equal(t, 3, len(wFromAPI.Groups))
 	checked := false
 	for _, grp := range wFromAPI.Groups {
 		if grp.Group.Name == reqG.Group.Name {
@@ -326,7 +326,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 	var wFromAPI sdk.Workflow
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wFromAPI))
 
-	assert.Equal(t, len(wFromAPI.Groups), 0)
+	assert.Equal(t, len(wFromAPI.Groups), 1)
 }
 
 // Test_UpdateProjectPermsWithWorkflow Useful to test permission propagation on project
