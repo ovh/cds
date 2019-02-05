@@ -17,15 +17,18 @@
             <ng-container *ngSwitchCase="connectionType.SSH">
                 <div class="inline fields">
                     <div class="two wide field">
-                        <label>{{ 'vcs_ssh_key' | translate }} *<span class="keyLink" (click)="openCreateKeyModal('ssh')" *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span></label>
+                        <label>{{ 'vcs_ssh_key' | translate }} *<span class="keyLink" (click)="openCreateKeyModal('ssh')"
+                                *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span></label>
                     </div>
                     <div class="thirteen wide field">
                         <div class="ssh">
-                            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys" [(value)]="strategy.ssh_key" (valueChange)="updatePublicKey($event)"></app-parameter-value>
+                            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys"
+                                [(value)]="strategy.ssh_key" (valueChange)="updatePublicKey($event)"></app-parameter-value>
                         </div>
                     </div>
                     <div class="one wide field">
-                        <button class="ui icon button copyButton" [title]="'key_copy_public' | translate" ngxClipboard [cbContent]="selectedPublicKey">
+                        <button class="ui icon button copyButton" [title]="'key_copy_public' | translate" ngxClipboard
+                            [cbContent]="selectedPublicKey" (click)="clickCopyKey()">
                             <i class="copy icon"></i>
                         </button>
                     </div>
@@ -39,7 +42,6 @@
                     <div class="fourteen wide field">
                         <input type="text" class="ui input" [(ngModel)]="strategy.user">
                     </div>
-
                 </div>
                 <div class="inline fields">
                     <div class="two wide field">
@@ -52,11 +54,13 @@
             </ng-container>
             <div class="inline fields">
                 <div class="two wide field">
-                    <label>{{ 'vcs_pgp_key' | translate }}<span class="keyLink" (click)="openCreateKeyModal('pgp')" *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span></label>
+                    <label>{{ 'vcs_pgp_key' | translate }}<span class="keyLink" (click)="openCreateKeyModal('pgp')"
+                            *ngIf="createOnProject">{{ 'key_or_create' | translate }}</span></label>
                 </div>
                 <div class="fourteen wide field">
                     <div class="ssh">
-                        <app-parameter-value [editList]="false" [edit]="true" [type]="'pgp-key'" [keys]="keys" [(value)]="strategy.pgp_key"></app-parameter-value>
+                        <app-parameter-value [editList]="false" [edit]="true" [type]="'pgp-key'" [keys]="keys"
+                            [(value)]="strategy.pgp_key"></app-parameter-value>
                     </div>
                 </div>
             </div>
@@ -69,7 +73,8 @@
         </div>
     </div>
     <div class="right aligned field" *ngIf="!hideButton">
-        <button class="ui green button" [class.loading]="loading" [disabled]="loading || !strategy.connection_type" (click)="saveStrategy()">{{ 'btn_save' | translate }}</button>
+        <button class="ui green button" [class.loading]="loading" [disabled]="loading || !strategy.connection_type"
+            (click)="saveStrategy()">{{ 'btn_save' | translate }}</button>
     </div>
 </div>
 <ng-template let-context let-modal="modal" #createKey>

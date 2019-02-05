@@ -1,4 +1,4 @@
-<div class="node-wrapper" (click)="clickOnNode()" (dblclick)="dblClickOnNode()" [ngSwitch]="node.type">
+<div class="node-wrapper" (click)="clickOnNode()" (dblclick)="$event.stopPropagation(); dblClickOnNode()" [ngSwitch]="node.type">
     <app-workflow-wnode-pipeline *ngSwitchCase="'pipeline'" [project]="project" [workflow]="workflow" [node]="node"
         [noderun]="currentNodeRun" [warnings]="warnings"></app-workflow-wnode-pipeline>
     <app-workflow-wnode-join *ngSwitchCase="'join'" [project]="project" [workflow]="workflow" [node]="node" [noderun]="currentNodeRun"

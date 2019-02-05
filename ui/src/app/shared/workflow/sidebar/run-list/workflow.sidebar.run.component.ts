@@ -1,7 +1,6 @@
 import { Component, ElementRef, Input, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { finalize } from 'rxjs/operators';
 import { PipelineStatus } from '../../../../model/pipeline.model';
 import { Project } from '../../../../model/project.model';
 import { Workflow } from '../../../../model/workflow.model';
@@ -67,8 +66,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     selectedWorkfowRun: WorkflowRun;
     subWorkflowRun: Subscription;
     offset = 0;
-    loading = false;
-    loadingMore = false;
 
     constructor(
         private _workflowRunService: WorkflowRunService,
@@ -87,9 +84,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     scroll() {
         if (!Array.isArray(this.selectedTags) || !this.selectedTags.length) {
             this.offset += 50;
-            this.loadingMore = true;
             this._workflowRunService.runs(this.project.key, this.workflow.name, '50', this.offset.toString())
-                .pipe(finalize(() => this.loadingMore = false))
                 .subscribe((runs) => {
                     this.workflowRuns = this.workflowRuns.concat(runs);
                     this.refreshRun();
@@ -155,15 +150,10 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             }, {});
         }
 
-        this.loading = true;
-        this._workflowRunService.runs(this.project.key, this.workflow.name, '50', null, filters)
-            .pipe(
-                finalize(() => this.loading = false)
-            )
-            .subscribe((runs) => {
-                this.workflowRuns = runs;
-                this.refreshRun();
-            });
+        this._workflowRunService.runs(this.project.key, this.workflow.name, '50', null, filters).subscribe((runs) => {
+            this.workflowRuns = runs;
+            this.refreshRun();
+        });
     }
 
     refreshRun(): void {
@@ -208,5 +198,16 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             clearInterval(this.durationIntervalID);
             this.durationIntervalID = 0;
         }
+    }
+
+    filterTags(options: Array<string>, query: string): Array<string> | false {
+        if (!options) {
+            return false;
+        }
+        if (!query || query.length < 3) {
+            return options.slice(0, 100);
+        }
+        let queryLowerCase = query.toLowerCase();
+        return options.filter(o => o.toLowerCase().indexOf(queryLowerCase) !== -1);
     }
 }

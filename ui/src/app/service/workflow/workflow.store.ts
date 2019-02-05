@@ -224,7 +224,7 @@ export class WorkflowStore {
                 return j[key + '-' + name];
             }
         }
-        return 'TB';
+        return 'LR';
     }
 
     setDirection(key: string, name: string, o: string) {
