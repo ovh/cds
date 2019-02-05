@@ -108,7 +108,7 @@ func GetSSHKey(vars []sdk.Variable, path string, key *sdk.Variable) (*SSHKey, er
 		return nil, sdk.ErrKeyNotFound
 	}
 
-	p := filepath.Join(path, key.Name)
+	p := filepath.Join(path, k.Name)
 	b, err := ioutil.ReadFile(p)
 	if err != nil {
 		return nil, err
