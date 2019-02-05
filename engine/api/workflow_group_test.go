@@ -299,6 +299,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 			Name: gr.Name,
 		},
 	}))
+	test.NoError(t, group.DeleteWorkflowGroup(db, &w, proj.ProjectGroups[0].Group.ID, 0))
 
 	//Prepare request
 	vars := map[string]string{
@@ -322,11 +323,6 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 403, rec.Code)
-
-	var wFromAPI sdk.Workflow
-	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wFromAPI))
-
-	assert.Equal(t, len(wFromAPI.Groups), 1)
 }
 
 // Test_UpdateProjectPermsWithWorkflow Useful to test permission propagation on project

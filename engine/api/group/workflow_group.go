@@ -174,7 +174,6 @@ func DeleteWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, groupID int64, in
 	if _, err := db.Exec(query, w.ID, groupID); err != nil {
 		return err
 	}
-	w.Groups = append(w.Groups[:index], w.Groups[index+1:]...)
 
 	ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, w.ID)
 	if err != nil {
@@ -183,6 +182,7 @@ func DeleteWorkflowGroup(db gorp.SqlExecutor, w *sdk.Workflow, groupID int64, in
 	if !ok {
 		return sdk.ErrLastGroupWithWriteRole
 	}
+	w.Groups = append(w.Groups[:index], w.Groups[index+1:]...)
 	return nil
 }
 
