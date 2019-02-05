@@ -220,6 +220,7 @@ func (api *API) InitRouter() {
 
 	// Workflows run
 	r.Handle("/project/{permProjectKey}/runs", r.GET(api.getWorkflowAllRunsHandler, EnableTracing()))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler, EnableTracing()), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true), EnableTracing()))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
@@ -236,7 +237,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/info", r.GET(api.getWorkflowNodeRunJobSpawnInfosHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/log/service", r.GET(api.getWorkflowNodeRunJobServiceLogsHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", r.GET(api.getWorkflowNodeRunJobStepHandler))
-	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/hooks/{hookRunID}/callback", r.POST(api.postWorkflowJobHookCallbackHandler, AllowServices(true)))
@@ -260,17 +260,16 @@ func (api *API) InitRouter() {
 	// Export Environment
 	r.Handle("/project/{permProjectKey}/export/environment/{environmentName}", r.GET(api.getEnvironmentExportHandler))
 
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/{ref}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/{ref}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/project/{permProjectKey}/storage/{integrationName}/{ref}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-
-	// Artifacts
-	r.Handle("/staticfiles/store", r.GET(api.getStaticFilesStoreHandler, Auth(false)))
-	r.Handle("/artifact/store", r.GET(api.getArtifactsStoreHandler, Auth(false)))
+	// Project storage
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}", r.GET(api.getArtifactsStoreHandler, Auth(false)))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/artifact/{ref}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/staticfiles/{name}", r.POSTEXECUTE(api.postWorkflowJobStaticFilesHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 
 	// Cache
-	r.Handle("/project/{permProjectKey}/cache/{tag}", r.POSTEXECUTE(api.postPushCacheHandler, NeedWorker()), r.GET(api.getPullCacheHandler, NeedWorker()))
-	r.Handle("/project/{permProjectKey}/cache/{tag}/url", r.POSTEXECUTE(api.postPushCacheWithTempURLHandler, NeedWorker()), r.GET(api.getPullCacheWithTempURLHandler, NeedWorker()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}", r.POSTEXECUTE(api.postPushCacheHandler, NeedWorker()), r.GET(api.getPullCacheHandler, NeedWorker()))
+	r.Handle("/project/{permProjectKey}/storage/{integrationName}/cache/{tag}/url", r.POSTEXECUTE(api.postPushCacheWithTempURLHandler, NeedWorker()), r.GET(api.getPullCacheWithTempURLHandler, NeedWorker()))
 
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler, EnableTracing(), MaintenanceAware()))
@@ -289,9 +288,6 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permID}/tag", r.POSTEXECUTE(api.postWorkflowJobTagsHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/staticfiles/{name}", r.POSTEXECUTE(api.postWorkflowJobStaticFilesHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/staticfiles/{name}/url", r.POSTEXECUTE(api.postWorkflowJobStaticFilesWithTempURLHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
-	r.Handle("/queue/workflows/{permID}/staticfiles/{name}/url/callback", r.POSTEXECUTE(api.postWorkflowJobStaticFilesWithTempURLCallbackHandler, NeedWorker(), EnableTracing(), MaintenanceAware()))
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", r.GET(api.getParameterTypeHandler))

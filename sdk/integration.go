@@ -2,8 +2,9 @@ package sdk
 
 // This is the buitin integration model
 const (
-	KafkaIntegrationModel    = "Kafka"
-	RabbitMQIntegrationModel = "RabbitMQ"
+	KafkaIntegrationModel         = "Kafka"
+	RabbitMQIntegrationModel      = "RabbitMQ"
+	DefaultStorageIntegrationName = "shared.infra"
 )
 
 // Here are the default plateform models
@@ -53,6 +54,14 @@ var (
 		Hook:     true,
 	}
 )
+
+// DefaultIfEmptyStorage return sdk.DefaultStorageIntegrationName if integrationName is empty
+func DefaultIfEmptyStorage(integrationName string) string {
+	if integrationName == "" {
+		return DefaultStorageIntegrationName
+	}
+	return integrationName
+}
 
 // IntegrationConfig represent the configuration of a plateform
 type IntegrationConfig map[string]IntegrationConfigValue

@@ -39,8 +39,8 @@ func DeleteIntegration(db gorp.SqlExecutor, integration sdk.ProjectIntegration) 
 	return nil
 }
 
-// LoadIntegrationsByName Load a integration by project key and its name
-func LoadIntegrationsByName(db gorp.SqlExecutor, key string, name string, clearPwd bool) (sdk.ProjectIntegration, error) {
+// LoadProjectIntegrationByName Load a integration by project key and its name
+func LoadProjectIntegrationByName(db gorp.SqlExecutor, key string, name string, clearPwd bool) (sdk.ProjectIntegration, error) {
 	var pp dbProjectIntegration
 	query := `
 		SELECT project_integration.*
@@ -57,7 +57,7 @@ func LoadIntegrationsByName(db gorp.SqlExecutor, key string, name string, clearP
 			if clearPwd {
 				decryptedValue, errD := decryptIntegrationValue(v.Value)
 				if errD != nil {
-					return p, sdk.WrapError(errD, "LoadIntegrationsByName> Cannot decrypt value")
+					return p, sdk.WrapError(errD, "LoadProjectIntegrationByName> Cannot decrypt value")
 				}
 				v.Value = decryptedValue
 				p.Config[k] = v

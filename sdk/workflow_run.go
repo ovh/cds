@@ -326,7 +326,7 @@ type WorkflowNodeRunArtifact struct {
 	Created              time.Time `json:"created,omitempty" db:"created"`
 	TempURL              string    `json:"temp_url,omitempty" db:"-"`
 	TempURLSecretKey     string    `json:"-" db:"-"`
-	IntegrationName      string    `json:"-" db:"-"`
+	ProjectIntegrationID *int64    `json:"project_integration_id" db:"project_integration_id"`
 }
 
 // Equal returns true if w WorkflowNodeRunArtifact equals c

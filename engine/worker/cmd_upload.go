@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -30,10 +31,13 @@ Inside a job, there are two ways to upload an artifact:
 
 ` + "`worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml`" + `
 
+You can use you storage integration: 
+	worker upload --destination="yourStorageIntegrationName"
 		`,
 		Run: uploadCmd(w),
 	}
 	c.Flags().StringVar(&cmdUploadTag, "tag", "", "Tag for artifact Upload - Tag is mandatory")
+	c.Flags().StringVar(&cmdStorageIntegrationName, "destination", "", "optional. You Storage Integration name")
 	return c
 }
 
@@ -68,7 +72,7 @@ func uploadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("internal error (%s)\n", errMarshal)
 			}
 
-			req, errRequest := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/upload", port), bytes.NewReader(data))
+			req, errRequest := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/upload?integration=%s", port, url.QueryEscape(cmdStorageIntegrationName)), bytes.NewReader(data))
 			if errRequest != nil {
 				sdk.Exit("cannot post worker upload (Request): %s\n", errRequest)
 			}
@@ -85,7 +89,6 @@ func uploadCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				sdk.Exit("cannot artefact upload HTTP %d\n", resp.StatusCode)
 			}
 		}
-
 	}
 }
 
@@ -114,6 +117,11 @@ func (wk *currentWorker) uploadHandler(w http.ResponseWriter, r *http.Request) {
 				Name:  "tag",
 				Type:  sdk.StringParameter,
 				Value: a.Tag,
+			},
+			{
+				Name:  "destination",
+				Type:  sdk.StringParameter,
+				Value: r.FormValue("integration"),
 			},
 		},
 	}

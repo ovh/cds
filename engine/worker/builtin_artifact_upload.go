@@ -58,7 +58,7 @@ func runArtifactUpload(wk *currentWorker) BuiltInAction {
 			}
 		}()
 
-		integrationName := strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination"))
+		integrationName := sdk.DefaultIfEmptyStorage(strings.TrimSpace(sdk.ParameterValue(a.Parameters, "destination")))
 		projectKey := sdk.ParameterValue(*params, "cds.project")
 
 		wg.Add(len(filesPath))

@@ -2,11 +2,9 @@ package gitlab
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
@@ -31,25 +29,11 @@ type Error struct {
 	Description string `json:"error_description"`
 }
 
-func generateHash() (string, error) {
-	size := 128
-	bs := make([]byte, size)
-	if _, err := rand.Read(bs); err != nil {
-		log.Error("vcs> gitlab> generateID: rand.Read failed: %s\n", err)
-		return "", err
-	}
-	str := hex.EncodeToString(bs)
-	token := []byte(str)[0:size]
-
-	log.Debug("vcs> gitlab> generateID: new generated id: %s\n", token)
-	return string(token), nil
-}
-
 //AuthorizeRedirect returns the request token, the Authorize URL
 func (g *gitlabConsumer) AuthorizeRedirect(ctx context.Context) (string, string, error) {
 	// See https://docs.gitlab.com/ce/api/oauth2.html
 
-	requestToken, err := generateHash()
+	requestToken, err := sdk.GenerateHash()
 	if err != nil {
 		return "", "", err
 	}

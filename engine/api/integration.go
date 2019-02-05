@@ -162,7 +162,7 @@ func propagatePublicIntegrationModelOnProject(db gorp.SqlExecutor, store cache.S
 
 	for pfName, immutableCfg := range m.PublicConfigurations {
 		cfg := immutableCfg.Clone()
-		oldPP, _ := integration.LoadIntegrationsByName(db, p.Key, pfName, true)
+		oldPP, _ := integration.LoadProjectIntegrationByName(db, p.Key, pfName, true)
 		if oldPP.ID == 0 {
 			pp := sdk.ProjectIntegration{
 				Model:              m,

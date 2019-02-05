@@ -66,6 +66,8 @@ Here, an example of a script inside a CDS Job using the cache feature:
 	return cmdCacheRoot
 }
 
+var cmdStorageIntegrationName string
+
 func cmdCachePush(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:     "push",
@@ -74,10 +76,14 @@ func cmdCachePush(w *currentWorker) *cobra.Command {
 		Long: `
 Inside a project, you can create a cache from your worker with a tag (useful for vendors for example)
 	worker push <tagValue> dir/file
+
+You can use you storage integration: 
+	worker push --destination="yourStorageIntegrationName" <tagValue> dir/file
 		`,
 		Example: "worker cache push {{.cds.workflow}}-{{.cds.version}} {{.cds.workspace}}/pathToUpload",
 		Run:     cachePushCmd(w),
 	}
+	c.Flags().StringVar(&cmdStorageIntegrationName, "destination", "", "optional. You Storage Integration name")
 	return c
 }
 
@@ -115,6 +121,7 @@ func cachePushCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			Tag:              args[0],
 			Files:            files,
 			WorkingDirectory: cwd,
+			IntegrationName:  cmdStorageIntegrationName,
 		}
 
 		data, errMarshal := json.Marshal(c)
@@ -203,7 +210,7 @@ func (wk *currentWorker) cachePushHandler(w http.ResponseWriter, r *http.Request
 
 	var errPush error
 	for i := 0; i < 10; i++ {
-		if errPush = wk.client.WorkflowCachePush(projectKey, vars["ref"], res); errPush == nil {
+		if errPush = wk.client.WorkflowCachePush(projectKey, c.IntegrationName, vars["ref"], res); errPush == nil {
 			return
 		}
 		time.Sleep(3 * time.Second)
@@ -238,9 +245,14 @@ The command:
 
 will create the directory {{.cds.workspace}}/pathToUpload with the content of the cache
 
+If you want to use a cache from a storage integration:
+
+	worker cache push latest {{.cds.workspace}}/pathToUpload
+
 		`,
 		Run: cachePullCmd(w),
 	}
+	c.Flags().StringVar(&cmdStorageIntegrationName, "storage", "", "optional. You Storage Integration name")
 	return c
 }
 
@@ -268,7 +280,7 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		fmt.Printf("Worker cache pull in progress... (tag: %s)\n", args[0])
 		req, errRequest := http.NewRequest(
 			"GET",
-			fmt.Sprintf("http://127.0.0.1:%d/cache/%s/pull?path=%s", port, base64.RawURLEncoding.EncodeToString([]byte(args[0])), url.QueryEscape(dir)),
+			fmt.Sprintf("http://127.0.0.1:%d/cache/%s/pull?path=%s&integration=%s", port, base64.RawURLEncoding.EncodeToString([]byte(args[0])), url.QueryEscape(dir), url.QueryEscape(cmdStorageIntegrationName)),
 			nil,
 		)
 		if errRequest != nil {
@@ -298,11 +310,11 @@ func cachePullCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 func (wk *currentWorker) cachePullHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-
 	path := r.FormValue("path")
+	integrationName := sdk.DefaultIfEmptyStorage(r.FormValue("integration"))
 	params := wk.currentJob.wJob.Parameters
 	projectKey := sdk.ParameterValue(params, "cds.project")
-	bts, err := wk.client.WorkflowCachePull(projectKey, vars["ref"])
+	bts, err := wk.client.WorkflowCachePull(projectKey, integrationName, vars["ref"])
 	if err != nil {
 		err = sdk.Error{
 			Message: "worker cache pull > Cannot pull cache : " + err.Error(),

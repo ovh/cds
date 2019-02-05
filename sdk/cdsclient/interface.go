@@ -233,7 +233,7 @@ type QueueClient interface {
 	QueueJobSendSpawnInfo(ctx context.Context, id int64, in []sdk.SpawnInfo) error
 	QueueSendResult(ctx context.Context, id int64, res sdk.Result) error
 	QueueArtifactUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, tag, filePath string) (bool, time.Duration, error)
-	QueueStaticFilesUpload(ctx context.Context, nodeJobRunID int64, name, entrypoint, staticKey string, tarContent io.Reader) (string, bool, time.Duration, error)
+	QueueStaticFilesUpload(ctx context.Context, projectKey, integrationName string, nodeJobRunID int64, name, entrypoint, staticKey string, tarContent io.Reader) (string, bool, time.Duration, error)
 	QueueJobTag(ctx context.Context, jobID int64, tags []sdk.WorkflowRunTag) error
 	QueueJobIncAttempts(ctx context.Context, jobID int64) ([]int64, error)
 	QueueServiceLogs(ctx context.Context, logs []sdk.ServiceLog) error
@@ -301,8 +301,8 @@ type WorkflowClient interface {
 	WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
-	WorkflowCachePush(projectKey, ref string, tarContent io.Reader) error
-	WorkflowCachePull(projectKey, ref string) (io.Reader, error)
+	WorkflowCachePush(projectKey, integrationName, ref string, tarContent io.Reader) error
+	WorkflowCachePull(projectKey, integrationName, ref string) (io.Reader, error)
 	WorkflowTemplateInstanceGet(projectKey, workflowName string) (*sdk.WorkflowTemplateInstance, error)
 	WorkflowTransformAsCode(projectKey, workflowName string) (*sdk.Operation, error)
 	WorkflowTransformAsCodeFollow(projectKey, workflowName string, ope *sdk.Operation) error
